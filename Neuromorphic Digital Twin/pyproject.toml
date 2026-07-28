@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neuromorphic-twin"
+version = "0.2.0"
+description = "Transparent integer neuromorphic core model for FPGA digital-twin research"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "Diego"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+compare = [
+    "numpy>=1.23",
+    "brian2>=2.4.2",
+    "brian2-loihi==0.5.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools.packages.find]
+where = ["src"]

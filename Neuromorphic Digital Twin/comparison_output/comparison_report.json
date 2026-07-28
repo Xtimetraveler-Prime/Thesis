@@ -1,0 +1,9 @@
+{
+  "schema": "neuromorphic-twin-comparison-v1",
+  "passed": true,
+  "reference_backend": "Brian2Loihi",
+  "candidate_backend": "python-golden-model",
+  "scenario": "brian2loihi-decay-order",
+  "compared_ticks": 3,
+  "mismatches": []
+}

@@ -1,0 +1,205 @@
+# Neuromorphic Twin — Phase 1 Python Model and Comparison Harness
+
+This repository contains a deliberately transparent, integer neuromorphic-core
+model intended to become the software golden model for an FPGA digital twin.
+Version 0.2 adds a backend-neutral verification harness and an optional
+Brian2Loihi adapter.
+
+## Architecture
+
+```text
+ComparisonScenario
+       │
+       ├── Python backend ──────────────┐
+       │   NeuromorphicCore             │
+       │                                ├── exact trace comparator
+       └── Brian2Loihi backend ─────────┘        │
+                                                 ├── console report
+                                                 ├── trace JSON
+                                                 └── report JSON
+```
+
+The comparison format is intentionally independent of both simulators. An RTL
+simulator or physical FPGA can later emit the same trace JSON schema and reuse
+the comparator without changing the reference-model code.
+
+## Current model scope
+
+Implemented:
+
+- Tick-driven current-based LIF neurons
+- Explicit integer decay and round-away-from-zero behavior
+- Configurable overflow policy: none, saturation, or two's-complement wrap
+- Fixed-weight axon-to-neuron synapses
+- Axon fan-out and excitatory/inhibitory weights
+- Per-tick current, voltage, and spike tracing
+- Refractory periods
+- Python-model backend
+- Optional Brian2Loihi backend
+- Exact per-neuron mismatch reports
+- Portable JSON trace and report artifacts
+- Unit tests and runnable examples
+
+Intentionally deferred:
+
+- A final Loihi-compatible update contract
+- Exact Loihi state widths and overflow semantics
+- Bias mapping in Brian2Loihi
+- Multiple Brian2Loihi neuron groups with different configurations
+- Duplicate spikes from one axon in one tick
+- Synaptic delays and event queues
+- Recurrent output axons
+- Multiple cores and packet routing
+- Learning rules and stochastic rounding
+
+## Installation
+
+Core model and tests:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+pytest
+```
+
+Core model plus Brian2Loihi comparison backend:
+
+```bash
+python -m pip install -e ".[dev,compare]"
+```
+
+Brian2Loihi is an optional dependency. The main model imports and runs without
+it. This is deliberate because Brian2Loihi is an older external package and may
+be easier to maintain in a dedicated reference virtual environment.
+
+## Run the comparison
+
+Start with the smoke scenario:
+
+```bash
+python examples/compare_brian2loihi.py
+```
+
+It writes:
+
+```text
+comparison_output/
+├── brian2loihi_trace.json
+├── python_trace.json
+└── comparison_report.json
+```
+
+A passing report begins with:
+
+```text
+PASS: python-golden-model vs Brian2Loihi
+```
+
+Run the diagnostic decay-order probe:
+
+```bash
+python examples/compare_brian2loihi.py --scenario decay-order
+```
+
+This probe is expected to be especially informative. The current Python model
+applies decay before adding the new synaptic input. Brian2Loihi changes Brian's
+schedule so synapses execute before neuron-group updates. A failure here is not
+a harness failure; it identifies the state-transition contract that should be
+revised and tested next.
+
+## Compare traces from separate environments
+
+The JSON trace format allows the reference and candidate to run independently.
+For example, Brian2Loihi could run in a dedicated Python environment while the
+golden model or FPGA tools run elsewhere.
+
+```bash
+python examples/compare_saved_traces.py \
+    comparison_output/brian2loihi_trace.json \
+    comparison_output/python_trace.json
+```
+
+This same command can later compare:
+
+```text
+Brian2Loihi trace vs Python trace
+Python trace vs RTL simulation trace
+Python trace vs FPGA hardware trace
+```
+
+## Scenario definition
+
+A comparison scenario owns every input needed for deterministic replay:
+
+```python
+scenario = ComparisonScenario.build(
+    name="example",
+    neuron_configs=[config],
+    synapses=[Synapse(axon_id=0, target_neuron=0, weight=128)],
+    input_schedule=[(0,), (), (0,)],
+)
+```
+
+Both backends consume the same object. This prevents the two simulations from
+quietly using different thresholds, weights, or spike schedules.
+
+## Initial Brian2Loihi adapter contract
+
+The first adapter intentionally supports a narrow, auditable subset:
+
+1. All neurons use one common `NeuronConfig`.
+2. Bias must be zero.
+3. Reset voltage must be zero.
+4. Refractory duration must be in `1..64`.
+5. Thresholds must be multiples of 64.
+6. Effective synaptic weights must be multiples of 64.
+7. Positive and negative weights are placed into separate sign-mode groups.
+8. One axon cannot spike twice during the same tick.
+9. Explicit saturation and wraparound are disabled for the comparison.
+
+Unsupported scenarios raise `UnsupportedScenarioError`. The adapter never
+silently rounds a threshold or weight merely to make a comparison run.
+
+## Why the trace stores before and after state
+
+Each `BackendTick` stores:
+
+```text
+current_before
+voltage_before
+current_after
+voltage_after
+spikes
+```
+
+The default comparator checks after-state and spikes. Before-state is retained
+for diagnosis. When the first mismatch occurs, the previous after-state and the
+current before-state show whether the divergence came from state carryover,
+input delivery, arithmetic, or threshold/reset behavior.
+
+## Why comparisons are exact
+
+The deterministic subset uses integer state and fixed input events. A tolerance
+would hide precisely the one-bit and one-tick differences this project is meant
+to discover. Learning traces with stochastic rounding will eventually need a
+separate statistical comparison mode; they should not weaken deterministic
+verification.
+
+## Package layout
+
+```text
+src/neuromorphic_twin/
+├── arithmetic.py
+├── core.py
+├── model.py
+├── neuron.py
+└── comparison/
+    ├── brian2loihi_backend.py
+    ├── compare.py
+    ├── io.py
+    ├── model.py
+    └── python_backend.py
+```
+
+The comparison layer does not modify neuron behavior. Its job is to expose
+behavioral differences, not to force agreement.

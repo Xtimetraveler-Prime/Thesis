@@ -1,0 +1,8 @@
+
+[compare]
+numpy>=1.23
+brian2>=2.4.2
+brian2-loihi==0.5.2
+
+[dev]
+pytest>=8.0

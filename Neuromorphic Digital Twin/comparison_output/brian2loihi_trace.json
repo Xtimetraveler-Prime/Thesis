@@ -1,0 +1,61 @@
+{
+  "schema": "neuromorphic-twin-trace-v1",
+  "backend": "Brian2Loihi",
+  "scenario": "brian2loihi-decay-order",
+  "metadata": {
+    "brian2": "2.10.1",
+    "brian2-loihi": "0.5.2",
+    "weight_scale": "64",
+    "threshold_scale": "64"
+  },
+  "ticks": [
+    {
+      "tick": 0,
+      "current_before": [
+        0
+      ],
+      "voltage_before": [
+        0
+      ],
+      "current_after": [
+        64
+      ],
+      "voltage_after": [
+        128
+      ],
+      "spikes": []
+    },
+    {
+      "tick": 1,
+      "current_before": [
+        64
+      ],
+      "voltage_before": [
+        128
+      ],
+      "current_after": [
+        32
+      ],
+      "voltage_after": [
+        192
+      ],
+      "spikes": []
+    },
+    {
+      "tick": 2,
+      "current_before": [
+        32
+      ],
+      "voltage_before": [
+        192
+      ],
+      "current_after": [
+        16
+      ],
+      "voltage_after": [
+        224
+      ],
+      "spikes": []
+    }
+  ]
+}
