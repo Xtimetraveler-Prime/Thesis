@@ -1,9 +1,4 @@
-"""Optional adapter for the external Brian2Loihi reference emulator.
-
-Brian2Loihi is intentionally imported inside the runner. The main golden model
-therefore remains dependency-free and usable even when the older reference
-package is installed in a separate virtual environment.
-"""
+"""Optional adapter for the external Brian2Loihi reference emulator."""
 
 from __future__ import annotations
 
@@ -25,14 +20,6 @@ class UnsupportedScenarioError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class Brian2LoihiMapping:
-    """Numerical encoding selected for the first comparison adapter.
-
-    With weight exponent zero and eight-bit, non-mixed sign groups, the actual
-    synaptic weight is ``mantissa * 64``. Positive and negative connections are
-    placed in separate Brian2Loihi synapse groups so full one-mantissa-step
-    precision remains available.
-    """
-
     threshold_scale: int = 64
     weight_scale: int = 64
     weight_exponent: int = 0
@@ -43,8 +30,6 @@ def validate_brian2loihi_scenario(
     scenario: ComparisonScenario,
     mapping: Brian2LoihiMapping | None = None,
 ) -> None:
-    """Fail explicitly when the initial adapter cannot represent a scenario."""
-
     mapping = mapping or Brian2LoihiMapping()
     configs = scenario.neuron_configs
     first = configs[0]
@@ -98,8 +83,6 @@ def effective_weight_to_mantissa(
     effective_weight: int,
     mapping: Brian2LoihiMapping | None = None,
 ) -> int:
-    """Convert the golden model's effective integer weight to Loihi mantissa."""
-
     mapping = mapping or Brian2LoihiMapping()
     if effective_weight % mapping.weight_scale != 0:
         raise UnsupportedScenarioError(
@@ -119,8 +102,6 @@ def run_brian2loihi_backend(
     *,
     mapping: Brian2LoihiMapping | None = None,
 ) -> BackendTrace:
-    """Run a scenario with Brian2Loihi and snapshot state after every tick."""
-
     mapping = mapping or Brian2LoihiMapping()
     validate_brian2loihi_scenario(scenario, mapping)
 
@@ -142,29 +123,8 @@ def run_brian2loihi_backend(
             "python -m pip install -e '.[compare]'. "
             f"Original import error: {type(exc).__name__}: {exc}"
         ) from exc
-    
-    # The comparison harness prioritizes portability and determinism over speed.
-    # Explicitly selecting NumPy prevents Brian from probing the Cython compiler.
-
-    try:
-        import numpy as np
-        from brian2 import prefs, start_scope
-        from brian2_loihi import (
-            LoihiNetwork,
-            LoihiNeuronGroup,
-            LoihiSpikeGeneratorGroup,
-            LoihiSpikeMonitor,
-            LoihiSynapses,
-            synapse_sign_mode,
-        )
-    except Exception as exc:
-        raise BackendUnavailableError(
-            "Brian2Loihi could not be imported. "
-            f"Original import error: {type(exc).__name__}: {exc}"
-        ) from exc
 
     prefs.codegen.target = "numpy"
-
     start_scope()
     config = scenario.neuron_configs[0]
     neurons = LoihiNeuronGroup(
@@ -248,7 +208,10 @@ def run_brian2loihi_backend(
         current_after = _as_integer_tuple(neurons.I[:], "I after tick")
         voltage_after = _as_integer_tuple(neurons.v[:], "v after tick")
         new_spikes = tuple(
-            sorted(int(neuron_id) for neuron_id in spike_monitor.i[spike_count_before:])
+            sorted(
+                int(neuron_id)
+                for neuron_id in spike_monitor.i[spike_count_before:]
+            )
         )
         ticks.append(
             BackendTick(
@@ -275,8 +238,6 @@ def run_brian2loihi_backend(
 
 
 def _as_integer_tuple(values: Any, label: str) -> tuple[int, ...]:
-    """Convert Brian dimensionless arrays while rejecting fractional states."""
-
     import numpy as np
 
     array = np.asarray(values, dtype=float)

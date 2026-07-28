@@ -1,13 +1,8 @@
-"""Compare deterministic scenarios against Brian2Loihi.
+"""Compare deterministic smoke and decay-order scenarios with Brian2Loihi.
 
-Install the optional backend first:
-    python -m pip install -e ".[dev,compare]"
-
-The default smoke scenario isolates input mapping, Loihi weight/threshold
-scaling, voltage integration, thresholding, reset, and spike timing. The
-``decay-order`` scenario is a diagnostic probe that is expected to reveal the
-current model's decay/input scheduling difference until that contract is
-updated.
+Both scenarios are expected to pass. The decay-order case is retained as a
+regression test for the corrected rule that delivered synaptic input is visible
+before current decay while voltage sees the pre-decay working current.
 """
 
 from __future__ import annotations
@@ -29,29 +24,24 @@ from neuromorphic_twin.comparison import (
 
 
 def build_smoke_scenario() -> ComparisonScenario:
-    common_config = NeuronConfig(
+    config = NeuronConfig(
         current_decay=0,
         voltage_decay=0,
-        threshold=256,       # Brian2Loihi threshold mantissa 4: 4 * 64
+        threshold=256,
         reset_voltage=0,
         refractory_ticks=1,
     )
     return ComparisonScenario.build(
         name="brian2loihi-smoke",
-        neuron_configs=[common_config],
-        synapses=[
-            Synapse(axon_id=0, target_neuron=0, weight=128),  # mantissa +2
-        ],
-        input_schedule=[
-            (0,),  # tick 0: I=128, v=128
-            (0,),  # tick 1: I=256, v=384 -> spike and reset
-        ],
+        neuron_configs=[config],
+        synapses=[Synapse(axon_id=0, target_neuron=0, weight=128)],
+        input_schedule=[(0,), (0,)],
     )
 
 
-def build_decay_order_probe() -> ComparisonScenario:
-    common_config = NeuronConfig(
-        current_decay=2048,  # remove one half per tick
+def build_decay_order_scenario() -> ComparisonScenario:
+    config = NeuronConfig(
+        current_decay=2048,
         voltage_decay=0,
         threshold=4096,
         reset_voltage=0,
@@ -59,7 +49,7 @@ def build_decay_order_probe() -> ComparisonScenario:
     )
     return ComparisonScenario.build(
         name="brian2loihi-decay-order",
-        neuron_configs=[common_config],
+        neuron_configs=[config],
         synapses=[Synapse(axon_id=0, target_neuron=0, weight=128)],
         input_schedule=[(0,), (), ()],
     )
@@ -82,7 +72,7 @@ def main() -> int:
     scenario = (
         build_smoke_scenario()
         if args.scenario == "smoke"
-        else build_decay_order_probe()
+        else build_decay_order_scenario()
     )
     candidate = run_python_backend(scenario)
     output = Path(args.output)
