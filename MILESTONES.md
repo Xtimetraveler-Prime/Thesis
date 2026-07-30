@@ -367,8 +367,10 @@ The result was independently reproduced from the development branch on 2026-07-2
 
 #### M08.2 — Exhaustively validate encoder arithmetic
 
-**Status:** In progress  
-**Started:** 2026-07-29
+**Status:** Complete  
+**Started:** 2026-07-29  
+**Completed:** 2026-07-29  
+**Repository evidence:** PR #3, branch `agent/m08-weight-encoder`
 
 Test all important boundaries and representative combinations of:
 
@@ -381,7 +383,7 @@ Test all important boundaries and representative combinations of:
 - The extreme negative clipping case.
 - Invalid configuration and mantissa inputs.
 
-Delivered so far:
+Delivered:
 
 - Directed tests for all documented configuration boundaries.
 - An equation-oriented reference calculation that does not call encoder helpers.
@@ -393,13 +395,15 @@ Completion criteria:
 - [x] Every configuration boundary has a directed test.
 - [x] Representative cross-product tests preserve quantization, alignment, and clipping invariants.
 - [x] A full valid-input sweep is available and practical.
-- [ ] Independently rerun the branch test suite and record the result.
+- [x] Independently rerun the branch test suite and record the result.
 
-Local development evidence:
+Completion evidence:
 
 ```text
-5 exhaustive tests passed
+55 passed
 ```
+
+The complete branch suite, including the exhaustive `147,456`-case sweep, was independently reproduced on 2026-07-29.
 
 #### M08.3 — Validate encoded weights against Brian2Loihi
 
