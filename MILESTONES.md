@@ -22,7 +22,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M05 | Correct and validate current-decay update order | Complete | 2026-07-18 | 2026-07-18 |
 | M06 | Build directed deterministic conformance suite | Complete | 2026-07-29 | 2026-07-29 |
 | M07 | Validate all directed neuron and synapse cases | Complete | 2026-07-29 | 2026-07-29 |
-| M08 | Add Loihi-native weight representation | Planned | — | — |
+| M08 | Add Loihi-native weight representation | In progress | 2026-07-29 | — |
 | M09 | Add recurrent spike routing | Planned | — | — |
 | M10 | Freeze computational-core specification | Planned | — | — |
 | M11 | Implement first FPGA neuron/core datapath | Planned | — | — |
@@ -316,19 +316,100 @@ All twelve supported deterministic scenarios agree exactly on compared current, 
 
 ## M08 — Add Loihi-native weight representation
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-07-29
 
 ### Goal
 
-Represent synaptic weights using explicit Loihi-style mantissa, exponent, precision, and sign-mode concepts.
+Represent static synaptic weights using explicit Loihi-style mantissa, exponent, precision, and sign-mode concepts while preserving a deterministic, integer-only path to FPGA implementation.
 
-### Planned deliverables
+### Scope decisions
 
-- Weight configuration data structure.
-- Effective-weight expansion rules.
-- Range and representability validation.
-- Directed mantissa and exponent boundary tests.
-- FPGA-oriented synaptic memory format.
+- Implement the published static-weight initialization behavior independently rather than copying Brian2Loihi source code.
+- Keep weight-format configuration separate from each synapse's mantissa so exponent, precision, and sign mode can later be shared in FPGA memory.
+- Preserve requested, quantized, unclipped, and final effective values for traceability.
+- Defer plastic weights and stochastic rounding to a later milestone.
+- Do not replace the existing integer `Synapse.weight` representation until the encoder itself conforms to Brian2Loihi.
+
+### Sub-milestones
+
+#### M08.1 — Implement pure static weight encoder
+
+**Status:** In progress
+
+Deliver an isolated integer-only encoder with:
+
+- `WeightSignMode` for mixed, excitatory, and inhibitory formats.
+- `WeightFormat` containing exponent, number of weight bits, and sign mode.
+- Sign-mode-specific mantissa validation.
+- Mantissa quantization toward zero at the configured precision.
+- Exponent scaling and final alignment to multiples of 64.
+- Signed 21-bit-aligned clipping.
+- A traceable result containing requested mantissa, quantized mantissa, pre-clip effective weight, final effective weight, and clipping status.
+
+Completion criteria:
+
+- [ ] Pure encoder is implemented without Brian2Loihi as a runtime dependency.
+- [ ] Public types are exported from the package.
+- [ ] Integer-only behavior is documented for later RTL translation.
+- [ ] Focused unit tests pass.
+
+#### M08.2 — Exhaustively validate encoder arithmetic
+
+**Status:** In progress
+
+Test all important boundaries and representative combinations of:
+
+- Exponents from `-8` through `7`.
+- Weight-bit settings from `0` through `8`.
+- Excitatory, inhibitory, and mixed sign modes.
+- Positive and negative quantization toward zero.
+- Final alignment behavior for negative fractional scaling.
+- Minimum and maximum mantissas.
+- The extreme negative clipping case.
+- Invalid configuration and mantissa inputs.
+
+Completion criteria:
+
+- [ ] Every configuration boundary has a directed test.
+- [ ] Representative cross-product tests preserve quantization, alignment, and clipping invariants.
+- [ ] A full valid-input sweep is available if runtime remains practical.
+
+#### M08.3 — Validate encoded weights against Brian2Loihi
+
+**Status:** Planned
+
+Add directed comparisons for negative and positive exponents, reduced precision, mixed-sign quantization, sign-mode limits, minimum and maximum values, and clipping behavior.
+
+Completion criteria:
+
+- [ ] Python effective weights agree with Brian2Loihi for every supported directed case.
+- [ ] Any ambiguity between published equations and emulator behavior is isolated and documented.
+- [ ] Stable comparison artifacts are produced for the weight suite.
+
+#### M08.4 — Integrate encoded weights into synapses and traces
+
+**Status:** Planned
+
+Introduce encoded weights without breaking the twelve Phase-1 conformance scenarios. Synaptic accumulation should consume only the derived effective integer weight, while traces retain the original format and mantissa.
+
+Completion criteria:
+
+- [ ] Existing integer-weight scenarios remain reproducible.
+- [ ] Encoded synapses drive the same core through a single effective-weight interface.
+- [ ] Scenario and trace schemas preserve weight-format metadata.
+
+#### M08.5 — Freeze FPGA-oriented weight storage
+
+**Status:** Planned
+
+Define the hardware representation after software conformance, favoring a shared weight-format table and per-synapse mantissa plus format index.
+
+Completion criteria:
+
+- [ ] Field widths and signed encodings are documented.
+- [ ] BRAM cost is estimated for repeated per-synapse fields versus shared formats.
+- [ ] The packed representation reconstructs every validated effective weight exactly.
 
 ---
 
