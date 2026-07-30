@@ -42,3 +42,49 @@ def test_trace_is_tick_indexed_and_core_reset_is_deterministic() -> None:
     core.reset()
     replay = core.step([0])
     assert replay == first
+
+
+def test_one_tick_refractory_core_can_spike_on_consecutive_ticks() -> None:
+    core = NeuromorphicCore(
+        [
+            NeuronConfig(
+                current_decay=4096,
+                voltage_decay=0,
+                threshold=256,
+                refractory_ticks=1,
+            )
+        ],
+        [Synapse(axon_id=0, target_neuron=0, weight=320)],
+    )
+
+    traces = [core.step([0]) for _ in range(4)]
+    spike_ticks = [
+        trace.tick
+        for trace in traces
+        if tuple(spike.neuron_id for spike in trace.spikes) == (0,)
+    ]
+
+    assert spike_ticks == [0, 1, 2, 3]
+
+
+def test_three_tick_refractory_core_spikes_every_third_tick() -> None:
+    core = NeuromorphicCore(
+        [
+            NeuronConfig(
+                current_decay=4096,
+                voltage_decay=0,
+                threshold=256,
+                refractory_ticks=3,
+            )
+        ],
+        [Synapse(axon_id=0, target_neuron=0, weight=320)],
+    )
+
+    traces = [core.step([0]) for _ in range(7)]
+    spike_ticks = [
+        trace.tick
+        for trace in traces
+        if tuple(spike.neuron_id for spike in trace.spikes) == (0,)
+    ]
+
+    assert spike_ticks == [0, 3, 6]
