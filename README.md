@@ -3,6 +3,9 @@
 This repository contains the software and verification work for an FPGA-based
 architecture-level digital twin of a Loihi-inspired neuromorphic processor.
 
+Project progress, completed research decisions, validation evidence, and planned
+work are tracked in [`MILESTONES.md`](MILESTONES.md).
+
 The active Python project is located in:
 
 ```text
