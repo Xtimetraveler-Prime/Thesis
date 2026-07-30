@@ -21,7 +21,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M04 | Pass basic integration smoke test | Complete | 2026-07-18 | 2026-07-18 |
 | M05 | Correct and validate current-decay update order | Complete | 2026-07-18 | 2026-07-18 |
 | M06 | Build directed deterministic conformance suite | Complete | 2026-07-29 | 2026-07-29 |
-| M07 | Validate all directed neuron and synapse cases | In progress | 2026-07-29 | — |
+| M07 | Validate all directed neuron and synapse cases | Complete | 2026-07-29 | 2026-07-29 |
 | M08 | Add Loihi-native weight representation | Planned | — | — |
 | M09 | Add recurrent spike routing | Planned | — | — |
 | M10 | Freeze computational-core specification | Planned | — | — |
@@ -256,31 +256,61 @@ This milestone establishes the suite. It does not claim that all external Brian2
 
 ## M07 — Validate all directed neuron and synapse cases
 
-**Status:** In progress  
-**Started:** 2026-07-29
+**Status:** Complete  
+**Started:** 2026-07-29  
+**Completed:** 2026-07-29  
+**Repository evidence:** PR #2, `6591a17e96b99d665428adf51b5c04fbd10180a6`
 
 ### Goal
 
 Execute all directed scenarios against Brian2Loihi, diagnose each first divergence, and revise the Python computational contract until the supported subset conforms exactly.
 
+### Initial result
+
+The first complete run passed 10 of 12 cases. Both failures were isolated to refractory release timing:
+
+```text
+refractory-one-tick: 1 spike mismatch
+refractory-three-ticks: 2 spike mismatches
+```
+
+The Python model released a neuron one tick later than Brian2Loihi because it loaded the full configured refractory duration after the spike tick had already occurred.
+
+### Correction
+
+The spike tick now counts as part of `refractory_ticks`. After a spike at tick `t`, the neuron is next eligible at:
+
+```text
+t + refractory_ticks
+```
+
+The model therefore loads `max(refractory_ticks - 1, 0)` future blocked ticks. Focused neuron and core regression tests preserve one-tick and three-tick release behavior, current updates during blocked ticks, reset-voltage holding, and release without forced spiking.
+
 ### Completion criteria
 
-- [ ] Run the complete suite in the Brian2Loihi environment.
-- [ ] Record the initial pass/fail/error summary.
-- [ ] Diagnose the earliest mismatch in every failing category.
-- [ ] Add a regression test for each corrected behavior.
-- [ ] Re-run the suite after each correction.
-- [ ] Achieve exact agreement for all supported cases or document explicit exclusions.
-- [ ] Record final evidence and mark this milestone complete.
+- [x] Run the complete suite in the Brian2Loihi environment.
+- [x] Record the initial pass/fail/error summary.
+- [x] Diagnose the earliest mismatch in every failing category.
+- [x] Add a regression test for each corrected behavior.
+- [x] Re-run the suite after the correction.
+- [x] Achieve exact agreement for all supported cases.
+- [x] Record final evidence and mark this milestone complete.
 
-### Current command
+### Completion evidence
 
-```bash
-cd "Neuromorphic Digital Twin"
-python -m pip install -e ".[dev,compare]"
-pytest
-python examples/run_directed_conformance.py
+Python regression suite:
+
+```text
+28 passed
 ```
+
+Final Brian2Loihi directed conformance result:
+
+```text
+cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+```
+
+All twelve supported deterministic scenarios agree exactly on compared current, voltage, and spike traces. Generated artifacts were written beneath `comparison_output/directed/` and remain reproducible rather than version-controlled.
 
 ---
 
