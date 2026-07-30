@@ -335,7 +335,10 @@ Represent static synaptic weights using explicit Loihi-style mantissa, exponent,
 
 #### M08.1 — Implement pure static weight encoder
 
-**Status:** In progress
+**Status:** Complete  
+**Started:** 2026-07-29  
+**Completed:** 2026-07-29  
+**Repository evidence:** PR #3, branch `agent/m08-weight-encoder`
 
 Deliver an isolated integer-only encoder with:
 
@@ -349,14 +352,23 @@ Deliver an isolated integer-only encoder with:
 
 Completion criteria:
 
-- [ ] Pure encoder is implemented without Brian2Loihi as a runtime dependency.
-- [ ] Public types are exported from the package.
-- [ ] Integer-only behavior is documented for later RTL translation.
-- [ ] Focused unit tests pass.
+- [x] Pure encoder is implemented without Brian2Loihi as a runtime dependency.
+- [x] Public types are exported from the package.
+- [x] Integer-only behavior is documented for later RTL translation.
+- [x] Focused unit tests pass.
+
+Completion evidence:
+
+```text
+50 passed
+```
+
+The result was independently reproduced from the development branch on 2026-07-29.
 
 #### M08.2 — Exhaustively validate encoder arithmetic
 
-**Status:** In progress
+**Status:** In progress  
+**Started:** 2026-07-29
 
 Test all important boundaries and representative combinations of:
 
@@ -369,11 +381,25 @@ Test all important boundaries and representative combinations of:
 - The extreme negative clipping case.
 - Invalid configuration and mantissa inputs.
 
+Delivered so far:
+
+- Directed tests for all documented configuration boundaries.
+- An equation-oriented reference calculation that does not call encoder helpers.
+- A full sweep of all `147,456` valid static-weight input combinations.
+- Exact comparisons of requested mantissa, quantized mantissa, pre-clip value, final value, clipping flag, alignment, and output bounds.
+
 Completion criteria:
 
-- [ ] Every configuration boundary has a directed test.
-- [ ] Representative cross-product tests preserve quantization, alignment, and clipping invariants.
-- [ ] A full valid-input sweep is available if runtime remains practical.
+- [x] Every configuration boundary has a directed test.
+- [x] Representative cross-product tests preserve quantization, alignment, and clipping invariants.
+- [x] A full valid-input sweep is available and practical.
+- [ ] Independently rerun the branch test suite and record the result.
+
+Local development evidence:
+
+```text
+5 exhaustive tests passed
+```
 
 #### M08.3 — Validate encoded weights against Brian2Loihi
 
