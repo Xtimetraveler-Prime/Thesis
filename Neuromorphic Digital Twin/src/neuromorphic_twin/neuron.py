@@ -35,7 +35,10 @@ def step_neuron(
     3. Decay the working current to obtain stored next current.
     4. During refractory state, hold voltage at reset.
     5. Otherwise decay previous voltage and add working current plus bias.
-    6. Test threshold; on a spike, reset voltage and load refractory state.
+    6. Test threshold; on a spike, reset voltage and load the number of future
+       blocked ticks. The spike tick itself counts toward ``refractory_ticks``,
+       so a spike at tick ``t`` is next eligible at
+       ``t + refractory_ticks``.
     """
 
     arithmetic = arithmetic or ArithmeticConfig()
@@ -69,7 +72,7 @@ def step_neuron(
     spiked = voltage > config.threshold
     if spiked:
         voltage = arithmetic.apply(config.reset_voltage)
-        refractory = config.refractory_ticks
+        refractory = max(config.refractory_ticks - 1, 0)
     else:
         refractory = 0
 
