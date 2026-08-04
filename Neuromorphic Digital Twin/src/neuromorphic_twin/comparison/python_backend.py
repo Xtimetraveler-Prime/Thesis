@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from .model import BackendTick, BackendTrace, ComparisonScenario
+from .model import (
+    BackendTick,
+    BackendTrace,
+    ComparisonScenario,
+    describe_synapses,
+)
 from ..core import NeuromorphicCore
 
 
@@ -34,4 +39,5 @@ def run_python_backend(scenario: ComparisonScenario) -> BackendTrace:
         scenario=scenario.name,
         ticks=tuple(ticks),
         metadata=(("model", "NeuromorphicCore"),),
+        synapses=describe_synapses(scenario.synapses),
     )
