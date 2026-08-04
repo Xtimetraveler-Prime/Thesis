@@ -88,7 +88,7 @@ single integer accumulation path.
 
 ## Production conformance path
 
-The fifteen directed cases now construct `Synapse.encoded(...)` objects and run
+The fifteen directed cases construct `Synapse.encoded(...)` objects and run
 through the same generic backends used by ordinary scenarios:
 
 ```text
@@ -106,7 +106,67 @@ A case passes only when:
    synapse's effective weight; and
 2. current, voltage, and spike traces agree exactly.
 
-## Run the validation sequence
+## M08.4 completion evidence
+
+The completed production-path validation was independently reproduced on
+2026-08-03:
+
+```text
+68 passed
+```
+
+The eight focused M08.4 integration tests also passed:
+
+```text
+8 passed
+```
+
+The original legacy scenarios remained unchanged:
+
+```text
+cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+```
+
+All fifteen encoded-weight scenarios passed through the production
+`Synapse.encoded(...)` and generic Brian2Loihi path:
+
+```text
+cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
+```
+
+A generated trace-v2 artifact preserved the expected source encoding:
+
+```text
+{
+  'requested_mantissa': 124,
+  'quantized_mantissa': 124,
+  'exponent': 0,
+  'num_weight_bits': 8,
+  'sign_mode': 'excitatory',
+  'effective_weight_before_clip': 7936,
+  'clipped': False
+}
+```
+
+For this case, `124 × 64 = 7936`, so the stored pre-clipping value is consistent
+with the exponent-zero, eight-bit excitatory format. The matching requested and
+quantized mantissas show that no precision truncation occurred, and
+`clipped=False` shows that the result remained within the supported range.
+
+Together these results establish that:
+
+- the production encoded-synapse representation preserves its source format;
+- the generic adapter groups and executes encoded formats without changing
+  legacy behavior;
+- Brian2Loihi `w_act` and Python effective weights agree for all fifteen cases;
+- current, voltage, and spike traces remain exact; and
+- trace-v2 artifacts retain every encoded-weight field required for audit and
+  later FPGA comparison.
+
+This completes M08.4. It does not define the packed FPGA memory representation;
+that work remains M08.5.
+
+## Reproduce the validation
 
 Install the comparison dependencies:
 
