@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
+from ..arithmetic import OverflowMode
+from ..weights import WeightFormat, WeightSignMode
 from .model import (
     BackendTick,
     BackendTrace,
     ComparisonScenario,
     describe_synapses,
 )
-from ..arithmetic import OverflowMode
 
 
 class BackendUnavailableError(RuntimeError):
@@ -29,6 +30,116 @@ class Brian2LoihiMapping:
     weight_scale: int = 64
     weight_exponent: int = 0
     num_weight_bits: int = 8
+
+
+@dataclass(frozen=True, slots=True)
+class Brian2LoihiSynapseGroup:
+    """One deterministic set of connections sharing a Loihi weight format.
+
+    Brian2Loihi stores exponent, configured precision, and sign mode on a
+    ``LoihiSynapses`` object. Connections can therefore share one object only
+    when all three fields match. ``scenario_indices`` preserves the original
+    connection order so the backend can restore observed ``w_act`` values after
+    executing format groups in any deterministic order.
+    """
+
+    exponent: int
+    num_weight_bits: int
+    sign_mode: WeightSignMode
+    scenario_indices: tuple[int, ...]
+    axon_ids: tuple[int, ...]
+    target_neurons: tuple[int, ...]
+    mantissas: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        lengths = {
+            len(self.scenario_indices),
+            len(self.axon_ids),
+            len(self.target_neurons),
+            len(self.mantissas),
+        }
+        if lengths != {len(self.scenario_indices)} or not self.scenario_indices:
+            raise ValueError("synapse group fields must have one non-empty length")
+
+    @property
+    def weight_format(self) -> WeightFormat:
+        return WeightFormat(
+            exponent=self.exponent,
+            num_weight_bits=self.num_weight_bits,
+            sign_mode=self.sign_mode,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Brian2LoihiBackendRun:
+    """Normalized trace plus Brian2Loihi effective weights in scenario order."""
+
+    trace: BackendTrace
+    effective_weights: tuple[int, ...]
+
+
+def build_brian2loihi_synapse_groups(
+    scenario: ComparisonScenario,
+    mapping: Brian2LoihiMapping | None = None,
+) -> tuple[Brian2LoihiSynapseGroup, ...]:
+    """Translate scenario synapses into deterministic Brian2Loihi groups.
+
+    Legacy integer synapses retain the original adapter contract: their
+    mantissas are reconstructed through ``Brian2LoihiMapping`` and separated
+    into excitatory and inhibitory exponent-zero groups. Encoded synapses use
+    their original requested mantissa and immutable ``WeightFormat`` directly.
+    Groups are returned in order of first appearance in the scenario.
+    """
+
+    mapping = mapping or Brian2LoihiMapping()
+    grouped: dict[
+        WeightFormat,
+        list[tuple[int, int, int, int]],
+    ] = {}
+
+    for scenario_index, synapse in enumerate(scenario.synapses):
+        if synapse.encoding is None:
+            sign_mode = (
+                WeightSignMode.EXCITATORY
+                if synapse.weight >= 0
+                else WeightSignMode.INHIBITORY
+            )
+            try:
+                weight_format = WeightFormat(
+                    exponent=mapping.weight_exponent,
+                    num_weight_bits=mapping.num_weight_bits,
+                    sign_mode=sign_mode,
+                )
+            except (TypeError, ValueError) as exc:
+                raise UnsupportedScenarioError(
+                    f"invalid legacy Brian2Loihi weight mapping: {exc}"
+                ) from exc
+            mantissa = effective_weight_to_mantissa(synapse.weight, mapping)
+        else:
+            weight_format = synapse.encoding.weight_format
+            mantissa = synapse.encoding.requested_mantissa
+
+        grouped.setdefault(weight_format, []).append(
+            (
+                scenario_index,
+                synapse.axon_id,
+                synapse.target_neuron,
+                mantissa,
+            )
+        )
+
+    return tuple(
+        Brian2LoihiSynapseGroup(
+            exponent=weight_format.exponent,
+            num_weight_bits=weight_format.num_weight_bits,
+            sign_mode=weight_format.sign_mode,
+            scenario_indices=tuple(entry[0] for entry in entries),
+            axon_ids=tuple(entry[1] for entry in entries),
+            target_neurons=tuple(entry[2] for entry in entries),
+            mantissas=tuple(entry[3] for entry in entries),
+        )
+        for weight_format, entries in grouped.items()
+    )
 
 
 def validate_brian2loihi_scenario(
@@ -73,14 +184,9 @@ def validate_brian2loihi_scenario(
             "arithmetic; disable explicit saturation/wraparound"
         )
 
-    for synapse in scenario.synapses:
-        if synapse.encoding is not None:
-            raise UnsupportedScenarioError(
-                "the generic Brian2Loihi adapter does not yet group encoded "
-                "synapses by exponent, precision, and sign mode; use the M08.3 "
-                "weight-conformance runner until that M08.4 refactor lands"
-            )
-        effective_weight_to_mantissa(synapse.weight, mapping)
+    # Building the groups validates every legacy mapping while preserving the
+    # already-validated source format for encoded synapses.
+    build_brian2loihi_synapse_groups(scenario, mapping)
 
     for tick, axons in enumerate(scenario.input_schedule):
         if len(axons) != len(set(axons)):
@@ -113,8 +219,28 @@ def run_brian2loihi_backend(
     *,
     mapping: Brian2LoihiMapping | None = None,
 ) -> BackendTrace:
+    """Run one scenario and return its normalized trace."""
+
+    return run_brian2loihi_backend_with_weights(
+        scenario,
+        mapping=mapping,
+    ).trace
+
+
+def run_brian2loihi_backend_with_weights(
+    scenario: ComparisonScenario,
+    *,
+    mapping: Brian2LoihiMapping | None = None,
+) -> Brian2LoihiBackendRun:
+    """Run one scenario and retain Brian2Loihi ``w_act`` observations.
+
+    The returned effective weights follow the original ``scenario.synapses``
+    order even though Brian2Loihi connections are instantiated by shared format.
+    """
+
     mapping = mapping or Brian2LoihiMapping()
     validate_brian2loihi_scenario(scenario, mapping)
+    groups = build_brian2loihi_synapse_groups(scenario, mapping)
 
     try:
         import numpy as np
@@ -155,7 +281,8 @@ def run_brian2loihi_backend(
 
     highest_input_axon = max(event_indices, default=0)
     highest_synapse_axon = max(
-        (synapse.axon_id for synapse in scenario.synapses), default=0
+        (synapse.axon_id for synapse in scenario.synapses),
+        default=0,
     )
     source_count = max(highest_input_axon, highest_synapse_axon) + 1
     generator = LoihiSpikeGeneratorGroup(
@@ -165,44 +292,41 @@ def run_brian2loihi_backend(
     )
 
     objects: list[Any] = [neurons, generator]
-    positive = [synapse for synapse in scenario.synapses if synapse.weight >= 0]
-    negative = [synapse for synapse in scenario.synapses if synapse.weight < 0]
+    effective_weights = [0] * len(scenario.synapses)
 
-    if positive:
-        synapses_ex = LoihiSynapses(
+    for group in groups:
+        brian_synapses = LoihiSynapses(
             generator,
             neurons,
-            w_exp=mapping.weight_exponent,
-            sign_mode=synapse_sign_mode.EXCITATORY,
-            num_weight_bits=mapping.num_weight_bits,
+            w_exp=group.exponent,
+            sign_mode=_brian_sign_mode(
+                group.sign_mode,
+                synapse_sign_mode,
+            ),
+            num_weight_bits=group.num_weight_bits,
         )
-        synapses_ex.connect(
-            i=[synapse.axon_id for synapse in positive],
-            j=[synapse.target_neuron for synapse in positive],
+        brian_synapses.connect(
+            i=list(group.axon_ids),
+            j=list(group.target_neurons),
         )
-        synapses_ex.w = np.asarray(
-            [effective_weight_to_mantissa(s.weight, mapping) for s in positive],
-            dtype=int,
-        )
-        objects.append(synapses_ex)
+        brian_synapses.w = np.asarray(group.mantissas, dtype=int)
 
-    if negative:
-        synapses_in = LoihiSynapses(
-            generator,
-            neurons,
-            w_exp=mapping.weight_exponent,
-            sign_mode=synapse_sign_mode.INHIBITORY,
-            num_weight_bits=mapping.num_weight_bits,
+        observed = _as_integer_tuple(
+            brian_synapses.w_act,
+            "Brian2Loihi actual weights",
         )
-        synapses_in.connect(
-            i=[synapse.axon_id for synapse in negative],
-            j=[synapse.target_neuron for synapse in negative],
-        )
-        synapses_in.w = np.asarray(
-            [effective_weight_to_mantissa(s.weight, mapping) for s in negative],
-            dtype=int,
-        )
-        objects.append(synapses_in)
+        if len(observed) != len(group.scenario_indices):
+            raise RuntimeError(
+                "Brian2Loihi returned an unexpected number of actual weights"
+            )
+        for scenario_index, actual_weight in zip(
+            group.scenario_indices,
+            observed,
+            strict=True,
+        ):
+            effective_weights[scenario_index] = actual_weight
+
+        objects.append(brian_synapses)
 
     spike_monitor = LoihiSpikeMonitor(neurons)
     objects.append(spike_monitor)
@@ -235,7 +359,7 @@ def run_brian2loihi_backend(
             )
         )
 
-    return BackendTrace(
+    trace = BackendTrace(
         backend="Brian2Loihi",
         scenario=scenario.name,
         ticks=tuple(ticks),
@@ -244,9 +368,24 @@ def run_brian2loihi_backend(
             ("brian2-loihi", _package_version("brian2-loihi")),
             ("weight_scale", str(mapping.weight_scale)),
             ("threshold_scale", str(mapping.threshold_scale)),
+            ("synapse_group_count", str(len(groups))),
         ),
         synapses=describe_synapses(scenario.synapses),
     )
+    return Brian2LoihiBackendRun(
+        trace=trace,
+        effective_weights=tuple(effective_weights),
+    )
+
+
+def _brian_sign_mode(sign_mode: WeightSignMode, namespace: Any) -> int:
+    if sign_mode is WeightSignMode.MIXED:
+        return namespace.MIXED
+    if sign_mode is WeightSignMode.EXCITATORY:
+        return namespace.EXCITATORY
+    if sign_mode is WeightSignMode.INHIBITORY:
+        return namespace.INHIBITORY
+    raise TypeError(f"unsupported WeightSignMode: {sign_mode!r}")
 
 
 def _as_integer_tuple(values: Any, label: str) -> tuple[int, ...]:
