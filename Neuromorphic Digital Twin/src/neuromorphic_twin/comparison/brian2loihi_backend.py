@@ -58,7 +58,7 @@ class Brian2LoihiSynapseGroup:
             len(self.target_neurons),
             len(self.mantissas),
         }
-        if lengths != {len(self.scenario_indices)} or not self.scenario_indices:
+        if len(lengths) != 1 or not self.scenario_indices:
             raise ValueError("synapse group fields must have one non-empty length")
 
     @property
