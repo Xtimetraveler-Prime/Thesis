@@ -62,8 +62,9 @@ def _mixed_group_scenario() -> ComparisonScenario:
             Synapse.encoded(2, 0, 125, shared_mixed),
             Synapse(3, 0, -64),
             Synapse.encoded(4, 0, 3, WeightFormat(exponent=1)),
+            Synapse.encoded(5, 0, 2, WeightFormat()),
         ],
-        input_schedule=[(0, 1, 2, 3, 4)],
+        input_schedule=[(0, 1, 2, 3, 4, 5)],
     )
 
 
@@ -183,7 +184,7 @@ def test_generic_brian_adapter_groups_encoded_and_legacy_formats() -> None:
 
     assert len(groups) == 4
 
-    mixed, legacy_positive, legacy_negative, encoded_positive = groups
+    mixed, default_positive, legacy_negative, encoded_positive = groups
     assert mixed.weight_format == WeightFormat(
         exponent=2,
         num_weight_bits=6,
@@ -194,9 +195,10 @@ def test_generic_brian_adapter_groups_encoded_and_legacy_formats() -> None:
     assert mixed.target_neurons == (0, 0)
     assert mixed.mantissas == (-127, 125)
 
-    assert legacy_positive.weight_format == WeightFormat()
-    assert legacy_positive.scenario_indices == (1,)
-    assert legacy_positive.mantissas == (1,)
+    assert default_positive.weight_format == WeightFormat()
+    assert default_positive.scenario_indices == (1, 5)
+    assert default_positive.axon_ids == (1, 5)
+    assert default_positive.mantissas == (1, 2)
 
     assert legacy_negative.weight_format == WeightFormat(
         sign_mode=WeightSignMode.INHIBITORY
@@ -291,6 +293,7 @@ def test_generic_backend_restores_w_act_to_scenario_order(monkeypatch) -> None:
         125 + 2_000 + 60_000 + 100_000,
         -1 + 80_000 + 300_000,
         3 + 1_000 + 80_000 + 200_000,
+        2 + 80_000 + 200_000,
     )
     assert dict(run.trace.metadata)["synapse_group_count"] == "4"
     assert run.trace.synapses == run_python_backend(scenario).synapses
