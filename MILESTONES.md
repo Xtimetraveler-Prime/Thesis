@@ -473,23 +473,45 @@ Delivered so far:
 - Trace schema v2 serialization plus v1 read compatibility.
 - Seven focused integration tests covering construction, invariant enforcement, core equivalence, trace metadata, v2 JSON round-trip, v1 compatibility, and the generic-adapter safety guard.
 
+Completion plan and reasoning:
+
+1. Introduce one internal generic-backend run result containing the normalized trace and Brian2Loihi's actual effective weight for each scenario synapse. Keep `run_brian2loihi_backend()` backward compatible by returning only the trace.
+2. Convert every scenario synapse into a group entry containing its original scenario index, routing fields, requested Brian2Loihi mantissa, and a format key `(exponent, num_weight_bits, sign_mode)`.
+3. Preserve legacy integer scenarios by translating their effective weights through the existing exponent-zero mapping and assigning excitatory or inhibitory sign mode exactly as before.
+4. Preserve encoded scenarios by using the requested mantissa stored in `Synapse.encoding`, never reverse-engineering it from the effective integer. Group encoded connections only when all three format fields match.
+5. Instantiate one `LoihiSynapses` object per format group, read each group's `w_act`, and restore those values to original scenario order for direct comparison evidence.
+6. Refactor all fifteen weight-conformance cases to construct production `Synapse.encoded(...)` objects and call the same generic Brian2Loihi backend used by ordinary scenarios. Remove the dedicated one-synapse Brian2Loihi construction path.
+7. Add focused tests for deterministic grouping, mixed encoded and legacy scenarios, preservation of original ordering, production-case construction, and complete v2 metadata.
+8. Validate in increasing scope: focused Python tests, complete `pytest`, the original 12-case Brian2Loihi suite, the 15-case encoded suite through the production path, and inspection of generated v2 artifacts.
+
+Reasoning and invariants:
+
+- The core must continue to consume only `Synapse.weight`; format selection belongs to configuration and backend translation, not the neuron datapath.
+- Legacy integer scenarios must retain their previously validated exponent-zero behavior without requiring encoding metadata.
+- Encoded scenarios must pass their requested mantissas directly to Brian2Loihi. Reconstructing a mantissa from the effective weight would discard quantization intent and can be ambiguous after clipping or negative-exponent alignment.
+- Group identity requires exponent, precision, and sign mode because Brian2Loihi stores those fields on `LoihiSynapses`, not independently per connection.
+- Direct `w_act` values must be restored to scenario order so grouping remains an implementation detail and comparison artifacts stay deterministic.
+- M08.4 is complete only when the dedicated M08.3 adapter path has been eliminated and the production scenario path proves both behavior and metadata preservation.
+
 Completion criteria:
 
-- [ ] Reproduce the complete Python test suite after the schema changes.
-- [ ] Re-run all twelve original Brian2Loihi directed cases without regressions.
+- [x] Reproduce the complete Python test suite after the schema changes.
+- [x] Re-run all twelve original Brian2Loihi directed cases without regressions.
 - [ ] Refactor the generic Brian2Loihi adapter to group encoded synapses by exponent, precision, and sign mode.
 - [ ] Refactor the weight-conformance scenarios to use `Synapse.encoded(...)` directly.
 - [ ] Re-run all fifteen encoded-weight cases through the production scenario path.
 - [ ] Confirm scenario and trace artifacts preserve every encoded-weight field.
 - [ ] Record final evidence and mark M08.4 complete.
 
-Local development evidence:
+Independent regression evidence before the generic-adapter refactor:
 
 ```text
-6 isolated reconstructed integration checks passed
+67 passed
+cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
 ```
 
-The reconstructed checks exercise the same integration contracts as the seven repository tests; the complete repository suite remains the authoritative next validation gate.
+The 15-case result above still uses the dedicated M08.3 Brian2Loihi construction path. It is retained as a regression baseline, not counted as completion of the production-path criterion.
 
 #### M08.5 — Freeze FPGA-oriented weight storage
 
