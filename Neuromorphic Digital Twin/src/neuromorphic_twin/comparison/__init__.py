@@ -18,6 +18,19 @@ from .model import (
     TraceMismatch,
 )
 from .python_backend import run_python_backend
+from .weight_conformance import (
+    WeightBackendRun,
+    WeightConformanceCase,
+    WeightConformanceCaseResult,
+    WeightConformanceSuiteReport,
+    build_weight_conformance_cases,
+    format_weight_suite_report,
+    run_brian2loihi_weight_backend,
+    run_python_weight_backend,
+    run_weight_conformance_suite,
+    weight_case_output_name,
+    write_weight_suite_report_json,
+)
 
 __all__ = [
     "BackendTick",
@@ -28,13 +41,24 @@ __all__ = [
     "ComparisonScenario",
     "TraceMismatch",
     "UnsupportedScenarioError",
+    "WeightBackendRun",
+    "WeightConformanceCase",
+    "WeightConformanceCaseResult",
+    "WeightConformanceSuiteReport",
+    "build_weight_conformance_cases",
     "compare_traces",
     "effective_weight_to_mantissa",
     "format_report",
+    "format_weight_suite_report",
     "read_trace_json",
     "run_brian2loihi_backend",
+    "run_brian2loihi_weight_backend",
     "run_python_backend",
+    "run_python_weight_backend",
+    "run_weight_conformance_suite",
     "validate_brian2loihi_scenario",
+    "weight_case_output_name",
     "write_report_json",
     "write_trace_json",
+    "write_weight_suite_report_json",
 ]
