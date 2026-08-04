@@ -560,15 +560,66 @@ Passing the complete M08.4 gate means the production representation preserves so
 
 #### M08.5 — Freeze FPGA-oriented weight storage
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-03  
+**Repository evidence:** PR #4, branch `agent/m08-weight-conformance`
 
-Define the hardware representation after software conformance, favoring a shared weight-format table and per-synapse mantissa plus format index.
+Convert the validated software representation into a fixed binary contract that can be consumed without reinterpretation by host tools, HDL testbenches, RTL, and physical FPGA memories.
+
+Why this sub-milestone is required:
+
+- Python objects such as `WeightFormat`, `StaticWeightEncoding`, and enum values are not BRAM layouts.
+- Vivado and RTL need exact word widths, bit positions, signed encodings, reserved-bit behavior, table capacities, and routing-memory organization.
+- Freezing these choices before neuron/core RTL prevents later hardware convenience changes from silently altering the already validated weight semantics.
+- A stable memory image lets software-generated configurations, simulation testbenches, and the physical FPGA consume identical words.
+- The memory-cost comparison is needed because sharing formats reduces repeated metadata but introduces a format table and index; the tradeoff should be measured rather than assumed.
+
+Frozen storage profile v1 selected for implementation:
+
+- **16-bit shared format word**
+  - bits `[3:0]`: exponent, signed four-bit two's complement, covering `-8..7`;
+  - bits `[7:4]`: `num_weight_bits`, unsigned four-bit value, valid range `0..8`;
+  - bits `[9:8]`: sign mode, with `00=mixed`, `01=excitatory`, `10=inhibitory`, and `11` reserved;
+  - bits `[15:10]`: reserved and required to be zero.
+- **32-bit per-synapse word**
+  - bits `[8:0]`: requested mantissa, signed nine-bit two's complement, covering `-256..255`;
+  - bits `[12:9]`: four-bit format-table index, supporting up to sixteen shared formats;
+  - bits `[28:13]`: unsigned sixteen-bit target-neuron ID;
+  - bits `[31:29]`: reserved and required to be zero.
+- **CSR-style axon routing**
+  - axon IDs are sixteen-bit table addresses and are not repeated inside every synapse word;
+  - a 32-bit row-pointer table stores the start and terminal offsets for each configured axon row;
+  - synapse records are stored by ascending axon ID while preserving source order within each row.
+- Store the **requested mantissa**, not the quantized mantissa or effective weight. The shared format plus requested mantissa is the validated source representation and deterministically reconstructs quantization, exponent alignment, and clipping through the existing encoder.
+- Reject legacy integer-only synapses during freezing because their original requested mantissa and format can be ambiguous after quantization, negative-exponent alignment, or clipping.
+
+Capacity and packing rationale:
+
+- A four-bit format index supports sixteen formats and keeps the per-synapse record at 29 used bits, allowing a 32-bit physical word with three reserved bits.
+- Repeating all format fields per synapse would require 35 used bits (`16 target + 9 mantissa + 10 format`) and therefore a 36-bit physical record.
+- Excluding the row-pointer table, shared-format storage uses `32N + 16F` bits versus `36N` bits for inline format fields, where `N` is synapse count and `F` is unique format count.
+- Shared storage therefore breaks even at `N = 4F` and saves `4N - 16F` bits beyond that point. Capacity-only BRAM36 estimates will be recorded separately from width/depth implementation constraints.
+
+Implementation and validation plan:
+
+1. Implement strict pack/unpack functions for both word types, including two's-complement conversion and rejection of nonzero reserved bits.
+2. Build a frozen storage image that deduplicates formats by first appearance and creates deterministic CSR axon rows.
+3. Decode the image back into production `Synapse.encoded(...)` objects and prove the resulting encodings and effective weights are unchanged.
+4. Export a versioned JSON manifest plus fixed-width hexadecimal `.mem` files for formats, synapses, and axon row pointers.
+5. Implement a logical-bit and capacity-only BRAM36 estimator comparing the shared table with a 36-bit inline-format record.
+6. Exhaustively pack, unpack, and re-encode all `147,456` valid static-weight combinations.
+7. Re-run the complete Python and Brian2Loihi regression suites before marking M08.5 complete.
 
 Completion criteria:
 
-- [ ] Field widths and signed encodings are documented.
-- [ ] BRAM cost is estimated for repeated per-synapse fields versus shared formats.
-- [ ] The packed representation reconstructs every validated effective weight exactly.
+- [ ] Field widths, bit positions, signed encodings, capacities, and reserved values are documented.
+- [ ] Public pack/unpack and freeze/decode APIs implement the frozen v1 contract.
+- [ ] Versioned JSON and fixed-width hexadecimal memory images are reproducible.
+- [ ] Shared-format versus repeated-format storage and BRAM36 lower bounds are estimated for representative configurations.
+- [ ] All `147,456` valid static-weight combinations reconstruct their exact validated encoding and effective weight.
+- [ ] The complete Python test suite passes after the storage implementation.
+- [ ] The twelve legacy and fifteen encoded Brian2Loihi suites remain exact.
+- [ ] Final evidence is recorded and M08.5 and M08 are marked complete.
 
 ---
 
