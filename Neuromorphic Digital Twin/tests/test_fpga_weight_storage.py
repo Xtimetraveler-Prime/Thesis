@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+import neuromorphic_twin as nt
 from neuromorphic_twin import (
     Synapse,
     WeightFormat,
@@ -22,6 +23,20 @@ from neuromorphic_twin.fpga_weight_storage import (
     unpack_weight_format,
     write_weight_storage_image,
 )
+
+
+def test_fpga_weight_storage_api_is_public() -> None:
+    assert nt.FPGA_WEIGHT_STORAGE_SCHEMA == (
+        "neuromorphic-twin-fpga-weight-storage-v1"
+    )
+    assert nt.FORMAT_WORD_BITS == 16
+    assert nt.SYNAPSE_WORD_BITS == 32
+    assert nt.AXON_ROW_POINTER_BITS == 32
+    assert nt.MAX_WEIGHT_FORMATS == 16
+    assert nt.FrozenWeightStorage is FrozenWeightStorage
+    assert nt.pack_weight_format is pack_weight_format
+    assert nt.freeze_encoded_synapses is freeze_encoded_synapses
+    assert nt.write_weight_storage_image is write_weight_storage_image
 
 
 def test_all_weight_formats_pack_and_unpack_exactly() -> None:
@@ -80,6 +95,45 @@ def test_synapse_word_rejects_invalid_or_reserved_values() -> None:
         )
     with pytest.raises(ValueError, match="reserved bits"):
         unpack_synapse_word(1 << 31)
+
+
+def test_storage_rejects_corrupt_cross_references_and_rows() -> None:
+    format_word = pack_weight_format(WeightFormat())
+    missing_format = pack_synapse_word(
+        target_neuron=0,
+        requested_mantissa=0,
+        format_index=1,
+    )
+    with pytest.raises(ValueError, match="outside the format table"):
+        FrozenWeightStorage(
+            format_words=(format_word,),
+            synapse_words=(missing_format,),
+            axon_row_pointers=(0, 1),
+        )
+
+    invalid_excitatory_mantissa = pack_synapse_word(
+        target_neuron=0,
+        requested_mantissa=-1,
+        format_index=0,
+    )
+    with pytest.raises(ValueError, match="invalid for its referenced"):
+        FrozenWeightStorage(
+            format_words=(format_word,),
+            synapse_words=(invalid_excitatory_mantissa,),
+            axon_row_pointers=(0, 1),
+        )
+
+    valid_word = pack_synapse_word(
+        target_neuron=0,
+        requested_mantissa=0,
+        format_index=0,
+    )
+    with pytest.raises(ValueError, match="monotonic"):
+        FrozenWeightStorage(
+            format_words=(format_word,),
+            synapse_words=(valid_word,),
+            axon_row_pointers=(0, 1, 0),
+        )
 
 
 def test_freeze_deduplicates_formats_and_builds_csr_rows() -> None:
