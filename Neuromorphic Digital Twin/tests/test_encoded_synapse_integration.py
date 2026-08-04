@@ -12,7 +12,7 @@ from neuromorphic_twin import (
 )
 from neuromorphic_twin.comparison import (
     ComparisonScenario,
-    UnsupportedScenarioError,
+    build_brian2loihi_synapse_groups,
     read_trace_json,
     run_python_backend,
     validate_brian2loihi_scenario,
@@ -151,13 +151,48 @@ def test_trace_v1_json_remains_readable(tmp_path) -> None:
     assert trace.ticks[0].current_after == (64,)
 
 
-def test_generic_brian_adapter_rejects_encoded_format_until_grouping_refactor() -> None:
+def test_generic_brian_adapter_groups_encoded_and_legacy_formats() -> None:
+    shared_mixed = WeightFormat(
+        exponent=2,
+        num_weight_bits=6,
+        sign_mode=WeightSignMode.MIXED,
+    )
+    synapses = [
+        Synapse.encoded(0, 0, -127, shared_mixed),
+        Synapse(1, 0, 64),
+        Synapse.encoded(2, 0, 125, shared_mixed),
+        Synapse(3, 0, -64),
+        Synapse.encoded(4, 0, 3, WeightFormat(exponent=1)),
+    ]
     scenario = ComparisonScenario.build(
-        name="encoded-adapter-guard",
+        name="encoded-adapter-grouping",
         neuron_configs=[_config()],
-        synapses=[_encoded_synapse()],
-        input_schedule=[(0,)],
+        synapses=synapses,
+        input_schedule=[(0, 1, 2, 3, 4)],
     )
 
-    with pytest.raises(UnsupportedScenarioError, match="does not yet group"):
-        validate_brian2loihi_scenario(scenario)
+    validate_brian2loihi_scenario(scenario)
+    groups = build_brian2loihi_synapse_groups(scenario)
+
+    assert len(groups) == 4
+
+    mixed, legacy_positive, legacy_negative, encoded_positive = groups
+    assert mixed.weight_format == shared_mixed
+    assert mixed.scenario_indices == (0, 2)
+    assert mixed.axon_ids == (0, 2)
+    assert mixed.target_neurons == (0, 0)
+    assert mixed.mantissas == (-127, 125)
+
+    assert legacy_positive.weight_format == WeightFormat()
+    assert legacy_positive.scenario_indices == (1,)
+    assert legacy_positive.mantissas == (1,)
+
+    assert legacy_negative.weight_format == WeightFormat(
+        sign_mode=WeightSignMode.INHIBITORY
+    )
+    assert legacy_negative.scenario_indices == (3,)
+    assert legacy_negative.mantissas == (-1,)
+
+    assert encoded_positive.weight_format == WeightFormat(exponent=1)
+    assert encoded_positive.scenario_indices == (4,)
+    assert encoded_positive.mantissas == (3,)
