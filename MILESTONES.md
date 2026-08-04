@@ -407,15 +407,47 @@ The complete branch suite, including the exhaustive `147,456`-case sweep, was in
 
 #### M08.3 — Validate encoded weights against Brian2Loihi
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-03  
+**Repository evidence:** branch `agent/m08-weight-conformance`
 
-Add directed comparisons for negative and positive exponents, reduced precision, mixed-sign quantization, sign-mode limits, minimum and maximum values, and clipping behavior.
+Add directed comparisons for negative and positive exponents, reduced precision, mixed-sign quantization, sign-mode limits, minimum and maximum values, zero configured weight bits, and clipping behavior.
+
+Design boundary:
+
+- Keep encoded-weight configuration outside the production `Synapse` and trace schemas until M08.4.
+- Give the Python candidate the encoder's derived effective integer weight.
+- Give Brian2Loihi the original requested mantissa, exponent, number of weight bits, and sign mode.
+- Compare both Brian2Loihi's directly observable `w_act` value and the resulting current, voltage, and spike traces.
+
+Delivered so far:
+
+- Fifteen directed encoded-weight cases.
+- Dedicated Python and Brian2Loihi weight runners.
+- Exact direct-effective-weight mismatch reporting.
+- Existing backend-neutral trace comparison for the one-synapse impulse.
+- Per-case trace and comparison artifacts plus a suite-level JSON report.
+- CLI case listing, case selection, stop-on-failure, and output controls.
+- Dedicated workflow documentation.
+- Five isolated harness tests covering case scope, Python mapping, pass behavior, direct mismatch detection, and JSON evidence.
 
 Completion criteria:
 
-- [ ] Python effective weights agree with Brian2Loihi for every supported directed case.
-- [ ] Any ambiguity between published equations and emulator behavior is isolated and documented.
-- [ ] Stable comparison artifacts are produced for the weight suite.
+- [x] Define directed cases covering all agreed static-weight boundaries.
+- [x] Compare Python effective weights directly with Brian2Loihi `w_act`.
+- [x] Compare observable current, voltage, and spike traces.
+- [x] Produce stable per-case and suite-level artifacts.
+- [x] Pass isolated harness tests in the development environment.
+- [ ] Independently run the baseline case in the Brian2Loihi environment.
+- [ ] Run all directed weight cases and diagnose every mismatch.
+- [ ] Achieve exact agreement for all supported cases.
+- [ ] Record final evidence and mark M08.3 complete.
+
+Local development evidence:
+
+```text
+5 weight-conformance harness tests passed
+```
 
 #### M08.4 — Integrate encoded weights into synapses and traces
 
