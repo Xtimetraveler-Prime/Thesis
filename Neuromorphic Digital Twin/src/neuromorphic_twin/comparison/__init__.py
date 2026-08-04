@@ -2,10 +2,14 @@
 
 from .brian2loihi_backend import (
     BackendUnavailableError,
+    Brian2LoihiBackendRun,
     Brian2LoihiMapping,
+    Brian2LoihiSynapseGroup,
     UnsupportedScenarioError,
+    build_brian2loihi_synapse_groups,
     effective_weight_to_mantissa,
     run_brian2loihi_backend,
+    run_brian2loihi_backend_with_weights,
     validate_brian2loihi_scenario,
 )
 from .compare import compare_traces, format_report
@@ -39,7 +43,9 @@ __all__ = [
     "BackendTick",
     "BackendTrace",
     "BackendUnavailableError",
+    "Brian2LoihiBackendRun",
     "Brian2LoihiMapping",
+    "Brian2LoihiSynapseGroup",
     "ComparisonReport",
     "ComparisonScenario",
     "TraceMismatch",
@@ -48,6 +54,7 @@ __all__ = [
     "WeightConformanceCase",
     "WeightConformanceCaseResult",
     "WeightConformanceSuiteReport",
+    "build_brian2loihi_synapse_groups",
     "build_weight_conformance_cases",
     "compare_traces",
     "describe_synapses",
@@ -56,6 +63,7 @@ __all__ = [
     "format_weight_suite_report",
     "read_trace_json",
     "run_brian2loihi_backend",
+    "run_brian2loihi_backend_with_weights",
     "run_brian2loihi_weight_backend",
     "run_python_backend",
     "run_python_weight_backend",
