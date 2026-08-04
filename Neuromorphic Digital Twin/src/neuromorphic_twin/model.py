@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .weights import StaticWeightEncoding, WeightFormat, encode_static_weight
+
 
 DECAY_SCALE = 4096
 
@@ -56,17 +58,59 @@ class NeuronState:
 
 @dataclass(frozen=True, slots=True)
 class Synapse:
-    """One fixed-weight connection from an input axon to a target neuron."""
+    """One fixed-weight connection from an input axon to a target neuron.
+
+    ``weight`` always stores the effective integer delivered to the neuron
+    datapath. Legacy callers can continue constructing ``Synapse(..., weight)``
+    directly. Loihi-style callers should use :meth:`encoded`, which preserves
+    the requested mantissa and format in ``encoding`` while deriving the same
+    single effective integer interface consumed by :class:`NeuromorphicCore`.
+    """
 
     axon_id: int
     target_neuron: int
     weight: int
+    encoding: StaticWeightEncoding | None = None
 
     def __post_init__(self) -> None:
         if self.axon_id < 0:
             raise ValueError("axon_id cannot be negative")
         if self.target_neuron < 0:
             raise ValueError("target_neuron cannot be negative")
+        if isinstance(self.weight, bool) or not isinstance(self.weight, int):
+            raise TypeError("weight must be an int")
+        if self.encoding is not None:
+            if not isinstance(self.encoding, StaticWeightEncoding):
+                raise TypeError("encoding must be a StaticWeightEncoding")
+            if self.weight != self.encoding.effective_weight:
+                raise ValueError(
+                    "weight must equal encoding.effective_weight for an "
+                    "encoded synapse"
+                )
+
+    @classmethod
+    def encoded(
+        cls,
+        axon_id: int,
+        target_neuron: int,
+        mantissa: int,
+        weight_format: WeightFormat | None = None,
+    ) -> "Synapse":
+        """Build a synapse from a requested mantissa and shared format."""
+
+        encoding = encode_static_weight(mantissa, weight_format)
+        return cls(
+            axon_id=axon_id,
+            target_neuron=target_neuron,
+            weight=encoding.effective_weight,
+            encoding=encoding,
+        )
+
+    @property
+    def is_encoded(self) -> bool:
+        """Whether this synapse retains Loihi-style encoding metadata."""
+
+        return self.encoding is not None
 
 
 @dataclass(frozen=True, slots=True)

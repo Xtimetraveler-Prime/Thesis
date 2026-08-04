@@ -6,9 +6,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .model import BackendTick, BackendTrace, ComparisonReport
+from .model import BackendSynapse, BackendTick, BackendTrace, ComparisonReport
 
-_TRACE_SCHEMA = "neuromorphic-twin-trace-v1"
+_TRACE_SCHEMA_V1 = "neuromorphic-twin-trace-v1"
+_TRACE_SCHEMA_V2 = "neuromorphic-twin-trace-v2"
+_TRACE_SCHEMA = _TRACE_SCHEMA_V2
+_SUPPORTED_TRACE_SCHEMAS = {_TRACE_SCHEMA_V1, _TRACE_SCHEMA_V2}
 _REPORT_SCHEMA = "neuromorphic-twin-comparison-v1"
 
 
@@ -22,6 +25,7 @@ def write_trace_json(trace: BackendTrace, path: str | Path) -> Path:
         "backend": trace.backend,
         "scenario": trace.scenario,
         "metadata": dict(trace.metadata),
+        "synapses": [_synapse_to_payload(synapse) for synapse in trace.synapses],
         "ticks": [
             {
                 "tick": tick.tick,
@@ -39,13 +43,18 @@ def write_trace_json(trace: BackendTrace, path: str | Path) -> Path:
 
 
 def read_trace_json(path: str | Path) -> BackendTrace:
-    """Load a trace written by :func:`write_trace_json`."""
+    """Load a v1 or v2 trace written by :func:`write_trace_json`.
+
+    Version 1 traces remain readable and simply contain no structured synapse
+    metadata. Version 2 adds the optional ``synapses`` collection.
+    """
 
     payload: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
-    if payload.get("schema") != _TRACE_SCHEMA:
+    schema = payload.get("schema")
+    if schema not in _SUPPORTED_TRACE_SCHEMAS:
         raise ValueError(
-            f"unsupported trace schema {payload.get('schema')!r}; "
-            f"expected {_TRACE_SCHEMA!r}"
+            f"unsupported trace schema {schema!r}; expected one of "
+            f"{sorted(_SUPPORTED_TRACE_SCHEMAS)!r}"
         )
 
     ticks = tuple(
@@ -63,11 +72,15 @@ def read_trace_json(path: str | Path) -> BackendTrace:
         (str(key), str(value))
         for key, value in sorted(payload.get("metadata", {}).items())
     )
+    synapses = tuple(
+        _synapse_from_payload(item) for item in payload.get("synapses", [])
+    )
     return BackendTrace(
         backend=str(payload["backend"]),
         scenario=str(payload["scenario"]),
         ticks=ticks,
         metadata=metadata,
+        synapses=synapses,
     )
 
 
@@ -96,3 +109,49 @@ def write_report_json(report: ComparisonReport, path: str | Path) -> Path:
     }
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return output
+
+
+def _synapse_to_payload(synapse: BackendSynapse) -> dict[str, Any]:
+    encoding: dict[str, Any] | None = None
+    if synapse.is_encoded:
+        encoding = {
+            "requested_mantissa": synapse.requested_mantissa,
+            "quantized_mantissa": synapse.quantized_mantissa,
+            "exponent": synapse.exponent,
+            "num_weight_bits": synapse.num_weight_bits,
+            "sign_mode": synapse.sign_mode,
+            "effective_weight_before_clip": synapse.effective_weight_before_clip,
+            "clipped": synapse.clipped,
+        }
+
+    return {
+        "axon_id": synapse.axon_id,
+        "target_neuron": synapse.target_neuron,
+        "effective_weight": synapse.effective_weight,
+        "encoding": encoding,
+    }
+
+
+def _synapse_from_payload(payload: dict[str, Any]) -> BackendSynapse:
+    encoding = payload.get("encoding")
+    if encoding is None:
+        return BackendSynapse(
+            axon_id=int(payload["axon_id"]),
+            target_neuron=int(payload["target_neuron"]),
+            effective_weight=int(payload["effective_weight"]),
+        )
+
+    return BackendSynapse(
+        axon_id=int(payload["axon_id"]),
+        target_neuron=int(payload["target_neuron"]),
+        effective_weight=int(payload["effective_weight"]),
+        requested_mantissa=int(encoding["requested_mantissa"]),
+        quantized_mantissa=int(encoding["quantized_mantissa"]),
+        exponent=int(encoding["exponent"]),
+        num_weight_bits=int(encoding["num_weight_bits"]),
+        sign_mode=str(encoding["sign_mode"]),
+        effective_weight_before_clip=int(
+            encoding["effective_weight_before_clip"]
+        ),
+        clipped=bool(encoding["clipped"]),
+    )
