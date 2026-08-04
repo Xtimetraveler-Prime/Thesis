@@ -449,8 +449,9 @@ Passing all fifteen cases means that the Python encoder's final effective intege
 
 #### M08.4 — Integrate encoded weights into synapses and traces
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-03  
+**Completed:** 2026-08-03  
 **Repository evidence:** PR #4, branch `agent/m08-weight-conformance`
 
 Introduce encoded weights without breaking the twelve Phase-1 conformance scenarios. Synaptic accumulation consumes only the derived effective integer weight, while scenarios and traces retain the original format and mantissa.
@@ -464,7 +465,7 @@ Architecture selected:
 - Trace schema v2 stores structured synapse metadata; the reader remains compatible with v1 traces.
 - The generic Brian2Loihi adapter groups connections by `(exponent, num_weight_bits, sign_mode)` and restores observed `w_act` values to original scenario order.
 
-Delivered so far:
+Delivered:
 
 - Backward-compatible encoded production synapses.
 - An invariant that rejects disagreement between `Synapse.weight` and `encoding.effective_weight`.
@@ -474,7 +475,7 @@ Delivered so far:
 - A testable `Brian2LoihiSynapseGroup` representation preserving format, routing, requested mantissas, and original scenario indices.
 - Generic backend support for legacy-only, encoded-only, and mixed legacy/encoded format groups.
 - `Brian2LoihiBackendRun`, which retains the normalized trace and directly observed effective weights in scenario order while preserving the old trace-only API.
-- All fifteen weight-conformance scenarios now construct `Synapse.encoded(...)` and call the generic production Brian2Loihi backend; the dedicated construction path has been removed.
+- All fifteen weight-conformance scenarios construct `Synapse.encoded(...)` and call the generic production Brian2Loihi backend; the dedicated construction path has been removed.
 - Eight focused integration tests covering construction, invariant enforcement, core equivalence, trace metadata, v2 JSON round-trip, v1 compatibility, mixed grouping, and observed-weight order restoration through a fake backend.
 
 Completion plan and reasoning:
@@ -490,39 +491,72 @@ Completion plan and reasoning:
 
 Reasoning and invariants:
 
-- The core must continue to consume only `Synapse.weight`; format selection belongs to configuration and backend translation, not the neuron datapath.
-- Legacy integer scenarios must retain their previously validated exponent-zero behavior without requiring encoding metadata.
-- Encoded scenarios must pass their requested mantissas directly to Brian2Loihi. Reconstructing a mantissa from the effective weight would discard quantization intent and can be ambiguous after clipping or negative-exponent alignment.
+- The core continues to consume only `Synapse.weight`; format selection belongs to configuration and backend translation, not the neuron datapath.
+- Legacy integer scenarios retain their previously validated exponent-zero behavior without requiring encoding metadata.
+- Encoded scenarios pass their requested mantissas directly to Brian2Loihi. Reconstructing a mantissa from the effective weight would discard quantization intent and can be ambiguous after clipping or negative-exponent alignment.
 - Group identity requires exponent, precision, and sign mode because Brian2Loihi stores those fields on `LoihiSynapses`, not independently per connection.
-- Direct `w_act` values must be restored to scenario order so grouping remains an implementation detail and comparison artifacts stay deterministic.
-- M08.4 is complete only when the dedicated M08.3 adapter path has been eliminated and the production scenario path proves both behavior and metadata preservation.
+- Direct `w_act` values are restored to scenario order so grouping remains an implementation detail and comparison artifacts stay deterministic.
+- The dedicated M08.3 adapter path has been eliminated; the production scenario path now proves both behavior and metadata preservation.
 
 Completion criteria:
 
-- [ ] Reproduce the complete Python test suite at the current generic-adapter head.
-- [ ] Re-run all twelve original Brian2Loihi directed cases at the current head.
+- [x] Reproduce the complete Python test suite at the current generic-adapter head.
+- [x] Re-run all twelve original Brian2Loihi directed cases at the current head.
 - [x] Refactor the generic Brian2Loihi adapter to group encoded synapses by exponent, precision, and sign mode.
 - [x] Refactor the weight-conformance scenarios to use `Synapse.encoded(...)` directly.
-- [ ] Re-run all fifteen encoded-weight cases through the production scenario path.
-- [ ] Confirm generated trace-v2 artifacts preserve every encoded-weight field.
-- [ ] Record final evidence and mark M08.4 complete.
+- [x] Re-run all fifteen encoded-weight cases through the production scenario path.
+- [x] Confirm generated trace-v2 artifacts preserve every encoded-weight field.
+- [x] Record final evidence and mark M08.4 complete.
 
 Implementation evidence:
 
 - Generic grouping and scenario-order restoration: `b7ddca2dab786c3b388df99e3dd7dc18f82486a6`.
 - Production weight-conformance scenarios: `219efff11f992b4fabb52ef383b6e28c8674cf62`.
 - Mixed-format and fake-backend order tests: `b0f6c1a6d6c5b21960fcf9dbaec2d18dc499ce11`.
-- No repository CI workflow is configured, so the current branch head requires independent local execution.
 
-Pre-refactor regression baseline:
+Completion evidence independently reproduced on 2026-08-03:
+
+Complete Python regression suite:
 
 ```text
-67 passed
+68 passed
+```
+
+Focused M08.4 integration suite:
+
+```text
+8 passed
+```
+
+Original legacy Brian2Loihi suite:
+
+```text
 cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+```
+
+Production encoded-weight suite through `Synapse.encoded(...)` and the generic Brian2Loihi backend:
+
+```text
 cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
 ```
 
-The expected current Python count is `68 passed` because the generic backend now has one additional direct order-restoration test. The external 15-case result must be reproduced again because it now exercises the production scenario path rather than the dedicated M08.3 construction path.
+Representative generated trace-v2 encoding payload:
+
+```text
+{
+  'requested_mantissa': 124,
+  'quantized_mantissa': 124,
+  'exponent': 0,
+  'num_weight_bits': 8,
+  'sign_mode': 'excitatory',
+  'effective_weight_before_clip': 7936,
+  'clipped': False
+}
+```
+
+For the representative case, `124 × 64 = 7936`, so the pre-clipping value is consistent with the exponent-zero, eight-bit excitatory format. The equal requested and quantized mantissas prove that no precision truncation occurred, and `clipped=False` proves that the result remained in range.
+
+Passing the complete M08.4 gate means the production representation preserves source encoding metadata, the generic adapter executes encoded formats without regressing legacy scenarios, Brian2Loihi `w_act` agrees with the Python effective weight for all fifteen directed cases, current/voltage/spike traces remain exact, and trace-v2 artifacts retain the fields required for later FPGA comparison. It does not yet freeze a packed FPGA memory layout; that is M08.5.
 
 #### M08.5 — Freeze FPGA-oriented weight storage
 
