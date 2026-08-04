@@ -329,7 +329,7 @@ Represent static synaptic weights using explicit Loihi-style mantissa, exponent,
 - Keep weight-format configuration separate from each synapse's mantissa so exponent, precision, and sign mode can later be shared in FPGA memory.
 - Preserve requested, quantized, unclipped, and final effective values for traceability.
 - Defer plastic weights and stochastic rounding to a later milestone.
-- Do not replace the existing integer `Synapse.weight` representation until the encoder itself conforms to Brian2Loihi.
+- Keep the effective integer as the sole core-datapath interface while attaching optional immutable encoding metadata to production synapses.
 
 ### Sub-milestones
 
@@ -407,29 +407,25 @@ The complete branch suite, including the exhaustive `147,456`-case sweep, was in
 
 #### M08.3 — Validate encoded weights against Brian2Loihi
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-03  
-**Repository evidence:** branch `agent/m08-weight-conformance`
+**Completed:** 2026-08-03  
+**Repository evidence:** PR #4, branch `agent/m08-weight-conformance`
 
 Add directed comparisons for negative and positive exponents, reduced precision, mixed-sign quantization, sign-mode limits, minimum and maximum values, zero configured weight bits, and clipping behavior.
 
 Design boundary:
 
-- Keep encoded-weight configuration outside the production `Synapse` and trace schemas until M08.4.
+- Keep encoded-weight configuration outside the production `Synapse` and trace schemas during arithmetic validation.
 - Give the Python candidate the encoder's derived effective integer weight.
 - Give Brian2Loihi the original requested mantissa, exponent, number of weight bits, and sign mode.
 - Compare both Brian2Loihi's directly observable `w_act` value and the resulting current, voltage, and spike traces.
 
-Delivered so far:
+Tests added:
 
-- Fifteen directed encoded-weight cases.
-- Dedicated Python and Brian2Loihi weight runners.
-- Exact direct-effective-weight mismatch reporting.
-- Existing backend-neutral trace comparison for the one-synapse impulse.
-- Per-case trace and comparison artifacts plus a suite-level JSON report.
-- CLI case listing, case selection, stop-on-failure, and output controls.
-- Dedicated workflow documentation.
-- Five isolated harness tests covering case scope, Python mapping, pass behavior, direct mismatch detection, and JSON evidence.
+- Fifteen directed encoded-weight cases spanning exponent scaling, negative-exponent alignment, reduced precision, mixed-sign quantization, sign-mode extrema, zero configured weight bits, and 21-bit-aligned clipping.
+- Five isolated harness tests covering case uniqueness and scope, Python effective-weight mapping, passing behavior when runners agree, direct `effective_weight` mismatch detection, and suite JSON evidence.
+- Per-case Brian2Loihi and Python traces, exact comparison reports, and a suite-level machine-readable result.
 
 Completion criteria:
 
@@ -438,28 +434,62 @@ Completion criteria:
 - [x] Compare observable current, voltage, and spike traces.
 - [x] Produce stable per-case and suite-level artifacts.
 - [x] Pass isolated harness tests in the development environment.
-- [ ] Independently run the baseline case in the Brian2Loihi environment.
-- [ ] Run all directed weight cases and diagnose every mismatch.
-- [ ] Achieve exact agreement for all supported cases.
-- [ ] Record final evidence and mark M08.3 complete.
+- [x] Independently run the baseline case in the Brian2Loihi environment.
+- [x] Run all directed weight cases and diagnose every mismatch.
+- [x] Achieve exact agreement for all supported cases.
+- [x] Record final evidence and mark M08.3 complete.
+
+Completion evidence:
+
+```text
+cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
+```
+
+Passing all fifteen cases means that the Python encoder's final effective integer exactly equals Brian2Loihi `w_act` for every tested format boundary, and that the resulting one-synapse current, voltage, and spike traces also agree exactly. This validates the tested static-weight arithmetic and delivery behavior; it does not by itself validate production synapse or portable trace-schema integration, which is M08.4.
+
+#### M08.4 — Integrate encoded weights into synapses and traces
+
+**Status:** In progress  
+**Started:** 2026-08-03  
+**Repository evidence:** PR #4, branch `agent/m08-weight-conformance`
+
+Introduce encoded weights without breaking the twelve Phase-1 conformance scenarios. Synaptic accumulation consumes only the derived effective integer weight, while scenarios and traces retain the original format and mantissa.
+
+Architecture selected:
+
+- `Synapse.weight` remains an integer and is the only value consumed by `NeuromorphicCore`.
+- `Synapse.encoding` optionally stores the immutable `StaticWeightEncoding` that produced that integer.
+- `Synapse.encoded(...)` derives and validates both values together.
+- Backend traces use structured synapse descriptors rather than flattening encoding fields into string metadata.
+- Trace schema v2 stores structured synapse metadata; the reader remains compatible with v1 traces.
+- Until generic adapter grouping is implemented, encoded scenarios are rejected by the legacy Brian2Loihi adapter instead of being silently remapped through exponent zero.
+
+Delivered so far:
+
+- Backward-compatible encoded production synapses.
+- An invariant that rejects disagreement between `Synapse.weight` and `encoding.effective_weight`.
+- A single unchanged integer accumulation path in the core.
+- Structured backend synapse descriptors containing routing, effective weight, requested and quantized mantissas, format fields, pre-clip value, and clipping status.
+- Trace schema v2 serialization plus v1 read compatibility.
+- Seven focused integration tests covering construction, invariant enforcement, core equivalence, trace metadata, v2 JSON round-trip, v1 compatibility, and the generic-adapter safety guard.
+
+Completion criteria:
+
+- [ ] Reproduce the complete Python test suite after the schema changes.
+- [ ] Re-run all twelve original Brian2Loihi directed cases without regressions.
+- [ ] Refactor the generic Brian2Loihi adapter to group encoded synapses by exponent, precision, and sign mode.
+- [ ] Refactor the weight-conformance scenarios to use `Synapse.encoded(...)` directly.
+- [ ] Re-run all fifteen encoded-weight cases through the production scenario path.
+- [ ] Confirm scenario and trace artifacts preserve every encoded-weight field.
+- [ ] Record final evidence and mark M08.4 complete.
 
 Local development evidence:
 
 ```text
-5 weight-conformance harness tests passed
+6 isolated reconstructed integration checks passed
 ```
 
-#### M08.4 — Integrate encoded weights into synapses and traces
-
-**Status:** Planned
-
-Introduce encoded weights without breaking the twelve Phase-1 conformance scenarios. Synaptic accumulation should consume only the derived effective integer weight, while traces retain the original format and mantissa.
-
-Completion criteria:
-
-- [ ] Existing integer-weight scenarios remain reproducible.
-- [ ] Encoded synapses drive the same core through a single effective-weight interface.
-- [ ] Scenario and trace schemas preserve weight-format metadata.
+The reconstructed checks exercise the same integration contracts as the seven repository tests; the complete repository suite remains the authoritative next validation gate.
 
 #### M08.5 — Freeze FPGA-oriented weight storage
 
