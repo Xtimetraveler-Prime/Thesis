@@ -30,9 +30,11 @@ def test_weight_cases_are_unique_and_cover_m08_3_boundaries() -> None:
     assert any(case.encoding.clipped for case in cases)
 
 
-def test_python_weight_cases_use_encoder_effective_weight() -> None:
+def test_python_weight_cases_use_production_encoded_synapses() -> None:
     for case in build_weight_conformance_cases():
         synapse = case.scenario.synapses[0]
+        assert synapse.is_encoded
+        assert synapse.encoding == case.encoding
         assert synapse.weight == case.encoding.effective_weight
 
         run = run_python_weight_backend(case)
@@ -44,6 +46,22 @@ def test_python_weight_cases_use_encoder_effective_weight() -> None:
             case.encoding.effective_weight,
         )
         assert run.trace.ticks[0].spikes == ()
+
+        assert len(run.trace.synapses) == 1
+        descriptor = run.trace.synapses[0]
+        fmt = case.encoding.weight_format
+        assert descriptor.is_encoded
+        assert descriptor.requested_mantissa == case.encoding.requested_mantissa
+        assert descriptor.quantized_mantissa == case.encoding.quantized_mantissa
+        assert descriptor.exponent == fmt.exponent
+        assert descriptor.num_weight_bits == fmt.num_weight_bits
+        assert descriptor.sign_mode == fmt.sign_mode.value
+        assert (
+            descriptor.effective_weight_before_clip
+            == case.encoding.effective_weight_before_clip
+        )
+        assert descriptor.effective_weight == case.encoding.effective_weight
+        assert descriptor.clipped == case.encoding.clipped
 
 
 def test_weight_suite_passes_when_both_runners_are_identical() -> None:
@@ -67,6 +85,7 @@ def test_weight_suite_reports_direct_effective_weight_mismatch() -> None:
                 backend="mutated-reference",
                 scenario=run.trace.scenario,
                 ticks=run.trace.ticks,
+                synapses=run.trace.synapses,
             ),
             effective_weight=run.effective_weight + 64,
         )
