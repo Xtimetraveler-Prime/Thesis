@@ -462,7 +462,7 @@ Architecture selected:
 - `Synapse.encoded(...)` derives and validates both values together.
 - Backend traces use structured synapse descriptors rather than flattening encoding fields into string metadata.
 - Trace schema v2 stores structured synapse metadata; the reader remains compatible with v1 traces.
-- Until generic adapter grouping is implemented, encoded scenarios are rejected by the legacy Brian2Loihi adapter instead of being silently remapped through exponent zero.
+- The generic Brian2Loihi adapter groups connections by `(exponent, num_weight_bits, sign_mode)` and restores observed `w_act` values to original scenario order.
 
 Delivered so far:
 
@@ -471,7 +471,11 @@ Delivered so far:
 - A single unchanged integer accumulation path in the core.
 - Structured backend synapse descriptors containing routing, effective weight, requested and quantized mantissas, format fields, pre-clip value, and clipping status.
 - Trace schema v2 serialization plus v1 read compatibility.
-- Seven focused integration tests covering construction, invariant enforcement, core equivalence, trace metadata, v2 JSON round-trip, v1 compatibility, and the generic-adapter safety guard.
+- A testable `Brian2LoihiSynapseGroup` representation preserving format, routing, requested mantissas, and original scenario indices.
+- Generic backend support for legacy-only, encoded-only, and mixed legacy/encoded format groups.
+- `Brian2LoihiBackendRun`, which retains the normalized trace and directly observed effective weights in scenario order while preserving the old trace-only API.
+- All fifteen weight-conformance scenarios now construct `Synapse.encoded(...)` and call the generic production Brian2Loihi backend; the dedicated construction path has been removed.
+- Eight focused integration tests covering construction, invariant enforcement, core equivalence, trace metadata, v2 JSON round-trip, v1 compatibility, mixed grouping, and observed-weight order restoration through a fake backend.
 
 Completion plan and reasoning:
 
@@ -495,15 +499,22 @@ Reasoning and invariants:
 
 Completion criteria:
 
-- [x] Reproduce the complete Python test suite after the schema changes.
-- [x] Re-run all twelve original Brian2Loihi directed cases without regressions.
-- [ ] Refactor the generic Brian2Loihi adapter to group encoded synapses by exponent, precision, and sign mode.
-- [ ] Refactor the weight-conformance scenarios to use `Synapse.encoded(...)` directly.
+- [ ] Reproduce the complete Python test suite at the current generic-adapter head.
+- [ ] Re-run all twelve original Brian2Loihi directed cases at the current head.
+- [x] Refactor the generic Brian2Loihi adapter to group encoded synapses by exponent, precision, and sign mode.
+- [x] Refactor the weight-conformance scenarios to use `Synapse.encoded(...)` directly.
 - [ ] Re-run all fifteen encoded-weight cases through the production scenario path.
-- [ ] Confirm scenario and trace artifacts preserve every encoded-weight field.
+- [ ] Confirm generated trace-v2 artifacts preserve every encoded-weight field.
 - [ ] Record final evidence and mark M08.4 complete.
 
-Independent regression evidence before the generic-adapter refactor:
+Implementation evidence:
+
+- Generic grouping and scenario-order restoration: `b7ddca2dab786c3b388df99e3dd7dc18f82486a6`.
+- Production weight-conformance scenarios: `219efff11f992b4fabb52ef383b6e28c8674cf62`.
+- Mixed-format and fake-backend order tests: `b0f6c1a6d6c5b21960fcf9dbaec2d18dc499ce11`.
+- No repository CI workflow is configured, so the current branch head requires independent local execution.
+
+Pre-refactor regression baseline:
 
 ```text
 67 passed
@@ -511,7 +522,7 @@ cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
 cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
 ```
 
-The 15-case result above still uses the dedicated M08.3 Brian2Loihi construction path. It is retained as a regression baseline, not counted as completion of the production-path criterion.
+The expected current Python count is `68 passed` because the generic backend now has one additional direct order-restoration test. The external 15-case result must be reproduced again because it now exercises the production scenario path rather than the dedicated M08.3 construction path.
 
 #### M08.5 — Freeze FPGA-oriented weight storage
 
@@ -583,7 +594,7 @@ Implement the frozen computational core on the FPGA while preserving determinist
 
 ## M12 — Validate FPGA against Python golden model
 
-**Status:** Planned
+**Status:** Planned  
 
 ### Goal
 
