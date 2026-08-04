@@ -6,7 +6,12 @@ from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
-from .model import BackendTick, BackendTrace, ComparisonScenario
+from .model import (
+    BackendTick,
+    BackendTrace,
+    ComparisonScenario,
+    describe_synapses,
+)
 from ..arithmetic import OverflowMode
 
 
@@ -69,6 +74,12 @@ def validate_brian2loihi_scenario(
         )
 
     for synapse in scenario.synapses:
+        if synapse.encoding is not None:
+            raise UnsupportedScenarioError(
+                "the generic Brian2Loihi adapter does not yet group encoded "
+                "synapses by exponent, precision, and sign mode; use the M08.3 "
+                "weight-conformance runner until that M08.4 refactor lands"
+            )
         effective_weight_to_mantissa(synapse.weight, mapping)
 
     for tick, axons in enumerate(scenario.input_schedule):
@@ -234,6 +245,7 @@ def run_brian2loihi_backend(
             ("weight_scale", str(mapping.weight_scale)),
             ("threshold_scale", str(mapping.threshold_scale)),
         ),
+        synapses=describe_synapses(scenario.synapses),
     )
 
 
