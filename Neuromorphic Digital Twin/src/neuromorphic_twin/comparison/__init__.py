@@ -11,11 +11,13 @@ from .brian2loihi_backend import (
 from .compare import compare_traces, format_report
 from .io import read_trace_json, write_report_json, write_trace_json
 from .model import (
+    BackendSynapse,
     BackendTick,
     BackendTrace,
     ComparisonReport,
     ComparisonScenario,
     TraceMismatch,
+    describe_synapses,
 )
 from .python_backend import run_python_backend
 from .weight_conformance import (
@@ -33,6 +35,7 @@ from .weight_conformance import (
 )
 
 __all__ = [
+    "BackendSynapse",
     "BackendTick",
     "BackendTrace",
     "BackendUnavailableError",
@@ -47,6 +50,7 @@ __all__ = [
     "WeightConformanceSuiteReport",
     "build_weight_conformance_cases",
     "compare_traces",
+    "describe_synapses",
     "effective_weight_to_mantissa",
     "format_report",
     "format_weight_suite_report",
