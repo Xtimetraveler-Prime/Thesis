@@ -206,5 +206,276 @@ M10.1 freezes:
 - architectural state and configuration widths;
 - deterministic reset state.
 
-Arithmetic, rounding, overflow, threshold/reset/refractory equations, detailed
-routing semantics, and requirement-linked tests are frozen by M10.2 and M10.3.
+---
+
+# M10.2 — Arithmetic and behavioral contract
+
+## 6. Integer arithmetic profile
+
+### 6.1 Signed state range and overflow
+
+Current and voltage use signed 24-bit two's-complement state. Define
+
+```text
+STATE_MIN = -2^23     = -8,388,608
+STATE_MAX =  2^23 - 1 =  8,388,607
+```
+
+and define the architectural state operator
+
+```text
+SAT24(x) = min(max(x, STATE_MIN), STATE_MAX)
+```
+
+**CORE-ARITH-001 — Saturating state arithmetic.** Every explicit state-width
+application identified by this specification SHALL saturate to the signed
+24-bit range. It SHALL NOT wrap modulo `2^24`.
+
+This saturation rule is a project-specific FPGA profile decision. Earlier
+Brian2Loihi conformance cases intentionally stay away from overflow, so they do
+not establish Intel Loihi's undocumented overflow behavior. Freezing saturation
+here makes M11 and M12 deterministic without overstating external equivalence.
+
+### 6.2 Round-away-from-zero division
+
+For integer numerator `a` and positive denominator `b`, define
+
+```text
+RAOZ(a, b) = 0                              if a = 0
+           =  ceil(|a| / b)                 if a > 0
+           = -ceil(|a| / b)                 if a < 0
+```
+
+Only integer operations are required to implement this function.
+
+**CORE-ARITH-002 — Decay rounding.** Every current- or voltage-decay division by
+`4096` SHALL round away from zero exactly as `RAOZ` above.
+
+### 6.3 Decay operator
+
+For state value `x` and configured decay `d` in `0..4096`, define the amount
+removed during the tick as
+
+```text
+DECAY_REMOVED(x, d) = RAOZ(x * d, 4096)
+DECAYED(x, d)       = x - DECAY_REMOVED(x, d)
+```
+
+The multiplication and subtraction are mathematical integer temporaries; only
+explicit `SAT24` points below are architecturally width-limited.
+
+**CORE-ARITH-003 — Decay endpoints.** `d = 0` SHALL remove zero and `d = 4096`
+SHALL remove the entire input value exactly, for both positive and negative
+state.
+
+## 7. Synaptic accumulation
+
+For neuron `n`, let `S[n,t]` be the mathematical integer sum of all effective
+synaptic weights delivered by every axon event consumed on tick `t`.
+
+**CORE-SYN-001 — Weight source.** The synapse datapath SHALL consume the final
+effective integer weight produced by the M08 encoding contract. It SHALL NOT
+re-quantize a weight during tick processing.
+
+**CORE-SYN-002 — Fan-out.** One axon event SHALL contribute every synapse in that
+axon's fan-out row exactly once.
+
+**CORE-SYN-003 — Event multiplicity.** Repeated occurrences of the same axon ID
+within one tick SHALL each deliver the row again. Two occurrences therefore
+contribute twice the row's weights.
+
+**CORE-SYN-004 — Exact pre-state sum.** Mixed positive and negative weights SHALL
+be accumulated as an exact mathematical integer sum before the single current
+state-width operation in `current_work` below. An implementation SHALL NOT
+saturate after each individual synapse if that changes the final sum.
+
+An axon ID with no synapses is a valid no-op event.
+
+## 8. Normative single-neuron transition
+
+For one neuron at tick `t`, define:
+
+```text
+I0 = current before tick
+V0 = voltage before tick
+R0 = refractory_remaining before tick
+S  = this tick's synaptic_input
+D_i = current_decay
+D_v = voltage_decay
+B   = bias
+T   = threshold
+V_r = reset_voltage
+R_c = refractory_ticks
+```
+
+### 8.1 Working current and stored current
+
+```text
+I_work = SAT24(I0 + S)
+I_next = SAT24(DECAYED(I_work, D_i))
+```
+
+**CORE-NEURON-001 — Input-before-decay current.** Newly delivered synaptic input
+SHALL be included in `I_work` before current decay is calculated.
+
+**CORE-NEURON-002 — Voltage current source.** Voltage integration SHALL use the
+pre-decay `I_work`, not `I_next`.
+
+**CORE-NEURON-003 — Stored current.** The current register committed after the
+tick SHALL contain `I_next` whether or not the neuron is refractory or spikes.
+
+### 8.2 Refractory branch
+
+If `R0 > 0`:
+
+```text
+V_next = SAT24(V_r)
+R_next = R0 - 1
+spike   = 0
+```
+
+No voltage decay, voltage integration, bias addition, or threshold test changes
+this branch's voltage result. Current still follows Section 8.1.
+
+**CORE-NEURON-004 — Refractory voltage hold.** A refractory neuron SHALL hold
+voltage at reset voltage while current continues to accumulate and decay.
+
+**CORE-NEURON-005 — Refractory countdown.** Each blocked tick SHALL decrement
+`refractory_remaining` by exactly one and SHALL NOT emit a spike.
+
+### 8.3 Non-refractory voltage branch
+
+If `R0 = 0`:
+
+```text
+V_decay_base = DECAYED(V0, D_v)
+V_work       = SAT24(V_decay_base + I_work + B)
+spike        = 1 if V_work > T else 0
+```
+
+**CORE-NEURON-006 — Voltage equation.** Non-refractory voltage SHALL decay the
+previous voltage, then add the pre-decay working current and bias, then apply
+one `SAT24` operation to the resulting working voltage.
+
+**CORE-NEURON-007 — Strict threshold.** A neuron SHALL spike only when
+`V_work > threshold`. Equality SHALL NOT spike.
+
+### 8.4 Spike/reset branch
+
+If `spike = 1`:
+
+```text
+V_next = SAT24(V_r)
+R_next = max(R_c - 1, 0)
+```
+
+Otherwise:
+
+```text
+V_next = V_work
+R_next = 0
+```
+
+**CORE-NEURON-008 — Hard reset.** A spike SHALL commit reset voltage rather than
+the threshold-crossing working voltage.
+
+**CORE-NEURON-009 — Refractory timing.** The spike tick itself SHALL count as the
+first configured refractory tick. After a spike at tick `t`, the neuron is next
+eligible to spike at `t + R_c`. Therefore `R_c = 0` and `R_c = 1` both leave no
+future blocked tick, while `R_c = 3` blocks ticks `t+1` and `t+2` and releases on
+`t+3`.
+
+## 9. Recurrent routing semantics
+
+A recurrent route is the ordered pair
+
+```text
+(source_neuron, target_axon)
+```
+
+**CORE-ROUTE-001 — Route fan-out.** One source neuron MAY declare multiple target
+axons. On a spike, all of those targets SHALL be emitted in declaration order.
+
+**CORE-ROUTE-002 — Duplicate route rejection.** The same exact
+`(source_neuron, target_axon)` pair SHALL NOT appear more than once in the route
+table.
+
+**CORE-ROUTE-003 — Cross-source multiplicity.** Different source neurons MAY
+route to the same target axon. If they spike simultaneously, repeated target
+axon IDs SHALL remain repeated events and SHALL accumulate synaptic input once
+per event.
+
+**CORE-ROUTE-004 — Simultaneous ordering.** Recurrent events generated by one
+tick SHALL be ordered first by ascending spiking source-neuron ID and then by
+route declaration order within each source.
+
+**CORE-ROUTE-005 — Tick boundary.** The full routed sequence generated on tick
+`t` SHALL become `R[t+1]` and SHALL remain separate from `E[t+1]` until Phase A
+concatenates external events before recurrent events.
+
+**CORE-ROUTE-006 — Reset queue behavior.** Reset SHALL discard the complete
+pending recurrent sequence.
+
+## 10. Validation and configuration constraints
+
+**CORE-CFG-001 — Neuron configuration validity.** `current_decay` and
+`voltage_decay` SHALL be in `0..4096`, `refractory_ticks` SHALL be nonnegative
+and fit 16 bits, and `threshold` SHALL be greater than `reset_voltage`.
+
+**CORE-CFG-002 — Identifier validity.** Neuron and axon IDs SHALL be nonnegative
+and fit their 16-bit architectural fields. Synapse targets and route sources
+SHALL refer to existing configured neurons.
+
+**CORE-CFG-003 — Deterministic route table.** Duplicate recurrent route pairs
+SHALL be rejected during configuration rather than resolved dynamically during
+a tick.
+
+## 11. Observable trace contract
+
+For each completed tick, a conforming implementation SHALL make the following
+values available to the M12 comparison path or an equivalent lossless trace
+export:
+
+```text
+tick
+external_input_axons
+recurrent_input_axons
+input_axons                 # exact concatenated consumed sequence
+synaptic_input              # per-neuron accumulated integer
+current_before
+voltage_before
+current_after
+voltage_after
+refractory_after
+spikes
+routed_output_axons
+```
+
+**CORE-TRACE-001 — State observability.** Current and voltage before/after values
+and spikes SHALL be observable at algorithmic tick boundaries.
+
+**CORE-TRACE-002 — Routing observability.** External, recurrent, combined input,
+and routed output axon sequences SHALL preserve order and multiplicity in trace
+artifacts.
+
+Backend JSON trace schema v3 is the current software interchange format. RTL or
+physical hardware may use a different transport internally, but conversion into
+the backend-neutral representation SHALL be lossless.
+
+## 12. M10.2 completion boundary
+
+M10.2 freezes:
+
+- signed 24-bit saturating current/voltage state arithmetic;
+- round-away-from-zero decay and its exact application points;
+- input-before-current-decay ordering;
+- voltage integration from pre-decay working current;
+- strict-greater-than threshold behavior;
+- hard reset and refractory timing;
+- exact synaptic event multiplicity and accumulation;
+- deterministic route validation, ordering, fan-out, and next-tick delivery;
+- the minimum trace information required for later FPGA comparison.
+
+M10.3 links every normative requirement in this document to executable
+conformance tests and checks that the frozen profile remains synchronized with
+the Python golden model.
