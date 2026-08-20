@@ -24,7 +24,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M07 | Validate all directed neuron and synapse cases | Complete | 2026-07-29 | 2026-07-29 |
 | M08 | Add Loihi-native weight representation | Complete | 2026-07-29 | 2026-08-03 |
 | M09 | Add recurrent spike routing | Complete | 2026-08-20 | 2026-08-20 |
-| M10 | Freeze computational-core specification | In progress | 2026-08-20 | — |
+| M10 | Freeze computational-core specification | Complete | 2026-08-20 | 2026-08-20 |
 | M11 | Implement first FPGA neuron/core datapath | Planned | — | — |
 | M12 | Validate FPGA against Python golden model | Planned | — | — |
 
@@ -767,8 +767,9 @@ round trips. The original 80 tests remain passing unchanged in scope.
 
 ## M10 — Freeze computational-core specification
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-20  
+**Completed:** 2026-08-20  
 **Repository evidence:** branch `agent/m10-core-specification`
 
 ### Goal
@@ -783,7 +784,33 @@ Convert validated software behavior into an implementation-neutral specification
 - [x] Threshold, reset, refractory, accumulation, and routing semantics.
 - [x] Conformance tests linked to every normative requirement.
 
-The work is split into ordered sub-milestones so M11 does not begin until the specification has both a written contract and an executable conformance gate.
+### How the deliverables were met
+
+1. **Formal per-tick update schedule** — `docs/CORE_SPECIFICATION.md` freezes six behaviorally ordered phases: latch external and recurrent events, accumulate synapses, update every neuron from the same pre-tick state snapshot, collect spikes, generate recurrent routes, and atomically commit state. This prevents an FPGA implementation from changing observable behavior merely because it pipelines or time-multiplexes the work.
+2. **State-register definitions and widths** — The FPGA-v1 profile freezes signed 24-bit current and voltage state, 16-bit refractory state and neuron/axon identifiers, a 32-bit tick counter, 13-bit decay configuration with domain `0..4096`, and signed 24-bit threshold/bias/reset configuration. Final boundary tests also prove those ID widths remain consistent with the previously frozen M08 FPGA weight-storage contract.
+3. **Arithmetic, rounding, and overflow rules** — The profile names signed 24-bit saturation as the FPGA state policy, preserves integer round-away-from-zero decay with denominator `4096`, and specifies the exact points where saturation occurs. The generic Python/Brian2Loihi path remains configurable and unchanged so this project-defined hardware overflow policy does not rewrite earlier external-conformance evidence.
+4. **Threshold, reset, refractory, accumulation, and routing semantics** — The specification freezes input-before-current-decay ordering, voltage integration from pre-decay working current, exact mathematical synaptic accumulation before state-width application, strict `>` threshold behavior, hard reset, refractory release timing, deterministic route order and multiplicity, next-tick-only recurrence, and reset disposal of queued recurrent events.
+5. **Conformance tests linked to every requirement** — `tests/test_core_specification.py` maps every normative `CORE-*` identifier to an executable pytest function and contains a coverage gate that fails if the specification and test map diverge. `tests/test_core_specification_boundaries.py` adds hardware-profile boundary checks for runtime axon IDs, replayed state width, threshold/reset validity, and M08/M10 identifier consistency. `src/neuromorphic_twin/specification.py` provides the machine-readable `neuromorphic-twin-core-spec-v1` constants and validators that M11/M12 can consume directly.
+
+The work was completed as three ordered sub-milestones so the implementation contract was defined before the executable completion gate was closed.
+
+### Overall completion evidence
+
+The final branch state was independently reproduced from a complete checkout on 2026-08-20. The following gates all passed:
+
+```bash
+pytest -q tests/test_core_specification.py tests/test_core_specification_boundaries.py
+pytest -q
+python examples/run_directed_conformance.py
+```
+
+The user-reproduced Python test runs completed with zero failures. The established Brian2Loihi directed regression remained:
+
+```text
+cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+```
+
+No exact final pytest test count is recorded here because only the successful pass status was reported for the final independent rerun.
 
 ---
 
@@ -856,11 +883,12 @@ The generic Python golden model remains configurable and keeps its prior default
 
 ### M10.3 — Link every specification requirement to executable conformance
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-20  
-**Repository evidence:** commits `c1d495e5dab8f871255a7e5a9e3d33a0c8a2d083`, `e3abc04f54ecaddcadf1440bff4f1fe2cc5ff555`, `fd939de9b4d52bb153abb38cb92cf5a1239af2cc`, `773957f76e24382692f114338535cc31cf9b743e`, and `01c28b145b8b6b23e45dea3b3636f91e5924df3b`
+**Completed:** 2026-08-20  
+**Repository evidence:** branch `agent/m10-core-specification`
 
-### Delivered so far
+### Delivered
 
 - `src/neuromorphic_twin/specification.py` containing the machine-readable `neuromorphic-twin-core-spec-v1` profile, frozen widths, saturating arithmetic configuration, and representability validators.
 - Public exports for the FPGA-v1 profile without changing generic model defaults.
@@ -868,32 +896,29 @@ The generic Python golden model remains configurable and keeps its prior default
 - `REQUIREMENT_TESTS`, an explicit map from every normative `CORE-*` requirement ID to an executable pytest function.
 - A coverage-gate test that extracts all normative requirement IDs from `CORE_SPECIFICATION.md` and requires exact equality with `REQUIREMENT_TESTS`, so specification growth without a test causes failure.
 - `docs/CORE_CONFORMANCE.md` documenting the coverage strategy and completion gate.
-- The reset test was strengthened after review so a real recurrent event is pending before reset; the test then proves that reset discards it and that replay remains deterministic.
-
-### Focused verification performed
-
-A local reconstruction of the relevant M10 core/profile path was executed after the reset-test correction:
-
-```text
-11 passed
-```
-
-This exercised the new width, saturation, decay, effective-weight, routing, reset, and profile-validation behavior.
+- A strengthened reset test that queues a real recurrent event before reset and proves both queue disposal and deterministic replay.
+- FPGA-v1 runtime input validation so external axon events must fit the frozen unsigned 16-bit ID space without tightening the generic golden-model core.
+- FPGA-v1 replay/state validation so injected current, voltage, and refractory values must fit the frozen architectural registers.
+- Boundary regressions proving the threshold remains strictly above reset voltage and M10 neuron/axon ID widths remain identical to M08's frozen storage widths.
 
 ### Completion criteria
 
 - [x] Every normative requirement has a stable `CORE-*` identifier.
 - [x] Every current requirement is linked to an executable test in `REQUIREMENT_TESTS`.
 - [x] A machine-readable FPGA-v1 profile exists for M11/M12.
-- [x] Focused M10 behavior has been exercised after the final reset-test correction.
-- [ ] Run `pytest -q tests/test_core_specification.py` from a complete repository checkout.
-- [ ] Run the complete Python `pytest -q` regression suite from that checkout.
-- [ ] Re-run the original Brian2Loihi directed conformance suite and confirm the previously validated subset remains unchanged.
-- [ ] Record final repository-level pass counts and mark M10.3 and M10 complete.
+- [x] Focused M10 behavior was exercised during development.
+- [x] `tests/test_core_specification.py` and `tests/test_core_specification_boundaries.py` pass from a complete repository checkout.
+- [x] The complete Python regression suite passes from that checkout.
+- [x] The original Brian2Loihi directed conformance suite remains exact.
+- [x] Final independent verification was reported and M10.3 and M10 are marked complete.
 
-### Why M10 remains in progress
+### Final independent verification
 
-The specification and requirement-linked tests are implemented, but the repository-level completion gate has not yet been executed from a complete checkout in the available environment. M11 should not start until those remaining regression checks are recorded.
+On 2026-08-20 the final branch state was pulled and the requested completion commands were run independently. Both Python test commands completed successfully with zero failures. The Brian2Loihi suite retained all twelve passing cases and zero mismatches.
+
+### What completion means
+
+M10 now provides one frozen, test-addressable computational contract for M11. Hardware may pipeline or serialize the implementation, but current/voltage arithmetic, tick boundaries, reset/refractory behavior, synaptic accumulation, event ordering, routing, widths, and trace observability may not change without changing the specification and its linked conformance tests together.
 
 ---
 
