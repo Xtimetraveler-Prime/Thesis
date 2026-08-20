@@ -62,9 +62,9 @@ The core still sees only:
 synapse.weight
 ```
 
-Backend traces have a structured synapse collection, and trace schema v2
-serializes the encoding metadata. The reader remains compatible with v1 traces,
-which load with an empty structured synapse collection.
+Backend traces have a structured synapse collection. Trace schema v3 serializes
+the encoding metadata alongside M09 routing data. The reader remains compatible
+with v1 and v2 traces; v1 loads with an empty structured synapse collection.
 
 ## Generic Brian2Loihi grouping
 
@@ -134,7 +134,7 @@ All fifteen encoded-weight scenarios passed through the production
 cases=15, pass=15, fail=0, error=0, ticks=15, mismatches=0
 ```
 
-A generated trace-v2 artifact preserved the expected source encoding:
+A generated trace-v3 artifact preserved the expected source encoding:
 
 ```text
 {
@@ -160,7 +160,7 @@ Together these results establish that:
   legacy behavior;
 - Brian2Loihi `w_act` and Python effective weights agree for all fifteen cases;
 - current, voltage, and spike traces remain exact; and
-- trace-v2 artifacts retain every encoded-weight field required for audit and
+- trace-v3 artifacts retain every encoded-weight field required for audit and
   later FPGA comparison.
 
 This completes M08.4. It does not define the packed FPGA memory representation;
@@ -198,7 +198,7 @@ Artifacts are written under:
 comparison_output/weights/
 ```
 
-Each case receives normalized Brian2Loihi and Python trace-v2 files plus a
+Each case receives normalized Brian2Loihi and Python trace-v3 files plus a
 comparison report. Trace files preserve routing, effective weight, requested and
 quantized mantissas, exponent, configured precision, sign mode, pre-clip value,
 and clipping status. The suite-level JSON additionally records the effective

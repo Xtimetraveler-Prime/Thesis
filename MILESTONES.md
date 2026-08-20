@@ -23,7 +23,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M06 | Build directed deterministic conformance suite | Complete | 2026-07-29 | 2026-07-29 |
 | M07 | Validate all directed neuron and synapse cases | Complete | 2026-07-29 | 2026-07-29 |
 | M08 | Add Loihi-native weight representation | Complete | 2026-07-29 | 2026-08-03 |
-| M09 | Add recurrent spike routing | Planned | — | — |
+| M09 | Add recurrent spike routing | Complete | 2026-08-20 | 2026-08-20 |
 | M10 | Freeze computational-core specification | Planned | — | — |
 | M11 | Implement first FPGA neuron/core datapath | Planned | — | — |
 | M12 | Validate FPGA against Python golden model | Planned | — | — |
@@ -703,18 +703,65 @@ This milestone freezes a project-specific storage profile and capacity model. It
 
 ## M09 — Add recurrent spike routing
 
-**Status:** Planned
+**Status:** Complete
+
+**Started:** 2026-08-20
+
+**Completed:** 2026-08-20
+
+**Repository evidence:** branch `agent/m09-recurrent-spike-routing`
 
 ### Goal
 
 Allow output spikes to become input axon events on later ticks, enabling deterministic recurrent networks.
 
-### Planned deliverables
+### Deliverables
 
-- Neuron-output to axon mapping.
-- Explicit tick-boundary routing contract.
-- Deterministic simultaneous-spike handling.
-- Recurrent-network scenarios and routing traces.
+- [x] Neuron-output to axon mapping.
+- [x] Explicit tick-boundary routing contract.
+- [x] Deterministic simultaneous-spike handling.
+- [x] Recurrent-network scenarios and routing traces.
+
+### How each deliverable was met
+
+1. **Neuron-output to axon mapping** — Added the immutable `SpikeRoute(source_neuron, target_axon)` model and a `spike_routes` input to `NeuromorphicCore`. The core validates that source neurons exist, rejects negative IDs and duplicate `(source_neuron, target_axon)` pairs, and stores each source neuron's target axons in declaration order. One output spike can therefore fan out to multiple input axons with an explicit, FPGA-translatable route table.
+2. **Explicit tick-boundary routing contract** — `NeuromorphicCore.step()` consumes only the recurrent axons queued by the previous tick, processes the complete synapse and neuron update, then converts the current tick's output spikes into `_pending_recurrent_axons` for the next call. A spike emitted on tick `t` can first affect neurons on tick `t + 1`, so same-tick recurrent feedback is impossible. `reset()` also clears the pending recurrent queue. Focused tests verify both next-tick delivery and a deterministic self-recurrent spike chain.
+3. **Deterministic simultaneous-spike handling** — Neurons are stepped in ascending neuron ID, so simultaneous spikes have a stable source order. Routed axons are flattened in that spike order and then in route declaration order for each source. External events are concatenated before recurrent events, and event multiplicity is never deduplicated. Tests prove the exact simultaneous route order `(8, 7, 9)` and prove that two source neurons routed to the same axon produce `(6, 6)` and accumulate that synaptic weight twice.
+4. **Recurrent-network scenarios and routing traces** — `ComparisonScenario` and the Python backend now carry `spike_routes`, allowing recurrent networks to run through the same backend-neutral comparison path as the earlier feed-forward cases. `TickTrace` and `BackendTick` separately record `external_input_axons`, `recurrent_input_axons`, and `routed_output_axons`; backend trace schema v3 stores those per-tick collections plus the route table while retaining v1/v2 read compatibility. Tests cover comparison-scenario execution and exact trace-v3 JSON round trips.
+
+### Routing contract
+
+- A `SpikeRoute(source_neuron, target_axon)` maps each output spike to one or
+  more axon events.
+- Spikes emitted on tick `t` are queued after all neurons finish that tick and
+  become inputs only on tick `t + 1`; same-tick feedback is impossible.
+- External axon events are ordered before queued recurrent events. Recurrent
+  events are ordered by source-neuron ID, then route declaration order.
+- Event multiplicity is preserved. Two simultaneous source neurons routed to
+  the same axon deliver that axon twice and accumulate its synaptic weight
+  twice.
+- Duplicate routes for one `(source_neuron, target_axon)` pair are rejected.
+- Reset clears both neuron state and the pending recurrent-event queue.
+
+### Trace contract
+
+`TickTrace` now separates `external_input_axons`, `recurrent_input_axons`, and
+`routed_output_axons`, while `input_axons` remains the exact combined event
+sequence consumed by the synapse fabric. Backend trace schema v3 preserves the
+route table and those three per-tick collections. Readers remain compatible
+with trace schemas v1 and v2.
+
+### Completion evidence
+
+```text
+89 passed
+cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
+```
+
+Nine focused tests cover next-tick delivery, external/recurrent ordering,
+simultaneous-spike ordering, same-axon multiplicity, self-recurrent chains,
+reset behavior, validation, comparison-scenario integration, and trace-v3
+round trips. The original 80 tests remain passing unchanged in scope.
 
 ---
 

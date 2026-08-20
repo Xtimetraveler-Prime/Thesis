@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from ..arithmetic import ArithmeticConfig
-from ..model import NeuronConfig, Synapse
+from ..model import NeuronConfig, SpikeRoute, Synapse
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +24,7 @@ class ComparisonScenario:
     synapses: tuple[Synapse, ...]
     input_schedule: tuple[tuple[int, ...], ...]
     arithmetic: ArithmeticConfig = field(default_factory=ArithmeticConfig)
+    spike_routes: tuple[SpikeRoute, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -40,6 +41,12 @@ class ComparisonScenario:
                     f"synapse target {synapse.target_neuron} is outside "
                     f"0..{neuron_count - 1}"
                 )
+        for route in self.spike_routes:
+            if route.source_neuron >= neuron_count:
+                raise ValueError(
+                    f"route source {route.source_neuron} is outside "
+                    f"0..{neuron_count - 1}"
+                )
         for tick, axons in enumerate(self.input_schedule):
             if any(axon_id < 0 for axon_id in axons):
                 raise ValueError(f"tick {tick} contains a negative axon ID")
@@ -53,6 +60,7 @@ class ComparisonScenario:
         synapses: list[Synapse] | tuple[Synapse, ...] = (),
         input_schedule: list[tuple[int, ...]] | tuple[tuple[int, ...], ...],
         arithmetic: ArithmeticConfig | None = None,
+        spike_routes: list[SpikeRoute] | tuple[SpikeRoute, ...] = (),
     ) -> "ComparisonScenario":
         """Construct a scenario while normalizing mutable inputs to tuples."""
 
@@ -62,6 +70,7 @@ class ComparisonScenario:
             synapses=tuple(synapses),
             input_schedule=tuple(tuple(tick) for tick in input_schedule),
             arithmetic=arithmetic or ArithmeticConfig(),
+            spike_routes=tuple(spike_routes),
         )
 
 
@@ -154,6 +163,9 @@ class BackendTick:
     current_after: tuple[int, ...]
     voltage_after: tuple[int, ...]
     spikes: tuple[int, ...]
+    external_input_axons: tuple[int, ...] = ()
+    recurrent_input_axons: tuple[int, ...] = ()
+    routed_output_axons: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         lengths = {
@@ -177,6 +189,7 @@ class BackendTrace:
     ticks: tuple[BackendTick, ...]
     metadata: tuple[tuple[str, str], ...] = ()
     synapses: tuple[BackendSynapse, ...] = ()
+    spike_routes: tuple[SpikeRoute, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.backend.strip():

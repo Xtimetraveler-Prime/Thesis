@@ -72,7 +72,7 @@ def test_trace_json_round_trip(tmp_path) -> None:
     output = write_trace_json(original, tmp_path / "trace.json")
     assert read_trace_json(output) == original
     payload = json.loads(output.read_text())
-    assert payload["schema"] == "neuromorphic-twin-trace-v2"
+    assert payload["schema"] == "neuromorphic-twin-trace-v3"
 
 
 def test_loihi_mapping_uses_sixty_four_unit_weight_steps() -> None:

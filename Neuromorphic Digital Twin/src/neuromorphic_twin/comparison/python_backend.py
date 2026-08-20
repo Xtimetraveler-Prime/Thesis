@@ -17,6 +17,7 @@ def run_python_backend(scenario: ComparisonScenario) -> BackendTrace:
     core = NeuromorphicCore(
         scenario.neuron_configs,
         scenario.synapses,
+        spike_routes=scenario.spike_routes,
         arithmetic=scenario.arithmetic,
     )
     ticks: list[BackendTick] = []
@@ -31,6 +32,9 @@ def run_python_backend(scenario: ComparisonScenario) -> BackendTrace:
                 current_after=trace.current_after,
                 voltage_after=trace.voltage_after,
                 spikes=tuple(spike.neuron_id for spike in trace.spikes),
+                external_input_axons=trace.external_input_axons,
+                recurrent_input_axons=trace.recurrent_input_axons,
+                routed_output_axons=trace.routed_output_axons,
             )
         )
 
@@ -40,4 +44,5 @@ def run_python_backend(scenario: ComparisonScenario) -> BackendTrace:
         ticks=tuple(ticks),
         metadata=(("model", "NeuromorphicCore"),),
         synapses=describe_synapses(scenario.synapses),
+        spike_routes=scenario.spike_routes,
     )
