@@ -804,7 +804,7 @@ pytest -q
 python examples/run_directed_conformance.py
 ```
 
-The user-reproduced Python test runs completed with zero failures. The established Brian2Loihi directed regression remained:
+The independently reproduced Python test runs completed with zero failures. The established Brian2Loihi directed regression remained:
 
 ```text
 cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
