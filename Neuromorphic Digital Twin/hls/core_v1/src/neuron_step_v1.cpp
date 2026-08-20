@@ -1,0 +1,124 @@
+#include "neuron_step_v1.hpp"
+
+namespace neuromorphic_hls {
+
+state_t saturate_state_v1(wide_t value) {
+#pragma HLS INLINE
+    const wide_t minimum = STATE_MIN;
+    const wide_t maximum = STATE_MAX;
+
+    if (value > maximum) {
+        return state_t(STATE_MAX);
+    }
+    if (value < minimum) {
+        return state_t(STATE_MIN);
+    }
+    return state_t(value);
+}
+
+wide_t round_away_from_zero_div4096_v1(wide_t numerator) {
+#pragma HLS INLINE
+    if (numerator == 0) {
+        return 0;
+    }
+
+    // 4096 == 2^12. For a non-zero magnitude, adding 4095 before shifting
+    // implements ceil(magnitude / 4096), which is exactly M10's
+    // round-away-from-zero rule for both signs.
+    const bool negative = numerator < 0;
+    const wide_t magnitude = negative ? -numerator : numerator;
+    const wide_t rounded_magnitude = (magnitude + (DECAY_SCALE - 1)) >> 12;
+    return negative ? -rounded_magnitude : rounded_magnitude;
+}
+
+state_t decayed_state_v1(state_t value, decay_t decay) {
+#pragma HLS INLINE
+    const wide_t value_wide = value;
+    const wide_t product = value_wide * wide_t(decay);
+    const wide_t removed = round_away_from_zero_div4096_v1(product);
+    return saturate_state_v1(value_wide - removed);
+}
+
+void neuron_step_v1(
+    state_t current_before,
+    state_t voltage_before,
+    refractory_t refractory_before,
+    accumulator_t synaptic_input,
+    decay_t current_decay,
+    decay_t voltage_decay,
+    state_t threshold,
+    state_t bias,
+    state_t reset_voltage,
+    refractory_t refractory_ticks,
+    state_t *current_after,
+    state_t *voltage_after,
+    refractory_t *refractory_after,
+    spike_t *spiked) {
+
+#pragma HLS INTERFACE ap_ctrl_hs port=return
+#pragma HLS INTERFACE ap_none port=current_before
+#pragma HLS INTERFACE ap_none port=voltage_before
+#pragma HLS INTERFACE ap_none port=refractory_before
+#pragma HLS INTERFACE ap_none port=synaptic_input
+#pragma HLS INTERFACE ap_none port=current_decay
+#pragma HLS INTERFACE ap_none port=voltage_decay
+#pragma HLS INTERFACE ap_none port=threshold
+#pragma HLS INTERFACE ap_none port=bias
+#pragma HLS INTERFACE ap_none port=reset_voltage
+#pragma HLS INTERFACE ap_none port=refractory_ticks
+#pragma HLS INTERFACE ap_none port=current_after
+#pragma HLS INTERFACE ap_none port=voltage_after
+#pragma HLS INTERFACE ap_none port=refractory_after
+#pragma HLS INTERFACE ap_none port=spiked
+
+    // CORE-NEURON-001 / CORE-ARITH-001:
+    // Input is part of working current before current decay, then SAT24 is
+    // applied once at the working-current boundary.
+    const wide_t current_sum = wide_t(current_before) + wide_t(synaptic_input);
+    const state_t current_work = saturate_state_v1(current_sum);
+
+    // CORE-NEURON-003:
+    // Stored current is always the decayed working current, even while
+    // refractory or on a spike tick.
+    const state_t next_current = decayed_state_v1(current_work, current_decay);
+
+    state_t next_voltage = 0;
+    refractory_t next_refractory = 0;
+    spike_t next_spike = 0;
+
+    if (refractory_before > 0) {
+        // CORE-NEURON-004 / CORE-NEURON-005.
+        next_voltage = reset_voltage;
+        next_refractory = refractory_before - 1;
+        next_spike = 0;
+    } else {
+        // CORE-NEURON-002 / CORE-NEURON-006:
+        // Voltage sees the pre-decay current_work value.
+        const state_t voltage_decay_base =
+            decayed_state_v1(voltage_before, voltage_decay);
+        const wide_t voltage_sum = wide_t(voltage_decay_base)
+                                 + wide_t(current_work)
+                                 + wide_t(bias);
+        const state_t voltage_work = saturate_state_v1(voltage_sum);
+
+        // CORE-NEURON-007: strict greater-than threshold.
+        if (voltage_work > threshold) {
+            // CORE-NEURON-008 / CORE-NEURON-009.
+            next_spike = 1;
+            next_voltage = reset_voltage;
+            next_refractory =
+                (refractory_ticks > 0) ? refractory_ticks - 1 : refractory_t(0);
+        } else {
+            next_spike = 0;
+            next_voltage = voltage_work;
+            next_refractory = 0;
+        }
+    }
+
+    *current_after = next_current;
+    *voltage_after = next_voltage;
+    *refractory_after = next_refractory;
+    *spiked = next_spike;
+}
+
+}  // namespace neuromorphic_hls
