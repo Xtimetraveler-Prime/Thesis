@@ -715,12 +715,19 @@ This milestone freezes a project-specific storage profile and capacity model. It
 
 Allow output spikes to become input axon events on later ticks, enabling deterministic recurrent networks.
 
-### Planned deliverables
+### Deliverables
 
 - [x] Neuron-output to axon mapping.
 - [x] Explicit tick-boundary routing contract.
 - [x] Deterministic simultaneous-spike handling.
 - [x] Recurrent-network scenarios and routing traces.
+
+### How each deliverable was met
+
+1. **Neuron-output to axon mapping** — Added the immutable `SpikeRoute(source_neuron, target_axon)` model and a `spike_routes` input to `NeuromorphicCore`. The core validates that source neurons exist, rejects negative IDs and duplicate `(source_neuron, target_axon)` pairs, and stores each source neuron's target axons in declaration order. One output spike can therefore fan out to multiple input axons with an explicit, FPGA-translatable route table.
+2. **Explicit tick-boundary routing contract** — `NeuromorphicCore.step()` consumes only the recurrent axons queued by the previous tick, processes the complete synapse and neuron update, then converts the current tick's output spikes into `_pending_recurrent_axons` for the next call. A spike emitted on tick `t` can first affect neurons on tick `t + 1`, so same-tick recurrent feedback is impossible. `reset()` also clears the pending recurrent queue. Focused tests verify both next-tick delivery and a deterministic self-recurrent spike chain.
+3. **Deterministic simultaneous-spike handling** — Neurons are stepped in ascending neuron ID, so simultaneous spikes have a stable source order. Routed axons are flattened in that spike order and then in route declaration order for each source. External events are concatenated before recurrent events, and event multiplicity is never deduplicated. Tests prove the exact simultaneous route order `(8, 7, 9)` and prove that two source neurons routed to the same axon produce `(6, 6)` and accumulate that synaptic weight twice.
+4. **Recurrent-network scenarios and routing traces** — `ComparisonScenario` and the Python backend now carry `spike_routes`, allowing recurrent networks to run through the same backend-neutral comparison path as the earlier feed-forward cases. `TickTrace` and `BackendTick` separately record `external_input_axons`, `recurrent_input_axons`, and `routed_output_axons`; backend trace schema v3 stores those per-tick collections plus the route table while retaining v1/v2 read compatibility. Tests cover comparison-scenario execution and exact trace-v3 JSON round trips.
 
 ### Routing contract
 
