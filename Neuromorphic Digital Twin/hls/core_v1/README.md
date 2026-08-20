@@ -2,6 +2,24 @@
 
 This directory starts the hardware implementation of the frozen M10 FPGA-v1 computational-core specification.
 
+## Standard M11 toolchain
+
+M11 and later FPGA-development work standardize on:
+
+```text
+AMD Vitis  2025.2
+AMD Vivado 2025.2
+```
+
+The command-line HLS flow uses the 2025.2 Unified IDE tools:
+
+- `vitis-run --mode hls --csim` for C simulation;
+- `v++ -c --mode hls` for HLS synthesis;
+- `vitis-run --mode hls --cosim` for C/RTL co-simulation;
+- `vitis-run --mode hls --package` for the later Vivado-IP packaging step.
+
+The repository no longer uses the legacy `vitis_hls -f ...` project script as the primary M11 flow.
+
 ## Scope of M11.1
 
 M11.1 deliberately implements the smallest useful synthesis boundary: one complete neuron state transition. The HLS top function is:
@@ -67,12 +85,35 @@ The frozen architectural state uses:
 
 M11.1 uses a signed 64-bit HLS integer for the scalar synaptic-accumulator input and intermediate arithmetic. This is an implementation boundary, not a change to M10 neuron semantics. The finite event/accumulator capacity of the complete hardware core will be frozen when synapse traversal and core scheduling are integrated later in M11.
 
-## C simulation
+## Vitis 2025.2 C simulation
 
-From this directory in a shell where Vitis HLS 2023.2 is available:
+The HLS component definition is in `hls_config.cfg`. The exact FPGA part is deliberately supplied at run time because the project should not guess the physical target.
+
+First source the Vitis/Vivado 2025.2 environment, then determine the exact part used by the target Vivado project. From an open Vivado project, the Tcl console command is:
+
+```tcl
+get_property PART [current_project]
+```
+
+Export that result in the shell:
 
 ```bash
-vitis_hls -f run_csim.tcl
+export HLS_PART='<exact-part-name>'
+```
+
+Then, from this directory, run:
+
+```bash
+bash run_csim.sh
+```
+
+The wrapper verifies that `vitis`, `vitis-run`, `v++`, and `vivado` all resolve and report version `2025.2`, clears the generated C-simulation work directory, and runs:
+
+```bash
+vitis-run --mode hls --csim \
+  --config hls_config.cfg \
+  --work_dir build/csim \
+  --part "$HLS_PART"
 ```
 
 The self-checking testbench should finish with:
@@ -85,4 +126,4 @@ The testbench returns a non-zero process status on a mismatch.
 
 ## Why synthesis is not part of M11.1 yet
 
-C simulation validates the behavioral C++ boundary before device-specific scheduling decisions are introduced. Target-part selection, clock constraints, C synthesis, resource/latency inspection, and C/RTL co-simulation are handled in M11.3 after M11.2 establishes a broader Python-to-HLS behavioral comparison.
+C simulation validates the behavioral C++ boundary before device-specific scheduling decisions are introduced. The exact target part is already supplied to keep the 2025.2 component reproducible, but clock constraints, C synthesis, resource/latency inspection, and C/RTL co-simulation remain M11.3 work after M11.2 establishes a broader Python-to-HLS behavioral comparison.
