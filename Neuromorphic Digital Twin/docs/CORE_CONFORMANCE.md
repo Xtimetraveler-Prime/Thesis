@@ -11,7 +11,7 @@ least one executable test. The mapping itself is also tested so adding a new
 requirement to the specification without adding coverage causes the M10.3 gate
 to fail.
 
-The implementation lives in:
+The primary requirement-linked implementation lives in:
 
 ```text
 tests/test_core_specification.py
@@ -21,6 +21,16 @@ That file contains `REQUIREMENT_TESTS`, a requirement-ID to pytest-function
 mapping, plus a coverage-gate test that extracts all IDs matching
 `CORE-[A-Z]+-NNN` from the specification and requires exact set equality with
 the mapping.
+
+Final profile-boundary and cross-contract guards live in:
+
+```text
+tests/test_core_specification_boundaries.py
+```
+
+These tests protect hardware-facing assumptions that span M08 and M10 or sit at
+the boundary between the configurable Python model and the frozen FPGA-v1
+profile.
 
 ## Coverage groups
 
@@ -37,9 +47,9 @@ The current specification contains requirements in these groups:
 | `CORE-CFG-*` | representability and static configuration validation |
 | `CORE-TRACE-*` | state and routing observability for M12 comparison |
 
-## Focused cases added
+## Directed cases
 
-The M10.3 suite includes directed checks for:
+The M10.3 suite now includes checks for:
 
 1. frozen architectural widths and the named `neuromorphic-twin-core-spec-v1` profile;
 2. signed 24-bit saturation at positive and negative limits;
@@ -54,7 +64,11 @@ The M10.3 suite includes directed checks for:
 11. reset disposal of a genuinely pending recurrent event plus deterministic replay;
 12. rejection of unrepresentable profile configuration and duplicate routes;
 13. trace visibility for state and routing boundaries;
-14. exact requirement-ID coverage of the normative specification.
+14. exact requirement-ID coverage of the normative specification;
+15. equality of M10's 16-bit ID profile with M08 axon and target-neuron storage widths;
+16. 16-bit validation of runtime external axon IDs while preserving order and multiplicity;
+17. representability validation for injected/replayed current, voltage, and refractory state;
+18. an explicit regression that threshold must remain strictly greater than reset voltage.
 
 ## Profile isolation
 
@@ -64,38 +78,51 @@ unbounded arithmetic. M10.3 instead exposes the frozen hardware profile through:
 ```python
 FPGA_CORE_ARITHMETIC_V1
 validate_core_configuration_v1(...)
+validate_input_axons_v1(...)
+validate_neuron_state_v1(...)
 ```
 
 This keeps the earlier Brian2Loihi conformance path unchanged while giving M11
-and M12 a single explicit FPGA contract.
+and M12 a single explicit FPGA contract. Runtime axon-event validation and
+injected-state validation are deliberately profile helpers rather than changes
+to `NeuromorphicCore`, because changing the generic core would alter behavior
+already used by earlier validation milestones.
 
-## Verification status
+## Verification history
 
-A focused local reconstruction of the M10 profile and core transition path was
-executed after the reset-queue test was strengthened:
+A focused local reconstruction of the original M10 profile and core transition
+path was executed after the recurrent-reset test was strengthened:
 
 ```text
 11 passed
 ```
 
-Those checks exercised the new width, saturation, decay, encoded-weight,
-recurrent-routing, reset, and configuration-validation behavior. The exact
-repository-level M10.3 pytest file and the complete pre-existing regression
-suite still need to be executed from a full checkout before M10.3 and M10 are
-marked complete in `MILESTONES.md`.
+The repository-level M10.3 test file, complete Python suite, and original
+Brian2Loihi directed conformance suite were then independently run by the user
+on 2026-08-20 and reported successful.
 
-Recommended completion commands from `Neuromorphic Digital Twin/`:
+A final specification audit after that verification identified two additional
+profile-boundary risks:
+
+- runtime external axon IDs needed an explicit 16-bit FPGA-v1 validator;
+- replay/injected neuron state needed explicit profile-width validation.
+
+The same audit added direct guards tying the M10 identifier widths to M08's
+frozen FPGA storage fields and explicitly testing the threshold/reset relation.
+Because these changes were made after the successful repository-level run, the
+final branch state requires one more independent verification before M10.3 is
+marked complete.
+
+## Final completion commands
+
+From `Neuromorphic Digital Twin/` run:
 
 ```bash
-pytest -q tests/test_core_specification.py
+pytest -q tests/test_core_specification.py tests/test_core_specification_boundaries.py
 pytest -q
-```
-
-The original Brian2Loihi directed regression should also remain unchanged:
-
-```bash
 python examples/run_directed_conformance.py
 ```
 
-M10.3 is complete only when the requirement-link gate passes and the full Python
-regression suite remains green.
+M10.3 is complete when all three commands pass on this final branch state. M10
+will remain in progress and the branch will remain unmerged until that final
+independent verification is confirmed.
