@@ -1,7 +1,7 @@
 """Frozen M10 computational-core profile for FPGA implementation.
 
 The generic Python model intentionally remains configurable so older validation
-scenarios keep their original behavior.  This module names the exact profile
+scenarios keep their original behavior. This module names the exact profile
 that M11 hardware and M12 hardware comparisons must use.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 
 from .arithmetic import ArithmeticConfig, OverflowMode
-from .model import NeuronConfig, SpikeRoute, Synapse
+from .model import NeuronConfig, NeuronState, SpikeRoute, Synapse
 
 CORE_SPEC_SCHEMA = "neuromorphic-twin-core-spec-v1"
 
@@ -62,6 +62,47 @@ def validate_neuron_config_v1(config: NeuronConfig) -> None:
             "refractory_ticks must fit the unsigned "
             f"{REFRACTORY_BITS}-bit profile field"
         )
+
+
+def validate_neuron_state_v1(state: NeuronState) -> None:
+    """Reject injected/replayed state that cannot exist in core profile v1."""
+
+    if not isinstance(state, NeuronState):
+        raise TypeError("state must be a NeuronState")
+
+    for name, value in (
+        ("current", state.current),
+        ("voltage", state.voltage),
+    ):
+        if not STATE_MIN <= value <= STATE_MAX:
+            raise ValueError(
+                f"{name}={value} is outside signed {STATE_BITS}-bit state range"
+            )
+
+    if not 0 <= state.refractory_remaining <= REFRACTORY_MAX:
+        raise ValueError(
+            "refractory_remaining must fit the unsigned "
+            f"{REFRACTORY_BITS}-bit profile field"
+        )
+
+
+def validate_input_axons_v1(input_axons: Iterable[int]) -> tuple[int, ...]:
+    """Validate and freeze one external axon-event sequence for profile v1.
+
+    The generic Python core accepts arbitrary nonnegative Python integers so
+    older behavioral tests remain backward compatible. The FPGA-v1 boundary is
+    stricter: every runtime axon ID must fit the frozen unsigned 16-bit field.
+    Order and multiplicity are preserved exactly in the returned tuple.
+    """
+
+    validated: list[int] = []
+    for axon_id in input_axons:
+        if isinstance(axon_id, bool) or not isinstance(axon_id, int):
+            raise TypeError("input axon IDs must be ints")
+        if not 0 <= axon_id <= ID_MAX:
+            raise ValueError(f"input axon ID must fit unsigned {ID_BITS} bits")
+        validated.append(axon_id)
+    return tuple(validated)
 
 
 def validate_synapse_v1(synapse: Synapse, *, neuron_count: int) -> None:
