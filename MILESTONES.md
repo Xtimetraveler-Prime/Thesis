@@ -25,7 +25,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M08 | Add Loihi-native weight representation | Complete | 2026-07-29 | 2026-08-03 |
 | M09 | Add recurrent spike routing | Complete | 2026-08-20 | 2026-08-20 |
 | M10 | Freeze computational-core specification | Complete | 2026-08-20 | 2026-08-20 |
-| M11 | Implement first FPGA neuron/core datapath | Planned | — | — |
+| M11 | Implement first FPGA neuron/core datapath | In progress | 2026-08-20 | — |
 | M12 | Validate FPGA against Python golden model | Planned | — | — |
 
 ---
@@ -924,20 +924,155 @@ M10 now provides one frozen, test-addressable computational contract for M11. Ha
 
 ## M11 — Implement first FPGA neuron/core datapath
 
+**Status:** In progress  
+**Started:** 2026-08-20  
+**Repository evidence:** branch `agent/m11-hls-core`
+
+### Goal
+
+Translate the frozen M10 computational-core contract into real FPGA logic while preserving the same algorithmic tick behavior and keeping state observable for M12 comparison.
+
+### Implementation strategy
+
+Use Vitis HLS for as much of the computational datapath and deterministic control logic as practical, then add or edit RTL where direct HDL gives clearer control over board-level interfaces, memory plumbing, timing, resource use, or debug instrumentation. HLS is a translation path from deliberate C++ to RTL; the Python golden model remains the behavioral reference and is not synthesized directly.
+
+The work is split into six ordered sub-milestones. Each stage adds a stronger hardware-specific verification boundary before the next layer is introduced.
+
+---
+
+### M11.1 — Create minimal HLS computational core
+
+**Status:** In progress  
+**Started:** 2026-08-20  
+**Repository evidence:** branch `agent/m11-hls-core`
+
+### Purpose
+
+Establish the smallest HLS synthesis boundary that implements one complete frozen M10 neuron transition without yet mixing in synapse-memory traversal, recurrent routing, or system integration.
+
+### Delivered so far
+
+- `hls/core_v1/include/neuron_step_v1.hpp` with the frozen 24-bit state, 16-bit refractory, 13-bit decay, and 1-bit spike HLS types.
+- A signed 64-bit HLS working domain for the M11.1 synaptic-input boundary and intermediate arithmetic so values are widened before the explicit M10 `SAT24` operation instead of silently wrapping in a 24-bit temporary.
+- `hls/core_v1/src/neuron_step_v1.cpp` implementing:
+  - explicit signed 24-bit saturation;
+  - exact round-away-from-zero decay with denominator `4096`;
+  - input-before-current-decay ordering;
+  - voltage integration from the pre-decay working current;
+  - strict `>` threshold behavior;
+  - hard reset;
+  - exact refractory countdown/load timing;
+  - current updates during refractory ticks.
+- The `4096 = 2^12` decay division is expressed as an exact add-and-shift magnitude operation, preserving the M10 integer result without requiring a general divider.
+- `hls/core_v1/tb/test_neuron_step_v1.cpp`, a self-checking C++ testbench with 11 directed cases covering threshold equality, positive and negative saturation, positive and negative decay behavior, input-before-decay, voltage decay/bias, refractory hold/countdown, refractory loading, and full decay.
+- `hls/core_v1/run_csim.tcl`, a Vitis HLS 2023.2-compatible C-simulation entry point.
+- `hls/core_v1/README.md` documenting the HLS boundary and why physical accumulator/event capacity is deferred until the wider core is integrated.
+- All 11 directed expected results were independently checked against the frozen M10 equations before vendor-tool execution.
+
+### Completion criteria
+
+- [x] Define an HLS-friendly top-level neuron transition with explicit fixed-width types.
+- [x] Implement the frozen M10 arithmetic and neuron semantics without relying on native C/C++ overflow behavior.
+- [x] Add a self-checking directed C++ testbench.
+- [x] Add a reproducible Vitis HLS 2023.2 C-simulation command path.
+- [x] Independently cross-check the directed expected values against the M10 equations.
+- [ ] Run the testbench through Vitis HLS C simulation from the development checkout.
+- [ ] Record the vendor-tool result and mark M11.1 complete.
+
+### Scope boundary
+
+M11.1 accepts one already-accumulated synaptic-input scalar and produces one neuron transition. It does not yet define the final physical synaptic accumulator capacity, walk the M08 CSR synapse memory, schedule multiple neurons, route recurrent events, or create the Vivado system project.
+
+---
+
+### M11.2 — Verify HLS behavior against the Python golden model
+
 **Status:** Planned
 
 ### Goal
 
-Implement the frozen computational core on the FPGA while preserving deterministic tick behavior and observable state.
+Move beyond the small directed M11.1 testbench and establish an automated differential path in which Python generates or evaluates broader state/configuration vectors and the HLS C++ implementation must match exactly.
 
 ### Planned deliverables
 
-- Current accumulation and decay datapath.
-- Voltage decay and integration datapath.
-- Threshold, reset, and refractory logic.
-- Neuron and synapse memories.
-- Tick controller and host-visible trace interface.
-- RTL or HLS trace exporter using the backend-neutral schema.
+- Shared or generated Python/HLS test vectors.
+- Boundary and randomized deterministic cases across the supported FPGA-v1 state/configuration domain.
+- Exact comparison of current, voltage, refractory state, and spike output.
+- Regression evidence that the HLS C++ implementation remains synchronized with M10.
+
+---
+
+### M11.3 — Synthesize HLS and run C/RTL co-simulation
+
+**Status:** Planned
+
+### Goal
+
+Prove that the C++ description is accepted by Vitis HLS for the selected FPGA target and that generated RTL reproduces the C++ results.
+
+### Planned deliverables
+
+- Freeze the target FPGA part and initial clock constraint for the HLS solution.
+- Run C synthesis and inspect latency, initiation interval, operator mapping, and resource estimates.
+- Resolve synthesis warnings that could affect bit accuracy or interfaces.
+- Run C/RTL co-simulation with the verified M11.2 vectors.
+- Record synthesis and co-simulation evidence before packaging the block.
+
+---
+
+### M11.4 — Export Vivado IP and create the Vivado project
+
+**Status:** Planned
+
+### Goal
+
+Package the verified HLS core as Vivado IP and establish the real FPGA system project that will host the digital twin.
+
+### Planned deliverables
+
+- Package the HLS RTL for the Vivado IP flow.
+- Create the M11 Vivado project for the target board/device.
+- Add the HLS core to the IP catalog/block design.
+- Connect clock, reset, and initial control/data interfaces.
+- Preserve a reproducible project-generation or source-management flow rather than relying only on GUI state.
+
+---
+
+### M11.5 — Integrate memories, tick control, routing, and observability
+
+**Status:** Planned
+
+### Goal
+
+Turn the isolated neuron transition into the first complete FPGA computational core capable of processing configured state and events over deterministic algorithmic ticks.
+
+### Planned deliverables
+
+- Neuron state/configuration memories.
+- M08-compatible weight-format, synapse, and axon-row storage path.
+- Synaptic accumulation scheduling and a frozen finite hardware capacity profile.
+- Multi-neuron tick controller preserving the six M10 behavioral phases.
+- Next-tick recurrent event queue/routing semantics from M09/M10.
+- Host-visible or simulation-visible state/spike/route observability suitable for later trace export.
+- Use targeted handwritten RTL where HLS is not the clearest or most controllable implementation choice.
+
+---
+
+### M11.6 — Generate first integrated bitstream and perform hardware smoke checks
+
+**Status:** Planned
+
+### Goal
+
+Produce the first loadable FPGA image containing the integrated M11 core and prove that its control/debug interfaces operate on the physical board.
+
+### Planned deliverables
+
+- Successful Vivado synthesis, implementation, timing review, and bitstream generation.
+- Program the target board with the M11 design.
+- Confirm reset/start/control access and basic state/spike observability on hardware.
+- Record initial utilization and timing information.
+- Keep full tick-by-tick Python-versus-RTL and Python-versus-physical-FPGA conformance in M12 rather than treating a smoke test as behavioral validation.
 
 ---
 
