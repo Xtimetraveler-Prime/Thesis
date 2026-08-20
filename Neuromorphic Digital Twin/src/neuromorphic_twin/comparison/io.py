@@ -6,12 +6,18 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ..model import SpikeRoute
 from .model import BackendSynapse, BackendTick, BackendTrace, ComparisonReport
 
 _TRACE_SCHEMA_V1 = "neuromorphic-twin-trace-v1"
 _TRACE_SCHEMA_V2 = "neuromorphic-twin-trace-v2"
-_TRACE_SCHEMA = _TRACE_SCHEMA_V2
-_SUPPORTED_TRACE_SCHEMAS = {_TRACE_SCHEMA_V1, _TRACE_SCHEMA_V2}
+_TRACE_SCHEMA_V3 = "neuromorphic-twin-trace-v3"
+_TRACE_SCHEMA = _TRACE_SCHEMA_V3
+_SUPPORTED_TRACE_SCHEMAS = {
+    _TRACE_SCHEMA_V1,
+    _TRACE_SCHEMA_V2,
+    _TRACE_SCHEMA_V3,
+}
 _REPORT_SCHEMA = "neuromorphic-twin-comparison-v1"
 
 
@@ -26,6 +32,13 @@ def write_trace_json(trace: BackendTrace, path: str | Path) -> Path:
         "scenario": trace.scenario,
         "metadata": dict(trace.metadata),
         "synapses": [_synapse_to_payload(synapse) for synapse in trace.synapses],
+        "spike_routes": [
+            {
+                "source_neuron": route.source_neuron,
+                "target_axon": route.target_axon,
+            }
+            for route in trace.spike_routes
+        ],
         "ticks": [
             {
                 "tick": tick.tick,
@@ -34,6 +47,9 @@ def write_trace_json(trace: BackendTrace, path: str | Path) -> Path:
                 "current_after": list(tick.current_after),
                 "voltage_after": list(tick.voltage_after),
                 "spikes": list(tick.spikes),
+                "external_input_axons": list(tick.external_input_axons),
+                "recurrent_input_axons": list(tick.recurrent_input_axons),
+                "routed_output_axons": list(tick.routed_output_axons),
             }
             for tick in trace.ticks
         ],
@@ -45,8 +61,9 @@ def write_trace_json(trace: BackendTrace, path: str | Path) -> Path:
 def read_trace_json(path: str | Path) -> BackendTrace:
     """Load a v1 or v2 trace written by :func:`write_trace_json`.
 
-    Version 1 traces remain readable and simply contain no structured synapse
-    metadata. Version 2 adds the optional ``synapses`` collection.
+    Version 1 traces contain no structured synapse metadata. Version 2 adds the
+    optional ``synapses`` collection. Version 3 adds spike-route definitions
+    and per-tick external, recurrent, and routed axon event collections.
     """
 
     payload: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -65,6 +82,15 @@ def read_trace_json(path: str | Path) -> BackendTrace:
             current_after=tuple(int(v) for v in item["current_after"]),
             voltage_after=tuple(int(v) for v in item["voltage_after"]),
             spikes=tuple(int(v) for v in item["spikes"]),
+            external_input_axons=tuple(
+                int(v) for v in item.get("external_input_axons", [])
+            ),
+            recurrent_input_axons=tuple(
+                int(v) for v in item.get("recurrent_input_axons", [])
+            ),
+            routed_output_axons=tuple(
+                int(v) for v in item.get("routed_output_axons", [])
+            ),
         )
         for item in payload["ticks"]
     )
@@ -75,12 +101,20 @@ def read_trace_json(path: str | Path) -> BackendTrace:
     synapses = tuple(
         _synapse_from_payload(item) for item in payload.get("synapses", [])
     )
+    spike_routes = tuple(
+        SpikeRoute(
+            source_neuron=int(item["source_neuron"]),
+            target_axon=int(item["target_axon"]),
+        )
+        for item in payload.get("spike_routes", [])
+    )
     return BackendTrace(
         backend=str(payload["backend"]),
         scenario=str(payload["scenario"]),
         ticks=ticks,
         metadata=metadata,
         synapses=synapses,
+        spike_routes=spike_routes,
     )
 
 

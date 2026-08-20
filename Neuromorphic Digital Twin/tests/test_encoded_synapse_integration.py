@@ -141,7 +141,7 @@ def test_trace_v2_json_round_trip_preserves_encoding(tmp_path) -> None:
     path = write_trace_json(trace, tmp_path / "trace.json")
 
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["schema"] == "neuromorphic-twin-trace-v2"
+    assert payload["schema"] == "neuromorphic-twin-trace-v3"
     assert payload["synapses"][0]["encoding"]["requested_mantissa"] == -127
     assert payload["synapses"][0]["encoding"]["sign_mode"] == "mixed"
     assert read_trace_json(path) == trace

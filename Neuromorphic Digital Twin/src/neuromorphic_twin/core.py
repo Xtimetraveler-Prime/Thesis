@@ -6,7 +6,14 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 
 from .arithmetic import ArithmeticConfig
-from .model import NeuronConfig, NeuronState, Spike, Synapse, TickTrace
+from .model import (
+    NeuronConfig,
+    NeuronState,
+    Spike,
+    SpikeRoute,
+    Synapse,
+    TickTrace,
+)
 from .neuron import step_neuron
 
 
@@ -23,6 +30,7 @@ class NeuromorphicCore:
         neuron_configs: Sequence[NeuronConfig],
         synapses: Iterable[Synapse] = (),
         *,
+        spike_routes: Iterable[SpikeRoute] = (),
         arithmetic: ArithmeticConfig | None = None,
     ) -> None:
         if not neuron_configs:
@@ -52,6 +60,30 @@ class NeuromorphicCore:
             axon_id: tuple(connections)
             for axon_id, connections in mutable_map.items()
         }
+
+        # source_neuron -> routes in declaration order. Output events are
+        # queued after a tick and become inputs only at the next tick boundary.
+        mutable_routes: dict[int, list[int]] = defaultdict(list)
+        seen_routes: set[tuple[int, int]] = set()
+        for route in spike_routes:
+            if route.source_neuron >= neuron_count:
+                raise ValueError(
+                    f"route source {route.source_neuron} is outside "
+                    f"0..{neuron_count - 1}"
+                )
+            key = (route.source_neuron, route.target_axon)
+            if key in seen_routes:
+                raise ValueError(
+                    "duplicate spike route from neuron "
+                    f"{route.source_neuron} to axon {route.target_axon}"
+                )
+            seen_routes.add(key)
+            mutable_routes[route.source_neuron].append(route.target_axon)
+        self._spike_routes = {
+            neuron_id: tuple(axons)
+            for neuron_id, axons in mutable_routes.items()
+        }
+        self._pending_recurrent_axons: tuple[int, ...] = ()
 
     @property
     def tick(self) -> int:
@@ -83,6 +115,7 @@ class NeuromorphicCore:
         """Return the core to its power-on state."""
 
         self._tick = 0
+        self._pending_recurrent_axons = ()
         for neuron_id, config in enumerate(self._configs):
             self._currents[neuron_id] = 0
             self._voltages[neuron_id] = config.reset_voltage
@@ -91,9 +124,11 @@ class NeuromorphicCore:
     def step(self, input_axons: Iterable[int] = ()) -> TickTrace:
         """Process one complete algorithmic tick and return a full trace."""
 
-        axons = tuple(int(axon_id) for axon_id in input_axons)
-        if any(axon_id < 0 for axon_id in axons):
+        external_axons = tuple(int(axon_id) for axon_id in input_axons)
+        if any(axon_id < 0 for axon_id in external_axons):
             raise ValueError("input axon IDs cannot be negative")
+        recurrent_axons = self._pending_recurrent_axons
+        axons = external_axons + recurrent_axons
 
         synaptic_input = [0] * self.neuron_count
         for axon_id in axons:
@@ -121,6 +156,13 @@ class NeuromorphicCore:
             if result.spiked:
                 spikes.append(Spike(tick=self._tick, neuron_id=neuron_id))
 
+        routed_axons = tuple(
+            axon_id
+            for spike in spikes
+            for axon_id in self._spike_routes.get(spike.neuron_id, ())
+        )
+        self._pending_recurrent_axons = routed_axons
+
         trace = TickTrace(
             tick=self._tick,
             input_axons=axons,
@@ -131,6 +173,9 @@ class NeuromorphicCore:
             voltage_after=tuple(self._voltages),
             refractory_after=tuple(self._refractory),
             spikes=tuple(spikes),
+            external_input_axons=external_axons,
+            recurrent_input_axons=recurrent_axons,
+            routed_output_axons=routed_axons,
         )
         self._tick += 1
         return trace

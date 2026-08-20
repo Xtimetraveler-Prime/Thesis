@@ -21,7 +21,7 @@ from .fpga_weight_storage import (
     unpack_weight_format,
     write_weight_storage_image,
 )
-from .model import NeuronConfig, NeuronState, Spike, Synapse, TickTrace
+from .model import NeuronConfig, NeuronState, Spike, SpikeRoute, Synapse, TickTrace
 from .neuron import step_neuron
 from .weights import (
     StaticWeightEncoding,
@@ -44,6 +44,7 @@ __all__ = [
     "PackedSynapseFields",
     "SYNAPSE_WORD_BITS",
     "Spike",
+    "SpikeRoute",
     "StaticWeightEncoding",
     "Synapse",
     "TickTrace",

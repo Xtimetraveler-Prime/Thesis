@@ -33,6 +33,7 @@ Implemented:
 - Fixed-weight axon-to-neuron synapses
 - Excitatory and inhibitory connections
 - Axon fan-in and fan-out
+- Deterministic next-tick recurrent spike routing
 - Refractory periods
 - Exact per-tick current, voltage, and spike traces
 - Optional Brian2Loihi reference backend
@@ -43,7 +44,6 @@ Deferred:
 
 - Exact Loihi state widths and overflow semantics
 - Loihi-native mantissa/exponent weight objects
-- Recurrent output axons
 - Synaptic delays and event queues
 - Multiple physical cores and packet routing
 - Learning rules and stochastic rounding

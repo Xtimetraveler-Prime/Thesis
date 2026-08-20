@@ -122,6 +122,20 @@ class Spike:
 
 
 @dataclass(frozen=True, slots=True)
+class SpikeRoute:
+    """Route one neuron's output spike to an input axon on the next tick."""
+
+    source_neuron: int
+    target_axon: int
+
+    def __post_init__(self) -> None:
+        if self.source_neuron < 0:
+            raise ValueError("source_neuron cannot be negative")
+        if self.target_axon < 0:
+            raise ValueError("target_axon cannot be negative")
+
+
+@dataclass(frozen=True, slots=True)
 class TickTrace:
     """Complete observable state transition for one core tick.
 
@@ -138,3 +152,6 @@ class TickTrace:
     voltage_after: tuple[int, ...]
     refractory_after: tuple[int, ...]
     spikes: tuple[Spike, ...]
+    external_input_axons: tuple[int, ...] = ()
+    recurrent_input_axons: tuple[int, ...] = ()
+    routed_output_axons: tuple[int, ...] = ()
