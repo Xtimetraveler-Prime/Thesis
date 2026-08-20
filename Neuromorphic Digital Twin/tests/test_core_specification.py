@@ -294,20 +294,26 @@ def test_simultaneous_routes_are_stable_and_cross_source_multiplicity_is_kept() 
 def test_reset_discards_routes_and_replays_deterministically() -> None:
     core = NeuromorphicCore(
         [_cfg(threshold=5, reset_voltage=-1)],
-        [Synapse(0, 0, 6)],
+        [Synapse(0, 0, 7)],
         spike_routes=[SpikeRoute(0, 0)],
         arithmetic=FPGA_CORE_ARITHMETIC_V1,
     )
 
     first = core.step([0])
+    assert first.routed_output_axons == (0,)
+
+    core.reset()
+    after_reset = core.step()
+    assert after_reset.tick == 0
+    assert after_reset.input_axons == ()
+    assert after_reset.recurrent_input_axons == ()
+    assert after_reset.spikes == ()
+
     core.reset()
     replay = core.step([0])
-
     assert replay == first
-    assert replay.tick == 0
     assert replay.current_before == (0,)
     assert replay.voltage_before == (-1,)
-    assert replay.recurrent_input_axons == ()
 
 
 def test_profile_validation_rejects_unrepresentable_configuration() -> None:
