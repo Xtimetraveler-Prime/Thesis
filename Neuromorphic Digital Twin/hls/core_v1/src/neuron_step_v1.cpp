@@ -51,21 +51,25 @@ state_t decayed_state_v1(state_t value, decay_t decay) {
     return saturate_state_v1(value_wide - removed);
 }
 
+}  // namespace neuromorphic_hls
+
 void neuron_step_v1(
-    state_t current_before,
-    state_t voltage_before,
-    refractory_t refractory_before,
-    accumulator_t synaptic_input,
-    decay_t current_decay,
-    decay_t voltage_decay,
-    state_t threshold,
-    state_t bias,
-    state_t reset_voltage,
-    refractory_t refractory_ticks,
-    state_t *current_after,
-    state_t *voltage_after,
-    refractory_t *refractory_after,
-    spike_t *spiked) {
+    neuromorphic_hls::state_t current_before,
+    neuromorphic_hls::state_t voltage_before,
+    neuromorphic_hls::refractory_t refractory_before,
+    neuromorphic_hls::accumulator_t synaptic_input,
+    neuromorphic_hls::decay_t current_decay,
+    neuromorphic_hls::decay_t voltage_decay,
+    neuromorphic_hls::state_t threshold,
+    neuromorphic_hls::state_t bias,
+    neuromorphic_hls::state_t reset_voltage,
+    neuromorphic_hls::refractory_t refractory_ticks,
+    neuromorphic_hls::state_t *current_after,
+    neuromorphic_hls::state_t *voltage_after,
+    neuromorphic_hls::refractory_t *refractory_after,
+    neuromorphic_hls::spike_t *spiked) {
+
+    using namespace neuromorphic_hls;
 
 #pragma HLS INTERFACE ap_ctrl_hs port=return
 #pragma HLS INTERFACE ap_none port=current_before
@@ -140,5 +144,3 @@ void neuron_step_v1(
     *refractory_after = next_refractory;
     *spiked = next_spike;
 }
-
-}  // namespace neuromorphic_hls
