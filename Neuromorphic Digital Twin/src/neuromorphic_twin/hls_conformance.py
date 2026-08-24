@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import random
 
 from .model import NeuronConfig, NeuronState
 from .neuron import step_neuron
@@ -22,6 +21,8 @@ M11_2_DEFAULT_SEED = 0x4D313132
 M11_2_DEFAULT_RANDOM_CASES = 2048
 M11_2_SYNAPTIC_MIN = -(1 << 31)
 M11_2_SYNAPTIC_MAX = (1 << 31) - 1
+
+_MASK64 = (1 << 64) - 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +44,26 @@ class HlsNeuronVector:
     expected_voltage: int
     expected_refractory: int
     expected_spike: int
+
+
+class _SplitMix64:
+    """Small specified PRNG so M11.2 vectors do not depend on Python version."""
+
+    def __init__(self, seed: int) -> None:
+        self._state = seed & _MASK64
+
+    def next_u64(self) -> int:
+        self._state = (self._state + 0x9E3779B97F4A7C15) & _MASK64
+        value = self._state
+        value = ((value ^ (value >> 30)) * 0xBF58476D1CE4E5B9) & _MASK64
+        value = ((value ^ (value >> 27)) * 0x94D049BB133111EB) & _MASK64
+        return (value ^ (value >> 31)) & _MASK64
+
+    def randint(self, minimum: int, maximum: int) -> int:
+        if maximum < minimum:
+            raise ValueError("maximum must be >= minimum")
+        span = maximum - minimum + 1
+        return minimum + (self.next_u64() % span)
 
 
 def _evaluate(
@@ -133,7 +154,7 @@ def directed_hls_neuron_vectors() -> tuple[HlsNeuronVector, ...]:
     return tuple(_evaluate(**case) for case in cases)
 
 
-def _random_refractory(rng: random.Random, index: int) -> int:
+def _random_refractory(rng: _SplitMix64, index: int) -> int:
     mode = index % 4
     if mode in (0, 1):
         return 0
@@ -142,7 +163,7 @@ def _random_refractory(rng: random.Random, index: int) -> int:
     return rng.randint(2, REFRACTORY_MAX)
 
 
-def _random_refractory_ticks(rng: random.Random, index: int) -> int:
+def _random_refractory_ticks(rng: _SplitMix64, index: int) -> int:
     mode = index % 5
     if mode == 0:
         return 0
@@ -153,7 +174,7 @@ def _random_refractory_ticks(rng: random.Random, index: int) -> int:
     return rng.randint(0, REFRACTORY_MAX)
 
 
-def _random_decay(rng: random.Random, index: int, offset: int) -> int:
+def _random_decay(rng: _SplitMix64, index: int, offset: int) -> int:
     boundaries = (0, 1, 2048, 4095, 4096)
     if index % 8 == offset:
         return boundaries[(index // 8) % len(boundaries)]
@@ -170,7 +191,7 @@ def randomized_hls_neuron_vectors(
     if count < 0:
         raise ValueError("count cannot be negative")
 
-    rng = random.Random(seed)
+    rng = _SplitMix64(seed)
     vectors: list[HlsNeuronVector] = []
     state_edges = (STATE_MIN, STATE_MIN + 1, -1, 0, 1, STATE_MAX - 1, STATE_MAX)
     synaptic_edges = (
