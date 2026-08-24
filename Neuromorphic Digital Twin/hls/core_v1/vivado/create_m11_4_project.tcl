@@ -42,9 +42,9 @@ set hls_cell [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 
 # ap_start can carry a default driver in the packaged HLS metadata. Vivado's
 # cell-wide make_bd_pins_external therefore may leave it tied to zero instead
-# of creating a source port. Create and connect this transaction-start port
-# explicitly so validation does not silently disable the HLS block.
-set ap_start_pin [get_bd_pins -quiet neuron_step_v1_0/ap_start]
+# of creating a source port. Query this pin from the cell object itself, then
+# create and connect a real transaction-start input explicitly.
+set ap_start_pin [get_bd_pins -quiet -of_objects $hls_cell -filter {NAME == "ap_start"}]
 if {[llength $ap_start_pin] != 1} {
     error "Expected exactly one HLS ap_start pin, found: $ap_start_pin"
 }
