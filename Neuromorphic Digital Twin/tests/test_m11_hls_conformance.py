@@ -29,6 +29,41 @@ def test_m11_2_vector_corpus_is_deterministic() -> None:
         seed=2,
     )
 
+    # Lock the specified SplitMix64 stream so the standard corpus cannot drift
+    # silently if generator internals are edited later.
+    first_random = randomized_hls_neuron_vectors(count=1)[0]
+    assert (
+        first_random.current_before,
+        first_random.voltage_before,
+        first_random.refractory_before,
+        first_random.synaptic_input,
+        first_random.current_decay,
+        first_random.voltage_decay,
+        first_random.threshold,
+        first_random.bias,
+        first_random.reset_voltage,
+        first_random.refractory_ticks,
+        first_random.expected_current,
+        first_random.expected_voltage,
+        first_random.expected_refractory,
+        first_random.expected_spike,
+    ) == (
+        -8388608,
+        -2260350,
+        0,
+        1794213486,
+        0,
+        2575,
+        2923231,
+        -7382325,
+        -4874965,
+        0,
+        8388607,
+        166929,
+        0,
+        0,
+    )
+
 
 def test_m11_2_default_corpus_size_and_boundaries() -> None:
     directed = directed_hls_neuron_vectors()
