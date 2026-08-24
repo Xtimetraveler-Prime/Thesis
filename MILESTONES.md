@@ -936,37 +936,31 @@ Translate the frozen M10 computational-core contract into real FPGA logic while 
 
 Use Vitis HLS for as much of the computational datapath and deterministic control logic as practical, then add or edit RTL where direct HDL gives clearer control over board-level interfaces, memory plumbing, timing, resource use, or debug instrumentation. HLS is a translation path from deliberate C++ to RTL; the Python golden model remains the behavioral reference and is not synthesized directly.
 
-The work is split into six ordered sub-milestones. Each stage adds a stronger hardware-specific verification boundary before the next layer is introduced.
+M11 and later FPGA-development work standardize on AMD Vitis 2025.2 and AMD Vivado 2025.2. The work is split into six ordered sub-milestones. Each stage adds a stronger hardware-specific verification boundary before the next layer is introduced.
 
 ---
 
 ### M11.1 — Create minimal HLS computational core
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-20  
+**Completed:** 2026-08-24  
 **Repository evidence:** branch `agent/m11-hls-core`
 
 ### Purpose
 
 Establish the smallest HLS synthesis boundary that implements one complete frozen M10 neuron transition without yet mixing in synapse-memory traversal, recurrent routing, or system integration.
 
-### Delivered so far
+### Delivered
 
 - `hls/core_v1/include/neuron_step_v1.hpp` with the frozen 24-bit state, 16-bit refractory, 13-bit decay, and 1-bit spike HLS types.
 - A signed 64-bit HLS working domain for the M11.1 synaptic-input boundary and intermediate arithmetic so values are widened before the explicit M10 `SAT24` operation instead of silently wrapping in a 24-bit temporary.
-- `hls/core_v1/src/neuron_step_v1.cpp` implementing:
-  - explicit signed 24-bit saturation;
-  - exact round-away-from-zero decay with denominator `4096`;
-  - input-before-current-decay ordering;
-  - voltage integration from the pre-decay working current;
-  - strict `>` threshold behavior;
-  - hard reset;
-  - exact refractory countdown/load timing;
-  - current updates during refractory ticks.
+- `hls/core_v1/src/neuron_step_v1.cpp` implementing explicit signed 24-bit saturation, exact round-away-from-zero decay, input-before-current-decay ordering, voltage integration from pre-decay working current, strict threshold behavior, hard reset, exact refractory timing, and current updates during refractory ticks.
 - The `4096 = 2^12` decay division is expressed as an exact add-and-shift magnitude operation, preserving the M10 integer result without requiring a general divider.
 - `hls/core_v1/tb/test_neuron_step_v1.cpp`, a self-checking C++ testbench with 11 directed cases covering threshold equality, positive and negative saturation, positive and negative decay behavior, input-before-decay, voltage decay/bias, refractory hold/countdown, refractory loading, and full decay.
-- `hls/core_v1/run_csim.tcl`, a Vitis HLS 2023.2-compatible C-simulation entry point.
-- `hls/core_v1/README.md` documenting the HLS boundary and why physical accumulator/event capacity is deferred until the wider core is integrated.
+- `hls/core_v1/hls_config.cfg` and `hls/core_v1/run_csim.sh` implementing the standardized Vitis 2025.2 C-simulation flow with tool-version checks and explicit target-part selection.
+- The wrapper stages the HLS component under a no-space `/tmp` path because Vitis HLS 2025.2 rejects project/work paths containing the space in `Neuromorphic Digital Twin`.
+- Vitis-2025.2-compatible explicit `ap_int` width conversions were added where unary negation and subtraction widen intermediate expression types; these casts preserve the frozen M10 arithmetic while removing compiler ambiguity.
 - All 11 directed expected results were independently checked against the frozen M10 equations before vendor-tool execution.
 
 ### Completion criteria
@@ -974,14 +968,37 @@ Establish the smallest HLS synthesis boundary that implements one complete froze
 - [x] Define an HLS-friendly top-level neuron transition with explicit fixed-width types.
 - [x] Implement the frozen M10 arithmetic and neuron semantics without relying on native C/C++ overflow behavior.
 - [x] Add a self-checking directed C++ testbench.
-- [x] Add a reproducible Vitis HLS 2023.2 C-simulation command path.
+- [x] Add a reproducible Vitis/Vivado 2025.2 C-simulation command path.
 - [x] Independently cross-check the directed expected values against the M10 equations.
-- [ ] Run the testbench through Vitis HLS C simulation from the development checkout.
-- [ ] Record the vendor-tool result and mark M11.1 complete.
+- [x] Run the testbench through Vitis HLS C simulation from the development checkout.
+- [x] Record the vendor-tool result and mark M11.1 complete.
+
+### Completion evidence
+
+The vendor C simulation was independently run on 2026-08-24 with:
+
+```text
+Vitis/Vivado: 2025.2
+FPGA part:    xck26-sfvc784-2LV-c
+```
+
+Command:
+
+```bash
+bash run_csim.sh | tee m11_1_csim_2025_2.log
+```
+
+The self-checking testbench completed successfully with:
+
+```text
+M11.1 HLS neuron-step tests passed: 11 cases
+```
+
+This proves the HLS C++ implementation compiles and produces the expected directed neuron transitions under the selected Vitis 2025.2 toolchain. C simulation does not synthesize RTL or package a Vivado IP; those hardware-generation steps remain M11.3 and M11.4.
 
 ### Scope boundary
 
-M11.1 accepts one already-accumulated synaptic-input scalar and produces one neuron transition. It does not yet define the final physical synaptic accumulator capacity, walk the M08 CSR synapse memory, schedule multiple neurons, route recurrent events, or create the Vivado system project.
+M11.1 accepts one already-accumulated synaptic-input scalar and produces one neuron transition. It does not yet define the final physical synaptic accumulator capacity, walk the M08 CSR synapse memory, schedule multiple neurons, route recurrent events, synthesize RTL, or create the Vivado system project.
 
 ---
 
