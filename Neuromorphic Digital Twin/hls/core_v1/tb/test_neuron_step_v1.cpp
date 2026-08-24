@@ -24,6 +24,10 @@ struct TestVector {
     unsigned expected_spike;
 };
 
+// Generated in the staging directory by run_csim.sh from the frozen Python
+// FPGA-v1 golden model before Vitis compiles this testbench.
+#include "generated_m11_2_vectors.inc"
+
 bool run_case(const TestVector &v) {
     state_t current_after = 0;
     state_t voltage_after = 0;
@@ -76,7 +80,7 @@ bool run_case(const TestVector &v) {
 }  // namespace
 
 int main() {
-    const TestVector cases[] = {
+    const TestVector m11_1_cases[] = {
         {
             "spike_no_decay",
             0, 0, 0, 6,
@@ -157,7 +161,7 @@ int main() {
     };
 
     unsigned failures = 0;
-    for (const auto &test_case : cases) {
+    for (const auto &test_case : m11_1_cases) {
         if (!run_case(test_case)) {
             ++failures;
         }
@@ -169,6 +173,26 @@ int main() {
     }
 
     std::cout << "M11.1 HLS neuron-step tests passed: "
-              << (sizeof(cases) / sizeof(cases[0])) << " cases\n";
+              << (sizeof(m11_1_cases) / sizeof(m11_1_cases[0]))
+              << " cases\n";
+
+    failures = 0;
+    for (const auto &test_case : M11_2_GOLDEN_VECTORS) {
+        if (!run_case(test_case)) {
+            ++failures;
+        }
+    }
+
+    if (failures != 0) {
+        std::cerr << failures << " M11.2 Python/HLS differential vector(s) failed\n";
+        return 1;
+    }
+
+    std::cout << "M11.2 Python/HLS differential tests passed: "
+              << M11_2_GOLDEN_COUNT
+              << " cases (directed=" << M11_2_DIRECTED_COUNT
+              << ", random=" << M11_2_RANDOM_COUNT
+              << ", seed=0x" << std::hex << M11_2_GOLDEN_SEED << std::dec
+              << ")\n";
     return 0;
 }
