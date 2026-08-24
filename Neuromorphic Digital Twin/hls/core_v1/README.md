@@ -107,12 +107,20 @@ Then, from this directory, run:
 bash run_csim.sh
 ```
 
-The wrapper verifies that `vitis`, `vitis-run`, `v++`, and `vivado` all resolve and report version `2025.2`, clears the generated C-simulation work directory, and runs:
+The repository path contains the directory name `Neuromorphic Digital Twin`. Vitis HLS 2025.2 rejects HLS project/solution paths containing spaces, so `run_csim.sh` automatically copies only the M11.1 HLS source, headers, testbench, and config into a clean staging directory under:
+
+```text
+/tmp/neuromorphic_twin_hls_<uid>/m11_1_csim
+```
+
+The source checkout is not modified by this staging step, and the staging directory is recreated for every run.
+
+The wrapper verifies that `vitis`, `vitis-run`, `v++`, and `vivado` all resolve and report version `2025.2`, then runs from the no-space staging directory:
 
 ```bash
 vitis-run --mode hls --csim \
   --config hls_config.cfg \
-  --work_dir build/csim \
+  --work_dir /tmp/neuromorphic_twin_hls_<uid>/m11_1_csim/work \
   --part "$HLS_PART"
 ```
 
