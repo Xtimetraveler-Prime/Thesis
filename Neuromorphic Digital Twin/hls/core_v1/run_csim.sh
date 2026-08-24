@@ -3,7 +3,6 @@ set -euo pipefail
 
 EXPECTED_VERSION="2025.2"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
 
 require_tool() {
     local tool="$1"
@@ -49,12 +48,27 @@ EOF
     exit 2
 fi
 
-echo "M11 toolchain: Vitis/Vivado $EXPECTED_VERSION"
-echo "HLS target part: $HLS_PART"
+# Vitis HLS 2025.2 rejects project/solution paths containing spaces. The
+# repository intentionally contains "Neuromorphic Digital Twin", so stage the
+# minimal HLS component under /tmp and run C simulation there. This does not
+# alter the source checkout; the staged copy is recreated on every invocation.
+STAGE_ROOT="/tmp/neuromorphic_twin_hls_${UID}/m11_1_csim"
+WORK_DIR="$STAGE_ROOT/work"
 
-rm -rf build/csim
+rm -rf "$STAGE_ROOT"
+mkdir -p "$STAGE_ROOT"
+cp -R "$SCRIPT_DIR/include" "$STAGE_ROOT/"
+cp -R "$SCRIPT_DIR/src" "$STAGE_ROOT/"
+cp -R "$SCRIPT_DIR/tb" "$STAGE_ROOT/"
+cp "$SCRIPT_DIR/hls_config.cfg" "$STAGE_ROOT/"
+
+printf 'M11 toolchain: Vitis/Vivado %s\n' "$EXPECTED_VERSION"
+printf 'HLS target part: %s\n' "$HLS_PART"
+printf 'HLS staging directory: %s\n' "$STAGE_ROOT"
+
+cd "$STAGE_ROOT"
 
 vitis-run --mode hls --csim \
     --config hls_config.cfg \
-    --work_dir build/csim \
+    --work_dir "$WORK_DIR" \
     --part "$HLS_PART"
