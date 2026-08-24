@@ -78,10 +78,15 @@ void neuron_step_v1(
 #pragma HLS INTERFACE ap_none port=bias
 #pragma HLS INTERFACE ap_none port=reset_voltage
 #pragma HLS INTERFACE ap_none port=refractory_ticks
-#pragma HLS INTERFACE ap_none port=current_after
-#pragma HLS INTERFACE ap_none port=voltage_after
-#pragma HLS INTERFACE ap_none port=refractory_after
-#pragma HLS INTERFACE ap_none port=spiked
+
+    // Output pointers use ap_vld rather than ap_none. Vitis HLS Vivado-IP
+    // flow normally applies ap_vld to output pointers so the consumer and the
+    // automatic C/RTL co-simulation harness know exactly when each result is
+    // valid. The data values and M10 neuron semantics are unchanged.
+#pragma HLS INTERFACE ap_vld port=current_after
+#pragma HLS INTERFACE ap_vld port=voltage_after
+#pragma HLS INTERFACE ap_vld port=refractory_after
+#pragma HLS INTERFACE ap_vld port=spiked
 
     // CORE-NEURON-001 / CORE-ARITH-001:
     // Input is part of working current before current decay, then SAT24 is
