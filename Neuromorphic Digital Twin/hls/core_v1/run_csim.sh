@@ -3,6 +3,7 @@ set -euo pipefail
 
 EXPECTED_VERSION="2025.2"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 require_tool() {
     local tool="$1"
@@ -24,6 +25,7 @@ require_version() {
     fi
 }
 
+require_tool python3
 require_tool vitis
 require_tool vitis-run
 require_tool v++
@@ -50,9 +52,8 @@ fi
 
 # Vitis HLS 2025.2 rejects project/solution paths containing spaces. The
 # repository intentionally contains "Neuromorphic Digital Twin", so stage the
-# minimal HLS component under /tmp and run C simulation there. This does not
-# alter the source checkout; the staged copy is recreated on every invocation.
-STAGE_ROOT="/tmp/neuromorphic_twin_hls_${UID}/m11_1_csim"
+# HLS component under /tmp. The staged copy is recreated on every invocation.
+STAGE_ROOT="/tmp/neuromorphic_twin_hls_${UID}/m11_core_csim"
 WORK_DIR="$STAGE_ROOT/work"
 
 rm -rf "$STAGE_ROOT"
@@ -61,6 +62,13 @@ cp -R "$SCRIPT_DIR/include" "$STAGE_ROOT/"
 cp -R "$SCRIPT_DIR/src" "$STAGE_ROOT/"
 cp -R "$SCRIPT_DIR/tb" "$STAGE_ROOT/"
 cp "$SCRIPT_DIR/hls_config.cfg" "$STAGE_ROOT/"
+
+# M11.2: generate the differential corpus from the frozen Python FPGA-v1
+# golden model directly into the staged testbench directory. The generated
+# file is intentionally not checked into the repository.
+PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+python3 "$PROJECT_DIR/examples/generate_m11_hls_vectors.py" \
+    --output "$STAGE_ROOT/tb/generated_m11_2_vectors.inc"
 
 printf 'M11 toolchain: Vitis/Vivado %s\n' "$EXPECTED_VERSION"
 printf 'HLS target part: %s\n' "$HLS_PART"
