@@ -26,9 +26,21 @@ wide_t round_away_from_zero_div4096_v1(wide_t numerator) {
     // implements ceil(magnitude / 4096), which is exactly M10's
     // round-away-from-zero rule for both signs.
     const bool negative = numerator < 0;
-    const wide_t magnitude = negative ? -numerator : numerator;
-    const wide_t rounded_magnitude = (magnitude + (DECAY_SCALE - 1)) >> 12;
-    return negative ? -rounded_magnitude : rounded_magnitude;
+
+    // Vitis HLS arbitrary-precision unary minus widens the expression by one
+    // bit. Assign explicitly back into wide_t instead of using ?: between
+    // ap_int<65> and ap_int<64>; the reachable numerator range here is far
+    // inside signed 64-bit because it comes from 24-bit state * 13-bit decay.
+    wide_t magnitude = numerator;
+    if (negative) {
+        magnitude = wide_t(-numerator);
+    }
+
+    const wide_t rounded_magnitude = (magnitude + wide_t(DECAY_SCALE - 1)) >> 12;
+    if (negative) {
+        return wide_t(-rounded_magnitude);
+    }
+    return rounded_magnitude;
 }
 
 state_t decayed_state_v1(state_t value, decay_t decay) {
@@ -89,7 +101,7 @@ void neuron_step_v1(
     if (refractory_before > 0) {
         // CORE-NEURON-004 / CORE-NEURON-005.
         next_voltage = reset_voltage;
-        next_refractory = refractory_before - 1;
+        next_refractory = refractory_t(refractory_before - refractory_t(1));
         next_spike = 0;
     } else {
         // CORE-NEURON-002 / CORE-NEURON-006:
@@ -106,8 +118,11 @@ void neuron_step_v1(
             // CORE-NEURON-008 / CORE-NEURON-009.
             next_spike = 1;
             next_voltage = reset_voltage;
-            next_refractory =
-                (refractory_ticks > 0) ? refractory_ticks - 1 : refractory_t(0);
+            if (refractory_ticks > 0) {
+                next_refractory = refractory_t(refractory_ticks - refractory_t(1));
+            } else {
+                next_refractory = refractory_t(0);
+            }
         } else {
             next_spike = 0;
             next_voltage = voltage_work;
