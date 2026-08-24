@@ -1065,67 +1065,147 @@ M11.2 establishes an automated behavioral bridge from the frozen Python FPGA-v1 
 
 ### M11.3 — Synthesize HLS and run C/RTL co-simulation
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
+**Completed:** 2026-08-24  
 **Repository evidence:** branch `agent/m11-hls-core`
 
 ### Goal
 
 Prove that the behaviorally verified C++ description is accepted by Vitis HLS for the selected FPGA target, inspect the resulting hardware implementation estimates, and prove that the generated RTL reproduces the verified C++/Python behavior.
 
-### Frozen initial synthesis baseline
+### Frozen synthesis baseline
 
 - FPGA part: `xck26-sfvc784-2LV-c`.
 - Toolchain: AMD Vitis 2025.2 and AMD Vivado 2025.2.
 - HLS target clock: `10ns` (100 MHz).
-- HLS clock uncertainty: `12%`.
+- HLS clock uncertainty: `12%` = `1.20ns`.
 - Flow target: `vivado`.
 - Synthesis output format: `rtl`.
 
-The 100 MHz target is an initial baseline for measurement and verification, not a claim about the final achievable frequency. Optimization or a more aggressive clock may be evaluated after this first report is recorded.
+The 100 MHz target is a baseline for measurement and later system integration, not a claim about final maximum frequency.
 
-### Delivered so far
+### Delivered
 
-- `hls_config.cfg` now explicitly freezes `clock=10ns`, `clock_uncertainty=12%`, `flow_target=vivado`, and `syn.output.format=rtl`.
-- `run_m11_3.sh` provides one reproducible Vitis 2025.2 flow that checks the toolchain, requires the exact frozen target part, stages the project under a no-space `/tmp` path, regenerates the same 2,072-vector M11.2 golden corpus, runs HLS synthesis with `v++ -c --mode hls`, locates/copies the generated `*_csynth.rpt`, prints selected timing/latency/II/resource lines, and then runs `vitis-run --mode hls --cosim` on the same component.
-- Generated synthesis/co-simulation logs and reports are copied to ignored `hls/core_v1/build/m11_3/` so evidence can be inspected without committing vendor build products.
-- The existing Python-golden differential testbench is reused unchanged for RTL co-simulation, so M11.3 does not introduce a weaker or separate expected-value source.
+- `hls_config.cfg` freezes the 10ns/12% HLS timing baseline with `flow_target=vivado` and `package.output.format=rtl`.
+- `run_m11_3.sh` stages the component under a no-space `/tmp` path, regenerates the 2,072-vector M11.2 corpus, runs `v++ -c --mode hls`, preserves the complete `csynth` report and vendor log, then runs `vitis-run --mode hls --cosim` using the same verified testbench.
+- Vitis generates both Verilog and VHDL RTL for `neuron_step_v1`.
+- The HLS top remains `ap_ctrl_hs`; scalar inputs are `ap_none`; all four output pointers use `ap_vld` so result validity is explicit for automatic co-simulation and later integration.
+- The HLS synthesis boundary is a global `neuron_step_v1(...)` wrapper while fixed-width types and arithmetic helpers remain in `neuromorphic_hls`. This Vitis-2025.2 tooling boundary avoids the co-simulation hardware-stub linker failure seen when the top itself was namespaced without changing any M10 arithmetic or neuron semantics.
+- The initial deprecated `syn.output.format` spelling was replaced with the 2025.2 `package.output.format` key.
+
+### Synthesis result
+
+The independently reproduced `csynth` report records:
+
+```text
+Target clock:        10.000 ns
+Estimated clock:      8.785 ns
+Clock uncertainty:    1.200 ns
+Estimated Fmax:     ~113.83 MHz
+
+Latency:              1 cycle
+Absolute latency:    10.000 ns
+Transaction interval: 2 cycles
+Pipeline type:        no
+
+BRAM_18K:             0
+DSP:                  2
+FF:                  51
+LUT:               1418
+URAM:                 0
+```
+
+The two DSP instances are the two signed 24-bit-by-13-bit decay multipliers (`mul_24s_13ns_37_1_1`). The remaining datapath is primarily LUT-based add/subtract, compare, saturation/select, and control logic. The report also contains one small sparse multiplexer instance and no inferred memories or FIFOs.
+
+The estimated 8.785ns datapath is only slightly below the effective 8.8ns target after the 1.2ns uncertainty allowance, so the 100 MHz setting should be treated as a useful first baseline rather than large timing headroom. Physical post-place-and-route timing remains later M11 evidence.
+
+### Warning resolution
+
+- The first synthesis warned that `ap_none` output pointers might not be automatically verifiable. The outputs were changed to `ap_vld`; the final interface table confirms dedicated validity signals for current, voltage, refractory state, and spike.
+- The deprecated output-format config name was replaced with `package.output.format`.
+- The first co-simulation attempts failed while generating the C-side hardware stub with `undefined symbol: neuron_step_v1_hw_stub`; XSIM had not started and there was no RTL behavioral mismatch. Moving only the HLS top wrapper to the global namespace resolved that Vitis 2025.2 instrumentation issue.
+- Repeated parenthesis warnings came from AMD-supplied Vitis headers (`gmp.h`, `hls_half_fpo.h`, `ap_int_base.h`, and `ap_fixed_base.h`), not project source, and were nonfatal.
 
 ### Completion criteria
 
 - [x] Freeze the target FPGA part and initial HLS clock/uncertainty baseline.
 - [x] Add a reproducible Vitis 2025.2 synthesis and co-simulation command path.
-- [ ] Run HLS C synthesis successfully on the development checkout.
-- [ ] Inspect and record top-level latency, initiation interval, estimated clock/timing, operator mapping, and BRAM/DSP/FF/LUT estimates.
-- [ ] Resolve or explicitly document synthesis warnings that could affect bit accuracy, interfaces, or later integration.
-- [ ] Run C/RTL co-simulation using the verified M11.2 vector corpus.
-- [ ] Record the vendor-tool evidence and mark M11.3 complete before packaging the block.
+- [x] Run HLS C synthesis successfully on the development checkout.
+- [x] Inspect and record top-level latency, transaction interval, estimated clock/timing, operator mapping, and BRAM/DSP/FF/LUT estimates.
+- [x] Resolve or explicitly document synthesis/co-simulation warnings that affect interfaces or tool compatibility.
+- [x] Run C/RTL co-simulation using the verified M11.2 vector corpus.
+- [x] Record the vendor-tool evidence and mark M11.3 complete before packaging the block.
+
+### Completion evidence
+
+The final M11.3 run on 2026-08-24 completed XSIM and C post-checking successfully. The post-check retained both prior gates:
+
+```text
+M11.1 HLS neuron-step tests passed: 11 cases
+M11.2 Python/HLS differential tests passed: 2072 cases (directed=24, random=2048, seed=0x4d313132)
+```
+
+Vitis then reported:
+
+```text
+INFO: [COSIM 212-1000] *** C/RTL co-simulation finished: PASS ***
+M11.3 synthesis and C/RTL co-simulation completed successfully.
+```
+
+This proves that the generated RTL, not only the C++ model, reproduces every observable neuron result in the M11.2 differential corpus under the selected Vitis/Vivado 2025.2 configuration.
+
+---
+
+### M11.4 — Export Vivado IP and create the Vivado project
+
+**Status:** In progress  
+**Started:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-hls-core`
+
+### Goal
+
+Package the verified HLS core as Vivado IP and establish the real FPGA system project that will host the digital twin.
+
+### Frozen packaging boundary
+
+- FPGA part: `xck26-sfvc784-2LV-c`.
+- Toolchain: Vitis/Vivado 2025.2.
+- Packaged IP VLNV: `neuromorphic-twin.org:hls:neuron_step_v1:1.0`.
+- HLS baseline clock: 10ns / 100 MHz.
+- Existing verified HLS interface remains unchanged: `ap_ctrl_hs`, scalar `ap_none` inputs, and `ap_vld` outputs.
+
+### Delivered so far
+
+- `hls_package.cfg` selects `package.output.format=ip_catalog`, disables automatic package generation during C synthesis with `package.output.syn=false`, and freezes the project-specific IP vendor/library/name/version metadata.
+- `run_m11_4.sh` provides one reproducible command path that checks Vitis/Vivado 2025.2 and the exact K26 target part, stages the HLS component under `/tmp`, regenerates the M11.2 vector include, runs fresh HLS synthesis, executes `vitis-run --mode hls --package`, preserves the packaged ZIP/unzipped IP under ignored `build/m11_4/`, and then invokes Vivado 2025.2 in batch mode.
+- `vivado/create_m11_4_project.tcl` creates project `neuromorphic_twin_m11_4`, registers the packaged custom IP repository with `IP_REPO_PATHS` plus `update_ip_catalog`, verifies the expected VLNV exists, creates block design `neuromorphic_twin_core`, instantiates the HLS IP as `neuron_step_v1_0`, and externalizes every currently unconnected scalar clock/reset/control/data pin.
+- The Tcl flow validates and saves the block design, generates output products, creates the HDL wrapper, updates compile order, and writes generated project- and BD-recreation Tcl as additional evidence. The source-controlled Tcl script remains the normative reconstruction flow.
+- `vivado/README.md` documents why M11.4 intentionally leaves the verified HLS pins external: M11.5 will connect them to state/configuration memories, tick control, synaptic accumulation, recurrent routing, and observability rather than prematurely freezing those choices here.
+- The Bash runner passes `bash -n`, and the Vivado Tcl script parses successfully under a stubbed Tcl syntax harness. Real Vitis packaging and Vivado project execution remain the completion gate.
+
+### Completion criteria
+
+- [x] Freeze packaged-IP identity, target part, toolchain, and HLS interface boundary.
+- [x] Add a reproducible Vitis 2025.2 `ip_catalog` packaging flow.
+- [x] Add a reproducible Vivado 2025.2 project/block-design creation flow.
+- [ ] Run HLS packaging successfully and preserve the packaged IP ZIP/unzipped repository.
+- [ ] Confirm Vivado discovers `neuromorphic-twin.org:hls:neuron_step_v1:1.0` in the custom IP catalog.
+- [ ] Create and validate the K26-targeted Vivado project and `neuromorphic_twin_core` block design from the source-controlled Tcl flow.
+- [ ] Confirm the generated HDL wrapper and saved recreation scripts are produced without errors.
+- [ ] Record vendor-tool evidence and mark M11.4 complete before starting memory/tick-controller integration.
 
 ### Reproduction command
 
 ```bash
 export HLS_PART='xck26-sfvc784-2LV-c'
 cd "Neuromorphic Digital Twin/hls/core_v1"
-bash run_m11_3.sh | tee m11_3_2025_2.log
+bash run_m11_4.sh | tee m11_4_2025_2.log
 ```
 
----
+### Scope boundary
 
-### M11.4 — Export Vivado IP and create the Vivado project
-
-**Status:** Planned
-
-### Goal
-
-Package the verified HLS core as Vivado IP and establish the real FPGA system project that will host the digital twin.
-
-### Planned deliverables
-
-- Package the HLS RTL for the Vivado IP flow.
-- Create the M11 Vivado project for the target board/device.
-- Add the HLS core to the IP catalog/block design.
-- Connect clock, reset, and initial control/data interfaces.
-- Preserve a reproducible project-generation or source-management flow rather than relying only on GUI state.
+M11.4 proves the verified HLS datapath can become a reusable Vivado IP and live inside a deterministic Vivado/IP-Integrator project. It intentionally does not add board pin constraints, neuron/synapse memories, a multi-neuron tick controller, recurrent routing, host registers, physical implementation, or a bitstream; those belong to M11.5 and M11.6.
 
 ---
 
