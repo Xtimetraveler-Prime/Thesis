@@ -92,9 +92,11 @@ cp "$SYNTH_REPORT" "$LOCAL_BUILD_DIR/neuron_step_v1_csynth.rpt"
 printf 'HLS synthesis report: %s\n' "$LOCAL_BUILD_DIR/neuron_step_v1_csynth.rpt"
 
 echo
-echo '=== Selected synthesis report lines ==='
-grep -Ei 'Target Clock|Clock Uncertainty|Estimated Clock|Latency|Interval|BRAM|DSP|FF|LUT|Utilization' \
-    "$LOCAL_BUILD_DIR/neuron_step_v1_csynth.rpt" | head -n 80 || true
+echo '=== HLS synthesis report ==='
+# The 2025.2 report tables put many numeric values on lines that do not repeat
+# labels such as "Latency" or "LUT". Print the complete report instead of a
+# label-only grep so the captured terminal log contains the actual numbers.
+cat "$LOCAL_BUILD_DIR/neuron_step_v1_csynth.rpt"
 
 echo
 echo '=== M11.3 C/RTL co-simulation ==='
