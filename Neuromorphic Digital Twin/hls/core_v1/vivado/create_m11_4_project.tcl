@@ -40,9 +40,21 @@ if {[llength $matching_ipdefs] == 0} {
 create_bd_design $bd_name
 set hls_cell [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 
-# M11.4 keeps the verified HLS core isolated. Make every currently unconnected
-# scalar control/data pin external so later M11.5 logic can connect state
-# memories, tick control, and observability without changing this IP boundary.
+# ap_start can carry a default driver in the packaged HLS metadata. Vivado's
+# cell-wide make_bd_pins_external therefore may leave it tied to zero instead
+# of creating a source port. Create and connect this transaction-start port
+# explicitly so validation does not silently disable the HLS block.
+set ap_start_pin [get_bd_pins -quiet neuron_step_v1_0/ap_start]
+if {[llength $ap_start_pin] != 1} {
+    error "Expected exactly one HLS ap_start pin, found: $ap_start_pin"
+}
+set ap_start_port [create_bd_port -dir I ap_start]
+connect_bd_net $ap_start_port $ap_start_pin
+
+# M11.4 keeps the verified HLS core isolated. Make every other currently
+# unconnected scalar control/data pin external so later M11.5 logic can
+# connect state memories, tick control, and observability without changing
+# this verified IP boundary.
 make_bd_pins_external $hls_cell
 
 validate_bd_design
@@ -65,7 +77,11 @@ update_compile_order -fileset sources_1
 # evidence. The source-controlled script in this directory remains normative.
 write_bd_tcl -force [file join $project_dir recreate_neuromorphic_twin_core_bd.tcl]
 write_project_tcl -force [file join $project_dir recreate_m11_4_project.tcl]
-save_project
+
+# create_project already created the project at the requested path, and the
+# design/source commands above update that active project in place. Vivado
+# 2025.2 exposes save_project_as for copying/renaming projects; there is no
+# zero-argument save_project operation to perform here.
 
 puts ""
 puts "M11.4 Vivado project created successfully."
