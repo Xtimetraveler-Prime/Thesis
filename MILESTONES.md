@@ -1004,36 +1004,110 @@ M11.1 accepts one already-accumulated synaptic-input scalar and produces one neu
 
 ### M11.2 — Verify HLS behavior against the Python golden model
 
-**Status:** Planned
+**Status:** Complete  
+**Started:** 2026-08-24  
+**Completed:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-hls-core`
 
 ### Goal
 
-Move beyond the small directed M11.1 testbench and establish an automated differential path in which Python generates or evaluates broader state/configuration vectors and the HLS C++ implementation must match exactly.
+Move beyond the small directed M11.1 testbench and establish an automated differential path in which Python generates broader state/configuration vectors and the HLS C++ implementation must match exactly.
 
-### Planned deliverables
+### Deliverables
 
-- Shared or generated Python/HLS test vectors.
-- Boundary and randomized deterministic cases across the supported FPGA-v1 state/configuration domain.
-- Exact comparison of current, voltage, refractory state, and spike output.
-- Regression evidence that the HLS C++ implementation remains synchronized with M10.
+- [x] Shared/generated Python/HLS test vectors.
+- [x] Boundary and randomized deterministic cases across the supported FPGA-v1 state/configuration domain.
+- [x] Exact comparison of current, voltage, refractory state, and spike output.
+- [x] Regression evidence that the HLS C++ implementation remains synchronized with M10.
+
+### How each deliverable was met
+
+1. **Shared/generated Python/HLS test vectors** — Added `src/neuromorphic_twin/hls_conformance.py` as the vector-generation library and `examples/generate_m11_hls_vectors.py` as its CLI. Every expected output is produced by the existing golden transition `step_neuron(..., arithmetic=FPGA_CORE_ARITHMETIC_V1)` after validating the input state/configuration against the M10 FPGA-v1 profile. The generator writes an ephemeral `generated_m11_2_vectors.inc` into the no-space HLS staging directory, and the C++ testbench includes that initializer. Expected outputs are therefore generated from the Python golden model rather than manually duplicated in C++.
+2. **Boundary and randomized deterministic cases** — The standard corpus contains 24 directed FPGA-v1 boundary vectors plus 2,048 seeded pseudo-random vectors, for 2,072 differential cases total. Directed coverage includes strict threshold equality/just-over behavior; signed 24-bit positive and negative saturation; decay values `0`, `1`, `2048`, `4095`, and `4096`; positive and negative round-away-from-zero behavior; refractory state/configuration values including `0`, `1`, and `65535`; positive/negative bias saturation; reset boundaries; and large positive/negative accumulated synaptic inputs. The randomized set spans legal state/configuration domains while deliberately keeping many cases non-refractory so spike/threshold behavior remains exercised. The corpus uses explicit SplitMix64 generation with seed `0x4D313132`, so vector reproduction is tied to a specified integer algorithm rather than Python's library RNG implementation.
+3. **Exact comparison of all neuron outputs** — `tb/test_neuron_step_v1.cpp` runs every Python-generated vector through `neuron_step_v1` and compares all four observable outputs exactly: `current_after`, `voltage_after`, `refractory_after`, and `spiked`. A mismatch prints the vector name and expected/actual tuple and returns nonzero. The original 11 M11.1 directed cases remain in the same testbench and run first as a regression gate.
+4. **Regression evidence synchronized with M10** — `tests/test_m11_hls_conformance.py` verifies deterministic corpus generation, required boundary presence, exact replay of generated expectations through the frozen Python golden model, and byte-for-byte reproducible C++ initializer output. `run_csim.sh` regenerates the vector file on every vendor run before invoking Vitis 2025.2, so the C++/HLS comparison cannot silently retain stale expected values after Python-golden changes.
+
+### Completion evidence
+
+The M11.2 branch state was independently pulled and tested on 2026-08-24. Both requested gates passed:
+
+```bash
+python3 -m pytest -q tests/test_m11_hls_conformance.py
+python3 -m pytest -q
+```
+
+The independent report confirmed both Python commands completed successfully. No exact pytest count is recorded because only pass status was reported.
+
+The same checkout was then run through Vitis/Vivado 2025.2 for target part:
+
+```text
+xck26-sfvc784-2LV-c
+```
+
+with:
+
+```bash
+bash run_csim.sh | tee m11_2_csim_2025_2.log
+```
+
+The vendor testbench retained the M11.1 gate and passed the new differential corpus:
+
+```text
+M11.1 HLS neuron-step tests passed: 11 cases
+M11.2 Python/HLS differential tests passed: 2072 cases (directed=24, random=2048, seed=0x4d313132)
+```
+
+### What completion means
+
+M11.2 establishes an automated behavioral bridge from the frozen Python FPGA-v1 model to the HLS C++ implementation. The result is substantially stronger than the original hand-authored cases: thousands of deterministic states/configurations are checked exactly, while expected values continue to come from the Python golden model. This is still C simulation, so it proves the C++ behavior but not yet the behavior, latency, timing, or resource use of generated RTL.
 
 ---
 
 ### M11.3 — Synthesize HLS and run C/RTL co-simulation
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-hls-core`
 
 ### Goal
 
-Prove that the C++ description is accepted by Vitis HLS for the selected FPGA target and that generated RTL reproduces the C++ results.
+Prove that the behaviorally verified C++ description is accepted by Vitis HLS for the selected FPGA target, inspect the resulting hardware implementation estimates, and prove that the generated RTL reproduces the verified C++/Python behavior.
 
-### Planned deliverables
+### Frozen initial synthesis baseline
 
-- Freeze the target FPGA part and initial clock constraint for the HLS solution.
-- Run C synthesis and inspect latency, initiation interval, operator mapping, and resource estimates.
-- Resolve synthesis warnings that could affect bit accuracy or interfaces.
-- Run C/RTL co-simulation with the verified M11.2 vectors.
-- Record synthesis and co-simulation evidence before packaging the block.
+- FPGA part: `xck26-sfvc784-2LV-c`.
+- Toolchain: AMD Vitis 2025.2 and AMD Vivado 2025.2.
+- HLS target clock: `10ns` (100 MHz).
+- HLS clock uncertainty: `12%`.
+- Flow target: `vivado`.
+- Synthesis output format: `rtl`.
+
+The 100 MHz target is an initial baseline for measurement and verification, not a claim about the final achievable frequency. Optimization or a more aggressive clock may be evaluated after this first report is recorded.
+
+### Delivered so far
+
+- `hls_config.cfg` now explicitly freezes `clock=10ns`, `clock_uncertainty=12%`, `flow_target=vivado`, and `syn.output.format=rtl`.
+- `run_m11_3.sh` provides one reproducible Vitis 2025.2 flow that checks the toolchain, requires the exact frozen target part, stages the project under a no-space `/tmp` path, regenerates the same 2,072-vector M11.2 golden corpus, runs HLS synthesis with `v++ -c --mode hls`, locates/copies the generated `*_csynth.rpt`, prints selected timing/latency/II/resource lines, and then runs `vitis-run --mode hls --cosim` on the same component.
+- Generated synthesis/co-simulation logs and reports are copied to ignored `hls/core_v1/build/m11_3/` so evidence can be inspected without committing vendor build products.
+- The existing Python-golden differential testbench is reused unchanged for RTL co-simulation, so M11.3 does not introduce a weaker or separate expected-value source.
+
+### Completion criteria
+
+- [x] Freeze the target FPGA part and initial HLS clock/uncertainty baseline.
+- [x] Add a reproducible Vitis 2025.2 synthesis and co-simulation command path.
+- [ ] Run HLS C synthesis successfully on the development checkout.
+- [ ] Inspect and record top-level latency, initiation interval, estimated clock/timing, operator mapping, and BRAM/DSP/FF/LUT estimates.
+- [ ] Resolve or explicitly document synthesis warnings that could affect bit accuracy, interfaces, or later integration.
+- [ ] Run C/RTL co-simulation using the verified M11.2 vector corpus.
+- [ ] Record the vendor-tool evidence and mark M11.3 complete before packaging the block.
+
+### Reproduction command
+
+```bash
+export HLS_PART='xck26-sfvc784-2LV-c'
+cd "Neuromorphic Digital Twin/hls/core_v1"
+bash run_m11_3.sh | tee m11_3_2025_2.log
+```
 
 ---
 
