@@ -121,11 +121,11 @@ module neuron_array_controller_v1 #(
         (work_config[25:13] <= 13'd4096) &&
         (cfg_threshold > cfg_reset_voltage);
 
-    // Hold ap_start until ap_ready is observed, then remove it immediately so
-    // the ready handshake cannot request an automatic next transaction. The
-    // FSM still captures a coincident ap_done in S_HLS_WAIT_READY.
-    assign hls_ap_start =
-        (controller_state == S_HLS_WAIT_READY) && !hls_ap_ready;
+    // ap_ctrl_hs requires ap_start to remain high through the clock edge on
+    // which ap_ready is sampled high. Leaving S_HLS_WAIT_READY on that edge
+    // deasserts ap_start in the following cycle, so no automatic next request
+    // is issued. A coincident ap_done is captured in the same FSM state below.
+    assign hls_ap_start = (controller_state == S_HLS_WAIT_READY);
 
     assign hls_current_before      = $signed(work_state[23:0]);
     assign hls_voltage_before      = $signed(work_state[47:24]);
@@ -284,8 +284,8 @@ module neuron_array_controller_v1 #(
 
                 S_HLS_WAIT_READY: begin
                     // Capture a result immediately if ap_done coincides with
-                    // the ready handshake. hls_ap_start is combinationally
-                    // removed while ready is high, preventing auto-restart.
+                    // the ready handshake. ap_start remains high through this
+                    // edge and drops in the following cycle when the FSM moves.
                     if (hls_ap_done) begin
                         result_current    <= hls_current_after;
                         result_voltage    <= hls_voltage_after;
