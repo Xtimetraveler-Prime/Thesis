@@ -49,10 +49,17 @@ module phase_b_synapse_accumulator_v1 #(
     input  logic [11:0]  recurrent_addr,
     input  logic [15:0]  recurrent_wdata,
 
+    // Idle-only trace/debug reads. The accumulator image is the exact Phase-B
+    // signed-64 result; the external-event read exposes the actual event words
+    // consumed by this engine rather than relying on host-side recollection.
     input  logic         debug_accum_re,
     input  logic [7:0]   debug_accum_addr,
     output logic         debug_accum_rvalid,
-    output logic signed [63:0] debug_accum_rdata
+    output logic signed [63:0] debug_accum_rdata,
+    input  logic         debug_external_re,
+    input  logic [11:0]  debug_external_addr,
+    output logic         debug_external_rvalid,
+    output logic [15:0]  debug_external_rdata
 );
 
     localparam logic [7:0] FAULT_NONE           = 8'h00;
@@ -162,9 +169,12 @@ module phase_b_synapse_accumulator_v1 #(
             work_format             <= 16'd0;
             debug_accum_rvalid      <= 1'b0;
             debug_accum_rdata       <= 64'sd0;
+            debug_external_rvalid   <= 1'b0;
+            debug_external_rdata    <= 16'd0;
         end else begin
-            done               <= 1'b0;
-            debug_accum_rvalid <= 1'b0;
+            done                  <= 1'b0;
+            debug_accum_rvalid    <= 1'b0;
+            debug_external_rvalid <= 1'b0;
 
             if (!busy) begin
                 if (format_we)
@@ -180,6 +190,10 @@ module phase_b_synapse_accumulator_v1 #(
                 if (debug_accum_re) begin
                     debug_accum_rdata  <= accumulator_mem[debug_accum_addr];
                     debug_accum_rvalid <= 1'b1;
+                end
+                if (debug_external_re) begin
+                    debug_external_rdata  <= external_event_mem[debug_external_addr];
+                    debug_external_rvalid <= 1'b1;
                 end
             end
 
