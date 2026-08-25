@@ -6,6 +6,9 @@
 // route row is traversed in stored declaration order and target axons are
 // appended to the inactive recurrent-event bank. Only S_COMMIT toggles the bank
 // selector, making same-tick recurrence structurally impossible.
+//
+// M11.5.5 keeps both 4096 x 16 recurrent banks on canonical synchronous RAM
+// ports so their trace readback does not force large LUT read muxes.
 module recurrent_route_queue_v1 #(
     parameter integer MAX_NEURONS = 256,
     parameter integer MAX_AXONS   = 1024,
@@ -89,9 +92,24 @@ module recurrent_route_queue_v1 #(
     logic [15:0] work_target;
     logic [12:0] next_count;
 
+    logic        bank0_mem_we;
+    logic [11:0] bank0_mem_waddr;
+    logic [15:0] bank0_mem_wdata;
+    logic        bank0_mem_re;
+    logic [11:0] bank0_mem_raddr;
+    logic [15:0] bank0_mem_rdata;
+
+    logic        bank1_mem_we;
+    logic [11:0] bank1_mem_waddr;
+    logic [15:0] bank1_mem_wdata;
+    logic        bank1_mem_re;
+    logic [11:0] bank1_mem_raddr;
+    logic [15:0] bank1_mem_rdata;
+
     assign current_count = current_bank ? bank1_count : bank0_count;
     assign debug_bank0_count = bank0_count;
     assign debug_bank1_count = bank1_count;
+    assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;
 
     function automatic logic counts_valid;
         counts_valid =
@@ -99,6 +117,55 @@ module recurrent_route_queue_v1 #(
             (neuron_count <= MAX_NEURONS) &&
             (route_count <= MAX_ROUTES);
     endfunction
+
+    // Each recurrent bank has one explicit synchronous read/write process.
+    // The router writes only the inactive bank; debug reads are accepted only
+    // while the routing engine is idle, so the two uses never compete.
+    always_comb begin
+        bank0_mem_we    = 1'b0;
+        bank0_mem_waddr = next_count[11:0];
+        bank0_mem_wdata = work_target;
+        bank0_mem_re    = 1'b0;
+        bank0_mem_raddr = debug_addr;
+
+        bank1_mem_we    = 1'b0;
+        bank1_mem_waddr = next_count[11:0];
+        bank1_mem_wdata = work_target;
+        bank1_mem_re    = 1'b0;
+        bank1_mem_raddr = debug_addr;
+
+        if (
+            (state == S_ROUTE_APPEND) &&
+            (work_target < MAX_AXONS) &&
+            (next_count < MAX_EVENTS)
+        ) begin
+            if (current_bank)
+                bank0_mem_we = 1'b1;
+            else
+                bank1_mem_we = 1'b1;
+        end
+
+        if ((!busy) && debug_re) begin
+            if (debug_bank)
+                bank1_mem_re = 1'b1;
+            else
+                bank0_mem_re = 1'b1;
+        end
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (bank0_mem_we)
+            recurrent_bank0[bank0_mem_waddr] <= bank0_mem_wdata;
+        if (bank0_mem_re)
+            bank0_mem_rdata <= recurrent_bank0[bank0_mem_raddr];
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (bank1_mem_we)
+            recurrent_bank1[bank1_mem_waddr] <= bank1_mem_wdata;
+        if (bank1_mem_re)
+            bank1_mem_rdata <= recurrent_bank1[bank1_mem_raddr];
+    end
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
@@ -123,7 +190,6 @@ module recurrent_route_queue_v1 #(
             work_target            <= 16'd0;
             next_count             <= 13'd0;
             debug_rvalid           <= 1'b0;
-            debug_rdata            <= 16'd0;
         end else begin
             core_reset_done <= 1'b0;
             done            <= 1'b0;
@@ -136,12 +202,8 @@ module recurrent_route_queue_v1 #(
                     route_target_mem[route_target_addr] <= route_target_wdata;
                 if (spike_we)
                     spike_mem[spike_addr] <= spike_wdata;
-                if (debug_re) begin
-                    debug_rdata <= debug_bank
-                        ? recurrent_bank1[debug_addr]
-                        : recurrent_bank0[debug_addr];
+                if (debug_re)
                     debug_rvalid <= 1'b1;
-                end
             end
 
             case (state)
@@ -169,12 +231,12 @@ module recurrent_route_queue_v1 #(
                             busy                   <= 1'b1;
                             latched_neuron_count   <= neuron_count;
                             latched_route_count    <= route_count;
-                            last_consumed_count   <= current_bank ? bank1_count : bank0_count;
-                            last_routed_count     <= 13'd0;
-                            active_source         <= 8'd0;
-                            active_route_index    <= 32'd0;
-                            expected_row_start    <= 32'd0;
-                            next_count            <= 13'd0;
+                            last_consumed_count    <= current_bank ? bank1_count : bank0_count;
+                            last_routed_count      <= 13'd0;
+                            active_source          <= 8'd0;
+                            active_route_index     <= 32'd0;
+                            expected_row_start     <= 32'd0;
+                            next_count             <= 13'd0;
                             // Logically clear the inactive bank immediately by
                             // clearing its count. Old data may remain physically.
                             if (current_bank)
@@ -236,10 +298,6 @@ module recurrent_route_queue_v1 #(
                         busy       <= 1'b0;
                         state      <= S_IDLE;
                     end else begin
-                        if (current_bank)
-                            recurrent_bank0[next_count[11:0]] <= work_target;
-                        else
-                            recurrent_bank1[next_count[11:0]] <= work_target;
                         next_count <= next_count + 13'd1;
 
                         if ((active_route_index + 32'd1) >= row_stop) begin
