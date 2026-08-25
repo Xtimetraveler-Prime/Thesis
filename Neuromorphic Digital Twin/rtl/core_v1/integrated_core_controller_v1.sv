@@ -116,7 +116,16 @@ module integrated_core_controller_v1 #(
     } integration_state_t;
 
     integration_state_t integration_state;
-    logic [8:0] active_count;
+
+    // Freeze the complete command boundary when reset/tick_start is accepted.
+    // Sub-blocks never consume live host count inputs while an operation is busy.
+    logic [8:0]  active_count;
+    logic [10:0] latched_axon_count;
+    logic [12:0] latched_synapse_count;
+    logic [4:0]  latched_format_count;
+    logic [12:0] latched_external_count;
+    logic [12:0] latched_recurrent_count;
+
     logic [7:0] copy_index;
     logic signed [63:0] copy_data;
 
@@ -143,6 +152,7 @@ module integrated_core_controller_v1 #(
     logic [7:0] neuron_accum_addr;
     logic signed [63:0] neuron_accum_wdata;
     logic neuron_debug_re;
+    wire unused_sub_busy;
 
     assign busy = (integration_state != S_IDLE);
     assign phase_b_start = (integration_state == S_PHASE_B_START);
@@ -170,12 +180,12 @@ module integrated_core_controller_v1 #(
         .ap_clk(ap_clk),
         .ap_rst(ap_rst),
         .start(phase_b_start),
-        .neuron_count(neuron_count),
-        .axon_count(axon_count),
-        .synapse_count(synapse_count),
-        .format_count(format_count),
-        .external_event_count(external_event_count),
-        .recurrent_event_count(recurrent_event_count),
+        .neuron_count(active_count),
+        .axon_count(latched_axon_count),
+        .synapse_count(latched_synapse_count),
+        .format_count(latched_format_count),
+        .external_event_count(latched_external_count),
+        .recurrent_event_count(latched_recurrent_count),
         .busy(phase_b_busy),
         .done(phase_b_done),
         .fault(phase_b_fault),
@@ -211,7 +221,7 @@ module integrated_core_controller_v1 #(
         .ap_rst(ap_rst),
         .core_reset_start(neuron_core_reset_start),
         .tick_start(neuron_tick_start),
-        .neuron_count(neuron_count),
+        .neuron_count(active_count),
         .busy(neuron_busy),
         .core_reset_done(neuron_core_reset_done),
         .tick_done(neuron_tick_done),
@@ -259,18 +269,23 @@ module integrated_core_controller_v1 #(
         .hls_spiked_ap_vld(hls_spiked_ap_vld)
     );
 
-    wire unused_sub_busy = phase_b_busy ^ neuron_busy;
+    assign unused_sub_busy = phase_b_busy ^ neuron_busy;
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
-            integration_state <= S_IDLE;
-            active_count       <= 9'd0;
-            copy_index         <= 8'd0;
-            copy_data          <= 64'sd0;
-            core_reset_done    <= 1'b0;
-            tick_done          <= 1'b0;
-            fault              <= 1'b0;
-            fault_code         <= FAULT_NONE;
+            integration_state       <= S_IDLE;
+            active_count            <= 9'd0;
+            latched_axon_count      <= 11'd0;
+            latched_synapse_count   <= 13'd0;
+            latched_format_count    <= 5'd0;
+            latched_external_count  <= 13'd0;
+            latched_recurrent_count <= 13'd0;
+            copy_index              <= 8'd0;
+            copy_data               <= 64'sd0;
+            core_reset_done         <= 1'b0;
+            tick_done               <= 1'b0;
+            fault                   <= 1'b0;
+            fault_code              <= FAULT_NONE;
         end else begin
             core_reset_done <= 1'b0;
             tick_done       <= 1'b0;
@@ -286,10 +301,15 @@ module integrated_core_controller_v1 #(
                         active_count      <= neuron_count;
                         integration_state <= S_RESET_START;
                     end else if (tick_start) begin
-                        fault             <= 1'b0;
-                        fault_code        <= FAULT_NONE;
-                        active_count      <= neuron_count;
-                        integration_state <= S_PHASE_B_START;
+                        fault                   <= 1'b0;
+                        fault_code              <= FAULT_NONE;
+                        active_count            <= neuron_count;
+                        latched_axon_count      <= axon_count;
+                        latched_synapse_count   <= synapse_count;
+                        latched_format_count    <= format_count;
+                        latched_external_count  <= external_event_count;
+                        latched_recurrent_count <= recurrent_event_count;
+                        integration_state       <= S_PHASE_B_START;
                     end
                 end
 
@@ -303,8 +323,8 @@ module integrated_core_controller_v1 #(
                         fault_code        <= FAULT_NEURON_BASE | neuron_fault_code;
                         integration_state <= S_IDLE;
                     end else if (neuron_core_reset_done) begin
-                        core_reset_done    <= 1'b1;
-                        integration_state  <= S_IDLE;
+                        core_reset_done   <= 1'b1;
+                        integration_state <= S_IDLE;
                     end
                 end
 
@@ -318,8 +338,8 @@ module integrated_core_controller_v1 #(
                         fault_code        <= FAULT_PHASE_B_BASE | phase_b_fault_code;
                         integration_state <= S_IDLE;
                     end else if (phase_b_done) begin
-                        copy_index         <= 8'd0;
-                        integration_state  <= S_COPY_READ;
+                        copy_index        <= 8'd0;
+                        integration_state <= S_COPY_READ;
                     end
                 end
 
@@ -328,14 +348,15 @@ module integrated_core_controller_v1 #(
                 end
 
                 S_COPY_WAIT: begin
+                    // phase_b_debug_rvalid must be the synchronous response to
+                    // the immediately preceding S_COPY_READ request.
                     if (!phase_b_debug_rvalid) begin
-                        // The Phase-B debug read is synchronous. Remain here for
-                        // the one-cycle response, but make a missing response a
-                        // deterministic protocol fault on the following cycle.
-                        integration_state <= S_COPY_WAIT;
+                        fault             <= 1'b1;
+                        fault_code        <= FAULT_COPY_PROTOCOL;
+                        integration_state <= S_IDLE;
                     end else begin
-                        copy_data          <= phase_b_debug_rdata;
-                        integration_state  <= S_COPY_WRITE;
+                        copy_data         <= phase_b_debug_rdata;
+                        integration_state <= S_COPY_WRITE;
                     end
                 end
 
@@ -358,8 +379,8 @@ module integrated_core_controller_v1 #(
                         fault_code        <= FAULT_NEURON_BASE | neuron_fault_code;
                         integration_state <= S_IDLE;
                     end else if (neuron_tick_done) begin
-                        tick_done          <= 1'b1;
-                        integration_state  <= S_IDLE;
+                        tick_done         <= 1'b1;
+                        integration_state <= S_IDLE;
                     end
                 end
 
