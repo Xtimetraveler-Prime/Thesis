@@ -39,6 +39,7 @@ module recurrent_integrated_core_controller_v1 #(
     output logic [12:0]  recurrent_current_count,
     output logic [12:0]  last_consumed_recurrent_count,
     output logic [12:0]  last_routed_count,
+    output logic [12:0]  trace_external_event_count,
 
     // Neuron and frozen M08 preload paths.
     input  logic         config_we,
@@ -68,16 +69,29 @@ module recurrent_integrated_core_controller_v1 #(
     input  logic [11:0]  route_target_addr,
     input  logic [15:0]  route_target_wdata,
 
-    // Committed neuron debug visibility.
+    // Post-Phase-F neuron/Phase-B trace visibility. The public validity pulse is
+    // suppressed while the outer recurrent controller is busy, including the
+    // internal spike-read phase after the inner neuron tick completes.
     input  logic         debug_re,
     input  logic [7:0]   debug_addr,
     output logic         debug_rvalid,
     output logic [127:0] debug_config_rdata,
+    output logic [63:0]  debug_state_before_rdata,
     output logic [63:0]  debug_state_rdata,
+    output logic signed [63:0] debug_synaptic_input_rdata,
     output logic signed [63:0] debug_accum_rdata,
     output logic         debug_spike_rdata,
 
-    // Recurrent-bank debug visibility while the full core is idle.
+    // External-event trace readback from the Phase-B memory consumed on the
+    // completed tick. Valid only while the outer core is idle.
+    input  logic         external_debug_re,
+    input  logic [11:0]  external_debug_addr,
+    output logic         external_debug_rvalid,
+    output logic [15:0]  external_debug_rdata,
+
+    // Recurrent-bank debug visibility while the full core is idle. After Phase
+    // F, the new current bank is routed_output_axons; the opposite bank prefix
+    // of last_consumed_recurrent_count is recurrent_input_axons.
     input  logic         recurrent_debug_re,
     input  logic         recurrent_debug_bank,
     input  logic [11:0]  recurrent_debug_addr,
@@ -162,6 +176,7 @@ module recurrent_integrated_core_controller_v1 #(
     logic core_debug_re;
     logic core_debug_rvalid;
     logic core_debug_spike;
+    logic core_external_debug_rvalid;
 
     logic route_busy;
     logic route_reset_start_i;
@@ -178,6 +193,7 @@ module recurrent_integrated_core_controller_v1 #(
     logic [15:0] route_debug_rdata_i;
 
     assign busy = (state != S_IDLE);
+    assign trace_external_event_count = latched_external_count;
     assign core_reset_start_i = (state == S_RESET_CORE_START);
     assign route_reset_start_i = (state == S_RESET_ROUTE_START);
     assign core_tick_start_i = (state == S_CORE_TICK_START);
@@ -199,6 +215,9 @@ module recurrent_integrated_core_controller_v1 #(
         ? recurrent_copy_index
         : recurrent_debug_addr;
 
+    assign debug_rvalid = (state == S_IDLE) ? core_debug_rvalid : 1'b0;
+    assign debug_spike_rdata = core_debug_spike;
+    assign external_debug_rvalid = (state == S_IDLE) ? core_external_debug_rvalid : 1'b0;
     assign recurrent_debug_rvalid = (state == S_IDLE) ? route_debug_rvalid_i : 1'b0;
     assign recurrent_debug_rdata = route_debug_rdata_i;
 
@@ -219,6 +238,7 @@ module recurrent_integrated_core_controller_v1 #(
         .tick(core_tick), .fault(core_fault), .fault_code(core_fault_code),
         .active_neuron(active_neuron),
         .phase_b_active_source(), .phase_b_active_event_index(), .phase_b_active_synapse_index(),
+        .trace_external_event_count(),
         .config_we(config_we && (state == S_IDLE)), .config_addr(config_addr), .config_wdata(config_wdata),
         .state_we(state_we && (state == S_IDLE)), .state_addr(state_addr), .state_wdata(state_wdata),
         .format_we(format_we && (state == S_IDLE)), .format_addr(format_addr), .format_wdata(format_wdata),
@@ -229,8 +249,15 @@ module recurrent_integrated_core_controller_v1 #(
         .debug_re(core_debug_re),
         .debug_addr((state == S_SPIKE_READ || state == S_SPIKE_WAIT) ? spike_scan_index : debug_addr),
         .debug_rvalid(core_debug_rvalid),
-        .debug_config_rdata(debug_config_rdata), .debug_state_rdata(debug_state_rdata),
+        .debug_config_rdata(debug_config_rdata),
+        .debug_state_before_rdata(debug_state_before_rdata),
+        .debug_state_rdata(debug_state_rdata),
+        .debug_synaptic_input_rdata(debug_synaptic_input_rdata),
         .debug_accum_rdata(debug_accum_rdata), .debug_spike_rdata(core_debug_spike),
+        .debug_external_re(external_debug_re && (state == S_IDLE)),
+        .debug_external_addr(external_debug_addr),
+        .debug_external_rvalid(core_external_debug_rvalid),
+        .debug_external_rdata(external_debug_rdata),
         .hls_ap_start(hls_ap_start), .hls_ap_done(hls_ap_done), .hls_ap_idle(hls_ap_idle), .hls_ap_ready(hls_ap_ready),
         .hls_current_before(hls_current_before), .hls_voltage_before(hls_voltage_before),
         .hls_refractory_before(hls_refractory_before), .hls_synaptic_input(hls_synaptic_input),
@@ -242,9 +269,6 @@ module recurrent_integrated_core_controller_v1 #(
         .hls_refractory_after_ap_vld(hls_refractory_after_ap_vld),
         .hls_spiked(hls_spiked), .hls_spiked_ap_vld(hls_spiked_ap_vld)
     );
-
-    assign debug_rvalid = (state == S_IDLE) ? core_debug_rvalid : 1'b0;
-    assign debug_spike_rdata = core_debug_spike;
 
     recurrent_route_queue_v1 #(
         .MAX_NEURONS(MAX_NEURONS), .MAX_AXONS(MAX_AXONS),
@@ -296,14 +320,16 @@ module recurrent_integrated_core_controller_v1 #(
                         fault      <= 1'b1;
                         fault_code <= FAULT_CONCURRENT_CMD;
                     end else if (core_reset_start) begin
-                        fault                  <= 1'b0;
-                        fault_code             <= FAULT_NONE;
-                        latched_neuron_count   <= neuron_count;
-                        latched_axon_count     <= axon_count;
-                        latched_synapse_count  <= synapse_count;
-                        latched_format_count   <= format_count;
-                        latched_route_count    <= route_count;
-                        state                  <= S_RESET_ROUTE_START;
+                        fault                    <= 1'b0;
+                        fault_code               <= FAULT_NONE;
+                        latched_neuron_count     <= neuron_count;
+                        latched_axon_count       <= axon_count;
+                        latched_synapse_count    <= synapse_count;
+                        latched_format_count     <= format_count;
+                        latched_external_count   <= 13'd0;
+                        latched_recurrent_count  <= 13'd0;
+                        latched_route_count      <= route_count;
+                        state                    <= S_RESET_ROUTE_START;
                     end else if (tick_start) begin
                         fault                    <= 1'b0;
                         fault_code               <= FAULT_NONE;
