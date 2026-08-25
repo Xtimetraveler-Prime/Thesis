@@ -107,8 +107,23 @@ def test_m11_5_4_differential_runner_regenerates_python_expectations() -> None:
 
 def test_m11_5_4_differential_uses_same_rtl_as_directed_gate() -> None:
     text = RTL.read_text(encoding="utf-8")
+    compact = " ".join(text.split())
+
     assert "module recurrent_route_queue_v1" in text
-    assert "current_bank      <= ~current_bank;" in text
-    assert "last_consumed_count   <= current_bank ? bank1_count : bank0_count;" in text
-    assert "recurrent_bank0[next_count[11:0]] <= work_target;" in text
-    assert "recurrent_bank1[next_count[11:0]] <= work_target;" in text
+    assert "current_bank <= ~current_bank;" in compact
+    assert (
+        "last_consumed_count <= current_bank ? bank1_count : bank0_count;"
+        in compact
+    )
+
+    # M11.5.5 converted the physical recurrent banks to explicit synchronous
+    # BRAM-friendly ports. The differential gate must keep using this same RTL
+    # while preserving the original inactive-bank append semantics.
+    assert "bank0_mem_waddr = next_count[11:0];" in text
+    assert "bank0_mem_wdata = work_target;" in text
+    assert "bank1_mem_waddr = next_count[11:0];" in text
+    assert "bank1_mem_wdata = work_target;" in text
+    assert "if (current_bank) bank0_mem_we = 1'b1;" in compact
+    assert "else bank1_mem_we = 1'b1;" in compact
+    assert "recurrent_bank0[bank0_mem_waddr] <= bank0_mem_wdata;" in text
+    assert "recurrent_bank1[bank1_mem_waddr] <= bank1_mem_wdata;" in text
