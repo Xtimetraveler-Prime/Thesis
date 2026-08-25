@@ -1,0 +1,30 @@
+name: Patch M11.6 checkpoint milestones
+
+on:
+  push:
+    branches:
+      - agent/m11-6-bitstream-hardware-smoke
+    paths:
+      - .github/workflows/patch_m11_6_checkpoint_milestones.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m11-6-bitstream-hardware-smoke
+          fetch-depth: 0
+      - name: Apply M11.6 checkpoint milestone update
+        run: python3 scripts/patch_m11_6_checkpoint_milestones.py
+      - name: Commit milestone checkpoint
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MILESTONES.md
+          git commit -m "Record M11.6 implementation checkpoint"
+          git push origin HEAD:agent/m11-6-bitstream-hardware-smoke
