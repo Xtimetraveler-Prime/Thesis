@@ -55,6 +55,23 @@ def test_m11_5_3_integrated_controller_has_no_host_accumulator_preload() -> None
     assert "input  logic         accum_we" not in text
 
 
+def test_m11_5_3_integrated_controller_latches_complete_tick_boundary() -> None:
+    text = INTEGRATED_RTL.read_text(encoding="utf-8")
+    assert "latched_axon_count      <= axon_count" in text
+    assert "latched_synapse_count   <= synapse_count" in text
+    assert "latched_format_count    <= format_count" in text
+    assert "latched_external_count  <= external_event_count" in text
+    assert "latched_recurrent_count <= recurrent_event_count" in text
+    assert ".neuron_count(active_count)" in text
+    assert ".axon_count(latched_axon_count)" in text
+    assert ".synapse_count(latched_synapse_count)" in text
+    assert ".format_count(latched_format_count)" in text
+    assert ".external_event_count(latched_external_count)" in text
+    assert ".recurrent_event_count(latched_recurrent_count)" in text
+    assert "FAULT_COPY_PROTOCOL" in text
+    assert "if (!phase_b_debug_rvalid)" in text
+
+
 def test_m11_5_3_real_hls_testbench_never_preloads_accumulators() -> None:
     text = TB.read_text(encoding="utf-8")
     assert '`include "generated_m11_5_3_integrated_vectors.svh"' in text
