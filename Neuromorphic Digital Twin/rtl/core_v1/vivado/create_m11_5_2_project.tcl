@@ -73,9 +73,11 @@ create_bd_design $bd_name
 set controller_cell [create_bd_cell -type module -reference $controller_name controller_0]
 set hls_cell [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 
-# Connect the complete accelerator handshake as an interface. The module
-# reference wrapper annotates hls_ctrl as an acc_handshake master; the HLS IP
-# exposes ap_ctrl as the corresponding slave.
+# Connect the inferred accelerator-control interface first. In Vivado 2025.2,
+# the acc_handshake interface net carries ap_done/ap_idle/ap_ready for this
+# Module Reference + HLS IP pairing but leaves the packaged HLS ap_start pin
+# without a source. Wire ap_start explicitly below and verify the resulting net
+# before validation. The checked-in Tcl, not write_bd_tcl, is normative.
 set controller_ctrl [get_bd_intf_pins -quiet controller_0/hls_ctrl]
 set hls_ctrl [get_bd_intf_pins -quiet neuron_step_v1_0/ap_ctrl]
 if {[llength $controller_ctrl] != 1} {
@@ -87,6 +89,23 @@ if {[llength $hls_ctrl] != 1} {
     error "Packaged HLS ap_ctrl interface was not found"
 }
 connect_bd_intf_net $controller_ctrl $hls_ctrl
+
+set controller_ap_start [get_bd_pins -quiet controller_0/hls_ap_start]
+set hls_ap_start [get_bd_pins -quiet neuron_step_v1_0/ap_start]
+if {[llength $controller_ap_start] != 1 || [llength $hls_ap_start] != 1} {
+    error "M11.5.2 ap_start pins were not found: controller=$controller_ap_start hls=$hls_ap_start"
+}
+connect_bd_net $controller_ap_start $hls_ap_start
+
+set hls_ap_start_nets [get_bd_nets -quiet -of_objects $hls_ap_start]
+set controller_ap_start_nets [get_bd_nets -quiet -of_objects $controller_ap_start]
+if {[llength $hls_ap_start_nets] != 1 || [llength $controller_ap_start_nets] != 1} {
+    error "M11.5.2 ap_start is not connected after explicit wiring: controller_nets=$controller_ap_start_nets hls_nets=$hls_ap_start_nets"
+}
+if {[lindex $hls_ap_start_nets 0] ne [lindex $controller_ap_start_nets 0]} {
+    error "M11.5.2 ap_start pins are on different nets: controller=$controller_ap_start_nets hls=$hls_ap_start_nets"
+}
+puts "M11.5.2 ap_start connected explicitly on net: [lindex $hls_ap_start_nets 0]"
 
 # Connect every scalar neuron datapath/result signal directly to the packaged
 # HLS IP. Width mismatches are intentionally fatal during BD validation.
@@ -119,9 +138,10 @@ foreach {controller_pin hls_pin} $scalar_pairs {
     connect_bd_net $cp $hp
 }
 
-# One 100 MHz clock and active-high reset feed both blocks.
-set clk_port [create_bd_port -dir I -type clk ap_clk]
-set_property CONFIG.FREQ_HZ 100000000 $clk_port
+# One 100 MHz clock and active-high reset feed both blocks. Supplying FREQ_HZ at
+# port creation avoids the transient user-clock warning produced when the value
+# is assigned only afterward.
+set clk_port [create_bd_port -dir I -type clk -freq_hz 100000000 ap_clk]
 connect_bd_net $clk_port [get_bd_pins controller_0/ap_clk] [get_bd_pins neuron_step_v1_0/ap_clk]
 
 set rst_port [create_bd_port -dir I -type rst ap_rst]
@@ -169,6 +189,7 @@ puts "M11.5.2 real-IP block design validated successfully."
 puts "Controller module reference: $controller_name"
 puts "Packaged HLS IP: $expected_vlnv"
 puts "Control interface connection: controller_0/hls_ctrl -> neuron_step_v1_0/ap_ctrl"
+puts "Explicit start connection: controller_0/hls_ap_start -> neuron_step_v1_0/ap_start"
 
 set bd_files [get_files -quiet */${bd_name}.bd]
 if {[llength $bd_files] != 1} {
