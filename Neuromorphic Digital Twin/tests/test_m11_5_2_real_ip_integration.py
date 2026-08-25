@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = ROOT / "examples" / "generate_m11_5_2_vectors.py"
-BD_WRAPPER = ROOT / "rtl" / "core_v1" / "neuron_array_controller_bd_v1.sv"
+BD_WRAPPER = ROOT / "rtl" / "core_v1" / "neuron_array_controller_bd_v1.v"
 VIVADO_TCL = ROOT / "rtl" / "core_v1" / "vivado" / "create_m11_5_2_project.tcl"
 REAL_IP_RUNNER = ROOT / "rtl" / "core_v1" / "run_m11_5_2_real_ip.sh"
 REAL_IP_TB = ROOT / "rtl" / "core_v1" / "tb" / "tb_neuromorphic_twin_m11_5_2.sv"
@@ -35,9 +35,13 @@ def test_m11_5_2_vector_include_is_byte_reproducible(tmp_path) -> None:
     assert "random_0039" in text
 
 
-def test_m11_5_2_bd_wrapper_declares_accelerator_handshake_interface() -> None:
+def test_m11_5_2_bd_wrapper_is_verilog_and_declares_accelerator_handshake() -> None:
+    assert BD_WRAPPER.suffix == ".v"
     text = BD_WRAPPER.read_text(encoding="utf-8")
 
+    assert "module neuron_array_controller_bd_v1" in text
+    assert "input  wire" in text
+    assert "output wire" in text
     assert "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_START" in text
     assert "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_DONE" in text
     assert "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_IDLE" in text
@@ -45,9 +49,11 @@ def test_m11_5_2_bd_wrapper_declares_accelerator_handshake_interface() -> None:
     assert "neuron_array_controller_v1" in text
 
 
-def test_m11_5_2_vivado_flow_uses_module_reference_and_real_hls_ip() -> None:
+def test_m11_5_2_vivado_flow_uses_legal_module_reference_languages_and_real_hls_ip() -> None:
     text = VIVADO_TCL.read_text(encoding="utf-8")
 
+    assert "set_property file_type SystemVerilog [get_files $controller_rtl]" in text
+    assert "set_property file_type Verilog [get_files $controller_bd_rtl]" in text
     assert "create_bd_cell -type module -reference $controller_name controller_0" in text
     assert "create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0" in text
     assert "connect_bd_intf_net $controller_ctrl $hls_ctrl" in text
@@ -75,6 +81,7 @@ def test_m11_5_2_real_ip_runner_requires_m11_4_packaged_ip() -> None:
     assert 'EXPECTED_PART="xck26-sfvc784-2LV-c"' in text
     assert 'EXPECTED_VLNV="neuromorphic-twin.org:hls:neuron_step_v1:1.0"' in text
     assert 'IP_REPO_DIR="$HLS_DIR/build/m11_4/ip_repo"' in text
+    assert 'CONTROLLER_BD_RTL="$SCRIPT_DIR/neuron_array_controller_bd_v1.v"' in text
     assert "generate_m11_5_2_vectors.py" in text
     assert "create_m11_5_2_project.tcl" in text
     assert 'grep -Fq "$PASS_MARKER"' in text
