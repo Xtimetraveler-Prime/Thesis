@@ -106,7 +106,7 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
     tcl = PROGRAM_TCL.read_text(encoding="utf-8")
     runner = HARDWARE_RUNNER.read_text(encoding="utf-8")
     for token in (
-        "open_hw_manager",
+        "open_hw",
         "connect_hw_server",
         "open_hw_target",
         "program_hw_devices",
@@ -122,5 +122,6 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
         "M11.6 physical VIO smoke passed:",
     ):
         assert token in tcl
+    assert "open_hw_manager" not in tcl
     assert "Run bash run_m11_6_bitstream.sh successfully first." in runner
     assert "M11.6 physical-board smoke completed successfully." in runner
