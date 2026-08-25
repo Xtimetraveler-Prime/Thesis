@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
-from generate_m11_5_4_integrated_vectors import (
+EXAMPLES_DIR = Path(__file__).resolve().parent
+if str(EXAMPLES_DIR) not in sys.path:
+    sys.path.insert(0, str(EXAMPLES_DIR))
+
+from generate_m11_5_4_integrated_vectors import (  # noqa: E402
     M11_5_4I_NEURON_COUNT,
     M11_5_4I_TICK_COUNT,
     integrated_vectors,
