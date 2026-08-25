@@ -926,7 +926,7 @@ M10 now provides one frozen, test-addressable computational contract for M11. Ha
 
 **Status:** In progress  
 **Started:** 2026-08-20  
-**Repository evidence:** branch `agent/m11-hls-core`
+**Repository evidence:** `main` through M11.4; branch `agent/m11-5-core-integration` through M11.5.3
 
 ### Goal
 
@@ -1239,21 +1239,152 @@ M11.4 proves the verified HLS datapath can become a reusable Vivado IP and live 
 
 ### M11.5 — Integrate memories, tick control, routing, and observability
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-5-core-integration` through M11.5.3
 
 ### Goal
 
 Turn the isolated neuron transition into the first complete FPGA computational core capable of processing configured state and events over deterministic algorithmic ticks.
 
-### Planned deliverables
+### Integration strategy
 
-- Neuron state/configuration memories.
-- M08-compatible weight-format, synapse, and axon-row storage path.
-- Synaptic accumulation scheduling and a frozen finite hardware capacity profile.
-- Multi-neuron tick controller preserving the six M10 behavioral phases.
-- Next-tick recurrent event queue/routing semantics from M09/M10.
-- Host-visible or simulation-visible state/spike/route observability suitable for later trace export.
-- Use targeted handwritten RTL where HLS is not the clearest or most controllable implementation choice.
+M11.5 keeps the M11.4 packaged `neuron_step_v1` HLS block as the verified neuron-transition boundary and surrounds it with source-controlled RTL for finite memories, deterministic phase scheduling, packed M08 synapse traversal, recurrent routing, queue banking, faults, and debug visibility. The first implementation is intentionally serialized: correctness and exact observability are prioritized over throughput.
+
+The work is split into five smaller closure gates:
+
+1. M11.5.1 — finite capacity profile and packed neuron-memory contract.
+2. M11.5.2 — multi-neuron state/config memories plus the real-HLS transaction sequencer.
+3. M11.5.3 — packed M08 synapse traversal and exact signed-64 Phase-B accumulation.
+4. M11.5.4 — recurrent route CSR plus double-buffered next-tick event queues.
+5. M11.5.5 — integrated observability, resource cleanup, and final Vivado system validation before M11.6.
+
+---
+
+#### M11.5.1 — Freeze finite core capacity and neuron-memory words
+
+**Status:** Complete  
+**Started:** 2026-08-24  
+**Completed:** 2026-08-24
+
+##### How it was met
+
+- Froze the first K26 physical profile at 256 neurons, 1,024 axons, 4,096 synapses, 16 weight formats, 4,096 recurrent routes, 4,096 external events/tick, and 4,096 recurrent events/tick while retaining the wider M10 architectural ID widths.
+- Froze a 64-bit neuron-state word containing signed-24 current, signed-24 voltage, and unsigned-16 refractory state.
+- Froze a 128-bit neuron-configuration word containing both 13-bit decays, signed-24 threshold/bias/reset, unsigned-16 refractory ticks, and required-zero reserved bits.
+- Proved that the existing signed-64 HLS synaptic-input boundary is sufficient for every legal physical workload: the worst-case absolute sum under the frozen event/synapse capacities is below `2^46`.
+- Added machine-readable pack/unpack APIs and a capacity/storage estimator. The capacity-only logical total is 500,288 bits, or a 14-BRAM36 lower bound before legal width/depth/banking effects.
+
+##### Completion evidence
+
+The capacity-report example was independently run and produced the expected frozen profile, including:
+
+```text
+schema=neuromorphic-twin-fpga-core-capacity-v1
+max_neurons=256
+max_axons=1024
+max_synapses=4096
+max_weight_formats=16
+max_routes=4096
+max_external_events_per_tick=4096
+max_recurrent_events_per_tick=4096
+storage_total_bits=500288
+bram36_capacity_lower_bound=14
+```
+
+The later independently reported full Python regressions include the M11.5.1 pack/unpack/capacity tests and completed with zero failures.
+
+---
+
+#### M11.5.2 — Integrate neuron memories and real HLS transactions
+
+**Status:** Complete  
+**Started:** 2026-08-24  
+**Completed:** 2026-08-24
+
+##### How it was met
+
+- Added a serialized RTL controller owning 64-bit state, 128-bit configuration, signed-64 accumulator, and spike memories for up to 256 neurons.
+- Added explicit architectural reset that initializes current to zero, voltage to configured reset voltage, refractory state to zero, accumulators/spikes to zero, and tick to zero without requiring asynchronous memory reset.
+- Preserved M10 atomic observability by blocking architectural debug reads while the controller is busy, so in-place per-neuron Phase-C writeback cannot expose a partial tick.
+- Sequenced neurons in ascending ID through the packaged `neuron_step_v1` block and handled the actual `ap_ctrl_hs` ready/done behavior, including coincident `ap_ready`/`ap_done`.
+- Worked around Vivado 2025.2 integration constraints with a thin Verilog Module-Reference top over the SystemVerilog controller, no-space `/tmp` source staging, and explicit scalar wiring for all four HLS handshake members.
+- Compared complete packed state words and spike flags against Python-generated expectations rather than only checking transaction completion.
+
+##### Completion evidence
+
+The standalone controller XSIM gate passed, and the final real packaged-IP Vivado/XSIM gate passed a 64-neuron corpus containing 24 directed M11.2 boundary vectors plus 40 deterministic random vectors:
+
+```text
+M11.5.2 real packaged-IP integration passed: neurons=64, directed=24, random=40, seed=0x4d313132
+M11.5.2 controller + real packaged HLS IP simulation completed successfully.
+```
+
+This established the real HLS memory/transaction/writeback boundary before adding synapse traversal.
+
+---
+
+#### M11.5.3 — Implement M08 synapse traversal and exact accumulation
+
+**Status:** Complete  
+**Started:** 2026-08-24  
+**Completed:** 2026-08-24
+
+##### Goal
+
+Replace M11.5.2 testbench-preloaded accumulator values with real Phase-B hardware that consumes the frozen M08 packed weight image and produces the exact signed-64 per-neuron accumulator image before Phase C begins.
+
+##### How it was met
+
+1. **Packed-memory software oracle** — Added `fpga_synapse_reference.py`, which consumes `FrozenWeightStorage` directly rather than high-level `Synapse` objects. It preserves external-before-recurrent event order, event and synapse multiplicity, CSR row order, legal unconfigured-axon no-op behavior, and reconstructs every effective weight from the packed requested mantissa plus referenced shared M08 format. It returns both the complete accumulator tuple and a contribution-level trace.
+2. **RTL M08 decoder and CSR walker** — Added `m08_weight_decoder_v1.sv` plus `phase_b_synapse_accumulator_v1.sv`. The decoder implements M08 sign-mode validation, precision truncation toward zero, signed exponent handling, fixed six-bit alignment, and effective-weight clipping. The walker clears configured accumulators, consumes external events first and recurrent events second, traverses each CSR row, and performs exact signed-64 read-modify-write accumulation with deterministic fault paths.
+3. **Python/RTL differential closure** — Added a 12-case deterministic packed-image corpus using seed `0x4D313533`. Each XSIM case reloads full format/synapse/row/event memories and compares every configured neuron's complete signed-64 accumulator word with the Python oracle. Coverage includes positive/negative exponents, all three sign modes, precision settings, empty rows, repeated events, recurrent events, and physically valid unconfigured axons.
+4. **Real-HLS end-to-end integration** — Added `integrated_core_controller_v1.sv`, which latches the complete command/count boundary, runs Phase B to completion, transfers the produced accumulator image internally, and only then launches the already-verified M11.5.2 Phase-C controller. The integration boundary intentionally has no host/testbench accumulator preload port, so the HLS `synaptic_input` values in the final test can only originate from packed M08 memories and event buffers. Python composes the Phase-B oracle with `step_packed_neuron_array_v1()` to produce the final expected packed state/spike image.
+
+##### Completion evidence
+
+The focused M11.5.3 Python tests and the complete Python suite were independently reported passing with zero failures. The directed standalone RTL gate also passed.
+
+The stronger Python/RTL differential gate then passed:
+
+```text
+M11.5.3 Python/RTL accumulator differential passed: cases=12, seed=0x4d313533
+M11.5.3 Python-to-RTL differential simulation completed successfully.
+```
+
+Finally, the K26-targeted Vivado design using the actual M11.4 packaged HLS IP validated and the integrated tick matched Python exactly:
+
+```text
+M11.5.3 packed-M08 real-HLS block design validated successfully.
+M11.5.3 packed-M08 + real-HLS integrated tick passed: neurons=16, axons=8, synapses=16, tag=0x4d353349
+M11.5.3 packed-M08 + real packaged HLS IP simulation completed successfully.
+```
+
+This proves the simulated path `packed M08 image + external/recurrent events -> exact signed-64 Phase B -> real packaged HLS Phase C -> packed next state/spikes` without precomputed accumulator injection.
+
+##### Remaining implementation note
+
+The M11.5.3 composition deliberately preserves the separately verified Phase-B and Phase-C blocks and copies accumulator words between them. This temporarily duplicates accumulator storage. M11.5.5 must collapse that storage into a shared physical organization or explicitly account for the extra memories before the final synthesis/resource baseline is accepted.
+
+---
+
+#### M11.5.4 — Add recurrent route CSR and double-buffered event queues
+
+**Status:** Planned
+
+##### Goal
+
+Implement the M09/M10 next-tick recurrent-routing contract in hardware while preserving ascending source-neuron order, declaration order inside each source, event multiplicity, and strict separation between the queue consumed on tick `t` and the queue generated for tick `t+1`.
+
+---
+
+#### M11.5.5 — Integrated observability and Vivado system validation
+
+**Status:** Planned
+
+##### Goal
+
+Complete trace/debug exposure, resolve temporary integration/resource duplication, and validate the full scripted Vivado system before physical implementation in M11.6.
 
 ---
 
