@@ -155,6 +155,7 @@ module recurrent_integrated_core_controller_v1 #(
     logic core_tick_start_i;
     logic core_reset_done_i;
     logic core_tick_done_i;
+    logic [31:0] core_tick;
     logic core_fault;
     logic [7:0] core_fault_code;
     logic core_recurrent_we;
@@ -215,7 +216,7 @@ module recurrent_integrated_core_controller_v1 #(
         .external_event_count(latched_external_count),
         .recurrent_event_count(latched_recurrent_count),
         .busy(core_busy), .core_reset_done(core_reset_done_i), .tick_done(core_tick_done_i),
-        .tick(tick), .fault(core_fault), .fault_code(core_fault_code),
+        .tick(core_tick), .fault(core_fault), .fault_code(core_fault_code),
         .active_neuron(active_neuron),
         .phase_b_active_source(), .phase_b_active_event_index(), .phase_b_active_synapse_index(),
         .config_we(config_we && (state == S_IDLE)), .config_addr(config_addr), .config_wdata(config_wdata),
@@ -282,6 +283,7 @@ module recurrent_integrated_core_controller_v1 #(
             spike_scan_data            <= 1'b0;
             core_reset_done            <= 1'b0;
             tick_done                  <= 1'b0;
+            tick                       <= 32'd0;
             fault                      <= 1'b0;
             fault_code                 <= FAULT_NONE;
         end else begin
@@ -339,6 +341,7 @@ module recurrent_integrated_core_controller_v1 #(
                         fault_code <= FAULT_CORE_BASE | core_fault_code;
                         state      <= S_IDLE;
                     end else if (core_reset_done_i) begin
+                        tick            <= 32'd0;
                         core_reset_done <= 1'b1;
                         state           <= S_IDLE;
                     end
@@ -403,6 +406,7 @@ module recurrent_integrated_core_controller_v1 #(
                         fault_code <= FAULT_ROUTE_BASE | route_fault_code;
                         state      <= S_IDLE;
                     end else if (route_done_i) begin
+                        tick      <= core_tick;
                         tick_done <= 1'b1;
                         state     <= S_IDLE;
                     end
