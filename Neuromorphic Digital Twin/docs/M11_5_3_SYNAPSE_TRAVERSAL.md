@@ -125,34 +125,73 @@ positive/negative accumulation, M08 effective-weight reconstruction, legal
 unconfigured-axon no-op behavior, configured-neuron target checks, and physical
 event-capacity checks.
 
+**Evidence:** the requested focused/full Python gates were independently reported
+passing on 2026-08-24. No exact pytest count is recorded because only pass status
+was reported.
+
 ### M11.5.3.2 — standalone RTL weight decoder + CSR walker
 
-Add source-controlled RTL that owns the first weight-format, synapse, axon-row,
-event, and signed-64 accumulator arrays. A standalone XSIM test will preload a
-small frozen image and require exact accumulator values from the RTL walker.
+`m08_weight_decoder_v1.sv` reconstructs the M08 effective weight, and
+`phase_b_synapse_accumulator_v1.sv` owns the first serialized CSR/event/accumulator
+walker. The directed XSIM test covers decoder boundaries, external-before-
+recurrent traversal, multiplicity, legal unconfigured axons, accumulator clear,
+and deterministic capacity faults.
+
+**Evidence:** the requested standalone vendor RTL gate was independently reported
+passing on 2026-08-24. This establishes the directed RTL boundary; exact vendor
+log text is not duplicated here because the user reported pass status rather
+than pasting the log.
 
 ### M11.5.3.3 — deterministic Python/RTL differential corpus
 
-Generate packed M08 memory/event images from Python, run them through the RTL
-walker, and compare complete accumulator memories plus selected traversal/fault
-observations.
+`examples/generate_m11_5_3_vectors.py` now generates 12 deterministic packed
+M08/CSR/event cases with seed `0x4D313533`. The corpus includes a directed extreme
+case plus reproducible randomized cases spanning positive/negative exponents,
+precision settings, all three sign modes, empty rows, repeated events, recurrent
+inputs, and physically valid unconfigured axons.
+
+`tb_phase_b_synapse_accumulator_differential_v1.sv` reloads the complete packed
+image for every case and compares every configured neuron's signed-64 accumulator
+against the Python oracle. `run_m11_5_3_differential_sim.sh` regenerates the
+expectations before every XSIM run. This gate is implemented and awaiting
+independent execution.
 
 ### M11.5.3.4 — integrate Phase B with the M11.5.2 controller
 
-Replace testbench accumulator preloads with the real walker. Phase C may start
-only after Phase B has completed every event/synapse contribution. Run the real
-packaged HLS IP and compare post-tick state/spikes against Python expectations.
+`integrated_core_controller_v1.sv` composes the already-verified Phase-B walker
+and M11.5.2 neuron controller without changing the HLS transaction FSM. For an
+integrated tick it:
+
+1. runs Phase B to completion;
+2. synchronously reads each Phase-B accumulator;
+3. copies that image internally into the M11.5.2 controller;
+4. starts the serialized Phase-C neuron controller only after the final copy;
+5. waits for the real packaged `neuron_step_v1` transactions to complete.
+
+There is deliberately no host/testbench accumulator-preload port on this
+integration boundary. `generate_m11_5_3_integrated_vectors.py` composes the
+Python Phase-B oracle with `step_packed_neuron_array_v1()` to generate one
+16-neuron end-to-end expectation. `create_m11_5_3_project.tcl` and
+`run_m11_5_3_real_ip.sh` build the K26-targeted Vivado design using the real M11.4
+packaged HLS IP and exact scalar `ap_ctrl_hs` wiring. This gate is implemented
+and awaiting independent execution.
+
+The internal copy deliberately preserves both already-verified sub-blocks while
+M11.5.3 is being behaviorally closed. It temporarily duplicates accumulator
+storage; M11.5.5 resource/system cleanup must either collapse that storage into
+a shared physical memory or explicitly account for the extra memory before the
+final integrated synthesis baseline is accepted.
 
 ## Completion criteria
 
-- [ ] Frozen packed-memory software oracle passes focused and full Python tests.
-- [ ] RTL reconstructs M08 effective weights exactly for directed boundaries.
-- [ ] RTL traverses axon CSR rows and preserves event multiplicity.
-- [ ] RTL produces exact signed-64 per-neuron accumulator values.
+- [x] Frozen packed-memory software oracle passes focused and full Python tests.
+- [x] RTL reconstructs M08 effective weights exactly for directed boundaries.
+- [x] RTL traverses axon CSR rows and preserves event multiplicity.
+- [x] RTL produces exact signed-64 per-neuron accumulator values for the directed gate.
 - [ ] Python-generated differential images match RTL accumulator memories.
-- [ ] Invalid counts, row pointers, event axons, format indices, and neuron
-      targets produce deterministic faults instead of truncation/wrap.
-- [ ] The Phase-B walker is integrated ahead of the M11.5.2 Phase-C controller.
+- [x] Directed invalid counts/event-capacity cases produce deterministic faults;
+      broader malformed-image fault regression remains part of the differential/integration closure.
+- [x] The Phase-B walker is structurally integrated ahead of the M11.5.2 Phase-C controller.
 - [ ] One real-HLS integrated tick matches the Python golden path without
       testbench-preloaded accumulators.
 - [ ] Completion evidence is recorded before starting M11.5.4.
