@@ -9,7 +9,11 @@
 module neuron_array_controller_bd_v1 #(
     parameter integer MAX_NEURONS = 256
 ) (
+    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 ap_clk CLK" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_clk, ASSOCIATED_RESET ap_rst, FREQ_HZ 100000000" *)
     input  wire         ap_clk,
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 ap_rst RST" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_rst, POLARITY ACTIVE_HIGH" *)
     input  wire         ap_rst,
 
     input  wire         core_reset_start,
