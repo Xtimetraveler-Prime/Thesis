@@ -28,7 +28,7 @@ proc find_one_probe {vio needle} {
     return [lindex $matches 0]
 }
 
-open_hw_manager
+open_hw
 connect_hw_server
 open_hw_target
 
