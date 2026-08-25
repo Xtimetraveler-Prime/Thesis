@@ -44,8 +44,8 @@ The wrapper:
 7. creates project `neuromorphic_twin_m11_4` for `xck26-sfvc784-2LV-c`;
 8. creates block design `neuromorphic_twin_core`;
 9. instantiates `neuromorphic-twin.org:hls:neuron_step_v1:1.0` as `neuron_step_v1_0`;
-10. externalizes every unconnected HLS clock/reset/control/data pin;
-11. validates the block design, generates output products, creates the HDL wrapper, and saves project/BD recreation Tcl.
+10. externalizes the complete HLS `ap_ctrl_hs` interface and every remaining unconnected scalar clock/reset/data pin;
+11. validates the block design, reports its scalar/interface ports while the BD is open, generates output products, and creates the HDL wrapper.
 
 The generated project is expected under:
 
@@ -53,12 +53,14 @@ The generated project is expected under:
 hls/core_v1/build/m11_4/vivado_project/
 ```
 
-and is intentionally ignored by Git. The source-controlled reconstruction path is `vivado/create_m11_4_project.tcl` plus `run_m11_4.sh`.
+and is intentionally ignored by Git. The source-controlled reconstruction path is `vivado/create_m11_4_project.tcl` plus `run_m11_4.sh`; generated `write_bd_tcl`/`write_project_tcl` snapshots are intentionally unnecessary because they embed build-local IP-repository paths without adding a stronger source-control guarantee.
 
-## Why all HLS pins are external in M11.4
+## Why all HLS ports are external in M11.4
 
 At this stage the purpose is to prove that the verified HLS RTL can be packaged, discovered by Vivado, instantiated in IP Integrator, and preserved in a deterministic system project without yet inventing the final core controller.
 
-Externalizing the current HLS pins keeps the interface visible and prevents M11.4 from prematurely choosing the M11.5 memory/control architecture. M11.5 will replace these temporary top-level connections with neuron state/configuration memories, the M08 synapse-storage path, deterministic tick scheduling, recurrent routing, and observability/control logic.
+The `ap_ctrl_hs` members (`ap_start`, `ap_done`, `ap_idle`, and `ap_ready`) remain grouped as one block-design interface instead of overriding an individual member pin. Externalizing that interface plus the remaining scalar HLS ports keeps the implementation boundary visible and prevents M11.4 from prematurely choosing the M11.5 memory/control architecture.
+
+M11.5 will replace these temporary top-level connections with neuron state/configuration memories, the M08 synapse-storage path, deterministic tick scheduling, recurrent routing, and observability/control logic.
 
 No board pin constraints or bitstream generation are part of M11.4. Physical clock/reset sources, implementation timing closure, and board programming remain later M11 work.
