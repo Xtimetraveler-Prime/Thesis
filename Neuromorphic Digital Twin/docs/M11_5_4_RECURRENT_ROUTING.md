@@ -91,9 +91,9 @@ Architectural reset clears both queue counts and returns the selector to bank 0.
 
 ### M11.5.4.1 — Python route/queue oracle
 
-**Implementation added; source-level regression remains part of the M11.5.4 test gate.**
+**Complete software/reference boundary.**
 
-`src/neuromorphic_twin/fpga_recurrent_routing.py` now provides:
+`src/neuromorphic_twin/fpga_recurrent_routing.py` provides:
 
 - `FrozenRouteStorage`, a strict CSR route image;
 - `freeze_spike_routes_v1()`, which groups sources in ascending ID while
@@ -163,41 +163,26 @@ M11.5.4 standalone recurrent-route RTL simulation completed successfully.
 
 ### M11.5.4.3 — Python/RTL differential routing corpus
 
-**Implemented; independent execution pending.**
+**Complete differential RTL gate.**
 
 `examples/generate_m11_5_4_vectors.py` generates 16 deterministic route images,
 each exercised for four consecutive routing ticks, for 64 stateful routing
 transitions total. The generator uses SplitMix64 seed `0x4D313534` and derives
 all expected queue behavior from `route_and_commit_recurrent_v1()`.
 
-The corpus includes:
-
-- the directed `(6, 8, 7, 9, 6)` ordering/multiplicity case;
-- randomized CSR row lengths and declaration order;
-- deliberate cross-source target reuse;
-- all-spiking and partially-spiking vectors;
-- explicit no-spike ticks;
-- both bank-selector directions across consecutive commits;
-- non-empty consumed queues and empty consumed queues.
+The corpus includes the directed ordering/multiplicity case, randomized CSR row
+lengths and declaration order, deliberate cross-source target reuse, all-spiking
+and partially-spiking vectors, explicit no-spike ticks, both selector directions,
+and both empty/non-empty consumed queues.
 
 `tb_recurrent_route_queue_differential_v1.sv` resets once per case, loads one
-route image, and then evolves the same physical queue across four spike vectors.
-Before each tick it reads the complete valid prefix of the current bank and
-compares it with Python's expected `consumed_recurrent_axons`. After the commit
-it compares:
+route image, and evolves the same physical queue across four spike vectors.
+Before each tick it compares the valid current-bank prefix with Python's
+`consumed_recurrent_axons`; after each commit it compares routed contents,
+selector, current count, and both physical bank counts.
 
-- `last_consumed_count`;
-- `last_routed_count`;
-- the physical `current_bank` selector;
-- current-bank count;
-- both physical bank counts;
-- every routed event in the newly current bank.
-
-This tests the bank history itself instead of treating the 64 transitions as
-independent one-shot routing examples. `run_m11_5_4_differential_sim.sh`
-regenerates the Python expectations before every Vivado/XSIM run.
-
-The expected vendor success markers are:
+The Python/source gates and the vendor differential gate were independently
+verified on 2026-08-24. The decisive markers were:
 
 ```text
 M11.5.4 Python/RTL routing differential passed: cases=16, ticks=64, seed=0x4d313534
@@ -206,15 +191,71 @@ M11.5.4 Python-to-RTL routing differential simulation completed successfully.
 
 ### M11.5.4.4 — integrate recurrence into the M11.5.3 core
 
-**Planned after differential closure.** Extend the integrated controller so
-Phase B consumes the current recurrent bank, Phase C produces spikes, Phase D/E
-scans those spike flags through route CSR, and Phase F swaps the recurrent
-banks. The strongest closure gate will execute at least two consecutive ticks
-through the real packaged HLS IP and prove that a spike generated on tick `t`
-first affects neuron state on tick `t+1`.
+**Implementation complete; independent real-HLS execution pending.**
+
+`recurrent_integrated_core_controller_v1.sv` composes the already-verified
+M11.5.3 core and the already-verified recurrent route engine without changing
+either internal FSM. For each accepted algorithmic tick it:
+
+1. latches the current recurrent-bank selector/count;
+2. copies only that valid current-bank prefix into the M11.5.3 Phase-B recurrent
+   input buffer;
+3. starts the packed-M08 Phase-B + real-HLS neuron tick;
+4. waits until all neuron state/spike results are committed;
+5. scans committed spike flags in ascending neuron ID and writes them into the
+   route engine;
+6. starts recurrent CSR traversal and waits for the Phase-F bank swap;
+7. asserts the top-level `tick_done` only after the route commit completes.
+
+There is no host-visible recurrent-event preload input on this final integration
+boundary. The only recurrent events presented to Phase B are copied internally
+from the router's current physical bank. The copy loop uses a 13-bit terminal
+comparison so the full legal 4096-event queue is representable while physical
+memory addresses remain 12 bits.
+
+`generate_m11_5_4_integrated_vectors.py` creates a four-tick directed proof:
+
+```text
+tick 0: external axon 0 -> neuron 0 spikes -> route axon 1
+tick 1: consume axon 1  -> neuron 1 spikes -> route axon 2
+tick 2: consume axon 2  -> neuron 2 spikes -> no route
+tick 3: consume nothing -> no spikes       -> no route
+```
+
+The exact expected spike sequence is:
+
+```text
+(1,0,0) -> (0,1,0) -> (0,0,1) -> (0,0,0)
+```
+
+and the recurrent sequences are:
+
+```text
+consumed: () -> (1,) -> (2,) -> ()
+routed:   (1,) -> (2,) -> () -> ()
+```
+
+This makes a same-tick recurrence bug immediately visible: neuron 1 must not
+spike on tick 0, and neuron 2 must not spike on tick 1.
+
+`create_m11_5_4_project.tcl` reconstructs the K26-targeted Vivado design with
+the real M11.4 packaged `neuron_step_v1` IP and explicit scalar HLS control/data
+connections. `run_m11_5_4_real_ip.sh` stages all RTL under a no-space `/tmp`
+path, regenerates the Python expectations, launches Vivado/XSIM, and requires
+the real multi-tick pass marker.
+
+Expected closure markers:
+
+```text
+M11.5.4 recurrent packed-M08 real-HLS block design validated successfully.
+M11.5.4 packed-M08 + real-HLS recurrent multi-tick passed: ticks=4, neurons=3, routes=2, tag=0x4d353449
+M11.5.4 recurrent packed-M08 + real packaged HLS IP simulation completed successfully.
+```
 
 ## Completion boundary
 
-M11.5.4 is complete only when the real integrated multi-tick XSIM path matches
-the Python golden routing behavior, including ordering, multiplicity, capacity
-faults, bank swaps, reset behavior, and strict next-tick recurrence.
+M11.5.4 is complete only after the M11.5.4.4 real packaged-HLS multi-tick XSIM
+gate independently passes. At that point the hardware path will have proven the
+M09/M10 ordering, multiplicity, bank swapping, reset behavior, stale-event
+prevention, and strict next-tick recurrence through the same packed-M08 and HLS
+neuron datapath used by M11.5.3.
