@@ -10,13 +10,23 @@ HLS_DIR="$PROJECT_DIR/hls/core_v1"
 IP_REPO_DIR="$HLS_DIR/build/m11_4/ip_repo"
 LOCAL_BUILD_DIR="$SCRIPT_DIR/build/m11_5_2_real_ip"
 VIVADO_PROJECT_DIR="$LOCAL_BUILD_DIR/vivado_project"
-VECTOR_FILE="$LOCAL_BUILD_DIR/generated_m11_5_2_vectors.svh"
 VIVADO_TCL="$SCRIPT_DIR/vivado/create_m11_5_2_project.tcl"
-CONTROLLER_RTL="$SCRIPT_DIR/neuron_array_controller_v1.sv"
-CONTROLLER_BD_RTL="$SCRIPT_DIR/neuron_array_controller_bd_v1.v"
-TB_FILE="$SCRIPT_DIR/tb/tb_neuromorphic_twin_m11_5_2.sv"
+SOURCE_CONTROLLER_RTL="$SCRIPT_DIR/neuron_array_controller_v1.sv"
+SOURCE_CONTROLLER_BD_RTL="$SCRIPT_DIR/neuron_array_controller_bd_v1.v"
+SOURCE_TB_FILE="$SCRIPT_DIR/tb/tb_neuromorphic_twin_m11_5_2.sv"
 LOG_FILE="$LOCAL_BUILD_DIR/m11_5_2_real_ip_vivado.log"
 PASS_MARKER="M11.5.2 real packaged-IP integration passed:"
+
+# Vivado's add_files command can reparse list-valued path arguments and split a
+# repository path containing spaces. Stage every source Vivado must add under a
+# no-space /tmp path. The generated project and preserved logs remain under the
+# repository's ignored build directory.
+STAGE_ROOT="/tmp/neuromorphic_twin_rtl_${UID}/m11_5_2_real_ip"
+CONTROLLER_RTL="$STAGE_ROOT/neuron_array_controller_v1.sv"
+CONTROLLER_BD_RTL="$STAGE_ROOT/neuron_array_controller_bd_v1.v"
+TB_FILE="$STAGE_ROOT/tb_neuromorphic_twin_m11_5_2.sv"
+VECTOR_FILE="$STAGE_ROOT/generated_m11_5_2_vectors.svh"
+VECTOR_EVIDENCE="$LOCAL_BUILD_DIR/generated_m11_5_2_vectors.svh"
 
 require_tool() {
     local tool="$1"
@@ -51,24 +61,30 @@ if [[ ! -f "$IP_REPO_DIR/neuron_step_v1/component.xml" ]]; then
     exit 3
 fi
 
-for path in "$VIVADO_TCL" "$CONTROLLER_RTL" "$CONTROLLER_BD_RTL" "$TB_FILE"; do
+for path in "$VIVADO_TCL" "$SOURCE_CONTROLLER_RTL" "$SOURCE_CONTROLLER_BD_RTL" "$SOURCE_TB_FILE"; do
     if [[ ! -f "$path" ]]; then
         echo "ERROR: missing M11.5.2 source file: $path" >&2
         exit 3
     fi
 done
 
-rm -rf "$LOCAL_BUILD_DIR"
-mkdir -p "$LOCAL_BUILD_DIR"
+rm -rf "$LOCAL_BUILD_DIR" "$STAGE_ROOT"
+mkdir -p "$LOCAL_BUILD_DIR" "$STAGE_ROOT"
+
+cp "$SOURCE_CONTROLLER_RTL" "$CONTROLLER_RTL"
+cp "$SOURCE_CONTROLLER_BD_RTL" "$CONTROLLER_BD_RTL"
+cp "$SOURCE_TB_FILE" "$TB_FILE"
 
 PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
 python3 "$PROJECT_DIR/examples/generate_m11_5_2_vectors.py" \
     --output "$VECTOR_FILE"
+cp "$VECTOR_FILE" "$VECTOR_EVIDENCE"
 
 printf 'M11.5.2 toolchain: Vivado %s\n' "$EXPECTED_VERSION"
 printf 'M11.5.2 target part: %s\n' "$EXPECTED_PART"
 printf 'M11.5.2 packaged HLS IP: %s\n' "$EXPECTED_VLNV"
 printf 'M11.5.2 IP repository: %s\n' "$IP_REPO_DIR"
+printf 'M11.5.2 no-space staging directory: %s\n' "$STAGE_ROOT"
 
 echo
 echo '=== M11.5.2 controller + real packaged HLS IP ==='
@@ -106,3 +122,4 @@ echo 'M11.5.2 controller + real packaged HLS IP simulation completed successfull
 printf 'Vivado project: %s\n' "$PROJECT_FILE"
 printf 'Block design: %s\n' "$BD_FILE"
 printf 'Log: %s\n' "$LOG_FILE"
+printf 'Generated vector evidence: %s\n' "$VECTOR_EVIDENCE"
