@@ -107,15 +107,15 @@ def test_packed_neuron_array_enforces_physical_neuron_capacity() -> None:
 def test_m11_5_2_rtl_freezes_memory_and_handshake_boundaries() -> None:
     text = RTL.read_text(encoding="utf-8")
 
-    assert 'parameter integer MAX_NEURONS = 256' in text
-    assert 'logic [63:0]  neuron_state_mem' in text
-    assert 'logic [127:0] neuron_config_mem' in text
-    assert 'logic signed [63:0] synaptic_accum_mem' in text
-    assert 'assign hls_ap_start = (controller_state == S_HLS_WAIT_READY);' in text
-    assert 'if (hls_ap_done)' in text
-    assert 'result_valid != 4\'b1111' in text
-    assert 'if (!busy)' in text
-    assert 'tick             <= tick + 32\'d1;' in text
+    assert "parameter integer MAX_NEURONS = 256" in text
+    assert "logic [63:0]  neuron_state_mem" in text
+    assert "logic [127:0] neuron_config_mem" in text
+    assert "logic signed [63:0] synaptic_accum_mem" in text
+    assert "assign hls_ap_start = (controller_state == S_HLS_WAIT_READY);" in text
+    assert "if (hls_ap_done)" in text
+    assert "result_valid != 4'b1111" in text
+    assert "if (!busy)" in text
+    assert "tick             <= tick + 32'd1;" in text
 
 
 def test_m11_5_2_vendor_simulation_runner_is_source_controlled() -> None:
