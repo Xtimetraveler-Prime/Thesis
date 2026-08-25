@@ -91,7 +91,7 @@ update_ip_catalog -rebuild
 if {[llength [get_ipdefs -all $expected_vlnv]] == 0} {
     error "Expected packaged HLS IP was not found in the catalog: $expected_vlnv"
 }
-foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0} {
+foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0 xilinx.com:ip:proc_sys_reset:5.0 xilinx.com:ip:xlconstant:1.1} {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found in the catalog: $required_ip"
     }
@@ -148,17 +148,38 @@ set_property -dict [list \
     CONFIG.C_PROBE_OUT0_WIDTH {1} \
     CONFIG.C_PROBE_OUT0_INIT_VAL {0x0}] $vio
 
-# Clock/reset: PS pl_clk0 defaults to the 100 MHz PL0 clock for this IP profile.
-# pl_resetn0 is synchronized and polarity-converted inside smoke_0; the resulting
-# active-high hls_ap_rst is shared with the packaged HLS block.
+# Clock/reset boundary. The K26 PS reports its realizable PL0 frequency as
+# approximately 100 MHz (99,999,001 Hz with this board preset). Module Reference
+# clock metadata is therefore allowed to inherit the propagated PS value instead
+# of forcing an exact 100,000,000-Hz property.
+#
+# Synchronize the active-low PS fabric reset with proc_sys_reset. Its active-low
+# peripheral_aresetn drives the smoke sequencer; its active-high peripheral_reset
+# drives the packaged HLS ap_rst. Both are synchronous to the same PL0 clock.
+set ps_reset [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_m11_6]
+set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $ps_reset
+set const_one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_m11_6]
+set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $const_one
+set const_zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_m11_6]
+set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $const_zero
+
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
     [get_bd_pins smoke_0/ap_clk] \
     [get_bd_pins neuron_step_v1_0/ap_clk] \
-    [get_bd_pins vio_m11_6/clk]
+    [get_bd_pins vio_m11_6/clk] \
+    [get_bd_pins proc_sys_reset_m11_6/slowest_sync_clk]
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] \
+    [get_bd_pins proc_sys_reset_m11_6/ext_reset_in]
+connect_bd_net [get_bd_pins const_one_m11_6/dout] \
+    [get_bd_pins proc_sys_reset_m11_6/dcm_locked]
+connect_bd_net [get_bd_pins const_zero_m11_6/dout] \
+    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in] \
+    [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]
+connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_aresetn] \
     [get_bd_pins smoke_0/pl_resetn0]
-connect_bd_net [get_bd_pins smoke_0/hls_ap_rst] \
+connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_reset] \
     [get_bd_pins neuron_step_v1_0/ap_rst]
+puts "M11.6 synchronized reset boundary: smoke=peripheral_aresetn HLS=peripheral_reset"
 
 set handshake_pairs {
     hls_ap_start ap_start

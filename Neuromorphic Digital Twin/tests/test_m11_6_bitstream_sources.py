@@ -50,6 +50,9 @@ def test_m11_6_smoke_uses_ps_reset_and_exports_real_hls_boundary() -> None:
     assert "hls_spiked_ap_vld" in smoke
     assert "module m11_6_smoke_controller_bd_v1" in wrapper
     assert "m11_6_smoke_controller_v1 smoke_i" in wrapper
+    assert "FREQ_HZ 100000000" not in wrapper
+    assert "ASSOCIATED_RESET pl_resetn0" in wrapper
+    assert "POLARITY ACTIVE_LOW" in wrapper
 
 
 def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
@@ -70,6 +73,14 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "set pl_resetn0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_resetn0]" in text
     assert "M11.6 PS Block Automation configured K26 SOM; PL boundary:" in text
     assert "xilinx.com:ip:vio:3.0" in text
+    assert "xilinx.com:ip:proc_sys_reset:5.0" in text
+    assert "CONFIG.C_EXT_RESET_HIGH {0}" in text
+    assert "proc_sys_reset_m11_6/slowest_sync_clk" in text
+    assert "proc_sys_reset_m11_6/ext_reset_in" in text
+    assert "proc_sys_reset_m11_6/peripheral_aresetn" in text
+    assert "proc_sys_reset_m11_6/peripheral_reset" in text
+    assert "[get_bd_pins smoke_0/hls_ap_rst]" not in text
+    assert "M11.6 synchronized reset boundary:" in text
     assert "connect_named_pair smoke_start" in text
     assert "connect_named_pair smoke_pass" in text
 
