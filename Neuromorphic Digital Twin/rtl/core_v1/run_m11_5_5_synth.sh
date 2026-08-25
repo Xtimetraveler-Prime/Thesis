@@ -128,6 +128,8 @@ REQUIRED_REPORTS=(
     "$REPORT_DIR/ram_utilization.rpt"
     "$REPORT_DIR/ram_utilization.csv"
     "$REPORT_DIR/timing_summary_synth.rpt"
+    "$REPORT_DIR/setup_paths_synth.rpt"
+    "$REPORT_DIR/hold_paths_synth.rpt"
     "$REPORT_DIR/methodology_synth.rpt"
     "$REPORT_DIR/clocks.rpt"
 )
