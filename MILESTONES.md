@@ -731,25 +731,16 @@ Allow output spikes to become input axon events on later ticks, enabling determi
 
 ### Routing contract
 
-- A `SpikeRoute(source_neuron, target_axon)` maps each output spike to one or
-  more axon events.
-- Spikes emitted on tick `t` are queued after all neurons finish that tick and
-  become inputs only on tick `t + 1`; same-tick feedback is impossible.
-- External axon events are ordered before queued recurrent events. Recurrent
-  events are ordered by source-neuron ID, then route declaration order.
-- Event multiplicity is preserved. Two simultaneous source neurons routed to
-  the same axon deliver that axon twice and accumulate its synaptic weight
-  twice.
-- Duplicate routes for one `(source_neuron, target_axon)` pair are rejected.
+- A `SpikeRoute(source_neuron,target_axon)` maps each output spike to one or more axon events.
+- Spikes emitted on tick `t` are queued after all neurons finish that tick and become inputs only on tick `t + 1`; same-tick feedback is impossible.
+- External axon events are ordered before queued recurrent events. Recurrent events are ordered by source-neuron ID, then route declaration order.
+- Event multiplicity is preserved. Two simultaneous source neurons routed to the same axon deliver that axon twice and accumulate its synaptic weight twice.
+- Duplicate routes for one `(source_neuron,target_axon)` pair are rejected.
 - Reset clears both neuron state and the pending recurrent-event queue.
 
 ### Trace contract
 
-`TickTrace` now separates `external_input_axons`, `recurrent_input_axons`, and
-`routed_output_axons`, while `input_axons` remains the exact combined event
-sequence consumed by the synapse fabric. Backend trace schema v3 preserves the
-route table and those three per-tick collections. Readers remain compatible
-with trace schemas v1 and v2.
+`TickTrace` now separates `external_input_axons`, `recurrent_input_axons`, and `routed_output_axons`, while `input_axons` remains the exact combined event sequence consumed by the synapse fabric. Backend trace schema v3 preserves the route table and those three per-tick collections. Readers remain compatible with trace schemas v1 and v2.
 
 ### Completion evidence
 
@@ -758,10 +749,7 @@ with trace schemas v1 and v2.
 cases=12, pass=12, fail=0, error=0, ticks=34, mismatches=0
 ```
 
-Nine focused tests cover next-tick delivery, external/recurrent ordering,
-simultaneous-spike ordering, same-axon multiplicity, self-recurrent chains,
-reset behavior, validation, comparison-scenario integration, and trace-v3
-round trips. The original 80 tests remain passing unchanged in scope.
+Nine focused tests cover next-tick delivery, external/recurrent ordering, simultaneous-spike ordering, same-axon multiplicity, self-recurrent chains, reset behavior, validation, comparison-scenario integration, and trace-v3 round trips. The original 80 tests remain passing unchanged in scope.
 
 ---
 
@@ -926,7 +914,7 @@ M10 now provides one frozen, test-addressable computational contract for M11. Ha
 
 **Status:** In progress  
 **Started:** 2026-08-20  
-**Repository evidence:** `main` through M11.4; branch `agent/m11-5-core-integration` through M11.5.3
+**Repository evidence:** `main` through M11.5.4; branch `agent/m11-5-5-system-validation` for M11.5.5
 
 ### Goal
 
@@ -1241,7 +1229,7 @@ M11.4 proves the verified HLS datapath can become a reusable Vivado IP and live 
 
 **Status:** In progress  
 **Started:** 2026-08-24  
-**Repository evidence:** branch `agent/m11-5-core-integration` through M11.5.3
+**Repository evidence:** `main` through M11.5.4; branch `agent/m11-5-5-system-validation` for M11.5.5
 
 ### Goal
 
@@ -1370,21 +1358,73 @@ The M11.5.3 composition deliberately preserves the separately verified Phase-B a
 
 #### M11.5.4 — Add recurrent route CSR and double-buffered event queues
 
-**Status:** Planned
+**Status:** Complete  
+**Started:** 2026-08-24  
+**Completed:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-5-4-recurrent-routing`
 
 ##### Goal
 
 Implement the M09/M10 next-tick recurrent-routing contract in hardware while preserving ascending source-neuron order, declaration order inside each source, event multiplicity, and strict separation between the queue consumed on tick `t` and the queue generated for tick `t+1`.
 
+##### How it was met
+
+1. **Frozen Python route/queue oracle** — Added `fpga_recurrent_routing.py` with a strict source-neuron CSR image and an immutable two-bank recurrent queue model. Route freezing canonicalizes ascending source-neuron order while preserving declaration order inside each source, rejects exact duplicate source/target pairs, preserves cross-source same-target multiplicity, validates finite route/event capacities, and models reset plus next-tick-only bank commit.
+2. **Standalone RTL route engine** — Added `recurrent_route_queue_v1.sv` with a 257-entry 32-bit route-row table, 4096-entry 16-bit route-target table, 256 spike flags, and two 4096-entry 16-bit recurrent banks. The FSM scans spike sources in ascending neuron order, enforces canonical CSR continuity, writes only the inactive bank, clears that bank logically by count rather than mass-erasing BRAM words, and toggles the selector only in the commit state. Directed XSIM proved ordering `(6, 8, 7, 9, 6)`, multiplicity, next-tick consumption, stale-bank suppression, reset, and route-target faulting.
+3. **Stateful Python/RTL differential closure** — Added a deterministic 16-case corpus using SplitMix64 seed `0x4D313534`, with four consecutive routing ticks per case for 64 stateful transitions. The XSIM test compares the complete valid current-bank prefix before each tick and, after commit, compares routed contents, selector, current count, and both physical bank counts. This tests queue history across swaps rather than isolated one-shot route examples.
+4. **Packed-M08 + real-HLS multi-tick integration** — Added `recurrent_integrated_core_controller_v1.sv` to compose the verified M11.5.3 core and route engine. Each tick latches and copies only the old current recurrent-bank prefix into Phase B, runs packed M08 accumulation and the real packaged `neuron_step_v1`, scans committed spike flags into the route CSR engine, waits for Phase-F bank swap, and only then commits the externally visible algorithmic tick. The final integration boundary has no host recurrent-event preload, so recurrence consumed by Phase B must originate from the physical double-buffered router.
+
+##### Completion evidence
+
+The focused M11.5.4 Python/source gates and complete Python suite were independently reported passing with zero failures. The directed standalone XSIM gate passed:
+
+```text
+M11.5.4 recurrent-route RTL tests passed: order + multiplicity + next-tick banks + reset + target fault
+M11.5.4 standalone recurrent-route RTL simulation completed successfully.
+```
+
+The stronger stateful differential gate then passed:
+
+```text
+M11.5.4 Python/RTL routing differential passed: cases=16, ticks=64, seed=0x4d313534
+M11.5.4 Python-to-RTL routing differential simulation completed successfully.
+```
+
+Finally, the K26-targeted Vivado design using the actual M11.4 packaged HLS IP validated and passed the four-tick recurrent chain:
+
+```text
+M11.5.4 recurrent packed-M08 real-HLS block design validated successfully.
+M11.5.4 packed-M08 + real-HLS recurrent multi-tick passed: ticks=4, neurons=3, routes=2, tag=0x4d353449
+M11.5.4 recurrent packed-M08 + real packaged HLS IP simulation completed successfully.
+```
+
+The directed chain required spike vectors `(1,0,0) -> (0,1,0) -> (0,0,1) -> (0,0,0)`, consumed recurrent sequences `() -> (1,) -> (2,) -> ()`, and routed sequences `(1,) -> (2,) -> () -> ()`. A same-tick recurrence error would therefore have moved neuron 1 or neuron 2 one tick early and failed exact state/spike comparison. The top-level tick was also held at its pre-tick value while Phase E/F was active and advanced only after the route-bank commit, preserving the M10 atomic tick boundary.
+
+##### What completion means
+
+M11.5.4 establishes the complete simulated recurrent path `old recurrent bank + external events -> packed M08 Phase B -> real packaged HLS Phase C -> committed spikes -> route CSR -> inactive bank -> Phase-F swap`. Ordering, multiplicity, finite capacity, reset/stale-event behavior, strict next-tick recurrence, and atomic state/queue/tick visibility are now all backed by independently reproduced RTL/XSIM evidence.
+
 ---
 
 #### M11.5.5 — Integrated observability and Vivado system validation
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-24  
+**Repository evidence:** branch `agent/m11-5-5-system-validation`
 
 ##### Goal
 
 Complete trace/debug exposure, resolve temporary integration/resource duplication, and validate the full scripted Vivado system before physical implementation in M11.6.
+
+##### Planned closure work
+
+- Freeze a hardware-visible debug/trace contract sufficient to reconstruct the M10/M12 per-tick fields without exposing partially committed state.
+- Resolve or explicitly account for the temporary duplicate signed-64 accumulator storage introduced by the verification-first M11.5.3 composition.
+- Synthesize the complete recurrent integrated core for `xck26-sfvc784-2LV-c` at the 100 MHz baseline and record actual BRAM/DSP/FF/LUT/URAM mapping.
+- Review inferred memories and any replication/banking caused by debug ports, widths, or access patterns instead of relying on the M11.5.1 capacity-only 14-BRAM36 lower bound.
+- Run Vivado timing analysis on the integrated synthesized design and record whether the 10 ns baseline is met before place-and-route.
+- Preserve the source-controlled, no-GUI reconstruction path and make the final M11.5 design reproducible without checked-in vendor build artifacts.
+- Run a final integrated behavioral gate after any resource/observability cleanup to prove M11.5.1–M11.5.4 behavior remains unchanged.
 
 ---
 
