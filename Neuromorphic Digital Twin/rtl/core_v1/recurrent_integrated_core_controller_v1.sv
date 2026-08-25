@@ -356,7 +356,7 @@ module recurrent_integrated_core_controller_v1 #(
                     end
                 end
                 S_RECURRENT_WRITE: begin
-                    if ((recurrent_copy_index + 12'd1) >= latched_recurrent_count) begin
+                    if (({1'b0, recurrent_copy_index} + 13'd1) >= latched_recurrent_count) begin
                         state <= S_CORE_TICK_START;
                     end else begin
                         recurrent_copy_index <= recurrent_copy_index + 12'd1;
