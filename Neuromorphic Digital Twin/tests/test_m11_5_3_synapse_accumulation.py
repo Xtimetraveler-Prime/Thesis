@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+import neuromorphic_twin as nt
 from neuromorphic_twin.fpga_core_capacity import FPGA_CORE_CAPACITY_V1
 from neuromorphic_twin.fpga_synapse_reference import accumulate_frozen_weight_image_v1
 from neuromorphic_twin.fpga_weight_storage import (
@@ -10,6 +13,11 @@ from neuromorphic_twin.fpga_weight_storage import (
     pack_weight_format,
 )
 from neuromorphic_twin.weights import WeightFormat, WeightSignMode, encode_static_weight
+
+ROOT = Path(__file__).resolve().parents[1]
+DECODER_RTL = ROOT / "rtl" / "core_v1" / "m08_weight_decoder_v1.sv"
+WALKER_RTL = ROOT / "rtl" / "core_v1" / "phase_b_synapse_accumulator_v1.sv"
+RUNNER = ROOT / "rtl" / "core_v1" / "run_m11_5_3_sim.sh"
 
 
 def _storage() -> FrozenWeightStorage:
@@ -29,6 +37,12 @@ def _storage() -> FrozenWeightStorage:
         ),
         axon_row_pointers=(0, 2, 3),
     )
+
+
+def test_phase_b_reference_is_public() -> None:
+    assert nt.accumulate_frozen_weight_image_v1 is accumulate_frozen_weight_image_v1
+    assert nt.PhaseBAccumulationResult is not None
+    assert nt.SynapseAccumulationStep is not None
 
 
 def test_phase_b_preserves_external_then_recurrent_order_and_multiplicity() -> None:
@@ -138,3 +152,41 @@ def test_phase_b_rejects_invalid_neuron_count_and_event_types() -> None:
         accumulate_frozen_weight_image_v1(
             _storage(), neuron_count=2, external_axons=(True,)
         )
+
+
+def test_m11_5_3_decoder_rtl_freezes_m08_arithmetic_contract() -> None:
+    text = DECODER_RTL.read_text(encoding="utf-8")
+    assert "module m08_weight_decoder_v1" in text
+    assert "format_word[15:10]" in text
+    assert "synapse_word[31:29]" in text
+    assert "precision_shift_i = 8 - num_weight_bits_i" in text
+    assert "quantized_i = (magnitude_i >> precision_shift_i) << precision_shift_i" in text
+    assert "aligned_units_i = quantized_i >>> (-exponent_i)" in text
+    assert "WEIGHT_LIMIT = 2097088" in text
+
+
+def test_m11_5_3_walker_rtl_freezes_phase_b_order_and_faults() -> None:
+    text = WALKER_RTL.read_text(encoding="utf-8")
+    assert "module phase_b_synapse_accumulator_v1" in text
+    assert "external_event_mem" in text
+    assert "recurrent_event_mem" in text
+    assert "axon_row_mem" in text
+    assert "synapse_mem" in text
+    assert "accumulator_mem" in text
+    assert "active_source      <= 1'b0" in text
+    assert "active_source      <= 1'b1" in text
+    assert "FAULT_EVENT_AXON" in text
+    assert "FAULT_ROW_POINTER" in text
+    assert "FAULT_FORMAT_INDEX" in text
+    assert "FAULT_TARGET_NEURON" in text
+    assert "FAULT_ACCUM_OVERFLOW" in text
+
+
+def test_m11_5_3_vendor_runner_is_source_controlled() -> None:
+    text = RUNNER.read_text(encoding="utf-8")
+    assert 'EXPECTED_VERSION="2025.2"' in text
+    assert 'STAGE_ROOT="/tmp/neuromorphic_twin_rtl_${UID}/m11_5_3"' in text
+    assert "m08_weight_decoder_v1.sv" in text
+    assert "phase_b_synapse_accumulator_v1.sv" in text
+    assert "tb_phase_b_synapse_accumulator_v1.sv" in text
+    assert 'xsim "$SNAPSHOT" -runall' in text
