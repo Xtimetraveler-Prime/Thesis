@@ -50,6 +50,8 @@ def test_recurrent_integration_orders_copy_core_spike_scan_and_route_commit() ->
     assert ".recurrent_event_count(latched_recurrent_count)" in text
     assert ".recurrent_we(core_recurrent_we)" in text
     assert ".spike_we(route_spike_we)" in text
+    assert ".tick(core_tick)" in text
+    assert "tick      <= core_tick;" in text
     assert "tick_done <= 1'b1;" in text
     assert "({1'b0, recurrent_copy_index} + 13'd1)" in text
 
