@@ -47,6 +47,10 @@ def test_m11_5_2_bd_wrapper_is_verilog_and_keeps_hls_control_scalar() -> None:
     assert "input  wire         hls_ap_idle" in text
     assert "input  wire         hls_ap_ready" in text
     assert "xilinx.com:interface:acc_handshake" not in text
+    assert "xilinx.com:signal:clock:1.0 ap_clk CLK" in text
+    assert "ASSOCIATED_RESET ap_rst, FREQ_HZ 100000000" in text
+    assert "xilinx.com:signal:reset:1.0 ap_rst RST" in text
+    assert "POLARITY ACTIVE_HIGH" in text
     assert "neuron_array_controller_v1" in text
 
 
