@@ -1,7 +1,8 @@
 # M11.5.4 — Recurrent Route CSR and Double-Buffered Event Queues
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
+**Completed:** 2026-08-24  
 **Repository evidence:** branch `agent/m11-5-4-recurrent-routing`
 
 ## Goal
@@ -191,7 +192,7 @@ M11.5.4 Python-to-RTL routing differential simulation completed successfully.
 
 ### M11.5.4.4 — integrate recurrence into the M11.5.3 core
 
-**Implementation complete; independent real-HLS execution pending.**
+**Complete real-HLS multi-tick gate.**
 
 `recurrent_integrated_core_controller_v1.sv` composes the already-verified
 M11.5.3 core and the already-verified recurrent route engine without changing
@@ -205,13 +206,19 @@ either internal FSM. For each accepted algorithmic tick it:
 5. scans committed spike flags in ascending neuron ID and writes them into the
    route engine;
 6. starts recurrent CSR traversal and waits for the Phase-F bank swap;
-7. asserts the top-level `tick_done` only after the route commit completes.
+7. commits the top-level architectural tick and asserts `tick_done` only after
+   the route commit completes.
 
 There is no host-visible recurrent-event preload input on this final integration
 boundary. The only recurrent events presented to Phase B are copied internally
 from the router's current physical bank. The copy loop uses a 13-bit terminal
 comparison so the full legal 4096-event queue is representable while physical
 memory addresses remain 12 bits.
+
+The final composition also keeps the externally visible algorithmic tick counter
+separate from the inner neuron-controller counter. The public tick value remains
+unchanged while Phase E/F is running and increments only when the recurrent bank
+swap has completed, preserving the M10 atomic Phase-F boundary.
 
 `generate_m11_5_4_integrated_vectors.py` creates a four-tick directed proof:
 
@@ -244,7 +251,8 @@ connections. `run_m11_5_4_real_ip.sh` stages all RTL under a no-space `/tmp`
 path, regenerates the Python expectations, launches Vivado/XSIM, and requires
 the real multi-tick pass marker.
 
-Expected closure markers:
+The final real packaged-HLS gate was independently verified on 2026-08-24 with
+all three closure markers:
 
 ```text
 M11.5.4 recurrent packed-M08 real-HLS block design validated successfully.
@@ -252,10 +260,28 @@ M11.5.4 packed-M08 + real-HLS recurrent multi-tick passed: ticks=4, neurons=3, r
 M11.5.4 recurrent packed-M08 + real packaged HLS IP simulation completed successfully.
 ```
 
+## How M11.5.4 was met
+
+M11.5.4 was closed as four increasingly strong boundaries rather than by adding
+routing directly to the full system and relying on one end-to-end run:
+
+1. The Python route/queue oracle froze CSR ordering, multiplicity, finite queue
+   capacity, reset behavior, and next-tick-only delivery.
+2. Standalone RTL proved the physical CSR walker and two-bank queue implement the
+   directed contract, including stale-bank suppression and deterministic faults.
+3. A 16-case, 64-transition Python/RTL differential corpus proved stateful bank
+   evolution and routing order across randomized route images and spike vectors.
+4. The final K26-targeted Vivado/XSIM design connected the recurrent queue to the
+   packed-M08 Phase-B path and actual packaged `neuron_step_v1` HLS IP. The
+   four-tick chain proved that recurrence generated on tick `t` first affects
+   neuron behavior on tick `t+1`, and that architectural tick visibility waits
+   for the Phase-F bank swap.
+
 ## Completion boundary
 
-M11.5.4 is complete only after the M11.5.4.4 real packaged-HLS multi-tick XSIM
-gate independently passes. At that point the hardware path will have proven the
-M09/M10 ordering, multiplicity, bank swapping, reset behavior, stale-event
-prevention, and strict next-tick recurrence through the same packed-M08 and HLS
-neuron datapath used by M11.5.3.
+M11.5.4 is complete. The simulated hardware path now proves the M09/M10 routing
+contract through the same packed-M08 and real-HLS neuron datapath used by the
+integrated core: ascending-source/declaration ordering, event multiplicity,
+finite CSR/queue storage, reset and stale-event behavior, two-bank next-tick
+recurrence, and atomic state/queue/tick commit have all been exercised with
+independently reproduced vendor-tool evidence.
