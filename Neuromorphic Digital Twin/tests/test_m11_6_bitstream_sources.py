@@ -56,11 +56,18 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     text = PROJECT_TCL.read_text(encoding="utf-8")
     assert 'set project_name "neuromorphic_twin_m11_6"' in text
     assert "xilinx.com:ip:zynq_ultra_ps_e:3.5" in text
+    assert "get_board_parts -quiet xilinx.com:kv260_som:part0:*" in text
+    assert "set_property BOARD_PART $kv260_board_part" in text
+    assert "apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e" in text
+    assert 'apply_board_preset "1"' in text
     assert "CONFIG.PSU__FPGA_PL0_ENABLE {1}" in text
+    assert "CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}" in text
+    assert "get_bd_intf_ports -quiet -filter {NAME =~ "DDR*"}" in text
+    assert "get_bd_intf_ports -quiet -filter {NAME =~ "FIXED_IO*"}" in text
+    assert "make_bd_intf_pins_external $ddr_pin" not in text
+    assert "make_bd_intf_pins_external $fixed_pin" not in text
     assert "get_bd_pins zynq_ultra_ps_e_0/pl_clk0" in text
     assert "get_bd_pins zynq_ultra_ps_e_0/pl_resetn0" in text
-    assert "make_bd_intf_pins_external $ddr_pin" in text
-    assert "make_bd_intf_pins_external $fixed_pin" in text
     assert "xilinx.com:ip:vio:3.0" in text
     assert "connect_named_pair smoke_start" in text
     assert "connect_named_pair smoke_pass" in text

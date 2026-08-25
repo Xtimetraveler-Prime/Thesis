@@ -63,6 +63,18 @@ create_project $project_name $project_dir -part $target_part -force
 set_property TARGET_LANGUAGE Verilog [current_project]
 set_property SIMULATOR_LANGUAGE Mixed [current_project]
 
+# The K26 part alone does not initialize the Zynq UltraScale+ PS package/DDR
+# configuration. Select the installed KV260 SOM board file dynamically; this is
+# a SOM-level preset for the K26 PS/DDR/dedicated I/O and does not constrain any
+# carrier-card PL pins.
+set kv260_board_parts [get_board_parts -quiet xilinx.com:kv260_som:part0:*]
+if {[llength $kv260_board_parts] == 0} {
+    error "M11.6 requires the Vivado KV260 SOM board files (xilinx.com:kv260_som:part0:*)."
+}
+set kv260_board_part [lindex [lsort -dictionary $kv260_board_parts] end]
+set_property BOARD_PART $kv260_board_part [current_project]
+puts "M11.6 K26 SOM board preset: $kv260_board_part"
+
 foreach source_file [list $decoder_rtl $phase_b_rtl $neuron_rtl $integrated_rtl $route_rtl $recurrent_rtl $smoke_rtl] {
     add_files -norecurse $source_file
     set_property file_type SystemVerilog [get_files $source_file]
@@ -88,23 +100,31 @@ foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0} {
 create_bd_design $bd_name
 
 # Use the K26 processing system only as a carrier-independent 100 MHz PL clock
-# and fabric-reset source. No AXI host path is introduced in M11.6; control and
-# observation are provided by VIO over the existing JTAG connection.
+# and fabric-reset source. The Zynq MPSoC cell must first receive its SOM board
+# preset through Block Automation; that step initializes the PS/DDR configuration
+# and creates the dedicated external DDR/FIXED_IO interfaces. Only after the
+# preset is applied do we disable unused AXI masters and freeze PL0 at 100 MHz.
 set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
+apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
+    -config {apply_board_preset "1"} $ps
 set_property -dict [list \
     CONFIG.PSU__USE__M_AXI_GP0 {0} \
     CONFIG.PSU__USE__M_AXI_GP1 {0} \
     CONFIG.PSU__USE__M_AXI_GP2 {0} \
     CONFIG.PSU__FPGA_PL0_ENABLE {1} \
-    CONFIG.PSU__USE__FABRIC__RST {1}] $ps
+    CONFIG.PSU__USE__FABRIC__RST {1} \
+    CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
 
-set ddr_pin [get_bd_intf_pins -quiet zynq_ultra_ps_e_0/DDR]
-set fixed_pin [get_bd_intf_pins -quiet zynq_ultra_ps_e_0/FIXED_IO]
-if {[llength $ddr_pin] != 1 || [llength $fixed_pin] != 1} {
-    error "M11.6 expected Zynq PS DDR and FIXED_IO interfaces."
+# Block Automation, rather than manual make_bd_intf_pins_external calls, owns
+# creation of the PS dedicated-I/O boundary. Accept the normal DDR/FIXED_IO name
+# suffixes Vivado may choose, but require exactly one of each.
+set ddr_ports [get_bd_intf_ports -quiet -filter {NAME =~ "DDR*"}]
+set fixed_ports [get_bd_intf_ports -quiet -filter {NAME =~ "FIXED_IO*"}]
+if {[llength $ddr_ports] != 1 || [llength $fixed_ports] != 1} {
+    puts "M11.6 external PS interfaces after Block Automation: [get_bd_intf_ports -quiet]"
+    error "M11.6 PS Block Automation did not create exactly one DDR and one FIXED_IO external interface."
 }
-make_bd_intf_pins_external $ddr_pin
-make_bd_intf_pins_external $fixed_pin
+puts "M11.6 PS Block Automation created external interfaces: DDR=$ddr_ports FIXED_IO=$fixed_ports"
 
 set smoke [create_bd_cell -type module -reference $smoke_module smoke_0]
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
