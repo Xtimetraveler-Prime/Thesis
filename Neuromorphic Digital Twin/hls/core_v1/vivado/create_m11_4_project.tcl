@@ -40,25 +40,51 @@ if {[llength $matching_ipdefs] == 0} {
 create_bd_design $bd_name
 set hls_cell [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 
-# ap_start can carry a default driver in the packaged HLS metadata. Vivado's
-# cell-wide make_bd_pins_external therefore may leave it tied to zero instead
-# of creating a source port. Query this pin from the cell object itself, then
-# create and connect a real transaction-start input explicitly.
-set ap_start_pin [get_bd_pins -quiet -of_objects $hls_cell -filter {NAME == "ap_start"}]
-if {[llength $ap_start_pin] != 1} {
-    error "Expected exactly one HLS ap_start pin, found: $ap_start_pin"
+# Preserve the HLS transaction protocol as a real block-design interface.
+# ap_ctrl_hs contains ap_start/ap_done/ap_idle/ap_ready; externalizing the
+# interface avoids overriding an individual member pin and produces a cleaner,
+# reproducible IP Integrator connection than manually wiring ap_start alone.
+set ap_ctrl_intf [get_bd_intf_pins -quiet -of_objects $hls_cell -filter {NAME == "ap_ctrl"}]
+if {[llength $ap_ctrl_intf] != 1} {
+    error "Expected exactly one HLS ap_ctrl interface pin, found: $ap_ctrl_intf"
 }
-set ap_start_port [create_bd_port -dir I ap_start]
-connect_bd_net $ap_start_port $ap_start_pin
+make_bd_intf_pins_external $ap_ctrl_intf
 
-# M11.4 keeps the verified HLS core isolated. Make every other currently
-# unconnected scalar control/data pin external so later M11.5 logic can
-# connect state memories, tick control, and observability without changing
-# this verified IP boundary.
+# M11.4 keeps the verified HLS core isolated. Make every remaining unconnected
+# scalar control/data pin external so later M11.5 logic can connect clocks,
+# reset, state/configuration memories, tick control, and observability without
+# changing this verified IP boundary.
 make_bd_pins_external $hls_cell
 
 validate_bd_design
 save_bd_design
+
+# Report ports while the block design is definitely current/open. Vivado's
+# get_bd_ports/get_bd_intf_ports commands operate on the current IP Integrator
+# subsystem; project-export helpers can change that current-design context.
+puts ""
+puts "M11.4 Vivado block design validated successfully."
+puts "External block-design interface ports:"
+foreach intf_port [lsort [get_bd_intf_ports]] {
+    set mode [get_property MODE $intf_port]
+    set vlnv [get_property VLNV $intf_port]
+    if {$vlnv eq ""} {
+        puts "  $intf_port ($mode)"
+    } else {
+        puts "  $intf_port ($mode, $vlnv)"
+    }
+}
+puts "External block-design scalar ports:"
+foreach port [lsort [get_bd_ports]] {
+    set dir [get_property DIR $port]
+    set left [get_property LEFT $port]
+    set right [get_property RIGHT $port]
+    if {$left eq "" || $right eq "" || $left == -1 || $right == -1} {
+        puts "  $port ($dir)"
+    } else {
+        puts "  $port ($dir, ${left}:${right})"
+    }
+}
 
 set bd_files [get_files -quiet */${bd_name}.bd]
 if {[llength $bd_files] != 1} {
@@ -73,15 +99,10 @@ if {[llength $wrapper_files] > 0} {
 }
 update_compile_order -fileset sources_1
 
-# Persist both a project-level and BD-level recreation script as generated
-# evidence. The source-controlled script in this directory remains normative.
-write_bd_tcl -force [file join $project_dir recreate_neuromorphic_twin_core_bd.tcl]
-write_project_tcl -force [file join $project_dir recreate_m11_4_project.tcl]
-
-# create_project already created the project at the requested path, and the
-# design/source commands above update that active project in place. Vivado
-# 2025.2 exposes save_project_as for copying/renaming projects; there is no
-# zero-argument save_project operation to perform here.
+# The checked-in script is the normative project-recreation source. Avoid
+# generating secondary write_bd_tcl/write_project_tcl snapshots here because
+# they embed build-local user-IP repository paths and add no stronger source-
+# control guarantee than this script already provides.
 
 puts ""
 puts "M11.4 Vivado project created successfully."
@@ -89,16 +110,5 @@ puts "Project: [file join $project_dir ${project_name}.xpr]"
 puts "Target part: $target_part"
 puts "Packaged HLS IP: $expected_vlnv"
 puts "Block design: $bd_name"
-puts "External block-design ports:"
-foreach port [lsort [get_bd_ports]] {
-    set dir [get_property DIR $port]
-    set left [get_property LEFT $port]
-    set right [get_property RIGHT $port]
-    if {$left eq "" || $right eq "" || $left == -1 || $right == -1} {
-        puts "  $port ($dir)"
-    } else {
-        puts "  $port ($dir, ${left}:${right})"
-    }
-}
 
 close_project
