@@ -177,15 +177,23 @@ report_utilization -file [file join $report_dir utilization.rpt]
 report_utilization -hierarchical -hierarchical_depth 6 -file [file join $report_dir utilization_hierarchical.rpt]
 report_ram_utilization -include_lutram -file [file join $report_dir ram_utilization.rpt] -csv [file join $report_dir ram_utilization.csv]
 report_timing_summary -file [file join $report_dir timing_summary_synth.rpt]
+report_timing -delay_type max -max_paths 20 -nworst 20 -path_type full_clock_expanded -file [file join $report_dir setup_paths_synth.rpt]
+report_timing -delay_type min -max_paths 20 -nworst 20 -path_type full_clock_expanded -file [file join $report_dir hold_paths_synth.rpt]
 report_methodology -file [file join $report_dir methodology_synth.rpt]
 report_clocks -file [file join $report_dir clocks.rpt]
 write_checkpoint -force [file join $report_dir neuromorphic_twin_m11_5_5_synth.dcp]
 
-set worst_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
-if {[llength $worst_paths] > 0} {
-    puts "M11.5.5 synthesis worst setup slack: [get_property SLACK [lindex $worst_paths 0]] ns"
+set worst_setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
+if {[llength $worst_setup_paths] > 0} {
+    puts "M11.5.5 synthesis worst setup slack: [get_property SLACK [lindex $worst_setup_paths 0]] ns"
 } else {
     puts "M11.5.5 synthesis worst setup slack: unavailable"
+}
+set worst_hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
+if {[llength $worst_hold_paths] > 0} {
+    puts "M11.5.5 synthesis worst hold slack: [get_property SLACK [lindex $worst_hold_paths 0]] ns"
+} else {
+    puts "M11.5.5 synthesis worst hold slack: unavailable"
 }
 
 puts "M11.5.5 synthesis reports generated successfully."
