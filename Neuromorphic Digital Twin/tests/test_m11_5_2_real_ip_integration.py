@@ -57,6 +57,12 @@ def test_m11_5_2_vivado_flow_uses_legal_module_reference_languages_and_real_hls_
     assert "create_bd_cell -type module -reference $controller_name controller_0" in text
     assert "create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0" in text
     assert "connect_bd_intf_net $controller_ctrl $hls_ctrl" in text
+    assert "set controller_ap_start [get_bd_pins -quiet controller_0/hls_ap_start]" in text
+    assert "set hls_ap_start [get_bd_pins -quiet neuron_step_v1_0/ap_start]" in text
+    assert "connect_bd_net $controller_ap_start $hls_ap_start" in text
+    assert "get_bd_nets -quiet -of_objects $hls_ap_start" in text
+    assert "M11.5.2 ap_start is not connected after explicit wiring" in text
+    assert "create_bd_port -dir I -type clk -freq_hz 100000000 ap_clk" in text
     assert "validate_bd_design" in text
     assert "launch_simulation -simset sim_1 -mode behavioral" in text
     assert "run all" in text
