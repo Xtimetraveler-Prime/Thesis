@@ -74,14 +74,22 @@ def test_m11_5_2_real_ip_testbench_compares_packed_python_expectations() -> None
     assert "M11.5.2 real packaged-IP integration passed:" in text
 
 
-def test_m11_5_2_real_ip_runner_requires_m11_4_packaged_ip() -> None:
+def test_m11_5_2_real_ip_runner_requires_packaged_ip_and_no_space_staging() -> None:
     text = REAL_IP_RUNNER.read_text(encoding="utf-8")
 
     assert 'EXPECTED_VERSION="2025.2"' in text
     assert 'EXPECTED_PART="xck26-sfvc784-2LV-c"' in text
     assert 'EXPECTED_VLNV="neuromorphic-twin.org:hls:neuron_step_v1:1.0"' in text
     assert 'IP_REPO_DIR="$HLS_DIR/build/m11_4/ip_repo"' in text
-    assert 'CONTROLLER_BD_RTL="$SCRIPT_DIR/neuron_array_controller_bd_v1.v"' in text
+    assert 'SOURCE_CONTROLLER_BD_RTL="$SCRIPT_DIR/neuron_array_controller_bd_v1.v"' in text
+    assert 'STAGE_ROOT="/tmp/neuromorphic_twin_rtl_${UID}/m11_5_2_real_ip"' in text
+    assert 'CONTROLLER_RTL="$STAGE_ROOT/neuron_array_controller_v1.sv"' in text
+    assert 'CONTROLLER_BD_RTL="$STAGE_ROOT/neuron_array_controller_bd_v1.v"' in text
+    assert 'TB_FILE="$STAGE_ROOT/tb_neuromorphic_twin_m11_5_2.sv"' in text
+    assert 'VECTOR_FILE="$STAGE_ROOT/generated_m11_5_2_vectors.svh"' in text
+    assert 'cp "$SOURCE_CONTROLLER_RTL" "$CONTROLLER_RTL"' in text
+    assert 'cp "$SOURCE_CONTROLLER_BD_RTL" "$CONTROLLER_BD_RTL"' in text
+    assert 'cp "$SOURCE_TB_FILE" "$TB_FILE"' in text
     assert "generate_m11_5_2_vectors.py" in text
     assert "create_m11_5_2_project.tcl" in text
     assert 'grep -Fq "$PASS_MARKER"' in text
