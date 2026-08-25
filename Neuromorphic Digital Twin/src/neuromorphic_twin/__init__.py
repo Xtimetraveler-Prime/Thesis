@@ -25,6 +25,11 @@ from .fpga_core_capacity import (
     unpack_neuron_config_word,
     unpack_neuron_state_word,
 )
+from .fpga_synapse_reference import (
+    PhaseBAccumulationResult,
+    SynapseAccumulationStep,
+    accumulate_frozen_weight_image_v1,
+)
 from .fpga_weight_storage import (
     AXON_ROW_POINTER_BITS,
     FORMAT_WORD_BITS,
@@ -106,6 +111,7 @@ __all__ = [
     "NeuromorphicCore",
     "OverflowMode",
     "PackedSynapseFields",
+    "PhaseBAccumulationResult",
     "REFRACTORY_BITS",
     "REFRACTORY_MAX",
     "ROUTE_ROW_POINTER_BITS",
@@ -119,12 +125,14 @@ __all__ = [
     "SpikeRoute",
     "StaticWeightEncoding",
     "Synapse",
+    "SynapseAccumulationStep",
     "TICK_BITS",
     "TickTrace",
     "WeightFormat",
     "WeightSignMode",
     "WeightStorageArtifacts",
     "WeightStorageEstimate",
+    "accumulate_frozen_weight_image_v1",
     "encode_static_weight",
     "estimate_fpga_core_storage_v1",
     "estimate_weight_storage",
