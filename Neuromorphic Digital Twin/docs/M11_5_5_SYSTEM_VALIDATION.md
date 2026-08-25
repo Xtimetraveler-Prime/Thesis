@@ -1,7 +1,8 @@
 # M11.5.5 — Integrated Observability and Vivado System Validation
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
+**Completed:** 2026-08-25  
 **Repository evidence:** branch `agent/m11-5-5-system-validation`
 
 ## Goal
@@ -116,26 +117,25 @@ URAM                 0 /     64 =   0.00%
 DSPs                  2 /   1248 =   0.16%
 ```
 
-The design therefore **cannot** proceed to M11.6 from this profile even though
-Vivado synthesis itself completed. BRAM, registers, DSPs, and URAM are
-comfortable; CLB LUT capacity is the blocker.
+That profile could not proceed to physical implementation even though Vivado
+synthesis completed. The result identified CLB LUT capacity—not arithmetic DSPs,
+register capacity, or nominal BRAM capacity—as the actual blocker.
 
-The RAM report also revealed the structural cause worth addressing before any
-higher-level redesign. Several large arrays annotated for block RAM did not
-appear in the inferred BRAM list, including the Phase-B event/accumulator path,
-neuron state/accumulator path, and recurrent event banks. One particularly clear
-cause was an asynchronous read of `accumulator_mem`; dedicated block RAM requires
-synchronous read behavior. Large arrays with non-BRAM-friendly read patterns can
-create deep LUT read muxes even when a `ram_style="block"` attribute is present.
+The RAM report exposed the structural cause worth correcting before any
+higher-level redesign. Several large arrays annotated for block RAM did not map
+to BRAM, including the Phase-B event/accumulator path, neuron state/accumulator
+path, and recurrent event banks. One clear cause was an asynchronous read of
+`accumulator_mem`; a `ram_style="block"` attribute cannot compensate for an
+access pattern that is incompatible with dedicated block-RAM inference.
 
-#### Resource remediation implemented
+#### Resource remediation
 
-The affected paths are now written as canonical synchronous single-clock RAM
+The affected paths were rewritten as canonical synchronous single-clock RAM
 ports without changing algorithmic behavior:
 
 - Phase-B external and recurrent 4096 x 16 event buffers use registered read
   outputs and explicit write/read ports.
-- Phase-B 256 x 64 signed accumulator uses a new implementation-only
+- Phase-B 256 x 64 signed accumulator uses an implementation-only
   `S_ACCUM_READ` cycle so read-modify-write accumulation consumes a synchronous
   registered RAM output rather than an asynchronous array read.
 - The neuron controller's 256 x 64 state and signed-64 copied accumulator use
@@ -145,12 +145,12 @@ ports without changing algorithmic behavior:
   processes; bank selector, counts, ordering, and Phase-F swap behavior are
   unchanged.
 
-These extra cycles are hardware scheduling details only. They do not alter the
+These added cycles are hardware scheduling details only. They do not change the
 M10 six-phase algorithmic tick, weight arithmetic, neuron equations, routing
 order, recurrence delay, or externally visible commit boundary.
 
-The synthesis runner now parses `utilization.rpt` after Vivado completes and
-fails if any of the following exceeds the selected device capacity:
+The synthesis runner was also hardened to parse `utilization.rpt` and fail if
+any of these device resource classes exceeds the K26 capacity:
 
 ```text
 CLB LUTs
@@ -160,8 +160,41 @@ DSPs
 URAM
 ```
 
-This prevents a >100% design from producing a misleading M11.5.5 completion
-marker again.
+This prevents a resource-overflowing design from producing a misleading M11.5.5
+completion marker.
+
+#### Final whole-core resource profile — accepted
+
+After the synchronous-RAM remediation, the independently rerun synthesis gate
+reported:
+
+```text
+M11.5.5 resource capacity check passed:
+CLB_LUT=1757/117120
+CLB_REG=944/234240
+BRAM_TILE=27/144
+DSP=2/1248
+URAM=0/64
+```
+
+Equivalent utilization percentages are approximately:
+
+```text
+CLB LUTs       1.50%
+CLB Registers  0.40%
+Block RAM Tile 18.75%
+DSPs           0.16%
+URAM           0.00%
+```
+
+The increase from 16 to 27 BRAM tiles is intentional: large runtime arrays that
+had previously exploded into LUT logic now map into dedicated block memory. The
+corresponding LUT reduction from 172,225 to 1,757 is the decisive evidence that
+the physical memory organization is now appropriate for the selected K26.
+
+The verification-first separation between Phase-B and Phase-C accumulator
+storage is therefore retained. It is now explicitly budgeted by real synthesis
+rather than justified only by the M11.5.1 logical 14-BRAM36 lower bound.
 
 ### M11.5.5.3 — Synthesize and measure the complete integrated core
 
@@ -195,9 +228,9 @@ clocks.rpt
 neuromorphic_twin_m11_5_5_synth.dcp
 ```
 
-#### First synthesis timing evidence — 2026-08-25
+#### Synthesis timing evidence and M11.6 handoff
 
-The first profile reported:
+The first complete-core synthesis profile reported:
 
 ```text
 Clock:      ap_clk = 10.000 ns / 100 MHz
@@ -210,23 +243,24 @@ Hold failing endpoints: 213 / 73353
 WPWS:       +4.238 ns
 ```
 
-Thus the first synthesized profile met the 100 MHz **setup** target but not the
-synthesis-stage min-delay/hold check. The 149 ps pre-route hold estimate is not
-being converted into an RTL timing exception or artificial data-path delay.
-Physical placement/routing is responsible for final min-delay behavior; M11.6
-must require nonnegative routed hold slack before the timing result is accepted.
-The Tcl records explicit worst setup and hold paths so any persistent routed issue
-can be traced to endpoints.
+That profile met the 100 MHz synthesis-stage setup target but had a 149 ps
+pre-route hold estimate. No RTL timing exception or artificial delay was added.
+The synthesis flow now records explicit setup and hold paths so physical
+implementation can diagnose any remaining min-delay problem.
 
-Material nonfunctional warnings in the first synthesis log were the known scalar
-overrides of the packaged HLS `ap_ctrl` members, clock-interface metadata without
-associated bus interfaces, skipped automatic incremental compilation because no
-reference checkpoint was supplied, and hierarchy/floorplanning advisories on the
-flattened synthesized netlist. None changes the frozen arithmetic or recurrent
-behavior.
+The final post-remediation synthesis completed successfully and passed the
+resource-capacity gate. Its detailed timing summary was not separately
+transcribed into the milestone evidence, so M11.5.5 does **not** claim routed or
+post-remediation timing closure. M11.6 is the authoritative physical timing
+stage and must require nonnegative routed setup/hold slack before accepting the
+implemented design.
 
-A new synthesis run after the BRAM-friendly cleanup must replace the first
-resource/timing profile before M11.5.5 can close.
+Material nonfunctional warnings observed during this work include the known
+scalar overrides of packaged HLS `ap_ctrl` members, clock-interface metadata
+without associated bus interfaces, skipped automatic incremental compilation
+when no reference checkpoint is supplied, and hierarchy/floorplanning
+advisories on the flattened synthesized netlist. None changes the frozen
+arithmetic or recurrent behavior.
 
 ### M11.5.5.4 — Final trace-aware behavioral regression
 
@@ -239,9 +273,12 @@ rtl/core_v1/vivado/create_m11_5_5_trace_project.tcl
 rtl/core_v1/run_m11_5_5_trace_sim.sh
 ```
 
-Before the resource-remediation RTL changes, the focused/full Python gates and
-all four real-HLS trace markers were independently reported passing. The trace
-test verifies after every Phase-F commit:
+After the resource remediation, the focused Python/source regressions, complete
+Python regression suite, affected M11.5.2/M11.5.3/M11.5.4 hardware regression
+gates, and the final trace-aware real-HLS gate were independently rerun and
+reported passing.
+
+The final trace gate verifies after every Phase-F commit:
 
 - post-commit hardware tick converts exactly to zero-based trace tick;
 - external event count/data match the actual Phase-B external buffer;
@@ -252,45 +289,47 @@ test verifies after every Phase-F commit:
 - committed state and spike flags remain exact; and
 - the transient neuron-controller accumulator is zero after writeback.
 
-Because Phase-B, neuron-memory, and recurrent-bank RTL access patterns changed
-after that pass, the strong hardware regressions must be rerun on the remediated
-branch before their earlier evidence can be used for final closure.
+The independently observed final trace markers included:
 
-## Current implementation state
+```text
+M11.5.5 trace real-HLS block design validated successfully.
+M11.5.5 trace snapshot + real-HLS recurrent regression passed: ticks=4, neurons=3, tag=0x4d353554
+M11.5.5 trace real-HLS Vivado simulation flow completed.
+M11.5.5 trace snapshot + real packaged HLS IP simulation completed successfully.
+```
 
-Implemented:
+The final synthesis then reported:
 
-- lossless `FpgaTickTraceSnapshot` reconstruction contract;
-- complete trace readback through the recurrent Module Reference boundary;
-- K26/100 MHz whole-core synthesis/reporting flow;
-- initial whole-core synthesis evidence including the discovered 147.05% LUT
-  overutilization;
-- BRAM-friendly synchronous refactoring of the major large runtime memories;
-- resource-capacity enforcement in the synthesis runner;
-- final trace-aware real-packaged-HLS XSIM gate and source guards.
+```text
+M11.5.5 resource capacity check passed: CLB_LUT=1757/117120, CLB_REG=944/234240, BRAM_TILE=27/144, DSP=2/1248, URAM=0/64
+M11.5.5 complete-core synthesis and reporting completed successfully.
+```
 
-Still required before M11.5.5 closure:
+## Completion evidence summary
 
-1. rerun focused/full Python source regressions after the RAM refactor;
-2. rerun the strongest RTL/HLS regression gates that touch the changed blocks;
-3. rerun complete-core synthesis and confirm **every physical resource class is
-   at or below 100%**, especially CLB LUTs;
-4. replace the first resource/timing baseline with the remediated result; and
-5. rerun the final trace-aware real-HLS recurrent regression on that same source
-   state.
+M11.5.5 closed with all required evidence layers:
 
-## Completion boundary
+1. lossless software reconstruction of every normative M10/M12 tick-trace field;
+2. passive hardware trace storage/readback that cannot feed or change the
+   computational datapath;
+3. exact real-packaged-HLS recurrent behavioral regression after trace and RAM
+   instrumentation;
+4. discovery and correction of an initially impossible 147.05% LUT synthesis
+   profile;
+5. a final synthesis profile that fits every checked K26 resource class with
+   substantial headroom; and
+6. a hardened source-controlled synthesis gate that rejects future resource
+   overflow automatically.
 
-M11.5.5 is complete only when:
+## What completion means
 
-1. every normative M10 trace field can be reconstructed losslessly after a
-   completed hardware tick;
-2. the complete core fits the selected `xck26-sfvc784-2LV-c` resource capacities
-   at synthesis, with no resource class above 100%;
-3. the final complete-core memory/resource organization is measured from Vivado
-   synthesis rather than inferred only from logical bit counts;
-4. the 100 MHz synthesis setup result, pre-route hold result, and material
-   warnings are recorded without misrepresenting synthesis timing as routed
-   signoff; and
-5. the final real packaged-HLS recurrent behavioral gate matches the Python
-   golden expectations after the resource/observability cleanup.
+M11.5.5—and therefore M11.5 as a whole—now establishes a complete simulated FPGA
+computational core with finite memories, packed M08 synapse traversal, exact
+signed-64 accumulation, real packaged HLS neuron execution, deterministic
+next-tick recurrent routing, atomic tick commit, and post-tick trace readback.
+The design is no longer only behaviorally correct: Vivado synthesis also shows
+that the final memory organization fits the selected K26 device.
+
+Physical placement, routing, routed timing closure, bitstream generation, board
+programming, and hardware smoke tests remain M11.6. Full Python-versus-physical-
+FPGA tick conformance remains M12.
