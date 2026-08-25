@@ -80,18 +80,32 @@ routed_output_axons[t]      = newly generated inactive-bank contents
 consumed_recurrent_axons[t] never includes routed_output_axons[t]
 ```
 
-A tick with no output spikes still replaces the inactive bank with an empty
-queue before the swap, so stale events cannot reappear two ticks later.
+A tick with no output spikes sets the inactive bank's logical count to zero
+before the swap. Physical words do not need to be mass-cleared; a zero count is
+enough to prevent stale events from becoming architecturally visible two ticks
+later.
 
-Architectural reset clears both queue counts and returns the selector to a
-known bank.
+Architectural reset clears both queue counts and returns the selector to bank 0.
 
-## Planned verification gates
+## Verification gates
 
 ### M11.5.4.1 — Python route/queue oracle
 
-Freeze CSR route storage and an immutable two-bank queue model. Directed tests
-must prove:
+**Implementation added; independent execution pending.**
+
+`src/neuromorphic_twin/fpga_recurrent_routing.py` now provides:
+
+- `FrozenRouteStorage`, a strict CSR route image;
+- `freeze_spike_routes_v1()`, which groups sources in ascending ID while
+  preserving declaration order inside each source and rejects exact duplicate
+  routes;
+- `DoubleBufferedRecurrentQueue`, an immutable two-bank queue state;
+- `route_and_commit_recurrent_v1()`, which returns the old current-bank events,
+  generates the inactive bank from ascending spike sources, then performs the
+  Phase-F bank swap;
+- `reset_recurrent_queue_v1()`, which clears both banks and restores bank 0.
+
+Focused tests cover:
 
 - ascending-source/declaration-order routing;
 - exact multiplicity for cross-source same-target routes;
@@ -100,28 +114,83 @@ must prove:
 - bank swapping across multiple commits;
 - stale inactive-bank replacement;
 - reset clearing both banks;
-- route/event physical-capacity validation.
+- route/event physical-capacity validation;
+- spike-vector shape/type validation;
+- next-queue capacity overflow.
 
 ### M11.5.4.2 — standalone RTL route engine
 
-Implement source-controlled RTL with route-row memory, route-target memory, two
-recurrent banks, counts, bank selector, and ascending spike scan. A directed
-XSIM test must prove ordering, multiplicity, bank swap, no-spike clearing,
-next-tick-only visibility, and deterministic overflow/invalid-route faults.
+**Initial RTL gate added; independent XSIM execution pending.**
+
+`rtl/core_v1/recurrent_route_queue_v1.sv` contains:
+
+```text
+257 x 32-bit route-row memory at physical maximum
+4096 x 16-bit route-target memory
+256 spike flags
+2 x 4096 x 16-bit recurrent banks
+bank counts + current-bank selector
+ascending source/CSR traversal FSM
+```
+
+The engine validates canonical CSR continuity while scanning: each source row
+must start exactly at the previous row's terminal pointer, pointers must remain
+inside the configured route count, and the final configured row must terminate
+exactly at `route_count`. Target axons outside the 1,024-axon physical profile
+fault instead of truncating.
+
+At transaction start, the engine snapshots the current-bank count and clears the
+inactive bank's logical count. Routes are appended only to that inactive bank.
+Only `S_COMMIT` writes the generated count and toggles `current_bank`.
+
+The directed XSIM test uses:
+
+```text
+source 0 -> [6]
+source 1 -> [8, 7]
+source 2 -> [9, 6]
+```
+
+with all three sources spiking, so the expected routed event sequence is:
+
+```text
+(6, 8, 7, 9, 6)
+```
+
+The repeated `6` proves cross-source multiplicity. The test then runs two empty
+routing transactions to prove the first generated sequence is counted as the
+next transaction's consumed recurrence exactly once and that stale physical bank
+contents do not replay. It also verifies architectural queue reset and an
+out-of-range route-target fault.
+
+Runner:
+
+```bash
+cd "Neuromorphic Digital Twin/rtl/core_v1"
+bash run_m11_5_4_sim.sh | tee m11_5_4_recurrent_route_sim.log
+```
+
+The scripted success markers are:
+
+```text
+M11.5.4 recurrent-route RTL tests passed: order + multiplicity + next-tick banks + reset + target fault
+M11.5.4 standalone recurrent-route RTL simulation completed successfully.
+```
 
 ### M11.5.4.3 — Python/RTL differential routing corpus
 
-Generate deterministic route images, spike vectors, and initial queue contents
-from Python and compare consumed events, routed outputs, queue counts/bank
-selection, and next-tick queue contents against RTL.
+**Planned next.** Generate deterministic route images, spike vectors, and queue
+histories from Python and compare consumed counts/events, routed outputs, queue
+counts/bank selection, and next-tick queue contents against RTL.
 
 ### M11.5.4.4 — integrate recurrence into the M11.5.3 core
 
-Extend the integrated controller so Phase B consumes the current recurrent bank,
-Phase C produces spikes, Phase D/E scans those spike flags through route CSR, and
-Phase F swaps the recurrent banks. The strongest closure gate will execute at
-least two consecutive ticks through the real packaged HLS IP and prove that a
-spike generated on tick `t` first affects neuron state on tick `t+1`.
+**Planned after differential closure.** Extend the integrated controller so
+Phase B consumes the current recurrent bank, Phase C produces spikes, Phase D/E
+scans those spike flags through route CSR, and Phase F swaps the recurrent
+banks. The strongest closure gate will execute at least two consecutive ticks
+through the real packaged HLS IP and prove that a spike generated on tick `t`
+first affects neuron state on tick `t+1`.
 
 ## Completion boundary
 
