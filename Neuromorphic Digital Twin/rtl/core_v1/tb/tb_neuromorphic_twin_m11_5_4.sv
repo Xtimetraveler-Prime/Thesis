@@ -128,7 +128,7 @@ module tb_neuromorphic_twin_m11_5_4;
         end
     endtask
 
-    task automatic run_tick;
+    task automatic run_tick(input integer previous_tick);
         integer cycles;
         begin
             @(negedge ap_clk); tick_start=1;
@@ -137,6 +137,8 @@ module tb_neuromorphic_twin_m11_5_4;
                 @(posedge ap_clk); #1;
                 if (fault)
                     $fatal(1,"tick fault 0x%02x tick=%0d active_neuron=%0d", fault_code, tick, active_neuron);
+                if (!tick_done && tick !== previous_tick)
+                    $fatal(1,"architectural tick became visible before Phase-F commit: previous=%0d actual=%0d", previous_tick, tick);
                 if (tick_done) return;
             end
             $fatal(1,"timeout waiting for M11.5.4 tick_done tick=%0d", tick);
@@ -220,7 +222,7 @@ module tb_neuromorphic_twin_m11_5_4;
             if (external_event_count != 0)
                 write_external0(M11_5_4I_EXTERNAL_EVENT0[t]);
 
-            run_tick();
+            run_tick(t);
 
             if (tick !== (t+1))
                 $fatal(1,"tick counter mismatch expected=%0d actual=%0d", t+1, tick);
