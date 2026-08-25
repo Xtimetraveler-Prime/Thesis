@@ -138,40 +138,31 @@ module tb_recurrent_route_queue_v1;
         input integer index,
         output logic [15:0] value
     );
-        integer cycles;
         begin
             @(negedge ap_clk);
             debug_bank = bank;
             debug_addr = index[11:0];
             debug_re = 1'b1;
+            @(posedge ap_clk);
+            #1;
+            if (!debug_rvalid)
+                $fatal(1, "recurrent bank debug read did not assert rvalid");
+            value = debug_rdata;
             @(negedge ap_clk);
             debug_re = 1'b0;
-            for (cycles = 0; cycles < 10; cycles = cycles + 1) begin
-                @(posedge ap_clk);
-                #1;
-                if (debug_rvalid) begin
-                    value = debug_rdata;
-                    return;
-                end
-            end
-            $fatal(1, "timeout waiting for recurrent bank debug read");
         end
     endtask
 
     task automatic pulse_core_reset;
-        integer cycles;
         begin
             @(negedge ap_clk);
             core_reset_start = 1'b1;
+            @(posedge ap_clk);
+            #1;
+            if (!core_reset_done)
+                $fatal(1, "recurrent core reset did not assert done");
             @(negedge ap_clk);
             core_reset_start = 1'b0;
-            for (cycles = 0; cycles < 10; cycles = cycles + 1) begin
-                @(posedge ap_clk);
-                #1;
-                if (core_reset_done)
-                    return;
-            end
-            $fatal(1, "timeout waiting for recurrent core reset");
         end
     endtask
 
