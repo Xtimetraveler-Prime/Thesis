@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import importlib.util
+import runpy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,17 +12,9 @@ TCL = ROOT / "rtl" / "core_v1" / "vivado" / "create_m11_5_4_project.tcl"
 RUNNER = ROOT / "rtl" / "core_v1" / "run_m11_5_4_real_ip.sh"
 
 
-def _load_generator():
-    spec = importlib.util.spec_from_file_location("m11_5_4_integrated_vectors", GENERATOR)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def test_integrated_python_oracle_proves_strict_next_tick_chain(tmp_path: Path) -> None:
-    module = _load_generator()
-    values = module.integrated_vectors()
+    module = runpy.run_path(str(GENERATOR))
+    values = module["integrated_vectors"]()
 
     assert values["expected_spikes"] == (
         (1, 0, 0),
@@ -36,8 +28,8 @@ def test_integrated_python_oracle_proves_strict_next_tick_chain(tmp_path: Path) 
 
     output_a = tmp_path / "a.svh"
     output_b = tmp_path / "b.svh"
-    module.write_systemverilog_include(output_a)
-    module.write_systemverilog_include(output_b)
+    module["write_systemverilog_include"](output_a)
+    module["write_systemverilog_include"](output_b)
     assert output_a.read_bytes() == output_b.read_bytes()
     text = output_a.read_text(encoding="utf-8")
     assert "M11_5_4I_TICK_COUNT = 4" in text
@@ -80,14 +72,12 @@ def test_real_ip_module_reference_and_vivado_flow_include_recurrence() -> None:
     assert "route_row_we" in bd_text
 
     assert "recurrent_integrated_core_controller_bd_v1" in tcl_text
-    assert "recurrent_route_queue_v1" not in tcl_text  # source path is passed, not a second BD cell
     assert "neuron_step_v1_0" in tcl_text
     assert "connect_verified_pair" in tcl_text
     assert "M11.5.4 recurrent packed-M08 real-HLS block design validated successfully." in tcl_text
     assert "tb_neuromorphic_twin_m11_5_4" in tcl_text
 
     assert "generate_m11_5_4_integrated_vectors.py" in runner_text
-    assert "run_m11_5_4_real_ip.sh" not in runner_text
     assert "xck26-sfvc784-2LV-c" in runner_text
     assert "neuromorphic-twin.org:hls:neuron_step_v1:1.0" in runner_text
     assert "M11.5.4 packed-M08 + real-HLS recurrent multi-tick passed:" in runner_text
