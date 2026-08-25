@@ -131,4 +131,10 @@ def test_m11_5_5_synthesis_flow_records_resource_memory_and_timing_reports() -> 
     assert "create_m11_5_5_project.tcl" in runner
     assert "ram_utilization.csv" in runner
     assert "timing_summary_synth.rpt" in runner
+    assert 'require_tool python3' in runner
+    assert 'checks = (' in runner
+    assert '("CLB LUTs", "CLB_LUT")' in runner
+    assert '("Block RAM Tile", "BRAM_TILE")' in runner
+    assert "used > available" in runner
+    assert "M11.5.5 resource capacity check passed:" in runner
     assert "M11.5.5 complete-core synthesis and reporting completed successfully." in runner
