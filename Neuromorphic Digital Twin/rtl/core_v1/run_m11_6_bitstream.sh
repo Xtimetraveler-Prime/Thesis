@@ -72,6 +72,7 @@ SOURCE_FILES=(
     "$SCRIPT_DIR/m11_6_smoke_controller_v1.sv"
     "$SCRIPT_DIR/m11_6_smoke_controller_bd_v1.v"
     "$SCRIPT_DIR/vivado/create_m11_6_project.tcl"
+    "$SCRIPT_DIR/check_m11_6_resources.py"
     "$PROJECT_DIR/examples/generate_m11_5_4_integrated_vectors.py"
 )
 for path in "${SOURCE_FILES[@]}"; do
@@ -168,47 +169,11 @@ for report in "${REQUIRED_REPORTS[@]}"; do
 done
 
 # Preserve the M11.5.5 physical-capacity gate after adding the PS/VIO smoke
-# shell. The bitstream is accepted only if the complete implemented PL remains
-# within the exact K26 resource capacities.
-python3 - "$REPORT_DIR/utilization_impl.rpt" <<'PY'
-from __future__ import annotations
-from pathlib import Path
-import sys
-
-lines = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").splitlines()
-
-def row(prefix: str) -> tuple[int, int]:
-    for line in lines:
-        if not line.lstrip().startswith("|"):
-            continue
-        fields = [field.strip() for field in line.strip().strip("|").split("|")]
-        if not fields or not fields[0].startswith(prefix) or len(fields) < 5:
-            continue
-        try:
-            return int(fields[1]), int(fields[4])
-        except ValueError:
-            continue
-    raise SystemExit(f"ERROR: could not locate utilization row: {prefix}")
-
-checks = (
-    ("CLB LUTs", "CLB_LUT"),
-    ("CLB Registers", "CLB_REG"),
-    ("Block RAM Tile", "BRAM_TILE"),
-    ("DSPs", "DSP"),
-    ("URAM", "URAM"),
-)
-failed = False
-summary = []
-for prefix, label in checks:
-    used, available = row(prefix)
-    summary.append(f"{label}={used}/{available}")
-    if used > available:
-        print(f"ERROR: M11.6 resource overflow: {label}={used}/{available}", file=sys.stderr)
-        failed = True
-if failed:
-    raise SystemExit(5)
-print("M11.6 implementation resource check passed: " + ", ".join(summary))
-PY
+# shell. The dedicated checker tolerates Vivado 2025.2 implemented-report
+# formatting where a literal `Block RAM Tile` row may be absent.
+python3 "$SCRIPT_DIR/check_m11_6_resources.py" \
+    "$REPORT_DIR/utilization_impl.rpt" \
+    "$REPORT_DIR/ram_utilization_impl.rpt"
 
 echo
 echo 'M11.6 routed bitstream flow completed successfully.'

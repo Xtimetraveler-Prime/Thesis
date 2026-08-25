@@ -116,9 +116,9 @@ def test_m11_6_bitstream_runner_preserves_k26_capacity_gate() -> None:
     assert "neuromorphic_twin_m11_6.bit" in text
     assert "neuromorphic_twin_m11_6.ltx" in text
     assert "neuromorphic_twin_m11_6.xsa" in text
-    assert '("CLB LUTs", "CLB_LUT")' in text
-    assert '("Block RAM Tile", "BRAM_TILE")' in text
-    assert "M11.6 implementation resource check passed:" in text
+    assert 'check_m11_6_resources.py' in text
+    assert '"$REPORT_DIR/utilization_impl.rpt"' in text
+    assert '"$REPORT_DIR/ram_utilization_impl.rpt"' in text
 
 
 def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
