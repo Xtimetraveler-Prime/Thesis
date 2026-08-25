@@ -47,6 +47,27 @@ proc expose_scalar_pin {cell_name pin_name} {
     connect_bd_net $port $pin
 }
 
+proc connect_verified_pair {controller_pin hls_pin} {
+    set cp [get_bd_pins -quiet controller_0/${controller_pin}]
+    set hp [get_bd_pins -quiet neuron_step_v1_0/${hls_pin}]
+    if {[llength $cp] != 1 || [llength $hp] != 1} {
+        error "Missing integration pin: controller=$controller_pin ($cp), hls=$hls_pin ($hp)"
+    }
+
+    connect_bd_net $cp $hp
+
+    set controller_nets [get_bd_nets -quiet -of_objects $cp]
+    set hls_nets [get_bd_nets -quiet -of_objects $hp]
+    if {[llength $controller_nets] != 1 || [llength $hls_nets] != 1} {
+        error "Integration pins are not connected: controller=$controller_pin nets=$controller_nets, hls=$hls_pin nets=$hls_nets"
+    }
+    if {[lindex $controller_nets 0] ne [lindex $hls_nets 0]} {
+        error "Integration pins are on different nets: controller=$controller_pin nets=$controller_nets, hls=$hls_pin nets=$hls_nets"
+    }
+
+    puts "M11.5.2 connected controller_0/$controller_pin -> neuron_step_v1_0/$hls_pin on [lindex $hls_nets 0]"
+}
+
 file delete -force $project_dir
 file mkdir $project_dir
 create_project $project_name $project_dir -part $target_part -force
@@ -55,7 +76,7 @@ set_property SIMULATOR_LANGUAGE Mixed [current_project]
 
 # Vivado Module Reference accepts Verilog/VHDL only at the referenced top.
 # Keep the actual controller implementation as SystemVerilog underneath a thin
-# Verilog-2001 wrapper that carries the IP-Integrator interface metadata.
+# Verilog-2001 wrapper. Sources are staged under a no-space path by the runner.
 add_files -norecurse [list $controller_rtl $controller_bd_rtl]
 set_property file_type SystemVerilog [get_files $controller_rtl]
 set_property file_type Verilog [get_files $controller_bd_rtl]
@@ -73,39 +94,20 @@ create_bd_design $bd_name
 set controller_cell [create_bd_cell -type module -reference $controller_name controller_0]
 set hls_cell [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 
-# Connect the inferred accelerator-control interface first. In Vivado 2025.2,
-# the acc_handshake interface net carries ap_done/ap_idle/ap_ready for this
-# Module Reference + HLS IP pairing but leaves the packaged HLS ap_start pin
-# without a source. Wire ap_start explicitly below and verify the resulting net
-# before validation. The checked-in Tcl, not write_bd_tcl, is normative.
-set controller_ctrl [get_bd_intf_pins -quiet controller_0/hls_ctrl]
-set hls_ctrl [get_bd_intf_pins -quiet neuron_step_v1_0/ap_ctrl]
-if {[llength $controller_ctrl] != 1} {
-    puts "Controller interfaces: [get_bd_intf_pins -quiet -of_objects $controller_cell]"
-    error "M11.5.2 controller hls_ctrl interface was not inferred"
+# Wire every ap_ctrl_hs member explicitly. UG994 documents that once an
+# individual interface signal is manually connected it is removed from the
+# interface connection and must be manually completed. Avoid mixing an inferred
+# acc_handshake connection with scalar overrides: all four members are explicit
+# and each resulting net is verified before block-design validation.
+set handshake_pairs {
+    hls_ap_start ap_start
+    hls_ap_done  ap_done
+    hls_ap_idle  ap_idle
+    hls_ap_ready ap_ready
 }
-if {[llength $hls_ctrl] != 1} {
-    puts "HLS interfaces: [get_bd_intf_pins -quiet -of_objects $hls_cell]"
-    error "Packaged HLS ap_ctrl interface was not found"
+foreach {controller_pin hls_pin} $handshake_pairs {
+    connect_verified_pair $controller_pin $hls_pin
 }
-connect_bd_intf_net $controller_ctrl $hls_ctrl
-
-set controller_ap_start [get_bd_pins -quiet controller_0/hls_ap_start]
-set hls_ap_start [get_bd_pins -quiet neuron_step_v1_0/ap_start]
-if {[llength $controller_ap_start] != 1 || [llength $hls_ap_start] != 1} {
-    error "M11.5.2 ap_start pins were not found: controller=$controller_ap_start hls=$hls_ap_start"
-}
-connect_bd_net $controller_ap_start $hls_ap_start
-
-set hls_ap_start_nets [get_bd_nets -quiet -of_objects $hls_ap_start]
-set controller_ap_start_nets [get_bd_nets -quiet -of_objects $controller_ap_start]
-if {[llength $hls_ap_start_nets] != 1 || [llength $controller_ap_start_nets] != 1} {
-    error "M11.5.2 ap_start is not connected after explicit wiring: controller_nets=$controller_ap_start_nets hls_nets=$hls_ap_start_nets"
-}
-if {[lindex $hls_ap_start_nets 0] ne [lindex $controller_ap_start_nets 0]} {
-    error "M11.5.2 ap_start pins are on different nets: controller=$controller_ap_start_nets hls=$hls_ap_start_nets"
-}
-puts "M11.5.2 ap_start connected explicitly on net: [lindex $hls_ap_start_nets 0]"
 
 # Connect every scalar neuron datapath/result signal directly to the packaged
 # HLS IP. Width mismatches are intentionally fatal during BD validation.
@@ -130,12 +132,7 @@ set scalar_pairs {
     hls_spiked_ap_vld              spiked_ap_vld
 }
 foreach {controller_pin hls_pin} $scalar_pairs {
-    set cp [get_bd_pins -quiet controller_0/${controller_pin}]
-    set hp [get_bd_pins -quiet neuron_step_v1_0/${hls_pin}]
-    if {[llength $cp] != 1 || [llength $hp] != 1} {
-        error "Missing scalar integration pin: controller=$controller_pin ($cp), hls=$hls_pin ($hp)"
-    }
-    connect_bd_net $cp $hp
+    connect_verified_pair $controller_pin $hls_pin
 }
 
 # One 100 MHz clock and active-high reset feed both blocks. Supplying FREQ_HZ at
@@ -188,8 +185,7 @@ puts ""
 puts "M11.5.2 real-IP block design validated successfully."
 puts "Controller module reference: $controller_name"
 puts "Packaged HLS IP: $expected_vlnv"
-puts "Control interface connection: controller_0/hls_ctrl -> neuron_step_v1_0/ap_ctrl"
-puts "Explicit start connection: controller_0/hls_ap_start -> neuron_step_v1_0/ap_start"
+puts "Control handshake: explicit ap_start/ap_done/ap_idle/ap_ready scalar nets"
 
 set bd_files [get_files -quiet */${bd_name}.bd]
 if {[llength $bd_files] != 1} {
