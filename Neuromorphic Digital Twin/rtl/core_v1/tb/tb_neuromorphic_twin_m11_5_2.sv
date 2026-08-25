@@ -155,9 +155,9 @@ module tb_neuromorphic_twin_m11_5_2;
                 if (core_reset_done)
                     return;
                 if (fault)
-                    $fatal(1, "controller fault during core reset: code=0x%02x", fault_code);
+                    $fatal(1, "controller fault during core reset: code=0x%02x active_neuron=%0d", fault_code, active_neuron);
             end
-            $fatal(1, "timeout waiting for core_reset_done");
+            $fatal(1, "timeout waiting for core_reset_done: busy=%0d active_neuron=%0d fault=%0d fault_code=0x%02x tick=%0d", busy, active_neuron, fault, fault_code, tick);
         end
     endtask
 
@@ -172,7 +172,7 @@ module tb_neuromorphic_twin_m11_5_2;
                 if (fault)
                     $fatal(1, "controller fault during tick: code=0x%02x active_neuron=%0d", fault_code, active_neuron);
             end
-            $fatal(1, "timeout waiting for tick_done");
+            $fatal(1, "timeout waiting for tick_done: busy=%0d active_neuron=%0d fault=%0d fault_code=0x%02x tick=%0d", busy, active_neuron, fault, fault_code, tick);
         end
     endtask
 
