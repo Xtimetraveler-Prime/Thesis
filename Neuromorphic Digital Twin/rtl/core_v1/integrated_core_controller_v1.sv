@@ -36,6 +36,7 @@ module integrated_core_controller_v1 #(
     output logic         phase_b_active_source,
     output logic [12:0]  phase_b_active_event_index,
     output logic [31:0]  phase_b_active_synapse_index,
+    output logic [12:0]  trace_external_event_count,
 
     // Neuron configuration/state preload. Accumulators are intentionally absent.
     input  logic         config_we,
@@ -62,14 +63,25 @@ module integrated_core_controller_v1 #(
     input  logic [11:0]  recurrent_addr,
     input  logic [15:0]  recurrent_wdata,
 
-    // Committed neuron observability. Reads are accepted only while top idle.
+    // Committed neuron/Phase-B observability. Reads are accepted only while
+    // this composition controller is idle. One neuron debug request returns
+    // config, state-before, state-after, Phase-B synaptic input, the legacy
+    // neuron accumulator word, and spike for the same neuron index.
     input  logic         debug_re,
     input  logic [7:0]   debug_addr,
     output logic         debug_rvalid,
     output logic [127:0] debug_config_rdata,
+    output logic [63:0]  debug_state_before_rdata,
     output logic [63:0]  debug_state_rdata,
+    output logic signed [63:0] debug_synaptic_input_rdata,
     output logic signed [63:0] debug_accum_rdata,
     output logic         debug_spike_rdata,
+
+    // External-event trace readback from the actual Phase-B input memory.
+    input  logic         debug_external_re,
+    input  logic [11:0]  debug_external_addr,
+    output logic         debug_external_rvalid,
+    output logic [15:0]  debug_external_rdata,
 
     // Scalar connection to packaged neuron_step_v1.
     output logic         hls_ap_start,
@@ -138,6 +150,7 @@ module integrated_core_controller_v1 #(
     logic [7:0] phase_b_debug_addr;
     logic phase_b_debug_rvalid;
     logic signed [63:0] phase_b_debug_rdata;
+    logic phase_b_external_debug_re;
 
     logic neuron_busy;
     logic neuron_core_reset_start;
@@ -155,11 +168,23 @@ module integrated_core_controller_v1 #(
     wire unused_sub_busy;
 
     assign busy = (integration_state != S_IDLE);
+    assign trace_external_event_count = latched_external_count;
     assign phase_b_start = (integration_state == S_PHASE_B_START);
     assign neuron_core_reset_start = (integration_state == S_RESET_START);
     assign neuron_tick_start = (integration_state == S_NEURON_TICK_START);
-    assign phase_b_debug_re = (integration_state == S_COPY_READ);
-    assign phase_b_debug_addr = copy_index;
+
+    // The Phase-B accumulator port is shared between the internal copy step and
+    // the post-tick trace read. Internal copy has priority while busy.
+    assign phase_b_debug_re = (integration_state == S_COPY_READ)
+        ? 1'b1
+        : (debug_re && (integration_state == S_IDLE));
+    assign phase_b_debug_addr = (integration_state == S_COPY_READ)
+        ? copy_index
+        : debug_addr;
+    assign debug_synaptic_input_rdata = phase_b_debug_rdata;
+
+    assign phase_b_external_debug_re = debug_external_re && (integration_state == S_IDLE);
+
     assign neuron_accum_we = (integration_state == S_COPY_WRITE);
     assign neuron_accum_addr = copy_index;
     assign neuron_accum_wdata = copy_data;
@@ -211,7 +236,11 @@ module integrated_core_controller_v1 #(
         .debug_accum_re(phase_b_debug_re),
         .debug_accum_addr(phase_b_debug_addr),
         .debug_accum_rvalid(phase_b_debug_rvalid),
-        .debug_accum_rdata(phase_b_debug_rdata)
+        .debug_accum_rdata(phase_b_debug_rdata),
+        .debug_external_re(phase_b_external_debug_re),
+        .debug_external_addr(debug_external_addr),
+        .debug_external_rvalid(debug_external_rvalid),
+        .debug_external_rdata(debug_external_rdata)
     );
 
     neuron_array_controller_v1 #(
@@ -242,6 +271,7 @@ module integrated_core_controller_v1 #(
         .debug_addr(debug_addr),
         .debug_rvalid(debug_rvalid),
         .debug_config_rdata(debug_config_rdata),
+        .debug_state_before_rdata(debug_state_before_rdata),
         .debug_state_rdata(debug_state_rdata),
         .debug_accum_rdata(debug_accum_rdata),
         .debug_spike_rdata(debug_spike_rdata),
@@ -296,10 +326,12 @@ module integrated_core_controller_v1 #(
                         fault      <= 1'b1;
                         fault_code <= FAULT_CONCURRENT_CMD;
                     end else if (core_reset_start) begin
-                        fault             <= 1'b0;
-                        fault_code        <= FAULT_NONE;
-                        active_count      <= neuron_count;
-                        integration_state <= S_RESET_START;
+                        fault                   <= 1'b0;
+                        fault_code              <= FAULT_NONE;
+                        active_count            <= neuron_count;
+                        latched_external_count  <= 13'd0;
+                        latched_recurrent_count <= 13'd0;
+                        integration_state       <= S_RESET_START;
                     end else if (tick_start) begin
                         fault                   <= 1'b0;
                         fault_code              <= FAULT_NONE;
