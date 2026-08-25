@@ -4,6 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PHASE_B = ROOT / "rtl" / "core_v1" / "phase_b_synapse_accumulator_v1.sv"
+NEURON = ROOT / "rtl" / "core_v1" / "neuron_array_controller_v1.sv"
+ROUTE = ROOT / "rtl" / "core_v1" / "recurrent_route_queue_v1.sv"
 INTEGRATED = ROOT / "rtl" / "core_v1" / "integrated_core_controller_v1.sv"
 RECURRENT = ROOT / "rtl" / "core_v1" / "recurrent_integrated_core_controller_v1.sv"
 BD_WRAPPER = ROOT / "rtl" / "core_v1" / "recurrent_integrated_core_controller_bd_v1.v"
@@ -16,9 +18,38 @@ def test_phase_b_exposes_actual_external_event_memory_and_accumulator() -> None:
     text = PHASE_B.read_text(encoding="utf-8")
     assert "input  logic         debug_external_re" in text
     assert "input  logic [11:0]  debug_external_addr" in text
-    assert "debug_external_rdata  <= external_event_mem[debug_external_addr];" in text
-    assert "debug_accum_rdata  <= accumulator_mem[debug_accum_addr];" in text
-    assert "if (!busy) begin" in text
+    assert "external_mem_rdata <= external_event_mem[external_mem_raddr];" in text
+    assert "accumulator_mem_rdata <= accumulator_mem[accumulator_mem_raddr];" in text
+    assert "assign debug_external_rdata = external_mem_rdata;" in text
+    assert "assign debug_accum_rdata = accumulator_mem_rdata;" in text
+
+
+def test_large_runtime_memories_use_synchronous_bram_friendly_ports() -> None:
+    phase_b = PHASE_B.read_text(encoding="utf-8")
+    neuron = NEURON.read_text(encoding="utf-8")
+    route = ROUTE.read_text(encoding="utf-8")
+
+    # Phase-B accumulation used to read accumulator_mem asynchronously, which
+    # prevents dedicated block-RAM inference and creates a deep LUT read mux.
+    assert "S_ACCUM_READ" in phase_b
+    assert "accumulator_mem_re" in phase_b
+    assert "accumulator_mem_rdata" in phase_b
+    assert "current_accumulator = accumulator_mem" not in phase_b
+    assert "external_mem_rdata <= external_event_mem[external_mem_raddr];" in phase_b
+    assert "recurrent_mem_rdata <= recurrent_event_mem[recurrent_mem_raddr];" in phase_b
+
+    # Neuron state and copied Phase-B accumulators likewise use registered RAM
+    # outputs before HLS launch.
+    assert "S_TICK_CAPTURE" in neuron
+    assert "state_mem_rdata <= neuron_state_mem[state_mem_raddr];" in neuron
+    assert "accum_mem_rdata <= synaptic_accum_mem[accum_mem_raddr];" in neuron
+    assert "work_state       <= state_mem_rdata;" in neuron
+    assert "work_accum       <= accum_mem_rdata;" in neuron
+
+    # Both physical recurrent banks have one synchronous write/read process.
+    assert "bank0_mem_rdata <= recurrent_bank0[bank0_mem_raddr];" in route
+    assert "bank1_mem_rdata <= recurrent_bank1[bank1_mem_raddr];" in route
+    assert "assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;" in route
 
 
 def test_integrated_core_returns_pre_state_synaptic_sum_and_external_events() -> None:
@@ -88,6 +119,8 @@ def test_m11_5_5_synthesis_flow_records_resource_memory_and_timing_reports() -> 
     assert "report_utilization -hierarchical" in tcl
     assert "report_ram_utilization -include_lutram" in tcl
     assert "report_timing_summary -file" in tcl
+    assert "report_timing -delay_type max" in tcl
+    assert "report_timing -delay_type min" in tcl
     assert "report_methodology -file" in tcl
     assert "write_checkpoint -force" in tcl
 
