@@ -38,11 +38,14 @@ module neuron_array_controller_v1 #(
     input  logic [7:0]   accum_addr,
     input  logic signed [63:0] accum_wdata,
 
-    // Synchronous debug read. Reads are serviced only while !busy.
+    // Synchronous debug read. Reads are serviced only while !busy. M11.5.5
+    // also returns the state word captured immediately before this tick's HLS
+    // transaction so M10 current_before/voltage_before remain reconstructable.
     input  logic         debug_re,
     input  logic [7:0]   debug_addr,
     output logic         debug_rvalid,
     output logic [127:0] debug_config_rdata,
+    output logic [63:0]  debug_state_before_rdata,
     output logic [63:0]  debug_state_rdata,
     output logic signed [63:0] debug_accum_rdata,
     output logic         debug_spike_rdata,
@@ -99,6 +102,7 @@ module neuron_array_controller_v1 #(
     (* ram_style = "block" *) logic [63:0]  neuron_state_mem [0:MAX_NEURONS-1];
     (* ram_style = "block" *) logic [127:0] neuron_config_mem [0:MAX_NEURONS-1];
     (* ram_style = "block" *) logic signed [63:0] synaptic_accum_mem [0:MAX_NEURONS-1];
+    (* ram_style = "block" *) logic [63:0]  trace_state_before_mem [0:MAX_NEURONS-1];
     (* ram_style = "distributed" *) logic spike_mem [0:MAX_NEURONS-1];
 
     logic [63:0]  work_state;
@@ -148,28 +152,29 @@ module neuron_array_controller_v1 #(
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
-            controller_state     <= S_IDLE;
-            busy                 <= 1'b0;
-            core_reset_done      <= 1'b0;
-            tick_done            <= 1'b0;
-            tick                 <= 32'd0;
-            fault                <= 1'b0;
-            fault_code           <= FAULT_NONE;
-            active_neuron        <= 8'd0;
-            active_count         <= 9'd0;
-            work_state           <= 64'd0;
-            work_config          <= 128'd0;
-            work_accum           <= 64'sd0;
-            result_current       <= 24'sd0;
-            result_voltage       <= 24'sd0;
-            result_refractory    <= 16'd0;
-            result_spiked        <= 1'b0;
-            result_valid         <= 4'd0;
-            debug_rvalid         <= 1'b0;
-            debug_config_rdata   <= 128'd0;
-            debug_state_rdata    <= 64'd0;
-            debug_accum_rdata    <= 64'sd0;
-            debug_spike_rdata    <= 1'b0;
+            controller_state          <= S_IDLE;
+            busy                      <= 1'b0;
+            core_reset_done           <= 1'b0;
+            tick_done                 <= 1'b0;
+            tick                      <= 32'd0;
+            fault                     <= 1'b0;
+            fault_code                <= FAULT_NONE;
+            active_neuron             <= 8'd0;
+            active_count              <= 9'd0;
+            work_state                <= 64'd0;
+            work_config               <= 128'd0;
+            work_accum                <= 64'sd0;
+            result_current            <= 24'sd0;
+            result_voltage            <= 24'sd0;
+            result_refractory         <= 16'd0;
+            result_spiked             <= 1'b0;
+            result_valid              <= 4'd0;
+            debug_rvalid              <= 1'b0;
+            debug_config_rdata        <= 128'd0;
+            debug_state_before_rdata  <= 64'd0;
+            debug_state_rdata         <= 64'd0;
+            debug_accum_rdata         <= 64'sd0;
+            debug_spike_rdata         <= 1'b0;
         end else begin
             core_reset_done <= 1'b0;
             tick_done       <= 1'b0;
@@ -185,11 +190,12 @@ module neuron_array_controller_v1 #(
                 if (accum_we)
                     synaptic_accum_mem[accum_addr] <= accum_wdata;
                 if (debug_re) begin
-                    debug_config_rdata <= neuron_config_mem[debug_addr];
-                    debug_state_rdata  <= neuron_state_mem[debug_addr];
-                    debug_accum_rdata  <= synaptic_accum_mem[debug_addr];
-                    debug_spike_rdata  <= spike_mem[debug_addr];
-                    debug_rvalid       <= 1'b1;
+                    debug_config_rdata       <= neuron_config_mem[debug_addr];
+                    debug_state_before_rdata <= trace_state_before_mem[debug_addr];
+                    debug_state_rdata        <= neuron_state_mem[debug_addr];
+                    debug_accum_rdata        <= synaptic_accum_mem[debug_addr];
+                    debug_spike_rdata        <= spike_mem[debug_addr];
+                    debug_rvalid             <= 1'b1;
                 end
             end
 
@@ -278,6 +284,9 @@ module neuron_array_controller_v1 #(
                         busy             <= 1'b0;
                         controller_state <= S_IDLE;
                     end else begin
+                        // Passive trace-only capture. This memory never feeds
+                        // the HLS datapath or architectural state writeback.
+                        trace_state_before_mem[active_neuron] <= work_state;
                         controller_state <= S_HLS_WAIT_READY;
                     end
                 end
