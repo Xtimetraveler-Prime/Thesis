@@ -121,10 +121,11 @@ module neuron_array_controller_v1 #(
         (work_config[25:13] <= 13'd4096) &&
         (cfg_threshold > cfg_reset_voltage);
 
-    // ap_ctrl_hs requires ap_start to remain asserted until ap_ready. For the
-    // non-pipelined M11.3 HLS block ap_ready may coincide with ap_done, so the
-    // FSM also captures ap_done while still in S_HLS_WAIT_READY.
-    assign hls_ap_start = (controller_state == S_HLS_WAIT_READY);
+    // Hold ap_start until ap_ready is observed, then remove it immediately so
+    // the ready handshake cannot request an automatic next transaction. The
+    // FSM still captures a coincident ap_done in S_HLS_WAIT_READY.
+    assign hls_ap_start =
+        (controller_state == S_HLS_WAIT_READY) && !hls_ap_ready;
 
     assign hls_current_before      = $signed(work_state[23:0]);
     assign hls_voltage_before      = $signed(work_state[47:24]);
@@ -252,9 +253,9 @@ module neuron_array_controller_v1 #(
                     spike_mem[active_neuron] <= 1'b0;
 
                     if (({1'b0, active_neuron} + 9'd1) >= active_count) begin
-                        tick            <= 32'd0;
-                        busy            <= 1'b0;
-                        core_reset_done <= 1'b1;
+                        tick             <= 32'd0;
+                        busy             <= 1'b0;
+                        core_reset_done  <= 1'b1;
                         controller_state <= S_IDLE;
                     end else begin
                         active_neuron    <= active_neuron + 8'd1;
@@ -263,10 +264,10 @@ module neuron_array_controller_v1 #(
                 end
 
                 S_TICK_READ: begin
-                    work_state      <= neuron_state_mem[active_neuron];
-                    work_config     <= neuron_config_mem[active_neuron];
-                    work_accum      <= synaptic_accum_mem[active_neuron];
-                    result_valid    <= 4'd0;
+                    work_state       <= neuron_state_mem[active_neuron];
+                    work_config      <= neuron_config_mem[active_neuron];
+                    work_accum       <= synaptic_accum_mem[active_neuron];
+                    result_valid     <= 4'd0;
                     controller_state <= S_TICK_VALIDATE;
                 end
 
@@ -282,8 +283,9 @@ module neuron_array_controller_v1 #(
                 end
 
                 S_HLS_WAIT_READY: begin
-                    // hls_ap_start remains high in this state. Capture a result
-                    // immediately if ap_done coincides with the ready handshake.
+                    // Capture a result immediately if ap_done coincides with
+                    // the ready handshake. hls_ap_start is combinationally
+                    // removed while ready is high, preventing auto-restart.
                     if (hls_ap_done) begin
                         result_current    <= hls_current_after;
                         result_voltage    <= hls_voltage_after;
