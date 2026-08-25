@@ -1,0 +1,31 @@
+name: Patch M11.6 ZynqMP PS boundary
+
+on:
+  push:
+    branches:
+      - agent/m11-6-bitstream-hardware-smoke
+    paths:
+      - .github/workflows/patch_m11_6_remove_ps_external_check.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m11-6-bitstream-hardware-smoke
+          fetch-depth: 0
+      - name: Apply ZynqMP PS-boundary fix
+        run: python3 scripts/patch_m11_6_remove_ps_external_check.py
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Neuromorphic Digital Twin/rtl/core_v1/vivado/create_m11_6_project.tcl" \
+                  "Neuromorphic Digital Twin/tests/test_m11_6_bitstream_sources.py"
+          git commit -m "Treat K26 PS dedicated I/O as SOM preset resources"
+          git push origin HEAD:agent/m11-6-bitstream-hardware-smoke
