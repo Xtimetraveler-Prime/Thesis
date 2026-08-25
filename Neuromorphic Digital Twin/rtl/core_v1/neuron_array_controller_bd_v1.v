@@ -4,8 +4,8 @@
 //
 // Vivado Module Reference requires the top module definition to be Verilog or
 // VHDL; the underlying neuron_array_controller_v1 implementation remains
-// SystemVerilog. This wrapper adds only Vivado interface metadata and language
-// compatibility at the Module Reference boundary.
+// SystemVerilog. Keep the HLS control handshake as four ordinary scalar pins so
+// the source-controlled Vivado Tcl can wire every ap_ctrl_hs member explicitly.
 module neuron_array_controller_bd_v1 #(
     parameter integer MAX_NEURONS = 256
 ) (
@@ -42,13 +42,9 @@ module neuron_array_controller_bd_v1 #(
     output wire signed [63:0] debug_accum_rdata,
     output wire         debug_spike_rdata,
 
-    (* X_INTERFACE_INFO = "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_START" *)
     output wire         hls_ap_start,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_DONE" *)
     input  wire         hls_ap_done,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_IDLE" *)
     input  wire         hls_ap_idle,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:acc_handshake:1.0 hls_ctrl AP_READY" *)
     input  wire         hls_ap_ready,
 
     output wire signed [23:0] hls_current_before,
