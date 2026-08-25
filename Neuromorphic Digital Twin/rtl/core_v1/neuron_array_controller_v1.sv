@@ -90,10 +90,11 @@ module neuron_array_controller_v1 #(
         S_TICK_READ,
         S_TICK_VALIDATE,
         S_HLS_WAIT_READY,
-        S_HLS_WAIT_DONE
-    } state_t;
+        S_HLS_WAIT_DONE,
+        S_HLS_COMMIT
+    } controller_state_t;
 
-    state_t state;
+    controller_state_t controller_state;
 
     (* ram_style = "block" *) logic [63:0]  neuron_state_mem [0:MAX_NEURONS-1];
     (* ram_style = "block" *) logic [127:0] neuron_config_mem [0:MAX_NEURONS-1];
@@ -105,6 +106,12 @@ module neuron_array_controller_v1 #(
     logic signed [63:0] work_accum;
     logic [8:0] active_count;
 
+    logic signed [23:0] result_current;
+    logic signed [23:0] result_voltage;
+    logic        [15:0] result_refractory;
+    logic               result_spiked;
+    logic        [3:0]  result_valid;
+
     wire signed [23:0] cfg_threshold = $signed(work_config[49:26]);
     wire signed [23:0] cfg_reset_voltage = $signed(work_config[97:74]);
 
@@ -114,7 +121,10 @@ module neuron_array_controller_v1 #(
         (work_config[25:13] <= 13'd4096) &&
         (cfg_threshold > cfg_reset_voltage);
 
-    assign hls_ap_start = (state == S_HLS_WAIT_READY);
+    // ap_ctrl_hs requires ap_start to remain asserted until ap_ready. For the
+    // non-pipelined M11.3 HLS block ap_ready may coincide with ap_done, so the
+    // FSM also captures ap_done while still in S_HLS_WAIT_READY.
+    assign hls_ap_start = (controller_state == S_HLS_WAIT_READY);
 
     assign hls_current_before      = $signed(work_state[23:0]);
     assign hls_voltage_before      = $signed(work_state[47:24]);
@@ -127,8 +137,8 @@ module neuron_array_controller_v1 #(
     assign hls_reset_voltage       = $signed(work_config[97:74]);
     assign hls_refractory_ticks    = work_config[113:98];
 
-    // hls_ap_idle is intentionally observable at the boundary but not required
-    // for launch: ap_ctrl_hs requires ap_start to remain asserted until ready.
+    // Keep ap_idle present at the integration boundary for observability. The
+    // launch handshake itself is defined entirely by ap_start/ap_ready.
     wire unused_hls_idle = hls_ap_idle;
 
     function automatic logic count_is_valid(input logic [8:0] count);
@@ -137,23 +147,28 @@ module neuron_array_controller_v1 #(
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
-            state              <= S_IDLE;
-            busy               <= 1'b0;
-            core_reset_done    <= 1'b0;
-            tick_done          <= 1'b0;
-            tick               <= 32'd0;
-            fault              <= 1'b0;
-            fault_code         <= FAULT_NONE;
-            active_neuron      <= 8'd0;
-            active_count       <= 9'd0;
-            work_state         <= 64'd0;
-            work_config        <= 128'd0;
-            work_accum         <= 64'sd0;
-            debug_rvalid       <= 1'b0;
-            debug_config_rdata <= 128'd0;
-            debug_state_rdata  <= 64'd0;
-            debug_accum_rdata  <= 64'sd0;
-            debug_spike_rdata  <= 1'b0;
+            controller_state     <= S_IDLE;
+            busy                 <= 1'b0;
+            core_reset_done      <= 1'b0;
+            tick_done            <= 1'b0;
+            tick                 <= 32'd0;
+            fault                <= 1'b0;
+            fault_code           <= FAULT_NONE;
+            active_neuron        <= 8'd0;
+            active_count         <= 9'd0;
+            work_state           <= 64'd0;
+            work_config          <= 128'd0;
+            work_accum           <= 64'sd0;
+            result_current       <= 24'sd0;
+            result_voltage       <= 24'sd0;
+            result_refractory    <= 16'd0;
+            result_spiked        <= 1'b0;
+            result_valid         <= 4'd0;
+            debug_rvalid         <= 1'b0;
+            debug_config_rdata   <= 128'd0;
+            debug_state_rdata    <= 64'd0;
+            debug_accum_rdata    <= 64'sd0;
+            debug_spike_rdata    <= 1'b0;
         end else begin
             core_reset_done <= 1'b0;
             tick_done       <= 1'b0;
@@ -177,7 +192,7 @@ module neuron_array_controller_v1 #(
                 end
             end
 
-            case (state)
+            case (controller_state)
                 S_IDLE: begin
                     busy <= 1'b0;
 
@@ -189,41 +204,41 @@ module neuron_array_controller_v1 #(
                             fault      <= 1'b1;
                             fault_code <= FAULT_INVALID_COUNT;
                         end else begin
-                            fault         <= 1'b0;
-                            fault_code    <= FAULT_NONE;
-                            busy          <= 1'b1;
-                            active_count  <= neuron_count;
-                            active_neuron <= 8'd0;
-                            state         <= S_RESET_READ;
+                            fault            <= 1'b0;
+                            fault_code       <= FAULT_NONE;
+                            busy             <= 1'b1;
+                            active_count     <= neuron_count;
+                            active_neuron    <= 8'd0;
+                            controller_state <= S_RESET_READ;
                         end
                     end else if (tick_start) begin
                         if (!count_is_valid(neuron_count)) begin
                             fault      <= 1'b1;
                             fault_code <= FAULT_INVALID_COUNT;
                         end else begin
-                            fault         <= 1'b0;
-                            fault_code    <= FAULT_NONE;
-                            busy          <= 1'b1;
-                            active_count  <= neuron_count;
-                            active_neuron <= 8'd0;
-                            state         <= S_TICK_READ;
+                            fault            <= 1'b0;
+                            fault_code       <= FAULT_NONE;
+                            busy             <= 1'b1;
+                            active_count     <= neuron_count;
+                            active_neuron    <= 8'd0;
+                            controller_state <= S_TICK_READ;
                         end
                     end
                 end
 
                 S_RESET_READ: begin
-                    work_config <= neuron_config_mem[active_neuron];
-                    state       <= S_RESET_VALIDATE;
+                    work_config      <= neuron_config_mem[active_neuron];
+                    controller_state <= S_RESET_VALIDATE;
                 end
 
                 S_RESET_VALIDATE: begin
                     if (!config_valid) begin
-                        fault      <= 1'b1;
-                        fault_code <= FAULT_INVALID_CONFIG;
-                        busy       <= 1'b0;
-                        state      <= S_IDLE;
+                        fault            <= 1'b1;
+                        fault_code       <= FAULT_INVALID_CONFIG;
+                        busy             <= 1'b0;
+                        controller_state <= S_IDLE;
                     end else begin
-                        state <= S_RESET_WRITE;
+                        controller_state <= S_RESET_WRITE;
                     end
                 end
 
@@ -240,75 +255,100 @@ module neuron_array_controller_v1 #(
                         tick            <= 32'd0;
                         busy            <= 1'b0;
                         core_reset_done <= 1'b1;
-                        state           <= S_IDLE;
+                        controller_state <= S_IDLE;
                     end else begin
-                        active_neuron <= active_neuron + 8'd1;
-                        state         <= S_RESET_READ;
+                        active_neuron    <= active_neuron + 8'd1;
+                        controller_state <= S_RESET_READ;
                     end
                 end
 
                 S_TICK_READ: begin
-                    work_state  <= neuron_state_mem[active_neuron];
-                    work_config <= neuron_config_mem[active_neuron];
-                    work_accum  <= synaptic_accum_mem[active_neuron];
-                    state       <= S_TICK_VALIDATE;
+                    work_state      <= neuron_state_mem[active_neuron];
+                    work_config     <= neuron_config_mem[active_neuron];
+                    work_accum      <= synaptic_accum_mem[active_neuron];
+                    result_valid    <= 4'd0;
+                    controller_state <= S_TICK_VALIDATE;
                 end
 
                 S_TICK_VALIDATE: begin
                     if (!config_valid) begin
-                        fault      <= 1'b1;
-                        fault_code <= FAULT_INVALID_CONFIG;
-                        busy       <= 1'b0;
-                        state      <= S_IDLE;
+                        fault            <= 1'b1;
+                        fault_code       <= FAULT_INVALID_CONFIG;
+                        busy             <= 1'b0;
+                        controller_state <= S_IDLE;
                     end else begin
-                        state <= S_HLS_WAIT_READY;
+                        controller_state <= S_HLS_WAIT_READY;
                     end
                 end
 
                 S_HLS_WAIT_READY: begin
-                    // hls_ap_start is held high by the state decode until the
-                    // verified HLS block acknowledges the transaction.
-                    if (hls_ap_ready)
-                        state <= S_HLS_WAIT_DONE;
+                    // hls_ap_start remains high in this state. Capture a result
+                    // immediately if ap_done coincides with the ready handshake.
+                    if (hls_ap_done) begin
+                        result_current    <= hls_current_after;
+                        result_voltage    <= hls_voltage_after;
+                        result_refractory <= hls_refractory_after;
+                        result_spiked     <= hls_spiked;
+                        result_valid      <= {
+                            hls_spiked_ap_vld,
+                            hls_refractory_after_ap_vld,
+                            hls_voltage_after_ap_vld,
+                            hls_current_after_ap_vld
+                        };
+                        controller_state <= S_HLS_COMMIT;
+                    end else if (hls_ap_ready) begin
+                        controller_state <= S_HLS_WAIT_DONE;
+                    end
                 end
 
                 S_HLS_WAIT_DONE: begin
                     if (hls_ap_done) begin
-                        if (!(hls_current_after_ap_vld &&
-                              hls_voltage_after_ap_vld &&
-                              hls_refractory_after_ap_vld &&
-                              hls_spiked_ap_vld)) begin
-                            fault      <= 1'b1;
-                            fault_code <= FAULT_MISSING_HLS_VALID;
-                            busy       <= 1'b0;
-                            state      <= S_IDLE;
-                        end else begin
-                            neuron_state_mem[active_neuron] <= {
-                                hls_refractory_after,
-                                hls_voltage_after,
-                                hls_current_after
-                            };
-                            spike_mem[active_neuron] <= hls_spiked;
-                            synaptic_accum_mem[active_neuron] <= 64'sd0;
+                        result_current    <= hls_current_after;
+                        result_voltage    <= hls_voltage_after;
+                        result_refractory <= hls_refractory_after;
+                        result_spiked     <= hls_spiked;
+                        result_valid      <= {
+                            hls_spiked_ap_vld,
+                            hls_refractory_after_ap_vld,
+                            hls_voltage_after_ap_vld,
+                            hls_current_after_ap_vld
+                        };
+                        controller_state <= S_HLS_COMMIT;
+                    end
+                end
 
-                            if (({1'b0, active_neuron} + 9'd1) >= active_count) begin
-                                tick       <= tick + 32'd1;
-                                busy       <= 1'b0;
-                                tick_done  <= 1'b1;
-                                state      <= S_IDLE;
-                            end else begin
-                                active_neuron <= active_neuron + 8'd1;
-                                state         <= S_TICK_READ;
-                            end
+                S_HLS_COMMIT: begin
+                    if (result_valid != 4'b1111) begin
+                        fault            <= 1'b1;
+                        fault_code       <= FAULT_MISSING_HLS_VALID;
+                        busy             <= 1'b0;
+                        controller_state <= S_IDLE;
+                    end else begin
+                        neuron_state_mem[active_neuron] <= {
+                            result_refractory,
+                            result_voltage,
+                            result_current
+                        };
+                        spike_mem[active_neuron] <= result_spiked;
+                        synaptic_accum_mem[active_neuron] <= 64'sd0;
+
+                        if (({1'b0, active_neuron} + 9'd1) >= active_count) begin
+                            tick             <= tick + 32'd1;
+                            busy             <= 1'b0;
+                            tick_done        <= 1'b1;
+                            controller_state <= S_IDLE;
+                        end else begin
+                            active_neuron    <= active_neuron + 8'd1;
+                            controller_state <= S_TICK_READ;
                         end
                     end
                 end
 
                 default: begin
-                    fault      <= 1'b1;
-                    fault_code <= 8'hFF;
-                    busy       <= 1'b0;
-                    state      <= S_IDLE;
+                    fault            <= 1'b1;
+                    fault_code       <= 8'hFF;
+                    busy             <= 1'b0;
+                    controller_state <= S_IDLE;
                 end
             endcase
         end
