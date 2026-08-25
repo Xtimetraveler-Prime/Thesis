@@ -914,7 +914,7 @@ M10 now provides one frozen, test-addressable computational contract for M11. Ha
 
 **Status:** In progress  
 **Started:** 2026-08-20  
-**Repository evidence:** `main` through M11.5.5
+**Repository evidence:** `main` through M11.5.5; branch `agent/m11-6-bitstream-hardware-smoke` for M11.6
 
 ### Goal
 
@@ -1473,19 +1473,44 @@ M11.5 is now a complete, finite, behaviorally verified, trace-observable, synthe
 
 ### M11.6 — Generate first integrated bitstream and perform hardware smoke checks
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-25  
+**Repository evidence:** branch `agent/m11-6-bitstream-hardware-smoke`
 
 ### Goal
 
-Produce the first loadable FPGA image containing the integrated M11 core and prove that its control/debug interfaces operate on the physical board.
+Produce the first routed, timing-clean, loadable FPGA image containing the complete M11 core and prove through JTAG/VIO that its control and debug boundaries operate on the physical K26.
 
-### Planned deliverables
+### Implementation approach
 
-- Successful Vivado synthesis, implementation, timing review, and bitstream generation.
-- Program the target board with the M11 design.
-- Confirm reset/start/control access and basic state/spike observability on hardware.
-- Record initial utilization and timing information.
-- Keep full tick-by-tick Python-versus-RTL and Python-versus-physical-FPGA conformance in M12 rather than treating a smoke test as behavioral validation.
+- Keep the complete M11.5 computational RTL and packaged `neuron_step_v1` HLS IP unchanged.
+- Use the Zynq UltraScale+ PS `pl_clk0` and `pl_resetn0` so the first hardware shell does not require carrier-card PL pin assignments.
+- Add a VIO-over-JTAG command/status boundary rather than introducing a new software/AXI host protocol during bring-up.
+- Reuse the Python-golden M11.5.4 four-tick recurrent chain as an autonomous on-FPGA smoke workload.
+- Have the on-FPGA sequencer preload packed M08 weight/config/route memories, issue architectural reset, execute four ticks, and compare committed state, spikes, recurrent counts/bank selection, and recurrent event data against the generated expectations.
+- Generate a `.bit`, `.ltx`, routed `.dcp`, and `.xsa` from a source-controlled Vivado 2025.2 flow.
+- Accept the bitstream only if routed setup and routed hold slack are both nonnegative, implementation DRC has no errors, and every tracked K26 resource class remains within capacity.
+- Program and start the physical design from a batch Hardware-Manager Tcl flow using VIO `OUTPUT_VALUE`, `commit_hw_vio`, and `refresh_hw_vio`.
+
+### Active closure gates
+
+- [x] Define carrier-independent PS-clock + VIO physical shell.
+- [x] Add autonomous packed-M08 + real-HLS + recurrent smoke sequencer.
+- [x] Add source-controlled implementation/bitstream/reporting flow.
+- [x] Add source-controlled VIO programming/smoke flow.
+- [x] Add focused M11.6 source-regression guards.
+- [ ] Independently run focused M11.6 and complete Python regressions.
+- [ ] Run Vivado synthesis, placement, routing, DRC, and bitstream generation.
+- [ ] Confirm nonnegative routed WNS and WHS.
+- [ ] Confirm final implemented resource-capacity marker.
+- [ ] Confirm `.bit`, `.ltx`, routed `.dcp`, and `.xsa` artifacts.
+- [ ] Program the physical K26 through JTAG.
+- [ ] Confirm VIO control/readback and autonomous four-tick `smoke_pass=1`.
+- [ ] Record final hardware evidence and mark M11.6 and M11 complete.
+
+### Detailed design record
+
+See `Neuromorphic Digital Twin/docs/M11_6_BITSTREAM_HARDWARE_SMOKE.md` for the physical shell, smoke sequence, failure codes, routed implementation gate, programming flow, and M12 handoff.
 
 ---
 
