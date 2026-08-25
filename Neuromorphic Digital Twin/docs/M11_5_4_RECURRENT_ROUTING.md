@@ -91,7 +91,7 @@ Architectural reset clears both queue counts and returns the selector to bank 0.
 
 ### M11.5.4.1 — Python route/queue oracle
 
-**Implementation added; independent execution pending.**
+**Implementation added; source-level regression remains part of the M11.5.4 test gate.**
 
 `src/neuromorphic_twin/fpga_recurrent_routing.py` now provides:
 
@@ -105,22 +105,14 @@ Architectural reset clears both queue counts and returns the selector to bank 0.
   Phase-F bank swap;
 - `reset_recurrent_queue_v1()`, which clears both banks and restores bank 0.
 
-Focused tests cover:
-
-- ascending-source/declaration-order routing;
-- exact multiplicity for cross-source same-target routes;
-- exact duplicate-route rejection;
-- next-tick-only delivery;
-- bank swapping across multiple commits;
-- stale inactive-bank replacement;
-- reset clearing both banks;
-- route/event physical-capacity validation;
-- spike-vector shape/type validation;
-- next-queue capacity overflow.
+Focused tests cover ascending-source/declaration-order routing, cross-source
+same-target multiplicity, duplicate-route rejection, next-tick-only delivery,
+bank swapping, stale inactive-bank replacement, reset, physical capacities,
+spike-vector validation, and next-queue overflow.
 
 ### M11.5.4.2 — standalone RTL route engine
 
-**Initial RTL gate added; independent XSIM execution pending.**
+**Complete directed RTL gate.**
 
 `rtl/core_v1/recurrent_route_queue_v1.sv` contains:
 
@@ -151,26 +143,18 @@ source 1 -> [8, 7]
 source 2 -> [9, 6]
 ```
 
-with all three sources spiking, so the expected routed event sequence is:
+with all three sources spiking, so the routed event sequence is:
 
 ```text
 (6, 8, 7, 9, 6)
 ```
 
-The repeated `6` proves cross-source multiplicity. The test then runs two empty
-routing transactions to prove the first generated sequence is counted as the
-next transaction's consumed recurrence exactly once and that stale physical bank
-contents do not replay. It also verifies architectural queue reset and an
-out-of-range route-target fault.
+The repeated `6` proves cross-source multiplicity. The test then runs empty
+transactions to prove the first generated sequence is consumed exactly one tick
+later and stale physical words cannot replay. It also verifies architectural
+queue reset and an out-of-range route-target fault.
 
-Runner:
-
-```bash
-cd "Neuromorphic Digital Twin/rtl/core_v1"
-bash run_m11_5_4_sim.sh | tee m11_5_4_recurrent_route_sim.log
-```
-
-The scripted success markers are:
+The standalone vendor gate was independently verified on 2026-08-24 with:
 
 ```text
 M11.5.4 recurrent-route RTL tests passed: order + multiplicity + next-tick banks + reset + target fault
@@ -179,9 +163,46 @@ M11.5.4 standalone recurrent-route RTL simulation completed successfully.
 
 ### M11.5.4.3 — Python/RTL differential routing corpus
 
-**Planned next.** Generate deterministic route images, spike vectors, and queue
-histories from Python and compare consumed counts/events, routed outputs, queue
-counts/bank selection, and next-tick queue contents against RTL.
+**Implemented; independent execution pending.**
+
+`examples/generate_m11_5_4_vectors.py` generates 16 deterministic route images,
+each exercised for four consecutive routing ticks, for 64 stateful routing
+transitions total. The generator uses SplitMix64 seed `0x4D313534` and derives
+all expected queue behavior from `route_and_commit_recurrent_v1()`.
+
+The corpus includes:
+
+- the directed `(6, 8, 7, 9, 6)` ordering/multiplicity case;
+- randomized CSR row lengths and declaration order;
+- deliberate cross-source target reuse;
+- all-spiking and partially-spiking vectors;
+- explicit no-spike ticks;
+- both bank-selector directions across consecutive commits;
+- non-empty consumed queues and empty consumed queues.
+
+`tb_recurrent_route_queue_differential_v1.sv` resets once per case, loads one
+route image, and then evolves the same physical queue across four spike vectors.
+Before each tick it reads the complete valid prefix of the current bank and
+compares it with Python's expected `consumed_recurrent_axons`. After the commit
+it compares:
+
+- `last_consumed_count`;
+- `last_routed_count`;
+- the physical `current_bank` selector;
+- current-bank count;
+- both physical bank counts;
+- every routed event in the newly current bank.
+
+This tests the bank history itself instead of treating the 64 transitions as
+independent one-shot routing examples. `run_m11_5_4_differential_sim.sh`
+regenerates the Python expectations before every Vivado/XSIM run.
+
+The expected vendor success markers are:
+
+```text
+M11.5.4 Python/RTL routing differential passed: cases=16, ticks=64, seed=0x4d313534
+M11.5.4 Python-to-RTL routing differential simulation completed successfully.
+```
 
 ### M11.5.4.4 — integrate recurrence into the M11.5.3 core
 
