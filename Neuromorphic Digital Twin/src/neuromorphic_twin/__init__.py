@@ -38,6 +38,7 @@ from .fpga_synapse_reference import (
     SynapseAccumulationStep,
     accumulate_frozen_weight_image_v1,
 )
+from .fpga_trace_snapshot import FPGA_TRACE_SNAPSHOT_SCHEMA, FpgaTickTraceSnapshot
 from .fpga_weight_storage import (
     AXON_ROW_POINTER_BITS,
     FORMAT_WORD_BITS,
@@ -100,9 +101,11 @@ __all__ = [
     "FPGA_CORE_ARITHMETIC_V1",
     "FPGA_CORE_CAPACITY_SCHEMA",
     "FPGA_CORE_CAPACITY_V1",
+    "FPGA_TRACE_SNAPSHOT_SCHEMA",
     "FPGA_WEIGHT_STORAGE_SCHEMA",
     "FpgaCoreCapacity",
     "FpgaCoreStorageEstimate",
+    "FpgaTickTraceSnapshot",
     "FrozenRouteStorage",
     "FrozenWeightStorage",
     "ID_BITS",
