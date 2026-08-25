@@ -62,8 +62,8 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert 'apply_board_preset "1"' in text
     assert "CONFIG.PSU__FPGA_PL0_ENABLE {1}" in text
     assert "CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}" in text
-    assert "get_bd_intf_ports -quiet -filter {NAME =~ "DDR*"}" in text
-    assert "get_bd_intf_ports -quiet -filter {NAME =~ "FIXED_IO*"}" in text
+    assert 'get_bd_intf_ports -quiet -filter {NAME =~ "DDR*"}' in text
+    assert 'get_bd_intf_ports -quiet -filter {NAME =~ "FIXED_IO*"}' in text
     assert "make_bd_intf_pins_external $ddr_pin" not in text
     assert "make_bd_intf_pins_external $fixed_pin" not in text
     assert "get_bd_pins zynq_ultra_ps_e_0/pl_clk0" in text
