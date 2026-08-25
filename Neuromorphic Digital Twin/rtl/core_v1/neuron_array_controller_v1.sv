@@ -9,6 +9,8 @@
 //
 // Architectural observations are only serviced while !busy, so per-neuron
 // writeback during a tick cannot expose a partially committed tick externally.
+// M11.5.5 uses explicit synchronous RAM ports for the 64-bit state and
+// accumulator memories so their debug/readback paths remain BRAM-inferable.
 module neuron_array_controller_v1 #(
     parameter integer MAX_NEURONS = 256
 ) (
@@ -91,6 +93,7 @@ module neuron_array_controller_v1 #(
         S_RESET_VALIDATE,
         S_RESET_WRITE,
         S_TICK_READ,
+        S_TICK_CAPTURE,
         S_TICK_VALIDATE,
         S_HLS_WAIT_READY,
         S_HLS_WAIT_DONE,
@@ -115,6 +118,20 @@ module neuron_array_controller_v1 #(
     logic        [15:0] result_refractory;
     logic               result_spiked;
     logic        [3:0]  result_valid;
+
+    logic        state_mem_we;
+    logic [7:0]  state_mem_waddr;
+    logic [63:0] state_mem_wdata;
+    logic        state_mem_re;
+    logic [7:0]  state_mem_raddr;
+    logic [63:0] state_mem_rdata;
+
+    logic               accum_mem_we;
+    logic [7:0]         accum_mem_waddr;
+    logic signed [63:0] accum_mem_wdata_i;
+    logic               accum_mem_re;
+    logic [7:0]         accum_mem_raddr;
+    logic signed [63:0] accum_mem_rdata;
 
     wire signed [23:0] cfg_threshold = $signed(work_config[49:26]);
     wire signed [23:0] cfg_reset_voltage = $signed(work_config[97:74]);
@@ -142,6 +159,9 @@ module neuron_array_controller_v1 #(
     assign hls_reset_voltage       = $signed(work_config[97:74]);
     assign hls_refractory_ticks    = work_config[113:98];
 
+    assign debug_state_rdata = state_mem_rdata;
+    assign debug_accum_rdata = accum_mem_rdata;
+
     // Keep ap_idle present at the integration boundary for observability. The
     // launch handshake itself is defined entirely by ap_start/ap_ready.
     wire unused_hls_idle = hls_ap_idle;
@@ -149,6 +169,85 @@ module neuron_array_controller_v1 #(
     function automatic logic count_is_valid(input logic [8:0] count);
         count_is_valid = (count != 9'd0) && (count <= MAX_NEURONS);
     endfunction
+
+    // One synchronous state-memory port handles host preload, architectural
+    // reset/writeback, runtime read, and idle debug read with mutually exclusive
+    // scheduling from the controller FSM.
+    always_comb begin
+        state_mem_we    = 1'b0;
+        state_mem_waddr = 8'd0;
+        state_mem_wdata = 64'd0;
+        state_mem_re    = 1'b0;
+        state_mem_raddr = 8'd0;
+
+        if (controller_state == S_RESET_WRITE) begin
+            state_mem_we    = 1'b1;
+            state_mem_waddr = active_neuron;
+            state_mem_wdata = {16'd0, work_config[97:74], 24'd0};
+        end else if ((controller_state == S_HLS_COMMIT) && (result_valid == 4'b1111)) begin
+            state_mem_we    = 1'b1;
+            state_mem_waddr = active_neuron;
+            state_mem_wdata = {result_refractory, result_voltage, result_current};
+        end else if ((!busy) && state_we) begin
+            state_mem_we    = 1'b1;
+            state_mem_waddr = state_addr;
+            state_mem_wdata = state_wdata;
+        end
+
+        if (controller_state == S_TICK_READ) begin
+            state_mem_re    = 1'b1;
+            state_mem_raddr = active_neuron;
+        end else if ((!busy) && debug_re) begin
+            state_mem_re    = 1'b1;
+            state_mem_raddr = debug_addr;
+        end
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (state_mem_we)
+            neuron_state_mem[state_mem_waddr] <= state_mem_wdata;
+        if (state_mem_re)
+            state_mem_rdata <= neuron_state_mem[state_mem_raddr];
+    end
+
+    // The neuron-side accumulator is similarly synchronous. M11.5.3's internal
+    // Phase-B copy enters through the existing idle accum_we preload port.
+    always_comb begin
+        accum_mem_we      = 1'b0;
+        accum_mem_waddr   = 8'd0;
+        accum_mem_wdata_i = 64'sd0;
+        accum_mem_re      = 1'b0;
+        accum_mem_raddr   = 8'd0;
+
+        if (controller_state == S_RESET_WRITE) begin
+            accum_mem_we      = 1'b1;
+            accum_mem_waddr   = active_neuron;
+            accum_mem_wdata_i = 64'sd0;
+        end else if ((controller_state == S_HLS_COMMIT) && (result_valid == 4'b1111)) begin
+            accum_mem_we      = 1'b1;
+            accum_mem_waddr   = active_neuron;
+            accum_mem_wdata_i = 64'sd0;
+        end else if ((!busy) && accum_we) begin
+            accum_mem_we      = 1'b1;
+            accum_mem_waddr   = accum_addr;
+            accum_mem_wdata_i = accum_wdata;
+        end
+
+        if (controller_state == S_TICK_READ) begin
+            accum_mem_re    = 1'b1;
+            accum_mem_raddr = active_neuron;
+        end else if ((!busy) && debug_re) begin
+            accum_mem_re    = 1'b1;
+            accum_mem_raddr = debug_addr;
+        end
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (accum_mem_we)
+            synaptic_accum_mem[accum_mem_waddr] <= accum_mem_wdata_i;
+        if (accum_mem_re)
+            accum_mem_rdata <= synaptic_accum_mem[accum_mem_raddr];
+    end
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
@@ -172,8 +271,6 @@ module neuron_array_controller_v1 #(
             debug_rvalid              <= 1'b0;
             debug_config_rdata        <= 128'd0;
             debug_state_before_rdata  <= 64'd0;
-            debug_state_rdata         <= 64'd0;
-            debug_accum_rdata         <= 64'sd0;
             debug_spike_rdata         <= 1'b0;
         end else begin
             core_reset_done <= 1'b0;
@@ -181,19 +278,14 @@ module neuron_array_controller_v1 #(
             debug_rvalid    <= 1'b0;
 
             // Configuration/replay writes and architectural reads occur only
-            // between transactions. This prevents partial-tick observation.
+            // between transactions. State/accumulator RAM writes are owned by
+            // their dedicated processes above.
             if (!busy) begin
                 if (config_we)
                     neuron_config_mem[config_addr] <= config_wdata;
-                if (state_we)
-                    neuron_state_mem[state_addr] <= state_wdata;
-                if (accum_we)
-                    synaptic_accum_mem[accum_addr] <= accum_wdata;
                 if (debug_re) begin
                     debug_config_rdata       <= neuron_config_mem[debug_addr];
                     debug_state_before_rdata <= trace_state_before_mem[debug_addr];
-                    debug_state_rdata        <= neuron_state_mem[debug_addr];
-                    debug_accum_rdata        <= synaptic_accum_mem[debug_addr];
                     debug_spike_rdata        <= spike_mem[debug_addr];
                     debug_rvalid             <= 1'b1;
                 end
@@ -250,12 +342,6 @@ module neuron_array_controller_v1 #(
                 end
 
                 S_RESET_WRITE: begin
-                    neuron_state_mem[active_neuron] <= {
-                        16'd0,
-                        work_config[97:74],
-                        24'd0
-                    };
-                    synaptic_accum_mem[active_neuron] <= 64'sd0;
                     spike_mem[active_neuron] <= 1'b0;
 
                     if (({1'b0, active_neuron} + 9'd1) >= active_count) begin
@@ -269,11 +355,17 @@ module neuron_array_controller_v1 #(
                     end
                 end
 
+                // State and accumulator reads are issued during this cycle.
+                // The registered RAM outputs are captured in S_TICK_CAPTURE.
                 S_TICK_READ: begin
-                    work_state       <= neuron_state_mem[active_neuron];
                     work_config      <= neuron_config_mem[active_neuron];
-                    work_accum       <= synaptic_accum_mem[active_neuron];
                     result_valid     <= 4'd0;
+                    controller_state <= S_TICK_CAPTURE;
+                end
+
+                S_TICK_CAPTURE: begin
+                    work_state       <= state_mem_rdata;
+                    work_accum       <= accum_mem_rdata;
                     controller_state <= S_TICK_VALIDATE;
                 end
 
@@ -335,13 +427,7 @@ module neuron_array_controller_v1 #(
                         busy             <= 1'b0;
                         controller_state <= S_IDLE;
                     end else begin
-                        neuron_state_mem[active_neuron] <= {
-                            result_refractory,
-                            result_voltage,
-                            result_current
-                        };
                         spike_mem[active_neuron] <= result_spiked;
-                        synaptic_accum_mem[active_neuron] <= 64'sd0;
 
                         if (({1'b0, active_neuron} + 9'd1) >= active_count) begin
                             tick             <= tick + 32'd1;
