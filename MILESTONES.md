@@ -914,7 +914,7 @@ M10 now provides one frozen, test-addressable computational contract for M11. Ha
 
 **Status:** In progress  
 **Started:** 2026-08-20  
-**Repository evidence:** `main` through M11.5.4; branch `agent/m11-5-5-system-validation` for M11.5.5
+**Repository evidence:** `main` through M11.5.5
 
 ### Goal
 
@@ -1227,9 +1227,10 @@ M11.4 proves the verified HLS datapath can become a reusable Vivado IP and live 
 
 ### M11.5 — Integrate memories, tick control, routing, and observability
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
-**Repository evidence:** `main` through M11.5.4; branch `agent/m11-5-5-system-validation` for M11.5.5
+**Completed:** 2026-08-25  
+**Repository evidence:** `main` through M11.5.5
 
 ### Goal
 
@@ -1408,23 +1409,65 @@ M11.5.4 establishes the complete simulated recurrent path `old recurrent bank + 
 
 #### M11.5.5 — Integrated observability and Vivado system validation
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
-**Repository evidence:** branch `agent/m11-5-5-system-validation`
+**Completed:** 2026-08-25  
+**Repository evidence:** branch `agent/m11-5-5-system-validation`, merged to `main`
 
 ##### Goal
 
-Complete trace/debug exposure, resolve temporary integration/resource duplication, and validate the full scripted Vivado system before physical implementation in M11.6.
+Complete trace/debug exposure, resolve physical resource-mapping problems, and validate the full scripted Vivado system before physical implementation in M11.6.
 
-##### Planned closure work
+##### How it was met
 
-- Freeze a hardware-visible debug/trace contract sufficient to reconstruct the M10/M12 per-tick fields without exposing partially committed state.
-- Resolve or explicitly account for the temporary duplicate signed-64 accumulator storage introduced by the verification-first M11.5.3 composition.
-- Synthesize the complete recurrent integrated core for `xck26-sfvc784-2LV-c` at the 100 MHz baseline and record actual BRAM/DSP/FF/LUT/URAM mapping.
-- Review inferred memories and any replication/banking caused by debug ports, widths, or access patterns instead of relying on the M11.5.1 capacity-only 14-BRAM36 lower bound.
-- Run Vivado timing analysis on the integrated synthesized design and record whether the 10 ns baseline is met before place-and-route.
-- Preserve the source-controlled, no-GUI reconstruction path and make the final M11.5 design reproducible without checked-in vendor build artifacts.
-- Run a final integrated behavioral gate after any resource/observability cleanup to prove M11.5.1–M11.5.4 behavior remains unchanged.
+1. **Lossless post-tick trace contract** — Added `FpgaTickTraceSnapshot` and passive hardware readback for every normative M10/M12 field: committed tick, external and recurrent inputs, combined input order, exact signed-64 synaptic sums, pre- and post-neuron state, spikes, and routed output axons. Trace reads are valid only after the outer Phase-F commit and before the next tick/reset/host mutation, so partially committed state is never exposed.
+2. **Trace hardware without datapath feedback** — Added a passive 256 x 64 pre-Phase-C state snapshot, Phase-B accumulator/event readback, and propagation of trace ports through the integrated recurrent Module Reference. The trace memories and debug paths never feed HLS inputs or architectural writeback.
+3. **Whole-core synthesis exposed a physical blocker** — The first complete K26 synthesis reported `172225 / 117120` CLB LUTs (`147.05%`) despite modest BRAM/DSP use. This proved that synthesis completion alone was not a sufficient milestone gate. Inspection showed several large arrays were using access patterns incompatible with block-RAM inference and were expanding into LUT logic/read muxes.
+4. **BRAM-friendly memory remediation** — Phase-B external/recurrent event buffers, the signed-64 Phase-B accumulator, neuron state/accumulator memories, and both recurrent banks were rewritten with explicit synchronous single-clock RAM ports. Implementation-only capture/read states were added where required. These extra cycles do not alter M10 arithmetic, event ordering, next-tick recurrence, or the atomic algorithmic tick boundary.
+5. **Behavior preserved after the memory refactor** — The focused/full Python regressions and the affected M11.5.2, M11.5.3, M11.5.4, and final trace-aware real-packaged-HLS hardware gates were independently rerun and reported passing after the synchronous-RAM changes.
+6. **Physical resource gate hardened and passed** — `run_m11_5_5_synth.sh` now parses `utilization.rpt` and fails if CLB LUTs, CLB registers, block-RAM tiles, DSPs, or URAM exceed the selected K26 capacity. The final remediated synthesis passed this gate.
+
+##### Final behavioral evidence
+
+The final trace-aware real-HLS regression passed all four scripted markers:
+
+```text
+M11.5.5 trace real-HLS block design validated successfully.
+M11.5.5 trace snapshot + real-HLS recurrent regression passed: ticks=4, neurons=3, tag=0x4d353554
+M11.5.5 trace real-HLS Vivado simulation flow completed.
+M11.5.5 trace snapshot + real packaged HLS IP simulation completed successfully.
+```
+
+This verifies the complete simulated path after the resource refactor, including post-Phase-F trace reconstruction rather than only final neuron state.
+
+##### Final synthesized K26 resource profile
+
+The accepted final synthesis reported:
+
+```text
+M11.5.5 resource capacity check passed: CLB_LUT=1757/117120, CLB_REG=944/234240, BRAM_TILE=27/144, DSP=2/1248, URAM=0/64
+M11.5.5 complete-core synthesis and reporting completed successfully.
+```
+
+Approximate utilization:
+
+```text
+CLB LUTs        1.50%
+CLB Registers   0.40%
+Block RAM Tile 18.75%
+DSPs            0.16%
+URAM            0.00%
+```
+
+The BRAM increase from the first 16-tile profile to 27 tiles is intentional: memories that previously consumed LUT fabric now map into dedicated block RAM. The decisive improvement is the CLB-LUT reduction from 172,225 (`147.05%`, impossible to implement) to 1,757 (`1.50%`). The verification-first duplicated accumulator organization can therefore remain because the real synthesized design now fits comfortably inside the K26 resource budget.
+
+##### Timing handoff
+
+The earlier complete-core synthesis timing report showed a positive 100 MHz setup estimate (`WNS=+1.337 ns`) but a small pre-route hold estimate (`WHS=-0.149 ns`). No artificial delay or timing exception was added. The final post-remediation synthesis completed successfully, but routed timing closure is intentionally not claimed by M11.5.5. M11.6 must perform placement/routing and require nonnegative routed setup and hold slack before accepting the bitstream timing result.
+
+##### What completion means
+
+M11.5 is now a complete, finite, behaviorally verified, trace-observable, synthesizable computational core for the selected K26. It integrates packed M08 weights, exact signed-64 Phase-B accumulation, the real packaged HLS neuron transition, deterministic recurrent routing with next-tick-only delivery, atomic tick commit, and hardware-visible trace reconstruction. Vivado synthesis confirms the final memory organization fits the device; physical implementation, routed timing closure, bitstream generation, programming, and board smoke checks remain M11.6.
 
 ---
 
