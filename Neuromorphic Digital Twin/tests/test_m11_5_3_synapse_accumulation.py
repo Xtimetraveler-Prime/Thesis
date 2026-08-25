@@ -75,8 +75,12 @@ def test_phase_b_effective_weights_are_reconstructed_from_m08_words() -> None:
     decoded = storage.decode_synapses()
 
     expected = tuple(
-        encode_static_weight(synapse.mantissa, synapse.weight_format).effective_weight
+        encode_static_weight(
+            synapse.encoding.requested_mantissa,
+            synapse.encoding.weight_format,
+        ).effective_weight
         for synapse in decoded
+        if synapse.encoding is not None
     )
     assert tuple(step.effective_weight for step in result.steps) == expected
 
