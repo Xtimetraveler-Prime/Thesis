@@ -33,6 +33,7 @@ require_tool() {
 }
 
 require_tool vivado
+require_tool python3
 
 VIVADO_VERSION="$(vivado -version 2>&1 || true)"
 if [[ "$VIVADO_VERSION" != *"$EXPECTED_VERSION"* ]]; then
@@ -143,6 +144,65 @@ for report in "${REQUIRED_REPORTS[@]}"; do
         exit 4
     fi
 done
+
+# A synthesis run is not a usable physical boundary merely because Vivado
+# completed. Reject any profile that exceeds the selected K26's available CLB
+# LUT, register, block-RAM tile, DSP, or URAM capacity. This specifically guards
+# against the first M11.5.5 profile, which synthesized but required 147% of the
+# device CLB LUTs.
+python3 - "$REPORT_DIR/utilization.rpt" <<'PY'
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+report = Path(sys.argv[1])
+lines = report.read_text(encoding="utf-8", errors="replace").splitlines()
+
+
+def row(prefix: str) -> tuple[int, int]:
+    for line in lines:
+        if not line.lstrip().startswith("|"):
+            continue
+        fields = [field.strip() for field in line.strip().strip("|").split("|")]
+        if not fields or not fields[0].startswith(prefix):
+            continue
+        # Standard Vivado utilization table columns:
+        # Site Type | Used | Fixed | Prohibited | Available | Util%
+        if len(fields) < 5:
+            continue
+        try:
+            return int(fields[1]), int(fields[4])
+        except ValueError:
+            continue
+    raise SystemExit(f"ERROR: could not locate utilization row: {prefix}")
+
+checks = (
+    ("CLB LUTs", "CLB_LUT"),
+    ("CLB Registers", "CLB_REG"),
+    ("Block RAM Tile", "BRAM_TILE"),
+    ("DSPs", "DSP"),
+    ("URAM", "URAM"),
+)
+
+summaries: list[str] = []
+failed = False
+for prefix, label in checks:
+    used, available = row(prefix)
+    summaries.append(f"{label}={used}/{available}")
+    if used > available:
+        print(
+            f"ERROR: M11.5.5 physical resource overflow: "
+            f"{label} used={used} available={available}",
+            file=sys.stderr,
+        )
+        failed = True
+
+if failed:
+    raise SystemExit(5)
+
+print("M11.5.5 resource capacity check passed: " + ", ".join(summaries))
+PY
 
 echo
 echo 'M11.5.5 complete-core synthesis and reporting completed successfully.'
