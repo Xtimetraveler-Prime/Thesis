@@ -44,9 +44,11 @@ last active neuron
         -> pulse tick_done
 ```
 
-The controller handles the non-pipelined `ap_ctrl_hs` case in which `ap_ready`
-and `ap_done` coincide. The HLS result is latched before writeback so a one-cycle
-`ap_done` pulse cannot be missed.
+`ap_start` remains high through the clock edge on which `ap_ready` is sampled.
+Leaving the wait-ready FSM state then deasserts `ap_start` on the next cycle, so
+the completed request does not auto-restart. The controller also handles the
+non-pipelined case in which `ap_ready` and `ap_done` coincide by latching the
+result before entering the writeback state.
 
 ## Atomic-tick observability
 
@@ -120,18 +122,110 @@ M11.5.2 standalone RTL controller simulation completed successfully.
 
 `src/neuromorphic_twin/neuron_array_reference.py` adapts the frozen Python
 `step_neuron(..., arithmetic=FPGA_CORE_ARITHMETIC_V1)` transition to the exact
-64-bit state and 128-bit configuration words. This gives later integration tests
-one golden function for comparing complete memory images across multiple
-neurons.
+64-bit state and 128-bit configuration words. This gives integration tests one
+golden function for comparing complete memory images across multiple neurons.
 
-## M11.5.2 completion path
+## Real packaged-HLS integration gate
 
-The standalone controller simulation is the first gate. After it passes, the
-next gate is a Vivado project that instantiates this RTL controller as a Module
-Reference beside the actual packaged `neuron_step_v1` IP, wires the scalar data
-and `ap_ctrl_hs` signals, and compares multi-neuron state/spike results against
-the packed Python reference. Only after that real-IP integration passes should
-M11.5.2 be marked complete.
+The second M11.5.2 gate connects the controller to the **actual M11.4 packaged
+HLS IP** rather than the mock.
+
+The IP-Integrator-facing wrapper is:
+
+```text
+rtl/core_v1/neuron_array_controller_bd_v1.sv
+```
+
+It contains no sequencing arithmetic. It only instantiates
+`neuron_array_controller_v1` and annotates its HLS control pins as a Vivado
+`xilinx.com:interface:acc_handshake:1.0` master named `hls_ctrl`.
+
+`vivado/create_m11_5_2_project.tcl` then creates a K26-targeted project and block
+design containing:
+
+```text
+neuron_array_controller_bd_v1  (RTL Module Reference)
+              |
+              | hls_ctrl / scalar neuron data
+              v
+neuron_step_v1_0                (M11.4 packaged HLS IP)
+```
+
+The complete accelerator handshake is connected with `connect_bd_intf_net`;
+individual `ap_start/ap_done/ap_idle/ap_ready` member pins are not overridden.
+Clock/reset and every HLS scalar input/output-valid signal are connected
+explicitly and block-design validation is mandatory.
+
+### Deterministic integration corpus
+
+`examples/generate_m11_5_2_vectors.py` produces one ephemeral SystemVerilog
+include from the Python golden path. One integrated tick contains 64 neurons:
+
+```text
+24 M11.2 directed boundary neurons
+40 deterministic SplitMix64 neurons
+seed = 0x4D313132
+```
+
+For every neuron the include contains:
+
+- packed 128-bit configuration;
+- packed pre-tick 64-bit dynamic state;
+- reset-state expectation;
+- signed 64-bit synaptic accumulator;
+- packed expected post-tick state; and
+- expected spike flag.
+
+The real-IP XSIM testbench first loads configurations and executes architectural
+reset, checking the reset image for all 64 neurons. It then loads the arbitrary
+pre-tick state/accumulator image, executes one serialized tick through the real
+HLS IP, and requires exact agreement on every packed state word and spike flag.
+It also requires configuration to remain unchanged, each consumed accumulator
+to be cleared to zero, and the architectural tick counter to increment once.
+
+### Prerequisite
+
+The runner reuses the ignored M11.4 packaged IP repository:
+
+```text
+hls/core_v1/build/m11_4/ip_repo/neuron_step_v1/component.xml
+```
+
+If that build artifact was removed, regenerate it once with `run_m11_4.sh`.
+The packaged IP itself is not committed; the M11.4 source/configuration remains
+the reproducible source of truth.
+
+### Run the real-IP gate
+
+From this directory:
+
+```bash
+bash run_m11_5_2_real_ip.sh | tee m11_5_2_real_ip.log
+```
+
+A successful XSIM run must contain:
+
+```text
+M11.5.2 real packaged-IP integration passed: neurons=64, directed=24, random=40, seed=0x4d313132
+M11.5.2 controller + real packaged HLS IP simulation completed successfully.
+```
+
+Generated Vivado projects, vector includes, journals, and logs live under ignored
+`rtl/core_v1/build/` output.
+
+## M11.5.2 completion boundary
+
+M11.5.2 is complete only after both vendor gates have been independently run on
+the current branch:
+
+1. standalone controller RTL simulation with the mock HLS responder; and
+2. controller + actual packaged HLS IP XSIM comparison against the 64-neuron
+   Python-generated packed corpus.
+
+Passing those gates proves the state/config/accumulator memory boundary,
+serialized multi-neuron scheduling, `ap_ctrl_hs`/`ap_vld` integration, reset,
+writeback, spike storage, and tick advancement before synapse-memory traversal is
+introduced.
 
 M11.5.3 then replaces testbench-preloaded accumulator values with the real M08
 weight-format/axon-row/synapse traversal and exact tick-local accumulation path.
