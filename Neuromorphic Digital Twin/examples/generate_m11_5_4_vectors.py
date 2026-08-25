@@ -200,20 +200,20 @@ def write_systemverilog_include(output: Path) -> Path:
     def emit_flat(
         name: str,
         width: int,
-        per_case: int,
+        per_row: int,
         rows: list[tuple[int, ...]],
     ) -> None:
-        total = len(rows) * per_case
+        total = len(rows) * per_row
         lines.append(f"localparam logic [{width - 1}:0] {name} [0:{total - 1}] = '{{")
         emitted = 0
-        for case_index, row in enumerate(rows):
-            padded = tuple(row) + (0,) * (per_case - len(row))
-            if len(padded) != per_case:
+        for row_index, row in enumerate(rows):
+            padded = tuple(row) + (0,) * (per_row - len(row))
+            if len(padded) != per_row:
                 raise ValueError(f"{name} row exceeds generated capacity")
             for local_index, value in enumerate(padded):
                 emitted += 1
                 comma = "," if emitted != total else ""
-                comment = f" // {cases[case_index].name}" if local_index == 0 else ""
+                comment = f" // row {row_index}" if local_index == 0 else ""
                 lines.append(f"    {width}'h{_hex(value, width)}{comma}{comment}")
         lines.append("};")
         lines.append("")
