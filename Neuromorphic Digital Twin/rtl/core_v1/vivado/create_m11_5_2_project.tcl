@@ -53,8 +53,12 @@ create_project $project_name $project_dir -part $target_part -force
 set_property TARGET_LANGUAGE Verilog [current_project]
 set_property SIMULATOR_LANGUAGE Mixed [current_project]
 
+# Vivado Module Reference accepts Verilog/VHDL only at the referenced top.
+# Keep the actual controller implementation as SystemVerilog underneath a thin
+# Verilog-2001 wrapper that carries the IP-Integrator interface metadata.
 add_files -norecurse [list $controller_rtl $controller_bd_rtl]
-set_property file_type SystemVerilog [get_files [list $controller_rtl $controller_bd_rtl]]
+set_property file_type SystemVerilog [get_files $controller_rtl]
+set_property file_type Verilog [get_files $controller_bd_rtl]
 update_compile_order -fileset sources_1
 
 set_property IP_REPO_PATHS [list $ip_repo_dir] [current_fileset]
