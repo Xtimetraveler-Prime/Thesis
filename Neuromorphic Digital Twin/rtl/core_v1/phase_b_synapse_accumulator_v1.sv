@@ -6,6 +6,11 @@
 // the frozen M08 axon-row CSR image, reconstructs each effective weight with
 // m08_weight_decoder_v1, and produces one exact signed-64 accumulator per
 // configured neuron. It is intentionally serialized for traceability.
+//
+// M11.5.5 keeps the large event/accumulator arrays on canonical synchronous
+// single-clock RAM access patterns so Vivado can map them into dedicated block
+// RAM rather than building deep LUT read muxes. The extra S_ACCUM_READ cycle is
+// an implementation timing detail and does not change the algorithmic tick.
 module phase_b_synapse_accumulator_v1 #(
     parameter integer MAX_NEURONS  = 256,
     parameter integer MAX_AXONS    = 1024,
@@ -49,13 +54,13 @@ module phase_b_synapse_accumulator_v1 #(
     input  logic [11:0]  recurrent_addr,
     input  logic [15:0]  recurrent_wdata,
 
-    // Idle-only trace/debug reads. The accumulator image is the exact Phase-B
-    // signed-64 result; the external-event read exposes the actual event words
-    // consumed by this engine rather than relying on host-side recollection.
     input  logic         debug_accum_re,
     input  logic [7:0]   debug_accum_addr,
     output logic         debug_accum_rvalid,
     output logic signed [63:0] debug_accum_rdata,
+
+    // M11.5.5 idle-only readback of the actual external-event buffer consumed
+    // by Phase B. This is trace-only and never feeds the datapath.
     input  logic         debug_external_re,
     input  logic [11:0]  debug_external_addr,
     output logic         debug_external_rvalid,
@@ -79,6 +84,7 @@ module phase_b_synapse_accumulator_v1 #(
         S_ROW_VALIDATE,
         S_SYN_READ,
         S_SYN_VALIDATE,
+        S_ACCUM_READ,
         S_ACCUMULATE,
         S_EVENT_ADVANCE
     } phase_b_state_t;
@@ -100,11 +106,34 @@ module phase_b_synapse_accumulator_v1 #(
     logic [12:0] latched_recurrent_count;
 
     logic [7:0]  clear_index;
-    logic [15:0] current_axon;
     logic [31:0] row_start;
     logic [31:0] row_stop;
     logic [31:0] work_synapse;
     logic [15:0] work_format;
+
+    // Canonical synchronous RAM port controls for memories that previously
+    // synthesized into LUT fabric. Each array is touched by exactly one RAM
+    // process; host/runtime/debug accesses are multiplexed onto that port.
+    logic        external_mem_we;
+    logic [11:0] external_mem_waddr;
+    logic [15:0] external_mem_wdata;
+    logic        external_mem_re;
+    logic [11:0] external_mem_raddr;
+    logic [15:0] external_mem_rdata;
+
+    logic        recurrent_mem_we;
+    logic [11:0] recurrent_mem_waddr;
+    logic [15:0] recurrent_mem_wdata;
+    logic        recurrent_mem_re;
+    logic [11:0] recurrent_mem_raddr;
+    logic [15:0] recurrent_mem_rdata;
+
+    logic               accumulator_mem_we;
+    logic [7:0]         accumulator_mem_waddr;
+    logic signed [63:0] accumulator_mem_wdata;
+    logic               accumulator_mem_re;
+    logic [7:0]         accumulator_mem_raddr;
+    logic signed [63:0] accumulator_mem_rdata;
 
     logic               decoded_valid;
     logic [7:0]         decoded_fault_code;
@@ -115,11 +144,13 @@ module phase_b_synapse_accumulator_v1 #(
 
     wire [7:0] target_index = decoded_target[7:0];
     wire signed [63:0] decoded_weight_64 = {{32{decoded_weight[31]}}, decoded_weight};
-    wire signed [63:0] current_accumulator = accumulator_mem[target_index];
-    wire signed [63:0] accumulator_sum = current_accumulator + decoded_weight_64;
+    wire signed [63:0] accumulator_sum = accumulator_mem_rdata + decoded_weight_64;
     wire accumulator_overflow =
-        (current_accumulator[63] == decoded_weight_64[63]) &&
-        (accumulator_sum[63] != current_accumulator[63]);
+        (accumulator_mem_rdata[63] == decoded_weight_64[63]) &&
+        (accumulator_sum[63] != accumulator_mem_rdata[63]);
+    wire [15:0] current_event_axon = active_source
+        ? recurrent_mem_rdata
+        : external_mem_rdata;
 
     m08_weight_decoder_v1 decoder_i (
         .format_word(work_format),
@@ -145,6 +176,88 @@ module phase_b_synapse_accumulator_v1 #(
             (recurrent_event_count <= MAX_EVENTS);
     endfunction
 
+    // External-event RAM: one synchronous read port plus one synchronous write
+    // port on the same clock. Runtime reads have priority over idle trace reads.
+    always_comb begin
+        external_mem_we    = (!busy) && external_we;
+        external_mem_waddr = external_addr;
+        external_mem_wdata = external_wdata;
+        external_mem_re    = 1'b0;
+        external_mem_raddr = 12'd0;
+
+        if ((state == S_EVENT_LOAD) && !active_source) begin
+            external_mem_re    = 1'b1;
+            external_mem_raddr = active_event_index[11:0];
+        end else if ((!busy) && debug_external_re) begin
+            external_mem_re    = 1'b1;
+            external_mem_raddr = debug_external_addr;
+        end
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (external_mem_we)
+            external_event_mem[external_mem_waddr] <= external_mem_wdata;
+        if (external_mem_re)
+            external_mem_rdata <= external_event_mem[external_mem_raddr];
+    end
+
+    // Recurrent-event RAM is loaded by the integration controller while Phase B
+    // is idle and read synchronously while recurrent events are consumed.
+    always_comb begin
+        recurrent_mem_we    = (!busy) && recurrent_we;
+        recurrent_mem_waddr = recurrent_addr;
+        recurrent_mem_wdata = recurrent_wdata;
+        recurrent_mem_re    = (state == S_EVENT_LOAD) && active_source;
+        recurrent_mem_raddr = active_event_index[11:0];
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (recurrent_mem_we)
+            recurrent_event_mem[recurrent_mem_waddr] <= recurrent_mem_wdata;
+        if (recurrent_mem_re)
+            recurrent_mem_rdata <= recurrent_event_mem[recurrent_mem_raddr];
+    end
+
+    // Accumulator RAM is synchronous on both accesses. S_ACCUM_READ requests
+    // the existing target value; S_ACCUMULATE consumes that registered value on
+    // the following cycle. This is the block-RAM-compatible replacement for the
+    // previous asynchronous array read.
+    always_comb begin
+        accumulator_mem_we    = 1'b0;
+        accumulator_mem_waddr = 8'd0;
+        accumulator_mem_wdata = 64'sd0;
+        accumulator_mem_re    = 1'b0;
+        accumulator_mem_raddr = 8'd0;
+
+        if (state == S_CLEAR) begin
+            accumulator_mem_we    = 1'b1;
+            accumulator_mem_waddr = clear_index;
+            accumulator_mem_wdata = 64'sd0;
+        end else if ((state == S_ACCUMULATE) && decoded_valid && !accumulator_overflow) begin
+            accumulator_mem_we    = 1'b1;
+            accumulator_mem_waddr = target_index;
+            accumulator_mem_wdata = accumulator_sum;
+        end
+
+        if (state == S_ACCUM_READ) begin
+            accumulator_mem_re    = 1'b1;
+            accumulator_mem_raddr = target_index;
+        end else if ((!busy) && debug_accum_re) begin
+            accumulator_mem_re    = 1'b1;
+            accumulator_mem_raddr = debug_accum_addr;
+        end
+    end
+
+    always_ff @(posedge ap_clk) begin
+        if (accumulator_mem_we)
+            accumulator_mem[accumulator_mem_waddr] <= accumulator_mem_wdata;
+        if (accumulator_mem_re)
+            accumulator_mem_rdata <= accumulator_mem[accumulator_mem_raddr];
+    end
+
+    assign debug_accum_rdata = accumulator_mem_rdata;
+    assign debug_external_rdata = external_mem_rdata;
+
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
             state                   <= S_IDLE;
@@ -162,20 +275,24 @@ module phase_b_synapse_accumulator_v1 #(
             latched_external_count  <= 13'd0;
             latched_recurrent_count <= 13'd0;
             clear_index             <= 8'd0;
-            current_axon            <= 16'd0;
             row_start               <= 32'd0;
             row_stop                <= 32'd0;
             work_synapse            <= 32'd0;
             work_format             <= 16'd0;
             debug_accum_rvalid      <= 1'b0;
-            debug_accum_rdata       <= 64'sd0;
             debug_external_rvalid   <= 1'b0;
-            debug_external_rdata    <= 16'd0;
         end else begin
-            done                  <= 1'b0;
-            debug_accum_rvalid    <= 1'b0;
-            debug_external_rvalid <= 1'b0;
+            done                    <= 1'b0;
+            debug_accum_rvalid      <= 1'b0;
+            debug_external_rvalid   <= 1'b0;
 
+            if ((!busy) && debug_accum_re)
+                debug_accum_rvalid <= 1'b1;
+            if ((!busy) && debug_external_re)
+                debug_external_rvalid <= 1'b1;
+
+            // Small/static image memories keep their already-verified access
+            // patterns. The large event/accumulator RAMs are owned above.
             if (!busy) begin
                 if (format_we)
                     format_mem[format_addr] <= format_wdata;
@@ -183,18 +300,6 @@ module phase_b_synapse_accumulator_v1 #(
                     synapse_mem[synapse_addr] <= synapse_wdata;
                 if (row_we)
                     axon_row_mem[row_addr] <= row_wdata;
-                if (external_we)
-                    external_event_mem[external_addr] <= external_wdata;
-                if (recurrent_we)
-                    recurrent_event_mem[recurrent_addr] <= recurrent_wdata;
-                if (debug_accum_re) begin
-                    debug_accum_rdata  <= accumulator_mem[debug_accum_addr];
-                    debug_accum_rvalid <= 1'b1;
-                end
-                if (debug_external_re) begin
-                    debug_external_rdata  <= external_event_mem[debug_external_addr];
-                    debug_external_rvalid <= 1'b1;
-                end
             end
 
             case (state)
@@ -224,7 +329,6 @@ module phase_b_synapse_accumulator_v1 #(
                 end
 
                 S_CLEAR: begin
-                    accumulator_mem[clear_index] <= 64'sd0;
                     if (({1'b0, clear_index} + 9'd1) >= latched_neuron_count) begin
                         if (latched_external_count != 13'd0) begin
                             active_source      <= 1'b0;
@@ -244,26 +348,25 @@ module phase_b_synapse_accumulator_v1 #(
                     end
                 end
 
+                // The synchronous event RAM read is requested combinationally
+                // while in S_EVENT_LOAD and is available throughout the next
+                // S_EVENT_VALIDATE cycle.
                 S_EVENT_LOAD: begin
-                    if (!active_source)
-                        current_axon <= external_event_mem[active_event_index[11:0]];
-                    else
-                        current_axon <= recurrent_event_mem[active_event_index[11:0]];
                     state <= S_EVENT_VALIDATE;
                 end
 
                 S_EVENT_VALIDATE: begin
-                    if (current_axon >= MAX_AXONS) begin
+                    if (current_event_axon >= MAX_AXONS) begin
                         fault      <= 1'b1;
                         fault_code <= FAULT_EVENT_AXON;
                         busy       <= 1'b0;
                         state      <= S_IDLE;
-                    end else if (current_axon >= latched_axon_count) begin
+                    end else if (current_event_axon >= latched_axon_count) begin
                         // Physically valid but unconfigured axon: no-op.
                         state <= S_EVENT_ADVANCE;
                     end else begin
-                        row_start <= axon_row_mem[current_axon];
-                        row_stop  <= axon_row_mem[current_axon + 16'd1];
+                        row_start <= axon_row_mem[current_event_axon];
+                        row_stop  <= axon_row_mem[current_event_axon + 16'd1];
                         state     <= S_ROW_VALIDATE;
                     end
                 end
@@ -305,29 +408,32 @@ module phase_b_synapse_accumulator_v1 #(
                         state      <= S_IDLE;
                     end else begin
                         work_format <= format_mem[work_synapse[12:9]];
-                        state       <= S_ACCUMULATE;
+                        state       <= S_ACCUM_READ;
                     end
                 end
 
-                S_ACCUMULATE: begin
+                S_ACCUM_READ: begin
                     if (!decoded_valid) begin
                         fault      <= 1'b1;
                         fault_code <= FAULT_WEIGHT_WORD;
                         busy       <= 1'b0;
                         state      <= S_IDLE;
-                    end else if (accumulator_overflow) begin
+                    end else begin
+                        state <= S_ACCUMULATE;
+                    end
+                end
+
+                S_ACCUMULATE: begin
+                    if (accumulator_overflow) begin
                         fault      <= 1'b1;
                         fault_code <= FAULT_ACCUM_OVERFLOW;
                         busy       <= 1'b0;
                         state      <= S_IDLE;
+                    end else if ((active_synapse_index + 32'd1) >= row_stop) begin
+                        state <= S_EVENT_ADVANCE;
                     end else begin
-                        accumulator_mem[target_index] <= accumulator_sum;
-                        if ((active_synapse_index + 32'd1) >= row_stop) begin
-                            state <= S_EVENT_ADVANCE;
-                        end else begin
-                            active_synapse_index <= active_synapse_index + 32'd1;
-                            state                <= S_SYN_READ;
-                        end
+                        active_synapse_index <= active_synapse_index + 32'd1;
+                        state                <= S_SYN_READ;
                     end
                 end
 
