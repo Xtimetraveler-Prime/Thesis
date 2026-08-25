@@ -4,8 +4,10 @@
 // sequencer. Vivado 2025.2 Module Reference requires a Verilog top in this flow.
 module m11_6_smoke_controller_bd_v1 (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 ap_clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_clk, FREQ_HZ 100000000" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_clk, ASSOCIATED_RESET pl_resetn0" *)
     input  wire         ap_clk,
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 pl_resetn0 RST" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME pl_resetn0, POLARITY ACTIVE_LOW" *)
     input  wire         pl_resetn0,
     input  wire         smoke_start,
 
