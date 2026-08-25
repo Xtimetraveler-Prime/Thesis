@@ -133,18 +133,25 @@ HLS IP** rather than the mock.
 The IP-Integrator-facing wrapper is:
 
 ```text
-rtl/core_v1/neuron_array_controller_bd_v1.sv
+rtl/core_v1/neuron_array_controller_bd_v1.v
 ```
 
-It contains no sequencing arithmetic. It only instantiates
-`neuron_array_controller_v1` and annotates its HLS control pins as a Vivado
+Vivado Module Reference accepts Verilog or VHDL for the referenced top-level
+module definition; a SystemVerilog top-level Module Reference is rejected. The
+actual controller therefore remains SystemVerilog in
+`neuron_array_controller_v1.sv`, while this thin Verilog-2001 wrapper is the
+Module Reference top. It contains no sequencing arithmetic. It only instantiates
+the SystemVerilog controller and annotates its HLS control pins as a Vivado
 `xilinx.com:interface:acc_handshake:1.0` master named `hls_ctrl`.
 
-`vivado/create_m11_5_2_project.tcl` then creates a K26-targeted project and block
-design containing:
+`vivado/create_m11_5_2_project.tcl` explicitly marks the controller implementation
+as SystemVerilog and the Module Reference wrapper as Verilog before creating the
+block-design cell.
+
+The block design contains:
 
 ```text
-neuron_array_controller_bd_v1  (RTL Module Reference)
+neuron_array_controller_bd_v1  (Verilog RTL Module Reference)
               |
               | hls_ctrl / scalar neuron data
               v
