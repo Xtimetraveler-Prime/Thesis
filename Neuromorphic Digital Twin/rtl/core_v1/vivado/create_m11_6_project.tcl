@@ -115,16 +115,16 @@ set_property -dict [list \
     CONFIG.PSU__USE__FABRIC__RST {1} \
     CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
 
-# Block Automation, rather than manual make_bd_intf_pins_external calls, owns
-# creation of the PS dedicated-I/O boundary. Accept the normal DDR/FIXED_IO name
-# suffixes Vivado may choose, but require exactly one of each.
-set ddr_ports [get_bd_intf_ports -quiet -filter {NAME =~ "DDR*"}]
-set fixed_ports [get_bd_intf_ports -quiet -filter {NAME =~ "FIXED_IO*"}]
-if {[llength $ddr_ports] != 1 || [llength $fixed_ports] != 1} {
-    puts "M11.6 external PS interfaces after Block Automation: [get_bd_intf_ports -quiet]"
-    error "M11.6 PS Block Automation did not create exactly one DDR and one FIXED_IO external interface."
+# Unlike Zynq-7000 PS7 flows, the KV260/K26 Zynq UltraScale+ MPSoC preset does
+# not require top-level DDR/FIXED_IO block-design interface ports. Those are
+# dedicated PS/SOM resources configured by the board preset. For M11.6 the only
+# PS-to-PL boundary we require is the fabric clock/reset pair below.
+set pl_clk0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_clk0]
+set pl_resetn0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_resetn0]
+if {[llength $pl_clk0_pin] != 1 || [llength $pl_resetn0_pin] != 1} {
+    error "M11.6 KV260 PS preset did not expose the required pl_clk0/pl_resetn0 fabric boundary."
 }
-puts "M11.6 PS Block Automation created external interfaces: DDR=$ddr_ports FIXED_IO=$fixed_ports"
+puts "M11.6 PS Block Automation configured K26 SOM; PL boundary: clk=$pl_clk0_pin reset=$pl_resetn0_pin"
 
 set smoke [create_bd_cell -type module -reference $smoke_module smoke_0]
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
