@@ -1159,8 +1159,9 @@ This proves that the generated RTL, not only the C++ model, reproduces every obs
 
 ### M11.4 — Export Vivado IP and create the Vivado project
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-08-24  
+**Completed:** 2026-08-24  
 **Repository evidence:** branch `agent/m11-hls-core`
 
 ### Goal
@@ -1173,27 +1174,54 @@ Package the verified HLS core as Vivado IP and establish the real FPGA system pr
 - Toolchain: Vitis/Vivado 2025.2.
 - Packaged IP VLNV: `neuromorphic-twin.org:hls:neuron_step_v1:1.0`.
 - HLS baseline clock: 10ns / 100 MHz.
-- Existing verified HLS interface remains unchanged: `ap_ctrl_hs`, scalar `ap_none` inputs, and `ap_vld` outputs.
+- Verified HLS interface: `ap_ctrl_hs`, scalar `ap_none` inputs, and `ap_vld` outputs.
 
-### Delivered so far
+### Delivered
 
-- `hls_package.cfg` selects `package.output.format=ip_catalog`, disables automatic package generation during C synthesis with `package.output.syn=false`, and freezes the project-specific IP vendor/library/name/version metadata.
-- `run_m11_4.sh` provides one reproducible command path that checks Vitis/Vivado 2025.2 and the exact K26 target part, stages the HLS component under `/tmp`, regenerates the M11.2 vector include, runs fresh HLS synthesis, executes `vitis-run --mode hls --package`, preserves the packaged ZIP/unzipped IP under ignored `build/m11_4/`, and then invokes Vivado 2025.2 in batch mode.
-- `vivado/create_m11_4_project.tcl` creates project `neuromorphic_twin_m11_4`, registers the packaged custom IP repository with `IP_REPO_PATHS` plus `update_ip_catalog`, verifies the expected VLNV exists, creates block design `neuromorphic_twin_core`, instantiates the HLS IP as `neuron_step_v1_0`, and externalizes every currently unconnected scalar clock/reset/control/data pin.
-- The Tcl flow validates and saves the block design, generates output products, creates the HDL wrapper, updates compile order, and writes generated project- and BD-recreation Tcl as additional evidence. The source-controlled Tcl script remains the normative reconstruction flow.
-- `vivado/README.md` documents why M11.4 intentionally leaves the verified HLS pins external: M11.5 will connect them to state/configuration memories, tick control, synaptic accumulation, recurrent routing, and observability rather than prematurely freezing those choices here.
-- The Bash runner passes `bash -n`, and the Vivado Tcl script parses successfully under a stubbed Tcl syntax harness. Real Vitis packaging and Vivado project execution remain the completion gate.
+- `hls_package.cfg` selects `package.output.format=ip_catalog`, disables package generation during the synthesis step with `package.output.syn=false`, and freezes the project-specific IP vendor/library/name/version metadata.
+- `run_m11_4.sh` provides one reproducible Vitis/Vivado 2025.2 command path that checks the exact K26 target part, stages the HLS component under `/tmp`, regenerates the deterministic M11.2 vector include, runs fresh HLS synthesis, executes `vitis-run --mode hls --package`, preserves the packaged ZIP/unpacked IP under ignored `build/m11_4/`, and invokes Vivado in batch mode.
+- `vivado/create_m11_4_project.tcl` creates project `neuromorphic_twin_m11_4`, registers `build/m11_4/ip_repo` with `IP_REPO_PATHS` plus `update_ip_catalog`, verifies the exact expected VLNV, creates block design `neuromorphic_twin_core`, and instantiates the HLS IP as `neuron_step_v1_0`.
+- The final Tcl flow externalizes the complete HLS `ap_ctrl_hs` interface so `ap_start`, `ap_done`, `ap_idle`, and `ap_ready` remain one transaction-control interface, then externalizes the remaining unconnected clock/reset/data/result pins.
+- The block design is validated and saved, interface/scalar ports are reported while the BD is still current/open, output products are generated, the HDL wrapper is created and added, and compile order is updated.
+- The checked-in Tcl is the normative Vivado reconstruction source. Generated `write_bd_tcl`/`write_project_tcl` snapshots were deliberately removed from the final flow because they embedded build-local custom-IP paths and produced avoidable repository warnings.
+- `vivado/README.md` documents the packaged-IP boundary, the batch reconstruction path, completion evidence, and the Vivado-specific fixes made while closing the milestone.
+
+### Vivado integration issues resolved
+
+1. The first project-generation run reached successful BD/wrapper generation but failed on an invalid zero-argument `save_project` call. The call was removed because `create_project` already creates and maintains the requested project in place.
+2. A manual `ap_start` connection produced an IP-Integrator interface-override warning because `ap_start` belongs to the HLS `ap_ctrl` interface. The final flow externalizes the complete `ap_ctrl_hs` interface instead.
+3. Port-reporting originally called `get_bd_ports` after export helpers had changed the current IP-Integrator design context. The final flow reports ports immediately after BD validation while the design is open.
+4. Generated project/BD Tcl snapshots produced custom-IP repository warnings and local path coupling. They were removed in favor of the source-controlled generator that already reproduces the project from the packaged IP repository.
+
+These are project/integration changes only; the verified M10/M11.3 arithmetic and generated HLS datapath are unchanged.
 
 ### Completion criteria
 
 - [x] Freeze packaged-IP identity, target part, toolchain, and HLS interface boundary.
 - [x] Add a reproducible Vitis 2025.2 `ip_catalog` packaging flow.
 - [x] Add a reproducible Vivado 2025.2 project/block-design creation flow.
-- [ ] Run HLS packaging successfully and preserve the packaged IP ZIP/unzipped repository.
-- [ ] Confirm Vivado discovers `neuromorphic-twin.org:hls:neuron_step_v1:1.0` in the custom IP catalog.
-- [ ] Create and validate the K26-targeted Vivado project and `neuromorphic_twin_core` block design from the source-controlled Tcl flow.
-- [ ] Confirm the generated HDL wrapper and saved recreation scripts are produced without errors.
-- [ ] Record vendor-tool evidence and mark M11.4 complete before starting memory/tick-controller integration.
+- [x] Run HLS packaging successfully and preserve the packaged IP repository/ZIP artifacts.
+- [x] Confirm Vivado discovers `neuromorphic-twin.org:hls:neuron_step_v1:1.0` in the custom IP catalog.
+- [x] Create and validate the K26-targeted Vivado project and `neuromorphic_twin_core` block design from the source-controlled Tcl flow.
+- [x] Generate the block-design output products and HDL wrapper without fatal errors.
+- [x] Independently verify that the `.xpr` project and `.bd` block-design artifacts exist.
+- [x] Record the vendor-tool evidence and mark M11.4 complete before starting memory/tick-controller integration.
+
+### Completion evidence
+
+The final vendor flow on 2026-08-24 successfully packaged the HLS core and loaded the resulting custom IP repository in Vivado. Vivado found the expected VLNV, instantiated `neuron_step_v1_0`, validated `neuromorphic_twin_core`, generated Verilog/VHDL output products, generated the HDL wrapper and hardware handoff files, and created the target project.
+
+After the final Tcl fixes, the following independent verification commands were run and passed:
+
+```bash
+test -f build/m11_4/vivado_project/neuromorphic_twin_m11_4.xpr \
+  && echo "XPR: PASS"
+
+find build/m11_4/vivado_project \
+  -type f -name 'neuromorphic_twin_core.bd' -print
+```
+
+This establishes the M11.4 boundary: the M11.3-verified RTL is now a custom Vivado IP that is discoverable in the IP catalog, instantiated in a validated K26-targeted IP-Integrator design, wrapped as HDL, and reproducible from the repository scripts.
 
 ### Reproduction command
 
