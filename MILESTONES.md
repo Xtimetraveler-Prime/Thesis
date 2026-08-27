@@ -1484,7 +1484,7 @@ Produce the first routed, timing-clean, loadable FPGA image containing the compl
 ### Implementation approach
 
 - Keep the complete M11.5 computational RTL and packaged `neuron_step_v1` HLS IP unchanged.
-- Use the Zynq UltraScale+ PS `pl_clk0` and `pl_resetn0` so the first hardware shell does not require carrier-card PL pin assignments.
+- Use the Zynq UltraScale+ PS `pl_clk0` as the carrier-independent clock, but keep JTAG-smoke reset local to VIO so direct PL programming does not depend on PS software-managed `pl_resetn0`.
 - Add a VIO-over-JTAG command/status boundary rather than introducing a new software/AXI host protocol during bring-up.
 - Reuse the Python-golden M11.5.4 four-tick recurrent chain as an autonomous on-FPGA smoke workload.
 - Have the on-FPGA sequencer preload packed M08 weight/config/route memories, issue architectural reset, execute four ticks, and compare committed state, spikes, recurrent counts/bank selection, and recurrent event data against the generated expectations.
@@ -1499,14 +1499,15 @@ Produce the first routed, timing-clean, loadable FPGA image containing the compl
 - [x] Add source-controlled implementation/bitstream/reporting flow.
 - [x] Add source-controlled VIO programming/smoke flow.
 - [x] Add focused M11.6 source-regression guards.
-- [x] Independently run the focused M11.6 source guard.
+- [ ] Independently rerun the focused M11.6 source guard after the local-reset/heartbeat revision.
 - [ ] Independently rerun the complete Python regression suite after the final M11.6 shell changes.
-- [x] Run Vivado synthesis, placement, routing, DRC, and bitstream generation.
-- [x] Confirm nonnegative routed WNS and WHS.
-- [x] Confirm final implemented resource-capacity marker.
-- [x] Confirm `.bit`, `.ltx`, routed `.dcp`, and `.xsa` artifacts.
-- [ ] Program the physical K26 through JTAG.
-- [ ] Confirm VIO control/readback and autonomous four-tick `smoke_pass=1`.
+- [ ] Regenerate the revised shell through Vivado synthesis, placement, routing, DRC, and bitstream generation.
+- [ ] Confirm nonnegative routed WNS and WHS for the revised shell.
+- [ ] Confirm final implemented resource-capacity marker for the revised shell.
+- [ ] Confirm revised `.bit`, `.ltx`, routed `.dcp`, and `.xsa` artifacts.
+- [ ] Program the revised physical K26 image through JTAG after unloading any active stock Kria PL application.
+- [ ] Confirm the physical `pl_clk0` heartbeat advances through VIO.
+- [ ] Confirm VIO local-reset control/readback and autonomous four-tick `smoke_pass=1`.
 - [ ] Record final hardware evidence and mark M11.6 and M11 complete.
 
 ### Implementation and bitstream checkpoint — 2026-08-25
@@ -1537,6 +1538,14 @@ M11.6 implementation resource check passed: CLB_LUT=2657/117120, CLB_REG=3095/23
 ```
 
 This is a checkpoint, not M11.6 completion. The remaining decisive evidence is physical K26 programming plus VIO/JTAG execution of the autonomous four-tick recurrent smoke workload with `smoke_pass=1`. M11.6 and M11 therefore remain **In progress**.
+
+### First physical bring-up findings and shell revision — 2026-08-27
+
+The first board attempt established that direct JTAG programming itself works: Vivado selected `xck26_0`, reached startup status `HIGH`, discovered the matching VIO core, and committed `smoke_start`. However, all clocked smoke outputs remained zero (`busy=0`, `done=0`, `pass=0`, phase/tick/state all zero) until the host timeout. The stock AMD Kria image also had the default `k26-starter-kits` PL application active; programming over that live PL image made the UART/Linux session unresponsive. The stock application is now explicitly unloaded with `sudo xmutil unloadapp` before future JTAG smoke attempts.
+
+PS-side diagnosis showed `PL0_REF_CTRL=0x01010A00`, consistent with the PL0 clock generator being configured active. A manual PS-GPIO output-enable experiment intended to release the fabric reset did not make the smoke advance and is not part of the accepted flow. The shell is therefore being revised instead of relying on further PS register pokes: `pl_clk0` remains the real physical clock, a reset-independent 32-bit heartbeat is exposed through VIO, and a second VIO output supplies a local active-low reset that the existing smoke-controller synchronizer converts into the shared smoke/HLS reset boundary.
+
+Because this changes the physical shell, the 2026-08-25 routed image remains valuable historical implementation evidence but is no longer the candidate final M11.6 image. Synthesis/place/route, routed WNS/WHS, DRC, resource capacity, and `.bit/.ltx/.dcp/.xsa` generation must be rerun for the revised local-reset/heartbeat shell before physical closure. The M11.5 computational core and Python-golden workload are unchanged.
 
 ### Detailed design record
 

@@ -17,11 +17,14 @@ The M11.6 bitstream deliberately avoids carrier-card-specific PL pins.
 ```text
 K26 Zynq UltraScale+ PS
         │
-        ├── pl_clk0 (100 MHz PL clock)
-        └── pl_resetn0
+        └── pl_clk0 (~100 MHz PL clock)
+                │
+                ├── reset-independent heartbeat counter -> VIO
                 │
                 v
       M11.6 autonomous smoke sequencer
+                ↑
+        VIO smoke_resetn
                 │
                 ├── packed M08 memories
                 ├── exact signed-64 Phase B
@@ -33,9 +36,9 @@ K26 Zynq UltraScale+ PS
           VIO over JTAG
 ```
 
-The Zynq UltraScale+ processing-system block supplies `pl_clk0` and `pl_resetn0`. DDR and fixed-IO interfaces are externalized as dedicated PS interfaces, but M11.6 adds no carrier-card PL `PACKAGE_PIN` assignments. This lets the first smoke image remain tied to the exact `xck26-sfvc784-2LV-c` SOM device rather than to one carrier connector mapping.
+The Zynq UltraScale+ processing-system block supplies only `pl_clk0` to the JTAG smoke shell. DDR and fixed-IO remain dedicated PS/SOM resources, and M11.6 adds no carrier-card PL `PACKAGE_PIN` assignments. The physical smoke no longer depends on software-managed `pl_resetn0`: VIO supplies an active-low `smoke_resetn`, the smoke controller asynchronously asserts and synchronously releases it in the PL clock domain, and that same synchronized state drives the packaged HLS `ap_rst`.
 
-Control and status use a Vivado VIO core. One output probe supplies `smoke_start`; input probes expose busy/done/pass, failure code, sequencer phase, committed tick, core fault code, all three smoke-neuron state words, spike vector, and recurrent bank/count. The VIO core is driven by the same PL clock as the computational core.
+A reset-independent 32-bit heartbeat counter runs directly from `pl_clk0` and is exposed through VIO. The hardware script samples it twice before reset release and refuses to start the workload unless the value changes. This separates three bring-up failure classes: stopped PL clock, reset/control failure, and actual computational smoke failure. VIO output probes supply `smoke_start` and `smoke_resetn`; input probes expose the heartbeat plus busy/done/pass, failure code, sequencer phase, committed tick, core fault code, all three smoke-neuron state words, spike vector, and recurrent bank/count.
 
 ## Autonomous physical smoke
 
@@ -100,7 +103,7 @@ The flow:
 1. Requires the previously packaged M11.4 `neuromorphic-twin.org:hls:neuron_step_v1:1.0` IP.
 2. Stages RTL under a no-space `/tmp` path.
 3. Regenerates the M11.5.4 recurrent smoke vectors from Python.
-4. Builds a block design containing the Zynq UltraScale+ PS clock/reset source, the autonomous smoke module, the real packaged HLS IP, and one VIO core.
+4. Builds a block design containing the Zynq UltraScale+ PS PL0 clock source, the autonomous smoke module with reset-independent heartbeat, the real packaged HLS IP, and one VIO core.
 5. Runs synthesis and implementation through `write_bitstream`.
 6. Opens the routed design and records implementation utilization, RAM mapping, route status, DRC, clocks, setup/hold paths, methodology, and timing summary.
 7. Requires both routed worst setup slack and routed worst hold slack to be nonnegative.
@@ -128,23 +131,29 @@ M11.6 must not be marked complete from synthesis-only timing. The accepted bitst
 2. Selects the single K26 device.
 3. Programs `neuromorphic_twin_m11_6.bit` and associates `neuromorphic_twin_m11_6.ltx`.
 4. Discovers the VIO and named smoke probes.
-5. Pulses `smoke_start` using the VIO `OUTPUT_VALUE`/commit mechanism.
-6. Polls the VIO until `smoke_done` or a bounded host timeout.
-7. Prints the pass/failure code, sequencer phase, tick, core fault, final neuron states/spikes, and recurrent-bank status.
-8. Requires `smoke_pass=1`.
+5. Holds `smoke_resetn=0`, samples the reset-independent heartbeat twice, and requires it to advance.
+6. Releases `smoke_resetn=1` through VIO and allows the synchronized local reset to clear.
+7. Pulses `smoke_start` using the VIO `OUTPUT_VALUE`/commit mechanism.
+8. Polls the VIO until `smoke_done` or a bounded host timeout.
+9. Prints the pass/failure code, sequencer phase, tick, core fault, final neuron states/spikes, and recurrent-bank status.
+10. Requires `smoke_pass=1`.
 
 Required physical markers are:
 
 ```text
 M11.6 bitstream programmed successfully.
+M11.6 PL clock heartbeat advanced: ... -> ...
+M11.6 local smoke reset released through VIO.
 M11.6 smoke_start pulse committed through VIO.
 M11.6 physical VIO smoke passed: ...
 M11.6 physical-board smoke completed successfully.
 ```
 
-### PS clock prerequisite
+### Stock-Kria/Linux prerequisite and physical bring-up finding
 
-The hardware smoke uses PS `pl_clk0`; therefore the K26 processing system must be alive and supplying that clock when the PL image is programmed. The normal powered/booted SOM state is the intended bring-up condition. If the VIO is discoverable but all values remain static and the smoke times out, the first check is PS/PL-clock availability rather than changing computational RTL.
+The hardware smoke uses PS `pl_clk0`; therefore the K26 processing system must be alive and supplying that clock when the PL image is programmed. On the stock AMD Kria Linux image, the default `k26-starter-kits` PL application can already occupy slot 0. Before direct JTAG programming, unload that active application cleanly with `sudo xmutil unloadapp` and verify Linux remains responsive. Directly overwriting an active stock PL application during the first board attempts caused the UART/Linux session to become unresponsive.
+
+The first programmed M11.6 image was accepted by JTAG and its VIO was discovered, but every clocked smoke signal remained zero. `PL0_REF_CTRL` read back as `0x01010A00`, showing the PL0 clock generator configured active, and a manual PS-GPIO output-enable experiment did not make the smoke advance. The final JTAG shell therefore removes the software-managed `pl_resetn0` dependency and adds the reset-independent heartbeat described above. Manual PS register pokes are not part of the accepted flow.
 
 ## Completion boundary
 

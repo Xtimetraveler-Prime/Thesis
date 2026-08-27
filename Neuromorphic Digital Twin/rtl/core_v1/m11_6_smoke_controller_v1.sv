@@ -13,7 +13,7 @@
 // examples/generate_m11_5_4_integrated_vectors.py by run_m11_6_bitstream.sh.
 module m11_6_smoke_controller_v1 (
     input  logic         ap_clk,
-    input  logic         pl_resetn0,
+    input  logic         smoke_resetn,
     input  logic         smoke_start,
 
     output logic         smoke_busy,
@@ -106,13 +106,14 @@ module m11_6_smoke_controller_v1 (
 
     smoke_state_t state;
 
-    // Active-low PS fabric reset is asynchronously asserted and synchronously
-    // released into the PL clock domain. The same synchronized reset is sent to
-    // the HLS IP so the complete smoke path shares one reset boundary.
+    // Active-low VIO-controlled local reset is asynchronously asserted and
+    // synchronously released into the PL clock domain. The same synchronized
+    // reset is sent to the HLS IP so the complete smoke path shares one reset
+    // boundary without depending on PS software-managed fabric reset state.
     logic [1:0] reset_sync;
     logic       ap_rst;
-    always_ff @(posedge ap_clk or negedge pl_resetn0) begin
-        if (!pl_resetn0)
+    always_ff @(posedge ap_clk or negedge smoke_resetn) begin
+        if (!smoke_resetn)
             reset_sync <= 2'b11;
         else
             reset_sync <= {reset_sync[0], 1'b0};

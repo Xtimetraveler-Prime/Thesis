@@ -39,10 +39,10 @@ def test_m11_6_smoke_reuses_python_golden_recurrent_chain() -> None:
     assert "WAIT_LIMIT" in text
 
 
-def test_m11_6_smoke_uses_ps_reset_and_exports_real_hls_boundary() -> None:
+def test_m11_6_smoke_uses_local_reset_heartbeat_and_exports_real_hls_boundary() -> None:
     smoke = SMOKE.read_text(encoding="utf-8")
     wrapper = SMOKE_BD.read_text(encoding="utf-8")
-    assert "input  logic         pl_resetn0" in smoke
+    assert "input  logic         smoke_resetn" in smoke
     assert "reset_sync <= {reset_sync[0], 1'b0};" in smoke
     assert "assign hls_ap_rst = ap_rst;" in smoke
     assert "hls_ap_start" in smoke
@@ -51,7 +51,9 @@ def test_m11_6_smoke_uses_ps_reset_and_exports_real_hls_boundary() -> None:
     assert "module m11_6_smoke_controller_bd_v1" in wrapper
     assert "m11_6_smoke_controller_v1 smoke_i" in wrapper
     assert "FREQ_HZ 100000000" not in wrapper
-    assert "ASSOCIATED_RESET pl_resetn0" in wrapper
+    assert "ASSOCIATED_RESET smoke_resetn" in wrapper
+    assert "clock_heartbeat" in wrapper
+    assert "heartbeat_counter" in wrapper
     assert "POLARITY ACTIVE_LOW" in wrapper
 
 
@@ -70,17 +72,18 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "make_bd_intf_pins_external $ddr_pin" not in text
     assert "make_bd_intf_pins_external $fixed_pin" not in text
     assert "set pl_clk0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_clk0]" in text
-    assert "set pl_resetn0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_resetn0]" in text
-    assert "M11.6 PS Block Automation configured K26 SOM; PL boundary:" in text
+    assert "pl_resetn0_pin" not in text
+    assert "CONFIG.PSU__USE__FABRIC__RST {0}" in text
+    assert "M11.6 PS Block Automation configured K26 SOM; PL clock boundary:" in text
     assert "xilinx.com:ip:vio:3.0" in text
-    assert "xilinx.com:ip:proc_sys_reset:5.0" in text
-    assert "CONFIG.C_EXT_RESET_HIGH {0}" in text
-    assert "proc_sys_reset_m11_6/slowest_sync_clk" in text
-    assert "proc_sys_reset_m11_6/ext_reset_in" in text
-    assert "proc_sys_reset_m11_6/peripheral_aresetn" in text
-    assert "proc_sys_reset_m11_6/peripheral_reset" in text
-    assert "[get_bd_pins smoke_0/hls_ap_rst]" not in text
-    assert "M11.6 synchronized reset boundary:" in text
+    assert "xilinx.com:ip:proc_sys_reset:5.0" not in text
+    assert "xilinx.com:ip:xlconstant:1.1" not in text
+    assert "CONFIG.C_NUM_PROBE_IN {14}" in text
+    assert "CONFIG.C_NUM_PROBE_OUT {2}" in text
+    assert "connect_verified_pair hls_ap_rst ap_rst" in text
+    assert "connect_named_pair smoke_resetn" in text
+    assert "connect_named_pair clock_heartbeat" in text
+    assert "M11.6 local reset/heartbeat boundary:" in text
     assert "connect_named_pair smoke_start" in text
     assert "connect_named_pair smoke_pass" in text
 
@@ -125,7 +128,7 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
     tcl = PROGRAM_TCL.read_text(encoding="utf-8")
     runner = HARDWARE_RUNNER.read_text(encoding="utf-8")
     for token in (
-        "open_hw",
+        "open_hw_manager",
         "connect_hw_server",
         "open_hw_target",
         "program_hw_devices",
@@ -136,11 +139,16 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
         "commit_hw_vio",
         "refresh_hw_vio",
         "smoke_start",
+        "smoke_resetn",
+        "clock_heartbeat",
+        "M11.6 PL clock heartbeat advanced:",
+        "M11.6 local smoke reset released through VIO.",
         "smoke_done",
         "smoke_pass",
         "M11.6 physical VIO smoke passed:",
     ):
         assert token in tcl
-    assert "open_hw_manager" not in tcl
+    assert "open_hw\n" not in tcl
+    assert "sudo xmutil unloadapp" in runner
     assert "Run bash run_m11_6_bitstream.sh successfully first." in runner
     assert "M11.6 physical-board smoke completed successfully." in runner

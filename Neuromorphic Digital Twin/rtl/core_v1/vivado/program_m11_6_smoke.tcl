@@ -28,7 +28,7 @@ proc find_one_probe {vio needle} {
     return [lindex $matches 0]
 }
 
-open_hw
+open_hw_manager
 connect_hw_server
 open_hw_target
 
@@ -58,7 +58,9 @@ if {[llength $vios] != 1} {
 set vio [lindex $vios 0]
 puts "M11.6 VIO core: [get_property NAME $vio]"
 
-set p_start [find_one_probe $vio smoke_start]
+set p_start     [find_one_probe $vio smoke_start]
+set p_resetn    [find_one_probe $vio smoke_resetn]
+set p_heartbeat [find_one_probe $vio clock_heartbeat]
 set p_busy  [find_one_probe $vio smoke_busy]
 set p_done  [find_one_probe $vio smoke_done]
 set p_pass  [find_one_probe $vio smoke_pass]
@@ -73,12 +75,33 @@ set p_spike [find_one_probe $vio observed_spikes]
 set p_bank  [find_one_probe $vio observed_recurrent_bank]
 set p_count [find_one_probe $vio observed_recurrent_count]
 
-# Synchronize Tcl-side values with the freshly programmed VIO before pulsing the
-# one-bit command. VIO uses the documented OUTPUT_VALUE + commit model.
+# Synchronize Tcl-side values with the freshly programmed VIO. Both command
+# outputs initialize low: smoke_start=0 and smoke_resetn=0. Before releasing the
+# reset, prove that the reset-independent heartbeat advances on the physical PL0
+# clock. This distinguishes clock failure from reset/datapath failure.
 refresh_hw_vio -update_output_values $vio
 set_property OUTPUT_VALUE 0 $p_start
 commit_hw_vio $p_start
-after 10
+set_property OUTPUT_VALUE 0 $p_resetn
+commit_hw_vio $p_resetn
+refresh_hw_vio $vio
+set heartbeat_before [get_property INPUT_VALUE $p_heartbeat]
+after 100
+refresh_hw_vio $vio
+set heartbeat_after [get_property INPUT_VALUE $p_heartbeat]
+if {$heartbeat_before eq $heartbeat_after} {
+    error "M11.6 PL clock heartbeat did not advance: value=$heartbeat_before. Verify pl_clk0 before debugging reset or datapath logic."
+}
+puts "M11.6 PL clock heartbeat advanced: $heartbeat_before -> $heartbeat_after"
+
+# Release the local reset through VIO. The smoke controller synchronizes the
+# deassertion into pl_clk0 and drives the packaged HLS active-high ap_rst from the
+# same synchronized reset state.
+set_property OUTPUT_VALUE 1 $p_resetn
+commit_hw_vio $p_resetn
+after 20
+puts "M11.6 local smoke reset released through VIO."
+
 set_property OUTPUT_VALUE 1 $p_start
 commit_hw_vio $p_start
 after 10

@@ -91,7 +91,7 @@ update_ip_catalog -rebuild
 if {[llength [get_ipdefs -all $expected_vlnv]] == 0} {
     error "Expected packaged HLS IP was not found in the catalog: $expected_vlnv"
 }
-foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0 xilinx.com:ip:proc_sys_reset:5.0 xilinx.com:ip:xlconstant:1.1} {
+foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0} {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found in the catalog: $required_ip"
     }
@@ -100,10 +100,10 @@ foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0 xil
 create_bd_design $bd_name
 
 # Use the K26 processing system only as a carrier-independent 100 MHz PL clock
-# and fabric-reset source. The Zynq MPSoC cell must first receive its SOM board
-# preset through Block Automation; that step initializes the PS/DDR configuration
-# and creates the dedicated external DDR/FIXED_IO interfaces. Only after the
-# preset is applied do we disable unused AXI masters and freeze PL0 at 100 MHz.
+# source. The Zynq MPSoC cell must first receive its SOM board preset through
+# Block Automation; that step initializes the PS/DDR configuration and dedicated
+# I/O. The M11.6 JTAG smoke deliberately does not depend on the software-managed
+# PS fabric-reset GPIO; reset ownership is local to VIO inside the PL shell.
 set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
     -config {apply_board_preset "1"} $ps
@@ -112,26 +112,25 @@ set_property -dict [list \
     CONFIG.PSU__USE__M_AXI_GP1 {0} \
     CONFIG.PSU__USE__M_AXI_GP2 {0} \
     CONFIG.PSU__FPGA_PL0_ENABLE {1} \
-    CONFIG.PSU__USE__FABRIC__RST {1} \
+    CONFIG.PSU__USE__FABRIC__RST {0} \
     CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
 
 # Unlike Zynq-7000 PS7 flows, the KV260/K26 Zynq UltraScale+ MPSoC preset does
 # not require top-level DDR/FIXED_IO block-design interface ports. Those are
 # dedicated PS/SOM resources configured by the board preset. For M11.6 the only
-# PS-to-PL boundary we require is the fabric clock/reset pair below.
+# PS-to-PL signal required by the JTAG shell is the fabric clock below.
 set pl_clk0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_clk0]
-set pl_resetn0_pin [get_bd_pins -quiet zynq_ultra_ps_e_0/pl_resetn0]
-if {[llength $pl_clk0_pin] != 1 || [llength $pl_resetn0_pin] != 1} {
-    error "M11.6 KV260 PS preset did not expose the required pl_clk0/pl_resetn0 fabric boundary."
+if {[llength $pl_clk0_pin] != 1} {
+    error "M11.6 KV260 PS preset did not expose the required pl_clk0 fabric clock."
 }
-puts "M11.6 PS Block Automation configured K26 SOM; PL boundary: clk=$pl_clk0_pin reset=$pl_resetn0_pin"
+puts "M11.6 PS Block Automation configured K26 SOM; PL clock boundary: clk=$pl_clk0_pin"
 
 set smoke [create_bd_cell -type module -reference $smoke_module smoke_0]
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_m11_6]
 set_property -dict [list \
-    CONFIG.C_NUM_PROBE_IN {13} \
-    CONFIG.C_NUM_PROBE_OUT {1} \
+    CONFIG.C_NUM_PROBE_IN {14} \
+    CONFIG.C_NUM_PROBE_OUT {2} \
     CONFIG.C_PROBE_IN0_WIDTH {1} \
     CONFIG.C_PROBE_IN1_WIDTH {1} \
     CONFIG.C_PROBE_IN2_WIDTH {1} \
@@ -145,41 +144,26 @@ set_property -dict [list \
     CONFIG.C_PROBE_IN10_WIDTH {3} \
     CONFIG.C_PROBE_IN11_WIDTH {1} \
     CONFIG.C_PROBE_IN12_WIDTH {13} \
+    CONFIG.C_PROBE_IN13_WIDTH {32} \
     CONFIG.C_PROBE_OUT0_WIDTH {1} \
-    CONFIG.C_PROBE_OUT0_INIT_VAL {0x0}] $vio
+    CONFIG.C_PROBE_OUT0_INIT_VAL {0x0} \
+    CONFIG.C_PROBE_OUT1_WIDTH {1} \
+    CONFIG.C_PROBE_OUT1_INIT_VAL {0x0}] $vio
 
 # Clock/reset boundary. The K26 PS reports its realizable PL0 frequency as
 # approximately 100 MHz (99,999,001 Hz with this board preset). Module Reference
-# clock metadata is therefore allowed to inherit the propagated PS value instead
-# of forcing an exact 100,000,000-Hz property.
-#
-# Synchronize the active-low PS fabric reset with proc_sys_reset. Its active-low
-# peripheral_aresetn drives the smoke sequencer; its active-high peripheral_reset
-# drives the packaged HLS ap_rst. Both are synchronous to the same PL0 clock.
-set ps_reset [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_m11_6]
-set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $ps_reset
-set const_one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_m11_6]
-set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $const_one
-set const_zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_m11_6]
-set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $const_zero
-
+# clock metadata inherits that propagated PS value. Reset is deliberately local:
+# VIO probe_out1 asynchronously asserts the smoke reset; the existing two-flop
+# synchronizer in the smoke controller releases it synchronously and produces the
+# matching active-high HLS ap_rst. A reset-independent heartbeat proves pl_clk0.
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
     [get_bd_pins smoke_0/ap_clk] \
     [get_bd_pins neuron_step_v1_0/ap_clk] \
-    [get_bd_pins vio_m11_6/clk] \
-    [get_bd_pins proc_sys_reset_m11_6/slowest_sync_clk]
-connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] \
-    [get_bd_pins proc_sys_reset_m11_6/ext_reset_in]
-connect_bd_net [get_bd_pins const_one_m11_6/dout] \
-    [get_bd_pins proc_sys_reset_m11_6/dcm_locked]
-connect_bd_net [get_bd_pins const_zero_m11_6/dout] \
-    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in] \
-    [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]
-connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_aresetn] \
-    [get_bd_pins smoke_0/pl_resetn0]
-connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_reset] \
-    [get_bd_pins neuron_step_v1_0/ap_rst]
-puts "M11.6 synchronized reset boundary: smoke=peripheral_aresetn HLS=peripheral_reset"
+    [get_bd_pins vio_m11_6/clk]
+connect_verified_pair hls_ap_rst ap_rst
+connect_named_pair smoke_resetn vio_m11_6/probe_out1 smoke_0/smoke_resetn
+connect_named_pair clock_heartbeat smoke_0/clock_heartbeat vio_m11_6/probe_in13
+puts "M11.6 local reset/heartbeat boundary: reset=VIO smoke_resetn heartbeat=clock_heartbeat"
 
 set handshake_pairs {
     hls_ap_start ap_start
