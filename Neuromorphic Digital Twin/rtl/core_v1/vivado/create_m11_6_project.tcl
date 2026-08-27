@@ -91,7 +91,7 @@ update_ip_catalog -rebuild
 if {[llength [get_ipdefs -all $expected_vlnv]] == 0} {
     error "Expected packaged HLS IP was not found in the catalog: $expected_vlnv"
 }
-foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0} {
+foreach required_ip {xilinx.com:ip:zynq_ultra_ps_e:3.5 xilinx.com:ip:vio:3.0 xilinx.com:ip:proc_sys_reset:5.0 xilinx.com:ip:xlconstant:1.1} {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found in the catalog: $required_ip"
     }
@@ -152,18 +152,34 @@ set_property -dict [list \
 
 # Clock/reset boundary. The K26 PS reports its realizable PL0 frequency as
 # approximately 100 MHz (99,999,001 Hz with this board preset). Module Reference
-# clock metadata inherits that propagated PS value. Reset is deliberately local:
-# VIO probe_out1 asynchronously asserts the smoke reset; the existing two-flop
-# synchronizer in the smoke controller releases it synchronously and produces the
-# matching active-high HLS ap_rst. A reset-independent heartbeat proves pl_clk0.
+# clock metadata inherits that propagated PS value. Reset ownership remains local
+# to VIO, but proc_sys_reset converts the active-low VIO command into synchronized
+# active-low smoke reset and synchronized active-high HLS ap_rst. The heartbeat is
+# deliberately outside that reset path so Hardware Manager can prove pl_clk0 first.
+set local_reset [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_m11_6]
+set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $local_reset
+set const_one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_m11_6]
+set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $const_one
+set const_zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_m11_6]
+set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $const_zero
+
 connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
     [get_bd_pins smoke_0/ap_clk] \
     [get_bd_pins neuron_step_v1_0/ap_clk] \
-    [get_bd_pins vio_m11_6/clk]
-connect_verified_pair hls_ap_rst ap_rst
-connect_named_pair smoke_resetn vio_m11_6/probe_out1 smoke_0/smoke_resetn
+    [get_bd_pins vio_m11_6/clk] \
+    [get_bd_pins proc_sys_reset_m11_6/slowest_sync_clk]
+connect_named_pair smoke_resetn vio_m11_6/probe_out1 proc_sys_reset_m11_6/ext_reset_in
+connect_bd_net [get_bd_pins const_one_m11_6/dout] \
+    [get_bd_pins proc_sys_reset_m11_6/dcm_locked]
+connect_bd_net [get_bd_pins const_zero_m11_6/dout] \
+    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in] \
+    [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]
+connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_aresetn] \
+    [get_bd_pins smoke_0/smoke_resetn]
+connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_reset] \
+    [get_bd_pins neuron_step_v1_0/ap_rst]
 connect_named_pair clock_heartbeat smoke_0/clock_heartbeat vio_m11_6/probe_in13
-puts "M11.6 local reset/heartbeat boundary: reset=VIO smoke_resetn heartbeat=clock_heartbeat"
+puts "M11.6 local reset/heartbeat boundary: VIO reset -> proc_sys_reset; smoke=peripheral_aresetn HLS=peripheral_reset"
 
 set handshake_pairs {
     hls_ap_start ap_start

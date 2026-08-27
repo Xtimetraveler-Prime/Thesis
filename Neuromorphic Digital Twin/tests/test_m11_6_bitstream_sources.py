@@ -44,7 +44,7 @@ def test_m11_6_smoke_uses_local_reset_heartbeat_and_exports_real_hls_boundary() 
     wrapper = SMOKE_BD.read_text(encoding="utf-8")
     assert "input  logic         smoke_resetn" in smoke
     assert "reset_sync <= {reset_sync[0], 1'b0};" in smoke
-    assert "assign hls_ap_rst = ap_rst;" in smoke
+    assert "hls_ap_rst" not in smoke
     assert "hls_ap_start" in smoke
     assert "hls_synaptic_input" in smoke
     assert "hls_spiked_ap_vld" in smoke
@@ -76,12 +76,15 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "CONFIG.PSU__USE__FABRIC__RST {0}" in text
     assert "M11.6 PS Block Automation configured K26 SOM; PL clock boundary:" in text
     assert "xilinx.com:ip:vio:3.0" in text
-    assert "xilinx.com:ip:proc_sys_reset:5.0" not in text
-    assert "xilinx.com:ip:xlconstant:1.1" not in text
+    assert "xilinx.com:ip:proc_sys_reset:5.0" in text
+    assert "xilinx.com:ip:xlconstant:1.1" in text
     assert "CONFIG.C_NUM_PROBE_IN {14}" in text
     assert "CONFIG.C_NUM_PROBE_OUT {2}" in text
-    assert "connect_verified_pair hls_ap_rst ap_rst" in text
-    assert "connect_named_pair smoke_resetn" in text
+    assert "connect_verified_pair hls_ap_rst ap_rst" not in text
+    assert "connect_named_pair smoke_resetn vio_m11_6/probe_out1 proc_sys_reset_m11_6/ext_reset_in" in text
+    assert "proc_sys_reset_m11_6/peripheral_aresetn" in text
+    assert "proc_sys_reset_m11_6/peripheral_reset" in text
+    assert "[get_bd_pins neuron_step_v1_0/ap_rst]" in text
     assert "connect_named_pair clock_heartbeat" in text
     assert "M11.6 local reset/heartbeat boundary:" in text
     assert "connect_named_pair smoke_start" in text

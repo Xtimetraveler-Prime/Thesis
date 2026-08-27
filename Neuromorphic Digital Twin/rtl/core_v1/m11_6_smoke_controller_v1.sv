@@ -30,8 +30,8 @@ module m11_6_smoke_controller_v1 (
     output logic         observed_recurrent_bank,
     output logic [12:0]  observed_recurrent_count,
 
-    // Reset and scalar connection to packaged neuron_step_v1.
-    output logic                hls_ap_rst,
+    // Scalar connection to packaged neuron_step_v1. HLS reset is supplied
+    // independently by the block-design proc_sys_reset instance.
     output logic                hls_ap_start,
     input  logic                hls_ap_done,
     input  logic                hls_ap_idle,
@@ -107,9 +107,9 @@ module m11_6_smoke_controller_v1 (
     smoke_state_t state;
 
     // Active-low VIO-controlled local reset is asynchronously asserted and
-    // synchronously released into the PL clock domain. The same synchronized
-    // reset is sent to the HLS IP so the complete smoke path shares one reset
-    // boundary without depending on PS software-managed fabric reset state.
+    // synchronously released into the PL clock domain. The block design derives
+    // both this active-low reset and the HLS active-high reset from the same
+    // proc_sys_reset instance, without depending on PS fabric-reset GPIO state.
     logic [1:0] reset_sync;
     logic       ap_rst;
     always_ff @(posedge ap_clk or negedge smoke_resetn) begin
@@ -118,8 +118,7 @@ module m11_6_smoke_controller_v1 (
         else
             reset_sync <= {reset_sync[0], 1'b0};
     end
-    assign ap_rst     = reset_sync[1];
-    assign hls_ap_rst = ap_rst;
+    assign ap_rst = reset_sync[1];
 
     logic smoke_start_d;
     wire  smoke_start_pulse = smoke_start && !smoke_start_d;

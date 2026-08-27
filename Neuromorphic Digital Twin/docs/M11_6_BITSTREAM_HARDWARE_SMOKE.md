@@ -36,7 +36,7 @@ K26 Zynq UltraScale+ PS
           VIO over JTAG
 ```
 
-The Zynq UltraScale+ processing-system block supplies only `pl_clk0` to the JTAG smoke shell. DDR and fixed-IO remain dedicated PS/SOM resources, and M11.6 adds no carrier-card PL `PACKAGE_PIN` assignments. The physical smoke no longer depends on software-managed `pl_resetn0`: VIO supplies an active-low `smoke_resetn`, the smoke controller asynchronously asserts and synchronously releases it in the PL clock domain, and that same synchronized state drives the packaged HLS `ap_rst`.
+The Zynq UltraScale+ processing-system block supplies only `pl_clk0` to the JTAG smoke shell. DDR and fixed-IO remain dedicated PS/SOM resources, and M11.6 adds no carrier-card PL `PACKAGE_PIN` assignments. The physical smoke no longer depends on software-managed `pl_resetn0`: VIO supplies the active-low local reset command to `proc_sys_reset`, whose synchronized `peripheral_aresetn` drives the smoke controller and synchronized active-high `peripheral_reset` drives packaged HLS `ap_rst`.
 
 A reset-independent 32-bit heartbeat counter runs directly from `pl_clk0` and is exposed through VIO. The hardware script samples it twice before reset release and refuses to start the workload unless the value changes. This separates three bring-up failure classes: stopped PL clock, reset/control failure, and actual computational smoke failure. VIO output probes supply `smoke_start` and `smoke_resetn`; input probes expose the heartbeat plus busy/done/pass, failure code, sequencer phase, committed tick, core fault code, all three smoke-neuron state words, spike vector, and recurrent bank/count.
 

@@ -26,7 +26,6 @@ module m11_6_smoke_controller_bd_v1 (
     output wire         observed_recurrent_bank,
     output wire [12:0]  observed_recurrent_count,
 
-    output wire                hls_ap_rst,
     output wire                hls_ap_start,
     input  wire                hls_ap_done,
     input  wire                hls_ap_idle,
@@ -77,7 +76,6 @@ module m11_6_smoke_controller_bd_v1 (
         .observed_spikes(observed_spikes),
         .observed_recurrent_bank(observed_recurrent_bank),
         .observed_recurrent_count(observed_recurrent_count),
-        .hls_ap_rst(hls_ap_rst),
         .hls_ap_start(hls_ap_start),
         .hls_ap_done(hls_ap_done),
         .hls_ap_idle(hls_ap_idle),
