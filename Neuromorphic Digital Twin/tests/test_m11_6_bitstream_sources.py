@@ -54,6 +54,7 @@ def test_m11_6_smoke_uses_local_reset_heartbeat_and_exports_real_hls_boundary() 
     assert "ASSOCIATED_RESET smoke_resetn" in wrapper
     assert "clock_heartbeat" in wrapper
     assert "heartbeat_counter" in wrapper
+    assert "start_seen_reg" in wrapper
     assert "POLARITY ACTIVE_LOW" in wrapper
 
 
@@ -78,7 +79,7 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "xilinx.com:ip:vio:3.0" in text
     assert "xilinx.com:ip:proc_sys_reset:5.0" in text
     assert "xilinx.com:ip:xlconstant:1.1" in text
-    assert "CONFIG.C_NUM_PROBE_IN {14}" in text
+    assert "CONFIG.C_NUM_PROBE_IN {16}" in text
     assert "CONFIG.C_NUM_PROBE_OUT {2}" in text
     assert "connect_verified_pair hls_ap_rst ap_rst" not in text
     assert "connect_named_pair smoke_resetn vio_m11_6/probe_out1 proc_sys_reset_m11_6/ext_reset_in" in text
@@ -86,6 +87,8 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "proc_sys_reset_m11_6/peripheral_reset" in text
     assert "[get_bd_pins neuron_step_v1_0/ap_rst]" in text
     assert "connect_named_pair clock_heartbeat" in text
+    assert "reset_released" in text
+    assert "connect_named_pair start_seen" in text
     assert "M11.6 local reset/heartbeat boundary:" in text
     assert "connect_named_pair smoke_start" in text
     assert "connect_named_pair smoke_pass" in text
@@ -144,6 +147,8 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
         "smoke_start",
         "smoke_resetn",
         "clock_heartbeat",
+        "reset_released",
+        "start_seen",
         "M11.6 PL clock heartbeat advanced:",
         "M11.6 local smoke reset released through VIO",
         "smoke_done",

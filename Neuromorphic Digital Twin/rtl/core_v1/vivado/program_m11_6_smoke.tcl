@@ -60,7 +60,9 @@ puts "M11.6 VIO core: [get_property NAME $vio]"
 
 set p_start     [find_one_probe $vio smoke_start]
 set p_resetn    [find_one_probe $vio smoke_resetn]
-set p_heartbeat [find_one_probe $vio clock_heartbeat]
+set p_heartbeat      [find_one_probe $vio clock_heartbeat]
+set p_reset_released [find_one_probe $vio reset_released]
+set p_start_seen     [find_one_probe $vio start_seen]
 set p_busy  [find_one_probe $vio smoke_busy]
 set p_done  [find_one_probe $vio smoke_done]
 set p_pass  [find_one_probe $vio smoke_pass]
@@ -85,6 +87,15 @@ commit_hw_vio $p_start
 set_property OUTPUT_VALUE 0 $p_resetn
 commit_hw_vio $p_resetn
 refresh_hw_vio $vio
+set reset_asserted_readback [get_property INPUT_VALUE $p_reset_released]
+set start_seen_before [get_property INPUT_VALUE $p_start_seen]
+if {$reset_asserted_readback ne "0"} {
+    error "M11.6 synchronized reset was not asserted before heartbeat test: reset_released=$reset_asserted_readback"
+}
+if {$start_seen_before ne "0"} {
+    error "M11.6 start_seen unexpectedly set immediately after programming: value=$start_seen_before"
+}
+puts "M11.6 reset diagnostic before release: reset_released=$reset_asserted_readback start_seen=$start_seen_before"
 set heartbeat_before [get_property INPUT_VALUE $p_heartbeat]
 after 100
 refresh_hw_vio $vio
@@ -107,7 +118,12 @@ set reset_readback [get_property OUTPUT_VALUE $p_resetn]
 if {$reset_readback ne "1"} {
     error "M11.6 smoke_resetn VIO readback mismatch after release: expected=1 actual=$reset_readback"
 }
-puts "M11.6 local smoke reset released through VIO; output readback=$reset_readback"
+refresh_hw_vio $vio
+set reset_released_readback [get_property INPUT_VALUE $p_reset_released]
+if {$reset_released_readback ne "1"} {
+    error "M11.6 proc_sys_reset did not release the smoke domain: reset_released=$reset_released_readback"
+}
+puts "M11.6 local smoke reset released through VIO; output readback=$reset_readback reset_released=$reset_released_readback"
 
 # Hold start high long enough to read the actual hardware VIO output back before
 # returning it low. The smoke FSM edge-detects the rising edge, so the extended
@@ -120,7 +136,12 @@ set start_high_readback [get_property OUTPUT_VALUE $p_start]
 if {$start_high_readback ne "1"} {
     error "M11.6 smoke_start VIO readback mismatch while asserted: expected=1 actual=$start_high_readback"
 }
-puts "M11.6 smoke_start asserted through VIO; output readback=$start_high_readback"
+refresh_hw_vio $vio
+set start_seen_high [get_property INPUT_VALUE $p_start_seen]
+if {$start_seen_high ne "1"} {
+    error "M11.6 smoke_start did not reach the module boundary: start_seen=$start_seen_high"
+}
+puts "M11.6 smoke_start asserted through VIO; output readback=$start_high_readback start_seen=$start_seen_high"
 set_property OUTPUT_VALUE 0 $p_start
 commit_hw_vio $p_start
 after 2
@@ -161,7 +182,9 @@ puts "M11.6 VIO neuron state0=$s0 state1=$s1 state2=$s2 spikes=$spike"
 puts "M11.6 VIO recurrent bank=$bank count=$count"
 
 if {!$completed} {
-    error "M11.6 hardware smoke timed out after clock and VIO-output diagnostics. If status remains at reset values, instrument proc_sys_reset peripheral_aresetn and smoke-start observation before changing computational RTL."
+    set reset_final [get_property INPUT_VALUE $p_reset_released]
+    set start_seen_final [get_property INPUT_VALUE $p_start_seen]
+    error "M11.6 hardware smoke timed out after clock/reset/start diagnostics: reset_released=$reset_final start_seen=$start_seen_final phase=$phase tick=$tick. If both diagnostics are 1 while phase remains 00, debug the smoke FSM boundary before changing computational RTL."
 }
 if {$pass ne "1"} {
     error "M11.6 physical smoke failed: fail_code=$fail phase=$phase tick=$tick core_fault=$fault"

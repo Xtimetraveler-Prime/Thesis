@@ -129,7 +129,7 @@ set smoke [create_bd_cell -type module -reference $smoke_module smoke_0]
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_m11_6]
 set_property -dict [list \
-    CONFIG.C_NUM_PROBE_IN {14} \
+    CONFIG.C_NUM_PROBE_IN {16} \
     CONFIG.C_NUM_PROBE_OUT {2} \
     CONFIG.C_PROBE_IN0_WIDTH {1} \
     CONFIG.C_PROBE_IN1_WIDTH {1} \
@@ -145,6 +145,8 @@ set_property -dict [list \
     CONFIG.C_PROBE_IN11_WIDTH {1} \
     CONFIG.C_PROBE_IN12_WIDTH {13} \
     CONFIG.C_PROBE_IN13_WIDTH {32} \
+    CONFIG.C_PROBE_IN14_WIDTH {1} \
+    CONFIG.C_PROBE_IN15_WIDTH {1} \
     CONFIG.C_PROBE_OUT0_WIDTH {1} \
     CONFIG.C_PROBE_OUT0_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT1_WIDTH {1} \
@@ -157,7 +159,6 @@ set_property -dict [list \
 # active-low smoke reset and synchronized active-high HLS ap_rst. The heartbeat is
 # deliberately outside that reset path so Hardware Manager can prove pl_clk0 first.
 set local_reset [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_m11_6]
-set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $local_reset
 set const_one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_m11_6]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $const_one
 set const_zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_m11_6]
@@ -174,12 +175,16 @@ connect_bd_net [get_bd_pins const_one_m11_6/dout] \
 connect_bd_net [get_bd_pins const_zero_m11_6/dout] \
     [get_bd_pins proc_sys_reset_m11_6/aux_reset_in] \
     [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]
-connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_aresetn] \
-    [get_bd_pins smoke_0/smoke_resetn]
+set reset_released_net [create_bd_net reset_released]
+connect_bd_net -net $reset_released_net \
+    [get_bd_pins proc_sys_reset_m11_6/peripheral_aresetn] \
+    [get_bd_pins smoke_0/smoke_resetn] \
+    [get_bd_pins vio_m11_6/probe_in14]
 connect_bd_net [get_bd_pins proc_sys_reset_m11_6/peripheral_reset] \
     [get_bd_pins neuron_step_v1_0/ap_rst]
 connect_named_pair clock_heartbeat smoke_0/clock_heartbeat vio_m11_6/probe_in13
-puts "M11.6 local reset/heartbeat boundary: VIO reset -> proc_sys_reset; smoke=peripheral_aresetn HLS=peripheral_reset"
+connect_named_pair start_seen smoke_0/start_seen vio_m11_6/probe_in15
+puts "M11.6 local reset/heartbeat boundary: VIO reset -> proc_sys_reset; smoke=peripheral_aresetn HLS=peripheral_reset; probes=reset_released,start_seen"
 
 set handshake_pairs {
     hls_ap_start ap_start

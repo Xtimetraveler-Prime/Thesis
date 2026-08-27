@@ -12,6 +12,7 @@ module m11_6_smoke_controller_bd_v1 (
     input  wire         smoke_start,
 
     output wire [31:0]  clock_heartbeat,
+    output wire         start_seen,
     output wire         smoke_busy,
     output wire         smoke_done,
     output wire         smoke_pass,
@@ -58,6 +59,15 @@ module m11_6_smoke_controller_bd_v1 (
         heartbeat_counter <= heartbeat_counter + 32'd1;
     end
     assign clock_heartbeat = heartbeat_counter;
+
+    // Sticky reset-independent witness that VIO smoke_start reached this
+    // module boundary. Configuration initializes it to zero.
+    reg start_seen_reg = 1'b0;
+    always @(posedge ap_clk) begin
+        if (smoke_start)
+            start_seen_reg <= 1'b1;
+    end
+    assign start_seen = start_seen_reg;
 
     m11_6_smoke_controller_v1 smoke_i (
         .ap_clk(ap_clk),
