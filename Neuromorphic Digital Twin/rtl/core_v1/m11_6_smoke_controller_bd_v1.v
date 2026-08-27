@@ -4,13 +4,15 @@
 // sequencer. Vivado 2025.2 Module Reference requires a Verilog top in this flow.
 module m11_6_smoke_controller_bd_v1 (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 ap_clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_clk, ASSOCIATED_RESET pl_resetn0" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME ap_clk, ASSOCIATED_RESET smoke_resetn" *)
     input  wire         ap_clk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 pl_resetn0 RST" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME pl_resetn0, POLARITY ACTIVE_LOW" *)
-    input  wire         pl_resetn0,
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME smoke_resetn, POLARITY ACTIVE_LOW" *)
+    input  wire         smoke_resetn,
     input  wire         smoke_start,
 
+    output wire [31:0]  clock_heartbeat,
+    output wire         start_seen,
     output wire         smoke_busy,
     output wire         smoke_done,
     output wire         smoke_pass,
@@ -25,7 +27,6 @@ module m11_6_smoke_controller_bd_v1 (
     output wire         observed_recurrent_bank,
     output wire [12:0]  observed_recurrent_count,
 
-    output wire                hls_ap_rst,
     output wire                hls_ap_start,
     input  wire                hls_ap_done,
     input  wire                hls_ap_idle,
@@ -50,9 +51,27 @@ module m11_6_smoke_controller_bd_v1 (
     input  wire                hls_spiked_ap_vld
 );
 
+    // Free-running physical PL-clock witness. It is intentionally independent
+    // of the smoke/core reset so Hardware Manager can distinguish a stopped
+    // pl_clk0 from a reset or datapath problem before starting the workload.
+    reg [31:0] heartbeat_counter = 32'h00000000;
+    always @(posedge ap_clk) begin
+        heartbeat_counter <= heartbeat_counter + 32'd1;
+    end
+    assign clock_heartbeat = heartbeat_counter;
+
+    // Sticky reset-independent witness that VIO smoke_start reached this
+    // module boundary. Configuration initializes it to zero.
+    reg start_seen_reg = 1'b0;
+    always @(posedge ap_clk) begin
+        if (smoke_start)
+            start_seen_reg <= 1'b1;
+    end
+    assign start_seen = start_seen_reg;
+
     m11_6_smoke_controller_v1 smoke_i (
         .ap_clk(ap_clk),
-        .pl_resetn0(pl_resetn0),
+        .smoke_resetn(smoke_resetn),
         .smoke_start(smoke_start),
         .smoke_busy(smoke_busy),
         .smoke_done(smoke_done),
@@ -67,7 +86,6 @@ module m11_6_smoke_controller_bd_v1 (
         .observed_spikes(observed_spikes),
         .observed_recurrent_bank(observed_recurrent_bank),
         .observed_recurrent_count(observed_recurrent_count),
-        .hls_ap_rst(hls_ap_rst),
         .hls_ap_start(hls_ap_start),
         .hls_ap_done(hls_ap_done),
         .hls_ap_idle(hls_ap_idle),
