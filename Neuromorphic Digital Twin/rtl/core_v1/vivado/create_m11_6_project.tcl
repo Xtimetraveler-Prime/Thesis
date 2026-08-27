@@ -170,10 +170,13 @@ connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
     [get_bd_pins vio_m11_6/clk] \
     [get_bd_pins proc_sys_reset_m11_6/slowest_sync_clk]
 connect_named_pair smoke_resetn vio_m11_6/probe_out1 proc_sys_reset_m11_6/ext_reset_in
+# proc_sys_reset v5.0 on this K26/Vivado build instantiates both external and
+# auxiliary reset inputs active-low. Keep the unused auxiliary reset explicitly
+# inactive (1); tying it low would hold every generated reset asserted forever.
 connect_bd_net [get_bd_pins const_one_m11_6/dout] \
-    [get_bd_pins proc_sys_reset_m11_6/dcm_locked]
+    [get_bd_pins proc_sys_reset_m11_6/dcm_locked] \
+    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in]
 connect_bd_net [get_bd_pins const_zero_m11_6/dout] \
-    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in] \
     [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]
 set reset_released_net [create_bd_net reset_released]
 connect_bd_net -net $reset_released_net \

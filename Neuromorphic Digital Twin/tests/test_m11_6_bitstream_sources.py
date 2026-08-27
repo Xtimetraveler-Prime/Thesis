@@ -85,6 +85,8 @@ def test_m11_6_project_is_carrier_pin_independent_and_vio_controlled() -> None:
     assert "connect_named_pair smoke_resetn vio_m11_6/probe_out1 proc_sys_reset_m11_6/ext_reset_in" in text
     assert "proc_sys_reset_m11_6/peripheral_aresetn" in text
     assert "proc_sys_reset_m11_6/peripheral_reset" in text
+    assert "[get_bd_pins proc_sys_reset_m11_6/dcm_locked] \\\n    [get_bd_pins proc_sys_reset_m11_6/aux_reset_in]" in text
+    assert "[get_bd_pins const_zero_m11_6/dout] \\\n    [get_bd_pins proc_sys_reset_m11_6/mb_debug_sys_rst]" in text
     assert "[get_bd_pins neuron_step_v1_0/ap_rst]" in text
     assert "connect_named_pair clock_heartbeat" in text
     assert "reset_released" in text
