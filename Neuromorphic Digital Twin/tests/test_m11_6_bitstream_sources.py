@@ -145,7 +145,7 @@ def test_m11_6_hardware_runner_programs_and_executes_vio_smoke() -> None:
         "smoke_resetn",
         "clock_heartbeat",
         "M11.6 PL clock heartbeat advanced:",
-        "M11.6 local smoke reset released through VIO.",
+        "M11.6 local smoke reset released through VIO",
         "smoke_done",
         "smoke_pass",
         "M11.6 physical VIO smoke passed:",
