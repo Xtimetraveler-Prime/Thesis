@@ -1,5 +1,6 @@
 name: Patch M11.6 reset start probes v2
 
+# Retry after aligning the focused source guard with the readback marker.
 on:
   push:
     branches:
