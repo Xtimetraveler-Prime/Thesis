@@ -94,20 +94,42 @@ if {$heartbeat_before eq $heartbeat_after} {
 }
 puts "M11.6 PL clock heartbeat advanced: $heartbeat_before -> $heartbeat_after"
 
-# Release the local reset through VIO. The smoke controller synchronizes the
-# deassertion into pl_clk0 and drives the packaged HLS active-high ap_rst from the
-# same synchronized reset state.
+# Release the local reset through VIO. proc_sys_reset synchronizes this active-low
+# command to pl_clk0, driving peripheral_aresetn to the smoke controller and the
+# matching active-high peripheral_reset to the packaged HLS IP. Read the VIO
+# output back from hardware before proceeding so a host-side set/commit mismatch
+# cannot masquerade as an internal reset failure.
 set_property OUTPUT_VALUE 1 $p_resetn
 commit_hw_vio $p_resetn
 after 20
-puts "M11.6 local smoke reset released through VIO."
+refresh_hw_vio -update_output_values $vio
+set reset_readback [get_property OUTPUT_VALUE $p_resetn]
+if {$reset_readback ne "1"} {
+    error "M11.6 smoke_resetn VIO readback mismatch after release: expected=1 actual=$reset_readback"
+}
+puts "M11.6 local smoke reset released through VIO; output readback=$reset_readback"
 
+# Hold start high long enough to read the actual hardware VIO output back before
+# returning it low. The smoke FSM edge-detects the rising edge, so the extended
+# diagnostic pulse does not alter the autonomous workload semantics.
 set_property OUTPUT_VALUE 1 $p_start
 commit_hw_vio $p_start
 after 10
+refresh_hw_vio -update_output_values $vio
+set start_high_readback [get_property OUTPUT_VALUE $p_start]
+if {$start_high_readback ne "1"} {
+    error "M11.6 smoke_start VIO readback mismatch while asserted: expected=1 actual=$start_high_readback"
+}
+puts "M11.6 smoke_start asserted through VIO; output readback=$start_high_readback"
 set_property OUTPUT_VALUE 0 $p_start
 commit_hw_vio $p_start
-puts "M11.6 smoke_start pulse committed through VIO."
+after 2
+refresh_hw_vio -update_output_values $vio
+set start_low_readback [get_property OUTPUT_VALUE $p_start]
+if {$start_low_readback ne "0"} {
+    error "M11.6 smoke_start VIO readback mismatch after deassertion: expected=0 actual=$start_low_readback"
+}
+puts "M11.6 smoke_start pulse committed through VIO; final output readback=$start_low_readback"
 
 set completed 0
 for {set attempt 0} {$attempt < 500} {incr attempt} {
@@ -139,7 +161,7 @@ puts "M11.6 VIO neuron state0=$s0 state1=$s1 state2=$s2 spikes=$spike"
 puts "M11.6 VIO recurrent bank=$bank count=$count"
 
 if {!$completed} {
-    error "M11.6 hardware smoke timed out. If VIO values never changed after programming, verify that the K26 processing system is running and supplying pl_clk0."
+    error "M11.6 hardware smoke timed out after clock and VIO-output diagnostics. If status remains at reset values, instrument proc_sys_reset peripheral_aresetn and smoke-start observation before changing computational RTL."
 }
 if {$pass ne "1"} {
     error "M11.6 physical smoke failed: fail_code=$fail phase=$phase tick=$tick core_fault=$fault"
