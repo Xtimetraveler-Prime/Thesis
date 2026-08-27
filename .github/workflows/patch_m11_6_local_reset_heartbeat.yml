@@ -18,6 +18,8 @@ jobs:
         with:
           ref: agent/m11-6-bitstream-hardware-smoke
           fetch-depth: 0
+      - name: Install focused test dependency
+        run: python3 -m pip install pytest
       - name: Apply local reset and heartbeat revision
         run: python3 scripts/patch_m11_6_local_reset_heartbeat.py
       - name: Run focused source regressions
