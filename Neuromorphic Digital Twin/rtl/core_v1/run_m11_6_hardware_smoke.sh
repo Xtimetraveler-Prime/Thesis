@@ -38,11 +38,13 @@ vivado -mode batch \
     -tclargs "$BIT_FILE" "$LTX_FILE" \
     2>&1 | tee "$LOG_FILE"
 
+# Match stable message prefixes. Reset/start diagnostics append readback details,
+# so requiring the historical trailing period would reject a successful run.
 for marker in \
     "M11.6 bitstream programmed successfully." \
     "M11.6 PL clock heartbeat advanced:" \
-    "M11.6 local smoke reset released through VIO." \
-    "M11.6 smoke_start pulse committed through VIO." \
+    "M11.6 local smoke reset released through VIO" \
+    "M11.6 smoke_start pulse committed through VIO" \
     "M11.6 physical VIO smoke passed:"; do
     if ! grep -Fq "$marker" "$LOG_FILE"; then
         echo "ERROR: physical run returned without expected M11.6 marker: $marker" >&2
