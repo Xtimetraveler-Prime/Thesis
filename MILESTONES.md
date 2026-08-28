@@ -27,6 +27,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M10 | Freeze computational-core specification | Complete | 2026-08-20 | 2026-08-20 |
 | M11 | Implement first FPGA neuron/core datapath | Complete | 2026-08-20 | 2026-08-27 |
 | M12 | Validate FPGA against Python golden model | In progress | 2026-08-27 | — |
+| M13 | Cross-validate and audit against Catalyst N1 | Planned | — | — |
 
 ---
 
@@ -1885,6 +1886,270 @@ The defensible claim is not that the project reproduces Intel Loihi's undocument
 #### Pass boundary
 
 M12 closes when exact physical conformance evidence, broad deterministic coverage, final implementation/performance characterization, supported-scope boundaries, and limitations are all recorded in a reproducible form suitable for direct use in the thesis results and conclusions.
+
+---
+
+## M13 — Cross-validate and audit against Catalyst N1
+
+**Status:** Planned
+
+### Goal
+
+Use Catalyst N1 as an independently developed Loihi-oriented architecture to audit the scope, assumptions, and behavior of this project's validated digital twin after M12 establishes the physical FPGA as a trustworthy implementation of the frozen FPGA-v1 contract. M13 should identify agreements, meaningful architectural differences, unsupported features, ambiguous Loihi behaviors, and any genuine defects or incomplete interpretations in this project without treating Catalyst N1 as a replacement ground truth.
+
+### Evidence philosophy
+
+M13 uses four distinct evidence columns rather than collapsing all external sources into one authority:
+
+```text
+published Loihi descriptions
+          │
+          ├───────────────┬────────────────┐
+          ▼               ▼                ▼
+   Brian2Loihi      this project      Catalyst N1
+```
+
+Published Loihi material is the primary source for claims about Loihi itself. Brian2Loihi contributes an established software interpretation whose observable behavior already informed M03-M08. Catalyst N1 contributes a separate open implementation and architectural interpretation. This project's Python/FPGA pair remains the implementation under audit. Agreement among independent implementations increases confidence, but implementation agreement cannot substitute for published evidence when making claims about undocumented Loihi behavior.
+
+### Overall completion criteria
+
+- [ ] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
+- [ ] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
+- [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
+- [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
+- [ ] Reproduce a physical or RTL-level Catalyst comparison on the common K26 path if the pinned Catalyst release and available tooling support a defensible configuration; otherwise document the exact blocker and complete the strongest reproducible comparison boundary available.
+- [ ] Classify every meaningful discrepancy before changing the project baseline.
+- [ ] If a validated project defect or incomplete Loihi interpretation is found, add a directed regression, revise the relevant specification, and rerun all affected M12 evidence before M13 closes.
+- [ ] Record final findings, supported-scope changes, remaining ambiguities, and candidate experiment implications in a reproducible thesis-ready form.
+
+---
+
+### M13.1 — Pin Catalyst N1 and freeze the comparison methodology
+
+**Status:** Planned
+
+#### Core goal
+
+Create a reproducible external-reference boundary before inspecting differences deeply enough to influence this project's architecture.
+
+#### Planned work
+
+- Pin an exact Catalyst N1 repository commit/release and record its license, documentation set, reference simulator/testbench boundary, FPGA target flow, and required tool versions.
+- Archive stable source references for the published Loihi material and the Brian2Loihi version already used by this project where practical.
+- Define what counts as direct documentation, directly observable behavior, implementation inference, and project interpretation for each comparison source.
+- Preserve implementation independence: Catalyst source may be inspected to understand its architecture and tests, but this project's core should not be rewritten by copying Catalyst RTL or software implementation details.
+- Define a discrepancy policy before testing begins so external disagreement does not automatically mutate the frozen M10/M12 baseline.
+
+#### Pass boundary
+
+The exact source versions, evidence hierarchy, comparison terminology, and discrepancy-handling rules are recorded well enough that another researcher could reconstruct which implementations and documents were compared.
+
+---
+
+### M13.2 — Build a four-way architectural feature crosswalk
+
+**Status:** Planned
+
+#### Core goal
+
+Build a source-cited feature matrix comparing **published Loihi information, Brian2Loihi, this project's validated digital twin, and Catalyst N1** so behavioral tests are interpreted in the context of each architecture rather than reduced to unexplained output differences.
+
+#### Planned feature classes
+
+At minimum, investigate the features relevant to the current supported subset and the most important known scope gaps:
+
+- neuron model/state variables;
+- current and voltage decay semantics;
+- update ordering and algorithmic tick boundaries;
+- threshold, reset, and refractory behavior;
+- weight representation, sign modes, exponent/precision behavior, quantization, and clipping;
+- synaptic accumulation and fan-in/fan-out;
+- fixed-point widths, rounding, saturation/overflow behavior where documented or observable;
+- event ordering and multiplicity;
+- recurrent delivery timing;
+- synapse/routing memory organization at the architectural level;
+- routing/network organization;
+- learning/plasticity support;
+- management/host-control architecture;
+- multicore/network-on-chip features;
+- observability/debug mechanisms relevant to experimental validation.
+
+#### Brian2Loihi-specific requirement
+
+Brian2Loihi must be represented as its own comparison column rather than being merged into the published-Loihi column. For each feature, the crosswalk should distinguish among:
+
+- behavior explicitly described by Loihi publications/documentation;
+- behavior implemented or directly observable in Brian2Loihi;
+- behavior implemented and physically validated by this project;
+- behavior implemented or documented by Catalyst N1.
+
+Where Brian2Loihi cannot express or expose a feature, record that limitation explicitly. Where earlier M03-M08 work already produced direct Brian2Loihi evidence, link that evidence rather than re-deriving it informally.
+
+#### Classification vocabulary
+
+Each crosswalk row should classify relationships using terms such as:
+
+```text
+exactly comparable
+comparable after a documented transform
+similar but architecturally different
+unsupported by one implementation
+not observable through the available interface
+ambiguous in available Loihi evidence
+out of project scope
+```
+
+#### Pass boundary
+
+The repository contains a reviewable, source-cited matrix that makes the supported common subset and major architectural differences explicit before M13 differential probes are interpreted.
+
+---
+
+### M13.3 — Define a common behavioral subset and normalized comparison interface
+
+**Status:** Planned
+
+#### Core goal
+
+Identify the behaviors that can be expressed comparably across this project's Python/FPGA implementation, Brian2Loihi where supported, and Catalyst N1, then freeze the mapping needed to run shared scenarios without pretending unlike architectural states are identical.
+
+#### Planned work
+
+- Reuse the existing backend-neutral scenario/trace concepts where they fit rather than creating an unrelated comparison framework.
+- Define parameter transforms for thresholds, weights, decays, state units, timing, and identifiers where a direct representation is not possible.
+- Separate fields into exact, transformed, qualitative, and non-comparable categories.
+- Preserve each implementation's native trace alongside the normalized trace so normalization errors can be diagnosed.
+- Prefer deterministic, minimal networks that isolate one architectural question at a time.
+- Define the common scenario schema before broad testing so scenarios are not tailored after seeing results.
+
+#### Candidate common behaviors
+
+- current-based LIF/CUBA-style integration where supported;
+- positive and negative synaptic drive;
+- current/voltage decay;
+- threshold and reset;
+- refractory timing;
+- static/fixed-point synaptic weights;
+- fan-in and fan-out;
+- multi-tick state evolution;
+- recurrent motifs where each implementation exposes a comparable timing model.
+
+#### Pass boundary
+
+A frozen comparison specification can generate or translate at least a small directed corpus into every participating implementation for which the behavior is genuinely supported, and it clearly marks non-comparable fields rather than forcing artificial equality.
+
+---
+
+### M13.4 — Run directed differential architectural probes
+
+**Status:** Planned
+
+#### Core goal
+
+Use small deterministic probes to expose semantic agreements and differences among the validated project baseline, Brian2Loihi where supported, Catalyst N1, and the available published-Loihi evidence.
+
+#### Planned probe classes
+
+- impulse-response/current-decay sequences;
+- voltage-decay sequences;
+- negative-current rounding cases;
+- threshold equality and just-over-threshold behavior;
+- refractory entry, hold, countdown, and release;
+- positive/negative and mixed excitation/inhibition;
+- representative weight precision/exponent/sign-mode boundaries;
+- simultaneous fan-in and fan-out;
+- repeated event multiplicity;
+- recurrent-delivery timing and recurrent chains where comparable;
+- finite-width saturation/overflow boundaries where each architecture has a documented or observable contract.
+
+Existing M06-M08 directed cases should be reused when they ask the same architectural question. New cases should be added only where Catalyst or the four-way crosswalk exposes a missing question.
+
+#### Evidence format
+
+For each probe, preserve the native inputs/configuration, normalized scenario, native traces, normalized traces, comparison report, and source citations that explain the expected relationship. A mismatch should identify the first divergent architectural quantity rather than report only a final network difference.
+
+#### Pass boundary
+
+The agreed directed corpus has been executed across every applicable implementation, with all agreements and discrepancies reproduced and classified. M13 does not require all implementations to produce identical results; it requires every meaningful difference to be understood well enough to state whether it reflects mapping, scope, architecture, ambiguity, or a defect.
+
+---
+
+### M13.5 — Reproduce Catalyst at the strongest common FPGA/RTL boundary
+
+**Status:** Planned
+
+#### Core goal
+
+Where supported by the pinned Catalyst N1 release and available tools, reproduce Catalyst N1 on a K26-class or otherwise directly comparable FPGA/RTL flow so the architectural audit includes implementation evidence beyond documentation and software simulation.
+
+#### Preferred physical comparison
+
+If a reproducible K26 build is available, run both implementations on the same FPGA family/board class with clearly documented constraints. Candidate comparison evidence includes:
+
+- successful synthesis/place/route/programming boundary;
+- target clock and routed timing;
+- LUT/register/BRAM/DSP/URAM use using the same device-capacity definitions where possible;
+- cycles or latency per architectural timestep under documented workloads;
+- event/neuron/synapse throughput metrics that can be normalized fairly;
+- memory/routing organization and host-control differences;
+- deterministic output behavior for the common directed scenarios.
+
+#### Fairness rule
+
+M13.5 is not a performance contest. Resource or throughput numbers may be placed side-by-side only when differences in core count, capacity, supported features, clock constraints, debug infrastructure, and serialization/parallelism are disclosed. A broader Catalyst implementation should not be portrayed as inefficient merely because it implements features this project omits, and this project's smaller core should not be portrayed as architecturally superior from raw utilization alone.
+
+#### Fallback boundary
+
+If the pinned Catalyst release cannot be reproduced physically on the available K26 flow, record the exact blocker and complete the strongest reproducible RTL simulation/synthesis comparison possible. The thesis should distinguish a tool/platform reproduction limitation from a behavioral disagreement.
+
+#### Pass boundary
+
+A reproducible common hardware/RTL comparison has been completed at the strongest defensible boundary available, with enough configuration metadata to prevent misleading performance or resource claims.
+
+---
+
+### M13.6 — Adjudicate discrepancies and freeze M13 findings
+
+**Status:** Planned
+
+#### Core goal
+
+Turn cross-implementation differences into defensible findings without silently changing the validated project baseline or overstating what any external implementation proves about Loihi.
+
+#### Discrepancy classes
+
+Every meaningful disagreement should be assigned at least one explicit class:
+
+```text
+A. project implementation defect
+B. project interpretation/specification incomplete or inconsistent with stronger Loihi evidence
+C. Catalyst N1 makes a different architectural choice
+D. Brian2Loihi makes or exposes a different modeling choice
+E. published Loihi evidence is ambiguous or insufficient
+F. comparison mapping/normalization issue
+G. feature is unsupported or outside the project's validated subset
+H. test/capture/tooling defect
+```
+
+#### Change-control rule
+
+Only discrepancies supported strongly enough to classify as A or B should modify the project's baseline computational contract. Any such change requires:
+
+1. a minimized directed regression reproducing the issue;
+2. an update to the applicable normative specification/source model;
+3. regeneration or update of dependent HLS/RTL if behavior changes;
+4. rerunning all affected M12 physical conformance evidence;
+5. recording which previous thesis claims/evidence were superseded.
+
+Classes C-G should normally be documented as architectural differences, ambiguity, or scope boundaries rather than forced into artificial agreement.
+
+#### Experiment handoff
+
+M13 findings should be cross-referenced into `EXPERIMENTS.md`. Legitimate architectural differences may become controlled counterfactual variables; confirmed baseline defects must be corrected and revalidated before experimental use; ambiguous behaviors should not be presented as tests of Loihi itself until independently resolved.
+
+#### Pass boundary
+
+M13 closes when the four-way architectural audit, directed comparison evidence, strongest reproducible hardware/RTL comparison, discrepancy classifications, any required M12 reruns, and final supported-scope conclusions are recorded in a form suitable for thesis methods/results discussion.
 
 ---
 
