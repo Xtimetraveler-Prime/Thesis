@@ -82,8 +82,11 @@ def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     assert 'set SCENARIO_ID "m11_5_4_recurrent_chain_physical_trace_v1"' in text
     assert "set NEURON_COUNT 3" in text
     assert "set TICK_COUNT 4" in text
-    assert '"neuromorphic-twin-physical-fpga-trace-v1"' in text
-    assert '"jtag-vio"' in text
+    # The JSON is emitted from Tcl double-quoted strings, so the source file
+    # necessarily contains escaped quote characters even though the resulting
+    # artifact contains ordinary JSON string literals.
+    assert r'\"neuromorphic-twin-physical-fpga-trace-v1\"' in text
+    assert r'\"jtag-vio\"' in text
     assert "trace_response_seq" in text
     assert "Trace response tag mismatch" in text
 
