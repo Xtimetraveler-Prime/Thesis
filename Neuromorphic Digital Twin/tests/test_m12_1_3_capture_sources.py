@@ -92,6 +92,17 @@ def test_host_capture_uses_exact_vio_probe_leaf_names() -> None:
     assert "find_one_probe $vio observed_core_fault_code]" in text
 
 
+def test_host_vio_writes_are_zero_padded_to_uploaded_hex_width() -> None:
+    text = CAPTURE_TCL.read_text(encoding="utf-8")
+
+    assert "set current [get_property OUTPUT_VALUE $probe]" in text
+    assert "set digits [string length $current]" in text
+    assert 'set encoded [format "%0*x" $digits $value]' in text
+    assert "VIO value does not fit probe width" in text
+    assert "set_property OUTPUT_VALUE $encoded $probe" in text
+    assert "set_property OUTPUT_VALUE [format %x $value] $probe" not in text
+
+
 def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     text = CAPTURE_TCL.read_text(encoding="utf-8")
 
