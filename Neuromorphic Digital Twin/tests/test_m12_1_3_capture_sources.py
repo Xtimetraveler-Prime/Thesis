@@ -76,6 +76,22 @@ def test_vivado_shell_exposes_complete_capture_and_trace_api() -> None:
     assert "connect_named_pair trace_read_addr" in tcl
 
 
+def test_host_capture_uses_exact_vio_probe_leaf_names() -> None:
+    text = CAPTURE_TCL.read_text(encoding="utf-8")
+
+    assert 'set leaf [lindex [split $name "/"] end]' in text
+    assert "if {$leaf eq $needle}" in text
+    assert 'string match "*${needle}*"' not in text
+    assert "Expected exactly one VIO probe named '$needle'" in text
+
+    # These pairs deliberately share prefixes and therefore guard the physical
+    # failure that motivated exact leaf-name matching.
+    assert "find_one_probe $vio capture_fault]" in text
+    assert "find_one_probe $vio capture_fault_code]" in text
+    assert "find_one_probe $vio observed_core_fault]" in text
+    assert "find_one_probe $vio observed_core_fault_code]" in text
+
+
 def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     text = CAPTURE_TCL.read_text(encoding="utf-8")
 
