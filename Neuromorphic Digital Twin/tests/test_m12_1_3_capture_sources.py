@@ -80,16 +80,24 @@ def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     text = CAPTURE_TCL.read_text(encoding="utf-8")
 
     assert 'set SCENARIO_ID "m11_5_4_recurrent_chain_physical_trace_v1"' in text
-    assert 'set NEURON_COUNT 3' in text
-    assert 'set TICK_COUNT 4' in text
+    assert "set NEURON_COUNT 3" in text
+    assert "set TICK_COUNT 4" in text
     assert '"neuromorphic-twin-physical-fpga-trace-v1"' in text
     assert '"jtag-vio"' in text
     assert "trace_response_seq" in text
     assert "Trace response tag mismatch" in text
 
-    # All frozen M12.1 read-space IDs are exercised by the host capture path.
-    for space in range(7):
-        assert f" $space $" in text or f" {space} $neuron" in text or f" {space} $idx" in text
+    # Per-neuron spaces 0-3 and the external-event space 4 are issued directly.
+    for space in range(4):
+        assert f" $space $neuron]" in text
+    assert " 4 $idx]" in text
+
+    # Recurrent spaces 5 and 6 are selected dynamically from current_bank so the
+    # current-bank prefix is routed output and the opposite prefix is consumed input.
+    assert "set routed_space 5" in text
+    assert "set consumed_space 6" in text
+    assert "set routed_space 6" in text
+    assert "set consumed_space 5" in text
 
 
 def test_m12_1_3_build_and_physical_scripts_are_source_controlled() -> None:
