@@ -90,10 +90,12 @@ def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     assert "trace_response_seq" in text
     assert "Trace response tag mismatch" in text
 
-    # Per-neuron spaces 0-3 and the external-event space 4 are issued directly.
+    # Per-neuron spaces 0-3 are explicit numeric trace_read_word calls. Assert
+    # the stable tail of each call rather than assuming a Tcl loop variable named
+    # $space exists in the capture script.
     for space in range(4):
-        assert f" $space $neuron]" in text
-    assert " 4 $idx]" in text
+        assert f"$p_trace_addr {space} $neuron]" in text
+    assert "$p_trace_addr 4 $idx]" in text
 
     # Recurrent spaces 5 and 6 are selected dynamically from current_bank so the
     # current-bank prefix is routed output and the opposite prefix is consumed input.
@@ -101,6 +103,8 @@ def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     assert "set consumed_space 6" in text
     assert "set routed_space 6" in text
     assert "set consumed_space 5" in text
+    assert "$p_trace_addr $consumed_space $idx]" in text
+    assert "$p_trace_addr $routed_space $idx]" in text
 
 
 def test_m12_1_3_build_and_physical_scripts_are_source_controlled() -> None:
