@@ -21,7 +21,11 @@ proc find_one_probe {vio needle} {
     set matches {}
     foreach probe [get_hw_probes -quiet -of_objects $vio] {
         set name [get_property NAME $probe]
-        if {[string match "*${needle}*" $name]} {
+        # Vivado exposes hierarchical probe names such as
+        # neuromorphic_twin_m12_1_3_i/capture_fault. Match the exact final path
+        # component so capture_fault cannot collide with capture_fault_code.
+        set leaf [lindex [split $name "/"] end]
+        if {$leaf eq $needle} {
             lappend matches $probe
         }
     }
@@ -30,7 +34,7 @@ proc find_one_probe {vio needle} {
         foreach probe [get_hw_probes -quiet -of_objects $vio] {
             lappend available [get_property NAME $probe]
         }
-        error "Expected exactly one VIO probe matching '$needle'; matches=$matches available=$available"
+        error "Expected exactly one VIO probe named '$needle'; matches=$matches available=$available"
     }
     return [lindex $matches 0]
 }
