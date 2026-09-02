@@ -52,7 +52,20 @@ proc probe_uint {probe} {
 }
 
 proc set_probe_uint {probe value} {
-    set_property OUTPUT_VALUE [format %x $value] $probe
+    # Vivado Hardware Manager requires OUTPUT_VALUE to contain exactly the
+    # number of HEX characters implied by the VIO probe width. Reuse the
+    # currently uploaded OUTPUT_VALUE only as a width template, so a 12-bit
+    # trace address is written as 000/001/... rather than the rejected 0/1.
+    set current [get_property OUTPUT_VALUE $probe]
+    set digits [string length $current]
+    if {$digits < 1} {
+        error "Could not determine HEX output width for [get_property NAME $probe]"
+    }
+    set encoded [format "%0*x" $digits $value]
+    if {[string length $encoded] != $digits} {
+        error "VIO value does not fit probe width: probe=[get_property NAME $probe] value=$value digits=$digits"
+    }
+    set_property OUTPUT_VALUE $encoded $probe
     commit_hw_vio $probe
 }
 
