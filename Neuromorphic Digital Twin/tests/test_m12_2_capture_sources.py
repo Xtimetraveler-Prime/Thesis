@@ -123,7 +123,7 @@ def test_hardware_capture_programs_once_then_selects_and_captures_all_cases() ->
     text = CAPTURE_TCL.read_text(encoding="utf-8")
 
     assert text.count("program_hw_devices $dev") == 1
-    assert 'case_id\tcase_name\tneuron_count' in text
+    assert r"case_id\tcase_name\tneuron_count" in text
     assert "foreach record $case_lines" in text
     assert "set_probe_uint $p_trace_addr $case_id" in text
     assert "set selected_case [expr {($phase >> 4) & 0xF}]" in text
