@@ -338,7 +338,10 @@ for {set expected_tick 1} {$expected_tick <= $TICK_COUNT} {incr expected_tick} {
         lappend routed_outputs [trace_read_word $vio $p_trace_ready $p_rsp_seq $p_rsp_space $p_rsp_addr $p_rsp_data $p_rsp_error $p_trace_req $p_trace_space $p_trace_addr $routed_space $idx]
     }
 
-    puts $fh "    {"
+    # Literal JSON object braces must be escaped here because Tcl parses this
+    # entire for-body as a braced word; unescaped braces inside quoted strings
+    # still participate in brace matching before the loop executes.
+    puts $fh "    \{"
     puts $fh "      \"committed_tick\": $expected_tick,"
     puts $fh "      \"core_fault\": [bool_json $core_fault],"
     puts $fh "      \"core_fault_code\": $core_fault_code,"
@@ -357,9 +360,9 @@ for {set expected_tick 1} {$expected_tick <= $TICK_COUNT} {incr expected_tick} {
     puts $fh "      \"state_after_words\": [json_u64_list $state_after],"
     puts $fh "      \"spikes\": [json_bool_list $spikes]"
     if {$expected_tick < $TICK_COUNT} {
-        puts $fh "    },"
+        puts $fh "    \},"
     } else {
-        puts $fh "    }"
+        puts $fh "    \}"
     }
     flush $fh
     puts "M12.1.3 captured physical tick $expected_tick: external=$external_count consumed=$consumed_count routed=$routed_count bank=$current_bank"
