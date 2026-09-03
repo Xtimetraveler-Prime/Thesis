@@ -1735,24 +1735,82 @@ The work is split into five ordered sub-milestones. M12.1 creates the physical o
 
 ### M12.1 — Build the physical FPGA trace-capture boundary
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-08-27  
+**Repository evidence:** PR #8 / merge `044093b825bd8bfbb9b3f7971157b0d22c365b7d` for M12.1.1–M12.1.3; branch `agent/m12-1-closure` for M12.1.4
 
 #### Core goal
 
 Make the physical FPGA sufficiently observable that host-side tooling can reconstruct the architectural state needed for exact Python-versus-FPGA comparison without manually reading individual VIO values or relying only on the autonomous M11.6 `pass/fail` result.
 
-#### Planned work
+#### M12.1.1 — Freeze the physical trace artifact and host parser
 
-- Define a versioned physical trace schema aligned with the already frozen M10 trace requirements and existing Python/backend trace concepts.
-- Expose, at minimum, architectural tick, neuron current/voltage/refractory state, spikes, core fault state, recurrent queue bank/count information, and the event/routing observations required to distinguish external input, consumed recurrence, and newly routed recurrence.
-- Preserve atomic tick observability: a captured record must correspond to one committed algorithmic tick rather than a partially updated serialized implementation state.
-- Add a source-controlled host capture path that converts hardware observations into a stable JSON or equivalent machine-readable artifact.
-- Reuse JTAG/debug infrastructure where practical for the first validation path rather than introducing a large Linux/AXI software stack before behavioral equivalence is established.
-- Keep the M11.5 computational semantics unchanged; changes in this sub-milestone should be observability/control infrastructure unless a genuine implementation defect is discovered.
+**Status:** Complete  
+**Completed:** 2026-09-02
 
-#### Pass boundary
+- Added versioned schema `neuromorphic-twin-physical-fpga-trace-v1` and initial transport identity `jtag-vio`.
+- Added `PhysicalFpgaTickCapture` / `PhysicalFpgaTraceArtifact` validation around the existing `FpgaTickTraceSnapshot` architectural record.
+- Preserved architectural tick, external/recurrent/routed events, signed-64 synaptic sums, pre/post neuron state, spikes, core fault status, and recurrent-bank/count metadata.
+- Added deterministic JSON read/write and lossless replay into the existing backend-neutral `TickTrace` representation.
 
-A small deterministic physical workload can be configured and executed, and the host can capture a complete machine-readable trace containing every required architectural observation for each requested committed tick. The trace can be parsed and replayed by automated tests without manual transcription.
+#### M12.1.2 — Add a passive indexed RTL trace-read bridge
+
+**Status:** Complete  
+**Completed:** 2026-09-02
+
+- Added seven frozen indexed read spaces for pre-state, post-state, synaptic input, spike state, external events, and both recurrent-event banks.
+- The bridge accepts at most one outstanding request, blocks while the core is busy, rejects invalid selectors/addresses, preserves raw 64-bit signed-sum words, and contains no architectural write path.
+- XSIM and source-contract regressions verify read-space mapping, error handling, and nonintrusive access to the M11.5 debug memories.
+
+#### M12.1.3 — Wire physical host-stepped capture through Vivado VIO
+
+**Status:** Complete  
+**Completed:** 2026-09-02  
+**Repository evidence:** PR #8
+
+- Added a dedicated M12 capture shell around the unchanged recurrent integrated core. The shell preloads only scenario inputs/configuration; it deliberately contains no Python-golden expected-output arrays.
+- Added host `capture_start` and edge-detected `capture_step` control so one physical algorithmic tick executes at a time and then remains in an immutable post-commit trace window while JTAG reads complete.
+- Added an edge-detected trace request plus sticky response sequence/tag/data/error registers so millisecond-scale VIO polling cannot miss one-cycle RTL responses.
+- Added a source-controlled Vivado 2025.2 K26 project, routed bitstream flow, `.bit`/`.ltx` artifacts, VIO probe set, Hardware Manager Tcl capture path, JSON artifact validator, and one-command board capture wrapper.
+- Physical debugging fixed three host-tooling issues without changing computational semantics: exact VIO leaf-name lookup, width-padded HEX output writes, and escaped Tcl braces when emitting per-tick JSON objects.
+
+Physical KV260 closure on 2026-09-02 successfully crossed every required boundary:
+
+```text
+M12.1.3 bitstream programmed successfully.
+M12.1.3 PL clock heartbeat advanced:
+M12.1.3 local capture reset released through VIO.
+M12.1.3 preload/reset complete; host-stepped physical execution is ready.
+M12.1.3 captured physical tick 1:
+M12.1.3 captured physical tick 2:
+M12.1.3 captured physical tick 3:
+M12.1.3 captured physical tick 4:
+M12.1.3 physical trace capture completed successfully:
+M12.1.3 physical trace artifact validated:
+M12.1.3 physical-board trace capture completed successfully.
+```
+
+This proves that a real K26 can be programmed, stepped one committed algorithmic tick at a time, read nonintrusively through JTAG/VIO, serialized without manual transcription, parsed, and replayed through the existing trace model.
+
+#### M12.1.4 — Prove repeated physical capture reproducibility and close M12.1
+
+**Status:** In progress  
+**Started:** 2026-09-02
+
+The final M12.1 closure gate requires two independent executions of the accepted M12.1.3 program/reset/capture path for the same deterministic four-tick recurrent-chain workload. The repository now contains a repeated-capture board wrapper plus a comparator that requires:
+
+- both physical JSON files independently pass the frozen schema/parser validation;
+- complete typed physical artifacts are identical;
+- replayed backend-neutral `TickTrace` sequences are identical;
+- raw JSON files are byte-for-byte identical;
+- the stable artifact byte count and SHA-256 digest are reported;
+- both run logs and both physical trace artifacts are preserved under the M12.1.4 build directory.
+
+No Python-golden output differential is performed in M12.1.4; that remains the explicit M12.2 boundary. The computational M11.5 core remains frozen throughout M12.1 closure.
+
+#### M12.1 pass boundary
+
+M12.1 closes when the repeated physical-board gate passes and demonstrates that the same deterministic workload can be independently programmed/reset/executed/captured twice with byte-stable machine-readable traces, while the parser/replay regressions and complete software suite remain passing.
 
 ---
 
