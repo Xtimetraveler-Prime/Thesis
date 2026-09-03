@@ -139,6 +139,17 @@ def write_systemverilog_include(output: Path) -> Path:
     return output
 
 
+def write_hardware_case_metadata(output: Path) -> Path:
+    """Write simple Tcl-readable case identity/count metadata, not golden data."""
+
+    cases = build_m12_single_tick_cases()
+    lines = ["case_id\tcase_name\tneuron_count"]
+    lines.extend(f"{case.case_id}\t{case.name}\t{case.neuron_count}" for case in cases)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate the M12.2 directed one-tick FPGA load corpus and Python golden artifacts."
@@ -149,10 +160,11 @@ def main() -> int:
 
     manifest = write_m12_single_tick_corpus(args.output_dir)
     include = write_systemverilog_include(args.sv_output)
+    metadata = write_hardware_case_metadata(args.output_dir / "hardware_cases.tsv")
     cases = build_m12_single_tick_cases()
     print(
         "M12.2 directed single-tick corpus generated: "
-        f"cases={len(cases)} manifest={manifest} sv={include}"
+        f"cases={len(cases)} manifest={manifest} metadata={metadata} sv={include}"
     )
     return 0
 
