@@ -1818,11 +1818,21 @@ The two captured artifacts were byte-for-byte identical and both replayed succes
 
 ### M12.2 — Exact single-tick Python-versus-FPGA differential validation
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-02  
+**Repository evidence:** branch `agent/m12-2-single-tick-physical`
 
 #### Core goal
 
 Prove that one complete physical FPGA algorithmic tick is exactly equivalent to the Python FPGA-v1 golden transition across a deliberately chosen directed corpus.
+
+#### Implementation in progress
+
+- A frozen 16-case directed Python corpus now independently generates packed FPGA load images and Python-golden physical-tick expectations across synaptic sign, E/I mixing, decay, saturation, threshold, refractory, multi-neuron/axon, multiplicity/empty-row, routing, and representative M08 weight-format boundaries.
+- FPGA-visible generated SystemVerilog contains only case inputs/load images. Python-golden expected outputs remain host-side and source-contract tests reject `M12_2_EXPECTED*` FPGA arrays.
+- A case-selectable physical shell reuses the unchanged M11.5 recurrent integrated core, unchanged M12.1 passive trace bridge, and the proven 26-input/6-output VIO shape. Arbitrary initial neuron state is deliberately written after architectural reset so saturation and refractory boundary probes survive into the tested tick.
+- The planned board flow programs one M12.2 bitstream, runs all 16 cases with a fresh architectural reset per case, writes one physical trace artifact per case, and performs exact host-side comparison of every physical trace field against Python.
+- The focused Python/source-contract gate passes. Routed Vivado 2025.2 implementation and physical KV260 zero-mismatch evidence remain the open completion gates.
 
 #### Planned coverage
 
