@@ -1,0 +1,39 @@
+name: Start M12.2 milestone tracker
+
+on:
+  push:
+    branches:
+      - agent/m12-2-single-tick-physical
+    paths:
+      - .github/workflows/start_m12_2_milestone.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-2-single-tick-physical
+          fetch-depth: 0
+      - name: Update M12.2 tracker
+        run: python3 scripts/start_m12_2_milestone.py
+      - name: Validate M12.2 in-progress markers
+        shell: bash
+        run: |
+          grep -A8 -F '### M12.2 — Exact single-tick Python-versus-FPGA differential validation' MILESTONES.md | grep -Fq '**Status:** In progress'
+          grep -Fq '**Started:** 2026-09-02' MILESTONES.md
+          grep -Fq 'branch `agent/m12-2-single-tick-physical`' MILESTONES.md
+          grep -Fq 'A frozen 16-case directed Python corpus' MILESTONES.md
+          grep -Fq 'Routed Vivado 2025.2 implementation and physical KV260 zero-mismatch evidence remain the open completion gates.' MILESTONES.md
+      - name: Commit M12.2 start evidence
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/start_m12_2_milestone.yml scripts/start_m12_2_milestone.py
+          git add MILESTONES.md
+          git commit -m "Start M12.2 physical single-tick validation"
+          git push origin HEAD:agent/m12-2-single-tick-physical
