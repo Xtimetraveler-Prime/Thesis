@@ -23,7 +23,8 @@ def test_m12_2_fpga_source_cannot_consult_python_golden_outputs() -> None:
     # The SV generator is intentionally input-only. Golden values are written to
     # host JSON by write_m12_single_tick_corpus(), never emitted as SV arrays.
     assert "write_m12_single_tick_corpus" in generator
-    assert "expected outputs stay host-side" in generator
+    assert "Python-golden outputs stay host-side" in generator
+    assert "expected outputs are deliberately kept out of FPGA-visible source" in generator
     assert 'emit("M12_2_CONFIG_WORDS"' in generator
     assert 'emit("M12_2_INITIAL_STATE_WORDS"' in generator
     assert 'emit("M12_2_EXTERNAL_EVENTS"' in generator
