@@ -185,3 +185,12 @@ def test_m12_2_golden_artifacts_are_deterministic_and_machine_readable(tmp_path)
     assert golden["schema"] == M12_SINGLE_TICK_CORPUS_SCHEMA
     assert golden["expected_tick"]["committed_tick"] == 1
     assert golden["expected_tick"]["routed_output_axons"] == [1]
+
+
+def test_case07_preserves_nonzero_physical_route_target() -> None:
+    cases = build_m12_single_tick_cases()
+    case = cases[7]
+    assert case.name == "threshold-over-refractory-entry"
+    assert case.routes.target_axons == (1,)
+    assert case.expected.snapshot.spikes == (True,)
+    assert case.expected.snapshot.routed_output_axons == (1,)

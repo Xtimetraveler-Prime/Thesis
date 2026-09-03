@@ -54,26 +54,22 @@ def test_case_selection_reuses_existing_vio_address_and_is_physically_witnessed(
     assert "assign capture_phase = {active_case_id[3:0], state};" in text
 
 
-def test_arbitrary_initial_state_is_loaded_only_after_architectural_reset() -> None:
+def test_each_case_resets_before_static_reload_and_initial_state() -> None:
     text = CONTROLLER.read_text(encoding="utf-8")
 
     reset_wait = text.index("S_RESET_WAIT: begin")
-    load_state = text.index("S_LOAD_STATE: begin", reset_wait)
-    load_external = text.index("S_LOAD_EXTERNAL: begin", load_state)
-    ready = text.index("S_READY_TICK: begin", load_external)
-    assert reset_wait < load_state < load_external < ready
-
-    reset_block = text[reset_wait:load_state]
+    reset_block = text[reset_wait:text.index("S_LOAD_STATE: begin", reset_wait)]
     assert "core_reset_done" in reset_block
-    assert "state <= S_LOAD_STATE;" in reset_block
-    assert "M12.2 initial state is intentionally loaded AFTER" in text
+    assert "state <= S_LOAD_CONFIG;" in reset_block
+    assert "reconfiguration begins only AFTER architectural" in text
+    assert "state <= S_LOAD_STATE;" in text[text.index("S_LOAD_ROUTE_TARGET: begin"):reset_wait]
 
 
 def test_zero_route_and_zero_external_cases_skip_empty_loads() -> None:
     text = CONTROLLER.read_text(encoding="utf-8")
 
     assert "if (case_route_count == 0)" in text
-    assert "state <= S_RESET_PULSE;" in text
+    assert "state <= S_LOAD_STATE;" in text
     assert "if (case_external_count == 0)" in text
     assert "state <= S_READY_TICK;" in text
 
