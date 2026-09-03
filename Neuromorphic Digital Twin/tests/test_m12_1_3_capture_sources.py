@@ -103,6 +103,25 @@ def test_host_vio_writes_are_zero_padded_to_uploaded_hex_width() -> None:
     assert "set_property OUTPUT_VALUE [format %x $value] $probe" not in text
 
 
+def test_host_json_object_braces_are_safe_inside_braced_tcl_loop() -> None:
+    text = CAPTURE_TCL.read_text(encoding="utf-8")
+
+    loop_start = text.index(
+        "for {set expected_tick 1} {$expected_tick <= $TICK_COUNT} {incr expected_tick} {"
+    )
+    loop_text = text[loop_start:]
+
+    # Tcl performs brace matching on a braced loop body before evaluating the
+    # quoted commands inside it. Literal JSON braces therefore have to be
+    # backslash-escaped in source even though the emitted JSON contains plain
+    # braces.
+    assert 'puts $fh "    \\{"' in loop_text
+    assert 'puts $fh "    \\},"' in loop_text
+    assert 'puts $fh "    \\}"' in loop_text
+    assert 'puts $fh "    {"' not in loop_text
+    assert 'puts $fh "    },"' not in loop_text
+
+
 def test_host_capture_emits_versioned_machine_readable_artifact() -> None:
     text = CAPTURE_TCL.read_text(encoding="utf-8")
 
