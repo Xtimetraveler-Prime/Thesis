@@ -34,6 +34,10 @@ from .fpga_physical_trace import (
     read_physical_fpga_trace_json,
     write_physical_fpga_trace_json,
 )
+from .fpga_physical_trace_reproducibility import (
+    PhysicalTraceReproducibilityResult,
+    compare_physical_fpga_trace_files,
+)
 from .fpga_recurrent_routing import (
     DoubleBufferedRecurrentQueue,
     FrozenRouteStorage,
@@ -139,6 +143,7 @@ __all__ = [
     "PhaseBAccumulationResult",
     "PhysicalFpgaTickCapture",
     "PhysicalFpgaTraceArtifact",
+    "PhysicalTraceReproducibilityResult",
     "REFRACTORY_BITS",
     "REFRACTORY_MAX",
     "ROUTE_ROW_POINTER_BITS",
@@ -161,6 +166,7 @@ __all__ = [
     "WeightStorageArtifacts",
     "WeightStorageEstimate",
     "accumulate_frozen_weight_image_v1",
+    "compare_physical_fpga_trace_files",
     "encode_static_weight",
     "estimate_fpga_core_storage_v1",
     "estimate_weight_storage",
