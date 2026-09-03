@@ -25,10 +25,18 @@ def test_m12_2_fpga_source_cannot_consult_python_golden_outputs() -> None:
     assert "write_m12_single_tick_corpus" in generator
     assert "Python-golden outputs stay host-side" in generator
     assert "expected outputs are deliberately kept out of FPGA-visible source" in generator
-    assert 'emit("M12_2_CONFIG_WORDS"' in generator
-    assert 'emit("M12_2_INITIAL_STATE_WORDS"' in generator
-    assert 'emit("M12_2_EXTERNAL_EVENTS"' in generator
-    assert 'emit("M12_2_EXPECTED' not in generator
+    for array_name in (
+        "M12_2_CONFIG_WORDS",
+        "M12_2_INITIAL_STATE_WORDS",
+        "M12_2_FORMAT_WORDS",
+        "M12_2_SYNAPSE_WORDS",
+        "M12_2_WEIGHT_ROWS",
+        "M12_2_ROUTE_ROWS",
+        "M12_2_ROUTE_TARGETS",
+        "M12_2_EXTERNAL_EVENTS",
+    ):
+        assert f'"{array_name}"' in generator
+    assert '"M12_2_EXPECTED' not in generator
 
 
 def test_case_selection_reuses_existing_vio_address_and_is_physically_witnessed() -> None:
