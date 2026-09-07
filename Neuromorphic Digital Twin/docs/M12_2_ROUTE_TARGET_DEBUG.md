@@ -87,32 +87,60 @@ at case 07's exact flattened index.
 
 Conclusion: **the Python golden model, route freezing, SV corpus generator, and flattened case/route indexing all preserve target axon 1 correctly**. The discrepancy occurs downstream of the generated load image.
 
+### 4. Physical route-target write/read witness
+
+Passive VIO-visible registers were added around `recurrent_route_queue_v1` without feeding any values back into architectural computation. Case 07 physically reported:
+
+```text
+M12.2 route-target witness case 7: write_seen=1 write_addr=0 write_data=1 read_addr=0 read_data=1
+```
+
+Conclusion: **the physical router accepts target axon 1 at route-target address 0 and later reads target axon 1 into the routing work register**. This rules out the Python case, generated SV image, route-target preload interface, route-target RAM contents, route-target read address, and route-target RAM read value.
+
+At this point the mismatch is downstream of `work_target`: either the inactive recurrent-bank append/write path is wrong, or recurrent-bank debug capture is observing the wrong stored value.
+
+### 5. Duplicate recurrent-bank debug read
+
+To test whether synchronous debug readback merely returned a stale value, a host-only case-07 diagnostic read the same committed routed-bank entry twice consecutively without changing the bitstream.
+
+Observed:
+
+```text
+M12.2 case07 recurrent-bank duplicate read: bank=1 space=6 addr=0 first=0 second=0
+```
+
+The same run still reported:
+
+```text
+write_seen=1 write_addr=0 write_data=1 read_addr=0 read_data=1
+routed=1
+```
+
+Conclusion: **a simple one-read stale-data explanation is ruled out**. Two independent post-commit reads of recurrent bank 1, address 0 both return axon 0 even though the route engine consumed target 1 and reports one routed event. The remaining localization boundary is therefore the recurrent-bank append/write itself versus a deeper bank-storage/readback implementation problem.
+
 ## Current localization plan
 
-The next diagnostic bitstream adds read-only physical witnesses around the existing `recurrent_route_queue_v1` route-target path without changing architectural computation:
+The next diagnostic bitstream adds passive physical witnesses at the actual inactive recurrent-bank write boundary:
 
-- whether a route-target write was actually accepted by the router,
-- the accepted write address,
-- the accepted write data,
-- the route-target address read during routing,
-- the route-target data read into the router's work register.
+- whether a recurrent-bank write enable fired,
+- which bank was selected,
+- the write address,
+- the write data.
 
-The expected case-07 witness is:
+For case 07 the expected write witness is:
 
 ```text
 write_seen = 1
+write_bank = 1
 write_addr = 0
 write_data = 1
-read_addr  = 0
-read_data  = 1
-routed_output_axons = (1,)
 ```
 
 Interpretation:
 
-- `write_data=0` means the defect is between the generated constant image and the router write interface.
-- `write_data=1` but `read_data=0` means the accepted route-target memory write/read path is defective or synthesized differently than intended.
-- `read_data=1` but routed queue payload `0` means the defect is in the route append / recurrent-bank write path.
+- `write_seen=0` means the route append state never generated the queue write despite incrementing the routed count.
+- `write_seen=1` with `write_data=0` means the payload changes between the route work register and the recurrent-bank write interface.
+- `write_seen=1`, `write_bank=1`, `write_addr=0`, `write_data=1` while repeated bank reads still return `0` means the fault is below the logical append interface, most likely in physical recurrent-bank RAM inference/storage or its readback implementation.
 
 No expected FPGA output is embedded into this diagnostic path. These signals are passive witnesses only; Python remains the independent golden reference.
 
