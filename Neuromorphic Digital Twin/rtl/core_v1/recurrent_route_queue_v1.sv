@@ -121,11 +121,15 @@ module recurrent_route_queue_v1 #(
     logic        bank1_mem_re;
     logic [11:0] bank1_mem_raddr;
     logic [15:0] bank1_mem_rdata;
+    logic        debug_bank_latched;
 
     assign current_count = current_bank ? bank1_count : bank0_count;
     assign debug_bank0_count = bank0_count;
     assign debug_bank1_count = bank1_count;
-    assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;
+    // Recurrent-bank reads are synchronous. The bank selector must therefore
+    // be held from the accepted request until the registered RAM data is valid.
+    // Callers are not required to keep debug_bank stable after debug_re falls.
+    assign debug_rdata = debug_bank_latched ? bank1_mem_rdata : bank0_mem_rdata;
 
     function automatic logic counts_valid;
         counts_valid =
@@ -206,15 +210,16 @@ module recurrent_route_queue_v1 #(
             work_target                  <= 16'd0;
             next_count                   <= 13'd0;
             debug_rvalid                 <= 1'b0;
+            debug_bank_latched           <= 1'b0;
             route_target_write_seen      <= 1'b0;
             last_route_target_write_addr <= 12'd0;
             last_route_target_write_data <= 16'd0;
             last_route_target_read_addr  <= 12'd0;
-            last_route_target_read_data      <= 16'd0;
-            recurrent_bank_write_seen         <= 1'b0;
-            last_recurrent_bank_write_bank    <= 1'b0;
-            last_recurrent_bank_write_addr    <= 12'd0;
-            last_recurrent_bank_write_data    <= 16'd0;
+            last_route_target_read_data  <= 16'd0;
+            recurrent_bank_write_seen      <= 1'b0;
+            last_recurrent_bank_write_bank <= 1'b0;
+            last_recurrent_bank_write_addr <= 12'd0;
+            last_recurrent_bank_write_data <= 16'd0;
         end else begin
             core_reset_done <= 1'b0;
             done            <= 1'b0;
@@ -245,8 +250,10 @@ module recurrent_route_queue_v1 #(
                 end
                 if (spike_we)
                     spike_mem[spike_addr] <= spike_wdata;
-                if (debug_re)
-                    debug_rvalid <= 1'b1;
+                if (debug_re) begin
+                    debug_bank_latched <= debug_bank;
+                    debug_rvalid       <= 1'b1;
+                end
             end
 
             case (state)
