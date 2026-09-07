@@ -1,0 +1,65 @@
+name: M12.3 full gate
+on:
+  push:
+    branches: [agent/m12-3-multitick-recurrent-physical]
+    paths: [.github/workflows/m12_3_full_gate.yml]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-3-multitick-recurrent-physical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install pytest
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+      - name: Run M12.3 focused tests
+        working-directory: Neuromorphic Digital Twin
+        run: python -m pytest -q tests/test_m12_3_multitick_conformance.py tests/test_m12_3_capture_sources.py
+      - name: Run full Python source regression suite
+        working-directory: Neuromorphic Digital Twin
+        run: python -m pytest -q
+      - name: Generate FPGA input-only include
+        working-directory: Neuromorphic Digital Twin
+        run: |
+          mkdir -p /tmp/m12_3_gate
+          PYTHONPATH=src python examples/generate_m12_3_multitick_corpus.py \
+            --output-dir /tmp/m12_3_gate/golden \
+            --sv-output /tmp/m12_3_gate/generated_m12_3_multitick_cases.svh
+          grep -F 'M12.3 directed multi-tick corpus generated: cases=10 ticks=40' <(PYTHONPATH=src python examples/generate_m12_3_multitick_corpus.py --output-dir /tmp/m12_3_gate/golden2 --sv-output /tmp/m12_3_gate/generated2.svh)
+          if grep -E 'M12_3_EXPECTED|RECURRENT_SCHEDULE|RECURRENT_EVENTS' /tmp/m12_3_gate/generated_m12_3_multitick_cases.svh; then
+            echo 'ERROR: forbidden golden/recurrent schedule data leaked into include' >&2
+            exit 1
+          fi
+      - name: Compile M12.3 controller RTL
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          iverilog -g2012 -I /tmp/m12_3_gate \
+            -s m12_3_multitick_capture_controller_v1 \
+            -o /tmp/m12_3_gate/controller.vvp \
+            m08_weight_decoder_v1.sv \
+            phase_b_synapse_accumulator_v1.sv \
+            neuron_array_controller_v1.sv \
+            integrated_core_controller_v1.sv \
+            recurrent_route_queue_v1.sv \
+            recurrent_integrated_core_controller_v1.sv \
+            m12_trace_read_bridge_v1.sv \
+            m12_3_multitick_capture_controller_v1.sv
+      - name: Regress M12.2 recurrent debug bank fix
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          iverilog -g2012 -o /tmp/m12_3_gate/bank_latch.vvp \
+            recurrent_route_queue_v1.sv tb/tb_m12_2_recurrent_debug_bank_latch.sv
+          vvp /tmp/m12_3_gate/bank_latch.vvp | tee /tmp/m12_3_gate/bank_latch.log
+          grep -F 'M12.2 recurrent debug bank-latch regression passed' /tmp/m12_3_gate/bank_latch.log
+      - name: Check shell syntax and identities
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          bash -n run_m12_3_bitstream.sh
+          bash -n run_m12_3_hardware_suite.sh
+          grep -F 'M12.3 routed bitstream flow completed successfully.' run_m12_3_bitstream.sh
+          grep -F 'M12.3 physical multi-tick/recurrent suite completed successfully.' run_m12_3_hardware_suite.sh
