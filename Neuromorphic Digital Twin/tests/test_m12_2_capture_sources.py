@@ -113,7 +113,7 @@ def test_m12_2_wrapper_and_vivado_project_keep_m12_1_vio_shape() -> None:
 
     assert 'set project_name "neuromorphic_twin_m12_2"' in project
     assert 'set capture_module "m12_2_single_tick_capture_controller_bd_v1"' in project
-    assert "CONFIG.C_NUM_PROBE_IN {31}" in project
+    assert "CONFIG.C_NUM_PROBE_IN {35}" in project
     assert "CONFIG.C_NUM_PROBE_OUT {6}" in project
     assert "neuromorphic_twin_m12_2.bit" in project
     assert "M12.2 routed timing check passed:" in project
@@ -195,5 +195,28 @@ def test_route_target_physical_witnesses_are_passive_and_vio_visible() -> None:
         assert signal in project
         assert signal in capture
 
-    assert "CONFIG.C_NUM_PROBE_IN {31}" in project
+    assert "CONFIG.C_NUM_PROBE_IN {35}" in project
     assert "M12.2 route-target witness case $case_id:" in capture
+
+
+def test_recurrent_bank_write_witnesses_are_passive_and_vio_visible() -> None:
+    route = (RTL / "recurrent_route_queue_v1.sv").read_text(encoding="utf-8")
+    outer = (RTL / "recurrent_integrated_core_controller_v1.sv").read_text(encoding="utf-8")
+    controller = CONTROLLER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    project = PROJECT_TCL.read_text(encoding="utf-8")
+    capture = CAPTURE_TCL.read_text(encoding="utf-8")
+    for signal in ("recurrent_bank_write_seen", "last_recurrent_bank_write_bank", "last_recurrent_bank_write_addr", "last_recurrent_bank_write_data"):
+        assert signal in route
+        assert signal in outer
+    assert "if (bank0_mem_we) begin" in route
+    assert "else if (bank1_mem_we) begin" in route
+    assert "last_recurrent_bank_write_data <= bank1_mem_wdata;" in route
+    assert "never feed routing decisions or architectural state" in route
+    for signal in ("observed_recurrent_bank_write_seen", "observed_recurrent_bank_write_bank", "observed_recurrent_bank_write_addr", "observed_recurrent_bank_write_data"):
+        assert signal in controller
+        assert signal in wrapper
+        assert signal in project
+        assert signal in capture
+    assert "CONFIG.C_NUM_PROBE_IN {35}" in project
+    assert "M12.2 recurrent-bank write witness case $case_id:" in capture

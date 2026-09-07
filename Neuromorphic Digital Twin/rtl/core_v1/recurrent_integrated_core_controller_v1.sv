@@ -45,6 +45,10 @@ module recurrent_integrated_core_controller_v1 #(
     output logic [15:0]  last_route_target_write_data,
     output logic [11:0]  last_route_target_read_addr,
     output logic [15:0]  last_route_target_read_data,
+    output logic         recurrent_bank_write_seen,
+    output logic         last_recurrent_bank_write_bank,
+    output logic [11:0]  last_recurrent_bank_write_addr,
+    output logic [15:0]  last_recurrent_bank_write_data,
 
     // Neuron and frozen M08 preload paths.
     input  logic         config_we,
@@ -292,6 +296,10 @@ module recurrent_integrated_core_controller_v1 #(
         .last_route_target_write_data(last_route_target_write_data),
         .last_route_target_read_addr(last_route_target_read_addr),
         .last_route_target_read_data(last_route_target_read_data),
+        .recurrent_bank_write_seen(recurrent_bank_write_seen),
+        .last_recurrent_bank_write_bank(last_recurrent_bank_write_bank),
+        .last_recurrent_bank_write_addr(last_recurrent_bank_write_addr),
+        .last_recurrent_bank_write_data(last_recurrent_bank_write_data),
         .route_row_we(route_row_we && (state == S_IDLE)), .route_row_addr(route_row_addr), .route_row_wdata(route_row_wdata),
         .route_target_we(route_target_we && (state == S_IDLE)), .route_target_addr(route_target_addr), .route_target_wdata(route_target_wdata),
         .spike_we(route_spike_we), .spike_addr(spike_scan_index), .spike_wdata(spike_scan_data),

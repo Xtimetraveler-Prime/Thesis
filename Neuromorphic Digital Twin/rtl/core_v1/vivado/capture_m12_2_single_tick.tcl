@@ -217,6 +217,10 @@ set p_route_write_addr [find_one_probe $vio observed_route_target_write_addr]
 set p_route_write_data [find_one_probe $vio observed_route_target_write_data]
 set p_route_read_addr [find_one_probe $vio observed_route_target_read_addr]
 set p_route_read_data [find_one_probe $vio observed_route_target_read_data]
+set p_bank_write_seen [find_one_probe $vio observed_recurrent_bank_write_seen]
+set p_bank_write_bank [find_one_probe $vio observed_recurrent_bank_write_bank]
+set p_bank_write_addr [find_one_probe $vio observed_recurrent_bank_write_addr]
+set p_bank_write_data [find_one_probe $vio observed_recurrent_bank_write_data]
 
 set p_start [find_one_probe $vio capture_start]
 set p_step [find_one_probe $vio capture_step]
@@ -314,7 +318,12 @@ foreach record $case_lines {
     set route_write_data [probe_uint $p_route_write_data]
     set route_read_addr [probe_uint $p_route_read_addr]
     set route_read_data [probe_uint $p_route_read_data]
+    set bank_write_seen [probe_uint $p_bank_write_seen]
+    set bank_write_bank [probe_uint $p_bank_write_bank]
+    set bank_write_addr [probe_uint $p_bank_write_addr]
+    set bank_write_data [probe_uint $p_bank_write_data]
     puts "M12.2 route-target witness case $case_id: write_seen=$route_write_seen write_addr=$route_write_addr write_data=$route_write_data read_addr=$route_read_addr read_data=$route_read_data"
+    puts "M12.2 recurrent-bank write witness case $case_id: write_seen=$bank_write_seen bank=$bank_write_bank addr=$bank_write_addr data=$bank_write_data"
 
     set state_before {}
     set state_after {}

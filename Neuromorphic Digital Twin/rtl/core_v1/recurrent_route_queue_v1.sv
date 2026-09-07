@@ -43,6 +43,14 @@ module recurrent_route_queue_v1 #(
     output logic [11:0]  last_route_target_read_addr,
     output logic [15:0]  last_route_target_read_data,
 
+    // Passive witnesses of the actual recurrent-bank write interface. These
+    // observe the same enable/address/data that drive the RAM processes below
+    // and never feed routing decisions or architectural state.
+    output logic         recurrent_bank_write_seen,
+    output logic         last_recurrent_bank_write_bank,
+    output logic [11:0]  last_recurrent_bank_write_addr,
+    output logic [15:0]  last_recurrent_bank_write_data,
+
     // Static route-image and spike preload writes. Accepted only while idle.
     input  logic         route_row_we,
     input  logic [8:0]   route_row_addr,
@@ -202,11 +210,29 @@ module recurrent_route_queue_v1 #(
             last_route_target_write_addr <= 12'd0;
             last_route_target_write_data <= 16'd0;
             last_route_target_read_addr  <= 12'd0;
-            last_route_target_read_data  <= 16'd0;
+            last_route_target_read_data      <= 16'd0;
+            recurrent_bank_write_seen         <= 1'b0;
+            last_recurrent_bank_write_bank    <= 1'b0;
+            last_recurrent_bank_write_addr    <= 12'd0;
+            last_recurrent_bank_write_data    <= 16'd0;
         end else begin
             core_reset_done <= 1'b0;
             done            <= 1'b0;
             debug_rvalid    <= 1'b0;
+
+            // Capture the exact RAM-write boundary on the same edge as the
+            // physical recurrent-bank memory process.
+            if (bank0_mem_we) begin
+                recurrent_bank_write_seen      <= 1'b1;
+                last_recurrent_bank_write_bank <= 1'b0;
+                last_recurrent_bank_write_addr <= bank0_mem_waddr;
+                last_recurrent_bank_write_data <= bank0_mem_wdata;
+            end else if (bank1_mem_we) begin
+                recurrent_bank_write_seen      <= 1'b1;
+                last_recurrent_bank_write_bank <= 1'b1;
+                last_recurrent_bank_write_addr <= bank1_mem_waddr;
+                last_recurrent_bank_write_data <= bank1_mem_wdata;
+            end
 
             if (!busy) begin
                 if (route_row_we)
@@ -236,8 +262,12 @@ module recurrent_route_queue_v1 #(
                         bank0_count         <= 13'd0;
                         bank1_count         <= 13'd0;
                         last_consumed_count <= 13'd0;
-                        last_routed_count   <= 13'd0;
-                        core_reset_done     <= 1'b1;
+                        last_routed_count               <= 13'd0;
+                        recurrent_bank_write_seen       <= 1'b0;
+                        last_recurrent_bank_write_bank  <= 1'b0;
+                        last_recurrent_bank_write_addr  <= 12'd0;
+                        last_recurrent_bank_write_data  <= 16'd0;
+                        core_reset_done                 <= 1'b1;
                     end else if (start) begin
                         if (!counts_valid()) begin
                             fault      <= 1'b1;
