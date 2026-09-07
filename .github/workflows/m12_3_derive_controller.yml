@@ -1,0 +1,34 @@
+name: Derive M12.3 controller
+
+on:
+  push:
+    branches:
+      - agent/m12-3-multitick-recurrent-physical
+    paths:
+      - .github/workflows/m12_3_derive_controller.yml
+
+permissions:
+  contents: write
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-3-multitick-recurrent-physical
+      - run: python scripts/derive_m12_3_controller.py
+      - name: Assert input-only multi-tick contract
+        run: |
+          grep -F 'generated_m12_3_multitick_cases.svh' 'Neuromorphic Digital Twin/rtl/core_v1/m12_3_multitick_capture_controller_v1.sv'
+          grep -F 'debug_bank_latched' 'Neuromorphic Digital Twin/rtl/core_v1/recurrent_route_queue_v1.sv'
+          if grep -E 'M12_3_EXPECTED|RECURRENT_SCHEDULE|RECURRENT_EVENTS' 'Neuromorphic Digital Twin/rtl/core_v1/m12_3_multitick_capture_controller_v1.sv'; then
+            echo 'ERROR: golden/recurrent schedule leaked into M12.3 controller' >&2
+            exit 1
+          fi
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Neuromorphic Digital Twin/rtl/core_v1/m12_3_multitick_capture_controller_v1.sv'
+          git commit -m 'Add M12.3 host-stepped multi-tick capture controller'
+          git push origin HEAD:agent/m12-3-multitick-recurrent-physical
