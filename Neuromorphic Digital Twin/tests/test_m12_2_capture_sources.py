@@ -179,7 +179,8 @@ def test_route_target_physical_witnesses_are_passive_and_vio_visible() -> None:
 
     assert "route_target_write_seen      <= 1'b1;" in route
     assert "last_route_target_write_data <= route_target_wdata;" in route
-    assert "last_route_target_read_data <= route_target_mem[active_route_index[11:0]];" in route
+    assert "last_route_target_read_data <= work_target;" in route
+    assert "this adds no route-memory read port" in route
     assert "never feed routing decisions or architectural state" in route
 
     for signal in (
