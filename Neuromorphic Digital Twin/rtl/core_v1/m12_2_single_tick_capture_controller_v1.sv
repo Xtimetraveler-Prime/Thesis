@@ -11,12 +11,11 @@
 // role as the indexed trace-read address, so the proven 26-in/6-out VIO shape
 // does not change.
 //
-// Unlike the fixed one-shot M12.1 workload, M12.2 repeatedly reconfigures the
-// same physical core. Each selected case therefore begins with architectural
-// reset, then loads ALL case-specific static memories (config/weights/routes),
-// then loads arbitrary initial state/external events. This guarantees that no
-// write races residual activity from the previous case while preserving the
-// frozen computational semantics.
+// Unlike the fixed reset-state M12.1 workload, M12.2 must test arbitrary
+// pre-tick state. Configuration/weight/route memories are loaded first, the
+// architectural core is reset, and only THEN are the selected case's initial
+// neuron state words written. Reset validates neuron configuration, so config
+// must exist before reset; arbitrary runtime state is loaded afterward.
 module m12_2_single_tick_capture_controller_v1 (
     input  logic         ap_clk,
     input  logic         capture_resetn,
@@ -442,9 +441,7 @@ module m12_2_single_tick_capture_controller_v1 (
                             capture_fault_code <= CAPTURE_FAULT_CASE_SELECT;
                             state <= S_FAIL;
                         end else begin
-                            // Reset first so repeated physical cases reconfigure only from a
-                            // clean idle boundary; static memories are loaded after reset.
-                            state <= S_RESET_PULSE;
+                            state <= S_LOAD_CONFIG;
                         end
                     end
                 end
@@ -479,7 +476,8 @@ module m12_2_single_tick_capture_controller_v1 (
                     if (load_index >= case_neuron_count) begin
                         load_index <= 13'd0;
                         if (case_route_count == 0) begin
-                            state <= S_LOAD_STATE;
+                            watchdog <= 24'd0;
+                            state <= S_RESET_PULSE;
                         end else begin
                             state <= S_LOAD_ROUTE_TARGET;
                         end
@@ -488,7 +486,8 @@ module m12_2_single_tick_capture_controller_v1 (
                 S_LOAD_ROUTE_TARGET: begin
                     if (load_index + 13'd1 >= case_route_count) begin
                         load_index <= 13'd0;
-                        state <= S_LOAD_STATE;
+                        watchdog <= 24'd0;
+                        state <= S_RESET_PULSE;
                     end else load_index <= load_index + 13'd1;
                 end
 
@@ -508,11 +507,10 @@ module m12_2_single_tick_capture_controller_v1 (
                             capture_fault_code <= CAPTURE_FAULT_PROTOCOL;
                             state <= S_FAIL;
                         end else begin
-                            // M12.2 reconfiguration begins only AFTER architectural
-                            // reset, guaranteeing a clean idle boundary for route/config
-                            // writes before arbitrary pre-tick state is loaded.
+                            // M12.2 initial state is intentionally loaded AFTER
+                            // architectural reset so arbitrary pre-tick state survives.
                             load_index <= 13'd0;
-                            state <= S_LOAD_CONFIG;
+                            state <= S_LOAD_STATE;
                         end
                     end else if (watchdog >= WAIT_LIMIT) begin
                         capture_fault <= 1'b1;
@@ -586,9 +584,7 @@ module m12_2_single_tick_capture_controller_v1 (
                             capture_fault_code <= CAPTURE_FAULT_CASE_SELECT;
                             state <= S_FAIL;
                         end else begin
-                            // Reset first so repeated physical cases reconfigure only from a
-                            // clean idle boundary; static memories are loaded after reset.
-                            state <= S_RESET_PULSE;
+                            state <= S_LOAD_CONFIG;
                         end
                     end
                 end
@@ -605,9 +601,7 @@ module m12_2_single_tick_capture_controller_v1 (
                             capture_fault <= 1'b1;
                             capture_fault_code <= CAPTURE_FAULT_CASE_SELECT;
                         end else begin
-                            // Reset first so repeated physical cases reconfigure only from a
-                            // clean idle boundary; static memories are loaded after reset.
-                            state <= S_RESET_PULSE;
+                            state <= S_LOAD_CONFIG;
                         end
                     end
                 end
