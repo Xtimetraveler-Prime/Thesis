@@ -30,3 +30,4 @@ jobs:
           git add MILESTONES.md 'Neuromorphic Digital Twin/docs/M12_2_ROUTE_TARGET_DEBUG.md'
           git commit -m 'Close M12.2 physical single-tick conformance'
           git push origin HEAD:agent/m12-2-single-tick-physical
+# retry after robust status-line handling
