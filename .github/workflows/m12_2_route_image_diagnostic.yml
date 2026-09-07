@@ -1,0 +1,50 @@
+name: M12.2 route image diagnostic
+
+on:
+  push:
+    branches:
+      - agent/m12-2-single-tick-physical
+    paths:
+      - .github/workflows/m12_2_route_image_diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-2-single-tick-physical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate and inspect M12.2 route image
+        working-directory: Neuromorphic Digital Twin
+        run: |
+          PYTHONPATH=src python examples/generate_m12_2_single_tick_corpus.py --output-dir /tmp/m12_2_golden --sv-output /tmp/generated_m12_2_single_tick_cases.svh
+          PYTHONPATH=src python - <<'PY'
+          from neuromorphic_twin.fpga_single_tick_conformance import build_m12_single_tick_cases
+          cases = build_m12_single_tick_cases()
+          max_routes = max(c.routes.route_count for c in cases)
+          flat = []
+          for c in cases:
+              vals = c.routes.target_axons + (0,) * (max_routes - c.routes.route_count)
+              flat.extend(vals)
+          c7 = cases[7]
+          idx = c7.case_id * max_routes
+          print(f'M12.2 DIAG max_routes={max_routes}')
+          print(f'M12.2 DIAG case07 route_count={c7.routes.route_count} targets={c7.routes.target_axons}')
+          print(f'M12.2 DIAG case07 flattened_index={idx} flattened_value={flat[idx]}')
+          assert max_routes == 1
+          assert c7.routes.target_axons == (1,)
+          assert flat[idx] == 1
+          text = open('/tmp/generated_m12_2_single_tick_cases.svh').read()
+          marker = 'M12_2_ROUTE_TARGETS'
+          start = text.index(marker)
+          end = text.index('};', start) + 2
+          print('M12.2 DIAG GENERATED ROUTE TARGET BLOCK BEGIN')
+          print(text[start:end])
+          print('M12.2 DIAG GENERATED ROUTE TARGET BLOCK END')
+          PY
