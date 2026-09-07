@@ -16,7 +16,7 @@ def test_recurrent_debug_bank_is_latched_for_synchronous_response() -> None:
         in route
     )
     assert "debug_bank_latched <= debug_bank;" in route
-    assert "callers are not required to keep debug_bank stable after debug_re falls" in route
+    assert "Callers are not required to keep debug_bank stable after debug_re falls" in route
     assert "assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;" not in route
 
 
@@ -25,5 +25,5 @@ def test_behavioral_regression_releases_live_bank_selector_before_response() -> 
 
     assert "debug_bank=1; debug_addr=0; debug_re=1;" in tb
     assert "debug_re=0; debug_bank=0;" in tb
-    assert 'debug_rdata !== 16\'d1' in tb
+    assert "debug_rdata !== 16'd1" in tb
     assert "bank1 payload survives selector release" in tb
