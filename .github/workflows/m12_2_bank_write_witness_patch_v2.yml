@@ -1,0 +1,107 @@
+name: Retry M12.2 recurrent-bank write witnesses
+
+on:
+  push:
+    branches:
+      - agent/m12-2-single-tick-physical
+    paths:
+      - .github/workflows/m12_2_bank_write_witness_patch_v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-2-single-tick-physical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch passive recurrent-bank write witnesses
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def repl(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'missing patch anchor in {path}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          route = 'Neuromorphic Digital Twin/rtl/core_v1/recurrent_route_queue_v1.sv'
+          repl(route,
+              '    output logic [15:0]  last_route_target_read_data,\n\n    // Static route-image and spike preload writes.',
+              '    output logic [15:0]  last_route_target_read_data,\n\n    // Passive witnesses of the actual recurrent-bank write interface. These\n    // observe the same enable/address/data that drive the RAM processes below\n    // and never feed routing decisions or architectural state.\n    output logic         recurrent_bank_write_seen,\n    output logic         last_recurrent_bank_write_bank,\n    output logic [11:0]  last_recurrent_bank_write_addr,\n    output logic [15:0]  last_recurrent_bank_write_data,\n\n    // Static route-image and spike preload writes.')
+          repl(route,
+              '            last_route_target_read_data  <= 16\'d0;\n',
+              '            last_route_target_read_data      <= 16\'d0;\n            recurrent_bank_write_seen         <= 1\'b0;\n            last_recurrent_bank_write_bank    <= 1\'b0;\n            last_recurrent_bank_write_addr    <= 12\'d0;\n            last_recurrent_bank_write_data    <= 16\'d0;\n')
+          repl(route,
+              '            debug_rvalid    <= 1\'b0;\n\n            if (!busy) begin\n',
+              '            debug_rvalid    <= 1\'b0;\n\n            // Capture the exact RAM-write boundary on the same edge as the\n            // physical recurrent-bank memory process.\n            if (bank0_mem_we) begin\n                recurrent_bank_write_seen      <= 1\'b1;\n                last_recurrent_bank_write_bank <= 1\'b0;\n                last_recurrent_bank_write_addr <= bank0_mem_waddr;\n                last_recurrent_bank_write_data <= bank0_mem_wdata;\n            end else if (bank1_mem_we) begin\n                recurrent_bank_write_seen      <= 1\'b1;\n                last_recurrent_bank_write_bank <= 1\'b1;\n                last_recurrent_bank_write_addr <= bank1_mem_waddr;\n                last_recurrent_bank_write_data <= bank1_mem_wdata;\n            end\n\n            if (!busy) begin\n')
+          repl(route,
+              '                        last_routed_count   <= 13\'d0;\n                        core_reset_done     <= 1\'b1;\n',
+              '                        last_routed_count               <= 13\'d0;\n                        recurrent_bank_write_seen       <= 1\'b0;\n                        last_recurrent_bank_write_bank  <= 1\'b0;\n                        last_recurrent_bank_write_addr  <= 12\'d0;\n                        last_recurrent_bank_write_data  <= 16\'d0;\n                        core_reset_done                 <= 1\'b1;\n')
+
+          outer = 'Neuromorphic Digital Twin/rtl/core_v1/recurrent_integrated_core_controller_v1.sv'
+          repl(outer,
+              '    output logic [15:0]  last_route_target_read_data,\n\n    // Neuron and frozen M08 preload paths.',
+              '    output logic [15:0]  last_route_target_read_data,\n    output logic         recurrent_bank_write_seen,\n    output logic         last_recurrent_bank_write_bank,\n    output logic [11:0]  last_recurrent_bank_write_addr,\n    output logic [15:0]  last_recurrent_bank_write_data,\n\n    // Neuron and frozen M08 preload paths.')
+          repl(outer,
+              '        .last_route_target_read_data(last_route_target_read_data),\n',
+              '        .last_route_target_read_data(last_route_target_read_data),\n        .recurrent_bank_write_seen(recurrent_bank_write_seen),\n        .last_recurrent_bank_write_bank(last_recurrent_bank_write_bank),\n        .last_recurrent_bank_write_addr(last_recurrent_bank_write_addr),\n        .last_recurrent_bank_write_data(last_recurrent_bank_write_data),\n')
+
+          cap = 'Neuromorphic Digital Twin/rtl/core_v1/m12_2_single_tick_capture_controller_v1.sv'
+          repl(cap,
+              '    output logic [15:0]  observed_route_target_read_data,\n\n    input  logic         trace_read_req,',
+              '    output logic [15:0]  observed_route_target_read_data,\n    output logic         observed_recurrent_bank_write_seen,\n    output logic         observed_recurrent_bank_write_bank,\n    output logic [11:0]  observed_recurrent_bank_write_addr,\n    output logic [15:0]  observed_recurrent_bank_write_data,\n\n    input  logic         trace_read_req,')
+          repl(cap,
+              '        .last_route_target_read_data(observed_route_target_read_data),\n',
+              '        .last_route_target_read_data(observed_route_target_read_data),\n        .recurrent_bank_write_seen(observed_recurrent_bank_write_seen),\n        .last_recurrent_bank_write_bank(observed_recurrent_bank_write_bank),\n        .last_recurrent_bank_write_addr(observed_recurrent_bank_write_addr),\n        .last_recurrent_bank_write_data(observed_recurrent_bank_write_data),\n')
+
+          bd = 'Neuromorphic Digital Twin/rtl/core_v1/m12_2_single_tick_capture_controller_bd_v1.v'
+          repl(bd,
+              '    output wire [15:0]  observed_route_target_read_data,\n    output wire         trace_read_ready,',
+              '    output wire [15:0]  observed_route_target_read_data,\n    output wire         observed_recurrent_bank_write_seen,\n    output wire         observed_recurrent_bank_write_bank,\n    output wire [11:0]  observed_recurrent_bank_write_addr,\n    output wire [15:0]  observed_recurrent_bank_write_data,\n    output wire         trace_read_ready,')
+          repl(bd,
+              '        .observed_route_target_read_data(observed_route_target_read_data),\n',
+              '        .observed_route_target_read_data(observed_route_target_read_data),\n        .observed_recurrent_bank_write_seen(observed_recurrent_bank_write_seen),\n        .observed_recurrent_bank_write_bank(observed_recurrent_bank_write_bank),\n        .observed_recurrent_bank_write_addr(observed_recurrent_bank_write_addr),\n        .observed_recurrent_bank_write_data(observed_recurrent_bank_write_data),\n')
+
+          project = 'Neuromorphic Digital Twin/rtl/core_v1/vivado/create_m12_2_project.tcl'
+          repl(project, '    CONFIG.C_NUM_PROBE_IN {31} \\\n', '    CONFIG.C_NUM_PROBE_IN {35} \\\n')
+          repl(project,
+              '    CONFIG.C_PROBE_IN30_WIDTH {16} \\\n',
+              '    CONFIG.C_PROBE_IN30_WIDTH {16} \\\n    CONFIG.C_PROBE_IN31_WIDTH {1} \\\n    CONFIG.C_PROBE_IN32_WIDTH {1} \\\n    CONFIG.C_PROBE_IN33_WIDTH {12} \\\n    CONFIG.C_PROBE_IN34_WIDTH {16} \\\n')
+          repl(project,
+              'connect_named_pair observed_route_target_read_data     capture_0/observed_route_target_read_data vio_m12_2/probe_in30\n',
+              'connect_named_pair observed_route_target_read_data     capture_0/observed_route_target_read_data vio_m12_2/probe_in30\nconnect_named_pair observed_recurrent_bank_write_seen   capture_0/observed_recurrent_bank_write_seen vio_m12_2/probe_in31\nconnect_named_pair observed_recurrent_bank_write_bank   capture_0/observed_recurrent_bank_write_bank vio_m12_2/probe_in32\nconnect_named_pair observed_recurrent_bank_write_addr   capture_0/observed_recurrent_bank_write_addr vio_m12_2/probe_in33\nconnect_named_pair observed_recurrent_bank_write_data   capture_0/observed_recurrent_bank_write_data vio_m12_2/probe_in34\n')
+
+          tcl = 'Neuromorphic Digital Twin/rtl/core_v1/vivado/capture_m12_2_single_tick.tcl'
+          repl(tcl,
+              'set p_route_read_data [find_one_probe $vio observed_route_target_read_data]\n',
+              'set p_route_read_data [find_one_probe $vio observed_route_target_read_data]\nset p_bank_write_seen [find_one_probe $vio observed_recurrent_bank_write_seen]\nset p_bank_write_bank [find_one_probe $vio observed_recurrent_bank_write_bank]\nset p_bank_write_addr [find_one_probe $vio observed_recurrent_bank_write_addr]\nset p_bank_write_data [find_one_probe $vio observed_recurrent_bank_write_data]\n')
+          repl(tcl,
+              '    puts "M12.2 route-target witness case $case_id: write_seen=$route_write_seen write_addr=$route_write_addr write_data=$route_write_data read_addr=$route_read_addr read_data=$route_read_data"\n',
+              '    set bank_write_seen [probe_uint $p_bank_write_seen]\n    set bank_write_bank [probe_uint $p_bank_write_bank]\n    set bank_write_addr [probe_uint $p_bank_write_addr]\n    set bank_write_data [probe_uint $p_bank_write_data]\n    puts "M12.2 route-target witness case $case_id: write_seen=$route_write_seen write_addr=$route_write_addr write_data=$route_write_data read_addr=$route_read_addr read_data=$route_read_data"\n    puts "M12.2 recurrent-bank write witness case $case_id: write_seen=$bank_write_seen bank=$bank_write_bank addr=$bank_write_addr data=$bank_write_data"\n')
+
+          test = 'Neuromorphic Digital Twin/tests/test_m12_2_capture_sources.py'
+          p = Path(test)
+          txt = p.read_text().replace('CONFIG.C_NUM_PROBE_IN {31}', 'CONFIG.C_NUM_PROBE_IN {35}')
+          txt += '''\n\ndef test_recurrent_bank_write_witnesses_are_passive_and_vio_visible() -> None:\n    route = (RTL / "recurrent_route_queue_v1.sv").read_text(encoding="utf-8")\n    outer = (RTL / "recurrent_integrated_core_controller_v1.sv").read_text(encoding="utf-8")\n    controller = CONTROLLER.read_text(encoding="utf-8")\n    wrapper = WRAPPER.read_text(encoding="utf-8")\n    project = PROJECT_TCL.read_text(encoding="utf-8")\n    capture = CAPTURE_TCL.read_text(encoding="utf-8")\n    for signal in ("recurrent_bank_write_seen", "last_recurrent_bank_write_bank", "last_recurrent_bank_write_addr", "last_recurrent_bank_write_data"):\n        assert signal in route\n        assert signal in outer\n    assert "if (bank0_mem_we) begin" in route\n    assert "else if (bank1_mem_we) begin" in route\n    assert "last_recurrent_bank_write_data <= bank1_mem_wdata;" in route\n    assert "never feed routing decisions or architectural state" in route\n    for signal in ("observed_recurrent_bank_write_seen", "observed_recurrent_bank_write_bank", "observed_recurrent_bank_write_addr", "observed_recurrent_bank_write_data"):\n        assert signal in controller\n        assert signal in wrapper\n        assert signal in project\n        assert signal in capture\n    assert "CONFIG.C_NUM_PROBE_IN {35}" in project\n    assert "M12.2 recurrent-bank write witness case $case_id:" in capture\n'''
+          p.write_text(txt)
+          PY
+      - name: Run focused M12.2 regressions
+        working-directory: Neuromorphic Digital Twin
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_m12_2_single_tick_conformance.py tests/test_m12_2_capture_sources.py
+      - name: Commit bank-write instrumentation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Neuromorphic Digital Twin/rtl/core_v1/recurrent_route_queue_v1.sv' 'Neuromorphic Digital Twin/rtl/core_v1/recurrent_integrated_core_controller_v1.sv' 'Neuromorphic Digital Twin/rtl/core_v1/m12_2_single_tick_capture_controller_v1.sv' 'Neuromorphic Digital Twin/rtl/core_v1/m12_2_single_tick_capture_controller_bd_v1.v' 'Neuromorphic Digital Twin/rtl/core_v1/vivado/create_m12_2_project.tcl' 'Neuromorphic Digital Twin/rtl/core_v1/vivado/capture_m12_2_single_tick.tcl' 'Neuromorphic Digital Twin/tests/test_m12_2_capture_sources.py'
+          git commit -m 'Instrument M12.2 recurrent bank write path'
+          git push origin HEAD:agent/m12-2-single-tick-physical
