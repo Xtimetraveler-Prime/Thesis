@@ -1,6 +1,6 @@
 # M12.2 Physical Route-Target Debug Record
 
-Status: **Open physical conformance discrepancy**
+Status: **Root cause identified; RTL fix pending physical verification**
 
 Milestone: **M12.2 — exact single-tick Python-vs-physical-FPGA conformance**
 
@@ -15,9 +15,7 @@ M12.2 case FAIL: 07 threshold-over-refractory-entry mismatches=1
   snapshot.routed_output_axons: expected=(1,) actual=(0,)
 ```
 
-The other 15 cases passed exactly. For case 07, the neuron state transition, spike result, recurrent-bank selector/count metadata, and routed-event count all matched the Python golden model. The FPGA therefore reported that one recurrent event was generated, but the payload stored in the newly committed recurrent queue was axon `0` instead of axon `1`.
-
-This localizes the discrepancy to the route-target payload path after spike generation rather than to the neuron/HLS transition, threshold/refractory behavior, route count, or host differential logic.
+The other 15 cases passed exactly. For case 07, the neuron state transition, spike result, recurrent-bank selector/count metadata, and routed-event count all matched the Python golden model. The FPGA therefore reported that one recurrent event was generated, but the host-visible payload in the newly committed recurrent queue appeared as axon `0` instead of axon `1`.
 
 ## Expected case-07 route
 
@@ -85,7 +83,7 @@ The generated SV block contains seven zero entries followed by:
 
 at case 07's exact flattened index.
 
-Conclusion: **the Python golden model, route freezing, SV corpus generator, and flattened case/route indexing all preserve target axon 1 correctly**. The discrepancy occurs downstream of the generated load image.
+Conclusion: **the Python golden model, route freezing, SV corpus generator, and flattened case/route indexing all preserve target axon 1 correctly**.
 
 ### 4. Physical route-target write/read witness
 
@@ -97,11 +95,9 @@ M12.2 route-target witness case 7: write_seen=1 write_addr=0 write_data=1 read_a
 
 Conclusion: **the physical router accepts target axon 1 at route-target address 0 and later reads target axon 1 into the routing work register**. This rules out the Python case, generated SV image, route-target preload interface, route-target RAM contents, route-target read address, and route-target RAM read value.
 
-At this point the mismatch is downstream of `work_target`: either the inactive recurrent-bank append/write path is wrong, or recurrent-bank debug capture is observing the wrong stored value.
-
 ### 5. Duplicate recurrent-bank debug read
 
-To test whether synchronous debug readback merely returned a stale value, a host-only case-07 diagnostic read the same committed routed-bank entry twice consecutively without changing the bitstream.
+To test whether synchronous debug readback merely returned a one-off stale value, a host-only case-07 diagnostic read the same committed routed-bank entry twice consecutively without changing the bitstream.
 
 Observed:
 
@@ -109,48 +105,71 @@ Observed:
 M12.2 case07 recurrent-bank duplicate read: bank=1 space=6 addr=0 first=0 second=0
 ```
 
-The same run still reported:
+Conclusion: **the problem is reproducible across repeated host reads**. This ruled out a single transient/stale VIO sample, but it did not yet distinguish queue storage from a bank-selection alignment error in the synchronous debug path.
+
+### 6. Physical recurrent-bank write witness
+
+Passive witnesses were added at the exact RAM write boundary. Case 07 physically reported:
 
 ```text
-write_seen=1 write_addr=0 write_data=1 read_addr=0 read_data=1
-routed=1
+M12.2 recurrent-bank write witness case 7: write_seen=1 bank=1 addr=0 data=1
 ```
 
-Conclusion: **a simple one-read stale-data explanation is ruled out**. Two independent post-commit reads of recurrent bank 1, address 0 both return axon 0 even though the route engine consumed target 1 and reports one routed event. The remaining localization boundary is therefore the recurrent-bank append/write itself versus a deeper bank-storage/readback implementation problem.
-
-## Current localization plan
-
-The next diagnostic bitstream adds passive physical witnesses at the actual inactive recurrent-bank write boundary:
-
-- whether a recurrent-bank write enable fired,
-- which bank was selected,
-- the write address,
-- the write data.
-
-For case 07 the expected write witness is:
+Combined with the route-target witness, the physical datapath is now proven through the append boundary:
 
 ```text
-write_seen = 1
-write_bank = 1
-write_addr = 0
-write_data = 1
+route target image = 1
+    -> route-target RAM read = 1
+    -> work_target = 1
+    -> bank-1 write enable fires
+    -> bank-1 write address = 0
+    -> bank-1 write data = 1
 ```
 
-Interpretation:
+This result rules out the routing decision, append data path, bank choice, and write address/data generation.
 
-- `write_seen=0` means the route append state never generated the queue write despite incrementing the routed count.
-- `write_seen=1` with `write_data=0` means the payload changes between the route work register and the recurrent-bank write interface.
-- `write_seen=1`, `write_bank=1`, `write_addr=0`, `write_data=1` while repeated bank reads still return `0` means the fault is below the logical append interface, most likely in physical recurrent-bank RAM inference/storage or its readback implementation.
+## Identified root cause
 
-No expected FPGA output is embedded into this diagnostic path. These signals are passive witnesses only; Python remains the independent golden reference.
+Source inspection after the write witness exposed an observability bug in `recurrent_route_queue_v1`.
+
+The recurrent event banks are synchronous memories. A debug request for bank 1 asserts `debug_bank=1` during the request cycle and the bank-1 RAM output becomes valid on the subsequent clocked response. However, `debug_rdata` was selected using the **live** request signal:
+
+```systemverilog
+assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;
+```
+
+The M12 trace bridge only drives `debug_bank=1` while issuing the request. Once that pulse ends, the live selector returns to bank 0 before the synchronous bank-1 response is consumed. The RAM write can therefore be completely correct while the response mux exposes bank 0's stale/zero data. Repeating the same request does not help because every request repeats the same selector timing error, explaining the observed `first=0 second=0` result.
+
+The fix latches the requested bank when `debug_re` is accepted and uses that registered selector for the synchronous response:
+
+```systemverilog
+debug_bank_latched <= debug_bank;
+assign debug_rdata = debug_bank_latched ? bank1_mem_rdata : bank0_mem_rdata;
+```
+
+This changes only the debug/readback alignment. It does **not** modify spike routing, recurrent queue writes, bank counts, route order, tick timing, or any frozen M10 computational semantics.
+
+A dedicated RTL regression (`tb_m12_2_recurrent_debug_bank_latch.sv`) deliberately requests bank 1 and then returns the live `debug_bank` input to bank 0 before the response. The expected response remains the bank-1 payload. `run_m12_2_recurrent_debug_bank_latch_sim.sh` provides the Vivado/XSIM regression runner.
+
+## Next verification
+
+Before closing the defect, the corrected RTL must pass:
+
+1. the targeted debug-bank XSIM regression;
+2. the focused/full Python regression suites;
+3. a rebuilt M12.2 bitstream;
+4. the physical case-07 probe, which must change from `actual=(0,)` to `actual=(1,)`;
+5. the complete 16-case physical suite with `mismatches=0`.
+
+The passive route-target and recurrent-bank write witnesses remain useful until physical closure, after which they may be removed from the final M12.2 capture image if they are no longer needed.
 
 ## Closure rule
 
-M12.2 remains **in progress** until the discrepancy is explained and the complete physical suite reports:
+M12.2 remains **in progress** until the discrepancy is physically closed and the complete suite reports:
 
 ```text
 cases=16
 mismatches=0
 ```
 
-A workaround that changes the Python expected value from axon `1` to axon `0` is not acceptable because it would hide the physical implementation defect rather than establish equivalence.
+Changing the Python expected value from axon `1` to axon `0` is explicitly not an acceptable workaround.
