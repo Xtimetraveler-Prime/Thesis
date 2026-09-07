@@ -619,7 +619,6 @@ module m12_3_multitick_capture_controller_v1 (
                         capture_fault <= 1'b0;
                         capture_fault_code <= CAPTURE_FAULT_NONE;
                         load_index <= 13'd0;
-                        tick_index <= 8'd0;
                         watchdog <= 24'd0;
                         if (trace_read_addr >= M12_3_CASE_COUNT) begin
                             capture_fault <= 1'b1;
@@ -634,6 +633,7 @@ module m12_3_multitick_capture_controller_v1 (
                 S_FAIL: begin
                     if (capture_start_pulse) begin
                         active_case_id <= trace_read_addr[7:0];
+                        tick_index <= 8'd0;
                         capture_done <= 1'b0;
                         capture_fault <= 1'b0;
                         capture_fault_code <= CAPTURE_FAULT_NONE;
