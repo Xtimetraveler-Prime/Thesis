@@ -63,3 +63,4 @@ jobs:
           bash -n run_m12_3_hardware_suite.sh
           grep -F 'M12.3 routed bitstream flow completed successfully.' run_m12_3_bitstream.sh
           grep -F 'M12.3 physical multi-tick/recurrent suite completed successfully.' run_m12_3_hardware_suite.sh
+# rerun after focused FSM source assertion correction
