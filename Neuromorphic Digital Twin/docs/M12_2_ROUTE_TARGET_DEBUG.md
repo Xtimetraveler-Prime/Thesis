@@ -1,6 +1,6 @@
 # M12.2 Physical Route-Target Debug Record
 
-Status: **Root cause identified; RTL fix pending physical verification**
+Status: **Resolved — M12.2 physical conformance closed**
 
 Milestone: **M12.2 — exact single-tick Python-vs-physical-FPGA conformance**
 
@@ -173,3 +173,27 @@ mismatches=0
 ```
 
 Changing the Python expected value from axon `1` to axon `0` is explicitly not an acceptable workaround.
+
+
+## Final resolution and closure
+
+The physical recurrent-bank write witness reported:
+
+```text
+M12.2 recurrent-bank write witness case 7: write_seen=1 bank=1 addr=0 data=1
+```
+
+This proved the route engine and queue-write datapath were correct all the way to the bank-1 RAM write interface. The final root cause was the synchronous debug response bank selector, not architectural recurrent routing.
+
+`recurrent_route_queue_v1` originally selected `debug_rdata` with the live `debug_bank` request signal. Because the recurrent banks use registered synchronous reads and the trace bridge releases the request selector before the response cycle, a bank-1 request could correctly load `bank1_mem_rdata` while the output mux had already switched back to bank 0. The correction latches the requested bank when `debug_re` is accepted and holds that selector through the registered response.
+
+A dedicated RTL regression reproduces the exact timing condition by requesting bank 1, immediately returning the live selector to bank 0, and requiring the synchronous response to remain the bank-1 payload.
+
+After rebuilding the corrected physical image, case 07 passed exactly and the complete M12.2 directed physical corpus completed:
+
+```text
+cases=16
+mismatches=0
+```
+
+M12.2 is therefore closed. The expected route target remained axon `1`; no golden-model expectation was weakened to obtain the pass.
