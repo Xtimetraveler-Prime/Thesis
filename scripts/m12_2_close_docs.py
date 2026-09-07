@@ -71,7 +71,12 @@ milestones.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
 
 debug = Path('Neuromorphic Digital Twin/docs/M12_2_ROUTE_TARGET_DEBUG.md')
 d = debug.read_text(encoding='utf-8')
-d = d.replace('Status: **Open physical conformance discrepancy**', 'Status: **Resolved — M12.2 physical conformance closed**', 1)
+lines = d.splitlines()
+for i, line in enumerate(lines):
+    if line.startswith('Status: **'):
+        lines[i] = 'Status: **Resolved — M12.2 physical conformance closed**'
+        break
+d = '\n'.join(lines) + ('\n' if d.endswith('\n') else '')
 if '## Final resolution and closure' not in d:
     d += '''
 
