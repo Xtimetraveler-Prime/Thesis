@@ -1724,7 +1724,7 @@ The work is split into five ordered sub-milestones. M12.1 creates the physical o
 ### Overall completion criteria
 
 - [x] A stable machine-readable physical-FPGA trace path exists for the required M10/M11 architectural observables.
-- [ ] Directed single-tick physical cases match the Python golden model exactly.
+- [x] Directed single-tick physical cases match the Python golden model exactly.
 - [ ] Directed multi-tick and recurrent physical scenarios match Python exactly at every compared tick.
 - [ ] A broader deterministic physical corpus completes with zero unexplained mismatches and reproducible failure artifacts.
 - [ ] Final timing, utilization, latency/throughput, supported-scope, and limitation evidence is recorded for thesis use.
@@ -1818,32 +1818,61 @@ The two captured artifacts were byte-for-byte identical and both replayed succes
 
 ### M12.2 — Exact single-tick Python-versus-FPGA differential validation
 
-**Status:** Planned
+**Status:** Complete  
+**Started:** 2026-09-02  
+**Completed:** 2026-09-07  
+**Repository evidence:** branch `agent/m12-2-single-tick-physical`; final physical closure on KV260 with 16/16 exact cases
 
 #### Core goal
 
 Prove that one complete physical FPGA algorithmic tick is exactly equivalent to the Python FPGA-v1 golden transition across a deliberately chosen directed corpus.
 
-#### Planned coverage
+#### Delivered
 
-- Positive and negative synaptic input.
-- Mixed excitation and inhibition.
-- Current- and voltage-decay boundary values.
-- Positive and negative state saturation boundaries.
-- Threshold equality and just-over-threshold behavior.
-- Refractory entry, hold, countdown, and release behavior.
-- Multiple neurons and multiple axons.
-- Repeated event multiplicity and empty CSR rows.
-- Representative M08 encoded-weight sign modes, exponents, and precisions.
-- Legal finite-profile count and identifier boundaries where practical on the physical test path.
+- A frozen 16-case directed Python corpus independently generates packed FPGA load images and Python-golden committed-tick expectations across synaptic sign, E/I mixing, decay, positive/negative saturation, strict threshold behavior, refractory boundaries, multi-neuron/axon operation, event multiplicity, empty CSR rows, recurrent routing, and representative M08 encoded-weight formats.
+- FPGA-visible generated SystemVerilog contains only case inputs/load images. Python-golden expected outputs remain host-side, and source-contract tests reject any `M12_2_EXPECTED*` arrays in the physical shell.
+- A case-selectable host-stepped physical shell reuses the M11.5 recurrent integrated core and M12.1 trace bridge. Each case performs a fresh architectural reset; arbitrary initial neuron state is restored after reset so saturation and refractory boundary probes are genuine pre-tick states.
+- A single-session Hardware Manager flow selects all 16 cases, captures one machine-readable physical trace artifact per case, and runs exact host-side differential comparison against the independent Python expectation.
+- Passive route-target and recurrent-bank write witnesses were added during diagnosis of the only initial mismatch. They never feed architectural computation and remain useful as physical debug evidence.
 
-#### Comparison contract
+#### Physical discrepancy discovered and resolved
 
-For every case, Python independently generates the initial state/configuration, FPGA load image, and expected committed trace. The physical FPGA executes exactly one architectural tick. Host-side comparison then checks every required field exactly; the FPGA is not allowed to define its own expected result.
+The first complete physical run passed 15 of 16 cases. Case 07 (`threshold-over-refractory-entry`) matched neuron state, spike, routed count, bank selection, and queue count but reported routed axon payload `0` instead of Python's expected `1`.
 
-#### Pass boundary
+The issue was reduced systematically:
 
-The agreed directed single-tick corpus completes on the physical K26 with zero exact mismatches across all compared architectural fields. Any discovered defect must be reduced to a reproducible directed regression before M12.2 can close.
+```text
+Python route target            = 1
+generated SV route target      = 1
+physical route-target write    = addr0 data1
+physical route-target read     = addr0 data1
+physical recurrent-bank write  = bank1 addr0 data1
+trace readback                 = 0
+```
+
+A duplicate host read returned `0` twice, proving the failure was not a one-off host sample. Source inspection then identified the actual observability defect: the recurrent queues are synchronous memories, but `debug_rdata` selected bank 0 versus bank 1 using the live `debug_bank` request signal. The trace bridge releases that request after the read pulse, so by the response cycle the selector had returned to bank 0 even though bank 1's registered RAM data was the requested response.
+
+The fix latches `debug_bank` when `debug_re` is accepted and uses the latched selector for the synchronous response. This changes only readback alignment; recurrent routing, queue writes, counts, and algorithmic semantics remain unchanged. A dedicated RTL regression intentionally releases the live selector immediately after a bank-1 request and requires the response to remain the bank-1 payload.
+
+The rejected reset-first reconfiguration experiment and the full localization trail are retained in `docs/M12_2_ROUTE_TARGET_DEBUG.md` so the thesis record distinguishes invalid hypotheses from the final root cause.
+
+#### Final physical completion evidence
+
+After the debug-bank selector fix was rebuilt and programmed on the KV260, the complete directed physical suite passed:
+
+```text
+M12.2 case PASS: 00 positive-synaptic-input
+...
+M12.2 case PASS: 15 encoded-reduced-precision-mixed
+M12.2 exact physical single-tick differential passed: cases=16 mismatches=0
+M12.2 physical directed single-tick suite completed successfully.
+```
+
+This closes the M12.2 pass boundary: every agreed directed physical single-tick case matches the independent Python FPGA-v1 golden model exactly across every compared architectural field. The previously failing nonzero recurrent-route payload now passes without changing its expected value.
+
+#### What completion means
+
+M12.2 establishes exact software-to-physical-hardware equivalence for one complete algorithmic tick across the directed architectural boundary corpus. It also demonstrates that the physical trace path is strong enough to expose a real readback alignment defect that an on-FPGA self-check alone would not have localized. M12.3 can therefore build on a validated single-tick execution and observation boundary to test state history, queue swaps, recurrent timing, event ordering, and repeated committed ticks.
 
 ---
 

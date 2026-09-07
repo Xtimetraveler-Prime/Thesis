@@ -47,9 +47,17 @@ def test_large_runtime_memories_use_synchronous_bram_friendly_ports() -> None:
     assert "work_accum       <= accum_mem_rdata;" in neuron
 
     # Both physical recurrent banks have one synchronous write/read process.
+    # The bank selector is latched with the request so the registered BRAM
+    # response cannot be redirected by a later change on the live debug input.
     assert "bank0_mem_rdata <= recurrent_bank0[bank0_mem_raddr];" in route
     assert "bank1_mem_rdata <= recurrent_bank1[bank1_mem_raddr];" in route
-    assert "assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;" in route
+    assert "logic        debug_bank_latched;" in route
+    assert "debug_bank_latched <= debug_bank;" in route
+    assert (
+        "assign debug_rdata = debug_bank_latched ? bank1_mem_rdata : bank0_mem_rdata;"
+        in route
+    )
+    assert "assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;" not in route
 
 
 def test_integrated_core_returns_pre_state_synaptic_sum_and_external_events() -> None:

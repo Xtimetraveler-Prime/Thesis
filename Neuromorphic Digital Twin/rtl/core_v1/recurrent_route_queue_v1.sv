@@ -35,6 +35,22 @@ module recurrent_route_queue_v1 #(
     output logic [7:0]   active_source,
     output logic [31:0]  active_route_index,
 
+    // Passive route-target witnesses for physical M12.2 localization. These
+    // registers never feed routing decisions or architectural state.
+    output logic         route_target_write_seen,
+    output logic [11:0]  last_route_target_write_addr,
+    output logic [15:0]  last_route_target_write_data,
+    output logic [11:0]  last_route_target_read_addr,
+    output logic [15:0]  last_route_target_read_data,
+
+    // Passive witnesses of the actual recurrent-bank write interface. These
+    // observe the same enable/address/data that drive the RAM processes below
+    // and never feed routing decisions or architectural state.
+    output logic         recurrent_bank_write_seen,
+    output logic         last_recurrent_bank_write_bank,
+    output logic [11:0]  last_recurrent_bank_write_addr,
+    output logic [15:0]  last_recurrent_bank_write_data,
+
     // Static route-image and spike preload writes. Accepted only while idle.
     input  logic         route_row_we,
     input  logic [8:0]   route_row_addr,
@@ -105,11 +121,15 @@ module recurrent_route_queue_v1 #(
     logic        bank1_mem_re;
     logic [11:0] bank1_mem_raddr;
     logic [15:0] bank1_mem_rdata;
+    logic        debug_bank_latched;
 
     assign current_count = current_bank ? bank1_count : bank0_count;
     assign debug_bank0_count = bank0_count;
     assign debug_bank1_count = bank1_count;
-    assign debug_rdata = debug_bank ? bank1_mem_rdata : bank0_mem_rdata;
+    // Recurrent-bank reads are synchronous. The bank selector must therefore
+    // be held from the accepted request until the registered RAM data is valid.
+    // Callers are not required to keep debug_bank stable after debug_re falls.
+    assign debug_rdata = debug_bank_latched ? bank1_mem_rdata : bank0_mem_rdata;
 
     function automatic logic counts_valid;
         counts_valid =
@@ -169,41 +189,71 @@ module recurrent_route_queue_v1 #(
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
-            state                  <= S_IDLE;
-            busy                   <= 1'b0;
-            core_reset_done        <= 1'b0;
-            done                   <= 1'b0;
-            fault                  <= 1'b0;
-            fault_code             <= FAULT_NONE;
-            current_bank           <= 1'b0;
-            bank0_count            <= 13'd0;
-            bank1_count            <= 13'd0;
-            last_consumed_count    <= 13'd0;
-            last_routed_count      <= 13'd0;
-            active_source          <= 8'd0;
-            active_route_index     <= 32'd0;
-            latched_neuron_count   <= 9'd0;
-            latched_route_count    <= 13'd0;
-            row_start              <= 32'd0;
-            row_stop               <= 32'd0;
-            expected_row_start     <= 32'd0;
-            work_target            <= 16'd0;
-            next_count             <= 13'd0;
-            debug_rvalid           <= 1'b0;
+            state                        <= S_IDLE;
+            busy                         <= 1'b0;
+            core_reset_done              <= 1'b0;
+            done                         <= 1'b0;
+            fault                        <= 1'b0;
+            fault_code                   <= FAULT_NONE;
+            current_bank                 <= 1'b0;
+            bank0_count                  <= 13'd0;
+            bank1_count                  <= 13'd0;
+            last_consumed_count          <= 13'd0;
+            last_routed_count            <= 13'd0;
+            active_source                <= 8'd0;
+            active_route_index           <= 32'd0;
+            latched_neuron_count         <= 9'd0;
+            latched_route_count          <= 13'd0;
+            row_start                    <= 32'd0;
+            row_stop                     <= 32'd0;
+            expected_row_start           <= 32'd0;
+            work_target                  <= 16'd0;
+            next_count                   <= 13'd0;
+            debug_rvalid                 <= 1'b0;
+            debug_bank_latched           <= 1'b0;
+            route_target_write_seen      <= 1'b0;
+            last_route_target_write_addr <= 12'd0;
+            last_route_target_write_data <= 16'd0;
+            last_route_target_read_addr  <= 12'd0;
+            last_route_target_read_data  <= 16'd0;
+            recurrent_bank_write_seen      <= 1'b0;
+            last_recurrent_bank_write_bank <= 1'b0;
+            last_recurrent_bank_write_addr <= 12'd0;
+            last_recurrent_bank_write_data <= 16'd0;
         end else begin
             core_reset_done <= 1'b0;
             done            <= 1'b0;
             debug_rvalid    <= 1'b0;
 
+            // Capture the exact RAM-write boundary on the same edge as the
+            // physical recurrent-bank memory process.
+            if (bank0_mem_we) begin
+                recurrent_bank_write_seen      <= 1'b1;
+                last_recurrent_bank_write_bank <= 1'b0;
+                last_recurrent_bank_write_addr <= bank0_mem_waddr;
+                last_recurrent_bank_write_data <= bank0_mem_wdata;
+            end else if (bank1_mem_we) begin
+                recurrent_bank_write_seen      <= 1'b1;
+                last_recurrent_bank_write_bank <= 1'b1;
+                last_recurrent_bank_write_addr <= bank1_mem_waddr;
+                last_recurrent_bank_write_data <= bank1_mem_wdata;
+            end
+
             if (!busy) begin
                 if (route_row_we)
                     route_row_mem[route_row_addr] <= route_row_wdata;
-                if (route_target_we)
+                if (route_target_we) begin
                     route_target_mem[route_target_addr] <= route_target_wdata;
+                    route_target_write_seen      <= 1'b1;
+                    last_route_target_write_addr <= route_target_addr;
+                    last_route_target_write_data <= route_target_wdata;
+                end
                 if (spike_we)
                     spike_mem[spike_addr] <= spike_wdata;
-                if (debug_re)
-                    debug_rvalid <= 1'b1;
+                if (debug_re) begin
+                    debug_bank_latched <= debug_bank;
+                    debug_rvalid       <= 1'b1;
+                end
             end
 
             case (state)
@@ -219,8 +269,12 @@ module recurrent_route_queue_v1 #(
                         bank0_count         <= 13'd0;
                         bank1_count         <= 13'd0;
                         last_consumed_count <= 13'd0;
-                        last_routed_count   <= 13'd0;
-                        core_reset_done     <= 1'b1;
+                        last_routed_count               <= 13'd0;
+                        recurrent_bank_write_seen       <= 1'b0;
+                        last_recurrent_bank_write_bank  <= 1'b0;
+                        last_recurrent_bank_write_addr  <= 12'd0;
+                        last_recurrent_bank_write_data  <= 16'd0;
+                        core_reset_done                 <= 1'b1;
                     end else if (start) begin
                         if (!counts_valid()) begin
                             fault      <= 1'b1;
@@ -282,11 +336,15 @@ module recurrent_route_queue_v1 #(
                 end
 
                 S_ROUTE_READ: begin
-                    work_target <= route_target_mem[active_route_index[11:0]];
-                    state       <= S_ROUTE_APPEND;
+                    work_target                 <= route_target_mem[active_route_index[11:0]];
+                    last_route_target_read_addr <= active_route_index[11:0];
+                    state                       <= S_ROUTE_APPEND;
                 end
 
                 S_ROUTE_APPEND: begin
+                    // Passive witness of the exact registered target consumed by
+                    // the existing append path; this adds no route-memory read port.
+                    last_route_target_read_data <= work_target;
                     if (work_target >= MAX_AXONS) begin
                         fault      <= 1'b1;
                         fault_code <= FAULT_ROUTE_TARGET;
