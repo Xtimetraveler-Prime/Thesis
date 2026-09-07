@@ -177,24 +177,24 @@ module recurrent_route_queue_v1 #(
 
     always_ff @(posedge ap_clk) begin
         if (ap_rst) begin
-            state                  <= S_IDLE;
-            busy                   <= 1'b0;
-            core_reset_done        <= 1'b0;
-            done                   <= 1'b0;
-            fault                  <= 1'b0;
-            fault_code             <= FAULT_NONE;
-            current_bank           <= 1'b0;
-            bank0_count            <= 13'd0;
-            bank1_count            <= 13'd0;
-            last_consumed_count    <= 13'd0;
-            last_routed_count      <= 13'd0;
-            active_source          <= 8'd0;
-            active_route_index     <= 32'd0;
-            latched_neuron_count   <= 9'd0;
-            latched_route_count    <= 13'd0;
-            row_start              <= 32'd0;
-            row_stop               <= 32'd0;
-            expected_row_start     <= 32'd0;
+            state                        <= S_IDLE;
+            busy                         <= 1'b0;
+            core_reset_done              <= 1'b0;
+            done                         <= 1'b0;
+            fault                        <= 1'b0;
+            fault_code                   <= FAULT_NONE;
+            current_bank                 <= 1'b0;
+            bank0_count                  <= 13'd0;
+            bank1_count                  <= 13'd0;
+            last_consumed_count          <= 13'd0;
+            last_routed_count            <= 13'd0;
+            active_source                <= 8'd0;
+            active_route_index           <= 32'd0;
+            latched_neuron_count         <= 9'd0;
+            latched_route_count          <= 13'd0;
+            row_start                    <= 32'd0;
+            row_stop                     <= 32'd0;
+            expected_row_start           <= 32'd0;
             work_target                  <= 16'd0;
             next_count                   <= 13'd0;
             debug_rvalid                 <= 1'b0;
@@ -301,11 +301,13 @@ module recurrent_route_queue_v1 #(
                 S_ROUTE_READ: begin
                     work_target                 <= route_target_mem[active_route_index[11:0]];
                     last_route_target_read_addr <= active_route_index[11:0];
-                    last_route_target_read_data <= route_target_mem[active_route_index[11:0]];
                     state                       <= S_ROUTE_APPEND;
                 end
 
                 S_ROUTE_APPEND: begin
+                    // Passive witness of the exact registered target consumed by
+                    // the existing append path; this adds no route-memory read port.
+                    last_route_target_read_data <= work_target;
                     if (work_target >= MAX_AXONS) begin
                         fault      <= 1'b1;
                         fault_code <= FAULT_ROUTE_TARGET;
