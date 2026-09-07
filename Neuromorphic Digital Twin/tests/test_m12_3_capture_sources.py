@@ -55,18 +55,18 @@ def test_controller_is_case_selectable_multitick_and_never_embeds_golden_outputs
 
 def test_next_tick_external_events_are_loaded_only_after_host_releases_trace_window() -> None:
     text = CONTROLLER.read_text(encoding="utf-8")
-    # Initial state load reaches READY without touching external memory.
-    assert "S_LOAD_STATE: begin" in text
-    state_block = text.split("S_LOAD_STATE: begin", 1)[1].split("S_LOAD_EXTERNAL: begin", 1)[0]
+    # State names occur once in the combinational load mux and again in the
+    # sequential FSM. These assertions intentionally inspect the latter.
+    state_block = text.rsplit("S_LOAD_STATE: begin", 1)[1].split("S_LOAD_EXTERNAL: begin", 1)[0]
     assert "state <= S_READY_TICK;" in state_block
-    assert "S_LOAD_EXTERNAL" not in state_block
+    assert "state <= S_LOAD_EXTERNAL;" not in state_block
 
     # A step from READY decides whether to load the current tick's external
     # events; a step from CAPTURE_HOLD advances the tick and does the same.
-    ready_block = text.split("S_READY_TICK: begin", 1)[1].split("S_TICK_PULSE: begin", 1)[0]
+    ready_block = text.rsplit("S_READY_TICK: begin", 1)[1].split("S_TICK_PULSE: begin", 1)[0]
     assert "if (case_external_count == 0)" in ready_block
     assert "state <= S_LOAD_EXTERNAL;" in ready_block
-    hold_block = text.split("S_CAPTURE_HOLD: begin", 1)[1].split("S_FAIL: begin", 1)[0]
+    hold_block = text.rsplit("S_CAPTURE_HOLD: begin", 1)[1].split("S_FAIL: begin", 1)[0]
     assert "capture_step_pulse && !capture_done" in hold_block
     assert "state <= S_LOAD_EXTERNAL;" in hold_block
     assert "external-event loading and tick launch" in hold_block
