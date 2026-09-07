@@ -35,6 +35,14 @@ module recurrent_route_queue_v1 #(
     output logic [7:0]   active_source,
     output logic [31:0]  active_route_index,
 
+    // Passive route-target witnesses for physical M12.2 localization. These
+    // registers never feed routing decisions or architectural state.
+    output logic         route_target_write_seen,
+    output logic [11:0]  last_route_target_write_addr,
+    output logic [15:0]  last_route_target_write_data,
+    output logic [11:0]  last_route_target_read_addr,
+    output logic [15:0]  last_route_target_read_data,
+
     // Static route-image and spike preload writes. Accepted only while idle.
     input  logic         route_row_we,
     input  logic [8:0]   route_row_addr,
@@ -187,9 +195,14 @@ module recurrent_route_queue_v1 #(
             row_start              <= 32'd0;
             row_stop               <= 32'd0;
             expected_row_start     <= 32'd0;
-            work_target            <= 16'd0;
-            next_count             <= 13'd0;
-            debug_rvalid           <= 1'b0;
+            work_target                  <= 16'd0;
+            next_count                   <= 13'd0;
+            debug_rvalid                 <= 1'b0;
+            route_target_write_seen      <= 1'b0;
+            last_route_target_write_addr <= 12'd0;
+            last_route_target_write_data <= 16'd0;
+            last_route_target_read_addr  <= 12'd0;
+            last_route_target_read_data  <= 16'd0;
         end else begin
             core_reset_done <= 1'b0;
             done            <= 1'b0;
@@ -198,8 +211,12 @@ module recurrent_route_queue_v1 #(
             if (!busy) begin
                 if (route_row_we)
                     route_row_mem[route_row_addr] <= route_row_wdata;
-                if (route_target_we)
+                if (route_target_we) begin
                     route_target_mem[route_target_addr] <= route_target_wdata;
+                    route_target_write_seen      <= 1'b1;
+                    last_route_target_write_addr <= route_target_addr;
+                    last_route_target_write_data <= route_target_wdata;
+                end
                 if (spike_we)
                     spike_mem[spike_addr] <= spike_wdata;
                 if (debug_re)
@@ -282,8 +299,10 @@ module recurrent_route_queue_v1 #(
                 end
 
                 S_ROUTE_READ: begin
-                    work_target <= route_target_mem[active_route_index[11:0]];
-                    state       <= S_ROUTE_APPEND;
+                    work_target                 <= route_target_mem[active_route_index[11:0]];
+                    last_route_target_read_addr <= active_route_index[11:0];
+                    last_route_target_read_data <= route_target_mem[active_route_index[11:0]];
+                    state                       <= S_ROUTE_APPEND;
                 end
 
                 S_ROUTE_APPEND: begin

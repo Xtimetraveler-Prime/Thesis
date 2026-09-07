@@ -113,7 +113,7 @@ def test_m12_2_wrapper_and_vivado_project_keep_m12_1_vio_shape() -> None:
 
     assert 'set project_name "neuromorphic_twin_m12_2"' in project
     assert 'set capture_module "m12_2_single_tick_capture_controller_bd_v1"' in project
-    assert "CONFIG.C_NUM_PROBE_IN {26}" in project
+    assert "CONFIG.C_NUM_PROBE_IN {31}" in project
     assert "CONFIG.C_NUM_PROBE_OUT {6}" in project
     assert "neuromorphic_twin_m12_2.bit" in project
     assert "M12.2 routed timing check passed:" in project
@@ -157,3 +157,42 @@ def test_build_and_suite_wrappers_enforce_physical_zero_mismatch_gate() -> None:
     assert "mismatch_total" in validator
     assert "M12.2 exact physical single-tick differential passed:" in validator
     assert "mismatches=0" in validator
+
+
+def test_route_target_physical_witnesses_are_passive_and_vio_visible() -> None:
+    route = (RTL / "recurrent_route_queue_v1.sv").read_text(encoding="utf-8")
+    outer = (RTL / "recurrent_integrated_core_controller_v1.sv").read_text(encoding="utf-8")
+    controller = CONTROLLER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    project = PROJECT_TCL.read_text(encoding="utf-8")
+    capture = CAPTURE_TCL.read_text(encoding="utf-8")
+
+    for signal in (
+        "route_target_write_seen",
+        "last_route_target_write_addr",
+        "last_route_target_write_data",
+        "last_route_target_read_addr",
+        "last_route_target_read_data",
+    ):
+        assert signal in route
+        assert signal in outer
+
+    assert "route_target_write_seen      <= 1'b1;" in route
+    assert "last_route_target_write_data <= route_target_wdata;" in route
+    assert "last_route_target_read_data <= route_target_mem[active_route_index[11:0]];" in route
+    assert "never feed routing decisions or architectural state" in route
+
+    for signal in (
+        "observed_route_target_write_seen",
+        "observed_route_target_write_addr",
+        "observed_route_target_write_data",
+        "observed_route_target_read_addr",
+        "observed_route_target_read_data",
+    ):
+        assert signal in controller
+        assert signal in wrapper
+        assert signal in project
+        assert signal in capture
+
+    assert "CONFIG.C_NUM_PROBE_IN {31}" in project
+    assert "M12.2 route-target witness case $case_id:" in capture

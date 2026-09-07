@@ -113,7 +113,7 @@ set capture [create_bd_cell -type module -reference $capture_module capture_0]
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv neuron_step_v1_0]
 set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_m12_2]
 set_property -dict [list \
-    CONFIG.C_NUM_PROBE_IN {26} \
+    CONFIG.C_NUM_PROBE_IN {31} \
     CONFIG.C_NUM_PROBE_OUT {6} \
     CONFIG.C_PROBE_IN0_WIDTH {32} \
     CONFIG.C_PROBE_IN1_WIDTH {1} \
@@ -141,6 +141,11 @@ set_property -dict [list \
     CONFIG.C_PROBE_IN23_WIDTH {12} \
     CONFIG.C_PROBE_IN24_WIDTH {64} \
     CONFIG.C_PROBE_IN25_WIDTH {1} \
+    CONFIG.C_PROBE_IN26_WIDTH {1} \
+    CONFIG.C_PROBE_IN27_WIDTH {12} \
+    CONFIG.C_PROBE_IN28_WIDTH {16} \
+    CONFIG.C_PROBE_IN29_WIDTH {12} \
+    CONFIG.C_PROBE_IN30_WIDTH {16} \
     CONFIG.C_PROBE_OUT0_WIDTH {1} CONFIG.C_PROBE_OUT0_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT1_WIDTH {1} CONFIG.C_PROBE_OUT1_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT2_WIDTH {1} CONFIG.C_PROBE_OUT2_INIT_VAL {0x0} \
@@ -232,6 +237,11 @@ connect_named_pair trace_response_space               capture_0/trace_response_s
 connect_named_pair trace_response_addr                capture_0/trace_response_addr vio_m12_2/probe_in23
 connect_named_pair trace_response_data                capture_0/trace_response_data vio_m12_2/probe_in24
 connect_named_pair trace_response_error               capture_0/trace_response_error vio_m12_2/probe_in25
+connect_named_pair observed_route_target_write_seen    capture_0/observed_route_target_write_seen vio_m12_2/probe_in26
+connect_named_pair observed_route_target_write_addr    capture_0/observed_route_target_write_addr vio_m12_2/probe_in27
+connect_named_pair observed_route_target_write_data    capture_0/observed_route_target_write_data vio_m12_2/probe_in28
+connect_named_pair observed_route_target_read_addr     capture_0/observed_route_target_read_addr vio_m12_2/probe_in29
+connect_named_pair observed_route_target_read_data     capture_0/observed_route_target_read_data vio_m12_2/probe_in30
 
 connect_named_pair capture_start                      vio_m12_2/probe_out0 capture_0/capture_start
 connect_named_pair capture_step                       vio_m12_2/probe_out1 capture_0/capture_step
