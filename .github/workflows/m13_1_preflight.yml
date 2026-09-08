@@ -12,6 +12,7 @@ on:
       - 'Neuromorphic Digital Twin/scripts/*m13_1*'
       - 'Neuromorphic Digital Twin/tests/test_m13_1_reference_manifest.py'
 
+# Temporary development gate; removed before user handoff.
 jobs:
   preflight:
     runs-on: ubuntu-latest
