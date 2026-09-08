@@ -1,0 +1,181 @@
+{
+  "schema": "neuromorphic-twin-m13-reference-manifest-v1",
+  "frozen_on": "2026-09-08",
+  "purpose": "Reproducible external-reference boundary for M13 before any Catalyst-derived disagreement can influence the frozen project baseline.",
+  "project_baseline": {
+    "repository": "Xtimetraveler-Prime/Thesis",
+    "branch": "main",
+    "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "milestone_state": "M12 complete",
+    "normative_behavior": "Frozen M10 FPGA-v1 contract as physically validated through M12",
+    "rule": "M13 audits this baseline; it does not silently mutate it."
+  },
+  "catalyst_n1": {
+    "repository": "catalyst-neuromorphic/catalyst-n1",
+    "repository_url": "https://github.com/catalyst-neuromorphic/catalyst-n1",
+    "pin_kind": "annotated repository tag resolved to commit",
+    "primary_tag": "v2.3-paper",
+    "equivalent_tag": "n1-final",
+    "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+    "commit_date_utc": "2026-03-15T09:01:18Z",
+    "commit_message": "Open source release under Apache 2.0",
+    "license": "Apache-2.0",
+    "paper": {
+      "title": "Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity and FPGA Validation",
+      "doi": "10.5281/zenodo.18727094",
+      "stable_record": "https://zenodo.org/records/18727094"
+    },
+    "native_simulation": {
+      "rtl_regression_script": "run_regression.sh",
+      "rtl_regression_blob_sha": "3ae5ca468a4d57143764c5538ce2dc65d0cbba65",
+      "testbench_count_in_script": 25,
+      "tool": "Icarus Verilog",
+      "tool_requirement": ">=12",
+      "compile_language": "SystemVerilog 2012 (-g2012)",
+      "known_relocation_issue": "The pinned run_regression.sh begins with an author-specific WSL cd path. M13 removes only that working-directory assumption at runtime; the pinned RTL list, testbench list, compile flags, and source files remain unchanged."
+    },
+    "sdk_reference": {
+      "package_name": "neurocore",
+      "package_version": "1.0.0",
+      "python_requirement": ">=3.9",
+      "dependencies": [
+        "numpy>=1.21",
+        "matplotlib>=3.5",
+        "pyserial>=3.5"
+      ],
+      "simulator_path": "sdk/neurocore/simulator.py",
+      "simulator_blob_sha": "281b75730357fe9e302e4570c80818cba9316730",
+      "simulator_claim_in_source": "Cycle-accurate software LIF simulator matching scalable_core_v2.v",
+      "simulator_test_path": "sdk/tests/test_simulator.py",
+      "simulator_test_blob_sha": "351cdca74083d37a301d0a9e707312bbae18ba3e",
+      "setup_path": "sdk/setup.py",
+      "setup_blob_sha": "831e29b787d60a1611f752c0b747f7daa178ef76"
+    },
+    "kria_k26_flow": {
+      "build_script": "fpga/kria/build_kria.tcl",
+      "build_script_blob_sha": "6aff405e689cdd2dce402b78002516039777a340",
+      "implementation_script": "fpga/kria/run_impl.tcl",
+      "implementation_script_blob_sha": "672705d32baf5ca473f9ad538a3272ec3c483a11",
+      "wrapper": "fpga/kria/kria_neuromorphic.v",
+      "wrapper_blob_sha": "fee15b738087c155d271f7d7c1eddc5bc9544072",
+      "target_part_in_script": "xczu5ev-sfvc784-2-i",
+      "configured_cores": 2,
+      "neurons_per_core": 256,
+      "pool_depth_per_core": 4096,
+      "clock_target_hz": 100000000,
+      "clock_period_ns": 10.0,
+      "host_boundary": "AXI-facing Kria wrapper",
+      "vivado_version_status": "The K26 Tcl files do not pin a Vivado version. The same pinned repository's AWS F2 build explicitly sources Vivado 2025.2. M13 will use Vivado 2025.2 for a future K26 reproduction to align with both this project and Catalyst's explicit F2 tool version; that is an M13 reproduction choice, not a claimed Catalyst K26 requirement."
+    },
+    "key_source_boundaries": [
+      {
+        "path": "README.md",
+        "blob_sha": "acb840c88be97e5cacb45d7e4ad50e108752eca7",
+        "role": "top-level architecture, simulator, SDK, and FPGA usage documentation"
+      },
+      {
+        "path": "LICENSE",
+        "blob_sha": "5b68a09e1207cac107246fd29184e9bfbdbaeec0",
+        "role": "Apache-2.0 license text"
+      },
+      {
+        "path": "rtl/scalable_core_v2.v",
+        "blob_sha": "c21c9c0256b37b94e78a7eb49dfd3d4303e93f0b",
+        "role": "primary per-core RTL implementation boundary"
+      },
+      {
+        "path": "fpga/f2/run_build.sh",
+        "blob_sha": "97a20277ba1b131aba88580f1cd5316963ef9665",
+        "role": "repository-explicit Vivado 2025.2 tool-version evidence"
+      }
+    ]
+  },
+  "brian2loihi": {
+    "project_dependency": "brian2-loihi==0.5.2",
+    "repository": "sagacitysite/brian2_loihi",
+    "repository_url": "https://github.com/sagacitysite/brian2_loihi",
+    "tag": "v0.5.2",
+    "commit": "d54676cb113e48dc886615a0b589bb0e4bccbca4",
+    "commit_date_utc": "2021-07-20T15:46:36Z",
+    "commit_message": "decay zero bug solved",
+    "license": "MIT",
+    "pypi_version": "0.5.2",
+    "pypi_release_date": "2021-07-20",
+    "wheel_filename": "brian2_loihi-0.5.2-py3-none-any.whl",
+    "wheel_sha256": "fc0bf66ea9e212a0c7d5003332b244fe02a47bc874382092b0bff6d83ebbd4d3",
+    "declared_brian2_requirement": ">=2.4.2",
+    "project_role": "External software interpretation already used for M03-M08 behavioral validation; retained as a distinct evidence column rather than merged with published Loihi evidence."
+  },
+  "published_loihi": [
+    {
+      "source_id": "davies2018-loihi",
+      "title": "Loihi: A Neuromorphic Manycore Processor with On-Chip Learning",
+      "authors_short": "Davies et al.",
+      "venue": "IEEE Micro 38(1), 82-99",
+      "year": 2018,
+      "doi": "10.1109/MM.2018.112130359",
+      "role": "Primary published architectural source for Loihi claims."
+    },
+    {
+      "source_id": "lin2018-programming-loihi",
+      "title": "Programming Spiking Neural Networks on Intel's Loihi",
+      "authors_short": "Lin et al.",
+      "venue": "Computer 51(3), 52-61",
+      "year": 2018,
+      "doi": "10.1109/MC.2018.157113521",
+      "role": "Published programming/toolchain source and secondary architectural context."
+    }
+  ],
+  "evidence_types": [
+    {
+      "id": "published_documentation",
+      "definition": "A stable publication, DOI record, or source-controlled document that states a behavior or architecture directly. Statements are attributed to the source and do not become true merely because another implementation agrees."
+    },
+    {
+      "id": "direct_observation",
+      "definition": "Behavior produced by executing a pinned implementation, simulator, testbench, RTL, or physical FPGA under recorded inputs and tool versions."
+    },
+    {
+      "id": "implementation_inference",
+      "definition": "A conclusion drawn from reading implementation source or structure when the behavior is not directly stated in documentation or isolated by an observation. Must be labeled as inference."
+    },
+    {
+      "id": "project_interpretation",
+      "definition": "A mapping, normalization, terminology choice, or architectural interpretation made by this thesis project. It must not be presented as an external-source fact."
+    }
+  ],
+  "source_authority_rules": [
+    "Published Loihi material is the primary authority for claims about Loihi itself.",
+    "Brian2Loihi and Catalyst N1 are independent implementations/interpretations, not ground truth for undocumented Loihi behavior.",
+    "This project's M12-closed Python/FPGA pair is the implementation under audit and remains frozen unless a discrepancy is classified strongly enough as A or B.",
+    "Agreement among implementations increases confidence in a shared interpretation but does not prove undocumented Intel microarchitecture.",
+    "Implementation source may establish what that implementation does, but not what Loihi necessarily does."
+  ],
+  "independence_rules": [
+    "Do not copy Catalyst RTL, simulator equations, state-machine code, constants, or implementation structures into the project's computational core.",
+    "Catalyst source may be inspected to identify architectural questions, understand native configuration/trace fields, reproduce Catalyst itself, and classify differences.",
+    "Any project baseline change must arise from stronger evidence and a minimized project regression, not from a desire to make outputs agree with Catalyst.",
+    "Native source/trace artifacts must be preserved alongside normalized representations so mapping errors can be distinguished from architectural differences."
+  ],
+  "discrepancy_classes": {
+    "A": "project implementation defect",
+    "B": "project interpretation/specification incomplete or inconsistent with stronger Loihi evidence",
+    "C": "Catalyst N1 makes a different architectural choice",
+    "D": "Brian2Loihi makes or exposes a different modeling choice",
+    "E": "published Loihi evidence is ambiguous or insufficient",
+    "F": "comparison mapping/normalization issue",
+    "G": "feature is unsupported or outside the project's validated subset",
+    "H": "test/capture/tooling defect"
+  },
+  "change_control": {
+    "baseline_mutation_allowed_for": ["A", "B"],
+    "required_steps": [
+      "Create a minimized directed regression reproducing the issue.",
+      "Update the applicable normative project specification/source model.",
+      "Regenerate or update dependent HLS/RTL if behavior changes.",
+      "Rerun every affected M12 physical-conformance gate.",
+      "Record which prior thesis claims/evidence were superseded."
+    ],
+    "default_for_C_through_G": "Document as architecture, ambiguity, mapping, or scope; do not force agreement."
+  }
+}
