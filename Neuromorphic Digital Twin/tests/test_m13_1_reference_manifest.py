@@ -101,6 +101,10 @@ def test_m13_1_fetch_and_native_regression_scripts_never_modify_catalyst_sources
     assert 'version_text="$(iverilog -V 2>&1)"' in regression
     assert "version_first_line=\"${version_text%%$'\\n'*}\"" in regression
     assert "iverilog -V 2>&1 | head -n 1" not in regression
+    assert 'TB_TIMEOUT_SECONDS="${M13_1_TB_TIMEOUT_SECONDS:-300}"' in regression
+    assert 'timeout "$TB_TIMEOUT_SECONDS" vvp "$vvp_out"' in regression
+    assert 'M13_1_TB_TIMEOUT_SECONDS=600' in regression
+    assert "timeout 120 vvp" not in regression
     for forbidden in ("sed -i", "perl -pi", "git apply", "patch "):
         assert forbidden not in regression
 
