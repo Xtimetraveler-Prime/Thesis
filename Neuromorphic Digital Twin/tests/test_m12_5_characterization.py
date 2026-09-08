@@ -10,6 +10,7 @@ from neuromorphic_twin.fpga_characterization import (
     ImplementationCharacterization,
     RawTickCycleMeasurement,
     characterize_ticks,
+    parse_implementation_reports,
     read_cycle_measurements,
     synapse_visits_for_tick,
     write_characterization,
@@ -78,6 +79,43 @@ def test_cycle_tsv_reader_requires_frozen_header(tmp_path: Path) -> None:
     )
     rows = read_cycle_measurements(path)
     assert rows[0].cycles == 123
+
+    bad = tmp_path / "bad.tsv"
+    bad.write_text(
+        "case_name\tcase_id\ttick\tcycles\texternal_events\trecurrent_events\trouted_events\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="header"):
+        read_cycle_measurements(bad)
+
+
+def test_implementation_parser_uses_routed_resources_and_positive_slack(tmp_path: Path) -> None:
+    util = tmp_path / "util.rpt"
+    ram = tmp_path / "ram.rpt"
+    log = tmp_path / "vivado.log"
+    util.write_text(
+        "| CLB LUTs | 3000 | 0 | 0 | 117120 |\n"
+        "| CLB Registers | 4000 | 0 | 0 | 234240 |\n"
+        "| DSPs | 2 | 0 | 0 | 1248 |\n"
+        "| URAM | 0 | 0 | 0 | 64 |\n",
+        encoding="utf-8",
+    )
+    ram.write_text(
+        "| RAMB36/FIFO | 10 |\n"
+        "| RAMB18 | 7 |\n",
+        encoding="utf-8",
+    )
+    log.write_text(
+        "M12.5 routed timing check passed: WNS=1.250 ns, WHS=0.015 ns\n",
+        encoding="utf-8",
+    )
+    impl = parse_implementation_reports(util, ram, log)
+    assert impl.clb_luts == 3000
+    assert impl.clb_registers == 4000
+    assert impl.bram_tiles_upper_bound == 14
+    assert impl.dsps == 2
+    assert impl.worst_setup_slack_ns == pytest.approx(1.25)
+    assert impl.worst_hold_slack_ns == pytest.approx(0.015)
 
 
 def test_characterization_artifacts_are_machine_readable_and_thesis_friendly(tmp_path: Path) -> None:
