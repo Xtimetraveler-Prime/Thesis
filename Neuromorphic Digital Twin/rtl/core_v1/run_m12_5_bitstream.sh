@@ -13,7 +13,7 @@ VIVADO_PROJECT_DIR="$LOCAL_BUILD_DIR/vivado_project"
 REPORT_DIR="$LOCAL_BUILD_DIR/reports"
 ARTIFACT_DIR="$LOCAL_BUILD_DIR/artifacts"
 GOLDEN_DIR="$LOCAL_BUILD_DIR/golden"
-LOG_FILE="$LOCAL_BUILD_DIR/m12_4_vivado.log"
+LOG_FILE="$LOCAL_BUILD_DIR/m12_5_vivado.log"
 JOBS="${M12_5_JOBS:-4}"
 
 STAGE_ROOT="/tmp/neuromorphic_twin_rtl_${UID}/m12_5"
