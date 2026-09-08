@@ -1,0 +1,31 @@
+name: Close M13.1
+
+on:
+  push:
+    branches:
+      - agent/m13-1-pin-catalyst-methodology
+    paths:
+      - .github/workflows/m13_1_close.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-1-pin-catalyst-methodology
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/close_m13_1.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MILESTONES.md 'Neuromorphic Digital Twin/docs/M13_1_REFERENCE_BASELINE.md'
+          git diff --cached --check
+          git commit -m "Close M13.1 reference baseline methodology"
+          git push origin HEAD:agent/m13-1-pin-catalyst-methodology
