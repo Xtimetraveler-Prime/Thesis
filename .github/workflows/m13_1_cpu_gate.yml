@@ -1,0 +1,30 @@
+name: M13.1 Catalyst CPU reference gate
+
+on:
+  push:
+    branches:
+      - agent/m13-1-pin-catalyst-methodology
+    paths:
+      - '.github/workflows/m13_1_cpu_gate.yml'
+
+jobs:
+  cpu-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pinned Catalyst N1
+        uses: actions/checkout@v4
+        with:
+          repository: catalyst-neuromorphic/catalyst-n1
+          ref: 1806bb4b4114d7671e5648fa75b7b83b3a8d5543
+          fetch-depth: 0
+          path: catalyst-n1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned Catalyst SDK
+        run: |
+          python -m pip install pytest
+          python -m pip install -e "$GITHUB_WORKSPACE/catalyst-n1/sdk"
+      - name: Run pinned CPU simulator tests
+        run: |
+          python -m pytest -q "$GITHUB_WORKSPACE/catalyst-n1/sdk/tests/test_simulator.py"
