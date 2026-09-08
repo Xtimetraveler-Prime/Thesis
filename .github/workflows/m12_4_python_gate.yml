@@ -1,4 +1,4 @@
-name: M12.4 Python corpus gate
+name: M12.4 preflight gate
 
 on:
   push:
@@ -18,9 +18,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install -e '.[dev,compare]'
-      - name: Focused M12.4 corpus tests
-        run: python -m pytest -q tests/test_m12_4_broad_regression.py
+      - name: Install Python and RTL test dependencies
+        run: |
+          python -m pip install -e '.[dev,compare]'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq verilator iverilog
+      - name: Focused M12.4 tests
+        run: |
+          python -m pytest -q \
+            tests/test_m12_4_broad_regression.py \
+            tests/test_m12_4_capture_sources.py
       - name: Complete regression suite
         run: python -m pytest -q
       - name: Generate packed input-only corpus
@@ -37,3 +44,33 @@ jobs:
           fi
           grep -F 'M12_4_CONFIG_OFFSETS' /tmp/m12_4_gate/generated_m12_4_broad_cases.svh
           grep -F 'M12_4_EXTERNAL_TICK_OFFSETS' /tmp/m12_4_gate/generated_m12_4_broad_cases.svh
+      - name: Lint M12.4 controller hierarchy
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          verilator --lint-only --timing -Wno-fatal \
+            --top-module m12_4_broad_capture_controller_v1 \
+            -I/tmp/m12_4_gate \
+            m08_weight_decoder_v1.sv \
+            phase_b_synapse_accumulator_v1.sv \
+            neuron_array_controller_v1.sv \
+            integrated_core_controller_v1.sv \
+            recurrent_route_queue_v1.sv \
+            recurrent_integrated_core_controller_v1.sv \
+            m12_trace_read_bridge_v1.sv \
+            m12_4_broad_capture_controller_v1.sv
+      - name: Regress M12.2 synchronous recurrent-bank fix
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          iverilog -g2012 -o /tmp/m12_4_gate/bank_latch.vvp \
+            recurrent_route_queue_v1.sv tb/tb_m12_2_recurrent_debug_bank_latch.sv
+          vvp /tmp/m12_4_gate/bank_latch.vvp | tee /tmp/m12_4_gate/bank_latch.log
+          grep -F 'M12.2 recurrent debug bank-latch regression passed' /tmp/m12_4_gate/bank_latch.log
+      - name: Check M12.4 runner syntax and identities
+        working-directory: Neuromorphic Digital Twin/rtl/core_v1
+        run: |
+          bash -n run_m12_4_bitstream.sh
+          bash -n run_m12_4_hardware_suite.sh
+          bash -n run_m12_4_case.sh
+          grep -F 'M12.4 routed bitstream flow completed successfully.' run_m12_4_bitstream.sh
+          grep -F 'M12.4 physical broad deterministic regression completed successfully.' run_m12_4_hardware_suite.sh
+          grep -F 'M12.4 targeted physical rerun completed successfully.' run_m12_4_case.sh
