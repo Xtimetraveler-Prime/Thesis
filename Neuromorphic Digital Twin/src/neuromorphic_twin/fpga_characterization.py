@@ -109,11 +109,11 @@ def read_cycle_measurements(path: str | Path) -> tuple[RawTickCycleMeasurement, 
     rows: list[RawTickCycleMeasurement] = []
     with source.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
-        expected = {
+        expected = (
             "case_id", "case_name", "tick", "cycles",
             "external_events", "recurrent_events", "routed_events",
-        }
-        if set(reader.fieldnames or ()) != expected:
+        )
+        if tuple(reader.fieldnames or ()) != expected:
             raise ValueError(f"unexpected M12.5 cycle TSV header: {reader.fieldnames}")
         for item in reader:
             row = RawTickCycleMeasurement(
