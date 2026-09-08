@@ -5,11 +5,6 @@ path = root / "MILESTONES.md"
 text = path.read_text(encoding="utf-8")
 
 text = text.replace(
-    "| M12 | Validate FPGA against Python golden model | In progress | 2026-08-27 | — |",
-    "| M12 | Validate FPGA against Python golden model | In progress | 2026-08-27 | — |",
-    1,
-)
-text = text.replace(
     "- [ ] A broader deterministic physical corpus completes with zero unexplained mismatches and reproducible failure artifacts.",
     "- [x] A broader deterministic physical corpus completes with zero unexplained mismatches and reproducible failure artifacts.",
     1,
@@ -52,9 +47,9 @@ The agreed deterministic physical corpus completes with zero unexplained mismatc
 '''
 new = '''### M12.4 — Broad deterministic physical regression and boundary stress
 
-**Status:** Complete  
-**Started:** 2026-09-07  
-**Completed:** 2026-09-07  
+**Status:** Complete
+**Started:** 2026-09-07
+**Completed:** 2026-09-07
 **Repository evidence:** branch `agent/m12-4-broad-physical-regression`; physical KV260 closure with 22 cases / 166 committed ticks / zero mismatches
 
 #### Core goal
