@@ -59,7 +59,7 @@ def test_m12_4_capture_tcl_accepts_22_case_metadata_and_full_case_id() -> None:
     assert "if {[llength $fields] != 10}" in text
     assert "set selected_case $phase" in text
     assert "($phase >> 4)" not in text
-    assert "source_kind=$source_kind seed=$seed config=$configuration_sha256" in text
+    assert "kind=$source_kind seed=$seed config=$configuration_sha256" in text
     assert "M12.4 physical broad deterministic suite capture completed successfully:" in text
 
 
@@ -86,6 +86,7 @@ def test_m12_4_build_and_board_runners_have_frozen_case_tick_markers() -> None:
     assert "cases=22 ticks=166" in hardware
     assert "M12.4 physical broad deterministic regression completed successfully." in hardware
     assert "validate_m12_4_physical_suite.py" in hardware
+    assert "m12_4_differential.log" in hardware
 
     assert "usage: $0 <case-id 0..21>" in targeted
     assert "configuration_sha256" in targeted
