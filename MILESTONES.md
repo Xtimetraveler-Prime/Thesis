@@ -2146,7 +2146,7 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 
 ### Overall completion criteria
 
-- [ ] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
+- [x] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
 - [ ] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
 - [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
 - [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
@@ -2159,9 +2159,10 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 
 ### M13.1 — Pin Catalyst N1 and freeze the comparison methodology
 
-**Status:** In progress
+**Status:** Complete
 **Started:** 2026-09-08
-**Repository evidence:** branch `agent/m13-1-pin-catalyst-methodology`
+**Completed:** 2026-09-08
+**Repository evidence:** branch `agent/m13-1-pin-catalyst-methodology`; validated before merge
 
 #### Current implementation boundary
 
@@ -2183,7 +2184,11 @@ Create a reproducible external-reference boundary before inspecting differences 
 
 #### Pass boundary
 
-The exact source versions, evidence hierarchy, comparison terminology, and discrepancy-handling rules are recorded well enough that another researcher could reconstruct which implementations and documents were compared.
+**Achieved.** The exact source versions, evidence hierarchy, comparison terminology, and discrepancy-handling rules are recorded well enough that another researcher can reconstruct which implementations and documents were compared.
+
+Closure evidence on 2026-09-08 includes a clean Catalyst `v2.3-paper` / `n1-final` checkout at `1806bb4b4114d7671e5648fa75b7b83b3a8d5543`, exact key-source Git-blob verification, both lightweight tag-object checks, a passing complete thesis regression, **25/25** native Catalyst RTL regression testbenches under Icarus Verilog 12.0, and **56/56** pinned Catalyst CPU-simulator tests under Python 3.11.16. The exact validation environment and the distinction between source-declared minimums and closure-time versions are frozen in `Neuromorphic Digital Twin/references/m13_1_reference_manifest.json` and `Neuromorphic Digital Twin/docs/M13_1_REFERENCE_BASELINE.md`.
+
+No project computational behavior, HLS, RTL, or M12 physical baseline was changed by M13.1. The only M12-era edit made while establishing this gate restored the already-intended documentation phrase required by its existing source-contract regression. K26 Catalyst reproduction remains deferred to M13.5.
 
 ---
 

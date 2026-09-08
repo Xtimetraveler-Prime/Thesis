@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress on branch `agent/m13-1-pin-catalyst-methodology`.
+**Complete — M13.1 pass boundary achieved on 2026-09-08.** Development and closure evidence are on branch `agent/m13-1-pin-catalyst-methodology` pending user validation/merge.
 
 M13.1 begins only after M12 closes the software-to-physical validation ladder for this project's FPGA-v1 digital twin. The M12-closed project is therefore the implementation **under audit**, not an implementation waiting to be rewritten to match Catalyst N1. M13.1 freezes the external sources, terminology, evidence hierarchy, and discrepancy policy before M13.2 inspects architectural differences in detail.
 
@@ -394,7 +394,9 @@ The DOI `10.5281/zenodo.18727094` remains the stable Catalyst N1 publication ide
 
 ## M13.1 pass boundary
 
-M13.1 can close when all of the following are true:
+**Achieved on 2026-09-08.** M13.1 closed only after the provenance-corrected final gate reproduced the clean external checkout and both independent Catalyst execution boundaries.
+
+The closure criteria are:
 
 - the manifest validates from source control;
 - `v2.3-paper` and `n1-final` resolve to the frozen Catalyst commit;
