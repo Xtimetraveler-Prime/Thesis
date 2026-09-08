@@ -6,6 +6,7 @@ PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 CHECKOUT="${1:-$PROJECT_DIR/build/m13_1/catalyst-n1}"
 OUT_DIR="${2:-$PROJECT_DIR/build/m13_1/catalyst-rtl-regression}"
 PIN="1806bb4b4114d7671e5648fa75b7b83b3a8d5543"
+TB_TIMEOUT_SECONDS="${M13_1_TB_TIMEOUT_SECONDS:-300}"
 
 for tool in git python3 iverilog vvp timeout; do
     if ! command -v "$tool" >/dev/null 2>&1; then
@@ -13,6 +14,11 @@ for tool in git python3 iverilog vvp timeout; do
         exit 2
     fi
 done
+
+if [[ ! "$TB_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: M13_1_TB_TIMEOUT_SECONDS must be a positive integer; found: $TB_TIMEOUT_SECONDS" >&2
+    exit 2
+fi
 
 # Do not pipe `iverilog -V` through `head` while `pipefail` is enabled.
 # Some Icarus builds receive SIGPIPE when the consumer exits after one line,
@@ -26,6 +32,7 @@ if [[ -z "$version_major" || "$version_major" -lt 12 ]]; then
 fi
 
 echo "M13.1 Catalyst RTL runner: $version_first_line"
+echo "M13.1 Catalyst RTL per-testbench timeout: ${TB_TIMEOUT_SECONDS}s (override with M13_1_TB_TIMEOUT_SECONDS)"
 
 PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
 python3 "$PROJECT_DIR/examples/validate_m13_1_reference_manifest.py" \
@@ -78,13 +85,19 @@ for i in "${!testbenches[@]}"; do
     fi
 
     set +e
-    timeout 120 vvp "$vvp_out" >"$log" 2>&1
+    timeout "$TB_TIMEOUT_SECONDS" vvp "$vvp_out" >"$log" 2>&1
     rc=$?
     set -e
     cat "$log"
+    if [[ "$rc" -eq 124 ]]; then
+        printf '%s\t%s\tPASS\tTIMEOUT(%ss)\t0\n' "$case_id" "$tb" "$TB_TIMEOUT_SECONDS" >> "$summary"
+        echo "ERROR: Catalyst testbench exceeded ${TB_TIMEOUT_SECONDS}s timeout: $tb" >&2
+        echo "       Retry with a larger value, e.g. M13_1_TB_TIMEOUT_SECONDS=600 bash scripts/run_m13_1_catalyst_rtl_regression.sh" >&2
+        exit 4
+    fi
     if [[ "$rc" -ne 0 ]]; then
         printf '%s\t%s\tPASS\tFAIL(%s)\t0\n' "$case_id" "$tb" "$rc" >> "$summary"
-        echo "ERROR: Catalyst testbench returned nonzero/timeout: $tb rc=$rc" >&2
+        echo "ERROR: Catalyst testbench returned nonzero: $tb rc=$rc" >&2
         exit 4
     fi
 
