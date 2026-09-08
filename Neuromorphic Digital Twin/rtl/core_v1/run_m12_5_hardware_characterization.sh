@@ -115,6 +115,7 @@ python3 "$ANALYZER" \
 for output in \
     "$CHAR_DIR/characterization.json" \
     "$CHAR_DIR/tick_characterization.csv" \
+    "$CHAR_DIR/case_scaling.csv" \
     "$CHAR_DIR/CHARACTERIZATION_SUMMARY.md"; do
     if [[ ! -s "$output" ]]; then
         echo "ERROR: required M12.5 characterization output is missing: $output" >&2
