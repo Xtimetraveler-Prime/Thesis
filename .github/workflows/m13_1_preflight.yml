@@ -1,0 +1,66 @@
+name: M13.1 reference preflight
+
+on:
+  push:
+    branches:
+      - agent/m13-1-pin-catalyst-methodology
+    paths:
+      - '.github/workflows/m13_1_preflight.yml'
+      - 'Neuromorphic Digital Twin/references/**'
+      - 'Neuromorphic Digital Twin/src/neuromorphic_twin/m13_reference_manifest.py'
+      - 'Neuromorphic Digital Twin/examples/validate_m13_1_reference_manifest.py'
+      - 'Neuromorphic Digital Twin/scripts/*m13_1*'
+      - 'Neuromorphic Digital Twin/tests/test_m13_1_reference_manifest.py'
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout thesis branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/m13-1-pin-catalyst-methodology
+          path: thesis
+      - name: Checkout pinned Catalyst N1
+        uses: actions/checkout@v4
+        with:
+          repository: catalyst-neuromorphic/catalyst-n1
+          ref: 1806bb4b4114d7671e5648fa75b7b83b3a8d5543
+          fetch-depth: 0
+          path: catalyst-n1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project and Icarus dependencies
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pip install -e '.[dev,compare]'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+      - name: Focused M13.1 tests
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pytest -q tests/test_m13_1_reference_manifest.py
+      - name: Complete thesis regression suite
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pytest -q
+      - name: Verify exact external checkout pin and source blobs
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          PYTHONPATH=src python examples/validate_m13_1_reference_manifest.py \
+            --catalyst-checkout "$GITHUB_WORKSPACE/catalyst-n1"
+      - name: Run Catalyst native 25-testbench RTL regression
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          bash scripts/run_m13_1_catalyst_rtl_regression.sh \
+            "$GITHUB_WORKSPACE/catalyst-n1" \
+            "$GITHUB_WORKSPACE/m13_1_catalyst_rtl"
+      - name: Run Catalyst pinned CPU simulator tests
+        run: |
+          python -m pip install -e "$GITHUB_WORKSPACE/catalyst-n1/sdk"
+          python -m pytest -q "$GITHUB_WORKSPACE/catalyst-n1/sdk/tests/test_simulator.py"
+      - name: Check M13.1 shell syntax
+        run: |
+          bash -n 'thesis/Neuromorphic Digital Twin/scripts/fetch_m13_1_catalyst.sh'
+          bash -n 'thesis/Neuromorphic Digital Twin/scripts/run_m13_1_catalyst_rtl_regression.sh'
