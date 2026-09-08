@@ -19,7 +19,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev,compare]'
           sudo apt-get update -qq
-          sudo apt-get install -y -qq iverilog
+          sudo apt-get install -y -qq iverilog verilator
       - name: Run M12.3 focused tests
         working-directory: Neuromorphic Digital Twin
         run: python -m pytest -q tests/test_m12_3_multitick_conformance.py tests/test_m12_3_capture_sources.py
@@ -38,12 +38,12 @@ jobs:
             echo 'ERROR: forbidden golden/recurrent schedule data leaked into include' >&2
             exit 1
           fi
-      - name: Compile M12.3 controller RTL
+      - name: Lint M12.3 controller RTL
         working-directory: Neuromorphic Digital Twin/rtl/core_v1
         run: |
-          iverilog -g2012 -I /tmp/m12_3_gate \
-            -s m12_3_multitick_capture_controller_v1 \
-            -o /tmp/m12_3_gate/controller.vvp \
+          verilator --lint-only --timing -Wno-fatal \
+            --top-module m12_3_multitick_capture_controller_v1 \
+            -I/tmp/m12_3_gate \
             m08_weight_decoder_v1.sv \
             phase_b_synapse_accumulator_v1.sv \
             neuron_array_controller_v1.sv \
