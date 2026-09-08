@@ -94,6 +94,7 @@ def test_m13_1_fetch_and_native_regression_scripts_never_modify_catalyst_sources
     assert "grep -m1 '^RTL=\"'" in regression
     assert "grep -m1 '^for tb in .*; do$'" in regression
     assert "${rtl_files[@]}" in regression
-    assert "${testbenches[@]}" in regression
+    assert 'for i in "${!testbenches[@]}"' in regression
+    assert 'tb="${testbenches[$i]}"' in regression
     for forbidden in ("sed -i", "perl -pi", "git apply", "patch "):
         assert forbidden not in regression
