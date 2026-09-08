@@ -81,7 +81,16 @@ for i in "${!testbenches[@]}"; do
         echo "ERROR: Catalyst testbench returned nonzero/timeout: $tb rc=$rc" >&2
         exit 4
     fi
-    if grep -Eiq '(^|[^A-Z])(FAILED|FAILURE)([^A-Z]|$)|COMPILE ERROR' "$log"; then
+
+    # Catalyst testbenches commonly print summaries such as "6 PASSED, 0 FAILED".
+    # Preserve those as success while still rejecting any other explicit failure line.
+    failure_lines="$(
+        grep -Ei 'FAILED|FAILURE|COMPILE ERROR' "$log" \
+            | grep -Eiv '(^|[^0-9])0[[:space:]]+FAILED([^A-Z]|$)|ALL TESTS PASSED' \
+            || true
+    )"
+    if [[ -n "$failure_lines" ]]; then
+        printf '%s\n' "$failure_lines" >&2
         printf '%s\t%s\tPASS\tFAIL(marker)\t0\n' "$case_id" "$tb" >> "$summary"
         echo "ERROR: Catalyst testbench emitted a failure marker: $tb" >&2
         exit 4
