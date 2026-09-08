@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RTL = ROOT / "rtl" / "core_v1"
+DOCS = ROOT / "docs"
+EXAMPLES = ROOT / "examples"
 
 
 def test_m12_5_counter_is_passive_and_reuses_frozen_m12_4_corpus() -> None:
@@ -16,8 +18,9 @@ def test_m12_5_counter_is_passive_and_reuses_frozen_m12_4_corpus() -> None:
     assert "else if (tick_start) begin" in text
     assert "if (tick_done) begin" in text
     assert "observed_last_tick_cycles <= tick_cycle_counter + 32'd1" in text
-    assert ".observed_last_tick_cycles" not in text.split("recurrent_integrated_core_controller_v1 core_i", 1)[1].split(");", 1)[0]
-    assert "tick_cycle_counter" not in text.split("recurrent_integrated_core_controller_v1 core_i", 1)[1].split(");", 1)[0]
+    core_instance = text.split("recurrent_integrated_core_controller_v1 core_i", 1)[1].split(");", 1)[0]
+    assert ".observed_last_tick_cycles" not in core_instance
+    assert "tick_cycle_counter" not in core_instance
 
 
 def test_m12_5_vivado_adds_only_one_32_bit_measurement_probe() -> None:
@@ -52,11 +55,12 @@ def test_m12_5_capture_writes_exact_cycle_tsv_and_full_physical_trace() -> None:
 
 def test_m12_5_hardware_runner_requires_exact_behavior_before_characterization() -> None:
     text = (RTL / "run_m12_5_hardware_characterization.sh").read_text(encoding="utf-8")
-    validator = text.index("validate_m12_4_physical_suite.py")
+    validator_call = text.index('python3 "$SUITE_VALIDATOR"')
     exact_marker = text.index("M12.4 exact broad physical differential passed: cases=22 ticks=166 mismatches=0")
-    analyzer = text.index("analyze_m12_5_characterization.py")
-    assert validator < exact_marker < analyzer
+    analyzer_call = text.index('python3 "$ANALYZER"')
+    assert validator_call < exact_marker < analyzer_call
     assert "cycle_rows" in text and "166" in text
+    assert '"$CHAR_DIR/case_scaling.csv"' in text
     assert "M12.5 physical characterization completed successfully." in text
 
 
@@ -70,3 +74,15 @@ def test_m12_5_bitstream_reuses_m12_4_workload_authority_and_has_own_artifacts()
     assert "create_m12_5_project.tcl" in text
     assert "neuromorphic_twin_m12_5.bit" in text
     assert "M12.5 routed bitstream flow completed successfully." in text
+
+
+def test_m12_5_analysis_and_documentation_freeze_scaling_and_claim_boundaries() -> None:
+    analyzer = (EXAMPLES / "analyze_m12_5_characterization.py").read_text(encoding="utf-8")
+    doc = (DOCS / "M12_5_CHARACTERIZATION.md").read_text(encoding="utf-8")
+    assert 'output_dir / "case_scaling.csv"' in analyzer
+    assert "total_synapse_visits" in analyzer
+    assert "mean_cycles" in analyzer
+    assert "maximum Fmax" in doc
+    assert "Power/energy is intentionally outside" in doc
+    assert "Supported feature matrix" in doc
+    assert "Explicit limitations" in doc
