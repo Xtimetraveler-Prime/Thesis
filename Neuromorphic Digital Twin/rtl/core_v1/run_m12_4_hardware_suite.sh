@@ -15,6 +15,7 @@ METADATA="$GOLDEN_DIR/hardware_cases.tsv"
 CAPTURE_TCL="$SCRIPT_DIR/vivado/capture_m12_4_broad.tcl"
 SUITE_VALIDATOR="$PROJECT_DIR/examples/validate_m12_4_physical_suite.py"
 LOG_FILE="$BUILD_DIR/m12_4_hardware_suite.log"
+DIFF_LOG="$BUILD_DIR/m12_4_differential.log"
 
 if ! command -v vivado >/dev/null 2>&1; then
     echo "ERROR: vivado is not on PATH. Source the Vivado 2025.2 settings64.sh first." >&2
@@ -35,6 +36,7 @@ for path in "$BIT_FILE" "$LTX_FILE" "$METADATA" "$CAPTURE_TCL" "$SUITE_VALIDATOR
 done
 
 rm -rf "$CAPTURE_DIR" "$DIFF_DIR"
+rm -f "$DIFF_LOG"
 mkdir -p "$CAPTURE_DIR" "$DIFF_DIR"
 
 echo '=== M12.4 broad deterministic physical regression ==='
@@ -68,19 +70,17 @@ fi
 PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
 python3 "$SUITE_VALIDATOR" \
     --physical-dir "$CAPTURE_DIR" \
-    --report-dir "$DIFF_DIR"
+    --report-dir "$DIFF_DIR" \
+    2>&1 | tee "$DIFF_LOG"
 
 if [[ ! -s "$DIFF_DIR/suite_report.json" ]]; then
     echo "ERROR: M12.4 suite differential report was not created." >&2
     exit 5
 fi
-
-if ! grep -Fq 'M12.4 exact broad physical differential passed: cases=22 ticks=166 mismatches=0' \
-    <(PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" python3 "$SUITE_VALIDATOR" --physical-dir "$CAPTURE_DIR" --report-dir "$DIFF_DIR/recheck"); then
-    echo "ERROR: M12.4 exact differential recheck did not produce the expected pass marker." >&2
+if ! grep -Fq 'M12.4 exact broad physical differential passed: cases=22 ticks=166 mismatches=0' "$DIFF_LOG"; then
+    echo "ERROR: M12.4 exact differential did not produce the expected pass marker." >&2
     exit 5
 fi
-rm -rf "$DIFF_DIR/recheck"
 
 echo
 echo 'M12.4 physical broad deterministic regression completed successfully.'
@@ -88,3 +88,4 @@ printf 'Physical traces: %s\n' "$CAPTURE_DIR"
 printf 'Differential reports: %s\n' "$DIFF_DIR"
 printf 'Corpus manifest: %s\n' "$GOLDEN_DIR/manifest.json"
 printf 'Hardware log: %s\n' "$LOG_FILE"
+printf 'Differential log: %s\n' "$DIFF_LOG"
