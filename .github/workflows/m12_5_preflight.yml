@@ -68,6 +68,8 @@ jobs:
         run: |
           bash -n run_m12_5_bitstream.sh
           bash -n run_m12_5_hardware_characterization.sh
+          bash -n run_m12_5_analysis.sh
           grep -F 'LOG_FILE="$LOCAL_BUILD_DIR/m12_5_vivado.log"' run_m12_5_bitstream.sh
           grep -F 'M12.5 routed bitstream flow completed successfully.' run_m12_5_bitstream.sh
           grep -F 'M12.5 physical characterization completed successfully.' run_m12_5_hardware_characterization.sh
+          grep -F 'M12.5 host-side characterization analysis completed successfully.' run_m12_5_analysis.sh
