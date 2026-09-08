@@ -14,12 +14,18 @@ for tool in git python3 iverilog vvp timeout; do
     fi
 done
 
-version_text="$(iverilog -V 2>&1 | head -n 1)"
-version_major="$(printf '%s\n' "$version_text" | sed -nE 's/.*version ([0-9]+).*/\1/p')"
+# Do not pipe `iverilog -V` through `head` while `pipefail` is enabled.
+# Some Icarus builds receive SIGPIPE when the consumer exits after one line,
+# which made the runner terminate silently before emitting any diagnostics.
+version_text="$(iverilog -V 2>&1)"
+version_first_line="${version_text%%$'\n'*}"
+version_major="$(sed -nE 's/.*version ([0-9]+).*/\1/p' <<< "$version_first_line")"
 if [[ -z "$version_major" || "$version_major" -lt 12 ]]; then
-    echo "ERROR: Catalyst N1 v2.3-paper documents Icarus Verilog v12+; found: $version_text" >&2
+    echo "ERROR: Catalyst N1 v2.3-paper documents Icarus Verilog v12+; found: $version_first_line" >&2
     exit 2
 fi
+
+echo "M13.1 Catalyst RTL runner: $version_first_line"
 
 PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
 python3 "$PROJECT_DIR/examples/validate_m13_1_reference_manifest.py" \
