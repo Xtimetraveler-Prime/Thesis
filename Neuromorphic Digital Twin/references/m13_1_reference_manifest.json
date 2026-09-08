@@ -13,7 +13,7 @@
   "catalyst_n1": {
     "repository": "catalyst-neuromorphic/catalyst-n1",
     "repository_url": "https://github.com/catalyst-neuromorphic/catalyst-n1",
-    "pin_kind": "annotated repository tag resolved to commit",
+    "pin_kind": "lightweight Git tags resolved directly to commit",
     "primary_tag": "v2.3-paper",
     "equivalent_tag": "n1-final",
     "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
@@ -21,9 +21,10 @@
     "commit_message": "Open source release under Apache 2.0",
     "license": "Apache-2.0",
     "paper": {
-      "title": "Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity and FPGA Validation",
+      "title": "Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity",
       "doi": "10.5281/zenodo.18727094",
-      "stable_record": "https://zenodo.org/records/18727094"
+      "stable_record": "https://zenodo.org/records/18727094",
+      "identity_rule": "The DOI/Zenodo record is the stable publication identity. Catalyst-controlled secondary sources observed on 2026-09-08 use more than one title string for this DOI, so title text is descriptive rather than the pin."
     },
     "native_simulation": {
       "rtl_regression_script": "run_regression.sh",
@@ -88,7 +89,8 @@
         "blob_sha": "97a20277ba1b131aba88580f1cd5316963ef9665",
         "role": "repository-explicit Vivado 2025.2 tool-version evidence"
       }
-    ]
+    ],
+    "latest_master_observed_at_freeze": "47f3fa3cc3c596724d91498a5085225fcba12a49"
   },
   "brian2loihi": {
     "project_dependency": "brian2-loihi==0.5.2",
@@ -168,7 +170,10 @@
     "H": "test/capture/tooling defect"
   },
   "change_control": {
-    "baseline_mutation_allowed_for": ["A", "B"],
+    "baseline_mutation_allowed_for": [
+      "A",
+      "B"
+    ],
     "required_steps": [
       "Create a minimized directed regression reproducing the issue.",
       "Update the applicable normative project specification/source model.",
@@ -177,5 +182,31 @@
       "Record which prior thesis claims/evidence were superseded."
     ],
     "default_for_C_through_G": "Document as architecture, ambiguity, mapping, or scope; do not force agreement."
+  },
+  "m13_1_validated_environment": {
+    "validation_date": "2026-09-08",
+    "os": "Ubuntu 24.04.4 LTS (GitHub-hosted ubuntu-24.04 runner)",
+    "python": "3.11.16",
+    "iverilog": "12.0 (Ubuntu package 12.0-2build2)",
+    "project_environment": {
+      "pytest": "9.1.1",
+      "numpy": "2.4.6",
+      "brian2": "2.9.0",
+      "brian2_loihi": "0.5.2",
+      "result": "complete thesis regression suite passed"
+    },
+    "catalyst_rtl": {
+      "result": "25/25 native run_regression.sh testbenches passed",
+      "normalization": "working-directory relocation only; Catalyst source checkout remained clean"
+    },
+    "catalyst_cpu": {
+      "pytest": "9.1.1",
+      "neurocore": "1.0.0",
+      "numpy": "2.4.6",
+      "matplotlib": "3.11.1",
+      "pyserial": "3.5",
+      "result": "56/56 sdk/tests/test_simulator.py tests passed"
+    },
+    "note": "These are the exact M13.1 closure-validation versions, kept separate from source-declared minimum requirements."
   }
 }

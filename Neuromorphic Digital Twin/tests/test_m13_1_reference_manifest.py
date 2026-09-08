@@ -35,6 +35,8 @@ def test_m13_1_catalyst_pin_is_paper_tag_and_k26_boundary_is_frozen() -> None:
     assert catalyst["primary_tag"] == "v2.3-paper"
     assert catalyst["equivalent_tag"] == "n1-final"
     assert catalyst["license"] == "Apache-2.0"
+    assert catalyst["pin_kind"] == "lightweight Git tags resolved directly to commit"
+    assert catalyst["latest_master_observed_at_freeze"] == "47f3fa3cc3c596724d91498a5085225fcba12a49"
     assert catalyst["paper"]["doi"] == "10.5281/zenodo.18727094"
     assert catalyst["native_simulation"]["testbench_count_in_script"] == 25
     assert catalyst["native_simulation"]["tool_requirement"] == ">=12"
@@ -98,3 +100,15 @@ def test_m13_1_fetch_and_native_regression_scripts_never_modify_catalyst_sources
     assert 'tb="${testbenches[$i]}"' in regression
     for forbidden in ("sed -i", "perl -pi", "git apply", "patch "):
         assert forbidden not in regression
+
+
+def test_m13_1_exact_closure_environment_is_recorded_separately_from_minimums() -> None:
+    data = load_reference_manifest()
+    env = data["m13_1_validated_environment"]
+    assert env["python"] == "3.11.16"
+    assert env["iverilog"].startswith("12.0")
+    assert env["project_environment"]["brian2_loihi"] == "0.5.2"
+    assert env["catalyst_rtl"]["result"].startswith("25/25")
+    assert env["catalyst_cpu"]["result"].startswith("56/56")
+    assert data["catalyst_n1"]["native_simulation"]["tool_requirement"] == ">=12"
+    assert data["catalyst_n1"]["sdk_reference"]["python_requirement"] == ">=3.9"

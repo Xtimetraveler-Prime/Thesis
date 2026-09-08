@@ -62,6 +62,8 @@ def validate_reference_manifest(data: dict[str, Any]) -> None:
         raise ValueError("Catalyst N1 commit differs from the frozen M13.1 pin")
     if catalyst.get("primary_tag") != M13_CATALYST_TAG:
         raise ValueError("Catalyst N1 primary tag differs from the frozen M13.1 pin")
+    if catalyst.get("pin_kind") != "lightweight Git tags resolved directly to commit":
+        raise ValueError("Catalyst N1 tag-kind provenance changed")
     if brian["commit"] != M13_BRIAN2LOIHI_COMMIT:
         raise ValueError("Brian2Loihi commit differs from the frozen project dependency")
     if brian.get("project_dependency") != "brian2-loihi==0.5.2":
@@ -117,6 +119,14 @@ def validate_reference_manifest(data: dict[str, Any]) -> None:
     classes = data.get("discrepancy_classes")
     if not isinstance(classes, dict) or tuple(classes.keys()) != M13_DISCREPANCY_CLASSES:
         raise ValueError("M13 discrepancy classes A-H must be frozen in order")
+    env = _mapping(data, "m13_1_validated_environment")
+    if env.get("python") != "3.11.16" or not str(env.get("iverilog", "")).startswith("12.0"):
+        raise ValueError("M13.1 exact closure-validation environment changed")
+    if _mapping(env, "catalyst_rtl").get("result") != "25/25 native run_regression.sh testbenches passed":
+        raise ValueError("M13.1 Catalyst RTL validation result changed")
+    if _mapping(env, "catalyst_cpu").get("result") != "56/56 sdk/tests/test_simulator.py tests passed":
+        raise ValueError("M13.1 Catalyst CPU validation result changed")
+
     change = _mapping(data, "change_control")
     if change.get("baseline_mutation_allowed_for") != ["A", "B"]:
         raise ValueError("only discrepancy classes A/B may alter the frozen baseline")
@@ -145,6 +155,9 @@ def verify_catalyst_checkout(
     required_tags = {catalyst["primary_tag"], catalyst["equivalent_tag"]}
     if not required_tags.issubset(tags):
         raise ValueError(f"Catalyst checkout is missing frozen tags at HEAD: required={sorted(required_tags)} actual={tags}")
+    for tag in sorted(required_tags):
+        if _git(root, "cat-file", "-t", tag) != "commit":
+            raise ValueError(f"Catalyst frozen tag is no longer lightweight/direct-to-commit: {tag}")
 
     status = _git(root, "status", "--porcelain")
     clean = not bool(status.strip())

@@ -62,7 +62,7 @@ commit message: Open source release under Apache 2.0
 license:        Apache-2.0
 ```
 
-Both `v2.3-paper` and `n1-final` resolve to the same commit. No GitHub Release object exists for the repository, so the tag+commit pair is the stable software pin.
+Both `v2.3-paper` and `n1-final` are lightweight Git tags whose refs resolve directly to the same commit. No GitHub Release object exists for the repository, so the tag+commit pair is the stable software pin. M13.1 verifies both tag object types as `commit`, not annotated tag objects.
 
 The `v2.3-paper` tag is preferred as the human-facing identifier because it explicitly ties the frozen code to the paper-era N1 baseline. The full commit SHA remains the normative identifier because branch names and tag labels are less precise than an immutable commit object.
 
@@ -79,7 +79,7 @@ The frozen Catalyst publication reference is:
 ```text
 Henry Arthur Shulayev Barnes
 Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with
-Programmable Synaptic Plasticity and FPGA Validation
+Programmable Synaptic Plasticity
 DOI: 10.5281/zenodo.18727094
 record: https://zenodo.org/records/18727094
 ```
@@ -368,6 +368,29 @@ bash scripts/run_m13_1_catalyst_rtl_regression.sh
 ```
 
 Generated external source and regression products live under `build/m13_1/`, which is ignored by the thesis repository. Catalyst source is not vendored into this project's computational tree.
+
+## M13.1 validated execution environment
+
+The source-declared minimum requirements above are deliberately distinct from the exact environment used for the successful M13.1 closure gate. The accepted direct-observation environment on 2026-09-08 was:
+
+```text
+Ubuntu:              24.04.4 LTS (GitHub-hosted ubuntu-24.04 runner)
+Python:              3.11.16
+Icarus Verilog:      12.0 (Ubuntu package 12.0-2build2)
+pytest:              9.1.1
+project numpy:       2.4.6
+project Brian2:      2.9.0
+project Brian2Loihi: 0.5.2
+Catalyst neurocore:  1.0.0
+Catalyst matplotlib: 3.11.1
+Catalyst pyserial:   3.5
+```
+
+The complete thesis regression suite passed in this environment. The pinned Catalyst checkout then passed exact commit/tag/blob verification while clean, all **25/25** testbenches enumerated by its native `run_regression.sh`, and all **56/56** tests in `sdk/tests/test_simulator.py`. These results establish that the external reference boundaries selected by M13.1 are independently runnable; they do not establish that Catalyst behavior is Loihi ground truth.
+
+Two development-only Class-H issues were found and corrected before closure: an older M12.5 documentation test expected the exact already-intended power-exclusion wording, and the first M13.1 RTL harness falsely interpreted Catalyst's `0 FAILED` summary text as a failure. Neither issue changed project computation or Catalyst source.
+
+The DOI `10.5281/zenodo.18727094` remains the stable Catalyst N1 publication identity. Catalyst-controlled secondary sources observed during M13.1 use more than one title string for that DOI, so M13 records the DOI as normative and treats publication-title text as descriptive metadata.
 
 ## M13.1 pass boundary
 
