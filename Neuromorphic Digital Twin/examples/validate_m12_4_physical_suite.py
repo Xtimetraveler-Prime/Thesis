@@ -52,6 +52,7 @@ def validate_suite(physical_dir: Path, report_dir: Path) -> Path:
                 "golden_artifact": f"{case.case_id:02d}-{case.name}.golden.json",
                 "physical_artifact": physical_path.name,
                 "report": report_path.name,
+                "targeted_rerun": f"bash run_m12_4_case.sh {case.case_id}",
                 "passed": report.passed,
                 "mismatch_count": len(report.mismatches),
             }
@@ -70,6 +71,7 @@ def validate_suite(physical_dir: Path, report_dir: Path) -> Path:
                 f"seed=0x{case.seed:016x} config={case.configuration_sha256} "
                 f"mismatches={len(report.mismatches)}"
             )
+            print(f"  targeted rerun: bash run_m12_4_case.sh {case.case_id}")
             for mismatch in report.mismatches:
                 prefix = "artifact" if mismatch.tick is None else f"tick={mismatch.tick}"
                 print(
