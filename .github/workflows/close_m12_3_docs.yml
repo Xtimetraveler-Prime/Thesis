@@ -6,6 +6,7 @@ on:
       - agent/m12-3-multitick-recurrent-physical
     paths:
       - scripts/close_m12_3_docs.py
+      - .github/workflows/close_m12_3_docs.yml
 
 permissions:
   contents: write
