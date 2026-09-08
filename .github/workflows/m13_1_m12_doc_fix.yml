@@ -1,0 +1,32 @@
+name: Fix M12.5 documentation contract
+
+on:
+  push:
+    branches:
+      - agent/m13-1-pin-catalyst-methodology
+    paths:
+      - scripts/fix_m12_5_power_contract.py
+      - .github/workflows/m13_1_m12_doc_fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-1-pin-catalyst-methodology
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/fix_m12_5_power_contract.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md'
+          git diff --cached --check
+          git commit -m "Restore M12.5 power claim contract wording"
+          git push origin HEAD:agent/m13-1-pin-catalyst-methodology
