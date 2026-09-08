@@ -1,0 +1,38 @@
+name: Finalize M13.1 provenance
+
+on:
+  push:
+    branches:
+      - agent/m13-1-pin-catalyst-methodology
+    paths:
+      - scripts/finalize_m13_1_provenance.py
+      - .github/workflows/m13_1_provenance_finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-1-pin-catalyst-methodology
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply final provenance corrections
+        run: python scripts/finalize_m13_1_provenance.py
+      - name: Commit final provenance files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            'Neuromorphic Digital Twin/references/m13_1_reference_manifest.json' \
+            'Neuromorphic Digital Twin/src/neuromorphic_twin/m13_reference_manifest.py' \
+            'Neuromorphic Digital Twin/tests/test_m13_1_reference_manifest.py' \
+            'Neuromorphic Digital Twin/docs/M13_1_REFERENCE_BASELINE.md'
+          git diff --cached --check
+          git commit -m "Finalize M13.1 reference provenance and validation record"
+          git push origin HEAD:agent/m13-1-pin-catalyst-methodology
