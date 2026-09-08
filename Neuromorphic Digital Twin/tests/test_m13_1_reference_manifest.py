@@ -98,6 +98,9 @@ def test_m13_1_fetch_and_native_regression_scripts_never_modify_catalyst_sources
     assert "${rtl_files[@]}" in regression
     assert 'for i in "${!testbenches[@]}"' in regression
     assert 'tb="${testbenches[$i]}"' in regression
+    assert 'version_text="$(iverilog -V 2>&1)"' in regression
+    assert 'version_first_line="${version_text%%$\'\\n\'*}"' in regression
+    assert "iverilog -V 2>&1 | head -n 1" not in regression
     for forbidden in ("sed -i", "perl -pi", "git apply", "patch "):
         assert forbidden not in regression
 
