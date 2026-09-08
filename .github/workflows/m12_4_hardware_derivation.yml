@@ -1,0 +1,37 @@
+name: Derive M12.4 hardware shell
+
+on:
+  push:
+    branches:
+      - agent/m12-4-broad-physical-regression
+    paths:
+      - scripts/derive_m12_4_hardware.py
+      - .github/workflows/m12_4_hardware_derivation.yml
+
+permissions:
+  contents: write
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m12-4-broad-physical-regression
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/derive_m12_4_hardware.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            "Neuromorphic Digital Twin/rtl/core_v1/m12_4_broad_capture_controller_v1.sv" \
+            "Neuromorphic Digital Twin/rtl/core_v1/m12_4_broad_capture_controller_bd_v1.v" \
+            "Neuromorphic Digital Twin/rtl/core_v1/vivado/create_m12_4_project.tcl" \
+            "Neuromorphic Digital Twin/rtl/core_v1/vivado/capture_m12_4_broad.tcl" \
+            "Neuromorphic Digital Twin/rtl/core_v1/run_m12_4_bitstream.sh"
+          git diff --cached --check
+          git commit -m "Add M12.4 broad physical capture shell"
+          git push origin HEAD:agent/m12-4-broad-physical-regression
