@@ -5,10 +5,6 @@ path = root / "MILESTONES.md"
 text = path.read_text(encoding="utf-8")
 
 text = text.replace(
-    "| M12 | Validate FPGA against Python golden model | In progress | 2026-08-27 | — |",
-    "| M12 | Validate FPGA against Python golden model | In progress | 2026-08-27 | — |",
-)
-text = text.replace(
     "- [ ] Directed multi-tick and recurrent physical scenarios match Python exactly at every compared tick.",
     "- [x] Directed multi-tick and recurrent physical scenarios match Python exactly at every compared tick.",
 )
@@ -17,9 +13,9 @@ start = text.index("### M12.3 — Multi-tick and recurrent-network physical conf
 end = text.index("\n---\n\n### M12.4 — Broad deterministic physical regression and boundary stress", start)
 replacement = '''### M12.3 — Multi-tick and recurrent-network physical conformance
 
-**Status:** Complete  
-**Started:** 2026-09-07  
-**Completed:** 2026-09-07  
+**Status:** Complete
+**Started:** 2026-09-07
+**Completed:** 2026-09-07
 **Repository evidence:** branch `agent/m12-3-multitick-recurrent-physical`; physical KV260 closure with 10 directed scenarios / 40 committed ticks plus independent six-tick reset/replay
 
 #### Core goal
