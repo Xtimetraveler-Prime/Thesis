@@ -175,6 +175,8 @@ bash scripts/run_m13_4_catalyst_cuba_probes.sh
 python3 examples/run_m13_4_differential.py \
   --output build/m13_4/differential \
   --catalyst-cuba-log build/m13_4/catalyst-rtl/native.log
+python3 examples/validate_m13_4_candidate_findings.py \
+  --report build/m13_4/differential/directed-report.json
 ```
 
 The generated bundle preserves native/normalized artifacts and writes `build/m13_4/differential/manifest.json` plus `directed-report.json`.
@@ -194,7 +196,7 @@ Full regression:
 python3 -m pytest -q
 ```
 
-The latest automated clean reconstruction used Ubuntu 24.04, Icarus Verilog 12, NumPy 1.26.4, Brian2 2.9.0, Brian2Loihi 0.5.2, and the pinned Catalyst SDK. Before the final documentation/test closure changes, the corrected run passed 24 focused M13.3/M13.4 tests and 325 total project tests. The final closure gate must rerun these commands with the new M13.4 contract tests included.
+The final automated clean candidate-closure reconstruction used Ubuntu 24.04, Icarus Verilog 12, NumPy 1.26.4, Brian2 2.9.0, Brian2Loihi 0.5.2, and the exact pinned Catalyst SDK. It reproduced the 12-probe findings snapshot, passed **30/30 focused M13.3/M13.4 tests**, and passed the complete **331/331 project regression**. A branch-diff guard also verified that M13.4 introduced no computational-core, HLS-core, or FPGA-v1 behavioral changes.
 
 ## M13.4 pass boundary
 
@@ -212,4 +214,4 @@ M13.4 is ready for independent validation when all of the following are true:
 - focused M13.4 tests and the complete historical regression pass;
 - no computational-core/HLS/FPGA-v1 behavior changed as part of the audit.
 
-The automated candidate currently satisfies these criteria with zero A/B candidates. M13.4 remains **In progress** until the development branch is independently pulled and the validation commands are reproduced.
+The automated candidate satisfies these criteria with zero A/B candidates. M13.4 remains **In progress** only until the development branch is independently pulled and the validation commands are reproduced.
