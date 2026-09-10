@@ -136,36 +136,50 @@ jobs:
 
           p = Path('MILESTONES.md')
           text = p.read_text(encoding='utf-8')
-          old = '''### M13.3 — Define a common behavioral subset and normalized comparison interface
-
-**Status:** Planned
-'''
-          new = '''### M13.3 — Define a common behavioral subset and normalized comparison interface
-
-**Status:** In progress  
-**Started:** 2026-09-09  
-**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; frozen normalization implementation and CI preflight complete, pending independent local validation
-'''
+          old = (
+              '### M13.3 — Define a common behavioral subset and normalized comparison interface\n\n'
+              '**Status:** Planned\n'
+          )
+          new = (
+              '### M13.3 — Define a common behavioral subset and normalized comparison interface\n\n'
+              '**Status:** In progress  \n'
+              '**Started:** 2026-09-09  \n'
+              '**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; '
+              'frozen normalization implementation and CI preflight complete, pending independent local validation\n'
+          )
           if old not in text:
               raise SystemExit('M13.3 planned status block not found')
           text = text.replace(old, new, 1)
 
-          marker = '''#### Pass boundary
-
-A frozen comparison specification can generate or translate at least a small directed corpus into every participating implementation for which the behavior is genuinely supported, and it clearly marks non-comparable fields rather than forcing artificial equality.
-'''
-          addition = marker + '''
-#### Implementation checkpoint
-
-The candidate M13.3 implementation freezes `references/m13_3_normalization_spec.json` (`neuromorphic-twin-m13-normalization-v1`, version 1) before M13.4 Catalyst differential execution. It defines exact/transformed/qualitative/non-comparable field policy, strict-threshold `T+1` normalization for Catalyst, semantic refractory `R-1` parameter normalization, final-effective-weight mapping, the signed-16-bit shared observation envelope, logical-identifier mapping, restricted CPU direct-drive scenarios, and the isolated-impulse Catalyst RTL CUBA one-native-tick staging transform. General multi-input CUBA update order is deliberately not normalized away.
-
-The executable interface in `src/neuromorphic_twin/comparison/m13_normalization.py` generates native plans for the project, Brian2Loihi, Catalyst synchronous CPU, and Catalyst RTL CUBA boundaries and preserves native plus normalized artifacts. The four-case translation-smoke corpus covers threshold, refractory release, signed drive, and isolated CUBA decay. A clean CI reconstruction verified the pinned Catalyst commit and key source blobs, executed the three Catalyst CPU-applicable plans, generated the Catalyst RTL CUBA native plan, materialized project/Brian2Loihi traces, and passed the complete thesis regression suite. The comparison runtime is pinned to NumPy 1.26.4, Brian2 2.9.0, and Brian2Loihi 0.5.2 to eliminate the previously observed Class-H dependency incompatibility.
-
-M13.3 remains **In progress** until the requested independent local validation is reproduced. No project computational behavior, HLS, RTL, or M12 physical evidence changed.
-'''
+          marker = (
+              '#### Pass boundary\n\n'
+              'A frozen comparison specification can generate or translate at least a small directed corpus into every '
+              'participating implementation for which the behavior is genuinely supported, and it clearly marks '
+              'non-comparable fields rather than forcing artificial equality.\n'
+          )
+          checkpoint = (
+              '\n#### Implementation checkpoint\n\n'
+              'The candidate M13.3 implementation freezes `references/m13_3_normalization_spec.json` '
+              '(`neuromorphic-twin-m13-normalization-v1`, version 1) before M13.4 Catalyst differential execution. '
+              'It defines exact/transformed/qualitative/non-comparable field policy, strict-threshold `T+1` normalization '
+              'for Catalyst, semantic refractory `R-1` parameter normalization, final-effective-weight mapping, the '
+              'signed-16-bit shared observation envelope, logical-identifier mapping, restricted CPU direct-drive '
+              'scenarios, and the isolated-impulse Catalyst RTL CUBA one-native-tick staging transform. General multi-input '
+              'CUBA update order is deliberately not normalized away.\n\n'
+              'The executable interface in `src/neuromorphic_twin/comparison/m13_normalization.py` generates native plans '
+              'for the project, Brian2Loihi, Catalyst synchronous CPU, and Catalyst RTL CUBA boundaries and preserves '
+              'native plus normalized artifacts. The four-case translation-smoke corpus covers threshold, refractory '
+              'release, signed drive, and isolated CUBA decay. A clean CI reconstruction verified the pinned Catalyst '
+              'commit and key source blobs, executed the three Catalyst CPU-applicable plans, generated the Catalyst RTL '
+              'CUBA native plan, materialized project/Brian2Loihi traces, and passed the complete thesis regression suite. '
+              'The comparison runtime is pinned to NumPy 1.26.4, Brian2 2.9.0, and Brian2Loihi 0.5.2 to eliminate the '
+              'previously observed Class-H dependency incompatibility.\n\n'
+              'M13.3 remains **In progress** until the requested independent local validation is reproduced. No project '
+              'computational behavior, HLS, RTL, or M12 physical evidence changed.\n'
+          )
           if marker not in text:
               raise SystemExit('M13.3 pass-boundary marker not found')
-          text = text.replace(marker, addition, 1)
+          text = text.replace(marker, marker + checkpoint, 1)
           p.write_text(text, encoding='utf-8')
           PY
 
