@@ -101,6 +101,8 @@ The catalog links earlier evidence rather than discarding it. Examples include:
 
 The M12 references are catalog provenance only at this stage; the pre-normalization runner does not rerun physical FPGA evidence.
 
+The existing Brian2Loihi adapter now also fails closed when a `ComparisonScenario` contains `spike_routes`. Brian2Loihi itself supports recurrent Synapses, but the project adapter does not yet define the graph/timing translation from the project route representation. Repeated identical-source events are likewise rejected by the current SpikeGeneratorGroup mapping, and explicit finite-width saturation is outside the adapter's current unbounded arithmetic boundary. P09-P11 therefore remain blocked on M13.3 transforms instead of silently substituting a different scenario.
+
 ## New work still required after M13.3
 
 Once M13.3 freezes the common subset, M13.4 must still:
