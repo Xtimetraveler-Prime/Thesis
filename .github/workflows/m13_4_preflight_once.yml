@@ -1,0 +1,97 @@
+name: M13.4 one-shot pre-normalization preflight
+
+on:
+  push:
+    branches:
+      - agent/m13-4-directed-differential-probes
+    paths:
+      - '.github/workflows/m13_4_preflight_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-4-directed-differential-probes
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Mark M13.4 started without closing M13.3
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('MILESTONES.md')
+          text = p.read_text(encoding='utf-8')
+          old = '### M13.4 — Run directed differential architectural probes\n\n**Status:** Planned\n'
+          new = ('### M13.4 — Run directed differential architectural probes\n\n'
+                 '**Status:** In progress\n'
+                 '**Started:** 2026-09-09\n'
+                 '**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; '
+                 'pre-normalization scaffold only while M13.3 remains Planned\n')
+          if old not in text and new not in text:
+              raise SystemExit('M13.4 status block not found')
+          if old in text:
+              text = text.replace(old, new, 1)
+          text = text.replace(
+              '**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`',
+              '**Repository evidence:** M13.1 merged via PR #14; M13.2 merged via PR #15; M13.4 pre-normalization scaffold on branch `agent/m13-4-directed-differential-probes`',
+              1,
+          )
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Install project comparison dependencies
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python -m pip install -e '.[dev,compare]'
+      - name: Focused M13.4 catalog tests
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python -m pytest -q tests/test_m13_4_directed_probes.py
+          PYTHONPATH=src python examples/run_m13_4_directed_probes.py
+      - name: Re-execute preserved project Brian2Loihi evidence
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          PYTHONPATH=src python examples/run_m13_4_directed_probes.py \
+            --run-pre-normalization-reuse build/m13_4/pre_normalization
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('build/m13_4/pre_normalization/manifest.json')
+          data = json.loads(p.read_text())
+          assert data['normalized_comparison_performed'] is False
+          assert data['catalyst_execution_performed'] is False
+          assert data['directed_summary'] == {
+              'cases': 12, 'pass': 12, 'fail': 0, 'error': 0, 'ticks': 34, 'mismatches': 0
+          }
+          assert data['weight_summary'] == {
+              'cases': 15, 'pass': 15, 'fail': 0, 'error': 0, 'ticks': 15, 'mismatches': 0
+          }
+          print(f"M13.4 pre-normalization evidence PASS: artifacts={len(data['artifacts'])}")
+          PY
+      - name: Prove normalized work fails closed without M13.3
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          set +e
+          PYTHONPATH=src python examples/run_m13_4_directed_probes.py --require-normalization
+          rc=$?
+          set -e
+          test "$rc" -eq 4
+          echo 'M13.4 M13.3 prerequisite guard PASS'
+      - name: Complete thesis regression suite
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python -m pytest -q
+      - name: Commit milestone start record and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_4_preflight_once.yml
+          git add MILESTONES.md
+          git diff --cached --check
+          git commit -m 'Record validated M13.4 pre-normalization checkpoint'
+          git push origin HEAD:agent/m13-4-directed-differential-probes
