@@ -91,11 +91,9 @@ section = section.replace(
     "**Status:** Complete\n**Started:** 2026-09-09\n**Completed:** 2026-09-09\n**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`; validated before merge",
     1,
 )
-section = section.replace(
-    "#### Pass boundary\n\nThe repository contains a reviewable, source-cited matrix that makes the common supported subset and major architectural differences explicit before M13 directed differential probes begin.",
-    """#### Completion evidence
+completion = """#### Completion evidence
 
-**Achieved.** M13.2 freezes a reviewable four-way architectural crosswalk before normalization or differential probing. The machine-readable authority is `Neuromorphic Digital Twin/references/m13_2_feature_crosswalk.json`; `docs/M13_2_ARCHITECTURAL_CROSSWALK.md` is generated deterministically from that source.
+**Achieved.** M13.2 freezes a reviewable four-way architectural crosswalk before normalization or differential probing. The machine-readable authority is `Neuromorphic Digital Twin/references/m13_2_feature_crosswalk.json`; `Neuromorphic Digital Twin/docs/M13_2_ARCHITECTURAL_CROSSWALK.md` is generated deterministically from that source.
 
 The accepted matrix contains **19 rows covering all 15 milestone-required feature classes**. Every row keeps four independent columns—published Loihi, Brian2Loihi 0.5.2, the M12-validated project, and pinned Catalyst N1—and every cell cites one or more entries from the frozen source registry. The registry links the project's earlier direct Brian2Loihi evidence rather than re-deriving it informally: M05 current-update ordering, M07 **12/12** directed conformance over 34 ticks, and M08.3 **15/15** encoded-weight conformance with directly observed `w_act`.
 
@@ -105,10 +103,15 @@ The crosswalk deliberately does **not** assign A-H discrepancy classes. It recor
 
 No project computational behavior, HLS, RTL, or M12 physical evidence changed in M13.2.
 
-#### Pass boundary
-
-**Achieved.** The repository contains a reviewable, source-cited matrix that makes the common supported subset and major architectural differences explicit before M13 directed differential probes begin. M13.3 may now define the common behavioral subset and normalization rules from this frozen crosswalk.
-""",
+"""
+if "#### Completion evidence" not in section:
+    marker = "#### Pass boundary\n"
+    if marker not in section:
+        raise SystemExit("Could not locate M13.2 pass-boundary heading")
+    section = section.replace(marker, completion + marker, 1)
+section = section.replace(
+    "#### Pass boundary\n\nThe repository contains a reviewable, source-cited matrix that makes the supported common subset and major architectural differences explicit before M13 differential probes are interpreted.",
+    "#### Pass boundary\n\n**Achieved.** The repository contains a reviewable, source-cited matrix that makes the supported common subset and major architectural differences explicit before M13 differential probes are interpreted. M13.3 may now define the common behavioral subset and normalization rules from this frozen crosswalk.",
     1,
 )
 m = m[:start] + section + m[end:]
