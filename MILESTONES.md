@@ -2124,7 +2124,7 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 **Status:** In progress
 **Started:** 2026-09-08
-**Repository evidence:** current work on branch `agent/m13-1-pin-catalyst-methodology`
+**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`
 
 ### Goal
 
@@ -2147,7 +2147,7 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 ### Overall completion criteria
 
 - [x] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
-- [ ] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
+- [x] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
 - [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
 - [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
 - [ ] Reproduce a physical or RTL-level Catalyst comparison on the common K26 path if the pinned Catalyst release and available tooling support a defensible configuration; otherwise document the exact blocker and complete the strongest reproducible comparison boundary available.
@@ -2201,9 +2201,10 @@ This local reproduction closes the M13.1 validation boundary with no architectur
 
 ### M13.2 — Build a four-way architectural feature crosswalk
 
-**Status:** In progress
+**Status:** Complete
 **Started:** 2026-09-09
-**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`
+**Completed:** 2026-09-09
+**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`; validated before merge
 
 #### Core goal
 
