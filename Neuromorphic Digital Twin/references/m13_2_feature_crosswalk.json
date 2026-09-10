@@ -1,0 +1,396 @@
+{
+  "schema": "neuromorphic-twin-m13-feature-crosswalk-v1",
+  "created_on": "2026-09-09",
+  "project_baseline_commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+  "m13_1_merge_commit": "fab362cebdff133e71367c186d8689e332a99a10",
+  "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+  "brian2loihi_commit": "d54676cb113e48dc886615a0b589bb0e4bccbca4",
+  "purpose": "Source-cited architectural crosswalk only. It records comparability and scope before M13.3 normalization and M13.4 directed differential probes; it does not adjudicate A-H discrepancies or mutate the M12 baseline.",
+  "relationship_vocabulary": [
+    "exactly comparable",
+    "comparable after a documented transform",
+    "similar but architecturally different",
+    "unsupported by one implementation",
+    "not observable through the available interface",
+    "ambiguous in available Loihi evidence",
+    "out of project scope"
+  ],
+  "cell_status_vocabulary": [
+    "documented",
+    "implemented",
+    "physically_validated",
+    "directly_observed",
+    "partial",
+    "unsupported",
+    "not_observable",
+    "ambiguous",
+    "out_of_scope"
+  ],
+  "source_registry": {
+    "loihi_davies_2018": {
+      "column": "published_loihi",
+      "evidence_type": "published_documentation",
+      "title": "Loihi: A Neuromorphic Manycore Processor with On-Chip Learning",
+      "doi": "10.1109/MM.2018.112130359",
+      "locator": "Sections 2.1 and 3.1",
+      "role": "Primary Loihi architecture source: CUBA LIF with current/potential state, fixed discrete timesteps, 128 neuromorphic cores, asynchronous NoC, hierarchical connectivity, dendritic compartments, synaptic delays, programmable learning, and embedded x86 management."
+    },
+    "loihi_lin_2018": {
+      "column": "published_loihi",
+      "evidence_type": "published_documentation",
+      "title": "Programming Spiking Neural Networks on Intel's Loihi",
+      "doi": "10.1109/MC.2018.157113521",
+      "locator": "architecture/programming discussion",
+      "role": "Primary published programming/toolchain context for Loihi management, configuration, and programmable learning."
+    },
+    "brian2loihi_michaelis_2022": {
+      "column": "published_loihi_and_brian2loihi_secondary",
+      "evidence_type": "published_documentation",
+      "title": "Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian",
+      "doi": "10.3389/fninf.2022.1015624",
+      "locator": "Sections 2.2, 3.1, 4.1 and Appendix",
+      "role": "Secondary published source for Loihi/Brian2Loihi discrete current/voltage equations, weight mantissa/exponent/sign/precision behavior, refractory representation, and emulator validation."
+    },
+    "project_core_spec_m12": {
+      "column": "project",
+      "evidence_type": "published_documentation",
+      "repository": "Xtimetraveler-Prime/Thesis",
+      "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+      "path": "Neuromorphic Digital Twin/docs/CORE_SPECIFICATION.md",
+      "role": "Normative M10/M12 project behavioral contract."
+    },
+    "project_weight_storage_m12": {
+      "column": "project",
+      "evidence_type": "published_documentation",
+      "repository": "Xtimetraveler-Prime/Thesis",
+      "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+      "path": "Neuromorphic Digital Twin/docs/FPGA_WEIGHT_STORAGE.md",
+      "role": "Frozen M08 static-weight encoding and CSR storage profile."
+    },
+    "project_recurrent_routing_m12": {
+      "column": "project",
+      "evidence_type": "direct_observation",
+      "repository": "Xtimetraveler-Prime/Thesis",
+      "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+      "path": "Neuromorphic Digital Twin/docs/M11_5_4_RECURRENT_ROUTING.md",
+      "role": "Validated CSR route ordering, multiplicity, double-buffer queues, and next-tick recurrence."
+    },
+    "project_m12_record": {
+      "column": "project",
+      "evidence_type": "direct_observation",
+      "repository": "Xtimetraveler-Prime/Thesis",
+      "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+      "path": "MILESTONES.md",
+      "role": "Physical FPGA conformance and characterization record through M12."
+    },
+    "brian_readme": {
+      "column": "brian2loihi",
+      "evidence_type": "published_documentation",
+      "repository": "sagacitysite/brian2_loihi",
+      "commit": "d54676cb113e48dc886615a0b589bb0e4bccbca4",
+      "path": "README.md",
+      "blob_sha": "9a7dc1b38aa5111c249d141217244b4988b445c0",
+      "role": "Pinned emulator API, supported Loihi parameters, monitor model, and schedule constraints."
+    },
+    "brian_neuron": {
+      "column": "brian2loihi",
+      "evidence_type": "implementation_inference",
+      "repository": "sagacitysite/brian2_loihi",
+      "commit": "d54676cb113e48dc886615a0b589bb0e4bccbca4",
+      "path": "loihi_neuron_group.py",
+      "blob_sha": "479c9fee37d3ac1302be9e1cab773440fc2935a5",
+      "role": "Pinned point-neuron equations: v/I state, decay round-away-from-zero construction, strict threshold, hard reset, and refractory scheduling."
+    },
+    "brian_synapses": {
+      "column": "brian2loihi",
+      "evidence_type": "implementation_inference",
+      "repository": "sagacitysite/brian2_loihi",
+      "commit": "d54676cb113e48dc886615a0b589bb0e4bccbca4",
+      "path": "loihi_synapses.py",
+      "blob_sha": "0d63a094f37f754d3666b8af5af0d5ca56ee32b2",
+      "role": "Pinned static/plastic weight encoding, sign modes, exponent, precision, clipping, delays, traces, and synaptic delivery."
+    },
+    "catalyst_readme": {
+      "column": "catalyst",
+      "evidence_type": "published_documentation",
+      "repository": "catalyst-neuromorphic/catalyst-n1",
+      "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "path": "README.md",
+      "blob_sha": "acb840c88be97e5cacb45d7e4ad50e108752eca7",
+      "role": "Pinned top-level N1 specifications, NoC/management/host architecture, learning claims, FPGA targets, and SDK backends."
+    },
+    "catalyst_constants": {
+      "column": "catalyst",
+      "evidence_type": "implementation_inference",
+      "repository": "catalyst-neuromorphic/catalyst-n1",
+      "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "path": "sdk/neurocore/constants.py",
+      "blob_sha": "542f2ccfb294e820ecc92db5228db641d614bb23",
+      "role": "Pinned SDK capacities, formats, delay range, learning constants, and command IDs."
+    },
+    "catalyst_simulator": {
+      "column": "catalyst",
+      "evidence_type": "implementation_inference",
+      "repository": "catalyst-neuromorphic/catalyst-n1",
+      "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "path": "sdk/neurocore/simulator.py",
+      "blob_sha": "281b75730357fe9e302e4570c80818cba9316730",
+      "role": "Pinned Catalyst CPU reference: synchronous DELIVER->UPDATE->LEARN mode, separate asynchronous quiescence mode, refractory/threshold behavior, pending-spike delivery, and learning."
+    },
+    "catalyst_core_rtl": {
+      "column": "catalyst",
+      "evidence_type": "implementation_inference",
+      "repository": "catalyst-neuromorphic/catalyst-n1",
+      "commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "path": "rtl/scalable_core_v2.v",
+      "blob_sha": "c21c9c0256b37b94e78a7eb49dfd3d4303e93f0b",
+      "role": "Pinned N1 core RTL: 24-bit neuron/current memories, 16-bit data/weights, optional 12-bit CUBA decays/bias, CSR synapses, compressed formats, FIFO delivery, refractory/threshold rules, probes, traces, and learning FSMs."
+    }
+  },
+  "rows": [
+    {
+      "id": "neuron-state-model",
+      "feature_class": "neuron model/state variables",
+      "feature": "Point-neuron dynamic state and LIF formulation",
+      "published_loihi": {"status": "documented", "summary": "Loihi publications describe a discrete-time CUBA LIF variant with synaptic response current u and membrane potential v as internal state.", "evidence": ["loihi_davies_2018", "brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "LoihiNeuronGroup exposes dimensionless current I and voltage v with Loihi-style decay parameters and a Brian2 forward-Euler schedule.", "evidence": ["brian_neuron", "brian_readme"]},
+      "project": {"status": "physically_validated", "summary": "Per-neuron architectural state is signed 24-bit current, signed 24-bit voltage, and unsigned 16-bit refractory_remaining; behavior is frozen by CORE_SPECIFICATION v1 and exact physical M12 traces.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Pinned RTL stores 24-bit potential and current plus 8-bit refractory state, while the CPU reference exposes potential/refractory and primarily presents a simpler subtractive-leak LIF API. RTL additionally contains an optional CUBA path.", "evidence": ["catalyst_core_rtl", "catalyst_simulator"]},
+      "overall_relationship": "similar but architecturally different",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Normalize a point-neuron state subset and explicitly choose Catalyst simple-LIF versus RTL CUBA mode rather than mixing them."
+    },
+    {
+      "id": "dendritic-compartments",
+      "feature_class": "neuron model/state variables",
+      "feature": "Dendritic compartments and compartment trees",
+      "published_loihi": {"status": "documented", "summary": "Dendritic compartments are an explicit Loihi architectural feature.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "The pinned LoihiNeuronGroup is a point-neuron v/I model and does not expose Loihi dendritic compartment trees.", "evidence": ["brian_neuron", "brian_readme"]},
+      "project": {"status": "out_of_scope", "summary": "FPGA-v1 is a point-neuron core and has no dendritic compartment tree state or join operations.", "evidence": ["project_core_spec_m12"]},
+      "catalyst": {"status": "implemented", "summary": "N1 exposes soma plus three dendritic compartments, per-compartment accumulators/thresholds, parent mappings, and join/stack behavior in the pinned RTL.", "evidence": ["catalyst_constants", "catalyst_core_rtl"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Exclude dendritic features from common behavioral probes; document as a major scope difference."
+    },
+    {
+      "id": "current-voltage-decay",
+      "feature_class": "current and voltage decay semantics",
+      "feature": "Dual current/voltage decay representation, rounding, and update source",
+      "published_loihi": {"status": "documented", "summary": "Available Loihi/Brian2Loihi publications describe separate current and voltage decays on a 12-bit denominator (4096) discrete-timestep model; exact undocumented overflow details remain outside this evidence.", "evidence": ["loihi_davies_2018", "brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "decay_I and decay_v are 0..4096; each decay amount is constructed as sign(x)*ceil(abs(x*d/4096)), i.e. away from zero. The Brian2 equations retain separate I and v state.", "evidence": ["brian_neuron"]},
+      "project": {"status": "physically_validated", "summary": "0..4096 decay factors use explicit round-away-from-zero. Input is added to current before current decay; voltage uses the pre-decay working current including same-tick input.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "partial", "summary": "Pinned RTL has optional 12-bit decay_u/decay_v and a round-away-from-zero /4096 helper. In CUBA mode current becomes old_current - decay(old_current) + optionally scaled same-tick input, while potential uses decayed old potential plus old current and bias. The pinned CPU simulator's ordinary synchronous LIF path instead uses subtractive leak and does not expose this CUBA state transition through the same API.", "evidence": ["catalyst_core_rtl", "catalyst_simulator"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Freeze which Catalyst execution boundary represents CUBA comparison and specify the one-tick/current-source mapping before probes."
+    },
+    {
+      "id": "tick-update-order",
+      "feature_class": "update ordering and algorithmic tick boundaries",
+      "feature": "Discrete timestep phases and atomic state visibility",
+      "published_loihi": {"status": "partial", "summary": "Loihi is described as a fixed-size discrete timestep model with globally consistent algorithmic time, but the initial publications do not fully specify every intra-timestep software-observable ordering used by this thesis.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "implemented", "summary": "The emulator requires its LoihiNetwork/default clock/schedule to remain unchanged; neuron and synapse equations are placed into that fixed Brian2 schedule.", "evidence": ["brian_readme", "brian_neuron", "brian_synapses"]},
+      "project": {"status": "physically_validated", "summary": "Six normative phases A-F latch events, accumulate, update from a common pre-state snapshot, collect spikes, route recurrence, then atomically commit. Hardware cycles inside a tick are non-architectural.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "CPU synchronous mode states DELIVER->UPDATE->LEARN. RTL has explicit delivery/update/learning FSM phases and asserts timestep_done after the state machine completes; Catalyst also has a distinct asynchronous mode.", "evidence": ["catalyst_simulator", "catalyst_core_rtl"]},
+      "overall_relationship": "similar but architecturally different",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Normalize only committed timestep boundaries; do not equate internal phase names or hardware cycle counts."
+    },
+    {
+      "id": "threshold-reset",
+      "feature_class": "threshold, reset, and refractory behavior",
+      "feature": "Threshold comparator and spike reset",
+      "published_loihi": {"status": "partial", "summary": "Published descriptions state that a spike is emitted when membrane potential passes/exceeds its firing threshold and that voltage resets after a spike; the precise equality convention is not treated as fully settled by the primary papers alone here.", "evidence": ["loihi_davies_2018", "brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "Threshold is explicitly v > threshold_v_mant*64; a spike resets v to 0.", "evidence": ["brian_neuron"]},
+      "project": {"status": "physically_validated", "summary": "Threshold is strict V_work > T; equality does not spike. Spike commits configurable reset_voltage. Directed physical M12 cases cover threshold equality/over-threshold and reset.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Both pinned CPU simulator and RTL use >= threshold in their main update paths and reset potential to the configured resting value after a spike.", "evidence": ["catalyst_simulator", "catalyst_core_rtl"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "yes",
+      "m13_3_action": "Define threshold-unit transforms and preserve the > versus >= convention as an explicit semantic difference for M13.4."
+    },
+    {
+      "id": "refractory-semantics",
+      "feature_class": "threshold, reset, and refractory behavior",
+      "feature": "Refractory entry, countdown, hold, and release convention",
+      "published_loihi": {"status": "partial", "summary": "Loihi supports programmable refractory behavior; secondary Brian2Loihi documentation notes that Loihi uses voltage-register behavior during refractory. Exact countdown representation is not assumed from publications alone.", "evidence": ["brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "Refractory is configured as 1..64 Brian2 timesteps; voltage dynamics are disabled while refractory while current continues its equation. Earlier M07 project comparison fixed the project's convention against this observable boundary.", "evidence": ["brian_neuron", "brian_readme"]},
+      "project": {"status": "physically_validated", "summary": "Spike tick counts as the first configured refractory tick: R_c=3 blocks t+1 and t+2 and releases at t+3; voltage holds reset while current continues to accumulate/decay.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "On spike Catalyst loads the programmed refractory period directly into refractory state; each later refractory update holds/rests potential and decrements by one. This convention is not numerically identical to the project's stored-count convention without a mapping.", "evidence": ["catalyst_simulator", "catalyst_core_rtl"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "yes",
+      "m13_3_action": "Freeze a semantic 'next eligible tick' mapping rather than equating raw refractory register values."
+    },
+    {
+      "id": "weight-encoding",
+      "feature_class": "weight representation, sign modes, exponent/precision behavior, quantization, and clipping",
+      "feature": "Static synaptic weight representation and effective-weight reconstruction",
+      "published_loihi": {"status": "documented", "summary": "Secondary published Loihi documentation describes mantissa plus exponent (-8..7), excitatory/inhibitory/mixed sign modes, configurable mantissa precision, initialization quantization toward zero, scaling, and effective-weight clipping/alignment.", "evidence": ["brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "Implements sign modes, w_exp -8..7, num_weight_bits 0..8, mode-dependent mantissa bounds, deterministic static quantization/scaling/alignment/clipping, and w_act delivery.", "evidence": ["brian_synapses", "brian_readme"]},
+      "project": {"status": "physically_validated", "summary": "M08 freezes the same Loihi-style source fields into shared 16-bit format records plus 32-bit CSR synapse records; effective integer weight is deterministically reconstructed and physically consumed without re-quantization.", "evidence": ["project_weight_storage_m12", "project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "N1 supports signed 16-bit pool weights and optional axon-format decoding with configurable bit width/exponent/sign behavior, plus sparse/dense/population formats. Its native encoding is not field-for-field identical to the Brian2Loihi/project M08 storage profile.", "evidence": ["catalyst_constants", "catalyst_core_rtl"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "yes",
+      "m13_3_action": "Normalize by final delivered signed integer contribution first; preserve native encoding metadata separately."
+    },
+    {
+      "id": "synaptic-accumulation",
+      "feature_class": "synaptic accumulation and fan-in/fan-out",
+      "feature": "Fan-in, fan-out, and accumulation of signed synaptic contributions",
+      "published_loihi": {"status": "documented", "summary": "Loihi supports arbitrary sparse connection topologies subject to per-core memory capacity; CUBA input is a weighted sum of delivered spike events.", "evidence": ["loihi_davies_2018", "brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "implemented", "summary": "Each presynaptic event executes I += w_act through Brian2 Synapses; arbitrary connection graphs/fan-in/fan-out are represented at the software-model level.", "evidence": ["brian_synapses"]},
+      "project": {"status": "physically_validated", "summary": "Every event visits the full CSR axon row; mixed signed contributions are summed exactly in a wide temporary before a single 24-bit current-state application. Physical stress includes dense fan-in/fan-out.", "evidence": ["project_core_spec_m12", "project_weight_storage_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "FIFO-delivered spikes traverse a CSR connectivity index/pool and accumulate per-target signed contributions; sparse/dense/population formats and multicast routing broaden fan-out options.", "evidence": ["catalyst_core_rtl", "catalyst_constants"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "yes",
+      "m13_3_action": "Use small sparse fan-in/fan-out networks with normalized effective weights and no optional dendritic/graded behavior."
+    },
+    {
+      "id": "numeric-width-rounding-overflow",
+      "feature_class": "fixed-point widths, rounding, saturation/overflow behavior",
+      "feature": "Architectural widths, rounding points, and overflow policy",
+      "published_loihi": {"status": "ambiguous", "summary": "Available sources establish fixed-point/integer implementation and commonly reported current/voltage precision, but the thesis does not treat undocumented overflow/wrap/saturation micro-details as proven by the initial publications.", "evidence": ["loihi_davies_2018", "brian2loihi_michaelis_2022"]},
+      "brian2loihi": {"status": "partial", "summary": "Uses explicit integerized decay/weight calculations but Brian2 state is not a hardware-width-accurate register model; exact Loihi overflow behavior is therefore not a safe emulator claim at the interface used here.", "evidence": ["brian_neuron", "brian_synapses"]},
+      "project": {"status": "physically_validated", "summary": "Current/voltage are signed 24-bit with explicit SAT24 saturation at frozen application points and round-away-from-zero decay. Saturation is explicitly a project-specific deterministic FPGA profile, not a Loihi claim.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "RTL stores potential/current in 24-bit memories with 16-bit weights/config interfaces and explicit round-away-from-zero CUBA decay helper; many arithmetic assignments rely on Verilog width behavior rather than the project's explicit SAT24 policy. CPU reference uses NumPy int32 state.", "evidence": ["catalyst_core_rtl", "catalyst_simulator", "catalyst_constants"]},
+      "overall_relationship": "ambiguous in available Loihi evidence",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Keep ordinary probes away from overflow; treat finite-width boundary probes as architecture-specific comparisons unless stronger Loihi evidence is added."
+    },
+    {
+      "id": "event-order-multiplicity",
+      "feature_class": "event ordering and multiplicity",
+      "feature": "Ordering of coincident events and preservation of repeated events",
+      "published_loihi": {"status": "ambiguous", "summary": "Publications establish packetized spike communication and synchronized algorithmic time, but do not provide the thesis with a complete externally observable total-order contract for coincident spike messages.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "partial", "summary": "Brian2 executes individual synaptic events under a fixed schedule, but the pinned API does not expose a Loihi hardware event FIFO/order trace comparable to the project's ordered axon-event artifact.", "evidence": ["brian_readme", "brian_synapses"]},
+      "project": {"status": "physically_validated", "summary": "External events precede recurrent events; multiplicity is preserved; simultaneous recurrent outputs are ordered by ascending source neuron then declaration order. M12 captures the exact sequences.", "evidence": ["project_core_spec_m12", "project_recurrent_routing_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Per-core delivery consumes FIFO entries and applies each event/CSR row occurrence. Inter-core ordering is mediated by Catalyst's mesh/FIFO architecture rather than the project's single-core canonical source-ID ordering.", "evidence": ["catalyst_core_rtl", "catalyst_readme"]},
+      "overall_relationship": "similar but architecturally different",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Compare multiplicity and final per-target accumulation where deterministic; do not normalize a global total event order unless each backend exposes one."
+    },
+    {
+      "id": "recurrent-delivery",
+      "feature_class": "recurrent delivery timing",
+      "feature": "When spikes become synaptic input in recurrent networks",
+      "published_loihi": {"status": "partial", "summary": "Loihi uses discrete algorithmic timesteps and supports nonzero synaptic delays; publications do not justify equating every implementation's internal FIFO phase with one universal recurrence convention without configuration context.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "implemented", "summary": "Recurrent Brian2 Synapses are supported and the emulator paper includes recurrent-network examples; delivery follows the fixed LoihiNetwork/Brian schedule and configured integer delay.", "evidence": ["brian_readme", "brian_synapses", "brian2loihi_michaelis_2022"]},
+      "project": {"status": "physically_validated", "summary": "Spikes from tick t route only into the inactive recurrent bank and can first be consumed at t+1. Same-tick recurrence is structurally excluded and physically validated.", "evidence": ["project_core_spec_m12", "project_recurrent_routing_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Catalyst synchronous CPU mode delivers _pending_spikes from the previous timestep before UPDATE and stores new spikes for the next timestep. Its separate asynchronous mode can propagate intra/inter-core activity through micro-steps until quiescence within one requested timestep.", "evidence": ["catalyst_simulator"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Use Catalyst synchronous mode for next-timestep recurrence comparisons; treat async quiescence behavior as a separate architecture feature."
+    },
+    {
+      "id": "synaptic-delay",
+      "feature_class": "recurrent delivery timing",
+      "feature": "Programmable per-synapse/axon delay beyond the baseline timestep",
+      "published_loihi": {"status": "documented", "summary": "Synaptic delays are an explicit Loihi feature.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "implemented", "summary": "LoihiSynapses exposes integer delay 0..62 timesteps.", "evidence": ["brian_synapses", "brian_readme"]},
+      "project": {"status": "out_of_scope", "summary": "FPGA-v1 has no general programmable synaptic-delay field; its recurrent route contract only guarantees next-tick delivery.", "evidence": ["project_core_spec_m12"]},
+      "catalyst": {"status": "implemented", "summary": "N1 exposes a 6-bit delay field with SDK MAX_DELAY=63 and a 64-bucket delay queue in the reference implementation/RTL.", "evidence": ["catalyst_constants", "catalyst_simulator", "catalyst_core_rtl"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Exclude programmable delays from common subset; zero/minimal-delay recurrence remains separately comparable."
+    },
+    {
+      "id": "synapse-memory-organization",
+      "feature_class": "synapse/routing memory organization at the architectural level",
+      "feature": "Connectivity storage organization and capacity model",
+      "published_loihi": {"status": "partial", "summary": "Loihi publications describe hierarchical/sparse connectivity and finite per-core memory resources, but this crosswalk does not infer undocumented SRAM bit layout from those descriptions.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "Brian2Loihi models connections as Brian2 Synapses and does not emulate Loihi's physical synapse SRAM organization/capacity layout.", "evidence": ["brian_synapses"]},
+      "project": {"status": "physically_validated", "summary": "Static synapses use a project-specific CSR row table with shared format records and 32-bit synapse words; recurrent routes use a separate CSR table and two 4096-entry event banks.", "evidence": ["project_weight_storage_m12", "project_recurrent_routing_m12"]},
+      "catalyst": {"status": "implemented", "summary": "N1 uses a CSR-style index plus connection pool with sparse/dense/population formats. The pinned top-level RTL default pool depth is 131072 entries/core while the SDK constant uses 32768, an implementation-layer configuration difference that later comparisons must disclose rather than silently reconcile.", "evidence": ["catalyst_core_rtl", "catalyst_constants", "catalyst_readme"]},
+      "overall_relationship": "similar but architecturally different",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Normalize network graphs, not memory addresses/layouts; retain native capacity/configuration metadata for M13.5."
+    },
+    {
+      "id": "routing-network",
+      "feature_class": "routing/network organization",
+      "feature": "Spike routing and communication hierarchy",
+      "published_loihi": {"status": "documented", "summary": "Loihi has a 128-neuromorphic-core mesh with an asynchronous packet NoC, hierarchical off-chip links, and spike/management/time-synchronization messages.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "The emulator represents logical synapses but does not model Loihi's physical mesh, packet routing, multicast tables, or off-chip hierarchy.", "evidence": ["brian_readme", "brian_synapses"]},
+      "project": {"status": "out_of_scope", "summary": "FPGA-v1 is one physical core with local source-neuron to target-axon recurrent CSR routes; it has no inter-core packet network.", "evidence": ["project_recurrent_routing_m12", "project_core_spec_m12"]},
+      "catalyst": {"status": "implemented", "summary": "N1 documents a configurable XY mesh with multicast, up to eight inter-core route slots per source in the SDK constants, hierarchical/global routing, and a multi-chip link/router.", "evidence": ["catalyst_readme", "catalyst_constants"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Common behavioral tests stay within one logical core unless M13.5 deliberately studies network-level implementation differences."
+    },
+    {
+      "id": "learning-plasticity",
+      "feature_class": "learning/plasticity support",
+      "feature": "Online synaptic learning and traces",
+      "published_loihi": {"status": "documented", "summary": "Programmable on-chip synaptic learning rules are a defining Loihi feature, using local state/traces and programmable learning behavior.", "evidence": ["loihi_davies_2018", "loihi_lin_2018"]},
+      "brian2loihi": {"status": "implemented", "summary": "Supports user learning-rule expressions over selected pre/post traces and periodic variables; trace and plastic-weight updates include stochastic rounding approximations, which the authors note can differ slightly from Loihi trace realizations.", "evidence": ["brian_synapses", "brian2loihi_michaelis_2022"]},
+      "project": {"status": "out_of_scope", "summary": "M12 FPGA-v1 intentionally freezes static weights only; no plastic synaptic state or learning engine is implemented.", "evidence": ["project_weight_storage_m12", "project_core_spec_m12"]},
+      "catalyst": {"status": "implemented", "summary": "N1 provides STDP, trace state, two/three-factor paths, eligibility/reward modulation, and a programmable microcode learning engine in the pinned software/RTL.", "evidence": ["catalyst_readme", "catalyst_simulator", "catalyst_core_rtl"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Exclude plasticity from common behavioral subset; discuss it as an intentional scope limitation and broader Catalyst/Loihi capability."
+    },
+    {
+      "id": "management-host-control",
+      "feature_class": "management/host-control architecture",
+      "feature": "Configuration, run control, and management processors/interfaces",
+      "published_loihi": {"status": "documented", "summary": "Loihi integrates three embedded x86 management cores and allows host/on-chip management messages to configure/read neuromorphic cores and coordinate execution.", "evidence": ["loihi_davies_2018", "loihi_lin_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "Brian2Loihi exposes Python/Brian network construction and run control, not Loihi management cores or host-transport architecture.", "evidence": ["brian_readme"]},
+      "project": {"status": "physically_validated", "summary": "Research validation uses Python host tooling plus Vivado/JTAG VIO around a K26 PS/PL design. This is an experimental control/trace interface, not an emulation of Loihi x86 management architecture.", "evidence": ["project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "N1 documents an RV32IM RISC-V management cluster and host paths including UART, AXI-Lite/F2, and PCIe MMIO; SDK backends expose common deployment/control APIs.", "evidence": ["catalyst_readme", "catalyst_constants"]},
+      "overall_relationship": "similar but architecturally different",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Keep management/control outside neuronal trace normalization; use it only as implementation-context metadata."
+    },
+    {
+      "id": "multicore-noc",
+      "feature_class": "multicore/network-on-chip features",
+      "feature": "Core count, core capacity, NoC, and multi-chip scaling",
+      "published_loihi": {"status": "documented", "summary": "Loihi integrates 128 neuromorphic cores with asynchronous on-chip communication and hierarchical extension to other chips.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "The emulator does not expose a physical multicore placement/NoC execution model corresponding to Loihi silicon.", "evidence": ["brian_readme"]},
+      "project": {"status": "out_of_scope", "summary": "The validated FPGA-v1 implementation is a single core with a physical profile up to 256 neurons, 1024 axons, and local recurrent routing.", "evidence": ["project_recurrent_routing_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Pinned N1 top-level specification is 128 cores x 1024 neurons = 131072 neurons with configurable mesh multicast and multi-chip routing. The separate K26 reproduction profile is smaller and must not be conflated with the full architecture.", "evidence": ["catalyst_readme", "catalyst_constants"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Restrict behavioral common subset to single-core/local behavior; reserve multicore/resource comparisons for M13.5 with explicit capacities."
+    },
+    {
+      "id": "observability-debug",
+      "feature_class": "observability/debug mechanisms relevant to experimental validation",
+      "feature": "State, spike, event, and performance observability",
+      "published_loihi": {"status": "partial", "summary": "Published architecture/programming material supports core management/readback and host tooling, but does not provide the same lossless per-tick trace contract defined by this thesis.", "evidence": ["loihi_davies_2018", "loihi_lin_2018"]},
+      "brian2loihi": {"status": "implemented", "summary": "LoihiStateMonitor and LoihiSpikeMonitor expose software state variables and spikes through Brian2, suitable for observable emulator traces but not physical hardware-internal queues.", "evidence": ["brian_readme"]},
+      "project": {"status": "physically_validated", "summary": "M12 exposes committed tick, ordered external/recurrent/routed events, signed synaptic sums, pre/post state, spikes, queue-bank metadata, faults, and passive cycle characterization through a reproducible physical trace path.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Pinned core RTL exposes probe IDs for potential, threshold, traces, refractory, accumulators, dendrites, leak/resting, weight, eligibility, current, performance counters, and trace FIFO state; the SDK provides result/spike APIs.", "evidence": ["catalyst_core_rtl", "catalyst_simulator"]},
+      "overall_relationship": "comparable after a documented transform",
+      "common_subset_candidate": "conditional",
+      "m13_3_action": "Normalize only shared architectural quantities while preserving richer native traces from each implementation."
+    },
+    {
+      "id": "async-execution",
+      "feature_class": "update ordering and algorithmic tick boundaries",
+      "feature": "Asynchronous/event-driven execution versus synchronous algorithmic timestep",
+      "published_loihi": {"status": "documented", "summary": "Loihi combines fixed-size synchronized algorithmic timesteps for SNN dynamics with an asynchronous hardware NoC/implementation methodology; asynchronous physical communication is not equivalent to abandoning algorithmic time.", "evidence": ["loihi_davies_2018"]},
+      "brian2loihi": {"status": "unsupported", "summary": "The emulator requires a fixed Brian2 clock and LoihiNetwork schedule and does not model asynchronous NoC/GALS micro-steps.", "evidence": ["brian_readme", "brian_neuron"]},
+      "project": {"status": "out_of_scope", "summary": "FPGA-v1 is clocked synchronous RTL implementing an atomic discrete algorithmic tick; event-dependent work is serialized but not asynchronous/GALS.", "evidence": ["project_core_spec_m12", "project_m12_record"]},
+      "catalyst": {"status": "implemented", "summary": "Catalyst CPU reference provides both synchronous DELIVER->UPDATE->LEARN and a separate async mode that iterates active cores/micro-steps to quiescence; the architecture also includes asynchronous-style NoC work in dedicated modules.", "evidence": ["catalyst_simulator", "catalyst_readme"]},
+      "overall_relationship": "out of project scope",
+      "common_subset_candidate": "no",
+      "m13_3_action": "Use Catalyst synchronous mode for common-subset behavior; document async mode as an architectural extension rather than trying to emulate it in FPGA-v1."
+    }
+  ],
+  "summary": {
+    "row_count": 18,
+    "minimum_milestone_feature_classes_covered": 15,
+    "common_subset_yes": ["threshold-reset", "refractory-semantics", "weight-encoding", "synaptic-accumulation"],
+    "common_subset_conditional": ["neuron-state-model", "current-voltage-decay", "tick-update-order", "numeric-width-rounding-overflow", "event-order-multiplicity", "recurrent-delivery", "observability-debug"],
+    "common_subset_no": ["dendritic-compartments", "synaptic-delay", "synapse-memory-organization", "routing-network", "learning-plasticity", "management-host-control", "multicore-noc", "async-execution"],
+    "major_crosswalk_findings": [
+      "Catalyst's pinned CPU reference and RTL expose more than one neuron-update regime; M13.3 must choose a comparison boundary rather than treating Catalyst as one undifferentiated model.",
+      "Project and Brian2Loihi use strict threshold > while Catalyst's main pinned CPU/RTL paths use >=.",
+      "Catalyst RTL CUBA current/voltage ordering differs from the project's M12 input-before-decay/current-into-voltage ordering and therefore requires an explicit mapping/probe.",
+      "Project refractory duration and Catalyst's raw refractory register use different entry/countdown conventions; compare next-eligible timestep rather than raw count.",
+      "The project intentionally omits dendritic compartments, programmable delays, learning, multicore NoC, and management processors that Loihi/Catalyst support.",
+      "Catalyst's pinned top-level RTL default synapse pool depth and SDK pool-depth constant differ, so capacity comparisons must identify the exact implementation layer/configuration.",
+      "The project is synchronous at the RTL level and discrete-timestep architecturally; Catalyst additionally exposes asynchronous quiescence execution. Loihi's asynchronous NoC does not by itself imply asynchronous algorithmic neuron time."
+    ]
+  }
+}
