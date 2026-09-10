@@ -601,7 +601,7 @@ The validated M12 claim does **not** include:
 
 ### Power and energy
 
-Power/energy remains intentionally outside the validated M12 claim set. No calibrated board-level measurement method was established during M12. Synthesis estimates, informal board readings, or host-side observations are insufficient to call a number measured neuromorphic energy.
+Power/energy is intentionally outside the validated M12 claim set. No calibrated board-level measurement method was established during M12. Synthesis estimates, informal board readings, or host-side observations are insufficient to call a number measured neuromorphic energy.
 
 This omission strengthens rather than weakens the final claim because it cleanly separates physically established evidence from quantities that would require additional methodology.
 

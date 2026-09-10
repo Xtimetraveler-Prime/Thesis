@@ -27,7 +27,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M10 | Freeze computational-core specification | Complete | 2026-08-20 | 2026-08-20 |
 | M11 | Implement first FPGA neuron/core datapath | Complete | 2026-08-20 | 2026-08-27 |
 | M12 | Validate FPGA against Python golden model | Complete | 2026-08-27 | 2026-09-07 |
-| M13 | Cross-validate and audit against Catalyst N1 | Planned | — | — |
+| M13 | Cross-validate and audit against Catalyst N1 | In progress | 2026-09-08 | — |
 
 ---
 
@@ -2122,7 +2122,9 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 ## M13 — Cross-validate and audit against Catalyst N1
 
-**Status:** Planned
+**Status:** In progress
+**Started:** 2026-09-08
+**Repository evidence:** current work on branch `agent/m13-1-pin-catalyst-methodology`
 
 ### Goal
 
@@ -2144,7 +2146,7 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 
 ### Overall completion criteria
 
-- [ ] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
+- [x] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
 - [ ] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
 - [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
 - [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
@@ -2157,7 +2159,16 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 
 ### M13.1 — Pin Catalyst N1 and freeze the comparison methodology
 
-**Status:** Planned
+**Status:** Complete
+**Started:** 2026-09-08
+**Completed:** 2026-09-08
+**Repository evidence:** branch `agent/m13-1-pin-catalyst-methodology`; validated before merge
+
+#### Current implementation boundary
+
+M13.1 freezes provenance and comparison rules before any cross-implementation behavioral judgment is allowed to influence the M12-closed baseline. The project-under-audit is pinned to M12 merge `80a502ec6dfc4c8d61372089b08c9a584ad65f85`. Catalyst N1 is pinned to tag `v2.3-paper` / equivalent tag `n1-final` at commit `1806bb4b4114d7671e5648fa75b7b83b3a8d5543`; Brian2Loihi is pinned to project dependency/tag `0.5.2` / `v0.5.2` at commit `d54676cb113e48dc886615a0b589bb0e4bccbca4`; and the initial published-Loihi set is anchored by stable DOI references.
+
+The branch adds a versioned machine-readable reference manifest, exact Git-blob verification for key Catalyst source/document/tooling boundaries, a clean detached-checkout fetch gate, a native Catalyst RTL-regression runner that preserves the pinned source unchanged, and explicit evidence/independence/discrepancy/change-control terminology. Behavioral normalization, four-way feature comparison, project baseline changes, performance comparison, and K26 Catalyst reproduction remain outside M13.1 and are deferred to later M13 sub-milestones.
 
 #### Core goal
 
@@ -2173,9 +2184,20 @@ Create a reproducible external-reference boundary before inspecting differences 
 
 #### Pass boundary
 
-The exact source versions, evidence hierarchy, comparison terminology, and discrepancy-handling rules are recorded well enough that another researcher could reconstruct which implementations and documents were compared.
+**Achieved.** The exact source versions, evidence hierarchy, comparison terminology, and discrepancy-handling rules are recorded well enough that another researcher can reconstruct which implementations and documents were compared.
+
+Closure evidence on 2026-09-08 includes a clean Catalyst `v2.3-paper` / `n1-final` checkout at `1806bb4b4114d7671e5648fa75b7b83b3a8d5543`, exact key-source Git-blob verification, both lightweight tag-object checks, a passing complete thesis regression, **25/25** native Catalyst RTL regression testbenches under Icarus Verilog 12.0, and **56/56** pinned Catalyst CPU-simulator tests under Python 3.11.16. The exact validation environment and the distinction between source-declared minimums and closure-time versions are frozen in `Neuromorphic Digital Twin/references/m13_1_reference_manifest.json` and `Neuromorphic Digital Twin/docs/M13_1_REFERENCE_BASELINE.md`.
+
+No project computational behavior, HLS, RTL, or M12 physical baseline was changed by M13.1. The only M12-era edit made while establishing this gate restored the already-intended documentation phrase required by its existing source-contract regression. K26 Catalyst reproduction remains deferred to M13.5.
 
 ---
+
+
+##### Independent local closure evidence
+
+On 2026-09-09 the pinned Catalyst reference was independently reproduced on the user's local PC. The CPU simulator suite passed **56/56** tests and the native RTL suite passed **25/25** testbenches. The local RTL run used `M13_1_TB_TIMEOUT_SECONDS=600` after a 120-second wrapper timeout terminated a still-progressing `tb_p13a.v`; the longer timeout was classified as a Class-H host-harness portability correction, not a behavioral change. The accepted runner keeps compile errors, native failure markers, nonzero simulator exits, source-pin changes, and provenance failures fatal.
+
+This local reproduction closes the M13.1 validation boundary with no architectural discrepancy and no change to the M12-validated project baseline.
 
 ### M13.2 — Build a four-way architectural feature crosswalk
 
