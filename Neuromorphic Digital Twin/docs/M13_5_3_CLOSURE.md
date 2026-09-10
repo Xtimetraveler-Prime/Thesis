@@ -137,7 +137,7 @@ The independently generated `references/m13_5_closure.json` is now tracked and r
 
 ## Closure-tooling CI checkpoint
 
-Before local evidence promotion, the M13.5.3 host-side tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.
+Before local evidence promotion, the M13.5.3 host-side tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This pre-promotion checkpoint validated the promotion machinery; the independent local closure subsequently generated and tracked `references/m13_5_closure.json`.
 
 ---
 
@@ -151,7 +151,7 @@ The source-controlled closure command was independently executed against the pre
 M13.5.3 closure validation PASS
 ```
 
-The resulting tracked authority records Catalyst routed WNS `+0.001 ns`, WHS `+0.013 ns`, **19,891** CLB LUTs, **30,850** CLB registers, **52.5** Block RAM tiles, **14** DSPs, and **0** URAM at the frozen 100 MHz target. The final source-level tracked-result gate adds four invariants, bringing the expected clean branch totals to **23 focused M13.5 tests** and **358 project tests**.
+The resulting tracked authority records Catalyst routed WNS `+0.001 ns`, WHS `+0.013 ns`, **19,891** CLB LUTs, **30,850** CLB registers, **52.5** Block RAM tiles, **14** DSPs, and **0** URAM at the frozen 100 MHz target. The final source-level tracked-result gate passed **23/23 focused M13.5 tests** and **358/358 complete project tests** with the tracked closure invariants included.
 
 The evidence-manifest SHA-256 is:
 

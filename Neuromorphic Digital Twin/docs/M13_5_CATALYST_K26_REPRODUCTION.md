@@ -388,7 +388,7 @@ The source-controlled `run_m13_5_catalyst_k26_vivado.sh` runner was independentl
 
 The generated normalized comparison retained the frozen evidence rules: project part `xck26-sfvc784-2LV-c` remains distinct from the Catalyst part, latency/throughput is withheld, power/energy is withheld, and Catalyst physical execution remains false. The runner reached its final PASS only after required synthesis/implementation reports and the implemented DCP were preserved, the evidence tree was hashed, and tracked Catalyst source was confirmed unchanged.
 
-M13.5.2 is therefore complete. M13.5.3 subsequently validated the preserved evidence through `scripts/run_m13_5_closure.sh`, independently re-parsed the native routed timing/utilization reports, reproduced the normalized comparison, verified the complete SHA-256 evidence manifest, and promoted `references/m13_5_closure.json` as the tracked authority. Independent local closure passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**; the final tracked-result source gate extends those counts to **23/23 focused** and **358/358 complete** tests.
+M13.5.2 is therefore complete. M13.5.3 subsequently validated the preserved evidence through `scripts/run_m13_5_closure.sh`, independently re-parsed the native routed timing/utilization reports, reproduced the normalized comparison, verified the complete SHA-256 evidence manifest, and promoted `references/m13_5_closure.json` as the tracked authority. Independent local closure passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**; the final tracked-result source gate subsequently passed **23/23 focused** and **358/358 complete** tests.
 
 ---
 

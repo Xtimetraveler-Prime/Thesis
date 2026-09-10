@@ -2414,12 +2414,12 @@ Physical run:    not claimed
 
 The runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree, while M13.5.3 promotes only the compact machine-independent closure record and evidence hashes into source control.
 
-M13.5.3 closure tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in clean CI. Independent local execution of `bash scripts/run_m13_5_closure.sh` reproduced those pass counts and promoted the tracked closure artifact. The final tracked-result source gate adds four invariants, for **23/23 focused M13.5 tests** and **358/358 complete project tests**.
+M13.5.3 closure tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in clean CI. Independent local execution of `bash scripts/run_m13_5_closure.sh` reproduced those pass counts and promoted the tracked closure artifact. The final tracked-result source gate passed **23/23 focused M13.5 tests** and **358/358 complete project tests**.
 
 
 #### M13.5.3 completion evidence
 
-Independent local evidence promotion on 2026-09-10 validated the complete preserved vendor tree, independently re-parsed native routed timing/utilization reports, regenerated the normalized hardware comparison, verified every SHA-256 entry, and produced `Neuromorphic Digital Twin/references/m13_5_closure.json` with status `validated_complete`. The same closure command passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**. A final tracked-result source gate adds four exact closure invariants and is expected to pass **23/23 focused M13.5 tests** and **358/358 complete project tests** before merge.
+Independent local evidence promotion on 2026-09-10 validated the complete preserved vendor tree, independently re-parsed native routed timing/utilization reports, regenerated the normalized hardware comparison, verified every SHA-256 entry, and produced `Neuromorphic Digital Twin/references/m13_5_closure.json` with status `validated_complete`. The same closure command passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**. The final tracked-result source gate added the tracked closure invariants and passed **23/23 focused M13.5 tests** and **358/358 complete project tests** before merge.
 
 Final Catalyst routed result at the frozen 100 MHz / 10 ns target:
 
