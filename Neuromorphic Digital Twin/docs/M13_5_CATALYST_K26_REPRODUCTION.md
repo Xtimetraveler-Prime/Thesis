@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress — hardware-comparison boundary frozen and automated RTL/vendor tooling implemented; Vivado 2025.2 routed reproduction remains to be run independently.**
+**In progress — M13.5.1 automated hardware/RTL preflight complete; M13.5.2 Vivado 2025.2 routed reproduction remains to be run independently.**
 
 M13.5 extends the Catalyst audit beyond documentation and software simulation. Its goal is to reproduce the pinned Catalyst N1 release at the strongest hardware boundary actually supplied by that release, preserve vendor evidence, and compare it with the accepted M12.5 FPGA characterization without turning unlike implementations into an unfair performance contest.
 
@@ -275,6 +275,8 @@ build/m13_5/catalyst-k26-vivado/
   synthesis.log
   implementation.log
   catalyst-hardware-result.json
+  hardware-comparison.json
+  hardware-comparison.md
   evidence-manifest.json
   native_reports/
     synth_utilization.rpt
@@ -384,3 +386,11 @@ The branch can be fully tested in a normal CI environment through:
 - complete thesis Python regression.
 
 The remaining step that requires the local AMD toolchain is the actual Vivado 2025.2 synthesis/place/route flow. Once that result is available, M13.5 can populate the Catalyst side of the hardware comparison and determine whether routed implementation is the final strongest defensible boundary or whether any additional board integration is warranted.
+
+## Automated M13.5.1 preflight evidence
+
+A clean Ubuntu 24.04 current-head reconstruction completed the non-Vivado M13.5 boundary successfully. The run verified the exact pinned Catalyst checkout and `fpga/kria` inventory, elaborated the K26 wrapper from the same 15 RTL files named by `build_kria.tcl` with Icarus Verilog 12+, passed **13/13 focused M13.5 tests**, and passed the complete **344/344 thesis regression suite**. Both M13.5 shell runners passed syntax validation and the branch-diff guard confirmed no frozen computational-core, HLS, routing, weight, or FPGA-v1 behavior file changed.
+
+M13.1 already established the unchanged Catalyst pin at **25/25 native RTL regression testbenches**; the M13.5 branch consumes that exact source and adds the K26-wrapper-specific elaboration gate rather than redefining Catalyst's regression suite.
+
+At this checkpoint all work that does not require AMD Vivado is complete. The next evidence-producing command is the source-controlled Vivado 2025.2 runner. Its output will determine the actual routed timing/resource result and therefore cannot be pre-filled or inferred from upstream claims.

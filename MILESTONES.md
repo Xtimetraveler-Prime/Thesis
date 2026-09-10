@@ -2366,11 +2366,33 @@ The validated result authority is `Neuromorphic Digital Twin/references/m13_4_ca
 
 ### M13.5 — Reproduce Catalyst at the strongest common FPGA/RTL boundary
 
-**Status:** Planned
+**Status:** In progress
+**Started:** 2026-09-10
+**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight complete, M13.5.2 awaiting independent Vivado 2025.2 reproduction
 
 #### Core goal
 
 Where supported by the pinned Catalyst N1 release and available tools, reproduce Catalyst N1 on a K26-class or otherwise directly comparable FPGA/RTL flow so the architectural audit includes implementation evidence beyond documentation and software simulation.
+
+#### Development decomposition
+
+M13.5 is being executed in three ordered sub-boundaries:
+
+- **M13.5.1 — Freeze hardware comparison boundary and automated RTL preflight.** Pin the source-supported Catalyst K26 configuration, tooling assumptions, fairness rules, physical-programming limitation, wrapper elaboration, and vendor-report parser before observing Vivado results.
+- **M13.5.2 — Reproduce Catalyst synthesis/place/route in Vivado 2025.2.** Run the pinned `synth_only` and `run_impl.tcl` flow without editing Catalyst source; preserve the implemented DCP and native reports.
+- **M13.5.3 — Normalize hardware evidence and close at the strongest defensible boundary.** Compare routed timing/resources with M12.5 only where definitions are compatible, explicitly withhold unsupported latency/power/physical claims, and decide whether routed implementation is the final source-supported boundary.
+
+#### M13.5.1 completion evidence
+
+The hardware comparison contract is frozen in `Neuromorphic Digital Twin/references/m13_5_hardware_manifest.json` before any Catalyst Vivado utilization result is observed. It records the exact Catalyst pin, upstream K26 target part `xczu5ev-sfvc784-2-i`, 2-core x 256-neuron wrapper, 4096-entry pool/core, 100 MHz target, Vivado-2025.2 thesis reproduction choice, project M12.5 baseline, target-part distinction, and fairness rules. It also records an upstream tooling caveat: the README's default `build_kria.tcl` invocation does not launch synthesis at the pinned source, while the Tcl's existing documented `synth_only` mode does. The reproduction runner therefore selects that existing mode and then executes the pinned `run_impl.tcl` without modifying Catalyst source.
+
+The exact pinned `fpga/kria/` directory contains only four source/build files and provides no K26 XDC, processing-system block design, or `write_bitstream` step. M13.5 consequently treats routed implementation as the strongest directly supplied hardware boundary unless a separately identified board integration is later justified. This is a platform/tooling limitation, not a behavioral discrepancy.
+
+Automated current-head preflight verified the exact Catalyst checkout and K26 inventory, elaborated the same 15 RTL files named by the pinned K26 synthesis Tcl under Icarus Verilog 12+, passed **13/13 focused M13.5 tests**, passed the complete **344/344 project regression suite**, validated both vendor shell scripts syntactically, and confirmed that no frozen computational-core/HLS/FPGA-v1 path changed. Earlier M13.1 evidence already established the pinned Catalyst native RTL regression at 25/25; M13.5 does not alter that external source.
+
+The source-controlled Vivado runner now preserves native synthesis/implementation reports and the implemented DCP, parses routed WNS/WHS and resource counts into machine-readable JSON, generates a fairness-preserving project/Catalyst comparison artifact, hashes the evidence tree, rejects negative routed setup/hold slack, and structurally withholds latency/throughput, power/energy, and physical-Catalyst claims that are not supported by the supplied flow.
+
+**M13.5.1 is complete. M13.5.2 is the current boundary and requires independent execution with the local Vivado 2025.2 installation.**
 
 #### Preferred physical comparison
 
