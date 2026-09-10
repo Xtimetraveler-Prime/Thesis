@@ -184,6 +184,14 @@ def validate_brian2loihi_scenario(
             "arithmetic; disable explicit saturation/wraparound"
         )
 
+    if scenario.spike_routes:
+        raise UnsupportedScenarioError(
+            "the current Brian2Loihi adapter does not map ComparisonScenario "
+            "spike_routes. Recurrent scenarios must remain blocked until M13.3 "
+            "freezes the recurrent graph/timing transform; silently dropping "
+            "routes would create invalid comparison evidence"
+        )
+
     # Building the groups validates every legacy mapping while preserving the
     # already-validated source format for encoded synapses.
     build_brian2loihi_synapse_groups(scenario, mapping)
