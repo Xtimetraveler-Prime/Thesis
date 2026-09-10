@@ -1,0 +1,152 @@
+{
+  "schema": "neuromorphic-twin-m13-hardware-closure-v1",
+  "status": "validated_complete",
+  "milestone": "M13.5",
+  "strongest_catalyst_boundary": "source-supported routed implementation",
+  "source_pins": {
+    "m13_4_main_merge": "54c7840dff765d585e7ff236845b085007405c05",
+    "project_m12_merge": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+    "catalyst_tag": "v2.3-paper"
+  },
+  "reproduction": {
+    "vivado": "2025.2",
+    "clock_hz": 100000000,
+    "clock_period_ns": 10.0,
+    "project_target_part": "xck26-sfvc784-2LV-c",
+    "catalyst_target_part": "xczu5ev-sfvc784-2-i"
+  },
+  "configured_scope": {
+    "project": "Validation-capable M12.5 image including computational core, workload image, VIO/debug shell, physical trace path, and passive timing counter.",
+    "catalyst": {
+      "cores": 2,
+      "neurons_per_core": 256,
+      "total_neurons": 512,
+      "pool_depth_per_core": 4096,
+      "host_boundary": "AXI-facing top-level wrapper"
+    }
+  },
+  "routed_timing": {
+    "comparison_status": "contextual_same_10ns_constraint",
+    "project": {
+      "wns_ns": 0.493,
+      "whs_ns": 0.011
+    },
+    "catalyst": {
+      "wns_ns": 0.001,
+      "whs_ns": 0.013
+    },
+    "project_timing_closed": true,
+    "catalyst_timing_closed": true,
+    "rule": "Do not infer maximum Fmax from WNS; both values only describe closure/margin at the 10 ns target."
+  },
+  "resources": [
+    {
+      "resource": "CLB LUTs",
+      "comparison_status": "contextual_only",
+      "project": {
+        "used": 4424,
+        "available": 117120
+      },
+      "catalyst": {
+        "used": 19891.0,
+        "available": 117120.0,
+        "utilization_percent": 16.98
+      },
+      "reason": "Raw implementation counts are shown with local device capacities, but the target part strings, configured capacities, architectural feature sets, and validation/debug overhead differ."
+    },
+    {
+      "resource": "CLB registers",
+      "comparison_status": "contextual_only",
+      "project": {
+        "used": 4280,
+        "available": 234240
+      },
+      "catalyst": {
+        "used": 30850.0,
+        "available": 234240.0,
+        "utilization_percent": 13.17
+      },
+      "reason": "Raw implementation counts are shown with local device capacities, but the target part strings, configured capacities, architectural feature sets, and validation/debug overhead differ."
+    },
+    {
+      "resource": "Block RAM tiles",
+      "comparison_status": "contextual_only",
+      "project": {
+        "used": 18,
+        "available": 144,
+        "relation": "<="
+      },
+      "catalyst": {
+        "used": 52.5,
+        "available": 144.0,
+        "utilization_percent": 36.46
+      },
+      "reason": "Raw implementation counts are shown with local device capacities, but the target part strings, configured capacities, architectural feature sets, and validation/debug overhead differ."
+    },
+    {
+      "resource": "DSPs",
+      "comparison_status": "contextual_only",
+      "project": {
+        "used": 2,
+        "available": 1248
+      },
+      "catalyst": {
+        "used": 14.0,
+        "available": 1248.0,
+        "utilization_percent": 1.12
+      },
+      "reason": "Raw implementation counts are shown with local device capacities, but the target part strings, configured capacities, architectural feature sets, and validation/debug overhead differ."
+    },
+    {
+      "resource": "URAM",
+      "comparison_status": "contextual_only",
+      "project": {
+        "used": 0,
+        "available": 64
+      },
+      "catalyst": {
+        "used": 0.0,
+        "available": 64.0,
+        "utilization_percent": 0.0
+      },
+      "reason": "Raw implementation counts are shown with local device capacities, but the target part strings, configured capacities, architectural feature sets, and validation/debug overhead differ."
+    }
+  ],
+  "behavioral_execution": {
+    "project": {
+      "cases": 22,
+      "ticks": 166,
+      "mismatches": 0
+    },
+    "catalyst": null,
+    "comparison_status": "not_comparable_at_routed_boundary",
+    "reason": "The supplied Catalyst K26 flow produces an implemented DCP/reports but no board runtime trace for the M13.4 common corpus."
+  },
+  "comparison_limits": {
+    "latency_throughput": "withheld",
+    "power_energy": "withheld",
+    "physical_catalyst_execution": false
+  },
+  "evidence": {
+    "local_layout": "build/m13_5/catalyst-k26-vivado",
+    "evidence_manifest_sha256": "80a03e53f8775c6358654fa34e35176442f79b94b43de8e58ecf10920665b2bc",
+    "normalized_result_sha256": "27fca6ef4497f59359860caa199708725cec4ab14ba33d7ce696d50b8530ae0a",
+    "normalized_comparison_sha256": "1a4f2035d4b2774c68e6e93eef1c0f498adbd592b44fec7eb46dd8b10c728a09",
+    "normalized_comparison_markdown_sha256": "ccff370b62e5eb1d66b5b2f02d5e4df5e0c272eb419f9926442f1ba7724e7766",
+    "native_reports_sha256": {
+      "synth_utilization.rpt": "1170552bcde232e0809b3baa8ad66ec63c0cb98aeadf4d09dc9e6a3526384e68",
+      "synth_utilization_hier.rpt": "b17118d9adb85f8be45304a178cb29345ee55db51fc15e1b82cc675d6ed43262",
+      "synth_timing.rpt": "92e3f9a639a8e265b38f761a9938c38244f4da5ffec91575b2b3b4db8f0dacac",
+      "kria_n1_impl.dcp": "28fa5f660a74eed48412b8d5d7e0301d394d3ce1d31020c100e88fcd514dc2c9",
+      "timing_summary.rpt": "12191530994d7cec4064447a4b844a5565ce06832b03f150e20b627ebd591b53",
+      "timing_paths.rpt": "d69497c2f84904e4f005683e51ce1667d55cbc0cd6af20ec4360560d01d52f16",
+      "utilization.rpt": "7005642c630024fd1a284d9b397c5dfdc51460d9e511643efbc033f42cfa0bae",
+      "utilization_hier.rpt": "dca269172826923061b360d42b3819e639526cbe16e02c780cabfcd994d2f456",
+      "power.rpt": "e85837f6d3c14d9432c10e8ac88985610d830038d7e661b2b9b7c39503efa5ce",
+      "clock_utilization.rpt": "2d49b85771be9cb4af712fa83b2eca8fbc6d32e80192799cb2d2e52737f3e8e4",
+      "design_analysis.rpt": "008601e99539aefbe86c23a9f184ef01590c7abbb733ad9f33361a2074e03bc2"
+    }
+  },
+  "conclusion": "The exact pinned Catalyst N1 K26-class RTL reproduced successfully through Vivado 2025.2 synthesis, placement, physical optimization, and routing at the frozen 100 MHz target. The pinned release does not provide a directly programmable KV260 integration, so routed implementation is the strongest source-supported Catalyst hardware boundary used by M13.5."
+}
