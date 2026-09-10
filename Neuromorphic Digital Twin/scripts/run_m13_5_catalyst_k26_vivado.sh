@@ -9,13 +9,16 @@ NATIVE_BUILD="$CATALYST/fpga/kria/build"
 command -v python3 >/dev/null
 command -v vivado >/dev/null
 
+# Remove only the known generated upstream build directory before provenance
+# validation so an interrupted prior vendor run cannot poison a clean rerun.
+rm -rf "$NATIVE_BUILD"
+
 cd "$ROOT"
 PYTHONPATH=src python3 examples/validate_m13_5_hardware_manifest.py --catalyst-checkout "$CATALYST"
 
 vivado_text="$(vivado -version 2>&1)"
 VIVADO_VERSION="$(PYTHONPATH=src python3 -c 'import sys; from neuromorphic_twin.m13_hardware_audit import require_vivado_2025_2; print(require_vivado_2025_2(sys.stdin.read()))' <<<"$vivado_text")"
 
-rm -rf "$NATIVE_BUILD"
 rm -rf "$OUT"
 mkdir -p "$OUT/native_reports"
 printf '%s\n' "$vivado_text" > "$OUT/vivado-version.txt"
