@@ -16,6 +16,7 @@ from neuromorphic_twin.m13_findings import (
     build_m13_6_findings,
     render_m13_6_findings_markdown,
     validate_m13_evidence_inputs,
+    validate_tracked_m13_6_findings,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -147,3 +148,8 @@ def test_hardware_claim_boundary_drift_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="M13.5 comparison limits drifted"):
         build_m13_6_findings(crosswalk, directed, hardware)
+
+
+def test_tracked_candidate_matches_deterministic_regeneration() -> None:
+    tracked = _load("m13_6_findings.json")
+    validate_tracked_m13_6_findings(tracked, *_inputs())
