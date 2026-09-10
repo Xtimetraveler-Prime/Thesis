@@ -56,6 +56,8 @@ The script defaults to the evidence produced by the successful M13.5.2 run and p
 2. run the focused M13.5 audit/comparison/closure tests;
 3. run the complete project regression and verify that no frozen computational-core/HLS/FPGA-v1 baseline path changed.
 
+Before the promotion stage accepts the normalized JSON, the wrapper independently re-parses the preserved native `utilization.rpt` and `timing_summary.rpt` through `validate_m13_5_native_reports.py`. The regenerated vendor result must match `catalyst-hardware-result.json` exactly. This prevents a self-consistent JSON/hash bundle from masking drift between the normalized record and the actual Vivado reports.
+
 The generated human-readable summary remains in ignored build output:
 
 ```text
@@ -72,8 +74,9 @@ references/m13_5_closure.json
 
 ## Evidence-tree validation
 
-`m13_hardware_closure.py` fails closed unless all of the following hold:
+The source-controlled closure chain fails closed unless all of the following hold:
 
+- the preserved native utilization and timing reports independently regenerate the saved normalized Catalyst result exactly;
 - every artifact required by the source-controlled Vivado runner is present;
 - the exact Catalyst commit, Vivado version, target part, and frozen 100 MHz boundary agree with the pre-vendor M13.5 manifest;
 - routed WNS and WHS are non-negative;
@@ -86,7 +89,7 @@ references/m13_5_closure.json
 - every preserved evidence file except the hash manifest itself is covered by the recorded SHA-256 map;
 - every recorded SHA-256 digest matches the current local evidence file.
 
-An extra un-hashed file, missing native report, changed normalized result, comparison drift, or tampered preserved artifact causes closure to fail.
+An extra un-hashed file, missing native report, changed normalized result, native-report regeneration mismatch, comparison drift, or tampered preserved artifact causes closure to fail.
 
 ---
 
