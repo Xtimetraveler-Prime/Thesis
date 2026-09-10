@@ -1,0 +1,34 @@
+name: Build M13.2 crosswalk document
+
+on:
+  push:
+    branches:
+      - agent/m13-2-four-way-crosswalk
+    paths:
+      - scripts/build_m13_2_crosswalk_doc.py
+      - .github/workflows/m13_2_build_doc.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-2-four-way-crosswalk
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/build_m13_2_crosswalk_doc.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MILESTONES.md \
+            'Neuromorphic Digital Twin/references/m13_2_feature_crosswalk.json' \
+            'Neuromorphic Digital Twin/docs/M13_2_ARCHITECTURAL_CROSSWALK.md'
+          git diff --cached --check
+          git commit -m "Generate M13.2 architectural crosswalk record"
+          git push origin HEAD:agent/m13-2-four-way-crosswalk
