@@ -80,6 +80,11 @@ PYTHONPATH=src python3 examples/parse_m13_5_catalyst_reports.py \
   --vivado-version "$VIVADO_VERSION" \
   --output "$OUT/catalyst-hardware-result.json"
 
+PYTHONPATH=src python3 examples/render_m13_5_hardware_comparison.py \
+  --catalyst-result "$OUT/catalyst-hardware-result.json" \
+  --output-json "$OUT/hardware-comparison.json" \
+  --output-md "$OUT/hardware-comparison.md"
+
 PYTHONPATH=src python3 - "$OUT" <<'PY'
 import hashlib
 import json
@@ -93,12 +98,17 @@ for path in sorted(p for p in out.rglob('*') if p.is_file()):
         continue
     files[str(path.relative_to(out))] = hashlib.sha256(path.read_bytes()).hexdigest()
 result = json.loads((out / 'catalyst-hardware-result.json').read_text())
+comparison = json.loads((out / 'hardware-comparison.json').read_text())
 manifest = {
     'schema': 'neuromorphic-twin-m13-hardware-evidence-manifest-v1',
     'catalyst_commit': result['catalyst_commit'],
     'vivado': result['vivado'],
     'target_part': result['target_part'],
     'timing_closed': result['timing_closed'],
+    'strongest_catalyst_boundary': comparison['strongest_catalyst_boundary'],
+    'latency_throughput_comparison': comparison['latency_throughput']['comparison_status'],
+    'power_energy_comparison': comparison['power_energy']['comparison_status'],
+    'physical_catalyst_execution': comparison['physical_execution']['catalyst'],
     'files_sha256': files,
 }
 (out / 'evidence-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -106,6 +116,12 @@ if not result['timing_closed']:
     raise SystemExit(
         f"Catalyst routed implementation completed but 100 MHz timing did not close: {result['timing']}"
     )
+if comparison['latency_throughput']['comparison_status'] != 'withheld':
+    raise SystemExit('M13.5 fairness violation: latency/throughput comparison was not withheld')
+if comparison['power_energy']['comparison_status'] != 'withheld':
+    raise SystemExit('M13.5 fairness violation: power/energy comparison was not withheld')
+if comparison['physical_execution']['catalyst'] is not False:
+    raise SystemExit('M13.5 fairness violation: routed Catalyst evidence was labeled physical')
 PY
 
 # The Vivado flow may create ignored/untracked products, but tracked Catalyst source must remain byte-identical.
@@ -116,4 +132,4 @@ git -C "$CATALYST" diff --cached --quiet --
 rm -rf "$NATIVE_BUILD"
 
 printf 'M13.5 Catalyst K26 Vivado PASS: commit=%s vivado=%s part=%s clock=100MHz output=%s\n' \
-  "$(cat "$OUT/catalyst-head.txt" | cut -c1-12)" "$VIVADO_VERSION" "xczu5ev-sfvc784-2-i" "$OUT"
+  "$(cut -c1-12 "$OUT/catalyst-head.txt")" "$VIVADO_VERSION" "xczu5ev-sfvc784-2-i" "$OUT"
