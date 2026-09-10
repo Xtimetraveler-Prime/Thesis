@@ -1,0 +1,39 @@
+name: M13.4 Catalyst CUBA smoke once
+
+on:
+  push:
+    branches:
+      - agent/m13-4-directed-differential-probes
+    paths:
+      - '.github/workflows/m13_4_cuba_smoke_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-4-directed-differential-probes
+          fetch-depth: 0
+      - name: Install Icarus and project
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+      - name: Fetch pinned Catalyst and run CUBA probes
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          bash scripts/fetch_m13_1_catalyst.sh
+          bash scripts/run_m13_4_catalyst_cuba_probes.sh
+      - name: Remove one-shot workflow
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_4_cuba_smoke_once.yml
+          git commit -m 'Remove temporary M13.4 CUBA smoke workflow'
+          git push origin HEAD:agent/m13-4-directed-differential-probes
