@@ -145,6 +145,15 @@
       "path": "rtl/scalable_core_v2.v",
       "blob_sha": "c21c9c0256b37b94e78a7eb49dfd3d4303e93f0b",
       "role": "Pinned N1 core RTL: 24-bit neuron/current memories, 16-bit data/weights, optional 12-bit CUBA decays/bias, CSR synapses, compressed formats, FIFO delivery, refractory/threshold rules, probes, traces, and learning FSMs."
+    },
+    "project_m03_m08_brian_evidence": {
+      "column": "brian2loihi_comparison_evidence",
+      "evidence_type": "direct_observation",
+      "repository": "Xtimetraveler-Prime/Thesis",
+      "commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+      "path": "MILESTONES.md",
+      "locator": "M03-M08 completion evidence, especially M05, M07, and M08.3",
+      "role": "Project-owned direct observations against Brian2Loihi: M05 current-decay ordering probe; M07 12/12 directed current/voltage/spike conformance across 34 ticks; M08.3 15/15 encoded-weight conformance including direct w_act comparison."
     }
   },
   "rows": [
@@ -165,7 +174,8 @@
         "summary": "LoihiNeuronGroup exposes dimensionless current I and voltage v with Loihi-style decay parameters and a Brian2 forward-Euler schedule.",
         "evidence": [
           "brian_neuron",
-          "brian_readme"
+          "brian_readme",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -242,7 +252,8 @@
         "status": "implemented",
         "summary": "decay_I and decay_v are 0..4096; each decay amount is constructed as sign(x)*ceil(abs(x*d/4096)), i.e. away from zero. The Brian2 equations retain separate I and v state.",
         "evidence": [
-          "brian_neuron"
+          "brian_neuron",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -282,7 +293,8 @@
         "evidence": [
           "brian_readme",
           "brian_neuron",
-          "brian_synapses"
+          "brian_synapses",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -321,7 +333,8 @@
         "status": "implemented",
         "summary": "Threshold is explicitly v > threshold_v_mant*64; a spike resets v to 0.",
         "evidence": [
-          "brian_neuron"
+          "brian_neuron",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -360,7 +373,8 @@
         "summary": "Refractory is configured as 1..64 Brian2 timesteps; voltage dynamics are disabled while refractory while current continues its equation. Earlier M07 project comparison fixed the project's convention against this observable boundary.",
         "evidence": [
           "brian_neuron",
-          "brian_readme"
+          "brian_readme",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -399,7 +413,8 @@
         "summary": "Implements sign modes, w_exp -8..7, num_weight_bits 0..8, mode-dependent mantissa bounds, deterministic static quantization/scaling/alignment/clipping, and w_act delivery.",
         "evidence": [
           "brian_synapses",
-          "brian_readme"
+          "brian_readme",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
@@ -439,7 +454,8 @@
         "status": "implemented",
         "summary": "Each presynaptic event executes I += w_act through Brian2 Synapses; arbitrary connection graphs/fan-in/fan-out are represented at the software-model level.",
         "evidence": [
-          "brian_synapses"
+          "brian_synapses",
+          "project_m03_m08_brian_evidence"
         ]
       },
       "project": {
