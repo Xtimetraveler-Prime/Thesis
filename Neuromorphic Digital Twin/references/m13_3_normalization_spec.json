@@ -1,0 +1,366 @@
+{
+  "schema": "neuromorphic-twin-m13-normalization-v1",
+  "status": "frozen",
+  "version": 1,
+  "frozen_on": "2026-09-09",
+  "purpose": "Freeze the common behavioral subset, parameter transforms, timing alignment rules, field comparability classes, and scenario-generation constraints before M13.4 observes Catalyst differential outputs.",
+  "source_pins": {
+    "project_m12_baseline": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "m13_2_crosswalk_merge": "49ab7be6dfce427979622b585165b59bbbfbc2da",
+    "catalyst_n1": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+    "brian2loihi": "d54676cb113e48dc886615a0b589bb0e4bccbca4"
+  },
+  "authority_rules": [
+    "This specification is a thesis-project normalization authority, not a claim about undocumented Intel Loihi microarchitecture.",
+    "Published Loihi evidence remains the authority for claims about Loihi itself; Brian2Loihi and Catalyst are independent implementations/interpretations.",
+    "Transforms are frozen before M13.4 output inspection and must not be changed merely to make implementations agree.",
+    "Native configuration and native traces must be retained beside normalized artifacts.",
+    "A field marked qualitative or non_comparable must never be coerced into an exact equality test."
+  ],
+  "comparison_categories": {
+    "exact": "Same architectural quantity and same integer representation at the normalized boundary; equality may be tested directly.",
+    "transformed": "Same intended architectural quantity after the exact predeclared parameter, state-unit, identifier, or tick transform in this specification.",
+    "qualitative": "Related behavior can be described or ordered, but the available interfaces do not justify integer equality.",
+    "non_comparable": "No defensible common observable exists at this boundary; preserve native evidence only."
+  },
+  "canonical_boundary": {
+    "time": "One committed target-neuron algorithmic update. Hardware clock cycles and internal FSM phases are not canonical time.",
+    "state_unit": "One integer unit of the project's effective current/voltage representation. No hidden rescaling is applied to Catalyst potential/current or effective weights.",
+    "spike": "Binary spike presence for a logical neuron on one canonical tick. Native spike payload is outside the common exact subset.",
+    "logical_neuron_id": "Zero-based logical neuron identifier. Shared single-core/K26-portable scenarios restrict IDs to 0..255.",
+    "effective_weight": "Signed integer current contribution after any source-format initialization transform. Source encoding fields remain native metadata.",
+    "refractory_duration": "Number of canonical ticks from a spike tick t to the first tick on which the neuron is eligible to spike again; next_eligible_tick = t + R."
+  },
+  "global_common_constraints": {
+    "logical_core_count": 1,
+    "max_logical_neurons": 256,
+    "reset_voltage": 0,
+    "bias": 0,
+    "learning": false,
+    "graded_spikes": false,
+    "dendritic_compartments": false,
+    "noise": false,
+    "programmable_synaptic_delay": false,
+    "multicore_noc": false,
+    "state_observation_envelope": {
+      "min": -32768,
+      "max": 32767,
+      "reason": "Catalyst's exposed probe/parameter/weight boundary is 16-bit even where internal current/potential memories are wider."
+    },
+    "threshold_domain": {
+      "min": 64,
+      "max": 32704,
+      "multiple_of": 64,
+      "reason": "Brian2Loihi threshold_v_mant maps by x64; Catalyst strict-threshold normalization requires native threshold T+1 to remain signed-int16 representable."
+    },
+    "legacy_effective_weight_domain": {
+      "min": -16384,
+      "max": 16320,
+      "multiple_of": 64,
+      "reason": "Common legacy project/Brian mapping uses exponent 0 and scale 64 with Brian inhibitory mantissa -256 and excitatory mantissa +255; Catalyst accepts the resulting value directly as int16."
+    },
+    "refractory_duration_domain": {
+      "min": 1,
+      "max": 64,
+      "reason": "Brian2Loihi exposes refractory=1..64; Catalyst native counter is transformed as R-1."
+    }
+  },
+  "participants": {
+    "project_fpga_v1": {
+      "role": "M12-validated implementation under audit",
+      "native_boundary": "ComparisonScenario/Python golden model and physically validated FPGA-v1 architectural trace",
+      "profile": "frozen M10/M12 synchronous single-core behavior"
+    },
+    "brian2loihi_0_5_2": {
+      "role": "independent Loihi-oriented software reference",
+      "native_boundary": "LoihiNeuronGroup/LoihiSynapses under LoihiNetwork",
+      "profile": "point-neuron v/I model; static Loihi-style weight initialization; Brian schedule retained"
+    },
+    "catalyst_cpu_sync": {
+      "role": "pinned Catalyst software reference for simple synchronous LIF/refractory/recurrent questions",
+      "native_boundary": "sdk/neurocore/simulator.py synchronous DELIVER -> UPDATE -> LEARN path",
+      "profile": "simple subtractive-leak LIF; no independently observable dual current state",
+      "required_settings": {
+        "async_enable": false,
+        "learn_enable": false,
+        "graded_enable": false,
+        "dendritic_enable": false,
+        "noise_enable": false,
+        "leak": 0,
+        "resting": 0
+      }
+    },
+    "catalyst_rtl_cuba": {
+      "role": "pinned Catalyst RTL boundary for dual current/potential decay questions",
+      "native_boundary": "rtl/scalable_core_v2.v CUBA path",
+      "profile": "24-bit internal current/potential, 12-bit decay_u/decay_v, signed 16-bit external current/weight/parameter interface",
+      "required_settings": {
+        "scale_u_enable": false,
+        "learn_enable": false,
+        "graded_enable": false,
+        "dendritic_enable": false,
+        "noise_enable": false,
+        "resting": 0,
+        "bias_cfg": 0
+      }
+    }
+  },
+  "parameter_transforms": {
+    "threshold": {
+      "canonical_semantics": "spike iff V_work > T",
+      "project_fpga_v1": "native_threshold = T",
+      "brian2loihi_0_5_2": "threshold_v_mant = T / 64; T must be divisible by 64",
+      "catalyst_cpu_sync": "native_threshold = T + 1 because Catalyst uses >= and normalized states are integer-valued",
+      "catalyst_rtl_cuba": "native_threshold = T + 1 because the pinned RTL uses >=",
+      "category": "transformed"
+    },
+    "reset": {
+      "canonical_semantics": "hard reset to zero after a spike",
+      "project_fpga_v1": "reset_voltage = 0",
+      "brian2loihi_0_5_2": "fixed reset voltage = 0",
+      "catalyst_cpu_sync": "resting = 0",
+      "catalyst_rtl_cuba": "resting = 0",
+      "category": "exact"
+    },
+    "refractory": {
+      "canonical_semantics": "after a spike on tick t, first eligible tick is t + R",
+      "project_fpga_v1": "refractory_ticks = R; project stores max(R-1,0) future blocked ticks",
+      "brian2loihi_0_5_2": "refractory = R",
+      "catalyst_cpu_sync": "native refrac parameter = R - 1 for shared R in 1..64",
+      "catalyst_rtl_cuba": "native refractory counter parameter low 8 bits = R - 1; absolute mode",
+      "normalized_observable": "next_eligible_tick rather than raw implementation register",
+      "category": "transformed"
+    },
+    "legacy_effective_weight": {
+      "canonical_semantics": "signed effective integer current contribution",
+      "project_fpga_v1": "native effective weight = W",
+      "brian2loihi_0_5_2": "mantissa = W / 64, exponent = 0, precision = 8, excitatory mode for W >= 0 and inhibitory mode for W < 0",
+      "catalyst_cpu_sync": "native connection/direct-current value = W when the selected scenario class exposes that boundary",
+      "catalyst_rtl_cuba": "native pool/external-current value = W",
+      "category": "transformed"
+    },
+    "encoded_weight": {
+      "canonical_semantics": "compare final effective weight and resulting drive, not native source encoding fields",
+      "project_fpga_v1": "preserve requested mantissa, exponent, precision, sign mode, quantized mantissa, unclipped value, final effective value",
+      "brian2loihi_0_5_2": "program the same requested Loihi-style fields and observe w_act",
+      "catalyst_cpu_sync": "program only the final effective weight if it fits signed int16",
+      "catalyst_rtl_cuba": "program only the final effective weight if it fits signed int16",
+      "source_encoding_category_for_catalyst": "non_comparable",
+      "effective_weight_category": "transformed"
+    },
+    "decay": {
+      "canonical_semantics": "coefficient d denotes a /4096 decay amount; project/Brian domain is 0..4096",
+      "project_fpga_v1": "native d unchanged",
+      "brian2loihi_0_5_2": "native decay_I/decay_v unchanged",
+      "catalyst_cpu_sync": "non_comparable: simple CPU LIF has subtractive leak instead of independent current/voltage decay",
+      "catalyst_rtl_cuba": "native decay_u/decay_v = d with shared representable domain 0..4095; at least one CUBA-enabling field must be nonzero",
+      "full_decay_4096": "outside Catalyst RTL common subset because decay memories are 12-bit",
+      "category": "transformed"
+    },
+    "logical_identifiers": {
+      "canonical_semantics": "compare logical graph identity, not raw memory addresses or route encodings",
+      "project_fpga_v1": "logical neuron IDs remain canonical; axon/route IDs are preserved only as native evidence",
+      "brian2loihi_0_5_2": "logical neuron/source indices are mapped bijectively",
+      "catalyst_cpu_sync": "logical neurons map to one core local IDs; synthetic driver IDs, if used, are implementation-only",
+      "catalyst_rtl_cuba": "logical neurons map to one core local IDs",
+      "category": "transformed"
+    }
+  },
+  "timing_transforms": {
+    "committed_tick": {
+      "project_fpga_v1": "trace tick t is canonical tick t",
+      "brian2loihi_0_5_2": "one completed LoihiNetwork 1 ms step is treated as one candidate canonical tick; schedule-internal phases remain native evidence",
+      "catalyst_cpu_sync": "one completed synchronous Simulator timestep is canonical tick t for direct-current-equivalent scenarios",
+      "category": "transformed"
+    },
+    "catalyst_rtl_cuba_isolated_impulse": {
+      "precondition": "one non-empty external impulse at canonical tick 0 followed only by zero-input ticks over the compared window",
+      "native_input_rule": "apply the impulse before Catalyst native timestep 0",
+      "native_observation_rule": "Catalyst native timestep 0 is preserved as a warmup/staging tick and is not compared; canonical tick k maps to Catalyst native tick k+1",
+      "reason": "pinned Catalyst CUBA writes new input into current on one timestep while voltage uses the previously stored current",
+      "scope": "isolated impulse/decay traces only; do not use this shift to normalize arbitrary multi-input schedules",
+      "category": "transformed"
+    },
+    "recurrent_delivery": {
+      "canonical_observable": "lag from source spike tick to first target state effect/spike",
+      "project_fpga_v1": "next-tick only by frozen route-bank contract",
+      "catalyst_cpu_sync": "previous-timestep pending spikes are delivered before UPDATE in the next synchronous timestep",
+      "brian2loihi_0_5_2": "use native recurrent LoihiSynapses with delay=0 and measure the observed lag; do not post-hoc shift the result",
+      "catalyst_rtl_cuba": "measure native routed-delivery lag at committed timestep boundaries",
+      "category": "transformed"
+    }
+  },
+  "scenario_classes": {
+    "cpu_direct_drive": {
+      "purpose": "threshold/reset/refractory and delivered-drive probes where Catalyst CPU lacks an external axon-current state",
+      "requirements": [
+        "current_decay must be 4096 so project/Brian current does not carry into later ticks",
+        "voltage_decay must be 0 because Catalyst CPU simple LIF has no multiplicative voltage decay",
+        "bias/reset must be zero",
+        "no recurrent routes",
+        "no repeated copy of one source axon within the same tick for Brian2Loihi participation"
+      ],
+      "catalyst_translation": "collapse each canonical external-axon event row into the exact per-target effective current sum and inject that sum directly before the Catalyst CPU timestep",
+      "topology_caveat": "This scenario class compares delivered drive and neuron behavior; it does not claim that Catalyst traversed the same external-axon fanout structure."
+    },
+    "rtl_cuba_isolated_impulse": {
+      "purpose": "dual current/potential decay and input-staging probes",
+      "requirements": [
+        "exactly one non-empty external impulse tick at canonical tick 0",
+        "all later compared ticks have no external input",
+        "every decay is 0..4095 and at least one decay is nonzero",
+        "all direct injected per-neuron currents fit signed int16",
+        "all observed normalized states must stay inside signed int16 probe envelope",
+        "bias/reset/noise/dendrites/learning/graded mode disabled"
+      ],
+      "catalyst_translation": "program decay_v param 16, decay_u param 17, strict-threshold-transformed param 0, absolute refractory param 3, scale_u_enable=0, and apply the canonical impulse through ext_current before native timestep 0",
+      "observation_alignment": "canonical k <- Catalyst native k+1"
+    },
+    "logical_recurrent": {
+      "purpose": "compare next-tick recurrence using logical neuron-to-neuron effective edges rather than raw project axon-route storage",
+      "project_translation": "flatten each source_neuron -> target_axon route followed by that axon's synapse row into ordered logical (source_neuron,target_neuron,effective_weight) edges",
+      "brian2loihi_translation": "instantiate recurrent LoihiSynapses for the flattened logical edges with native delay=0",
+      "catalyst_translation": "instantiate same-core sparse logical connections in synchronous mode with delay=0",
+      "comparison_rule": "compare source spike tick, first target-effect lag, target state/spike outcomes, and multiplicity where representable; do not compare raw CSR addresses, route slots, or global FIFO order"
+    }
+  },
+  "field_policy": {
+    "current_after": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "exact",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "voltage_after": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "exact",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "spike_presence": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "exact",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "spike_payload": {
+      "project_fpga_v1": "non_comparable",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "non_comparable"
+    },
+    "threshold_configuration": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "transformed",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "refractory_raw_register": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "next_eligible_tick": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "transformed",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "effective_weight": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "transformed",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "weight_mantissa_exponent_precision_sign_mode": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "transformed",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "non_comparable"
+    },
+    "logical_edge_multiset": {
+      "project_fpga_v1": "transformed",
+      "brian2loihi_0_5_2": "transformed",
+      "catalyst_cpu_sync": "transformed",
+      "catalyst_rtl_cuba": "transformed"
+    },
+    "raw_event_total_order": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "qualitative"
+    },
+    "same_source_same_tick_duplicate_event": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "qualitative"
+    },
+    "finite_width_overflow_or_saturation": {
+      "project_fpga_v1": "exact",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "qualitative"
+    },
+    "hardware_cycle_count": {
+      "project_fpga_v1": "non_comparable",
+      "brian2loihi_0_5_2": "non_comparable",
+      "catalyst_cpu_sync": "non_comparable",
+      "catalyst_rtl_cuba": "non_comparable"
+    }
+  },
+  "common_behavior_decisions": {
+    "current_based_lif": "conditional: project/Brian dual-state directly; Catalyst CPU only voltage/spike direct-drive subset; Catalyst RTL CUBA for dual-state probes",
+    "positive_negative_synaptic_drive": "included by effective integer drive; Catalyst source-format encoding is not compared",
+    "current_voltage_decay": "included through project/Brian and Catalyst RTL CUBA isolated-impulse profile; arbitrary multi-input update order remains an M13.4 architectural probe",
+    "threshold_reset": "included with Catalyst threshold +1 transform and common reset zero",
+    "refractory_timing": "included through normalized next_eligible_tick and Catalyst R-1 parameter transform",
+    "static_fixed_point_weights": "included at final effective signed weight; Loihi-style encoding fields are project/Brian-only",
+    "fan_in_fan_out": "included at logical edge multiset and delivered target sum; raw storage and external transport are not equated",
+    "multi_tick_state_evolution": "included within each declared scenario class and field policy",
+    "recurrent_motifs": "conditionally included in synchronous single-core, delay=0 logical-edge form; native lag is measured rather than assumed",
+    "finite_width_overflow": "excluded from common exact subset and retained as architecture-specific native evidence"
+  },
+  "explicit_exclusions": [
+    "dendritic compartments",
+    "plasticity/learning and traces",
+    "noise",
+    "graded spike payload equivalence",
+    "programmable synaptic delays beyond the zero/minimal recurrent timing probe",
+    "multicore NoC behavior",
+    "management processors and host-control architecture",
+    "raw synapse/route memory addresses",
+    "global coincident-event total ordering where not exposed by every backend",
+    "universal finite-width overflow/saturation equivalence",
+    "performance, power, resource, and hardware-cycle comparisons"
+  ],
+  "small_translation_corpus": [
+    {
+      "name": "m13-3-threshold-boundary",
+      "scenario_class": "cpu_direct_drive",
+      "question": "strict equality versus just-over-threshold after the frozen Catalyst T+1 transform"
+    },
+    {
+      "name": "m13-3-refractory-release",
+      "scenario_class": "cpu_direct_drive",
+      "question": "first eligible tick after a canonical three-tick refractory duration"
+    },
+    {
+      "name": "m13-3-signed-drive",
+      "scenario_class": "cpu_direct_drive",
+      "question": "positive and negative effective drive summed into a non-spiking neuron"
+    },
+    {
+      "name": "m13-3-isolated-cuba-decay",
+      "scenario_class": "rtl_cuba_isolated_impulse",
+      "question": "dual-state isolated impulse translated with one Catalyst native warmup tick"
+    }
+  ],
+  "m13_4_handoff": {
+    "rule": "M13.4 must consume this frozen schema/version and may not silently substitute a different threshold, refractory, decay, weight, identifier, or timing transform.",
+    "native_evidence_required": true,
+    "normalized_evidence_required": true,
+    "classification_deferred": "A-H discrepancy adjudication remains M13.6; M13.4 records reproducible agreements/differences without mutating the M12 baseline."
+  }
+}
