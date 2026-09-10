@@ -2368,7 +2368,7 @@ The validated result authority is `Neuromorphic Digital Twin/references/m13_4_ca
 
 **Status:** In progress
 **Started:** 2026-09-10
-**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight complete, M13.5.2 awaiting independent Vivado 2025.2 reproduction
+**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight and M13.5.2 independent Vivado 2025.2 routed reproduction complete; M13.5.3 evidence promotion in progress
 
 #### Core goal
 
@@ -2392,7 +2392,28 @@ Automated current-head preflight verified the exact Catalyst checkout and K26 in
 
 The source-controlled Vivado runner now preserves native synthesis/implementation reports and the implemented DCP, parses routed WNS/WHS and resource counts into machine-readable JSON, generates a fairness-preserving project/Catalyst comparison artifact, hashes the evidence tree, rejects negative routed setup/hold slack, and structurally withholds latency/throughput, power/energy, and physical-Catalyst claims that are not supported by the supplied flow.
 
-**M13.5.1 is complete. M13.5.2 is the current boundary and requires independent execution with the local Vivado 2025.2 installation.**
+**M13.5.1 is complete. M13.5.2 independently reproduced the pinned Catalyst routed flow under local Vivado 2025.2 on 2026-09-10. M13.5.3 is now the current boundary: validate and promote the preserved vendor evidence into the tracked closure record.**
+
+#### M13.5.2 completion evidence
+
+Independent execution of the source-controlled Vivado runner on 2026-09-10 completed the exact pinned Catalyst N1 K26-class synthesis/place/phys-opt/route flow under Vivado 2025.2. The runner reported:
+
+```text
+Catalyst commit: 1806bb4b4114d7671e5648fa75b7b83b3a8d5543
+Vivado:          2025.2
+Target part:     xczu5ev-sfvc784-2-i
+Clock target:    100 MHz / 10 ns
+Routed WNS:      +0.001 ns
+Routed WHS:      +0.013 ns
+Timing closed:   yes
+Latency:         withheld
+Power:           withheld
+Physical run:    not claimed
+```
+
+The runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree until M13.5.3 validates and promotes the compact tracked closure artifact.
+
+M13.5.3 closure tooling has now passed **19/19 focused M13.5 tests** and the complete **350/350 project regression suite** in clean CI. The source-controlled closure command is `bash scripts/run_m13_5_closure.sh`.
 
 #### Preferred physical comparison
 

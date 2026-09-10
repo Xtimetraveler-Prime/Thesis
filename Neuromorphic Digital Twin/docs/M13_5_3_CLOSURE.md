@@ -131,3 +131,7 @@ If evidence promotion and the full regression pass, no additional Catalyst board
 A future thesis-created Catalyst board integration could be an additional experiment, but it is not required to close M13.5 and must not be retroactively described as part of the pinned upstream release.
 
 After `references/m13_5_closure.json` is independently generated and reviewed, the remaining repository work is to record its observed resource numbers and evidence hash in the main M13.5 narrative and `MILESTONES.md`, run final source-level consistency checks, and merge the branch.
+
+## Closure-tooling CI checkpoint
+
+Before local evidence promotion, the M13.5.3 host-side tooling passed **19/19 focused M13.5 tests** and the complete **350/350 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.

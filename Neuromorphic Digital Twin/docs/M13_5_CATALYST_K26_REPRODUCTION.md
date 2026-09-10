@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress — M13.5.1 automated hardware/RTL preflight complete; M13.5.2 Vivado 2025.2 routed reproduction remains to be run independently.**
+**In progress — M13.5.1 preflight and M13.5.2 independent Vivado 2025.2 routed reproduction are complete; M13.5.3 tracked evidence promotion remains.**
 
 M13.5 extends the Catalyst audit beyond documentation and software simulation. Its goal is to reproduce the pinned Catalyst N1 release at the strongest hardware boundary actually supplied by that release, preserve vendor evidence, and compare it with the accepted M12.5 FPGA characterization without turning unlike implementations into an unfair performance contest.
 
@@ -385,7 +385,17 @@ The branch can be fully tested in a normal CI environment through:
 - synthetic Vivado report-parser tests;
 - complete thesis Python regression.
 
-The remaining step that requires the local AMD toolchain is the actual Vivado 2025.2 synthesis/place/route flow. Once that result is available, M13.5 can populate the Catalyst side of the hardware comparison and determine whether routed implementation is the final strongest defensible boundary or whether any additional board integration is warranted.
+The local AMD-toolchain step is now complete. Independent Vivado 2025.2 execution reproduced the pinned Catalyst synthesis/place/route flow at 100 MHz with routed WNS `+0.001 ns` and WHS `+0.013 ns`. The current boundary is M13.5.3: validate the preserved evidence tree, promote a compact tracked closure record, and then close M13.5 at routed implementation unless the evidence contradicts the already-frozen source-supported boundary.
+
+## Independent M13.5.2 Vivado reproduction
+
+The source-controlled `run_m13_5_catalyst_k26_vivado.sh` runner was independently executed on 2026-09-10 with the local Vivado 2025.2 installation and completed successfully. It reproduced the pinned Catalyst commit `1806bb4b4114d7671e5648fa75b7b83b3a8d5543` on upstream target `xczu5ev-sfvc784-2-i` at the frozen 100 MHz constraint. The routed timing result was WNS `+0.001 ns` and WHS `+0.013 ns`, so setup and hold both closed.
+
+The generated normalized comparison retained the frozen evidence rules: project part `xck26-sfvc784-2LV-c` remains distinct from the Catalyst part, latency/throughput is withheld, power/energy is withheld, and Catalyst physical execution remains false. The runner reached its final PASS only after required synthesis/implementation reports and the implemented DCP were preserved, the evidence tree was hashed, and tracked Catalyst source was confirmed unchanged.
+
+M13.5.2 is therefore complete. M13.5.3 now promotes the local preserved evidence through `scripts/run_m13_5_closure.sh`; the resulting compact `references/m13_5_closure.json` becomes the tracked authority for final resource values and evidence hashes. The closure tooling itself passed **19/19 focused tests** and **350/350 complete project tests** in clean CI before this checkpoint was recorded.
+
+---
 
 ## Automated M13.5.1 preflight evidence
 
