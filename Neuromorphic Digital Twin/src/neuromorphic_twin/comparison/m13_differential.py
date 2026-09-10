@@ -332,6 +332,9 @@ def run_catalyst_graph_probe(
         core, neuron = sim._compiled.placement.neuron_map[(pop.id, 0)]
         gid_for_pop[pop.id] = int(core) * int(NEURONS_PER_CORE) + int(neuron)
 
+    logical_gids = [gid_for_pop[pop.id] for pop in pops]
+    gid_to_logical = {gid: logical for logical, gid in enumerate(logical_gids)}
+
     compiled_edges = []
     for src, tgt, requested_weight in edges:
         src_gid = gid_for_pop[pops[src].id]
@@ -353,21 +356,25 @@ def run_catalyst_graph_probe(
 
     ticks = []
     for native_tick, currents in enumerate(direct_current_schedule):
-        before = [int(v) for v in sim._potential.tolist()]
-        ref_before = [int(v) for v in sim._refrac.tolist()]
+        before = [int(sim._potential[gid]) for gid in logical_gids]
+        ref_before = [int(sim._refrac[gid]) for gid in logical_gids]
         for neuron_id, current in enumerate(currents):
             if int(current):
                 sim.inject(pops[neuron_id], int(current))
         result = sim.run(1)
-        spikes = sorted(int(neuron_id) for neuron_id in result.spike_trains)
+        spikes = sorted(
+            gid_to_logical[int(gid)]
+            for gid in result.spike_trains
+            if int(gid) in gid_to_logical
+        )
         ticks.append(
             {
                 "native_tick": native_tick,
                 "direct_current": [int(v) for v in currents],
                 "potential_before": before,
-                "potential_after": [int(v) for v in sim._potential.tolist()],
+                "potential_after": [int(sim._potential[gid]) for gid in logical_gids],
                 "refractory_before": ref_before,
-                "refractory_after": [int(v) for v in sim._refrac.tolist()],
+                "refractory_after": [int(sim._refrac[gid]) for gid in logical_gids],
                 "spikes": spikes,
             }
         )
@@ -376,6 +383,7 @@ def run_catalyst_graph_probe(
         "backend": "catalyst_cpu_sync",
         "scenario": name,
         "catalyst_commit": CATALYST_PIN,
+        "logical_to_catalyst_gid": logical_gids,
         "compiled_edges": compiled_edges,
         "ticks": ticks,
     }
