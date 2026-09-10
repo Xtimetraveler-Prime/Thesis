@@ -14,8 +14,8 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 compare = [
-    "numpy>=1.23",
-    "brian2>=2.4.2",
+    "numpy==1.26.4",
+    "brian2==2.9.0",
     "brian2-loihi==0.5.2",
 ]
 
