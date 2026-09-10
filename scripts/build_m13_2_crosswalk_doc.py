@@ -36,6 +36,27 @@ for row_id in (
     evidence = rows[row_id]["brian2loihi"]["evidence"]
     if source_id not in evidence:
         evidence.append(source_id)
+
+# Preserve a notation/scheduling question for M13.3 instead of adjudicating it here.
+# Michaelis et al. Eq. 9-11 writes the new spike term after the decay of I[t-1],
+# while M05 directly observed the pinned Brian2Loihi schedule used by this project
+# as input-visible before the stored-current decay. This may be timestep indexing /
+# scheduler interpretation rather than a behavioral disagreement, so M13.2 only
+# requires explicit normalization before later probes.
+finding = (
+    "The Michaelis/Brian2Loihi paper writes the discrete synaptic-current recurrence with the new spike term "
+    "added after the decay of the previous current, while this project's M05 direct Brian2Loihi observation "
+    "established its compared software boundary as same-tick input visible before stored-current decay. M13.3 "
+    "must reconcile timestep indexing/scheduler semantics explicitly before M13.4 treats this textual difference "
+    "as behavioral evidence."
+)
+if finding not in data["summary"]["major_crosswalk_findings"]:
+    data["summary"]["major_crosswalk_findings"].append(finding)
+rows["current-voltage-decay"]["m13_3_action"] = (
+    "Freeze which Catalyst execution boundary represents CUBA comparison; reconcile the published "
+    "I[t] recurrence with the M05 directly observed Brian2Loihi scheduling/index convention; then specify "
+    "the one-tick/current-source mapping before probes."
+)
 JSON_PATH.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 sys.path.insert(0, str(PROJECT / "src"))
