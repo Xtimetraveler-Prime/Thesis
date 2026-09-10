@@ -33,12 +33,12 @@ jobs:
         shell: bash
         run: |
           cd 'Neuromorphic Digital Twin'
-          python3 -m pytest -q tests/test_m13_5_hardware_audit.py tests/test_m13_5_hardware_comparison.py | tee /tmp/m13_5_focused.log
+          python3 -m pytest --override-ini addopts='' -q tests/test_m13_5_hardware_audit.py tests/test_m13_5_hardware_comparison.py | tee /tmp/m13_5_focused.log
       - name: Complete project regression
         shell: bash
         run: |
           cd 'Neuromorphic Digital Twin'
-          python3 -m pytest -q | tee /tmp/m13_5_full.log
+          python3 -m pytest --override-ini addopts='' -q | tee /tmp/m13_5_full.log
       - name: Verify fairness and baseline guards
         shell: bash
         run: |
