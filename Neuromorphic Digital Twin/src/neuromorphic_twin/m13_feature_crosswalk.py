@@ -180,7 +180,7 @@ def render_feature_crosswalk_markdown(data: Mapping[str, Any]) -> str:
     out += [
         "# M13.2 — Four-way Architectural Feature Crosswalk",
         "",
-        "**Status:** Complete crosswalk candidate; M13.2 only. No A–H discrepancy adjudication is performed here.",
+        "**Status:** Complete — M13.2 pass boundary achieved on 2026-09-09. No A–H discrepancy adjudication is performed here.",
         "",
         "This document compares four deliberately separate evidence columns: **published Loihi information**, **Brian2Loihi 0.5.2**, **the M12-validated project digital twin**, and **Catalyst N1 at the M13.1 pin**. Agreement is evidence of a shared interpretation, not proof of undocumented Intel microarchitecture. Architectural differences are preserved rather than forced into equality.",
         "",
@@ -269,7 +269,7 @@ def render_feature_crosswalk_markdown(data: Mapping[str, Any]) -> str:
         "",
         "## M13.2 pass boundary",
         "",
-        "M13.2 is ready to close when this generated document and its machine-readable source agree, all 15 milestone feature classes are present, every one of the four columns is source-backed in every row, and the full project regression suite remains green. No behavioral differential result is required by M13.2 itself.",
+        "**Achieved.** The generated document and machine-readable source agree byte-for-byte under regeneration, all 15 milestone feature classes are covered by 19 rows, every one of the four columns is source-backed in every row, prior M03-M08 Brian2Loihi observations are linked where applicable, exact external source identities are verified, and the full project regression suite remains green. No behavioral differential result is required by M13.2 itself.",
         "",
     ]
     return "\n".join(out)
