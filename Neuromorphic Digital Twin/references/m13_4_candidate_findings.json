@@ -1,6 +1,6 @@
 {
   "schema": "neuromorphic-twin-m13-directed-findings-v1",
-  "status": "candidate_complete_pending_independent_validation",
+  "status": "validated_complete",
   "normalization": {
     "schema": "neuromorphic-twin-m13-normalization-v1",
     "version": 1,
@@ -36,12 +36,18 @@
     {
       "probe_id": "P03-negative-rounding",
       "status": "architectural_difference",
-      "discrepancy_classes": ["C"],
+      "discrepancy_classes": [
+        "C"
+      ],
       "first_divergence": {
         "canonical_tick": 0,
         "field": "current_after",
-        "project_and_brian2loihi": [-47],
-        "catalyst_rtl_cuba": [-46]
+        "project_and_brian2loihi": [
+          -47
+        ],
+        "catalyst_rtl_cuba": [
+          -46
+        ]
       },
       "finding": "Pinned Catalyst RTL CUBA uses a different negative /4096 rounding implementation from the project/Brian2Loihi rule."
     },
@@ -60,19 +66,28 @@
     {
       "probe_id": "P06-signed-synaptic-drive",
       "status": "architectural_difference",
-      "discrepancy_classes": ["C"],
+      "discrepancy_classes": [
+        "C"
+      ],
       "first_divergence": {
         "canonical_tick": 0,
         "field": "voltage_after",
-        "project_and_brian2loihi": [-128],
-        "catalyst_cpu_sync": [0]
+        "project_and_brian2loihi": [
+          -128
+        ],
+        "catalyst_cpu_sync": [
+          0
+        ]
       },
       "finding": "Catalyst CPU simple-LIF returns sufficiently negative sub-rest drive to resting=0, while project/Brian2Loihi retain negative membrane state; the mixed net-positive case agrees."
     },
     {
       "probe_id": "P07-weight-encoding-boundaries",
       "status": "partial_scope",
-      "discrepancy_classes": ["C", "G"],
+      "discrepancy_classes": [
+        "C",
+        "G"
+      ],
       "finding": "All 13 of 15 project/Brian effective weights that fit Catalyst's signed-int16 compiler boundary are reproduced exactly by Catalyst. Catalyst does not expose the same Loihi-style source mantissa/exponent/precision/sign-mode encoding, and two project/Brian cases lie outside the common int16 envelope."
     },
     {
@@ -84,13 +99,17 @@
     {
       "probe_id": "P09-event-multiplicity",
       "status": "non_comparable",
-      "discrepancy_classes": ["G"],
+      "discrepancy_classes": [
+        "G"
+      ],
       "finding": "Same-source same-tick event multiplicity has no defensible common exact boundary: the project preserves repeated events, Brian SpikeGeneratorGroup cannot encode two spikes from one source at one time, and Catalyst external stimulus is not the same event-list interface."
     },
     {
       "probe_id": "P10-recurrent-timing",
       "status": "architectural_difference",
-      "discrepancy_classes": ["D"],
+      "discrepancy_classes": [
+        "D"
+      ],
       "first_divergence": {
         "field": "source_spike_to_target_spike_lag",
         "project_fpga_v1": 1,
@@ -102,7 +121,10 @@
     {
       "probe_id": "P11-state-saturation",
       "status": "non_comparable",
-      "discrepancy_classes": ["E", "G"],
+      "discrepancy_classes": [
+        "E",
+        "G"
+      ],
       "finding": "Finite-width overflow/saturation remains intentionally outside the common exact normalization because state widths and exposed probe widths differ and available published Loihi evidence does not justify one shared contract."
     },
     {
@@ -128,5 +150,21 @@
     "project_baseline_changed": false,
     "m12_evidence_superseded": false,
     "reason": "No directed M13.4 result met the Class-A or Class-B change-control threshold."
+  },
+  "independent_validation": {
+    "date": "2026-09-10",
+    "source": "independent local user validation from the development branch",
+    "reported_result": "all requested M13.4 reproduction and regression commands passed",
+    "focused_tests_passed": 30,
+    "full_project_tests_passed": 331,
+    "directed_probe_summary": {
+      "probes": 12,
+      "agreement": 6,
+      "architectural_difference": 3,
+      "partial_scope": 1,
+      "non_comparable": 2,
+      "class_A_or_B": 0
+    },
+    "m12_revalidation_required": false
   }
 }

@@ -198,6 +198,14 @@ python3 -m pytest -q
 
 The final automated clean candidate-closure reconstruction used Ubuntu 24.04, Icarus Verilog 12, NumPy 1.26.4, Brian2 2.9.0, Brian2Loihi 0.5.2, and the exact pinned Catalyst SDK. It reproduced the 12-probe findings snapshot, passed **30/30 focused M13.3/M13.4 tests**, and passed the complete **331/331 project regression**. A branch-diff guard also verified that M13.4 introduced no computational-core, HLS-core, or FPGA-v1 behavioral changes.
 
+## Independent validation and closure
+
+On 2026-09-10 the development branch was independently pulled and the requested reproduction sequence was run outside the automated closure environment. The reported result was that every command passed. This includes the pinned Catalyst checkout, Catalyst CUBA RTL probe, normalized 12-probe differential, findings-snapshot validator, the 30-test focused M13.3/M13.4 regression set, and the complete 331-test project suite.
+
+The independently reproduced architectural result remains **6 agreements, 3 architectural/model differences, 1 partial-scope result, 2 intentionally non-comparable results, and 0 Class-A/B candidates**. No project computational behavior changed and no M12 physical result is superseded. Because no A/B finding exists, the M13 change-control rule does not require an M12 physical rerun.
+
+The two Class-H issues encountered during development remain documented as resolved harness defects rather than architectural findings: CUBA state reuse between probes and Catalyst physical-GID/logical-ID observation mismatch. Both were corrected before the accepted result snapshot; the latter correction removed the earlier apparent P08 fan-in discrepancy.
+
 ## M13.4 pass boundary
 
 M13.4 is ready for independent validation when all of the following are true:

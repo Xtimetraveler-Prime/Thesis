@@ -125,7 +125,10 @@ def test_normalized_comparison_reports_first_divergent_quantity() -> None:
 def test_candidate_findings_cover_all_probes_without_ab_change_control() -> None:
     data = json.loads(FINDINGS.read_text(encoding="utf-8"))
     assert data["schema"] == "neuromorphic-twin-m13-directed-findings-v1"
-    assert data["status"] == "candidate_complete_pending_independent_validation"
+    assert data["status"] == "validated_complete"
+    assert data["independent_validation"]["focused_tests_passed"] == 30
+    assert data["independent_validation"]["full_project_tests_passed"] == 331
+    assert data["independent_validation"]["directed_probe_summary"]["class_A_or_B"] == 0
     assert {row["probe_id"] for row in data["results"]} == EXPECTED_PROBE_IDS
     assert len(data["results"]) == 12
     assert data["summary"] == {

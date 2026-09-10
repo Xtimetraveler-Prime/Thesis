@@ -87,3 +87,7 @@ Those guards remain intentional after M13.3. The final M13.4 implementation uses
 M13.3 subsequently froze `references/m13_3_normalization_spec.json`, after which M13.4 implemented the Catalyst CPU and RTL CUBA boundaries, native/normalized artifact preservation, first-divergence reporting, logical compiler-placement normalization, and directed discrepancy classification.
 
 The resulting candidate pass-boundary evidence is now in `docs/M13_4_DIRECTED_DIFFERENTIAL.md`. This historical checkpoint should therefore be cited only when explaining how the directed questions and pre-normalization guards were established before Catalyst outputs were interpreted.
+
+## Closure handoff
+
+M13.3 subsequently froze `neuromorphic-twin-m13-normalization-v1`, enabling the predeclared Catalyst and Brian2Loihi transforms without redesigning the probe questions. M13.4 then executed all 12 frozen questions and closed with 6 agreements, 3 architectural/model differences, 1 partial-scope result, 2 non-comparable results, and no Class-A/B candidate. Independent local validation on 2026-09-10 reproduced the full requested gate. The authoritative result narrative is `M13_4_DIRECTED_DIFFERENTIAL.md`; this file remains useful as provenance for how the questions and reuse boundary were frozen before those outputs were known.
