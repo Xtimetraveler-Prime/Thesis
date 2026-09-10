@@ -1,0 +1,131 @@
+name: M13.5 closure tooling preflight once
+on:
+  push:
+    branches: [agent/m13-5-catalyst-k26-reproduction]
+    paths: [.github/workflows/m13_5_closure_preflight_once.yml]
+permissions:
+  contents: write
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-5-catalyst-k26-reproduction
+          fetch-depth: 0
+      - name: Install project and RTL dependency
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+          bash scripts/fetch_m13_1_catalyst.sh
+      - name: Validate closure scripts and Catalyst wrapper
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          bash -n scripts/run_m13_5_closure.sh
+          bash -n scripts/run_m13_5_catalyst_k26_vivado.sh
+          PYTHONPATH=src python3 examples/validate_m13_5_hardware_manifest.py --catalyst-checkout build/m13_1/catalyst-n1
+          bash scripts/run_m13_5_catalyst_kria_elaboration.sh
+      - name: Focused M13.5 closure tests
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest --override-ini addopts='' -q \
+            tests/test_m13_5_hardware_audit.py \
+            tests/test_m13_5_hardware_comparison.py \
+            tests/test_m13_5_hardware_closure.py | tee /tmp/m13_5_closure_focused.log
+      - name: Complete project regression
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest --override-ini addopts='' -q | tee /tmp/m13_5_closure_full.log
+      - name: Verify frozen baseline guard
+        shell: bash
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/m13_5_closure_names.txt
+          cat /tmp/m13_5_closure_names.txt
+          if grep -E '^Neuromorphic Digital Twin/(hls/core_v1|rtl/core_v1|src/neuromorphic_twin/(model|arithmetic|core|routing|weights)\.py)' /tmp/m13_5_closure_names.txt; then
+            echo 'ERROR: M13.5 unexpectedly changed a frozen computational baseline path.' >&2
+            exit 1
+          fi
+      - name: Record M13.5.2 handoff and tooling checkpoint
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          def count(path):
+              text = Path(path).read_text()
+              matches = re.findall(r'(\d+) passed', text)
+              if not matches:
+                  raise SystemExit(f'could not parse pytest pass count from {path}')
+              return int(matches[-1])
+
+          focused = count('/tmp/m13_5_closure_focused.log')
+          full = count('/tmp/m13_5_closure_full.log')
+
+          milestones = Path('MILESTONES.md')
+          m = milestones.read_text()
+          old_repo = '**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight complete, M13.5.2 awaiting independent Vivado 2025.2 reproduction'
+          new_repo = '**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight and M13.5.2 independent Vivado 2025.2 routed reproduction complete; M13.5.3 evidence promotion in progress'
+          if old_repo not in m:
+              raise SystemExit('M13.5 repository-evidence anchor not found')
+          m = m.replace(old_repo, new_repo, 1)
+
+          old_boundary = '**M13.5.1 is complete. M13.5.2 is the current boundary and requires independent execution with the local Vivado 2025.2 installation.**'
+          new_boundary = '**M13.5.1 is complete. M13.5.2 independently reproduced the pinned Catalyst routed flow under local Vivado 2025.2 on 2026-09-10. M13.5.3 is now the current boundary: validate and promote the preserved vendor evidence into the tracked closure record.**'
+          if old_boundary not in m:
+              raise SystemExit('M13.5 current-boundary anchor not found')
+          m = m.replace(old_boundary, new_boundary, 1)
+
+          anchor = '#### Preferred physical comparison\n'
+          if anchor not in m:
+              raise SystemExit('M13.5 preferred-comparison anchor not found')
+          insertion = f'''#### M13.5.2 completion evidence\n\nIndependent execution of the source-controlled Vivado runner on 2026-09-10 completed the exact pinned Catalyst N1 K26-class synthesis/place/phys-opt/route flow under Vivado 2025.2. The runner reported:\n\n```text\nCatalyst commit: 1806bb4b4114d7671e5648fa75b7b83b3a8d5543\nVivado:          2025.2\nTarget part:     xczu5ev-sfvc784-2-i\nClock target:    100 MHz / 10 ns\nRouted WNS:      +0.001 ns\nRouted WHS:      +0.013 ns\nTiming closed:   yes\nLatency:         withheld\nPower:           withheld\nPhysical run:    not claimed\n```\n\nThe runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree until M13.5.3 validates and promotes the compact tracked closure artifact.\n\nM13.5.3 closure tooling has now passed **{focused}/{focused} focused M13.5 tests** and the complete **{full}/{full} project regression suite** in clean CI. The source-controlled closure command is `bash scripts/run_m13_5_closure.sh`.\n\n'''
+          m = m.replace(anchor, insertion + anchor, 1)
+          milestones.write_text(m)
+
+          doc = Path('Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md')
+          d = doc.read_text()
+          old_status = '**In progress — M13.5.1 automated hardware/RTL preflight complete; M13.5.2 Vivado 2025.2 routed reproduction remains to be run independently.**'
+          new_status = '**In progress — M13.5.1 preflight and M13.5.2 independent Vivado 2025.2 routed reproduction are complete; M13.5.3 tracked evidence promotion remains.**'
+          if old_status not in d:
+              raise SystemExit('M13.5 doc status anchor not found')
+          d = d.replace(old_status, new_status, 1)
+
+          old_current = '''The remaining step that requires the local AMD toolchain is the actual Vivado 2025.2 synthesis/place/route flow. Once that result is available, M13.5 can populate the Catalyst side of the hardware comparison and determine whether routed implementation is the final strongest defensible boundary or whether any additional board integration is warranted.\n'''
+          new_current = '''The local AMD-toolchain step is now complete. Independent Vivado 2025.2 execution reproduced the pinned Catalyst synthesis/place/route flow at 100 MHz with routed WNS `+0.001 ns` and WHS `+0.013 ns`. The current boundary is M13.5.3: validate the preserved evidence tree, promote a compact tracked closure record, and then close M13.5 at routed implementation unless the evidence contradicts the already-frozen source-supported boundary.\n'''
+          if old_current not in d:
+              raise SystemExit('M13.5 doc current-boundary paragraph not found')
+          d = d.replace(old_current, new_current, 1)
+
+          marker = '## Automated M13.5.1 preflight evidence\n'
+          if marker not in d:
+              raise SystemExit('M13.5 automated-preflight section not found')
+          result_section = f'''## Independent M13.5.2 Vivado reproduction\n\nThe source-controlled `run_m13_5_catalyst_k26_vivado.sh` runner was independently executed on 2026-09-10 with the local Vivado 2025.2 installation and completed successfully. It reproduced the pinned Catalyst commit `1806bb4b4114d7671e5648fa75b7b83b3a8d5543` on upstream target `xczu5ev-sfvc784-2-i` at the frozen 100 MHz constraint. The routed timing result was WNS `+0.001 ns` and WHS `+0.013 ns`, so setup and hold both closed.\n\nThe generated normalized comparison retained the frozen evidence rules: project part `xck26-sfvc784-2LV-c` remains distinct from the Catalyst part, latency/throughput is withheld, power/energy is withheld, and Catalyst physical execution remains false. The runner reached its final PASS only after required synthesis/implementation reports and the implemented DCP were preserved, the evidence tree was hashed, and tracked Catalyst source was confirmed unchanged.\n\nM13.5.2 is therefore complete. M13.5.3 now promotes the local preserved evidence through `scripts/run_m13_5_closure.sh`; the resulting compact `references/m13_5_closure.json` becomes the tracked authority for final resource values and evidence hashes. The closure tooling itself passed **{focused}/{focused} focused tests** and **{full}/{full} complete project tests** in clean CI before this checkpoint was recorded.\n\n---\n\n'''
+          d = d.replace(marker, result_section + marker, 1)
+          doc.write_text(d)
+
+          closure_doc = Path('Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md')
+          c = closure_doc.read_text()
+          checkpoint = f'''\n## Closure-tooling CI checkpoint\n\nBefore local evidence promotion, the M13.5.3 host-side tooling passed **{focused}/{focused} focused M13.5 tests** and the complete **{full}/{full} project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.\n'''
+          if '## Closure-tooling CI checkpoint' not in c:
+              c += checkpoint
+          closure_doc.write_text(c)
+          PY
+      - name: Remove one-shot workflow and commit checkpoint
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/m13_5_closure_preflight_once.yml
+          git add MILESTONES.md \
+            'Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md' \
+            'Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md' \
+            .github/workflows/m13_5_closure_preflight_once.yml
+          git commit -m 'Validate M13.5.3 closure tooling'
+          git push origin HEAD:agent/m13-5-catalyst-k26-reproduction
