@@ -8,6 +8,11 @@ CLOSURE_MD="$ROOT/build/m13_5/m13_5_closure_summary.md"
 
 cd "$ROOT"
 
+# Re-parse the preserved vendor reports independently before trusting the
+# normalized JSON result or promoting any tracked closure evidence.
+PYTHONPATH=src python3 examples/validate_m13_5_native_reports.py \
+  --evidence-dir "$EVIDENCE"
+
 PYTHONPATH=src python3 examples/close_m13_5_hardware_reproduction.py \
   --evidence-dir "$EVIDENCE" \
   --output-json "$CLOSURE_JSON" \
@@ -16,7 +21,8 @@ PYTHONPATH=src python3 examples/close_m13_5_hardware_reproduction.py \
 python3 -m pytest --override-ini addopts='' -q \
   tests/test_m13_5_hardware_audit.py \
   tests/test_m13_5_hardware_comparison.py \
-  tests/test_m13_5_hardware_closure.py
+  tests/test_m13_5_hardware_closure.py \
+  tests/test_m13_5_native_report_validation.py
 
 python3 -m pytest --override-ini addopts='' -q
 
