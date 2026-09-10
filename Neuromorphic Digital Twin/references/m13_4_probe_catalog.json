@@ -17,7 +17,7 @@
       "crosswalk_rows": ["current-voltage-decay", "tick-update-order"],
       "comparison_intent": ["current_after", "voltage_after", "spikes"],
       "reuse": {
-        "directed_cases": ["current-decay-order"],
+        "directed_cases": ["smoke-no-decay", "current-decay-order"],
         "weight_cases": [],
         "m12_physical_cases": [],
         "m12_multitick_cases": []
