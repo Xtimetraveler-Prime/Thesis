@@ -1,0 +1,99 @@
+{
+  "schema": "neuromorphic-twin-m13-closure-v1",
+  "status": "validated_complete",
+  "completed_on": "2026-09-10",
+  "milestones": {
+    "M13.6": "complete",
+    "M13": "complete"
+  },
+  "validated_candidate": {
+    "path": "references/m13_6_findings.json",
+    "schema": "neuromorphic-twin-m13-final-findings-v1",
+    "candidate_status": "candidate_frozen_pending_independent_validation",
+    "branch": "agent/m13-6-adjudicate-freeze-findings",
+    "branch_head": "dedd3adcffd4f6080bfbb17153110539d8d45061",
+    "sha256": "96170e8edc77095a50a0dd59f3f92ec40c508f9311e2892e1a69b1e88d5e6f83",
+    "disposition": "accepted_without_mutation_after_independent_reproduction"
+  },
+  "evidence_chain": {
+    "m13_2_crosswalk": "references/m13_2_feature_crosswalk.json",
+    "m13_4_directed_findings": "references/m13_4_candidate_findings.json",
+    "m13_5_hardware_closure": "references/m13_5_closure.json",
+    "m13_6_candidate": "references/m13_6_findings.json"
+  },
+  "accepted_summary": {
+    "crosswalk_rows": 19,
+    "directed_probes": 12,
+    "directed_agreements": 6,
+    "directed_adjudications": 6,
+    "resolved_class_H_harness_findings": 2,
+    "class_A_or_B_findings": 0,
+    "explicit_project_scope_exclusions": 8,
+    "project_baseline_changed": false,
+    "m12_revalidation_required": false,
+    "strongest_catalyst_hardware_boundary": "source-supported routed implementation"
+  },
+  "change_control": {
+    "trigger_classes": [
+      "A",
+      "B"
+    ],
+    "observed_trigger_findings": 0,
+    "project_baseline_status": "frozen_unchanged",
+    "project_baseline_commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "normative_specification_update_required": false,
+    "hls_rtl_regeneration_required": false,
+    "m12_evidence_superseded": false,
+    "m12_physical_revalidation_required": false,
+    "closure_reason": "The accepted M13 audit contains zero Class-A/B findings. Classes C-G are retained as architectural/modeling/ambiguity/scope findings and the two Class-H harness issues were resolved before the accepted M13.4 snapshot. Therefore the validated M10/M12 FPGA-v1 baseline remains authoritative and no M12 rerun is required."
+  },
+  "independent_validation": {
+    "date": "2026-09-10",
+    "source": "independent local user reproduction from a Linux VS Code terminal",
+    "validated_branch": "agent/m13-6-adjudicate-freeze-findings",
+    "validated_head": "dedd3adcffd4f6080bfbb17153110539d8d45061",
+    "candidate_regeneration": {
+      "command": "python3 examples/generate_m13_6_findings.py",
+      "reported_result": "M13.6 findings candidate PASS: crosswalk=19 directed=12 agreements=6 adjudications=6 A/B=0 scope=8 m12_revalidation=False"
+    },
+    "byte_identity_check": {
+      "command": "cmp references/m13_6_findings.json build/m13_6/m13_6_findings.json",
+      "reported_result": "success_with_no_output"
+    },
+    "focused_tests": {
+      "command": "python3 -m pytest --override-ini addopts='' -q tests/test_m13_6_findings.py",
+      "passed": 9,
+      "elapsed_seconds_reported": 0.12
+    },
+    "full_project_regression": {
+      "command": "python3 -m pytest --override-ini addopts='' -q",
+      "passed": 367,
+      "elapsed_seconds_reported": 5.63
+    },
+    "working_tree_note": {
+      "reported_untracked_paths": [
+        "Neuromorphic",
+        "Neuromorphic Digital Twin/rtl/core_v1/xvlog.pb"
+      ],
+      "interpretation": "These paths were untracked local artifacts and were not included in the source-controlled branch diff or accepted as M13 evidence."
+    }
+  },
+  "automated_candidate_preflight": {
+    "platform": "GitHub Actions Ubuntu 24.04",
+    "workflow_run_id": 34494689724,
+    "candidate_validation": "pass",
+    "byte_identical_regeneration": true,
+    "focused_tests_passed": 9,
+    "full_project_tests_passed": 367,
+    "frozen_baseline_diff_guard": "pass"
+  },
+  "final_claim_boundary": {
+    "project_fpga_v1_baseline": "retained",
+    "m12_physical_evidence": "retained_not_superseded",
+    "catalyst_hardware_boundary": "source-supported routed implementation",
+    "physical_catalyst_execution_claim": false,
+    "universal_loihi_equivalence_claim": false,
+    "raw_cross_architecture_efficiency_ranking": false
+  },
+  "conclusion": "M13 is complete. The project has been cross-audited against published Loihi evidence, Brian2Loihi, and pinned Catalyst N1 evidence at explicitly normalized behavioral and hardware boundaries. The audit found meaningful differences and scope limits but no supported defect or stronger-evidence contradiction requiring a change to the physically validated FPGA-v1 computational baseline."
+}
