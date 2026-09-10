@@ -5,6 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from neuromorphic_twin.comparison.brian2loihi_backend import (
+    UnsupportedScenarioError,
+    validate_brian2loihi_scenario,
+)
 from neuromorphic_twin.comparison.conformance import build_directed_cases
 from neuromorphic_twin.comparison.m13_directed_probes import (
     M13NormalizationNotFrozen,
@@ -14,7 +18,9 @@ from neuromorphic_twin.comparison.m13_directed_probes import (
     pre_normalization_reuse_names,
     require_frozen_m13_3,
 )
+from neuromorphic_twin.comparison.model import ComparisonScenario
 from neuromorphic_twin.comparison.weight_conformance import build_weight_conformance_cases
+from neuromorphic_twin.model import NeuronConfig, SpikeRoute, Synapse
 
 
 def test_m13_4_catalog_covers_every_planned_probe_class() -> None:
@@ -72,3 +78,22 @@ def test_m13_4_accepts_only_explicitly_frozen_m13_3_spec(tmp_path: Path) -> None
     payload = {"schema": M13_3_EXPECTED_SCHEMA, "status": "frozen", "version": 1}
     path.write_text(json.dumps(payload), encoding="utf-8")
     assert require_frozen_m13_3(path) == payload
+
+
+def test_brian2loihi_adapter_rejects_unmapped_recurrent_routes() -> None:
+    scenario = ComparisonScenario.build(
+        name="m13-recurrent-guard",
+        neuron_configs=[
+            NeuronConfig(
+                current_decay=0,
+                voltage_decay=0,
+                threshold=64,
+                refractory_ticks=1,
+            )
+        ],
+        synapses=[Synapse(axon_id=0, target_neuron=0, weight=64)],
+        input_schedule=[(0,), ()],
+        spike_routes=[SpikeRoute(source_neuron=0, target_axon=0)],
+    )
+    with pytest.raises(UnsupportedScenarioError, match="does not map ComparisonScenario spike_routes"):
+        validate_brian2loihi_scenario(scenario)
