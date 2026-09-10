@@ -12,7 +12,7 @@ on:
       - 'Neuromorphic Digital Twin/tests/test_m13_2_feature_crosswalk.py'
       - 'Neuromorphic Digital Twin/docs/M13_2_ARCHITECTURAL_CROSSWALK.md'
 
-# Final M13.2 content gate: source integrity, deterministic rendering, and full historical regression.
+# Closure-state gate: source integrity, deterministic rendering, and full historical regression.
 jobs:
   preflight:
     runs-on: ubuntu-24.04
