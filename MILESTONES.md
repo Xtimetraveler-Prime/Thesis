@@ -2124,7 +2124,7 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 **Status:** In progress
 **Started:** 2026-09-08
-**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`
+**Repository evidence:** M13.1 merged via PR #14; M13.2 merged via PR #15; M13.4 pre-normalization scaffold on branch `agent/m13-4-directed-differential-probes`
 
 ### Goal
 
@@ -2310,7 +2310,9 @@ A frozen comparison specification can generate or translate at least a small dir
 
 ### M13.4 — Run directed differential architectural probes
 
-**Status:** Planned
+**Status:** In progress
+**Started:** 2026-09-09
+**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; pre-normalization scaffold only while M13.3 remains Planned
 
 #### Core goal
 
