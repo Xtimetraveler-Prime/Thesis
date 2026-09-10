@@ -1,30 +1,33 @@
-# M13.4 — Directed Differential Architectural Probes
+# M13.4 Pre-Normalization Directed-Probe Checkpoint
 
-**Status:** In progress — native/pre-normalization evidence boundary implemented; normalized four-way comparison remains blocked on M13.3.
+## Historical status
 
-## Purpose
+This document records the **pre-normalization M13.4 checkpoint** created before M13.3 was complete. It is retained for provenance, but it is no longer the current M13.4 status document.
 
-M13.4 uses small deterministic probes to expose architectural agreements and differences among the M12-validated project baseline, Brian2Loihi 0.5.2, pinned Catalyst N1, and published Loihi evidence. This work must not tailor parameter transforms after observing a discrepancy. For that reason, the M13.4 implementation is deliberately split into a native-evidence layer that can be developed now and a normalized-comparison layer that is fail-closed until M13.3 freezes the common behavioral subset and mapping rules.
-
-The branch is based on the merged M13.2 crosswalk at `49ab7be6dfce427979622b585165b59bbbfbc2da`. No M12 computational behavior, HLS, or RTL is modified by this work.
-
-## Why M13.3 is a hard dependency
-
-M13.2 identified several cases where superficially identical integer fields do not yet have a defensible shared meaning: current/update indexing, strict `>` versus Catalyst `>=` threshold behavior, refractory register conventions, weight formats, recurrence timing, and event-order observability. M13.4 therefore may collect native evidence before M13.3, but it must not call unlike native states equal or different until a frozen mapping says what is comparable.
-
-The machine gate expects a future normalization authority at:
+Current M13.4 methods, results, classifications, and validation boundary are documented in:
 
 ```text
-references/m13_3_normalization_spec.json
-schema = neuromorphic-twin-m13-normalization-v1
-status = frozen
+docs/M13_4_DIRECTED_DIFFERENTIAL.md
+references/m13_4_candidate_findings.json
 ```
 
-Until that file exists, `require_frozen_m13_3()` raises `M13NormalizationNotFrozen`, and the M13.4 catalog keeps every Catalyst normalized participation state at `blocked_by_m13_3`.
+The probe catalog remains at `references/m13_4_probe_catalog.json`; it has since been advanced to record that the M13.3 normalization authority is frozen and executable comparison is permitted only under those predeclared transforms.
+
+## Purpose of the checkpoint
+
+M13.4 was intentionally started before M13.3 so the architectural questions could be frozen independently of later Catalyst outputs. This prevented comparison mappings from being invented after observing an interesting difference.
+
+The branch began from the merged M13.2 crosswalk at:
+
+```text
+49ab7be6dfce427979622b585165b59bbbfbc2da
+```
+
+At that checkpoint, no M12 computational behavior, HLS, or RTL was modified.
 
 ## Frozen directed-probe catalog
 
-The authority is `references/m13_4_probe_catalog.json`. It contains 12 probes covering all 11 M13.4 probe classes:
+The pre-normalization catalog established 12 probe questions covering the 11 required M13.4 probe classes:
 
 1. current impulse / current-decay ordering;
 2. voltage decay;
@@ -39,22 +42,31 @@ The authority is `references/m13_4_probe_catalog.json`. It contains 12 probes co
 11. finite-width saturation/overflow boundaries;
 12. simultaneous independent spikes and observable ordering.
 
-The catalog records the M13.2 crosswalk rows that motivate each question, intended observables, reusable earlier cases, and participation status for published Loihi, Brian2Loihi, this project, and Catalyst N1. It intentionally contains no A-H discrepancy class and no verdict.
+The catalog deliberately contained no result verdict or A-H discrepancy class. It recorded only the question, crosswalk provenance, intended observables, reusable earlier evidence, and then-current participation boundary.
 
-## Reused evidence before normalization
+## Reused project/Brian2Loihi evidence
 
-M13.4 can already re-execute cases whose project/Brian2Loihi mapping was established before Catalyst entered the audit. The current reuse boundary is:
+Before normalized Catalyst execution was authorized, M13.4 could still rerun scenarios whose project/Brian2Loihi mapping had already been established. That reuse boundary contained:
 
 - all 12 M06/M07 directed conformance cases;
 - all 15 M08 encoded-weight conformance cases.
 
-This is not a substitute for the eventual four-way corpus. It is a provenance-preserving re-execution of already shared project/Brian2Loihi scenarios so later M13.4 evidence can reuse exact inputs rather than reconstructing them informally.
+The pre-normalization evidence runner preserved, per case:
 
-### Reproducible Brian2Loihi runtime
+```text
+scenario.json
+project.native.json
+brian2loihi.native.json
+project-vs-brian2loihi.report.json
+```
 
-A fresh M13.4 preflight exposed a Class-H dependency issue before any architectural result was produced. The comparison extra previously allowed unrestricted `numpy>=1.23`; a fresh resolver selected NumPy 2.4.6, while the installed Brian2 2.9.0 import path still references `numpy.ndarray.ptp`. NumPy 2 removed that ndarray method, so Brian2 failed at import before any scenario ran.
+Encoded-weight cases additionally preserved `effective-weight.json`; the aggregate manifest recorded SHA-256 hashes and explicitly marked that Catalyst execution and normalized comparison had not yet occurred.
 
-The comparison-only optional dependency set is therefore frozen to:
+## Comparison-runtime Class-H correction
+
+The pre-normalization preflight exposed a dependency-only incompatibility before any Catalyst architectural result was produced. An unrestricted NumPy resolver selected NumPy 2.x, while the selected Brian2 2.9.0 path still depended on an ndarray API removed by NumPy 2.
+
+The comparison-only environment was therefore frozen to:
 
 ```text
 numpy==1.26.4
@@ -62,62 +74,16 @@ brian2==2.9.0
 brian2-loihi==0.5.2
 ```
 
-This is a tooling/reproducibility correction, not a neuron-model change. Neither Brian2 nor NumPy is patched, and the project computational core is unchanged. The pin is kept in `pyproject.toml` under the `compare` optional dependency so a clean `pip install -e '.[dev,compare]'` reconstructs the tested comparison runtime.
+This was classified as tooling/reproducibility evidence, not a neuron-model change. The project computational core was unchanged.
 
-Run:
+## Fail-closed guards established here
 
-```bash
-PYTHONPATH=src python3 examples/run_m13_4_directed_probes.py \
-  --run-pre-normalization-reuse build/m13_4/pre_normalization
-```
+The generic Brian2Loihi adapter was changed to reject project `spike_routes` rather than silently drop recurrence. Repeated identical-source/same-tick events and explicit finite-width overflow were also kept outside that adapter's comparison boundary when no defensible transform existed.
 
-For each directed case the evidence tree contains:
+Those guards remain intentional after M13.3. The final M13.4 implementation uses a dedicated Brian2Loihi native recurrent probe rather than weakening the generic route guard, and it keeps repeated-event multiplicity and cross-implementation overflow non-comparable where the frozen M13.3 specification says no shared exact observable exists.
 
-```text
-directed/<case>/
-  scenario.json
-  project.native.json
-  brian2loihi.native.json
-  project-vs-brian2loihi.report.json
-```
+## Handoff to completed M13.4 candidate
 
-Encoded-weight cases additionally contain `effective-weight.json`. The top-level `manifest.json` records summary counts and SHA-256 hashes for every preserved artifact. It also explicitly records:
+M13.3 subsequently froze `references/m13_3_normalization_spec.json`, after which M13.4 implemented the Catalyst CPU and RTL CUBA boundaries, native/normalized artifact preservation, first-divergence reporting, logical compiler-placement normalization, and directed discrepancy classification.
 
-```text
-normalized_comparison_performed = false
-catalyst_execution_performed = false
-```
-
-Those flags prevent this evidence from being misrepresented later as a completed Catalyst comparison.
-
-## Probe provenance and reuse
-
-The catalog links earlier evidence rather than discarding it. Examples include:
-
-- M05/M07 `smoke-no-decay`, `current-decay-order`, `voltage-decay`, negative rounding, threshold, refractory, fan-in/fan-out, mixed excitation/inhibition, and simultaneous spike scenarios;
-- all 15 M08 encoded-weight cases;
-- M12.2 physical boundary cases for threshold, refractory, rounding, repeated multiplicity, encoded weights, and state saturation;
-- M12.3 recurrent chain/fan-in/fan-out/multiplicity/order/history cases.
-
-The M12 references are catalog provenance only at this stage; the pre-normalization runner does not rerun physical FPGA evidence.
-
-The existing Brian2Loihi adapter now also fails closed when a `ComparisonScenario` contains `spike_routes`. Brian2Loihi itself supports recurrent Synapses, but the project adapter does not yet define the graph/timing translation from the project route representation. Repeated identical-source events are likewise rejected by the current SpikeGeneratorGroup mapping, and explicit finite-width saturation is outside the adapter's current unbounded arithmetic boundary. P09-P11 therefore remain blocked on M13.3 transforms instead of silently substituting a different scenario.
-
-## New work still required after M13.3
-
-Once M13.3 freezes the common subset, M13.4 must still:
-
-- implement the exact Catalyst adapter(s) named by the normalization specification;
-- add new native scenarios for repeated multiplicity, recurrence, and saturation where an existing backend-neutral M06/M08 case is insufficient;
-- preserve Catalyst native configuration and trace artifacts alongside project/Brian2Loihi native traces;
-- generate normalized traces using only the frozen M13.3 transforms;
-- compare only fields categorized as exact or transformed-comparable;
-- preserve qualitative/non-comparable fields without forcing equality;
-- report the first divergent architectural quantity;
-- carry every meaningful difference forward for A-H adjudication rather than changing the project baseline inside the probe runner.
-
-## Current pass boundary
-
-M13.4 is **not complete** at this checkpoint. The pre-normalization scaffold is complete enough to freeze the questions and preserve existing shared evidence, but the milestone pass boundary requires the agreed directed corpus to run across every applicable implementation. That cannot be done defensibly while M13.3 remains Planned.
-
-The correct next dependency is therefore M13.3: freeze the common behavioral subset and normalization interface. After that merge, this branch/work can continue without redesigning the probe questions in response to observed Catalyst outputs.
+The resulting candidate pass-boundary evidence is now in `docs/M13_4_DIRECTED_DIFFERENTIAL.md`. This historical checkpoint should therefore be cited only when explaining how the directed questions and pre-normalization guards were established before Catalyst outputs were interpreted.
