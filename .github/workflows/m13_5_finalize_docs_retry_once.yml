@@ -19,11 +19,33 @@ jobs:
           ref: agent/m13-5-catalyst-k26-reproduction
           fetch-depth: 0
 
-      - name: Install project development dependencies
-        run: python3 -m pip install -e 'Neuromorphic Digital Twin[dev]'
+      - name: Install complete project test environment
+        run: python3 -m pip install -e 'Neuromorphic Digital Twin[dev,compare]'
 
       - name: Finalize documentation from tracked closure
         run: python3 'Neuromorphic Digital Twin/scripts/finalize_m13_5_docs.py'
+
+      - name: Correct final source-gate count wording
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          paths = [
+              Path('MILESTONES.md'),
+              Path('Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md'),
+              Path('Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md'),
+          ]
+          replacements = {
+              '**27/27 focused** and **358/358 complete**': '**23/23 focused** and **358/358 complete**',
+              '**27 focused M13.5 tests** and **358 project tests**': '**23 focused M13.5 tests** and **358 project tests**',
+              '**27/27 focused M13.5 tests** and **358/358 complete project tests**': '**23/23 focused M13.5 tests** and **358/358 complete project tests**',
+          }
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+          PY
 
       - name: Focused final M13.5 tests
         working-directory: Neuromorphic Digital Twin
@@ -36,7 +58,11 @@ jobs:
 
       - name: Complete project regression
         working-directory: Neuromorphic Digital Twin
-        run: python3 -m pytest --override-ini addopts='' -q
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 -m pytest --override-ini addopts='' -q | tee /tmp/m13_5_full_regression.log
+          grep -q '358 passed' /tmp/m13_5_full_regression.log
 
       - name: Verify closure artifact and frozen baseline remain untouched
         shell: bash
