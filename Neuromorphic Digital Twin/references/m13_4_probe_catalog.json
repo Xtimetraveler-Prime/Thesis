@@ -1,0 +1,264 @@
+{
+  "schema": "neuromorphic-twin-m13-directed-probe-catalog-v1",
+  "baseline_commit": "49ab7be6dfce427979622b585165b59bbbfbc2da",
+  "purpose": "Freeze the M13.4 directed architectural questions and reusable native evidence before any M13.3 normalization transform is chosen. This catalog is not a discrepancy register and does not authorize normalized Catalyst comparison by itself.",
+  "normalization_gate": {
+    "required_schema": "neuromorphic-twin-m13-normalization-v1",
+    "expected_path": "references/m13_3_normalization_spec.json",
+    "state": "blocked_m13_3_not_frozen",
+    "normalized_comparison_allowed": false,
+    "rule": "Native capture and re-execution of previously shared project/Brian2Loihi scenarios may proceed. Catalyst translation or normalized four-way equality/difference claims must wait for a frozen M13.3 specification."
+  },
+  "probes": [
+    {
+      "id": "P01-current-impulse-decay",
+      "probe_class": "impulse-response/current-decay sequences",
+      "question": "How does one synaptic impulse affect stored current and voltage across subsequent ticks, and which update boundary sees the delivered input?",
+      "crosswalk_rows": ["current-voltage-decay", "tick-update-order"],
+      "comparison_intent": ["current_after", "voltage_after", "spikes"],
+      "reuse": {
+        "directed_cases": ["current-decay-order"],
+        "weight_cases": [],
+        "m12_physical_cases": [],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P02-voltage-decay",
+      "probe_class": "voltage-decay sequences",
+      "question": "How does membrane voltage decay after a controlled impulse once subsequent synaptic input is absent?",
+      "crosswalk_rows": ["current-voltage-decay", "fixed-point-rounding-saturation"],
+      "comparison_intent": ["voltage_after"],
+      "reuse": {
+        "directed_cases": ["voltage-decay"],
+        "weight_cases": [],
+        "m12_physical_cases": [],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P03-negative-rounding",
+      "probe_class": "negative-current rounding cases",
+      "question": "What integer result is produced when negative state decay requires fractional rounding?",
+      "crosswalk_rows": ["current-voltage-decay", "fixed-point-rounding-saturation"],
+      "comparison_intent": ["current_after", "voltage_after"],
+      "reuse": {
+        "directed_cases": ["negative-current-rounding"],
+        "weight_cases": [],
+        "m12_physical_cases": ["negative-synaptic-rounding"],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P04-threshold-boundary",
+      "probe_class": "threshold equality and just-over-threshold behavior",
+      "question": "Does exact threshold equality spike, and what is the first state above threshold that does spike?",
+      "crosswalk_rows": ["threshold-reset"],
+      "comparison_intent": ["voltage_after", "spikes"],
+      "reuse": {
+        "directed_cases": ["threshold-boundary"],
+        "weight_cases": [],
+        "m12_physical_cases": ["threshold-equality", "threshold-over-refractory-entry"],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P05-refractory-release",
+      "probe_class": "refractory entry, hold, countdown, and release",
+      "question": "After a spike, on which architectural tick is the neuron next eligible for integration and threshold testing?",
+      "crosswalk_rows": ["refractory-semantics", "threshold-reset"],
+      "comparison_intent": ["current_after", "voltage_after", "spikes", "next_eligible_tick"],
+      "reuse": {
+        "directed_cases": ["refractory-one-tick", "refractory-three-ticks"],
+        "weight_cases": [],
+        "m12_physical_cases": ["refractory-hold", "refractory-release-boundary"],
+        "m12_multitick_cases": ["decay-refractory-history"]
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P06-signed-synaptic-drive",
+      "probe_class": "positive/negative and mixed excitation/inhibition",
+      "question": "How are positive, negative, and simultaneous mixed synaptic drives accumulated into neuron state?",
+      "crosswalk_rows": ["weight-encoding", "synaptic-accumulation"],
+      "comparison_intent": ["current_after", "voltage_after"],
+      "reuse": {
+        "directed_cases": ["inhibitory-synapse", "mixed-excitation-inhibition"],
+        "weight_cases": [],
+        "m12_physical_cases": ["mixed-excitation-inhibition"],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P07-weight-encoding-boundaries",
+      "probe_class": "representative weight precision/exponent/sign-mode boundaries",
+      "question": "After each implementation's documented initialization transform, what effective signed synaptic drive corresponds to representative precision, exponent, sign-mode, and clipping boundaries?",
+      "crosswalk_rows": ["weight-encoding", "fixed-point-rounding-saturation"],
+      "comparison_intent": ["effective_weight", "current_after"],
+      "reuse": {
+        "directed_cases": [],
+        "weight_cases": [
+          "weight-baseline-excitatory",
+          "weight-positive-exponent",
+          "weight-negative-exponent-exact",
+          "weight-negative-exponent-positive-floor",
+          "weight-negative-exponent-negative-floor",
+          "weight-reduced-precision-excitatory",
+          "weight-reduced-precision-inhibitory",
+          "weight-mixed-positive-quantization",
+          "weight-mixed-negative-quantization",
+          "weight-excitatory-maximum",
+          "weight-inhibitory-minimum",
+          "weight-negative-clipping",
+          "weight-zero-bits-excitatory",
+          "weight-zero-bits-inhibitory",
+          "weight-zero-bits-mixed"
+        ],
+        "m12_physical_cases": ["encoded-positive-exponent", "encoded-negative-exponent", "encoded-reduced-precision-mixed"],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P08-fanin-fanout",
+      "probe_class": "simultaneous fan-in and fan-out",
+      "question": "Do simultaneous fan-in and one-to-many fan-out preserve multiplicity and target-specific effective drive?",
+      "crosswalk_rows": ["synaptic-accumulation", "event-order-multiplicity"],
+      "comparison_intent": ["current_after", "voltage_after", "spikes"],
+      "reuse": {
+        "directed_cases": ["simultaneous-fan-in", "fan-out"],
+        "weight_cases": [],
+        "m12_physical_cases": ["multi-neuron-multi-axon"],
+        "m12_multitick_cases": ["recurrent-fanout", "recurrent-fanin"]
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P09-event-multiplicity",
+      "probe_class": "repeated event multiplicity",
+      "question": "Are repeated occurrences of the same event preserved as repeated synaptic work rather than deduplicated?",
+      "crosswalk_rows": ["event-order-multiplicity", "synaptic-accumulation"],
+      "comparison_intent": ["input_event_count", "current_after"],
+      "reuse": {
+        "directed_cases": [],
+        "weight_cases": [],
+        "m12_physical_cases": ["repeated-event-multiplicity"],
+        "m12_multitick_cases": ["same-target-recurrent-multiplicity"]
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_new_native",
+        "project": "runnable_new_native",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P10-recurrent-timing",
+      "probe_class": "recurrent-delivery timing and recurrent chains",
+      "question": "When a neuron spikes on tick t, what is the earliest comparable tick on which its recurrent target can be affected?",
+      "crosswalk_rows": ["recurrent-delivery", "tick-update-order", "routing-network"],
+      "comparison_intent": ["spikes", "recurrent_input_events", "first_affected_tick"],
+      "reuse": {
+        "directed_cases": [],
+        "weight_cases": [],
+        "m12_physical_cases": [],
+        "m12_multitick_cases": ["feedforward-recurrent-chain", "self-recurrent-oscillator", "two-neuron-recurrent-loop"]
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_new_native",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P11-state-saturation",
+      "probe_class": "finite-width saturation/overflow boundaries",
+      "question": "At representable state extremes, does the implementation saturate, wrap, clip earlier, or leave the behavior unspecified?",
+      "crosswalk_rows": ["fixed-point-rounding-saturation"],
+      "comparison_intent": ["current_after", "voltage_after", "overflow_behavior"],
+      "reuse": {
+        "directed_cases": [],
+        "weight_cases": [],
+        "m12_physical_cases": ["positive-state-saturation", "negative-state-saturation"],
+        "m12_multitick_cases": []
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_new_native",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    },
+    {
+      "id": "P12-simultaneous-spikes",
+      "probe_class": "simultaneous fan-in and fan-out",
+      "question": "When several independent neurons spike on the same architectural tick, which observables are order-independent and which event-order details are actually exposed?",
+      "crosswalk_rows": ["event-order-multiplicity", "routing-network"],
+      "comparison_intent": ["spike_set", "observable_ordering"],
+      "reuse": {
+        "directed_cases": ["multiple-simultaneous-spikes"],
+        "weight_cases": [],
+        "m12_physical_cases": [],
+        "m12_multitick_cases": ["simultaneous-routing-order"]
+      },
+      "participation": {
+        "published_loihi": "evidence_only",
+        "brian2loihi": "runnable_existing",
+        "project": "runnable_existing",
+        "catalyst_n1": "blocked_by_m13_3"
+      }
+    }
+  ],
+  "summary": {
+    "probe_count": 12,
+    "required_probe_classes_covered": 11,
+    "pre_normalization_reuse_boundary": "M06/M07 12-case directed suite plus all 15 M08 encoded-weight cases can be re-executed now because those project/Brian2Loihi scenarios already share an established backend-neutral schema.",
+    "not_yet_authorized": "No Catalyst parameter translation, normalized trace comparison, four-way PASS/FAIL result, or A-H discrepancy classification is authorized until M13.3 freezes the common comparison specification."
+  }
+}
