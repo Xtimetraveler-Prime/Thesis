@@ -50,6 +50,20 @@ M13.4 can already re-execute cases whose project/Brian2Loihi mapping was establi
 
 This is not a substitute for the eventual four-way corpus. It is a provenance-preserving re-execution of already shared project/Brian2Loihi scenarios so later M13.4 evidence can reuse exact inputs rather than reconstructing them informally.
 
+### Reproducible Brian2Loihi runtime
+
+A fresh M13.4 preflight exposed a Class-H dependency issue before any architectural result was produced. The comparison extra previously allowed unrestricted `numpy>=1.23`; a fresh resolver selected NumPy 2.4.6, while the installed Brian2 2.9.0 import path still references `numpy.ndarray.ptp`. NumPy 2 removed that ndarray method, so Brian2 failed at import before any scenario ran.
+
+The comparison-only optional dependency set is therefore frozen to:
+
+```text
+numpy==1.26.4
+brian2==2.9.0
+brian2-loihi==0.5.2
+```
+
+This is a tooling/reproducibility correction, not a neuron-model change. Neither Brian2 nor NumPy is patched, and the project computational core is unchanged. The pin is kept in `pyproject.toml` under the `compare` optional dependency so a clean `pip install -e '.[dev,compare]'` reconstructs the tested comparison runtime.
+
 Run:
 
 ```bash
@@ -80,7 +94,7 @@ Those flags prevent this evidence from being misrepresented later as a completed
 
 The catalog links earlier evidence rather than discarding it. Examples include:
 
-- M05/M07 `current-decay-order`, `voltage-decay`, negative rounding, threshold, refractory, fan-in/fan-out, mixed excitation/inhibition, and simultaneous spike scenarios;
+- M05/M07 `smoke-no-decay`, `current-decay-order`, `voltage-decay`, negative rounding, threshold, refractory, fan-in/fan-out, mixed excitation/inhibition, and simultaneous spike scenarios;
 - all 15 M08 encoded-weight cases;
 - M12.2 physical boundary cases for threshold, refractory, rounding, repeated multiplicity, encoded weights, and state saturation;
 - M12.3 recurrent chain/fan-in/fan-out/multiplicity/order/history cases.
