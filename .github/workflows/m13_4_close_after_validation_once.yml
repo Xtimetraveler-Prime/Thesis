@@ -1,0 +1,144 @@
+name: M13.4 close after validation once
+on:
+  push:
+    branches: [agent/m13-4-directed-differential-probes]
+    paths: [.github/workflows/m13_4_close_after_validation_once.yml]
+permissions:
+  contents: write
+jobs:
+  close:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-4-directed-differential-probes
+          fetch-depth: 0
+      - name: Promote findings and documentation to validated complete
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('Neuromorphic Digital Twin')
+
+          # Machine-readable findings: preserve filename for compatibility, promote status.
+          fp = root / 'references/m13_4_candidate_findings.json'
+          data = json.loads(fp.read_text())
+          data['status'] = 'validated_complete'
+          data['independent_validation'] = {
+              'date': '2026-09-10',
+              'source': 'independent local user validation from the development branch',
+              'reported_result': 'all requested M13.4 reproduction and regression commands passed',
+              'focused_tests_passed': 30,
+              'full_project_tests_passed': 331,
+              'directed_probe_summary': {
+                  'probes': 12,
+                  'agreement': 6,
+                  'architectural_difference': 3,
+                  'partial_scope': 1,
+                  'non_comparable': 2,
+                  'class_A_or_B': 0,
+              },
+              'm12_revalidation_required': False,
+          }
+          fp.write_text(json.dumps(data, indent=2) + '\n')
+
+          # Contract test now requires independently validated status.
+          tp = root / 'tests/test_m13_4_differential.py'
+          t = tp.read_text()
+          t = t.replace(
+              'assert data["status"] == "candidate_complete_pending_independent_validation"',
+              'assert data["status"] == "validated_complete"\n'
+              '    assert data["independent_validation"]["focused_tests_passed"] == 30\n'
+              '    assert data["independent_validation"]["full_project_tests_passed"] == 331\n'
+              '    assert data["independent_validation"]["directed_probe_summary"]["class_A_or_B"] == 0'
+          )
+          tp.write_text(t)
+
+          # Main M13.4 methods/results document.
+          dp = root / 'docs/M13_4_DIRECTED_DIFFERENTIAL.md'
+          d = dp.read_text()
+          d = d.replace(
+              '**Status:** In progress — candidate directed findings satisfy the automated pass boundary; independent local validation remains required before closure.',
+              '**Status:** Complete — automated reconstruction and independent local validation both satisfy the M13.4 pass boundary.'
+          )
+          d = d.replace(
+              'The candidate result authority is `references/m13_4_candidate_findings.json`.',
+              'The validated result authority is `references/m13_4_candidate_findings.json`. The historical filename is retained for compatibility, while its internal status is `validated_complete`.'
+          )
+          d = d.replace(
+              'The automated candidate currently satisfies these criteria with zero A/B candidates. M13.4 remains **In progress** until the development branch is independently pulled and the validation commands are reproduced.',
+              'The automated reconstruction satisfied these criteria with zero A/B candidates. Independent local validation on 2026-09-10 then reproduced the requested M13.4 reference fetch, Catalyst RTL CUBA probe, 12-probe normalized differential, committed-findings validation, 30 focused M13.3/M13.4 tests, and 331-test full project regression with no reported failures. M13.4 therefore satisfies its pass boundary and is complete.'
+          )
+          marker = '## M13.4 pass boundary\n'
+          validation = '''## Independent validation and closure\n\nOn 2026-09-10 the development branch was independently pulled and the requested reproduction sequence was run outside the automated closure environment. The reported result was that every command passed. This includes the pinned Catalyst checkout, Catalyst CUBA RTL probe, normalized 12-probe differential, findings-snapshot validator, the 30-test focused M13.3/M13.4 regression set, and the complete 331-test project suite.\n\nThe independently reproduced architectural result remains **6 agreements, 3 architectural/model differences, 1 partial-scope result, 2 intentionally non-comparable results, and 0 Class-A/B candidates**. No project computational behavior changed and no M12 physical result is superseded. Because no A/B finding exists, the M13 change-control rule does not require an M12 physical rerun.\n\nThe two Class-H issues encountered during development remain documented as resolved harness defects rather than architectural findings: CUBA state reuse between probes and Catalyst physical-GID/logical-ID observation mismatch. Both were corrected before the accepted result snapshot; the latter correction removed the earlier apparent P08 fan-in discrepancy.\n\n'''
+          if validation not in d:
+              d = d.replace(marker, validation + marker)
+          dp.write_text(d)
+
+          # Earlier probe-planning doc: convert from blocked historical checkpoint into accurate closure note.
+          pp = root / 'docs/M13_4_DIRECTED_PROBES.md'
+          p = pp.read_text()
+          p = p.replace(
+              '**Status:** In progress — pre-normalization planning/evidence scaffold preserved as historical provenance; M13.3 is now frozen and the completed normalized execution/results are documented in `M13_4_DIRECTED_DIFFERENTIAL.md`.',
+              '**Status:** Complete — the pre-normalization planning scaffold is retained as provenance; M13.3 is frozen and the accepted normalized execution/results are documented in `M13_4_DIRECTED_DIFFERENTIAL.md`.'
+          )
+          p = p.replace(
+              'M13.4 is **not complete** at this checkpoint.',
+              'This document describes the original pre-normalization checkpoint; that checkpoint is now superseded by the validated M13.4 differential result.'
+          )
+          if '## Closure handoff' not in p:
+              p += '''\n## Closure handoff\n\nM13.3 subsequently froze `neuromorphic-twin-m13-normalization-v1`, enabling the predeclared Catalyst and Brian2Loihi transforms without redesigning the probe questions. M13.4 then executed all 12 frozen questions and closed with 6 agreements, 3 architectural/model differences, 1 partial-scope result, 2 non-comparable results, and no Class-A/B candidate. Independent local validation on 2026-09-10 reproduced the full requested gate. The authoritative result narrative is `M13_4_DIRECTED_DIFFERENTIAL.md`; this file remains useful as provenance for how the questions and reuse boundary were frozen before those outputs were known.\n'''
+          pp.write_text(p)
+
+          # Milestone tracker: close M13.4 but leave overall M13 active for M13.5/13.6.
+          mp = Path('MILESTONES.md')
+          m = mp.read_text()
+          m = m.replace(
+              '### M13.4 — Run directed differential architectural probes\n\n**Status:** In progress\n**Started:** 2026-09-09\n**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; frozen M13.3-normalized 12-probe candidate evidence awaiting independent local validation',
+              '### M13.4 — Run directed differential architectural probes\n\n**Status:** Complete\n**Started:** 2026-09-09\n**Completed:** 2026-09-10\n**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; validated 12-probe M13.3-normalized differential evidence; independent local reproduction complete'
+          )
+          m = m.replace('#### Candidate completion evidence\n\nThe M13.3-normalized directed engine now executes', '#### Completion evidence\n\nThe M13.3-normalized directed engine executes')
+          m = m.replace(
+              'The candidate result authority is `Neuromorphic Digital Twin/references/m13_4_candidate_findings.json`; the methods/results narrative is `Neuromorphic Digital Twin/docs/M13_4_DIRECTED_DIFFERENTIAL.md`. No project computational-core, HLS, or FPGA-v1 behavior changed, and no M12 physical revalidation is required because no A/B candidate was found. M13.4 remains In progress until these results are independently reproduced from the development branch.',
+              'The validated result authority is `Neuromorphic Digital Twin/references/m13_4_candidate_findings.json` (historical filename retained; internal status `validated_complete`); the methods/results narrative is `Neuromorphic Digital Twin/docs/M13_4_DIRECTED_DIFFERENTIAL.md`. Independent local validation on 2026-09-10 reproduced the requested reference fetch, Catalyst RTL CUBA probe, 12-probe differential, findings validator, 30 focused tests, and 331-test full project suite with all commands reported passing. No project computational-core, HLS, or FPGA-v1 behavior changed, and no M12 physical revalidation is required because no A/B candidate was found.'
+          )
+          m = m.replace(
+              'The agreed directed corpus has been executed across every applicable implementation, with all agreements and discrepancies reproduced and classified. M13 does not require all implementations to produce identical results; it requires every meaningful difference to be understood well enough to state whether it reflects mapping, scope, architecture, ambiguity, or a defect.',
+              '**Achieved.** The agreed directed corpus was executed across every applicable implementation; all meaningful agreements, differences, scope boundaries, and harness defects were reproduced and classified. The accepted result contains zero Class-A/B candidates, so the M12-validated baseline remains unchanged and M13.5 can proceed to the strongest common FPGA/RTL reproduction boundary.'
+          )
+          mp.write_text(m)
+          PY
+      - name: Install comparison environment and external tools
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+          bash scripts/fetch_m13_1_catalyst.sh
+          python3 -m pip install -e build/m13_1/catalyst-n1/sdk
+      - name: Reproduce accepted M13.4 result after closure edits
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          PYTHONPATH=src python3 examples/run_m13_4_directed_probes.py --require-normalization
+          bash scripts/run_m13_4_catalyst_cuba_probes.sh
+          python3 examples/run_m13_4_differential.py --output build/m13_4/differential --catalyst-cuba-log build/m13_4/catalyst-rtl/native.log
+          python3 examples/validate_m13_4_candidate_findings.py --report build/m13_4/differential/directed-report.json
+      - name: Regression
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest -q tests/test_m13_3_normalization.py tests/test_m13_4_directed_probes.py tests/test_m13_4_differential.py
+          python3 -m pytest -q
+      - name: Commit closure and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_4_close_after_validation_once.yml
+          git add MILESTONES.md 'Neuromorphic Digital Twin/docs/M13_4_DIRECTED_DIFFERENTIAL.md' 'Neuromorphic Digital Twin/docs/M13_4_DIRECTED_PROBES.md' 'Neuromorphic Digital Twin/references/m13_4_candidate_findings.json' 'Neuromorphic Digital Twin/tests/test_m13_4_differential.py'
+          git commit -m 'Close M13.4 after independent validation'
+          git push origin HEAD:agent/m13-4-directed-differential-probes
