@@ -1,0 +1,116 @@
+name: M13.6 candidate findings freeze once
+
+on:
+  push:
+    branches:
+      - agent/m13-6-adjudicate-freeze-findings
+    paths:
+      - '.github/workflows/m13_6_candidate_freeze_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  freeze:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-6-adjudicate-freeze-findings
+          fetch-depth: 0
+
+      - name: Install complete project test environment
+        run: python3 -m pip install -e 'Neuromorphic Digital Twin[dev,compare]'
+
+      - name: Generate tracked M13.6 candidate findings
+        working-directory: Neuromorphic Digital Twin
+        run: |
+          python3 examples/generate_m13_6_findings.py \
+            --output references/m13_6_findings.json \
+            --markdown build/m13_6/m13_6_findings.md
+          cat build/m13_6/m13_6_findings.md
+
+      - name: Record M13.6 start and experiment handoff
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          milestones = Path('MILESTONES.md')
+          text = milestones.read_text(encoding='utf-8')
+          old = '''### M13.6 — Adjudicate discrepancies and freeze M13 findings
+
+**Status:** Planned
+
+#### Core goal'''
+          new = '''### M13.6 — Adjudicate discrepancies and freeze M13 findings
+
+**Status:** In progress
+**Started:** 2026-09-10
+**Repository evidence:** branch `agent/m13-6-adjudicate-freeze-findings`; candidate authority `Neuromorphic Digital Twin/references/m13_6_findings.json`
+
+M13.6 is being executed in two ordered sub-boundaries:
+
+- **M13.6.1 — Freeze evidence-driven A–H adjudication and change control.** Regenerate the final candidate findings from the tracked M13.2 crosswalk, M13.4 directed findings, and M13.5 hardware closure; fail closed on source-pin, classification, comparison-limit, or baseline drift.
+- **M13.6.2 — Freeze thesis claim boundaries and experiment handoff.** Cross-reference the accepted differences into `EXPERIMENTS.md`, preserve the zero-A/B change-control decision, and complete independent local validation before M13.6/M13 closure.
+
+#### Core goal'''
+          if old not in text:
+              raise SystemExit('M13.6 planned-status marker not found')
+          milestones.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          experiments = Path('EXPERIMENTS.md')
+          text = experiments.read_text(encoding='utf-8')
+          marker = '\n## Required experiment record\n'
+          if marker not in text:
+              raise SystemExit('EXPERIMENTS required-record marker not found')
+          if '## M13.6 audit handoff' not in text:
+              handoff = '''
+## M13.6 audit handoff
+
+The candidate M13.6 adjudication preserves the validated FPGA-v1 baseline because the accepted M13 audit contains **zero Class-A/B findings**. The audit therefore changes experiment interpretation rather than silently changing the instrument:
+
+- **E01 — update ordering:** retain the physically validated FPGA-v1 update schedule as the baseline. M13 agreement on current/voltage, transformed threshold, and refractory release does not make alternative schedules equivalent; ordering changes remain explicit counterfactuals.
+- **E02 — weight representation:** M13 P07 found exact agreement for all 13 effective-weight cases inside Catalyst's signed-int16 common envelope, while native encoding fields are not field-for-field equivalent and two project/Brian2Loihi cases fall outside that envelope. Experiments should separate delivered effective-weight effects from encoding-layout effects.
+- **E03 — recurrent timing:** M13 P10 found a one-tick source-to-target lag in FPGA-v1 and Catalyst synchronous execution, while the pinned Brian2Loihi native recurrent probe produced no target effect. The Brian2Loihi null result is retained as an emulator/modeling finding, not treated as Loihi ground truth.
+- **E04 — finite precision:** M13 P03/P06/P11 make negative `/4096` rounding, sub-rest membrane clamping, and overflow/saturation policy especially useful controlled variants. Published Loihi evidence remains insufficient to promote one shared overflow policy to ground truth.
+- **E05 — multi-feature ablation:** keep this deferred at the design level until the relevant single-factor variants from E01-E04 are independently frozen and validated, so an ablation cannot confound several M13 differences at once.
+- **E06 — FPGA fidelity cost:** M13.5 routed Catalyst timing/resources are implementation context only. Fair cost experiments should compare controlled project variants under the same target part, tool version, constraints, workload boundary, and measurement method rather than rank the raw Catalyst and FPGA-v1 totals.
+
+No experiment status is promoted by M13.6 alone. The machine-readable handoff is part of `Neuromorphic Digital Twin/references/m13_6_findings.json`; experiments move to Designed/Ready only when their own hypotheses, variants, workloads, and validation gates are frozen.
+'''
+              text = text.replace(marker, '\n' + handoff + marker, 1)
+          experiments.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Focused M13.6 adjudication tests
+        working-directory: Neuromorphic Digital Twin
+        run: python3 -m pytest --override-ini addopts='' -q tests/test_m13_6_findings.py
+
+      - name: Complete project regression
+        working-directory: Neuromorphic Digital Twin
+        run: python3 -m pytest --override-ini addopts='' -q
+
+      - name: Verify frozen computational baseline untouched
+        shell: bash
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/m13_6_branch_files.txt
+          git diff --name-only >> /tmp/m13_6_branch_files.txt
+          sort -u /tmp/m13_6_branch_files.txt -o /tmp/m13_6_branch_files.txt
+          cat /tmp/m13_6_branch_files.txt
+          if grep -E '^Neuromorphic Digital Twin/(hls/core_v1/|rtl/core_v1/|src/neuromorphic_twin/(arithmetic|core|model|neuron|specification|weights)\.py$|src/neuromorphic_twin/(fpga_|hls_conformance\.py))' /tmp/m13_6_branch_files.txt; then
+            echo 'ERROR: M13.6 changed a frozen computational/HLS/RTL/physical-validation path.' >&2
+            exit 2
+          fi
+
+      - name: Commit candidate evidence and remove one-shot workflow
+        shell: bash
+        run: |
+          rm .github/workflows/m13_6_candidate_freeze_once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add MILESTONES.md EXPERIMENTS.md \
+            'Neuromorphic Digital Twin/references/m13_6_findings.json' \
+            .github/workflows/m13_6_candidate_freeze_once.yml
+          git commit -m 'Freeze M13.6 candidate findings and experiment handoff'
+          git push origin HEAD:agent/m13-6-adjudicate-freeze-findings
