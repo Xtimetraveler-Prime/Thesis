@@ -2,7 +2,9 @@
 
 ## Status
 
-**In progress — M13.5.1 preflight and M13.5.2 independent Vivado 2025.2 routed reproduction are complete; M13.5.3 tracked evidence promotion remains.**
+**Status: Complete**
+
+M13.5.1, M13.5.2, and M13.5.3 are complete. The final tracked result authority is `references/m13_5_closure.json`; bulky native Vivado products remain in the ignored local evidence tree.
 
 M13.5 extends the Catalyst audit beyond documentation and software simulation. Its goal is to reproduce the pinned Catalyst N1 release at the strongest hardware boundary actually supplied by that release, preserve vendor evidence, and compare it with the accepted M12.5 FPGA characterization without turning unlike implementations into an unfair performance contest.
 
@@ -360,7 +362,7 @@ These values are retained in the M13.5 manifest for provenance but are **not yet
 
 ---
 
-## Fairness rules for the eventual comparison
+## Fairness rules applied to the final comparison
 
 The following rules are frozen before Catalyst Vivado results are observed:
 
@@ -374,18 +376,11 @@ The following rules are frozen before Catalyst Vivado results are observed:
 
 ---
 
-## Current M13.5 development boundary
+## Final M13.5 hardware boundary
 
-The branch can be fully tested in a normal CI environment through:
+The independent AMD-toolchain step and tracked evidence promotion are complete. The pinned Catalyst K26-class RTL reproduced successfully through Vivado 2025.2 synthesis, placement, physical optimization, and routing at 100 MHz. M13.5 closes at **source-supported routed implementation** because the pinned `fpga/kria/` release does not supply the board constraints, processing-system integration, or bitstream-generation path needed to attribute a physical KV260 run to upstream Catalyst.
 
-- manifest validation;
-- exact Catalyst checkout verification;
-- 15-file K26 wrapper elaboration;
-- Catalyst's 25-testbench native RTL regression;
-- synthetic Vivado report-parser tests;
-- complete thesis Python regression.
-
-The local AMD-toolchain step is now complete. Independent Vivado 2025.2 execution reproduced the pinned Catalyst synthesis/place/route flow at 100 MHz with routed WNS `+0.001 ns` and WHS `+0.013 ns`. The current boundary is M13.5.3: validate the preserved evidence tree, promote a compact tracked closure record, and then close M13.5 at routed implementation unless the evidence contradicts the already-frozen source-supported boundary.
+The accepted result is deliberately asymmetric in evidence strength: the thesis project retains physical M12.5 execution evidence, while Catalyst contributes routed implementation evidence. This is recorded as a platform/integration boundary rather than a behavioral discrepancy.
 
 ## Independent M13.5.2 Vivado reproduction
 
@@ -393,7 +388,7 @@ The source-controlled `run_m13_5_catalyst_k26_vivado.sh` runner was independentl
 
 The generated normalized comparison retained the frozen evidence rules: project part `xck26-sfvc784-2LV-c` remains distinct from the Catalyst part, latency/throughput is withheld, power/energy is withheld, and Catalyst physical execution remains false. The runner reached its final PASS only after required synthesis/implementation reports and the implemented DCP were preserved, the evidence tree was hashed, and tracked Catalyst source was confirmed unchanged.
 
-M13.5.2 is therefore complete. M13.5.3 now promotes the local preserved evidence through `scripts/run_m13_5_closure.sh`; the resulting compact `references/m13_5_closure.json` becomes the tracked authority for final resource values and evidence hashes. The closure tooling itself passed **19/19 focused tests** and **354/354 complete project tests** in clean CI before this checkpoint was recorded.
+M13.5.2 is therefore complete. M13.5.3 subsequently validated the preserved evidence through `scripts/run_m13_5_closure.sh`, independently re-parsed the native routed timing/utilization reports, reproduced the normalized comparison, verified the complete SHA-256 evidence manifest, and promoted `references/m13_5_closure.json` as the tracked authority. Independent local closure passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**; the final tracked-result source gate extends those counts to **23/23 focused** and **358/358 complete** tests.
 
 ---
 
@@ -403,4 +398,43 @@ A clean Ubuntu 24.04 current-head reconstruction completed the non-Vivado M13.5 
 
 M13.1 already established the unchanged Catalyst pin at **25/25 native RTL regression testbenches**; the M13.5 branch consumes that exact source and adds the K26-wrapper-specific elaboration gate rather than redefining Catalyst's regression suite.
 
-At this checkpoint all work that does not require AMD Vivado is complete. The next evidence-producing command is the source-controlled Vivado 2025.2 runner. Its output will determine the actual routed timing/resource result and therefore cannot be pre-filled or inferred from upstream claims.
+That pre-vendor checkpoint is retained as provenance for the frozen comparison contract; the independently observed vendor result and final closure are recorded below.
+
+---
+
+## Final M13.5.3 observed result and closure
+
+Independent evidence promotion completed on 2026-09-10 from the preserved M13.5.2 Vivado tree. The closure command re-parsed the native `timing_summary.rpt` and `utilization.rpt`, required exact regeneration of the normalized result/comparison, verified every preserved evidence hash, reran the focused M13.5 tests and full project regression, and emitted the tracked machine-independent closure record.
+
+### Routed implementation result
+
+| Metric | Thesis M12.5 | Catalyst N1 |
+| --- | ---: | ---: |
+| Target part | `xck26-sfvc784-2LV-c` | `xczu5ev-sfvc784-2-i` |
+| Clock target | 100 MHz | 100 MHz |
+| Routed WNS | +0.493 ns | +0.001 ns |
+| Routed WHS | +0.011 ns | +0.013 ns |
+| CLB LUTs | 4,424 / 117,120 | 19,891 / 117,120 (16.98%) |
+| CLB registers | 4,280 / 234,240 | 30,850 / 234,240 (13.17%) |
+| Block RAM tiles | <=18 / 144 | 52.5 / 144 (36.46%) |
+| DSPs | 2 / 1,248 | 14 / 1,248 (1.12%) |
+| URAM | 0 / 64 | 0 / 64 (0.00%) |
+
+Both implementations close the same nominal 10 ns constraint. The different WNS margins are **not** converted into an Fmax or architectural-efficiency claim. The designs differ in target-part string, configured capacity, feature scope, serialization/parallelism, host infrastructure, and validation/debug overhead. Resource totals are therefore contextual rather than a winner/loser metric.
+
+Latency/throughput remains withheld because the Catalyst routed flow does not establish an equivalent on-fabric architectural-timestep cycle boundary. Power/energy remains withheld because the project has no matching validated physical power methodology. Catalyst physical execution remains false; the implemented DCP is not relabeled as a programmed-board result.
+
+### Evidence identity
+
+The compact tracked closure is `references/m13_5_closure.json` with schema `neuromorphic-twin-m13-hardware-closure-v1` and status `validated_complete`. Its preserved evidence-manifest SHA-256 is:
+
+```text
+80a03e53f8775c6358654fa34e35176442f79b94b43de8e58ecf10920665b2bc
+```
+
+The closure record also stores hashes for the normalized result/comparison and all 11 native Vivado reports/DCP products while intentionally omitting machine-local absolute paths.
+
+### M13.5 conclusion
+
+**M13.5 is complete.** The exact pinned Catalyst N1 K26-class RTL was reproducibly implemented through route at 100 MHz under Vivado 2025.2, with positive setup and hold slack and source provenance intact. Because the pinned Catalyst release does not provide a complete directly programmable KV260 integration, routed implementation is the strongest source-supported Catalyst hardware boundary used by this thesis. No project computational baseline changed, and no M12 physical rerun is required by M13.5.
+

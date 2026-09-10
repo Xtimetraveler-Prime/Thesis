@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress — M13.5.2 independent Vivado 2025.2 reproduction passed; tracked evidence promotion is the remaining closure step.**
+**Status: Complete**
 
 The independently executed M13.5.2 runner completed successfully on the pinned Catalyst N1 K26-class flow with:
 
@@ -133,8 +133,33 @@ If evidence promotion and the full regression pass, no additional Catalyst board
 
 A future thesis-created Catalyst board integration could be an additional experiment, but it is not required to close M13.5 and must not be retroactively described as part of the pinned upstream release.
 
-After `references/m13_5_closure.json` is independently generated and reviewed, the remaining repository work is to record its observed resource numbers and evidence hash in the main M13.5 narrative and `MILESTONES.md`, run final source-level consistency checks, and merge the branch.
+The independently generated `references/m13_5_closure.json` is now tracked and reviewed. Its observed resource/timing values and evidence identity are recorded in the main M13.5 narrative and `MILESTONES.md`; only branch merge remains outside this sub-milestone.
 
 ## Closure-tooling CI checkpoint
 
 Before local evidence promotion, the M13.5.3 host-side tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.
+
+---
+
+## Final independently promoted evidence
+
+The source-controlled closure command was independently executed against the preserved M13.5.2 Vivado evidence and passed:
+
+```text
+23 passed
+354 passed
+M13.5.3 closure validation PASS
+```
+
+The resulting tracked authority records Catalyst routed WNS `+0.001 ns`, WHS `+0.013 ns`, **19,891** CLB LUTs, **30,850** CLB registers, **52.5** Block RAM tiles, **14** DSPs, and **0** URAM at the frozen 100 MHz target. The final source-level tracked-result gate adds four invariants, bringing the expected clean branch totals to **23 focused M13.5 tests** and **358 project tests**.
+
+The evidence-manifest SHA-256 is:
+
+```text
+80a03e53f8775c6358654fa34e35176442f79b94b43de8e58ecf10920665b2bc
+```
+
+The closure retains latency/throughput=`withheld`, power/energy=`withheld`, and Catalyst physical execution=`false`. The project side remains the independently validated M12.5 physical image with 22/22 workloads, 166/166 committed ticks, and zero mismatches.
+
+**M13.5.3 is complete.** No additional Catalyst board-programming step is required for this milestone because that integration is not supplied by the pinned upstream K26 source boundary.
+

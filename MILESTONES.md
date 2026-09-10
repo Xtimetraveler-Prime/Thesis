@@ -2124,7 +2124,7 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 **Status:** In progress
 **Started:** 2026-09-08
-**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`
+**Repository evidence:** M13.1-M13.4 merged to `main`; M13.5 closure on branch `agent/m13-5-catalyst-k26-reproduction` with tracked `Neuromorphic Digital Twin/references/m13_5_closure.json`
 
 ### Goal
 
@@ -2148,9 +2148,9 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 
 - [x] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
 - [x] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
-- [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
-- [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
-- [ ] Reproduce a physical or RTL-level Catalyst comparison on the common K26 path if the pinned Catalyst release and available tooling support a defensible configuration; otherwise document the exact blocker and complete the strongest reproducible comparison boundary available.
+- [x] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
+- [x] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
+- [x] Reproduce a physical or RTL-level Catalyst comparison on the common K26 path if the pinned Catalyst release and available tooling support a defensible configuration; otherwise document the exact blocker and complete the strongest reproducible comparison boundary available.
 - [ ] Classify every meaningful discrepancy before changing the project baseline.
 - [ ] If a validated project defect or incomplete Loihi interpretation is found, add a directed regression, revise the relevant specification, and rerun all affected M12 evidence before M13 closes.
 - [ ] Record final findings, supported-scope changes, remaining ambiguities, and candidate experiment implications in a reproducible thesis-ready form.
@@ -2366,9 +2366,10 @@ The validated result authority is `Neuromorphic Digital Twin/references/m13_4_ca
 
 ### M13.5 — Reproduce Catalyst at the strongest common FPGA/RTL boundary
 
-**Status:** In progress
+**Status:** Complete
 **Started:** 2026-09-10
-**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; M13.5.1 automated preflight and M13.5.2 independent Vivado 2025.2 routed reproduction complete; M13.5.3 evidence promotion in progress
+**Completed:** 2026-09-10
+**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; tracked closure `Neuromorphic Digital Twin/references/m13_5_closure.json`; independent Vivado 2025.2 reproduction and M13.5.3 evidence promotion complete
 
 #### Core goal
 
@@ -2392,7 +2393,7 @@ Automated current-head preflight verified the exact Catalyst checkout and K26 in
 
 The source-controlled Vivado runner now preserves native synthesis/implementation reports and the implemented DCP, parses routed WNS/WHS and resource counts into machine-readable JSON, generates a fairness-preserving project/Catalyst comparison artifact, hashes the evidence tree, rejects negative routed setup/hold slack, and structurally withholds latency/throughput, power/energy, and physical-Catalyst claims that are not supported by the supplied flow.
 
-**M13.5.1 is complete. M13.5.2 independently reproduced the pinned Catalyst routed flow under local Vivado 2025.2 on 2026-09-10. M13.5.3 is now the current boundary: validate and promote the preserved vendor evidence into the tracked closure record.**
+**M13.5.1, M13.5.2, and M13.5.3 are complete. The tracked M13.5 closure record is `Neuromorphic Digital Twin/references/m13_5_closure.json`.**
 
 #### M13.5.2 completion evidence
 
@@ -2411,11 +2412,33 @@ Power:           withheld
 Physical run:    not claimed
 ```
 
-The runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree until M13.5.3 validates and promotes the compact tracked closure artifact.
+The runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree, while M13.5.3 promotes only the compact machine-independent closure record and evidence hashes into source control.
 
-M13.5.3 closure tooling has now passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in clean CI. The source-controlled closure command is `bash scripts/run_m13_5_closure.sh`.
+M13.5.3 closure tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in clean CI. Independent local execution of `bash scripts/run_m13_5_closure.sh` reproduced those pass counts and promoted the tracked closure artifact. The final tracked-result source gate adds four invariants, for **23/23 focused M13.5 tests** and **358/358 complete project tests**.
 
-#### Preferred physical comparison
+
+#### M13.5.3 completion evidence
+
+Independent local evidence promotion on 2026-09-10 validated the complete preserved vendor tree, independently re-parsed native routed timing/utilization reports, regenerated the normalized hardware comparison, verified every SHA-256 entry, and produced `Neuromorphic Digital Twin/references/m13_5_closure.json` with status `validated_complete`. The same closure command passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite**. A final tracked-result source gate adds four exact closure invariants and is expected to pass **23/23 focused M13.5 tests** and **358/358 complete project tests** before merge.
+
+Final Catalyst routed result at the frozen 100 MHz / 10 ns target:
+
+```text
+target part:      xczu5ev-sfvc784-2-i
+routed WNS:       +0.001 ns
+routed WHS:       +0.013 ns
+CLB LUTs:         19,891 / 117,120  (16.98%)
+CLB registers:    30,850 / 234,240  (13.17%)
+Block RAM tiles:  52.5 / 144        (36.46%)
+DSPs:             14 / 1,248        (1.12%)
+URAM:             0 / 64            (0.00%)
+```
+
+The project M12.5 result remains `+0.493 ns` WNS / `+0.011 ns` WHS with 4,424 LUTs, 4,280 registers, `<=18` BRAM tiles, 2 DSPs, and 0 URAM on `xck26-sfvc784-2LV-c`. These resource/timing rows are contextual only: the target strings, configured capacities, architectural scope, serialization/parallelism, and debug/host infrastructure differ. No maximum-Fmax or efficiency ranking is inferred.
+
+Latency/throughput and power/energy comparisons remain withheld, and Catalyst physical execution remains false. The preserved evidence-manifest SHA-256 is `80a03e53f8775c6358654fa34e35176442f79b94b43de8e58ecf10920665b2bc`. No project computational-core/HLS/FPGA-v1 behavior changed, so M13.5 requires no M12 physical revalidation.
+
+#### Comparison dimensions considered
 
 If a reproducible K26 build is available, run both implementations on the same FPGA family/board class with clearly documented constraints. Candidate comparison evidence includes:
 
@@ -2431,13 +2454,13 @@ If a reproducible K26 build is available, run both implementations on the same F
 
 M13.5 is not a performance contest. Resource or throughput numbers may be placed side-by-side only when differences in core count, capacity, supported features, clock constraints, debug infrastructure, and serialization/parallelism are disclosed. A broader Catalyst implementation should not be portrayed as inefficient merely because it implements features this project omits, and this project's smaller core should not be portrayed as architecturally superior from raw utilization alone.
 
-#### Fallback boundary
+#### Physical-comparison limitation
 
-If the pinned Catalyst release cannot be reproduced physically on the available K26 flow, record the exact blocker and complete the strongest reproducible RTL simulation/synthesis comparison possible. The thesis should distinguish a tool/platform reproduction limitation from a behavioral disagreement.
+The pinned Catalyst release does not supply a complete programmable KV260 integration. M13.5 therefore closes at the successfully reproduced routed-implementation boundary and records the missing board integration as a tool/platform scope limitation rather than a behavioral disagreement.
 
 #### Pass boundary
 
-A reproducible common hardware/RTL comparison has been completed at the strongest defensible boundary available, with enough configuration metadata to prevent misleading performance or resource claims.
+**Achieved.** The exact pinned Catalyst K26-class RTL reproduced through routed Vivado 2025.2 implementation at 100 MHz with positive setup/hold slack. The tracked closure records target-part/configuration distinctions, routed resources/timing, evidence hashes, and explicit exclusions for latency/throughput, power/energy, and physical Catalyst execution. Routed implementation is the strongest source-supported boundary supplied by the pinned release.
 
 ---
 
