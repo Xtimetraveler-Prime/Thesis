@@ -1,0 +1,123 @@
+{
+  "schema": "neuromorphic-twin-m13-hardware-comparison-v1",
+  "status": "preflight_frozen_pending_vivado_reproduction",
+  "started_on": "2026-09-10",
+  "purpose": "Freeze the strongest defensible Catalyst N1 K26-class hardware/RTL comparison boundary before vendor implementation results are observed.",
+  "baseline": {
+    "m13_4_main_merge": "54c7840dff765d585e7ff236845b085007405c05",
+    "project_m12_merge": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+    "catalyst_tag": "v2.3-paper"
+  },
+  "reproduction_environment": {
+    "vivado": "2025.2",
+    "vivado_version_role": "Project reproduction choice. The pinned Catalyst K26 Tcl does not require a version; the same Catalyst commit explicitly uses Vivado 2025.2 for AWS F2 and this thesis already standardizes on Vivado/Vitis 2025.2.",
+    "rtl_preflight": "Icarus Verilog >=12",
+    "clock_target_hz": 100000000,
+    "clock_period_ns": 10.0
+  },
+  "catalyst_k26": {
+    "source_directory": "fpga/kria",
+    "source_directory_files_at_pin": [
+      "build_kria.tcl",
+      "kria_neuromorphic.v",
+      "kria_neuromorphic_8core_backup.v",
+      "run_impl.tcl"
+    ],
+    "build_script": "fpga/kria/build_kria.tcl",
+    "build_script_blob_sha": "6aff405e689cdd2dce402b78002516039777a340",
+    "implementation_script": "fpga/kria/run_impl.tcl",
+    "implementation_script_blob_sha": "672705d32baf5ca473f9ad538a3272ec3c483a11",
+    "wrapper": "fpga/kria/kria_neuromorphic.v",
+    "wrapper_blob_sha": "fee15b738087c155d271f7d7c1eddc5bc9544072",
+    "upstream_target_part": "xczu5ev-sfvc784-2-i",
+    "configured_cores": 2,
+    "neurons_per_core": 256,
+    "total_configured_neurons": 512,
+    "pool_depth_per_core": 4096,
+    "host_boundary": "AXI-facing top-level wrapper",
+    "clock_hz": 100000000,
+    "readme_command": "vivado -mode batch -source fpga/kria/build_kria.tcl",
+    "source_supported_synthesis_command": "vivado -mode batch -source fpga/kria/build_kria.tcl -tclargs synth_only",
+    "source_supported_implementation_command": "vivado -mode batch -source fpga/kria/run_impl.tcl",
+    "readme_flow_caveat": "The pinned README omits -tclargs synth_only. In the pinned build_kria.tcl, default mode=full creates and closes the project without launching synthesis. M13.5 therefore invokes the source's documented synth_only mode before run_impl.tcl and records this as tooling normalization, not a Catalyst RTL modification.",
+    "implementation_outputs": [
+      "synth_utilization.rpt",
+      "synth_utilization_hier.rpt",
+      "synth_timing.rpt",
+      "impl_results/kria_n1_impl.dcp",
+      "impl_results/timing_summary.rpt",
+      "impl_results/timing_paths.rpt",
+      "impl_results/utilization.rpt",
+      "impl_results/utilization_hier.rpt",
+      "impl_results/power.rpt",
+      "impl_results/clock_utilization.rpt",
+      "impl_results/design_analysis.rpt"
+    ],
+    "physical_programming_boundary": {
+      "source_supported": false,
+      "reason": "The pinned fpga/kria directory provides no board XDC, no Vivado block design/processing-system integration, and no write_bitstream step. The supplied wrapper exposes AXI ports as top-level ports. The source-supported flow therefore establishes synthesis/routed implementation characterization, not a directly programmable KV260 image.",
+      "rule": "Do not claim physical Catalyst KV260 execution unless a separate, explicitly documented board integration is constructed and validated. Absence of that integration is a platform/tooling boundary, not a behavioral disagreement."
+    }
+  },
+  "project_m12_physical": {
+    "target_part": "xck26-sfvc784-2LV-c",
+    "board": "KV260 / K26",
+    "clock_hz": 100000000,
+    "clock_period_ns": 10.0,
+    "scope": "Validation-capable M12.5 image including computational core, workload image, VIO/debug shell, physical trace path, and passive timing counter.",
+    "behavioral_validation": {
+      "cases": 22,
+      "ticks": 166,
+      "mismatches": 0
+    },
+    "timing": {
+      "wns_ns": 0.493,
+      "whs_ns": 0.011
+    },
+    "resources": {
+      "clb_luts": {"used": 4424, "available": 117120},
+      "clb_registers": {"used": 4280, "available": 234240},
+      "bram_tiles_upper_bound": {"used": 18, "available": 144, "relation": "<="},
+      "ramb36": {"used": 15},
+      "ramb18": {"used": 5},
+      "dsps": {"used": 2, "available": 1248},
+      "uram": {"used": 0, "available": 64}
+    },
+    "latency_cycles": {"min": 26, "mean": 379.10, "max": 8218},
+    "aggregate": {
+      "cycles": 62931,
+      "time_us_at_100mhz": 629.31,
+      "ticks": 166,
+      "neuron_updates": 2035,
+      "input_events": 2231,
+      "synapse_visits": 4084,
+      "routed_output_events": 725
+    }
+  },
+  "fairness_rules": [
+    "M13.5 is a reproducibility and architecture audit, not a performance contest.",
+    "Always disclose that Catalyst's pinned K26 Tcl targets xczu5ev-sfvc784-2-i while the project's accepted M12 image targets xck26-sfvc784-2LV-c; do not silently treat the part strings as identical.",
+    "Report Catalyst resource usage together with the Available counts emitted by the same Vivado report. Compare raw counts and fractions only with the target-part distinction visible.",
+    "Disclose capacity and feature scope: Catalyst wrapper is 2 cores x 256 neurons with pool depth 4096/core and broader NoC/management/learning-related RTL; the thesis M12.5 image is a smaller serialized validation core with VIO/trace/debug instrumentation.",
+    "Do not infer architectural efficiency from raw LUT/BRAM/DSP totals when feature sets and capacities differ.",
+    "Do not compare M12 latency/throughput against Catalyst unless an equivalent architectural-timestep workload and on-fabric cycle boundary are measured for Catalyst. K26 implementation reports alone do not provide that evidence.",
+    "Do not compare power values: M12 intentionally excluded power/energy from its validated claim set and Catalyst's report_power estimate would not share the same measurement methodology.",
+    "A failed physical-programming attempt caused by missing board integration is Class H/tooling-platform evidence, not a neuron-model discrepancy."
+  ],
+  "pass_boundary": {
+    "automated_preflight": [
+      "exact Catalyst source pin and K26 blobs verified",
+      "Kria wrapper elaborates from the pinned RTL under Icarus >=12",
+      "native Catalyst RTL regression remains 25/25",
+      "M13.5 manifest/parser tests and complete project regression pass"
+    ],
+    "vendor_reproduction": [
+      "Vivado 2025.2 synth_only flow completes on pinned Catalyst source without tracked-source edits",
+      "run_impl.tcl completes route_design at the upstream target part and 10 ns clock",
+      "synthesis and routed utilization/timing reports are preserved",
+      "routed WNS/WHS and major resources are parsed into a machine-readable result"
+    ],
+    "strongest_boundary_rule": "If the vendor routed flow succeeds but the pinned release still lacks a directly programmable KV260 integration, M13.5 may close at routed implementation as the strongest source-supported hardware boundary, provided the physical limitation is explicitly documented."
+  }
+}
