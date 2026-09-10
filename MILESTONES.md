@@ -2413,7 +2413,7 @@ Physical run:    not claimed
 
 The runner also completed its expected-artifact checks, normalized comparison generation, evidence-tree hashing, tracked-Catalyst-source cleanliness checks, and fairness guards before printing PASS. This crosses the M13.5.2 vendor-reproduction boundary. The complete vendor outputs remain in the ignored local `build/m13_5/catalyst-k26-vivado/` tree until M13.5.3 validates and promotes the compact tracked closure artifact.
 
-M13.5.3 closure tooling has now passed **19/19 focused M13.5 tests** and the complete **350/350 project regression suite** in clean CI. The source-controlled closure command is `bash scripts/run_m13_5_closure.sh`.
+M13.5.3 closure tooling has now passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in clean CI. The source-controlled closure command is `bash scripts/run_m13_5_closure.sh`.
 
 #### Preferred physical comparison
 

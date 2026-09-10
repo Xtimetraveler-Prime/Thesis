@@ -134,4 +134,4 @@ After `references/m13_5_closure.json` is independently generated and reviewed, t
 
 ## Closure-tooling CI checkpoint
 
-Before local evidence promotion, the M13.5.3 host-side tooling passed **19/19 focused M13.5 tests** and the complete **350/350 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.
+Before local evidence promotion, the M13.5.3 host-side tooling passed **23/23 focused M13.5 tests** and the complete **354/354 project regression suite** in a clean Ubuntu 24.04 environment. The same run revalidated the frozen M13.5 hardware manifest, exact Catalyst checkout, K26 wrapper elaboration, shell syntax, and branch-diff guard. This validates the promotion machinery itself; the independent local evidence tree is still required to generate `references/m13_5_closure.json`.
