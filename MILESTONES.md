@@ -2124,7 +2124,7 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 **Status:** In progress
 **Started:** 2026-09-08
-**Repository evidence:** M13.1 merged via PR #14; M13.2 merged via PR #15; M13.4 pre-normalization scaffold on branch `agent/m13-4-directed-differential-probes`
+**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`
 
 ### Goal
 
@@ -2275,7 +2275,10 @@ No project computational behavior, HLS, RTL, or M12 physical evidence changed in
 
 ### M13.3 — Define a common behavioral subset and normalized comparison interface
 
-**Status:** Planned
+**Status:** Complete
+**Started:** 2026-09-09
+**Completed:** 2026-09-09
+**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; PR #16; frozen normalization implementation, clean CI preflight, and independent local validation complete
 
 #### Core goal
 
@@ -2305,6 +2308,14 @@ Identify the behaviors that can be expressed comparably across this project's Py
 #### Pass boundary
 
 A frozen comparison specification can generate or translate at least a small directed corpus into every participating implementation for which the behavior is genuinely supported, and it clearly marks non-comparable fields rather than forcing artificial equality.
+
+#### Implementation checkpoint
+
+The candidate M13.3 implementation freezes `references/m13_3_normalization_spec.json` (`neuromorphic-twin-m13-normalization-v1`, version 1) before M13.4 Catalyst differential execution. It defines exact/transformed/qualitative/non-comparable field policy, strict-threshold `T+1` normalization for Catalyst, semantic refractory `R-1` parameter normalization, final-effective-weight mapping, the signed-16-bit shared observation envelope, logical-identifier mapping, restricted CPU direct-drive scenarios, and the isolated-impulse Catalyst RTL CUBA one-native-tick staging transform. General multi-input CUBA update order is deliberately not normalized away.
+
+The executable interface in `src/neuromorphic_twin/comparison/m13_normalization.py` generates native plans for the project, Brian2Loihi, Catalyst synchronous CPU, and Catalyst RTL CUBA boundaries and preserves native plus normalized artifacts. The four-case translation-smoke corpus covers threshold, refractory release, signed drive, and isolated CUBA decay. A clean CI reconstruction verified the pinned Catalyst commit and key source blobs, executed the three Catalyst CPU-applicable plans, generated the Catalyst RTL CUBA native plan, materialized project/Brian2Loihi traces, and passed the complete thesis regression suite. The comparison runtime is pinned to NumPy 1.26.4, Brian2 2.9.0, and Brian2Loihi 0.5.2 to eliminate the previously observed Class-H dependency incompatibility.
+
+Independent local validation reproduced the focused M13.3 tests, frozen comparison-runtime versions, exact Catalyst commit/blob checks, four-case translation-smoke bundle including the three applicable Catalyst CPU executions, and the complete thesis regression suite. M13.3 therefore satisfies its pass boundary and is complete. No project computational behavior, HLS, RTL, or M12 physical evidence changed.
 
 ---
 
