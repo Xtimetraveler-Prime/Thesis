@@ -2192,6 +2192,13 @@ No project computational behavior, HLS, RTL, or M12 physical baseline was change
 
 ---
 
+
+##### Independent local closure evidence
+
+On 2026-09-09 the pinned Catalyst reference was independently reproduced on the user's local PC. The CPU simulator suite passed **56/56** tests and the native RTL suite passed **25/25** testbenches. The local RTL run used `M13_1_TB_TIMEOUT_SECONDS=600` after a 120-second wrapper timeout terminated a still-progressing `tb_p13a.v`; the longer timeout was classified as a Class-H host-harness portability correction, not a behavioral change. The accepted runner keeps compile errors, native failure markers, nonzero simulator exits, source-pin changes, and provenance failures fatal.
+
+This local reproduction closes the M13.1 validation boundary with no architectural discrepancy and no change to the M12-validated project baseline.
+
 ### M13.2 — Build a four-way architectural feature crosswalk
 
 **Status:** Planned

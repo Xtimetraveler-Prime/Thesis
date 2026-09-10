@@ -2,7 +2,7 @@
 
 ## Status
 
-**Complete — M13.1 pass boundary achieved on 2026-09-08.** Development and closure evidence are on branch `agent/m13-1-pin-catalyst-methodology` pending user validation/merge.
+**Complete — M13.1 pass boundary achieved on 2026-09-08 and independently validated locally on 2026-09-09.** Development and closure evidence are on branch `agent/m13-1-pin-catalyst-methodology` pending merge.
 
 M13.1 begins only after M12 closes the software-to-physical validation ladder for this project's FPGA-v1 digital twin. The M12-closed project is therefore the implementation **under audit**, not an implementation waiting to be rewritten to match Catalyst N1. M13.1 freezes the external sources, terminology, evidence hierarchy, and discrepancy policy before M13.2 inspects architectural differences in detail.
 
@@ -391,6 +391,27 @@ The complete thesis regression suite passed in this environment. The pinned Cata
 Two development-only Class-H issues were found and corrected before closure: an older M12.5 documentation test expected the exact already-intended power-exclusion wording, and the first M13.1 RTL harness falsely interpreted Catalyst's `0 FAILED` summary text as a failure. Neither issue changed project computation or Catalyst source.
 
 The DOI `10.5281/zenodo.18727094` remains the stable Catalyst N1 publication identity. Catalyst-controlled secondary sources observed during M13.1 use more than one title string for that DOI, so M13 records the DOI as normative and treats publication-title text as descriptive metadata.
+
+## Independent local validation closure
+
+The user independently reproduced the M13.1 external-reference boundary on the development branch on 2026-09-09. The pinned Catalyst CPU simulator suite completed **56/56** tests successfully, and the pinned Catalyst native RTL regression completed **25/25** testbenches successfully with exit code 0. No Catalyst source, RTL expectation, testbench list, compile flag, or project computational baseline was changed for this reproduction.
+
+Two host-harness portability issues were exposed during local reproduction and were corrected as Class-H tooling issues before final acceptance:
+
+1. With `set -euo pipefail`, piping `iverilog -V` into `head -n 1` could cause some local Icarus builds to receive SIGPIPE and terminate the wrapper before emitting diagnostics. The runner now captures the full version output first and extracts the first line in Bash without a pipe.
+2. The original wrapper imposed a fixed 120-second `vvp` timeout. On the user's PC, `tb/tb_p13a.v` was still producing the expected cross-core spike sequence when GNU `timeout` terminated it with exit code 124. The wrapper now defaults to 300 seconds per native testbench and exposes `M13_1_TB_TIMEOUT_SECONDS` as an explicit host-performance override. The successful local acceptance used 600 seconds per testbench. A timeout is reported separately from a genuine simulator failure.
+
+The longer local timeout does not weaken the behavioral gate: compile failures, nonzero simulator exits, explicit native failure markers, missing native result markers, changed testbench count, dirty/moved Catalyst source, and incorrect commit/tag/blob provenance remain fatal. The local 25/25 pass therefore confirms that the earlier 120-second stop was host-runtime variability rather than a Catalyst architectural discrepancy.
+
+The independent local closure result is:
+
+```text
+Catalyst native RTL: 25/25 PASS
+Catalyst CPU tests:   56/56 PASS
+Catalyst source pin:  1806bb4b4114d7671e5648fa75b7b83b3a8d5543
+Project M12 baseline: unchanged
+Discrepancy outcome:  no architectural discrepancy identified in M13.1
+```
 
 ## M13.1 pass boundary
 
