@@ -44,6 +44,19 @@ jobs:
           )
           p.write_text(text, encoding='utf-8')
           PY
+      - name: Repair complete M06 M07 reuse boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('Neuromorphic Digital Twin/references/m13_4_probe_catalog.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          p01 = next(probe for probe in data['probes'] if probe['id'] == 'P01-current-impulse-decay')
+          names = p01['reuse']['directed_cases']
+          if 'smoke-no-decay' not in names:
+              names.insert(0, 'smoke-no-decay')
+          p.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
       - name: Install project comparison dependencies
         run: |
           cd 'Neuromorphic Digital Twin'
@@ -86,12 +99,12 @@ jobs:
         run: |
           cd 'Neuromorphic Digital Twin'
           python -m pytest -q
-      - name: Commit milestone start record and remove one-shot workflow
+      - name: Commit checkpoint and remove one-shot workflow
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/m13_4_preflight_once.yml
-          git add MILESTONES.md
+          git add MILESTONES.md 'Neuromorphic Digital Twin/references/m13_4_probe_catalog.json'
           git diff --cached --check
           git commit -m 'Record validated M13.4 pre-normalization checkpoint'
           git push origin HEAD:agent/m13-4-directed-differential-probes
