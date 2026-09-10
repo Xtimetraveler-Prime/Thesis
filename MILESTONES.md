@@ -2466,7 +2466,14 @@ The pinned Catalyst release does not supply a complete programmable KV260 integr
 
 ### M13.6 — Adjudicate discrepancies and freeze M13 findings
 
-**Status:** Planned
+**Status:** In progress
+**Started:** 2026-09-10
+**Repository evidence:** branch `agent/m13-6-adjudicate-freeze-findings`; candidate authority `Neuromorphic Digital Twin/references/m13_6_findings.json`
+
+M13.6 is being executed in two ordered sub-boundaries:
+
+- **M13.6.1 — Freeze evidence-driven A–H adjudication and change control.** Regenerate the final candidate findings from the tracked M13.2 crosswalk, M13.4 directed findings, and M13.5 hardware closure; fail closed on source-pin, classification, comparison-limit, or baseline drift.
+- **M13.6.2 — Freeze thesis claim boundaries and experiment handoff.** Cross-reference the accepted differences into `EXPERIMENTS.md`, preserve the zero-A/B change-control decision, and complete independent local validation before M13.6/M13 closure.
 
 #### Core goal
 

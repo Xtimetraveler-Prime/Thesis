@@ -1,0 +1,349 @@
+{
+  "schema": "neuromorphic-twin-m13-final-findings-v1",
+  "status": "candidate_frozen_pending_independent_validation",
+  "milestone": "M13.6",
+  "source_pins": {
+    "m13_5_main_merge": "95f83ed5c1b47d5ad37badfaa091ce24dad2efed",
+    "project_m12_baseline": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "m13_3_normalization_merge": "32cc170ced02af834ed48b9533b245db1f65641d",
+    "m13_4_main_merge": "54c7840dff765d585e7ff236845b085007405c05",
+    "catalyst_n1": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+    "brian2loihi": "d54676cb113e48dc886615a0b589bb0e4bccbca4"
+  },
+  "evidence_authorities": {
+    "architectural_crosswalk": "references/m13_2_feature_crosswalk.json",
+    "directed_findings": "references/m13_4_candidate_findings.json",
+    "hardware_closure": "references/m13_5_closure.json"
+  },
+  "discrepancy_taxonomy": {
+    "A": "project implementation defect",
+    "B": "project interpretation/specification incomplete or inconsistent with stronger Loihi evidence",
+    "C": "Catalyst N1 makes a different architectural choice",
+    "D": "Brian2Loihi makes or exposes a different modeling choice",
+    "E": "published Loihi evidence is ambiguous or insufficient",
+    "F": "comparison mapping/normalization issue",
+    "G": "feature is unsupported or outside the project's validated subset",
+    "H": "test/capture/tooling defect"
+  },
+  "summary": {
+    "crosswalk_rows": 19,
+    "directed_probes": 12,
+    "directed_agreements": 6,
+    "directed_adjudications": 6,
+    "resolved_class_H_harness_findings": 2,
+    "class_A_or_B_findings": 0,
+    "explicit_project_scope_exclusions": 8,
+    "project_baseline_changed": false,
+    "m12_revalidation_required": false,
+    "strongest_catalyst_hardware_boundary": "source-supported routed implementation"
+  },
+  "accepted_agreements": [
+    {
+      "probe_id": "P01-current-impulse-decay",
+      "finding": "Project, Brian2Loihi, and Catalyst RTL CUBA agree for the positive isolated-impulse current sequence after the frozen one-native-tick Catalyst staging transform."
+    },
+    {
+      "probe_id": "P02-voltage-decay",
+      "finding": "Project, Brian2Loihi, and Catalyst RTL CUBA agree for the positive isolated-impulse voltage sequence after the same frozen staging transform."
+    },
+    {
+      "probe_id": "P04-threshold-boundary",
+      "finding": "Strict project/Brian threshold behavior agrees with Catalyst after the predeclared Catalyst native-threshold transform T+1."
+    },
+    {
+      "probe_id": "P05-refractory-release",
+      "finding": "For canonical refractory duration R=3, all three executable software participants spike on ticks 0 and 3; raw refractory registers remain non-comparable."
+    },
+    {
+      "probe_id": "P08-fanin-fanout",
+      "finding": "After translating Catalyst compiler placement back to logical IDs, real Catalyst compiled fan-in produces 192 and fan-out produces target drives 64, 128, and 192, matching the common logical graph."
+    },
+    {
+      "probe_id": "P12-simultaneous-spikes",
+      "finding": "Project, Brian2Loihi, and Catalyst agree on the per-tick simultaneous spike set; global spike/event ordering remains non-comparable."
+    }
+  ],
+  "directed_adjudications": [
+    {
+      "finding_id": "D01",
+      "probe_id": "P03-negative-rounding",
+      "status": "architectural_difference",
+      "classes": [
+        "C"
+      ],
+      "finding": "Pinned Catalyst RTL CUBA uses a different negative /4096 rounding implementation from the project/Brian2Loihi rule.",
+      "change_control_action": "retain_project_baseline_document_difference",
+      "experiment_links": [
+        "E04"
+      ],
+      "first_divergence": {
+        "canonical_tick": 0,
+        "field": "current_after",
+        "project_and_brian2loihi": [
+          -47
+        ],
+        "catalyst_rtl_cuba": [
+          -46
+        ]
+      }
+    },
+    {
+      "finding_id": "D02",
+      "probe_id": "P06-signed-synaptic-drive",
+      "status": "architectural_difference",
+      "classes": [
+        "C"
+      ],
+      "finding": "Catalyst CPU simple-LIF returns sufficiently negative sub-rest drive to resting=0, while project/Brian2Loihi retain negative membrane state; the mixed net-positive case agrees.",
+      "change_control_action": "retain_project_baseline_document_difference",
+      "experiment_links": [
+        "E04"
+      ],
+      "first_divergence": {
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "project_and_brian2loihi": [
+          -128
+        ],
+        "catalyst_cpu_sync": [
+          0
+        ]
+      }
+    },
+    {
+      "finding_id": "D03",
+      "probe_id": "P07-weight-encoding-boundaries",
+      "status": "partial_scope",
+      "classes": [
+        "C",
+        "G"
+      ],
+      "finding": "All 13 of 15 project/Brian effective weights that fit Catalyst's signed-int16 compiler boundary are reproduced exactly by Catalyst. Catalyst does not expose the same Loihi-style source mantissa/exponent/precision/sign-mode encoding, and two project/Brian cases lie outside the common int16 envelope.",
+      "change_control_action": "retain_project_baseline_limit_claim_to_common_subset",
+      "experiment_links": [
+        "E02"
+      ]
+    },
+    {
+      "finding_id": "D04",
+      "probe_id": "P09-event-multiplicity",
+      "status": "non_comparable",
+      "classes": [
+        "G"
+      ],
+      "finding": "Same-source same-tick event multiplicity has no defensible common exact boundary: the project preserves repeated events, Brian SpikeGeneratorGroup cannot encode two spikes from one source at one time, and Catalyst external stimulus is not the same event-list interface.",
+      "change_control_action": "retain_project_baseline_withhold_cross_implementation_equality_claim",
+      "experiment_links": [
+        "E05"
+      ]
+    },
+    {
+      "finding_id": "D05",
+      "probe_id": "P10-recurrent-timing",
+      "status": "architectural_difference",
+      "classes": [
+        "D"
+      ],
+      "finding": "Project and Catalyst synchronous recurrence deliver a one-tick source-to-target effect. Under Brian2Loihi 0.5.2's own LoihiNetwork schedule, the directed neuron-to-neuron recurrent connection produced no target effect; an independent diagnostic reproduced the null result for native synaptic delays 0, 1, and 2 over six ticks.",
+      "change_control_action": "retain_project_baseline_document_difference",
+      "experiment_links": [
+        "E03"
+      ],
+      "first_divergence": {
+        "field": "source_spike_to_target_spike_lag",
+        "project_fpga_v1": 1,
+        "catalyst_cpu_sync": 1,
+        "brian2loihi_0_5_2": null
+      }
+    },
+    {
+      "finding_id": "D06",
+      "probe_id": "P11-state-saturation",
+      "status": "non_comparable",
+      "classes": [
+        "E",
+        "G"
+      ],
+      "finding": "Finite-width overflow/saturation remains intentionally outside the common exact normalization because state widths and exposed probe widths differ and available published Loihi evidence does not justify one shared contract.",
+      "change_control_action": "retain_project_baseline_withhold_cross_implementation_equality_claim",
+      "experiment_links": [
+        "E04"
+      ]
+    }
+  ],
+  "resolved_harness_findings": [
+    {
+      "finding_id": "H01",
+      "class": "H",
+      "status": "resolved_before_accepted_m13_4_snapshot",
+      "issue": "The initial Catalyst CUBA negative probe reused a neuron whose SRAM state survived control reset.",
+      "resolution": "Positive and negative probes now use independent neuron state slots; the negative native staging tick is current=-64, voltage=0.",
+      "baseline_effect": "none"
+    },
+    {
+      "finding_id": "H02",
+      "class": "H",
+      "status": "resolved_before_accepted_m13_4_snapshot",
+      "issue": "The initial Catalyst graph observer treated physical compiler GIDs as logical population IDs.",
+      "resolution": "Native graph traces now preserve logical_to_catalyst_gid and remap potential, refractory state, and spike IDs back to logical order before comparison.",
+      "baseline_effect": "none"
+    }
+  ],
+  "scope_and_comparison_findings": [
+    {
+      "finding_id": "S01",
+      "classes": [
+        "G"
+      ],
+      "status": "intentional_project_scope_boundary",
+      "crosswalk_rows": [
+        "dendritic-compartments",
+        "synaptic-delay",
+        "synapse-memory-organization",
+        "routing-network",
+        "learning-plasticity",
+        "management-host-control",
+        "multicore-noc",
+        "async-execution"
+      ],
+      "finding": "FPGA-v1 intentionally excludes dendritic compartments, general programmable synaptic delays, native synapse-memory equivalence, inter-core routing/NoC, online learning, Loihi-like management processors, multicore scaling, and asynchronous/quiescence execution.",
+      "change_control_action": "document_scope_do_not_expand_m12_baseline"
+    },
+    {
+      "finding_id": "S02",
+      "classes": [
+        "G"
+      ],
+      "status": "catalyst_physical_execution_not_source_supported",
+      "finding": "The pinned Catalyst K26-class source reproduces through routed implementation but does not supply the complete KV260 board integration needed for attributable physical execution.",
+      "strongest_catalyst_boundary": "source-supported routed implementation",
+      "change_control_action": "retain_routed_boundary_do_not_claim_physical_catalyst_execution",
+      "experiment_links": [
+        "E06"
+      ]
+    },
+    {
+      "finding_id": "S03",
+      "classes": [
+        "F"
+      ],
+      "status": "hardware_metric_comparison_limited",
+      "finding": "M13.5 routed timing and resource totals are contextual only because target part strings, configured capacity, architectural scope, host/debug infrastructure, and execution evidence differ.",
+      "withheld": {
+        "latency_throughput": "withheld",
+        "power_energy": "withheld",
+        "physical_catalyst_execution": false
+      },
+      "change_control_action": "withhold_efficiency_fmax_latency_power_and_physical_winner_claims",
+      "experiment_links": [
+        "E06"
+      ]
+    }
+  ],
+  "change_control": {
+    "trigger_classes": [
+      "A",
+      "B"
+    ],
+    "observed_trigger_findings": 0,
+    "project_baseline_status": "frozen_unchanged",
+    "project_baseline_commit": "80a502ec6dfc4c8d61372089b08c9a584ad65f85",
+    "normative_specification_update_required": false,
+    "hls_rtl_regeneration_required": false,
+    "m12_evidence_superseded": false,
+    "m12_physical_revalidation_required": false,
+    "reason": "No accepted M13 discrepancy is Class A or B. Classes C-G are retained as architectural, modeling, ambiguity, normalization, or scope findings; resolved Class-H issues affected only the audit harness."
+  },
+  "claim_boundary": {
+    "three_way_directed_agreements": [
+      "P01-current-impulse-decay",
+      "P02-voltage-decay",
+      "P04-threshold-boundary",
+      "P05-refractory-release",
+      "P08-fanin-fanout",
+      "P12-simultaneous-spikes"
+    ],
+    "qualified_project_catalyst_recurrent_support": {
+      "probe_id": "P10-recurrent-timing",
+      "source_to_target_spike_lag_ticks": 1,
+      "brian2loihi_result": "no target effect observed at the pinned native probe boundary"
+    },
+    "weight_common_envelope": "13 of 15 project/Brian2Loihi effective-weight cases fit Catalyst signed-int16 and agree exactly",
+    "not_claimed_as_universal_loihi_semantics": [
+      "project SAT24 overflow/saturation policy",
+      "global ordering of coincident spike/event messages",
+      "same-source same-tick external event multiplicity across all backends",
+      "Catalyst negative CUBA rounding or sub-rest clamp behavior as Loihi ground truth",
+      "Brian2Loihi recurrent null behavior as Loihi ground truth",
+      "asynchronous/quiescence execution in FPGA-v1",
+      "physical Catalyst KV260 execution from the pinned routed-only source boundary",
+      "performance or efficiency ranking from M13.5 raw resource/timing totals"
+    ]
+  },
+  "experiment_handoff": [
+    {
+      "experiment_id": "E01",
+      "action": "retain",
+      "evidence": [
+        "P01-current-impulse-decay",
+        "P02-voltage-decay",
+        "P04-threshold-boundary",
+        "P05-refractory-release"
+      ],
+      "guardrail": "Treat altered update ordering as an explicit counterfactual; the validated FPGA-v1 schedule remains the baseline."
+    },
+    {
+      "experiment_id": "E02",
+      "action": "prioritize_common-effective-weight_then_encoding-variant",
+      "evidence": [
+        "D03"
+      ],
+      "guardrail": "Catalyst native encoding is not field-for-field equivalent to the project/Brian2Loihi source encoding; compare delivered effective weight first."
+    },
+    {
+      "experiment_id": "E03",
+      "action": "retain_with_m13_recurrence_context",
+      "evidence": [
+        "D05"
+      ],
+      "guardrail": "Project and Catalyst synchronous recurrence support a one-tick lag; the Brian2Loihi null result is an emulator/modeling finding, not a Loihi ground-truth variant."
+    },
+    {
+      "experiment_id": "E04",
+      "action": "expand_candidate_variants",
+      "evidence": [
+        "D01",
+        "D02",
+        "D06"
+      ],
+      "guardrail": "Alternative negative rounding, sub-rest clamping, and overflow policies are architecture counterfactuals unless stronger Loihi evidence establishes one as normative."
+    },
+    {
+      "experiment_id": "E05",
+      "action": "defer_until_single-factor_variants_are_frozen",
+      "evidence": [
+        "D01",
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06"
+      ],
+      "guardrail": "Do not combine architecture differences before isolated variants are independently validated."
+    },
+    {
+      "experiment_id": "E06",
+      "action": "use_m13_5_as_context_not_efficiency_baseline",
+      "evidence": [
+        "S02",
+        "S03"
+      ],
+      "guardrail": "Fair FPGA cost experiments should compare controlled project variants on the same target/tool boundary; raw Catalyst totals are contextual only."
+    }
+  ],
+  "closure_decision": {
+    "candidate_m13_result": "freeze_project_baseline_and_document_differences",
+    "requires_new_external_or_physical_evidence_before_independent_validation": false,
+    "next_gate": "independent local reproduction of M13.6 source-level findings and full regression"
+  }
+}
