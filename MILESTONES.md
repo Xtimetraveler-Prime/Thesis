@@ -27,7 +27,7 @@ Dates before this tracker was created were reconstructed from the project conver
 | M10 | Freeze computational-core specification | Complete | 2026-08-20 | 2026-08-20 |
 | M11 | Implement first FPGA neuron/core datapath | Complete | 2026-08-20 | 2026-08-27 |
 | M12 | Validate FPGA against Python golden model | Complete | 2026-08-27 | 2026-09-07 |
-| M13 | Cross-validate and audit against Catalyst N1 | In progress | 2026-09-08 | — |
+| M13 | Cross-validate and audit against Catalyst N1 | Complete | 2026-09-08 | 2026-09-10 |
 
 ---
 
@@ -2466,7 +2466,15 @@ The pinned Catalyst release does not supply a complete programmable KV260 integr
 
 ### M13.6 — Adjudicate discrepancies and freeze M13 findings
 
-**Status:** Planned
+**Status:** Complete  
+**Started:** 2026-09-10  
+**Completed:** 2026-09-10  
+**Repository evidence:** branch `agent/m13-6-adjudicate-freeze-findings`; candidate authority `Neuromorphic Digital Twin/references/m13_6_findings.json`; closure authority `Neuromorphic Digital Twin/references/m13_6_closure.json`
+
+M13.6 was executed in two ordered sub-boundaries:
+
+- **M13.6.1 — Freeze evidence-driven A–H adjudication and change control — Complete.** The final candidate findings regenerate deterministically from the tracked M13.2 crosswalk, M13.4 directed findings, and M13.5 hardware closure and fail closed on source-pin, classification, comparison-limit, or baseline drift.
+- **M13.6.2 — Freeze thesis claim boundaries and experiment handoff — Complete.** The accepted differences are cross-referenced into `EXPERIMENTS.md`; the zero-A/B change-control decision is preserved; independent local validation reproduced the candidate byte-for-byte and passed the complete regression.
 
 #### Core goal
 
@@ -2520,3 +2528,47 @@ For each future milestone:
 5. Document architectural decisions and known limitations.
 6. Set **Completed** only after evidence is reproducible.
 7. Update the summary table in the same change.
+
+#### M13.6 completion evidence
+
+The candidate findings were frozen before independent validation and intentionally remain unchanged at `Neuromorphic Digital Twin/references/m13_6_findings.json`. The independent gate was then executed from branch head `dedd3adcffd4f6080bfbb17153110539d8d45061` in a local Linux VS Code terminal.
+
+Reported independent result:
+
+```text
+candidate regeneration: PASS
+crosswalk rows:          19
+directed probes:         12
+agreements:               6
+adjudications:            6
+Class A/B findings:       0
+scope exclusions:         8
+M12 revalidation:         false
+candidate cmp:            byte-identical / no output
+focused tests:            9 passed in 0.12 s
+full regression:          367 passed in 5.63 s
+```
+
+The local working tree also contained two untracked paths (`Neuromorphic` and `Neuromorphic Digital Twin/rtl/core_v1/xvlog.pb`). They were not part of the source-controlled branch diff and are explicitly excluded from M13 evidence.
+
+The final closure record `Neuromorphic Digital Twin/references/m13_6_closure.json` binds the exact candidate bytes to that independently validated branch head and records the accepted change-control disposition. The accepted audit contains zero Class-A or Class-B findings, so the M10/M12 computational baseline remains frozen, no normative specification change is required, no HLS/RTL regeneration is required, no M12 evidence is superseded, and no M12 physical rerun is required.
+
+#### Final M13 outcome
+
+M13 is complete. The audit established a source-backed four-way architectural crosswalk, froze normalization before differential interpretation, executed twelve directed probes, resolved two audit-harness defects before accepting results, reproduced pinned Catalyst N1 through the strongest source-supported K26-class routed hardware boundary, and adjudicated every supported discrepancy under the A-H taxonomy.
+
+Final accepted result:
+
+```text
+three-way/common-boundary agreements: 6
+architectural/model differences:      3
+partial-scope results:                 1
+non-comparable results:                2
+resolved Class-H harness defects:      2
+Class-A/B findings:                    0
+project baseline changed:              no
+M12 revalidation required:             no
+```
+
+The audit therefore strengthens the thesis by separating **validated FPGA-v1 behavior**, **cross-implementation agreement**, **legitimate architectural/model differences**, and **unsupported or ambiguous claims** instead of treating any one external implementation as Loihi ground truth. `Neuromorphic Digital Twin/docs/M13_FINAL_AUDIT_SUMMARY.md` is the consolidated thesis-facing record of the process, findings, claim limits, and experiment handoff.
+

@@ -366,6 +366,20 @@ Some semantics that are behaviorally important may have modest FPGA cost, while 
 
 ---
 
+
+## M13.6 audit handoff
+
+The completed M13.6 adjudication preserves the validated FPGA-v1 baseline because the accepted M13 audit contains **zero Class-A/B findings**. The audit therefore changes experiment interpretation rather than silently changing the instrument:
+
+- **E01 — update ordering:** retain the physically validated FPGA-v1 update schedule as the baseline. M13 agreement on current/voltage, transformed threshold, and refractory release does not make alternative schedules equivalent; ordering changes remain explicit counterfactuals.
+- **E02 — weight representation:** M13 P07 found exact agreement for all 13 effective-weight cases inside Catalyst's signed-int16 common envelope, while native encoding fields are not field-for-field equivalent and two project/Brian2Loihi cases fall outside that envelope. Experiments should separate delivered effective-weight effects from encoding-layout effects.
+- **E03 — recurrent timing:** M13 P10 found a one-tick source-to-target lag in FPGA-v1 and Catalyst synchronous execution, while the pinned Brian2Loihi native recurrent probe produced no target effect. The Brian2Loihi null result is retained as an emulator/modeling finding, not treated as Loihi ground truth.
+- **E04 — finite precision:** M13 P03/P06/P11 make negative `/4096` rounding, sub-rest membrane clamping, and overflow/saturation policy especially useful controlled variants. Published Loihi evidence remains insufficient to promote one shared overflow policy to ground truth.
+- **E05 — multi-feature ablation:** keep this deferred at the design level until the relevant single-factor variants from E01-E04 are independently frozen and validated, so an ablation cannot confound several M13 differences at once.
+- **E06 — FPGA fidelity cost:** M13.5 routed Catalyst timing/resources are implementation context only. Fair cost experiments should compare controlled project variants under the same target part, tool version, constraints, workload boundary, and measurement method rather than rank the raw Catalyst and FPGA-v1 totals.
+
+No experiment status is promoted by M13.6 alone. The machine-readable handoff is part of `Neuromorphic Digital Twin/references/m13_6_findings.json`; experiments move to Designed/Ready only when their own hypotheses, variants, workloads, and validation gates are frozen. M13.6/M13 closure is recorded in `Neuromorphic Digital Twin/references/m13_6_closure.json`; the completed audit changes experiment interpretation and guardrails, not the validated instrument baseline.
+
 ## Required experiment record
 
 When an experiment moves from **Proposed** to **Designed**, add a frozen record containing at least:
