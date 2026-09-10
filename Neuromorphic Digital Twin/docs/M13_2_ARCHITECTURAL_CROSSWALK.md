@@ -58,6 +58,7 @@ These are **comparability labels**, not the M13 A–H discrepancy classes. In pa
 - The project intentionally omits dendritic compartments, programmable delays, learning, multicore NoC, and management processors that Loihi/Catalyst support.
 - Catalyst's pinned top-level RTL default synapse pool depth and SDK pool-depth constant differ, so capacity comparisons must identify the exact implementation layer/configuration.
 - The project is synchronous at the RTL level and discrete-timestep architecturally; Catalyst additionally exposes asynchronous quiescence execution. Loihi's asynchronous NoC does not by itself imply asynchronous algorithmic neuron time.
+- The Michaelis/Brian2Loihi paper writes the discrete synaptic-current recurrence with the new spike term added after the decay of the previous current, while this project's M05 direct Brian2Loihi observation established its compared software boundary as same-tick input visible before stored-current decay. M13.3 must reconcile timestep indexing/scheduler semantics explicitly before M13.4 treats this textual difference as behavioral evidence.
 
 ## M13.3 handoff by feature
 
@@ -65,7 +66,7 @@ The following actions are intentionally phrased as **normalization questions**, 
 
 - **neuron-state-model** — Normalize a point-neuron state subset and explicitly choose Catalyst simple-LIF versus RTL CUBA mode rather than mixing them.
 - **dendritic-compartments** — Exclude dendritic features from common behavioral probes; document as a major scope difference.
-- **current-voltage-decay** — Freeze which Catalyst execution boundary represents CUBA comparison and specify the one-tick/current-source mapping before probes.
+- **current-voltage-decay** — Freeze which Catalyst execution boundary represents CUBA comparison; reconcile the published I[t] recurrence with the M05 directly observed Brian2Loihi scheduling/index convention; then specify the one-tick/current-source mapping before probes.
 - **tick-update-order** — Normalize only committed timestep boundaries; do not equate internal phase names or hardware cycle counts.
 - **threshold-reset** — Define threshold-unit transforms and preserve the > versus >= convention as an explicit semantic difference for M13.4.
 - **refractory-semantics** — Freeze a semantic 'next eligible tick' mapping rather than equating raw refractory register values.

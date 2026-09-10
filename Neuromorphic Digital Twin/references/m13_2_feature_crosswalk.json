@@ -274,7 +274,7 @@
       },
       "overall_relationship": "comparable after a documented transform",
       "common_subset_candidate": "conditional",
-      "m13_3_action": "Freeze which Catalyst execution boundary represents CUBA comparison and specify the one-tick/current-source mapping before probes."
+      "m13_3_action": "Freeze which Catalyst execution boundary represents CUBA comparison; reconcile the published I[t] recurrence with the M05 directly observed Brian2Loihi scheduling/index convention; then specify the one-tick/current-source mapping before probes."
     },
     {
       "id": "tick-update-order",
@@ -948,7 +948,8 @@
       "Project refractory duration and Catalyst's raw refractory register use different entry/countdown conventions; compare next-eligible timestep rather than raw count.",
       "The project intentionally omits dendritic compartments, programmable delays, learning, multicore NoC, and management processors that Loihi/Catalyst support.",
       "Catalyst's pinned top-level RTL default synapse pool depth and SDK pool-depth constant differ, so capacity comparisons must identify the exact implementation layer/configuration.",
-      "The project is synchronous at the RTL level and discrete-timestep architecturally; Catalyst additionally exposes asynchronous quiescence execution. Loihi's asynchronous NoC does not by itself imply asynchronous algorithmic neuron time."
+      "The project is synchronous at the RTL level and discrete-timestep architecturally; Catalyst additionally exposes asynchronous quiescence execution. Loihi's asynchronous NoC does not by itself imply asynchronous algorithmic neuron time.",
+      "The Michaelis/Brian2Loihi paper writes the discrete synaptic-current recurrence with the new spike term added after the decay of the previous current, while this project's M05 direct Brian2Loihi observation established its compared software boundary as same-tick input visible before stored-current decay. M13.3 must reconcile timestep indexing/scheduler semantics explicitly before M13.4 treats this textual difference as behavioral evidence."
     ]
   }
 }
