@@ -2201,7 +2201,9 @@ This local reproduction closes the M13.1 validation boundary with no architectur
 
 ### M13.2 — Build a four-way architectural feature crosswalk
 
-**Status:** Planned
+**Status:** In progress
+**Started:** 2026-09-09
+**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`
 
 #### Core goal
 
