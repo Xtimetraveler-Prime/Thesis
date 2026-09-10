@@ -39,11 +39,16 @@ jobs:
           fi
 
           unresolved="$(git diff --name-only --diff-filter=U | sort)"
-          expected=$'MILESTONES.md\nNeuromorphic Digital Twin/pyproject.toml'
-          if [ -n "$unresolved" ] && [ "$unresolved" != "$expected" ]; then
-            echo "Unexpected merge conflicts:" >&2
-            printf '%s\n' "$unresolved" >&2
-            exit 2
+          if [ -n "$unresolved" ]; then
+            while IFS= read -r path; do
+              case "$path" in
+                'MILESTONES.md'|'Neuromorphic Digital Twin/pyproject.toml') ;;
+                *)
+                  echo "Unexpected merge conflict: $path" >&2
+                  exit 2
+                  ;;
+              esac
+            done <<< "$unresolved"
           fi
 
           # Main is authoritative through M13.3; preserve the already validated
