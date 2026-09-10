@@ -30,6 +30,23 @@ def test_m13_2_keeps_brian2loihi_separate_from_published_loihi() -> None:
         assert row["published_loihi"]["summary"] != row["brian2loihi"]["summary"]
 
 
+def test_m13_2_links_prior_m03_m08_direct_brian2loihi_evidence() -> None:
+    data = load_feature_crosswalk()
+    source_id = "project_m03_m08_brian_evidence"
+    source = data["source_registry"][source_id]
+    assert source["evidence_type"] == "direct_observation"
+    assert "M05" in source["role"] and "M07" in source["role"] and "M08.3" in source["role"]
+    rows = {row["id"]: row for row in data["rows"]}
+    for row_id in (
+        "current-voltage-decay",
+        "threshold-reset",
+        "refractory-semantics",
+        "weight-encoding",
+        "synaptic-accumulation",
+    ):
+        assert source_id in rows[row_id]["brian2loihi"]["evidence"]
+
+
 def test_m13_2_does_not_prematurely_assign_discrepancy_classes() -> None:
     data = load_feature_crosswalk()
     raw = (ROOT / "references" / "m13_2_feature_crosswalk.json").read_text(encoding="utf-8")
@@ -91,6 +108,7 @@ def test_m13_2_renderer_is_deterministic_and_source_cited() -> None:
     assert "# M13.2 — Four-way Architectural Feature Crosswalk" in first
     assert "`loihi_davies_2018`" in first
     assert "`brian_neuron`" in first
+    assert "`project_m03_m08_brian_evidence`" in first
     assert "`project_core_spec_m12`" in first
     assert "`catalyst_core_rtl`" in first
     assert "## M13.3 handoff by feature" in first
