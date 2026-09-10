@@ -1,0 +1,70 @@
+name: M13.4 fix graph observation mapping once
+on:
+  push:
+    branches: [agent/m13-4-directed-differential-probes]
+    paths: ['.github/workflows/m13_4_fix_graph_mapping_once.yml']
+permissions:
+  contents: write
+jobs:
+  fix-and-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-4-directed-differential-probes
+          fetch-depth: 0
+      - name: Fix Catalyst logical observation mapping
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('Neuromorphic Digital Twin/src/neuromorphic_twin/comparison/m13_differential.py')
+          s = p.read_text()
+          old = '''    compiled_edges = []\n    for src, tgt, requested_weight in edges:\n'''
+          new = '''    logical_gids = [gid_for_pop[pop.id] for pop in pops]\n    gid_to_logical = {gid: logical for logical, gid in enumerate(logical_gids)}\n\n    compiled_edges = []\n    for src, tgt, requested_weight in edges:\n'''
+          if old not in s:
+              raise SystemExit('mapping insertion anchor not found')
+          s = s.replace(old, new, 1)
+          old = '''    ticks = []\n    for native_tick, currents in enumerate(direct_current_schedule):\n        before = [int(v) for v in sim._potential.tolist()]\n        ref_before = [int(v) for v in sim._refrac.tolist()]\n        for neuron_id, current in enumerate(currents):\n            if int(current):\n                sim.inject(pops[neuron_id], int(current))\n        result = sim.run(1)\n        spikes = sorted(int(neuron_id) for neuron_id in result.spike_trains)\n        ticks.append(\n            {\n                "native_tick": native_tick,\n                "direct_current": [int(v) for v in currents],\n                "potential_before": before,\n                "potential_after": [int(v) for v in sim._potential.tolist()],\n                "refractory_before": ref_before,\n                "refractory_after": [int(v) for v in sim._refrac.tolist()],\n                "spikes": spikes,\n            }\n        )\n    return {\n        "schema": "neuromorphic-twin-m13-catalyst-graph-native-v1",\n        "backend": "catalyst_cpu_sync",\n        "scenario": name,\n        "catalyst_commit": CATALYST_PIN,\n        "compiled_edges": compiled_edges,\n        "ticks": ticks,\n    }\n'''
+          new = '''    ticks = []\n    for native_tick, currents in enumerate(direct_current_schedule):\n        before = [int(sim._potential[gid]) for gid in logical_gids]\n        ref_before = [int(sim._refrac[gid]) for gid in logical_gids]\n        for neuron_id, current in enumerate(currents):\n            if int(current):\n                sim.inject(pops[neuron_id], int(current))\n        result = sim.run(1)\n        spikes = sorted(\n            gid_to_logical[int(gid)]\n            for gid in result.spike_trains\n            if int(gid) in gid_to_logical\n        )\n        ticks.append(\n            {\n                "native_tick": native_tick,\n                "direct_current": [int(v) for v in currents],\n                "potential_before": before,\n                "potential_after": [int(sim._potential[gid]) for gid in logical_gids],\n                "refractory_before": ref_before,\n                "refractory_after": [int(sim._refrac[gid]) for gid in logical_gids],\n                "spikes": spikes,\n            }\n        )\n    return {\n        "schema": "neuromorphic-twin-m13-catalyst-graph-native-v1",\n        "backend": "catalyst_cpu_sync",\n        "scenario": name,\n        "catalyst_commit": CATALYST_PIN,\n        "logical_to_catalyst_gid": logical_gids,\n        "compiled_edges": compiled_edges,\n        "ticks": ticks,\n    }\n'''
+          if old not in s:
+              raise SystemExit('graph observation block anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Install project, Catalyst and Icarus
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+          bash scripts/fetch_m13_1_catalyst.sh
+          python3 -m pip install -e build/m13_1/catalyst-n1/sdk
+      - name: Re-run full M13.4 differential
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          bash scripts/run_m13_4_catalyst_cuba_probes.sh
+          python3 examples/run_m13_4_differential.py \
+            --output build/m13_4/differential \
+            --catalyst-cuba-log build/m13_4/catalyst-rtl/native.log
+          cat build/m13_4/differential/directed-report.json
+          echo '--- Catalyst fan-in native ---'
+          cat build/m13_4/differential/m13-4-catalyst-connectivity/fanin.native.json
+          echo '--- Recurrence native traces ---'
+          cat build/m13_4/differential/m13-4-recurrent-one-hop/project.native.json
+          cat build/m13_4/differential/m13-4-recurrent-one-hop/brian2loihi.native.json
+          cat build/m13_4/differential/m13-4-recurrent-one-hop/catalyst.native.json
+      - name: Regression
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest -q tests/test_m13_3_normalization.py tests/test_m13_4_directed_probes.py
+          python3 -m pytest -q
+          bash -n scripts/run_m13_4_catalyst_cuba_probes.sh
+      - name: Commit fix and remove workflow
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_4_fix_graph_mapping_once.yml
+          git add 'Neuromorphic Digital Twin/src/neuromorphic_twin/comparison/m13_differential.py'
+          git commit -m 'Normalize Catalyst graph observations to logical IDs'
+          git push origin HEAD:agent/m13-4-directed-differential-probes
