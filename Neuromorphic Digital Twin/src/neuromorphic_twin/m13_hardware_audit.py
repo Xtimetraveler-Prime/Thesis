@@ -212,28 +212,28 @@ def parse_utilization_report(text: str) -> dict[str, UtilizationValue]:
 
 
 def parse_timing_summary(text: str) -> dict[str, float]:
+    """Parse the Design Timing Summary WNS/WHS row.
+
+    Vivado's printed header contains multi-word column labels, so whitespace-token
+    indices from the header do not line up with numeric-row indices. The summary
+    numeric row is stable: WNS, TNS, TNS failing endpoints, TNS total endpoints,
+    WHS, THS, ... . We therefore locate the WNS/WHS header and read numeric
+    positions 0 and 4 from the first following data row.
+    """
+
     lines = [line.strip() for line in text.splitlines()]
+    number_re = re.compile(r"[-+]?\d+(?:\.\d+)?")
     for i, line in enumerate(lines):
         if "WNS(ns)" not in line or "WHS(ns)" not in line:
             continue
-        header = line.split()
-        try:
-            wns_index = header.index("WNS(ns)")
-            whs_index = header.index("WHS(ns)")
-        except ValueError as exc:
-            raise ValueError("timing header lacks WNS/WHS columns") from exc
-        for candidate in lines[i + 1 : i + 8]:
-            tokens = candidate.split()
-            if len(tokens) <= max(wns_index, whs_index):
+        for candidate in lines[i + 1 : i + 10]:
+            if not candidate or set(candidate) <= {"-", " ", "\t"}:
                 continue
-            try:
-                return {
-                    "wns_ns": float(tokens[wns_index]),
-                    "whs_ns": float(tokens[whs_index]),
-                }
-            except ValueError:
-                continue
-    # Common alternate report wording.
+            values = [float(v) for v in number_re.findall(candidate)]
+            if len(values) >= 5:
+                return {"wns_ns": values[0], "whs_ns": values[4]}
+
+    # Common alternate prose wording.
     wns = re.search(r"Worst Negative Slack.*?(-?\d+(?:\.\d+)?)\s*ns", text, flags=re.I | re.S)
     whs = re.search(r"Worst Hold Slack.*?(-?\d+(?:\.\d+)?)\s*ns", text, flags=re.I | re.S)
     if wns and whs:
