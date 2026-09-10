@@ -1,0 +1,64 @@
+name: M13.5 final documentation retry once
+
+on:
+  push:
+    branches:
+      - agent/m13-5-catalyst-k26-reproduction
+    paths:
+      - '.github/workflows/m13_5_finalize_docs_retry_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-5-catalyst-k26-reproduction
+          fetch-depth: 0
+
+      - name: Install project development dependencies
+        run: python3 -m pip install -e 'Neuromorphic Digital Twin[dev]'
+
+      - name: Finalize documentation from tracked closure
+        run: python3 'Neuromorphic Digital Twin/scripts/finalize_m13_5_docs.py'
+
+      - name: Focused final M13.5 tests
+        working-directory: Neuromorphic Digital Twin
+        run: |
+          python3 -m pytest --override-ini addopts='' -q \
+            tests/test_m13_5_hardware_audit.py \
+            tests/test_m13_5_hardware_comparison.py \
+            tests/test_m13_5_hardware_closure.py \
+            tests/test_m13_5_tracked_closure.py
+
+      - name: Complete project regression
+        working-directory: Neuromorphic Digital Twin
+        run: python3 -m pytest --override-ini addopts='' -q
+
+      - name: Verify closure artifact and frozen baseline remain untouched
+        shell: bash
+        run: |
+          git diff --exit-code -- 'Neuromorphic Digital Twin/references/m13_5_closure.json'
+          git diff --name-only origin/main...HEAD > /tmp/m13_5_files.txt
+          if grep -E '^Neuromorphic Digital Twin/(hls/core_v1|rtl/core_v1|src/neuromorphic_twin/(model|arithmetic|core|routing|weights)\.py)' /tmp/m13_5_files.txt; then
+            echo 'ERROR: M13.5 changed a frozen computational baseline path.' >&2
+            exit 2
+          fi
+
+      - name: Commit final documentation and remove one-shot helpers
+        shell: bash
+        run: |
+          rm .github/workflows/m13_5_finalize_docs_retry_once.yml
+          rm 'Neuromorphic Digital Twin/scripts/finalize_m13_5_docs.py'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add MILESTONES.md \
+            'Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md' \
+            'Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md' \
+            'Neuromorphic Digital Twin/scripts/finalize_m13_5_docs.py' \
+            .github/workflows/m13_5_finalize_docs_retry_once.yml
+          git commit -m 'Close M13.5 Catalyst hardware reproduction'
+          git push origin HEAD:agent/m13-5-catalyst-k26-reproduction
