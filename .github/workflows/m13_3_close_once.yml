@@ -1,0 +1,72 @@
+name: M13.3 close after independent validation
+
+on:
+  push:
+    branches:
+      - agent/m13-3-normalized-comparison-interface
+    paths:
+      - '.github/workflows/m13_3_close_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-3-normalized-comparison-interface
+          fetch-depth: 0
+
+      - name: Record M13.3 completion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('MILESTONES.md')
+          text = p.read_text(encoding='utf-8')
+
+          old = (
+              '### M13.3 — Define a common behavioral subset and normalized comparison interface\n\n'
+              '**Status:** In progress\n'
+              '**Started:** 2026-09-09\n'
+              '**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; '
+              'frozen normalization implementation and CI preflight complete, pending independent local validation\n'
+          )
+          new = (
+              '### M13.3 — Define a common behavioral subset and normalized comparison interface\n\n'
+              '**Status:** Complete\n'
+              '**Started:** 2026-09-09\n'
+              '**Completed:** 2026-09-09\n'
+              '**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; PR #16; '
+              'frozen normalization implementation, clean CI preflight, and independent local validation complete\n'
+          )
+          if old not in text:
+              raise SystemExit('M13.3 in-progress status block not found')
+          text = text.replace(old, new, 1)
+
+          old_tail = (
+              'M13.3 remains **In progress** until the requested independent local validation is reproduced. '
+              'No project computational behavior, HLS, RTL, or M12 physical evidence changed.\n'
+          )
+          new_tail = (
+              'Independent local validation reproduced the focused M13.3 tests, frozen comparison-runtime versions, '
+              'exact Catalyst commit/blob checks, four-case translation-smoke bundle including the three applicable '
+              'Catalyst CPU executions, and the complete thesis regression suite. M13.3 therefore satisfies its pass '
+              'boundary and is complete. No project computational behavior, HLS, RTL, or M12 physical evidence changed.\n'
+          )
+          if old_tail not in text:
+              raise SystemExit('M13.3 closure sentence not found')
+          text = text.replace(old_tail, new_tail, 1)
+
+          p.write_text(text, encoding='utf-8')
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_3_close_once.yml
+          git add MILESTONES.md
+          git diff --cached --check
+          git commit -m 'Complete M13.3 after independent validation'
+          git push origin HEAD:agent/m13-3-normalized-comparison-interface
