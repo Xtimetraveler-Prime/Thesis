@@ -142,8 +142,8 @@ jobs:
           )
           new = (
               '### M13.3 — Define a common behavioral subset and normalized comparison interface\n\n'
-              '**Status:** In progress  \n'
-              '**Started:** 2026-09-09  \n'
+              '**Status:** In progress\n'
+              '**Started:** 2026-09-09\n'
               '**Repository evidence:** branch `agent/m13-3-normalized-comparison-interface`; '
               'frozen normalization implementation and CI preflight complete, pending independent local validation\n'
           )
