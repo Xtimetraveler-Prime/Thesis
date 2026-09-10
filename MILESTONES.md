@@ -2124,7 +2124,7 @@ See `Neuromorphic Digital Twin/docs/M12_5_CHARACTERIZATION.md` for the full phys
 
 **Status:** In progress
 **Started:** 2026-09-08
-**Repository evidence:** current work on branch `agent/m13-1-pin-catalyst-methodology`
+**Repository evidence:** M13.1 merged via PR #14; M13.2 on branch `agent/m13-2-four-way-crosswalk`
 
 ### Goal
 
@@ -2147,7 +2147,7 @@ Published Loihi material is the primary source for claims about Loihi itself. Br
 ### Overall completion criteria
 
 - [x] Pin and archive the exact Catalyst N1 source/version, toolchain, documentation, and comparison assumptions used for M13.
-- [ ] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
+- [x] Produce a source-cited architectural crosswalk containing published Loihi, Brian2Loihi, this project, and Catalyst N1 for every feature relevant to the supported computational subset and important scope gaps.
 - [ ] Define the common behavioral subset and explicit mapping/normalization rules before differential testing.
 - [ ] Run directed architectural probes across the implementations that can express each case and preserve machine-readable evidence.
 - [ ] Reproduce a physical or RTL-level Catalyst comparison on the common K26 path if the pinned Catalyst release and available tooling support a defensible configuration; otherwise document the exact blocker and complete the strongest reproducible comparison boundary available.
@@ -2201,7 +2201,10 @@ This local reproduction closes the M13.1 validation boundary with no architectur
 
 ### M13.2 — Build a four-way architectural feature crosswalk
 
-**Status:** Planned
+**Status:** Complete
+**Started:** 2026-09-09
+**Completed:** 2026-09-09
+**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`; validated before merge
 
 #### Core goal
 
@@ -2252,9 +2255,21 @@ ambiguous in available Loihi evidence
 out of project scope
 ```
 
+#### Completion evidence
+
+**Achieved.** M13.2 freezes a reviewable four-way architectural crosswalk before normalization or differential probing. The machine-readable authority is `Neuromorphic Digital Twin/references/m13_2_feature_crosswalk.json`; `Neuromorphic Digital Twin/docs/M13_2_ARCHITECTURAL_CROSSWALK.md` is generated deterministically from that source.
+
+The accepted matrix contains **19 rows covering all 15 milestone-required feature classes**. Every row keeps four independent columns—published Loihi, Brian2Loihi 0.5.2, the M12-validated project, and pinned Catalyst N1—and every cell cites one or more entries from the frozen source registry. The registry links the project's earlier direct Brian2Loihi evidence rather than re-deriving it informally: M05 current-update ordering, M07 **12/12** directed conformance over 34 ticks, and M08.3 **15/15** encoded-weight conformance with directly observed `w_act`.
+
+The source-integrity preflight checks the pinned Catalyst and Brian2Loihi commits and verifies **seven exact external Git blob identities** used by the matrix. It also proves generated Markdown is byte-identical to a fresh render, runs the focused M13.2 source-contract tests, runs the complete historical thesis regression suite, and verifies the validation process leaves the repository clean.
+
+The crosswalk deliberately does **not** assign A-H discrepancy classes. It records comparability relationships and hands unresolved questions forward. Major handoffs include Catalyst's distinct CPU/simple-LIF and RTL/CUBA boundaries, project/Brian strict `>` versus Catalyst `>=` threshold comparison, refractory register/countdown normalization, native weight-encoding transforms, observable event-order limits, and current-update/timestep-indexing questions that must be normalized before any output difference is interpreted as architectural evidence.
+
+No project computational behavior, HLS, RTL, or M12 physical evidence changed in M13.2.
+
 #### Pass boundary
 
-The repository contains a reviewable, source-cited matrix that makes the supported common subset and major architectural differences explicit before M13 differential probes are interpreted.
+**Achieved.** The repository contains a reviewable, source-cited matrix that makes the supported common subset and major architectural differences explicit before M13 differential probes are interpreted. M13.3 may now define the common behavioral subset and normalization rules from this frozen crosswalk.
 
 ---
 
