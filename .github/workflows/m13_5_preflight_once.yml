@@ -1,0 +1,75 @@
+name: M13.5 Catalyst K26 preflight once
+on:
+  push:
+    branches: [agent/m13-5-catalyst-k26-reproduction]
+    paths: [.github/workflows/m13_5_preflight_once.yml]
+permissions:
+  contents: write
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-5-catalyst-k26-reproduction
+          fetch-depth: 0
+      - name: Mark M13.5 development started
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('MILESTONES.md')
+          s = p.read_text()
+          old = '''### M13.5 — Reproduce Catalyst at the strongest common FPGA/RTL boundary\n\n**Status:** Planned\n\n#### Core goal\n'''
+          new = '''### M13.5 — Reproduce Catalyst at the strongest common FPGA/RTL boundary\n\n**Status:** In progress\n**Started:** 2026-09-10\n**Repository evidence:** branch `agent/m13-5-catalyst-k26-reproduction`; hardware boundary and automated RTL/vendor preflight under development\n\n#### Core goal\n'''
+          if old not in s:
+              raise SystemExit('M13.5 start anchor not found')
+          s = s.replace(old, new, 1)
+          anchor = '''#### Preferred physical comparison\n'''
+          insertion = '''#### Development decomposition\n\nM13.5 is being executed in three ordered sub-boundaries:\n\n- **M13.5.1 — Freeze hardware comparison boundary and automated RTL preflight.** Pin the source-supported Catalyst K26 configuration, tooling assumptions, fairness rules, physical-programming limitation, wrapper elaboration, and vendor-report parser before observing Vivado results.\n- **M13.5.2 — Reproduce Catalyst synthesis/place/route in Vivado 2025.2.** Run the pinned `synth_only` and `run_impl.tcl` flow without editing Catalyst source; preserve the implemented DCP and native reports.\n- **M13.5.3 — Normalize hardware evidence and close at the strongest defensible boundary.** Compare routed timing/resources with M12.5 only where definitions are compatible, explicitly withhold unsupported latency/power/physical claims, and decide whether routed implementation is the final source-supported boundary.\n\n#### Current implementation checkpoint\n\nM13.5.1 freezes `references/m13_5_hardware_manifest.json` and documents an upstream K26-flow caveat discovered before vendor execution: the pinned README command uses the Tcl default `mode=full`, but synthesis is launched only under the existing `synth_only` mode. The source-supported two-stage reproduction is therefore `build_kria.tcl -tclargs synth_only` followed by `run_impl.tcl`; this selects existing pinned behavior and does not patch Catalyst. The same frozen boundary records that `fpga/kria/` contains no K26 XDC, processing-system block design, or `write_bitstream` step, so the supplied release directly supports routed characterization rather than a loadable KV260 image.\n\nThe branch adds exact checkout/K26 inventory validation, Icarus elaboration of the 15-file Kria wrapper source list, a Vivado-2025.2-only vendor runner that preserves and hashes native reports/DCPs, and fail-closed routed timing/resource parsing. The project-versus-Catalyst fairness contract is frozen before any Catalyst Vivado utilization number is observed.\n\n'''
+          if anchor not in s:
+              raise SystemExit('M13.5 preferred-comparison anchor not found')
+          s = s.replace(anchor, insertion + anchor, 1)
+          p.write_text(s)
+          PY
+      - name: Install project and Icarus
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+          bash scripts/fetch_m13_1_catalyst.sh
+      - name: Validate M13.5 exact hardware boundary
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          PYTHONPATH=src python3 examples/validate_m13_5_hardware_manifest.py --catalyst-checkout build/m13_1/catalyst-n1
+          bash scripts/run_m13_5_catalyst_kria_elaboration.sh
+          bash scripts/run_m13_1_catalyst_rtl_regression.sh
+          bash -n scripts/run_m13_5_catalyst_k26_vivado.sh
+          bash -n scripts/run_m13_5_catalyst_kria_elaboration.sh
+      - name: Focused M13.5 tests and full regression
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest -q tests/test_m13_5_hardware_audit.py
+          python3 -m pytest -q
+      - name: Verify no frozen computational baseline path changed
+        shell: bash
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/m13_5_names.txt
+          cat /tmp/m13_5_names.txt
+          if grep -E '^Neuromorphic Digital Twin/(hls/core_v1|rtl/core_v1|src/neuromorphic_twin/(model|arithmetic|core|routing|weights)\.py)' /tmp/m13_5_names.txt; then
+            echo 'ERROR: M13.5 unexpectedly changed a computational baseline path.' >&2
+            exit 1
+          fi
+      - name: Commit checkpoint and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/m13_5_preflight_once.yml
+          git add MILESTONES.md
+          git commit -m 'Start M13.5 Catalyst K26 reproduction'
+          git push origin HEAD:agent/m13-5-catalyst-k26-reproduction
