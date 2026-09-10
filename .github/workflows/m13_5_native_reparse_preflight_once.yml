@@ -1,0 +1,96 @@
+name: M13.5 native report closure preflight once
+on:
+  push:
+    branches: [agent/m13-5-catalyst-k26-reproduction]
+    paths: [.github/workflows/m13_5_native_reparse_preflight_once.yml]
+permissions:
+  contents: write
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m13-5-catalyst-k26-reproduction
+          fetch-depth: 0
+      - name: Install project and RTL dependency
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pip install -e '.[dev,compare]'
+          bash scripts/fetch_m13_1_catalyst.sh
+      - name: Validate closure command surface
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          bash -n scripts/run_m13_5_closure.sh
+          PYTHONPATH=src python3 examples/validate_m13_5_hardware_manifest.py --catalyst-checkout build/m13_1/catalyst-n1
+          bash scripts/run_m13_5_catalyst_kria_elaboration.sh
+      - name: Focused M13.5 closure tests
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest --override-ini addopts='' -q \
+            tests/test_m13_5_hardware_audit.py \
+            tests/test_m13_5_hardware_comparison.py \
+            tests/test_m13_5_hardware_closure.py \
+            tests/test_m13_5_native_report_validation.py | tee /tmp/m13_5_native_focused.log
+      - name: Complete project regression
+        shell: bash
+        run: |
+          cd 'Neuromorphic Digital Twin'
+          python3 -m pytest --override-ini addopts='' -q | tee /tmp/m13_5_native_full.log
+      - name: Verify frozen baseline guard
+        shell: bash
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/m13_5_native_names.txt
+          cat /tmp/m13_5_native_names.txt
+          if grep -E '^Neuromorphic Digital Twin/(hls/core_v1|rtl/core_v1|src/neuromorphic_twin/(model|arithmetic|core|routing|weights)\.py)' /tmp/m13_5_native_names.txt; then
+            echo 'ERROR: M13.5 unexpectedly changed a frozen computational baseline path.' >&2
+            exit 1
+          fi
+      - name: Refresh tooling checkpoint counts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          def count(path):
+              text = Path(path).read_text()
+              matches = re.findall(r'(\d+) passed', text)
+              if not matches:
+                  raise SystemExit(f'could not parse pytest pass count from {path}')
+              return int(matches[-1])
+
+          focused = count('/tmp/m13_5_native_focused.log')
+          full = count('/tmp/m13_5_native_full.log')
+
+          for path in [
+              Path('MILESTONES.md'),
+              Path('Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md'),
+              Path('Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md'),
+          ]:
+              text = path.read_text()
+              text = re.sub(r'\*\*19/19 focused M13\.5 tests\*\*', f'**{focused}/{focused} focused M13.5 tests**', text)
+              text = re.sub(r'\*\*350/350 (?:complete )?project (?:regression suite|tests)\*\*', lambda m: f'**{full}/{full} ' + ('complete project tests' if 'tests' in m.group(0) else 'project regression suite') + '**', text)
+              text = text.replace(
+                  'the M13.5.3 host-side tooling passed **19/19 focused M13.5 tests** and the complete **350/350 project regression suite**',
+                  f'the M13.5.3 host-side tooling passed **{focused}/{focused} focused M13.5 tests** and the complete **{full}/{full} project regression suite**',
+              )
+              path.write_text(text)
+          PY
+      - name: Remove one-shot workflow and commit checkpoint
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/m13_5_native_reparse_preflight_once.yml
+          git add MILESTONES.md \
+            'Neuromorphic Digital Twin/docs/M13_5_CATALYST_K26_REPRODUCTION.md' \
+            'Neuromorphic Digital Twin/docs/M13_5_3_CLOSURE.md' \
+            .github/workflows/m13_5_native_reparse_preflight_once.yml
+          git commit -m 'Validate native-report M13.5 closure gate'
+          git push origin HEAD:agent/m13-5-catalyst-k26-reproduction
