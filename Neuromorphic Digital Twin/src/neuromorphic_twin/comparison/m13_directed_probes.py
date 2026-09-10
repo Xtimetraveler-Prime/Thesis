@@ -1,14 +1,8 @@
-"""M13.4 directed architectural probe planning and pre-normalization evidence.
+"""M13.4 directed architectural probe planning and reusable evidence.
 
-M13.4 is intentionally split into two boundaries:
-
-* native/pre-normalization evidence may be produced from already validated shared
-  project/Brian2Loihi scenarios; and
-* normalized cross-implementation comparison is forbidden until M13.3 freezes
-  the common behavioral subset and parameter/state transforms.
-
-This prevents Catalyst-driven mappings from being invented after observing an
-interesting output difference.
+The probe questions were frozen before M13.3 normalization. M13.4 now permits
+normalized execution only when the M13.3 specification is explicitly frozen;
+observed findings remain separate from this planning catalog.
 """
 
 from __future__ import annotations
@@ -84,10 +78,10 @@ def validate_probe_catalog(data: Mapping[str, Any]) -> None:
     gate = _mapping(data.get("normalization_gate"), "normalization_gate")
     if gate.get("required_schema") != M13_3_EXPECTED_SCHEMA:
         raise ValueError("M13.4 normalization prerequisite schema changed")
-    if gate.get("state") != "blocked_m13_3_not_frozen":
-        raise ValueError("M13.4 catalog must remain blocked until M13.3 is frozen")
-    if gate.get("normalized_comparison_allowed") is not False:
-        raise ValueError("normalized comparison cannot be enabled by M13.4 itself")
+    if gate.get("state") != "m13_3_frozen":
+        raise ValueError("M13.4 catalog must record the frozen M13.3 gate")
+    if gate.get("normalized_comparison_allowed") is not True:
+        raise ValueError("normalized comparison must be enabled only after M13.3 is frozen")
 
     probes = data.get("probes")
     if not isinstance(probes, list) or not probes:

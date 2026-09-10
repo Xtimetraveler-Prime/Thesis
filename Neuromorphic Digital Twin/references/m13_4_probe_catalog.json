@@ -1,13 +1,13 @@
 {
   "schema": "neuromorphic-twin-m13-directed-probe-catalog-v1",
   "baseline_commit": "49ab7be6dfce427979622b585165b59bbbfbc2da",
-  "purpose": "Freeze the M13.4 directed architectural questions and reusable native evidence before any M13.3 normalization transform is chosen. This catalog is not a discrepancy register and does not authorize normalized Catalyst comparison by itself.",
+  "purpose": "Preserve the M13.4 directed architectural questions frozen before normalization and record which native execution boundary is authorized now that M13.3 is frozen. Observed discrepancy outcomes remain in m13_4_candidate_findings.json rather than this planning catalog.",
   "normalization_gate": {
     "required_schema": "neuromorphic-twin-m13-normalization-v1",
     "expected_path": "references/m13_3_normalization_spec.json",
-    "state": "blocked_m13_3_not_frozen",
-    "normalized_comparison_allowed": false,
-    "rule": "Native capture and re-execution of previously shared project/Brian2Loihi scenarios may proceed. Catalyst translation or normalized four-way equality/difference claims must wait for a frozen M13.3 specification."
+    "state": "m13_3_frozen",
+    "normalized_comparison_allowed": true,
+    "rule": "M13.3 normalization is frozen. M13.4 may execute only the predeclared transforms and comparison categories from that specification; qualitative/non-comparable fields must not be coerced into exact equality."
   },
   "probes": [
     {
@@ -36,7 +36,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -62,7 +62,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -91,7 +91,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -120,7 +120,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -155,7 +155,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -185,7 +185,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -230,7 +230,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -264,7 +264,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -291,9 +291,9 @@
       },
       "participation": {
         "published_loihi": "evidence_only",
-        "brian2loihi": "blocked_by_m13_3",
+        "brian2loihi": "not_applicable",
         "project": "runnable_new_native",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "not_applicable"
       }
     },
     {
@@ -322,9 +322,9 @@
       },
       "participation": {
         "published_loihi": "evidence_only",
-        "brian2loihi": "blocked_by_m13_3",
+        "brian2loihi": "runnable_new_native",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     },
     {
@@ -350,9 +350,9 @@
       },
       "participation": {
         "published_loihi": "evidence_only",
-        "brian2loihi": "blocked_by_m13_3",
+        "brian2loihi": "not_applicable",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "not_applicable"
       }
     },
     {
@@ -381,7 +381,7 @@
         "published_loihi": "evidence_only",
         "brian2loihi": "runnable_existing",
         "project": "runnable_existing",
-        "catalyst_n1": "blocked_by_m13_3"
+        "catalyst_n1": "runnable_new_native"
       }
     }
   ],
@@ -389,6 +389,7 @@
     "probe_count": 12,
     "required_probe_classes_covered": 11,
     "pre_normalization_reuse_boundary": "M06/M07 12-case directed suite plus all 15 M08 encoded-weight cases can be re-executed now because those project/Brian2Loihi scenarios already share an established backend-neutral schema.",
-    "not_yet_authorized": "No Catalyst parameter translation, repeated-identical-source Brian2Loihi transform, Brian2Loihi recurrent-route mapping, finite-width Brian2Loihi boundary transform, normalized trace comparison, four-way PASS/FAIL result, or A-H discrepancy classification is authorized until M13.3 freezes the common comparison specification."
+    "execution_authority": "M13.3 is frozen; Catalyst CPU/RTL and dedicated Brian2Loihi recurrent probes may now run only under the declared M13.3 transforms.",
+    "result_authority": "Observed statuses and A-H classes are recorded separately in references/m13_4_candidate_findings.json."
   }
 }

@@ -30,13 +30,18 @@ def test_m13_4_catalog_covers_every_planned_probe_class() -> None:
     assert data["summary"]["required_probe_classes_covered"] == len(M13_4_REQUIRED_PROBE_CLASSES)
 
 
-def test_m13_4_keeps_normalized_comparison_blocked_until_m13_3() -> None:
+def test_m13_4_records_frozen_m13_3_execution_gate() -> None:
     data = load_probe_catalog()
     gate = data["normalization_gate"]
-    assert gate["state"] == "blocked_m13_3_not_frozen"
-    assert gate["normalized_comparison_allowed"] is False
+    assert gate["state"] == "m13_3_frozen"
+    assert gate["normalized_comparison_allowed"] is True
     assert gate["required_schema"] == M13_3_EXPECTED_SCHEMA
-    assert all(probe["participation"]["catalyst_n1"] == "blocked_by_m13_3" for probe in data["probes"])
+    states = {probe["id"]: probe["participation"]["catalyst_n1"] for probe in data["probes"]}
+    assert states["P01-current-impulse-decay"] == "runnable_new_native"
+    assert states["P08-fanin-fanout"] == "runnable_new_native"
+    assert states["P10-recurrent-timing"] == "runnable_new_native"
+    assert states["P09-event-multiplicity"] == "not_applicable"
+    assert states["P11-state-saturation"] == "not_applicable"
 
 
 def test_m13_4_catalog_does_not_prejudge_discrepancies() -> None:

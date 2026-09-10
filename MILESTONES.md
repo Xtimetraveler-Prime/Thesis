@@ -2323,7 +2323,7 @@ Independent local validation reproduced the focused M13.3 tests, frozen comparis
 
 **Status:** In progress
 **Started:** 2026-09-09
-**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; pre-normalization scaffold only while M13.3 remains Planned
+**Repository evidence:** branch `agent/m13-4-directed-differential-probes`; frozen M13.3-normalized 12-probe candidate evidence awaiting independent local validation
 
 #### Core goal
 
@@ -2348,6 +2348,14 @@ Existing M06-M08 directed cases should be reused when they ask the same architec
 #### Evidence format
 
 For each probe, preserve the native inputs/configuration, normalized scenario, native traces, normalized traces, comparison report, and source citations that explain the expected relationship. A mismatch should identify the first divergent architectural quantity rather than report only a final network difference.
+
+#### Candidate completion evidence
+
+The M13.3-normalized directed engine now executes all **12 frozen probe questions** against every applicable pinned implementation boundary and preserves native artifacts before normalization. The corrected clean reconstruction produced **6 agreements, 3 architectural/model differences, 1 partial-scope result, and 2 deliberately non-comparable results, with zero Class-A or Class-B candidates**. The meaningful differences are: Catalyst RTL negative-decay rounding (Class C), Catalyst CPU negative sub-rest membrane behavior (Class C), and Brian2Loihi neuron-to-neuron recurrence under its native LoihiNetwork schedule (Class D). The weight-source-format boundary is partial scope (Classes C/G); repeated-identical-source event multiplicity and cross-implementation finite-width overflow remain non-comparable by the frozen M13.3 contract.
+
+Two Class-H harness defects were found and removed before freezing candidate findings: Catalyst CUBA state SRAM was initially reused across positive/negative probes, and Catalyst compiler physical GIDs were initially read as logical neuron IDs. The final harness uses independent CUBA neuron state slots and explicitly records/remaps `logical_to_catalyst_gid`; after the latter correction the apparent fan-in discrepancy disappeared and P08 agrees.
+
+The candidate result authority is `Neuromorphic Digital Twin/references/m13_4_candidate_findings.json`; the methods/results narrative is `Neuromorphic Digital Twin/docs/M13_4_DIRECTED_DIFFERENTIAL.md`. No project computational-core, HLS, or FPGA-v1 behavior changed, and no M12 physical revalidation is required because no A/B candidate was found. M13.4 remains In progress until these results are independently reproduced from the development branch.
 
 #### Pass boundary
 
