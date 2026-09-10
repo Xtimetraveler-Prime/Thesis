@@ -21,7 +21,7 @@ from neuromorphic_twin.m13_feature_crosswalk import load_feature_crosswalk, rend
 validated = load_feature_crosswalk(JSON_PATH)
 DOC_PATH.write_text(render_feature_crosswalk_markdown(validated), encoding="utf-8")
 
-m = MILESTONES.read_text(encoding="utf-8")n
+m = MILESTONES.read_text(encoding="utf-8")
 old = "### M13.2 — Build a four-way architectural feature crosswalk\n\n**Status:** Planned\n"
 new = "### M13.2 — Build a four-way architectural feature crosswalk\n\n**Status:** In progress\n**Started:** 2026-09-09\n**Repository evidence:** branch `agent/m13-2-four-way-crosswalk`\n"
 if old in m:
