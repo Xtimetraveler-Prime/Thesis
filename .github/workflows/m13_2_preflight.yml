@@ -1,0 +1,107 @@
+name: M13.2 architectural crosswalk preflight
+
+on:
+  push:
+    branches:
+      - agent/m13-2-four-way-crosswalk
+    paths:
+      - '.github/workflows/m13_2_preflight.yml'
+      - 'Neuromorphic Digital Twin/references/m13_2_feature_crosswalk.json'
+      - 'Neuromorphic Digital Twin/src/neuromorphic_twin/m13_feature_crosswalk.py'
+      - 'Neuromorphic Digital Twin/examples/validate_m13_2_feature_crosswalk.py'
+      - 'Neuromorphic Digital Twin/tests/test_m13_2_feature_crosswalk.py'
+      - 'Neuromorphic Digital Twin/docs/M13_2_ARCHITECTURAL_CROSSWALK.md'
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout thesis branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/m13-2-four-way-crosswalk
+          fetch-depth: 0
+          path: thesis
+      - name: Checkout pinned Catalyst
+        uses: actions/checkout@v4
+        with:
+          repository: catalyst-neuromorphic/catalyst-n1
+          ref: 1806bb4b4114d7671e5648fa75b7b83b3a8d5543
+          fetch-depth: 0
+          path: catalyst-n1
+      - name: Checkout pinned Brian2Loihi
+        uses: actions/checkout@v4
+        with:
+          repository: sagacitysite/brian2_loihi
+          ref: d54676cb113e48dc886615a0b589bb0e4bccbca4
+          fetch-depth: 0
+          path: brian2_loihi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project dependencies
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pip install -e '.[dev,compare]'
+      - name: Focused M13.2 tests
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pytest -q tests/test_m13_2_feature_crosswalk.py
+          PYTHONPATH=src python examples/validate_m13_2_feature_crosswalk.py
+      - name: Verify source registry against pinned repositories
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          root = Path.cwd()
+          thesis = root / 'thesis'
+          project = thesis / 'Neuromorphic Digital Twin'
+          data = json.loads((project / 'references/m13_2_feature_crosswalk.json').read_text())
+          checkout_by_repo = {
+              'Xtimetraveler-Prime/Thesis': thesis,
+              'catalyst-neuromorphic/catalyst-n1': root / 'catalyst-n1',
+              'sagacitysite/brian2_loihi': root / 'brian2_loihi',
+          }
+          top_pins = {
+              'catalyst-neuromorphic/catalyst-n1': data['catalyst_commit'],
+              'sagacitysite/brian2_loihi': data['brian2loihi_commit'],
+          }
+          for repo, expected in top_pins.items():
+              checkout = checkout_by_repo[repo]
+              actual = subprocess.check_output(['git', '-C', str(checkout), 'rev-parse', 'HEAD'], text=True).strip()
+              if actual != expected:
+                  raise SystemExit(f'{repo}: HEAD {actual} != {expected}')
+
+          checked_blobs = 0
+          for source_id, source in data['source_registry'].items():
+              repo = source.get('repository')
+              if not repo:
+                  continue
+              checkout = checkout_by_repo[repo]
+              commit = source['commit']
+              path = source['path']
+              object_spec = f'{commit}:{path}'
+              actual_blob = subprocess.check_output(['git', '-C', str(checkout), 'rev-parse', object_spec], text=True).strip()
+              expected_blob = source.get('blob_sha')
+              if expected_blob and actual_blob != expected_blob:
+                  raise SystemExit(f'{source_id}: blob {actual_blob} != {expected_blob}')
+              checked_blobs += int(expected_blob is not None)
+          if checked_blobs < 7:
+              raise SystemExit(f'expected at least 7 exact external blob checks, got {checked_blobs}')
+          print(f'M13.2 source integrity PASS: exact_external_blobs={checked_blobs}')
+          PY
+      - name: Verify generated Markdown is byte-identical
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          PYTHONPATH=src python examples/validate_m13_2_feature_crosswalk.py --write-markdown /tmp/M13_2.md
+          cmp /tmp/M13_2.md docs/M13_2_ARCHITECTURAL_CROSSWALK.md
+      - name: Complete thesis regression suite
+        run: |
+          cd 'thesis/Neuromorphic Digital Twin'
+          python -m pytest -q
+      - name: Ensure validation is read-only
+        run: |
+          cd thesis
+          git diff --exit-code
