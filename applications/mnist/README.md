@@ -1,25 +1,85 @@
 # MNIST Application
 
-This directory contains the MNIST application track built on top of the validated
-neuromorphic digital-twin platform.
+This directory tracks an MNIST workload built on top of the validated neuromorphic digital-twin platform. Application work is intentionally separate from the baseline platform milestones and must not silently change the frozen core behavior.
 
-The application should consume the existing Python/FPGA core interfaces rather
-than duplicate or silently modify the baseline computational model. If MNIST
-exposes a genuine platform limitation, any resulting core change should be
-tracked explicitly in the main platform development history instead of being
-hidden inside application code.
+See [`MILESTONES.md`](MILESTONES.md) for the rollout plan and [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the first hardware-fit decision.
 
-Application progress is tracked in [`MILESTONES.md`](MILESTONES.md).
+## Frozen first architecture
 
-Planned work in this directory includes:
+The FPGA-v1 core has a 4,096-synapse physical limit, so a dense 784-pixel-to-10-neuron network does not fit. The first workload uses the largest simple square dense input that does fit:
 
-- deterministic MNIST-to-spike encoding;
-- SNN training and hardware-aware quantization;
-- export into the project's neuron/synapse configuration format;
-- inference and evaluation on the Python golden model;
-- FPGA deployment and Python/FPGA conformance testing; and
-- application-level characterization and comparison with published Loihi MNIST
-  results where the measurement boundaries are defensibly comparable.
+```text
+28x28 MNIST
+   -> exact 20x20 center crop
+   -> 400 deterministic spike-encoded input axons
+   -> 10 LIF output neurons
+   -> 4,000 maximum dense synapses
+   -> argmax(output spike counts)
+```
 
-Subdirectories for source, tests, FPGA integration, configuration, and generated
-results will be added as those parts of the application are implemented.
+Images are presented for 16 algorithmic ticks. Pixel intensities are converted to deterministic integer spike counts rather than random Poisson trains.
+
+## Layout
+
+```text
+applications/mnist/
+├── docs/           audit and application notes
+├── mnist_app/      reusable dataset, encoding, training, export, inference code
+├── scripts/        command-line entry points
+├── tests/          application-level regression tests
+├── MILESTONES.md
+└── pyproject.toml
+```
+
+Generated training/deployment artifacts go under `applications/mnist/build/`, which is excluded by the repository-wide `build/` ignore rule.
+
+## Setup
+
+Install the already-validated core package, then the MNIST application:
+
+```bash
+python -m pip install -e "Neuromorphic Digital Twin[dev,compare]"
+python -m pip install -e "applications/mnist[test]"
+pytest applications/mnist/tests -q
+```
+
+For training, add TensorFlow:
+
+```bash
+python -m pip install -e "applications/mnist[train,test]"
+```
+
+The training dependency follows the TensorFlow 2.21 workflow used in the user-authored MNIST lab notebooks.
+
+## Training and deployment flow
+
+A small smoke run can be used before full training:
+
+```bash
+python applications/mnist/scripts/train_snn.py \
+  --epochs 1 \
+  --train-limit 2000 \
+  --test-limit 500
+```
+
+Full baseline training:
+
+```bash
+python applications/mnist/scripts/train_snn.py --epochs 10
+```
+
+Export the trained weights to the project's integer/FPGA representation:
+
+```bash
+python applications/mnist/scripts/export_network.py \
+  applications/mnist/build/training/mnist_snn_float.npz
+```
+
+Evaluate the exported network through the actual `NeuromorphicCore` golden model:
+
+```bash
+python applications/mnist/scripts/evaluate_golden.py \
+  applications/mnist/build/deployment/deployment.json
+```
+
+Until the first local TensorFlow training run is accepted, MNIST-03 and the downstream trained-network milestones remain open even though their implementation scaffolding is present.
