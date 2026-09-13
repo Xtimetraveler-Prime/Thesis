@@ -17,7 +17,7 @@ accepted, tracked in the main platform development history.
 
 ## MNIST-01 — Capacity Audit and Application Architecture
 
-**Status:** Planned
+**Status:** Complete
 
 Establish the smallest useful MNIST network that fits the current platform and
 freeze the application-level interface before training begins.
@@ -36,19 +36,25 @@ freeze the application-level interface before training begins.
 - Define the output decoding rule, initially based on output-neuron spike count
   with a deterministic tie-break.
 
-### Completion criteria
+### Completion result
 
-- A documented, resource-compatible network architecture is selected.
-- Input encoding, presentation length, and output decoding are fixed for the
-  first baseline experiment.
-- Any required platform change is identified explicitly rather than hidden in
-  application code.
+The physical FPGA-v1 profile is `256 neurons / 1024 axons / 4096 synapses /
+4096 routes / 4096 events per tick`. A dense `784 -> 10` network would require
+7,840 synapses and therefore does not fit. The largest simple square dense input
+that fits ten outputs is `20 x 20 = 400` axons, requiring 4,000 synapses.
+
+The first application is frozen as a 20x20 center crop, 400 direct input axons,
+10 LIF output neurons, 16 presentation ticks, deterministic rate encoding,
+full current decay, persistent membrane voltage, zero reset/refractory/bias,
+no recurrent routes, and highest-spike-count decoding with lowest-ID tie-break.
+
+See `docs/MNIST_01_CAPACITY_AUDIT.md` for the full audit.
 
 ---
 
 ## MNIST-02 — Deterministic MNIST Spike Encoder
 
-**Status:** Planned
+**Status:** In progress — implementation complete; local real-MNIST integration validation required
 
 Convert MNIST pixel data into the exact per-tick external axon-event sequences
 accepted by the existing neuromorphic core.
@@ -64,6 +70,18 @@ accepted by the existing neuromorphic core.
 - Provide small human-readable fixtures showing image, pixel intensity, and
   generated axon events.
 
+### Current progress
+
+`mnist_app/encoding.py` implements exact 20x20 cropping, integer intensity-to-
+spike-level quantization, deterministic per-tick distribution, row-major axon
+mapping, and direct event schedules for `NeuromorphicCore.step()`.
+
+Source-only tests cover empty/dense inputs, exact per-pixel spike counts,
+repeatability, ordering, uniqueness, shape validation, and range validation.
+An optional TensorFlow-backed test loads an actual MNIST image and verifies the
+same repeatability contract. `scripts/inspect_encoding.py` provides a
+human-readable real-image fixture once MNIST is available locally.
+
 ### Completion criteria
 
 - The same image always produces the same event schedule.
@@ -75,7 +93,7 @@ accepted by the existing neuromorphic core.
 
 ## MNIST-03 — Software SNN Training Baseline
 
-**Status:** Planned
+**Status:** In progress — training implementation complete; first accepted local training run required
 
 Train a small SNN for MNIST using a conventional training framework while
 keeping the network architecture compatible with the selected deployment
@@ -92,6 +110,19 @@ boundary.
 - Keep the first network intentionally simple; avoid hidden layers unless the
   direct input-to-output network is demonstrably inadequate.
 
+### Current progress
+
+`mnist_app/training.py` reuses the TensorFlow/Keras MNIST workflow from the
+user-authored class notebooks but replaces the ReLU ANN forward path with a
+400-to-10 integrate-and-fire SNN. The forward pass uses hard spikes with a
+surrogate gradient, the frozen 16-tick encoder, full current decay, persistent
+voltage, hard zero reset, and output spike-count logits. The training script
+records the fixed seed, hyperparameters, per-epoch accuracy/activity, and a
+portable NumPy checkpoint.
+
+A TensorFlow/MNIST run cannot be executed in the current development sandbox,
+so baseline SNN accuracy is intentionally not claimed yet.
+
 ### Completion criteria
 
 - Training is reproducible from source-controlled scripts and configuration.
@@ -102,7 +133,7 @@ boundary.
 
 ## MNIST-04 — Hardware-Aware Quantization and Export
 
-**Status:** Planned
+**Status:** In progress — implementation complete; trained checkpoint and accuracy-loss measurement required
 
 Translate the trained software network into parameters that are exactly legal
 for the project's integer neuromorphic model.
@@ -119,6 +150,16 @@ for the project's integer neuromorphic model.
 - If needed, add quantization-aware retraining or fine-tuning while preserving
   the frozen hardware rules.
 
+### Current progress
+
+`mnist_app/export.py` maps float weights to two existing exponent-zero encoded
+weight formats (excitatory/inhibitory), scales the threshold into the same
+integer state units, constrains scale using both mantissa range and conservative
+SAT24 headroom, emits the existing M08 FPGA weight-storage image, and writes a
+machine-readable deployment manifest. Pure quantization tests pass locally.
+An optional platform integration test exports a synthetic checkpoint and runs
+it through the actual project core when `neuromorphic_twin` is installed.
+
 ### Completion criteria
 
 - The exported network can be instantiated by the existing Python golden model.
@@ -129,7 +170,7 @@ for the project's integer neuromorphic model.
 
 ## MNIST-05 — Python Golden-Model MNIST Inference
 
-**Status:** Planned
+**Status:** In progress — inference implementation complete; trained exported network required
 
 Run the exported trained network through the actual project
 `NeuromorphicCore`, making the validated golden model the application inference
@@ -145,6 +186,15 @@ authority.
 - Record accuracy, confusion matrix, spikes per image, input events per image,
   synaptic activity, and prediction behavior versus presentation length.
 - Preserve representative full per-tick traces for regression use.
+
+### Current progress
+
+`mnist_app/inference.py` loads the exported M08 storage, reconstructs encoded
+synapses, instantiates the real `NeuromorphicCore` with
+`FPGA_CORE_ARITHMETIC_V1`, resets between images, feeds the deterministic event
+schedule, counts output spikes, and performs deterministic argmax decoding.
+`scripts/evaluate_golden.py` evaluates a finite test corpus and records accuracy,
+confusion matrix, mean input events, and mean output spikes.
 
 ### Completion criteria
 
