@@ -6,6 +6,23 @@ architecture-level digital twin of a Loihi-inspired neuromorphic processor.
 Project progress, completed research decisions, validation evidence, and planned
 work are tracked in [`MILESTONES.md`](MILESTONES.md).
 
+## Repository structure
+
+- [`MILESTONES.md`](MILESTONES.md) tracks development of the baseline
+  neuromorphic digital-twin platform and its Loihi-inspired core features.
+- [`EXPERIMENTS.md`](EXPERIMENTS.md) records the experiments used to probe and
+  validate the model and hardware implementation.
+- [`AUDIT.md`](AUDIT.md) records project audits, evidence checks, and validation
+  findings.
+- [`Neuromorphic Digital Twin/`](Neuromorphic%20Digital%20Twin/) contains the
+  core Python model, verification code, documentation, HLS, RTL, and FPGA
+  implementation work.
+- [`applications/`](applications/) contains application workloads built on top
+  of the validated core. Each application can maintain its own milestones and
+  supporting code without changing the meaning of the baseline platform
+  milestones. The first application track is
+  [`applications/mnist/`](applications/mnist/).
+
 The active Python project is located in:
 
 ```text
