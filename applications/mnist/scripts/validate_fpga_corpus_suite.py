@@ -4,27 +4,7 @@ import argparse
 from pathlib import Path
 
 from mnist_app.fpga_corpus import validate_physical_corpus_suite
-
-
-def format_suite_summary(suite: dict[str, object]) -> tuple[str, ...]:
-    """Format the stable MNIST-08 suite schema for console reporting."""
-
-    lines = [
-        "MNIST-08 suite: "
-        f"passed={suite['passed']} cases={suite['case_count']} "
-        f"ticks={suite['tick_count']} mismatches={suite['mismatch_count']}"
-    ]
-    for profile, summary in suite["profiles"].items():
-        lines.append(
-            f"profile={profile} cases={summary['cases']} "
-            f"passed={summary['passed']} mismatches={summary['mismatches']}"
-        )
-    for reason, summary in suite["selection_reasons"].items():
-        lines.append(
-            f"reason={reason} cases={summary['cases']} "
-            f"passed={summary['passed']} mismatches={summary['mismatches']}"
-        )
-    return tuple(lines)
+from mnist_app.fpga_corpus_reporting import format_suite_summary
 
 
 def main() -> int:
