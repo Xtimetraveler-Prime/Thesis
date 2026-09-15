@@ -193,20 +193,22 @@ See `docs/MNIST_08_FPGA_APPLICATION_CORPUS.md`.
 
 ## MNIST-09 — Shared Runtime Host Interface
 
-**Status:** In progress — dual-profile static runtime image, host request/result protocol, reusable VIO runtime controller, bitstream flow, and `classify_fpga.py` implemented; local/Vivado/physical validation pending
+**Status:** Physical validation complete; final application pytest after the last host-side synchronization patch pending before merge
 
-MNIST-09 removes the fixed-case schedule assumption used by MNIST-07/08. One reusable bitstream stores both immutable `mnist-v1` deployment images while arbitrary image schedules are encoded on the host and streamed at runtime.
+One reusable Vivado 2025.2 K26 bitstream contains both frozen `mnist-v1` deployment images while arbitrary image schedules are encoded on the host and streamed at runtime. The implementation preserves the existing M12.3 VIO shape: `capture_start` selects the frozen profile, trace space `7` appends runtime axon IDs, `capture_step` executes a buffered tick, and normal trace spaces retain their validated post-commit read semantics. The architectural core RTL and HLS neuron IP are unchanged.
 
-The implementation preserves the existing M12.3 VIO shape. `capture_start` selects profile 0 (`cropped-dense`) or profile 1 (`native-sparse`), normal trace spaces `0..6` retain their validated read semantics, and previously unused trace space `7` appends one host-supplied axon ID to the next tick's external-event buffer. `capture_step` executes the buffered tick. The architectural core RTL and HLS neuron IP remain unchanged.
-
-The host CLI supports:
+The accepted physical runtime exercise used the same generated bitstream artifacts for four classifications:
 
 ```text
-python applications/mnist/scripts/classify_fpga.py --profile native-sparse --index N
-python applications/mnist/scripts/classify_fpga.py --profile cropped-dense --index N
+cropped-dense, index 3, label 0, golden prediction 0
+native-sparse,  index 3, label 0, golden prediction 0
+cropped-dense, index 1, label 2, golden prediction 2
+native-sparse,  index 1, label 2, golden prediction 2
 ```
 
-`--prepare-only` exercises dataset loading, deterministic encoding, request serialization, and independent golden inference without requiring Vivado. Physical mode programs the reusable runtime bitstream, streams all 16 ticks, reads output spike flags through the existing trace bridge, decodes the prediction, and compares the physical spike-count vector/prediction with the frozen Python golden result.
+All four physical runs passed exact comparison of final output spike-count vectors and decoded predictions against the frozen Python golden result. Thus the runtime has demonstrated both profile switching and image switching without rebuilding application-specific neuron logic or regenerating the bitstream.
+
+Two host/runtime bring-up issues were corrected without changing the core: an over-broad static-image safety grep that mistook the allowed `M12_3_MAX_EXTERNAL_EVENTS` capacity constant for compiled event data, and a trace-read synchronization ordering bug after runtime space-7 event injection. Both now have regression coverage.
 
 JTAG/VIO transaction time remains explicitly separate from architectural FPGA execution time.
 
