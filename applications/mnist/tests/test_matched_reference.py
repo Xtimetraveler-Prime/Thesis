@@ -42,6 +42,9 @@ def test_semantic_audit_has_explicit_reference_classes() -> None:
     assert rows["refractory"].catalyst == "EQUIVALENT"
     assert rows["synaptic_graph"].brian2loihi == "EXACT"
     assert rows["synaptic_graph"].catalyst == "TRANSLATED"
+    assert rows["voltage_decay"].catalyst == "TRANSLATED"
+    assert rows["sub_rest_negative_voltage"].brian2loihi == "EXACT"
+    assert rows["sub_rest_negative_voltage"].catalyst == "UNREPRESENTABLE"
     assert rows["finite_width_saturation"].catalyst == "UNREPRESENTABLE"
     assert rows["online_learning_recurrence"].brian2loihi == "NOT_USED"
 
