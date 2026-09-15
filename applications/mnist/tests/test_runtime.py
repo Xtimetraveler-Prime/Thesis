@@ -117,3 +117,21 @@ def test_runtime_controller_reserves_trace_space_seven_for_event_append() -> Non
     assert "RUNTIME_APPEND_SPACE = 3'd7" in text
     assert "normal_trace_req_pulse" in text
     assert "external_wdata = {4'b0, trace_read_addr}" in text
+
+
+def test_runtime_tcl_selects_normal_trace_space_before_waiting_for_ready() -> None:
+    script = (
+        Path(__file__).parents[1]
+        / "fpga"
+        / "vivado"
+        / "classify_mnist_09_runtime.tcl"
+    )
+    text = script.read_text(encoding="utf-8")
+    start = text.index("proc trace_read_word")
+    end = text.index("proc json_quote", start)
+    helper = text[start:end]
+    select_pos = helper.index("set_probe_uint $p_space $space")
+    ready_pos = helper.index("[probe_uint $p_ready] == 1")
+    pulse_pos = helper.index("pulse_probe $p_req")
+    assert select_pos < ready_pos < pulse_pos
+    assert "trace bridge not ready for space=$space addr=$addr" in helper
