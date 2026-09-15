@@ -37,6 +37,29 @@ def build_matched_summary(
             "refusing to combine Brian/Catalyst suites with different MNIST index/order scopes"
         )
     case_count = len(brian_indices)
+    if case_count == 0:
+        raise ValueError("matched comparison requires at least one case")
+
+    brian_cases = list(brian["cases"])
+    catalyst_cases = list(catalyst["cases"])
+    for brian_case, catalyst_case in zip(brian_cases, catalyst_cases, strict=True):
+        if int(brian_case["label"]) != int(catalyst_case["label"]):
+            raise ValueError("Brian/Catalyst labels differ on the matched scope")
+        if int(brian_case["project_prediction"]) != int(catalyst_case["project_prediction"]):
+            raise ValueError("Brian/Catalyst project predictions differ on the matched scope")
+
+    catalyst_project_correct = sum(
+        int(case["project_prediction"]) == int(case["label"])
+        for case in catalyst_cases
+    )
+    catalyst_graph_correct = sum(
+        int(case["graph_prediction"]) == int(case["label"])
+        for case in catalyst_cases
+    )
+    catalyst_direct_correct = sum(
+        int(case["delivered_drive_prediction"]) == int(case["label"])
+        for case in catalyst_cases
+    )
     native = accepted["profiles"]["native-sparse"]["summary"]
 
     return {
@@ -81,6 +104,9 @@ def build_matched_summary(
             "delivered_drive_spike_vector_agreement_cases": int(
                 catalyst["delivered_drive_spike_vector_agreement_cases"]
             ),
+            "project_accuracy_on_scope": catalyst_project_correct / case_count,
+            "graph_accuracy_on_scope": catalyst_graph_correct / case_count,
+            "delivered_drive_accuracy_on_scope": catalyst_direct_correct / case_count,
             "evidence_label": "MATCHED EFFECTIVE GRAPH / DELIVERED DRIVE + TRANSLATED DYNAMICS",
         },
         "hardware_boundary": {
