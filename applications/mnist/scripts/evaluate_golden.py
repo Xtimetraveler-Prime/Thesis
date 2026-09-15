@@ -29,6 +29,7 @@ def main() -> None:
         images,
         labels,
         profile=runtime.profile,
+        row_lengths=runtime.row_lengths,
     )
 
     output = args.output or (
