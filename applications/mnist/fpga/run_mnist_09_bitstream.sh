@@ -64,7 +64,12 @@ python3 "$APP_DIR/scripts/generate_runtime_profiles.py" \
     --frozen-root "$APP_DIR/frozen/mnist-v1" \
     --sv-output "$CAPTURE_VECTORS"
 
-if grep -Eq 'M12_3_EXPECTED|EXTERNAL_EVENTS|RECURRENT_SCHEDULE' "$CAPTURE_VECTORS"; then
+# The runtime static include may define capacity constants such as
+# M12_3_MAX_EXTERNAL_EVENTS, but it must never embed a concrete external-event
+# schedule or golden expected-output array. Match actual array declarations / 
+# schedule identifiers rather than broad substrings so capacity metadata does
+# not trip the guard.
+if grep -Eq 'M12_3_EXPECTED|M12_3_EXTERNAL_(COUNTS|ROWS|EVENTS)[[:space:]]*\[|RECURRENT_SCHEDULE' "$CAPTURE_VECTORS"; then
     echo "ERROR: MNIST-09 static include unexpectedly contains runtime/golden event data." >&2
     exit 3
 fi
