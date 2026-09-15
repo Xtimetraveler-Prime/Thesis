@@ -161,9 +161,22 @@ See `docs/MNIST_07_SINGLE_IMAGE_CONFORMANCE.md`.
 
 ## MNIST-08 — FPGA Application Corpus
 
-**Status:** Planned
+**Status:** In progress — 60-case generator, shared-static/packed-event capture image, physical runner, and exact suite validator implemented; local/Vivado/physical validation pending
 
-Run the common frozen source-image corpus through both physical deployments. Every accepted case must agree with Python at the required application/trace boundary, and machine-readable physical results must be preserved.
+MNIST-08 expands the frozen 30-image common source corpus across both deployment profiles:
+
+```text
+30 frozen source images x 2 profiles = 60 physical cases
+60 cases x 16 ticks = 960 committed physical ticks
+```
+
+The physical corpus preserves the MNIST-07 correctness boundary and still feeds only deployment/input data to the FPGA. Golden states, signed-64 synaptic accumulators, spike flags, output spike counts, and predictions remain host-side.
+
+To avoid duplicating roughly four thousand static synapses 60 times, the generated bitstream image stores the two frozen deployment images once and maps each dynamic case to a profile ID plus its 16-tick external-event schedule. External schedules are packed with CSR-like row pointers rather than padded to a case-wide maximum event count. These are capture-shell storage optimizations only; the validated core RTL and neuron/synapse behavior are unchanged.
+
+The suite validator requires exact physical/golden agreement for all 60 cases and summarizes results by profile and by frozen case category (`both-correct`, `profile-divergent`, `both-wrong`). The deliberately selected 30-image corpus is used for conformance coverage, not reported as an unbiased accuracy sample.
+
+See `docs/MNIST_08_FPGA_APPLICATION_CORPUS.md`.
 
 ---
 
