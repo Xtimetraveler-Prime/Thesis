@@ -1,4 +1,4 @@
-"""Quantize a trained MNIST SNN into the project-native FPGA/core format."""
+"""Quantize trained MNIST SNN checkpoints into project-native FPGA/core formats."""
 
 from __future__ import annotations
 
@@ -10,13 +10,15 @@ import numpy as np
 
 from .config import (
     CURRENT_DECAY,
+    DEFAULT_PROFILE,
     FLOAT_THRESHOLD,
-    INPUT_AXONS,
     OUTPUT_NEURONS,
     PRESENTATION_TICKS,
     REFRACTORY_TICKS,
     RESET_VOLTAGE,
     VOLTAGE_DECAY,
+    MnistProfile,
+    get_profile,
 )
 
 STATE_MAX = (1 << 23) - 1
@@ -41,16 +43,25 @@ def _round_half_away_from_zero(values: np.ndarray | float) -> np.ndarray:
     return np.copysign(rounded, array).astype(np.int64)
 
 
+def _checkpoint_profile(checkpoint) -> MnistProfile:
+    if "profile" not in checkpoint:
+        return get_profile(DEFAULT_PROFILE)
+    raw = np.asarray(checkpoint["profile"])
+    return get_profile(str(raw.item()))
+
+
 def quantize_float_weights(
     weights: np.ndarray,
     *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
     threshold: float = FLOAT_THRESHOLD,
     state_headroom: float = 0.90,
 ) -> QuantizationResult:
     """Map float weights to exponent-0 signed mantissas and scaled state units."""
 
+    selected = get_profile(profile)
     matrix = np.asarray(weights, dtype=np.float64)
-    expected = (INPUT_AXONS, OUTPUT_NEURONS)
+    expected = (selected.input_axons, OUTPUT_NEURONS)
     if matrix.shape != expected:
         raise ValueError(f"weights must have shape {expected}; got {matrix.shape}")
     if not np.all(np.isfinite(matrix)):
@@ -59,6 +70,11 @@ def quantize_float_weights(
         raise ValueError("threshold must be positive")
     if not 0 < state_headroom <= 1:
         raise ValueError("state_headroom must be in (0, 1]")
+    if np.count_nonzero(matrix) > selected.max_synapses:
+        raise ValueError(
+            f"{selected.name} contains more than {selected.max_synapses} "
+            "nonzero float connections"
+        )
 
     max_abs = float(np.max(np.abs(matrix)))
     if max_abs == 0.0:
@@ -66,7 +82,9 @@ def quantize_float_weights(
 
     mantissa_scale_limit = MAX_MANTISSA_MAGNITUDE / max_abs
     max_l1 = float(np.max(np.sum(np.abs(matrix), axis=0)))
-    safe_state_scale = (STATE_MAX * state_headroom) / (PRESENTATION_TICKS * max_l1)
+    safe_state_scale = (STATE_MAX * state_headroom) / (
+        PRESENTATION_TICKS * max_l1
+    )
     safe_mantissa_scale = safe_state_scale / WEIGHT_ALIGNMENT
     threshold_scale_limit = (STATE_MAX * state_headroom) / (
         threshold * WEIGHT_ALIGNMENT
@@ -93,13 +111,17 @@ def quantize_float_weights(
     reconstructed = mantissas.astype(np.float64) / mantissa_scale
     error = reconstructed - matrix
     conservative_bound = state_scale * PRESENTATION_TICKS * max_l1
+    nonzero_synapses = int(np.count_nonzero(mantissas))
+    if nonzero_synapses > selected.max_synapses:
+        raise AssertionError("quantization increased the stored synapse count")
+
     return QuantizationResult(
         mantissas=mantissas,
         state_scale=state_scale,
         threshold=threshold_int,
         max_abs_weight_error=float(np.max(np.abs(error))),
         rmse_weight_error=float(np.sqrt(np.mean(np.square(error)))),
-        nonzero_synapses=int(np.count_nonzero(mantissas)),
+        nonzero_synapses=nonzero_synapses,
         saturation_safe_bound=conservative_bound,
     )
 
@@ -121,9 +143,16 @@ def write_deployment(
     )
 
     checkpoint = np.load(checkpoint_path)
+    selected = _checkpoint_profile(checkpoint)
     weights = np.asarray(checkpoint["weights"], dtype=np.float64)
-    threshold_float = float(checkpoint.get("threshold", FLOAT_THRESHOLD))
-    quantized = quantize_float_weights(weights, threshold=threshold_float)
+    threshold_float = float(
+        checkpoint["threshold"] if "threshold" in checkpoint else FLOAT_THRESHOLD
+    )
+    quantized = quantize_float_weights(
+        weights,
+        profile=selected,
+        threshold=threshold_float,
+    )
 
     positive_format = WeightFormat(
         exponent=0,
@@ -136,7 +165,7 @@ def write_deployment(
         sign_mode=WeightSignMode.INHIBITORY,
     )
     synapses = []
-    for axon_id in range(INPUT_AXONS):
+    for axon_id in range(selected.input_axons):
         for neuron_id in range(OUTPUT_NEURONS):
             mantissa = int(quantized.mantissas[axon_id, neuron_id])
             if mantissa == 0:
@@ -152,8 +181,8 @@ def write_deployment(
             )
 
     storage = freeze_encoded_synapses(synapses)
-    if storage.axon_count < INPUT_AXONS:
-        missing = INPUT_AXONS - storage.axon_count
+    if storage.axon_count < selected.input_axons:
+        missing = selected.input_axons - storage.axon_count
         storage = FrozenWeightStorage(
             format_words=storage.format_words,
             synapse_words=storage.synapse_words,
@@ -163,10 +192,15 @@ def write_deployment(
             ),
         )
 
-    if storage.synapse_count > 4096:
-        raise ValueError("deployment exceeds the physical 4096-synapse limit")
-    if storage.axon_count != INPUT_AXONS:
-        raise AssertionError("deployment must expose exactly 400 axon rows")
+    if storage.synapse_count > selected.max_synapses:
+        raise ValueError(
+            f"deployment exceeds {selected.name} synapse limit "
+            f"{selected.max_synapses}"
+        )
+    if storage.axon_count != selected.input_axons:
+        raise AssertionError(
+            f"deployment must expose exactly {selected.input_axons} axon rows"
+        )
 
     neuron_configs = [
         NeuronConfig(
@@ -189,14 +223,25 @@ def write_deployment(
     manifest.write_text(
         json.dumps(
             {
-                "schema": "neuromorphic-twin-mnist-deployment-v1",
+                "schema": "neuromorphic-twin-mnist-deployment-v2",
+                "profile": selected.name,
                 "architecture": {
                     "source_image": [28, 28],
-                    "center_crop": [20, 20],
-                    "input_axons": INPUT_AXONS,
+                    "input_shape": [
+                        selected.input_height,
+                        selected.input_width,
+                    ],
+                    "preprocessing": (
+                        "native-28x28"
+                        if selected.crop_border is None
+                        else "center-crop-[4:24,4:24]"
+                    ),
+                    "input_axons": selected.input_axons,
                     "output_neurons": OUTPUT_NEURONS,
                     "presentation_ticks": PRESENTATION_TICKS,
                     "routes": 0,
+                    "maximum_profile_synapses": selected.max_synapses,
+                    "stored_synapses": storage.synapse_count,
                 },
                 "decoder": "argmax-output-spike-count-lowest-id-tie-break",
                 "neuron_config": {
@@ -214,7 +259,9 @@ def write_deployment(
                     "nonzero_synapses": quantized.nonzero_synapses,
                     "max_abs_weight_error": quantized.max_abs_weight_error,
                     "rmse_weight_error": quantized.rmse_weight_error,
-                    "conservative_abs_voltage_bound": quantized.saturation_safe_bound,
+                    "conservative_abs_voltage_bound": (
+                        quantized.saturation_safe_bound
+                    ),
                     "state_max": STATE_MAX,
                 },
                 "weight_storage": "weight_image/weight_storage.json",
