@@ -82,11 +82,22 @@ proc wait_input {vio probe expected description} {
     error "Timed out waiting for $description; expected=$expected actual=[probe_uint $probe]"
 }
 proc trace_read_word {vio p_ready p_seq p_rsp_space p_rsp_addr p_rsp_data p_rsp_error p_req p_space p_addr space addr} {
-    refresh_hw_vio $vio
-    if {[probe_uint $p_ready] != 1} { error "trace bridge not ready" }
-    set old_seq [probe_uint $p_seq]
+    # Runtime event appends deliberately leave trace_read_space at 7, for which
+    # the RTL advertises trace_read_ready=0. Select the requested normal trace
+    # space/address first, then wait for readiness before issuing the request.
     set_probe_uint $p_space $space
     set_probe_uint $p_addr $addr
+    set ready 0
+    for {set i 0} {$i < 200} {incr i} {
+        refresh_hw_vio $vio
+        if {[probe_uint $p_ready] == 1} {
+            set ready 1
+            break
+        }
+        after 1
+    }
+    if {!$ready} { error "trace bridge not ready for space=$space addr=$addr" }
+    set old_seq [probe_uint $p_seq]
     pulse_probe $p_req
     for {set i 0} {$i < 200} {incr i} {
         refresh_hw_vio $vio
