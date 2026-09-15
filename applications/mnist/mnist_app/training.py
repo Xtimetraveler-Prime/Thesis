@@ -414,6 +414,7 @@ def train_snn(
     best_finetune_epoch: int | None = None
     best_finetune_validation_accuracy: float | None = None
     best_finetune_validation_spikes: float | None = None
+    selected_sparse_stage: str | None = None
     final_mask = dense_mask
 
     if selected.is_sparse:
@@ -424,6 +425,7 @@ def train_snn(
         weights.assign(
             weights * tf.convert_to_tensor(final_mask, dtype=tf.float32)
         )
+        post_prune_weights = np.asarray(weights.numpy(), dtype=np.float32).copy()
         (
             post_prune_validation_accuracy,
             post_prune_validation_spikes,
@@ -442,10 +444,11 @@ def train_snn(
             f"spikes/image={post_prune_validation_spikes:.2f} "
             f"connections={int(np.count_nonzero(final_mask))}"
         )
+        selected_sparse_stage = "post-prune"
 
         if fine_tune_epochs:
             (
-                _,
+                finetune_weights,
                 best_finetune_validation_accuracy,
                 best_finetune_validation_spikes,
                 best_finetune_epoch,
@@ -454,6 +457,14 @@ def train_snn(
                 "masked-finetune",
                 final_mask,
             )
+            if (
+                best_finetune_validation_accuracy
+                > post_prune_validation_accuracy
+            ):
+                weights.assign(finetune_weights)
+                selected_sparse_stage = "masked-finetune"
+            else:
+                weights.assign(post_prune_weights)
 
     elapsed_seconds = time.perf_counter() - start_time
     final_mask_tensor = tf.convert_to_tensor(final_mask, dtype=tf.float32)
@@ -551,6 +562,7 @@ def train_snn(
                 "best_finetune_validation_spikes_per_image": (
                     best_finetune_validation_spikes
                 ),
+                "selected_sparse_stage": selected_sparse_stage,
                 "final_test_accuracy": final_accuracy,
                 "mean_test_output_spikes_per_image": mean_output_spikes,
                 "nonzero_weights": nonzero_weights,
