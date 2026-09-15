@@ -91,8 +91,6 @@ The full 10,000-image matched evaluation produced:
 
 Some small trained weights quantized exactly to zero, reducing the stored synapse count from 4,000 to 3,893 for cropped-dense and from 4,096 to 4,086 for native-sparse. The resulting accuracy changes are negligible.
 
-The generated deployment/validation manifests record state scale, integer threshold, quantization error, stored synapse count, and artifact hashes.
-
 See `docs/MNIST_04_05_ACCEPTED_VALIDATION.md`.
 
 ---
@@ -118,26 +116,33 @@ See `docs/MNIST_04_05_ACCEPTED_VALIDATION.md`.
 
 ## MNIST-06 — Dual-Profile Deployment Freeze
 
-**Status:** Planned
+**Status:** In progress — freeze tooling and corpus policy implemented; materialized accepted package pending
 
 Freeze both accepted deployments rather than selecting one winner.
 
-### Goals
+### Implemented
 
-- Preserve trained/quantized network checksums.
-- Preserve exact encoder profile and 16-tick presentation contract.
-- Preserve weight-storage images and neuron configuration.
-- Preserve accepted golden-model accuracy and matched-validation results.
-- Select one common FPGA-validation corpus using the same original MNIST test indices for both profiles.
-- Record enough provenance that the physical experiments cannot accidentally use a different checkpoint or deployment image.
+- `mnist_app/deployment_freeze.py` verifies accepted MNIST-04/05 hashes and copies the exact checkpoints and deployment images out of the ignored build tree.
+- `scripts/freeze_deployment.py` generates the versioned `applications/mnist/frozen/mnist-v1/` package.
+- A deterministic 30-image common FPGA corpus selects three source images per digit: one both-correct case, one profile-divergent case, and one both-wrong case, with explicit deterministic fallback if a category is absent.
+- `mnist_app/frozen_validation.py` and `scripts/validate_frozen_deployment.py` independently re-hash the complete package and verify the 30-case/three-per-digit corpus contract.
+- Unit tests cover corpus selection, hash-verified copying, complete-package validation, and tamper detection.
 
-Any discovered need to alter baseline core semantics must be proposed outside the application track.
+### Completion criteria
+
+- The accepted full-test MNIST-04/05 validation is the freeze source.
+- Both accepted checkpoints and both project-native deployment images are hash-verified and copied.
+- The common 30-image FPGA-validation corpus is generated.
+- The frozen package passes independent validation.
+- `applications/mnist/frozen/mnist-v1/` is committed to the repository and becomes the sole MNIST-07 input package.
+
+See `docs/MNIST_06_DEPLOYMENT_FREEZE.md`.
 
 ---
 
 ## MNIST-07 — Single-Image FPGA Conformance
 
-**Status:** Planned
+**Status:** Planned — M12 multi-tick physical-conformance reuse path identified
 
 ### MNIST-07A — Cropped-dense
 
@@ -147,7 +152,7 @@ Run one frozen cropped-dense image through the physical FPGA and require exact p
 
 Repeat for the native-sparse deployment, including irregular and empty CSR rows where present.
 
-Both profiles must produce exact Python/FPGA state/spike agreement and identical final spike counts/predictions. The FPGA receives configuration and input events, never expected outputs.
+The implementation will reuse the existing M12 multi-tick physical-conformance boundary: FPGA-visible artifacts contain static load images and per-tick external-event schedules only; independent golden state/spike/trace data remains host-side. Both profiles must produce exact Python/FPGA state/spike agreement and identical final spike counts/predictions.
 
 ---
 
