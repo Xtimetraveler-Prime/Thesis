@@ -1,13 +1,13 @@
 """Deterministic source adapters for reusing the M12.3 capture shell in MNIST-08.
 
 The architectural core RTL remains untouched. MNIST-08 stages application-local
-copies of the already validated M12.3 capture controller/Tcl and applies two
-small mechanical adaptations:
+copies of the already validated M12.3 capture controller/Tcl and applies three
+mechanical adaptations:
 
 1. static load-image addressing uses the case's frozen profile ID, while the
    external schedule remains indexed by the 60-case application case ID;
-2. packed external events use a row pointer instead of a rectangular
-   case*tick*max-events ROM;
+2. packed external events use a row pointer plus one synthesis-safe ROM bank per
+   profile rather than a single oversized or rectangular event array;
 3. the existing four-bit capture-phase witness is compared with the low nibble
    of case IDs above 15. Exact external-event differential checking still proves
    that the complete selected case, not just its low nibble, executed.
@@ -51,11 +51,17 @@ _EXTERNAL_RECTANGULAR = """M12_3_EXTERNAL_EVENTS[
                     (((active_case_id * M12_3_MAX_TICKS) + tick_index) *
                      M12_3_MAX_EXTERNAL_EVENTS) + load_index
                 ]"""
-_EXTERNAL_PACKED = """M12_3_EXTERNAL_EVENTS[
-                    M12_3_EXTERNAL_ROWS[
-                        (active_case_id * M12_3_MAX_TICKS) + tick_index
-                    ] + load_index
-                ]"""
+_EXTERNAL_PROFILE_BANKED = """(static_image_id == 8'd0) ?
+                    M12_3_EXTERNAL_EVENTS_PROFILE0[
+                        M12_3_EXTERNAL_ROWS[
+                            (active_case_id * M12_3_MAX_TICKS) + tick_index
+                        ] + load_index
+                    ] :
+                    M12_3_EXTERNAL_EVENTS_PROFILE1[
+                        M12_3_EXTERNAL_ROWS[
+                            (active_case_id * M12_3_MAX_TICKS) + tick_index
+                        ] + load_index
+                    ]"""
 
 _TCL_CASE_CHECK = """    if {$selected_case != $case_id} {
         error \"M12.3 case-select witness mismatch: requested=$case_id observed=$selected_case phase=$phase\"
@@ -82,12 +88,16 @@ def patch_capture_controller_text(text: str) -> str:
 
     if patched.count(_EXTERNAL_RECTANGULAR) != 1:
         raise ValueError("unexpected M12.3 rectangular external-event expression")
-    patched = patched.replace(_EXTERNAL_RECTANGULAR, _EXTERNAL_PACKED, 1)
+    patched = patched.replace(_EXTERNAL_RECTANGULAR, _EXTERNAL_PROFILE_BANKED, 1)
 
     if "M12_3_CASE_PROFILE_IDS[active_case_id]" not in patched:
         raise AssertionError("shared-profile selector was not inserted")
     if "M12_3_EXTERNAL_ROWS[" not in patched:
         raise AssertionError("packed external-event row lookup was not inserted")
+    if "M12_3_EXTERNAL_EVENTS_PROFILE0[" not in patched:
+        raise AssertionError("profile-banked external-event lookup was not inserted")
+    if "M12_3_EXTERNAL_EVENTS_PROFILE1[" not in patched:
+        raise AssertionError("profile-banked external-event lookup was not inserted")
     return patched
 
 
