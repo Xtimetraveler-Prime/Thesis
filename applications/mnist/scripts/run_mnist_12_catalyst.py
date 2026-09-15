@@ -70,6 +70,12 @@ def main() -> int:
             f"{direct['metadata']['max_abs_delivered_current']} transport_consistent="
             f"{result['passed_transport_consistency']}"
         )
+        if graph["voltage_spike_trace"]["first_mismatch"] is not None:
+            print(f"  graph_first_mismatch={graph['voltage_spike_trace']['first_mismatch']}")
+        if direct["voltage_spike_trace"]["first_mismatch"] is not None:
+            print(f"  direct_first_mismatch={direct['voltage_spike_trace']['first_mismatch']}")
+        if internal["voltage_spike_trace"]["first_mismatch"] is not None:
+            print(f"  catalyst_internal_first_mismatch={internal['voltage_spike_trace']['first_mismatch']}")
 
     suite = summarize_suite(results)
     suite_path = args.output_dir / "suite.json"
