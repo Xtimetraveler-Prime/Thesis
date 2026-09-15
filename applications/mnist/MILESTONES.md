@@ -139,17 +139,27 @@ See `docs/MNIST_06_DEPLOYMENT_FREEZE.md`.
 
 ## MNIST-07 — Single-Image FPGA Conformance
 
-**Status:** Planned — M12 multi-tick physical-conformance reuse path identified
+**Status:** In progress — software/golden generation, M12.3-compatible bitstream flow, and physical differential tooling implemented; local/physical validation pending
+
+MNIST-07 uses the first frozen both-correct corpus image as a shared source anchor for both profiles. In `mnist-v1` this is official MNIST test index 3, true label 0. Both profiles are presented for 16 ticks from zero initial state using their frozen deployment images.
 
 ### MNIST-07A — Cropped-dense
 
-Run one frozen cropped-dense image through the physical FPGA and require exact per-tick agreement with the Python golden trace.
+Generate the cropped-dense static image and 16-tick external-event schedule from the frozen deployment and require exact per-tick Python/FPGA agreement plus identical final output spike counts/prediction.
 
 ### MNIST-07B — Native-sparse
 
-Repeat for the native-sparse deployment, including irregular and empty CSR rows where present.
+Repeat for native-sparse using the same original source image and the frozen 784-axon / 4,086-synapse deployment, including its irregular CSR row structure.
 
-The implementation will reuse the existing M12 multi-tick physical-conformance boundary: FPGA-visible artifacts contain static load images and per-tick external-event schedules only; independent golden state/spike/trace data remains host-side. Both profiles must produce exact Python/FPGA state/spike agreement and identical final spike counts/predictions.
+### Implemented boundary
+
+The flow reuses the existing M12.3 multi-tick capture shell and VIO transport. FPGA-visible artifacts contain static configuration/weight/row images and per-tick external events only. Independent golden state, signed-64 synaptic accumulators, spike flags, and decoded predictions stay host-side.
+
+New application tooling generates the two cases, emits an M12.3-compatible input-only include, builds the K26 bitstream around the existing validated RTL/HLS core, captures both physical 16-tick traces, and performs exact host-side differential validation.
+
+MNIST-07 closes only after both physical K26 cases complete with zero architectural mismatches and matching final spike counts/predictions.
+
+See `docs/MNIST_07_SINGLE_IMAGE_CONFORMANCE.md`.
 
 ---
 
