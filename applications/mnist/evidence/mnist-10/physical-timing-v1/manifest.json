@@ -1,0 +1,222 @@
+{
+  "all_passed": true,
+  "case_count": 4,
+  "cases": [
+    {
+      "device": "xck26_0",
+      "files": {
+        "comparison": {
+          "filename": "timing_comparison.json",
+          "sha256": "f5eec26daefddc1cc47c59bef49efb0bbdfe3c9006e6b96be281789b1e67ab9e"
+        },
+        "events": {
+          "filename": "events.tsv",
+          "sha256": "7664f46a34d2a2562d45dd4e3c42aa7daeed70e42f5273fe342e1cced5719392"
+        },
+        "expectation": {
+          "filename": "timing_expectation.json",
+          "sha256": "80291557fcec66eec74026e02a96ed0e6f0f346c602611772437ab2d9536a0cb"
+        },
+        "physical_result": {
+          "filename": "physical_timing_result.json",
+          "sha256": "a5286a7a8036167a77ad9c346da9fc69c1f35f14a2935b55f4ac9ad8a19ca42b"
+        },
+        "request": {
+          "filename": "request.json",
+          "sha256": "3174393369fc634ee2b731ca88bc6575feb94c16ba6cff4096efa72576dfcd7d"
+        }
+      },
+      "golden_prediction": 0,
+      "label": 0,
+      "latency_ms_at_100mhz": 1.03264,
+      "mnist_test_index": 3,
+      "passed": true,
+      "physical_prediction": 0,
+      "profile": "cropped-dense",
+      "tick_cycles": [
+        4630,
+        6434,
+        6462,
+        6702,
+        6330,
+        6270,
+        6466,
+        7466,
+        5438,
+        6510,
+        6226,
+        6858,
+        6174,
+        6506,
+        6390,
+        8402
+      ],
+      "ticks": 16,
+      "total_cycles": 103264,
+      "total_events": 2345
+    },
+    {
+      "device": "xck26_0",
+      "files": {
+        "comparison": {
+          "filename": "timing_comparison.json",
+          "sha256": "6e66f7ae7d48668a683afcab72b3432a297901431335da40342d7895f512a52a"
+        },
+        "events": {
+          "filename": "events.tsv",
+          "sha256": "75f1a3aacbf9497d4604542e479d4aea340315ee45302ea0d1df50856f29e521"
+        },
+        "expectation": {
+          "filename": "timing_expectation.json",
+          "sha256": "e1e237e9f2cf188cd4049dd82950ffd6d5f11c00dacde44ecf19dbb93b718707"
+        },
+        "physical_result": {
+          "filename": "physical_timing_result.json",
+          "sha256": "0bc800fde924e60919302e66565738085ca977aeffe3641a8e5ca5b0b1a7e3ad"
+        },
+        "request": {
+          "filename": "request.json",
+          "sha256": "fbbbb051a96591df12799d12651b3d57d2142270f08af7240a1719d691e42956"
+        }
+      },
+      "golden_prediction": 0,
+      "label": 0,
+      "latency_ms_at_100mhz": 0.45832,
+      "mnist_test_index": 3,
+      "passed": true,
+      "physical_prediction": 0,
+      "profile": "native-sparse",
+      "tick_cycles": [
+        2070,
+        2846,
+        2846,
+        2994,
+        2806,
+        2766,
+        2862,
+        3334,
+        2454,
+        2878,
+        2750,
+        3026,
+        2774,
+        2862,
+        2830,
+        3734
+      ],
+      "ticks": 16,
+      "total_cycles": 45832,
+      "total_events": 2345
+    },
+    {
+      "device": "xck26_0",
+      "files": {
+        "comparison": {
+          "filename": "timing_comparison.json",
+          "sha256": "b6b0c64a3cb9d7a1bce3f98b0ec73c4bd9d8aaaf38f98c2e10b12544e0d77a56"
+        },
+        "events": {
+          "filename": "events.tsv",
+          "sha256": "fa1e587ef4e90c586a298f912bfad7cece92e3c15a3396f5a547db6eba7c00c0"
+        },
+        "expectation": {
+          "filename": "timing_expectation.json",
+          "sha256": "498542d61eb1d5fea0c589073f389056cf9fd06488ef2f09666fb11d383bae07"
+        },
+        "physical_result": {
+          "filename": "physical_timing_result.json",
+          "sha256": "c77169e9769db8a1969f9e30fd2790d62179f013e0a2b297fdd1f645d3c8ab46"
+        },
+        "request": {
+          "filename": "request.json",
+          "sha256": "20d2c79a0de8db7a98732eead0d6170b7f9c46b54da3e72830540561ef7c0678"
+        }
+      },
+      "golden_prediction": 2,
+      "label": 2,
+      "latency_ms_at_100mhz": 0.745,
+      "mnist_test_index": 1,
+      "passed": true,
+      "physical_prediction": 2,
+      "profile": "cropped-dense",
+      "tick_cycles": [
+        3074,
+        5066,
+        4254,
+        4986,
+        4294,
+        4770,
+        4218,
+        5522,
+        4302,
+        4606,
+        4382,
+        4934,
+        4346,
+        4642,
+        4678,
+        6426
+      ],
+      "ticks": 16,
+      "total_cycles": 74500,
+      "total_events": 1670
+    },
+    {
+      "device": "xck26_0",
+      "files": {
+        "comparison": {
+          "filename": "timing_comparison.json",
+          "sha256": "a42c2f4052fd3d8b4834c4eaaa98f9d9ecae008ca5742b2d77759f28e3344057"
+        },
+        "events": {
+          "filename": "events.tsv",
+          "sha256": "a91d40e31b4d143cc0a7fcf4235c73766da962f50b7f9722b788e2c21984b9b9"
+        },
+        "expectation": {
+          "filename": "timing_expectation.json",
+          "sha256": "10a7b885f2f1a32efa6192a0a21b17bce272b44ac336213c986143b4aa34f167"
+        },
+        "physical_result": {
+          "filename": "physical_timing_result.json",
+          "sha256": "c186c2e3f0304ae26aad35a700dcf574439ff6a819c4895dec6cab080926e054"
+        },
+        "request": {
+          "filename": "request.json",
+          "sha256": "a5cdb5cd5a766830d795e00528d4feb1674fb7a201c4ad604507b4885731954e"
+        }
+      },
+      "golden_prediction": 2,
+      "label": 2,
+      "latency_ms_at_100mhz": 0.40824,
+      "mnist_test_index": 1,
+      "passed": true,
+      "physical_prediction": 2,
+      "profile": "native-sparse",
+      "tick_cycles": [
+        1658,
+        2762,
+        2342,
+        2734,
+        2350,
+        2658,
+        2258,
+        3046,
+        2358,
+        2486,
+        2430,
+        2738,
+        2346,
+        2570,
+        2534,
+        3554
+      ],
+      "ticks": 16,
+      "total_cycles": 40824,
+      "total_events": 1820
+    }
+  ],
+  "clock_hz": 100000000,
+  "schema": "neuromorphic-twin-mnist-10-physical-timing-evidence-v1",
+  "timing_boundary": "PL ap_clk cycles from accepted tick_start through outer-core tick_done; host/JTAG/VIO transport excluded",
+  "validation_contract": "physical prediction and spike-count vector match independent golden output, and every physical tick-cycle count exactly equals the M12.5-derived expectation"
+}

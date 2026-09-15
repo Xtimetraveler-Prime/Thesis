@@ -1,0 +1,40 @@
+{
+  "events_per_tick": [
+    71,
+    124,
+    104,
+    122,
+    104,
+    118,
+    101,
+    137,
+    104,
+    112,
+    107,
+    122,
+    104,
+    115,
+    113,
+    162
+  ],
+  "golden_prediction": 2,
+  "golden_spike_counts": [
+    3,
+    0,
+    13,
+    0,
+    0,
+    4,
+    8,
+    0,
+    0,
+    0
+  ],
+  "label": 2,
+  "mnist_test_index": 1,
+  "presentation_ticks": 16,
+  "profile": "native-sparse",
+  "profile_id": 1,
+  "schema": "neuromorphic-twin-mnist-runtime-request-v1",
+  "total_events": 1820
+}

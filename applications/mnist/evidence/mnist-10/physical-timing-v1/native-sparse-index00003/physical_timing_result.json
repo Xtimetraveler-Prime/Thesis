@@ -1,0 +1,12 @@
+{
+  "schema": "neuromorphic-twin-mnist-runtime-result-v1",
+  "profile": "native-sparse",
+  "profile_id": 1,
+  "mnist_test_index": 3,
+  "device": "xck26_0",
+  "ticks": 16,
+  "total_events": 2345,
+  "spike_counts": [16, 0, 1, 0, 0, 0, 2, 0, 0, 0],
+  "tick_cycles": [2070, 2846, 2846, 2994, 2806, 2766, 2862, 3334, 2454, 2878, 2750, 3026, 2774, 2862, 2830, 3734],
+  "prediction": 0
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "neuromorphic-twin-mnist-runtime-result-v1",
+  "profile": "cropped-dense",
+  "profile_id": 0,
+  "mnist_test_index": 1,
+  "device": "xck26_0",
+  "ticks": 16,
+  "total_events": 1670,
+  "spike_counts": [9, 0, 16, 9, 0, 9, 10, 0, 8, 0],
+  "tick_cycles": [3074, 5066, 4254, 4986, 4294, 4770, 4218, 5522, 4302, 4606, 4382, 4934, 4346, 4642, 4678, 6426],
+  "prediction": 2
+}
