@@ -9,6 +9,7 @@ from mnist_app.fpga_corpus import (
     validate_corpus_case_contract,
     write_corpus_systemverilog_include,
 )
+from mnist_app.fpga_corpus_reporting import format_suite_summary
 from mnist_app.fpga_corpus_shell import (
     patch_capture_controller_text,
     patch_capture_tcl_text,
@@ -64,13 +65,7 @@ def test_corpus_include_stores_static_images_once_and_banks_events(tmp_path: Pat
     assert "M12_3_CASE_PROFILE_IDS" in text
     assert "M12_3_EXTERNAL_ROWS" in text
 
-    # Two profiles x two synthetic synapse words = four static entries. A naive
-    # case-replicated image would contain 120 entries.
     assert "localparam logic [31:0] M12_3_SYNAPSE_WORDS [0:3]" in text
-
-    # Each profile has 30 cases x 4 events = 120 16-bit words. Keeping them in
-    # separate banks models the production Vivado workaround and prevents one
-    # aggregate variable from crossing the synthesis-size ceiling.
     assert "localparam logic [15:0] M12_3_EXTERNAL_EVENTS_PROFILE0 [0:119]" in text
     assert "localparam logic [15:0] M12_3_EXTERNAL_EVENTS_PROFILE1 [0:119]" in text
     assert "M12_3_EXTERNAL_EVENTS [" not in text
@@ -108,3 +103,25 @@ def test_capture_tcl_patch_accepts_case_ids_above_fifteen() -> None:
     patched = patch_capture_tcl_text(text)
     assert "set expected_case_nibble [expr {$case_id & 0xF}]" in patched
     assert "$selected_case != $expected_case_nibble" in patched
+
+
+def test_suite_summary_uses_validator_schema_keys() -> None:
+    suite = {
+        "passed": True,
+        "case_count": 60,
+        "tick_count": 960,
+        "mismatch_count": 0,
+        "profiles": {
+            "cropped-dense": {"cases": 30, "passed": 30, "mismatches": 0},
+            "native-sparse": {"cases": 30, "passed": 30, "mismatches": 0},
+        },
+        "selection_reasons": {
+            "both-correct": {"cases": 20, "passed": 20, "mismatches": 0},
+            "profile-divergent": {"cases": 20, "passed": 20, "mismatches": 0},
+            "both-wrong": {"cases": 20, "passed": 20, "mismatches": 0},
+        },
+    }
+    lines = format_suite_summary(suite)
+    assert lines[0] == "MNIST-08 suite: passed=True cases=60 ticks=960 mismatches=0"
+    assert "profile=cropped-dense cases=30 passed=30 mismatches=0" in lines
+    assert "reason=both-wrong cases=20 passed=20 mismatches=0" in lines
