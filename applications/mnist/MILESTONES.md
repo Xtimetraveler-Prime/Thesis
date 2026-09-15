@@ -86,41 +86,51 @@ One shared profile-aware encoder is implemented in `mnist_app/encoding.py`.
 
 Source-level tests cover both profiles: black/white images, exact spike count per pixel, deterministic ordering, uniqueness, profile-specific axon limits, exact crop behavior, preservation of the native image, outer-border behavior, input validation, and equivalence to the notebook-style `pixel / 255.0` normalization concept.
 
-The TensorFlow-backed real-MNIST integration tests and the full application pytest suite were independently run successfully in the user application environment. Full training runs also consumed the standard MNIST dataset through both encoders without profile or event-bound failures.
+The TensorFlow-backed real-MNIST integration tests and the full application pytest suite were independently run successfully in the user application environment. Full accepted training runs also consumed the standard MNIST dataset through both encoders without profile or event-bound failures.
 
 ---
 
 ## MNIST-03 — Software SNN Training Baselines
 
-**Status:** Implementation complete; validation-selected acceptance reruns pending
+**Status:** Complete
 
 `mnist_app/training.py` repurposes the user-authored notebook workflow where it remains appropriate: TensorFlow/Keras MNIST loading, Adam optimization, sparse categorical cross-entropy, elapsed training time, final test accuracy, `argmax` predictions, and incorrect-sample indexing. The dense ReLU forward path is replaced by explicit integrate-and-fire output dynamics with a surrogate gradient.
 
-The accepted methodology now reserves a deterministic stratified 5,000-sample validation set from the official 60,000-sample MNIST training split. Per-epoch checkpoint selection uses validation accuracy only. The official 10,000-image test set is not consulted until the selected model is frozen.
+The accepted methodology reserves a deterministic stratified 5,000-sample validation set from the official 60,000-sample MNIST training split. Per-epoch checkpoint selection uses validation accuracy only. The official 10,000-image test set is not consulted until the selected model is frozen.
 
 ### MNIST-03A — Cropped-dense SNN
 
-The trainer supports a direct `400 -> 10` spiking classifier with the full 4,000-connection matrix trainable. The best validation checkpoint is restored before the single official test evaluation.
+The accepted direct `400 -> 10` spiking classifier uses the full 4,000-connection matrix. Ten initial epochs were run; epoch 10 was selected from validation performance.
+
+```text
+best validation accuracy:   0.8912
+final official test accuracy: 0.9029
+nonzero weights:            4000
+```
 
 ### MNIST-03B — Native-sparse SNN
 
-The trainer:
+The accepted native profile was trained and selected as follows:
 
-1. trains the full software `784 -> 10` direct SNN;
-2. selects/restores the best dense checkpoint using validation accuracy;
-3. deterministically magnitude-prunes to at most 4,096 connections;
-4. records the immediate post-prune validation result as a candidate;
-5. resets Adam and fine-tunes only surviving weights;
-6. chooses between the post-prune checkpoint and best fine-tuned checkpoint using validation accuracy;
-7. evaluates the official test set only after final sparse selection.
+1. train the full software `784 -> 10` direct SNN;
+2. restore the best dense checkpoint using validation accuracy;
+3. deterministically magnitude-prune to 4,096 connections;
+4. record the immediate post-prune validation result;
+5. reset Adam and fine-tune only surviving weights;
+6. select between post-prune and fine-tuned candidates using validation accuracy;
+7. evaluate the official test set once after final selection.
 
-Pure NumPy tests cover deterministic pruning, deterministic stratified splitting, and notebook-derived prediction/error-index analysis.
+The best dense checkpoint was initial epoch 8 at 0.9028 validation accuracy. Immediate pruning reduced validation accuracy to 0.8250. Masked fine-tuning recovered to a best validation accuracy of 0.9092 at fine-tune epoch 2.
 
-Preliminary full-data development runs established that both architectures learn successfully (about 89.6% cropped-dense and 91.2% native-sparse in the earlier test-monitored workflow). Those values are retained only as development evidence; the validation-selected reruns supersede them as the accepted thesis baselines.
+```text
+selected sparse stage:       masked-finetune epoch 2
+final official test accuracy: 0.9162
+nonzero weights:             4096
+```
 
-### Completion criteria
+The native-sparse accepted model therefore outperforms cropped-dense by 1.33 percentage points on the official test set while remaining inside essentially the same physical synapse budget.
 
-For both profiles preserve a reproducible checkpoint, seed, training configuration, training time, validation history, selected epoch/stage, one final official test accuracy, mean output spikes/image, predictions, and incorrect-sample indices. Raw scores/spike counts are not called probabilities.
+See `docs/MNIST_03_TRAINING_BASELINES.md` for the full accepted methodology and results.
 
 ---
 
@@ -145,7 +155,7 @@ For both profiles preserve a reproducible checkpoint, seed, training configurati
 
 Pure quantization tests cover both profiles, signed mantissa range, state headroom, shape validation, and sparse-budget enforcement.
 
-`mnist_app/comparison.py` and `scripts/compare_float_golden.py` now evaluate the float SNN and quantized golden deployment on the exact same official test samples and report accuracy delta, prediction agreement/disagreement, activity metrics, and deployed synapse count.
+`mnist_app/comparison.py` and `scripts/compare_float_golden.py` evaluate the float SNN and quantized golden deployment on the exact same official test samples and report accuracy delta, prediction agreement/disagreement, activity metrics, and deployed synapse count.
 
 ### Completion criteria
 
