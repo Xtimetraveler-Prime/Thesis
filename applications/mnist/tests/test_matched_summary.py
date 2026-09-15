@@ -37,7 +37,15 @@ def _brian(indices: list[int]) -> dict[str, object]:
         "exact_trace_agreement_cases": n,
         "project_accuracy_on_scope": 1.0,
         "brian2loihi_accuracy_on_scope": 1.0,
-        "cases": [{"mnist_test_index": index} for index in indices],
+        "cases": [
+            {
+                "mnist_test_index": index,
+                "label": index % 10,
+                "project_prediction": index % 10,
+                "brian2loihi_prediction": index % 10,
+            }
+            for index in indices
+        ],
     }
 
 
@@ -50,7 +58,17 @@ def _catalyst(indices: list[int]) -> dict[str, object]:
         "graph_spike_vector_agreement_cases": n,
         "delivered_drive_prediction_agreement_cases": n,
         "delivered_drive_spike_vector_agreement_cases": n,
-        "cases": [{"mnist_test_index": index} for index in indices],
+        "cases": [
+            {
+                "mnist_test_index": index,
+                "label": index % 10,
+                "project_prediction": index % 10,
+                "graph_prediction": index % 10,
+                "delivered_drive_prediction": index % 10,
+                "transport_consistent": True,
+            }
+            for index in indices
+        ],
     }
 
 
@@ -61,7 +79,19 @@ def test_matched_summary_requires_identical_scope_order(tmp_path: Path) -> None:
     result = build_matched_summary(accepted, brian, catalyst)
     assert result["matched_scope"]["mnist_test_indices"] == [3, 1]
     assert result["project_full_test_context"]["golden_accuracy"] == pytest.approx(0.9171)
+    assert result["catalyst_matched_scope"]["graph_accuracy_on_scope"] == pytest.approx(1.0)
 
     wrong = _write(tmp_path / "catalyst-wrong.json", _catalyst([1, 3]))
     with pytest.raises(ValueError, match="different MNIST index/order scopes"):
         build_matched_summary(accepted, brian, wrong)
+
+
+def test_matched_summary_rejects_project_prediction_drift(tmp_path: Path) -> None:
+    accepted = _write(tmp_path / "accepted.json", _accepted())
+    brian_payload = _brian([3])
+    catalyst_payload = _catalyst([3])
+    catalyst_payload["cases"][0]["project_prediction"] = 9
+    brian = _write(tmp_path / "brian.json", brian_payload)
+    catalyst = _write(tmp_path / "catalyst.json", catalyst_payload)
+    with pytest.raises(ValueError, match="project predictions differ"):
+        build_matched_summary(accepted, brian, catalyst)
