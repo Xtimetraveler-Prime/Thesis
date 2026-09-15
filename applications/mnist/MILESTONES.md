@@ -19,9 +19,7 @@ Both profiles use the same dataset source, deterministic rate encoder, 16 presen
 
 **Status:** Complete
 
-Audit the current FPGA-v1 capacities and freeze both application profiles before training.
-
-### Frozen capacity boundary
+The current FPGA-v1 capacity is:
 
 ```text
 neurons:                 256
@@ -33,38 +31,34 @@ external events/tick:   4096
 recurrent events/tick:  4096
 ```
 
-A dense 784x10 network requires 7,840 synapses and does not fit. Two hardware-fit profiles are therefore frozen:
+A dense 784x10 classifier requires 7,840 synapses and does not fit. Two hardware-fit profiles are frozen:
 
-### MNIST-01A — Native-sparse profile
-
-```text
-source image:           28x28 native MNIST
-input axons:            784
-output neurons:         10
-stored synapses:        <=4096
-connectivity:           sparse/pruned
-presentation ticks:     16
-routes:                 0
-```
-
-This profile is the stronger Loihi-facing reference because it preserves the original MNIST pixel representation.
-
-### MNIST-01B — Cropped-dense profile
+### MNIST-01A — Native-sparse
 
 ```text
-source image:           28x28 native MNIST
-preprocessing:          center crop [4:24, 4:24]
-input axons:            400
-output neurons:         10
-stored synapses:        <=4000
-connectivity:           dense
-presentation ticks:     16
-routes:                 0
+28x28 native MNIST
+784 input axons
+10 output neurons
+<=4096 stored sparse/pruned synapses
+16 presentation ticks
+0 recurrent routes
 ```
 
-This profile is the simplest near-capacity dense FPGA-v1 classifier.
+This is the stronger Loihi-facing profile because the source MNIST representation is preserved.
 
-Both profiles freeze the same neuron/application semantics: `current_decay=4096`, `voltage_decay=0`, zero reset/bias/refractory, deterministic rate encoding, and highest output-spike count with lowest neuron ID as the tie-break.
+### MNIST-01B — Cropped-dense
+
+```text
+28x28 native MNIST
+center crop [4:24, 4:24]
+400 input axons
+10 output neurons
+<=4000 dense synapses
+16 presentation ticks
+0 recurrent routes
+```
+
+Both profiles use `current_decay=4096`, `voltage_decay=0`, zero reset/bias/refractory, deterministic rate encoding, and highest output-spike count with lowest neuron ID as the tie-break.
 
 See `docs/MNIST_01_CAPACITY_AUDIT.md`.
 
@@ -72,84 +66,99 @@ See `docs/MNIST_01_CAPACITY_AUDIT.md`.
 
 ## MNIST-02 — Shared Dataset and Deterministic Spike Encoding
 
-**Status:** In progress
+**Status:** Implementation complete; real-MNIST integration gate pending
 
-Build one dataset/encoder layer that supports both frozen profiles without changing core semantics.
+One shared profile-aware encoder is implemented in `mnist_app/encoding.py`.
 
 ### MNIST-02A — Native-sparse encoding
 
-- Load standard MNIST using the same TensorFlow/Keras dataset path used in the user-authored class notebooks.
-- Preserve all 28x28 pixels.
-- Map row-major pixel IDs directly to axons `0..783`.
-- Convert raw uint8 intensities to deterministic spike counts over 16 ticks.
+- preserves all 28x28 pixels;
+- maps row-major pixels directly to axons `0..783`;
+- converts uint8 intensity into deterministic spike counts over 16 ticks.
 
 ### MNIST-02B — Cropped-dense encoding
 
-- Apply the frozen exact 20x20 center crop.
-- Map row-major cropped pixels to axons `0..399`.
-- Use the same deterministic intensity-to-spike rule and tick schedule as the native profile.
+- applies the exact center crop `[4:24, 4:24]`;
+- maps row-major cropped pixels to axons `0..399`;
+- uses the identical deterministic intensity-to-spike rule.
+
+### Current evidence
+
+Source-level tests cover both profiles: black/white images, exact spike count per pixel, deterministic ordering, uniqueness, profile-specific axon limits, exact crop behavior, preservation of the native image, outer-border behavior, input validation, and equivalence to the notebook-style `pixel / 255.0` normalization concept.
+
+An integration test using `tf.keras.datasets.mnist.load_data()` is source-controlled for both profiles but must run in an environment containing TensorFlow/MNIST before this milestone is marked complete.
 
 ### Completion criteria
 
-- Identical input always produces an identical schedule.
-- Both schedules can be consumed directly by `NeuromorphicCore.step()`.
-- Tests cover black, white, sparse, dense, real MNIST, ordering, exact spike counts, and profile-specific axon bounds.
+- identical input always produces an identical schedule;
+- both schedules can be consumed directly by `NeuromorphicCore.step()`;
+- the real-MNIST integration tests pass for both profiles.
 
 ---
 
 ## MNIST-03 — Software SNN Training Baselines
 
-**Status:** Planned
+**Status:** Implementation complete; first accepted TensorFlow training runs pending
 
-Reuse the TensorFlow/Keras loading, optimization, evaluation, timing, `argmax`, and error-analysis workflow from the user-authored notebooks while replacing the ANN forward path with the frozen spiking model.
+`mnist_app/training.py` repurposes the user-authored notebook workflow where it remains appropriate: TensorFlow/Keras MNIST loading, Adam optimization, sparse categorical cross-entropy, elapsed training time, test accuracy, `argmax` predictions, and incorrect-sample indexing. The dense ReLU forward path is replaced by explicit integrate-and-fire output dynamics with a surrogate gradient.
 
 ### MNIST-03A — Cropped-dense SNN
 
-Train a `400 -> 10` direct spiking classifier with all 4,000 connections trainable. This is the simpler training/debug baseline and should be accepted before the sparse profile.
+The implemented trainer supports a direct `400 -> 10` spiking classifier with the full 4,000-connection matrix trainable.
 
 ### MNIST-03B — Native-sparse SNN
 
-Train a native `784 -> 10` classifier, then constrain it to at most 4,096 stored nonzero synapses. Initial strategy:
+The implemented trainer:
 
-1. train the full 7,840-weight direct SNN;
-2. magnitude-prune the weakest weights to the 4,096-synapse budget;
-3. freeze the pruning mask;
-4. fine-tune only surviving weights;
-5. verify the final nonzero count does not exceed the physical limit.
+1. trains the full software `784 -> 10` direct SNN;
+2. deterministically magnitude-prunes to at most 4,096 connections;
+3. freezes the pruning mask;
+4. fine-tunes only surviving weights;
+5. asserts that the accepted checkpoint remains within the hardware budget.
+
+Pure NumPy tests cover deterministic pruning and the notebook-derived prediction/error-index analysis. The TensorFlow training path cannot be executed in the current development environment, so no SNN accuracy is claimed yet.
 
 ### Completion criteria
 
-For each profile, preserve a reproducible checkpoint, random seed, training configuration, training time, per-epoch metrics, test accuracy, mean output spikes/image, predictions, and incorrect-sample indices. Raw class scores/spike counts must not be mislabeled as probabilities.
+For both profiles preserve a reproducible checkpoint, seed, training configuration, training time, per-epoch metrics, test accuracy, mean output spikes/image, predictions, and incorrect-sample indices. Raw scores/spike counts are not called probabilities.
 
 ---
 
 ## MNIST-04 — Hardware-Aware Quantization and Export
 
-**Status:** Planned
+**Status:** Implementation complete; trained-checkpoint validation and accuracy-loss measurement pending
 
-Translate both trained profiles into parameters exactly legal under the existing integer core and M08 storage contract.
+`mnist_app/export.py` now accepts either profile and maps accepted float checkpoints into the existing Loihi-style encoded weight representation and M08 CSR storage.
 
 ### MNIST-04A — Cropped-dense export
 
-Quantize/export the `400 -> 10` trained network and measure floating-SNN to quantized-SNN accuracy loss.
+- accepts the `400 -> 10` trained matrix;
+- supports up to 4,000 stored synapses;
+- retains the full 400-row axon table.
 
 ### MNIST-04B — Native-sparse export
 
-Export only surviving sparse connections, retaining exactly 784 axon rows and at most 4,096 synapse records. Empty axon rows are valid and must remain addressable.
+- requires the float checkpoint to already satisfy the <=4,096 nonzero-connection budget;
+- rejects an accidentally unpruned 7,840-connection native matrix;
+- retains all 784 axon rows, including valid empty rows;
+- exports at most 4,096 stored synapses.
+
+Pure quantization tests cover both profiles, signed mantissa range, state headroom, shape validation, and sparse-budget enforcement.
 
 ### Completion criteria
 
-- Both deployments instantiate the existing `NeuromorphicCore` without application-specific core changes.
-- Every neuron/weight parameter is legal under FPGA-v1.
-- Each deployment records exact synapse count, quantization error, checksum/version, and accuracy delta.
+- both trained checkpoints export successfully;
+- every parameter is legal under FPGA-v1;
+- exact stored synapse counts and quantization errors are recorded;
+- floating-SNN versus quantized/golden accuracy loss is measured.
 
 ---
 
 ## MNIST-05 — Python Golden-Model Evaluation
 
-**Status:** Planned
+**Status:** Implementation complete; trained exported deployments required
 
-Run both exported networks through the actual validated `NeuromorphicCore` and make that path the application inference authority.
+`mnist_app/inference.py` loads either deployment into the actual validated `NeuromorphicCore`; no application-specific neuron simulator is used.
 
 ### MNIST-05A — Cropped-dense golden inference
 
@@ -159,9 +168,24 @@ Evaluate the cropped-dense deployment over the frozen test corpus.
 
 Evaluate the native-sparse deployment over the same source MNIST indices.
 
+### Implemented metrics
+
+Golden evaluation records:
+
+- final accuracy and confusion matrix;
+- notebook-style predictions and incorrect-sample indices;
+- accuracy after every presentation tick;
+- mean input events/image;
+- mean output spikes/image;
+- exact CSR synapse visits/image from the deployed row lengths;
+- no-spike image count;
+- tied-winner image count.
+
+Pure tests verify profile selection, event behavior, synaptic-visit counting, tick-by-tick predictions, and error-index reporting. The real `neuromorphic_twin` integration test is source-controlled for both profiles and runs when the package is installed.
+
 ### Completion criteria
 
-Record for both profiles: accuracy, confusion matrix, predictions, incorrect-sample indices, input events/image, output spikes/image, synaptic visits/activity, tie/no-spike frequency, and accuracy versus presentation tick. Preserve representative full tick traces.
+Both trained/exported profiles run end-to-end from MNIST image to golden-model prediction, and their full evaluation artifacts are preserved.
 
 ---
 
@@ -170,8 +194,6 @@ Record for both profiles: accuracy, confusion matrix, predictions, incorrect-sam
 **Status:** Planned
 
 Compare the two accepted software/golden results and freeze both rather than selecting one winner.
-
-### Completion criteria
 
 For both profiles preserve:
 
@@ -198,8 +220,6 @@ Run one frozen cropped-dense image through the physical FPGA and require exact p
 
 Repeat for the native-sparse deployment, including irregular and empty CSR rows where present.
 
-### Completion criteria
-
 Both profiles must produce exact Python/FPGA state/spike agreement and identical final spike counts/predictions. The FPGA receives configuration and input events, never expected outputs.
 
 ---
@@ -216,9 +236,7 @@ Run the frozen physical corpus through the cropped-dense deployment.
 
 Run the same source MNIST indices through the native-sparse deployment.
 
-### Completion criteria
-
-Every accepted case agrees with Python at the required application/trace boundary, and machine-readable physical results are preserved for later analysis.
+Every accepted case must agree with Python at the required application/trace boundary, and machine-readable physical results must be preserved.
 
 ---
 
@@ -226,7 +244,7 @@ Every accepted case agrees with Python at the required application/trace boundar
 
 **Status:** Planned
 
-Create one runtime host flow capable of selecting either profile without rebuilding the core per image.
+Create one runtime host flow capable of selecting either profile without rebuilding application-specific neuron logic.
 
 Target interface concept:
 
@@ -235,9 +253,7 @@ classify_fpga --profile native-sparse --index N
 classify_fpga --profile cropped-dense --index N
 ```
 
-### Completion criteria
-
-Multiple arbitrary test images can be classified with one programmed hardware image or an explicitly documented profile-loading flow; transport/debug overhead remains separated from PL architectural execution time.
+Transport/debug overhead remains separate from PL architectural execution time.
 
 ---
 
@@ -257,6 +273,4 @@ Use the full 28x28 native-sparse profile as the primary external comparison beca
 
 Treat the cropped-dense result primarily as a controlled FPGA-v1 hardware-fit baseline, not as the primary apples-to-apples Loihi comparison.
 
-### Completion criteria
-
-The thesis must clearly separate: directly comparable quantities, quantities requiring normalization/caveats, and qualitative-only comparisons. Shared use of MNIST alone is never presented as proof of identical experimental conditions.
+The thesis must clearly separate directly comparable quantities, quantities requiring normalization/caveats, and qualitative-only comparisons. Shared use of MNIST alone is never presented as proof of identical experimental conditions.
