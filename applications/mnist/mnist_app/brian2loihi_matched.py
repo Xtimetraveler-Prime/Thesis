@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from .matched_reference import (
     FrozenMatchedWorkload,
@@ -54,8 +54,8 @@ def run_brian2loihi_matched_case(
     """Run one frozen image through project and Brian2Loihi without retuning.
 
     The project R=0 configuration is first compared against an otherwise
-    identical project R=1 surrogate.  Brian2Loihi is invoked only after that
-    equivalence is proven for the exact image schedule.  The Brian scenario uses
+    identical project R=1 surrogate. Brian2Loihi is invoked only after that
+    equivalence is proven for the exact image schedule. The Brian scenario uses
     unbounded arithmetic because the external emulator does not model the
     project's SAT24 policy; the frozen deployment's accepted conservative bound
     proves saturation is inactive for this workload profile.
@@ -148,6 +148,8 @@ def run_brian2loihi_matched_case(
         "project_refractory_0_to_1_equivalence": _report_payload(refractory_report),
         "project_prediction": project_prediction,
         "brian2loihi_prediction": brian_prediction,
+        "project_correct": project_prediction == image.label,
+        "brian2loihi_correct": brian_prediction == image.label,
         "project_spike_counts": list(project_counts),
         "brian2loihi_spike_counts": list(brian_counts),
         "prediction_agreement": exact_prediction,
@@ -177,15 +179,22 @@ def summarize_suite(results: Sequence[dict[str, object]]) -> dict[str, object]:
     spike_vectors = sum(bool(result["spike_count_vector_agreement"]) for result in results)
     trace_exact = sum(bool(result["trace_comparison"]["passed"]) for result in results)
     passed = sum(bool(result["passed"]) for result in results)
+    project_correct = sum(bool(result["project_correct"]) for result in results)
+    brian_correct = sum(bool(result["brian2loihi_correct"]) for result in results)
+    case_count = len(results)
     return {
         "schema": SUITE_SCHEMA,
         "profile": "native-sparse",
-        "case_count": len(results),
+        "case_count": case_count,
         "passed_cases": passed,
         "prediction_agreement_cases": predictions,
         "spike_count_vector_agreement_cases": spike_vectors,
         "exact_trace_agreement_cases": trace_exact,
-        "all_passed": passed == len(results),
+        "project_correct_cases": project_correct,
+        "brian2loihi_correct_cases": brian_correct,
+        "project_accuracy_on_scope": project_correct / case_count,
+        "brian2loihi_accuracy_on_scope": brian_correct / case_count,
+        "all_passed": passed == case_count,
         "cases": [
             {
                 "mnist_test_index": int(result["mnist_test_index"]),
