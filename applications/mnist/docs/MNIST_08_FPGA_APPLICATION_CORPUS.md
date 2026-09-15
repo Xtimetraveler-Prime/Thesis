@@ -70,25 +70,30 @@ case -> 16-tick external-event schedule
 
 The staged M12.3 capture controller therefore uses the case ID for schedule selection and the corresponding profile ID for configuration/weight/CSR load-image selection. The validated architectural core RTL is unchanged.
 
-## Packed external-event storage
+## Profile-banked packed external-event storage
 
 The MNIST-07/M12.3 directed-test include used a rectangular `case x tick x max_events` array. That is reasonable for a small directed corpus but wasteful for 60 MNIST cases.
 
-MNIST-08 stores external events contiguously and emits a row-pointer table:
+MNIST-08 first compressed all case/tick schedules into a single packed 16-bit event array plus row pointers. The first full Vivado synthesis attempt exposed a tool limit rather than a core-design failure: the packed array contained **1,524,304 bits**, while Vivado synthesis rejects a single generated variable above **1,000,000 bits** (`Synth 8-4556`).
+
+The corrected layout preserves the packed representation but banks event words by the already-frozen profile ID:
 
 ```text
-M12_3_EXTERNAL_ROWS[case_tick]
-M12_3_EXTERNAL_EVENTS[packed_event_index]
+M12_3_EXTERNAL_ROWS[case_tick]              -> offset within selected profile bank
+M12_3_EXTERNAL_EVENTS_PROFILE0[offset]      -> cropped-dense events
+M12_3_EXTERNAL_EVENTS_PROFILE1[offset]      -> native-sparse events
 ```
 
-The existing per-case/tick event counts remain present. Event order and multiplicity are unchanged; only the debug input-ROM layout is compressed.
+Each case/tick row pointer is therefore relative to its profile-specific bank. Event order, multiplicity, counts, schedules, golden traces, and application semantics are unchanged. Only the generated debug-ROM organization changes.
+
+The generator now computes the bit size of each profile event bank and refuses to emit the include if either bank reaches Vivado's 1,000,000-bit per-variable ceiling. It also prints both bank sizes before synthesis, turning this tool limitation into an explicit pre-Vivado validation gate.
 
 ## Capture-shell reuse
 
 MNIST-08 continues to reuse the validated M12.3 physical transport and core integration. The application bitstream flow stages the existing sources and mechanically adapts only the capture-shell indexing needed for the larger corpus:
 
 1. static image reads use `M12_3_CASE_PROFILE_IDS[active_case_id]`;
-2. external-event reads use packed row pointers; and
+2. external-event reads use packed row pointers and the selected profile's synthesis-safe event bank; and
 3. the existing four-bit `capture_phase` case witness is compared to the low nibble of case IDs above 15.
 
 The complete case identity is still validated by the exact captured external-event schedule and independent golden differential, so a wrong high case-ID bit cannot silently pass.
@@ -140,7 +145,7 @@ MNIST-08 closes when:
 1. the application pytest suite passes with the new corpus/adapter tests;
 2. the generator reconstructs exactly 30 frozen source images and 60 profile/image cases;
 3. every regenerated golden prediction matches the prediction recorded in the committed `mnist-v1` corpus;
-4. the Vivado 2025.2 K26 implementation passes the existing timing/resource gates with the shared-static/packed-event capture image;
+4. both profile-specific event banks pass the synthesis-size guard and the Vivado 2025.2 K26 implementation passes the existing timing/resource gates;
 5. all 60 physical cases complete all 16 ticks;
 6. all 960 committed physical ticks produce zero architectural mismatches;
 7. every physical final spike-count vector and prediction matches its independent Python golden case; and
