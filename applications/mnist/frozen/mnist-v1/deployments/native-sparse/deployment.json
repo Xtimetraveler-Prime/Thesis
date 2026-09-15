@@ -1,0 +1,123 @@
+{
+  "architecture": {
+    "input_axons": 784,
+    "input_shape": [
+      28,
+      28
+    ],
+    "maximum_profile_synapses": 4096,
+    "output_neurons": 10,
+    "preprocessing": "native-28x28",
+    "presentation_ticks": 16,
+    "routes": 0,
+    "source_image": [
+      28,
+      28
+    ],
+    "stored_synapses": 4086
+  },
+  "decoder": "argmax-output-spike-count-lowest-id-tie-break",
+  "neuron_config": {
+    "bias": 0,
+    "current_decay": 4096,
+    "refractory_ticks": 0,
+    "reset_voltage": 0,
+    "threshold": 8384,
+    "voltage_decay": 0
+  },
+  "neuron_configs": [
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    },
+    {
+      "bias": 0,
+      "current_decay": 4096,
+      "refractory_ticks": 0,
+      "reset_voltage": 0,
+      "threshold": 8384,
+      "voltage_decay": 0
+    }
+  ],
+  "profile": "native-sparse",
+  "quantization": {
+    "conservative_abs_voltage_bound": 7549746.3,
+    "effective_weight_quantum": 64,
+    "max_abs_weight_error": 0.0038168376492748735,
+    "nonzero_synapses": 4086,
+    "rmse_weight_error": 0.0015930504382678352,
+    "state_max": 8388607,
+    "state_scale": 8383.613594867957,
+    "threshold_float": 1.0
+  },
+  "schema": "neuromorphic-twin-mnist-deployment-v2",
+  "weight_storage": "weight_image/weight_storage.json"
+}

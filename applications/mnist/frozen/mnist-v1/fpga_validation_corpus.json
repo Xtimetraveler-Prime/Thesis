@@ -1,0 +1,310 @@
+{
+  "count": 30,
+  "entries": [
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 0,
+      "label": 0,
+      "mnist_test_index": 3,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 0,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 3,
+      "label": 0,
+      "mnist_test_index": 126,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 0,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 6,
+      "label": 0,
+      "mnist_test_index": 717,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 1,
+      "label": 1,
+      "mnist_test_index": 2,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 1,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 8,
+      "label": 1,
+      "mnist_test_index": 619,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 1,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 6,
+      "label": 1,
+      "mnist_test_index": 1527,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 2,
+      "label": 2,
+      "mnist_test_index": 1,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 2,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 2,
+      "label": 2,
+      "mnist_test_index": 119,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 8,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 9,
+      "label": 2,
+      "mnist_test_index": 149,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 9,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 3,
+      "label": 3,
+      "mnist_test_index": 30,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 3,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 3,
+      "label": 3,
+      "mnist_test_index": 18,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 8,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 2,
+      "label": 3,
+      "mnist_test_index": 63,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 2,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 4,
+      "label": 4,
+      "mnist_test_index": 4,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 4,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 4,
+      "label": 4,
+      "mnist_test_index": 33,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 0,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 2,
+      "label": 4,
+      "mnist_test_index": 247,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 5,
+      "label": 5,
+      "mnist_test_index": 15,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 5,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 0,
+      "label": 5,
+      "mnist_test_index": 211,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 5,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 6,
+      "label": 5,
+      "mnist_test_index": 8,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 6,
+      "label": 6,
+      "mnist_test_index": 11,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 7,
+      "label": 6,
+      "mnist_test_index": 66,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 6,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 0,
+      "label": 6,
+      "mnist_test_index": 259,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 0,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 7,
+      "label": 7,
+      "mnist_test_index": 0,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 7,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 3,
+      "label": 7,
+      "mnist_test_index": 60,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 7,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 4,
+      "label": 7,
+      "mnist_test_index": 124,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 4,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 8,
+      "label": 8,
+      "mnist_test_index": 61,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 8,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 2,
+      "label": 8,
+      "mnist_test_index": 257,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 8,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 7,
+      "label": 8,
+      "mnist_test_index": 233,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 7,
+      "selection_reason": "both-wrong"
+    },
+    {
+      "cropped_dense_correct": true,
+      "cropped_dense_golden_prediction": 9,
+      "label": 9,
+      "mnist_test_index": 7,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 9,
+      "selection_reason": "both-correct"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 7,
+      "label": 9,
+      "mnist_test_index": 73,
+      "native_sparse_correct": true,
+      "native_sparse_golden_prediction": 9,
+      "selection_reason": "profile-divergent"
+    },
+    {
+      "cropped_dense_correct": false,
+      "cropped_dense_golden_prediction": 3,
+      "label": 9,
+      "mnist_test_index": 241,
+      "native_sparse_correct": false,
+      "native_sparse_golden_prediction": 3,
+      "selection_reason": "both-wrong"
+    }
+  ],
+  "indices": [
+    3,
+    126,
+    717,
+    2,
+    619,
+    1527,
+    1,
+    119,
+    149,
+    30,
+    18,
+    63,
+    4,
+    33,
+    247,
+    15,
+    211,
+    8,
+    11,
+    66,
+    259,
+    0,
+    60,
+    124,
+    61,
+    257,
+    233,
+    7,
+    73,
+    241
+  ],
+  "schema": "neuromorphic-twin-mnist-fpga-corpus-v1",
+  "selection_policy": "per digit: first unused both-correct, first unused profile-divergent, first unused both-wrong; deterministic class-local fallback when absent",
+  "source": "official-mnist-test"
+}
