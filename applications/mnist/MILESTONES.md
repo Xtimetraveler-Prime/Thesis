@@ -193,16 +193,24 @@ See `docs/MNIST_08_FPGA_APPLICATION_CORPUS.md`.
 
 ## MNIST-09 — Shared Runtime Host Interface
 
-**Status:** Planned
+**Status:** In progress — dual-profile static runtime image, host request/result protocol, reusable VIO runtime controller, bitstream flow, and `classify_fpga.py` implemented; local/Vivado/physical validation pending
 
-Create one runtime host flow capable of selecting either frozen profile without rebuilding application-specific neuron logic. Transport/debug overhead remains separate from PL architectural execution time.
+MNIST-09 removes the fixed-case schedule assumption used by MNIST-07/08. One reusable bitstream stores both immutable `mnist-v1` deployment images while arbitrary image schedules are encoded on the host and streamed at runtime.
 
-Target interface concept:
+The implementation preserves the existing M12.3 VIO shape. `capture_start` selects profile 0 (`cropped-dense`) or profile 1 (`native-sparse`), normal trace spaces `0..6` retain their validated read semantics, and previously unused trace space `7` appends one host-supplied axon ID to the next tick's external-event buffer. `capture_step` executes the buffered tick. The architectural core RTL and HLS neuron IP remain unchanged.
+
+The host CLI supports:
 
 ```text
-classify_fpga --profile native-sparse --index N
-classify_fpga --profile cropped-dense --index N
+python applications/mnist/scripts/classify_fpga.py --profile native-sparse --index N
+python applications/mnist/scripts/classify_fpga.py --profile cropped-dense --index N
 ```
+
+`--prepare-only` exercises dataset loading, deterministic encoding, request serialization, and independent golden inference without requiring Vivado. Physical mode programs the reusable runtime bitstream, streams all 16 ticks, reads output spike flags through the existing trace bridge, decodes the prediction, and compares the physical spike-count vector/prediction with the frozen Python golden result.
+
+JTAG/VIO transaction time remains explicitly separate from architectural FPGA execution time.
+
+See `docs/MNIST_09_SHARED_RUNTIME.md`.
 
 ---
 
