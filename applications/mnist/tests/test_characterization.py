@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -11,6 +12,12 @@ from mnist_app.characterization import (
     modeled_cycles_per_image,
     static_profile_bits,
 )
+from mnist_app.characterization_runtime import (
+    expected_tick_cycles,
+    patch_runtime_controller_for_timing,
+    patch_runtime_tcl_for_timing,
+)
+from mnist_app.runtime import RuntimeRequest
 
 
 def _accepted_payload() -> dict[str, object]:
@@ -114,3 +121,63 @@ def test_frozen_accepted_baseline_regression() -> None:
     assert cropped["architectural_timing_model"]["mean_cycles_per_image"] == pytest.approx(71893.614)
     assert native["architectural_timing_model"]["mean_cycles_per_image"] == pytest.approx(33925.6324)
     assert result["comparison"]["native_to_cropped_modeled_cycle_ratio"] == pytest.approx(0.4718865906504575)
+
+
+def test_timing_controller_patch_adds_only_passive_cycle_witness() -> None:
+    source = (
+        Path(__file__).parents[1]
+        / "fpga"
+        / "mnist_09_runtime_controller_v1.sv"
+    ).read_text(encoding="utf-8")
+    patched = patch_runtime_controller_for_timing(source)
+    assert "module m12_5_characterization_capture_controller_v1" in patched
+    assert "output logic [31:0]  observed_last_tick_cycles" in patched
+    assert "observed_last_tick_cycles <= tick_cycle_counter + 32'd1" in patched
+    assert "module m12_3_multitick_capture_controller_v1" not in patched
+    # The computational core remains exactly the same instantiated module.
+    assert "recurrent_integrated_core_controller_v1 core_i" in patched
+
+
+def test_timing_tcl_patch_reads_cycle_probe_and_preserves_runtime_trace_flow() -> None:
+    source = (
+        Path(__file__).parents[1]
+        / "fpga"
+        / "vivado"
+        / "classify_mnist_09_runtime.tcl"
+    ).read_text(encoding="utf-8")
+    patched = patch_runtime_tcl_for_timing(source)
+    assert "observed_last_tick_cycles" in patched
+    assert "set tick_cycles {}" in patched
+    assert "lappend tick_cycles [probe_uint $p_tick_cycles]" in patched
+    assert '\\"tick_cycles\\"' in patched
+    assert "trace_read_space 7" not in patched  # commands use the probe variable, as before
+    assert "set_probe_uint $p_trace_space 7" in patched
+
+
+def test_expected_tick_cycles_uses_exact_csr_row_visits(monkeypatch: pytest.MonkeyPatch) -> None:
+    import mnist_app.characterization_runtime as module
+
+    # Row lengths: axon0=2, axon1=0, axon2=3. Multiplicity must count twice.
+    monkeypatch.setattr(
+        module,
+        "load_deployment",
+        lambda _path: SimpleNamespace(row_lengths=(2, 0, 3)),
+    )
+    rows = [() for _ in range(16)]
+    rows[0] = (0, 2, 2)
+    rows[1] = (1,)
+    request = RuntimeRequest(
+        profile="cropped-dense",
+        profile_id=0,
+        mnist_test_index=0,
+        label=0,
+        external_schedule=tuple(rows),
+        golden_prediction=0,
+        golden_spike_counts=(0,) * 10,
+    )
+    cycles = expected_tick_cycles(request, "/unused")
+    # tick0: base170 + 3 events*4 + (2+3+3) visits*4 = 214
+    assert cycles[0] == 214
+    # tick1: base170 + 1 event*4 + 0 visits = 174
+    assert cycles[1] == 174
+    assert cycles[2:] == (170,) * 14
