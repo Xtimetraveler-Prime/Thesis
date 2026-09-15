@@ -68,6 +68,28 @@ def test_project_refractory_zero_and_reference_one_are_exactly_equivalent() -> N
     assert report.passed
 
 
+def test_brian2loihi_adapter_accepts_reference_mnist_contract_without_importing_backend() -> None:
+    from neuromorphic_twin.comparison.brian2loihi_backend import (
+        build_brian2loihi_synapse_groups,
+        validate_brian2loihi_scenario,
+    )
+
+    workload = load_frozen_matched_workload(FROZEN)
+    scenario = build_comparison_scenario(
+        workload,
+        [()] * 16,
+        name="brian-mnist-contract",
+        reference_refractory=True,
+        unbounded_arithmetic=True,
+    )
+    validate_brian2loihi_scenario(scenario)
+    groups = build_brian2loihi_synapse_groups(scenario)
+    assert sum(len(group.scenario_indices) for group in groups) == 4086
+    assert len(groups) == 2
+    assert scenario.neuron_configs[0].threshold // 64 == 131
+    assert scenario.neuron_configs[0].refractory_ticks == 1
+
+
 def test_schedule_rejects_same_source_same_tick_multiplicity() -> None:
     rows = [()] * 16
     rows[0] = (4, 4)
