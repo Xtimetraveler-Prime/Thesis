@@ -116,25 +116,22 @@ See `docs/MNIST_04_05_ACCEPTED_VALIDATION.md`.
 
 ## MNIST-06 — Dual-Profile Deployment Freeze
 
-**Status:** In progress — freeze tooling and corpus policy implemented; materialized accepted package pending
+**Status:** Complete
 
-Freeze both accepted deployments rather than selecting one winner.
+The accepted full-test MNIST-04/05 artifacts have been materialized into the source-controlled `applications/mnist/frozen/mnist-v1/` package and independently validated.
 
-### Implemented
+The freeze contains:
 
-- `mnist_app/deployment_freeze.py` verifies accepted MNIST-04/05 hashes and copies the exact checkpoints and deployment images out of the ignored build tree.
-- `scripts/freeze_deployment.py` generates the versioned `applications/mnist/frozen/mnist-v1/` package.
-- A deterministic 30-image common FPGA corpus selects three source images per digit: one both-correct case, one profile-divergent case, and one both-wrong case, with explicit deterministic fallback if a category is absent.
-- `mnist_app/frozen_validation.py` and `scripts/validate_frozen_deployment.py` independently re-hash the complete package and verify the 30-case/three-per-digit corpus contract.
-- Unit tests cover corpus selection, hash-verified copying, complete-package validation, and tamper detection.
+- both accepted floating-point checkpoints;
+- both exact project-native deployment images and M08 weight-memory files;
+- SHA-256 hashes for checkpoints, deployments, accepted-validation evidence, and the common corpus;
+- the frozen 16-tick application contract;
+- the accepted full-test software/golden summaries; and
+- one deterministic 30-image common FPGA-validation corpus.
 
-### Completion criteria
+The corpus contains exactly three samples for every digit `0..9`: one both-correct case, one profile-divergent case, and one both-wrong case. The accepted materialized corpus required no fallbacks. The same original MNIST test indices are used for both profiles.
 
-- The accepted full-test MNIST-04/05 validation is the freeze source.
-- Both accepted checkpoints and both project-native deployment images are hash-verified and copied.
-- The common 30-image FPGA-validation corpus is generated.
-- The frozen package passes independent validation.
-- `applications/mnist/frozen/mnist-v1/` is committed to the repository and becomes the sole MNIST-07 input package.
+`validate_frozen_deployment.py` passed in the user application environment before the package was committed. The committed `mnist-v1` directory is now the sole accepted input package for MNIST-07 and later physical experiments; any changed hash requires a new freeze version rather than a silent replacement.
 
 See `docs/MNIST_06_DEPLOYMENT_FREEZE.md`.
 
