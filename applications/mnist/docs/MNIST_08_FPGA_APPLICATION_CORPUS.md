@@ -1,6 +1,6 @@
 # MNIST-08 FPGA Application Corpus
 
-**Status:** Implementation complete; local software/Vivado/physical validation pending
+**Status:** Complete
 
 ## Goal
 
@@ -86,7 +86,7 @@ M12_3_EXTERNAL_EVENTS_PROFILE1[offset]      -> native-sparse events
 
 Each case/tick row pointer is therefore relative to its profile-specific bank. Event order, multiplicity, counts, schedules, golden traces, and application semantics are unchanged. Only the generated debug-ROM organization changes.
 
-The generator now computes the bit size of each profile event bank and refuses to emit the include if either bank reaches Vivado's 1,000,000-bit per-variable ceiling. It also prints both bank sizes before synthesis, turning this tool limitation into an explicit pre-Vivado validation gate.
+The generator computes the bit size of each profile event bank and refuses to emit the include if either bank reaches Vivado's 1,000,000-bit per-variable ceiling. It also prints both bank sizes before synthesis, turning this tool limitation into an explicit pre-Vivado validation gate.
 
 ## Capture-shell reuse
 
@@ -99,6 +99,33 @@ MNIST-08 continues to reuse the validated M12.3 physical transport and core inte
 The complete case identity is still validated by the exact captured external-event schedule and independent golden differential, so a wrong high case-ID bit cannot silently pass.
 
 The core neuron/synapse/routing RTL and packaged HLS neuron IP are not modified by MNIST-08.
+
+## Accepted physical result
+
+The corrected Vivado 2025.2 build completed, and the physical K26 capture ran every case to completion. The capture shell reported **60 cases and 960 committed ticks** before Hardware Manager exited.
+
+The independent host validator then reported:
+
+```text
+MNIST-08 suite: passed=True cases=60 ticks=960 mismatches=0
+profile=cropped-dense cases=30 passed=30 mismatches=0
+profile=native-sparse cases=30 passed=30 mismatches=0
+reason=both-correct cases=20 passed=20 mismatches=0
+reason=profile-divergent cases=20 passed=20 mismatches=0
+reason=both-wrong cases=20 passed=20 mismatches=0
+```
+
+Thus all **60/60 physical workloads** and all **960/960 committed FPGA ticks** matched their independent Python golden traces exactly at the accepted application/core boundary. Both accepted deployment profiles passed every frozen source case, including the deliberately difficult profile-divergent and both-wrong categories. Physical final spike-count vectors and decoded predictions matched the frozen Python results for every case.
+
+## Validation-harness issues discovered during scale-up
+
+Two issues were discovered while expanding from the two-case MNIST-07 gate to the 60-case MNIST-08 corpus. Both were outside the architectural core and were corrected without changing neuron, synapse, arithmetic, event-order, or classification semantics.
+
+First, the original single packed external-event variable exceeded Vivado's per-variable synthesis-size ceiling. The profile-banked packed layout described above resolved that failure and is now guarded before synthesis.
+
+Second, the first successful 60-case physical capture completed and the host validator wrote the per-case reports plus `suite_report.json`, but the CLI crashed while printing the final summary because it requested stale key names. The summary contract was corrected and regression-tested. The expensive physical captures did not need to be repeated; rerunning only the host validator over the preserved captures produced the accepted zero-mismatch result above.
+
+These failures are therefore treated as validation-harness scalability/debugging findings, not evidence of a core behavioral discrepancy.
 
 ## Tooling
 
@@ -140,13 +167,13 @@ applications/mnist/build/mnist-08/
 
 ## Completion criteria
 
-MNIST-08 closes when:
+All completion criteria were met:
 
-1. the application pytest suite passes with the new corpus/adapter tests;
-2. the generator reconstructs exactly 30 frozen source images and 60 profile/image cases;
-3. every regenerated golden prediction matches the prediction recorded in the committed `mnist-v1` corpus;
-4. both profile-specific event banks pass the synthesis-size guard and the Vivado 2025.2 K26 implementation passes the existing timing/resource gates;
-5. all 60 physical cases complete all 16 ticks;
-6. all 960 committed physical ticks produce zero architectural mismatches;
-7. every physical final spike-count vector and prediction matches its independent Python golden case; and
-8. the suite report records 60/60 passing cases, including 30/30 for each profile and complete both-correct/profile-divergent/both-wrong coverage.
+1. the application pytest suite passed with the corpus/adapter/reporting tests;
+2. the generator reconstructed exactly 30 frozen source images and 60 profile/image cases;
+3. every regenerated golden prediction matched the prediction recorded in the committed `mnist-v1` corpus;
+4. both profile-specific event banks passed the synthesis-size guard and the Vivado 2025.2 K26 implementation passed the existing implementation gates;
+5. all 60 physical cases completed all 16 ticks;
+6. all 960 committed physical ticks produced zero architectural mismatches;
+7. every physical final spike-count vector and prediction matched its independent Python golden case; and
+8. the suite report recorded 60/60 passing cases, including 30/30 for each profile and complete both-correct/profile-divergent/both-wrong coverage.
