@@ -100,28 +100,37 @@ python applications/mnist/scripts/train_snn.py \
 
 Accepted floating-point test accuracies are 90.29% for cropped-dense and 91.62% for native-sparse. See `docs/MNIST_03_TRAINING_BASELINES.md` for selection details.
 
-## Export and matched golden-model evaluation
+## Accepted MNIST-04/05 software validation
 
-Each accepted checkpoint embeds its profile, so deployment artifacts are kept separate automatically:
-
-```bash
-python applications/mnist/scripts/export_network.py \
-  applications/mnist/build/accepted-training/cropped-dense_snn_float.npz
-
-python applications/mnist/scripts/export_network.py \
-  applications/mnist/build/accepted-training/native-sparse_snn_float.npz
-```
-
-Then compare each floating-point SNN and exported integer deployment on the exact same official test images:
+The preferred flow validates both accepted checkpoints, exports both project-native integer deployments, evaluates each float and golden network on the exact same official test corpus, and hashes the resulting artifacts in one command:
 
 ```bash
-python applications/mnist/scripts/compare_float_golden.py \
-  applications/mnist/build/accepted-training/cropped-dense_snn_float.npz \
-  applications/mnist/build/deployment/cropped-dense/deployment.json
-
-python applications/mnist/scripts/compare_float_golden.py \
-  applications/mnist/build/accepted-training/native-sparse_snn_float.npz \
-  applications/mnist/build/deployment/native-sparse/deployment.json
+python applications/mnist/scripts/run_accepted_validation.py
 ```
 
-The comparison reports float accuracy, quantized/golden accuracy, accuracy delta, prediction agreement, input events, output spikes, synaptic visits, no-spike/tie frequency, and deployed synapse count on one matched corpus.
+The generated validation directory contains:
+
+```text
+applications/mnist/build/accepted-validation/
+├── accepted_software_validation.json
+├── cropped-dense_matched_comparison.json
+└── native-sparse_matched_comparison.json
+```
+
+The deployment images are written under:
+
+```text
+applications/mnist/build/accepted-deployment/
+├── cropped-dense/
+└── native-sparse/
+```
+
+The validation manifest records checkpoint and deployment SHA-256 hashes plus compact matched-corpus summaries. Each profile comparison preserves the full float/golden prediction evidence, quantization error, accuracy delta, accuracy-by-tick, confusion matrix, input events, output spikes, synaptic visits, and no-spike/tie counts.
+
+For a fast integration check before the full official test corpus, the same flow supports an explicit prefix:
+
+```bash
+python applications/mnist/scripts/run_accepted_validation.py --limit 100
+```
+
+Individual `export_network.py`, `compare_float_golden.py`, and `evaluate_golden.py` commands remain available for focused debugging, but the accepted MNIST-04/05 result should come from `run_accepted_validation.py` so both profiles use the same procedure and corpus boundary.
