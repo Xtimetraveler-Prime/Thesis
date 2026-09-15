@@ -18,7 +18,7 @@ source .venv-mnist/bin/activate
 pytest applications/mnist/tests -q
 ```
 
-This gate exercises the new frozen-contract, R=0/R=1 equivalence, Brian mapping validation that does not import Brian itself, Catalyst capacity audit, and exact 4,086-edge matrix reconstruction.
+This gate exercises the frozen-contract, R=0/R=1 equivalence, Brian mapping validation that does not import Brian itself, Catalyst capacity audit, exact 4,086-edge matrix reconstruction, and the Catalyst wide-fan-in delivered-drive rule.
 
 ## 3. Generate the one immutable two-image anchor bundle
 
@@ -97,12 +97,24 @@ python applications/mnist/scripts/run_mnist_12_catalyst.py \
   --bundle applications/mnist/build/matched-reference/anchor.bundle.json
 ```
 
-The runner executes two independent Catalyst views per image:
+The runner executes two independent Catalyst CPU views per image:
 
 1. graph-preserving `784 sources -> 10 outputs` with the exact 4,086 effective-weight matrix and one declared native pipeline tick;
-2. M13-frozen delivered-drive translation into the ten output neurons.
+2. an exact delivered-drive control that collapses the same active axon rows into ten per-output fan-in sums and injects those sums directly into the output neurons.
 
-Project-vs-Catalyst differences are allowed and are experimental evidence. The command exits nonzero only if the two Catalyst views disagree in final spike vector/prediction, indicating the transport adapter itself requires review.
+Individual Catalyst graph weights remain signed-int16. The collapsed fan-in sum is **not** restricted to signed-int16: several simultaneously active source weights may sum beyond that range. The pinned Catalyst CPU simulator stores both its external-current buffer and synchronous soma accumulator as signed 32-bit NumPy values, so the control preserves those sums exactly with no clipping or rescaling. This wider direct-current path is a CPU-reference control only and must not be presented as a K26 host-transport capability.
+
+Project-vs-Catalyst differences are allowed and are experimental evidence. The command exits nonzero only if the two independently constructed Catalyst paths disagree after the declared one-tick graph-pipeline normalization. The internal control now compares **every normalized output voltage vector and spike set**, as well as final spike counts/prediction.
+
+### Anchor bring-up harness finding
+
+The first local anchor attempt exposed one adapter-scope issue before index 1 completed:
+
+```text
+Catalyst direct current tick 1 neuron 7=-55680 is outside signed int16
+```
+
+This was not a Catalyst behavioral failure. The first implementation reused M13.3's signed-int16 direct-stimulus guard, which was intentionally frozen for the smaller hardware-common directed probes. In MNIST, the value is a post-synaptic **fan-in sum** of multiple individually valid int16 weights, and therefore may legitimately exceed int16. The MNIST-12 CPU control now computes the exact sum in signed 32-bit, verifies the pinned simulator's `int32` external-current buffer at runtime, and records the maximum absolute delivered current plus the number of values outside signed-int16 in each result JSON.
 
 ## What to return
 
