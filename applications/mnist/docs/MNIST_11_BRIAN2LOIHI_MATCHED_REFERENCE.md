@@ -1,213 +1,181 @@
 # MNIST-11 — Brian2Loihi Matched Reference Experiment
 
-**Status:** Planned
+**Status:** In progress — frozen application adapter, semantic audit, request-bundle boundary, exact comparison runner, regression coverage, and pinned environment bootstrap implemented; local/external execution pending
 
 ## Goal
 
-MNIST-10 compared the accepted FPGA-v1 MNIST application against published Loihi MNIST results only as cross-system context. MNIST-11 creates a stronger experiment by porting the **same frozen native-sparse MNIST workload** into Brian2Loihi, an open-source Brian2-based emulator of Intel Loihi-1 neuron/synapse semantics.
+MNIST-10 used published Loihi MNIST measurements only as cross-system context. MNIST-11 instead executes the **same frozen native-sparse deployment** through Brian2Loihi and asks whether the project reproduces a published Loihi-1-oriented software model under matched graph/input conditions.
 
-The primary research question is:
+The primary question is:
 
-> Given the same frozen graph, effective weights, deterministic input events, presentation length, and decoder, how closely do FPGA-v1 and Brian2Loihi agree at the neuron-state, spike, and classification levels?
+> Given the same 4,086 encoded connections, effective weights, deterministic 16-tick input schedule, zero initial state, and spike-count decoder, how closely do FPGA-v1 semantics and Brian2Loihi agree at the state, spike, and prediction levels?
 
-This is a **behavioral/reference-model comparison**, not a hardware-performance benchmark. Brian2Loihi CPU wall time must never be compared to FPGA PL architectural latency.
+This is a behavioral/reference-model experiment. Brian2Loihi CPU wall time is not Loihi hardware latency.
 
-## Why Brian2Loihi
+## Reuse of the completed M13 reference audit
 
-Brian2Loihi was published by Michaelis, Lehr, Oed, and Tetzlaff as a Loihi emulator built on Brian2. The authors report exact Loihi agreement for neuron/network dynamics without plasticity, while learning introduces stochastic-rounding differences. This MNIST application uses fixed inference weights and no on-chip learning, making it a useful reference target.
+MNIST-11 does **not** restart the external-reference methodology from scratch. Core milestone M13 already froze and independently validated:
 
-Primary sources:
+- Brian2Loihi `0.5.2`, upstream commit `d54676cb113e48dc886615a0b589bb0e4bccbca4`;
+- Brian2 `2.9.0` and NumPy `1.26.4` in the project compare extra;
+- a production `brian2loihi_backend.py` adapter;
+- exact Loihi-style static-weight field mapping and observed `w_act` checks;
+- threshold/current/voltage mapping rules;
+- directed project/Brian2Loihi conformance probes; and
+- the frozen M13.3 normalization/change-control policy.
 
-- Michaelis et al., “Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian,” *Frontiers in Neuroinformatics* 16:1015624, 2022. DOI: `10.3389/fninf.2022.1015624`.
-- PyPI package `brian2-loihi`, latest published release currently `0.5.2` (2021): https://pypi.org/project/brian2-loihi/
-- Source repository: https://github.com/sagacitysite/brian2_loihi
+M13 found no Class-A/B project defect. For the present feed-forward MNIST workload, the M13 Brian recurrence finding is irrelevant because the deployment has zero recurrent routes.
 
-The package is old relative to current Brian2/Python releases, so environment compatibility is itself a milestone deliverable rather than an assumption.
+Primary Brian2Loihi source remains Michaelis et al., “Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian,” *Frontiers in Neuroinformatics* 16:1015624, 2022, DOI `10.3389/fninf.2022.1015624`.
 
----
+## Frozen application contract
 
-## Frozen comparison contract
-
-The primary comparison profile is **native-sparse** because it preserves the original 28x28 MNIST input and is the accepted Loihi-facing FPGA profile.
-
-The comparison must reuse, without retraining:
-
-```text
-source package:          applications/mnist/frozen/mnist-v1
-input representation:   original 28x28 MNIST
-input axons:             784
-output neurons:          10
-stored connections:      4,086
-presentation:            16 algorithmic ticks
-external events:         exact deterministic FPGA-v1 encoder schedule
-recurrent routes:        none
-initial state:           zero
-readout:                 output spike counts, lowest-ID tie break
-weights:                 accepted effective quantized deployment weights
-```
-
-The floating checkpoint is not the reference for this experiment. The reference is the **already frozen hardware deployment** and its exact deterministic event schedule.
-
-No Brian2Loihi-specific retraining, weight tuning, threshold tuning, or input re-encoding is allowed in the primary matched experiment. If an exact parameter mapping is impossible, that limitation must be measured and documented rather than hidden by retuning the network.
-
-Cropped-dense may be added later as a secondary sensitivity check, but it is not required to close MNIST-11.
-
----
-
-## MNIST-11.1 — Toolchain and provenance freeze
-
-**Goal:** establish a reproducible Brian2Loihi environment without contaminating the existing MNIST virtual environment.
-
-Deliverables:
-
-1. Create an isolated environment/container for Brian2Loihi.
-2. Pin Python, Brian2, Brian2Loihi, NumPy, and supporting package versions.
-3. Record package versions and hashes in a source-controlled environment manifest.
-4. Run the upstream single-neuron/basic-network examples before adding any project adapter.
-5. Record the exact upstream repository/package revision used.
-6. Keep any compatibility shim separate from Brian2Loihi's model equations.
-
-Important constraint: Brian2Loihi `0.5.2` dates from 2021 and specifies Brian2 `>=2.4.2`; current Brian2 has moved substantially since then. If the current Python environment is incompatible, use a dedicated older interpreter rather than modifying Brian2Loihi arithmetic merely to make it run.
-
-**Acceptance gate:** a pinned environment reproduces an upstream Brian2Loihi inference example with no project-specific semantic patches.
-
----
-
-## MNIST-11.2 — Semantic mapping audit
-
-Before running MNIST, build a machine-readable mapping between the two neuron/synapse models.
-
-Audit at minimum:
-
-- current decay representation and rounding;
-- voltage decay representation and rounding;
-- threshold representation and `>` versus `>=` firing semantics;
-- bias handling;
-- reset rule and reset timing;
-- refractory semantics;
-- signed weight representation and effective weight scaling;
-- same-tick event accumulation order;
-- state-update ordering;
-- integer width, clipping, and saturation behavior;
-- input-spike timing convention;
-- spike visibility/readout timing.
-
-Every field receives one of these labels:
+The experiment consumes only:
 
 ```text
-EXACT                same mathematical/integer operation
-EQUIVALENT           same observable behavior under the frozen MNIST domain
-TRANSLATED           deterministic parameter conversion required
-UNREPRESENTABLE      no exact mapping in the target model
-NOT_USED             feature absent from the frozen workload
+applications/mnist/frozen/mnist-v1/deployments/native-sparse/
 ```
 
-The adapter must never silently replace an `UNREPRESENTABLE` feature with a nearby value.
-
-**Acceptance gate:** all frozen MNIST semantics are classified and the project can state whether exact state-level equivalence is theoretically possible before looking at classification accuracy.
-
----
-
-## MNIST-11.3 — Micro-conformance suite
-
-Do not begin with 10,000 images. First isolate the arithmetic.
-
-Directed tests should include:
-
-1. one neuron, no input;
-2. one positive input event;
-3. one negative input event;
-4. repeated same-axon events within one tick;
-5. multiple axons converging on one neuron;
-6. threshold-minus-one, threshold-equal, and threshold-plus-one cases;
-7. reset after spike;
-8. current/voltage decay across silent ticks;
-9. maximum/minimum relevant frozen weight values;
-10. sequences that exercise any discovered rounding boundary.
-
-For each tick compare all mutually observable quantities:
+and preserves:
 
 ```text
-current
-voltage
-spike flag
-spike time/tick
+28x28 source image
+784 external axons
+10 output neurons
+4,086 stored encoded synapses
+16 deterministic presentation ticks
+zero recurrent routes
+zero initial state
+argmax output spike-count decoder, lowest ID tie break
+no retraining or target-specific tuning
 ```
 
-Where both systems expose equivalent pre/post state timing, compare both before and after state words/values.
-
-**Acceptance gate:** either exact agreement on the common semantic subset, or a deterministic, localized mismatch report that explains every divergence before application-scale testing.
-
----
-
-## MNIST-11.4 — Frozen corpus comparison
-
-Once the micro-suite is understood, replay the existing 30-image frozen conformance corpus through Brian2Loihi using the **same source indices and same 16-tick event schedules**.
-
-Required outputs per image:
-
-- label;
-- FPGA-v1 golden prediction;
-- Brian2Loihi prediction;
-- ten final spike counts;
-- per-tick spike flags;
-- per-tick current/voltage where representable;
-- first divergent tick/neuron/state field, if any;
-- prediction-agreement flag.
-
-Report separately:
+The frozen neuron config is:
 
 ```text
-state-exact cases
-spike-exact cases
-prediction-agreement cases
-classification accuracy on the selected corpus
-semantic-mismatch categories
+current_decay     = 4096
+voltage_decay     = 0
+threshold         = 8384 = 131 * 64
+bias              = 0
+reset_voltage     = 0
+refractory_ticks  = 0
 ```
 
-The 30-image set remains a conformance corpus, not an unbiased accuracy benchmark.
+The deployment has two sign-specific exponent-zero, 8-bit Loihi-style weight formats; all accepted effective weights are aligned to 64.
 
-**Acceptance gate:** the complete 30-image result is reproducible and every mismatch is attributable either to a known semantic difference or an implementation defect.
+## Application-specific semantic audit
 
----
+`mnist_app/matched_reference.py` freezes the application-level mapping before Brian outputs are observed. Every field is labeled `EXACT`, `EQUIVALENT`, `TRANSLATED`, `UNREPRESENTABLE`, or `NOT_USED`.
 
-## MNIST-11.5 — Full-test matched software evaluation
+Two points require explicit treatment:
 
-If the adapter/mapping is stable, run the official 10,000-image MNIST test split through Brian2Loihi using exactly the same native-sparse deployment and input encoder.
+### Refractory 0 -> 1
 
-Record:
+Brian2Loihi requires `refractory` in `1..64`, while the frozen application requests `0`. This is **not** silently clamped. FPGA-v1 loads:
 
-- Brian2Loihi accuracy;
-- prediction agreement against FPGA-v1 golden;
-- spike-count-vector agreement;
-- disagreement indices;
-- confusion matrix;
-- agreement grouped by any semantic edge condition discovered in 11.2/11.3.
+```text
+future_blocked_ticks = max(refractory_ticks - 1, 0)
+```
 
-Do **not** interpret Python/Brian execution time as Loihi hardware latency.
+on a spike, so project `R=0` and `R=1` both store zero future blocked ticks under the one-update-per-neuron-per-tick contract. The matched runner therefore:
 
-### MNIST-11 completion criterion
+1. executes the exact image in FPGA-v1 semantics with `R=0`;
+2. executes the same image in FPGA-v1 semantics with `R=1`;
+3. requires exact current/voltage/spike trace equality; and only then
+4. permits Brian2Loihi to use `R=1`.
 
-MNIST-11 is complete when the thesis can make one of two defensible statements:
+Any failed equivalence aborts the case.
 
-1. **Exact/near-exact matched behavior:** the frozen FPGA-v1 application maps to Brian2Loihi with quantified state/spike/prediction agreement; or
-2. **Quantified semantic divergence:** exact mapping is impossible, the precise incompatible semantics are identified, and the resulting application-level effect is measured without retuning the network.
+### SAT24 versus Brian unbounded arithmetic
 
-Either outcome is scientifically useful. A forced match obtained by retraining or silently changing the workload is not acceptable.
+Brian2Loihi does not expose the project's SAT24 state policy. The frozen deployment, however, records a conservative absolute voltage bound of about `7.55e6`, below SAT24 max `8,388,607`. The Brian scenario is therefore run with unbounded comparison arithmetic while the project retains FPGA-v1 SAT24 arithmetic. Exact state comparison itself verifies that saturation did not create a hidden discrepancy on each executed schedule.
 
----
+## Immutable matched request bundle
 
-## Evidence boundary
+TensorFlow/MNIST loading is separated from both external environments. In the normal MNIST environment:
 
-MNIST-11 may support claims about:
+```text
+scripts/prepare_matched_reference_bundle.py
+```
 
-- agreement with a published Loihi-1 emulator;
-- sensitivity of the MNIST workload to differences in Loihi-like arithmetic/update semantics;
-- application-level prediction/state agreement under matched graph/input conditions.
+writes one JSON bundle containing, per selected image:
 
-It may **not** support claims about:
+- official MNIST test index and label;
+- exact 16-tick external axon schedule;
+- total event count;
+- frozen project golden spike-count vector and prediction; and
+- SHA-256 provenance for the freeze manifest, deployment, and weight image.
 
-- actual Loihi hardware latency or energy;
-- Loihi-2 behavior;
-- FPGA-vs-Loihi hardware speedup;
-- an exact Loihi comparison if the semantic audit finds unrepresentable differences.
+Brian2Loihi and Catalyst consume the same bundle. This prevents either external environment from reloading/re-encoding MNIST differently.
+
+Scopes are:
+
+```text
+anchor  -> indices 3 and 1
+corpus  -> exact frozen 30-image conformance corpus
+full    -> official 10,000-image test set
+```
+
+## Exact Brian case runner
+
+`mnist_app/brian2loihi_matched.py` and `scripts/run_mnist_11_brian2loihi.py` perform each case as follows:
+
+1. rebuild the accepted encoded graph from frozen FPGA storage;
+2. prove project `R=0` and reference `R=1` exact equivalence for that image;
+3. verify the reconstructed project scenario still matches the frozen golden spike vector/prediction;
+4. instantiate Brian2Loihi with the exact requested mantissa/exponent/precision/sign-mode groups;
+5. read Brian2Loihi `w_act` and require all **4,086** effective weights to equal the frozen project weights;
+6. compare every tick's `current_after`, `voltage_after`, and spike set exactly; and
+7. compare final ten-neuron spike counts and prediction.
+
+A case passes only when all of those checks pass.
+
+## Environment
+
+The application bootstrap script is:
+
+```text
+applications/mnist/scripts/setup_mnist_11_brian2loihi_env.sh
+```
+
+It creates an isolated `.venv-mnist-brian2loihi` by default and installs the already-frozen core compare extra:
+
+```text
+numpy==1.26.4
+brian2==2.9.0
+brian2-loihi==0.5.2
+```
+
+No Brian arithmetic/model source patch is part of MNIST-11.
+
+## Sub-milestone state
+
+### MNIST-11.1 — Toolchain/provenance freeze
+
+**Implementation status:** substantially inherited from completed M13; application bootstrap added. Local bootstrap/import confirmation remains.
+
+### MNIST-11.2 — Semantic mapping audit
+
+**Implementation status:** complete in source. Local pytest/audit generation remains as the validation gate.
+
+### MNIST-11.3 — Micro-conformance
+
+**Implementation status:** core directed project/Brian probes already accepted under M13. MNIST-11 adds the application-specific `R=0 -> R=1` equivalence regression and full frozen-weight contract checks. Local pytest remains.
+
+### MNIST-11.4 — Frozen 30-image corpus
+
+**Implementation status:** runner complete; external execution pending. Start with the two-image anchor before spending time on all 30 cases.
+
+### MNIST-11.5 — Full 10,000-image evaluation
+
+**Implementation status:** bundle/runner path supports it, but it remains intentionally gated on the 30-image result. Full-test CPU runtime may be substantial and is not a hardware-performance metric.
+
+## Acceptance / interpretation
+
+Possible scientifically valid outcomes are:
+
+1. exact state/spike agreement on the matched feed-forward workload;
+2. prediction agreement with lower-level deterministic state differences; or
+3. a reproducible semantic divergence trace.
+
+Retuning to force agreement is forbidden. Brian CPU execution time is never compared to FPGA PL latency or published Loihi hardware latency.
