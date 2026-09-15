@@ -1,6 +1,6 @@
 # MNIST-06 Dual-Profile Deployment Freeze
 
-**Status:** In progress — freeze tooling implemented; accepted local artifacts must be materialized and committed
+**Status:** Complete
 
 ## Purpose
 
@@ -10,13 +10,13 @@ The freeze therefore copies the exact accepted artifacts out of the ignored buil
 
 ## Frozen package
 
-The accepted package is generated under:
+The accepted package is committed under:
 
 ```text
 applications/mnist/frozen/mnist-v1/
 ```
 
-Expected layout:
+Layout:
 
 ```text
 mnist-v1/
@@ -45,6 +45,33 @@ mnist-v1/
 
 The freeze manifest records the accepted validation hash, common-corpus hash, checkpoint hashes, deployment file hashes, 16-tick application contract, and compact accepted golden-result summaries.
 
+## Accepted freeze evidence
+
+The materialized `mnist-v1` package was generated from the accepted full-test MNIST-04/05 artifacts, independently validated in the user application environment, and committed to `agent/mnist-06-deployment-freeze`.
+
+Key immutable identifiers are:
+
+```text
+accepted_software_validation.json SHA-256:
+  ae0ea737338c8c7a9f11d0783542858faec2833b3c3a5bbe07571dfa57fc5734
+
+fpga_validation_corpus.json SHA-256:
+  ee5ea48bfec7f120f702455f68aabe02dd20860d49708b27370d14ebd1fefc4f
+
+cropped-dense checkpoint SHA-256:
+  a0a116e638c410c92f49948cc4c608525fb11fe400f9e80fa0600e9b62d90d22
+
+native-sparse checkpoint SHA-256:
+  d70bfec246b9fa0e391531bebaf4608d96e33616e7b8c49238ec380c09c93361
+```
+
+The frozen deployment summaries retain the accepted full-test results:
+
+| Profile | Float accuracy | Golden accuracy | Stored synapses | Prediction agreement |
+|---|---:|---:|---:|---:|
+| cropped-dense | 90.29% | 90.24% | 3,893 | 99.25% |
+| native-sparse | 91.62% | 91.71% | 4,086 | 99.30% |
+
 ## Common FPGA-validation corpus
 
 The physical corpus contains exactly **30 original MNIST test indices**, and the same source indices are used for both profiles.
@@ -55,25 +82,25 @@ For each true digit class `0..9`, the selector requests three deterministic case
 2. **profile-divergent** — the two accepted golden deployments produce different predictions;
 3. **both-wrong** — both accepted golden deployments misclassify the image.
 
-The first unused source index satisfying each category is selected. If a particular category is absent for a class, the selector uses the first unused class-local sample and records the fallback explicitly. This policy gives the FPGA corpus all ten classes while intentionally including easy, profile-sensitive, and difficult behavior.
+The materialized accepted corpus contains all three requested categories for every digit class; no fallback case was required. The resulting indices are frozen in `fpga_validation_corpus.json`.
 
 The corpus file records each source test index, true label, both accepted golden predictions, correctness flags, and the selection reason. It does **not** become an FPGA expected-output input. Physical hardware still receives only static configuration and encoded external events; expected results remain host-side validation evidence.
 
-## Generation
+## Generation and validation
 
-After the full MNIST-04/05 accepted validation artifacts are present locally, run:
+The package is generated with:
 
 ```bash
 python applications/mnist/scripts/freeze_deployment.py
 ```
 
-Then verify the complete package independently:
+and independently checked with:
 
 ```bash
 python applications/mnist/scripts/validate_frozen_deployment.py
 ```
 
-The validator recomputes every stored SHA-256 digest, verifies both profiles are present, verifies the 16-tick contract, and requires exactly 30 unique corpus samples with three samples from every digit class.
+The validator recomputes every stored SHA-256 digest, verifies both profiles are present, verifies the 16-tick contract, and requires exactly 30 unique corpus samples with three samples from every digit class. The accepted materialized package passed this validator before being committed.
 
 ## Source-control policy
 
@@ -92,14 +119,6 @@ MNIST-07 will reuse the established M12 multi-tick physical-conformance boundary
 
 The MNIST application does not introduce a second definition of FPGA correctness.
 
-## Completion criteria
+## Closure
 
-MNIST-06 closes when:
-
-- the accepted full-test MNIST-04/05 validation artifacts are the freeze source;
-- both accepted checkpoints are copied and their hashes match;
-- both accepted deployment images are copied and every file hash matches;
-- `fpga_validation_corpus.json` contains the frozen 30-image common corpus;
-- `validate_frozen_deployment.py` passes on the materialized package;
-- the entire `applications/mnist/frozen/mnist-v1/` directory is committed to the repository; and
-- the application milestone document records the resulting freeze as the sole MNIST-07 input package.
+All MNIST-06 completion criteria are satisfied. The committed `applications/mnist/frozen/mnist-v1/` package is the sole accepted input package for MNIST-07 and later FPGA application milestones.
