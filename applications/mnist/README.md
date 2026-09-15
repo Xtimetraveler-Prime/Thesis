@@ -2,7 +2,7 @@
 
 This directory tracks an MNIST workload built on top of the validated neuromorphic digital-twin platform. Application work is separate from baseline platform milestones and must not silently change the frozen core behavior.
 
-See [`MILESTONES.md`](MILESTONES.md) for the rollout plan, [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the hardware-capacity decision, [`docs/MNIST_03_TRAINING_BASELINES.md`](docs/MNIST_03_TRAINING_BASELINES.md) for the accepted floating-point SNN baselines, and [`docs/NOTEBOOK_REUSE.md`](docs/NOTEBOOK_REUSE.md) for how the user-authored class notebooks are being repurposed.
+See [`MILESTONES.md`](MILESTONES.md) for the rollout plan, [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the hardware-capacity decision, [`docs/MNIST_03_TRAINING_BASELINES.md`](docs/MNIST_03_TRAINING_BASELINES.md) for the accepted floating-point SNN baselines, [`docs/MNIST_04_05_ACCEPTED_VALIDATION.md`](docs/MNIST_04_05_ACCEPTED_VALIDATION.md) for the accepted quantized/golden results, and [`docs/NOTEBOOK_REUSE.md`](docs/NOTEBOOK_REUSE.md) for how the user-authored class notebooks are being repurposed.
 
 ## Dual FPGA-v1 profiles
 
@@ -68,41 +68,29 @@ python -m pip install -e "applications/mnist[train,test]"
 pytest applications/mnist/tests -q
 ```
 
-## Encoder inspection
-
-Inspect the same source MNIST image through either mapping:
-
-```bash
-python applications/mnist/scripts/inspect_encoding.py --profile native-sparse --index 0
-python applications/mnist/scripts/inspect_encoding.py --profile cropped-dense --index 0
-```
-
 ## Accepted training methodology
 
 Training uses a deterministic stratified 5,000-image validation split drawn only from the official MNIST training set. Checkpoint selection uses validation accuracy; the official 10,000-image test split is evaluated only after model selection is frozen.
 
-Accepted runs:
+Accepted floating-point test accuracies are:
 
-```bash
-python applications/mnist/scripts/train_snn.py \
-  --profile cropped-dense \
-  --epochs 10 \
-  --validation-size 5000 \
-  --output applications/mnist/build/accepted-training
-
-python applications/mnist/scripts/train_snn.py \
-  --profile native-sparse \
-  --epochs 10 \
-  --fine-tune-epochs 5 \
-  --validation-size 5000 \
-  --output applications/mnist/build/accepted-training
+```text
+cropped-dense: 90.29%
+native-sparse: 91.62%
 ```
 
-Accepted floating-point test accuracies are 90.29% for cropped-dense and 91.62% for native-sparse. See `docs/MNIST_03_TRAINING_BASELINES.md` for selection details.
+See `docs/MNIST_03_TRAINING_BASELINES.md` for training/selection details.
 
-## Accepted MNIST-04/05 software validation
+## Accepted MNIST-04/05 validation
 
-The preferred flow validates both accepted checkpoints, exports both project-native integer deployments, evaluates each float and golden network on the exact same official test corpus, and hashes the resulting artifacts in one command:
+The accepted checkpoints are exported into the project's existing encoded-weight and M08 CSR storage representation, then executed through the actual validated `NeuromorphicCore` on the same official 10,000-image MNIST test corpus.
+
+```text
+cropped-dense: float 90.29% -> golden 90.24%, 99.25% prediction agreement, 3893 stored synapses
+native-sparse: float 91.62% -> golden 91.71%, 99.30% prediction agreement, 4086 stored synapses
+```
+
+Run the complete accepted export/comparison flow with:
 
 ```bash
 python applications/mnist/scripts/run_accepted_validation.py
@@ -117,20 +105,4 @@ applications/mnist/build/accepted-validation/
 └── native-sparse_matched_comparison.json
 ```
 
-The deployment images are written under:
-
-```text
-applications/mnist/build/accepted-deployment/
-├── cropped-dense/
-└── native-sparse/
-```
-
-The validation manifest records checkpoint and deployment SHA-256 hashes plus compact matched-corpus summaries. Each profile comparison preserves the full float/golden prediction evidence, quantization error, accuracy delta, accuracy-by-tick, confusion matrix, input events, output spikes, synaptic visits, and no-spike/tie counts.
-
-For a fast integration check before the full official test corpus, the same flow supports an explicit prefix:
-
-```bash
-python applications/mnist/scripts/run_accepted_validation.py --limit 100
-```
-
-Individual `export_network.py`, `compare_float_golden.py`, and `evaluate_golden.py` commands remain available for focused debugging, but the accepted MNIST-04/05 result should come from `run_accepted_validation.py` so both profiles use the same procedure and corpus boundary.
+The deployment images are written under `applications/mnist/build/accepted-deployment/`. The validation manifest records checkpoint/deployment SHA-256 hashes, quantization details, matched predictions, golden activity metrics, and exact stored synapse counts. See `docs/MNIST_04_05_ACCEPTED_VALIDATION.md` for the accepted result.
