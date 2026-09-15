@@ -46,9 +46,9 @@ Generated training/deployment artifacts belong under `applications/mnist/build/`
 The software path intentionally reuses the user's own TensorFlow/Keras MNIST lab structure where it remains valid:
 
 - `tf.keras.datasets.mnist.load_data()` and the standard train/test split;
-- raw pixel handling and 0..255 / 255 normalization concept;
+- raw pixel handling and the `pixel / 255.0` normalization convention;
 - Adam optimization and sparse categorical cross-entropy;
-- training-time measurement;
+- training-time measurement with `time.perf_counter()`;
 - test accuracy evaluation;
 - `argmax` predictions;
 - incorrect-prediction indexing and later visualization/analysis.
@@ -57,36 +57,80 @@ The dense ReLU ANN itself is not copied as the deployable model because the targ
 
 ## Setup
 
-Install the validated core package and MNIST application:
+A separate application environment is recommended so the TensorFlow dependency does not disturb the Brian2Loihi/reference environment:
 
 ```bash
-python -m pip install -e "Neuromorphic Digital Twin[dev,compare]"
-python -m pip install -e "applications/mnist[test]"
+python3.12 -m venv .venv-mnist
+source .venv-mnist/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e "Neuromorphic Digital Twin"
+python -m pip install -e "applications/mnist[train,test]"
 pytest applications/mnist/tests -q
 ```
 
-For training, add TensorFlow:
+## Encoder inspection
 
-```bash
-python -m pip install -e "applications/mnist[train,test]"
-```
-
-## Planned software flow
-
-Inspect either encoder profile:
+Inspect the same source MNIST image through either mapping:
 
 ```bash
 python applications/mnist/scripts/inspect_encoding.py --profile native-sparse --index 0
 python applications/mnist/scripts/inspect_encoding.py --profile cropped-dense --index 0
 ```
 
-Train the simpler cropped-dense baseline first, then the native-sparse baseline:
+## Training
+
+The cropped-dense profile should be trained first because it isolates SNN training behavior without pruning:
+
+```bash
+python applications/mnist/scripts/train_snn.py \
+  --profile cropped-dense \
+  --epochs 1 \
+  --train-limit 2000 \
+  --test-limit 500
+```
+
+Then smoke-test native-sparse, which trains the full direct matrix, magnitude-prunes to the 4,096-connection budget, and fine-tunes only surviving connections:
+
+```bash
+python applications/mnist/scripts/train_snn.py \
+  --profile native-sparse \
+  --epochs 1 \
+  --fine-tune-epochs 1 \
+  --train-limit 2000 \
+  --test-limit 500
+```
+
+Accepted/full runs can use the complete dataset, for example:
 
 ```bash
 python applications/mnist/scripts/train_snn.py --profile cropped-dense --epochs 10
-python applications/mnist/scripts/train_snn.py --profile native-sparse --epochs 10
+python applications/mnist/scripts/train_snn.py --profile native-sparse --epochs 10 --fine-tune-epochs 5
 ```
 
-The native-sparse training path trains the direct classifier, prunes to the physical 4,096-synapse budget, and fine-tunes the surviving masked connections before acceptance.
+Training preserves notebook-style metrics including elapsed training time, accuracy, `argmax` predictions, and incorrect sample indices, while also recording output spike activity and active connection count.
 
-Each accepted checkpoint is then exported into the existing integer/M08 storage representation and evaluated through the actual `NeuromorphicCore`, not through a separate application simulator.
+## Export and golden-model evaluation
+
+Each checkpoint embeds its profile, so deployment artifacts are kept separate automatically:
+
+```bash
+python applications/mnist/scripts/export_network.py \
+  applications/mnist/build/training/cropped-dense_snn_float.npz
+
+python applications/mnist/scripts/export_network.py \
+  applications/mnist/build/training/native-sparse_snn_float.npz
+```
+
+Then evaluate each exported integer network through the actual validated `NeuromorphicCore`:
+
+```bash
+python applications/mnist/scripts/evaluate_golden.py \
+  applications/mnist/build/deployment/cropped-dense/deployment.json
+
+python applications/mnist/scripts/evaluate_golden.py \
+  applications/mnist/build/deployment/native-sparse/deployment.json
+```
+
+Golden evaluation records accuracy, confusion matrix, notebook-style prediction/error indices, input events, output spikes, synaptic visits, no-spike/tie frequency, and accuracy versus presentation tick.
+
+The current development environment does not contain TensorFlow/MNIST, so real training accuracy is intentionally not claimed until these commands are run in the application environment.
