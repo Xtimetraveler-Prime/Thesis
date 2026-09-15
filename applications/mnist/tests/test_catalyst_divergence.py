@@ -7,10 +7,11 @@ from mnist_app.catalyst_divergence import (
     TRANSPORT_INCONSISTENT,
     classify_case,
     summarize_cases,
+    summarize_cases_compact,
 )
 
 
-def _case(*, ref, cand, internal_passed=True, prediction=0):
+def _case(*, ref, cand, internal_passed=True, prediction=0, spike_vector_agreement=True):
     mismatch = None if ref == cand else {
         "canonical_tick": 0,
         "field": "voltage_after",
@@ -29,11 +30,13 @@ def _case(*, ref, cand, internal_passed=True, prediction=0):
         "graph_preserving": {
             "prediction": prediction,
             "prediction_agreement_with_project": prediction == 0,
+            "spike_vector_agreement_with_project": spike_vector_agreement,
             "voltage_spike_trace": comparison,
         },
         "delivered_drive": {
             "prediction": prediction,
             "prediction_agreement_with_project": prediction == 0,
+            "spike_vector_agreement_with_project": spike_vector_agreement,
             "voltage_spike_trace": comparison,
         },
         "catalyst_internal_control": {
@@ -66,7 +69,11 @@ def test_transport_inconsistency_takes_precedence() -> None:
 
 
 def test_summary_counts_anchor_style_results() -> None:
-    first = _case(ref=[0, -13888, 2176, -2368], cand=[0, 0, 2176, 0])
+    first = _case(
+        ref=[0, -13888, 2176, -2368],
+        cand=[0, 0, 2176, 0],
+        spike_vector_agreement=False,
+    )
     second = _case(ref=[3136, -3072, 8128, -22016], cand=[3136, 0, 8128, 0], prediction=2)
     second["mnist_test_index"] = 1
     second["label"] = 2
@@ -78,5 +85,11 @@ def test_summary_counts_anchor_style_results() -> None:
     assert summary["case_count"] == 2
     assert summary["transport_consistent_cases"] == 2
     assert summary["prediction_agreement_cases"] == 2
+    assert summary["graph_spike_vector_agreement_cases"] == 1
     assert summary["sub_rest_clamp_cases"] == 2
     assert summary["other_translated_dynamics_cases"] == 0
+
+    compact = summarize_cases_compact([first, second])
+    assert compact["graph_spike_vector_disagreement_indices"] == [3]
+    assert compact["prediction_disagreement_indices"] == []
+    assert compact["classification_indices"][SUB_REST_CLAMP] == [3, 1]
