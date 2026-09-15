@@ -45,7 +45,7 @@ The paper also reports a pre-silicon supervised-STDP MNIST example with ten clas
 
 **Citation**
 
-Gautham Chinya et al. / Intel Loihi team, “Programming Spiking Neural Networks on Intel’s Loihi,” *Computer*, vol. 51, no. 3, pp. 52–61, 2018.
+Chit-Kwan Lin, Andreas Wild, Gautham N. Chinya, Yongqiang Cao, Mike Davies, Daniel M. Lavery, and Hong Wang, “Programming Spiking Neural Networks on Intel’s Loihi,” *Computer*, vol. 51, no. 3, pp. 52–61, 2018.
 
 - DOI: https://doi.org/10.1109/MC.2018.157113521
 - IEEE: https://ieeexplore.ieee.org/document/8303802
@@ -93,7 +93,7 @@ The paper explicitly notes that its model is a rate-coded ANN-to-SNN conversion 
 
 **Citation**
 
-H. Xu et al., “Optimizing event-based neural networks on digital neuromorphic architecture: a comprehensive design space exploration,” *Frontiers in Neuroscience*, 2024.
+Yingfu Xu et al., “Optimizing event-based neural networks on digital neuromorphic architecture: a comprehensive design space exploration,” *Frontiers in Neuroscience*, vol. 18, 2024.
 
 - DOI: https://doi.org/10.3389/fnins.2024.1335422
 - Full text: https://www.frontiersin.org/journals/neuroscience/articles/10.3389/fnins.2024.1335422/full
