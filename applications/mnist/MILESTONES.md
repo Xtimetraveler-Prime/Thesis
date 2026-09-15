@@ -218,7 +218,7 @@ See `docs/MNIST_09_SHARED_RUNTIME.md`.
 
 ## MNIST-10 — Characterization and Loihi Comparison
 
-**Status:** Scientific/sub-milestone work complete; final application regression confirmation pending before parent milestone merge/closure
+**Status:** Complete
 
 ### MNIST-10A — Internal FPGA profile comparison
 
@@ -283,12 +283,49 @@ The final comparison explicitly separates direct project measurements, project-d
 
 See `docs/MNIST_10_CHARACTERIZATION.md` and `docs/MNIST_10_LOIHI_SOURCES.md`.
 
-### Parent milestone closure gate
+The full application regression passed after the archived physical evidence and final MNIST-10 documentation changes, and the accepted branch was merged into `main`.
 
-No additional FPGA experiment is required for MNIST-10. The remaining merge gate is one final full application regression after the archived evidence and documentation changes:
+---
 
-```text
-pytest applications/mnist/tests -q
-```
+## MNIST-11 — Brian2Loihi Matched Reference Experiment
 
-If that passes, MNIST-10 can be marked **Complete** and the branch can be merged into `main`.
+**Status:** Planned
+
+MNIST-11 replaces the loose published-Loihi comparison with a matched **software/reference-model** experiment. The accepted native-sparse deployment is translated into Brian2Loihi without retraining, using the same 28x28 source images, 4,086-connection graph, accepted effective weights where representable, exact deterministic 16-tick event schedules, zero initial state, and spike-count decoder.
+
+The milestone proceeds in five gates:
+
+1. **MNIST-11.1 — Toolchain/provenance freeze:** isolate and pin the older Brian2Loihi environment and reproduce upstream examples before adding project code.
+2. **MNIST-11.2 — Semantic mapping audit:** classify decay, threshold, reset, refractory, weight scaling, rounding, saturation, update-order, and spike-timing semantics as `EXACT`, `EQUIVALENT`, `TRANSLATED`, `UNREPRESENTABLE`, or `NOT_USED`.
+3. **MNIST-11.3 — Micro-conformance:** compare directed single-neuron/network traces before attempting MNIST-scale claims.
+4. **MNIST-11.4 — Frozen 30-image corpus:** replay the same source indices/event schedules and report state/spike/prediction agreement plus first-divergence causes.
+5. **MNIST-11.5 — Full 10,000-image evaluation:** if the mapping is stable, measure Brian2Loihi accuracy, prediction agreement, spike-vector agreement, and disagreement indices using the unchanged frozen network.
+
+Brian2Loihi CPU wall time is not Loihi hardware latency and must not be compared to FPGA PL latency. If exact mapping is impossible, a quantified semantic-divergence result is acceptable; retuning the network to force agreement is not.
+
+See `docs/MNIST_11_BRIAN2LOIHI_MATCHED_REFERENCE.md`.
+
+---
+
+## MNIST-12 — Catalyst N1 Matched Hardware Comparison
+
+**Status:** Planned
+
+MNIST-12 moves from a Loihi emulator to an independent **Loihi-class hardware architecture**. The first target is Catalyst N1 because its public project provides a relatively simple fixed-point LIF design, Python SDK/reference simulator, open Verilog RTL, and an explicit Kria K26 build target. Catalyst is not Intel Loihi, so its results remain a separate external-architecture comparison.
+
+The milestone proceeds in six gates:
+
+1. **MNIST-12.1 — Upstream/K26 feasibility audit:** pin the exact Catalyst N1 revision, reproduce software regressions, verify the exact K26/Vivado target, and audit neuron/synapse/event/routing capacities for the frozen 784-input/10-output/4,086-connection network.
+2. **MNIST-12.2 — Semantic mapping audit:** classify Catalyst LIF/weight/update semantics using the same explicit mapping categories as MNIST-11.
+3. **MNIST-12.3 — Catalyst CPU/reference experiment:** deploy the unchanged translated graph through Catalyst's software reference before touching hardware and compare it against FPGA-v1 and Brian2Loihi.
+4. **MNIST-12.4 — Physical Catalyst N1 K26 run:** begin with MNIST indices 3 and 1, then expand to the 30-image conformance corpus if stable; physical Catalyst output must first agree with its own pinned software reference.
+5. **MNIST-12.5 — Same-K26 characterization:** collect locally generated Vivado resources/timing and a defensible on-device execution boundary. Host transport is excluded unless both targets deliberately use equivalent boundaries.
+6. **MNIST-12.6 — Final matched matrix:** separate `MATCHED GRAPH + MATCHED DYNAMICS`, `MATCHED GRAPH + TRANSLATED DYNAMICS`, and `UNMATCHED LITERATURE REFERENCE` evidence across FPGA-v1, Brian2Loihi, Catalyst software/hardware, and published Loihi context.
+
+No energy/inference comparison is admitted from board TDP or Vivado estimated power. A physical K26 blocker may close a feasibility sub-gate but does not count as a hardware comparison result.
+
+See `docs/MNIST_12_CATALYST_MATCHED_HARDWARE.md`.
+
+### Follow-on decision — actual Intel Loihi / Lava
+
+MNIST-11 and MNIST-12 still do not execute the workload on Intel Loihi silicon. Brian2Loihi is a Loihi-1 software emulator, while Catalyst is independently developed Loihi-class hardware. If authenticated Loihi-2/Lava hardware access becomes available, create a separate follow-on milestone using the same frozen comparison contract rather than folding an unmatched Loihi-2 experiment into MNIST-12.
