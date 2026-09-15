@@ -2,7 +2,7 @@
 
 This directory tracks an MNIST workload built on top of the validated neuromorphic digital-twin platform. Application work is separate from baseline platform milestones and must not silently change the frozen core behavior.
 
-See [`MILESTONES.md`](MILESTONES.md) for the rollout plan, [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the hardware-capacity decision, and [`docs/NOTEBOOK_REUSE.md`](docs/NOTEBOOK_REUSE.md) for how the user-authored class notebooks are being repurposed.
+See [`MILESTONES.md`](MILESTONES.md) for the rollout plan, [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the hardware-capacity decision, [`docs/MNIST_03_TRAINING_BASELINES.md`](docs/MNIST_03_TRAINING_BASELINES.md) for the accepted floating-point SNN baselines, and [`docs/NOTEBOOK_REUSE.md`](docs/NOTEBOOK_REUSE.md) for how the user-authored class notebooks are being repurposed.
 
 ## Dual FPGA-v1 profiles
 
@@ -31,7 +31,7 @@ The native-sparse profile preserves the original MNIST representation and is the
 
 ```text
 applications/mnist/
-├── docs/           audit and application notes
+├── docs/           audit, accepted-result, and application notes
 ├── mnist_app/      reusable dataset, encoding, training, export, inference code
 ├── scripts/        command-line entry points
 ├── tests/          application-level regression tests
@@ -45,7 +45,7 @@ Generated training/deployment artifacts belong under `applications/mnist/build/`
 
 The software path intentionally reuses the user's own TensorFlow/Keras MNIST lab structure where it remains valid:
 
-- `tf.keras.datasets.mnist.load_data()`;
+- `tf.keras.datasets.mnist.load_data()` and the standard train/test split;
 - raw pixel handling and the `pixel / 255.0` normalization convention;
 - Adam optimization and sparse categorical cross-entropy;
 - training-time measurement with `time.perf_counter()`;
@@ -77,75 +77,51 @@ python applications/mnist/scripts/inspect_encoding.py --profile native-sparse --
 python applications/mnist/scripts/inspect_encoding.py --profile cropped-dense --index 0
 ```
 
-## Training methodology
+## Accepted training methodology
 
-Model selection does not use the official MNIST test set. By default, the 60,000 official training samples are split deterministically and stratified by class into:
+Training uses a deterministic stratified 5,000-image validation split drawn only from the official MNIST training set. Checkpoint selection uses validation accuracy; the official 10,000-image test split is evaluated only after model selection is frozen.
 
-```text
-55,000 optimization/training samples
-5,000 validation samples
-10,000 untouched official test samples
-```
-
-Per-epoch progress reports validation accuracy (`val_acc`). The best validation checkpoint is restored after each phase, with the earliest epoch retained on an exact validation tie. The official test set is evaluated only once after the selected model is frozen.
-
-For `native-sparse`, the best dense validation checkpoint is pruned to the 4,096-connection budget. The post-prune model itself is retained as an explicit candidate, Adam is reset, and masked fine-tuning proceeds only on surviving connections. Final sparse selection compares the best fine-tuned validation result against the immediate post-prune validation result.
-
-The default validation size can be changed with `--validation-size`, but the frozen thesis baseline uses 5,000 samples.
-
-Full accepted runs:
+Accepted runs:
 
 ```bash
 python applications/mnist/scripts/train_snn.py \
   --profile cropped-dense \
   --epochs 10 \
-  --output applications/mnist/build/training
+  --validation-size 5000 \
+  --output applications/mnist/build/accepted-training
 
 python applications/mnist/scripts/train_snn.py \
   --profile native-sparse \
   --epochs 10 \
   --fine-tune-epochs 5 \
-  --output applications/mnist/build/training
+  --validation-size 5000 \
+  --output applications/mnist/build/accepted-training
 ```
 
-Training preserves notebook-style metrics including elapsed training time, `argmax` predictions, and incorrect sample indices, while also recording validation history, selected epochs, output spike activity, and active connection count.
+Accepted floating-point test accuracies are 90.29% for cropped-dense and 91.62% for native-sparse. See `docs/MNIST_03_TRAINING_BASELINES.md` for selection details.
 
-## Export and golden-model evaluation
+## Export and matched golden-model evaluation
 
-Each checkpoint embeds its profile, so deployment artifacts are kept separate automatically:
+Each accepted checkpoint embeds its profile, so deployment artifacts are kept separate automatically:
 
 ```bash
 python applications/mnist/scripts/export_network.py \
-  applications/mnist/build/training/cropped-dense_snn_float.npz
+  applications/mnist/build/accepted-training/cropped-dense_snn_float.npz
 
 python applications/mnist/scripts/export_network.py \
-  applications/mnist/build/training/native-sparse_snn_float.npz
+  applications/mnist/build/accepted-training/native-sparse_snn_float.npz
 ```
 
-Then evaluate each exported integer network through the actual validated `NeuromorphicCore`:
+Then compare each floating-point SNN and exported integer deployment on the exact same official test images:
 
 ```bash
-python applications/mnist/scripts/evaluate_golden.py \
+python applications/mnist/scripts/compare_float_golden.py \
+  applications/mnist/build/accepted-training/cropped-dense_snn_float.npz \
   applications/mnist/build/deployment/cropped-dense/deployment.json
 
-python applications/mnist/scripts/evaluate_golden.py \
+python applications/mnist/scripts/compare_float_golden.py \
+  applications/mnist/build/accepted-training/native-sparse_snn_float.npz \
   applications/mnist/build/deployment/native-sparse/deployment.json
 ```
 
-Golden evaluation records accuracy, confusion matrix, notebook-style prediction/error indices, input events, output spikes, synaptic visits, no-spike/tie frequency, and accuracy versus presentation tick.
-
-For the MNIST-04 quantization comparison, compare the float checkpoint and quantized golden deployment on the exact same official test images:
-
-```bash
-python applications/mnist/scripts/compare_float_golden.py \
-  applications/mnist/build/training/cropped-dense_snn_float.npz \
-  applications/mnist/build/deployment/cropped-dense/deployment.json \
-  --output applications/mnist/build/comparison/cropped-dense_float_vs_golden.json
-
-python applications/mnist/scripts/compare_float_golden.py \
-  applications/mnist/build/training/native-sparse_snn_float.npz \
-  applications/mnist/build/deployment/native-sparse/deployment.json \
-  --output applications/mnist/build/comparison/native-sparse_float_vs_golden.json
-```
-
-The comparison reports float accuracy, golden accuracy, accuracy delta, prediction agreement/disagreement, activity metrics, and quantized deployment synapse count on one matched corpus.
+The comparison reports float accuracy, quantized/golden accuracy, accuracy delta, prediction agreement, input events, output spikes, synaptic visits, no-spike/tie frequency, and deployed synapse count on one matched corpus.
