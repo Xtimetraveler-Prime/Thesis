@@ -161,20 +161,31 @@ See `docs/MNIST_07_SINGLE_IMAGE_CONFORMANCE.md`.
 
 ## MNIST-08 — FPGA Application Corpus
 
-**Status:** In progress — 60-case generator, shared-static/packed-event capture image, physical runner, and exact suite validator implemented; local/Vivado/physical validation pending
+**Status:** Complete
 
-MNIST-08 expands the frozen 30-image common source corpus across both deployment profiles:
+The complete frozen 30-image source corpus was executed through both accepted physical deployment profiles:
 
 ```text
 30 frozen source images x 2 profiles = 60 physical cases
 60 cases x 16 ticks = 960 committed physical ticks
 ```
 
-The physical corpus preserves the MNIST-07 correctness boundary and still feeds only deployment/input data to the FPGA. Golden states, signed-64 synaptic accumulators, spike flags, output spike counts, and predictions remain host-side.
+The accepted K26 run completed all 60 captures, and the independent host-side differential validator reported:
 
-To avoid duplicating roughly four thousand static synapses 60 times, the generated bitstream image stores the two frozen deployment images once and maps each dynamic case to a profile ID plus its 16-tick external-event schedule. External schedules are packed with CSR-like row pointers rather than padded to a case-wide maximum event count. These are capture-shell storage optimizations only; the validated core RTL and neuron/synapse behavior are unchanged.
+```text
+MNIST-08 suite: passed=True cases=60 ticks=960 mismatches=0
+profile=cropped-dense cases=30 passed=30 mismatches=0
+profile=native-sparse cases=30 passed=30 mismatches=0
+reason=both-correct cases=20 passed=20 mismatches=0
+reason=profile-divergent cases=20 passed=20 mismatches=0
+reason=both-wrong cases=20 passed=20 mismatches=0
+```
 
-The suite validator requires exact physical/golden agreement for all 60 cases and summarizes results by profile and by frozen case category (`both-correct`, `profile-divergent`, `both-wrong`). The deliberately selected 30-image corpus is used for conformance coverage, not reported as an unbiased accuracy sample.
+Every physical tick matched the corresponding Python `NeuromorphicCore` golden trace at the accepted application/core boundary, including ordered external events, signed-64 synaptic accumulators, state-before/state-after words, spike flags, fault status, final spike counts, and decoded predictions.
+
+Scaling from MNIST-07 exposed two validation-harness issues that were corrected without changing the architectural core. First, a single packed external-event variable exceeded Vivado's 1,000,000-bit synthesis limit; the event image was changed to two profile-banked packed ROMs with a generation-time size guard. Second, the first completed 60-case capture exposed a CLI summary-key mismatch after validation had already succeeded and written the reports; regression coverage now enforces that reporting contract. Neither issue altered neuron, synapse, arithmetic, event-order, or classification semantics.
+
+The 30-image corpus remains a deliberately selected conformance set rather than an unbiased accuracy sample.
 
 See `docs/MNIST_08_FPGA_APPLICATION_CORPUS.md`.
 
