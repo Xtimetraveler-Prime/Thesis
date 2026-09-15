@@ -66,7 +66,12 @@ def main() -> int:
         "--progress-every",
         type=int,
         default=1,
-        help="Print routine case progress every N completed cases; disagreements always print.",
+        help="Print routine case progress every N completed cases.",
+    )
+    parser.add_argument(
+        "--print-spike-disagreements",
+        action="store_true",
+        help="Also print every spike-vector-only project/Catalyst disagreement.",
     )
     parser.add_argument(
         "--frozen-root",
@@ -116,12 +121,17 @@ def main() -> int:
         graph = result["graph_preserving"]
         direct = result["delivered_drive"]
         internal = result["catalyst_internal_control"]
-        noteworthy = (
+        critical = (
             not bool(result["passed_transport_consistency"])
             or not bool(graph["prediction_agreement_with_project"])
-            or not bool(graph["spike_vector_agreement_with_project"])
         )
-        should_print = position == total or position % args.progress_every == 0 or noteworthy
+        spike_only = not bool(graph["spike_vector_agreement_with_project"])
+        should_print = (
+            position == total
+            or position % args.progress_every == 0
+            or critical
+            or (args.print_spike_disagreements and spike_only)
+        )
         if should_print:
             print(
                 f"MNIST-12 progress={position}/{total} index={case.mnist_test_index} "
@@ -130,10 +140,11 @@ def main() -> int:
                 f"{graph['voltage_spike_trace']['mismatch_count']} direct_trace_mismatches="
                 f"{direct['voltage_spike_trace']['mismatch_count']} catalyst_internal_trace_mismatches="
                 f"{internal['voltage_spike_trace']['mismatch_count']} max_abs_direct_current="
-                f"{direct['metadata']['max_abs_delivered_current']} transport_consistent="
+                f"{direct['metadata']['max_abs_delivered_current']} spike_vector_agreement="
+                f"{graph['spike_vector_agreement_with_project']} transport_consistent="
                 f"{result['passed_transport_consistency']} source={'resume' if resumed else 'run'}"
             )
-            if noteworthy and graph["voltage_spike_trace"]["first_mismatch"] is not None:
+            if critical and graph["voltage_spike_trace"]["first_mismatch"] is not None:
                 print(f"  graph_first_mismatch={graph['voltage_spike_trace']['first_mismatch']}")
 
     if len(results) != total:
