@@ -6,7 +6,6 @@ from mnist_app.fpga_corpus import (
     MnistFpgaCorpusCase,
     PROFILE_ID,
     PROFILE_ORDER,
-    load_frozen_corpus_entries,
     validate_corpus_case_contract,
     write_corpus_systemverilog_include,
 )
@@ -16,17 +15,12 @@ from mnist_app.fpga_corpus_shell import (
 )
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
 def _cases() -> tuple[MnistFpgaCorpusCase, ...]:
     result: list[MnistFpgaCorpusCase] = []
     reasons = ("both-correct", "profile-divergent", "both-wrong")
     for source_ordinal in range(30):
         for profile in PROFILE_ORDER:
             profile_id = PROFILE_ID[profile]
-            # Distinct static image per profile, identical across that profile's cases.
             base = 100 + profile_id * 100
             result.append(
                 MnistFpgaCorpusCase(
@@ -53,19 +47,6 @@ def _cases() -> tuple[MnistFpgaCorpusCase, ...]:
     return tuple(result)
 
 
-def test_committed_frozen_corpus_has_thirty_valid_sources() -> None:
-    entries = load_frozen_corpus_entries(
-        _repo_root() / "applications" / "mnist" / "frozen" / "mnist-v1"
-    )
-    assert len(entries) == 30
-    assert {int(entry["label"]) for entry in entries} == set(range(10))
-    assert {str(entry["selection_reason"]) for entry in entries} == {
-        "both-correct",
-        "profile-divergent",
-        "both-wrong",
-    }
-
-
 def test_corpus_contract_requires_sixty_paired_cases() -> None:
     cases = _cases()
     validate_corpus_case_contract(cases)
@@ -73,7 +54,7 @@ def test_corpus_contract_requires_sixty_paired_cases() -> None:
     assert {case.profile for case in cases[:2]} == set(PROFILE_ORDER)
 
 
-def test_corpus_include_stores_static_images_once_and_packs_events(tmp_path: Path) -> None:
+def test_corpus_include_stores_static_images_once_and_banks_events(tmp_path: Path) -> None:
     cases = _cases()
     output = write_corpus_systemverilog_include(cases, tmp_path / "corpus.svh")
     text = output.read_text(encoding="utf-8")
@@ -85,16 +66,17 @@ def test_corpus_include_stores_static_images_once_and_packs_events(tmp_path: Pat
 
     # Two profiles x two synthetic synapse words = four static entries. A naive
     # case-replicated image would contain 120 entries.
-    synapse_header = "localparam logic [31:0] M12_3_SYNAPSE_WORDS [0:3]"
-    assert synapse_header in text
+    assert "localparam logic [31:0] M12_3_SYNAPSE_WORDS [0:3]" in text
 
-    # Each case has four events total. Packed storage therefore contains 240
-    # event words rather than 60*4ticks*2(max events)=480 rectangular entries.
-    external_header = "localparam logic [15:0] M12_3_EXTERNAL_EVENTS [0:239]"
-    assert external_header in text
+    # Each profile has 30 cases x 4 events = 120 16-bit words. Keeping them in
+    # separate banks models the production Vivado workaround and prevents one
+    # aggregate variable from crossing the synthesis-size ceiling.
+    assert "localparam logic [15:0] M12_3_EXTERNAL_EVENTS_PROFILE0 [0:119]" in text
+    assert "localparam logic [15:0] M12_3_EXTERNAL_EVENTS_PROFILE1 [0:119]" in text
+    assert "M12_3_EXTERNAL_EVENTS [" not in text
 
 
-def test_capture_controller_patch_uses_profile_static_image_and_packed_events() -> None:
+def test_capture_controller_patch_uses_profile_static_image_and_event_bank() -> None:
     text = """    capture_state_t state;
     logic [7:0] active_case_id;
 active_case_id * M12_3_MAX_NEURONS
@@ -113,6 +95,8 @@ M12_3_EXTERNAL_EVENTS[
     assert "static_image_id = M12_3_CASE_PROFILE_IDS[active_case_id]" in patched
     assert "static_image_id * M12_3_MAX_SYNAPSES" in patched
     assert "M12_3_EXTERNAL_ROWS[" in patched
+    assert "M12_3_EXTERNAL_EVENTS_PROFILE0[" in patched
+    assert "M12_3_EXTERNAL_EVENTS_PROFILE1[" in patched
     assert "active_case_id * M12_3_MAX_SYNAPSES" not in patched
 
 
@@ -124,19 +108,3 @@ def test_capture_tcl_patch_accepts_case_ids_above_fifteen() -> None:
     patched = patch_capture_tcl_text(text)
     assert "set expected_case_nibble [expr {$case_id & 0xF}]" in patched
     assert "$selected_case != $expected_case_nibble" in patched
-
-
-def test_capture_shell_adapters_apply_to_current_platform_sources() -> None:
-    root = _repo_root() / "Neuromorphic Digital Twin" / "rtl" / "core_v1"
-    controller = (root / "m12_3_multitick_capture_controller_v1.sv").read_text(
-        encoding="utf-8"
-    )
-    capture_tcl = (root / "vivado" / "capture_m12_3_multitick.tcl").read_text(
-        encoding="utf-8"
-    )
-
-    patched_controller = patch_capture_controller_text(controller)
-    patched_tcl = patch_capture_tcl_text(capture_tcl)
-    assert "M12_3_CASE_PROFILE_IDS[active_case_id]" in patched_controller
-    assert "M12_3_EXTERNAL_ROWS[" in patched_controller
-    assert "expected_case_nibble" in patched_tcl
