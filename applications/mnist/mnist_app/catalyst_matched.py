@@ -4,13 +4,20 @@ Two Catalyst CPU views are retained deliberately:
 
 * ``graph-preserving`` materializes 784 source neurons, ten classifier neurons,
   and the exact 4,086 effective-weight edges in Catalyst's generic SDK;
-* ``delivered-drive`` uses the M13.3 frozen normalization to collapse each
-  external axon row into the exact ten delivered currents for one tick.
+* ``delivered-drive`` collapses each frozen axon row to the exact ten fan-in
+  current sums and injects those sums directly into ten output neurons.
 
-The first preserves graph traversal but introduces one native source->target
-pipeline tick.  The second isolates output-neuron dynamics.  Agreement between
-those two Catalyst views is a useful internal control; disagreement is preserved
-rather than tuned away.
+The graph-preserving experiment is the primary matched-graph result.  The
+``delivered-drive`` experiment is a CPU-reference control that isolates output
+neuron dynamics.  It deliberately permits signed-32-bit fan-in sums because the
+pinned Catalyst CPU simulator stores external current and soma accumulation in
+``numpy.int32``.  This is broader than the signed-int16 direct-stimulus subset
+frozen for M13.3 and must not be presented as a physical host-transport claim.
+
+Source spikes in graph-preserving mode are delivered one Catalyst native tick
+later.  After that declared pipeline normalization, the two Catalyst views must
+match exactly in per-tick output voltage and spikes; otherwise the adapter fails
+closed.
 """
 
 from __future__ import annotations
@@ -19,13 +26,13 @@ import json
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from .brian2loihi_matched import MatchedImageInput
 from .matched_reference import (
     FrozenMatchedWorkload,
     build_comparison_scenario,
     decode_spike_counts,
     spike_counts_from_trace,
 )
-from .brian2loihi_matched import MatchedImageInput
 
 
 RESULT_SCHEMA = "neuromorphic-twin-mnist-12-catalyst-case-v1"
@@ -34,6 +41,10 @@ CATALYST_PIN = "1806bb4b4114d7671e5648fa75b7b83b3a8d5543"
 GENERIC_CPU_NEURONS_PER_CORE = 1024
 K26_CONFIGURED_NEURONS = 512
 K26_POOL_DEPTH_PER_CORE = 4096
+INT16_MIN = -(1 << 15)
+INT16_MAX = (1 << 15) - 1
+INT32_MIN = -(1 << 31)
+INT32_MAX = (1 << 31) - 1
 
 
 def catalyst_feasibility_audit(workload: FrozenMatchedWorkload) -> dict[str, object]:
@@ -42,7 +53,7 @@ def catalyst_feasibility_audit(workload: FrozenMatchedWorkload) -> dict[str, obj
     if len(graph_pairs) != len(workload.synapses):
         raise ValueError("Catalyst weight-matrix adapter requires unique axon/target pairs")
     max_abs_weight = max(abs(int(s.weight)) for s in workload.synapses)
-    weights_fit_int16 = max_abs_weight <= 32767
+    weights_fit_int16 = max_abs_weight <= INT16_MAX
     return {
         "schema": "neuromorphic-twin-mnist-12-catalyst-feasibility-v1",
         "catalyst_commit": CATALYST_PIN,
@@ -59,7 +70,13 @@ def catalyst_feasibility_audit(workload: FrozenMatchedWorkload) -> dict[str, obj
         "generic_cpu_reference": {
             "neurons_per_core": GENERIC_CPU_NEURONS_PER_CORE,
             "graph_preserving_single_core_fit": graph_neurons <= GENERIC_CPU_NEURONS_PER_CORE,
-            "note": "Pinned Simulator uses a software-expanded pool; this is a reference-model capacity statement, not a K26 hardware-fit claim.",
+            "delivered_drive_accumulator_bits": 32,
+            "delivered_drive_allows_fanin_sum_beyond_signed_int16": True,
+            "note": (
+                "Pinned Simulator uses a software-expanded connection pool and numpy.int32 "
+                "external-current/soma-accumulator paths. Wide delivered-drive is a CPU-only "
+                "semantic control, not a K26 host-stimulus or hardware-fit claim."
+            ),
         },
         "pinned_k26_wrapper": {
             "configured_neurons": K26_CONFIGURED_NEURONS,
@@ -72,11 +89,14 @@ def catalyst_feasibility_audit(workload: FrozenMatchedWorkload) -> dict[str, obj
             ),
             "delivered_drive_output_only_neuron_fit": workload.output_neurons <= K26_CONFIGURED_NEURONS,
             "physical_programming_source_supported": False,
-            "physical_programming_blocker": "Pinned M13.5 K26 source has no board XDC/PS integration/write_bitstream path; routed implementation is the strongest source-supported boundary.",
+            "physical_programming_blocker": (
+                "Pinned M13.5 K26 source has no board XDC/PS integration/write_bitstream "
+                "path; routed implementation is the strongest source-supported boundary."
+            ),
         },
         "decision": {
             "software_graph_preserving_experiment": "SUPPORTED",
-            "software_delivered_drive_experiment": "SUPPORTED",
+            "software_delivered_drive_experiment": "SUPPORTED_CPU_INT32_CONTROL",
             "physical_graph_preserving_k26_experiment": "BLOCKED_BY_PINNED_WRAPPER_CAPACITY_AND_BOARD_INTEGRATION",
             "physical_delivered_drive_k26_experiment": "BLOCKED_BY_BOARD_INTEGRATION_AND_NOT_GRAPH_MATCHED",
         },
@@ -111,6 +131,7 @@ def _compare_voltage_spikes(
                 "candidate": len(cand_ticks),
             },
         }
+
     mismatches: list[dict[str, object]] = []
     for expected_tick, (ref, cand) in enumerate(zip(ref_ticks, cand_ticks, strict=True)):
         if int(ref["canonical_tick"]) != expected_tick or int(cand["canonical_tick"]) != expected_tick:
@@ -140,41 +161,135 @@ def _compare_voltage_spikes(
     }
 
 
+def _collapse_delivered_drive(
+    workload: FrozenMatchedWorkload,
+    schedule: Sequence[Sequence[int]],
+) -> tuple[tuple[int, ...], ...]:
+    """Return exact per-output fan-in sums without narrowing to signed int16.
+
+    Individual frozen weights remain signed-int16-compatible.  Multiple active
+    axons may converge on one output during the same algorithmic tick, so the
+    *sum* can legitimately exceed signed int16 (for example -55,680 in the
+    accepted anchor bundle).  The pinned Catalyst CPU simulator's external
+    current and synchronous soma accumulator are signed 32-bit NumPy arrays.
+    """
+
+    rows: dict[int, list[tuple[int, int]]] = {}
+    for synapse in workload.synapses:
+        rows.setdefault(int(synapse.axon_id), []).append(
+            (int(synapse.target_neuron), int(synapse.weight))
+        )
+
+    collapsed: list[tuple[int, ...]] = []
+    for tick, events in enumerate(schedule):
+        values = [0] * workload.output_neurons
+        for axon_id in events:
+            for target, weight in rows.get(int(axon_id), ()):
+                values[target] += weight
+        for neuron_id, value in enumerate(values):
+            if not INT32_MIN <= value <= INT32_MAX:
+                raise OverflowError(
+                    f"Catalyst CPU delivered-drive tick {tick} neuron {neuron_id} "
+                    f"sum {value} exceeds signed int32"
+                )
+        collapsed.append(tuple(values))
+    return tuple(collapsed)
+
+
 def _run_delivered_drive(
     workload: FrozenMatchedWorkload,
     image: MatchedImageInput,
     project_trace: object,
-) -> tuple[dict[str, object], tuple[int, ...], int]:
-    from neuromorphic_twin.comparison.m13_normalization import (
-        M13CommonCase,
-        build_catalyst_cpu_native_plan,
-        catalyst_cpu_native_to_normalized_payload,
-        run_catalyst_cpu_native,
-    )
+) -> tuple[
+    dict[str, object],
+    tuple[int, ...],
+    int,
+    dict[str, object],
+    dict[str, object],
+]:
+    """Run the CPU-only exact fan-in-sum control directly on output neurons."""
 
-    scenario = build_comparison_scenario(
-        workload,
-        image.schedule,
-        name=f"mnist12-delivered-index{image.mnist_test_index:05d}",
-        reference_refractory=True,
-        unbounded_arithmetic=False,
+    try:
+        import neurocore as nc
+        from neurocore.constants import NEURONS_PER_CORE
+    except Exception as exc:  # pragma: no cover - external pinned environment
+        raise RuntimeError(
+            "Catalyst neurocore SDK is not importable; put the pinned catalyst-n1/sdk on PYTHONPATH"
+        ) from exc
+
+    currents = _collapse_delivered_drive(workload, image.schedule)
+    network = nc.Network()
+    output = network.population(
+        workload.output_neurons,
+        params={"threshold": 8385, "leak": 0, "resting": 0, "refrac": 0},
+        label="mnist_outputs_direct_drive",
     )
-    case = M13CommonCase(
-        name=scenario.name,
-        scenario_class="cpu_direct_drive",
-        question="Frozen MNIST external axon rows collapsed to exact per-output delivered current.",
-        scenario=scenario,
-    )
-    plan = build_catalyst_cpu_native_plan(case)
-    native = run_catalyst_cpu_native(plan)
-    normalized = catalyst_cpu_native_to_normalized_payload(native)
+    simulator = nc.Simulator(num_cores=1)
+    simulator.deploy(network)
+
+    ext_dtype = str(simulator._ext_current.dtype)
+    if ext_dtype != "int32":
+        raise RuntimeError(
+            f"pinned Catalyst CPU external-current dtype changed: expected int32, got {ext_dtype}"
+        )
+
+    placement = simulator._compiled.placement.neuron_map
+    output_gids = [
+        int(placement[(output.id, index)][0]) * int(NEURONS_PER_CORE)
+        + int(placement[(output.id, index)][1])
+        for index in range(workload.output_neurons)
+    ]
+    output_gid_to_logical = {gid: logical for logical, gid in enumerate(output_gids)}
+
+    normalized_ticks: list[dict[str, object]] = []
+    max_abs_current = 0
+    outside_int16_values = 0
+    for canonical_tick, row in enumerate(currents):
+        for neuron_id, current in enumerate(row):
+            max_abs_current = max(max_abs_current, abs(int(current)))
+            if int(current) < INT16_MIN or int(current) > INT16_MAX:
+                outside_int16_values += 1
+            if int(current) != 0:
+                simulator.inject(output[neuron_id], int(current))
+        result = simulator.run(1)
+        spike_gids = {int(gid) for gid in result.spike_trains}
+        normalized_ticks.append(
+            {
+                "canonical_tick": canonical_tick,
+                "native_tick": canonical_tick,
+                "voltage_after": [int(simulator._potential[gid]) for gid in output_gids],
+                "spikes": sorted(
+                    output_gid_to_logical[gid]
+                    for gid in spike_gids
+                    if gid in output_gid_to_logical
+                ),
+            }
+        )
+
+    normalized = {"ticks": normalized_ticks}
     comparison = _compare_voltage_spikes(_normalized_project_trace(project_trace), normalized)
     counts = [0] * workload.output_neurons
-    for tick in normalized["ticks"]:
+    for tick in normalized_ticks:
         for neuron_id in tick["spikes"]:
             counts[int(neuron_id)] += 1
     result_counts = tuple(counts)
-    return comparison, result_counts, decode_spike_counts(result_counts)
+    metadata = {
+        "catalyst_commit": CATALYST_PIN,
+        "transport": "cpu_reference_direct_current",
+        "external_current_dtype": ext_dtype,
+        "fan_in_sum_width": "signed-int32",
+        "max_abs_delivered_current": max_abs_current,
+        "delivered_values_outside_signed_int16": outside_int16_values,
+        "hardware_transport_claim": False,
+        "m13_signed_int16_direct_stimulus_guard_reused": False,
+    }
+    return (
+        comparison,
+        result_counts,
+        decode_spike_counts(result_counts),
+        normalized,
+        metadata,
+    )
 
 
 def _build_weight_matrix(workload: FrozenMatchedWorkload):
@@ -188,7 +303,7 @@ def _build_weight_matrix(workload: FrozenMatchedWorkload):
             raise ValueError(f"duplicate frozen axon/target pair cannot map to Catalyst matrix: {key}")
         seen.add(key)
         value = int(synapse.weight)
-        if not -32768 <= value <= 32767:
+        if not INT16_MIN <= value <= INT16_MAX:
             raise ValueError("frozen effective weight exceeds Catalyst signed-int16 boundary")
         matrix[key] = value
     if int(np.count_nonzero(matrix)) != len(workload.synapses):
@@ -270,12 +385,13 @@ def _run_graph_preserving(
                 "source_events": [int(v) for v in events],
                 "output_voltage_after": [int(simulator._potential[gid]) for gid in output_gids],
                 "output_spikes": sorted(
-                    output_gid_to_logical[gid] for gid in spike_gids if gid in output_gid_to_logical
+                    output_gid_to_logical[gid]
+                    for gid in spike_gids
+                    if gid in output_gid_to_logical
                 ),
             }
         )
 
-    # Source spikes emitted on native tick k are delivered to outputs on k+1.
     normalized = {
         "ticks": [
             {
@@ -340,9 +456,13 @@ def run_catalyst_matched_case(
     if project_counts != image.golden_spike_counts or project_prediction != image.golden_prediction:
         raise RuntimeError("matched project scenario no longer reproduces frozen golden result")
 
-    direct_cmp, direct_counts, direct_prediction = _run_delivered_drive(
-        workload, image, reference_trace
-    )
+    (
+        direct_cmp,
+        direct_counts,
+        direct_prediction,
+        direct_normalized,
+        direct_metadata,
+    ) = _run_delivered_drive(workload, image, reference_trace)
     graph_normalized, graph_counts, graph_prediction, graph_metadata = _run_graph_preserving(
         workload, image
     )
@@ -350,17 +470,14 @@ def run_catalyst_matched_case(
         _normalized_project_trace(reference_trace), graph_normalized
     )
 
-    # The two Catalyst experiments should agree if graph translation adds no
-    # semantic effect beyond Catalyst's known source->target delivery pipeline.
-    direct_payload = {
-        "ticks": [],
-    }
-    # Re-run only a compact comparison representation from spike counts is not
-    # sufficient for state agreement, so use graph-vs-project and direct-vs-
-    # project separately as the authoritative results. Prediction/vector equality
-    # between the two Catalyst views is retained as an additional control.
+    internal_trace_cmp = _compare_voltage_spikes(direct_normalized, graph_normalized)
     catalyst_internal_prediction_agreement = graph_prediction == direct_prediction
     catalyst_internal_spike_vector_agreement = graph_counts == direct_counts
+    transport_consistent = (
+        internal_trace_cmp["passed"]
+        and catalyst_internal_prediction_agreement
+        and catalyst_internal_spike_vector_agreement
+    )
 
     return {
         "schema": RESULT_SCHEMA,
@@ -376,7 +493,8 @@ def run_catalyst_matched_case(
             "prediction_agreement_with_project": direct_prediction == project_prediction,
             "spike_vector_agreement_with_project": direct_counts == project_counts,
             "voltage_spike_trace": direct_cmp,
-            "evidence_label": "MATCHED DELIVERED DRIVE + TRANSLATED DYNAMICS",
+            "metadata": direct_metadata,
+            "evidence_label": "MATCHED DELIVERED DRIVE + TRANSLATED DYNAMICS (CPU INT32 CONTROL)",
         },
         "graph_preserving": {
             "prediction": graph_prediction,
@@ -390,12 +508,14 @@ def run_catalyst_matched_case(
         "catalyst_internal_control": {
             "prediction_agreement": catalyst_internal_prediction_agreement,
             "spike_vector_agreement": catalyst_internal_spike_vector_agreement,
+            "voltage_spike_trace": internal_trace_cmp,
         },
-        "passed_transport_consistency": (
-            catalyst_internal_prediction_agreement
-            and catalyst_internal_spike_vector_agreement
+        "passed_transport_consistency": transport_consistent,
+        "note": (
+            "A Catalyst-vs-project mismatch is an experimental result, not an automatic "
+            "failure. Only disagreement between the independently constructed Catalyst "
+            "graph-preserving and exact-fan-in CPU control paths fails closed."
         ),
-        "note": "A Catalyst-vs-project mismatch is an experimental result, not an automatic failure; only adapter/transport inconsistency fails closed.",
     }
 
 
