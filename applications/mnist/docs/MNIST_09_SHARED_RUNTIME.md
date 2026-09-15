@@ -1,6 +1,6 @@
 # MNIST-09 Shared Runtime Host Interface
 
-**Status:** Physical runtime validation complete; final application pytest after the last host-side Tcl synchronization fix pending before merge
+**Status:** Complete
 
 ## Goal
 
@@ -130,7 +130,7 @@ These fixes affect only validation/runtime transport behavior. Neuron dynamics, 
 
 The MNIST-09 transport is intentionally JTAG/VIO because it reuses the already proven physical-control path with minimal new hardware surface. Host/JTAG transaction time is **not** FPGA architectural execution latency and must not be reported as such.
 
-MNIST-10 characterization should use core-visible cycle/tick timing for architectural performance. The JTAG runtime is a functional host interface and correctness/debug transport.
+MNIST-10 characterization uses core-visible cycle/tick timing for architectural performance. The JTAG runtime is a functional host interface and correctness/debug transport.
 
 ## Tooling
 
@@ -162,14 +162,12 @@ The runtime bitstream generator reuses:
 
 ## Completion criteria
 
-MNIST-09 closes when:
+All criteria are satisfied:
 
-1. the application pytest suite passes with runtime request/result/static-image tests after the final host-side runtime fix;
-2. `--prepare-only` regenerates valid schedules for both frozen profiles;
+1. the application pytest suite passed after the final host-side runtime synchronization fix;
+2. `--prepare-only` regenerated valid schedules for both frozen profiles;
 3. one Vivado 2025.2 K26 runtime bitstream contains both accepted static deployments and no compiled MNIST event schedule;
-4. the same bitstream physically classifies both profiles without rebuilding;
-5. at least two distinct MNIST test indices are exercised through the runtime path;
-6. every accepted runtime result matches independent Python-golden output spike counts and decoded prediction; and
+4. the same bitstream physically classified both profiles without rebuilding;
+5. two distinct MNIST test indices were exercised through the runtime path;
+6. every accepted runtime result matched independent Python-golden output spike counts and decoded prediction; and
 7. documentation keeps JTAG/VIO transport overhead separate from architectural execution timing.
-
-Criteria 2 through 7 are satisfied by the accepted physical run. Criterion 1 is the final merge gate.
