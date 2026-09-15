@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from mnist_app.catalyst_matched import _build_weight_matrix, catalyst_feasibility_audit
+from mnist_app.catalyst_matched import (
+    _build_weight_matrix,
+    _collapse_delivered_drive,
+    catalyst_feasibility_audit,
+)
 from mnist_app.matched_bundle import scope_indices
 from mnist_app.matched_reference import (
     SAT24_MAX,
@@ -54,8 +58,6 @@ def test_project_refractory_zero_and_reference_one_are_exactly_equivalent() -> N
     from neuromorphic_twin.comparison.python_backend import run_python_backend
 
     workload = load_frozen_matched_workload(FROZEN)
-    # Use a deterministic high-activity schedule so the equivalence is exercised
-    # across repeated opportunities to spike, not just a quiescent trace.
     rows = [tuple(range(0, 784, 7)) for _ in range(16)]
     original = build_comparison_scenario(
         workload, rows, name="r0-r1-regression", reference_refractory=False
@@ -112,6 +114,8 @@ def test_catalyst_feasibility_distinguishes_cpu_from_pinned_k26_wrapper() -> Non
     workload = load_frozen_matched_workload(FROZEN)
     audit = catalyst_feasibility_audit(workload)
     assert audit["generic_cpu_reference"]["graph_preserving_single_core_fit"] is True
+    assert audit["generic_cpu_reference"]["delivered_drive_accumulator_bits"] == 32
+    assert audit["generic_cpu_reference"]["delivered_drive_allows_fanin_sum_beyond_signed_int16"] is True
     assert audit["pinned_k26_wrapper"]["graph_preserving_fit"] is False
     assert audit["pinned_k26_wrapper"]["physical_programming_source_supported"] is False
     assert audit["graph"]["total_neurons_if_materialized"] == 794
@@ -127,3 +131,24 @@ def test_catalyst_weight_matrix_preserves_all_stored_edges() -> None:
     assert int(np.count_nonzero(matrix)) == 4086
     for synapse in workload.synapses[:100]:
         assert int(matrix[synapse.axon_id, synapse.target_neuron]) == synapse.weight
+
+
+def test_catalyst_delivered_drive_preserves_wide_fanin_sum_without_int16_clipping() -> None:
+    workload = load_frozen_matched_workload(FROZEN)
+    # The accepted graph contains enough negative fan-in to output 7 that an
+    # all-negative source subset exceeds a signed-int16 direct-stimulus value.
+    negative_axons = tuple(
+        int(synapse.axon_id)
+        for synapse in workload.synapses
+        if int(synapse.target_neuron) == 7 and int(synapse.weight) < 0
+    )
+    assert len(negative_axons) == len(set(negative_axons))
+    schedule = (negative_axons,) + ((),) * 15
+    collapsed = _collapse_delivered_drive(workload, schedule)
+    assert collapsed[0][7] < -32768
+    assert collapsed[0][7] == sum(
+        int(synapse.weight)
+        for synapse in workload.synapses
+        if int(synapse.target_neuron) == 7
+        and int(synapse.axon_id) in set(negative_axons)
+    )
