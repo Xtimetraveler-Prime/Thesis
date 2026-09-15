@@ -38,11 +38,11 @@ def _is_sub_rest_clamp(mismatch: Mapping[str, object] | None) -> bool:
 def classify_case(result: Mapping[str, object]) -> dict[str, object]:
     """Classify the first FPGA-v1/Catalyst divergence for one matched case.
 
-    Classification is intentionally causal and conservative.  We only assign
+    Classification is intentionally causal and conservative. We only assign
     ``CATALYST_SUB_REST_CLAMP`` when the two independent Catalyst views are
     internally trace-identical and their first mismatch against FPGA-v1 is the
     same voltage vector obtained by replacing each negative project voltage with
-    Catalyst's resting value zero.  Later differences may be downstream effects
+    Catalyst's resting value zero. Later differences may be downstream effects
     of that first state divergence and are not independently relabeled.
     """
 
@@ -70,6 +70,12 @@ def classify_case(result: Mapping[str, object]) -> dict[str, object]:
         "prediction_agreement": bool(
             result["graph_preserving"]["prediction_agreement_with_project"]
         ),
+        "graph_spike_vector_agreement": bool(
+            result["graph_preserving"]["spike_vector_agreement_with_project"]
+        ),
+        "direct_spike_vector_agreement": bool(
+            result["delivered_drive"]["spike_vector_agreement_with_project"]
+        ),
         "transport_consistent": bool(result["passed_transport_consistency"]),
         "classification": classification,
         "graph_first_mismatch": _first_mismatch(result, "graph_preserving"),
@@ -77,20 +83,65 @@ def classify_case(result: Mapping[str, object]) -> dict[str, object]:
     }
 
 
-def summarize_cases(results: Sequence[Mapping[str, object]]) -> dict[str, object]:
-    if not results:
-        raise ValueError("Catalyst divergence summary requires at least one case")
-    cases = [classify_case(result) for result in results]
+def _aggregate(cases: Sequence[Mapping[str, object]]) -> dict[str, object]:
     counts = Counter(str(case["classification"]) for case in cases)
     return {
-        "schema": "neuromorphic-twin-mnist-12-catalyst-divergence-summary-v1",
         "case_count": len(cases),
         "classification_counts": dict(sorted(counts.items())),
         "transport_consistent_cases": sum(bool(case["transport_consistent"]) for case in cases),
         "prediction_agreement_cases": sum(bool(case["prediction_agreement"]) for case in cases),
+        "graph_spike_vector_agreement_cases": sum(
+            bool(case["graph_spike_vector_agreement"]) for case in cases
+        ),
+        "direct_spike_vector_agreement_cases": sum(
+            bool(case["direct_spike_vector_agreement"]) for case in cases
+        ),
         "sub_rest_clamp_cases": counts.get(SUB_REST_CLAMP, 0),
         "exact_cases": counts.get(EXACT, 0),
         "other_translated_dynamics_cases": counts.get(OTHER, 0),
         "transport_inconsistent_cases": counts.get(TRANSPORT_INCONSISTENT, 0),
+    }
+
+
+def summarize_cases(results: Sequence[Mapping[str, object]]) -> dict[str, object]:
+    if not results:
+        raise ValueError("Catalyst divergence summary requires at least one case")
+    cases = [classify_case(result) for result in results]
+    return {
+        "schema": "neuromorphic-twin-mnist-12-catalyst-divergence-summary-v1",
+        **_aggregate(cases),
         "cases": cases,
+    }
+
+
+def summarize_cases_compact(results: Sequence[Mapping[str, object]]) -> dict[str, object]:
+    """Return full-scope evidence without embedding first-mismatch vectors per case."""
+
+    if not results:
+        raise ValueError("Catalyst divergence summary requires at least one case")
+    cases = [classify_case(result) for result in results]
+    classifications: dict[str, list[int]] = {}
+    for case in cases:
+        classifications.setdefault(str(case["classification"]), []).append(
+            int(case["mnist_test_index"])
+        )
+    return {
+        "schema": "neuromorphic-twin-mnist-12-catalyst-divergence-compact-v1",
+        **_aggregate(cases),
+        "classification_indices": dict(sorted(classifications.items())),
+        "prediction_disagreement_indices": [
+            int(case["mnist_test_index"])
+            for case in cases
+            if not bool(case["prediction_agreement"])
+        ],
+        "graph_spike_vector_disagreement_indices": [
+            int(case["mnist_test_index"])
+            for case in cases
+            if not bool(case["graph_spike_vector_agreement"])
+        ],
+        "transport_inconsistent_indices": [
+            int(case["mnist_test_index"])
+            for case in cases
+            if not bool(case["transport_consistent"])
+        ],
     }
