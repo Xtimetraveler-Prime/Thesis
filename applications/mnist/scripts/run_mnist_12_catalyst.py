@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from mnist_app.catalyst_matched import (
@@ -60,12 +59,15 @@ def main() -> int:
         write_json(result, args.output_dir / f"index{case.mnist_test_index:05d}.json")
         graph = result["graph_preserving"]
         direct = result["delivered_drive"]
+        internal = result["catalyst_internal_control"]
         print(
             f"MNIST-12 case index={case.mnist_test_index} label={case.label} "
             f"project={result['project_prediction']} graph={graph['prediction']} "
             f"direct={direct['prediction']} graph_trace_mismatches="
             f"{graph['voltage_spike_trace']['mismatch_count']} direct_trace_mismatches="
-            f"{direct['voltage_spike_trace']['mismatch_count']} transport_consistent="
+            f"{direct['voltage_spike_trace']['mismatch_count']} catalyst_internal_trace_mismatches="
+            f"{internal['voltage_spike_trace']['mismatch_count']} max_abs_direct_current="
+            f"{direct['metadata']['max_abs_delivered_current']} transport_consistent="
             f"{result['passed_transport_consistency']}"
         )
 
@@ -79,9 +81,9 @@ def main() -> int:
         f"direct_prediction_agreement={suite['delivered_drive_prediction_agreement_cases']}"
     )
     print(f"suite: {suite_path}")
-    # Project-vs-Catalyst disagreement is evidence, not a harness failure.  Exit
-    # nonzero only when the two independently constructed Catalyst transport
-    # views disagree, which indicates the matched adapter itself needs review.
+    # Project-vs-Catalyst disagreement is evidence, not a harness failure. Exit
+    # nonzero only when the independently constructed Catalyst graph and exact
+    # fan-in CPU control traces disagree after the declared pipeline transform.
     return 0 if suite["transport_consistent_cases"] == suite["case_count"] else 1
 
 
