@@ -88,9 +88,7 @@ def write_timing_runtime_controller(source: str | Path, output: str | Path) -> P
     return target
 
 
-_TCL_PROBE_ANCHOR = (
-    "set p_external_count [find_one_probe $vio observed_external_event_count]\n"
-)
+_TCL_PROBE_ANCHOR = "set p_external_count [find_one_probe $vio observed_external_event_count]\n"
 _TCL_PROBE_INSERT = (
     "set p_external_count [find_one_probe $vio observed_external_event_count]\n"
     "set p_tick_cycles [find_one_probe $vio observed_last_tick_cycles]\n"
@@ -113,12 +111,8 @@ _TCL_EXT_CHECK_INSERT = """    if {[probe_uint $p_external_count] != [llength $e
 
     for {set neuron 0} {$neuron < 10} {incr neuron} {
 """
-_TCL_JSON_ANCHOR = (
-    'puts $out "  \\"spike_counts\\": \\[[join $spike_counts {, }]\\],"\n'
-    'puts $out "  \\"prediction\\": $prediction"\n'
-)
+_TCL_JSON_ANCHOR = 'puts $out "  \\"prediction\\": $prediction"\n'
 _TCL_JSON_INSERT = (
-    'puts $out "  \\"spike_counts\\": \\[[join $spike_counts {, }]\\],"\n'
     'puts $out "  \\"tick_cycles\\": \\[[join $tick_cycles {, }]\\],"\n'
     'puts $out "  \\"prediction\\": $prediction"\n'
 )
@@ -138,8 +132,11 @@ def patch_runtime_tcl_for_timing(text: str) -> str:
         if patched.count(source) != 1:
             raise ValueError(f"unexpected MNIST-09 Tcl anchor for {description}")
         patched = patched.replace(source, target, 1)
-    patched = patched.replace("MNIST-09 runtime classification complete:", "MNIST-10 timed runtime classification complete:")
-    if "observed_last_tick_cycles" not in patched or '"tick_cycles"' not in patched:
+    patched = patched.replace(
+        "MNIST-09 runtime classification complete:",
+        "MNIST-10 timed runtime classification complete:",
+    )
+    if "observed_last_tick_cycles" not in patched or "tick_cycles" not in patched:
         raise AssertionError("MNIST-10 timing Tcl adaptation is incomplete")
     return patched
 
@@ -161,12 +158,7 @@ def expected_tick_synapse_visits(
 ) -> tuple[int, ...]:
     """Exact CSR visits implied by one feed-forward runtime event schedule."""
 
-    deployment = (
-        Path(frozen_root)
-        / "deployments"
-        / request.profile
-        / "deployment.json"
-    )
+    deployment = Path(frozen_root) / "deployments" / request.profile / "deployment.json"
     runtime = load_deployment(deployment)
     row_lengths: Sequence[int] = runtime.row_lengths
     visits: list[int] = []
