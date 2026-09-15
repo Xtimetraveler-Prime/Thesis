@@ -66,7 +66,7 @@ See `docs/MNIST_01_CAPACITY_AUDIT.md`.
 
 ## MNIST-02 — Shared Dataset and Deterministic Spike Encoding
 
-**Status:** Implementation complete; real-MNIST integration gate pending
+**Status:** Complete
 
 One shared profile-aware encoder is implemented in `mnist_app/encoding.py`.
 
@@ -82,53 +82,53 @@ One shared profile-aware encoder is implemented in `mnist_app/encoding.py`.
 - maps row-major cropped pixels to axons `0..399`;
 - uses the identical deterministic intensity-to-spike rule.
 
-### Current evidence
+### Completion evidence
 
 Source-level tests cover both profiles: black/white images, exact spike count per pixel, deterministic ordering, uniqueness, profile-specific axon limits, exact crop behavior, preservation of the native image, outer-border behavior, input validation, and equivalence to the notebook-style `pixel / 255.0` normalization concept.
 
-An integration test using `tf.keras.datasets.mnist.load_data()` is source-controlled for both profiles but must run in an environment containing TensorFlow/MNIST before this milestone is marked complete.
-
-### Completion criteria
-
-- identical input always produces an identical schedule;
-- both schedules can be consumed directly by `NeuromorphicCore.step()`;
-- the real-MNIST integration tests pass for both profiles.
+The TensorFlow-backed real-MNIST integration tests and the full application pytest suite were independently run successfully in the user application environment. Full training runs also consumed the standard MNIST dataset through both encoders without profile or event-bound failures.
 
 ---
 
 ## MNIST-03 — Software SNN Training Baselines
 
-**Status:** Implementation complete; first accepted TensorFlow training runs pending
+**Status:** Implementation complete; validation-selected acceptance reruns pending
 
-`mnist_app/training.py` repurposes the user-authored notebook workflow where it remains appropriate: TensorFlow/Keras MNIST loading, Adam optimization, sparse categorical cross-entropy, elapsed training time, test accuracy, `argmax` predictions, and incorrect-sample indexing. The dense ReLU forward path is replaced by explicit integrate-and-fire output dynamics with a surrogate gradient.
+`mnist_app/training.py` repurposes the user-authored notebook workflow where it remains appropriate: TensorFlow/Keras MNIST loading, Adam optimization, sparse categorical cross-entropy, elapsed training time, final test accuracy, `argmax` predictions, and incorrect-sample indexing. The dense ReLU forward path is replaced by explicit integrate-and-fire output dynamics with a surrogate gradient.
+
+The accepted methodology now reserves a deterministic stratified 5,000-sample validation set from the official 60,000-sample MNIST training split. Per-epoch checkpoint selection uses validation accuracy only. The official 10,000-image test set is not consulted until the selected model is frozen.
 
 ### MNIST-03A — Cropped-dense SNN
 
-The implemented trainer supports a direct `400 -> 10` spiking classifier with the full 4,000-connection matrix trainable.
+The trainer supports a direct `400 -> 10` spiking classifier with the full 4,000-connection matrix trainable. The best validation checkpoint is restored before the single official test evaluation.
 
 ### MNIST-03B — Native-sparse SNN
 
-The implemented trainer:
+The trainer:
 
 1. trains the full software `784 -> 10` direct SNN;
-2. deterministically magnitude-prunes to at most 4,096 connections;
-3. freezes the pruning mask;
-4. fine-tunes only surviving weights;
-5. asserts that the accepted checkpoint remains within the hardware budget.
+2. selects/restores the best dense checkpoint using validation accuracy;
+3. deterministically magnitude-prunes to at most 4,096 connections;
+4. records the immediate post-prune validation result as a candidate;
+5. resets Adam and fine-tunes only surviving weights;
+6. chooses between the post-prune checkpoint and best fine-tuned checkpoint using validation accuracy;
+7. evaluates the official test set only after final sparse selection.
 
-Pure NumPy tests cover deterministic pruning and the notebook-derived prediction/error-index analysis. The TensorFlow training path cannot be executed in the current development environment, so no SNN accuracy is claimed yet.
+Pure NumPy tests cover deterministic pruning, deterministic stratified splitting, and notebook-derived prediction/error-index analysis.
+
+Preliminary full-data development runs established that both architectures learn successfully (about 89.6% cropped-dense and 91.2% native-sparse in the earlier test-monitored workflow). Those values are retained only as development evidence; the validation-selected reruns supersede them as the accepted thesis baselines.
 
 ### Completion criteria
 
-For both profiles preserve a reproducible checkpoint, seed, training configuration, training time, per-epoch metrics, test accuracy, mean output spikes/image, predictions, and incorrect-sample indices. Raw scores/spike counts are not called probabilities.
+For both profiles preserve a reproducible checkpoint, seed, training configuration, training time, validation history, selected epoch/stage, one final official test accuracy, mean output spikes/image, predictions, and incorrect-sample indices. Raw scores/spike counts are not called probabilities.
 
 ---
 
 ## MNIST-04 — Hardware-Aware Quantization and Export
 
-**Status:** Implementation complete; trained-checkpoint validation and accuracy-loss measurement pending
+**Status:** Implementation complete; accepted-checkpoint validation and matched accuracy-loss measurement pending
 
-`mnist_app/export.py` now accepts either profile and maps accepted float checkpoints into the existing Loihi-style encoded weight representation and M08 CSR storage.
+`mnist_app/export.py` accepts either profile and maps accepted float checkpoints into the existing Loihi-style encoded weight representation and M08 CSR storage.
 
 ### MNIST-04A — Cropped-dense export
 
@@ -145,18 +145,20 @@ For both profiles preserve a reproducible checkpoint, seed, training configurati
 
 Pure quantization tests cover both profiles, signed mantissa range, state headroom, shape validation, and sparse-budget enforcement.
 
+`mnist_app/comparison.py` and `scripts/compare_float_golden.py` now evaluate the float SNN and quantized golden deployment on the exact same official test samples and report accuracy delta, prediction agreement/disagreement, activity metrics, and deployed synapse count.
+
 ### Completion criteria
 
-- both trained checkpoints export successfully;
+- both accepted trained checkpoints export successfully;
 - every parameter is legal under FPGA-v1;
 - exact stored synapse counts and quantization errors are recorded;
-- floating-SNN versus quantized/golden accuracy loss is measured.
+- floating-SNN versus quantized/golden accuracy loss is measured on one matched corpus.
 
 ---
 
 ## MNIST-05 — Python Golden-Model Evaluation
 
-**Status:** Implementation complete; trained exported deployments required
+**Status:** Implementation complete; accepted trained/exported deployments required
 
 `mnist_app/inference.py` loads either deployment into the actual validated `NeuromorphicCore`; no application-specific neuron simulator is used.
 
@@ -181,11 +183,11 @@ Golden evaluation records:
 - no-spike image count;
 - tied-winner image count.
 
-Pure tests verify profile selection, event behavior, synaptic-visit counting, tick-by-tick predictions, and error-index reporting. The real `neuromorphic_twin` integration test is source-controlled for both profiles and runs when the package is installed.
+Pure tests verify profile selection, event behavior, synaptic-visit counting, tick-by-tick predictions, and error-index reporting. The real `neuromorphic_twin` integration tests have run successfully in the user application environment for both profiles using development checkpoints.
 
 ### Completion criteria
 
-Both trained/exported profiles run end-to-end from MNIST image to golden-model prediction, and their full evaluation artifacts are preserved.
+Both accepted trained/exported profiles run end-to-end from MNIST image to golden-model prediction, and their full evaluation artifacts are preserved.
 
 ---
 
