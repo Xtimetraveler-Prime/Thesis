@@ -45,11 +45,11 @@ Generated training/deployment artifacts belong under `applications/mnist/build/`
 
 The software path intentionally reuses the user's own TensorFlow/Keras MNIST lab structure where it remains valid:
 
-- `tf.keras.datasets.mnist.load_data()` and the standard train/test split;
+- `tf.keras.datasets.mnist.load_data()`;
 - raw pixel handling and the `pixel / 255.0` normalization convention;
 - Adam optimization and sparse categorical cross-entropy;
 - training-time measurement with `time.perf_counter()`;
-- test accuracy evaluation;
+- final test accuracy evaluation;
 - `argmax` predictions;
 - incorrect-prediction indexing and later visualization/analysis.
 
@@ -77,37 +77,38 @@ python applications/mnist/scripts/inspect_encoding.py --profile native-sparse --
 python applications/mnist/scripts/inspect_encoding.py --profile cropped-dense --index 0
 ```
 
-## Training
+## Training methodology
 
-The cropped-dense profile should be trained first because it isolates SNN training behavior without pruning:
+Model selection does not use the official MNIST test set. By default, the 60,000 official training samples are split deterministically and stratified by class into:
+
+```text
+55,000 optimization/training samples
+5,000 validation samples
+10,000 untouched official test samples
+```
+
+Per-epoch progress reports validation accuracy (`val_acc`). The best validation checkpoint is restored after each phase, with the earliest epoch retained on an exact validation tie. The official test set is evaluated only once after the selected model is frozen.
+
+For `native-sparse`, the best dense validation checkpoint is pruned to the 4,096-connection budget. The post-prune model itself is retained as an explicit candidate, Adam is reset, and masked fine-tuning proceeds only on surviving connections. Final sparse selection compares the best fine-tuned validation result against the immediate post-prune validation result.
+
+The default validation size can be changed with `--validation-size`, but the frozen thesis baseline uses 5,000 samples.
+
+Full accepted runs:
 
 ```bash
 python applications/mnist/scripts/train_snn.py \
   --profile cropped-dense \
-  --epochs 1 \
-  --train-limit 2000 \
-  --test-limit 500
-```
+  --epochs 10 \
+  --output applications/mnist/build/training
 
-Then smoke-test native-sparse, which trains the full direct matrix, magnitude-prunes to the 4,096-connection budget, and fine-tunes only surviving connections:
-
-```bash
 python applications/mnist/scripts/train_snn.py \
   --profile native-sparse \
-  --epochs 1 \
-  --fine-tune-epochs 1 \
-  --train-limit 2000 \
-  --test-limit 500
+  --epochs 10 \
+  --fine-tune-epochs 5 \
+  --output applications/mnist/build/training
 ```
 
-Accepted/full runs can use the complete dataset, for example:
-
-```bash
-python applications/mnist/scripts/train_snn.py --profile cropped-dense --epochs 10
-python applications/mnist/scripts/train_snn.py --profile native-sparse --epochs 10 --fine-tune-epochs 5
-```
-
-Training preserves notebook-style metrics including elapsed training time, accuracy, `argmax` predictions, and incorrect sample indices, while also recording output spike activity and active connection count.
+Training preserves notebook-style metrics including elapsed training time, `argmax` predictions, and incorrect sample indices, while also recording validation history, selected epochs, output spike activity, and active connection count.
 
 ## Export and golden-model evaluation
 
@@ -133,4 +134,18 @@ python applications/mnist/scripts/evaluate_golden.py \
 
 Golden evaluation records accuracy, confusion matrix, notebook-style prediction/error indices, input events, output spikes, synaptic visits, no-spike/tie frequency, and accuracy versus presentation tick.
 
-The current development environment does not contain TensorFlow/MNIST, so real training accuracy is intentionally not claimed until these commands are run in the application environment.
+For the MNIST-04 quantization comparison, compare the float checkpoint and quantized golden deployment on the exact same official test images:
+
+```bash
+python applications/mnist/scripts/compare_float_golden.py \
+  applications/mnist/build/training/cropped-dense_snn_float.npz \
+  applications/mnist/build/deployment/cropped-dense/deployment.json \
+  --output applications/mnist/build/comparison/cropped-dense_float_vs_golden.json
+
+python applications/mnist/scripts/compare_float_golden.py \
+  applications/mnist/build/training/native-sparse_snn_float.npz \
+  applications/mnist/build/deployment/native-sparse/deployment.json \
+  --output applications/mnist/build/comparison/native-sparse_float_vs_golden.json
+```
+
+The comparison reports float accuracy, golden accuracy, accuracy delta, prediction agreement/disagreement, activity metrics, and quantized deployment synapse count on one matched corpus.
