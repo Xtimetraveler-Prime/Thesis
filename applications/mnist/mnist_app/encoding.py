@@ -1,10 +1,4 @@
-"""Deterministic MNIST-to-axon event encoding.
-
-The FPGA baseline consumes integer axon IDs, not floating-point pixels. The
-encoder uses the original uint8 MNIST image, center-crops 28x28 to 20x20,
-quantizes each pixel to an integer spike count in 0..T, and distributes those
-spikes deterministically across T algorithmic ticks.
-"""
+"""Deterministic MNIST-to-axon event encoding shared by both application profiles."""
 
 from __future__ import annotations
 
@@ -13,13 +7,12 @@ from collections.abc import Sequence
 import numpy as np
 
 from .config import (
-    CROP_BORDER,
-    INPUT_AXONS,
-    INPUT_HEIGHT,
-    INPUT_WIDTH,
+    DEFAULT_PROFILE,
     PRESENTATION_TICKS,
     SOURCE_HEIGHT,
     SOURCE_WIDTH,
+    MnistProfile,
+    get_profile,
 )
 
 
@@ -38,48 +31,79 @@ def _validate_images(images: np.ndarray) -> np.ndarray:
     return array.astype(np.uint8, copy=False)
 
 
-def center_crop_20x20(images: np.ndarray) -> np.ndarray:
-    """Return the frozen 20x20 center crop while preserving uint8 pixels."""
+def preprocess_images(
+    images: np.ndarray,
+    *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
+) -> np.ndarray:
+    """Return native 28x28 images or the exact cropped-dense 20x20 view."""
 
+    selected = get_profile(profile)
     array = _validate_images(images)
-    stop = SOURCE_HEIGHT - CROP_BORDER
-    cropped = array[:, CROP_BORDER:stop, CROP_BORDER:stop]
-    if cropped.shape[1:] != (INPUT_HEIGHT, INPUT_WIDTH):
-        raise AssertionError("internal crop configuration is inconsistent")
-    return cropped
+    if selected.crop_border is None:
+        return array
+
+    start = selected.crop_border
+    stop_y = start + selected.input_height
+    stop_x = start + selected.input_width
+    result = array[:, start:stop_y, start:stop_x]
+    if result.shape[1:] != (selected.input_height, selected.input_width):
+        raise AssertionError("profile crop configuration is inconsistent")
+    return result
+
+
+def center_crop_20x20(images: np.ndarray) -> np.ndarray:
+    """Compatibility helper for the cropped-dense profile."""
+
+    return preprocess_images(images, profile="cropped-dense")
+
+
+def normalize_pixels(
+    images: np.ndarray,
+    *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
+) -> np.ndarray:
+    """Return float32 pixels in 0..1, matching the user's notebook convention."""
+
+    selected = preprocess_images(images, profile=profile)
+    return selected.astype(np.float32) / np.float32(255.0)
 
 
 def quantize_spike_levels(
     images: np.ndarray,
     *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
     presentation_ticks: int = PRESENTATION_TICKS,
 ) -> np.ndarray:
-    """Quantize each cropped pixel to an exact integer spike count in 0..T."""
+    """Quantize each selected pixel to an exact integer spike count in 0..T."""
 
     if isinstance(presentation_ticks, bool) or not isinstance(presentation_ticks, int):
         raise TypeError("presentation_ticks must be an int")
     if presentation_ticks <= 0:
         raise ValueError("presentation_ticks must be positive")
 
-    cropped = center_crop_20x20(images).astype(np.int64)
-    levels = (cropped * presentation_ticks + 127) // 255
-    return levels.reshape(cropped.shape[0], INPUT_AXONS).astype(np.int16)
+    selected = get_profile(profile)
+    pixels = preprocess_images(images, profile=selected).astype(np.int64)
+
+    # Integer half-up quantization is the deterministic equivalent of the
+    # notebook's pixel/255 normalization followed by scaling to T spikes.
+    levels = (pixels * presentation_ticks + 127) // 255
+    return levels.reshape(pixels.shape[0], selected.input_axons).astype(np.int16)
 
 
 def encode_binary_spikes(
     images: np.ndarray,
     *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
     presentation_ticks: int = PRESENTATION_TICKS,
 ) -> np.ndarray:
-    """Encode images as a dense boolean tensor ``(N, T, 400)``.
+    """Encode images as ``(N, T, input_axons)`` boolean spike tensors."""
 
-    A pixel with level ``k`` emits exactly ``k`` spikes, spread as evenly as
-    possible over the presentation window. Every axon can appear at most once
-    per tick, so one image can generate no more than 400 external events on any
-    tick.
-    """
-
-    levels = quantize_spike_levels(images, presentation_ticks=presentation_ticks)
+    levels = quantize_spike_levels(
+        images,
+        profile=profile,
+        presentation_ticks=presentation_ticks,
+    )
     ticks = np.arange(presentation_ticks, dtype=np.int64)
     before = (ticks[None, :, None] * levels[:, None, :]) // presentation_ticks
     after = ((ticks[None, :, None] + 1) * levels[:, None, :]) // presentation_ticks
@@ -89,11 +113,16 @@ def encode_binary_spikes(
 def encode_event_schedule(
     image: np.ndarray,
     *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
     presentation_ticks: int = PRESENTATION_TICKS,
 ) -> tuple[tuple[int, ...], ...]:
     """Encode one image as the exact per-tick axon-ID sequence for the core."""
 
-    spikes = encode_binary_spikes(image, presentation_ticks=presentation_ticks)
+    spikes = encode_binary_spikes(
+        image,
+        profile=profile,
+        presentation_ticks=presentation_ticks,
+    )
     if spikes.shape[0] != 1:
         raise ValueError("encode_event_schedule accepts exactly one image")
     return tuple(
