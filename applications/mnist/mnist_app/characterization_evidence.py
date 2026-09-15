@@ -55,6 +55,8 @@ def _validate_case(source_dir: Path, *, profile: str, index: int) -> dict[str, A
 
     if str(request.get("profile")) != profile or int(request.get("mnist_test_index", -1)) != index:
         raise ValueError("request identity does not match archive case")
+    if int(request.get("presentation_ticks", -1)) != 16:
+        raise ValueError("request does not use the frozen 16-tick presentation")
     if expectation.get("schema") != TIMING_EXPECTATION_SCHEMA:
         raise ValueError("unsupported timing-expectation schema")
     if str(expectation.get("profile")) != profile or int(expectation.get("mnist_test_index", -1)) != index:
@@ -89,6 +91,8 @@ def _validate_case(source_dir: Path, *, profile: str, index: int) -> dict[str, A
 
     if int(physical.get("ticks", -1)) != 16:
         raise ValueError("physical result did not commit exactly 16 ticks")
+    if int(physical.get("total_events", -1)) != int(request.get("total_events", -2)):
+        raise ValueError("physical result event count does not match the host request")
     if int(physical.get("prediction", -1)) != int(comparison["golden_prediction"]):
         raise ValueError("physical prediction does not match the independent golden prediction")
     if tuple(int(v) for v in physical["spike_counts"]) != tuple(
