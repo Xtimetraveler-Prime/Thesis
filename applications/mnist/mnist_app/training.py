@@ -1,21 +1,29 @@
-"""TensorFlow training utilities for the first direct MNIST SNN.
+"""TensorFlow training utilities for the dual-profile direct MNIST SNNs.
 
-The user's original lab used TensorFlow/Keras for MNIST loading, training, and
-accuracy evaluation. This module keeps that workflow but replaces ReLU dense
-neurons with an explicit integrate-and-fire output layer whose forward behavior
-matches the frozen application profile: full current decay, persistent voltage,
-hard reset to zero, no refractory period, and spike-count decoding.
+The user's class notebooks provide the surrounding workflow: TensorFlow/Keras
+MNIST loading, Adam, sparse categorical cross-entropy, elapsed training time,
+argmax predictions, and incorrect-sample indexing. This module preserves those
+pieces while replacing the ANN forward path with the application's explicit
+integrate-and-fire dynamics.
 """
 
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
-from .config import FLOAT_THRESHOLD, INPUT_AXONS, OUTPUT_NEURONS, PRESENTATION_TICKS
+from .config import (
+    DEFAULT_PROFILE,
+    FLOAT_THRESHOLD,
+    OUTPUT_NEURONS,
+    PRESENTATION_TICKS,
+    MnistProfile,
+    get_profile,
+)
 from .dataset import load_mnist
 from .encoding import encode_binary_spikes
 
@@ -24,7 +32,10 @@ from .encoding import encode_binary_spikes
 class TrainingResult:
     checkpoint: Path
     metrics: Path
+    evaluation: Path
     final_test_accuracy: float
+    profile: str
+    nonzero_weights: int
 
 
 def _require_tensorflow():
@@ -39,7 +50,7 @@ def _require_tensorflow():
 
 
 def _surrogate_spike(tf, x):
-    """Hard forward threshold with a smooth fast-sigmoid surrogate gradient."""
+    """Hard strict-threshold forward path with a fast-sigmoid surrogate gradient."""
 
     @tf.custom_gradient
     def op(value):
@@ -55,18 +66,63 @@ def _surrogate_spike(tf, x):
     return op(x)
 
 
-def forward_spike_counts(spikes, weights, *, threshold: float = FLOAT_THRESHOLD):
+def magnitude_pruning_mask(weights: np.ndarray, max_nonzero: int) -> np.ndarray:
+    """Keep at most ``max_nonzero`` largest-magnitude weights deterministically."""
+
+    matrix = np.asarray(weights)
+    if matrix.ndim != 2:
+        raise ValueError("weights must be a rank-2 matrix")
+    if isinstance(max_nonzero, bool) or not isinstance(max_nonzero, int):
+        raise TypeError("max_nonzero must be an int")
+    if max_nonzero < 0:
+        raise ValueError("max_nonzero cannot be negative")
+
+    flat = np.abs(matrix).reshape(-1)
+    keep = min(max_nonzero, flat.size)
+    mask = np.zeros(flat.size, dtype=np.float32)
+    if keep:
+        indices = np.arange(flat.size)
+        # Primary key: descending magnitude. Secondary key: ascending flat index.
+        order = np.lexsort((indices, -flat))
+        mask[order[:keep]] = 1.0
+    return mask.reshape(matrix.shape)
+
+
+def analyze_predictions(
+    class_scores: np.ndarray,
+    labels: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return notebook-style argmax predictions and incorrect sample indices."""
+
+    scores = np.asarray(class_scores)
+    target = np.asarray(labels, dtype=np.int64)
+    if scores.ndim != 2 or scores.shape[1] != OUTPUT_NEURONS:
+        raise ValueError(f"class_scores must have shape (N, {OUTPUT_NEURONS})")
+    if scores.shape[0] != target.shape[0]:
+        raise ValueError("class_scores and labels must contain the same samples")
+    predictions = np.argmax(scores, axis=1).astype(np.int64)
+    incorrect = np.where(predictions != target)[0].astype(np.int64)
+    return predictions, incorrect
+
+
+def forward_spike_counts(
+    spikes,
+    weights,
+    *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
+    threshold: float = FLOAT_THRESHOLD,
+):
     """Run the float training model and return output spike counts."""
 
     tf = _require_tensorflow()
+    selected = get_profile(profile)
     spikes = tf.convert_to_tensor(spikes, dtype=tf.float32)
     weights = tf.convert_to_tensor(weights, dtype=tf.float32)
     if spikes.shape.rank != 3:
         raise ValueError("spikes must have rank 3: (batch, ticks, axons)")
-    if weights.shape != (INPUT_AXONS, OUTPUT_NEURONS):
-        raise ValueError(
-            f"weights must have shape {(INPUT_AXONS, OUTPUT_NEURONS)}; got {weights.shape}"
-        )
+    expected = (selected.input_axons, OUTPUT_NEURONS)
+    if weights.shape != expected:
+        raise ValueError(f"weights must have shape {expected}; got {weights.shape}")
 
     batch = tf.shape(spikes)[0]
     voltage = tf.zeros((batch, OUTPUT_NEURONS), dtype=tf.float32)
@@ -80,35 +136,61 @@ def forward_spike_counts(spikes, weights, *, threshold: float = FLOAT_THRESHOLD)
     return counts
 
 
-def _evaluate(weights, images, labels, *, batch_size: int) -> tuple[float, float]:
-    correct = 0
-    total = 0
+def _evaluate(
+    weights,
+    images,
+    labels,
+    *,
+    profile: MnistProfile,
+    batch_size: int,
+) -> tuple[float, float, np.ndarray, np.ndarray]:
+    score_rows: list[np.ndarray] = []
     total_spikes = 0.0
     for start in range(0, len(images), batch_size):
         stop = min(start + batch_size, len(images))
-        spike_batch = encode_binary_spikes(images[start:stop]).astype(np.float32)
-        counts = forward_spike_counts(spike_batch, weights).numpy()
-        predictions = np.argmax(counts, axis=1)
-        correct += int(np.sum(predictions == labels[start:stop]))
-        total += stop - start
+        spike_batch = encode_binary_spikes(
+            images[start:stop],
+            profile=profile,
+        ).astype(np.float32)
+        counts = forward_spike_counts(
+            spike_batch,
+            weights,
+            profile=profile,
+        ).numpy()
+        score_rows.append(counts)
         total_spikes += float(np.sum(counts))
-    return correct / total, total_spikes / total
+
+    scores = (
+        np.concatenate(score_rows, axis=0)
+        if score_rows
+        else np.empty((0, OUTPUT_NEURONS), dtype=np.float32)
+    )
+    predictions, incorrect = analyze_predictions(scores, labels)
+    accuracy = float(np.mean(predictions == labels)) if len(labels) else 0.0
+    mean_spikes = total_spikes / len(labels) if len(labels) else 0.0
+    return accuracy, mean_spikes, predictions, incorrect
 
 
 def train_snn(
     output_dir: str | Path,
     *,
+    profile: str | MnistProfile = DEFAULT_PROFILE,
     epochs: int = 10,
+    fine_tune_epochs: int = 5,
     batch_size: int = 128,
     learning_rate: float = 1e-3,
     seed: int = 0x4D4E4953,
     train_limit: int | None = None,
     test_limit: int | None = None,
 ) -> TrainingResult:
-    """Train and persist the frozen 400->10 direct spiking classifier."""
+    """Train one direct SNN and, for native-sparse, prune/fine-tune to hardware fit."""
 
+    selected = get_profile(profile)
     if epochs <= 0 or batch_size <= 0:
         raise ValueError("epochs and batch_size must be positive")
+    if fine_tune_epochs < 0:
+        raise ValueError("fine_tune_epochs cannot be negative")
+
     tf = _require_tensorflow()
     tf.random.set_seed(seed)
     rng = np.random.default_rng(seed)
@@ -123,83 +205,178 @@ def train_snn(
 
     initializer = tf.keras.initializers.GlorotUniform(seed=seed)
     weights = tf.Variable(
-        initializer((INPUT_AXONS, OUTPUT_NEURONS)),
+        initializer((selected.input_axons, OUTPUT_NEURONS)),
         trainable=True,
-        name="input_to_output_weights",
+        name=f"{selected.name}_input_to_output_weights",
     )
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     @tf.function
-    def train_step(spike_batch, label_batch):
+    def train_step(spike_batch, label_batch, mask_tensor):
         with tf.GradientTape() as tape:
-            counts = forward_spike_counts(spike_batch, weights)
+            effective_weights = weights * mask_tensor
+            counts = forward_spike_counts(
+                spike_batch,
+                effective_weights,
+                profile=selected,
+            )
             loss = loss_fn(label_batch, counts)
-        gradient = tape.gradient(loss, [weights])
-        optimizer.apply_gradients(zip(gradient, [weights]))
+        gradient = tape.gradient(loss, weights)
+        gradient = gradient * mask_tensor
+        optimizer.apply_gradients([(gradient, weights)])
+        weights.assign(weights * mask_tensor)
         predictions = tf.argmax(counts, axis=1, output_type=tf.int64)
-        accuracy = tf.reduce_mean(tf.cast(predictions == label_batch, tf.float32))
+        accuracy = tf.reduce_mean(
+            tf.cast(predictions == label_batch, tf.float32)
+        )
         return loss, accuracy
 
-    history: list[dict[str, float | int]] = []
+    history: list[dict[str, float | int | str]] = []
     order = np.arange(len(x_train))
-    for epoch in range(1, epochs + 1):
-        rng.shuffle(order)
-        loss_sum = 0.0
-        acc_sum = 0.0
-        batches = 0
-        for start in range(0, len(order), batch_size):
-            ids = order[start : start + batch_size]
-            spike_batch = encode_binary_spikes(x_train[ids]).astype(np.float32)
-            labels = tf.convert_to_tensor(y_train[ids], dtype=tf.int64)
-            loss, accuracy = train_step(spike_batch, labels)
-            loss_sum += float(loss.numpy())
-            acc_sum += float(accuracy.numpy())
-            batches += 1
+    mask = np.ones((selected.input_axons, OUTPUT_NEURONS), dtype=np.float32)
 
-        test_accuracy, mean_output_spikes = _evaluate(
-            weights, x_test, y_test, batch_size=batch_size
+    def run_epochs(count: int, phase: str) -> None:
+        nonlocal mask
+        mask_tensor = tf.convert_to_tensor(mask, dtype=tf.float32)
+        for phase_epoch in range(1, count + 1):
+            rng.shuffle(order)
+            loss_sum = 0.0
+            acc_sum = 0.0
+            batches = 0
+            for start in range(0, len(order), batch_size):
+                ids = order[start : start + batch_size]
+                spike_batch = encode_binary_spikes(
+                    x_train[ids],
+                    profile=selected,
+                ).astype(np.float32)
+                labels = tf.convert_to_tensor(y_train[ids], dtype=tf.int64)
+                loss, accuracy = train_step(spike_batch, labels, mask_tensor)
+                loss_sum += float(loss.numpy())
+                acc_sum += float(accuracy.numpy())
+                batches += 1
+
+            test_accuracy, mean_output_spikes, _, _ = _evaluate(
+                weights * mask_tensor,
+                x_test,
+                y_test,
+                profile=selected,
+                batch_size=batch_size,
+            )
+            row = {
+                "phase": phase,
+                "epoch": phase_epoch,
+                "mean_batch_loss": loss_sum / batches,
+                "mean_batch_accuracy": acc_sum / batches,
+                "test_accuracy": test_accuracy,
+                "mean_output_spikes_per_image": mean_output_spikes,
+                "active_connections": int(np.count_nonzero(mask)),
+            }
+            history.append(row)
+            print(
+                f"profile={selected.name} phase={phase} epoch={phase_epoch:02d} "
+                f"loss={row['mean_batch_loss']:.4f} "
+                f"train_acc={row['mean_batch_accuracy']:.4f} "
+                f"test_acc={test_accuracy:.4f} "
+                f"spikes/image={mean_output_spikes:.2f} "
+                f"connections={row['active_connections']}"
+            )
+
+    start_time = time.perf_counter()
+    run_epochs(epochs, "initial")
+
+    pre_prune_accuracy, _, _, _ = _evaluate(
+        weights,
+        x_test,
+        y_test,
+        profile=selected,
+        batch_size=batch_size,
+    )
+
+    if selected.is_sparse:
+        mask = magnitude_pruning_mask(weights.numpy(), selected.max_synapses)
+        weights.assign(weights * tf.convert_to_tensor(mask, dtype=tf.float32))
+        post_prune_accuracy, _, _, _ = _evaluate(
+            weights,
+            x_test,
+            y_test,
+            profile=selected,
+            batch_size=batch_size,
         )
-        row = {
-            "epoch": epoch,
-            "mean_batch_loss": loss_sum / batches,
-            "mean_batch_accuracy": acc_sum / batches,
-            "test_accuracy": test_accuracy,
-            "mean_output_spikes_per_image": mean_output_spikes,
-        }
-        history.append(row)
-        print(
-            f"epoch={epoch:02d} loss={row['mean_batch_loss']:.4f} "
-            f"train_acc={row['mean_batch_accuracy']:.4f} "
-            f"test_acc={test_accuracy:.4f} spikes/image={mean_output_spikes:.2f}"
-        )
+        if fine_tune_epochs:
+            run_epochs(fine_tune_epochs, "masked-finetune")
+    else:
+        post_prune_accuracy = pre_prune_accuracy
+
+    elapsed_seconds = time.perf_counter() - start_time
+    final_mask = tf.convert_to_tensor(mask, dtype=tf.float32)
+    final_weights = np.asarray((weights * final_mask).numpy(), dtype=np.float32)
+    (
+        final_accuracy,
+        mean_output_spikes,
+        predictions,
+        incorrect_indices,
+    ) = _evaluate(
+        final_weights,
+        x_test,
+        y_test,
+        profile=selected,
+        batch_size=batch_size,
+    )
+    nonzero_weights = int(np.count_nonzero(final_weights))
+    if nonzero_weights > selected.max_synapses:
+        raise AssertionError("trained network exceeds the selected synapse budget")
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    checkpoint = output / "mnist_snn_float.npz"
+    checkpoint = output / f"{selected.name}_snn_float.npz"
     np.savez_compressed(
         checkpoint,
-        weights=np.asarray(weights.numpy(), dtype=np.float32),
+        weights=final_weights,
+        mask=mask.astype(np.uint8),
         threshold=np.float32(FLOAT_THRESHOLD),
         presentation_ticks=np.int32(PRESENTATION_TICKS),
         seed=np.int64(seed),
+        profile=np.asarray(selected.name),
     )
-    metrics_path = output / "training_metrics.json"
+
+    evaluation_path = output / f"{selected.name}_evaluation.npz"
+    np.savez_compressed(
+        evaluation_path,
+        predictions=predictions,
+        labels=np.asarray(y_test, dtype=np.int64),
+        incorrect_indices=incorrect_indices,
+    )
+
+    metrics_path = output / f"{selected.name}_training_metrics.json"
     metrics_path.write_text(
         json.dumps(
             {
-                "schema": "neuromorphic-twin-mnist-training-v1",
-                "architecture": "20x20-input-axons-to-10-lif-output-neurons",
-                "input_axons": INPUT_AXONS,
+                "schema": "neuromorphic-twin-mnist-training-v2",
+                "profile": selected.name,
+                "architecture": (
+                    f"{selected.input_axons}-input-axons-to-10-lif-output-neurons"
+                ),
+                "input_axons": selected.input_axons,
                 "output_neurons": OUTPUT_NEURONS,
                 "presentation_ticks": PRESENTATION_TICKS,
                 "threshold": FLOAT_THRESHOLD,
                 "seed": seed,
                 "epochs": epochs,
+                "fine_tune_epochs": (
+                    fine_tune_epochs if selected.is_sparse else 0
+                ),
                 "batch_size": batch_size,
                 "learning_rate": learning_rate,
                 "train_samples": len(x_train),
                 "test_samples": len(x_test),
+                "training_seconds": elapsed_seconds,
+                "pre_prune_test_accuracy": pre_prune_accuracy,
+                "post_prune_test_accuracy": post_prune_accuracy,
+                "final_test_accuracy": final_accuracy,
+                "mean_output_spikes_per_image": mean_output_spikes,
+                "nonzero_weights": nonzero_weights,
+                "incorrect_predictions": int(len(incorrect_indices)),
                 "history": history,
             },
             indent=2,
@@ -211,5 +388,8 @@ def train_snn(
     return TrainingResult(
         checkpoint=checkpoint,
         metrics=metrics_path,
-        final_test_accuracy=float(history[-1]["test_accuracy"]),
+        evaluation=evaluation_path,
+        final_test_accuracy=final_accuracy,
+        profile=selected.name,
+        nonzero_weights=nonzero_weights,
     )
