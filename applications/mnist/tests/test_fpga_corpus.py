@@ -6,6 +6,7 @@ from mnist_app.fpga_corpus import (
     MnistFpgaCorpusCase,
     PROFILE_ID,
     PROFILE_ORDER,
+    load_frozen_corpus_entries,
     validate_corpus_case_contract,
     write_corpus_systemverilog_include,
 )
@@ -13,6 +14,10 @@ from mnist_app.fpga_corpus_shell import (
     patch_capture_controller_text,
     patch_capture_tcl_text,
 )
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
 
 
 def _cases() -> tuple[MnistFpgaCorpusCase, ...]:
@@ -46,6 +51,19 @@ def _cases() -> tuple[MnistFpgaCorpusCase, ...]:
                 )
             )
     return tuple(result)
+
+
+def test_committed_frozen_corpus_has_thirty_valid_sources() -> None:
+    entries = load_frozen_corpus_entries(
+        _repo_root() / "applications" / "mnist" / "frozen" / "mnist-v1"
+    )
+    assert len(entries) == 30
+    assert {int(entry["label"]) for entry in entries} == set(range(10))
+    assert {str(entry["selection_reason"]) for entry in entries} == {
+        "both-correct",
+        "profile-divergent",
+        "both-wrong",
+    }
 
 
 def test_corpus_contract_requires_sixty_paired_cases() -> None:
@@ -106,3 +124,19 @@ def test_capture_tcl_patch_accepts_case_ids_above_fifteen() -> None:
     patched = patch_capture_tcl_text(text)
     assert "set expected_case_nibble [expr {$case_id & 0xF}]" in patched
     assert "$selected_case != $expected_case_nibble" in patched
+
+
+def test_capture_shell_adapters_apply_to_current_platform_sources() -> None:
+    root = _repo_root() / "Neuromorphic Digital Twin" / "rtl" / "core_v1"
+    controller = (root / "m12_3_multitick_capture_controller_v1.sv").read_text(
+        encoding="utf-8"
+    )
+    capture_tcl = (root / "vivado" / "capture_m12_3_multitick.tcl").read_text(
+        encoding="utf-8"
+    )
+
+    patched_controller = patch_capture_controller_text(controller)
+    patched_tcl = patch_capture_tcl_text(capture_tcl)
+    assert "M12_3_CASE_PROFILE_IDS[active_case_id]" in patched_controller
+    assert "M12_3_EXTERNAL_ROWS[" in patched_controller
+    assert "expected_case_nibble" in patched_tcl
