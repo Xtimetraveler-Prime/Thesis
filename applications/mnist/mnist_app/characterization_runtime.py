@@ -88,6 +88,73 @@ def write_timing_runtime_controller(source: str | Path, output: str | Path) -> P
     return target
 
 
+_TCL_PROBE_ANCHOR = (
+    "set p_external_count [find_one_probe $vio observed_external_event_count]\n"
+)
+_TCL_PROBE_INSERT = (
+    "set p_external_count [find_one_probe $vio observed_external_event_count]\n"
+    "set p_tick_cycles [find_one_probe $vio observed_last_tick_cycles]\n"
+)
+_TCL_COUNTS_ANCHOR = "set spike_counts {0 0 0 0 0 0 0 0 0 0}\n"
+_TCL_COUNTS_INSERT = (
+    "set spike_counts {0 0 0 0 0 0 0 0 0 0}\n"
+    "set tick_cycles {}\n"
+)
+_TCL_EXT_CHECK_ANCHOR = """    if {[probe_uint $p_external_count] != [llength $events]} {
+        error \"MNIST-09 external-event count mismatch tick=$expected_tick expected=[llength $events] actual=[probe_uint $p_external_count]\"
+    }
+
+    for {set neuron 0} {$neuron < 10} {incr neuron} {
+"""
+_TCL_EXT_CHECK_INSERT = """    if {[probe_uint $p_external_count] != [llength $events]} {
+        error \"MNIST-10 external-event count mismatch tick=$expected_tick expected=[llength $events] actual=[probe_uint $p_external_count]\"
+    }
+    lappend tick_cycles [probe_uint $p_tick_cycles]
+
+    for {set neuron 0} {$neuron < 10} {incr neuron} {
+"""
+_TCL_JSON_ANCHOR = (
+    'puts $out "  \\"spike_counts\\": \\[[join $spike_counts {, }]\\],"\n'
+    'puts $out "  \\"prediction\\": $prediction"\n'
+)
+_TCL_JSON_INSERT = (
+    'puts $out "  \\"spike_counts\\": \\[[join $spike_counts {, }]\\],"\n'
+    'puts $out "  \\"tick_cycles\\": \\[[join $tick_cycles {, }]\\],"\n'
+    'puts $out "  \\"prediction\\": $prediction"\n'
+)
+
+
+def patch_runtime_tcl_for_timing(text: str) -> str:
+    """Add the passive cycle witness to the already accepted MNIST-09 host flow."""
+
+    anchors = (
+        (_TCL_PROBE_ANCHOR, _TCL_PROBE_INSERT, "cycle probe"),
+        (_TCL_COUNTS_ANCHOR, _TCL_COUNTS_INSERT, "cycle list"),
+        (_TCL_EXT_CHECK_ANCHOR, _TCL_EXT_CHECK_INSERT, "tick capture"),
+        (_TCL_JSON_ANCHOR, _TCL_JSON_INSERT, "JSON output"),
+    )
+    patched = text
+    for source, target, description in anchors:
+        if patched.count(source) != 1:
+            raise ValueError(f"unexpected MNIST-09 Tcl anchor for {description}")
+        patched = patched.replace(source, target, 1)
+    patched = patched.replace("MNIST-09 runtime classification complete:", "MNIST-10 timed runtime classification complete:")
+    if "observed_last_tick_cycles" not in patched or '"tick_cycles"' not in patched:
+        raise AssertionError("MNIST-10 timing Tcl adaptation is incomplete")
+    return patched
+
+
+def write_timing_runtime_tcl(source: str | Path, output: str | Path) -> Path:
+    source_path = Path(source)
+    target = Path(output)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        patch_runtime_tcl_for_timing(source_path.read_text(encoding="utf-8")),
+        encoding="utf-8",
+    )
+    return target
+
+
 def expected_tick_synapse_visits(
     request: RuntimeRequest,
     frozen_root: str | Path,
