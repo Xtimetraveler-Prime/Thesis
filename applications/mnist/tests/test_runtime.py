@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 from mnist_app.runtime import (
     RuntimeRequest,
@@ -12,10 +13,6 @@ from mnist_app.runtime_static import RuntimeStaticProfile, write_runtime_static_
 
 
 def _request() -> RuntimeRequest:
-    schedule = tuple(
-        ((tick % 4, tick % 4),) if False else ()
-        for tick in range(16)
-    )
     # Preserve multiplicity explicitly on selected ticks.
     rows = [() for _ in range(16)]
     rows[0] = (3, 3, 7)
@@ -101,8 +98,17 @@ def test_runtime_static_include_contains_two_profiles_and_no_event_schedule(tmp_
     assert "M12_3_CASE_COUNT = 2" in text
     assert "M12_3_MAX_AXONS = 3" in text
     assert "M12_3_MAX_SYNAPSES = 3" in text
-    assert "M12_3_EXTERNAL_EVENTS" not in text
+    # Capacity metadata is allowed, but concrete runtime event arrays are not.
+    assert "M12_3_MAX_EXTERNAL_EVENTS = 4096" in text
+    assert re.search(r"M12_3_EXTERNAL_(COUNTS|ROWS|EVENTS)\s*\[", text) is None
     assert "M12_3_EXPECTED" not in text
+
+
+def test_runtime_bitstream_guard_distinguishes_capacity_from_event_arrays() -> None:
+    script = Path(__file__).parents[1] / "fpga" / "run_mnist_09_bitstream.sh"
+    text = script.read_text(encoding="utf-8")
+    assert "M12_3_EXTERNAL_(COUNTS|ROWS|EVENTS)[[:space:]]*\\[" in text
+    assert "M12_3_EXPECTED|EXTERNAL_EVENTS|RECURRENT_SCHEDULE" not in text
 
 
 def test_runtime_controller_reserves_trace_space_seven_for_event_append() -> None:
