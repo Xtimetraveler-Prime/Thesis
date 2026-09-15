@@ -218,36 +218,77 @@ See `docs/MNIST_09_SHARED_RUNTIME.md`.
 
 ## MNIST-10 — Characterization and Loihi Comparison
 
-**Status:** In progress — internal full-test characterization baseline, evidence labeling, and Loihi source registry implemented; direct physical MNIST cycle validation and final comparison pending
+**Status:** Scientific/sub-milestone work complete; final application regression confirmation pending before parent milestone merge/closure
 
 ### MNIST-10A — Internal FPGA profile comparison
 
-The first characterization pass consumes the frozen full 10,000-image FPGA-v1 golden evidence rather than the deliberately selected 30-image conformance corpus. Accepted measured workload means are preserved for accuracy, input events/image, actual CSR synapse visits/image, output spikes/image, and stored synapses.
+**Status:** Complete
 
-A first architectural timing estimate applies the physically measured M12.5 no-route timing decomposition to those full-test workload means. Because both MNIST profiles have ten neurons and no recurrent routes, the model is:
+The accepted full 10,000-image FPGA-v1 golden evaluation gives:
+
+| Metric | cropped-dense | native-sparse |
+|---|---:|---:|
+| Golden accuracy | 90.24% | 91.71% |
+| Mean input events/image | 1,614.46 | 1,668.58 |
+| Mean CSR synapse visits/image | 15,678.95 | 6,132.83 |
+| Mean output spikes/image | 26.28 | 20.50 |
+| Logical static deployment data | 17.055 KiB | 19.309 KiB |
+| Full-test mean architectural cycles/image | 71,893.61 | 33,925.63 |
+| Full-test mean PL latency @100 MHz | 0.718936 ms | 0.339256 ms |
+
+The image-level timing means are project-derived from measured workload counts using the M12.5 no-route equation:
 
 ```text
 cycles/image = 16*(16*10 + 10) + 4*input_events + 4*CSR_synapse_visits
 ```
 
-The resulting image-level cycle/latency numbers remain explicitly labeled **model-derived** until MNIST-10 physically spot-checks them on the application image. JTAG/VIO/Python time is excluded from the architectural timing boundary.
+MNIST-10 directly validated that equation on the physical K26 using the actual reusable MNIST runtime. Four accepted runs cover two distinct source images through both profiles, and all **64 physical tick-cycle measurements exactly equal** their independent predictions while preserving exact golden spike-count/prediction agreement.
 
-Logical profile-attributable storage is also derived from the frozen word schemas, while routed FPGA utilization remains a separate device-level measurement. FPGA energy per inference is not claimed without a defensible workload-specific measurement boundary.
+Accepted physical image totals:
+
+```text
+cropped-dense index 3: 103264 cycles = 1.03264 ms
+native-sparse  index 3:  45832 cycles = 0.45832 ms
+cropped-dense index 1:  74500 cycles = 0.74500 ms
+native-sparse  index 1:  40824 cycles = 0.40824 ms
+```
+
+The compact evidence and SHA-256 provenance are source-controlled under `evidence/mnist-10/physical-timing-v1/`.
+
+The strongest internal result is that native-sparse is +1.47 percentage points more accurate while using only 39.12% as many mean CSR synapse visits and about 47.19% as many derived architectural cycles per image under nearly the same stored-synapse ceiling. The shared dual-profile bitstream passed the existing routed-resource gate; profile-specific memory is reported separately as logical frozen-deployment storage rather than incorrectly attributing shared LUT/FF/BRAM/DSP totals to one profile.
+
+FPGA energy/inference remains explicitly **not measured** because no defensible workload-specific physical power boundary was established.
 
 See `docs/MNIST_10_CHARACTERIZATION.md`.
 
 ### MNIST-10B — Native-sparse Loihi-facing comparison
 
-Native-sparse remains the primary external comparison because it preserves the full 28x28 MNIST representation. External Loihi metrics are now governed by `docs/MNIST_10_LOIHI_SOURCES.md`.
+**Status:** Complete
+
+Native-sparse is the primary external comparison because it preserves the full 28x28 MNIST representation. External Loihi metrics are governed by `docs/MNIST_10_LOIHI_SOURCES.md`.
 
 The primary numeric Loihi MNIST reference is Rueckauer et al., *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi* (ACM JETC, DOI `10.1145/3501770`). Its frame-based MNIST benchmark reports a converted four-layer CNN mapped to 14 neurocores, run for 100 algorithmic time steps/sample, with 0.79% error (99.21% accuracy), 0.66 mJ/sample, and 6.65 ms/sample.
 
-Those numbers are treated as cross-system literature context, not a workload-matched speedup/energy comparison: topology, neuron/parameter count, training/conversion method, presentation length, precision, mapping, and measurement method differ from the FPGA native-sparse workload. Primary papers control their own benchmark values when later secondary comparison tables disagree.
+Those numbers are retained as cross-system literature context, not a workload-matched speedup/energy comparison. The FPGA network topology, neuron/parameter count, training path, presentation length, precision/mapping, and timing/measurement boundary differ. The thesis-facing table therefore does not divide the FPGA and Loihi latency values into an architecture speedup claim.
+
+Primary papers control their own benchmark values when secondary comparison tables disagree. Davies et al. remains the primary Loihi-1 architecture source; later comparison tables are used only for explicitly labeled secondary quantities/cross-checks.
 
 ### MNIST-10C — Cropped-dense interpretation
 
-Cropped-dense remains a controlled FPGA-v1 hardware-fit baseline rather than the primary Loihi comparator because it changes the sensory representation to a 20x20 crop. Its main value is the internal comparison against native-sparse under essentially the same stored-synapse ceiling.
+**Status:** Complete
 
-The final thesis-facing comparison will explicitly separate direct project measurements, project-derived metrics, primary external literature measurements, secondary-source estimates, and qualitative-only architecture context.
+Cropped-dense is retained as a controlled FPGA-v1 hardware-fit baseline rather than the primary Loihi comparator because it changes the sensory representation to a 20x20 crop. Its main value is the internal comparison against native-sparse under essentially the same stored-synapse ceiling.
+
+The final comparison explicitly separates direct project measurements, project-derived metrics, primary external literature measurements, secondary-source estimates, and qualitative architecture context.
 
 See `docs/MNIST_10_CHARACTERIZATION.md` and `docs/MNIST_10_LOIHI_SOURCES.md`.
+
+### Parent milestone closure gate
+
+No additional FPGA experiment is required for MNIST-10. The remaining merge gate is one final full application regression after the archived evidence and documentation changes:
+
+```text
+pytest applications/mnist/tests -q
+```
+
+If that passes, MNIST-10 can be marked **Complete** and the branch can be merged into `main`.
