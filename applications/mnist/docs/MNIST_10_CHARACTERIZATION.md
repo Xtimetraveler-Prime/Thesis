@@ -1,6 +1,6 @@
 # MNIST-10 Characterization and Loihi Comparison
 
-**Status:** In progress — internal full-test workload baseline and Loihi source registry implemented; direct MNIST physical timing validation and final comparison pending
+**Status:** Physical timing validation accepted; compact evidence archival and final regression confirmation pending before milestone closure
 
 ## Purpose
 
@@ -20,7 +20,7 @@ External Loihi sources and metric provenance are maintained separately in `MNIST
 
 ### Accepted full-test application metrics
 
-The following values come directly from the frozen `mnist-v1` accepted full 10,000-image FPGA-v1 golden evaluation. They are not estimates from the 30-image physical conformance corpus.
+The following values come directly from the frozen `mnist-v1` accepted full 10,000-image FPGA-v1 golden evaluation. They are not estimates from the deliberately selected 30-image physical conformance corpus.
 
 | Metric | cropped-dense | native-sparse |
 | --- | ---: | ---: |
@@ -34,15 +34,15 @@ The following values come directly from the frozen `mnist-v1` accepted full 10,0
 | Mean CSR synapse visits / image | **15,678.95** | **6,132.83** |
 | Mean output spikes / image | **26.28** | **20.50** |
 
-The internal comparison is especially informative because the two profiles use essentially the same physical synapse ceiling and exactly the same FPGA core implementation.
+The internal comparison is especially informative because the two profiles use essentially the same stored-synapse ceiling and exactly the same FPGA core implementation.
 
-Native-sparse is **+1.47 percentage points** more accurate while generating only **3.35% more input events**. More importantly, sparse row structure reduces actual synaptic work dramatically: native-sparse performs only **39.12%** as many CSR synapse visits per image as cropped-dense. Its mean output spike count is also about **78.01%** of cropped-dense.
+Native-sparse is **+1.47 percentage points** more accurate while generating only **3.35% more input events**. Sparse row structure reduces actual synaptic work much more strongly: native-sparse performs only **39.12%** as many CSR synapse visits per image as cropped-dense. Its mean output spike count is about **78.01%** of cropped-dense.
 
-This is why raw input-event count alone is not a sufficient performance proxy for the FPGA architecture. One input axon event may traverse a long dense CSR row or a short/empty sparse row.
+This demonstrates why raw event count is not an adequate performance proxy for this architecture. One axon event may traverse a long dense CSR row, a short sparse row, or an empty row.
 
 ### Logical frozen deployment footprint
 
-`characterization.py` also records a profile-attributable logical static-memory footprint using the frozen word schemas:
+`characterization.py` records a profile-attributable logical static-memory footprint using the frozen word schemas:
 
 ```text
 10 neuron configs       x 128 bits
@@ -60,7 +60,7 @@ This produces:
 | cropped-dense | **139,712 bits = 17.055 KiB** |
 | native-sparse | **158,176 bits = 19.309 KiB** |
 
-These numbers are useful for comparing the two frozen application images, but they are **not** FPGA BRAM utilization. They intentionally exclude fixed-capacity event/recurrent buffers, core control logic, HLS logic, VIO/debug logic, implementation padding, and bitstream overhead. Routed Vivado utilization must remain a separate device-level metric.
+These are application-image storage quantities, **not FPGA BRAM utilization**. They exclude fixed-capacity event/recurrent buffers, control logic, HLS logic, VIO/debug logic, implementation padding, and bitstream overhead.
 
 ---
 
@@ -81,7 +81,7 @@ PL clock = 100 MHz
 period   = 10 ns
 ```
 
-Host Python execution, TensorFlow loading/encoding, Vivado Hardware Manager, JTAG, VIO writes/reads, JSON serialization, and comparison time are **not** architectural inference latency.
+Host Python execution, TensorFlow loading/encoding, Vivado Hardware Manager, JTAG, VIO writes/reads, JSON serialization, and comparison time are explicitly excluded from architectural inference latency.
 
 M12.5 physically isolated the no-route FPGA-v1 costs as:
 
@@ -91,7 +91,7 @@ external input event  = 4 additional cycles/event
 CSR synapse visit     = 4 additional cycles/visit
 ```
 
-Both accepted MNIST profiles have ten neurons and zero recurrent routes. Therefore the currently implemented full-test timing model is:
+Both accepted MNIST profiles have ten neurons and zero recurrent routes. Therefore the full-test timing model is:
 
 ```text
 cycles/image =
@@ -100,119 +100,165 @@ cycles/image =
     + 4 * CSR_synapse_visits/image
 ```
 
-Applying that model to the full 10,000-image workload means gives:
+Applying that relation to the accepted full-test workload means gives:
 
 | Profile | Model-derived cycles/image | Model-derived PL latency @100 MHz | Model-derived images/s |
 | --- | ---: | ---: | ---: |
 | cropped-dense | **71,893.61** | **0.718936 ms** | **1,390.94** |
 | native-sparse | **33,925.63** | **0.339256 ms** | **2,947.62** |
 
-The modeled native/cropped cycle ratio is **0.4719**.
+The native/cropped modeled cycle ratio is **0.4719**.
 
-### Important evidence label
+### Direct MNIST physical timing validation
 
-These image-level timing values are currently **model-derived from a physically measured M12.5 timing decomposition**. They are not yet labeled as direct MNIST physical latency measurements.
+The model relation was then independently tested on the actual reusable MNIST application image using the passive M12.5-style PL cycle counter. The computational core, HLS neuron step, weight image, event ordering, and decoder semantics remained unchanged.
 
-MNIST-10A will not close until a passive PL-cycle measurement on the MNIST application independently spot-checks the model. The intended physical timing instrument must remain outside the computational datapath and must not alter neuron, synapse, arithmetic, event-order, or decoding semantics.
+The accepted physical exercise covered the same two source images previously used to demonstrate arbitrary-image runtime operation, through both frozen profiles:
+
+```text
+cropped-dense, index 3
+native-sparse,  index 3
+cropped-dense, index 1
+native-sparse,  index 1
+```
+
+For every run, the MNIST-10 validator required all of the following simultaneously:
+
+1. physical output spike-count vector exactly equals the independent frozen Python golden vector;
+2. physical decoded prediction equals the golden prediction;
+3. exactly 16 ticks are committed;
+4. physical input-event count agrees with the host request; and
+5. the complete **16-element physical tick-cycle vector exactly equals** the independently predicted vector from `170 + 4*external_events + 4*CSR_synapse_visits`.
+
+All four physical characterizations passed with no mismatches.
+
+This changes the evidence status of the timing relation: the full 10,000-image averages above remain **model-derived workload averages**, but the underlying cycle equation is no longer merely extrapolated from M12.5 stress cases. It has now been directly and exactly spot-checked on two real MNIST schedules through each deployment profile.
+
+The compact source-controlled evidence package is produced from the already accepted local results by:
+
+```text
+python applications/mnist/scripts/archive_mnist_10_evidence.py
+```
+
+The archive intentionally copies only the request, deterministic event schedule, independent timing expectation, physical result, exact comparison, hashes, and summary manifest. Vivado projects, bitstreams, logs, and other generated build products remain excluded.
+
+---
+
+## Final internal interpretation
+
+The strongest application-level FPGA result is not simply that native-sparse has more input pixels. Under nearly the same stored-synapse limit, it simultaneously:
+
+- preserves the original 28x28 sensory representation;
+- improves golden accuracy by **1.47 percentage points**;
+- incurs only **3.35%** more encoded input events;
+- reduces mean CSR synapse visits by about **60.88%**; and
+- under the physically validated serialized timing relation, requires about **47.19%** as many architectural cycles per image on the accepted full-test workload means.
+
+That result is specific to this trained pair of models and this serialized FPGA-v1 architecture. It does not establish that sparse networks are universally faster or more accurate, but it does show that **connection sparsity can matter much more than event count alone** for the implemented CSR/event-processing datapath.
 
 ---
 
 ## Energy and power policy
 
-No FPGA energy-per-inference number is currently claimed.
+No FPGA energy-per-inference number is claimed.
 
-A board TDP, supply rating, or generic Vivado power estimate is not an acceptable substitute for a workload-specific measured energy boundary. If a defensible measurement can be made later, the documentation must state:
+A board TDP, supply rating, or generic Vivado power estimate is not an acceptable substitute for a workload-specific measurement boundary. A future energy result would need to document measured rails/device scope, idle subtraction, measurement equipment/tool and sampling rate, workload duration/repetitions, PS/debug inclusion, and integration method.
 
-- what rails/device scope were measured;
-- idle subtraction policy;
-- sampling equipment/tool and rate;
-- workload duration/repetitions;
-- whether PS/JTAG/debug power is included; and
-- how energy per inference is integrated.
-
-If such a measurement is not completed, the FPGA energy cell in the final Loihi comparison will remain **not measured** rather than presenting a speculative value.
+If that experiment is not performed, the FPGA energy cell remains **not measured** rather than presenting a speculative number.
 
 ---
 
-## MNIST-10B Loihi-facing comparison policy
+## MNIST-10B Loihi-facing comparison
 
-The primary external numeric reference is Rueckauer et al., *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi* (ACM JETC, DOI `10.1145/3501770`). The source registry records the exact role of this and all supporting sources.
+The primary external numeric reference is Rueckauer et al., *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi* (ACM JETC, DOI `10.1145/3501770`). `MNIST_10_LOIHI_SOURCES.md` records the source hierarchy and the provenance of every admitted external metric.
 
-The NxTF MNIST benchmark reports a rate-coded converted four-layer CNN on Loihi with approximately 4k neurons / 7k shared parameters, mapped to 14 neurocores and run for 100 algorithmic time steps per sample. The reported Loihi result is 0.79% error (99.21% accuracy), 0.66 mJ/sample, and 6.65 ms/sample.
+The NxTF frame-based MNIST experiment reports a rate-coded converted four-layer CNN with approximately 4k neurons and 7k shared parameters, mapped to 14 Loihi neurocores and run for 100 algorithmic time steps/sample. The reported Loihi result is **0.79% error (99.21% accuracy), 0.66 mJ/sample, 6.65 ms/sample, and 4.38 µJ·s EDP**.
 
-Those numbers are valid published Loihi measurements, but they are **not workload matched** to this project's native-sparse network:
+### Thesis-facing side-by-side table
 
-| Dimension | FPGA native-sparse | NxTF Loihi MNIST |
-| --- | --- | --- |
-| Dataset | MNIST 28x28 | MNIST 28x28 |
-| Network | 784 input axons -> 10 output neurons | four-layer CNN |
-| Stored/shared weights | 4,086 stored synapses | about 7k shared parameters |
-| Neurons | 10 computational output neurons in this app | about 4k |
-| Presentation | 16 ticks | 100 algorithmic time steps |
-| Training path | direct surrogate-trained SNN, prune/fine-tune, project quantization | trained ANN -> rate-based SNN conversion |
-| Hardware | serialized FPGA-v1 core on K26 | Loihi neuromorphic ASIC |
-| Timing boundary | PL architectural cycles only | Loihi benchmark execution time |
-| Energy | not measured | 0.66 mJ/sample reported |
+| Quantity | FPGA native-sparse | NxTF Loihi MNIST | Comparison status |
+| --- | ---: | ---: | --- |
+| Dataset/input image | MNIST 28x28 | MNIST 28x28 | Directly aligned at source-image level |
+| Accuracy | **91.71%** | **99.21%** | Numeric context; different models/training |
+| Computational neurons | 10 output neurons | ~4k neurons | Not matched |
+| Stored/shared weights | 4,086 stored synapses | ~7k shared parameters | Not equivalent representations |
+| Presentation length | 16 ticks | 100 algorithmic time steps | Not matched |
+| PL/model latency | **0.339256 ms/image** full-test mean, model-derived from physically validated cycle relation | **6.65 ms/sample** measured | Side-by-side context only; no speedup ratio claimed |
+| Energy/inference | **not measured** | **660 µJ/sample** measured | No FPGA energy comparison claimed |
+| Hardware | K26 FPGA, serialized FPGA-v1 core | Loihi neuromorphic ASIC | Fundamentally different implementation |
+| Training | direct surrogate SNN + prune/fine-tune + project quantization | ANN training + rate-based SNN conversion | Not matched |
 
-Consequently, MNIST-10 may compare the values side-by-side as **cross-system literature context**, but it will not report a simple FPGA/Loihi latency or energy ratio as though it were an architecture-only speedup.
+The latency values must **not** be divided and reported as an architectural speedup. The workload graphs, neuron counts, timestep counts, precision/mapping, training methods, and timing/measurement implementations differ. NxTF itself explicitly discusses the difficulty of comparing results across dissimilar neuromorphic implementations.
 
-### Source hierarchy
+### Loihi architecture context
 
-The comparison uses this hierarchy:
+For Loihi-1 chip facts, the project uses Davies et al., *Loihi: A Neuromorphic Manycore Processor with On-Chip Learning* (IEEE Micro, DOI `10.1109/MM.2018.112130359`) as the primary authority. Loihi is reported as a **60 mm², 14 nm chip with 128 neuromorphic cores plus three embedded x86 cores**.
 
-1. primary workload paper for its own benchmark numbers;
-2. primary Loihi architecture paper for chip specifications;
-3. later comparison tables only for cross-checks or clearly labeled secondary quantities.
+A later SENECA comparison table reproduces the NxTF 99.21%, 660 µJ, and 6.65 ms values and gives **5.74 mm²** as utilized silicon area for that Loihi row. If used, that value is labeled a **secondary utilized-core-area estimate**, not Loihi die area and not a direct NxTF measurement.
 
-For example, later papers reproduce the NxTF 99.21% / 660 µJ / 6.65 ms result. One secondary table reports a core count that conflicts with NxTF's own statement that the MNIST CNN maps to 14 neurocores. MNIST-10 therefore retains the primary-paper value and documents the discrepancy rather than silently copying the secondary table.
-
-See `MNIST_10_LOIHI_SOURCES.md` for the complete source registry, DOI/URL list, admitted metrics, and rejected/secondary fields.
+`MNIST_10_LOIHI_SOURCES.md` also records secondary-source inconsistencies instead of silently copying them. In particular, a later comparison table lists 128 cores for the NxTF-like Loihi MNIST row, while the primary NxTF paper explicitly states that this MNIST CNN maps to **14 neurocores**. The primary workload paper therefore controls.
 
 ---
 
 ## MNIST-10C cropped-dense interpretation
 
-Cropped-dense should not be presented as the main Loihi comparator because it changes the sensory representation from the original 28x28 MNIST image to a 20x20 center crop.
+Cropped-dense is not the primary Loihi comparator because it changes the sensory representation from 28x28 MNIST to a 20x20 center crop.
 
-Its value is internal: under essentially the same FPGA synapse ceiling it preserves dense input-to-output connectivity while native-sparse preserves full sensory resolution and uses sparse connectivity. The measured accuracy/workload results therefore give a controlled architecture-design comparison inside this FPGA implementation.
+Its value is as a controlled FPGA-v1 hardware-fit baseline: under essentially the same stored-synapse ceiling it retains dense input-to-output connectivity, whereas native-sparse retains full sensory resolution and uses sparse connectivity. The pair therefore isolates an application design tradeoff inside the same FPGA core more cleanly than either can be compared against an unrelated external architecture.
 
 ---
 
-## Current tooling
+## Evidence classes used in the thesis
+
+MNIST-10 keeps four evidence classes separate:
+
+| Evidence class | Examples |
+| --- | --- |
+| Direct project measurement | physical exact cycle vectors for the four accepted timing cases; routed core validation from earlier milestones |
+| Project-derived metric | 10,000-image mean cycles/latency calculated from measured workload counts using the physically validated cycle equation; logical deployment bits |
+| Primary external measurement | NxTF Loihi MNIST accuracy, energy, latency, core mapping, timestep count |
+| Secondary/qualitative context | SENECA utilized-area normalization; Loihi-2 architectural context |
+
+This distinction is intentional. A derived value may be highly constrained and experimentally validated without becoming a direct measurement of every image in the 10,000-image test set.
+
+---
+
+## Tooling
 
 ```text
 mnist_app/characterization.py
+mnist_app/characterization_runtime.py
+mnist_app/characterization_evidence.py
 scripts/build_characterization_baseline.py
+scripts/characterize_fpga.py
+scripts/archive_mnist_10_evidence.py
 tests/test_characterization.py
+tests/test_characterization_evidence.py
 docs/MNIST_10_CHARACTERIZATION.md
 docs/MNIST_10_LOIHI_SOURCES.md
 ```
 
-Generate the current internal baseline with:
-
-```text
-python applications/mnist/scripts/build_characterization_baseline.py
-```
-
-Output:
+The generated full-test baseline is:
 
 ```text
 applications/mnist/build/mnist-10/characterization_baseline.json
 ```
 
-The JSON intentionally carries evidence labels (`measured-software-golden`, `derived-from-frozen-storage-schema`, and `model-derived-from-M12.5-physical-decomposition`) so later tables cannot accidentally erase the distinction between measurement and derivation.
+The accepted compact physical evidence is archived to:
+
+```text
+applications/mnist/evidence/mnist-10/physical-timing-v1/
+```
 
 ---
 
-## Remaining gates
+## Remaining closure gates
 
-MNIST-10 is complete only after:
+The scientific/physical characterization gates are satisfied. Before MNIST-10 is merged, the remaining repository gates are:
 
-1. characterization unit tests and the full application pytest suite pass;
-2. the full-test internal baseline is reproducibly generated from `mnist-v1`;
-3. a passive MNIST PL-cycle measurement validates the timing model on physical K26 execution;
-4. final internal profile timing/resource interpretation is assembled;
-5. Loihi comparison numbers are traceable to `MNIST_10_LOIHI_SOURCES.md`;
-6. all non-matched workload dimensions are stated beside the external comparison;
-7. no unsupported FPGA energy claim is introduced; and
-8. the final thesis-facing comparison separates direct measurements, derived metrics, external literature values, and qualitative-only context.
+1. archive the already-passed four physical timing outputs into the source-controlled evidence directory;
+2. rerun the full application pytest suite including the new evidence-archive tests;
+3. regenerate the characterization baseline once more from the frozen package; and
+4. commit/push the evidence package so the exact physical cycle vectors and SHA-256 provenance are retained with the thesis repository.
+
+No additional FPGA experiment is required unless the archive validator finds an inconsistency in the already-passed results.
