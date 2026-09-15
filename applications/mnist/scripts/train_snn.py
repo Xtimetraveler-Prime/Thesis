@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 
 from mnist_app.config import PROFILES
-from mnist_app.training import train_snn
+from mnist_app.training import DEFAULT_VALIDATION_SIZE, train_snn
 
 
 def main() -> None:
@@ -20,6 +20,12 @@ def main() -> None:
         default=5,
         help="masked fine-tuning epochs used by native-sparse after pruning",
     )
+    parser.add_argument(
+        "--validation-size",
+        type=int,
+        default=DEFAULT_VALIDATION_SIZE,
+        help="stratified validation samples reserved from the 60k training set",
+    )
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument(
@@ -27,8 +33,16 @@ def main() -> None:
         type=lambda value: int(value, 0),
         default=0x4D4E4953,
     )
-    parser.add_argument("--train-limit", type=int)
-    parser.add_argument("--test-limit", type=int)
+    parser.add_argument(
+        "--train-limit",
+        type=int,
+        help="optional smoke-test limit applied after the validation split",
+    )
+    parser.add_argument(
+        "--test-limit",
+        type=int,
+        help="optional smoke-test limit for the one final test evaluation",
+    )
     args = parser.parse_args()
 
     result = train_snn(
@@ -36,6 +50,7 @@ def main() -> None:
         profile=args.profile,
         epochs=args.epochs,
         fine_tune_epochs=args.fine_tune_epochs,
+        validation_size=args.validation_size,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
         seed=args.seed,
