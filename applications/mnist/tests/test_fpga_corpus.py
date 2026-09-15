@@ -41,7 +41,7 @@ def _cases() -> tuple[MnistFpgaCorpusCase, ...]:
                     weight_rows=(0, 1, 2),
                     route_rows=(0, 0, 0),
                     route_targets=(),
-                    external_schedule=((0,), (1, 1), (), (0, 1)),
+                    external_schedule=((0,), (1, 1), (), (0,)),
                     golden_trace=object(),
                 )
             )
