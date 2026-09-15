@@ -89,6 +89,10 @@ def main() -> int:
 
     shutil.copy2(args.bundle, target / "request_bundle.json")
     shutil.copy2(args.brian_dir / "suite.json", target / "brian2loihi" / "suite.json")
+    brian_audit = args.brian_dir / "semantic_audit.json"
+    if brian_audit.exists():
+        shutil.copy2(brian_audit, target / "brian2loihi" / "semantic_audit.json")
+
     shutil.copy2(args.catalyst_dir / "suite.json", target / "catalyst" / "suite.json")
     for optional_name in ("semantic_audit.json", "feasibility_audit.json", "divergence_summary.json"):
         source = args.catalyst_dir / optional_name
