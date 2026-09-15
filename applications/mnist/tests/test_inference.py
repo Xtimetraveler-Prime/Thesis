@@ -15,20 +15,28 @@ class SilentCore:
 
 
 @pytest.mark.parametrize(
-    ("profile", "expected_events"),
+    ("profile", "expected_events", "row_count"),
     [
-        ("native-sparse", 16),
-        ("cropped-dense", 0),
+        ("native-sparse", 16, 784),
+        ("cropped-dense", 0, 400),
     ],
 )
-def test_infer_image_uses_selected_profile(profile, expected_events):
+def test_infer_image_uses_selected_profile(profile, expected_events, row_count):
     image = np.zeros((28, 28), dtype=np.uint8)
     image[0, 0] = 255
-    result = infer_image(SilentCore(), image, profile=profile)
+    row_lengths = (2,) * row_count
+    result = infer_image(
+        SilentCore(),
+        image,
+        profile=profile,
+        row_lengths=row_lengths,
+    )
     assert result.prediction == 0
     assert result.no_spike
     assert result.tied_winners == 10
     assert result.total_input_events == expected_events
+    assert result.synaptic_visits == expected_events * 2
+    assert len(result.predictions_by_tick) == 16
 
 
 def test_evaluation_retains_notebook_style_prediction_and_error_indices():
@@ -39,7 +47,10 @@ def test_evaluation_retains_notebook_style_prediction_and_error_indices():
         images,
         labels,
         profile="native-sparse",
+        row_lengths=(0,) * 784,
     )
     assert result["predictions"] == [0, 0]
     assert result["incorrect_indices"] == [1]
     assert result["accuracy"] == 0.5
+    assert result["accuracy_by_tick"] == [0.5] * 16
+    assert result["mean_synaptic_visits"] == 0.0
