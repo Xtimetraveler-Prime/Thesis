@@ -139,25 +139,21 @@ See `docs/MNIST_06_DEPLOYMENT_FREEZE.md`.
 
 ## MNIST-07 — Single-Image FPGA Conformance
 
-**Status:** In progress — software/golden generation, M12.3-compatible bitstream flow, and physical differential tooling implemented; local/physical validation pending
+**Status:** Complete
 
-MNIST-07 uses the first frozen both-correct corpus image as a shared source anchor for both profiles. In `mnist-v1` this is official MNIST test index 3, true label 0. Both profiles are presented for 16 ticks from zero initial state using their frozen deployment images.
+MNIST-07 used the first frozen both-correct corpus image as a shared source anchor for both profiles. In `mnist-v1` this is official MNIST test index 3, true label 0. Both profiles were presented for 16 ticks from zero initial state using their frozen deployment images.
 
 ### MNIST-07A — Cropped-dense
 
-Generate the cropped-dense static image and 16-tick external-event schedule from the frozen deployment and require exact per-tick Python/FPGA agreement plus identical final output spike counts/prediction.
+The physical K26 completed all 16 committed ticks with exact agreement against the independent Python golden trace and zero architectural mismatches.
 
 ### MNIST-07B — Native-sparse
 
-Repeat for native-sparse using the same original source image and the frozen 784-axon / 4,086-synapse deployment, including its irregular CSR row structure.
+The physical K26 repeated the same 16-tick test using the frozen 784-axon / 4,086-synapse sparse deployment, including its irregular CSR rows, again with zero architectural mismatches.
 
-### Implemented boundary
+The accepted run reused the existing M12.3 multi-tick capture shell and JTAG/VIO transport. FPGA-visible artifacts contained static configuration/weight/row images and per-tick external events only; independent golden state, signed-64 synaptic accumulators, spike flags, spike counts, and predictions stayed host-side.
 
-The flow reuses the existing M12.3 multi-tick capture shell and VIO transport. FPGA-visible artifacts contain static configuration/weight/row images and per-tick external events only. Independent golden state, signed-64 synaptic accumulators, spike flags, and decoded predictions stay host-side.
-
-New application tooling generates the two cases, emits an M12.3-compatible input-only include, builds the K26 bitstream around the existing validated RTL/HLS core, captures both physical 16-tick traces, and performs exact host-side differential validation.
-
-MNIST-07 closes only after both physical K26 cases complete with zero architectural mismatches and matching final spike counts/predictions.
+Both physical final spike-count vectors and decoded predictions matched the corresponding Python golden results. This closes the application-level physical conformance gate for both deployment profiles.
 
 See `docs/MNIST_07_SINGLE_IMAGE_CONFORMANCE.md`.
 
