@@ -1,7 +1,7 @@
 """Shared frozen-workload contract for MNIST-11/12 matched comparisons.
 
 The matched-reference experiments deliberately reuse the accepted native-sparse
-MNIST deployment without retraining or parameter retuning.  This module owns the
+MNIST deployment without retraining or parameter retuning. This module owns the
 application-level audit boundary shared by Brian2Loihi and Catalyst adapters.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 import json
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 
 PROFILE = "native-sparse"
@@ -138,9 +138,9 @@ def load_frozen_matched_workload(frozen_root: str | Path) -> FrozenMatchedWorklo
 def reference_configs(workload: FrozenMatchedWorkload) -> tuple[object, ...]:
     """Return the R=1 reference surrogate for the frozen project's R=0 config.
 
-    FPGA-v1 stores ``max(R-1, 0)`` future blocked ticks after a spike.  Therefore
+    FPGA-v1 stores ``max(R-1, 0)`` future blocked ticks after a spike. Therefore
     R=0 and R=1 both store zero and are behaviorally identical under the frozen
-    one-update-per-neuron-per-tick execution contract.  Brian2Loihi requires
+    one-update-per-neuron-per-tick execution contract. Brian2Loihi requires
     refractory>=1 and Catalyst's frozen transform maps canonical R to native
     R-1, so R=1 is the explicit common representation.
     """
@@ -254,14 +254,20 @@ def semantic_audit(workload: FrozenMatchedWorkload) -> tuple[SemanticAuditRow, .
         SemanticAuditRow(
             "voltage_decay",
             "EXACT",
-            "EQUIVALENT",
-            "Frozen voltage_decay=0 is directly represented by Brian and by zero Catalyst leak in the simple-LIF comparison.",
+            "TRANSLATED",
+            "Brian represents decay_v=0 directly. Catalyst leak=0 preserves positive/no-leak accumulation, but its simple-LIF update also applies a resting-floor rule that is tracked separately.",
+        ),
+        SemanticAuditRow(
+            "sub_rest_negative_voltage",
+            "EXACT",
+            "UNREPRESENTABLE",
+            "FPGA-v1/Brian can retain negative membrane voltage; pinned Catalyst simple-LIF clamps potential+input<=leak to resting=0. M13 identified this as an architecture difference and MNIST-12 measures its application effect without retuning.",
         ),
         SemanticAuditRow(
             "reset_voltage_bias",
             "EXACT",
             "EQUIVALENT",
-            "All are zero; Brian uses fixed zero reset and Catalyst resting/leak settings preserve zero-reset behavior on the common subset.",
+            "Bias and spike reset are zero in the frozen workload. Catalyst resting=0 reproduces the spike reset; its additional sub-rest clamp is classified separately.",
         ),
         SemanticAuditRow(
             "refractory",
