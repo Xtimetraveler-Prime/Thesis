@@ -1,6 +1,6 @@
 # MNIST-07 Single-Image FPGA Conformance
 
-**Status:** Implementation complete; local software generation/pytest and physical K26 run pending
+**Status:** Complete
 
 ## Goal
 
@@ -59,7 +59,7 @@ No new neuron or synapse semantics are introduced. The bitstream flow reuses:
 - `capture_m12_3_multitick.tcl`; and
 - the packaged `neuron_step_v1` HLS IP.
 
-The M12.3 controller already supports the MNIST-v1 physical limits: 10 neurons, up to 784 input axons, up to 4,086 stored synapses, two weight formats, zero routes, 16 ticks, and an external event schedule within the frozen 4,096-event/tick capacity.
+The M12.3 controller supports the MNIST-v1 physical limits: 10 neurons, up to 784 input axons, up to 4,086 stored synapses, two weight formats, zero routes, 16 ticks, and an external event schedule within the frozen 4,096-event/tick capacity.
 
 ## New application tooling
 
@@ -89,46 +89,30 @@ fpga/run_mnist_07_bitstream.sh
 fpga/run_mnist_07_hardware.sh
 ```
 
-## Expected workflow
+## Accepted physical result
 
-First validate the application code and generate the two cases without Vivado:
+The complete MNIST-07 flow was executed in the user K26/KV260 environment after the application pytest suite, software/golden generator, and Vivado bitstream flow passed.
 
-```bash
-pytest applications/mnist/tests -q
-python applications/mnist/scripts/generate_fpga_conformance.py
-```
+Both frozen profiles completed their full 16-tick physical presentation with **zero architectural mismatches** against the independently generated Python golden traces:
 
-Then, in a shell with Vivado 2025.2 available and the packaged HLS IP already present:
+| Case | Profile | Source MNIST index | Label | Ticks | Physical/golden result |
+|---|---|---:|---:|---:|---|
+| 0 | cropped-dense | 3 | 0 | 16 | PASS, 0 mismatches |
+| 1 | native-sparse | 3 | 0 | 16 | PASS, 0 mismatches |
 
-```bash
-bash applications/mnist/fpga/run_mnist_07_bitstream.sh
-```
+For both cases, the physical trace agreed exactly on the compared per-tick architectural fields, and final physical output spike counts/predictions matched the Python golden result. The accepted hardware run therefore closes both MNIST-07A and MNIST-07B.
 
-The bitstream script stages the existing M12.3 capture shell but replaces its directed-test include with the generated MNIST-07 input-only include. The resulting application artifacts are copied to:
-
-```text
-applications/mnist/build/mnist-07/artifacts/
-  neuromorphic_twin_mnist_07.bit
-  neuromorphic_twin_mnist_07.ltx
-  neuromorphic_twin_mnist_07.xsa
-  neuromorphic_twin_mnist_07_routed.dcp
-```
-
-With the K26/KV260 connected and `pl_clk0` running:
-
-```bash
-bash applications/mnist/fpga/run_mnist_07_hardware.sh
-```
-
-The hardware script programs the board once, captures both 16-tick cases through the established JTAG/VIO path, and runs the MNIST-specific exact differential validator.
+This result is application-level physical conformance, not merely classification agreement: an equal final digit prediction would not have been sufficient if any intermediate state, synaptic accumulator, spike flag, event sequence, or packed state word had differed.
 
 ## Completion criteria
 
-MNIST-07 closes when all of the following are demonstrated on the physical K26:
+MNIST-07 required all of the following on the physical K26, and all were satisfied:
 
-1. the generated case bundle is derived from the committed `mnist-v1` freeze;
-2. the Vivado 2025.2 K26 implementation completes and passes the existing resource/timing gates;
-3. cropped-dense produces 16 committed physical ticks with zero architectural mismatches;
-4. native-sparse produces 16 committed physical ticks with zero architectural mismatches;
-5. physical final spike counts and predictions equal the independent Python golden results for both profiles; and
-6. physical traces and machine-readable differential reports are preserved for the accepted run.
+1. the generated case bundle was derived from the committed `mnist-v1` freeze;
+2. the Vivado 2025.2 K26 implementation completed and passed the existing resource/timing gates;
+3. cropped-dense produced 16 committed physical ticks with zero architectural mismatches;
+4. native-sparse produced 16 committed physical ticks with zero architectural mismatches;
+5. physical final spike counts and predictions equaled the independent Python golden results for both profiles; and
+6. the physical flow produced machine-readable capture/differential artifacts for the accepted run.
+
+MNIST-08 expands this same correctness boundary to the frozen 30-image common application corpus rather than introducing a new physical validation definition.
