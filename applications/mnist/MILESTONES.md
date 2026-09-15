@@ -193,7 +193,7 @@ See `docs/MNIST_08_FPGA_APPLICATION_CORPUS.md`.
 
 ## MNIST-09 — Shared Runtime Host Interface
 
-**Status:** Physical validation complete; final application pytest after the last host-side synchronization patch pending before merge
+**Status:** Complete
 
 One reusable Vivado 2025.2 K26 bitstream contains both frozen `mnist-v1` deployment images while arbitrary image schedules are encoded on the host and streamed at runtime. The implementation preserves the existing M12.3 VIO shape: `capture_start` selects the frozen profile, trace space `7` appends runtime axon IDs, `capture_step` executes a buffered tick, and normal trace spaces retain their validated post-commit read semantics. The architectural core RTL and HLS neuron IP are unchanged.
 
@@ -206,11 +206,11 @@ cropped-dense, index 1, label 2, golden prediction 2
 native-sparse,  index 1, label 2, golden prediction 2
 ```
 
-All four physical runs passed exact comparison of final output spike-count vectors and decoded predictions against the frozen Python golden result. Thus the runtime has demonstrated both profile switching and image switching without rebuilding application-specific neuron logic or regenerating the bitstream.
+All four physical runs passed exact comparison of final output spike-count vectors and decoded predictions against the frozen Python golden result. Thus the runtime demonstrated both profile switching and image switching without rebuilding application-specific neuron logic or regenerating the bitstream.
 
-Two host/runtime bring-up issues were corrected without changing the core: an over-broad static-image safety grep that mistook the allowed `M12_3_MAX_EXTERNAL_EVENTS` capacity constant for compiled event data, and a trace-read synchronization ordering bug after runtime space-7 event injection. Both now have regression coverage.
+Two host/runtime bring-up issues were corrected without changing the core: an over-broad static-image safety grep that mistook the allowed `M12_3_MAX_EXTERNAL_EVENTS` capacity constant for compiled event data, and a trace-read synchronization ordering bug after runtime space-7 event injection. Both have regression coverage.
 
-JTAG/VIO transaction time remains explicitly separate from architectural FPGA execution time.
+After the final host-side synchronization patch, the complete application pytest suite passed in the user environment. JTAG/VIO transaction time remains explicitly separate from architectural FPGA execution time.
 
 See `docs/MNIST_09_SHARED_RUNTIME.md`.
 
@@ -218,18 +218,36 @@ See `docs/MNIST_09_SHARED_RUNTIME.md`.
 
 ## MNIST-10 — Characterization and Loihi Comparison
 
-**Status:** Planned
+**Status:** In progress — internal full-test characterization baseline, evidence labeling, and Loihi source registry implemented; direct physical MNIST cycle validation and final comparison pending
 
 ### MNIST-10A — Internal FPGA profile comparison
 
-Compare native-sparse and cropped-dense on the same FPGA core: accuracy, cycles/image, latency, events/image, synapse visits/image, spikes/image, memory use, and power/energy only when defensibly measurable.
+The first characterization pass consumes the frozen full 10,000-image FPGA-v1 golden evidence rather than the deliberately selected 30-image conformance corpus. Accepted measured workload means are preserved for accuracy, input events/image, actual CSR synapse visits/image, output spikes/image, and stored synapses.
+
+A first architectural timing estimate applies the physically measured M12.5 no-route timing decomposition to those full-test workload means. Because both MNIST profiles have ten neurons and no recurrent routes, the model is:
+
+```text
+cycles/image = 16*(16*10 + 10) + 4*input_events + 4*CSR_synapse_visits
+```
+
+The resulting image-level cycle/latency numbers remain explicitly labeled **model-derived** until MNIST-10 physically spot-checks them on the application image. JTAG/VIO/Python time is excluded from the architectural timing boundary.
+
+Logical profile-attributable storage is also derived from the frozen word schemas, while routed FPGA utilization remains a separate device-level measurement. FPGA energy per inference is not claimed without a defensible workload-specific measurement boundary.
+
+See `docs/MNIST_10_CHARACTERIZATION.md`.
 
 ### MNIST-10B — Native-sparse Loihi-facing comparison
 
-Use the full 28x28 native-sparse profile as the primary external comparison because the starting MNIST representation is aligned. Explicitly document remaining differences in topology, encoding, training, precision, scale, timing definitions, and measurement method.
+Native-sparse remains the primary external comparison because it preserves the full 28x28 MNIST representation. External Loihi metrics are now governed by `docs/MNIST_10_LOIHI_SOURCES.md`.
+
+The primary numeric Loihi MNIST reference is Rueckauer et al., *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi* (ACM JETC, DOI `10.1145/3501770`). Its frame-based MNIST benchmark reports a converted four-layer CNN mapped to 14 neurocores, run for 100 algorithmic time steps/sample, with 0.79% error (99.21% accuracy), 0.66 mJ/sample, and 6.65 ms/sample.
+
+Those numbers are treated as cross-system literature context, not a workload-matched speedup/energy comparison: topology, neuron/parameter count, training/conversion method, presentation length, precision, mapping, and measurement method differ from the FPGA native-sparse workload. Primary papers control their own benchmark values when later secondary comparison tables disagree.
 
 ### MNIST-10C — Cropped-dense interpretation
 
-Treat the cropped-dense result primarily as a controlled FPGA-v1 hardware-fit baseline, not as the primary apples-to-apples Loihi comparison.
+Cropped-dense remains a controlled FPGA-v1 hardware-fit baseline rather than the primary Loihi comparator because it changes the sensory representation to a 20x20 crop. Its main value is the internal comparison against native-sparse under essentially the same stored-synapse ceiling.
 
-The thesis must clearly separate directly comparable quantities, quantities requiring normalization/caveats, and qualitative-only comparisons. Shared use of MNIST alone is never presented as proof of identical experimental conditions.
+The final thesis-facing comparison will explicitly separate direct project measurements, project-derived metrics, primary external literature measurements, secondary-source estimates, and qualitative-only architecture context.
+
+See `docs/MNIST_10_CHARACTERIZATION.md` and `docs/MNIST_10_LOIHI_SOURCES.md`.
