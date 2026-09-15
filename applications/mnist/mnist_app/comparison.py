@@ -55,8 +55,14 @@ def compare_float_checkpoint_to_golden(
     *,
     limit: int | None = None,
     batch_size: int = 128,
+    include_details: bool = False,
 ) -> dict[str, object]:
-    """Evaluate float and quantized models on the same MNIST test samples."""
+    """Evaluate float and quantized models on the same MNIST test samples.
+
+    ``include_details`` preserves the complete golden evaluation and float
+    prediction arrays so a source-controlled summary can later be derived from
+    one immutable matched-corpus run without re-running inference.
+    """
 
     checkpoint = np.load(checkpoint_path)
     checkpoint_profile = str(np.asarray(checkpoint["profile"]).item())
@@ -102,9 +108,17 @@ def compare_float_checkpoint_to_golden(
         golden_predictions,
         labels,
     )
+
+    quantization = runtime.manifest["quantization"]
+    architecture = runtime.manifest["architecture"]
     summary.update(
         {
             "profile": selected.name,
+            "corpus": (
+                "official-mnist-test-full"
+                if limit is None
+                else f"official-mnist-test-first-{limit}"
+            ),
             "float_accuracy": float_accuracy,
             "float_mean_output_spikes": float_mean_spikes,
             "float_incorrect_predictions": int(len(float_incorrect)),
@@ -115,8 +129,37 @@ def compare_float_checkpoint_to_golden(
             "golden_no_spike_images": int(golden["no_spike_images"]),
             "golden_tied_winner_images": int(golden["tied_winner_images"]),
             "deployment_nonzero_synapses": int(
-                runtime.manifest["quantization"]["nonzero_synapses"]
+                quantization["nonzero_synapses"]
             ),
+            "deployment_stored_synapses": int(
+                architecture["stored_synapses"]
+            ),
+            "quantized_threshold": int(
+                runtime.manifest["neuron_config"]["threshold"]
+            ),
+            "quantization_state_scale": float(quantization["state_scale"]),
+            "quantization_max_abs_weight_error": float(
+                quantization["max_abs_weight_error"]
+            ),
+            "quantization_rmse_weight_error": float(
+                quantization["rmse_weight_error"]
+            ),
+            "quantization_conservative_abs_voltage_bound": float(
+                quantization["conservative_abs_voltage_bound"]
+            ),
+            "golden_accuracy_by_tick": golden["accuracy_by_tick"],
+            "golden_confusion_matrix": golden["confusion_matrix"],
         }
     )
+
+    if include_details:
+        summary.update(
+            {
+                "labels": np.asarray(labels, dtype=np.int64).tolist(),
+                "float_predictions": float_predictions.tolist(),
+                "float_incorrect_indices": float_incorrect.tolist(),
+                "golden_predictions": golden["predictions"],
+                "golden_incorrect_indices": golden["incorrect_indices"],
+            }
+        )
     return summary
