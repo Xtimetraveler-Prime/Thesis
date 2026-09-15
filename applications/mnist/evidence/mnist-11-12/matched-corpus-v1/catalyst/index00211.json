@@ -1,0 +1,150 @@
+{
+  "catalyst_internal_control": {
+    "prediction_agreement": true,
+    "spike_vector_agreement": true,
+    "voltage_spike_trace": {
+      "first_mismatch": null,
+      "mismatch_count": 0,
+      "passed": true
+    }
+  },
+  "delivered_drive": {
+    "evidence_label": "MATCHED DELIVERED DRIVE + TRANSLATED DYNAMICS (CPU INT32 CONTROL)",
+    "metadata": {
+      "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "delivered_values_outside_signed_int16": 0,
+      "external_current_dtype": "int32",
+      "fan_in_sum_width": "signed-int32",
+      "hardware_transport_claim": false,
+      "m13_signed_int16_direct_stimulus_guard_reused": false,
+      "max_abs_delivered_current": 31232,
+      "transport": "cpu_reference_direct_current"
+    },
+    "prediction": 5,
+    "prediction_agreement_with_project": true,
+    "spike_counts": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      4,
+      0,
+      4,
+      2,
+      2
+    ],
+    "spike_vector_agreement_with_project": true,
+    "voltage_spike_trace": {
+      "first_mismatch": {
+        "candidate": [
+          1600,
+          1152,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          1600,
+          1152,
+          -320,
+          -64,
+          -832,
+          -448,
+          1216,
+          -832,
+          1216,
+          -640
+        ]
+      },
+      "mismatch_count": 18,
+      "passed": false
+    }
+  },
+  "graph_preserving": {
+    "evidence_label": "MATCHED EFFECTIVE GRAPH + TRANSLATED DYNAMICS",
+    "metadata": {
+      "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+      "compiled_edges": 4086,
+      "deployed_neurons": 794,
+      "native_ticks": 17,
+      "output_neurons": 10,
+      "source_neurons": 784,
+      "warmup_pipeline_ticks": 1
+    },
+    "prediction": 5,
+    "prediction_agreement_with_project": true,
+    "spike_counts": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      4,
+      0,
+      4,
+      2,
+      2
+    ],
+    "spike_vector_agreement_with_project": true,
+    "voltage_spike_trace": {
+      "first_mismatch": {
+        "candidate": [
+          1600,
+          1152,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          1600,
+          1152,
+          -320,
+          -64,
+          -832,
+          -448,
+          1216,
+          -832,
+          1216,
+          -640
+        ]
+      },
+      "mismatch_count": 18,
+      "passed": false
+    }
+  },
+  "label": 5,
+  "mnist_test_index": 211,
+  "note": "A Catalyst-vs-project mismatch is an experimental result, not an automatic failure. Only disagreement between the independently constructed Catalyst graph-preserving and exact-fan-in CPU control paths fails closed.",
+  "passed_transport_consistency": true,
+  "profile": "native-sparse",
+  "project_prediction": 5,
+  "project_spike_counts": [
+    0,
+    0,
+    0,
+    1,
+    0,
+    4,
+    0,
+    4,
+    2,
+    2
+  ],
+  "refractory_0_to_1_equivalent": true,
+  "schema": "neuromorphic-twin-mnist-12-catalyst-case-v1"
+}

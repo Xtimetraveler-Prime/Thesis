@@ -1,0 +1,55 @@
+{
+  "brian2loihi_correct": true,
+  "brian2loihi_prediction": 7,
+  "brian2loihi_spike_counts": [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    9,
+    0,
+    1
+  ],
+  "effective_weight_mismatch_count": 0,
+  "evidence_label": "MATCHED GRAPH + MATCHED/EXPLICITLY-EQUIVALENT DYNAMICS",
+  "first_effective_weight_mismatch_index": null,
+  "label": 7,
+  "mnist_test_index": 0,
+  "passed": true,
+  "prediction_agreement": true,
+  "profile": "native-sparse",
+  "project_correct": true,
+  "project_prediction": 7,
+  "project_refractory_0_to_1_equivalence": {
+    "compared_ticks": 16,
+    "first_mismatch": null,
+    "mismatch_count": 0,
+    "passed": true
+  },
+  "project_spike_counts": [
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    9,
+    0,
+    1
+  ],
+  "schema": "neuromorphic-twin-mnist-11-brian2loihi-case-v1",
+  "spike_count_vector_agreement": true,
+  "ticks": 16,
+  "total_input_events": 1157,
+  "trace_comparison": {
+    "compared_ticks": 16,
+    "first_mismatch": null,
+    "mismatch_count": 0,
+    "passed": true
+  },
+  "weight_count": 4086
+}

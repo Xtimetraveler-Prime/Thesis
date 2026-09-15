@@ -1,0 +1,252 @@
+{
+  "case_count": 30,
+  "cases": [
+    {
+      "delivered_drive_prediction": 0,
+      "graph_prediction": 0,
+      "label": 0,
+      "mnist_test_index": 3,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 0,
+      "graph_prediction": 0,
+      "label": 0,
+      "mnist_test_index": 126,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 0,
+      "mnist_test_index": 717,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 1,
+      "graph_prediction": 1,
+      "label": 1,
+      "mnist_test_index": 2,
+      "project_prediction": 1,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 1,
+      "graph_prediction": 1,
+      "label": 1,
+      "mnist_test_index": 619,
+      "project_prediction": 1,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 1,
+      "mnist_test_index": 1527,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 2,
+      "graph_prediction": 2,
+      "label": 2,
+      "mnist_test_index": 1,
+      "project_prediction": 2,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 8,
+      "graph_prediction": 8,
+      "label": 2,
+      "mnist_test_index": 119,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 9,
+      "graph_prediction": 9,
+      "label": 2,
+      "mnist_test_index": 149,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 3,
+      "graph_prediction": 3,
+      "label": 3,
+      "mnist_test_index": 30,
+      "project_prediction": 3,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 8,
+      "graph_prediction": 8,
+      "label": 3,
+      "mnist_test_index": 18,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 2,
+      "graph_prediction": 2,
+      "label": 3,
+      "mnist_test_index": 63,
+      "project_prediction": 2,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 4,
+      "graph_prediction": 4,
+      "label": 4,
+      "mnist_test_index": 4,
+      "project_prediction": 4,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 0,
+      "graph_prediction": 0,
+      "label": 4,
+      "mnist_test_index": 33,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 4,
+      "mnist_test_index": 247,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 5,
+      "graph_prediction": 5,
+      "label": 5,
+      "mnist_test_index": 15,
+      "project_prediction": 5,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 5,
+      "graph_prediction": 5,
+      "label": 5,
+      "mnist_test_index": 211,
+      "project_prediction": 5,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 5,
+      "mnist_test_index": 8,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 6,
+      "mnist_test_index": 11,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 6,
+      "graph_prediction": 6,
+      "label": 6,
+      "mnist_test_index": 66,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 0,
+      "graph_prediction": 0,
+      "label": 6,
+      "mnist_test_index": 259,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 7,
+      "graph_prediction": 7,
+      "label": 7,
+      "mnist_test_index": 0,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 7,
+      "graph_prediction": 7,
+      "label": 7,
+      "mnist_test_index": 60,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 4,
+      "graph_prediction": 4,
+      "label": 7,
+      "mnist_test_index": 124,
+      "project_prediction": 4,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 8,
+      "graph_prediction": 8,
+      "label": 8,
+      "mnist_test_index": 61,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 8,
+      "graph_prediction": 8,
+      "label": 8,
+      "mnist_test_index": 257,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 7,
+      "graph_prediction": 7,
+      "label": 8,
+      "mnist_test_index": 233,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 9,
+      "graph_prediction": 9,
+      "label": 9,
+      "mnist_test_index": 7,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 9,
+      "graph_prediction": 9,
+      "label": 9,
+      "mnist_test_index": 73,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "delivered_drive_prediction": 3,
+      "graph_prediction": 3,
+      "label": 9,
+      "mnist_test_index": 241,
+      "project_prediction": 3,
+      "transport_consistent": true
+    }
+  ],
+  "delivered_drive_prediction_agreement_cases": 30,
+  "delivered_drive_spike_vector_agreement_cases": 26,
+  "graph_prediction_agreement_cases": 30,
+  "graph_spike_vector_agreement_cases": 26,
+  "profile": "native-sparse",
+  "schema": "neuromorphic-twin-mnist-12-catalyst-suite-v1",
+  "transport_consistent_cases": 30
+}

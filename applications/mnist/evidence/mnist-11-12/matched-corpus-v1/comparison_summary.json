@@ -1,0 +1,70 @@
+{
+  "brian2loihi_matched_scope": {
+    "brian2loihi_accuracy_on_scope": 0.5666666666666667,
+    "case_count": 30,
+    "evidence_label": "MATCHED GRAPH + MATCHED/EXPLICITLY-EQUIVALENT DYNAMICS",
+    "exact_trace_agreement_cases": 30,
+    "prediction_agreement_cases": 30,
+    "project_accuracy_on_scope": 0.5666666666666667,
+    "spike_count_vector_agreement_cases": 30
+  },
+  "catalyst_matched_scope": {
+    "case_count": 30,
+    "delivered_drive_prediction_agreement_cases": 30,
+    "delivered_drive_spike_vector_agreement_cases": 26,
+    "evidence_label": "MATCHED EFFECTIVE GRAPH / DELIVERED DRIVE + TRANSLATED DYNAMICS",
+    "graph_prediction_agreement_cases": 30,
+    "graph_spike_vector_agreement_cases": 26,
+    "transport_consistent_cases": 30
+  },
+  "hardware_boundary": {
+    "brian2loihi": "software emulator only; no hardware latency/energy claim",
+    "catalyst": "generic CPU matched experiment supported; pinned M13.5 K26 graph-preserving MNIST blocked by 512-neuron wrapper and missing board integration",
+    "fpga_v1": "physical K26 application behavior/timing already accepted in MNIST-07..10",
+    "published_loihi": "retain MNIST-10 NxTF row as UNMATCHED LITERATURE REFERENCE only"
+  },
+  "matched_scope": {
+    "case_count": 30,
+    "mnist_test_indices": [
+      3,
+      126,
+      717,
+      2,
+      619,
+      1527,
+      1,
+      119,
+      149,
+      30,
+      18,
+      63,
+      4,
+      33,
+      247,
+      15,
+      211,
+      8,
+      11,
+      66,
+      259,
+      0,
+      60,
+      124,
+      61,
+      257,
+      233,
+      7,
+      73,
+      241
+    ]
+  },
+  "profile": "native-sparse",
+  "project_full_test_context": {
+    "corpus": "official-mnist-test-full",
+    "evidence_label": "PROJECT FULL-TEST GOLDEN CONTEXT",
+    "golden_accuracy": 0.9171,
+    "images": 10000,
+    "stored_synapses": 4086
+  },
+  "schema": "neuromorphic-twin-mnist-matched-comparison-summary-v1"
+}

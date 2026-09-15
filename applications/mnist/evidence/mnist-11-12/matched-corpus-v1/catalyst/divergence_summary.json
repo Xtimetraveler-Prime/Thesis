@@ -1,0 +1,1995 @@
+{
+  "case_count": 30,
+  "cases": [
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2176,
+          0,
+          0,
+          192,
+          3328,
+          2112,
+          832,
+          448
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          0,
+          -13888,
+          2176,
+          -2368,
+          -3840,
+          192,
+          3328,
+          2112,
+          832,
+          448
+        ]
+      },
+      "direct_prediction": 0,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2176,
+          0,
+          0,
+          192,
+          3328,
+          2112,
+          832,
+          448
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          0,
+          -13888,
+          2176,
+          -2368,
+          -3840,
+          192,
+          3328,
+          2112,
+          832,
+          448
+        ]
+      },
+      "graph_prediction": 0,
+      "label": 0,
+      "mnist_test_index": 3,
+      "prediction_agreement": true,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          4416,
+          0,
+          6016,
+          3840,
+          0,
+          128,
+          2496,
+          4672,
+          256,
+          2240
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          4416,
+          -13056,
+          6016,
+          3840,
+          -1408,
+          128,
+          2496,
+          4672,
+          256,
+          2240
+        ]
+      },
+      "direct_prediction": 0,
+      "graph_first_mismatch": {
+        "candidate": [
+          4416,
+          0,
+          6016,
+          3840,
+          0,
+          128,
+          2496,
+          4672,
+          256,
+          2240
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          4416,
+          -13056,
+          6016,
+          3840,
+          -1408,
+          128,
+          2496,
+          4672,
+          256,
+          2240
+        ]
+      },
+      "graph_prediction": 0,
+      "label": 0,
+      "mnist_test_index": 126,
+      "prediction_agreement": true,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          2624,
+          0,
+          1088,
+          0,
+          0,
+          5952,
+          4480,
+          3072,
+          2496,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          2624,
+          -10688,
+          1088,
+          -9600,
+          -3328,
+          5952,
+          4480,
+          3072,
+          2496,
+          -5568
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          2624,
+          0,
+          1088,
+          0,
+          0,
+          5952,
+          4480,
+          3072,
+          2496,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          2624,
+          -10688,
+          1088,
+          -9600,
+          -3328,
+          5952,
+          4480,
+          3072,
+          2496,
+          -5568
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 0,
+      "mnist_test_index": 717,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          3456,
+          576,
+          0,
+          2112,
+          0,
+          1408,
+          0,
+          1408,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2752,
+          3456,
+          576,
+          -1856,
+          2112,
+          0,
+          1408,
+          -1216,
+          1408,
+          -2432
+        ]
+      },
+      "direct_prediction": 1,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          3456,
+          576,
+          0,
+          2112,
+          0,
+          1408,
+          0,
+          1408,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2752,
+          3456,
+          576,
+          -1856,
+          2112,
+          0,
+          1408,
+          -1216,
+          1408,
+          -2432
+        ]
+      },
+      "graph_prediction": 1,
+      "label": 1,
+      "mnist_test_index": 2,
+      "prediction_agreement": true,
+      "project_prediction": 1,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          7808,
+          640,
+          3712,
+          1024,
+          1984,
+          2368,
+          0,
+          5120,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -16064,
+          7808,
+          640,
+          3712,
+          1024,
+          1984,
+          2368,
+          -7808,
+          5120,
+          -6272
+        ]
+      },
+      "direct_prediction": 1,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          7808,
+          640,
+          3712,
+          1024,
+          1984,
+          2368,
+          0,
+          5120,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -16064,
+          7808,
+          640,
+          3712,
+          1024,
+          1984,
+          2368,
+          -7808,
+          5120,
+          -6272
+        ]
+      },
+      "graph_prediction": 1,
+      "label": 1,
+      "mnist_test_index": 619,
+      "prediction_agreement": true,
+      "project_prediction": 1,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          256,
+          768,
+          1088,
+          0,
+          3392,
+          2432,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          0,
+          256,
+          768,
+          1088,
+          -11072,
+          3392,
+          2432,
+          -7744,
+          -64,
+          -9664
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          256,
+          768,
+          1088,
+          0,
+          3392,
+          2432,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          0,
+          256,
+          768,
+          1088,
+          -11072,
+          3392,
+          2432,
+          -7744,
+          -64,
+          -9664
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 1,
+      "mnist_test_index": 1527,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          3136,
+          0,
+          8128,
+          320,
+          0,
+          1088,
+          3584,
+          0,
+          3776,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          3136,
+          -3072,
+          8128,
+          320,
+          -22016,
+          1088,
+          3584,
+          -31744,
+          3776,
+          -25344
+        ]
+      },
+      "direct_prediction": 2,
+      "graph_first_mismatch": {
+        "candidate": [
+          3136,
+          0,
+          8128,
+          320,
+          0,
+          1088,
+          3584,
+          0,
+          3776,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          3136,
+          -3072,
+          8128,
+          320,
+          -22016,
+          1088,
+          3584,
+          -31744,
+          3776,
+          -25344
+        ]
+      },
+      "graph_prediction": 2,
+      "label": 2,
+      "mnist_test_index": 1,
+      "prediction_agreement": true,
+      "project_prediction": 2,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          512,
+          0,
+          3328,
+          0,
+          1984,
+          704,
+          4928,
+          3520,
+          4096,
+          576
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          512,
+          -12224,
+          3328,
+          -5696,
+          1984,
+          704,
+          4928,
+          3520,
+          4096,
+          576
+        ]
+      },
+      "direct_prediction": 8,
+      "graph_first_mismatch": {
+        "candidate": [
+          512,
+          0,
+          3328,
+          0,
+          1984,
+          704,
+          4928,
+          3520,
+          4096,
+          576
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          512,
+          -12224,
+          3328,
+          -5696,
+          1984,
+          704,
+          4928,
+          3520,
+          4096,
+          576
+        ]
+      },
+      "graph_prediction": 8,
+      "label": 2,
+      "mnist_test_index": 119,
+      "prediction_agreement": true,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          704,
+          1344
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -5760,
+          -1792,
+          -768,
+          -3264,
+          -704,
+          -64,
+          -3584,
+          -3712,
+          704,
+          1344
+        ]
+      },
+      "direct_prediction": 9,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          704,
+          1344
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -5760,
+          -1792,
+          -768,
+          -3264,
+          -704,
+          -64,
+          -3584,
+          -3712,
+          704,
+          1344
+        ]
+      },
+      "graph_prediction": 9,
+      "label": 2,
+      "mnist_test_index": 149,
+      "prediction_agreement": true,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          6592,
+          0,
+          3968,
+          0,
+          0,
+          832,
+          1280
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -512,
+          -2048,
+          6592,
+          -5632,
+          3968,
+          -4800,
+          -832,
+          832,
+          1280
+        ]
+      },
+      "direct_prediction": 3,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          6592,
+          0,
+          3968,
+          0,
+          0,
+          832,
+          1280
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -512,
+          -2048,
+          6592,
+          -5632,
+          3968,
+          -4800,
+          -832,
+          832,
+          1280
+        ]
+      },
+      "graph_prediction": 3,
+      "label": 3,
+      "mnist_test_index": 30,
+      "prediction_agreement": true,
+      "project_prediction": 3,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2816,
+          7040,
+          3456,
+          2944,
+          1024,
+          0,
+          5120,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -6592,
+          -3200,
+          2816,
+          7040,
+          3456,
+          2944,
+          1024,
+          -3840,
+          5120,
+          -2688
+        ]
+      },
+      "direct_prediction": 8,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2816,
+          7040,
+          3456,
+          2944,
+          1024,
+          0,
+          5120,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -6592,
+          -3200,
+          2816,
+          7040,
+          3456,
+          2944,
+          1024,
+          -3840,
+          5120,
+          -2688
+        ]
+      },
+      "graph_prediction": 8,
+      "label": 3,
+      "mnist_test_index": 18,
+      "prediction_agreement": true,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          512,
+          1536,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -3456,
+          -1792,
+          512,
+          1536,
+          -6208,
+          -1536,
+          -2560,
+          -7360,
+          1216,
+          -4224
+        ]
+      },
+      "direct_prediction": 2,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          512,
+          1536,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -3456,
+          -1792,
+          512,
+          1536,
+          -6208,
+          -1536,
+          -2560,
+          -7360,
+          1216,
+          -4224
+        ]
+      },
+      "graph_prediction": 2,
+      "label": 3,
+      "mnist_test_index": 63,
+      "prediction_agreement": true,
+      "project_prediction": 2,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          256,
+          0,
+          2560,
+          0,
+          4736,
+          0,
+          1472,
+          0,
+          384,
+          896
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          256,
+          -8896,
+          2560,
+          -704,
+          4736,
+          -896,
+          1472,
+          -128,
+          384,
+          896
+        ]
+      },
+      "direct_prediction": 4,
+      "graph_first_mismatch": {
+        "candidate": [
+          256,
+          0,
+          2560,
+          0,
+          4736,
+          0,
+          1472,
+          0,
+          384,
+          896
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          256,
+          -8896,
+          2560,
+          -704,
+          4736,
+          -896,
+          1472,
+          -128,
+          384,
+          896
+        ]
+      },
+      "graph_prediction": 4,
+      "label": 4,
+      "mnist_test_index": 4,
+      "prediction_agreement": true,
+      "project_prediction": 4,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          3648,
+          0,
+          1856,
+          0,
+          6656,
+          3456,
+          6144,
+          0,
+          2880,
+          384
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          3648,
+          -10432,
+          1856,
+          -8320,
+          6656,
+          3456,
+          6144,
+          -5376,
+          2880,
+          384
+        ]
+      },
+      "direct_prediction": 0,
+      "graph_first_mismatch": {
+        "candidate": [
+          3648,
+          0,
+          1856,
+          0,
+          6656,
+          3456,
+          6144,
+          0,
+          2880,
+          384
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          3648,
+          -10432,
+          1856,
+          -8320,
+          6656,
+          3456,
+          6144,
+          -5376,
+          2880,
+          384
+        ]
+      },
+      "graph_prediction": 0,
+      "label": 4,
+      "mnist_test_index": 33,
+      "prediction_agreement": true,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          3456,
+          0,
+          704,
+          0,
+          2816,
+          0,
+          3264,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2176,
+          -5952,
+          3456,
+          -448,
+          704,
+          -2048,
+          2816,
+          -11392,
+          3264,
+          -2368
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          3456,
+          0,
+          704,
+          0,
+          2816,
+          0,
+          3264,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2176,
+          -5952,
+          3456,
+          -448,
+          704,
+          -2048,
+          2816,
+          -11392,
+          3264,
+          -2368
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 4,
+      "mnist_test_index": 247,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1344,
+          0,
+          0,
+          1152,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1856,
+          -2240,
+          -1472,
+          -1088,
+          -2240,
+          1344,
+          -3200,
+          -8832,
+          1152,
+          -6912
+        ]
+      },
+      "direct_prediction": 5,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1344,
+          0,
+          0,
+          1152,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1856,
+          -2240,
+          -1472,
+          -1088,
+          -2240,
+          1344,
+          -3200,
+          -8832,
+          1152,
+          -6912
+        ]
+      },
+      "graph_prediction": 5,
+      "label": 5,
+      "mnist_test_index": 15,
+      "prediction_agreement": true,
+      "project_prediction": 5,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          1600,
+          1152,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          1600,
+          1152,
+          -320,
+          -64,
+          -832,
+          -448,
+          1216,
+          -832,
+          1216,
+          -640
+        ]
+      },
+      "direct_prediction": 5,
+      "graph_first_mismatch": {
+        "candidate": [
+          1600,
+          1152,
+          0,
+          0,
+          0,
+          0,
+          1216,
+          0,
+          1216,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          1600,
+          1152,
+          -320,
+          -64,
+          -832,
+          -448,
+          1216,
+          -832,
+          1216,
+          -640
+        ]
+      },
+      "graph_prediction": 5,
+      "label": 5,
+      "mnist_test_index": 211,
+      "prediction_agreement": true,
+      "project_prediction": 5,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          960,
+          0,
+          0,
+          0,
+          2368,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          960,
+          -9728,
+          -960,
+          -7872,
+          2368,
+          -64,
+          0,
+          -15744,
+          -192,
+          -6784
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          960,
+          0,
+          0,
+          0,
+          2368,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          960,
+          -9728,
+          -960,
+          -7872,
+          2368,
+          -64,
+          0,
+          -15744,
+          -192,
+          -6784
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 5,
+      "mnist_test_index": 8,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          1408,
+          0,
+          0,
+          320,
+          0,
+          2048,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -960,
+          1408,
+          -2240,
+          -576,
+          320,
+          -1536,
+          2048,
+          -5376,
+          -1792,
+          -5632
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          1408,
+          0,
+          0,
+          320,
+          0,
+          2048,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -960,
+          1408,
+          -2240,
+          -576,
+          320,
+          -1536,
+          2048,
+          -5376,
+          -1792,
+          -5632
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 6,
+      "mnist_test_index": 11,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2560,
+          3776,
+          512,
+          0,
+          1664,
+          0,
+          320,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -3776,
+          2560,
+          3776,
+          512,
+          -1472,
+          1664,
+          -1472,
+          320,
+          -2752
+        ]
+      },
+      "direct_prediction": 6,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          2560,
+          3776,
+          512,
+          0,
+          1664,
+          0,
+          320,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -3776,
+          2560,
+          3776,
+          512,
+          -1472,
+          1664,
+          -1472,
+          320,
+          -2752
+        ]
+      },
+      "graph_prediction": 6,
+      "label": 6,
+      "mnist_test_index": 66,
+      "prediction_agreement": true,
+      "project_prediction": 6,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          7168,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2240,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          7168,
+          -4608,
+          -2880,
+          -6208,
+          -1920,
+          -4928,
+          2240,
+          -6592,
+          -2176,
+          -8064
+        ]
+      },
+      "direct_prediction": 0,
+      "graph_first_mismatch": {
+        "candidate": [
+          7168,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2240,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          7168,
+          -4608,
+          -2880,
+          -6208,
+          -1920,
+          -4928,
+          2240,
+          -6592,
+          -2176,
+          -8064
+        ]
+      },
+      "graph_prediction": 0,
+      "label": 6,
+      "mnist_test_index": 259,
+      "prediction_agreement": true,
+      "project_prediction": 0,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          1536,
+          0,
+          0,
+          0,
+          4736,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4096,
+          -14528,
+          -2112,
+          1536,
+          -3072,
+          -4224,
+          -11392,
+          4736,
+          -1600,
+          -512
+        ]
+      },
+      "direct_prediction": 7,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          1536,
+          0,
+          0,
+          0,
+          4736,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4096,
+          -14528,
+          -2112,
+          1536,
+          -3072,
+          -4224,
+          -11392,
+          4736,
+          -1600,
+          -512
+        ]
+      },
+      "graph_prediction": 7,
+      "label": 7,
+      "mnist_test_index": 0,
+      "prediction_agreement": true,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          5888,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -14016,
+          -19520,
+          -1984,
+          5888,
+          -5888,
+          -5504,
+          -9024,
+          0,
+          -3328,
+          -4544
+        ]
+      },
+      "direct_prediction": 7,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          5888,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -14016,
+          -19520,
+          -1984,
+          5888,
+          -5888,
+          -5504,
+          -9024,
+          0,
+          -3328,
+          -4544
+        ]
+      },
+      "graph_prediction": 7,
+      "label": 7,
+      "mnist_test_index": 60,
+      "prediction_agreement": true,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          1344,
+          4416,
+          0,
+          0,
+          256,
+          2112,
+          1152
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2432,
+          -16192,
+          -5504,
+          1344,
+          4416,
+          -6272,
+          -4160,
+          256,
+          2112,
+          1152
+        ]
+      },
+      "direct_prediction": 4,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          1344,
+          4416,
+          0,
+          0,
+          256,
+          2112,
+          1152
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -2432,
+          -16192,
+          -5504,
+          1344,
+          4416,
+          -6272,
+          -4160,
+          256,
+          2112,
+          1152
+        ]
+      },
+      "graph_prediction": 4,
+      "label": 7,
+      "mnist_test_index": 124,
+      "prediction_agreement": true,
+      "project_prediction": 4,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          256,
+          0,
+          3072,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1152,
+          128
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          256,
+          -12032,
+          3072,
+          -2624,
+          -5312,
+          -6336,
+          -768,
+          -4672,
+          1152,
+          128
+        ]
+      },
+      "direct_prediction": 8,
+      "graph_first_mismatch": {
+        "candidate": [
+          256,
+          0,
+          3072,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1152,
+          128
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          256,
+          -12032,
+          3072,
+          -2624,
+          -5312,
+          -6336,
+          -768,
+          -4672,
+          1152,
+          128
+        ]
+      },
+      "graph_prediction": 8,
+      "label": 8,
+      "mnist_test_index": 61,
+      "prediction_agreement": true,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          6720,
+          768,
+          1152,
+          0,
+          768,
+          2240,
+          0,
+          3648,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -832,
+          6720,
+          768,
+          1152,
+          -7296,
+          768,
+          2240,
+          -9344,
+          3648,
+          -4672
+        ]
+      },
+      "direct_prediction": 8,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          6720,
+          768,
+          1152,
+          0,
+          768,
+          2240,
+          0,
+          3648,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -832,
+          6720,
+          768,
+          1152,
+          -7296,
+          768,
+          2240,
+          -9344,
+          3648,
+          -4672
+        ]
+      },
+      "graph_prediction": 8,
+      "label": 8,
+      "mnist_test_index": 257,
+      "prediction_agreement": true,
+      "project_prediction": 8,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          832,
+          0,
+          0,
+          0,
+          3776,
+          960,
+          2048
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4800,
+          -12480,
+          -1920,
+          832,
+          -4736,
+          -704,
+          -17856,
+          3776,
+          960,
+          2048
+        ]
+      },
+      "direct_prediction": 7,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          832,
+          0,
+          0,
+          0,
+          3776,
+          960,
+          2048
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4800,
+          -12480,
+          -1920,
+          832,
+          -4736,
+          -704,
+          -17856,
+          3776,
+          960,
+          2048
+        ]
+      },
+      "graph_prediction": 7,
+      "label": 8,
+      "mnist_test_index": 233,
+      "prediction_agreement": true,
+      "project_prediction": 7,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          4096,
+          0,
+          0,
+          4160,
+          1344,
+          0,
+          1536,
+          3200,
+          5120
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4736,
+          4096,
+          -768,
+          -1408,
+          4160,
+          1344,
+          -1344,
+          1536,
+          3200,
+          5120
+        ]
+      },
+      "direct_prediction": 9,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          4096,
+          0,
+          0,
+          4160,
+          1344,
+          0,
+          1536,
+          3200,
+          5120
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -4736,
+          4096,
+          -768,
+          -1408,
+          4160,
+          1344,
+          -1344,
+          1536,
+          3200,
+          5120
+        ]
+      },
+      "graph_prediction": 9,
+      "label": 9,
+      "mnist_test_index": 7,
+      "prediction_agreement": true,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          3712,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3392,
+          2240,
+          4608
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -6720,
+          3712,
+          -3840,
+          -128,
+          -3392,
+          -4352,
+          -14592,
+          3392,
+          2240,
+          4608
+        ]
+      },
+      "direct_prediction": 9,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          3712,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3392,
+          2240,
+          4608
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -6720,
+          3712,
+          -3840,
+          -128,
+          -3392,
+          -4352,
+          -14592,
+          3392,
+          2240,
+          4608
+        ]
+      },
+      "graph_prediction": 9,
+      "label": 9,
+      "mnist_test_index": 73,
+      "prediction_agreement": true,
+      "project_prediction": 9,
+      "transport_consistent": true
+    },
+    {
+      "classification": "CATALYST_SUB_REST_CLAMP",
+      "direct_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          192,
+          0,
+          2112,
+          0,
+          0,
+          384,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -9920,
+          -1088,
+          192,
+          -3904,
+          2112,
+          -4736,
+          -6272,
+          384,
+          -1536
+        ]
+      },
+      "direct_prediction": 3,
+      "graph_first_mismatch": {
+        "candidate": [
+          0,
+          0,
+          0,
+          192,
+          0,
+          2112,
+          0,
+          0,
+          384,
+          0
+        ],
+        "canonical_tick": 0,
+        "field": "voltage_after",
+        "reference": [
+          -1472,
+          -9920,
+          -1088,
+          192,
+          -3904,
+          2112,
+          -4736,
+          -6272,
+          384,
+          -1536
+        ]
+      },
+      "graph_prediction": 3,
+      "label": 9,
+      "mnist_test_index": 241,
+      "prediction_agreement": true,
+      "project_prediction": 3,
+      "transport_consistent": true
+    }
+  ],
+  "classification_counts": {
+    "CATALYST_SUB_REST_CLAMP": 30
+  },
+  "exact_cases": 0,
+  "other_translated_dynamics_cases": 0,
+  "prediction_agreement_cases": 30,
+  "schema": "neuromorphic-twin-mnist-12-catalyst-divergence-summary-v1",
+  "sub_rest_clamp_cases": 30,
+  "transport_consistent_cases": 30,
+  "transport_inconsistent_cases": 0
+}
