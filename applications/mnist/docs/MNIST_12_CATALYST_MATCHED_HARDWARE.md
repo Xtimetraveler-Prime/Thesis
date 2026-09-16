@@ -1,12 +1,16 @@
 # MNIST-12 — Catalyst N1 Matched Architecture Experiment
 
-**Status:** In progress — MNIST-12.1 through MNIST-12.3 complete; pinned physical K26 path blocked; full-test sensitivity and final matrix remain
+**Status:** Complete at the pinned-source boundary
 
 ## Goal
 
 MNIST-12 uses **Catalyst N1**, the same independent Loihi-class architecture audited in core M13, as an application-level comparison target for the unchanged frozen native-sparse MNIST workload.
 
-Catalyst is not Intel Loihi. Its role is to test the same effective graph and inputs under an independently designed fixed-point/event-driven LIF architecture and to separate graph/transport effects from neuron-model effects.
+Catalyst is not Intel Loihi. Its role is to answer:
+
+> If the same frozen effective graph, weights, input events, initial state, and decoder are evaluated under Catalyst N1's independently chosen neuron semantics, where do the two architectures first diverge and how often does that difference propagate into spikes or classification?
+
+The milestone includes a matched Catalyst CPU/reference experiment and an explicit physical-K26 feasibility audit. It does not claim a Catalyst hardware result where the pinned artifact cannot represent the declared graph.
 
 ## Frozen upstream reference
 
@@ -16,17 +20,9 @@ commit:     1806bb4b4114d7671e5648fa75b7b83b3a8d5543
 tag:        v2.3-paper
 ```
 
-M13 already established:
+M13 already reproduced the pinned Catalyst CPU/RTL regressions, directed semantic probes, and routed K26-class implementation. MNIST-12 reuses those accepted reference boundaries rather than changing Catalyst source to force application agreement.
 
-- 25/25 pinned Catalyst RTL regressions;
-- 56/56 Catalyst CPU tests;
-- directed project/Brian/Catalyst semantic probes;
-- routed Catalyst K26-class Vivado implementation; and
-- the strongest source-supported K26 hardware boundary.
-
-MNIST-12 reuses those authorities rather than altering Catalyst to look like FPGA-v1.
-
-## Frozen matched workload
+## Frozen matched application contract
 
 ```text
 784 external axons
@@ -40,24 +36,20 @@ same spike-count decoder
 no retraining
 ```
 
-Brian2Loihi and Catalyst consume the same immutable matched request data.
+Both MNIST-11 and MNIST-12 consume the same backend-neutral request data generated from `applications/mnist/frozen/mnist-v1/`.
 
 ## Two independent Catalyst CPU views
 
 ### Graph-preserving reference
 
-The generic pinned SDK exposes `1024` neurons/core, so the software reference can materialize:
+The generic pinned Catalyst SDK supports 1,024 neurons per software core, so the application is materialized as:
 
 ```text
 784 source neurons + 10 output neurons = 794 neurons
 4,086 exact effective-weight edges
 ```
 
-Each source event produces a Catalyst source-neuron spike and traverses Catalyst's own compiler/adjacency path. Because synchronous Catalyst delivers newly generated source spikes on the following native timestep, comparison uses:
-
-```text
-project canonical tick k <-> Catalyst native output tick k+1
-```
+Each external axon event drives a threshold-1 source neuron. Catalyst's synchronous source-to-target pipeline is normalized by comparing project canonical tick `k` with Catalyst output tick `k+1`.
 
 Evidence label:
 
@@ -67,16 +59,9 @@ MATCHED EFFECTIVE GRAPH + TRANSLATED DYNAMICS
 
 ### Delivered-drive reference
 
-The same axon schedule is independently collapsed to the exact ten per-output fan-in sums for each tick. The pinned Catalyst CPU simulator represents injected current and its synchronous soma accumulator with signed 32-bit arrays, so fan-in sums wider than signed int16 are preserved exactly. Individual stored synaptic weights remain signed-int16-compatible.
+A second construction independently collapses every active external axon row into the exact ten per-output fan-in currents and injects those currents directly into Catalyst output neurons.
 
-This control uses:
-
-```text
-strict FPGA-v1 V > T -> Catalyst V >= T+1
-project R=1 reference -> Catalyst refrac=0
-zero bias/reset
-same exact fan-in delivered current
-```
+Because many valid signed-int16 synaptic weights can converge in one tick, the collapsed current is retained as signed 32-bit in the Catalyst CPU simulator. It is not clipped or rescaled to the older M13 hardware-common signed-int16 direct-stimulus envelope.
 
 Evidence label:
 
@@ -84,141 +69,116 @@ Evidence label:
 MATCHED DELIVERED DRIVE + TRANSLATED DYNAMICS (CPU INT32 CONTROL)
 ```
 
-The graph and delivered-drive traces must be identical after pipeline alignment. A disagreement between them is an adapter/transport failure; a common disagreement with FPGA-v1 is an architecture result.
+The two Catalyst views must match each other at every normalized output voltage vector and spike set. A project/Catalyst difference is scientific evidence; a graph/direct Catalyst mismatch is an adapter failure.
 
-## Confirmed semantic divergence: sub-rest membrane clamp
+## Predeclared semantic difference
 
-Catalyst's simple LIF update floors sufficiently negative membrane results to its resting value `0`. FPGA-v1 preserves negative membrane state. This difference was identified before the corpus results and is classified as:
+The primary relevant Catalyst N1 difference was identified before application outputs were accepted: Catalyst's simple LIF update floors a sufficiently negative sub-rest membrane state back to its resting value `0`, while FPGA-v1 retains signed negative voltage.
 
-```text
-sub_rest_negative_voltage -> UNREPRESENTABLE
-```
+The automated divergence classifier labels a case `CATALYST_SUB_REST_CLAMP` only when:
 
-The accepted anchor and 30-image corpus confirm the effect directly. At each case's first divergence, Catalyst's output voltage vector equals the FPGA-v1 vector with negative entries replaced by zero, while nonnegative entries remain unchanged.
+1. the graph-preserving and delivered-drive Catalyst traces are internally identical;
+2. their first mismatch against FPGA-v1 is the same voltage vector; and
+3. that candidate vector is exactly the project vector with every negative element replaced by `0`.
 
-Because the graph-preserving and delivered-drive Catalyst paths are trace-identical, this is not a graph-translation artifact.
+Later state/spike differences are treated as downstream effects of that first divergence rather than independently relabeled.
 
-## Accepted 30-image result
+## Accepted results
 
-The frozen 30-image conformance corpus produced:
+### Two-image anchor
 
-```text
-Catalyst internal transport consistency:       30 / 30
-Catalyst prediction agreement with FPGA-v1:    30 / 30
-graph spike-vector agreement with FPGA-v1:     26 / 30
-direct spike-vector agreement with FPGA-v1:    26 / 30
-first divergence = sub-rest clamp:              30 / 30
-other first-divergence categories:               0 / 30
-```
+Indices `3` and `1` established the matched execution path. Both Catalyst constructions were internally trace-identical and produced the same decoded class as FPGA-v1. The first project/Catalyst mismatch in both cases was the predeclared sub-rest clamp.
 
-The four final spike-vector differences occur at MNIST indices:
+### Frozen 30-image corpus
 
 ```text
-3, 7, 30, 149
+cases:                            30
+Catalyst internal trace match:    30 / 30
+project/Catalyst prediction match:30 / 30
+project/Catalyst spike-vector:    26 / 30
+first divergence = sub-rest clamp:30 / 30
+unexplained first divergences:     0
 ```
 
-In all four cases Catalyst adds exactly one spike to a non-winning output neuron while preserving the decoded class:
+The four spike-vector differences occurred at official test indices `3`, `7`, `30`, and `149`. In each case Catalyst added exactly one spike to a non-winning output neuron, so the decoded class was unchanged.
 
-| MNIST index | label | decoded class | FPGA-v1 -> Catalyst |
-| ---: | ---: | ---: | --- |
-| 3 | 0 | 0 | output 2: `1 -> 2` |
-| 7 | 9 | 9 | output 3: `1 -> 2` |
-| 30 | 3 | 3 | output 7: `5 -> 6` |
-| 149 | 2 | 9 | output 4: `1 -> 2` |
+### Full official 10,000-image test set
 
-The corpus is deliberately selected and must not be used as an unbiased accuracy estimate. Its significance is behavioral: Catalyst's target-native resting-floor rule changes lower-level state on all selected images, changes final spike counts in some images, but did not change the winner in this 30-image set.
-
-Accepted evidence:
+The final matched software experiment produced:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-corpus-v1/
+cases:                                  10,000
+Catalyst internal transport consistency:10,000 / 10,000
+project accuracy:                        91.71%
+Catalyst graph accuracy:                 91.74%
+prediction agreement:                    9,995 / 10,000  (99.95%)
+spike-count-vector agreement:             9,079 / 10,000  (90.79%)
+spike-vector differences:                   921 / 10,000  (9.21%)
+first divergence = sub-rest clamp:       10,000 / 10,000
+other first-divergence categories:            0
+transport inconsistencies:                   0
 ```
 
-See `docs/MNIST_11_12_CORPUS_RESULTS.md`.
+The five decoded-prediction differences occur at official MNIST test indices:
 
-## Pinned K26 feasibility boundary
+```text
+1012, 1868, 4548, 6157, 7426
+```
 
-The M13.5 Catalyst K26 wrapper remains:
+The 91.74% versus 91.71% accuracy difference is reported descriptively as `+0.03` percentage points for this frozen test set. It is **not** interpreted as Catalyst being a better classifier: the network was trained for FPGA-v1 semantics, only five predictions changed, and the purpose of the experiment is semantic sensitivity rather than architecture ranking.
+
+The important result is the propagation hierarchy:
+
+```text
+known state-level semantic divergence: 100.00% of images
+final spike-vector difference:           9.21% of images
+decoded-class difference:                0.05% of images
+```
+
+Thus Catalyst's resting-floor rule is observable on every image at the internal-state boundary, but the frozen classifier is highly robust to it at the decoded-output boundary.
+
+## Physical K26 feasibility boundary
+
+The pinned M13.5 Catalyst K26 wrapper is not equivalent in capacity to the generic CPU simulator:
 
 ```text
 configured cores:          2
 neurons/core:              256
 total configured neurons: 512
-pool depth/core:           4096
-clock target:              100 MHz
-upstream target part:      xczu5ev-sfvc784-2-i
+matched graph requirement: 794 neurons
 ```
 
-The matched graph requires `794` explicit neuron slots, so it does not fit the pinned wrapper. The pinned source also provides no board XDC, no PS/block-design integration, and no `write_bitstream` path. Routed implementation is therefore the strongest source-supported hardware boundary from M13.5.
+Therefore the graph-preserving matched MNIST workload does **not** fit the pinned K26 wrapper (`794 > 512`). The same upstream snapshot also lacks the board XDC, PS/block-design integration, and `write_bitstream` programming path required for a source-supported physical KV260 run.
 
-Current physical decision:
+M13 reproduced routed implementation, but that resource/timing evidence is context only. It is not an application-level Catalyst MNIST latency measurement.
+
+A custom expanded Catalyst FPGA configuration and KV260 integration could be built as future thesis-owned work, but that would be a **new implementation experiment** and must not be represented as execution of the pinned upstream artifact used here.
+
+## Interpretation
+
+MNIST-12 establishes a controlled matched-application comparison to an independent neuromorphic architecture:
+
+- graph translation is internally validated by two exact Catalyst constructions;
+- the first project/Catalyst divergence is deterministic and explained by a semantic rule declared before full-test results;
+- that state difference changes spike-count vectors much more often than it changes decoded classifications; and
+- the physical matched-graph comparison is infeasible on the pinned Catalyst K26 artifact and is recorded as such rather than fabricated.
+
+No Catalyst CPU wall time, board TDP, or Vivado power estimate is compared against FPGA-v1 architectural latency or energy.
+
+## Sub-milestone closure
+
+- **MNIST-12.1 — Upstream/K26 feasibility audit:** Complete.
+- **MNIST-12.2 — Semantic mapping audit:** Complete.
+- **MNIST-12.3 — Catalyst CPU/reference matched experiment:** Complete through the full official 10,000-image test set.
+- **MNIST-12.4 — Physical Catalyst N1 K26 run:** Closed as infeasible for the declared matched graph at the pinned-source boundary (`794 > 512` plus missing board programming integration). No physical result is claimed.
+- **MNIST-12.5 — Same-K26 characterization:** Closed/not applicable for the matched application because no equivalent Catalyst physical execution boundary exists. M13 routed results remain context only.
+- **MNIST-12.6 — Final matched matrix:** Complete.
+
+See also:
 
 ```text
-generic Catalyst CPU graph-preserving experiment: SUPPORTED and accepted
-Catalyst CPU delivered-drive experiment:          SUPPORTED and accepted
-pinned K26 graph-preserving MNIST:                 BLOCKED (794 > 512 neurons)
-pinned K26 physical delivered-drive MNIST:         BLOCKED by board integration and not graph matched
+docs/MNIST_11_12_ANCHOR_RESULTS.md
+docs/MNIST_11_12_CORPUS_RESULTS.md
+docs/MNIST_11_12_FULL_TEST_RESULTS.md
+applications/mnist/evidence/mnist-11-12/matched-full-v1/
 ```
-
-A thesis-owned expanded/board-integrated Catalyst implementation would be a new hardware experiment and must be labeled separately from the pinned upstream artifact.
-
-## Sub-milestone state
-
-### MNIST-12.1 — Upstream/K26 feasibility audit
-
-**Status:** Complete.
-
-Generic CPU graph fit and the pinned K26 capacity/programming blockers are frozen and machine-readable.
-
-### MNIST-12.2 — Semantic mapping audit
-
-**Status:** Complete.
-
-Threshold, refractory, current-delivery, voltage semantics, state width, and the sub-rest negative-voltage difference are explicitly classified.
-
-### MNIST-12.3 — Catalyst CPU/reference matched experiment
-
-**Status:** Complete.
-
-The two-image anchor and frozen 30-image corpus executed successfully. The graph-preserving and delivered-drive paths agree exactly with each other on all 30 cases, all 30 predictions match FPGA-v1, and the observed lower-level divergence is localized to the predeclared Catalyst resting-floor rule.
-
-### MNIST-12.4 — Physical Catalyst N1 K26 run
-
-**Status:** Blocked at the pinned upstream source boundary.
-
-The exact matched graph does not fit the 512-neuron wrapper, and the release lacks a source-supported programmable KV260 integration. No physical matched-Catalyst result is claimed.
-
-### MNIST-12.5 — Same-K26 characterization
-
-**Status:** Not directly admissible for the matched MNIST graph under the pinned artifact.
-
-M13.5 routed resources/timing remain architecture/context evidence only; they are not an application latency comparison.
-
-### MNIST-12.6 — Final matched matrix
-
-**Status:** In progress.
-
-The 30-image matrix is now populated. A full 10,000-image Catalyst software pass is the next useful sensitivity experiment because it can quantify how often the known resting-floor semantic changes spike vectors or decoded predictions across the unbiased official test set.
-
-## Scaling to full-test execution
-
-Large-scope tooling now uses deterministic request shards, resumable external runners, sparse progress output, and compact full-test archiving. This avoids one giant request JSON and permits an interrupted external run to continue from validated per-image result files.
-
-The full-test analysis will report at minimum:
-
-- transport-consistent case count;
-- prediction agreement against FPGA-v1;
-- spike-vector agreement against FPGA-v1;
-- Catalyst accuracy on the official test split;
-- counts/indices classified as `CATALYST_SUB_REST_CLAMP`;
-- any other first-divergence class; and
-- prediction-disagreement indices, if any.
-
-## Interpretation rules
-
-- Catalyst disagreement with FPGA-v1 is an architecture result unless the two Catalyst controls disagree.
-- The first divergent tick/state is more informative than final accuracy alone.
-- CPU wall time is not compared to FPGA PL latency.
-- M13.5 resource totals do not establish application efficiency ranking.
-- No power/energy claim is made from Vivado estimates or board TDP.
-- No target-specific retraining is allowed in the primary matched experiment.
