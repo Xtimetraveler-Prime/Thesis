@@ -1,43 +1,12 @@
 # MNIST-11 — Brian2Loihi Matched Reference Experiment
 
-**Status:** In progress — MNIST-11.1 through MNIST-11.4 complete; full 10,000-image evaluation remains
+**Status:** Complete
 
 ## Goal
 
-MNIST-10 used published Loihi MNIST measurements only as cross-system context. MNIST-11 instead executes the **same frozen native-sparse deployment** through Brian2Loihi and asks whether the project reproduces a published Loihi-1-oriented software model under matched graph/input conditions.
+MNIST-11 replaces the loose published-Loihi comparison from MNIST-10 with a matched **software/reference-model** experiment. The accepted `native-sparse` deployment is executed through the pinned Brian2Loihi reference without retraining or target-specific tuning.
 
-The primary question is:
-
-> Given the same 4,086 encoded connections, effective weights, deterministic 16-tick input schedule, zero initial state, and spike-count decoder, how closely do FPGA-v1 semantics and Brian2Loihi agree at the state, spike, and prediction levels?
-
-This is a behavioral/reference-model experiment. Brian2Loihi CPU wall time is not Loihi hardware latency.
-
-## Frozen reference and environment
-
-MNIST-11 reuses the completed M13 external-reference audit rather than creating a second Brian adapter:
-
-```text
-Brian2Loihi: 0.5.2
-upstream commit: d54676cb113e48dc886615a0b589bb0e4bccbca4
-Brian2: 2.9.0
-NumPy: 1.26.4
-```
-
-The production `Neuromorphic Digital Twin/src/neuromorphic_twin/comparison/brian2loihi_backend.py` adapter preserves Loihi-style encoded-weight fields and reads Brian2Loihi `w_act` back after construction.
-
-Primary source: Michaelis et al., “Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian,” *Frontiers in Neuroinformatics* 16:1015624, 2022, DOI `10.3389/fninf.2022.1015624`.
-
-The isolated application environment is created by:
-
-```text
-applications/mnist/scripts/setup_mnist_11_brian2loihi_env.sh
-```
-
-No Brian2Loihi arithmetic/model source patch is part of the experiment.
-
-## Frozen application contract
-
-The experiment consumes only the accepted `mnist-v1/native-sparse` deployment:
+The frozen comparison contract is:
 
 ```text
 28x28 source image
@@ -47,11 +16,40 @@ The experiment consumes only the accepted `mnist-v1/native-sparse` deployment:
 16 deterministic presentation ticks
 zero recurrent routes
 zero initial state
-argmax output spike-count decoder, lowest-ID tie break
-no retraining or target-specific tuning
+same spike-count decoder
+same official MNIST test indices
 ```
 
-Frozen neuron configuration:
+The primary question is:
+
+> Given the same effective graph, effective weights, input schedule, initial state, and decoding rule, does FPGA-v1 reproduce the pinned Brian2Loihi model at the internal state and output-spike levels?
+
+This is a behavioral/reference-model comparison. Brian2Loihi CPU wall time is **not** Loihi hardware latency and is never compared with FPGA PL latency.
+
+## Frozen reference and provenance
+
+MNIST-11 reuses the Brian2Loihi reference already audited during core milestone M13:
+
+```text
+Brian2Loihi: 0.5.2
+Brian2:      2.9.0
+NumPy:       1.26.4
+upstream commit: d54676cb113e48dc886615a0b589bb0e4bccbca4
+```
+
+The project adapter remains:
+
+```text
+Neuromorphic Digital Twin/src/neuromorphic_twin/comparison/brian2loihi_backend.py
+```
+
+Primary external source: Michaelis et al., “Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian,” *Frontiers in Neuroinformatics* 16:1015624, 2022, DOI `10.3389/fninf.2022.1015624`.
+
+Brian2Loihi is a software emulator/reference model. MNIST-11 does **not** constitute execution on Intel Loihi silicon.
+
+## Application semantic mapping
+
+The frozen neuron configuration is:
 
 ```text
 current_decay     = 4096
@@ -62,117 +60,104 @@ reset_voltage     = 0
 refractory_ticks  = 0
 ```
 
-All accepted effective weights retain their encoded metadata and are aligned to 64.
-
-## Application-specific semantic audit
-
-Every relevant field is classified before application-scale results as `EXACT`, `EQUIVALENT`, `TRANSLATED`, `UNREPRESENTABLE`, or `NOT_USED`.
+The application-level semantic audit was frozen before external outputs were inspected. Fields are classified as `EXACT`, `EQUIVALENT`, `TRANSLATED`, `UNREPRESENTABLE`, or `NOT_USED`.
 
 ### Refractory 0 -> 1
 
-Brian2Loihi requires refractory in `1..64`, while the frozen application requests `0`. FPGA-v1 stores:
+Brian2Loihi requires refractory in `1..64`, while the project deployment requests `0`. FPGA-v1 stores:
 
 ```text
 future_blocked_ticks = max(refractory_ticks - 1, 0)
 ```
 
-so project `R=0` and `R=1` both block zero future ticks under this workload. The matched runner proves exact project `R=0` versus project `R=1` current/voltage/spike equality on every image before using Brian `R=1`.
+on a spike. Therefore project `R=0` and `R=1` both store zero future blocked ticks for this one-update-per-neuron-per-tick application. The matched runner proves exact project-side `R=0`/`R=1` current, voltage, and spike equality for each image before allowing Brian2Loihi to use `R=1`.
 
-### SAT24 versus Brian unbounded arithmetic
+### SAT24 versus Brian arithmetic
 
-Brian2Loihi does not model the project's SAT24 policy. The frozen deployment's conservative absolute voltage bound is about `7.55e6`, below SAT24 max `8,388,607`. The Brian comparison therefore uses unbounded comparison arithmetic; exact state agreement verifies saturation remains inactive on every accepted schedule.
+Brian2Loihi does not expose the FPGA-v1 SAT24 state policy. The accepted frozen deployment has conservative headroom below SAT24 max, and every matched run compares the resulting current/voltage state exactly. Exact full-test agreement therefore directly checks that this representational difference does not alter the accepted workload.
 
-## Immutable matched requests
+## Exact matched runner
 
-Both Brian2Loihi and Catalyst consume the same backend-neutral request data containing:
+For every image, the runner:
 
-- official MNIST test index and label;
-- exact 16-tick external-axon schedule;
-- frozen project golden spike-count vector and prediction; and
-- SHA-256 provenance for the frozen deployment.
+1. reconstructs the accepted 4,086-edge graph from frozen storage;
+2. proves project `R=0 -> R=1` trace equivalence;
+3. confirms the reconstructed project result still equals the frozen golden spike vector and prediction;
+4. instantiates Brian2Loihi using the frozen Loihi-style weight fields;
+5. reads Brian2Loihi `w_act` and checks all **4,086 effective weights**;
+6. compares every tick's current, voltage, and spike set exactly; and
+7. compares the final ten-neuron spike-count vector and decoded prediction.
 
-Small scopes use one JSON bundle. The full 10,000-image scope uses deterministic bounded-size shards so the external environments do not need to parse one enormous request document.
+No retraining, threshold fitting, weight fitting, output correction, or post-result parameter tuning is permitted.
 
-## Exact case acceptance
+## Accepted validation sequence
 
-For every Brian image, the runner:
+### Two-image anchor
 
-1. reconstructs the accepted encoded graph from frozen FPGA storage;
-2. proves project `R=0 -> R=1` equivalence;
-3. verifies the reconstructed project result against the frozen golden result;
-4. instantiates the exact requested Brian mantissa/exponent/precision/sign groups;
-5. reads back all 4,086 effective `w_act` values;
-6. compares every tick's `current_after`, `voltage_after`, and spike set; and
-7. compares final ten-neuron spike counts and prediction.
+Official test indices `3` and `1` passed exact matched comparison and established the application/environment path.
 
-A case is marked passed only when every compared field is exact.
+### Frozen 30-image corpus
 
-## Accepted anchor and corpus results
-
-The two-image anchor passed exactly. The subsequent frozen 30-image corpus produced:
+The exact corpus previously used for FPGA application conformance produced:
 
 ```text
-case pass:                      30 / 30
-prediction agreement:          30 / 30
-final spike-vector agreement:  30 / 30
-exact current/voltage/spikes:   30 / 30
-weight mismatches:              0 on every case
+cases:                         30
+Brian2Loihi prediction match:  30 / 30
+spike-count-vector match:      30 / 30
+exact state/spike trace match: 30 / 30
+effective-weight mismatches:   0
 ```
 
-The selected corpus happens to contain 17 correct project predictions out of 30; that **56.67% is not an accuracy benchmark** because the corpus was deliberately constructed from both-correct, profile-divergent, and both-wrong examples. Brian2Loihi matches the project prediction on every selected case, including the deliberately incorrect ones.
+The corpus is intentionally selected for conformance coverage and is not an unbiased accuracy sample.
 
-Full evidence:
+### Full official 10,000-image test set
+
+The final matched experiment executed all official MNIST test images through the unchanged frozen deployment and pinned Brian2Loihi environment:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-corpus-v1/
+cases:                          10,000
+project accuracy:               91.71%
+Brian2Loihi accuracy:           91.71%
+prediction agreement:           10,000 / 10,000
+spike-count-vector agreement:   10,000 / 10,000
+exact current/voltage/spike:    10,000 / 10,000
+all cases passed:               true
 ```
 
-Interpretation and the cross-target result are summarized in `docs/MNIST_11_12_CORPUS_RESULTS.md`.
+The request set was generated deterministically in 100 shards of 100 images. The compact accepted evidence is source-controlled under:
 
-## Sub-milestone state
+```text
+applications/mnist/evidence/mnist-11-12/matched-full-v1/
+```
 
-### MNIST-11.1 — Toolchain/provenance freeze
+The archive retains the complete Brian suite, semantic audit, request-manifest provenance/hashes, and matched comparison summary while leaving large transient per-image request files under `build/`.
 
-**Status:** Complete.
+## Interpretation
 
-The isolated pinned environment was created successfully and the existing M13 reference backend remained usable without semantic source patches.
+For the frozen feed-forward native-sparse MNIST application, **FPGA-v1 golden semantics reproduce the pinned Brian2Loihi reference exactly across the full official 10,000-image test set at the observed effective-weight, current, voltage, spike-set, spike-count, and decoded-prediction boundary.**
 
-### MNIST-11.2 — Semantic mapping audit
+This is substantially stronger than saying the two systems have similar classification accuracy. The matched experiment demonstrates state-level behavioral equivalence for this particular application and semantic subset.
 
-**Status:** Complete.
+The result remains bounded by the experiment:
 
-The application-level mapping is frozen, including explicit treatment of refractory and SAT24 boundaries.
+- Brian2Loihi is an emulator, not Intel Loihi hardware;
+- the application has no recurrence or on-chip learning;
+- the result does not establish equivalence for every Loihi feature;
+- Brian CPU execution time is not a hardware-performance measurement; and
+- published Intel Loihi MNIST timing/energy numbers remain unmatched literature context only.
 
-### MNIST-11.3 — Micro-conformance
+## Sub-milestone closure
 
-**Status:** Complete.
+- **MNIST-11.1 — Toolchain/provenance freeze:** Complete.
+- **MNIST-11.2 — Semantic mapping audit:** Complete.
+- **MNIST-11.3 — Micro-conformance/application anchor:** Complete.
+- **MNIST-11.4 — Frozen 30-image corpus:** Complete, 30/30 exact.
+- **MNIST-11.5 — Full 10,000-image evaluation:** Complete, 10,000/10,000 exact.
 
-Existing M13 directed project/Brian probes plus the MNIST-specific `R=0 -> R=1` and encoded-weight regressions passed.
+See also:
 
-### MNIST-11.4 — Frozen 30-image corpus
-
-**Status:** Complete.
-
-All 30 selected images matched exactly at effective weights, per-tick current/voltage/spikes, final spike counts, and prediction.
-
-### MNIST-11.5 — Full 10,000-image evaluation
-
-**Status:** Pending execution.
-
-The full-test path is being scaled with sharded immutable requests plus resumable external execution. The intended outputs are:
-
-- exact-trace agreement count;
-- spike-vector agreement count;
-- prediction agreement count;
-- Brian2Loihi accuracy on the official test split; and
-- disagreement indices if any.
-
-Brian CPU execution time remains explicitly excluded from FPGA/Loihi hardware-performance comparisons.
-
-## Current interpretation
-
-The strongest accepted claim is now:
-
-> On the frozen 30-image feed-forward native-sparse conformance corpus, FPGA-v1 semantics and pinned Brian2Loihi reproduce the same 4,086 effective weights and agree exactly on every compared current, voltage, spike, final spike-count vector, and decoded prediction.
-
-The planned full-test run will determine whether that exact agreement extends from the selected conformance corpus to all 10,000 official MNIST test images.
+```text
+docs/MNIST_11_12_ANCHOR_RESULTS.md
+docs/MNIST_11_12_CORPUS_RESULTS.md
+docs/MNIST_11_12_FULL_TEST_RESULTS.md
+```
