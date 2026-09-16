@@ -1,0 +1,36 @@
+{
+  "catalyst_commit": "1806bb4b4114d7671e5648fa75b7b83b3a8d5543",
+  "decision": {
+    "physical_delivered_drive_k26_experiment": "BLOCKED_BY_BOARD_INTEGRATION_AND_NOT_GRAPH_MATCHED",
+    "physical_graph_preserving_k26_experiment": "BLOCKED_BY_PINNED_WRAPPER_CAPACITY_AND_BOARD_INTEGRATION",
+    "software_delivered_drive_experiment": "SUPPORTED_CPU_INT32_CONTROL",
+    "software_graph_preserving_experiment": "SUPPORTED"
+  },
+  "frozen_profile": "native-sparse",
+  "generic_cpu_reference": {
+    "delivered_drive_accumulator_bits": 32,
+    "delivered_drive_allows_fanin_sum_beyond_signed_int16": true,
+    "graph_preserving_single_core_fit": true,
+    "neurons_per_core": 1024,
+    "note": "Pinned Simulator uses a software-expanded connection pool and numpy.int32 external-current/soma-accumulator paths. Wide delivered-drive is a CPU-only semantic control, not a K26 host-stimulus or hardware-fit claim."
+  },
+  "graph": {
+    "all_effective_weights_fit_signed_int16": true,
+    "effective_edges": 4086,
+    "max_abs_effective_weight": 7296,
+    "output_neurons": 10,
+    "source_neurons_if_materialized": 784,
+    "total_neurons_if_materialized": 794,
+    "unique_source_target_pairs": 4086
+  },
+  "pinned_k26_wrapper": {
+    "configured_neurons": 512,
+    "delivered_drive_output_only_neuron_fit": true,
+    "graph_preserving_blocker": "materialized graph needs 794 neurons but pinned K26 wrapper configures 512",
+    "graph_preserving_fit": false,
+    "physical_programming_blocker": "Pinned M13.5 K26 source has no board XDC/PS integration/write_bitstream path; routed implementation is the strongest source-supported boundary.",
+    "physical_programming_source_supported": false,
+    "pool_depth_per_core": 4096
+  },
+  "schema": "neuromorphic-twin-mnist-12-catalyst-feasibility-v1"
+}

@@ -1,0 +1,79 @@
+{
+  "allowed_classes": [
+    "EQUIVALENT",
+    "EXACT",
+    "NOT_USED",
+    "TRANSLATED",
+    "UNREPRESENTABLE"
+  ],
+  "profile": "native-sparse",
+  "rows": [
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "TRANSLATED",
+      "field": "input_schedule",
+      "rationale": "Brian receives the same 16 tick/axon spike list; Catalyst compares both graph-preserving source spikes and a separately labeled delivered-drive collapse."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "TRANSLATED",
+      "field": "synaptic_graph",
+      "rationale": "Brian preserves all 4,086 encoded axon->output edges; Catalyst CPU graph mode preserves the effective 4,086-edge matrix but not Loihi source encoding fields."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "EXACT",
+      "field": "effective_weights",
+      "rationale": "All frozen weights are effective integer multiples of 64 and fit both Brian2Loihi's accepted format mapping and Catalyst signed-int16 weight boundary."
+    },
+    {
+      "brian2loihi": "TRANSLATED",
+      "catalyst": "TRANSLATED",
+      "field": "threshold",
+      "rationale": "8384 maps to Brian threshold_v_mant=131; Catalyst uses native T+1 to reproduce the project's strict V>T comparison."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "TRANSLATED",
+      "field": "current_decay",
+      "rationale": "Brian uses decay_I=4096 directly. Catalyst simple-LIF has no independent current state; the delivered-drive experiment is valid because project current fully decays each tick."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "TRANSLATED",
+      "field": "voltage_decay",
+      "rationale": "Brian represents decay_v=0 directly. Catalyst leak=0 preserves positive/no-leak accumulation, but its simple-LIF update also applies a resting-floor rule that is tracked separately."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "UNREPRESENTABLE",
+      "field": "sub_rest_negative_voltage",
+      "rationale": "FPGA-v1/Brian can retain negative membrane voltage; pinned Catalyst simple-LIF clamps potential+input<=leak to resting=0. M13 identified this as an architecture difference and MNIST-12 measures its application effect without retuning."
+    },
+    {
+      "brian2loihi": "EXACT",
+      "catalyst": "EQUIVALENT",
+      "field": "reset_voltage_bias",
+      "rationale": "Bias and spike reset are zero in the frozen workload. Catalyst resting=0 reproduces the spike reset; its additional sub-rest clamp is classified separately."
+    },
+    {
+      "brian2loihi": "EQUIVALENT",
+      "catalyst": "EQUIVALENT",
+      "field": "refractory",
+      "rationale": "Project R=0 and R=1 both store zero future blocked ticks; the matched reference uses R=1, which Brian accepts and Catalyst maps to native refractory=0."
+    },
+    {
+      "brian2loihi": "EQUIVALENT",
+      "catalyst": "UNREPRESENTABLE",
+      "field": "finite_width_saturation",
+      "rationale": "Brian runs unbounded, but the frozen conservative voltage bound 7549746.3 is below SAT24 max 8388607; Catalyst state-width behavior is not declared identical."
+    },
+    {
+      "brian2loihi": "NOT_USED",
+      "catalyst": "NOT_USED",
+      "field": "online_learning_recurrence",
+      "rationale": "The accepted MNIST deployment has fixed weights, no routes, and no online learning."
+    }
+  ],
+  "schema": "neuromorphic-twin-mnist-matched-semantic-audit-v1"
+}

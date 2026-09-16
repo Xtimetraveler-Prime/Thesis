@@ -1,0 +1,61 @@
+{
+  "artifacts": [
+    {
+      "bytes": 3421,
+      "path": "brian2loihi/semantic_audit.json",
+      "sha256": "4b841cfb90785c738e2395aaf52f76c4b26b59c4f7f3316301f22f0a762926bd"
+    },
+    {
+      "bytes": 2089351,
+      "path": "brian2loihi/suite.json",
+      "sha256": "61aabf247a5a4f4e96fd9e746d679dad36434efe5f809122a89faed29467c5ac"
+    },
+    {
+      "bytes": 128709,
+      "path": "catalyst/divergence_compact.json",
+      "sha256": "21a6a3acfca13321820cb5fe9e0a403302f0c6316c566aa25b50ce393ce403ad"
+    },
+    {
+      "bytes": 1793,
+      "path": "catalyst/feasibility_audit.json",
+      "sha256": "170fec79257267e6a397e7d16f20bc54b686e274eaf11fca30ac7e7ac25ea325"
+    },
+    {
+      "bytes": 3421,
+      "path": "catalyst/semantic_audit.json",
+      "sha256": "4b841cfb90785c738e2395aaf52f76c4b26b59c4f7f3316301f22f0a762926bd"
+    },
+    {
+      "bytes": 1969262,
+      "path": "catalyst/suite.json",
+      "sha256": "0500515088a4c0b805bc4d8e662989eca51aaab7d6a63658f11acd6c8b48e345"
+    },
+    {
+      "bytes": 120631,
+      "path": "comparison_summary.json",
+      "sha256": "553807de9ad72169fb351ec318c99b7e51811b3ce4e1e3f29b4fc94a3ce019e2"
+    },
+    {
+      "bytes": 21469,
+      "path": "request_manifest.json",
+      "sha256": "fced5073cc366b0276241aaf5e27abe9fec8e229cf3a8ca70adf70093b3927a7"
+    }
+  ],
+  "brian2loihi_accuracy": 0.9171,
+  "brian_all_passed": true,
+  "brian_exact_trace_agreement_cases": 10000,
+  "brian_prediction_agreement_cases": 10000,
+  "case_count": 10000,
+  "catalyst_graph_accuracy": 0.9174,
+  "catalyst_graph_prediction_agreement_cases": 9995,
+  "catalyst_graph_spike_vector_agreement_cases": 9079,
+  "catalyst_other_translated_dynamics_cases": 0,
+  "catalyst_sub_rest_clamp_cases": 10000,
+  "catalyst_transport_consistent_cases": 10000,
+  "note": "Per-image full-test JSON and request shards remain build artifacts. The archive preserves complete suite case tables, compact divergence indices, request-manifest hash/provenance, and all thesis-facing aggregate results without committing the large transient request/result corpus.",
+  "project_accuracy": 0.9171,
+  "request_indices_sha256": "a74675bfed3834ac1c3140b2d7fb7d93d90a76608cc08515a5019a1cb2075ff4",
+  "request_manifest_sha256": "fced5073cc366b0276241aaf5e27abe9fec8e229cf3a8ca70adf70093b3927a7",
+  "request_shard_count": 100,
+  "schema": "neuromorphic-twin-mnist-11-12-full-evidence-v1"
+}
