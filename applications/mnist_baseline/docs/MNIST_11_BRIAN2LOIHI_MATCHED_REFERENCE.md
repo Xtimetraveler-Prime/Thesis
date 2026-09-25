@@ -127,7 +127,7 @@ all cases passed:               true
 The request set was generated deterministically in 100 shards of 100 images. The compact accepted evidence is source-controlled under:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-full-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-full-v1/
 ```
 
 The archive retains the complete Brian suite, semantic audit, request-manifest provenance/hashes, and matched comparison summary while leaving large transient per-image request files under `build/`.

@@ -29,7 +29,7 @@ The pinned Brian2Loihi environment and two-image anchor completed successfully b
 - exact final spike-count vector; and
 - exact decoded prediction.
 
-The exact generated JSON remains local under the ignored `applications/mnist/build/` tree until the matched evidence archive step. The accepted result is sufficient to advance MNIST-11 to the 30-image corpus gate; the archive will preserve the exact counts before milestone closure.
+The exact generated JSON remains local under the ignored `applications/mnist_baseline/build/` tree until the matched evidence archive step. The accepted result is sufficient to advance MNIST-11 to the 30-image corpus gate; the archive will preserve the exact counts before milestone closure.
 
 ## MNIST-12 — Catalyst N1 anchor
 

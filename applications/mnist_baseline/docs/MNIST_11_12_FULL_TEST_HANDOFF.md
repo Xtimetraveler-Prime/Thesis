@@ -29,7 +29,7 @@ git switch agent/mnist-11-12-matched-comparison-dev
 git pull --ff-only origin agent/mnist-11-12-matched-comparison-dev
 
 source .venv-mnist/bin/activate
-pytest applications/mnist/tests -q
+pytest applications/mnist_baseline/tests -q
 ```
 
 ## 2. Generate deterministic full-test request shards
@@ -37,10 +37,10 @@ pytest applications/mnist/tests -q
 Do this in the normal MNIST environment so TensorFlow/MNIST loading stays outside the external reference environments:
 
 ```bash
-python applications/mnist/scripts/prepare_matched_reference_shards.py \
+python applications/mnist_baseline/scripts/prepare_matched_reference_shards.py \
   --scope full \
   --shard-size 100 \
-  --output-dir applications/mnist/build/matched-reference/full-shards
+  --output-dir applications/mnist_baseline/build/matched-reference/full-shards
 ```
 
 Expected manifest scope:
@@ -59,9 +59,9 @@ Generation loads MNIST and the frozen native-sparse deployment once. Every shard
 deactivate 2>/dev/null || true
 source .venv-mnist-brian2loihi/bin/activate
 
-python applications/mnist/scripts/run_mnist_11_brian2loihi.py \
-  --shard-manifest applications/mnist/build/matched-reference/full-shards/manifest.json \
-  --output-dir applications/mnist/build/mnist-11/full \
+python applications/mnist_baseline/scripts/run_mnist_11_brian2loihi.py \
+  --shard-manifest applications/mnist_baseline/build/matched-reference/full-shards/manifest.json \
+  --output-dir applications/mnist_baseline/build/mnist-11/full \
   --resume \
   --progress-every 100
 ```
@@ -89,11 +89,11 @@ Brian CPU wall time is not a hardware-performance metric.
 deactivate 2>/dev/null || true
 source .venv-mnist-catalyst/bin/activate
 
-export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist"
+export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist_baseline"
 
-python applications/mnist/scripts/run_mnist_12_catalyst.py \
-  --shard-manifest applications/mnist/build/matched-reference/full-shards/manifest.json \
-  --output-dir applications/mnist/build/mnist-12/full \
+python applications/mnist_baseline/scripts/run_mnist_12_catalyst.py \
+  --shard-manifest applications/mnist_baseline/build/matched-reference/full-shards/manifest.json \
+  --output-dir applications/mnist_baseline/build/mnist-12/full \
   --resume \
   --progress-every 100
 ```
@@ -109,9 +109,9 @@ Prediction or spike-vector disagreement with FPGA-v1 is an experiment result, no
 ## 5. Classify Catalyst divergence compactly
 
 ```bash
-python applications/mnist/scripts/analyze_mnist_12_divergence.py \
-  --result-dir applications/mnist/build/mnist-12/full \
-  --output applications/mnist/build/mnist-12/full/divergence_compact.json \
+python applications/mnist_baseline/scripts/analyze_mnist_12_divergence.py \
+  --result-dir applications/mnist_baseline/build/mnist-12/full \
+  --output applications/mnist_baseline/build/mnist-12/full/divergence_compact.json \
   --compact
 ```
 
@@ -133,10 +133,10 @@ Return to the normal application environment:
 deactivate 2>/dev/null || true
 source .venv-mnist/bin/activate
 
-python applications/mnist/scripts/build_matched_comparison_summary.py \
-  --brian-suite applications/mnist/build/mnist-11/full/suite.json \
-  --catalyst-suite applications/mnist/build/mnist-12/full/suite.json \
-  --output applications/mnist/build/matched-reference/full.comparison_summary.json
+python applications/mnist_baseline/scripts/build_matched_comparison_summary.py \
+  --brian-suite applications/mnist_baseline/build/mnist-11/full/suite.json \
+  --catalyst-suite applications/mnist_baseline/build/mnist-12/full/suite.json \
+  --output applications/mnist_baseline/build/matched-reference/full.comparison_summary.json
 ```
 
 For the full 10,000-image scope the summary reports comparable software/reference accuracies alongside prediction/spike agreement. This is the first matched external-reference scope where accuracy is an unbiased official-test metric.
@@ -144,17 +144,17 @@ For the full 10,000-image scope the summary reports comparable software/referenc
 ## 7. Archive compact full-test evidence
 
 ```bash
-python applications/mnist/scripts/archive_mnist_11_12_full_evidence.py \
-  --request-manifest applications/mnist/build/matched-reference/full-shards/manifest.json \
-  --brian-dir applications/mnist/build/mnist-11/full \
-  --catalyst-dir applications/mnist/build/mnist-12/full \
-  --catalyst-divergence applications/mnist/build/mnist-12/full/divergence_compact.json
+python applications/mnist_baseline/scripts/archive_mnist_11_12_full_evidence.py \
+  --request-manifest applications/mnist_baseline/build/matched-reference/full-shards/manifest.json \
+  --brian-dir applications/mnist_baseline/build/mnist-11/full \
+  --catalyst-dir applications/mnist_baseline/build/mnist-12/full \
+  --catalyst-divergence applications/mnist_baseline/build/mnist-12/full/divergence_compact.json
 ```
 
 The source-controlled archive is created at:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-full-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-full-v1/
 ```
 
 The archive contains the request manifest/provenance, complete Brian/Catalyst suite tables, compact Catalyst divergence indices, semantic/feasibility audits, a scope-checked comparison summary, and SHA-256 artifact manifest. It does **not** commit the large request shards or all per-image detailed result JSON files.
@@ -166,7 +166,7 @@ Only after the archive command succeeds:
 ```bash
 git status
 
-git add applications/mnist/evidence/mnist-11-12/matched-full-v1
+git add applications/mnist_baseline/evidence/mnist-11-12/matched-full-v1
 
 git commit -m "Archive MNIST-11/12 matched full-test evidence"
 git push origin agent/mnist-11-12-matched-comparison-dev

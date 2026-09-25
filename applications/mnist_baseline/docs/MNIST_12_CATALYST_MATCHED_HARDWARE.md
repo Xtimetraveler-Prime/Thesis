@@ -36,7 +36,7 @@ same spike-count decoder
 no retraining
 ```
 
-Both MNIST-11 and MNIST-12 consume the same backend-neutral request data generated from `applications/mnist/frozen/mnist-v1/`.
+Both MNIST-11 and MNIST-12 consume the same backend-neutral request data generated from `applications/mnist_baseline/frozen/mnist-v1/`.
 
 ## Two independent Catalyst CPU views
 
@@ -180,5 +180,5 @@ See also:
 docs/MNIST_11_12_ANCHOR_RESULTS.md
 docs/MNIST_11_12_CORPUS_RESULTS.md
 docs/MNIST_11_12_FULL_TEST_RESULTS.md
-applications/mnist/evidence/mnist-11-12/matched-full-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-full-v1/
 ```

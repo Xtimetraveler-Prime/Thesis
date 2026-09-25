@@ -29,7 +29,7 @@ The 30-image set is a deliberately selected conformance corpus, not an unbiased 
 Compact evidence is archived under:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-corpus-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-corpus-v1/
 ```
 
 ## Brian2Loihi result

@@ -15,7 +15,7 @@ source .venv-mnist/bin/activate
 ## 2. Normal MNIST regression
 
 ```bash
-pytest applications/mnist/tests -q
+pytest applications/mnist_baseline/tests -q
 ```
 
 This gate exercises the frozen-contract, R=0/R=1 equivalence, Brian mapping validation that does not import Brian itself, Catalyst capacity audit, exact 4,086-edge matrix reconstruction, and the Catalyst wide-fan-in delivered-drive rule.
@@ -25,9 +25,9 @@ This gate exercises the frozen-contract, R=0/R=1 equivalence, Brian mapping vali
 Still in `.venv-mnist`:
 
 ```bash
-python applications/mnist/scripts/prepare_matched_reference_bundle.py \
+python applications/mnist_baseline/scripts/prepare_matched_reference_bundle.py \
   --scope anchor \
-  --output applications/mnist/build/matched-reference/anchor.bundle.json
+  --output applications/mnist_baseline/build/matched-reference/anchor.bundle.json
 ```
 
 The bundle contains indices 3 and 1, their exact 16-tick schedules, frozen golden spike vectors/predictions, and hashes of the deployment/weight package. Both external backends consume this exact file.
@@ -35,8 +35,8 @@ The bundle contains indices 3 and 1, their exact 16-tick schedules, frozen golde
 Pure audit commands, still with no external backend required:
 
 ```bash
-python applications/mnist/scripts/run_mnist_11_brian2loihi.py --audit-only
-python applications/mnist/scripts/run_mnist_12_catalyst.py --audit-only
+python applications/mnist_baseline/scripts/run_mnist_11_brian2loihi.py --audit-only
+python applications/mnist_baseline/scripts/run_mnist_12_catalyst.py --audit-only
 ```
 
 Expected Catalyst capacity decision:
@@ -55,15 +55,15 @@ Create the isolated environment:
 
 ```bash
 deactivate 2>/dev/null || true
-bash applications/mnist/scripts/setup_mnist_11_brian2loihi_env.sh
+bash applications/mnist_baseline/scripts/setup_mnist_11_brian2loihi_env.sh
 source .venv-mnist-brian2loihi/bin/activate
 ```
 
 Run the exact two-image bundle:
 
 ```bash
-python applications/mnist/scripts/run_mnist_11_brian2loihi.py \
-  --bundle applications/mnist/build/matched-reference/anchor.bundle.json
+python applications/mnist_baseline/scripts/run_mnist_11_brian2loihi.py \
+  --bundle applications/mnist_baseline/build/matched-reference/anchor.bundle.json
 ```
 
 Each case reports:
@@ -84,17 +84,17 @@ Create/fetch the isolated pinned Catalyst environment:
 
 ```bash
 deactivate 2>/dev/null || true
-bash applications/mnist/scripts/setup_mnist_12_catalyst_env.sh
+bash applications/mnist_baseline/scripts/setup_mnist_12_catalyst_env.sh
 source .venv-mnist-catalyst/bin/activate
 
-export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist"
+export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist_baseline"
 ```
 
 Then run:
 
 ```bash
-python applications/mnist/scripts/run_mnist_12_catalyst.py \
-  --bundle applications/mnist/build/matched-reference/anchor.bundle.json
+python applications/mnist_baseline/scripts/run_mnist_12_catalyst.py \
+  --bundle applications/mnist_baseline/build/matched-reference/anchor.bundle.json
 ```
 
 The runner executes two independent Catalyst CPU views per image:
@@ -127,7 +127,7 @@ MNIST-11 anchor suite
 MNIST-12 anchor suite
 ```
 
-The detailed JSON remains under `applications/mnist/build/` and can be inspected or archived after the result is accepted.
+The detailed JSON remains under `applications/mnist_baseline/build/` and can be inspected or archived after the result is accepted.
 
 ## Next step after anchor acceptance
 
@@ -135,9 +135,9 @@ No new adapter design should be necessary. Generate the 30-image bundle:
 
 ```bash
 source .venv-mnist/bin/activate
-python applications/mnist/scripts/prepare_matched_reference_bundle.py \
+python applications/mnist_baseline/scripts/prepare_matched_reference_bundle.py \
   --scope corpus \
-  --output applications/mnist/build/matched-reference/corpus.bundle.json
+  --output applications/mnist_baseline/build/matched-reference/corpus.bundle.json
 ```
 
 and execute the same two backend CLIs against that file. The full 10,000-image scope remains gated on understanding the 30-image result first.

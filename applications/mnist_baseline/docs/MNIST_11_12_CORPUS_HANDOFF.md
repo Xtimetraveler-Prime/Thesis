@@ -11,7 +11,7 @@ git switch agent/mnist-11-12-matched-comparison-dev
 git pull --ff-only origin agent/mnist-11-12-matched-comparison-dev
 
 source .venv-mnist/bin/activate
-pytest applications/mnist/tests -q
+pytest applications/mnist_baseline/tests -q
 ```
 
 ## 2. Generate one immutable 30-image bundle
@@ -19,9 +19,9 @@ pytest applications/mnist/tests -q
 Still in `.venv-mnist`:
 
 ```bash
-python applications/mnist/scripts/prepare_matched_reference_bundle.py \
+python applications/mnist_baseline/scripts/prepare_matched_reference_bundle.py \
   --scope corpus \
-  --output applications/mnist/build/matched-reference/corpus.bundle.json
+  --output applications/mnist_baseline/build/matched-reference/corpus.bundle.json
 ```
 
 This reuses exactly the 30 official test indices frozen in `mnist-v1/fpga_validation_corpus.json`.
@@ -32,9 +32,9 @@ This reuses exactly the 30 official test indices frozen in `mnist-v1/fpga_valida
 deactivate 2>/dev/null || true
 source .venv-mnist-brian2loihi/bin/activate
 
-python applications/mnist/scripts/run_mnist_11_brian2loihi.py \
-  --bundle applications/mnist/build/matched-reference/corpus.bundle.json \
-  --output-dir applications/mnist/build/mnist-11/corpus
+python applications/mnist_baseline/scripts/run_mnist_11_brian2loihi.py \
+  --bundle applications/mnist_baseline/build/matched-reference/corpus.bundle.json \
+  --output-dir applications/mnist_baseline/build/mnist-11/corpus
 ```
 
 The desired suite boundary is exact matched behavior. Any nonzero mismatch is preserved for investigation rather than retuned away.
@@ -45,11 +45,11 @@ The desired suite boundary is exact matched behavior. Any nonzero mismatch is pr
 deactivate 2>/dev/null || true
 source .venv-mnist-catalyst/bin/activate
 
-export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist"
+export PYTHONPATH="$PWD/Neuromorphic Digital Twin/build/m13_1/catalyst-n1/sdk:$PWD/Neuromorphic Digital Twin/src:$PWD/applications/mnist_baseline"
 
-python applications/mnist/scripts/run_mnist_12_catalyst.py \
-  --bundle applications/mnist/build/matched-reference/corpus.bundle.json \
-  --output-dir applications/mnist/build/mnist-12/corpus
+python applications/mnist_baseline/scripts/run_mnist_12_catalyst.py \
+  --bundle applications/mnist_baseline/build/matched-reference/corpus.bundle.json \
+  --output-dir applications/mnist_baseline/build/mnist-12/corpus
 ```
 
 The primary harness gate is:
@@ -63,9 +63,9 @@ FPGA-v1/Catalyst state or prediction disagreement is experimental evidence and d
 ## 5. Classify Catalyst's first divergence per image
 
 ```bash
-python applications/mnist/scripts/analyze_mnist_12_divergence.py \
-  --result-dir applications/mnist/build/mnist-12/corpus \
-  --output applications/mnist/build/mnist-12/corpus/divergence_summary.json
+python applications/mnist_baseline/scripts/analyze_mnist_12_divergence.py \
+  --result-dir applications/mnist_baseline/build/mnist-12/corpus \
+  --output applications/mnist_baseline/build/mnist-12/corpus/divergence_summary.json
 ```
 
 The classifier labels a case `CATALYST_SUB_REST_CLAMP` only when both independent Catalyst views are trace-identical and their first FPGA-v1 mismatch is exactly the component-wise transformation `candidate=max(reference, 0)` with at least one negative project voltage. Other first divergences remain separately labeled.
@@ -75,10 +75,10 @@ The classifier labels a case `CATALYST_SUB_REST_CLAMP` only when both independen
 ```bash
 source .venv-mnist/bin/activate
 
-python applications/mnist/scripts/build_matched_comparison_summary.py \
-  --brian-suite applications/mnist/build/mnist-11/corpus/suite.json \
-  --catalyst-suite applications/mnist/build/mnist-12/corpus/suite.json \
-  --output applications/mnist/build/matched-reference/corpus.comparison_summary.json
+python applications/mnist_baseline/scripts/build_matched_comparison_summary.py \
+  --brian-suite applications/mnist_baseline/build/mnist-11/corpus/suite.json \
+  --catalyst-suite applications/mnist_baseline/build/mnist-12/corpus/suite.json \
+  --output applications/mnist_baseline/build/matched-reference/corpus.comparison_summary.json
 ```
 
 This command refuses to combine the suites unless Brian2Loihi and Catalyst contain the exact same MNIST indices in the same order.
@@ -86,17 +86,17 @@ This command refuses to combine the suites unless Brian2Loihi and Catalyst conta
 ## 7. Archive compact source-controlled evidence
 
 ```bash
-python applications/mnist/scripts/archive_mnist_11_12_evidence.py \
+python applications/mnist_baseline/scripts/archive_mnist_11_12_evidence.py \
   --scope corpus \
-  --bundle applications/mnist/build/matched-reference/corpus.bundle.json \
-  --brian-dir applications/mnist/build/mnist-11/corpus \
-  --catalyst-dir applications/mnist/build/mnist-12/corpus
+  --bundle applications/mnist_baseline/build/matched-reference/corpus.bundle.json \
+  --brian-dir applications/mnist_baseline/build/mnist-11/corpus \
+  --catalyst-dir applications/mnist_baseline/build/mnist-12/corpus
 ```
 
 Expected output directory:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-corpus-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-corpus-v1/
 ```
 
 It contains the immutable request bundle, both suite summaries, all 30 compact per-case results for each backend, Catalyst semantic/feasibility/divergence summaries when present, the cross-backend comparison summary, SHA-256 hashes, and a manifest. It does not copy virtual environments or Catalyst source/build trees.
@@ -105,7 +105,7 @@ Then commit only that compact evidence package:
 
 ```bash
 git status
-git add applications/mnist/evidence/mnist-11-12/matched-corpus-v1
+git add applications/mnist_baseline/evidence/mnist-11-12/matched-corpus-v1
 git commit -m "Archive MNIST-11/12 matched corpus evidence"
 git push origin agent/mnist-11-12-matched-comparison-dev
 ```

@@ -26,7 +26,7 @@ The full request set was generated deterministically as 100 shards of 100 test i
 Accepted evidence:
 
 ```text
-applications/mnist/evidence/mnist-11-12/matched-full-v1/
+applications/mnist_baseline/evidence/mnist-11-12/matched-full-v1/
 ```
 
 ## Result summary
