@@ -3,25 +3,54 @@
 This repository contains the software and verification work for an FPGA-based
 architecture-level digital twin of a Loihi-inspired neuromorphic processor.
 
-Project progress, completed research decisions, validation evidence, and planned
-work are tracked in [`MILESTONES.md`](MILESTONES.md).
+Completed platform development, research decisions, validation evidence, and
+historical work are tracked in [`MILESTONES.md`](MILESTONES.md). The active
+post-validation direction is summarized below and developed in detail in
+[`LOIHI_TWIN_ROADMAP.md`](LOIHI_TWIN_ROADMAP.md).
+
+## Endgame project direction
+
+The validated FPGA-v1 platform and its first MNIST application now serve as a
+frozen baseline rather than the final architecture. Before further development,
+the existing MNIST experiment will be preserved so its software results,
+physical K26 execution, bitstreams, and rebuild flow remain reproducible.
+
+The next major objective is to build a substantially more complete,
+transparent Loihi-1 architectural digital twin on the FPGA. The new
+architecture will preserve the validated FPGA-v1 work as a reference while
+adding the multicore organization, routing, connectivity/resource abstractions,
+and execution semantics needed to represent deeper SNNs. A logical Loihi-like
+architecture may time-multiplex or virtualize physical FPGA resources when a
+literal one-to-one implementation is not practical, but that virtualization
+must remain explicit and behaviorally testable.
+
+The culminating application target is a deeper MNIST implementation that can
+be compared on a defensible architectural/workload basis with Bodo Rueckauer
+et al., *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel
+Loihi* (ACM JETC, 2022, DOI `10.1145/3501770`). The counterfactual studies in
+[`EXPERIMENTS.md`](EXPERIMENTS.md) remain useful follow-on work, but they are
+deferred while this architecture/application path is pursued.
+
+See [`LOIHI_TWIN_ROADMAP.md`](LOIHI_TWIN_ROADMAP.md) for the detailed
+preservation, architecture, verification, scaling, and final-comparison plan.
 
 ## Repository structure
 
 - [`MILESTONES.md`](MILESTONES.md) tracks development of the baseline
   neuromorphic digital-twin platform and its Loihi-inspired core features.
-- [`EXPERIMENTS.md`](EXPERIMENTS.md) records the experiments used to probe and
-  validate the model and hardware implementation.
+- [`LOIHI_TWIN_ROADMAP.md`](LOIHI_TWIN_ROADMAP.md) defines the active
+  post-validation project direction.
+- [`EXPERIMENTS.md`](EXPERIMENTS.md) records proposed controlled experiments
+  that are currently deferred behind the deeper digital-twin work.
 - [`AUDIT.md`](AUDIT.md) records project audits, evidence checks, and validation
   findings.
 - [`Neuromorphic Digital Twin/`](Neuromorphic%20Digital%20Twin/) contains the
   core Python model, verification code, documentation, HLS, RTL, and FPGA
   implementation work.
 - [`applications/`](applications/) contains application workloads built on top
-  of the validated core. Each application can maintain its own milestones and
-  supporting code without changing the meaning of the baseline platform
-  milestones. The first application track is
-  [`applications/mnist/`](applications/mnist/).
+  of the validated core. The completed first application track currently lives
+  at [`applications/mnist/`](applications/mnist/) and will be preserved as the
+  FPGA-v1 MNIST baseline before new application work begins.
 
 The active Python project is located in:
 
