@@ -33,7 +33,7 @@ def main() -> None:
     )
 
     output = args.output or (
-        f"applications/mnist/build/{runtime.profile.name}_golden_evaluation.json"
+        f"applications/mnist_baseline/build/{runtime.profile.name}_golden_evaluation.json"
     )
     path = Path(output)
     path.parent.mkdir(parents=True, exist_ok=True)

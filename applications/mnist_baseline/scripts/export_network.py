@@ -23,7 +23,7 @@ def main() -> None:
         if "profile" in checkpoint
         else DEFAULT_PROFILE
     )
-    output = args.output or f"applications/mnist/build/deployment/{profile.name}"
+    output = args.output or f"applications/mnist_baseline/build/deployment/{profile.name}"
     manifest = write_deployment(args.checkpoint, output)
     print(f"profile:    {profile.name}")
     print(f"deployment: {manifest}")

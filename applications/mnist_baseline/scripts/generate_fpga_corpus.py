@@ -18,17 +18,17 @@ def main() -> int:
     parser.add_argument(
         "--frozen-root",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1"),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-08/golden"),
+        default=Path("applications/mnist_baseline/build/mnist-08/golden"),
     )
     parser.add_argument(
         "--sv-output",
         type=Path,
-        default=Path("applications/mnist/build/mnist-08/generated_m12_3_multitick_cases.svh"),
+        default=Path("applications/mnist_baseline/build/mnist-08/generated_m12_3_multitick_cases.svh"),
     )
     args = parser.parse_args()
 

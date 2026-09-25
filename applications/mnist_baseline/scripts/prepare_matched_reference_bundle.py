@@ -15,12 +15,12 @@ def main() -> int:
     parser.add_argument(
         "--frozen-root",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1"),
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("applications/mnist/build/matched-reference/anchor.bundle.json"),
+        default=Path("applications/mnist_baseline/build/matched-reference/anchor.bundle.json"),
     )
     args = parser.parse_args()
 
