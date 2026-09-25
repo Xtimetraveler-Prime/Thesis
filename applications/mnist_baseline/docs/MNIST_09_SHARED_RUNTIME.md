@@ -20,8 +20,8 @@ The accepted frozen neuron, synapse, arithmetic, weight-storage, and encoding se
 Target commands are:
 
 ```text
-python applications/mnist/scripts/classify_fpga.py --profile cropped-dense --index N
-python applications/mnist/scripts/classify_fpga.py --profile native-sparse --index N
+python applications/mnist_baseline/scripts/classify_fpga.py --profile cropped-dense --index N
+python applications/mnist_baseline/scripts/classify_fpga.py --profile native-sparse --index N
 ```
 
 No Vivado rebuild is required when the image index or selected frozen profile changes.

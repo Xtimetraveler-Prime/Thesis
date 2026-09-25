@@ -2,7 +2,7 @@
 
 **Branch:** `agent/mnist-v1-preservation`
 
-**Status:** In progress — archived-artifact rerun complete; clean source rebuild pending.
+**Status:** Historical audit procedure. Final completion is recorded in `MNIST_V1_PRESERVATION_COMPLETE.md`.
 
 ## Purpose
 
@@ -27,7 +27,7 @@ The audit is not complete until both requirements pass.
 The source-controlled deployment authority remains:
 
 ```text
-applications/mnist/frozen/mnist-v1/
+applications/mnist_baseline/frozen/mnist-v1/
 ```
 
 Its existing freeze manifest binds the accepted software/golden result to the
@@ -38,9 +38,9 @@ The preservation audit re-ran:
 
 ```bash
 PYTHONPATH="$PWD/applications/mnist:$PWD/Neuromorphic Digital Twin/src" \
-python applications/mnist/scripts/validate_frozen_deployment.py
+python applications/mnist_baseline/scripts/validate_frozen_deployment.py
 
-pytest applications/mnist/tests -q
+pytest applications/mnist_baseline/tests -q
 ```
 
 Accepted preservation result:
@@ -160,8 +160,8 @@ Neuromorphic Digital Twin/hls/core_v1/run_m11_4.sh
         ↓
 packaged neuron_step_v1 HLS IP
         ↓
-applications/mnist/fpga/run_mnist_09_bitstream.sh
-applications/mnist/fpga/run_mnist_10_bitstream.sh
+applications/mnist_baseline/fpga/run_mnist_09_bitstream.sh
+applications/mnist_baseline/fpga/run_mnist_10_bitstream.sh
         ↓
 regenerated MNIST-09 and MNIST-10 hardware images
         ↓
@@ -222,5 +222,4 @@ After the clean rebuild passes, the baseline will be closed with:
 6. the first MNIST application renamed as a historical baseline without
    altering its computational contents.
 
-Until then, do not rename `applications/mnist/` and do not begin FPGA-v2
-architecture changes.
+The preservation gate later completed successfully; see `MNIST_V1_PRESERVATION_COMPLETE.md`. The directory was then renamed to `applications/mnist_baseline/`.

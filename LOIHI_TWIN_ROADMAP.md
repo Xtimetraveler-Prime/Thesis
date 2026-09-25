@@ -47,15 +47,15 @@ Preserve both forms of reproducibility:
 2. **Source rebuild:** a clean checkout can regenerate the required HLS IP,
    Vivado project, bitstream, and runtime artifacts using the pinned toolchain.
 
-The current source-controlled `applications/mnist/frozen/mnist-v1/` package
+The current source-controlled `applications/mnist_baseline/frozen/mnist-v1/` package
 already preserves the accepted checkpoints, deployment images, encoded weight
-memories, frozen application contract, hashes, and conformance corpus. The
-remaining preservation work is primarily around generated FPGA artifacts,
-environment pinning, and one final physical reproduction.
+memories, frozen application contract, hashes, and conformance corpus. The preservation audit subsequently archived the generated FPGA artifacts,
+pinned the successful rebuild environment, and reproduced both archived and
+freshly rebuilt images on the K26.
 
-### Preservation actions
+### Completed preservation actions
 
-Before renaming `applications/mnist/`:
+The preservation gate was completed before renaming the baseline directory:
 
 - freeze the current repository identity with a final FPGA-v1/MNIST-v1 tag;
 - verify the committed `mnist-v1` package from a clean checkout;
@@ -72,10 +72,9 @@ Before renaming `applications/mnist/`:
 - create one concise reproduction record containing the exact commands, hashes,
   expected outputs, and artifact location.
 
-The preferred eventual directory name is `applications/mnist_baseline/` or
-`applications/mnist_v1/`, because this workload is a completed reference
-implementation rather than a temporary test. The rename should use Git history
-preserving moves and occur only after the preservation audit closes.
+The preserved workload now lives at `applications/mnist_baseline/`. It is a
+completed reference implementation rather than a temporary test, and the move
+was performed only after the preservation audit closed.
 
 ### Baseline immutability rule
 
@@ -439,8 +438,7 @@ The repository should separate completed history from the active research
 direction:
 
 - `MILESTONES.md` — historical FPGA-v1 platform-development record;
-- current `applications/mnist/` — first application, to be frozen/renamed as a
-  baseline after preservation;
+- `applications/mnist_baseline/` — preserved FPGA-v1 first-application baseline;
 - `LOIHI_TWIN_ROADMAP.md` — active high-level direction and phase plan;
 - future target specification — normative source-backed FPGA-v2 architecture
   contract;

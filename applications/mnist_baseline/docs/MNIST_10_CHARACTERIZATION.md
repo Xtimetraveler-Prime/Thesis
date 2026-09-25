@@ -114,7 +114,7 @@ These full-test image-level values remain **project-derived workload averages**,
 The source-controlled evidence package is:
 
 ```text
-applications/mnist/evidence/mnist-10/physical-timing-v1/
+applications/mnist_baseline/evidence/mnist-10/physical-timing-v1/
 ```
 
 Its manifest records four K26 runs on `xck26_0`, all accepted with `all_passed=true`. For every run, the validator required:
@@ -237,13 +237,13 @@ docs/MNIST_10_LOIHI_SOURCES.md
 Generated full-test baseline:
 
 ```text
-applications/mnist/build/mnist-10/characterization_baseline.json
+applications/mnist_baseline/build/mnist-10/characterization_baseline.json
 ```
 
 Accepted source-controlled physical evidence:
 
 ```text
-applications/mnist/evidence/mnist-10/physical-timing-v1/
+applications/mnist_baseline/evidence/mnist-10/physical-timing-v1/
 ```
 
 ---
@@ -255,7 +255,7 @@ The scientific and hardware characterization gates for **MNIST-10A, MNIST-10B, a
 Before merging the parent MNIST-10 branch, perform one final application regression run after the evidence archival/documentation updates:
 
 ```text
-pytest applications/mnist/tests -q
+pytest applications/mnist_baseline/tests -q
 ```
 
 If that passes, the parent **MNIST-10** can be marked Complete and merged without any additional physical run.

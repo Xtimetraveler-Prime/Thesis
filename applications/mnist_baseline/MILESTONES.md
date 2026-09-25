@@ -118,7 +118,7 @@ See `docs/MNIST_04_05_ACCEPTED_VALIDATION.md`.
 
 **Status:** Complete
 
-The accepted full-test MNIST-04/05 artifacts have been materialized into the source-controlled `applications/mnist/frozen/mnist-v1/` package and independently validated.
+The accepted full-test MNIST-04/05 artifacts have been materialized into the source-controlled `applications/mnist_baseline/frozen/mnist-v1/` package and independently validated.
 
 The freeze contains:
 

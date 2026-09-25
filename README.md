@@ -11,9 +11,9 @@ post-validation direction is summarized below and developed in detail in
 ## Endgame project direction
 
 The validated FPGA-v1 platform and its first MNIST application now serve as a
-frozen baseline rather than the final architecture. Before further development,
-the existing MNIST experiment will be preserved so its software results,
-physical K26 execution, bitstreams, and rebuild flow remain reproducible.
+frozen baseline rather than the final architecture. The first MNIST experiment has now been preserved as an immutable historical
+baseline, including its software results, physical K26 execution, FPGA artifacts,
+and clean-rebuild evidence.
 
 The next major objective is to build a substantially more complete,
 transparent Loihi-1 architectural digital twin on the FPGA. The new
@@ -48,9 +48,9 @@ preservation, architecture, verification, scaling, and final-comparison plan.
   core Python model, verification code, documentation, HLS, RTL, and FPGA
   implementation work.
 - [`applications/`](applications/) contains application workloads built on top
-  of the validated core. The completed first application track currently lives
-  at [`applications/mnist/`](applications/mnist/) and will be preserved as the
-  FPGA-v1 MNIST baseline before new application work begins.
+  of the validated core. The completed first application track lives at
+  [`applications/mnist_baseline/`](applications/mnist_baseline/) as the preserved
+  FPGA-v1 MNIST reference workload.
 
 The active Python project is located in:
 

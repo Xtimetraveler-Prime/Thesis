@@ -1,6 +1,6 @@
-# MNIST Application
+# MNIST FPGA-v1 Baseline Application
 
-This directory tracks an MNIST workload built on top of the validated neuromorphic digital-twin platform. Application work is separate from baseline platform milestones and must not silently change the frozen core behavior.
+This directory is the preserved first MNIST workload for the validated FPGA-v1 neuromorphic digital-twin platform. It is a historical reference baseline: future FPGA-v2 or deeper-MNIST work must live separately and must not silently change this frozen behavior.
 
 See [`MILESTONES.md`](MILESTONES.md) for the rollout plan, [`docs/MNIST_01_CAPACITY_AUDIT.md`](docs/MNIST_01_CAPACITY_AUDIT.md) for the hardware-capacity decision, [`docs/MNIST_03_TRAINING_BASELINES.md`](docs/MNIST_03_TRAINING_BASELINES.md) for the accepted floating-point SNN baselines, [`docs/MNIST_04_05_ACCEPTED_VALIDATION.md`](docs/MNIST_04_05_ACCEPTED_VALIDATION.md) for the accepted quantized/golden results, and [`docs/NOTEBOOK_REUSE.md`](docs/NOTEBOOK_REUSE.md) for how the user-authored class notebooks are being repurposed.
 
@@ -54,8 +54,8 @@ python3.12 -m venv .venv-mnist
 source .venv-mnist/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e "Neuromorphic Digital Twin"
-python -m pip install -e "applications/mnist[train,test]"
-pytest applications/mnist/tests -q
+python -m pip install -e "applications/mnist_baseline[train,test]"
+pytest applications/mnist_baseline/tests -q
 ```
 
 ## Reproduce accepted software validation
@@ -63,7 +63,7 @@ pytest applications/mnist/tests -q
 The accepted export/comparison flow validates both checkpoints, writes both project-native deployments, evaluates float and golden models on the same official test corpus, and records SHA-256 provenance:
 
 ```bash
-python applications/mnist/scripts/run_accepted_validation.py
+python applications/mnist_baseline/scripts/run_accepted_validation.py
 ```
 
-Generated validation artifacts are written under `applications/mnist/build/accepted-validation/`, and deployment images under `applications/mnist/build/accepted-deployment/`.
+Generated validation artifacts are written under `applications/mnist_baseline/build/accepted-validation/`, and deployment images under `applications/mnist_baseline/build/accepted-deployment/`.

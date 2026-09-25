@@ -148,7 +148,7 @@ fpga/run_mnist_08_hardware.sh
 Generated build tree:
 
 ```text
-applications/mnist/build/mnist-08/
+applications/mnist_baseline/build/mnist-08/
 ├── golden/
 │   ├── manifest.json
 │   ├── hardware_cases.tsv

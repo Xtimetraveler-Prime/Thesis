@@ -13,7 +13,7 @@ The freeze therefore copies the exact accepted artifacts out of the ignored buil
 The accepted package is committed under:
 
 ```text
-applications/mnist/frozen/mnist-v1/
+applications/mnist_baseline/frozen/mnist-v1/
 ```
 
 Layout:
@@ -91,20 +91,20 @@ The corpus file records each source test index, true label, both accepted golden
 The package is generated with:
 
 ```bash
-python applications/mnist/scripts/freeze_deployment.py
+python applications/mnist_baseline/scripts/freeze_deployment.py
 ```
 
 and independently checked with:
 
 ```bash
-python applications/mnist/scripts/validate_frozen_deployment.py
+python applications/mnist_baseline/scripts/validate_frozen_deployment.py
 ```
 
 The validator recomputes every stored SHA-256 digest, verifies both profiles are present, verifies the 16-tick contract, and requires exactly 30 unique corpus samples with three samples from every digit class. The accepted materialized package passed this validator before being committed.
 
 ## Source-control policy
 
-`applications/mnist/build/` remains generated/ignored. The `applications/mnist/frozen/mnist-v1/` package is intentionally source-controlled because it is the immutable application artifact consumed by MNIST-07 and later physical experiments.
+`applications/mnist_baseline/build/` remains generated/ignored. The `applications/mnist_baseline/frozen/mnist-v1/` package is intentionally source-controlled because it is the immutable application artifact consumed by MNIST-07 and later physical experiments.
 
 Any retraining, re-quantization, change of test-corpus policy, or regenerated deployment whose hash differs from the accepted package constitutes a new freeze version rather than a silent replacement of `mnist-v1`.
 
@@ -121,4 +121,4 @@ The MNIST application does not introduce a second definition of FPGA correctness
 
 ## Closure
 
-All MNIST-06 completion criteria are satisfied. The committed `applications/mnist/frozen/mnist-v1/` package is the sole accepted input package for MNIST-07 and later FPGA application milestones.
+All MNIST-06 completion criteria are satisfied. The committed `applications/mnist_baseline/frozen/mnist-v1/` package is the sole accepted input package for MNIST-07 and later FPGA application milestones.
