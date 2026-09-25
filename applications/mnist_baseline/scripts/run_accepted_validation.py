@@ -17,15 +17,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--training-dir",
-        default="applications/mnist/build/accepted-training",
+        default="applications/mnist_baseline/build/accepted-training",
     )
     parser.add_argument(
         "--deployment-root",
-        default="applications/mnist/build/accepted-deployment",
+        default="applications/mnist_baseline/build/accepted-deployment",
     )
     parser.add_argument(
         "--output",
-        default="applications/mnist/build/accepted-validation",
+        default="applications/mnist_baseline/build/accepted-validation",
     )
     parser.add_argument("--limit", type=int)
     parser.add_argument("--batch-size", type=int, default=128)

@@ -74,12 +74,12 @@ def main() -> int:
     parser.add_argument(
         "--frozen-root",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1"),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-11/brian2loihi"),
+        default=Path("applications/mnist_baseline/build/mnist-11/brian2loihi"),
     )
     args = parser.parse_args()
     if not args.audit_only and args.bundle is None and args.shard_manifest is None:

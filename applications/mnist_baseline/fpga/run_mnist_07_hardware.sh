@@ -33,7 +33,7 @@ fi
 for path in "$BIT_FILE" "$LTX_FILE" "$METADATA" "$MANIFEST" "$CAPTURE_TCL" "$SUITE_VALIDATOR"; do
     if [[ ! -f "$path" ]]; then
         echo "ERROR: required MNIST-07 hardware input is missing: $path" >&2
-        echo "Run applications/mnist/fpga/run_mnist_07_bitstream.sh successfully first." >&2
+        echo "Run applications/mnist_baseline/fpga/run_mnist_07_bitstream.sh successfully first." >&2
         exit 3
     fi
 done

@@ -39,7 +39,7 @@ for path in \
     "$CORE_RTL/vivado/capture_m12_3_multitick.tcl" "$SUITE_VALIDATOR"; do
     if [[ ! -f "$path" ]]; then
         echo "ERROR: required MNIST-08 hardware input is missing: $path" >&2
-        echo "Run applications/mnist/fpga/run_mnist_08_bitstream.sh successfully first." >&2
+        echo "Run applications/mnist_baseline/fpga/run_mnist_08_bitstream.sh successfully first." >&2
         exit 3
     fi
 done

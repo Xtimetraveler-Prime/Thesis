@@ -14,7 +14,7 @@ def main() -> None:
     parser.add_argument(
         "root",
         nargs="?",
-        default="applications/mnist/frozen/mnist-v1",
+        default="applications/mnist_baseline/frozen/mnist-v1",
     )
     args = parser.parse_args()
     result = validate_frozen_deployment(args.root)

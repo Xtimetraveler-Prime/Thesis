@@ -12,7 +12,7 @@ def main() -> None:
         description="Train one direct MNIST SNN deployment profile"
     )
     parser.add_argument("--profile", choices=tuple(PROFILES), required=True)
-    parser.add_argument("--output", default="applications/mnist/build/training")
+    parser.add_argument("--output", default="applications/mnist_baseline/build/training")
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument(
         "--fine-tune-epochs",
