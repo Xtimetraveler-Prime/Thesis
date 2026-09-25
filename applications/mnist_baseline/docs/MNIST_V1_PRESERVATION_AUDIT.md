@@ -37,7 +37,7 @@ corpus, and SHA-256 values.
 The preservation audit re-ran:
 
 ```bash
-PYTHONPATH="$PWD/applications/mnist:$PWD/Neuromorphic Digital Twin/src" \
+PYTHONPATH="$PWD/applications/mnist_baseline:$PWD/Neuromorphic Digital Twin/src" \
 python applications/mnist_baseline/scripts/validate_frozen_deployment.py
 
 pytest applications/mnist_baseline/tests -q
