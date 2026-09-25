@@ -17,12 +17,12 @@ def main() -> int:
     parser.add_argument(
         "--build-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-10"),
+        default=Path("applications/mnist_baseline/build/mnist-10"),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("applications/mnist/evidence/mnist-10/physical-timing-v1"),
+        default=Path("applications/mnist_baseline/evidence/mnist-10/physical-timing-v1"),
     )
     args = parser.parse_args()
 

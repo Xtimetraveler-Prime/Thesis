@@ -13,12 +13,12 @@ def main() -> int:
     parser.add_argument(
         "--accepted-validation",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1/accepted_software_validation.json"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1/accepted_software_validation.json"),
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("applications/mnist/build/mnist-10/characterization_baseline.json"),
+        default=Path("applications/mnist_baseline/build/mnist-10/characterization_baseline.json"),
     )
     parser.add_argument("--clock-hz", type=int, default=100_000_000)
     args = parser.parse_args()

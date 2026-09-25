@@ -27,12 +27,12 @@ def main() -> int:
     parser.add_argument(
         "--frozen-root",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1"),
     )
     parser.add_argument(
         "--build-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-10"),
+        default=Path("applications/mnist_baseline/build/mnist-10"),
     )
     parser.add_argument(
         "--prepare-only",
@@ -88,13 +88,13 @@ def main() -> int:
     artifact_dir = args.build_dir / "artifacts"
     bitstream = artifact_dir / "neuromorphic_twin_mnist_10.bit"
     probes = artifact_dir / "neuromorphic_twin_mnist_10.ltx"
-    source_tcl = Path("applications/mnist/fpga/vivado/classify_mnist_09_runtime.tcl")
+    source_tcl = Path("applications/mnist_baseline/fpga/vivado/classify_mnist_09_runtime.tcl")
     timing_tcl = args.build_dir / "classify_mnist_10_timing.tcl"
     for path in (bitstream, probes, source_tcl):
         if not path.is_file():
             raise SystemExit(
                 f"Required timing artifact missing: {path}. "
-                "Run applications/mnist/fpga/run_mnist_10_bitstream.sh first."
+                "Run applications/mnist_baseline/fpga/run_mnist_10_bitstream.sh first."
             )
     write_timing_runtime_tcl(source_tcl, timing_tcl)
 

@@ -14,12 +14,12 @@ def main() -> int:
     parser.add_argument(
         "--result-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-12/catalyst"),
+        default=Path("applications/mnist_baseline/build/mnist-12/catalyst"),
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("applications/mnist/build/mnist-12/catalyst/divergence_summary.json"),
+        default=Path("applications/mnist_baseline/build/mnist-12/catalyst/divergence_summary.json"),
     )
     parser.add_argument(
         "--compact",

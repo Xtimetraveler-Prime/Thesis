@@ -14,14 +14,14 @@ def main() -> int:
     parser.add_argument(
         "--accepted-validation",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1/accepted_software_validation.json"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1/accepted_software_validation.json"),
     )
     parser.add_argument("--brian-suite", type=Path, required=True)
     parser.add_argument("--catalyst-suite", type=Path, required=True)
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("applications/mnist/build/matched-reference/comparison_summary.json"),
+        default=Path("applications/mnist_baseline/build/matched-reference/comparison_summary.json"),
     )
     args = parser.parse_args()
     output = write_matched_summary(

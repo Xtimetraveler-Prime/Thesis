@@ -22,12 +22,12 @@ def main() -> int:
     parser.add_argument(
         "--frozen-root",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1"),
     )
     parser.add_argument(
         "--build-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-09"),
+        default=Path("applications/mnist_baseline/build/mnist-09"),
     )
     parser.add_argument(
         "--prepare-only",
@@ -60,12 +60,12 @@ def main() -> int:
     artifact_dir = args.build_dir / "artifacts"
     bitstream = artifact_dir / "neuromorphic_twin_mnist_09.bit"
     probes = artifact_dir / "neuromorphic_twin_mnist_09.ltx"
-    tcl = Path("applications/mnist/fpga/vivado/classify_mnist_09_runtime.tcl")
+    tcl = Path("applications/mnist_baseline/fpga/vivado/classify_mnist_09_runtime.tcl")
     for path in (bitstream, probes, tcl):
         if not path.is_file():
             raise SystemExit(
                 f"Required runtime artifact missing: {path}. "
-                "Run applications/mnist/fpga/run_mnist_09_bitstream.sh first."
+                "Run applications/mnist_baseline/fpga/run_mnist_09_bitstream.sh first."
             )
 
     result_json = request_dir / "physical_result.json"

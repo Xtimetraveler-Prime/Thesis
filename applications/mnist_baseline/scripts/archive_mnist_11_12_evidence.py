@@ -37,22 +37,22 @@ def main() -> int:
     parser.add_argument(
         "--brian-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-11/brian2loihi"),
+        default=Path("applications/mnist_baseline/build/mnist-11/brian2loihi"),
     )
     parser.add_argument(
         "--catalyst-dir",
         type=Path,
-        default=Path("applications/mnist/build/mnist-12/catalyst"),
+        default=Path("applications/mnist_baseline/build/mnist-12/catalyst"),
     )
     parser.add_argument(
         "--accepted-validation",
         type=Path,
-        default=Path("applications/mnist/frozen/mnist-v1/accepted_software_validation.json"),
+        default=Path("applications/mnist_baseline/frozen/mnist-v1/accepted_software_validation.json"),
     )
     parser.add_argument(
         "--output-root",
         type=Path,
-        default=Path("applications/mnist/evidence/mnist-11-12"),
+        default=Path("applications/mnist_baseline/evidence/mnist-11-12"),
     )
     args = parser.parse_args()
 
