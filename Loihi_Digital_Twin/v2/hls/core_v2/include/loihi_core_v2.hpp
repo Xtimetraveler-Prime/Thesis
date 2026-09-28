@@ -31,10 +31,11 @@ using route_desc_word_t = ap_uint<32>;
 using route_word_t = ap_uint<32>;
 using trace_word_t = ap_uint<256>;
 using packet_word_t = ap_uint<64>;
-// Logical axon IDs occupy 12 bits. The physical event memory uses a 16-bit
-// word so the BRAM interface has a conventional byte/power-of-two width; the
-// upper four bits are reserved and are written as zero by project tooling.
-using event_axon_t = ap_uint<16>;
+// Logical axon IDs occupy 12 bits. The physical event memory uses a 32-bit
+// word because Vivado 2025.2 Block Memory Generator on the K26 rejects the
+// 16-bit native port used by the first draft of this shell. Bits [31:12] are
+// implementation-reserved; valid P03 event words carry the axon ID in [11:0].
+using event_axon_t = ap_uint<32>;
 using status_t = ap_uint<32>;
 
 constexpr unsigned STATUS_CAPACITY = 1u << 0;
