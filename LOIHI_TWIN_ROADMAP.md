@@ -4,273 +4,194 @@
 
 This document defines the active post-validation direction of the thesis.
 
-The validated FPGA-v1 platform, M12 physical evidence, M13 cross-implementation
-audit, and first MNIST application are now treated as a stable baseline. The
-next objective is not to replace that baseline with a collection of unrelated
-counterfactual experiments. The objective is to extend the project into a
-substantially more complete, transparent Loihi-1 architectural digital twin and
-then use a deeper MNIST workload as the final application-level comparison.
+The FPGA-v1 architecture and first MNIST workload are now preserved historical
+baselines. The active objective is a substantially more complete, transparent
+Loihi-1 architectural digital twin and a deeper MNIST workload suitable for a
+defensible comparison with Rueckauer et al. NxTF.
 
-The intended progression is:
+The progression is:
 
 ```text
-preserve FPGA-v1 + first MNIST application
+preserved FPGA-v1 + first MNIST application
         ↓
-freeze a source-backed Loihi-1 target architecture
+source-backed Loihi-1 target specification
         ↓
-build and validate a new FPGA-v2 / manycore twin
+separate Python FPGA-v2 manycore golden model
         ↓
-scale the architecture to deeper mapped SNNs
+one-core then multicore FPGA-v2 implementation
         ↓
-run a deep MNIST workload through the new twin
+logical-core virtualization + mapper/compiler
         ↓
-compare against the Rueckauer et al. NxTF Loihi result
+deep mapped SNN validation
+        ↓
+NxTF-oriented deep MNIST comparison
 ```
 
-The proposed experiments in `EXPERIMENTS.md` remain valid follow-on research,
-but they are deferred while this endgame path is active.
+The proposed studies in `EXPERIMENTS.md` remain useful follow-on work but are
+deferred while this architecture/application path is active.
 
 ---
 
-## 1. Preserve the FPGA-v1 / first-MNIST baseline
+## 1. Preserved FPGA-v1 baseline
 
-The first MNIST application is a completed reference experiment, not a disposable
-prototype. It must remain reproducible before any directory rename or
-architecture-v2 development begins.
+The first architecture and MNIST application are completed reference results.
+Their preservation phase established both archived-artifact reproducibility and
+fresh-source rebuild reproducibility, including physical K26 validation.
 
-### Preservation objectives
+The immutable pre-v2 source point is tagged:
 
-Preserve both forms of reproducibility:
+```text
+fpga-v1-mnist-v1-final
+```
 
-1. **Immediate rerun:** an archived, previously verified K26 bitstream/debug
-   artifact can be programmed again and used to classify a frozen MNIST input.
-2. **Source rebuild:** a clean checkout can regenerate the required HLS IP,
-   Vivado project, bitstream, and runtime artifacts using the pinned toolchain.
+The repository now separates the generations:
 
-The current source-controlled `applications/mnist_baseline/frozen/mnist-v1/` package
-already preserves the accepted checkpoints, deployment images, encoded weight
-memories, frozen application contract, hashes, and conformance corpus. The preservation audit subsequently archived the generated FPGA artifacts,
-pinned the successful rebuild environment, and reproduced both archived and
-freshly rebuilt images on the K26.
+```text
+Loihi_Digital_Twin/
+├── v1/    preserved FPGA-v1 source, tests, docs, HLS, and RTL
+└── v2/    independent Loihi-1 architectural-twin development
 
-### Completed preservation actions
+applications/
+└── mnist_baseline/    preserved first MNIST application/evidence
+```
 
-The preservation gate was completed before renaming the baseline directory:
-
-- freeze the current repository identity with a final FPGA-v1/MNIST-v1 tag;
-- verify the committed `mnist-v1` package from a clean checkout;
-- preserve exact Python/package versions used by the accepted reproduction;
-- preserve Vitis/Vivado 2025.2, K26 part, board, and host-environment details;
-- archive the accepted MNIST runtime/characterization hardware artifacts,
-  including the reusable `.bit` and `.ltx` files and the final
-  characterization `.xsa`, routed checkpoint, and implementation reports;
-- record SHA-256 hashes for archived binary artifacts;
-- physically program the archived runtime image and reproduce at least one
-  classification from each frozen profile;
-- independently confirm that the same hardware image can still be rebuilt from
-  source; and
-- create one concise reproduction record containing the exact commands, hashes,
-  expected outputs, and artifact location.
-
-The preserved workload now lives at `applications/mnist_baseline/`. It is a
-completed reference implementation rather than a temporary test, and the move
-was performed only after the preservation audit closed.
+A compatibility symlink named `Neuromorphic Digital Twin` points to
+`Loihi_Digital_Twin/v1` so historical commands can continue to resolve. New
+work should use the canonical versioned paths.
 
 ### Baseline immutability rule
 
-The validated FPGA-v1 core, frozen MNIST-v1 deployment, and accepted evidence
-must not be silently modified to support the new architecture. Any new core,
-routing model, compiler/mapping layer, or application deployment should be
-versioned separately. FPGA-v1 remains the historical control.
+FPGA-v1 behavior and its accepted evidence must not be silently changed to make
+FPGA-v2 easier to implement. Reuse is allowed only through explicit,
+versioned interfaces with tests. FPGA-v1 remains the historical control.
 
 ---
 
-## 2. Define what “Loihi digital twin” means
+## 2. Definition of the Loihi digital twin
 
-The project should target a **source-backed architectural digital twin**, not an
-unverifiable transistor-level clone.
+The project targets a **source-backed architectural digital twin**, not a
+transistor-level clone.
 
 The working definition is:
 
-> A transparent FPGA implementation that exposes the documented logical
-> resources, state transitions, routing behavior, timing/execution semantics,
-> and mapping constraints needed to reproduce a defensible subset of Loihi-1
-> behavior at neuron, core, and manycore levels.
+> A transparent FPGA implementation exposing the documented logical resources,
+> state transitions, routing behavior, algorithmic-time semantics, and mapping
+> constraints needed to reproduce a defensible subset of Loihi-1 behavior at
+> neuron, core, and manycore levels.
 
-A literal spatial copy of all Loihi-1 hardware resources is not required if the
-K26 cannot support it. Logical resources may be time-multiplexed or virtualized
-provided that:
+Logical resources may be virtualized or time-multiplexed on the K26 provided
+that:
 
-- the virtualization is explicit;
+- virtualization is explicit;
 - architectural state remains inspectable;
-- timing and ordering rules remain deterministic and documented;
-- the logical resource limits are modeled rather than silently ignored; and
-- Python-golden and FPGA implementations can be compared at the same logical
-  boundary.
+- logical resource limits are enforced;
+- packet/timestep ordering rules remain deterministic and documented;
+- physical FPGA cycles are distinguished from algorithmic timesteps; and
+- Python and FPGA implementations compare at the same normalized boundary.
 
-This distinction is important. Loihi-1 itself is a manycore architecture whose
-neuron updates are time-multiplexed within cores, while communication between
-cores is packetized and asynchronous. FPGA resource reuse is therefore
-acceptable if it preserves the intended architectural behavior instead of
-collapsing the architecture back into a generic dense accelerator.
+Physical asynchronous-circuit equivalence is not required. The target is a
+synchronous FPGA realization of source-backed event-driven architectural
+semantics.
 
 ---
 
-## 3. Evidence base for the target architecture
+## 3. Normative architecture authority
 
-The architecture definition phase must precede FPGA-v2 implementation.
-
-Primary literature anchors should include at least:
-
-- Mike Davies et al., “Loihi: A Neuromorphic Manycore Processor with On-Chip
-  Learning,” *IEEE Micro*, 2018. DOI: `10.1109/MM.2018.112130359`.
-- Andrew Lines et al., “Loihi Asynchronous Neuromorphic Research Chip,”
-  *ASYNC*, 2018. DOI: `10.1109/ASYNC.2018.00018`.
-- Bodo Rueckauer et al., “NxTF: An API and Compiler for Deep Spiking Neural
-  Networks on Intel Loihi,” *ACM Journal on Emerging Technologies in Computing
-  Systems*, 2022. DOI: `10.1145/3501770`.
-- the existing M13 source manifest, architectural feature crosswalk,
-  normalization specification, and final audit summary.
-
-The M13 audit already identifies eight explicit FPGA-v1 scope limits:
+The architecture-definition gate is now represented by:
 
 ```text
-dendritic compartments
-programmable synaptic delays beyond the baseline recurrent rule
-native Loihi/Catalyst synapse-memory layout equivalence
-inter-core routing / packet NoC
-online learning / plasticity
-Loihi-like embedded management processors
-multicore scaling
-asynchronous / quiescence execution
+Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md
 ```
 
-These are the starting architecture-gap list, not an automatic requirement that
-all eight be implemented before the next useful result.
+That document is the normative authority for FPGA-v2. It records primary
+sources and requirement-level citations, distinguishes source-backed behavior
+from project implementation choices, defines explicit non-claims, and specifies
+the validation tests required before large-network development.
 
-### Architecture-definition deliverable
+The evidence hierarchy is centered on:
 
-Create a source-backed **Loihi-1 Twin Target Specification** before RTL/HLS
-changes begin. For every candidate feature it should record:
+- Davies et al., *Loihi: A Neuromorphic Manycore Processor with On-Chip
+  Learning*, IEEE Micro, 2018;
+- Lines et al., *Loihi Asynchronous Neuromorphic Research Chip*, ASYNC, 2018;
+- Davies et al., *Advancing Neuromorphic Computing With Loihi*, Proceedings of
+  the IEEE, 2021;
+- Rueckauer et al., *NxTF*, ACM JETC, 2022;
+- Michaelis et al., *Brian2Loihi*, Frontiers in Neuroinformatics, 2022; and
+- the completed project M13 audit for the FPGA-v1 behavior/scope boundary.
 
-- published evidence and confidence;
-- exact behavior/resource limit that can be defended;
-- whether the feature is required for the final deep-MNIST comparison;
-- whether FPGA-v1 already implements it;
-- Python-golden representation;
-- intended FPGA representation;
-- observability/trace requirements;
-- validation strategy; and
-- explicit unsupported or ambiguous behavior.
-
-This specification becomes the authority for FPGA-v2 in the same way the M10
-contract became the authority for FPGA-v1.
+A feature with insufficient public evidence must be marked unknown/not claimed
+rather than filled in from assumption.
 
 ---
 
-## 4. Feature priorities
+## 4. FPGA-v2 Priority-A architecture
 
-The new architecture should be developed in priority order rather than trying to
-implement every Loihi feature simultaneously.
-
-### Priority A — required for the deep-MNIST end goal
-
-These features are the minimum architectural expansion expected to materially
-change the final thesis comparison:
+The first complete v2 architecture must support:
 
 - multiple logical neuromorphic cores;
-- explicit per-core neuron, axon, synapse, and routing resources;
-- inter-core spike packet routing;
-- deterministic logical core placement and connection mapping;
-- support for deeper feed-forward SNN graphs;
-- Loihi-like axon/synapse sharing or an explicitly modeled equivalent needed to
-  represent convolutional connectivity efficiently;
-- per-core resource-capacity accounting;
-- a timestep/quiescence or barrier mechanism that separates algorithmic time
-  from raw FPGA clock cycles;
-- transparent host loading, execution, and state/spike observation; and
-- a compiler/mapping layer that transforms a trained network into the logical
-  manycore deployment.
+- explicit per-core compartment, input-axon, synapse, and output-routing
+  resources;
+- Loihi-like hard capacity accounting;
+- destination-core / destination-axon spike packets;
+- explicit inter-core fanout and packet routing;
+- deterministic placement and mapping;
+- algorithmic timestep/quiescence barriers independent of FPGA clock cycles;
+- convolution-oriented axon/synapse sharing or a clearly modeled equivalent;
+- transparent configuration, state, packet, spike, and resource traces;
+- deeper feed-forward SNN graphs; and
+- a deterministic mapping/compiler layer producing the configuration consumed
+  by both Python and FPGA execution.
 
-These capabilities are central to reproducing the kind of multicore,
-resource-constrained deep SNN mapping studied by NxTF.
-
-### Priority B — important architectural fidelity
-
-Implement after the Priority-A manycore path is stable unless the target
-specification shows that the final workload requires them earlier:
-
-- programmable synaptic delays;
-- richer compartment relationships / dendritic structures;
-- broader connection-format and weight-format support;
-- more faithful event scheduling under simultaneous traffic;
-- congestion/backpressure behavior where source evidence is sufficient;
-- expanded reset/refractory/threshold configurability; and
-- more detailed asynchronous/quiescence behavior.
-
-### Priority C — valuable but not required for the first deep-MNIST comparison
-
-These features may be deferred unless they become necessary for the thesis
-claim:
-
-- on-chip learning/plasticity;
-- embedded management-processor emulation;
-- full chip-to-chip scaling;
-- exact physical asynchronous-circuit implementation; and
-- undocumented proprietary microarchitectural details.
-
-The thesis should prefer a well-validated transparent manycore subset over a
-broader but weakly supported imitation.
+The target specification currently treats richer dendritic structures,
+programmable delays, broader weight/compression formats, and more detailed
+traffic behavior as later fidelity extensions. Learning engines, management
+processor emulation, multi-chip routing, and exact asynchronous circuit timing
+may remain deferred for the first deep-MNIST comparison.
 
 ---
 
 ## 5. FPGA-v2 architecture program
 
-FPGA-v2 should be developed beside FPGA-v1 rather than by mutating the validated
-baseline.
+### Stage A — separate Python manycore golden model
 
-A likely structure is:
+Create a new v2 package rather than extending the v1 `NeuromorphicCore` in
+place. The initial model should represent:
 
 ```text
-Loihi-like logical chip
-├── logical core 0
-│   ├── compartment/neuron state
-│   ├── axon table
-│   ├── synapse memory
-│   ├── routing table
-│   └── local event queues
-├── logical core 1
-├── ...
-├── packet router / NoC model
-├── timestep or quiescence coordinator
-├── configuration / mapping loader
-└── trace and instrumentation plane
+logical chip
+├── logical cores
+│   ├── compartment state
+│   ├── input axon table
+│   ├── synapse lists/groups
+│   ├── output routing table
+│   └── local completion state
+├── packet router / event queues
+├── timestep-barrier coordinator
+├── resource accounting
+├── mapper/deployment representation
+└── normalized trace plane
 ```
 
-Physical FPGA memories and compute engines may service multiple logical cores
-through time-division multiplexing. The logical architecture, not the number of
-physically duplicated compute blocks, defines fidelity.
+Reuse the already validated v1 neuron arithmetic only through an explicit
+versioned compatibility boundary. The first v2 model must not acquire v1's
+single-core execution assumptions accidentally.
 
-### Stage A — new golden model
+Required early directed tests include:
 
-Extend or create a Python architecture model that explicitly represents:
+- v1-compatible single-neuron arithmetic;
+- two-core feed-forward packet delivery;
+- multicast fanout;
+- within-timestep packet-order invariance;
+- barrier drain/advance behavior;
+- cross-core recurrence;
+- hard resource-limit rejection;
+- connection-sharing/accounting behavior; and
+- invariance to different physical/logical scheduling orders.
 
-- core identity;
-- per-core resource tables;
-- packetized spike destinations;
-- local event queues;
-- inter-core delivery;
-- per-timestep completion/quiescence;
-- mapping constraints; and
-- deterministic trace output.
+### Stage B — one FPGA-v2 core
 
-Before hardware work, reproduce existing FPGA-v1 single-core behavior as a
-degenerate one-core configuration where appropriate.
-
-### Stage B — one logical FPGA-v2 core
-
-Implement one new logical core using the target specification. Preserve the
-existing validation discipline:
+Implement one logical v2 core against the target specification and the new
+Python model. Preserve the existing verification discipline:
 
 ```text
 target specification
@@ -284,191 +205,131 @@ directed differential tests
 physical K26 conformance
 ```
 
-Do not scale to many cores until the one-core architectural contract is stable.
+### Stage C — multicore packet routing
 
-### Stage C — multicore routing
+Add at least two logical cores and validate local/remote traffic, simultaneous
+sources, fan-in/fanout, queue behavior, recurrence, and barrier semantics. The
+first divergence must remain traceable to a logical core, packet, and
+algorithmic timestep.
 
-Add at least two logical cores and validate:
+### Stage D — logical-core virtualization
 
-- local versus remote spike delivery;
-- fan-in/fan-out across cores;
-- simultaneous source spikes;
-- deterministic packet destinations;
-- next-timestep or documented delivery timing;
-- queue limits and overflow behavior;
-- core completion/barrier semantics; and
-- complete traceability of the first divergence.
+Allow more logical cores than physical compute engines. Logical per-core
+capacity must remain enforced even when memories and compute engines are shared
+physically. Report both logical core count and physical engine/resource count.
 
-### Stage D — scalable logical-core virtualization
-
-Introduce the scheduler/memory organization needed to represent more logical
-cores than can be physically duplicated.
-
-The implementation must report:
-
-- number of logical cores represented;
-- physical compute/memory resources used;
-- cycles required per logical timestep;
-- resource occupancy per logical core;
-- packet/event load; and
-- any capacity limit that prevents a mapping.
-
-A failed mapping because of a modeled architectural limit is a valid result.
-Silently exceeding logical Loihi-style resources is not.
+A central validation requirement is **virtualization invariance**: changing the
+number or service order of physical engines must not change normalized logical
+state/spike/packet traces.
 
 ### Stage E — mapping/compiler layer
 
-The final platform needs a deterministic mapping path from a network description
-to FPGA-v2 deployment artifacts. At minimum it should:
+Map trained networks into deterministic v2 deployment artifacts. At minimum the
+mapper shall:
 
-- partition neurons/compartments across logical cores;
-- assign axons and synapses;
-- exploit supported sharing/compression;
-- build routing entries;
-- reject mappings that exceed declared resources;
-- emit a machine-readable placement report; and
-- generate the exact configuration consumed by both Python golden and FPGA
-  execution.
-
-This mapping layer is essential to making the architecture useful beyond
-handwritten directed tests.
+- partition populations/compartments across logical cores;
+- allocate input axons, synaptic groups, and output routes;
+- exploit supported sharing;
+- enforce hard resource limits;
+- expose capacity headroom and traffic estimates;
+- reject invalid mappings explicitly; and
+- emit one machine-readable deployment consumed by both Python and FPGA.
 
 ---
 
 ## 6. Verification strategy
 
-The project’s strongest methodological advantage is its existing transparent
-verification workflow. FPGA-v2 should preserve it.
-
 Every architectural addition should be validated at three levels:
 
-1. **Directed unit behavior** — minimal cases isolate one semantic rule.
-2. **Network differential behavior** — Python golden and FPGA traces match over
-   representative mapped networks.
-3. **Physical application behavior** — a real K26 deployment reproduces the
-   golden application result.
+1. **Directed unit behavior** — minimal tests isolate one semantic rule.
+2. **Mapped-network differential behavior** — Python and FPGA normalized traces
+   agree across representative multicore networks.
+3. **Physical application behavior** — a K26 deployment reproduces the golden
+   workload result.
 
-Where an external reference such as Brian2Loihi is actually comparable, it may
-remain a supporting reference. It should not be treated as universal Loihi
-ground truth where M13 already established scope or modeling differences.
+The v2 trace boundary should expose, when practical:
 
-The FPGA-v2 validation record should preserve:
+```text
+algorithmic timestep
+logical core
+architectural phase
+packets in / packets out
+axon expansion
+synaptic contributions
+compartment state before / after
+spikes
+local completion
+barrier state
+physical FPGA cycle
+```
 
-- first state-divergence tick;
-- first spike-divergence tick;
-- logical core and neuron IDs;
-- packet/event traces;
-- per-core resource tables;
-- deployment hashes;
-- bitstream/toolchain identity; and
-- physical-versus-golden result summaries.
+External emulators such as Brian2Loihi remain supporting references only where
+their modeled boundary is actually comparable.
 
 ---
 
-## 7. Deep MNIST / NxTF comparison target
+## 7. Deep MNIST / NxTF target
 
-The final application should be qualitatively deeper than the current
-`784 -> 10` classifier and should exercise the new manycore architecture.
+The final application must be substantially deeper than the preserved
+single-layer `784 -> 10` baseline and must exercise multicore mapping and
+resource constraints.
 
-Rueckauer et al. is the primary comparison target because NxTF specifically
-addresses mapping deep convolutional SNNs onto Loihi’s multicore,
-resource-constrained architecture and exploits Loihi connectivity/weight
-sharing.
+Rueckauer et al. NxTF is the primary comparison target because it explicitly
+studies mapping deep convolutional SNNs onto Loihi's constrained multicore
+resources and exploits axon/synapse sharing.
 
-The experiment should reproduce the published workload as closely as public
-information and the new architecture permit, while clearly separating exact
-matches from translated or unavailable details.
+Before final results, freeze a comparison contract covering:
 
-### Comparison contract to freeze before results
+- data/preprocessing;
+- topology;
+- training/conversion procedure;
+- neuron model;
+- algorithmic presentation timesteps;
+- weight representation;
+- logical placement/core count;
+- sharing/compression model;
+- decoder and accuracy metric;
+- latency boundary; and
+- quantities that cannot be matched to the paper.
 
-Record before running the final comparison:
+Candidate final measurements include accuracy, logical cores, compartment/axon/
+synapse occupancy, sharing effectiveness, packet traffic, FPGA resources,
+physical architectural cycles/latency, and mapping/capacity failures.
 
-- MNIST source data and preprocessing;
-- network topology;
-- training/conversion method;
-- neuron dynamics;
-- presentation timestep count;
-- weight precision/representation;
-- logical core count and placement;
-- axon/synapse sharing strategy;
-- decoder;
-- accuracy metric;
-- latency boundary;
-- resource-accounting boundary; and
-- any quantity that cannot be matched to the paper.
-
-No target-specific retuning should be introduced after comparison results are
-observed without creating a new experiment version.
-
-### Candidate final measurements
-
-The strongest defensible comparison is expected to include:
-
-- classification accuracy;
-- timestep count;
-- logical core count;
-- neurons/compartments per core;
-- axon and synapse occupancy;
-- sharing/compression effectiveness;
-- packet/event traffic;
-- FPGA resource use;
-- FPGA architectural cycles and latency; and
-- mapping failures or capacity bottlenecks.
-
-Energy/inference should remain outside the claim set unless a defensible
-workload-specific physical power-measurement method is established.
-
-### Final thesis question
-
-A useful thesis-level framing is:
-
-> Can a transparent FPGA implementation of a documented Loihi-like manycore
-> architecture execute a deep spiking workload comparable to one previously
-> mapped to Intel Loihi, and what architectural, resource, and performance
-> differences emerge from that implementation?
-
-The result should emphasize architectural correspondence and transparent
-measurement rather than a simplistic FPGA-versus-Loihi winner/loser claim.
+Energy claims remain out of scope unless a defensible workload-specific
+physical measurement method is established.
 
 ---
 
 ## 8. Documentation structure
 
-The repository should separate completed history from the active research
-direction:
+- `MILESTONES.md` — historical FPGA-v1 development record;
+- `applications/mnist_baseline/` — preserved first application;
+- `Loihi_Digital_Twin/v1/` — preserved architecture implementation;
+- `Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md` — normative v2 contract;
+- `Loihi_Digital_Twin/v2/` — new golden model and later FPGA-v2 implementation;
+- future deep-MNIST application directory — NxTF-oriented workload;
+- `LOIHI_TWIN_ROADMAP.md` — high-level active program; and
+- `EXPERIMENTS.md` — deferred follow-on studies.
 
-- `MILESTONES.md` — historical FPGA-v1 platform-development record;
-- `applications/mnist_baseline/` — preserved FPGA-v1 first-application baseline;
-- `LOIHI_TWIN_ROADMAP.md` — active high-level direction and phase plan;
-- future target specification — normative source-backed FPGA-v2 architecture
-  contract;
-- future FPGA-v2 docs — implementation and validation evidence;
-- future deep-MNIST application directory — final NxTF-oriented workload; and
-- `EXPERIMENTS.md` — deferred counterfactual experiments available after the
-  architecture/application endgame path.
-
-Numbered milestones are not required for the new phase unless a later
-development problem benefits from that level of project-management detail.
-Research gates and versioned architecture specifications are preferred.
+New v2 implementation evidence should live with v2 rather than being appended
+to the preserved v1 milestone history.
 
 ---
 
-## 9. Immediate next action
+## 9. Immediate next gate
 
-The next active task is the **FPGA-v1/MNIST-v1 preservation audit**.
+The current gate is **review and local verification of the target specification
+and repository reorganization**.
 
-Do not rename the MNIST application or begin FPGA-v2 implementation until the
-audit establishes that:
+Once the branch is accepted:
 
-```text
-frozen software package validates
-accepted runtime bitstream is archived and hashed
-accepted runtime bitstream can still execute on the K26
-source can regenerate the required HLS/Vivado hardware
-tool/environment versions are recorded
-reproduction commands and expected outputs are documented
-```
+1. freeze `LOIHI1_TARGET_SPEC.md` as the initial v2 contract;
+2. create the separate `loihi_twin_v2` Python package and tests;
+3. implement resource, packet, core, router, and barrier abstractions;
+4. pass the directed architecture tests before any v2 HLS/RTL work; and
+5. only then begin the one-core FPGA-v2 implementation.
 
-Once those conditions are satisfied, freeze/tag the baseline, rename the
-application as a historical baseline, and begin the source-backed Loihi-1 target
-architecture study.
+This sequence keeps the new hardware driven by a source-backed executable
+contract rather than allowing RTL choices to define the architecture after the
+fact.
