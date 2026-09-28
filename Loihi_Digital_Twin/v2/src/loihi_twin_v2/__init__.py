@@ -7,6 +7,7 @@ from .compartment import CompartmentConfig, CompartmentState, step_compartment
 from .core import LogicalCore, LogicalCoreConfig
 from .mapping import Deployment
 from .packet import PacketClass, SpikePacket
+from .reporting import deployment_report, trace_report
 from .resources import (
     MAX_COMPARTMENTS_PER_CORE,
     MAX_INPUT_AXONS_PER_CORE,
@@ -35,6 +36,8 @@ __all__ = [
     "Deployment",
     "PacketClass",
     "SpikePacket",
+    "deployment_report",
+    "trace_report",
     "ResourceCapacityError",
     "ResourceUsage",
     "SynapseCostModel",
