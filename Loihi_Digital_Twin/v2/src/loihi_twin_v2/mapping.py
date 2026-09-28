@@ -25,7 +25,10 @@ def _primitive(value):
     if isinstance(value, list):
         return [_primitive(item) for item in value]
     if isinstance(value, dict):
-        return {str(key): _primitive(item) for key, item in sorted(value.items(), key=lambda x: str(x[0]))}
+        return {
+            str(key): _primitive(item)
+            for key, item in sorted(value.items(), key=lambda x: str(x[0]))
+        }
     return value
 
 
@@ -33,8 +36,8 @@ class Deployment:
     version = "v2.0-p02"
 
     def __init__(self, core_configs: tuple[LogicalCoreConfig, ...]) -> None:
-        self.core_configs = core_configs
-        LogicalChip(core_configs)
+        self.core_configs = tuple(sorted(core_configs, key=lambda config: config.core_id))
+        LogicalChip(self.core_configs)
 
     @property
     def fingerprint(self) -> str:
@@ -56,7 +59,7 @@ class Deployment:
                     "resource_usage": config.resource_usage.as_dict(),
                     "synapse_cost_model": config.synapse_cost_model.name,
                 }
-                for config in sorted(self.core_configs, key=lambda x: x.core_id)
+                for config in self.core_configs
             ],
         }
 
