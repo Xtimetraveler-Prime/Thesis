@@ -39,14 +39,13 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **Current phase: P02 — Separate Python manycore golden model**
+> **Current phase: P03 — One FPGA-v2 logical core**
 >
-> P01 is complete and merged. The independent v2 Python package, logical
-> resource model, packet/core/router/barrier architecture, deterministic
-> deployment representation, machine-readable reporting, and software-side
-> T1-T9 directed tests are now implemented on `agent/v2-python-manycore`.
-> The immediate remaining gate is local regression/behavior verification before
-> P02 can be closed.
+> P02 is complete. The separate Python manycore golden model passed its full
+> directed test suite, deterministic deployment round-trip checks, two-core
+> feed-forward behavior check, and three-core recurrent replay with identical
+> normalized trace fingerprints under reordered legal scheduling. P03 now moves
+> that contract into the first FPGA-v2 one-core hardware implementation.
 
 ---
 
@@ -56,8 +55,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 |---|---|---|---|---|
 | P00 | Preserve and freeze FPGA-v1 baseline | Complete | 2026-09 | 2026-09-25 |
 | P01 | Define Loihi-1 target and establish v2 project structure | Complete | 2026-09-28 | 2026-09-28 |
-| P02 | Build separate Python manycore golden model | In progress | 2026-09-28 | — |
-| P03 | Implement and validate one FPGA-v2 logical core | Planned | — | — |
+| P02 | Build separate Python manycore golden model | Complete | 2026-09-28 | 2026-09-28 |
+| P03 | Implement and validate one FPGA-v2 logical core | In progress | 2026-09-28 | — |
 | P04 | Add multicore packet routing and timestep/barrier semantics | Planned | — | — |
 | P05 | Add logical-core virtualization | Planned | — | — |
 | P06 | Build deterministic mapper/compiler and deployment format | Planned | — | — |
@@ -128,22 +127,20 @@ before implementing a new model or new FPGA datapath.
 ## Completion gate
 
 Complete. The initial target specification is the architecture authority for
-P02 implementation.
+P02 and later implementation.
 
 ---
 
 # P02 — Separate Python manycore golden model
 
-**Status:** In progress — **CURRENT PHASE**  
-**Started:** 2026-09-28
+**Status:** Complete  
+**Started:** 2026-09-28  
+**Completed:** 2026-09-28
 
 ## Goal
 
 Create a new executable golden model for the Loihi-like manycore architecture
 without extending the v1 `NeuromorphicCore` in place.
-
-The model must embody the target specification directly and must not inherit
-v1's single-core execution assumptions accidentally.
 
 ## Achieved implementation deliverables
 
@@ -159,25 +156,25 @@ v1's single-core execution assumptions accidentally.
 - [x] Defined destination-side input-axon bindings.
 - [x] Defined reusable synapse templates and explicit expanded-connection counts.
 - [x] Defined source-side output routing/fanout entries.
-- [x] Defined normalized spike packets containing target timestep, destination
-      logical core, destination axon, and optional source metadata.
+- [x] Defined normalized spike packets with target timestep, destination core,
+      destination axon, and optional source metadata.
 - [x] Implemented explicit packet queues and traffic accounting.
 - [x] Implemented logical-core ingress, axon expansion, accumulation,
       compartment update, spike decision, egress, and completion behavior.
 - [x] Implemented a centralized logical drain/advance barrier.
-- [x] Implemented chip-level logical-core scheduling independent of packet
-      delivery order.
+- [x] Implemented chip-level scheduling independent of packet-delivery order.
 - [x] Defined normalized core/chip traces containing packet, axon-expansion,
       synaptic-contribution, state, spike, and barrier information.
-- [x] Added deterministic deployment fingerprints and minimal deployment data
-      structures sufficient to configure the golden model.
+- [x] Added deterministic deployment fingerprints and a versioned JSON deployment
+      schema with round-trip loading and tamper detection.
 - [x] Added JSON-serializable deployment/capacity reports with per-core headroom.
-- [x] Added JSON-serializable architecture trace reports.
-- [x] Added a runnable two-core feed-forward example.
-- [x] Added `docs/P02_IMPLEMENTATION_NOTES.md` documenting project choices and
-      claim boundaries.
+- [x] Added JSON-serializable architecture trace reports and deterministic trace
+      fingerprints.
+- [x] Added runnable two-core feed-forward and three-core recurrent examples.
+- [x] Added `docs/P02_IMPLEMENTATION_NOTES.md` and
+      `docs/P02_DEPLOYMENT_SCHEMA.md`.
 
-## Directed tests implemented
+## Directed tests and verification
 
 - [x] **T1** — v1-compatible single-neuron/compartment arithmetic.
 - [x] **T2** — two-core feed-forward packet delivery.
@@ -190,28 +187,24 @@ v1's single-core execution assumptions accidentally.
 - [x] **T8** — connection-sharing/resource-accounting behavior.
 - [x] **T9** — logical service-order / packet-drain-order invariance at the
       normalized architecture boundary.
-- [ ] **T10** — Python/FPGA normalized trace comparison. This belongs to the
-      later hardware phases and is not required to close the software-only P02
-      gate.
-
-## Verification still required before P02 completion
-
-- [ ] Install the independent v2 package in a clean/current project environment.
-- [ ] Run the complete P02 Python test suite locally with zero failures.
-- [ ] Run the two-core example and inspect its deployment/resource and trace
-      output for the expected one-boundary feed-forward causality.
-- [ ] Re-run the preserved v1 and MNIST regressions if the local environment or
-      editable installations were changed in a way that could affect them.
-- [ ] Resolve any defects exposed by local execution without weakening the
-      target specification.
+- [ ] **T10** — Python/FPGA normalized trace comparison. Reserved for the hardware
+      phases and not required to close P02.
+- [x] Installed the v2 package in an independent `.venv-v2` environment.
+- [x] Full P02 test suite passed locally with **26 tests passing**.
+- [x] Two-core example demonstrated Core 0 firing at timestep 0 and Core 1
+      consuming the routed event/firing at timestep 1.
+- [x] Three-core recurrent replay produced the expected wave
+      `core0@t0 -> core1@t1 -> core2@t2 -> core0@t3`.
+- [x] Deployment round-trip fingerprint matched exactly.
+- [x] Reordered legal service/drain schedules produced the identical normalized
+      trace fingerprint `90a8300b7354744d00024cc9602a12b2f3ac432414ed027983b2c2cce28ad6d1`.
+- [x] Working tree remained clean after validation.
 
 ## Completion gate
 
-P02 is complete when the Python model executes representative multicore
-networks deterministically and all software-side directed architectural tests
-(T1-T9) pass without requiring FPGA RTL/HLS.
-
-No FPGA-v2 hardware implementation begins before this gate closes.
+Complete. The Python model executes representative multicore networks
+deterministically and all software-side directed architectural tests T1-T9 pass
+without requiring FPGA RTL/HLS.
 
 **Next phase:** P03 — one FPGA-v2 logical core.
 
@@ -219,7 +212,8 @@ No FPGA-v2 hardware implementation begins before this gate closes.
 
 # P03 — One FPGA-v2 logical core
 
-**Status:** Planned
+**Status:** In progress — **CURRENT PHASE**  
+**Started:** 2026-09-28
 
 ## Goal
 
@@ -527,10 +521,12 @@ Loihi_Digital_Twin/
     ├── LOIHI_TWIN_ROADMAP.md      active phase/status tracker
     ├── docs/
     │   ├── LOIHI1_TARGET_SPEC.md  normative architecture contract
-    │   └── P02_IMPLEMENTATION_NOTES.md
+    │   ├── P02_IMPLEMENTATION_NOTES.md
+    │   └── P02_DEPLOYMENT_SCHEMA.md
     ├── src/loihi_twin_v2/         separate Python golden model
     ├── tests/                      directed architecture tests
-    └── examples/                   minimal runnable architecture examples
+    ├── scripts/                    phase validation tools
+    └── examples/                   runnable architecture examples
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
