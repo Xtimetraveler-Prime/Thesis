@@ -119,6 +119,7 @@ set_property -dict [list \
     CONFIG.C_PROBE_IN7_WIDTH {1} \
     CONFIG.C_PROBE_IN8_WIDTH {64} \
     CONFIG.C_PROBE_IN9_WIDTH {32} \
+    CONFIG.C_NUM_PROBE_OUT {7} \
     CONFIG.C_PROBE_OUT0_WIDTH {1} CONFIG.C_PROBE_OUT0_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT1_WIDTH {1} CONFIG.C_PROBE_OUT1_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT2_WIDTH {11} CONFIG.C_PROBE_OUT2_INIT_VAL {0x003} \
@@ -216,8 +217,9 @@ report_drc -file [file join $report_dir drc_post_route.rpt]
 report_methodology -file [file join $report_dir methodology_post_route.rpt]
 write_checkpoint -force [file join $report_dir p03_post_route.dcp]
 
-set setup_paths [get_timing_paths -quiet -setup -max_paths 1]
-set hold_paths [get_timing_paths -quiet -hold -max_paths 1]
+# Use the same routed timing-path queries that were proven in the v1 K26 flow.
+set setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
+set hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
 set metrics [open [file join $report_dir p03_post_route_metrics.txt] w]
 if {[llength $setup_paths] > 0} {
     set wns [get_property SLACK [lindex $setup_paths 0]]
