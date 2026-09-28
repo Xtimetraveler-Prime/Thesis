@@ -75,10 +75,13 @@ proc connect_named_triple {net_name first second third} {
 }
 
 proc connect_hls_memory {hls_name arg_name depth width} {
-    set hp [get_bd_intf_pins -quiet ${hls_name}/${arg_name}]
+    # Packaged Vitis HLS BRAM interfaces are named <argument>_PORTA.
+    # Query that exact interface instead of the C argument name.
+    set hls_if_name ${arg_name}_PORTA
+    set hp [get_bd_intf_pins -quiet ${hls_name}/${hls_if_name}]
     if {[llength $hp] != 1} {
         puts "Available HLS interfaces: [get_bd_intf_pins -quiet ${hls_name}/*]"
-        error "P03 packaged HLS interface not found: ${hls_name}/${arg_name}"
+        error "P03 packaged HLS interface not found: ${hls_name}/${hls_if_name}"
     }
     set mem [create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ${arg_name}_mem]
     set_property -dict [list \
@@ -89,7 +92,7 @@ proc connect_hls_memory {hls_name arg_name depth width} {
     set mp [get_bd_intf_pins -quiet ${arg_name}_mem/BRAM_PORTA]
     if {[llength $mp] != 1} { error "P03 memory BRAM_PORTA not found for ${arg_name}_mem" }
     connect_bd_intf_net $hp $mp
-    puts "P03 memory: $arg_name depth=$depth width=$width"
+    puts "P03 memory: $arg_name interface=$hls_if_name depth=$depth width=$width"
 }
 
 create_bd_design $bd_name
