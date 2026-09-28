@@ -14,7 +14,7 @@ Vivado design therefore provides:
 
 - the K26/KV260 PS preset as a carrier-independent 100 MHz PL clock source;
 - the packaged `loihi_core_v2_tick` HLS IP;
-- one explicit memory IP for every HLS BRAM interface;
+- one explicit Block Memory Generator instance for every HLS memory argument;
 - a VIO/JTAG control/status surface for `ap_start`, logical counts, timestep,
   HLS completion/status, and physical cycle count; and
 - `p03_run_monitor.v`, which measures PL cycles from start to `ap_done`.
@@ -45,6 +45,24 @@ The HLS core also contains its 1,024 x 64-bit tick-local accumulator RAM.
 Logical Loihi/P02 capacity accounting remains separate from this physical memory
 cost.
 
+## HLS/Vivado memory-interface policy
+
+The first implementation used HLS `bram` interfaces, which package each memory
+as a grouped IP-Integrator BRAM bus. That path successfully exposed all nine
+memories, but Vivado validation reported incompatible `MEM_SIZE` and
+`READ_LATENCY` metadata between the packaged HLS interface and native Block
+Memory Generator. A subsequent attempt to use a `BRAM_Controller` BMG interface
+also failed because Vivado 2025.2 reported only `Native` as valid for this
+`blk_mem_gen:8.4` instance.
+
+P03 therefore uses HLS `ap_memory` interfaces with `storage_type=ram_1p` for the
+external memory arguments. `ap_memory` keeps the same RAM transaction semantics
+while exposing discrete, word-addressed address/CE/WE/data pins. The Vivado shell
+connects those pins directly to explicitly sized native single-port BMG pins.
+This intentionally removes IP-Integrator bus-metadata negotiation from the
+compute-memory boundary without changing the algorithm, table contents, logical
+capacities, or one-cycle synchronous RAM expectation.
+
 ## Memory-placement policy at this gate
 
 The first routed build intentionally uses Vivado Block Memory Generator with its
@@ -74,12 +92,17 @@ measurements are therefore required before optimizing that traversal.
 complete memory shell, and emits timing/utilization reports under
 `vivado/build/p03_impl/reports/`.
 
+Because the HLS memory protocol changed from grouped `bram` to discrete
+`ap_memory`, the C/RTL co-simulation gate must be rerun once before treating the
+Vivado implementation result as evidence.
+
 This gate passes only if:
 
-1. Vivado validates the HLS-to-memory interfaces;
-2. synthesis and implementation complete on `xck26-sfvc784-2LV-c`;
-3. post-route timing is reported at the propagated ~100 MHz PL clock; and
-4. resource reports make all BRAM/URAM/LUT/FF/DSP use explicit.
+1. HLS C/RTL co-simulation still matches the Python-generated differential corpus;
+2. Vivado validates every discrete HLS-to-native-memory connection;
+3. synthesis and implementation complete on `xck26-sfvc784-2LV-c`;
+4. post-route timing is reported at the propagated ~100 MHz PL clock; and
+5. resource reports make all BRAM/URAM/LUT/FF/DSP use explicit.
 
 A bitstream/physical inference test follows this gate; it is not implied by a
 successful routed implementation.
