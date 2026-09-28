@@ -185,7 +185,7 @@ connect_hls_memory loihi_core_v2_tick_0 axon_words 4096 64
 connect_hls_memory loihi_core_v2_tick_0 synapse_words 32768 64
 connect_hls_memory loihi_core_v2_tick_0 route_desc_words 1024 32
 connect_hls_memory loihi_core_v2_tick_0 route_words 4096 32
-connect_hls_memory loihi_core_v2_tick_0 input_events 4096 16
+connect_hls_memory loihi_core_v2_tick_0 input_events 4096 32
 connect_hls_memory loihi_core_v2_tick_0 trace_words 1024 256
 connect_hls_memory loihi_core_v2_tick_0 packet_words 4096 64
 
