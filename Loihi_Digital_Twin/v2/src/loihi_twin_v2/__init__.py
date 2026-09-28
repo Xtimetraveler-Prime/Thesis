@@ -5,6 +5,19 @@ from .axon import InputAxonBinding, OutputRoute, OutputRouteEntry
 from .chip import LogicalChip
 from .compartment import CompartmentConfig, CompartmentState, step_compartment
 from .core import LogicalCore, LogicalCoreConfig
+from .hardware_p03 import (
+    OneCoreHardwareImage,
+    P03_PROFILE_NAME,
+    P03_REQUIRED_ARITHMETIC,
+    SparseWord,
+    export_one_core_image,
+    pack_compartment_config,
+    pack_compartment_state,
+    pack_output_packet,
+    unpack_compartment_config,
+    unpack_compartment_state,
+    unpack_output_packet,
+)
 from .mapping import Deployment
 from .packet import PacketClass, SpikePacket
 from .reporting import deployment_report, trace_report
@@ -46,6 +59,17 @@ __all__ = [
     "SynapseCostModel",
     "SynapseEntry",
     "SynapseTemplate",
+    "OneCoreHardwareImage",
+    "SparseWord",
+    "P03_PROFILE_NAME",
+    "P03_REQUIRED_ARITHMETIC",
+    "export_one_core_image",
+    "pack_compartment_config",
+    "unpack_compartment_config",
+    "pack_compartment_state",
+    "unpack_compartment_state",
+    "pack_output_packet",
+    "unpack_output_packet",
     "MAX_LOGICAL_CORES",
     "MAX_COMPARTMENTS_PER_CORE",
     "MAX_INPUT_AXONS_PER_CORE",
