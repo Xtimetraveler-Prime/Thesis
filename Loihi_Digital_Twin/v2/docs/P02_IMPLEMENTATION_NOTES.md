@@ -19,8 +19,9 @@ The model currently separates:
 7. explicit packet queues and traffic accounting (`router.py`);
 8. logical drain/advance synchronization (`barrier.py`);
 9. chip-level scheduling (`chip.py`);
-10. deterministic deployment fingerprints (`mapping.py`); and
-11. JSON-serializable capacity and trace reports (`reporting.py`).
+10. deterministic deployment fingerprints and JSON round-trip loading (`mapping.py`);
+11. deterministic multi-timestep execution/replay (`runtime.py`); and
+12. JSON-serializable capacity and trace reports (`reporting.py`).
 
 ## Timestep interpretation
 
@@ -36,6 +37,18 @@ The current P02 barrier is centralized and intentionally simple. A timestep may 
 - every packet emitted during that timestep has been removed from the router queue and delivered into destination pending state.
 
 This is a PROJECT CHOICE implementing the logical drain/advance invariant in the target specification. It is not a claim that Loihi uses this software data structure.
+
+## Deployment and replay boundary
+
+`Deployment` is the first machine-readable architecture configuration consumed by the v2 model. It serializes the complete logical-core configuration, including compartments, destination-side axons, shared synapse templates, output routes, arithmetic profile, logical capacity, and synapse-cost model.
+
+The deployment schema is versioned as `v2.0-p02`. Its SHA-256 fingerprint is computed from a canonical logical payload with core configurations sorted by logical core ID. Serialized documents that carry a fingerprint are rejected if their contents no longer match that identity.
+
+This format is a PROJECT CHOICE and not a claim about native Loihi configuration storage. P06 should emit this boundary, or a strictly versioned successor, so Python and later FPGA execution do not acquire separate incompatible configuration formats.
+
+`run_deployment()` executes a deployment for a fixed number of algorithmic timesteps with explicit external-event, core-service-order, and packet-drain-order schedules. `RunResult.trace_fingerprint` hashes the JSON-normalized architectural trace. These controls exist specifically to validate that legal scheduling differences do not change logical behavior.
+
+See `P02_DEPLOYMENT_SCHEMA.md` for the field-level document contract.
 
 ## Synaptic storage accounting
 
@@ -61,7 +74,22 @@ Reusable templates are counted once even when multiple axons bind to them, allow
 - T8: shared-template accounting with equivalent expanded synaptic effects.
 - T9: normalized invariance to logical core service order and packet drain order.
 
+Additional P02 regression coverage checks deployment JSON round-trip behavior, fingerprint tamper detection, schema-version rejection, deterministic three-core recurrent replay, stable core-order-independent deployment identity, and multi-timestep trace-fingerprint invariance.
+
 T10 is intentionally reserved for the later Python/FPGA differential phase.
+
+## Integrated P02 validator
+
+`scripts/validate_p02.py` builds a three-core recurrent ring, serializes and reloads its deployment, executes four timesteps under forward and reversed legal scheduling policies, and requires:
+
+- the deployment fingerprint to survive round-trip serialization;
+- three logical cores to remain configured;
+- the spike wave `core0@t0 -> core1@t1 -> core2@t2 -> core0@t3`;
+- identical normalized traces across service-order changes;
+- identical trace fingerprints across those schedules; and
+- non-negative reported resource headroom.
+
+This script is intended as the final software-only behavioral smoke test before closing P02.
 
 ## Not implemented in P02 v2.0 profile
 
