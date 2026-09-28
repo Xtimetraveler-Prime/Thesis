@@ -31,7 +31,10 @@ using route_desc_word_t = ap_uint<32>;
 using route_word_t = ap_uint<32>;
 using trace_word_t = ap_uint<256>;
 using packet_word_t = ap_uint<64>;
-using event_axon_t = ap_uint<12>;
+// Logical axon IDs occupy 12 bits. The physical event memory uses a 16-bit
+// word so the BRAM interface has a conventional byte/power-of-two width; the
+// upper four bits are reserved and are written as zero by project tooling.
+using event_axon_t = ap_uint<16>;
 using status_t = ap_uint<32>;
 
 constexpr unsigned STATUS_CAPACITY = 1u << 0;
