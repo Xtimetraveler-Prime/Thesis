@@ -74,28 +74,114 @@ proc connect_named_triple {net_name first second third} {
     connect_bd_net -net $net $p0 $p1 $p2
 }
 
-proc connect_hls_memory {hls_name arg_name depth width} {
-    # Packaged Vitis HLS BRAM interfaces are named <argument>_PORTA.
-    set hls_if_name ${arg_name}_PORTA
-    set hp [get_bd_intf_pins -quiet ${hls_name}/${hls_if_name}]
-    if {[llength $hp] != 1} {
-        puts "Available HLS interfaces: [get_bd_intf_pins -quiet ${hls_name}/*]"
-        error "P03 packaged HLS interface not found: ${hls_name}/${hls_if_name}"
+proc first_bd_pin {cell candidates} {
+    foreach suffix $candidates {
+        set pin [get_bd_pins -quiet ${cell}/${suffix}]
+        if {[llength $pin] == 1} {
+            return $pin
+        }
     }
+    return ""
+}
 
-    # In IP Integrator, Block Memory Generator's BRAM-controller mode is
-    # parameterized from the connected master during validate_bd_design.  Do
-    # not force width/depth/read-latency here: doing so creates MEM_SIZE and
-    # READ_LATENCY metadata conflicts with the packaged HLS BRAM interface.
+proc hls_memory_pin {hls_name arg_name role required} {
+    switch -- $role {
+        address {
+            set candidates [list \
+                ${arg_name}_address0 \
+                ${arg_name}_address \
+                ${arg_name}_Addr_A]
+        }
+        ce {
+            set candidates [list \
+                ${arg_name}_ce0 \
+                ${arg_name}_ce \
+                ${arg_name}_EN_A]
+        }
+        we {
+            set candidates [list \
+                ${arg_name}_we0 \
+                ${arg_name}_we \
+                ${arg_name}_WEN_A]
+        }
+        din {
+            set candidates [list \
+                ${arg_name}_d0 \
+                ${arg_name}_d \
+                ${arg_name}_Din_A]
+        }
+        dout {
+            set candidates [list \
+                ${arg_name}_q0 \
+                ${arg_name}_q \
+                ${arg_name}_Dout_A]
+        }
+        default {
+            error "Unknown P03 HLS memory-pin role: $role"
+        }
+    }
+    set pin [first_bd_pin $hls_name $candidates]
+    if {$required && $pin eq ""} {
+        puts "Available HLS pins for $arg_name: [get_bd_pins -quiet ${hls_name}/${arg_name}_*]"
+        error "Required P03 HLS $role pin not found for ${hls_name}/${arg_name}"
+    }
+    return $pin
+}
+
+proc connect_hls_memory_native {hls_name arg_name depth width clock_pin zero_pin} {
+    # P03 uses ap_memory at the HLS boundary.  Unlike the grouped HLS bram
+    # interface, ap_memory presents word-addressed discrete signals.  Those
+    # signals map directly to a native single-port Block Memory Generator and
+    # therefore avoid IP-Integrator MEM_SIZE/READ_LATENCY metadata conflicts.
+    set address [hls_memory_pin $hls_name $arg_name address 1]
+    set ce [hls_memory_pin $hls_name $arg_name ce 1]
+    set we [hls_memory_pin $hls_name $arg_name we 0]
+    set din [hls_memory_pin $hls_name $arg_name din 0]
+    set dout [hls_memory_pin $hls_name $arg_name dout 0]
+
     set mem [create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ${arg_name}_mem]
     set_property -dict [list \
-        CONFIG.Interface_Type {BRAM_Controller} \
-        CONFIG.Memory_Type {Single_Port_RAM}] $mem
+        CONFIG.Memory_Type {Single_Port_RAM} \
+        CONFIG.Write_Width_A $width \
+        CONFIG.Read_Width_A $width \
+        CONFIG.Write_Depth_A $depth] $mem
 
-    set mp [get_bd_intf_pins -quiet ${arg_name}_mem/BRAM_PORTA]
-    if {[llength $mp] != 1} { error "P03 memory BRAM_PORTA not found for ${arg_name}_mem" }
-    connect_bd_intf_net $hp $mp
-    puts "P03 memory connected for propagation: $arg_name interface=$hls_if_name expected_depth=$depth expected_width=$width"
+    set clka [get_bd_pins -quiet ${arg_name}_mem/clka]
+    set addra [get_bd_pins -quiet ${arg_name}_mem/addra]
+    set ena [get_bd_pins -quiet ${arg_name}_mem/ena]
+    set wea [get_bd_pins -quiet ${arg_name}_mem/wea]
+    set bmg_din [get_bd_pins -quiet ${arg_name}_mem/dina]
+    set bmg_dout [get_bd_pins -quiet ${arg_name}_mem/douta]
+
+    if {[llength $clka] != 1 || [llength $addra] != 1 || [llength $wea] != 1} {
+        puts "Available BMG pins for $arg_name: [get_bd_pins -quiet ${arg_name}_mem/*]"
+        error "Required native BMG pins missing for ${arg_name}_mem"
+    }
+
+    connect_bd_net $clock_pin $clka
+    connect_bd_net $address $addra
+    if {[llength $ena] == 1} {
+        connect_bd_net $ce $ena
+    }
+
+    if {$we ne ""} {
+        if {$din eq "" || [llength $bmg_din] != 1} {
+            error "P03 write-enabled memory $arg_name is missing a data-input pin"
+        }
+        connect_bd_net $we $wea
+        connect_bd_net $din $bmg_din
+    } else {
+        connect_bd_net $zero_pin $wea
+    }
+
+    if {$dout ne ""} {
+        if {[llength $bmg_dout] != 1} {
+            error "P03 readable memory $arg_name is missing BMG douta"
+        }
+        connect_bd_net $bmg_dout $dout
+    }
+
+    puts "P03 native memory: $arg_name depth=$depth width=$width hls_address=$address hls_ce=$ce hls_we=$we hls_din=$din hls_dout=$dout"
 }
 
 create_bd_design $bd_name
@@ -140,7 +226,10 @@ set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $one
 set zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_p03]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $zero
 
-connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] \
+set pl_clk_pin [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+set zero_pin [get_bd_pins const_zero_p03/dout]
+
+connect_bd_net $pl_clk_pin \
     [get_bd_pins loihi_core_v2_tick_0/ap_clk] \
     [get_bd_pins p03_run_monitor_0/ap_clk] \
     [get_bd_pins vio_p03/clk] \
@@ -149,7 +238,7 @@ connect_named_pair p03_reset_command vio_p03/probe_out1 proc_sys_reset_p03/ext_r
 connect_bd_net [get_bd_pins const_one_p03/dout] \
     [get_bd_pins proc_sys_reset_p03/dcm_locked] \
     [get_bd_pins proc_sys_reset_p03/aux_reset_in]
-connect_bd_net [get_bd_pins const_zero_p03/dout] [get_bd_pins proc_sys_reset_p03/mb_debug_sys_rst]
+connect_bd_net $zero_pin [get_bd_pins proc_sys_reset_p03/mb_debug_sys_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_reset] [get_bd_pins loihi_core_v2_tick_0/ap_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_aresetn] [get_bd_pins p03_run_monitor_0/resetn]
 
@@ -180,29 +269,26 @@ connect_named_pair p03_start_seen p03_run_monitor_0/start_seen vio_p03/probe_in7
 connect_named_pair p03_last_run_cycles p03_run_monitor_0/last_run_cycles vio_p03/probe_in8
 connect_named_pair p03_heartbeat p03_run_monitor_0/heartbeat vio_p03/probe_in9
 
-# Full transparent one-core memory boundary.  Each BMG instance is connected in
-# controller mode and receives width/depth/latency metadata from the HLS master
-# when validate_bd_design performs interface-parameter propagation.
-connect_hls_memory loihi_core_v2_tick_0 config_words 1024 128
-connect_hls_memory loihi_core_v2_tick_0 state_words 1024 64
-connect_hls_memory loihi_core_v2_tick_0 axon_words 4096 64
-connect_hls_memory loihi_core_v2_tick_0 synapse_words 32768 64
-connect_hls_memory loihi_core_v2_tick_0 route_desc_words 1024 32
-connect_hls_memory loihi_core_v2_tick_0 route_words 4096 32
-connect_hls_memory loihi_core_v2_tick_0 input_events 4096 32
-connect_hls_memory loihi_core_v2_tick_0 trace_words 1024 256
-connect_hls_memory loihi_core_v2_tick_0 packet_words 4096 64
+# Full transparent one-core memory boundary.  ap_memory gives word-addressed
+# discrete HLS pins, which are connected directly to native BMG pins.
+connect_hls_memory_native loihi_core_v2_tick_0 config_words 1024 128 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 state_words 1024 64 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 axon_words 4096 64 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 synapse_words 32768 64 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 route_desc_words 1024 32 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 route_words 4096 32 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 input_events 4096 32 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 trace_words 1024 256 $pl_clk_pin $zero_pin
+connect_hls_memory_native loihi_core_v2_tick_0 packet_words 4096 64 $pl_clk_pin $zero_pin
 
 validate_bd_design
 
-# Report the dimensions Vivado resolved after interface propagation.  These are
-# physical BMG parameters; logical Loihi capacity accounting remains separate.
 foreach arg_name {
     config_words state_words axon_words synapse_words route_desc_words
     route_words input_events trace_words packet_words
 } {
     set mem [get_bd_cells ${arg_name}_mem]
-    puts "P03 resolved memory: $arg_name write_width=[get_property CONFIG.Write_Width_A $mem] read_width=[get_property CONFIG.Read_Width_A $mem] depth=[get_property CONFIG.Write_Depth_A $mem]"
+    puts "P03 resolved native memory: $arg_name write_width=[get_property CONFIG.Write_Width_A $mem] read_width=[get_property CONFIG.Read_Width_A $mem] depth=[get_property CONFIG.Write_Depth_A $mem]"
 }
 
 save_bd_design
