@@ -227,15 +227,15 @@ void loihi_core_v2_tick(
     using namespace loihi_v2_hls;
 
 #pragma HLS INTERFACE ap_ctrl_hs port=return
-#pragma HLS INTERFACE bram port=config_words
-#pragma HLS INTERFACE bram port=state_words
-#pragma HLS INTERFACE bram port=axon_words
-#pragma HLS INTERFACE bram port=synapse_words
-#pragma HLS INTERFACE bram port=route_desc_words
-#pragma HLS INTERFACE bram port=route_words
-#pragma HLS INTERFACE bram port=input_events
-#pragma HLS INTERFACE bram port=trace_words
-#pragma HLS INTERFACE bram port=packet_words
+#pragma HLS INTERFACE ap_memory port=config_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=state_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=axon_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=synapse_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=route_desc_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=route_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=input_events storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=trace_words storage_type=ram_1p
+#pragma HLS INTERFACE ap_memory port=packet_words storage_type=ram_1p
 #pragma HLS INTERFACE ap_vld port=spike_count
 #pragma HLS INTERFACE ap_vld port=packet_count
 #pragma HLS INTERFACE ap_vld port=status_flags
