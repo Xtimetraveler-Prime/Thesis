@@ -41,11 +41,11 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 > **Current phase: P03 — One FPGA-v2 logical core**
 >
-> P02 is complete. The separate Python manycore golden model passed its full
-> directed test suite, deterministic deployment round-trip checks, two-core
-> feed-forward behavior check, and three-core recurrent replay with identical
-> normalized trace fingerprints under reordered legal scheduling. P03 now moves
-> that contract into the first FPGA-v2 one-core hardware implementation.
+> P02 is complete. P03 now has a packed one-core FPGA memory boundary and an HLS
+> implementation that passed Python/HLS C and C/RTL differential validation. The
+> active gate is full K26 Vivado implementation with explicit memories so that
+> post-route timing and physical resource use can be measured before bitstream
+> and board-level conformance work begins.
 
 ---
 
@@ -222,18 +222,46 @@ specification and the P02 Python golden model.
 
 ## Required deliverables
 
-- [ ] Define the FPGA-v2 one-core hardware boundary.
-- [ ] Implement per-core compartment state.
-- [ ] Implement input-axon lookup.
-- [ ] Implement synapse traversal/accumulation.
-- [ ] Implement output spike generation and routing-entry traversal.
-- [ ] Implement the v2 configuration/state loading interface.
-- [ ] Implement normalized trace/state inspection at the same semantic boundary
+- [x] Define the FPGA-v2 one-core hardware boundary.
+- [x] Implement per-core compartment state.
+- [x] Implement input-axon lookup.
+- [x] Implement synapse traversal/accumulation.
+- [x] Implement output spike generation and routing-entry traversal.
+- [ ] Implement the complete v2 runtime configuration/state loading interface.
+- [x] Implement normalized trace/state inspection at the same semantic boundary
       as the Python model.
-- [ ] Add resource/capacity guards for one logical core.
-- [ ] Add differential Python-vs-HLS/RTL tests.
-- [ ] Synthesize/implement on the K26 target.
+- [x] Add resource/capacity guards for one logical core.
+- [x] Add differential Python-vs-HLS/RTL tests.
+- [ ] Synthesize/implement the complete one-core memory shell on the K26 target.
 - [ ] Perform physical directed conformance against the Python model.
+
+## P03 HLS implementation findings
+
+The first HLS gate passed the five-timestep Python/HLS C and C/RTL differential
+corpus plus runtime integrity checks. At a 10 ns target the HLS estimate was
+8.785 ns with 1.20 ns uncertainty, so the estimate leaves essentially no
+uncertainty-adjusted margin and post-route Vivado timing is required before
+claiming 100 MHz closure. HLS reported a pathological maximum of 272,664,582
+cycles per tick because the maximum-capacity event-by-synapse traversal is fully
+serialized; this is an upper capacity bound rather than a representative
+workload latency. The HLS-internal compute used 3,027 LUTs, 1,238 FFs, 2 DSPs,
+and 4 BRAM18s, while the full external state/axon/synapse/route/trace memories
+must be accounted for by the routed Vivado shell.
+
+## Current implementation gate
+
+- [x] Added deterministic P03 packed-memory/export tooling and Python tests.
+- [x] Added full-capacity HLS one-core tick engine and normalized trace records.
+- [x] Verified HLS C simulation and generated-RTL co-simulation against P02.
+- [x] Added a reproducible HLS IP-packaging flow.
+- [x] Added an explicit K26/KV260 Vivado implementation shell with all nine
+      HLS-visible memory banks, VIO control/status, and a physical cycle monitor.
+- [ ] Route the complete shell and record post-route setup/hold timing.
+- [ ] Record complete BRAM/URAM/LUT/FF/DSP use, including external memories.
+- [ ] Decide whether the large synapse bank should remain BRAM-backed or move to
+      UltraRAM based on routed evidence rather than estimate alone.
+- [ ] Add the board-level configuration/load/readback path and physical corpus
+      only after the routed boundary is accepted.
 
 ## Completion gate
 
@@ -520,13 +548,18 @@ Loihi_Digital_Twin/
 └── v2/
     ├── LOIHI_TWIN_ROADMAP.md      active phase/status tracker
     ├── docs/
-    │   ├── LOIHI1_TARGET_SPEC.md  normative architecture contract
+    │   ├── LOIHI1_TARGET_SPEC.md
     │   ├── P02_IMPLEMENTATION_NOTES.md
-    │   └── P02_DEPLOYMENT_SCHEMA.md
-    ├── src/loihi_twin_v2/         separate Python golden model
-    ├── tests/                      directed architecture tests
+    │   ├── P02_DEPLOYMENT_SCHEMA.md
+    │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
+    │   └── P03_VIVADO_IMPLEMENTATION.md
+    ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
+    ├── hls/core_v2/                P03 one-core HLS source and packaging flow
+    ├── rtl/                        v2 RTL integration/observability logic
+    ├── vivado/                     source-controlled K26 build flows
+    ├── tests/                      directed architecture/packing tests
     ├── scripts/                    phase validation tools
-    └── examples/                   runnable architecture examples
+    └── examples/                   corpus generators and architecture examples
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
@@ -550,7 +583,7 @@ Only one phase should normally be marked **In progress** at a time.
 Before moving to the next phase:
 
 1. mark completed deliverables in the active phase;
-2. record validation evidence needed by that phase;
+2. record the validation evidence needed by that phase;
 3. verify its completion gate;
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
