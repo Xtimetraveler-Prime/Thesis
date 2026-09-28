@@ -148,7 +148,7 @@ bool run_differential_corpus() {
                 ap_int<64>(trace.range(127, 64)).to_int64();
             const unsigned long long actual_after =
                 trace.range(191, 128).to_uint64();
-            const unsigned actual_spike = trace[192].to_uint();
+            const unsigned actual_spike = trace[192] ? 1u : 0u;
 
             expected_spike_count += expected.spike;
             const bool compartment_ok =
