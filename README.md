@@ -1,79 +1,61 @@
 # Thesis
 
 This repository contains the software and verification work for an FPGA-based
-architecture-level digital twin of Intel Loihi-1-inspired neuromorphic
-computing.
+architecture-level digital twin of a Loihi-inspired neuromorphic processor.
 
-Completed platform development, research decisions, validation evidence, and
-historical work are tracked in [`MILESTONES.md`](MILESTONES.md). The active
-post-validation direction is defined in
-[`LOIHI_TWIN_ROADMAP.md`](LOIHI_TWIN_ROADMAP.md).
+The validated FPGA-v1 implementation is preserved under
+[`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/). Its completed M1-M13 development
+history is recorded in
+[`Loihi_Digital_Twin/v1/MILESTONES.md`](Loihi_Digital_Twin/v1/MILESTONES.md).
 
-## Active project direction
+Active development now targets the separate FPGA-v2 / Loihi-1 architectural twin
+under [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/). The authoritative current
+development objectives, sequencing, and research gates are maintained in
+[`Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md`](Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md).
+Future agents should treat that roadmap as the primary planning document for v2,
+and [`Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md`](Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md)
+as the normative architecture contract.
 
-The validated FPGA-v1 platform and its first MNIST application are frozen
-historical baselines. Their software results, physical K26 execution, FPGA
-artifacts, rebuild flow, and preservation evidence were closed before FPGA-v2
-work began.
-
-The active objective is a substantially more complete, transparent Loihi-1
-architectural digital twin with multicore organization, packet routing,
-resource-constrained mapping, algorithmic-time synchronization, and the
-observability needed for directed Python/FPGA comparison. The eventual
-application target is a deeper MNIST SNN suitable for a defensible comparison
-with Rueckauer et al., *NxTF: An API and Compiler for Deep Spiking Neural
-Networks on Intel Loihi* (ACM JETC, 2022, DOI `10.1145/3501770`).
+The culminating application target is a deeper MNIST implementation that can be
+compared on a defensible architectural/workload basis with Bodo Rueckauer et al.,
+*NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi*
+(ACM JETC, 2022, DOI `10.1145/3501770`). The counterfactual studies in
+[`EXPERIMENTS.md`](EXPERIMENTS.md) remain useful follow-on work, but they are
+deferred while this architecture/application path is pursued.
 
 ## Repository structure
 
-- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) is the canonical architecture
-  tree.
-  - [`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/) contains the preserved
-    FPGA-v1 Python model, tests, documentation, HLS, RTL, scripts, and reference
-    material.
-  - [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/) is the independent
-    development tree for the source-backed Loihi-1 architectural twin.
-  - [`Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md`](Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md)
-    is the normative architecture contract for v2.
-- [`applications/mnist_baseline/`](applications/mnist_baseline/) is the
-  preserved FPGA-v1 MNIST application and evidence baseline.
-- [`LOIHI_TWIN_ROADMAP.md`](LOIHI_TWIN_ROADMAP.md) defines the high-level
-  architecture/application program.
-- [`MILESTONES.md`](MILESTONES.md) records historical FPGA-v1 development.
-- [`EXPERIMENTS.md`](EXPERIMENTS.md) contains deferred counterfactual studies.
-- [`AUDIT.md`](AUDIT.md) and related audit documents record validation findings.
+- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) contains the versioned architecture work.
+  - [`v1/`](Loihi_Digital_Twin/v1/) is the preserved validated baseline, including
+    Python model, verification, HLS, RTL, documentation, and M1-M13 history.
+  - [`v2/`](Loihi_Digital_Twin/v2/) is the active Loihi-1 manycore architecture work,
+    including the current roadmap and target specification.
+- [`applications/`](applications/) contains application workloads. The completed first
+  application is preserved at
+  [`applications/mnist_baseline/`](applications/mnist_baseline/).
+- [`EXPERIMENTS.md`](EXPERIMENTS.md) records deferred controlled experiments.
+- [`AUDIT.md`](AUDIT.md) and the phase audit files record historical project audits and
+  validation findings.
+- [`Neuromorphic Digital Twin`](Neuromorphic%20Digital%20Twin) is a compatibility symlink
+  to `Loihi_Digital_Twin/v1` so historical v1 commands continue to resolve.
 
-For compatibility with historical commands, the repository retains the root
-symlink:
+## Working with FPGA-v1
 
-```text
-Neuromorphic Digital Twin -> Loihi_Digital_Twin/v1
-```
-
-New work and new documentation should use `Loihi_Digital_Twin/...` paths. The
-compatibility alias exists so archived v1 commands and application scripts do
-not fail solely because of the directory reorganization.
-
-## FPGA-v1 development environment
-
-The preserved v1 Python project is located in:
+The canonical v1 Python project is:
 
 ```text
 Loihi_Digital_Twin/v1/
 ```
 
-From that directory:
+From that directory, use:
 
 ```bash
 python -m pip install -e ".[dev,compare]"
-pytest
-python examples/compare_brian2loihi.py --scenario smoke
-python examples/compare_brian2loihi.py --scenario decay-order
-python examples/run_directed_conformance.py
+python -m pytest -q
 ```
 
-FPGA-v2 is intentionally a separate model and implementation. Its development
-begins from the target specification rather than by changing v1 behavior.
+Use `python -m pytest` rather than bare `pytest` for the historical v1 suite because
+one preserved test imports helper code from the project-root `examples/` directory.
 
 Generated bytecode, package metadata, test caches, and comparison outputs are
 excluded from version control by the repository `.gitignore`.
