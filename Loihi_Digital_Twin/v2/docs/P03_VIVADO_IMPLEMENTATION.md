@@ -19,7 +19,7 @@ Vivado design therefore provides:
   HLS completion/status, and physical cycle count; and
 - `p03_run_monitor.v`, which measures PL cycles from start to `ap_done`.
 
-The physical memories deliberately use the transparent P03 word widths and full
+The physical memories deliberately use transparent P03 word widths and full
 logical depths:
 
 | Memory | Depth | Width | Raw bits |
@@ -30,9 +30,16 @@ logical depths:
 | synapse table | 32,768 | 64 | 2,097,152 |
 | route descriptors | 1,024 | 32 | 32,768 |
 | route table | 4,096 | 32 | 131,072 |
-| input events | 4,096 | 16 | 65,536 |
+| input events | 4,096 | 32 | 131,072 |
 | normalized trace | 1,024 | 256 | 262,144 |
 | output packets | 4,096 | 64 | 262,144 |
+
+The logical event payload remains a 12-bit axon ID. The first draft used a
+16-bit physical event word, but Vivado 2025.2 Block Memory Generator on this K26
+configuration rejected that native-port width and reported a supported minimum
+of 32 bits. P03 therefore uses a 32-bit physical event word with the axon ID in
+bits `[11:0]` and the upper bits reserved. This is a physical-interface choice,
+not an architectural capacity change.
 
 The HLS core also contains its 1,024 x 64-bit tick-local accumulator RAM.
 Logical Loihi/P02 capacity accounting remains separate from this physical memory
