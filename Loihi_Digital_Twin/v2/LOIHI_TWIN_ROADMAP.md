@@ -39,12 +39,14 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **Current phase: P01 — Loihi-1 target definition and v2 project foundation**
+> **Current phase: P02 — Separate Python manycore golden model**
 >
-> The source-backed architecture specification and repository reorganization are
-> complete and have passed local regression verification. The remaining gate is
-> final branch acceptance/merge. After that, development moves to **P02 — the
-> separate Python manycore golden model**.
+> P01 is complete and merged. The independent v2 Python package, logical
+> resource model, packet/core/router/barrier architecture, deterministic
+> deployment representation, machine-readable reporting, and software-side
+> T1-T9 directed tests are now implemented on `agent/v2-python-manycore`.
+> The immediate remaining gate is local regression/behavior verification before
+> P02 can be closed.
 
 ---
 
@@ -53,8 +55,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | ID | Phase | Status | Started | Completed |
 |---|---|---|---|---|
 | P00 | Preserve and freeze FPGA-v1 baseline | Complete | 2026-09 | 2026-09-25 |
-| P01 | Define Loihi-1 target and establish v2 project structure | In progress | 2026-09-28 | — |
-| P02 | Build separate Python manycore golden model | Planned | — | — |
+| P01 | Define Loihi-1 target and establish v2 project structure | Complete | 2026-09-28 | 2026-09-28 |
+| P02 | Build separate Python manycore golden model | In progress | 2026-09-28 | — |
 | P03 | Implement and validate one FPGA-v2 logical core | Planned | — | — |
 | P04 | Add multicore packet routing and timestep/barrier semantics | Planned | — | — |
 | P05 | Add logical-core virtualization | Planned | — | — |
@@ -74,125 +76,66 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 Freeze the validated first-generation architecture and MNIST application before
 beginning substantial Loihi-like architectural changes.
 
-FPGA-v1 must remain a reproducible historical control rather than becoming an
-implicitly modified foundation for FPGA-v2.
-
 ## Achieved deliverables
 
 - Preserved the first MNIST application as `applications/mnist_baseline/`.
 - Preserved the first architecture under `Loihi_Digital_Twin/v1/`.
-- Archived the accepted historical FPGA artifacts.
-- Rebuilt the HLS and Vivado hardware from a fresh source checkout.
+- Archived accepted historical FPGA artifacts.
+- Rebuilt HLS/Vivado hardware from a fresh checkout.
 - Re-ran rebuilt images on the physical K26.
-- Confirmed preserved application behavior after the repository reorganization.
-- Created the immutable source tag:
-
-  ```text
-  fpga-v1-mnist-v1-final
-  ```
-
-- Published/retained preservation bundles and checksum records separately from
-  future v2 development.
-- Retained the compatibility symlink:
-
-  ```text
-  Neuromorphic Digital Twin -> Loihi_Digital_Twin/v1
-  ```
+- Confirmed preserved application behavior after repository reorganization.
+- Created the immutable source tag `fpga-v1-mnist-v1-final`.
+- Retained the compatibility symlink `Neuromorphic Digital Twin -> Loihi_Digital_Twin/v1`.
 
 ## Completion gate
 
-Complete. FPGA-v1 behavior and accepted evidence are now historical controls.
-Future changes must not silently alter the v1 implementation to simplify v2.
+Complete. FPGA-v1 behavior and accepted evidence are historical controls.
 
 ---
 
 # P01 — Loihi-1 target definition and v2 project foundation
 
-**Status:** In progress — **CURRENT PHASE**  
-**Started:** 2026-09-28
+**Status:** Complete  
+**Started:** 2026-09-28  
+**Completed:** 2026-09-28
 
 ## Goal
 
 Define exactly what this thesis means by a Loihi-1 architectural digital twin
 before implementing a new model or new FPGA datapath.
 
-The output of this phase must separate:
-
-- source-backed Loihi-1 behavior;
-- derived architectural consequences;
-- explicit FPGA implementation choices;
-- deferred features; and
-- behavior that is unknown or not claimed.
-
 ## Achieved deliverables
 
-- Created the source-backed architecture contract:
-
-  ```text
-  Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md
-  ```
-
-- Added requirement-level citations to the primary/reference literature used to
-  justify the target architecture.
-- Defined the project as a **source-backed architectural digital twin**, not a
+- Created `Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md`.
+- Added requirement-level citations to primary/reference literature.
+- Defined the project as a source-backed architectural digital twin, not a
   transistor-level or timing-exact clone.
-- Defined logical Loihi-like core/resource limits independently from physical
-  FPGA resource instantiation.
+- Defined logical Loihi-like resource limits independently from physical FPGA
+  instantiation.
 - Defined destination-core / destination-axon packet semantics.
-- Defined explicit axon-to-synapse expansion and outgoing fanout/routing.
+- Defined axon-to-synapse expansion and explicit source fanout.
 - Defined algorithmic timestep/quiescence/barrier semantics separately from
   physical FPGA clock cycles.
-- Defined virtualization as permissible only when normalized architectural
-  behavior remains invariant.
-- Defined transparent state/packet/resource tracing as a first-class
-  requirement.
+- Defined virtualization invariance and normalized trace requirements.
 - Defined Priority-A, deferred, and non-claimed features.
-- Defined the directed validation cases that the new model must eventually pass.
-- Reorganized architecture development into:
-
-  ```text
-  Loihi_Digital_Twin/
-  ├── v1/    preserved first-generation architecture
-  └── v2/    independent Loihi-1 architectural twin
-  ```
-
-- Moved the historical M01-M13 tracker to:
-
-  ```text
-  Loihi_Digital_Twin/v1/MILESTONES.md
-  ```
-
-- Made this roadmap the active v2 development tracker at:
-
-  ```text
-  Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md
-  ```
-
-- Updated top-level documentation to point future development and agents to the
-  versioned v1/v2 structure.
-- Verified locally that the relocated v1 Python regression suite passes.
-- Verified locally that the preserved MNIST regression suite passes.
-- Reviewed and accepted the initial target-specification direction.
-
-## Remaining deliverables
-
-- [ ] Merge `agent/loihi1-target-spec` into `main` after final review.
-- [ ] Treat the merged `LOIHI1_TARGET_SPEC.md` revision as the initial v2
-      architecture contract for P02 implementation.
+- Defined directed validation tests T1-T10.
+- Reorganized the architecture as `Loihi_Digital_Twin/v1/` and `v2/`.
+- Moved historical M01-M13 tracking to `Loihi_Digital_Twin/v1/MILESTONES.md`.
+- Made this file the active v2 roadmap.
+- Verified the relocated v1 and preserved MNIST regression suites locally.
+- Merged the accepted P01 branch into `main`.
 
 ## Completion gate
 
-P01 is complete when the specification/reorganization branch is merged and the
-project can begin a new implementation branch without unresolved repository or
-architecture-definition issues.
-
-**Next phase:** P02 — separate Python manycore golden model.
+Complete. The initial target specification is the architecture authority for
+P02 implementation.
 
 ---
 
 # P02 — Separate Python manycore golden model
 
-**Status:** Planned
+**Status:** In progress — **CURRENT PHASE**  
+**Started:** 2026-09-28
 
 ## Goal
 
@@ -202,58 +145,73 @@ without extending the v1 `NeuromorphicCore` in place.
 The model must embody the target specification directly and must not inherit
 v1's single-core execution assumptions accidentally.
 
-## Required deliverables
+## Achieved implementation deliverables
 
-- [ ] Create an independent v2 Python package under `Loihi_Digital_Twin/v2/`.
-- [ ] Define explicit logical-chip and logical-core resource objects.
-- [ ] Define compartment/neuron state behind a versioned v2 interface.
-- [ ] Reuse validated v1 neuron arithmetic only through an explicit compatibility
-      boundary with dedicated tests.
-- [ ] Define input-axon tables and axon-to-synapse expansion.
-- [ ] Define synapse groups/lists and resource accounting.
-- [ ] Define output routing/fanout entries.
-- [ ] Define normalized spike-packet objects containing logical routing identity.
-- [ ] Implement packet/event queues.
-- [ ] Implement logical-core execution independent of global matrix operations.
-- [ ] Implement timestep/quiescence/barrier coordination.
-- [ ] Define normalized architectural traces containing, when applicable:
+- [x] Created an independent v2 Python package under `Loihi_Digital_Twin/v2/`.
+- [x] Defined Loihi-1 logical chip/core resource constants and hard limits.
+- [x] Added explicit per-core resource accounting and named capacity failures.
+- [x] Defined a versioned project synapse-storage cost model behind an isolated
+      interface rather than claiming native Loihi SRAM packing.
+- [x] Defined a v2 compartment/neuron state interface.
+- [x] Re-versioned the validated v1 neuron arithmetic into v2 without a runtime
+      dependency on the v1 package.
+- [x] Added dedicated compatibility tests against the frozen v1 neuron step.
+- [x] Defined destination-side input-axon bindings.
+- [x] Defined reusable synapse templates and explicit expanded-connection counts.
+- [x] Defined source-side output routing/fanout entries.
+- [x] Defined normalized spike packets containing target timestep, destination
+      logical core, destination axon, and optional source metadata.
+- [x] Implemented explicit packet queues and traffic accounting.
+- [x] Implemented logical-core ingress, axon expansion, accumulation,
+      compartment update, spike decision, egress, and completion behavior.
+- [x] Implemented a centralized logical drain/advance barrier.
+- [x] Implemented chip-level logical-core scheduling independent of packet
+      delivery order.
+- [x] Defined normalized core/chip traces containing packet, axon-expansion,
+      synaptic-contribution, state, spike, and barrier information.
+- [x] Added deterministic deployment fingerprints and minimal deployment data
+      structures sufficient to configure the golden model.
+- [x] Added JSON-serializable deployment/capacity reports with per-core headroom.
+- [x] Added JSON-serializable architecture trace reports.
+- [x] Added a runnable two-core feed-forward example.
+- [x] Added `docs/P02_IMPLEMENTATION_NOTES.md` documenting project choices and
+      claim boundaries.
 
-  ```text
-  algorithmic timestep
-  logical core
-  architectural phase
-  packets in / packets out
-  axon expansion
-  synaptic contributions
-  compartment state before / after
-  spikes
-  local completion
-  barrier state
-  ```
+## Directed tests implemented
 
-- [ ] Add machine-readable resource/capacity reporting.
-- [ ] Establish minimal deployment/mapping data structures needed to configure
-      the golden model; full compiler work remains P06.
+- [x] **T1** — v1-compatible single-neuron/compartment arithmetic.
+- [x] **T2** — two-core feed-forward packet delivery.
+- [x] **T3** — multicast fanout.
+- [x] **T4** — within-timestep packet-order invariance.
+- [x] **T5** — barrier drain/advance behavior.
+- [x] **T6** — cross-core recurrence.
+- [x] **T7** — hard rejection of compartment, input-axon, output-route, and
+      synapse-memory capacity overflow.
+- [x] **T8** — connection-sharing/resource-accounting behavior.
+- [x] **T9** — logical service-order / packet-drain-order invariance at the
+      normalized architecture boundary.
+- [ ] **T10** — Python/FPGA normalized trace comparison. This belongs to the
+      later hardware phases and is not required to close the software-only P02
+      gate.
 
-## Required directed tests
+## Verification still required before P02 completion
 
-- [ ] v1-compatible single-neuron arithmetic.
-- [ ] Two-core feed-forward packet delivery.
-- [ ] Multicast fanout.
-- [ ] Within-timestep packet-order invariance.
-- [ ] Barrier drain/advance behavior.
-- [ ] Cross-core recurrence.
-- [ ] Hard resource-limit rejection.
-- [ ] Connection-sharing/accounting behavior.
-- [ ] Scheduler/service-order invariance at the normalized architectural trace.
+- [ ] Install the independent v2 package in a clean/current project environment.
+- [ ] Run the complete P02 Python test suite locally with zero failures.
+- [ ] Run the two-core example and inspect its deployment/resource and trace
+      output for the expected one-boundary feed-forward causality.
+- [ ] Re-run the preserved v1 and MNIST regressions if the local environment or
+      editable installations were changed in a way that could affect them.
+- [ ] Resolve any defects exposed by local execution without weakening the
+      target specification.
 
 ## Completion gate
 
-P02 is complete when the Python model can execute representative multicore
-networks deterministically and all directed architectural tests pass without
-requiring FPGA RTL/HLS.
+P02 is complete when the Python model executes representative multicore
+networks deterministically and all software-side directed architectural tests
+(T1-T9) pass without requiring FPGA RTL/HLS.
 
-No FPGA-v2 hardware implementation should begin before this gate closes.
+No FPGA-v2 hardware implementation begins before this gate closes.
 
 **Next phase:** P03 — one FPGA-v2 logical core.
 
@@ -283,20 +241,6 @@ specification and the P02 Python golden model.
 - [ ] Synthesize/implement on the K26 target.
 - [ ] Perform physical directed conformance against the Python model.
 
-## Verification discipline
-
-```text
-LOIHI1_TARGET_SPEC.md
-        ↓
-Python v2 golden model
-        ↓
-HLS/RTL one-core implementation
-        ↓
-directed differential tests
-        ↓
-physical K26 conformance
-```
-
 ## Completion gate
 
 P03 is complete when one hardware core reproduces the normalized golden-model
@@ -324,10 +268,9 @@ completion semantics.
 - [ ] Support simultaneous packet sources.
 - [ ] Support fan-in and fanout across cores.
 - [ ] Define and implement packet queue behavior required by the target spec.
-- [ ] Implement quiescence/completion detection.
-- [ ] Implement timestep/barrier advancement.
+- [ ] Implement quiescence/completion detection and timestep advancement.
 - [ ] Support cross-core recurrence without execution-order dependence.
-- [ ] Expose packet, core, timestep, and barrier state in normalized traces.
+- [ ] Expose packet/core/timestep/barrier state in normalized traces.
 
 ## Required validation
 
@@ -337,13 +280,12 @@ completion semantics.
 - [ ] Multicast to local and remote destinations.
 - [ ] Different legal packet-service orders produce identical normalized results.
 - [ ] A timestep cannot advance while current-timestep traffic remains pending.
-- [ ] First divergence remains attributable to a logical core, packet, and
-      algorithmic timestep.
 
 ## Completion gate
 
-P04 is complete when multicore execution is deterministic at the normalized
-architectural boundary and independent of incidental FPGA service ordering.
+P04 is complete when multicore hardware execution is deterministic at the
+normalized architectural boundary and independent of incidental FPGA service
+ordering.
 
 **Next phase:** P05 — logical-core virtualization.
 
@@ -356,31 +298,28 @@ architectural boundary and independent of incidental FPGA service ordering.
 ## Goal
 
 Support more logical Loihi-like cores than physically instantiated FPGA compute
-engines while preserving the same visible architecture and logical limits.
+engines while preserving visible architecture and logical limits.
 
 ## Required deliverables
 
 - [ ] Separate logical-core state from physical execution-engine identity.
 - [ ] Store independent compartment/axon/synapse/routing state per logical core.
 - [ ] Add a deterministic scheduler for logical-core service.
-- [ ] Preserve logical per-core resource limits even when memories are physically
-      shared.
+- [ ] Preserve logical per-core resource limits when memories are physically shared.
 - [ ] Report both logical core count and physical engine count.
-- [ ] Report physical FPGA memory/logic occupancy separately from logical Loihi
-      resource occupancy.
-- [ ] Maintain transparent mapping from logical core to physical service engine.
+- [ ] Report physical FPGA occupancy separately from logical Loihi occupancy.
+- [ ] Maintain transparent logical-core-to-engine mapping.
 
 ## Required validation
 
 - [ ] Run the same network with different physical-engine counts.
 - [ ] Run the same network with different legal logical-core service orders.
 - [ ] Confirm identical normalized logical state/spike/packet traces.
-- [ ] Confirm that logical capacity errors are not bypassed by physical sharing.
+- [ ] Confirm logical capacity errors cannot be bypassed by physical sharing.
 
 ## Completion gate
 
-P05 is complete when **virtualization invariance** is demonstrated: changing the
-number or service order of physical engines does not change logical results.
+P05 is complete when **virtualization invariance** is demonstrated.
 
 **Next phase:** P06 — deterministic mapper/compiler.
 
@@ -392,34 +331,22 @@ number or service order of physical engines does not change logical results.
 
 ## Goal
 
-Create the software layer that maps trained networks onto the modeled Loihi-like
-resources and emits one deterministic deployment consumed by both Python and
-FPGA execution.
+Map trained networks onto modeled Loihi-like resources and emit one
+deterministic deployment consumed by both Python and FPGA execution.
 
 ## Required deliverables
 
-- [ ] Define the machine-readable v2 deployment schema.
-- [ ] Partition neuron/compartment populations across logical cores.
-- [ ] Allocate input axons.
-- [ ] Allocate synapse groups/lists.
-- [ ] Allocate output routing entries.
+- [ ] Finalize the machine-readable deployment schema.
+- [ ] Partition populations/compartments across logical cores.
+- [ ] Allocate input axons, synapse groups/lists, and output routes.
 - [ ] Implement supported connection sharing/compression or the explicit
       project-defined equivalent.
 - [ ] Enforce hard per-core limits during mapping.
 - [ ] Reject invalid mappings with explicit diagnostics.
 - [ ] Make mapping deterministic for a fixed network/configuration.
-- [ ] Report per-core capacity use and remaining headroom.
-- [ ] Estimate/report expected packet traffic where meaningful.
+- [ ] Report per-core use/headroom and expected traffic where meaningful.
 - [ ] Hash/version deployment artifacts.
-- [ ] Load the same deployment artifact into both Python and FPGA paths.
-
-## Required validation
-
-- [ ] Repeated mapping of the same model produces the same deployment.
-- [ ] Boundary cases correctly fill/reject compartment, axon, synapse, and route
-      resources.
-- [ ] Mapped small networks reproduce hand-constructed expected placements.
-- [ ] Python and FPGA consume the same configuration semantics.
+- [ ] Load the same deployment artifact into Python and FPGA paths.
 
 ## Completion gate
 
@@ -437,25 +364,22 @@ resource-valid deployments without hand-editing FPGA-specific configuration.
 ## Goal
 
 Demonstrate that FPGA-v2 supports networks that genuinely exercise multicore
-mapping, routing, sharing, and capacity constraints before using MNIST as the
-final comparison workload.
+mapping, routing, sharing, and capacity constraints before final MNIST work.
 
 ## Required deliverables
 
 - [ ] Select/build a deeper feed-forward SNN with multiple mapped layers.
-- [ ] Map the network through the P06 compiler rather than manual placement.
-- [ ] Exercise multiple logical cores.
-- [ ] Exercise inter-core packet traffic.
+- [ ] Map through the P06 compiler rather than manual placement.
+- [ ] Exercise multiple logical cores and inter-core traffic.
 - [ ] Exercise supported connection sharing/resource optimization.
 - [ ] Compare Python and FPGA normalized traces on representative cases.
 - [ ] Validate physical K26 execution.
-- [ ] Record logical resource occupancy and physical FPGA utilization.
-- [ ] Record mapping/capacity failures for intentionally oversized networks.
+- [ ] Record logical occupancy, physical FPGA utilization, and capacity failures.
 
 ## Completion gate
 
 P07 is complete when a nontrivial deeper SNN executes reproducibly through the
-full specification → mapper → Python → FPGA flow and agrees at the normalized
+specification → mapper → Python → FPGA flow and agrees at the normalized
 architectural boundary.
 
 **Next phase:** P08 — NxTF-oriented deep MNIST comparison.
@@ -471,48 +395,21 @@ architectural boundary.
 Build a substantially deeper MNIST workload that exercises the new multicore
 architecture and supports a defensible comparison with Rueckauer et al. NxTF.
 
-The preserved `784 -> 10` FPGA-v1 baseline remains useful historical context,
-but it is not sufficient as the final FPGA-v2 application because it does not
-exercise the manycore mapping problem.
-
 ## Required deliverables
 
-- [ ] Select a deeper MNIST topology comparable in purpose and mapping pressure
-      to the NxTF workload.
-- [ ] Freeze the data/preprocessing contract.
-- [ ] Freeze the training/conversion procedure.
-- [ ] Freeze the neuron and weight-representation contract.
-- [ ] Freeze the number of algorithmic presentation timesteps.
+- [ ] Select a deeper MNIST topology comparable in purpose/mapping pressure to
+      the NxTF workload.
+- [ ] Freeze data/preprocessing, training/conversion, neuron, weight, timestep,
+      and decoder contracts.
 - [ ] Map the network with the P06 compiler.
-- [ ] Record logical placement/core count.
-- [ ] Record compartment/axon/synapse/routing occupancy.
-- [ ] Record sharing/compression effectiveness.
-- [ ] Record packet traffic.
+- [ ] Record logical placement/core count and per-resource occupancy.
+- [ ] Record sharing/compression effectiveness and packet traffic.
 - [ ] Validate Python-vs-FPGA inference behavior.
 - [ ] Run the physical K26 workload.
-- [ ] Measure/report accuracy.
-- [ ] Measure/report physical architectural cycles and latency with a clearly
-      stated boundary.
-- [ ] Record FPGA LUT/register/BRAM/URAM/DSP utilization.
+- [ ] Measure/report accuracy, architectural cycles/latency, and FPGA resources.
 - [ ] Record mapping failures/headroom where relevant.
-- [ ] Build an explicit NxTF comparison table that distinguishes directly
-      comparable quantities from contextual/non-comparable quantities.
-
-## Comparison contract
-
-Before final results, explicitly freeze:
-
-- dataset and preprocessing;
-- topology;
-- training/conversion procedure;
-- neuron model;
-- algorithmic presentation timesteps;
-- weight representation;
-- logical placement/core count;
-- sharing/compression model;
-- decoder and accuracy metric;
-- latency boundary; and
-- quantities that cannot be matched to the paper.
+- [ ] Build an explicit NxTF comparison table separating comparable from
+      contextual/non-comparable quantities.
 
 Energy claims remain out of scope unless a defensible workload-specific physical
 measurement method is established.
@@ -520,26 +417,22 @@ measurement method is established.
 ## Completion gate
 
 P08 is complete when the deep MNIST workload has been mapped, executed on the
-K26, quantitatively characterized, and compared to NxTF using an explicitly
+K26, quantitatively characterized, and compared to NxTF under an explicitly
 bounded comparison contract.
-
-This is the primary end-state of the current v2 thesis roadmap.
 
 ---
 
 # Cross-phase architectural requirements
 
-These requirements apply throughout P02-P08. They are summarized here for
-planning; the normative definitions and source citations live in
-`docs/LOIHI1_TARGET_SPEC.md`.
+These requirements apply throughout P02-P08. Normative definitions and source
+citations live in `docs/LOIHI1_TARGET_SPEC.md`.
 
 ## Priority-A requirements
 
 The first complete v2 architecture must support:
 
 - multiple logical neuromorphic cores;
-- explicit per-core compartment, input-axon, synapse, and output-routing
-  resources;
+- explicit per-core compartment, input-axon, synapse, and output-routing resources;
 - Loihi-like hard capacity accounting;
 - destination-core / destination-axon spike packets;
 - explicit inter-core fanout and packet routing;
@@ -597,16 +490,9 @@ barrier state
 physical FPGA cycle
 ```
 
-External emulators such as Brian2Loihi remain supporting references only where
-their modeled boundary is actually comparable.
-
 ---
 
 # Deferred fidelity extensions
-
-The following features are valuable but are not currently required to complete
-P08 unless the target specification or application work shows that they become
-necessary.
 
 ## Priority B — later architectural fidelity
 
@@ -623,11 +509,9 @@ necessary.
 - management-processor emulation;
 - chip-to-chip routing;
 - exact physical asynchronous circuit behavior; and
-- undocumented implementation details that cannot be supported by public
-  evidence.
+- undocumented implementation details unsupported by public evidence.
 
-A feature with insufficient public evidence must remain **unknown/not claimed**
-rather than being filled in from assumption.
+A feature with insufficient public evidence remains **unknown/not claimed**.
 
 ---
 
@@ -642,17 +526,20 @@ Loihi_Digital_Twin/
 └── v2/
     ├── LOIHI_TWIN_ROADMAP.md      active phase/status tracker
     ├── docs/
-    │   └── LOIHI1_TARGET_SPEC.md  normative architecture contract
-    └── ...                        new model/HLS/RTL/evidence as phases advance
+    │   ├── LOIHI1_TARGET_SPEC.md  normative architecture contract
+    │   └── P02_IMPLEMENTATION_NOTES.md
+    ├── src/loihi_twin_v2/         separate Python golden model
+    ├── tests/                      directed architecture tests
+    └── examples/                   minimal runnable architecture examples
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
 └── <future deep MNIST app>/       FPGA-v2 / NxTF-oriented workload
 ```
 
-New FPGA-v2 implementation evidence should live with v2 and should be referenced
-from the corresponding roadmap phase. It should not be appended to the preserved
-v1 milestone history.
+New FPGA-v2 implementation evidence belongs with v2 and should be referenced
+from the corresponding roadmap phase. It must not be appended to preserved v1
+milestone history.
 
 `EXPERIMENTS.md` remains a repository-level collection of deferred/follow-on
 studies and is not the active implementation tracker while this roadmap is in
@@ -667,11 +554,11 @@ Only one phase should normally be marked **In progress** at a time.
 Before moving to the next phase:
 
 1. mark completed deliverables in the active phase;
-2. record the validation evidence needed by that phase;
+2. record validation evidence needed by that phase;
 3. verify its completion gate;
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
 
-This keeps the v2 architecture driven by an explicit source-backed contract and
-makes project status recoverable directly from this file without reconstructing
-intent from commit history or conversation context.
+This keeps v2 driven by an explicit source-backed contract and makes project
+status recoverable directly from this file without reconstructing intent from
+commit history or conversation context.
