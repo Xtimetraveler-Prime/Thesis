@@ -18,6 +18,7 @@ from .resources import (
     ResourceUsage,
     SynapseCostModel,
 )
+from .runtime import RunResult, run_deployment
 from .synapse import SynapseEntry, SynapseTemplate
 
 __all__ = [
@@ -38,6 +39,8 @@ __all__ = [
     "SpikePacket",
     "deployment_report",
     "trace_report",
+    "RunResult",
+    "run_deployment",
     "ResourceCapacityError",
     "ResourceUsage",
     "SynapseCostModel",
