@@ -63,6 +63,17 @@ proc connect_named_pair {net_name left right} {
     connect_bd_net -net $net $lp $rp
 }
 
+proc connect_named_triple {net_name first second third} {
+    set p0 [get_bd_pins -quiet $first]
+    set p1 [get_bd_pins -quiet $second]
+    set p2 [get_bd_pins -quiet $third]
+    if {[llength $p0] != 1 || [llength $p1] != 1 || [llength $p2] != 1} {
+        error "Missing P03 pin for $net_name: first=$p0 second=$p1 third=$p2"
+    }
+    set net [create_bd_net $net_name]
+    connect_bd_net -net $net $p0 $p1 $p2
+}
+
 proc connect_hls_memory {hls_name arg_name depth width} {
     set hp [get_bd_intf_pins -quiet ${hls_name}/${arg_name}]
     if {[llength $hp] != 1} {
@@ -135,9 +146,16 @@ connect_bd_net [get_bd_pins const_zero_p03/dout] [get_bd_pins proc_sys_reset_p03
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_reset] [get_bd_pins loihi_core_v2_tick_0/ap_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_aresetn] [get_bd_pins p03_run_monitor_0/resetn]
 
-connect_named_pair p03_start vio_p03/probe_out0 loihi_core_v2_tick_0/ap_start
-connect_bd_net [get_bd_pins vio_p03/probe_out0] [get_bd_pins p03_run_monitor_0/start]
-connect_bd_net [get_bd_pins loihi_core_v2_tick_0/ap_done] [get_bd_pins p03_run_monitor_0/done]
+# One named net per HLS transaction event. The monitor observes the same start
+# and done signals as the HLS IP; no secondary net may share either pin.
+connect_named_triple p03_start \
+    vio_p03/probe_out0 \
+    loihi_core_v2_tick_0/ap_start \
+    p03_run_monitor_0/start
+connect_named_triple p03_done \
+    loihi_core_v2_tick_0/ap_done \
+    p03_run_monitor_0/done \
+    vio_p03/probe_in0
 
 connect_named_pair p03_compartment_count vio_p03/probe_out2 loihi_core_v2_tick_0/compartment_count
 connect_named_pair p03_event_count vio_p03/probe_out3 loihi_core_v2_tick_0/event_count
@@ -145,7 +163,6 @@ connect_named_pair p03_synapse_count vio_p03/probe_out4 loihi_core_v2_tick_0/syn
 connect_named_pair p03_route_count vio_p03/probe_out5 loihi_core_v2_tick_0/route_count
 connect_named_pair p03_timestep vio_p03/probe_out6 loihi_core_v2_tick_0/timestep
 
-connect_named_pair p03_done loihi_core_v2_tick_0/ap_done vio_p03/probe_in0
 connect_named_pair p03_idle loihi_core_v2_tick_0/ap_idle vio_p03/probe_in1
 connect_named_pair p03_ready loihi_core_v2_tick_0/ap_ready vio_p03/probe_in2
 connect_named_pair p03_spike_count loihi_core_v2_tick_0/spike_count vio_p03/probe_in3
