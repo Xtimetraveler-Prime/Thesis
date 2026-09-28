@@ -17,16 +17,17 @@ module p03_run_monitor (
     reg [63:0] active_cycles;
 
     always @(posedge ap_clk) begin
-        heartbeat <= heartbeat + 32'd1;
-        start_d <= start;
-
         if (!resetn) begin
             busy <= 1'b0;
             start_seen <= 1'b0;
             last_run_cycles <= 64'd0;
             active_cycles <= 64'd0;
+            heartbeat <= 32'd0;
             start_d <= 1'b0;
         end else begin
+            heartbeat <= heartbeat + 32'd1;
+            start_d <= start;
+
             if (start && !start_d && !busy) begin
                 busy <= 1'b1;
                 start_seen <= 1'b1;
