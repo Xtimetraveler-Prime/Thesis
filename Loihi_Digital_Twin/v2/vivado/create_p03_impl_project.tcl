@@ -76,23 +76,26 @@ proc connect_named_triple {net_name first second third} {
 
 proc connect_hls_memory {hls_name arg_name depth width} {
     # Packaged Vitis HLS BRAM interfaces are named <argument>_PORTA.
-    # Query that exact interface instead of the C argument name.
     set hls_if_name ${arg_name}_PORTA
     set hp [get_bd_intf_pins -quiet ${hls_name}/${hls_if_name}]
     if {[llength $hp] != 1} {
         puts "Available HLS interfaces: [get_bd_intf_pins -quiet ${hls_name}/*]"
         error "P03 packaged HLS interface not found: ${hls_name}/${hls_if_name}"
     }
+
+    # In IP Integrator, Block Memory Generator's BRAM-controller mode is
+    # parameterized from the connected master during validate_bd_design.  Do
+    # not force width/depth/read-latency here: doing so creates MEM_SIZE and
+    # READ_LATENCY metadata conflicts with the packaged HLS BRAM interface.
     set mem [create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ${arg_name}_mem]
     set_property -dict [list \
-        CONFIG.Memory_Type {Single_Port_RAM} \
-        CONFIG.Write_Width_A $width \
-        CONFIG.Read_Width_A $width \
-        CONFIG.Write_Depth_A $depth] $mem
+        CONFIG.Interface_Type {BRAM_Controller} \
+        CONFIG.Memory_Type {Single_Port_RAM}] $mem
+
     set mp [get_bd_intf_pins -quiet ${arg_name}_mem/BRAM_PORTA]
     if {[llength $mp] != 1} { error "P03 memory BRAM_PORTA not found for ${arg_name}_mem" }
     connect_bd_intf_net $hp $mp
-    puts "P03 memory: $arg_name interface=$hls_if_name depth=$depth width=$width"
+    puts "P03 memory connected for propagation: $arg_name interface=$hls_if_name expected_depth=$depth expected_width=$width"
 }
 
 create_bd_design $bd_name
@@ -177,8 +180,9 @@ connect_named_pair p03_start_seen p03_run_monitor_0/start_seen vio_p03/probe_in7
 connect_named_pair p03_last_run_cycles p03_run_monitor_0/last_run_cycles vio_p03/probe_in8
 connect_named_pair p03_heartbeat p03_run_monitor_0/heartbeat vio_p03/probe_in9
 
-# Full transparent one-core memory boundary. The first implementation baseline
-# intentionally uses BRAM-backed Block Memory Generator instances everywhere.
+# Full transparent one-core memory boundary.  Each BMG instance is connected in
+# controller mode and receives width/depth/latency metadata from the HLS master
+# when validate_bd_design performs interface-parameter propagation.
 connect_hls_memory loihi_core_v2_tick_0 config_words 1024 128
 connect_hls_memory loihi_core_v2_tick_0 state_words 1024 64
 connect_hls_memory loihi_core_v2_tick_0 axon_words 4096 64
@@ -190,6 +194,17 @@ connect_hls_memory loihi_core_v2_tick_0 trace_words 1024 256
 connect_hls_memory loihi_core_v2_tick_0 packet_words 4096 64
 
 validate_bd_design
+
+# Report the dimensions Vivado resolved after interface propagation.  These are
+# physical BMG parameters; logical Loihi capacity accounting remains separate.
+foreach arg_name {
+    config_words state_words axon_words synapse_words route_desc_words
+    route_words input_events trace_words packet_words
+} {
+    set mem [get_bd_cells ${arg_name}_mem]
+    puts "P03 resolved memory: $arg_name write_width=[get_property CONFIG.Write_Width_A $mem] read_width=[get_property CONFIG.Read_Width_A $mem] depth=[get_property CONFIG.Write_Depth_A $mem]"
+}
+
 save_bd_design
 puts "P03 implementation block design validated successfully."
 
