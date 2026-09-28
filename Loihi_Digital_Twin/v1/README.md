@@ -1,4 +1,6 @@
-# Neuromorphic Twin — Python Golden Model and Brian2Loihi Verification
+# FPGA-v1 Neuromorphic Twin — Python Golden Model and Brian2Loihi Verification
+
+This directory is the preserved FPGA-v1 architecture and verification tree. Its completed M1-M13 development history is recorded in [`MILESTONES.md`](MILESTONES.md). Active FPGA-v2 development is tracked separately under `../v2/`.
 
 This project implements a transparent integer neuromorphic-core model intended
 to become the software golden model for an FPGA-based, Loihi-inspired digital
@@ -55,8 +57,10 @@ From this directory, with the intended virtual environment active:
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev,compare]"
-pytest
+python -m pytest -q
 ```
+
+Use `python -m pytest` for the preserved v1 suite because one historical test imports helper code from the project-root `examples/` directory.
 
 ## Basic reference comparisons
 
