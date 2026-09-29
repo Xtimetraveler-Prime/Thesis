@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
 // Unified P03 host/debug access path for the second port of every external
-// logical-core memory bank.  Port A belongs to the HLS compute core; this
-// module exclusively drives Port B while the compute core is idle.
+// logical-core memory bank. Port A belongs to the HLS compute core; this module
+// exclusively drives Port B while the compute core is idle.
 //
 // Bank IDs:
 //   0 config_words       1024 x 128
@@ -15,10 +15,11 @@
 //   7 trace_words        1024 x 256
 //   8 packet_words       4096 x 64
 //
-// The command data path is a 256-bit superset.  Narrow banks consume/produce
-// the least-significant bits.  A request is accepted only on a rising edge of
-// req and only while compute_busy is low.  Reads and writes acknowledge after
-// the synchronous Block Memory Generator transaction has completed.
+// The command data path is a 256-bit superset. Narrow banks consume/produce
+// the least-significant bits. A request is accepted only on a rising edge of
+// req and only while compute_busy is low. Completion outputs are sticky until
+// the next accepted request so slow VIO/JTAG polling cannot miss a one-cycle
+// 100 MHz acknowledgement.
 module p03_memory_host_bridge (
     input  wire         clk,
     input  wire         resetn,
@@ -101,7 +102,7 @@ module p03_memory_host_bridge (
     reg [14:0]  cmd_addr;
     reg [255:0] cmd_wdata;
 
-    // Treat an asserted request as busy immediately.  This gives the run
+    // Treat an asserted request as busy immediately. This gives the run
     // monitor a combinational interlock so a host transaction wins if a host
     // request and compute-start request are presented in the same cycle.
     assign host_busy = (state != ST_IDLE) || req;
@@ -123,9 +124,9 @@ module p03_memory_host_bridge (
         end
     endfunction
 
-    // Port-B controls are asserted for the complete ST_ISSUE cycle.  The
-    // synchronous BMG performs the access at the following rising edge.  The
-    // result is sampled one cycle later in ST_COMPLETE.
+    // Port-B controls are asserted for the complete ST_ISSUE cycle. The
+    // synchronous XPM memory performs the access at the following rising edge.
+    // The result is sampled one cycle later in ST_COMPLETE.
     always @* begin
         config_words_enb = 1'b0;
         config_words_web = 1'b0;
@@ -174,42 +175,15 @@ module p03_memory_host_bridge (
 
         if (state == ST_ISSUE) begin
             case (cmd_bank)
-                4'd0: begin
-                    config_words_enb = 1'b1;
-                    config_words_web = cmd_write;
-                end
-                4'd1: begin
-                    state_words_enb = 1'b1;
-                    state_words_web = cmd_write;
-                end
-                4'd2: begin
-                    axon_words_enb = 1'b1;
-                    axon_words_web = cmd_write;
-                end
-                4'd3: begin
-                    synapse_words_enb = 1'b1;
-                    synapse_words_web = cmd_write;
-                end
-                4'd4: begin
-                    route_desc_words_enb = 1'b1;
-                    route_desc_words_web = cmd_write;
-                end
-                4'd5: begin
-                    route_words_enb = 1'b1;
-                    route_words_web = cmd_write;
-                end
-                4'd6: begin
-                    input_events_enb = 1'b1;
-                    input_events_web = cmd_write;
-                end
-                4'd7: begin
-                    trace_words_enb = 1'b1;
-                    trace_words_web = cmd_write;
-                end
-                4'd8: begin
-                    packet_words_enb = 1'b1;
-                    packet_words_web = cmd_write;
-                end
+                4'd0: begin config_words_enb = 1'b1; config_words_web = cmd_write; end
+                4'd1: begin state_words_enb = 1'b1; state_words_web = cmd_write; end
+                4'd2: begin axon_words_enb = 1'b1; axon_words_web = cmd_write; end
+                4'd3: begin synapse_words_enb = 1'b1; synapse_words_web = cmd_write; end
+                4'd4: begin route_desc_words_enb = 1'b1; route_desc_words_web = cmd_write; end
+                4'd5: begin route_words_enb = 1'b1; route_words_web = cmd_write; end
+                4'd6: begin input_events_enb = 1'b1; input_events_web = cmd_write; end
+                4'd7: begin trace_words_enb = 1'b1; trace_words_web = cmd_write; end
+                4'd8: begin packet_words_enb = 1'b1; packet_words_web = cmd_write; end
                 default: begin end
             endcase
         end
@@ -229,13 +203,14 @@ module p03_memory_host_bridge (
             rdata <= 256'd0;
         end else begin
             req_d <= req;
-            ack <= 1'b0;
-            rvalid <= 1'b0;
-            error <= 1'b0;
 
             case (state)
                 ST_IDLE: begin
                     if (req && !req_d) begin
+                        // A new request retires the previous sticky completion.
+                        ack <= 1'b0;
+                        rvalid <= 1'b0;
+                        error <= 1'b0;
                         if (compute_busy || !addr_valid(bank, addr)) begin
                             ack <= 1'b1;
                             error <= 1'b1;
@@ -255,8 +230,9 @@ module p03_memory_host_bridge (
 
                 ST_COMPLETE: begin
                     ack <= 1'b1;
+                    rvalid <= !cmd_write;
+                    error <= 1'b0;
                     if (!cmd_write) begin
-                        rvalid <= 1'b1;
                         rdata <= 256'd0;
                         case (cmd_bank)
                             4'd0: rdata[127:0] <= config_words_doutb;
@@ -279,6 +255,8 @@ module p03_memory_host_bridge (
 
                 default: begin
                     state <= ST_IDLE;
+                    ack <= 1'b1;
+                    rvalid <= 1'b0;
                     error <= 1'b1;
                 end
             endcase
