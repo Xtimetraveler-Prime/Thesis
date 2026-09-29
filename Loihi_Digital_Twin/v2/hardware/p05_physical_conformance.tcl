@@ -393,9 +393,9 @@ foreach scenario $P05_SCENARIOS {
                 set states [dict get $expected states]
                 set traces [dict get $expected traces]
                 for {set i 0} {$i < $compartment_count} {incr i} {
-                    p05_expect "$name t$timestep logical$core_id state($i)" \
+                    p05_expect "$name t$timestep logical$logical_id state($i)" \
                         [p05_host_read $slot 1 $i] [p05_parse_value [lindex $states $i]]
-                    p05_expect "$name t$timestep logical$core_id trace($i)" \
+                    p05_expect "$name t$timestep logical$logical_id trace($i)" \
                         [p05_host_read $slot 7 $i] [p05_parse_value [lindex $traces $i]]
                 }
 
