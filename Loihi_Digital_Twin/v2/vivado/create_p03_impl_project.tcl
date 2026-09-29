@@ -151,7 +151,7 @@ set monitor [create_bd_cell -type module -reference p03_run_monitor p03_run_moni
 set fabric [create_bd_cell -type module -reference p03_memory_fabric p03_memory_fabric_0]
 set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_p03]
 set_property -dict [list \
-    CONFIG.C_NUM_PROBE_IN {16} \
+    CONFIG.C_NUM_PROBE_IN {17} \
     CONFIG.C_NUM_PROBE_OUT {12} \
     CONFIG.C_PROBE_IN0_WIDTH {1} \
     CONFIG.C_PROBE_IN1_WIDTH {1} \
@@ -169,6 +169,7 @@ set_property -dict [list \
     CONFIG.C_PROBE_IN13_WIDTH {1} \
     CONFIG.C_PROBE_IN14_WIDTH {256} \
     CONFIG.C_PROBE_IN15_WIDTH {1} \
+    CONFIG.C_PROBE_IN16_WIDTH {32} \
     CONFIG.C_PROBE_OUT0_WIDTH {1} CONFIG.C_PROBE_OUT0_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT1_WIDTH {1} CONFIG.C_PROBE_OUT1_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT2_WIDTH {11} CONFIG.C_PROBE_OUT2_INIT_VAL {0x003} \
@@ -220,7 +221,7 @@ connect_named_pair p03_route_count vio_p03/probe_out5 loihi_core_v2_tick_0/route
 connect_named_pair p03_timestep vio_p03/probe_out6 loihi_core_v2_tick_0/timestep
 
 connect_named_pair p03_idle loihi_core_v2_tick_0/ap_idle vio_p03/probe_in1
-connect_named_pair p03_ready loihi_core_v2_tick_0/ap_ready vio_p03/probe_in2
+connect_named_triple p03_ready loihi_core_v2_tick_0/ap_ready p03_run_monitor_0/core_ready vio_p03/probe_in2
 connect_named_pair p03_spike_count loihi_core_v2_tick_0/spike_count vio_p03/probe_in3
 connect_named_pair p03_packet_count loihi_core_v2_tick_0/packet_count vio_p03/probe_in4
 connect_named_pair p03_status_flags loihi_core_v2_tick_0/status_flags vio_p03/probe_in5
@@ -228,6 +229,7 @@ connect_named_pair p03_start_seen p03_run_monitor_0/start_seen vio_p03/probe_in7
 connect_named_pair p03_last_run_cycles p03_run_monitor_0/last_run_cycles vio_p03/probe_in8
 connect_named_pair p03_heartbeat p03_run_monitor_0/heartbeat vio_p03/probe_in9
 connect_named_pair p03_start_blocked p03_run_monitor_0/start_blocked vio_p03/probe_in15
+connect_named_pair p03_completed_runs p03_run_monitor_0/completed_runs vio_p03/probe_in16
 
 connect_named_pair p03_host_req vio_p03/probe_out7 p03_memory_fabric_0/host_req
 connect_named_pair p03_host_write vio_p03/probe_out8 p03_memory_fabric_0/host_write
@@ -311,7 +313,7 @@ if {[llength $hold_paths] > 0} {
 }
 
 set expected_external_memory_bits 3375104
-set minimum_retained_bram_tiles 80.0
+set minimum_retained_bram_tiles 90.0
 if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} {
     puts $metrics "block_ram_tiles=$bram_tiles"
     puts "P03_POST_ROUTE_BRAM_TILES=$bram_tiles"
@@ -332,5 +334,12 @@ puts $metrics "board_part=$kv260_board_part"
 puts $metrics "pl_clock_requested_mhz=100"
 close $metrics
 
+set bit_file [file join $report_dir p03_one_core.bit]
+set ltx_file [file join $report_dir p03_one_core.ltx]
+write_debug_probes -force $ltx_file
+write_bitstream -force $bit_file
+
 puts "P03 fixed-depth XPM routed implementation completed successfully."
+puts "P03 bitstream: $bit_file"
+puts "P03 debug probes: $ltx_file"
 puts "P03 reports: $report_dir"
