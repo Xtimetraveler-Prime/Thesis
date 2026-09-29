@@ -33,13 +33,18 @@ banks intended to be 1,024, 4,096, and 32,768 words. The physical under-sizing
 therefore occurred before synthesis/route; it was not primarily a synthesis
 trimming problem.
 
-The replacement fixed-depth XPM fabric has now passed its synthesis-only
-retention gate. Vivado reported **94.5 Block RAM Tile equivalents** for the nine
-external banks (`93` RAMB36E2 plus `3` RAMB18E2), exceeding the conservative
-90-tile acceptance floor. The `32768 x 64` synapse bank alone accounted for
-`57` RAMB36E2 primitives. This result is consistent with the intended
-3,375,104-bit external image and confirms that the XPM fabric resolves the BMG
-depth-collapse problem before full HLS + shell place/route.
+The replacement fixed-depth XPM fabric then passed a synthesis-only retention
+gate at **94.5 BRAM-tile equivalents**. The complete HLS + XPM K26 shell routed
+successfully at 100 MHz using **96.5 BRAM tiles**, `3,545` LUTs, `5,607`
+registers, `2` DSPs, and no URAM. Post-route timing closed with WNS `+1.148 ns`
+and WHS `+0.010 ns`, and the bus-skew report passed. Primitive-level evidence
+showed the 32,768 x 64 synapse bank alone occupying `57` RAMB36E2 primitives,
+confirming that the dominant full-depth bank survived synthesis and route.
+
+This closes the P03 physical-memory-retention challenge. The all-BRAM XPM shell
+is retained as the transparent P03 reference implementation. Moving the large
+synapse bank to UltraRAM remains a later scaling optimization for P04/P05, not a
+repair required for one-core correctness.
 
 ## Challenge / resolution history
 
@@ -49,13 +54,14 @@ depth-collapse problem before full HLS + shell place/route.
 | Input-event physical word width | Vivado 2025.2 Block Memory Generator rejected the first 16-bit native event-memory port in this K26 configuration. | Widened only the physical event word to 32 bits. The logical axon ID remains 12 bits in `[11:0]`; upper bits are reserved. |
 | Grouped BRAM metadata mismatch | Directly connecting grouped HLS `bram` interfaces to manually configured BMG instances produced incompatible `MEM_SIZE` and `READ_LATENCY` interface metadata. | Replaced the grouped HLS `bram` protocol with discrete `ap_memory` ports. |
 | Unsupported BMG controller-mode assumption | An attempted `Interface_Type=BRAM_Controller` configuration was rejected because the instantiated BMG exposed only the Native interface mode. | Abandoned controller-mode propagation and retained native memory signaling. |
-| Full memories optimized from the routed baseline | The first successful `ap_memory`/native route used only one memory access path. Read-only configuration banks had no runtime writer and trace/packet banks had no runtime reader, allowing synthesis to remove storage that could not affect an observable result. | Added a host/debug access path and hardware arbitration so every bank is programmable/readable while the compute core is idle. |
-| BMG depth collapse in IP Integrator | The retained true-dual-port BMG shell routed with 48 RAMB36E2 tiles. Validation logs then showed all nine banks at depth 2048, including the intended 32,768x64 synapse bank. | **Resolved at the memory-fabric level:** replaced BMG block-design instances with fixed-parameter `xpm_memory_tdpram` banks in RTL. The synthesis-only retention gate now reports 94.5 BRAM tiles for the complete external image. Full HLS + XPM routing remains to be verified. |
-| Thin routed hold margin | The first successful shell closed hold with `+0.020 ns`; the retained 48-BRAM shell closed with `+0.013 ns`. | Not a redesign trigger; continue monitoring post-route hold and bus-skew reports. |
+| Full memories optimized from the routed baseline | The first successful `ap_memory`/native route used only one memory access path. Read-only configuration banks had no runtime writer and trace/packet banks had no runtime reader, allowing synthesis to remove storage that could not influence an observable result. | Added a host/debug access path and hardware arbitration so every bank is programmable/readable while the compute core is idle. |
+| BMG depth collapse in IP Integrator | The retained true-dual-port BMG shell routed with 48 RAMB36E2 tiles. Validation logs then showed all nine banks at depth 2048, including the intended 32,768x64 synapse bank. | **Resolved:** replaced BMG block-design instances with fixed-parameter `xpm_memory_tdpram` banks in RTL. The standalone fabric synthesized to 94.5 BRAM tiles and the complete routed shell used 96.5, with the synapse bank accounting for 57 RAMB36E2s. |
+| Thin routed hold margin | The first successful shell closed hold with `+0.020 ns`; the retained 48-BRAM shell closed with `+0.013 ns`; the accepted full XPM shell closed with `+0.010 ns`. | Timing is passing with zero failing hold endpoints. Continue monitoring hold as the design grows, but this is not a P03 redesign trigger. |
+| JTAG/VIO observability of one-cycle handshakes | The first host bridge emitted one-cycle `ack`/`rvalid` pulses, which are suitable for RTL simulation but not reliably pollable over JTAG at a 100 MHz PL clock. | P03 board-bring-up hardening makes host completion sticky until the next request and adds a completed-run counter so physical scripts can deterministically observe transaction and tick completion. |
 
-## Current memory-shell implementation
+## Accepted memory shell
 
-The current shell uses this invariant:
+The accepted P03 shell uses this invariant:
 
 ```text
                          Port A
@@ -83,17 +89,10 @@ The XPM fabric defines all nine physical capacities directly in RTL:
 9. packets: `4096 x 64`.
 
 Each bank uses `MEMORY_PRIMITIVE="block"` and
-`MEMORY_OPTIMIZATION="false"` for this validation baseline. The latter is not a
-claim that future implementations must disable all storage optimization; it is
-a P03 bring-up choice so physical-capacity evidence cannot be confused with
+`MEMORY_OPTIMIZATION="false"` for the P03 reference baseline. The latter is not
+a claim that future implementations must disable all storage optimization; it is
+a bring-up choice so physical-capacity evidence cannot be confused with
 unused-bit elimination.
-
-The synthesis-only gate measured `94.5 / 144` K26 Block RAM Tile equivalents,
-or about `65.6%` of available BRAM, for the external fabric alone. This is high
-enough that the large synapse bank remains a strong future UltraRAM candidate,
-but P03 intentionally keeps the all-BRAM shell as the first full-capacity
-reference implementation. UltraRAM migration will be driven by full routed
-timing/resource evidence rather than introduced before that baseline exists.
 
 The host/debug side remains one banked request interface rather than nine
 independent host protocols. Host/debug accesses are rejected while the HLS core
@@ -102,25 +101,41 @@ accidental architectural behavior. The bridge remains transport-neutral: P03
 uses VIO/JTAG for bring-up, while a later PS/AXI front end can reuse the same
 bank semantics.
 
-## Remaining evidence before this challenge is considered fully solved
+## Accepted routed evidence
 
-The memory-shell challenge is accepted at the synthesis level and now requires
-full-system evidence:
+The full fixed-depth one-core reference shell is accepted at the implementation
+boundary with:
 
-- [x] a fast synthesis-only XPM fabric gate reports BRAM use consistent with the
-  complete 3,375,104-bit external image rather than the 26/48-tile baselines;
-- [x] the dominant synapse bank remains identifiable in synthesized hierarchy
-  and consumes the expected majority of the external storage (`57` RAMB36E2);
-- [ ] the complete HLS + XPM shell synthesizes, places, and routes on the K26;
-- [ ] setup, hold, and bus-skew reports pass at the requested 100 MHz clock;
-- [ ] the host/debug bridge can write and read every bank on physical hardware
-  while the core is idle;
-- [ ] access while the compute core is busy is rejected deterministically on
-  physical hardware; and
-- [ ] the physical differential corpus can load state/configuration and read
-  back normalized trace/packet results through this retained memory path.
+```text
+PL clock target     100 MHz
+WNS                 +1.148 ns
+WHS                 +0.010 ns
+CLB LUTs            3,545 / 117,120  (3.03%)
+CLB registers       5,607 / 234,240  (2.39%)
+Block RAM tiles     96.5 / 144       (67.01%)
+URAM                0 / 64
+DSPs                2 / 1,248        (0.16%)
+external image      3,375,104 bits
+memory shell        xpm_true_dual_port_v2
+```
 
-When the remaining checks pass, this file should be updated with the measured
-full-shell resource cost and exact routed resolution rather than deleting the
-failed approaches. The failed iterations are useful evidence of how the logical
-architecture was made robust against HLS/Vivado interface conventions.
+The standalone XPM fabric used 94.5 BRAM-tile equivalents. The extra two tiles
+in the full shell correspond to the HLS core's local accumulator storage, so the
+standalone and integrated resource counts reconcile cleanly.
+
+## Remaining P03 evidence
+
+The memory-shell challenge is solved, but P03 itself remains open until physical
+directed conformance is demonstrated. The remaining gate is:
+
+- generate a bitstream/debug-probe artifact from the accepted routed shell;
+- program the physical K26;
+- load the deterministic one-core corpus through the host/debug memory path;
+- execute each directed timestep;
+- read back state, normalized trace, packet records, status, and physical cycle
+  counts;
+- compare those values against the Python-generated expectations (T10); and
+- preserve the resulting physical evidence before P03 is closed.
+
+The failed BMG iterations remain in this log because they document how the
+logical architecture was made robust against HLS/Vivado interface conventions.
