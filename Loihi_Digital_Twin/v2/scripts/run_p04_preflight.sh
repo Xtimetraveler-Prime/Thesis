@@ -28,13 +28,18 @@ echo '=== P04 Python regression ==='
 pytest -q
 
 echo
-echo '=== P04 vector-generation smoke test ==='
-VECTOR_TMP="${TMPDIR:-/tmp}/generated_p04_vectors_${UID:-0}.inc"
+echo '=== P04 vector-generation smoke tests ==='
+HLS_VECTOR_TMP="${TMPDIR:-/tmp}/generated_p04_vectors_${UID:-0}.inc"
+PHYSICAL_VECTOR_TMP="${TMPDIR:-/tmp}/generated_p04_physical_${UID:-0}.tcl"
 PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
-python3 "$PROJECT_DIR/examples/generate_p04_hls_vectors.py" --output "$VECTOR_TMP"
-grep -q 'P04_SCENARIOS' "$VECTOR_TMP"
-grep -q 'recurrent_multicast' "$VECTOR_TMP"
-rm -f "$VECTOR_TMP"
+python3 "$PROJECT_DIR/examples/generate_p04_hls_vectors.py" --output "$HLS_VECTOR_TMP"
+grep -q 'P04_SCENARIOS' "$HLS_VECTOR_TMP"
+grep -q 'recurrent_multicast' "$HLS_VECTOR_TMP"
+PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+python3 "$PROJECT_DIR/examples/generate_p04_physical_vectors.py" --output "$PHYSICAL_VECTOR_TMP"
+grep -q 'set P04_SCENARIOS' "$PHYSICAL_VECTOR_TMP"
+grep -q 'logical_capacity_changed' "$PROJECT_DIR/vivado/create_p04_impl_project.tcl"
+rm -f "$HLS_VECTOR_TMP" "$PHYSICAL_VECTOR_TMP"
 
 echo
 echo '=== P04 Python/HLS two-core differential ==='
