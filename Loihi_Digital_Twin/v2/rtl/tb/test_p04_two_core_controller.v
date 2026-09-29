@@ -116,12 +116,14 @@ module test_p04_two_core_controller;
         .synapse_count1(16'd2),
         .route_count1(13'd2),
         .core0_start(core0_start),
-        .core0_ready(1'b1),
+        // Real ap_ctrl_hs hardware can keep ap_ready low until after ap_start.
+        // Keep it low here so a future pre-start ready gate deadlocks this test.
+        .core0_ready(1'b0),
         .core0_done(core0_done),
         .core0_packet_count(core0_packet_count),
         .core0_status(core0_status),
         .core1_start(core1_start),
-        .core1_ready(1'b1),
+        .core1_ready(1'b0),
         .core1_done(core1_done),
         .core1_packet_count(core1_packet_count),
         .core1_status(core1_status),
