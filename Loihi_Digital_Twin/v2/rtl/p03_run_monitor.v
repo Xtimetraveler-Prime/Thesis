@@ -1,21 +1,23 @@
 `timescale 1ns/1ps
 
-// P03 implementation-shell observability and access interlock.  This module
-// does not alter loihi_core_v2_tick arithmetic or architectural state.  It
+// P03 implementation-shell observability and access interlock. This module
+// does not alter loihi_core_v2_tick arithmetic or architectural state. It
 // turns a VIO/JTAG start request into a one-cycle HLS ap_start pulse only while
-// the host/debug memory path is idle, measures physical PL cycles to ap_done,
-// and exposes blocked-start events plus a heartbeat.
+// the core is ready and the host/debug memory path is idle, measures physical
+// PL cycles to ap_done, and exposes a sticky run counter for slow JTAG polling.
 module p03_run_monitor (
     input  wire        ap_clk,
     input  wire        resetn,
     input  wire        start_request,
     input  wire        host_busy,
+    input  wire        core_ready,
     input  wire        done,
     output reg         core_start,
     output reg         busy,
     output reg         start_seen,
     output reg         start_blocked,
     output reg  [63:0] last_run_cycles,
+    output reg  [31:0] completed_runs,
     output reg  [31:0] heartbeat
 );
     reg start_request_d;
@@ -28,6 +30,7 @@ module p03_run_monitor (
             start_seen <= 1'b0;
             start_blocked <= 1'b0;
             last_run_cycles <= 64'd0;
+            completed_runs <= 32'd0;
             active_cycles <= 64'd0;
             heartbeat <= 32'd0;
             start_request_d <= 1'b0;
@@ -38,7 +41,7 @@ module p03_run_monitor (
             start_blocked <= 1'b0;
 
             if (start_request && !start_request_d) begin
-                if (!busy && !host_busy) begin
+                if (!busy && !host_busy && core_ready) begin
                     core_start <= 1'b1;
                     busy <= 1'b1;
                     start_seen <= 1'b1;
@@ -51,6 +54,7 @@ module p03_run_monitor (
                 if (done) begin
                     busy <= 1'b0;
                     last_run_cycles <= active_cycles + 64'd1;
+                    completed_runs <= completed_runs + 32'd1;
                 end
             end
         end
