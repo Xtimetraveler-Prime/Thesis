@@ -177,7 +177,11 @@ set_property -dict [list \
     CONFIG.C_PROBE_OUT18_WIDTH {256} CONFIG.C_PROBE_OUT18_INIT_VAL {0x0}] $vio
 
 set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_p04]
-set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $rst
+set reset_high [get_property CONFIG.C_EXT_RESET_HIGH $rst]
+puts "P04 board-resolved external reset polarity: C_EXT_RESET_HIGH=$reset_high"
+if {$reset_high ne "0"} {
+    error "P04 requires proc_sys_reset external reset to be active-low (C_EXT_RESET_HIGH=0), got $reset_high"
+}
 set one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_p04]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $one
 set zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_p04]
