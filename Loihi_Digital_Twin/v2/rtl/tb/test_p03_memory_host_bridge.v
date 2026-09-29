@@ -122,7 +122,7 @@ module test_p03_memory_host_bridge;
     );
 
     reg start_request = 1'b0;
-    reg core_ready = 1'b1;
+    reg core_ready = 1'b0;
     reg done = 1'b0;
     wire core_start;
     wire run_busy;
@@ -264,41 +264,31 @@ module test_p03_memory_host_bridge;
         start_request = 1'b0;
         wait_for_ack();
 
-        // ap_start must also be blocked if HLS is not ready.
+        // ap_ready is intentionally low before the first ap_ctrl_hs
+        // transaction. It must not block an otherwise legal start request.
         repeat (2) @(posedge clk);
         core_ready = 1'b0;
         @(negedge clk);
         start_request = 1'b1;
         @(posedge clk);
         #1;
-        if (core_start || !start_blocked) begin
-            $display("FAIL: start was accepted while core_ready was low");
+        if (!core_start || !run_busy || start_blocked) begin
+            $display("FAIL: legal start was incorrectly gated by core_ready");
             $finish(1);
         end
         @(negedge clk);
         start_request = 1'b0;
-        core_ready = 1'b1;
 
-        // Once the host path is idle and HLS is ready, an isolated start
-        // request becomes one core_start pulse and completion increments the
-        // sticky completed_runs counter.
-        repeat (2) @(posedge clk);
-        @(negedge clk);
-        start_request = 1'b1;
-        @(posedge clk);
-        #1;
-        if (!core_start || !run_busy) begin
-            $display("FAIL: legal compute start was not accepted");
-            $finish(1);
-        end
-        @(negedge clk);
-        start_request = 1'b0;
+        // Model eventual HLS completion. completed_runs must remain observable
+        // independently of the transient done/ap_ready pulses.
         repeat (4) @(posedge clk);
+        core_ready = 1'b1;
         @(negedge clk);
         done = 1'b1;
         @(posedge clk);
         @(negedge clk);
         done = 1'b0;
+        core_ready = 1'b0;
         repeat (2) @(posedge clk);
         if (run_busy || !start_seen || last_run_cycles == 0 || completed_runs != 32'd1) begin
             $display("FAIL: run monitor completion accounting is incorrect runs=%0d cycles=%0d", completed_runs, last_run_cycles);
