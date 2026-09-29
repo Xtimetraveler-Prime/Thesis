@@ -30,22 +30,17 @@ def _hex(value: int, bits: int) -> str:
 
 
 def _pair_list(entries: list[tuple[int, int]], bits: int) -> str:
-    if not entries:
-        return "[list]"
-    body = " \\\n    ".join(f"[list {index} {_hex(word, bits)}]" for index, word in entries)
-    return "[list \\\n    " + body + " \\\n]"
+    return "{" + " ".join(
+        "{" + f"{index} {_hex(word, bits)}" + "}" for index, word in entries
+    ) + "}"
 
 
 def _word_list(words: list[int], bits: int) -> str:
-    if not words:
-        return "[list]"
-    return "[list " + " ".join(_hex(word, bits) for word in words) + "]"
+    return "{" + " ".join(_hex(word, bits) for word in words) + "}"
 
 
 def _int_list(values: tuple[int, ...] | list[int]) -> str:
-    if not values:
-        return "[list]"
-    return "[list " + " ".join(str(value) for value in values) + "]"
+    return "{" + " ".join(str(value) for value in values) + "}"
 
 
 def _trace_word(before: int, synaptic_input: int, after: int, spike: bool) -> int:
@@ -82,7 +77,7 @@ def build_text() -> str:
         f"set P03_SYNAPSE_SEEDS {_pair_list(synapse_seeds, 64)}",
         f"set P03_ROUTE_DESC_SEEDS {_pair_list(route_desc_seeds, 32)}",
         f"set P03_ROUTE_SEEDS {_pair_list(route_seeds, 32)}",
-        "set P03_TICKS [list \\",
+        "set P03_TICKS {",
     ]
 
     for timestep, events in enumerate(SCHEDULE):
@@ -121,18 +116,17 @@ def build_text() -> str:
 
         packets = [pack_output_packet(packet) for packet in trace.packets_out]
         lines.append(
-            "    [dict create "
+            "    {"
             f"timestep {timestep} "
             f"events {_int_list(list(events))} "
             f"spike_count {len(spike_set)} "
             f"states {_word_list(expected_states, 64)} "
             f"traces {_word_list(expected_traces, 256)} "
-            f"packets {_word_list(packets, 64)}] \\")
+            f"packets {_word_list(packets, 64)}"
+            "}"
+        )
 
-    lines.extend([
-        "]",
-        "",
-    ])
+    lines.extend(["}", ""])
     return "\n".join(lines)
 
 
