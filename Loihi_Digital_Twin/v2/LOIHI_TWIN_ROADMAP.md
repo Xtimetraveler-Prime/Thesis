@@ -39,13 +39,14 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **Current phase: P03 — One FPGA-v2 logical core**
+> **P03 complete — P04 is next.**
 >
-> P02 is complete. The separate Python manycore golden model passed its full
-> directed test suite, deterministic deployment round-trip checks, two-core
-> feed-forward behavior check, and three-core recurrent replay with identical
-> normalized trace fingerprints under reordered legal scheduling. P03 now moves
-> that contract into the first FPGA-v2 one-core hardware implementation.
+> P03 closed on 2026-09-28 after the physical K26 T10 conformance gate passed.
+> The one-core implementation now has accepted Python/HLS, C/RTL, routed-K26,
+> nine-bank physical memory, and Python/FPGA differential evidence. The physical
+> corpus completed five directed timesteps with exact state/trace/packet
+> comparisons and `status=0` on every tick. P04 remains **Planned** until the
+> accepted P03 branch is merged according to the project branch workflow.
 
 ---
 
@@ -56,7 +57,7 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P00 | Preserve and freeze FPGA-v1 baseline | Complete | 2026-09 | 2026-09-25 |
 | P01 | Define Loihi-1 target and establish v2 project structure | Complete | 2026-09-28 | 2026-09-28 |
 | P02 | Build separate Python manycore golden model | Complete | 2026-09-28 | 2026-09-28 |
-| P03 | Implement and validate one FPGA-v2 logical core | In progress | 2026-09-28 | — |
+| P03 | Implement and validate one FPGA-v2 logical core | Complete | 2026-09-28 | 2026-09-28 |
 | P04 | Add multicore packet routing and timestep/barrier semantics | Planned | — | — |
 | P05 | Add logical-core virtualization | Planned | — | — |
 | P06 | Build deterministic mapper/compiler and deployment format | Planned | — | — |
@@ -187,8 +188,8 @@ without extending the v1 `NeuromorphicCore` in place.
 - [x] **T8** — connection-sharing/resource-accounting behavior.
 - [x] **T9** — logical service-order / packet-drain-order invariance at the
       normalized architecture boundary.
-- [ ] **T10** — Python/FPGA normalized trace comparison. Reserved for the hardware
-      phases and not required to close P02.
+- [x] **T10** — Python/FPGA normalized trace comparison, completed during P03 on
+      the physical K26. T10 was not required to close P02 itself.
 - [x] Installed the v2 package in an independent `.venv-v2` environment.
 - [x] Full P02 test suite passed locally with **26 tests passing**.
 - [x] Two-core example demonstrated Core 0 firing at timestep 0 and Core 1
@@ -212,8 +213,9 @@ without requiring FPGA RTL/HLS.
 
 # P03 — One FPGA-v2 logical core
 
-**Status:** In progress — **CURRENT PHASE**  
-**Started:** 2026-09-28
+**Status:** Complete  
+**Started:** 2026-09-28  
+**Completed:** 2026-09-28
 
 ## Goal
 
@@ -222,23 +224,103 @@ specification and the P02 Python golden model.
 
 ## Required deliverables
 
-- [ ] Define the FPGA-v2 one-core hardware boundary.
-- [ ] Implement per-core compartment state.
-- [ ] Implement input-axon lookup.
-- [ ] Implement synapse traversal/accumulation.
-- [ ] Implement output spike generation and routing-entry traversal.
-- [ ] Implement the v2 configuration/state loading interface.
-- [ ] Implement normalized trace/state inspection at the same semantic boundary
+- [x] Define the FPGA-v2 one-core hardware boundary.
+- [x] Implement per-core compartment state.
+- [x] Implement input-axon lookup.
+- [x] Implement synapse traversal/accumulation.
+- [x] Implement output spike generation and routing-entry traversal.
+- [x] Implement the P03 runtime configuration/state loading and readback
+      interface through the transport-neutral banked host/debug bridge.
+- [x] Implement normalized trace/state inspection at the same semantic boundary
       as the Python model.
-- [ ] Add resource/capacity guards for one logical core.
-- [ ] Add differential Python-vs-HLS/RTL tests.
-- [ ] Synthesize/implement on the K26 target.
-- [ ] Perform physical directed conformance against the Python model.
+- [x] Add resource/capacity guards for one logical core.
+- [x] Add differential Python-vs-HLS/RTL tests.
+- [x] Synthesize/implement the complete one-core memory shell on the K26 target.
+- [x] Perform physical directed conformance against the Python model.
+
+## P03 HLS implementation findings
+
+The first HLS gate passed the five-timestep Python/HLS C and C/RTL differential
+corpus plus runtime integrity checks. At a 10 ns target the HLS estimate was
+8.785 ns with 1.20 ns uncertainty, so the estimate left essentially no
+uncertainty-adjusted margin. The later full-capacity routed Vivado shell closed
+100 MHz with WNS `+1.148 ns`, showing that the HLS estimate was conservative for
+the integrated physical design. HLS reported a pathological maximum of
+272,664,582 cycles per tick because the maximum-capacity event-by-synapse
+traversal is fully serialized; this remains an upper capacity bound rather than
+a representative workload latency.
+
+The external-memory integration required several iterations. Native BMG
+instances silently resolved all requested depths to 2,048 words, so the physical
+shell was moved to source-controlled fixed-depth `xpm_memory_tdpram` banks. The
+standalone nine-bank fabric synthesized to `94.5` BRAM-tile equivalents, and the
+complete HLS + memory shell routed using `96.5 / 144` BRAM tiles. The 32,768 x 64
+synapse bank alone occupies 57 RAMB36E2 primitives. This challenge and its
+resolution are documented in `docs/P03_INTEGRATION_CHALLENGES.md`.
+
+Board bring-up additionally exposed two control/safety issues before closure.
+The VIO-driven reset path initially used the wrong external-reset polarity, and
+the first run monitor incorrectly pre-gated `ap_start` on `ap_ready`, creating a
+circular `ap_ctrl_hs` condition. Both were corrected and captured in the P03
+challenge log. The widened 32-bit event path was also hardened so reserved bits
+`[31:12]` are rejected before any axon-table lookup.
+
+## Accepted routed implementation evidence
+
+- [x] Full fixed-depth XPM one-core shell routed on `xck26-sfvc784-2LV-c`.
+- [x] 100 MHz setup timing closed: WNS `+1.148 ns`, zero failing endpoints.
+- [x] 100 MHz hold timing closed: WHS `+0.010 ns`, zero failing endpoints.
+- [x] Bus-skew reporting passed for the routed design.
+- [x] Complete utilization recorded: `3,545` LUTs, `5,607` registers,
+      `96.5` Block RAM tiles, `0` URAM, and `2` DSPs.
+- [x] Primitive-level evidence reconciles the standalone 94.5-tile external
+      fabric with the full 96.5-tile shell; the extra two BRAM tiles are the HLS
+      local accumulator memory.
+- [x] Keep the all-BRAM XPM shell as the transparent P03 reference baseline.
+      Moving the synapse bank to UltraRAM is deferred as a P04/P05 scaling
+      optimization rather than required for P03 correctness.
+
+## Accepted physical-conformance evidence
+
+- [x] Added a transport-neutral nine-bank host/debug bridge and compute/host
+      arbitration.
+- [x] Hardened host completion for VIO/JTAG by making `ack`, `rvalid`, and error
+      state pollable rather than one-PL-cycle-only observations.
+- [x] Added a completed-run counter and a proper `ap_ctrl_hs` start handshake for
+      deterministic physical tick control.
+- [x] Added deterministic physical-vector generation from the same Python
+      configuration used by the HLS differential corpus.
+- [x] Added a Vivado Hardware Manager/VIO harness that programs the K26,
+      preflights read/write access to all nine banks, executes all five directed
+      timesteps, and compares physical state/trace/packet results against Python.
+- [x] Extended the implementation flow to emit `.bit` and `.ltx` artifacts.
+- [x] Verified reset release physically with a free-running PL heartbeat.
+- [x] Verified physical write/read access to all nine retained XPM banks.
+- [x] Programmed `xck26_0` and completed the automated five-tick T10 corpus.
+- [x] Every physical tick matched Python state, normalized trace, packet words,
+      spike count, packet count, and status.
+- [x] All five ticks completed with `status=0`.
+
+Physical observations for the accepted directed corpus:
+
+| Tick | Timestep | PL cycles | Spikes | Packets | Status |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 0 | 36 | 1 | 2 | 0 |
+| 1 | 1 | 34 | 1 | 1 | 0 |
+| 2 | 2 | 36 | 0 | 0 | 0 |
+| 3 | 3 | 23 | 0 | 0 | 0 |
+| 4 | 4 | 36 | 1 | 2 | 0 |
+
+The physical harness wrote `schema=p03-physical-conformance-v1` and
+`result=PASS`. These cycle counts are implementation observations for the
+directed corpus, not algorithmic timesteps or native-Loihi latency claims.
 
 ## Completion gate
 
-P03 is complete when one hardware core reproduces the normalized golden-model
-state/spike behavior for the one-core directed suite on the physical K26.
+**Complete.** One hardware core reproduces the normalized golden-model
+state/spike/packet behavior for the directed suite on the physical K26, all nine
+physical memory banks are host-accessible, and T10 passes through the automated
+physical conformance flow.
 
 **Next phase:** P04 — multicore packet routing and barrier semantics.
 
@@ -520,13 +602,20 @@ Loihi_Digital_Twin/
 └── v2/
     ├── LOIHI_TWIN_ROADMAP.md      active phase/status tracker
     ├── docs/
-    │   ├── LOIHI1_TARGET_SPEC.md  normative architecture contract
+    │   ├── LOIHI1_TARGET_SPEC.md
     │   ├── P02_IMPLEMENTATION_NOTES.md
-    │   └── P02_DEPLOYMENT_SCHEMA.md
-    ├── src/loihi_twin_v2/         separate Python golden model
-    ├── tests/                      directed architecture tests
+    │   ├── P02_DEPLOYMENT_SCHEMA.md
+    │   ├── P03_INTEGRATION_CHALLENGES.md
+    │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
+    │   └── P03_VIVADO_IMPLEMENTATION.md
+    ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
+    ├── hls/core_v2/                P03 one-core HLS source and packaging flow
+    ├── rtl/                        v2 RTL integration/observability logic
+    ├── vivado/                     source-controlled K26 build flows
+    ├── hardware/                   physical programming/conformance flows
+    ├── tests/                      directed architecture/packing tests
     ├── scripts/                    phase validation tools
-    └── examples/                   runnable architecture examples
+    └── examples/                   corpus generators and architecture examples
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
@@ -550,7 +639,7 @@ Only one phase should normally be marked **In progress** at a time.
 Before moving to the next phase:
 
 1. mark completed deliverables in the active phase;
-2. record validation evidence needed by that phase;
+2. record the validation evidence needed by that phase;
 3. verify its completion gate;
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.

@@ -9,9 +9,9 @@ Development authority is split between:
 
 FPGA-v1 remains frozen under `../v1/`. No v2 implementation should silently import behavioral assumptions from v1 unless the target specification explicitly adopts them.
 
-## P02 Python golden model
+## P02 Python golden model — complete
 
-The independent v2 package lives under `src/loihi_twin_v2/`. It models logical resources, destination-side axons and synapse templates, explicit inter-core spike packets, logical cores, packet routing, timestep drain/advance barriers, deterministic deployment serialization, and multi-timestep replay separately from any future FPGA implementation.
+The independent v2 package lives under `src/loihi_twin_v2/`. It models logical resources, destination-side axons and synapse templates, explicit inter-core spike packets, logical cores, packet routing, timestep drain/advance barriers, deterministic deployment serialization, and multi-timestep replay separately from the FPGA implementation.
 
 Install and run its directed tests from this directory:
 
@@ -20,29 +20,61 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 ```
 
-Run the minimal two-core causality example:
+P02 closed with 26 tests passing plus verified two-core causality and three-core recurrent schedule invariance.
 
-```bash
-python examples/run_two_core.py
+Supporting material:
+
+- `docs/P02_IMPLEMENTATION_NOTES.md`
+- `docs/P02_DEPLOYMENT_SCHEMA.md`
+- `scripts/validate_p02.py`
+- `examples/run_two_core.py`
+- `examples/run_three_core_replay.py`
+
+## P03 one-core FPGA-v2 implementation — active
+
+P03 translates one verified P02 logical core into a synthesizable, transparent hardware boundary.
+
+The packed memory/export layer is:
+
+```text
+src/loihi_twin_v2/hardware_p03.py
 ```
 
-Run the three-core serialization/replay example:
+The source-level hardware contract is:
 
-```bash
-python examples/run_three_core_replay.py
+```text
+docs/P03_ONE_CORE_HARDWARE_BOUNDARY.md
 ```
 
-Run the integrated P02 behavioral validator:
+The first HLS core is:
 
-```bash
-python scripts/validate_p02.py
+```text
+hls/core_v2/
+├── include/loihi_core_v2.hpp
+├── src/loihi_core_v2.cpp
+├── tb/test_loihi_core_v2.cpp
+├── hls_config.cfg
+├── run_csim.sh
+└── run_synth_cosim.sh
 ```
 
-The validator serializes/reloads a three-core recurrent deployment, executes it under different legal core-service and packet-drain orders, checks the expected four-timestep spike wave, and requires identical normalized trace fingerprints.
+The HLS testbench does not use hand-entered expected behavior. Before compilation, `examples/generate_p03_hls_vectors.py` runs the P02 Python `LogicalCore` and emits a deterministic five-timestep differential corpus covering shared synapse templates, positive/negative weights, refractory behavior, state persistence, spike generation, and explicit output routing.
 
-## P02 documents
+With Vitis/Vivado 2025.2 on `PATH`:
 
-- `docs/P02_IMPLEMENTATION_NOTES.md` records implementation choices and claim boundaries.
-- `docs/P02_DEPLOYMENT_SCHEMA.md` defines the project deployment interchange document and fingerprint rules.
+```bash
+export HLS_PART='xck26-sfvc784-2LV-c'
+bash hls/core_v2/run_csim.sh
+```
 
-The current synapse-memory model (`v2-simple-32bit-entry`) is a documented project accounting choice, not a claim of exact Loihi SRAM bit packing. It is isolated behind `SynapseCostModel` so later native-style encoding work can replace it without changing logical routing behavior.
+After C simulation passes:
+
+```bash
+bash hls/core_v2/run_synth_cosim.sh
+```
+
+The synthesis/co-simulation result is the next P03 gate. Its timing, inferred interfaces/memories, resource use, and RTL behavior will determine the Vivado/K26 wrapper without changing the normalized one-core architecture contract.
+
+## Resource-accounting boundary
+
+The current logical synapse-memory model (`v2-simple-32bit-entry`) is a documented project accounting choice, not a claim of exact Loihi SRAM bit packing. P03 intentionally distinguishes this logical mapping budget from physical FPGA storage width and will report synthesized BRAM/URAM use separately.
