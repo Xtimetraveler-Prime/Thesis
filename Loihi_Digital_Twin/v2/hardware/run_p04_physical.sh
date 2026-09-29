@@ -25,6 +25,10 @@ command -v python3 >/dev/null 2>&1 || {
     echo "ERROR: python3 is not on PATH" >&2
     exit 2
 }
+command -v sha256sum >/dev/null 2>&1 || {
+    echo "ERROR: sha256sum is not on PATH" >&2
+    exit 2
+}
 
 for artifact in "$BIT_FILE" "$LTX_FILE"; do
     [[ -f "$artifact" ]] || {
@@ -60,9 +64,33 @@ grep -q '^result=PASS$' "$RESULT_FILE" || {
     exit 5
 }
 
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+EVIDENCE_DIR="$SCRIPT_DIR/evidence/p04_physical_${STAMP}"
+mkdir -p "$EVIDENCE_DIR"
+cp "$RESULT_FILE" "$EVIDENCE_DIR/"
+cp "$BUILD_DIR/p04_physical.log" "$EVIDENCE_DIR/"
+cp "$VECTOR_FILE" "$EVIDENCE_DIR/"
+for report in \
+    p04_post_route_metrics.txt \
+    timing_summary_post_route.rpt \
+    utilization_post_route.rpt \
+    bus_skew_post_route.rpt \
+    drc_post_route.rpt \
+    methodology_post_route.rpt; do
+    if [[ -f "$REPORT_DIR/$report" ]]; then
+        cp "$REPORT_DIR/$report" "$EVIDENCE_DIR/"
+    fi
+done
+{
+    printf 'bitstream=%s\n' "$BIT_FILE"
+    printf 'debug_probes=%s\n' "$LTX_FILE"
+    sha256sum "$BIT_FILE" "$LTX_FILE"
+} > "$EVIDENCE_DIR/artifact_sha256.txt"
+
 echo
 echo '=== P04 physical result ==='
 cat "$RESULT_FILE"
 echo
 echo "P04 physical conformance gate completed successfully."
-echo "Evidence: $BUILD_DIR"
+echo "Build evidence: $BUILD_DIR"
+echo "Archived evidence: $EVIDENCE_DIR"
