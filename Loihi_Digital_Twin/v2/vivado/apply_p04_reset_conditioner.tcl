@@ -49,10 +49,12 @@ if {[llength $old_reset_net] != 1 || [llength $old_resetn_net] != 1} {
     error "P04 expected proc_sys_reset functional reset nets"
 }
 
-disconnect_bd_net -net $old_reset_net \
+# disconnect_bd_net uses positional syntax: <net> <objects>... . Unlike
+# connect_bd_net, it does not accept a -net option (Vivado UG835).
+disconnect_bd_net $old_reset_net \
     [get_bd_pins loihi_core_v2_tick_0/ap_rst] \
     [get_bd_pins loihi_core_v2_tick_1/ap_rst]
-disconnect_bd_net -net $old_resetn_net \
+disconnect_bd_net $old_resetn_net \
     [get_bd_pins p04_two_core_controller_0/resetn] \
     [get_bd_pins p04_endpoint_memory_0/resetn] \
     [get_bd_pins p04_endpoint_memory_1/resetn] \
