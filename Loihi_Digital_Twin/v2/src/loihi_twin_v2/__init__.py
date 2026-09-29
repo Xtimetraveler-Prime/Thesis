@@ -44,6 +44,13 @@ from .resources import (
 )
 from .runtime import RunResult, run_deployment
 from .synapse import SynapseEntry, SynapseTemplate
+from .virtualization import (
+    DeterministicCoreScheduler,
+    VirtualDispatch,
+    VirtualizationReport,
+    VirtualizationSchedule,
+    VirtualizedLogicalChip,
+)
 
 __all__ = [
     "ArithmeticConfig",
@@ -91,6 +98,11 @@ __all__ = [
     "P04_PHYSICAL_OUTPUT_ROUTES",
     "P04_PHYSICAL_INPUT_EVENTS",
     "P04_PHYSICAL_OUTPUT_PACKETS",
+    "DeterministicCoreScheduler",
+    "VirtualDispatch",
+    "VirtualizationReport",
+    "VirtualizationSchedule",
+    "VirtualizedLogicalChip",
     "MAX_LOGICAL_CORES",
     "MAX_COMPARTMENTS_PER_CORE",
     "MAX_INPUT_AXONS_PER_CORE",
