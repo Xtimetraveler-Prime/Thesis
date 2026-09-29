@@ -1,0 +1,19 @@
+schema=p04-physical-conformance-v1
+device=xck26_0
+scenarios=2
+physical_fixture_compartments=16
+physical_fixture_axons=64
+physical_fixture_synapses=256
+physical_fixture_routes=64
+logical_capacity_changed=0
+scenario=feed_forward reverse=0 tick=0 timestep=0 cycles=28 local=0 remote=1
+scenario=feed_forward reverse=0 tick=1 timestep=1 cycles=21 local=0 remote=0
+scenario=feed_forward reverse=1 tick=0 timestep=0 cycles=28 local=0 remote=1
+scenario=feed_forward reverse=1 tick=1 timestep=1 cycles=21 local=0 remote=0
+scenario=recurrent_multicast reverse=0 tick=0 timestep=0 cycles=33 local=2 remote=2
+scenario=recurrent_multicast reverse=0 tick=1 timestep=1 cycles=39 local=2 remote=2
+scenario=recurrent_multicast reverse=0 tick=2 timestep=2 cycles=39 local=2 remote=2
+scenario=recurrent_multicast reverse=1 tick=0 timestep=0 cycles=33 local=2 remote=2
+scenario=recurrent_multicast reverse=1 tick=1 timestep=1 cycles=39 local=2 remote=2
+scenario=recurrent_multicast reverse=1 tick=2 timestep=2 cycles=39 local=2 remote=2
+result=PASS
