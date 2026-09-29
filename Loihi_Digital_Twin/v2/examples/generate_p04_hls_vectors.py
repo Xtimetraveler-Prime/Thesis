@@ -4,7 +4,7 @@
 The generated include is consumed by the C simulation harness that invokes the
 accepted P03 HLS core twice, routes the *actual* emitted packet words into the
 next-timestep event lists, and compares both cores against the Python golden
-model.  Only timestep-0 external events are seeded by the harness; subsequent
+model. Only timestep-0 external events are seeded by the harness; subsequent
 input-event lists must arise from routed HLS packets.
 """
 
@@ -125,33 +125,85 @@ def _emit_u64(values: list[int], length: int) -> str:
     return "{" + ", ".join(_hex64(v) for v in padded) + "}"
 
 
+def _emit_seed_array(
+    lines: list[str],
+    declaration: str,
+    entries: list[str],
+    dummy: str,
+) -> None:
+    lines.append(declaration + " = {")
+    if entries:
+        lines.extend(f"    {entry}," for entry in entries)
+    else:
+        # Standard C++ does not allow a zero-length inferred array. The seed
+        # count stored in CoreSeed remains zero, so this sentinel is never read.
+        lines.append(f"    {dummy},")
+    lines.append("};")
+
+
 def _emit_core_seed(lines: list[str], scenario_index: int, core_index: int, image) -> str:
     prefix = f"P04_S{scenario_index}_C{core_index}"
-    lines.append(f"const Word128Seed {prefix}_CONFIG[] = {{")
-    for index, word in enumerate(image.config_words):
-        lines.append(f"    {{{index}, {_hex64(word)}, {_hex64(word >> 64)}}},")
-    lines.append("};")
-    lines.append(f"const Word64Seed {prefix}_STATE[] = {{")
-    for index, word in enumerate(image.state_words):
-        lines.append(f"    {{{index}, {_hex64(word)}}},")
-    lines.append("};")
-    lines.append(f"const Word64Seed {prefix}_AXON[] = {{")
-    for seed in image.axon_words:
-        lines.append(f"    {{{seed.index}, {_hex64(seed.word)}}},")
-    lines.append("};")
-    lines.append(f"const Word64Seed {prefix}_SYNAPSE[] = {{")
-    for index, word in enumerate(image.synapse_words):
-        lines.append(f"    {{{index}, {_hex64(word)}}},")
-    lines.append("};")
-    lines.append(f"const Word32Seed {prefix}_ROUTE_DESC[] = {{")
-    for seed in image.route_descriptor_words:
-        lines.append(f"    {{{seed.index}, 0x{seed.word & 0xFFFFFFFF:08X}u}},")
-    lines.append("};")
-    lines.append(f"const Word32Seed {prefix}_ROUTE[] = {{")
-    for index, word in enumerate(image.route_words):
-        lines.append(f"    {{{index}, 0x{word & 0xFFFFFFFF:08X}u}},")
-    lines.append("};")
+
+    config_entries = [
+        f"{{{index}, {_hex64(word)}, {_hex64(word >> 64)}}}"
+        for index, word in enumerate(image.config_words)
+    ]
+    state_entries = [
+        f"{{{index}, {_hex64(word)}}}" for index, word in enumerate(image.state_words)
+    ]
+    axon_entries = [
+        f"{{{seed.index}, {_hex64(seed.word)}}}" for seed in image.axon_words
+    ]
+    synapse_entries = [
+        f"{{{index}, {_hex64(word)}}}" for index, word in enumerate(image.synapse_words)
+    ]
+    route_desc_entries = [
+        f"{{{seed.index}, 0x{seed.word & 0xFFFFFFFF:08X}u}}"
+        for seed in image.route_descriptor_words
+    ]
+    route_entries = [
+        f"{{{index}, 0x{word & 0xFFFFFFFF:08X}u}}"
+        for index, word in enumerate(image.route_words)
+    ]
+
+    _emit_seed_array(
+        lines,
+        f"const Word128Seed {prefix}_CONFIG[]",
+        config_entries,
+        "{0, 0ULL, 0ULL}",
+    )
+    _emit_seed_array(
+        lines,
+        f"const Word64Seed {prefix}_STATE[]",
+        state_entries,
+        "{0, 0ULL}",
+    )
+    _emit_seed_array(
+        lines,
+        f"const Word64Seed {prefix}_AXON[]",
+        axon_entries,
+        "{0, 0ULL}",
+    )
+    _emit_seed_array(
+        lines,
+        f"const Word64Seed {prefix}_SYNAPSE[]",
+        synapse_entries,
+        "{0, 0ULL}",
+    )
+    _emit_seed_array(
+        lines,
+        f"const Word32Seed {prefix}_ROUTE_DESC[]",
+        route_desc_entries,
+        "{0, 0u}",
+    )
+    _emit_seed_array(
+        lines,
+        f"const Word32Seed {prefix}_ROUTE[]",
+        route_entries,
+        "{0, 0u}",
+    )
     lines.append("")
+
     return (
         "{" + ", ".join(
             (
@@ -159,12 +211,12 @@ def _emit_core_seed(lines: list[str], scenario_index: int, core_index: int, imag
                 str(image.compartment_count),
                 str(image.synapse_count),
                 str(image.route_count),
-                f"{prefix}_CONFIG, sizeof({prefix}_CONFIG)/sizeof({prefix}_CONFIG[0])",
-                f"{prefix}_STATE, sizeof({prefix}_STATE)/sizeof({prefix}_STATE[0])",
-                f"{prefix}_AXON, sizeof({prefix}_AXON)/sizeof({prefix}_AXON[0])",
-                f"{prefix}_SYNAPSE, sizeof({prefix}_SYNAPSE)/sizeof({prefix}_SYNAPSE[0])",
-                f"{prefix}_ROUTE_DESC, sizeof({prefix}_ROUTE_DESC)/sizeof({prefix}_ROUTE_DESC[0])",
-                f"{prefix}_ROUTE, sizeof({prefix}_ROUTE)/sizeof({prefix}_ROUTE[0])",
+                f"{prefix}_CONFIG, {len(config_entries)}",
+                f"{prefix}_STATE, {len(state_entries)}",
+                f"{prefix}_AXON, {len(axon_entries)}",
+                f"{prefix}_SYNAPSE, {len(synapse_entries)}",
+                f"{prefix}_ROUTE_DESC, {len(route_desc_entries)}",
+                f"{prefix}_ROUTE, {len(route_entries)}",
             )
         ) + "}"
     )
@@ -196,6 +248,8 @@ def build_text() -> str:
             external = scenario.initial_packets if timestep == 0 else ()
             trace = chip.step(external)
             core_entries: list[str] = []
+            local_packets = 0
+            remote_packets = 0
             for core_id in (0, 1):
                 core_trace = next(c for c in trace.cores if c.logical_core_id == core_id)
                 events = [packet.destination_axon for packet in core_trace.packet_in]
@@ -229,6 +283,11 @@ def build_text() -> str:
                         expected.append("{0ULL, 0, 0ULL, 0}")
 
                 packets = [pack_output_packet(packet) for packet in core_trace.packets_out]
+                for packet in core_trace.packets_out:
+                    if packet.destination_core == core_id:
+                        local_packets += 1
+                    else:
+                        remote_packets += 1
                 if len(packets) > MAX_SEED_PACKETS:
                     raise ValueError("P04 seed packet capacity exceeded")
                 core_entries.append(
@@ -243,7 +302,11 @@ def build_text() -> str:
                     ) + "}"
                 )
             lines.append(
-                "    {" + str(timestep) + ", {" + ", ".join(core_entries) + "}},"
+                "    {"
+                + str(timestep)
+                + ", {"
+                + ", ".join(core_entries)
+                + f"}}, {local_packets}, {remote_packets}}},"
             )
         lines.append("};")
         lines.append("")
