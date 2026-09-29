@@ -10,7 +10,7 @@ from .packet import SpikePacket
 class PacketRouter:
     def __init__(self) -> None:
         self._queue: list[SpikePacket] = []
-        self._traffic: Counter[tuple[int, int, int]] = Counter()
+        self._traffic: Counter[tuple[int, int, int, str]] = Counter()
 
     @property
     def pending_count(self) -> int:
@@ -19,7 +19,14 @@ class PacketRouter:
     def enqueue(self, packet: SpikePacket) -> None:
         self._queue.append(packet)
         source = -1 if packet.source_core is None else packet.source_core
-        self._traffic[(packet.target_timestep, source, packet.destination_core)] += 1
+        self._traffic[
+            (
+                packet.target_timestep,
+                source,
+                packet.destination_core,
+                packet.route_scope.value,
+            )
+        ] += 1
 
     def enqueue_many(self, packets: tuple[SpikePacket, ...]) -> None:
         for packet in packets:
@@ -39,8 +46,16 @@ class PacketRouter:
                 del self._queue[:count]
         return selected
 
-    def traffic_snapshot(self) -> tuple[tuple[int, int, int, int], ...]:
+    def traffic_snapshot(self) -> tuple[tuple[int, int, int, str, int], ...]:
+        """Return deterministic cumulative traffic grouped by route scope.
+
+        Rows are ``(target_timestep, source_core, destination_core, scope, count)``.
+        ``source_core`` is ``-1`` only for externally sourced packets should they ever
+        pass through this router; core-generated P04 traffic is classified as local
+        when source and destination core IDs match and remote otherwise.
+        """
+
         return tuple(
-            (timestep, source, destination, count)
-            for (timestep, source, destination), count in sorted(self._traffic.items())
+            (timestep, source, destination, scope, count)
+            for (timestep, source, destination, scope), count in sorted(self._traffic.items())
         )
