@@ -59,7 +59,9 @@ repair required for one-core correctness.
 | Thin routed hold margin | The first successful shell closed hold with `+0.020 ns`; the retained 48-BRAM shell closed with `+0.013 ns`; the accepted full XPM shell closed with `+0.010 ns`. | Timing is passing with zero failing hold endpoints. Continue monitoring hold as the design grows, but this is not a P03 redesign trigger. |
 | JTAG/VIO observability of one-cycle handshakes | The first host bridge emitted one-cycle `ack`/`rvalid` pulses, which are suitable for RTL simulation but not reliably pollable over JTAG at a 100 MHz PL clock. | P03 board-bring-up hardening makes host completion sticky until the next request and adds a completed-run counter so physical scripts can deterministically observe transaction and tick completion. |
 | Hardware Manager VIO HEX formatting | The first physical harness programmed the K26 and discovered `vio_p03`, then failed on its first output write because Vivado HEX-radix VIO properties require exactly `ceil(width/4)` hexadecimal characters with no `0x` prefix. Passing decimal address/count strings directly would also have caused them to be reinterpreted as hexadecimal. | **Resolved in the harness:** all output values now pass through a width-aware formatter that distinguishes decimal Tcl integers from explicit `0x...` packed words, range-checks against the probe width, strips prefixes/underscores, and emits exactly the required number of hexadecimal characters. No bitstream change is required for this fix. |
-| Physical reset polarity mismatch | After VIO formatting was fixed, the K26 programmed successfully but the very first memory write timed out waiting for `host_ack`. `proc_sys_reset` defaults `C_EXT_RESET_HIGH=0` (active-low external reset), while the first harness sequence drove `1` then `0` under an incorrect active-high assumption. The final `0` therefore held the HLS core, run monitor, and memory fabric in reset indefinitely. | **Resolved:** P03 now explicitly freezes `C_EXT_RESET_HIGH=0` in the Vivado source, the physical harness uses `0=assert` and `1=release`, and a post-reset heartbeat check fails immediately if the PL control fabric does not actually leave reset. The already-built bitstream used the same active-low default, so this harness correction can be tested without rebuilding first. |
+| Physical reset polarity mismatch | After VIO formatting was fixed, the K26 programmed successfully but the very first memory write timed out waiting for `host_ack`. `proc_sys_reset` defaults `C_EXT_RESET_HIGH=0` (active-low external reset), while the first harness sequence drove `1` then `0` under an incorrect active-high assumption. The final `0` therefore held the HLS core, run monitor, and memory fabric in reset indefinitely. | **Resolved:** P03 now explicitly freezes `C_EXT_RESET_HIGH=0` in the Vivado source, the physical harness uses `0=assert` and `1=release`, and a post-reset heartbeat check fails immediately if the PL control fabric does not actually leave reset. |
+| First physical HLS transaction would not start | After reset release was corrected, the heartbeat advanced and physical write/read preflight passed on all nine XPM banks, but `completed_runs` remained zero at timestep 0. The run monitor incorrectly required `ap_ready=1` before asserting `ap_start`; under `ap_ctrl_hs`, `ap_ready` is inactive until a transaction has begun, making that prerequisite circular. | **Fixed in source, pending rebuilt-board verification:** the monitor now latches the start request and implements the `ap_ctrl_hs` handshake by holding `ap_start` while `ap_ready` is low and dropping it as `ap_ready` rises. Host-busy arbitration remains the only pre-start block. |
+| Reserved bits in widened physical event words | The physical event bank is 32 bits while the logical axon ID is 12 bits. The first HLS loop converted the full event word to an array index before checking reserved bits, so malformed upper bits could address beyond the 4096-entry axon table. | **Fixed in source, pending HLS regression:** bits `[31:12]` are now rejected before the axon lookup and assert both `STATUS_RESERVED_BITS` and `STATUS_INVALID_AXON`; an integrity test injects `0x1000`. |
 
 ## Accepted memory shell
 
@@ -127,13 +129,14 @@ standalone and integrated resource counts reconcile cleanly.
 
 ## Remaining P03 evidence
 
-The memory-shell challenge is solved, but P03 itself remains open until physical
-directed conformance is demonstrated. The remaining gate is:
+The memory-shell challenge is solved, and the latest physical run has additionally
+proved reset release plus read/write access to all nine external banks on the
+K26. P03 itself remains open until the rebuilt start-control/HLS image passes
+physical directed conformance. The remaining gate is:
 
-- generate a bitstream/debug-probe artifact from the accepted routed shell;
-- program the physical K26;
-- load the deterministic one-core corpus through the host/debug memory path;
-- execute each directed timestep;
+- rerun HLS C/RTL differential and integrity checks after the reserved-event fix;
+- rebuild the routed bitstream after the start-controller change;
+- execute each directed timestep on the physical K26;
 - read back state, normalized trace, packet records, status, and physical cycle
   counts;
 - compare those values against the Python-generated expectations (T10); and
