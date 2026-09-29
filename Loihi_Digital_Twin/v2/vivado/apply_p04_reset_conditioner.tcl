@@ -1,7 +1,7 @@
 # Replace only the functional P04 reset outputs in an isolated copy of the
 # generated project with the source-controlled p04_reset_conditioner. The
-# original proc_sys_reset instance remains present for diagnostic comparison,
-# but it no longer drives HLS/custom functional reset inputs in the candidate.
+# original proc_sys_reset instance remains present but no longer drives the
+# HLS/custom functional reset inputs in the conditioned design.
 if {$argc != 4} {
     error "usage: apply_p04_reset_conditioner.tcl <project.xpr> <reset_rtl> <report_dir> <jobs>"
 }
@@ -16,27 +16,26 @@ foreach path [list $project_xpr $reset_rtl] {
 }
 file mkdir $report_dir
 
-# Never mutate the reusable P04 implementation project in-place. Open it
-# read-only and clone it into the candidate build directory first.
-set candidate_project_dir [file normalize [file join $report_dir .. project]]
-file delete -force $candidate_project_dir
+# Never mutate the source implementation project in-place. Clone it into the
+# final/candidate build directory and condition only that copy.
+set conditioned_project_dir [file normalize [file join $report_dir .. project]]
+file delete -force $conditioned_project_dir
 open_project -read_only $project_xpr
-save_project_as -force -exclude_run_results p04_reset_conditioner_candidate $candidate_project_dir
+save_project_as -force -exclude_run_results p04_reset_conditioned $conditioned_project_dir
 close_project
-set candidate_xpr [file join $candidate_project_dir p04_reset_conditioner_candidate.xpr]
-if {![file exists $candidate_xpr]} {
-    error "P04 reset-conditioner candidate project copy was not created: $candidate_xpr"
+set conditioned_xpr [file join $conditioned_project_dir p04_reset_conditioned.xpr]
+if {![file exists $conditioned_xpr]} {
+    error "P04 reset-conditioned project copy was not created: $conditioned_xpr"
 }
-open_project $candidate_xpr
+open_project $conditioned_xpr
 
 set bd_file [lindex [get_files -quiet */loihi_twin_v2_p04_impl.bd] 0]
 if {$bd_file eq ""} { error "P04 reset-conditioner flow could not find the block design" }
 open_bd_design $bd_file
 
-# Ensure the current reset RTL is in the candidate project, then create or
-# refresh the module-reference cell. The HDL X_INTERFACE metadata defines the
-# reset polarities/clock association; Vivado exposes those BD parameters as
-# read-only, so verify them instead of attempting to write them.
+# Add/refresh the source-controlled synchronous reset conditioner. Its HDL
+# X_INTERFACE metadata defines ACTIVE_HIGH reset, ACTIVE_LOW resetn, and their
+# association with clk. Vivado exposes those BD properties read-only, so verify.
 if {[llength [get_files -quiet $reset_rtl]] == 0} {
     add_files -norecurse $reset_rtl
     set_property file_type Verilog [get_files $reset_rtl]
@@ -67,7 +66,6 @@ if {$associated_reset ne "reset:resetn"} {
     error "P04 reset-conditioner clock/reset association mismatch: $associated_reset"
 }
 
-# Reuse the exact PL0 clock and VIO reset-command nets already present in P04.
 set clk_net [get_bd_nets -quiet -of_objects [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]]
 if {[llength $clk_net] != 1} { error "P04 expected one PL0 clock net, got '$clk_net'" }
 set reset_cmd_net [get_bd_nets -quiet -of_objects [get_bd_pins vio_p04/probe_out2]]
@@ -84,7 +82,7 @@ proc p04_disconnect_pin {pin_path} {
     set pin [get_bd_pins $pin_path]
     set nets [get_bd_nets -quiet -of_objects $pin]
     if {[llength $nets] > 1} {
-        error "P04 reset candidate found multiple nets on $pin_path: $nets"
+        error "P04 reset-conditioned flow found multiple nets on $pin_path: $nets"
     }
     if {[llength $nets] == 1} {
         disconnect_bd_net [lindex $nets 0] $pin
@@ -111,9 +109,6 @@ connect_bd_net $cond_resetn \
     [get_bd_pins p04_endpoint_memory_1/resetn] \
     [get_bd_pins p04_heartbeat_0/resetn]
 
-# Read the source-side properties again after connectivity/parameter propagation.
-# If Vivado changed either polarity, fail here with the actual value rather than
-# producing an opaque validate_bd_design mismatch.
 set reset_polarity_post [get_property CONFIG.POLARITY $cond_reset]
 set resetn_polarity_post [get_property CONFIG.POLARITY $cond_resetn]
 puts "P04 reset-conditioner post-connect polarities: reset=$reset_polarity_post resetn=$resetn_polarity_post"
@@ -130,24 +125,65 @@ reset_run synth_1
 launch_runs synth_1 -jobs $jobs
 wait_on_run synth_1
 if {[get_property PROGRESS [get_runs synth_1]] ne "100%"} {
-    error "P04 reset-conditioner synthesis did not complete: [get_property STATUS [get_runs synth_1]]"
+    error "P04 reset-conditioned synthesis did not complete: [get_property STATUS [get_runs synth_1]]"
 }
 
 launch_runs impl_1 -to_step route_design -jobs $jobs
 wait_on_run impl_1
 if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {
-    error "P04 reset-conditioner implementation did not complete: [get_property STATUS [get_runs impl_1]]"
+    error "P04 reset-conditioned implementation did not complete: [get_property STATUS [get_runs impl_1]]"
 }
 open_run impl_1
+
 report_timing_summary -delay_type min_max -max_paths 20 -report_unconstrained \
     -file [file join $report_dir timing_summary_post_route.rpt]
-report_utilization -file [file join $report_dir utilization_post_route.rpt]
+set util_text [report_utilization -return_string]
+set util_file [open [file join $report_dir utilization_post_route.rpt] w]
+puts $util_file $util_text
+close $util_file
+report_utilization -hierarchical -hierarchical_depth 8 \
+    -file [file join $report_dir utilization_hierarchical_post_route.rpt]
+report_clock_utilization -file [file join $report_dir clock_utilization_post_route.rpt]
 report_bus_skew -file [file join $report_dir bus_skew_post_route.rpt]
-write_checkpoint -force [file join $report_dir p04_reset_conditioner_post_route.dcp]
-write_debug_probes -force [file join $report_dir p04_reset_conditioner.ltx]
-write_bitstream -force [file join $report_dir p04_reset_conditioner.bit]
+report_drc -file [file join $report_dir drc_post_route.rpt]
+report_methodology -file [file join $report_dir methodology_post_route.rpt]
+write_checkpoint -force [file join $report_dir p04_post_route.dcp]
 
-puts "P04 reset-conditioner implementation completed successfully."
-puts "P04 reset-conditioner bitstream: [file join $report_dir p04_reset_conditioner.bit]"
-puts "P04 reset-conditioner probes: [file join $report_dir p04_reset_conditioner.ltx]"
+set primitive_file [open [file join $report_dir memory_primitives_post_route.rpt] w]
+foreach c [lsort [get_cells -hierarchical -filter {REF_NAME == RAMB36E2 || REF_NAME == RAMB18E2 || REF_NAME == URAM288}]] {
+    puts $primitive_file "[get_property REF_NAME $c] $c"
+}
+close $primitive_file
+
+set metrics [open [file join $report_dir p04_post_route_metrics.txt] w]
+set setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
+set hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
+if {[llength $setup_paths] > 0} { puts $metrics "wns_ns=[get_property SLACK [lindex $setup_paths 0]]" } else { puts $metrics "wns_ns=NA" }
+if {[llength $hold_paths] > 0} { puts $metrics "whs_ns=[get_property SLACK [lindex $hold_paths 0]]" } else { puts $metrics "whs_ns=NA" }
+if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} { puts $metrics "block_ram_tiles=$bram_tiles" }
+if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $metrics "uram=$uram_count" }
+puts $metrics "physical_fixture_compartments_per_endpoint=16"
+puts $metrics "physical_fixture_axons_per_endpoint=64"
+puts $metrics "physical_fixture_synapse_entries_per_endpoint=256"
+puts $metrics "physical_fixture_routes_per_endpoint=64"
+puts $metrics "physical_fixture_events_per_endpoint=64"
+puts $metrics "physical_fixture_packets_per_endpoint=64"
+puts $metrics "logical_capacity_changed=0"
+puts $metrics "reset_strategy=source_controlled_synchronous_conditioner"
+puts $metrics "reset_request_active_high=1"
+puts $metrics "reset_release_cycles=16"
+puts $metrics "target_part=[get_property PART [current_project]]"
+puts $metrics "board_part=[get_property BOARD_PART [current_project]]"
+puts $metrics "pl_clock_requested_mhz=100"
+close $metrics
+
+set bit_file [file join $report_dir p04_two_core.bit]
+set ltx_file [file join $report_dir p04_two_core.ltx]
+write_debug_probes -force $ltx_file
+write_bitstream -force $bit_file
+
+puts "P04 reset-conditioned implementation completed successfully."
+puts "P04 canonical bitstream: $bit_file"
+puts "P04 canonical probes: $ltx_file"
+puts "P04 canonical reports: $report_dir"
 close_project
