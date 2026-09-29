@@ -66,7 +66,7 @@ module p04_packet_memory_streamer (
                     end
                     ST_HOLD: begin
                         if (stream_valid && stream_ready) begin
-                            if (index + 12'd1 >= latched_count) begin
+                            if ({1'b0, index} + 13'd1 >= latched_count) begin
                                 done <= 1'b1;
                                 state <= ST_IDLE;
                             end else begin
