@@ -249,10 +249,11 @@ foreach probe [get_hw_probes -of_objects $P04_VIO] {
 reset_hw_vio_outputs $P04_VIO
 refresh_hw_vio -update_output_values $P04_VIO
 
-# out2 drives the active-low proc_sys_reset external reset.
-p04_commit [list 2 0x0]
-after 20
+# out2 drives the KV260 board-resolved active-high proc_sys_reset external reset.
+# Assert reset, then release it before checking the free-running heartbeat.
 p04_commit [list 2 0x1]
+after 20
+p04_commit [list 2 0x0]
 after 20
 set heartbeat_before [p04_input 38]
 after 20
