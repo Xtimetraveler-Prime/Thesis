@@ -205,11 +205,23 @@ foreach probe [get_hw_probes -of_objects $P03_VIO] {
 reset_hw_vio_outputs $P03_VIO
 refresh_hw_vio -update_output_values $P03_VIO
 
-# out1 is the active-high external reset command.
-p03_commit [list 1 0x1]
-after 20
+# VIO out1 directly drives proc_sys_reset/ext_reset_in.  That input is
+# intentionally active-low for P03: drive 0 to assert reset, then 1 to release.
 p03_commit [list 1 0x0]
 after 20
+p03_commit [list 1 0x1]
+after 20
+
+# Prove that the PL clock/control fabric actually left reset before attempting a
+# memory transaction.  The heartbeat is a free-running 32-bit counter on VIO
+# input probe 9; two samples separated by 20 ms must differ at 100 MHz.
+set heartbeat_before [p03_input 9]
+after 20
+set heartbeat_after [p03_input 9]
+if {$heartbeat_before == $heartbeat_after} {
+    error "P03 control fabric did not leave reset: heartbeat remained $heartbeat_after"
+}
+puts "P03 reset release verified: heartbeat $heartbeat_before -> $heartbeat_after"
 
 # Physical Port-B preflight: write/read one unused high address in every bank.
 # This proves the VIO bridge reaches every retained XPM bank before model data is
