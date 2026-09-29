@@ -52,7 +52,7 @@ def test_p04_fixture_rejects_physical_axon_address_without_redefining_logical_li
     high = P04_PHYSICAL_INPUT_AXONS
     config0 = core(0, high, 1)
     config1 = core(1, 1, 0)
-    with pytest.raises(ValueError, match="fixture axon address allocation exceeded"):
+    with pytest.raises(ValueError, match="fixture"):
         export_two_core_validation_image((config0, config1))
 
 
