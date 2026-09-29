@@ -70,7 +70,9 @@ for required in \
     "$REPORT_DIR/memory_primitives_post_route.rpt" \
     "$REPORT_DIR/bus_skew_post_route.rpt" \
     "$REPORT_DIR/p03_post_route_metrics.txt" \
-    "$REPORT_DIR/p03_post_route.dcp"; do
+    "$REPORT_DIR/p03_post_route.dcp" \
+    "$REPORT_DIR/p03_one_core.bit" \
+    "$REPORT_DIR/p03_one_core.ltx"; do
     [[ -f "$required" ]] || {
         echo "ERROR: expected P03 implementation artifact missing: $required" >&2
         exit 4
@@ -93,4 +95,6 @@ grep -E \
 
 echo
 echo "P03 fixed-depth XPM routed implementation gate completed."
+echo "Bitstream: $REPORT_DIR/p03_one_core.bit"
+echo "Debug probes: $REPORT_DIR/p03_one_core.ltx"
 echo "Reports: $REPORT_DIR"
