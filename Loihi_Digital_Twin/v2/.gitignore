@@ -3,3 +3,4 @@ vivado.log
 vivado.jou
 vivado_*.backup.log
 vivado_*.backup.jou
+hardware/build/
