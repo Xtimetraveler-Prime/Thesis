@@ -85,6 +85,39 @@ for required in \
     }
 done
 
+metric_value() {
+    local key="$1"
+    sed -n "s/^${key}=//p" "$REPORT_DIR/p05_post_route_metrics.txt" | tail -n 1
+}
+
+WNS="$(metric_value wns_ns)"
+WHS="$(metric_value whs_ns)"
+for pair in "wns_ns:$WNS" "whs_ns:$WHS"; do
+    key="${pair%%:*}"
+    value="${pair#*:}"
+    if [[ -z "$value" || "$value" == "NA" ]]; then
+        echo "ERROR: P05 post-route metric $key is unavailable" >&2
+        exit 5
+    fi
+    if ! awk -v value="$value" 'BEGIN { exit !(value + 0 >= 0) }'; then
+        echo "ERROR: P05 post-route timing failed: $key=$value" >&2
+        exit 5
+    fi
+done
+
+[[ "$(metric_value logical_contexts)" == "3" ]] || {
+    echo "ERROR: P05 route did not report three logical contexts" >&2
+    exit 5
+}
+[[ "$(metric_value physical_engines)" == "1" ]] || {
+    echo "ERROR: P05 route did not report one physical engine" >&2
+    exit 5
+}
+[[ "$(metric_value logical_capacity_changed)" == "0" ]] || {
+    echo "ERROR: P05 route changed the logical-capacity contract" >&2
+    exit 5
+}
+
 echo
 echo '=== P05 post-route metrics ==='
 cat "$REPORT_DIR/p05_post_route_metrics.txt"
@@ -100,7 +133,7 @@ grep -E \
     "$REPORT_DIR/utilization_hierarchical_post_route.rpt" || true
 
 echo
-echo "P05 routed implementation gate completed."
+echo "P05 routed implementation gate completed successfully."
 echo "Bitstream: $REPORT_DIR/p05_virtualized.bit"
 echo "Debug probes: $REPORT_DIR/p05_virtualized.ltx"
 echo "Reports: $REPORT_DIR"
