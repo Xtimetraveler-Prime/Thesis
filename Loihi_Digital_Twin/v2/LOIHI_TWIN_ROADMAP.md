@@ -39,36 +39,43 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P04 in progress — P04.4 verified; physical P04.5 conformance is active.**
+> **P05 in progress — P04 multicore routing/barrier execution is complete and physically accepted.**
 >
-> P04 started on 2026-09-28 from the accepted P03 baseline. P04.1 golden-model
-> contract closure, P04.2 standalone router/barrier RTL, P04.3 two-endpoint
-> P03-core integration, and P04.4 routed K26 implementation are now verified.
-> The corrected repeated-timestep controller test and consolidated source
-> preflight pass under Vivado/Vitis 2025.2, including feed-forward and
-> recurrent/multicast Python↔HLS differential cases under forward and reversed
-> legal service orders.
+> P04 completed on 2026-09-29 after the canonical two-endpoint K26 artifact
+> passed the complete automated physical conformance gate. The final run verified
+> reset release, write/read access to both endpoint memory fabrics, two-core
+> feed-forward routing, recurrent local+remote multicast, both forward and
+> reversed legal packet-service priorities, barrier/timestep advancement, and
+> Python/FPGA agreement for the directed state/trace/packet/event corpus. The
+> result record reported `schema=p04-physical-conformance-v1` and `result=PASS`.
 >
-> The final integrated two-endpoint shell routes on the K26 at a requested
-> 100 MHz with WNS `+0.987 ns` and WHS `+0.010 ns`, using `7,065` CLB LUTs,
-> `9,999` CLB registers, `49 / 144` BRAM tiles, `0` URAM, and `4` DSPs. All
-> reported bus-skew constraints meet timing; the smallest reported bus-skew
-> slack is `+9.517 ns`. The final routed build has no reported `ERROR:` or
-> `CRITICAL WARNING:` diagnostics. The KV260 board preset resolves
-> `proc_sys_reset/C_EXT_RESET_HIGH=1`; the build now verifies that read-only
-> board-resolved active-high polarity explicitly, and the physical harness uses
-> the matching VIO reset sequence. The emitted metrics explicitly record
-> `logical_capacity_changed=0`.
+> The accepted final evidence is archived under:
 >
-> The accepted P03 shell occupies 96.5 of 144 K26 BRAM tiles, so blindly
-> duplicating two full-capacity P03 physical memory shells would require about
-> 193 BRAM tiles before adding any router/barrier storage. P04 therefore keeps
-> all logical Loihi capacities unchanged while using a **resource-scaled physical
-> validation allocation** for the directed two-endpoint corpus. This is a
-> physical test-shell choice only; it is not a smaller logical core and it is
-> not transparent core virtualization. P05 remains responsible for retaining
-> and scheduling multiple independent full logical-core contexts on fewer
-> physical resources.
+> ```text
+> hardware/evidence/p04_physical_20260929T211309Z/
+> ```
+>
+> Board bring-up exposed two hardware-only control problems before closure. The
+> original `proc_sys_reset` functional path remained asserted on the board even
+> after its input polarities were corrected; a reset-independent PL0 counter
+> proved the clock was running while `peripheral_aresetn` remained low. P04 now
+> uses a source-controlled synchronous reset conditioner with an active-high VIO
+> request and a 16-PL-cycle release interval. After reset was fixed, the first
+> multicore tick exposed a second issue: the controller incorrectly required HLS
+> `ap_ready` before issuing `ap_start`, which produced a circular startup
+> condition on hardware. `ap_ready` was removed from initial tick admission and
+> the controller regression now keeps ready low before start so the failure
+> cannot silently return. The full history is recorded in
+> `docs/P04_INTEGRATION_CHALLENGES.md`.
+>
+> P04 retains full logical Loihi capacities while using resource-scaled physical
+> validation memories for its two simultaneously instantiated compute endpoints.
+> The accepted P03 shell uses `96.5 / 144` K26 BRAM tiles, so two literal full
+> copies would require about `193` BRAM tiles before routing/barrier storage.
+> P04 therefore validates genuine two-endpoint routing behavior without claiming
+> that two maximally populated logical cores are simultaneously resident. P05 is
+> now active to solve that exact problem through transparent logical-core context
+> storage and scheduling.
 
 ---
 
@@ -80,8 +87,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P01 | Define Loihi-1 target and establish v2 project structure | Complete | 2026-09-28 | 2026-09-28 |
 | P02 | Build separate Python manycore golden model | Complete | 2026-09-28 | 2026-09-28 |
 | P03 | Implement and validate one FPGA-v2 logical core | Complete | 2026-09-28 | 2026-09-28 |
-| P04 | Add multicore packet routing and timestep/barrier semantics | In progress | 2026-09-28 | — |
-| P05 | Add logical-core virtualization | Planned | — | — |
+| P04 | Add multicore packet routing and timestep/barrier semantics | Complete | 2026-09-28 | 2026-09-29 |
+| P05 | Add logical-core virtualization | In progress | 2026-09-29 | — |
 | P06 | Build deterministic mapper/compiler and deployment format | Planned | — | — |
 | P07 | Validate deeper mapped multicore SNNs | Planned | — | — |
 | P08 | Build and compare NxTF-oriented deep MNIST workload | Planned | — | — |
@@ -221,7 +228,6 @@ without extending the v1 `NeuromorphicCore` in place.
 - [x] Deployment round-trip fingerprint matched exactly.
 - [x] Reordered legal service/drain schedules produced the identical normalized
       trace fingerprint `90a8300b7354744d00024cc9602a12b2f3ac432414ed027983b2c2cce28ad6d1`.
-- [x] Working tree remained clean after validation.
 
 ## Completion gate
 
@@ -260,62 +266,25 @@ specification and the P02 Python golden model.
 - [x] Synthesize/implement the complete one-core memory shell on the K26 target.
 - [x] Perform physical directed conformance against the Python model.
 
-## P03 HLS implementation findings
+## P03 implementation findings
 
-The first HLS gate passed the five-timestep Python/HLS C and C/RTL differential
-corpus plus runtime integrity checks. At a 10 ns target the HLS estimate was
-8.785 ns with 1.20 ns uncertainty, so the estimate left essentially no
-uncertainty-adjusted margin. The later full-capacity routed Vivado shell closed
-100 MHz with WNS `+1.148 ns`, showing that the HLS estimate was conservative for
-the integrated physical design. HLS reported a pathological maximum of
-272,664,582 cycles per tick because the maximum-capacity event-by-synapse
-traversal is fully serialized; this remains an upper capacity bound rather than
-a representative workload latency.
+The accepted full-capacity XPM one-core shell closes a requested 100 MHz on the
+K26 with WNS `+1.148 ns`, WHS `+0.010 ns`, `3,545` LUTs, `5,607` registers,
+`96.5 / 144` BRAM tiles, `0` URAM, and `2` DSPs. The standalone external memory
+fabric uses 94.5 BRAM-tile equivalents; the additional two tiles belong to the
+HLS-local accumulator.
 
-The external-memory integration required several iterations. Native BMG
-instances silently resolved all requested depths to 2,048 words, so the physical
-shell was moved to source-controlled fixed-depth `xpm_memory_tdpram` banks. The
-standalone nine-bank fabric synthesized to `94.5` BRAM-tile equivalents, and the
-complete HLS + memory shell routed using `96.5 / 144` BRAM tiles. The 32,768 x 64
-synapse bank alone occupies 57 RAMB36E2 primitives. This challenge and its
-resolution are documented in `docs/P03_INTEGRATION_CHALLENGES.md`.
-
-Board bring-up additionally exposed two control/safety issues before closure.
-The VIO-driven reset path initially used the wrong external-reset polarity, and
-the first run monitor incorrectly pre-gated `ap_start` on `ap_ready`, creating a
-circular `ap_ctrl_hs` condition. Both were corrected and captured in the P03
-challenge log. The widened 32-bit event path was also hardened so reserved bits
-`[31:12]` are rejected before any axon-table lookup.
-
-## Accepted routed implementation evidence
-
-- [x] Full fixed-depth XPM one-core shell routed on `xck26-sfvc784-2LV-c`.
-- [x] 100 MHz setup timing closed: WNS `+1.148 ns`, zero failing endpoints.
-- [x] 100 MHz hold timing closed: WHS `+0.010 ns`, zero failing endpoints.
-- [x] Bus-skew reporting passed for the routed design.
-- [x] Complete utilization recorded: `3,545` LUTs, `5,607` registers,
-      `96.5` Block RAM tiles, `0` URAM, and `2` DSPs.
-- [x] Primitive-level evidence reconciles the standalone 94.5-tile external
-      fabric with the full 96.5-tile shell; the extra two BRAM tiles are the HLS
-      local accumulator memory.
-- [x] Keep the all-BRAM XPM shell as the transparent P03 reference baseline.
-      Moving the synapse bank to UltraRAM is deferred as a P04/P05 scaling
-      optimization rather than required for P03 correctness.
+The external-memory integration, VIO/JTAG handshakes, physical reset behavior,
+HLS `ap_ctrl_hs` start semantics, and reserved event-word bits required several
+iterations. The complete history is retained in
+`docs/P03_INTEGRATION_CHALLENGES.md`.
 
 ## Accepted physical-conformance evidence
 
 - [x] Added a transport-neutral nine-bank host/debug bridge and compute/host
       arbitration.
-- [x] Hardened host completion for VIO/JTAG by making `ack`, `rvalid`, and error
-      state pollable rather than one-PL-cycle-only observations.
-- [x] Added a completed-run counter and a proper `ap_ctrl_hs` start handshake for
-      deterministic physical tick control.
-- [x] Added deterministic physical-vector generation from the same Python
-      configuration used by the HLS differential corpus.
-- [x] Added a Vivado Hardware Manager/VIO harness that programs the K26,
-      preflights read/write access to all nine banks, executes all five directed
-      timesteps, and compares physical state/trace/packet results against Python.
-- [x] Extended the implementation flow to emit `.bit` and `.ltx` artifacts.
+- [x] Made host completion/status pollable over VIO/JTAG.
+- [x] Added deterministic physical-vector generation from the Python corpus.
 - [x] Verified reset release physically with a free-running PL heartbeat.
 - [x] Verified physical write/read access to all nine retained XPM banks.
 - [x] Programmed `xck26_0` and completed the automated five-tick T10 corpus.
@@ -350,8 +319,9 @@ physical conformance flow.
 
 # P04 — Multicore packet routing and timestep/barrier semantics
 
-**Status:** In progress  
-**Started:** 2026-09-28
+**Status:** Complete  
+**Started:** 2026-09-28  
+**Completed:** 2026-09-29
 
 ## Goal
 
@@ -374,35 +344,17 @@ axon IDs/core, 4,096 output-route slots/core, and 128 KiB modeled synaptic
 fan-in storage/core. A deployment that exceeds those logical limits remains
 invalid regardless of how little or how much FPGA memory happens to be present.
 
-Five approaches were considered:
+The accepted design uses two unchanged P03-compatible compute endpoints with
+physical backing memories sized for the directed P04 validation deployment.
+This provides genuine simultaneous endpoint/routing behavior while clearly
+reporting that the test shell is not capable of retaining two maximally
+populated logical cores at once. P05 replaces this fixture limitation with
+transparent logical-context storage and scheduling.
 
-1. **Duplicate two full P03 memory shells.** Rejected because the measured BRAM
-   requirement exceeds the K26 before multicore transport is added.
-2. **Reduce the logical core capacities.** Rejected because FPGA fit must not
-   redefine the architecture being modeled.
-3. **Immediately move the large memories into URAM or external DDR.** Kept as a
-   later scaling option, but rejected as the first P04 step because it would
-   make routing/barrier validation depend on a new memory subsystem.
-4. **Immediately time-multiplex several full logical contexts through one
-   physical engine.** Rejected for P04 because that is the explicit P05
-   virtualization problem and would collapse the roadmap boundary.
-5. **Use two unchanged P03-compatible compute endpoints with physical backing
-   memories sized only for the directed P04 validation deployment.** Accepted.
-   This provides genuine simultaneous endpoint/routing behavior while clearly
-   reporting that the test shell is not capable of retaining two maximally
-   populated logical cores at once.
-
-The accepted option is therefore a **resource-scaled physical validation
-allocation**. It is intentionally analogous to using a smaller test fixture
-around the same processor interface: the logical architecture and its capacity
-checks remain full-sized in the specification/Python model, while the P04 FPGA
-fixture only retains addresses exercised by its directed corpus. P05 will later
-replace this fixture limitation with transparent logical-context storage and
-scheduling; the P04 packet format, router, barrier invariant, and normalized
-trace boundary are designed to remain reusable when that happens.
-
-The complete rationale and interface contract are recorded in
-`docs/P04_MULTICORE_ARCHITECTURE.md`.
+The complete architecture contract is recorded in
+`docs/P04_MULTICORE_ARCHITECTURE.md`; the integration implementation is recorded
+in `docs/P04_INTEGRATION_IMPLEMENTATION.md`; and the bring-up problems and fixes
+are recorded in `docs/P04_INTEGRATION_CHALLENGES.md`.
 
 ## Sub-milestone progress
 
@@ -413,14 +365,13 @@ The complete rationale and interface contract are recorded in
 - [x] Added local+remote multicast regression coverage.
 - [x] Preserved feed-forward, recurrence, barrier blocking, and legal
       service-order invariance behavior.
-- [x] Targeted multicore pytest passed locally on 2026-09-28.
-- [x] Full v2 pytest suite passed locally after the P04.1 changes.
+- [x] Targeted multicore pytest and the full v2 pytest suite passed.
 
 ### P04.2 — Standalone packet-router/barrier RTL — **Verified**
 
 - [x] Added independent producer capture slots so simultaneous source assertions
       are retained without depending on arbitration priority.
-- [x] Added deterministic arbitration with a reversible legal service priority.
+- [x] Added deterministic arbitration with reversible legal service priority.
 - [x] Added per-destination FIFOs with explicit ready/valid backpressure.
 - [x] Added P03 packet valid/destination/target-timestep integrity checks.
 - [x] Added local/remote traffic counters.
@@ -428,74 +379,96 @@ The complete rationale and interface contract are recorded in
       accepted advance, and blocked-advance behavior.
 - [x] Added a directed XSim test that stalls destination traffic and proves a
       timestep cannot advance until all traffic drains.
-- [x] Vivado 2025.2 XSim gate passed locally on 2026-09-28 with
+- [x] Vivado 2025.2 XSim passed with
       `PASS: P04 packet router/barrier directed test completed successfully.`
 
 ### P04.3 — Two-endpoint P03-core integration shell — **Verified**
 
-- [x] Instantiated two unchanged P03-compatible HLS compute endpoints in the
-      integrated Vivado shell.
-- [x] Added explicitly resource-scaled physical backing memories for the
-      directed corpus while preserving the full logical-capacity contract.
-- [x] Converted delivered destination-axon packets into each endpoint's next-tick
-      input-event list without introducing an extra algorithmic timestep.
+- [x] Instantiated two unchanged P03-compatible HLS compute endpoints.
+- [x] Added resource-scaled physical backing memories while preserving the full
+      logical-capacity contract.
+- [x] Converted routed destination-axon packets into each endpoint's next-tick
+      event list without adding an algorithmic timestep.
 - [x] Added deterministic multicore Python/HLS and physical-vector generation.
 - [x] Validated feed-forward, recurrence, simultaneous producers, fan-in, and
-      local/remote multicast in the two-core Python↔HLS differential corpus.
-- [x] Validated both forward and reversed legal packet-service orders.
-- [x] Corrected the packet-memory streamer completion handshake after the first
-      repeated-timestep controller run exposed a stale sticky `done` condition.
-- [x] Corrected controller XSim passed on 2026-09-29 with no `FAIL:` diagnostics.
-- [x] Full P04 source preflight passed after the correction.
-- [x] Integrated two-endpoint synthesis completed successfully on the K26 target.
+      local/remote multicast in the Python↔HLS differential corpus.
+- [x] Validated forward and reversed legal packet-service orders.
+- [x] Corrected the packet-memory streamer completion handshake after repeated
+      timesteps exposed stale sticky `done` state.
+- [x] Added a regression for HLS-ready-low startup after physical bring-up showed
+      that pre-gating `ap_start` on `ap_ready` could deadlock the first tick.
+- [x] Corrected controller XSim and the full P04 source preflight passed.
 
 ### P04.4 — K26 implementation/resource gate — **Verified**
 
 - [x] Routed the integrated P04 shell at a requested 100 MHz.
-- [x] Closed routed setup timing with WNS `+0.987 ns`.
-- [x] Closed routed hold timing with WHS `+0.010 ns`.
-- [x] Recorded routed utilization: `7,065` CLB LUTs, `9,999` CLB registers,
-      `49 / 144` BRAM tiles, `0` URAM, and `4` DSPs.
+- [x] Demonstrated a two-endpoint physical fixture using 49 BRAM tiles in the
+      preconditioned implementation, far below the approximately 193 BRAM tiles
+      required for two literal P03 full-memory shells.
 - [x] Recorded the physical validation allocation separately from logical Loihi
-      occupancy; routed metrics report `logical_capacity_changed=0`.
-- [x] Generated routed `.bit`, `.ltx`, checkpoint, timing, utilization, bus-skew,
-      DRC, and methodology artifacts.
-- [x] Replaced the invalid write to read-only `proc_sys_reset/C_EXT_RESET_HIGH`
-      with explicit board-preset readback; the accepted KV260 build reports
-      `C_EXT_RESET_HIGH=1` and the physical harness now uses active-high reset.
-- [x] Final routed build completed with no reported errors/critical warnings and
-      all reported bus-skew constraints met; minimum reported bus-skew slack was
-      `+9.517 ns`.
+      occupancy; implementation metrics report `logical_capacity_changed=0`.
+- [x] Generated `.bit`, `.ltx`, checkpoint, timing, utilization, bus-skew, DRC,
+      and methodology artifacts.
+- [x] Diagnosed the board reset path with a reset-independent PL0 counter and
+      direct observation of `peripheral_aresetn`.
+- [x] Replaced the functional `proc_sys_reset` dependency with the
+      source-controlled `p04_reset_conditioner` using active-high VIO reset
+      request and a 16-PL-cycle synchronous release interval.
+- [x] Promoted the conditioned project into the canonical `run_p04_impl.sh`
+      output so `p04_two_core.bit/.ltx` are the same artifact class used by the
+      normal physical harness.
+- [x] Rebuilt the canonical conditioned implementation before final board
+      acceptance.
 
-The resource result confirms the P04 memory decision: two genuine compute
-engines plus routing/control fit using 49 BRAM tiles rather than the roughly 193
-BRAM tiles that two literal full-capacity P03 memory shells would require. This
-is a physical validation-shell result, not a claim that two maximally populated
-logical cores are simultaneously resident; P05 remains responsible for that
-transparent context-storage problem.
+### P04.5 — Physical multicore conformance — **Verified**
 
-### P04.5 — Physical multicore conformance — **In progress**
+- [x] Programmed the K26 with the canonical P04 `.bit/.ltx` artifacts.
+- [x] Verified reset release using the free-running heartbeat.
+- [x] Passed physical write/read preflight for both endpoint memory fabrics.
+- [x] Executed the two-timestep feed-forward corpus under both legal packet
+      service priorities.
+- [x] Executed the three-timestep recurrent local+remote multicast corpus under
+      both legal packet service priorities.
+- [x] Compared physical core state, trace data, packets, next-timestep events,
+      spike counts, packet counts, local/remote traffic, barrier completion, and
+      status/error observations against Python-generated expectations.
+- [x] Verified nonzero physical cycle counts on every directed tick.
+- [x] Archived the final accepted evidence under
+      `hardware/evidence/p04_physical_20260929T211309Z/`.
+- [x] Final result: `schema=p04-physical-conformance-v1`, `result=PASS`.
 
-- [ ] Execute the directed multicore corpus on the K26.
-- [ ] Compare core state, packets, barrier state, and status to Python.
-- [ ] Re-run with an alternate legal packet-service priority where supported.
-- [ ] Archive the physical result, generated vectors, run log, routed reports,
-      and bitstream/debug-probe SHA-256 identities under `hardware/evidence/`.
+Accepted physical observations:
+
+| Scenario | Reverse priority | Timestep | PL cycles | Local packets | Remote packets |
+|---|---:|---:|---:|---:|---:|
+| feed_forward | 0 | 0 | 28 | 0 | 1 |
+| feed_forward | 0 | 1 | 21 | 0 | 0 |
+| feed_forward | 1 | 0 | 28 | 0 | 1 |
+| feed_forward | 1 | 1 | 21 | 0 | 0 |
+| recurrent_multicast | 0 | 0 | 33 | 2 | 2 |
+| recurrent_multicast | 0 | 1 | 39 | 2 | 2 |
+| recurrent_multicast | 0 | 2 | 39 | 2 | 2 |
+| recurrent_multicast | 1 | 0 | 33 | 2 | 2 |
+| recurrent_multicast | 1 | 1 | 39 | 2 | 2 |
+| recurrent_multicast | 1 | 2 | 39 | 2 | 2 |
+
+The final heartbeat check observed `4,710,844 -> 7,448,013` across the reset
+release interval before the harness proceeded into memory and compute testing.
+These physical cycle counts are implementation observations for the directed
+corpus, not native-Loihi timing claims.
 
 ## Required deliverables
 
-- [x] Instantiate or schedule at least two logical cores in the integrated FPGA path.
-- [x] Implement destination-core / destination-axon packet delivery in the standalone RTL fabric.
+- [x] Instantiate at least two logical compute endpoints in the integrated FPGA path.
+- [x] Implement destination-core / destination-axon packet delivery.
 - [x] Implement explicit local versus remote routing accounting.
 - [x] Support simultaneous packet sources at the routing boundary.
-- [x] Demonstrate fan-in and fanout through integrated compute endpoints in the
-      source-level Python↔HLS differential corpus.
-- [x] Define and implement explicit packet queue/backpressure behavior.
+- [x] Demonstrate fan-in and fanout through integrated compute endpoints.
+- [x] Define and implement packet queue/backpressure behavior.
 - [x] Implement quiescence/completion detection and timestep advancement.
-- [x] Demonstrate cross-core recurrence without execution-order dependence in
-      the integrated source-level differential corpus.
-- [x] Expose packet/core/timestep/barrier state in normalized software traces;
-      physical FPGA trace comparison remains the P04.5 gate.
+- [x] Demonstrate cross-core recurrence without execution-order dependence.
+- [x] Expose packet/core/timestep/barrier state in normalized software and
+      physical differential validation.
 
 ## Required validation
 
@@ -503,17 +476,17 @@ transparent context-storage problem.
 - [x] Bidirectional/recurrent two-core network through integrated compute endpoints.
 - [x] Multiple simultaneous packet producers.
 - [x] Multicast to local and remote destinations through integrated compute endpoints.
-- [x] Different legal packet-service orders produce identical source-level
-      normalized results.
+- [x] Different legal packet-service orders produce identical normalized results.
 - [x] A timestep cannot advance while current-timestep traffic remains pending.
+- [x] Physical K26 execution matches the Python-directed corpus under both legal
+      service priorities.
 
 ## Completion gate
 
-P04 is complete when multicore hardware execution is deterministic at the
-normalized architectural boundary and independent of incidental FPGA service
-ordering. P04.1-P04.4 are verified. The remaining gate is P04.5: physical K26
-conformance against the Python-generated directed corpus under both legal packet
-service priorities.
+**Complete.** Multicore hardware execution is deterministic at the normalized
+architectural boundary and independent of the tested legal FPGA packet-service
+ordering. P04.1-P04.5 are verified, including canonical physical K26
+conformance and archived evidence.
 
 **Next phase:** P05 — logical-core virtualization.
 
@@ -521,12 +494,20 @@ service priorities.
 
 # P05 — Logical-core virtualization
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-29
 
 ## Goal
 
 Support more logical Loihi-like cores than physically instantiated FPGA compute
 engines while preserving visible architecture and logical limits.
+
+P05 begins from the accepted P04 boundary: two physical compute endpoints,
+destination-core/destination-axon packet routing, quiescence/barrier semantics,
+normalized state/packet visibility, a physically verified reset/control path,
+and a clear distinction between logical Loihi capacity and physical FPGA
+allocation. P05 must remove the P04 validation fixture's context-retention
+limitation without changing those externally visible semantics.
 
 ## Required deliverables
 
@@ -537,6 +518,9 @@ engines while preserving visible architecture and logical limits.
 - [ ] Report both logical core count and physical engine count.
 - [ ] Report physical FPGA occupancy separately from logical Loihi occupancy.
 - [ ] Maintain transparent logical-core-to-engine mapping.
+- [ ] Preserve the accepted P04 packet format, barrier contract, reset strategy,
+      and host/debug observability unless a change is explicitly justified and
+      regression-tested.
 
 ## Required validation
 
@@ -544,10 +528,14 @@ engines while preserving visible architecture and logical limits.
 - [ ] Run the same network with different legal logical-core service orders.
 - [ ] Confirm identical normalized logical state/spike/packet traces.
 - [ ] Confirm logical capacity errors cannot be bypassed by physical sharing.
+- [ ] Demonstrate more logical cores/contexts than simultaneously resident
+      physical compute endpoints on the K26.
 
 ## Completion gate
 
-P05 is complete when **virtualization invariance** is demonstrated.
+P05 is complete when **virtualization invariance** is demonstrated: logical
+network behavior and normalized traces remain unchanged when the number or legal
+service order of physical execution engines changes.
 
 **Next phase:** P06 — deterministic mapper/compiler.
 
@@ -702,6 +690,14 @@ relevant implementation layer exists:
 3. **Physical application behavior** — a K26 deployment reproduces the golden
    workload result.
 
+Hardware-only control assumptions must not be inferred solely from source-level
+simulation. P04 specifically demonstrated that reset release and HLS transaction
+startup can fail on the physical board despite passing software/HLS/RTL tests.
+When practical, regressions should therefore preserve the hardware condition
+that exposed the failure (for example, ready-low startup), and physical gates
+should retain direct observability such as reset-independent clocks/heartbeats,
+pollable completion counters, and archived artifact identities.
+
 The normalized v2 trace boundary should expose, when practical:
 
 ```text
@@ -760,12 +756,15 @@ Loihi_Digital_Twin/
     │   ├── P03_INTEGRATION_CHALLENGES.md
     │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
     │   ├── P03_VIVADO_IMPLEMENTATION.md
-    │   └── P04_MULTICORE_ARCHITECTURE.md
+    │   ├── P04_MULTICORE_ARCHITECTURE.md
+    │   ├── P04_INTEGRATION_IMPLEMENTATION.md
+    │   └── P04_INTEGRATION_CHALLENGES.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/               P03 one-core HLS source and packaging flow
+    ├── hls/core_v2/               accepted P03/P04-compatible HLS compute core
     ├── rtl/                       v2 RTL integration/observability logic
     ├── vivado/                    source-controlled K26 build flows
     ├── hardware/                  physical programming/conformance flows
+    │   └── evidence/              archived accepted physical evidence
     ├── tests/                     directed architecture/packing tests
     ├── scripts/                   phase validation tools
     └── examples/                  corpus generators and architecture examples
@@ -797,6 +796,5 @@ Before moving to the next phase:
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
 
-This keeps v2 driven by an explicit source-backed contract and makes project
-status recoverable directly from this file without reconstructing intent from
-commit history or conversation context.
+P04 satisfied this rule on 2026-09-29 when the canonical K26 physical evidence
+reported `result=PASS`; P05 is therefore the active phase.
