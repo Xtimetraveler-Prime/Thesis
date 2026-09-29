@@ -1,6 +1,6 @@
 # P03 post-route implementation shell for one packaged loihi_core_v2_tick IP.
-if {$argc != 8} {
-    error "usage: create_p03_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <monitor_rtl> <host_bridge_rtl> <report_dir> <jobs>"
+if {$argc != 9} {
+    error "usage: create_p03_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <monitor_rtl> <host_bridge_rtl> <memory_fabric_rtl> <report_dir> <jobs>"
 }
 
 set ip_repo_dir [file normalize [lindex $argv 0]]
@@ -9,10 +9,11 @@ set target_part [lindex $argv 2]
 set expected_vlnv [lindex $argv 3]
 set monitor_rtl [file normalize [lindex $argv 4]]
 set host_bridge_rtl [file normalize [lindex $argv 5]]
-set report_dir [file normalize [lindex $argv 6]]
-set jobs [lindex $argv 7]
+set memory_fabric_rtl [file normalize [lindex $argv 6]]
+set report_dir [file normalize [lindex $argv 7]]
+set jobs [lindex $argv 8]
 
-foreach path [list $ip_repo_dir $monitor_rtl $host_bridge_rtl] {
+foreach path [list $ip_repo_dir $monitor_rtl $host_bridge_rtl $memory_fabric_rtl] {
     if {![file exists $path]} { error "Required P03 input does not exist: $path" }
 }
 file mkdir $report_dir
@@ -24,6 +25,7 @@ set bd_name "loihi_twin_v2_p03_impl"
 create_project $project_name $project_dir -part $target_part -force
 set_property TARGET_LANGUAGE Verilog [current_project]
 set_property SIMULATOR_LANGUAGE Mixed [current_project]
+set_property XPM_LIBRARIES XPM_MEMORY [current_project]
 
 set kv260_board_parts [get_board_parts -quiet xilinx.com:kv260_som:part0:*]
 if {[llength $kv260_board_parts] == 0} {
@@ -33,10 +35,10 @@ set kv260_board_part [lindex [lsort -dictionary $kv260_board_parts] end]
 set_property BOARD_PART $kv260_board_part [current_project]
 puts "P03 K26 SOM board preset: $kv260_board_part"
 
-add_files -norecurse $monitor_rtl
-add_files -norecurse $host_bridge_rtl
-set_property file_type Verilog [get_files $monitor_rtl]
-set_property file_type Verilog [get_files $host_bridge_rtl]
+foreach rtl [list $monitor_rtl $host_bridge_rtl $memory_fabric_rtl] {
+    add_files -norecurse $rtl
+    set_property file_type Verilog [get_files $rtl]
+}
 update_compile_order -fileset sources_1
 
 set_property IP_REPO_PATHS [list $ip_repo_dir] [current_fileset]
@@ -49,7 +51,6 @@ foreach required_ip {
     xilinx.com:ip:vio:3.0
     xilinx.com:ip:proc_sys_reset:5.0
     xilinx.com:ip:xlconstant:1.1
-    xilinx.com:ip:blk_mem_gen:8.4
 } {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found: $required_ip"
@@ -89,24 +90,12 @@ proc first_bd_pin {cell candidates} {
 
 proc hls_memory_pin {hls_name arg_name role required} {
     switch -- $role {
-        address {
-            set candidates [list ${arg_name}_address0 ${arg_name}_address ${arg_name}_Addr_A]
-        }
-        ce {
-            set candidates [list ${arg_name}_ce0 ${arg_name}_ce ${arg_name}_EN_A]
-        }
-        we {
-            set candidates [list ${arg_name}_we0 ${arg_name}_we ${arg_name}_WEN_A]
-        }
-        din {
-            set candidates [list ${arg_name}_d0 ${arg_name}_d ${arg_name}_Din_A]
-        }
-        dout {
-            set candidates [list ${arg_name}_q0 ${arg_name}_q ${arg_name}_Dout_A]
-        }
-        default {
-            error "Unknown P03 HLS memory-pin role: $role"
-        }
+        address { set candidates [list ${arg_name}_address0 ${arg_name}_address ${arg_name}_Addr_A] }
+        ce      { set candidates [list ${arg_name}_ce0 ${arg_name}_ce ${arg_name}_EN_A] }
+        we      { set candidates [list ${arg_name}_we0 ${arg_name}_we ${arg_name}_WEN_A] }
+        din     { set candidates [list ${arg_name}_d0 ${arg_name}_d ${arg_name}_Din_A] }
+        dout    { set candidates [list ${arg_name}_q0 ${arg_name}_q ${arg_name}_Dout_A] }
+        default { error "Unknown P03 HLS memory-pin role: $role" }
     }
     set pin [first_bd_pin $hls_name $candidates]
     if {$required && $pin eq ""} {
@@ -125,69 +114,25 @@ proc require_bd_pin {cell pin_name} {
     return $pin
 }
 
-proc connect_hls_memory_dual {hls_name host_name arg_name depth width clock_pin zero_pin} {
-    # Port A is the word-addressed HLS ap_memory interface. Port B belongs to
-    # p03_memory_host_bridge. True dual-port storage keeps every configuration,
-    # state, event, trace, and packet bank both programmable and observable.
+proc connect_hls_memory_fabric {hls_name fabric_name arg_name mode} {
     set address [hls_memory_pin $hls_name $arg_name address 1]
     set ce [hls_memory_pin $hls_name $arg_name ce 1]
-    set we [hls_memory_pin $hls_name $arg_name we 0]
-    set din [hls_memory_pin $hls_name $arg_name din 0]
-    set dout [hls_memory_pin $hls_name $arg_name dout 0]
+    connect_bd_net $address [require_bd_pin $fabric_name ${arg_name}_addra]
+    connect_bd_net $ce [require_bd_pin $fabric_name ${arg_name}_ena]
 
-    set mem [create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ${arg_name}_mem]
-    set_property -dict [list \
-        CONFIG.Memory_Type {True_Dual_Port_RAM} \
-        CONFIG.Assume_Synchronous_Clk {true} \
-        CONFIG.Write_Width_A $width \
-        CONFIG.Read_Width_A $width \
-        CONFIG.Write_Depth_A $depth \
-        CONFIG.Write_Width_B $width \
-        CONFIG.Read_Width_B $width \
-        CONFIG.Enable_A {Use_ENA_Pin} \
-        CONFIG.Enable_B {Use_ENB_Pin} \
-        CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
-        CONFIG.Register_PortB_Output_of_Memory_Primitives {false}] $mem
-
-    set clka [require_bd_pin ${arg_name}_mem clka]
-    set addra [require_bd_pin ${arg_name}_mem addra]
-    set ena [require_bd_pin ${arg_name}_mem ena]
-    set wea [require_bd_pin ${arg_name}_mem wea]
-    set bmg_dina [require_bd_pin ${arg_name}_mem dina]
-    set bmg_douta [require_bd_pin ${arg_name}_mem douta]
-
-    set clkb [require_bd_pin ${arg_name}_mem clkb]
-    set addrb [require_bd_pin ${arg_name}_mem addrb]
-    set enb [require_bd_pin ${arg_name}_mem enb]
-    set web [require_bd_pin ${arg_name}_mem web]
-    set bmg_dinb [require_bd_pin ${arg_name}_mem dinb]
-    set bmg_doutb [require_bd_pin ${arg_name}_mem doutb]
-
-    connect_bd_net $clock_pin $clka $clkb
-    connect_bd_net $address $addra
-    connect_bd_net $ce $ena
-
-    if {$we ne ""} {
-        if {$din eq ""} {
-            error "P03 write-enabled HLS memory $arg_name is missing data input"
-        }
-        connect_bd_net $we $wea
-        connect_bd_net $din $bmg_dina
-    } else {
-        connect_bd_net $zero_pin $wea
+    if {$mode eq "rw" || $mode eq "w"} {
+        set we [hls_memory_pin $hls_name $arg_name we 1]
+        set din [hls_memory_pin $hls_name $arg_name din 1]
+        connect_bd_net $we [require_bd_pin $fabric_name ${arg_name}_wea]
+        connect_bd_net $din [require_bd_pin $fabric_name ${arg_name}_dina]
     }
 
-    if {$dout ne ""} {
-        connect_bd_net $bmg_douta $dout
+    if {$mode eq "rw" || $mode eq "r"} {
+        set dout [hls_memory_pin $hls_name $arg_name dout 1]
+        connect_bd_net [require_bd_pin $fabric_name ${arg_name}_douta] $dout
     }
 
-    connect_bd_net [require_bd_pin $host_name ${arg_name}_addrb] $addrb
-    connect_bd_net [require_bd_pin $host_name ${arg_name}_enb] $enb
-    connect_bd_net [require_bd_pin $host_name ${arg_name}_web] $web
-    connect_bd_net [require_bd_pin $host_name ${arg_name}_dinb] $bmg_dinb
-    connect_bd_net $bmg_doutb [require_bd_pin $host_name ${arg_name}_doutb]
-
-    puts "P03 retained dual-port memory: $arg_name depth=$depth width=$width hls_address=$address hls_ce=$ce hls_we=$we"
+    puts "P03 XPM compute memory: $arg_name mode=$mode address=$address ce=$ce"
 }
 
 create_bd_design $bd_name
@@ -203,7 +148,7 @@ set_property -dict [list \
 
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv loihi_core_v2_tick_0]
 set monitor [create_bd_cell -type module -reference p03_run_monitor p03_run_monitor_0]
-set host [create_bd_cell -type module -reference p03_memory_host_bridge p03_memory_host_bridge_0]
+set fabric [create_bd_cell -type module -reference p03_memory_fabric p03_memory_fabric_0]
 set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_p03]
 set_property -dict [list \
     CONFIG.C_NUM_PROBE_IN {16} \
@@ -249,7 +194,7 @@ set zero_pin [get_bd_pins const_zero_p03/dout]
 connect_bd_net $pl_clk_pin \
     [get_bd_pins loihi_core_v2_tick_0/ap_clk] \
     [get_bd_pins p03_run_monitor_0/ap_clk] \
-    [get_bd_pins p03_memory_host_bridge_0/clk] \
+    [get_bd_pins p03_memory_fabric_0/clk] \
     [get_bd_pins vio_p03/clk] \
     [get_bd_pins proc_sys_reset_p03/slowest_sync_clk]
 connect_named_pair p03_reset_command vio_p03/probe_out1 proc_sys_reset_p03/ext_reset_in
@@ -260,23 +205,13 @@ connect_bd_net $zero_pin [get_bd_pins proc_sys_reset_p03/mb_debug_sys_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_reset] [get_bd_pins loihi_core_v2_tick_0/ap_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p03/peripheral_aresetn] \
     [get_bd_pins p03_run_monitor_0/resetn] \
-    [get_bd_pins p03_memory_host_bridge_0/resetn]
+    [get_bd_pins p03_memory_fabric_0/resetn]
 
-# The run monitor arbitrates compute-start against the host/debug memory path.
 connect_named_pair p03_start_request vio_p03/probe_out0 p03_run_monitor_0/start_request
 connect_named_pair p03_core_start p03_run_monitor_0/core_start loihi_core_v2_tick_0/ap_start
-connect_named_triple p03_done \
-    loihi_core_v2_tick_0/ap_done \
-    p03_run_monitor_0/done \
-    vio_p03/probe_in0
-connect_named_triple p03_monitor_busy \
-    p03_run_monitor_0/busy \
-    p03_memory_host_bridge_0/compute_busy \
-    vio_p03/probe_in6
-connect_named_triple p03_host_busy \
-    p03_memory_host_bridge_0/host_busy \
-    p03_run_monitor_0/host_busy \
-    vio_p03/probe_in10
+connect_named_triple p03_done loihi_core_v2_tick_0/ap_done p03_run_monitor_0/done vio_p03/probe_in0
+connect_named_triple p03_monitor_busy p03_run_monitor_0/busy p03_memory_fabric_0/compute_busy vio_p03/probe_in6
+connect_named_triple p03_host_busy p03_memory_fabric_0/host_busy p03_run_monitor_0/host_busy vio_p03/probe_in10
 
 connect_named_pair p03_compartment_count vio_p03/probe_out2 loihi_core_v2_tick_0/compartment_count
 connect_named_pair p03_event_count vio_p03/probe_out3 loihi_core_v2_tick_0/event_count
@@ -294,46 +229,29 @@ connect_named_pair p03_last_run_cycles p03_run_monitor_0/last_run_cycles vio_p03
 connect_named_pair p03_heartbeat p03_run_monitor_0/heartbeat vio_p03/probe_in9
 connect_named_pair p03_start_blocked p03_run_monitor_0/start_blocked vio_p03/probe_in15
 
-# Unified host/debug request interface. The 256-bit data word is a superset of
-# all P03 bank widths; narrow banks use the least-significant bits.
-connect_named_pair p03_host_req vio_p03/probe_out7 p03_memory_host_bridge_0/req
-connect_named_pair p03_host_write vio_p03/probe_out8 p03_memory_host_bridge_0/write
-connect_named_pair p03_host_bank vio_p03/probe_out9 p03_memory_host_bridge_0/bank
-connect_named_pair p03_host_addr vio_p03/probe_out10 p03_memory_host_bridge_0/addr
-connect_named_pair p03_host_wdata vio_p03/probe_out11 p03_memory_host_bridge_0/wdata
-connect_named_pair p03_host_ack p03_memory_host_bridge_0/ack vio_p03/probe_in11
-connect_named_pair p03_host_rvalid p03_memory_host_bridge_0/rvalid vio_p03/probe_in12
-connect_named_pair p03_host_error p03_memory_host_bridge_0/error vio_p03/probe_in13
-connect_named_pair p03_host_rdata p03_memory_host_bridge_0/rdata vio_p03/probe_in14
+connect_named_pair p03_host_req vio_p03/probe_out7 p03_memory_fabric_0/host_req
+connect_named_pair p03_host_write vio_p03/probe_out8 p03_memory_fabric_0/host_write
+connect_named_pair p03_host_bank vio_p03/probe_out9 p03_memory_fabric_0/host_bank
+connect_named_pair p03_host_addr vio_p03/probe_out10 p03_memory_fabric_0/host_addr
+connect_named_pair p03_host_wdata vio_p03/probe_out11 p03_memory_fabric_0/host_wdata
+connect_named_pair p03_host_ack p03_memory_fabric_0/host_ack vio_p03/probe_in11
+connect_named_pair p03_host_rvalid p03_memory_fabric_0/host_rvalid vio_p03/probe_in12
+connect_named_pair p03_host_error p03_memory_fabric_0/host_error vio_p03/probe_in13
+connect_named_pair p03_host_rdata p03_memory_fabric_0/host_rdata vio_p03/probe_in14
 
-# Full transparent one-core memory boundary. Port A belongs to the HLS core;
-# Port B remains live through the host/debug bridge so synthesis cannot discard
-# configuration, state, event, trace, or packet storage as unobservable.
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 config_words 1024 128 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 state_words 1024 64 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 axon_words 4096 64 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 synapse_words 32768 64 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 route_desc_words 1024 32 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 route_words 4096 32 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 input_events 4096 32 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 trace_words 1024 256 $pl_clk_pin $zero_pin
-connect_hls_memory_dual loihi_core_v2_tick_0 p03_memory_host_bridge_0 packet_words 4096 64 $pl_clk_pin $zero_pin
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 config_words r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 state_words rw
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 axon_words r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 synapse_words r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 route_desc_words r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 route_words r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 input_events r
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 trace_words w
+connect_hls_memory_fabric loihi_core_v2_tick_0 p03_memory_fabric_0 packet_words w
 
 validate_bd_design
-
-foreach arg_name {
-    config_words state_words axon_words synapse_words route_desc_words
-    route_words input_events trace_words packet_words
-} {
-    set mem [get_bd_cells ${arg_name}_mem]
-    if {[get_property CONFIG.Memory_Type $mem] ne "True_Dual_Port_RAM"} {
-        error "P03 memory $arg_name is not true dual port after validation"
-    }
-    puts "P03 resolved retained memory: $arg_name type=[get_property CONFIG.Memory_Type $mem] write_width_a=[get_property CONFIG.Write_Width_A $mem] read_width_a=[get_property CONFIG.Read_Width_A $mem] write_width_b=[get_property CONFIG.Write_Width_B $mem] read_width_b=[get_property CONFIG.Read_Width_B $mem] depth=[get_property CONFIG.Write_Depth_A $mem]"
-}
-
 save_bd_design
-puts "P03 retained dual-port block design validated successfully."
+puts "P03 fixed-depth XPM memory-fabric block design validated successfully."
 
 set bd_file [lindex [get_files -quiet */${bd_name}.bd] 0]
 if {$bd_file eq ""} { error "P03 block design file was not found" }
@@ -358,7 +276,7 @@ set util_text [report_utilization -return_string]
 set util_file [open [file join $report_dir utilization_post_route.rpt] w]
 puts $util_file $util_text
 close $util_file
-report_utilization -hierarchical -hierarchical_depth 5 \
+report_utilization -hierarchical -hierarchical_depth 7 \
     -file [file join $report_dir utilization_hierarchical_post_route.rpt]
 report_clock_utilization -file [file join $report_dir clock_utilization_post_route.rpt]
 report_bus_skew -file [file join $report_dir bus_skew_post_route.rpt]
@@ -366,7 +284,12 @@ report_drc -file [file join $report_dir drc_post_route.rpt]
 report_methodology -file [file join $report_dir methodology_post_route.rpt]
 write_checkpoint -force [file join $report_dir p03_post_route.dcp]
 
-# Use the same routed timing-path queries that were proven in the v1 K26 flow.
+set primitive_file [open [file join $report_dir memory_primitives_post_route.rpt] w]
+foreach c [lsort [get_cells -hierarchical -filter {REF_NAME == RAMB36E2 || REF_NAME == RAMB18E2 || REF_NAME == URAM288}]] {
+    puts $primitive_file "[get_property REF_NAME $c] $c"
+}
+close $primitive_file
+
 set setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
 set hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
 set metrics [open [file join $report_dir p03_post_route_metrics.txt] w]
@@ -387,20 +310,14 @@ if {[llength $hold_paths] > 0} {
     puts "P03_POST_ROUTE_WHS_NS=NA"
 }
 
-# The full nine-bank external image contains 3,375,104 raw bits. Since these
-# banks are explicitly Block Memory Generator BRAMs, a routed result near the
-# old 26-tile baseline would prove that storage was still optimized away. Use a
-# deliberately conservative 80-tile floor rather than claiming exact packing.
 set expected_external_memory_bits 3375104
 set minimum_retained_bram_tiles 80.0
-set bram_tiles ""
-if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> parsed_bram_tiles]} {
-    set bram_tiles $parsed_bram_tiles
+if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} {
     puts $metrics "block_ram_tiles=$bram_tiles"
     puts "P03_POST_ROUTE_BRAM_TILES=$bram_tiles"
     if {[expr {double($bram_tiles) < $minimum_retained_bram_tiles}]} {
         close $metrics
-        error "P03 memory-retention assertion failed: Block RAM Tile=$bram_tiles, expected at least $minimum_retained_bram_tiles for the retained nine-bank shell"
+        error "P03 XPM memory-retention assertion failed: Block RAM Tile=$bram_tiles, expected at least $minimum_retained_bram_tiles"
     }
 } else {
     close $metrics
@@ -409,11 +326,11 @@ if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> parsed_bram_
 
 puts $metrics "expected_external_memory_bits=$expected_external_memory_bits"
 puts $metrics "memory_retention_min_bram_tiles=$minimum_retained_bram_tiles"
-puts $metrics "memory_shell=retained_true_dual_port_v1"
+puts $metrics "memory_shell=xpm_true_dual_port_v2"
 puts $metrics "target_part=$target_part"
 puts $metrics "board_part=$kv260_board_part"
 puts $metrics "pl_clock_requested_mhz=100"
 close $metrics
 
-puts "P03 retained dual-port routed implementation completed successfully."
+puts "P03 fixed-depth XPM routed implementation completed successfully."
 puts "P03 reports: $report_dir"
