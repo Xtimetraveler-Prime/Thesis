@@ -19,7 +19,7 @@ from .hardware_p03 import (
     unpack_output_packet,
 )
 from .mapping import Deployment
-from .packet import PacketClass, SpikePacket
+from .packet import PacketClass, RouteScope, SpikePacket
 from .reporting import deployment_report, trace_report
 from .resources import (
     MAX_COMPARTMENTS_PER_CORE,
@@ -49,6 +49,7 @@ __all__ = [
     "LogicalCoreConfig",
     "Deployment",
     "PacketClass",
+    "RouteScope",
     "SpikePacket",
     "deployment_report",
     "trace_report",
