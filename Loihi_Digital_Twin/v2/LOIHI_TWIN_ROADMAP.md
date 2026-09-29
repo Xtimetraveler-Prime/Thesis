@@ -39,14 +39,26 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P03 complete — P04 is next.**
+> **P04 in progress — multicore packet routing and barrier semantics.**
 >
-> P03 closed on 2026-09-28 after the physical K26 T10 conformance gate passed.
-> The one-core implementation now has accepted Python/HLS, C/RTL, routed-K26,
-> nine-bank physical memory, and Python/FPGA differential evidence. The physical
-> corpus completed five directed timesteps with exact state/trace/packet
-> comparisons and `status=0` on every tick. P04 remains **Planned** until the
-> accepted P03 branch is merged according to the project branch workflow.
+> P04 started on 2026-09-28 from the accepted P03 baseline. P04.1 golden-model
+> contract closure and P04.2 standalone router/barrier RTL are now verified:
+> the targeted and full Python regressions pass, and the Vivado 2025.2 XSim
+> directed gate reaches `PASS` while exercising simultaneous producers,
+> destination routing, local/remote accounting, queue draining, reversed legal
+> service priority, and blocked timestep advancement while traffic remains in
+> flight. P04.3 is active and integrates two P03-compatible compute endpoints
+> through that verified fabric.
+>
+> The accepted P03 shell occupies 96.5 of 144 K26 BRAM tiles, so blindly
+> duplicating two full-capacity P03 physical memory shells would require about
+> 193 BRAM tiles before adding any router/barrier storage. P04 therefore keeps
+> all logical Loihi capacities unchanged while using a **resource-scaled physical
+> validation allocation** for the directed two-endpoint corpus. This is a
+> physical test-shell choice only; it is not a smaller logical core and it is
+> not transparent core virtualization. P05 remains responsible for retaining
+> and scheduling multiple independent full logical-core contexts on fewer
+> physical resources.
 
 ---
 
@@ -58,7 +70,7 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P01 | Define Loihi-1 target and establish v2 project structure | Complete | 2026-09-28 | 2026-09-28 |
 | P02 | Build separate Python manycore golden model | Complete | 2026-09-28 | 2026-09-28 |
 | P03 | Implement and validate one FPGA-v2 logical core | Complete | 2026-09-28 | 2026-09-28 |
-| P04 | Add multicore packet routing and timestep/barrier semantics | Planned | — | — |
+| P04 | Add multicore packet routing and timestep/barrier semantics | In progress | 2026-09-28 | — |
 | P05 | Add logical-core virtualization | Planned | — | — |
 | P06 | Build deterministic mapper/compiler and deployment format | Planned | — | — |
 | P07 | Validate deeper mapped multicore SNNs | Planned | — | — |
@@ -328,7 +340,8 @@ physical conformance flow.
 
 # P04 — Multicore packet routing and timestep/barrier semantics
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-28
 
 ## Goal
 
@@ -336,32 +349,130 @@ Extend FPGA-v2 from an isolated logical core to a true multicore architectural
 model with explicit inter-core communication and deterministic algorithmic-time
 completion semantics.
 
+## Engineering decision: preserving logical capacity under the K26 memory limit
+
+P03 established a transparent full-capacity one-core physical reference shell,
+but that shell uses `96.5 / 144` K26 BRAM tiles. Two literal copies would need
+approximately `193` BRAM tiles before the P04 router, barrier, or any extra queue
+storage is counted. Therefore a naive two-full-shell implementation is not a
+physically valid P04 plan.
+
+The memory problem is treated as a **physical implementation constraint**, not
+an architectural permission to shrink the modeled Loihi core. P04 continues to
+enforce the source-backed logical limits of 1,024 compartments/core, 4,096 input
+axon IDs/core, 4,096 output-route slots/core, and 128 KiB modeled synaptic
+fan-in storage/core. A deployment that exceeds those logical limits remains
+invalid regardless of how little or how much FPGA memory happens to be present.
+
+Five approaches were considered:
+
+1. **Duplicate two full P03 memory shells.** Rejected because the measured BRAM
+   requirement exceeds the K26 before multicore transport is added.
+2. **Reduce the logical core capacities.** Rejected because FPGA fit must not
+   redefine the architecture being modeled.
+3. **Immediately move the large memories into URAM or external DDR.** Kept as a
+   later scaling option, but rejected as the first P04 step because it would
+   make routing/barrier validation depend on a new memory subsystem.
+4. **Immediately time-multiplex several full logical contexts through one
+   physical engine.** Rejected for P04 because that is the explicit P05
+   virtualization problem and would collapse the roadmap boundary.
+5. **Use two unchanged P03-compatible compute endpoints with physical backing
+   memories sized only for the directed P04 validation deployment.** Accepted.
+   This provides genuine simultaneous endpoint/routing behavior while clearly
+   reporting that the test shell is not capable of retaining two maximally
+   populated logical cores at once.
+
+The accepted option is therefore a **resource-scaled physical validation
+allocation**. It is intentionally analogous to using a smaller test fixture
+around the same processor interface: the logical architecture and its capacity
+checks remain full-sized in the specification/Python model, while the P04 FPGA
+fixture only retains addresses exercised by its directed corpus. P05 will later
+replace this fixture limitation with transparent logical-context storage and
+scheduling; the P04 packet format, router, barrier invariant, and normalized
+trace boundary are designed to remain reusable when that happens.
+
+The complete rationale and interface contract are recorded in
+`docs/P04_MULTICORE_ARCHITECTURE.md`.
+
+## Sub-milestone progress
+
+### P04.1 — Golden-model multicore contract closure — **Verified**
+
+- [x] Added explicit `external` / `local` / `remote` route-scope accounting.
+- [x] Added simultaneous remote producers and fan-in regression coverage.
+- [x] Added local+remote multicast regression coverage.
+- [x] Preserved feed-forward, recurrence, barrier blocking, and legal
+      service-order invariance behavior.
+- [x] Targeted multicore pytest passed locally on 2026-09-28.
+- [x] Full v2 pytest suite passed locally after the P04.1 changes.
+
+### P04.2 — Standalone packet-router/barrier RTL — **Verified**
+
+- [x] Added independent producer capture slots so simultaneous source assertions
+      are retained without depending on arbitration priority.
+- [x] Added deterministic arbitration with a reversible legal service priority.
+- [x] Added per-destination FIFOs with explicit ready/valid backpressure.
+- [x] Added P03 packet valid/destination/target-timestep integrity checks.
+- [x] Added local/remote traffic counters.
+- [x] Added per-core completion latching, in-flight accounting, `can_advance`,
+      accepted advance, and blocked-advance behavior.
+- [x] Added a directed XSim test that stalls destination traffic and proves a
+      timestep cannot advance until all traffic drains.
+- [x] Vivado 2025.2 XSim gate passed locally on 2026-09-28 with
+      `PASS: P04 packet router/barrier directed test completed successfully.`
+
+### P04.3 — Two-endpoint P03-core integration shell — **In progress**
+
+- [ ] Instantiate two P03-compatible HLS compute endpoints.
+- [ ] Add resource-scaled physical backing memories for the directed corpus.
+- [ ] Convert delivered destination-axon packets into each endpoint's next-tick
+      input-event list without introducing an extra algorithmic timestep.
+- [ ] Generate deterministic multicore Python/FPGA vectors.
+- [ ] Validate feed-forward, recurrence, simultaneous producers, fan-in, and
+      local/remote multicast through the integrated shell.
+- [ ] Pass source-level integration simulation and synthesis gates.
+
+### P04.4 — K26 implementation/resource gate — **Pending P04.3**
+
+- [ ] Route the integrated P04 shell at 100 MHz.
+- [ ] Report LUT/register/BRAM/URAM/DSP use separately from logical Loihi
+      occupancy.
+- [ ] Record queue depth and physical-memory implementation observations.
+- [ ] Generate a bitstream only after timing/resource acceptance.
+
+### P04.5 — Physical multicore conformance — **Pending P04.4**
+
+- [ ] Execute the directed multicore corpus on the K26.
+- [ ] Compare core state, packets, barrier state, and status to Python.
+- [ ] Re-run with an alternate legal packet-service priority where supported.
+
 ## Required deliverables
 
-- [ ] Instantiate or schedule at least two logical cores.
-- [ ] Implement destination-core / destination-axon packet delivery.
-- [ ] Implement local versus remote routing behavior.
-- [ ] Support simultaneous packet sources.
-- [ ] Support fan-in and fanout across cores.
-- [ ] Define and implement packet queue behavior required by the target spec.
-- [ ] Implement quiescence/completion detection and timestep advancement.
-- [ ] Support cross-core recurrence without execution-order dependence.
-- [ ] Expose packet/core/timestep/barrier state in normalized traces.
+- [ ] Instantiate or schedule at least two logical cores in the integrated FPGA path.
+- [x] Implement destination-core / destination-axon packet delivery in the standalone RTL fabric.
+- [x] Implement explicit local versus remote routing accounting.
+- [x] Support simultaneous packet sources at the routing boundary.
+- [ ] Demonstrate fan-in and fanout through integrated compute endpoints.
+- [x] Define and implement explicit packet queue/backpressure behavior.
+- [x] Implement standalone quiescence/completion detection and timestep advancement.
+- [ ] Demonstrate cross-core recurrence without execution-order dependence in integrated hardware.
+- [x] Expose packet/core/timestep/barrier state in normalized software traces; integrated FPGA trace comparison remains pending.
 
 ## Required validation
 
-- [ ] Two-core feed-forward network.
-- [ ] Bidirectional/recurrent two-core network.
-- [ ] Multiple simultaneous packet producers.
-- [ ] Multicast to local and remote destinations.
-- [ ] Different legal packet-service orders produce identical normalized results.
-- [ ] A timestep cannot advance while current-timestep traffic remains pending.
+- [ ] Two-core feed-forward network through integrated FPGA compute endpoints.
+- [ ] Bidirectional/recurrent two-core network through integrated FPGA compute endpoints.
+- [x] Multiple simultaneous packet producers at the standalone routing boundary.
+- [ ] Multicast to local and remote destinations through integrated compute endpoints.
+- [ ] Different legal packet-service orders produce identical integrated normalized results.
+- [x] A timestep cannot advance while current-timestep traffic remains pending in the standalone RTL fabric.
 
 ## Completion gate
 
 P04 is complete when multicore hardware execution is deterministic at the
 normalized architectural boundary and independent of incidental FPGA service
-ordering.
+ordering. Standalone router success is necessary but not sufficient: integrated
+compute-endpoint and physical K26 evidence are still required.
 
 **Next phase:** P05 — logical-core virtualization.
 
@@ -607,15 +718,16 @@ Loihi_Digital_Twin/
     │   ├── P02_DEPLOYMENT_SCHEMA.md
     │   ├── P03_INTEGRATION_CHALLENGES.md
     │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
-    │   └── P03_VIVADO_IMPLEMENTATION.md
+    │   ├── P03_VIVADO_IMPLEMENTATION.md
+    │   └── P04_MULTICORE_ARCHITECTURE.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/                P03 one-core HLS source and packaging flow
-    ├── rtl/                        v2 RTL integration/observability logic
-    ├── vivado/                     source-controlled K26 build flows
-    ├── hardware/                   physical programming/conformance flows
-    ├── tests/                      directed architecture/packing tests
-    ├── scripts/                    phase validation tools
-    └── examples/                   corpus generators and architecture examples
+    ├── hls/core_v2/               P03 one-core HLS source and packaging flow
+    ├── rtl/                       v2 RTL integration/observability logic
+    ├── vivado/                    source-controlled K26 build flows
+    ├── hardware/                  physical programming/conformance flows
+    ├── tests/                     directed architecture/packing tests
+    ├── scripts/                   phase validation tools
+    └── examples/                  corpus generators and architecture examples
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
