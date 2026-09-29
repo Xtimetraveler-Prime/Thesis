@@ -184,6 +184,11 @@ set_property -dict [list \
     CONFIG.C_PROBE_OUT11_WIDTH {256} CONFIG.C_PROBE_OUT11_INIT_VAL {0x0}] $vio
 
 set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_p03]
+# The VIO reset probe directly drives ext_reset_in.  proc_sys_reset defaults to
+# an active-low external reset; make that contract explicit so board scripts can
+# safely use 0=assert and 1=release without depending on an IP default.
+set_property -dict [list CONFIG.C_EXT_RESET_HIGH {0}] $rst
+puts "P03 external reset polarity: C_EXT_RESET_HIGH=[get_property CONFIG.C_EXT_RESET_HIGH $rst] (0=active-low)"
 set one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_p03]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $one
 set zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero_p03]
