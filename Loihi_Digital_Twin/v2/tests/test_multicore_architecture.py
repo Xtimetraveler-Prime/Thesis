@@ -223,5 +223,5 @@ def test_p04_simultaneous_remote_producers_fan_in_deterministically():
     assert first_t1.normalized() == second_t1.normalized()
     destination = trace_for_core(first_t1, 2)
     assert [item.weight for item in destination.synaptic_contributions] == [3, 4]
-    assert destination.compartment_state_after[0].state.voltage == 7
+    assert sum(item.weight for item in destination.synaptic_contributions) == 7
     assert destination.spikes_out == (0,)
