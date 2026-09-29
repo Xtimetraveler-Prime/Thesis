@@ -21,11 +21,19 @@ set bd_file [lindex [get_files -quiet */loihi_twin_v2_p04_impl.bd] 0]
 if {$bd_file eq ""} { error "P04 reset-conditioner flow could not find the block design" }
 open_bd_design $bd_file
 
-if {[llength [get_bd_cells -quiet p04_reset_conditioner_0]] == 0} {
+# Ensure the current reset RTL is in the project, then create or refresh the
+# module-reference cell so X_INTERFACE_INFO/X_INTERFACE_PARAMETER metadata from
+# the source file is applied even after an earlier failed candidate attempt.
+if {[llength [get_files -quiet $reset_rtl]] == 0} {
     add_files -norecurse $reset_rtl
     set_property file_type Verilog [get_files $reset_rtl]
-    update_compile_order -fileset sources_1
+}
+update_compile_order -fileset sources_1
+
+if {[llength [get_bd_cells -quiet p04_reset_conditioner_0]] == 0} {
     create_bd_cell -type module -reference p04_reset_conditioner p04_reset_conditioner_0
+} else {
+    update_module_reference [get_bd_cells p04_reset_conditioner_0]
 }
 
 # Reuse the exact PL0 clock and VIO reset-command nets already present in P04.
@@ -41,24 +49,30 @@ if {[llength [get_bd_nets -quiet -of_objects [get_bd_pins p04_reset_conditioner_
     connect_bd_net -net $reset_cmd_net [get_bd_pins p04_reset_conditioner_0/reset_request]
 }
 
-# Detach proc_sys_reset from the functional endpoints. It is intentionally left
-# instantiated so diagnostic builds can still observe its stuck output.
-set old_reset_net [get_bd_nets -quiet -of_objects [get_bd_pins proc_sys_reset_p04/peripheral_reset]]
-set old_resetn_net [get_bd_nets -quiet -of_objects [get_bd_pins proc_sys_reset_p04/peripheral_aresetn]]
-if {[llength $old_reset_net] != 1 || [llength $old_resetn_net] != 1} {
-    error "P04 expected proc_sys_reset functional reset nets"
+# Disconnect each functional reset endpoint from whatever reset net currently
+# drives it. Querying the endpoint makes this flow idempotent and safe after a
+# partially completed earlier candidate run.
+proc p04_disconnect_pin {pin_path} {
+    set pin [get_bd_pins $pin_path]
+    set nets [get_bd_nets -quiet -of_objects $pin]
+    if {[llength $nets] > 1} {
+        error "P04 reset candidate found multiple nets on $pin_path: $nets"
+    }
+    if {[llength $nets] == 1} {
+        disconnect_bd_net [lindex $nets 0] $pin
+    }
 }
 
-# disconnect_bd_net uses positional syntax: <net> <objects>... . Unlike
-# connect_bd_net, it does not accept a -net option (Vivado UG835).
-disconnect_bd_net $old_reset_net \
-    [get_bd_pins loihi_core_v2_tick_0/ap_rst] \
-    [get_bd_pins loihi_core_v2_tick_1/ap_rst]
-disconnect_bd_net $old_resetn_net \
-    [get_bd_pins p04_two_core_controller_0/resetn] \
-    [get_bd_pins p04_endpoint_memory_0/resetn] \
-    [get_bd_pins p04_endpoint_memory_1/resetn] \
-    [get_bd_pins p04_heartbeat_0/resetn]
+foreach pin_path {
+    loihi_core_v2_tick_0/ap_rst
+    loihi_core_v2_tick_1/ap_rst
+    p04_two_core_controller_0/resetn
+    p04_endpoint_memory_0/resetn
+    p04_endpoint_memory_1/resetn
+    p04_heartbeat_0/resetn
+} {
+    p04_disconnect_pin $pin_path
+}
 
 connect_bd_net [get_bd_pins p04_reset_conditioner_0/reset] \
     [get_bd_pins loihi_core_v2_tick_0/ap_rst] \
