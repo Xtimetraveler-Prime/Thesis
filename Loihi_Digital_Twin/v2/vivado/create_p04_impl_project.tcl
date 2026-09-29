@@ -111,7 +111,7 @@ proc connect_hls_memory_fabric {hls_name fabric_name arg_name mode} {
     connect_bd_net $ce [require_bd_pin $fabric_name ${arg_name}_ena]
     if {$mode eq "rw" || $mode eq "w"} {
         set we [hls_memory_pin $hls_name $arg_name we 1]
-        set din [hls_memory_pin $hls_name arg_name din 1]
+        set din [hls_memory_pin $hls_name $arg_name din 1]
         connect_bd_net $we [require_bd_pin $fabric_name ${arg_name}_wea]
         connect_bd_net $din [require_bd_pin $fabric_name ${arg_name}_dina]
     }
