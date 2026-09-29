@@ -273,7 +273,13 @@ process_events:
             break;
         }
 
-        const unsigned axon_id = input_events[event].to_uint();
+        const event_axon_t event_word = input_events[event];
+        if (event_word.range(31, 12) != 0) {
+            status |= STATUS_RESERVED_BITS;
+            status |= STATUS_INVALID_AXON;
+            continue;
+        }
+        const unsigned axon_id = event_word.range(11, 0).to_uint();
         const axon_word_t axon = axon_words[axon_id];
         if (axon.range(63, 42) != 0) {
             status |= STATUS_RESERVED_BITS;
