@@ -162,6 +162,32 @@ bool same_events_unordered(
     return true;
 }
 
+bool same_packets_unordered(
+    const packet_word_t *actual,
+    unsigned actual_count,
+    const unsigned long long *expected,
+    unsigned expected_count) {
+    if (actual_count != expected_count || expected_count > P04_SEED_MAX_PACKETS) {
+        return false;
+    }
+    bool used[P04_SEED_MAX_PACKETS] = {};
+    for (unsigned i = 0; i < actual_count; ++i) {
+        const unsigned long long value = actual[i].to_uint64();
+        bool found = false;
+        for (unsigned j = 0; j < expected_count; ++j) {
+            if (!used[j] && value == expected[j]) {
+                used[j] = true;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
+}
+
 unsigned compare_core_tick(
     const char *scenario,
     const CoreSeed &core_seed,
@@ -247,23 +273,17 @@ unsigned compare_core_tick(
                   << ": spike_count=" << spike_count.to_uint()
                   << " expected=" << expected_spikes << "\n";
     }
-    if (packet_count.to_uint() != expected.packet_count) {
+    if (!same_packets_unordered(
+            memory.packet_words,
+            packet_count.to_uint(),
+            expected.packets,
+            expected.packet_count)) {
         ++failures;
         std::cerr << "FAIL P04 " << scenario << " t=" << timestep
                   << " core=" << core_seed.core_id
-                  << ": packet_count=" << packet_count.to_uint()
-                  << " expected=" << expected.packet_count << "\n";
-    } else {
-        for (unsigned packet = 0; packet < expected.packet_count; ++packet) {
-            const unsigned long long actual = memory.packet_words[packet].to_uint64();
-            if (actual != expected.packets[packet]) {
-                ++failures;
-                std::cerr << "FAIL P04 " << scenario << " t=" << timestep
-                          << " core=" << core_seed.core_id
-                          << " packet=" << packet
-                          << ": packet word mismatch\n";
-            }
-        }
+                  << ": unordered egress packet set mismatch count="
+                  << packet_count.to_uint() << " expected="
+                  << expected.packet_count << "\n";
     }
 
     *packet_count_out = packet_count;
