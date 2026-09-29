@@ -41,11 +41,13 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 > **Current phase: P03 — One FPGA-v2 logical core**
 >
-> P02 is complete. P03 now has a packed one-core FPGA memory boundary and an HLS
-> implementation that passed Python/HLS C and C/RTL differential validation. The
-> active gate is full K26 Vivado implementation with explicit memories so that
-> post-route timing and physical resource use can be measured before bitstream
-> and board-level conformance work begins.
+> P02 is complete. P03 has passed Python/HLS C and C/RTL differential validation
+> and now has an accepted full-capacity XPM memory shell that routes on the K26
+> at 100 MHz. The accepted routed baseline uses 96.5 BRAM tiles with WNS
+> `+1.148 ns` and WHS `+0.010 ns`. The remaining P03 gate is physical K26
+> conformance: generate/program the debug-hardened bitstream, load the same
+> deterministic corpus through VIO/JTAG, and complete T10 by comparing physical
+> state/trace/packet results against Python.
 
 ---
 
@@ -227,46 +229,73 @@ specification and the P02 Python golden model.
 - [x] Implement input-axon lookup.
 - [x] Implement synapse traversal/accumulation.
 - [x] Implement output spike generation and routing-entry traversal.
-- [ ] Implement the complete v2 runtime configuration/state loading interface.
+- [x] Implement the P03 runtime configuration/state loading and readback
+      interface through the transport-neutral banked host/debug bridge.
 - [x] Implement normalized trace/state inspection at the same semantic boundary
       as the Python model.
 - [x] Add resource/capacity guards for one logical core.
 - [x] Add differential Python-vs-HLS/RTL tests.
-- [ ] Synthesize/implement the complete one-core memory shell on the K26 target.
+- [x] Synthesize/implement the complete one-core memory shell on the K26 target.
 - [ ] Perform physical directed conformance against the Python model.
 
 ## P03 HLS implementation findings
 
 The first HLS gate passed the five-timestep Python/HLS C and C/RTL differential
 corpus plus runtime integrity checks. At a 10 ns target the HLS estimate was
-8.785 ns with 1.20 ns uncertainty, so the estimate leaves essentially no
-uncertainty-adjusted margin and post-route Vivado timing is required before
-claiming 100 MHz closure. HLS reported a pathological maximum of 272,664,582
-cycles per tick because the maximum-capacity event-by-synapse traversal is fully
-serialized; this is an upper capacity bound rather than a representative
-workload latency. The HLS-internal compute used 3,027 LUTs, 1,238 FFs, 2 DSPs,
-and 4 BRAM18s, while the full external state/axon/synapse/route/trace memories
-must be accounted for by the routed Vivado shell.
+8.785 ns with 1.20 ns uncertainty, so the estimate left essentially no
+uncertainty-adjusted margin. The later full-capacity routed Vivado shell closed
+100 MHz with WNS `+1.148 ns`, showing that the HLS estimate was conservative for
+the integrated physical design. HLS reported a pathological maximum of
+272,664,582 cycles per tick because the maximum-capacity event-by-synapse
+traversal is fully serialized; this remains an upper capacity bound rather than
+a representative workload latency.
 
-## Current implementation gate
+The external-memory integration required several iterations. Native BMG
+instances silently resolved all requested depths to 2,048 words, so the physical
+shell was moved to source-controlled fixed-depth `xpm_memory_tdpram` banks. The
+standalone nine-bank fabric synthesized to `94.5` BRAM-tile equivalents, and the
+complete HLS + memory shell routed using `96.5 / 144` BRAM tiles. The 32,768 x 64
+synapse bank alone occupies 57 RAMB36E2 primitives. This challenge and its
+resolution are documented in `docs/P03_INTEGRATION_CHALLENGES.md`.
 
-- [x] Added deterministic P03 packed-memory/export tooling and Python tests.
-- [x] Added full-capacity HLS one-core tick engine and normalized trace records.
-- [x] Verified HLS C simulation and generated-RTL co-simulation against P02.
-- [x] Added a reproducible HLS IP-packaging flow.
-- [x] Added an explicit K26/KV260 Vivado implementation shell with all nine
-      HLS-visible memory banks, VIO control/status, and a physical cycle monitor.
-- [ ] Route the complete shell and record post-route setup/hold timing.
-- [ ] Record complete BRAM/URAM/LUT/FF/DSP use, including external memories.
-- [ ] Decide whether the large synapse bank should remain BRAM-backed or move to
-      UltraRAM based on routed evidence rather than estimate alone.
-- [ ] Add the board-level configuration/load/readback path and physical corpus
-      only after the routed boundary is accepted.
+## Accepted routed implementation evidence
+
+- [x] Full fixed-depth XPM one-core shell routed on `xck26-sfvc784-2LV-c`.
+- [x] 100 MHz setup timing closed: WNS `+1.148 ns`, zero failing endpoints.
+- [x] 100 MHz hold timing closed: WHS `+0.010 ns`, zero failing endpoints.
+- [x] Bus-skew reporting passed for the routed design.
+- [x] Complete utilization recorded: `3,545` LUTs, `5,607` registers,
+      `96.5` Block RAM tiles, `0` URAM, and `2` DSPs.
+- [x] Primitive-level evidence reconciles the standalone 94.5-tile external
+      fabric with the full 96.5-tile shell; the extra two BRAM tiles are the HLS
+      local accumulator memory.
+- [x] Keep the all-BRAM XPM shell as the transparent P03 reference baseline.
+      Moving the synapse bank to UltraRAM is deferred as a P04/P05 scaling
+      optimization rather than required for P03 correctness.
+
+## Current physical-conformance gate
+
+- [x] Added a transport-neutral nine-bank host/debug bridge and compute/host
+      arbitration.
+- [x] Hardened host completion for VIO/JTAG by making `ack`, `rvalid`, and error
+      state pollable rather than one-PL-cycle-only observations.
+- [x] Added a completed-run counter and HLS-ready interlock for deterministic
+      physical tick control.
+- [x] Added deterministic physical-vector generation from the same Python
+      configuration used by the HLS differential corpus.
+- [x] Added a Vivado Hardware Manager/VIO harness that programs the K26,
+      preflights read/write access to all nine banks, executes all five directed
+      timesteps, and compares physical state/trace/packet results against Python.
+- [x] Extended the implementation flow to emit `.bit` and `.ltx` artifacts.
+- [ ] Re-run the debug-hardened bridge RTL simulation and final routed build.
+- [ ] Program the physical K26 and execute the automated T10 corpus.
+- [ ] Preserve physical cycle/state/trace/packet evidence and close P03.
 
 ## Completion gate
 
 P03 is complete when one hardware core reproduces the normalized golden-model
-state/spike behavior for the one-core directed suite on the physical K26.
+state/spike/packet behavior for the directed suite on the physical K26 and T10
+passes through the automated physical conformance flow.
 
 **Next phase:** P04 — multicore packet routing and barrier semantics.
 
@@ -551,12 +580,14 @@ Loihi_Digital_Twin/
     │   ├── LOIHI1_TARGET_SPEC.md
     │   ├── P02_IMPLEMENTATION_NOTES.md
     │   ├── P02_DEPLOYMENT_SCHEMA.md
+    │   ├── P03_INTEGRATION_CHALLENGES.md
     │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
     │   └── P03_VIVADO_IMPLEMENTATION.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
     ├── hls/core_v2/                P03 one-core HLS source and packaging flow
     ├── rtl/                        v2 RTL integration/observability logic
     ├── vivado/                     source-controlled K26 build flows
+    ├── hardware/                   physical programming/conformance flows
     ├── tests/                      directed architecture/packing tests
     ├── scripts/                    phase validation tools
     └── examples/                   corpus generators and architecture examples
