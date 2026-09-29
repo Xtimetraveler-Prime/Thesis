@@ -274,6 +274,37 @@ bool run_integrity_checks() {
         return false;
     }
 
+    // Physical event words are 32 bits even though logical axon IDs are 12
+    // bits. Reserved upper bits must be rejected before indexing axon_words.
+    load_seed();
+    input_events[0] = event_axon_t(0x00001000u);
+    status = 0;
+    loihi_core_v2_tick(
+        P03_SEED_COMPARTMENT_COUNT,
+        1,
+        P03_SEED_SYNAPSE_COUNT,
+        P03_SEED_ROUTE_COUNT,
+        0,
+        config_words,
+        state_words,
+        axon_words,
+        synapse_words,
+        route_desc_words,
+        route_words,
+        input_events,
+        trace_words,
+        packet_words,
+        &spikes,
+        &packets,
+        &status);
+    const unsigned reserved_event_status = status.to_uint();
+    if ((reserved_event_status & STATUS_RESERVED_BITS) == 0
+        || (reserved_event_status & STATUS_INVALID_AXON) == 0) {
+        std::cerr << "FAIL P03 reserved event bits were not rejected safely: status=0x"
+                  << std::hex << reserved_event_status << std::dec << "\n";
+        return false;
+    }
+
     std::cout << "P03 runtime integrity guards passed\n";
     return true;
 }
