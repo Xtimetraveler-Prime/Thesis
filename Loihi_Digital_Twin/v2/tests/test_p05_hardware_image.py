@@ -8,6 +8,7 @@ from loihi_twin_v2 import (
     LogicalCoreConfig,
     OutputRoute,
     OutputRouteEntry,
+    P03_REQUIRED_ARITHMETIC,
     SynapseEntry,
     SynapseTemplate,
 )
@@ -39,6 +40,9 @@ def core(core_id: int, axon_id: int, route_to: tuple[int, int] | None = None) ->
         input_axons=(InputAxonBinding(axon_id, 0),),
         synapse_templates=(SynapseTemplate(0, (SynapseEntry(0, 6),)),),
         output_routes=routes,
+        # P05 reuses the accepted P03 HLS datapath unchanged, so hardware-image
+        # fixtures must use the exact arithmetic profile required by that engine.
+        arithmetic=P03_REQUIRED_ARITHMETIC,
     )
 
 
