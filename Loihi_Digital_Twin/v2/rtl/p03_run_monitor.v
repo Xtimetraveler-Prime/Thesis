@@ -9,12 +9,15 @@
 // Important: ap_ready is deliberately NOT a prerequisite for issuing ap_start.
 // For ap_ctrl_hs, ap_ready is inactive until a transaction has started (and for
 // a non-pipelined design is commonly asserted with ap_done). Gating ap_start
-// on ap_ready therefore deadlocks the first transaction.
+// on ap_ready therefore deadlocks the first transaction. core_ready remains an
+// input only so the implementation shell can keep exposing the HLS signal at
+// the same debug boundary; it is intentionally not used as a start condition.
 module p03_run_monitor (
     input  wire        ap_clk,
     input  wire        resetn,
     input  wire        start_request,
     input  wire        host_busy,
+    input  wire        core_ready,
     input  wire        done,
     output reg         core_start,
     output reg         busy,
