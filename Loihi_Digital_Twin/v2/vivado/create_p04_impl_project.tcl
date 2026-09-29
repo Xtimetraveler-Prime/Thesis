@@ -177,14 +177,18 @@ set_property -dict [list \
     CONFIG.C_PROBE_OUT18_WIDTH {256} CONFIG.C_PROBE_OUT18_INIT_VAL {0x0}] $vio
 
 set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_p04]
-# The KV260 board preset resolves proc_sys_reset.ext_reset_in as active-high in
-# Vivado 2025.2. This property is read-only after IP creation, so verify rather
-# than attempting to override it. VIO probe_out2 therefore uses 1=assert reset,
-# 0=release reset; its initial value above is deliberately 0 (deasserted).
+# Vivado 2025.2 resolves both proc_sys_reset input polarities as active-high for
+# this P04 block. These properties are read-only after IP creation, so verify
+# them explicitly and drive each inactive source low. VIO probe_out2 therefore
+# uses 1=assert external reset and 0=release; its initial value is deasserted.
 set reset_high [get_property CONFIG.C_EXT_RESET_HIGH $rst]
-puts "P04 board-resolved external reset polarity: C_EXT_RESET_HIGH=$reset_high"
+set aux_reset_high [get_property CONFIG.C_AUX_RESET_HIGH $rst]
+puts "P04 board-resolved reset polarities: C_EXT_RESET_HIGH=$reset_high C_AUX_RESET_HIGH=$aux_reset_high"
 if {$reset_high ne "1"} {
-    error "P04 expects KV260 proc_sys_reset external reset to be active-high (C_EXT_RESET_HIGH=1), got $reset_high"
+    error "P04 expects proc_sys_reset external reset active-high (C_EXT_RESET_HIGH=1), got $reset_high"
+}
+if {$aux_reset_high ne "1"} {
+    error "P04 expects proc_sys_reset auxiliary reset active-high (C_AUX_RESET_HIGH=1), got $aux_reset_high"
 }
 set one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one_p04]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $one
@@ -199,8 +203,8 @@ connect_bd_net $pl_clk \
     [get_bd_pins p04_heartbeat_0/clk] [get_bd_pins vio_p04/clk] \
     [get_bd_pins proc_sys_reset_p04/slowest_sync_clk]
 connect_pair vio_p04/probe_out2 proc_sys_reset_p04/ext_reset_in
-connect_bd_net [get_bd_pins const_one_p04/dout] [get_bd_pins proc_sys_reset_p04/dcm_locked] [get_bd_pins proc_sys_reset_p04/aux_reset_in]
-connect_bd_net [get_bd_pins const_zero_p04/dout] [get_bd_pins proc_sys_reset_p04/mb_debug_sys_rst]
+connect_bd_net [get_bd_pins const_one_p04/dout] [get_bd_pins proc_sys_reset_p04/dcm_locked]
+connect_bd_net [get_bd_pins const_zero_p04/dout] [get_bd_pins proc_sys_reset_p04/aux_reset_in] [get_bd_pins proc_sys_reset_p04/mb_debug_sys_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p04/peripheral_reset] [get_bd_pins loihi_core_v2_tick_0/ap_rst] [get_bd_pins loihi_core_v2_tick_1/ap_rst]
 connect_bd_net [get_bd_pins proc_sys_reset_p04/peripheral_aresetn] \
     [get_bd_pins p04_two_core_controller_0/resetn] [get_bd_pins p04_endpoint_memory_0/resetn] \
@@ -395,6 +399,9 @@ puts $metrics "physical_fixture_routes_per_endpoint=64"
 puts $metrics "physical_fixture_events_per_endpoint=64"
 puts $metrics "physical_fixture_packets_per_endpoint=64"
 puts $metrics "logical_capacity_changed=0"
+puts $metrics "ext_reset_high=$reset_high"
+puts $metrics "aux_reset_high=$aux_reset_high"
+puts $metrics "aux_reset_in_tied_inactive_low=1"
 puts $metrics "target_part=$target_part"
 puts $metrics "board_part=$kv260_board_part"
 puts $metrics "pl_clock_requested_mhz=100"
