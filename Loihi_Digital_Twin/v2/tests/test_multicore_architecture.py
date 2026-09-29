@@ -9,6 +9,7 @@ from loihi_twin_v2 import (
     LogicalCoreConfig,
     OutputRoute,
     OutputRouteEntry,
+    RouteScope,
     SpikePacket,
     SynapseEntry,
     SynapseTemplate,
@@ -155,3 +156,72 @@ def test_t9_core_service_order_and_router_drain_order_do_not_change_normalized_t
     )
 
     assert a.normalized() == b.normalized()
+
+
+def test_p04_local_and_remote_fanout_are_explicit_and_share_barrier_semantics():
+    source = LogicalCoreConfig(
+        core_id=0,
+        compartments=(lif(),),
+        input_axons=(
+            InputAxonBinding(0, 0),
+            InputAxonBinding(2, 0),
+        ),
+        synapse_templates=(SynapseTemplate(0, (SynapseEntry(0, 6),)),),
+        output_routes=(
+            OutputRouteEntry(
+                0,
+                (
+                    OutputRoute(0, 2),
+                    OutputRoute(1, 1),
+                ),
+            ),
+        ),
+    )
+    remote = input_core(1, 1)
+    chip = LogicalChip((source, remote))
+
+    t0 = chip.step((SpikePacket(0, 0, 0),))
+    packets = trace_for_core(t0, 0).packets_out
+    assert [packet.route_scope for packet in packets] == [RouteScope.LOCAL, RouteScope.REMOTE]
+    assert (1, 0, 0, "local", 1) in t0.packet_traffic
+    assert (1, 0, 1, "remote", 1) in t0.packet_traffic
+    assert t0.barrier.can_advance
+
+    t1 = chip.step()
+    assert trace_for_core(t1, 0).spikes_out == (0,)
+    assert trace_for_core(t1, 1).spikes_out == (0,)
+
+
+def test_p04_simultaneous_remote_producers_fan_in_deterministically():
+    core0 = input_core(0, 0, routes=(OutputRoute(2, 10),))
+    core1 = input_core(1, 1, routes=(OutputRoute(2, 11),))
+    core2 = LogicalCoreConfig(
+        core_id=2,
+        compartments=(lif(),),
+        input_axons=(
+            InputAxonBinding(10, 0),
+            InputAxonBinding(11, 1),
+        ),
+        synapse_templates=(
+            SynapseTemplate(0, (SynapseEntry(0, 3),)),
+            SynapseTemplate(1, (SynapseEntry(0, 4),)),
+        ),
+    )
+    packets = (SpikePacket(0, 0, 0), SpikePacket(0, 1, 1))
+
+    first_chip = LogicalChip((core0, core1, core2))
+    second_chip = LogicalChip((core0, core1, core2))
+    first_t0 = first_chip.step(packets, service_order=(0, 1, 2))
+    second_t0 = second_chip.step(tuple(reversed(packets)), service_order=(1, 0, 2))
+
+    assert first_t0.normalized() == second_t0.normalized()
+    assert (1, 0, 2, "remote", 1) in first_t0.packet_traffic
+    assert (1, 1, 2, "remote", 1) in first_t0.packet_traffic
+
+    first_t1 = first_chip.step()
+    second_t1 = second_chip.step(service_order=(2, 1, 0), reverse_packet_drain=True)
+    assert first_t1.normalized() == second_t1.normalized()
+    destination = trace_for_core(first_t1, 2)
+    assert [item.weight for item in destination.synaptic_contributions] == [3, 4]
+    assert destination.compartment_state_after[0].state.voltage == 7
+    assert destination.spikes_out == (0,)
