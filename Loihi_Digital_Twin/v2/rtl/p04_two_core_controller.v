@@ -136,13 +136,25 @@ module p04_two_core_controller #(
 
     wire tick_request = tick_start && !tick_start_d;
     wire epoch_request = epoch_load && !epoch_load_d;
+
+    // ap_ready is a transaction-completion/acceptance handshake from an
+    // ap_ctrl_hs HLS block, not an idle-before-start indication. In particular,
+    // non-pipelined HLS cores can keep ap_ready low until the transaction that
+    // was started with ap_start completes. Gating the initial ap_start pulse on
+    // ap_ready therefore deadlocks real HLS hardware. Controller busy/epoch/host
+    // ownership and the physical fixture limits are the admission conditions;
+    // core*_ready remains exposed for debug observation only.
     wire start_allowed =
-        !busy && epoch_loaded && !host_busy0 && !host_busy1 &&
-        core0_ready && core1_ready && counts_fit_fixture;
+        !busy && epoch_loaded && !host_busy0 && !host_busy1 && counts_fit_fixture;
 
     assign core0_event_count = current_event_count0;
     assign core1_event_count = current_event_count1;
     assign core_timestep = current_timestep;
+
+    // Keep the HLS ready signals intentionally referenced so synthesis/debug
+    // retain the architectural observation points even though they do not gate
+    // the first transaction start.
+    wire unused_hls_ready = core0_ready ^ core1_ready;
 
     // Backpressure preserves events rather than silently dropping them when the
     // directed physical event allocation is exhausted.
