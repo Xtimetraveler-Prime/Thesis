@@ -39,16 +39,22 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P04 in progress — multicore packet routing and barrier semantics.**
+> **P04 in progress — P04.3 verified; routed P04.4 cleanup is active.**
 >
 > P04 started on 2026-09-28 from the accepted P03 baseline. P04.1 golden-model
-> contract closure and P04.2 standalone router/barrier RTL are now verified:
-> the targeted and full Python regressions pass, and the Vivado 2025.2 XSim
-> directed gate reaches `PASS` while exercising simultaneous producers,
-> destination routing, local/remote accounting, queue draining, reversed legal
-> service priority, and blocked timestep advancement while traffic remains in
-> flight. P04.3 is active and integrates two P03-compatible compute endpoints
-> through that verified fabric.
+> contract closure, P04.2 standalone router/barrier RTL, and P04.3 two-endpoint
+> P03-core integration are verified. The corrected repeated-timestep controller
+> test and the consolidated source preflight both pass under Vivado/Vitis 2025.2,
+> including feed-forward and recurrent/multicast Python↔HLS differential cases
+> under forward and reversed legal service orders.
+>
+> The integrated two-endpoint shell also synthesizes and routes on the K26. The
+> routed design closes 100 MHz with WNS `+0.987 ns` and WHS `+0.010 ns`, using
+> `7,065` CLB LUTs, `9,999` CLB registers, `49 / 144` BRAM tiles, `0` URAM, and
+> `4` DSPs. The emitted metrics explicitly record `logical_capacity_changed=0`.
+> P04.4 remains in progress until the `proc_sys_reset` polarity warning is
+> replaced by an explicit readback/assertion of the board-resolved active-low
+> reset configuration and the resulting routed artifact is accepted for board use.
 >
 > The accepted P03 shell occupies 96.5 of 144 K26 BRAM tiles, so blindly
 > duplicating two full-capacity P03 physical memory shells would require about
@@ -421,24 +427,45 @@ The complete rationale and interface contract are recorded in
 - [x] Vivado 2025.2 XSim gate passed locally on 2026-09-28 with
       `PASS: P04 packet router/barrier directed test completed successfully.`
 
-### P04.3 — Two-endpoint P03-core integration shell — **In progress**
+### P04.3 — Two-endpoint P03-core integration shell — **Verified**
 
-- [ ] Instantiate two P03-compatible HLS compute endpoints.
-- [ ] Add resource-scaled physical backing memories for the directed corpus.
-- [ ] Convert delivered destination-axon packets into each endpoint's next-tick
+- [x] Instantiated two unchanged P03-compatible HLS compute endpoints in the
+      integrated Vivado shell.
+- [x] Added explicitly resource-scaled physical backing memories for the
+      directed corpus while preserving the full logical-capacity contract.
+- [x] Converted delivered destination-axon packets into each endpoint's next-tick
       input-event list without introducing an extra algorithmic timestep.
-- [ ] Generate deterministic multicore Python/FPGA vectors.
-- [ ] Validate feed-forward, recurrence, simultaneous producers, fan-in, and
-      local/remote multicast through the integrated shell.
-- [ ] Pass source-level integration simulation and synthesis gates.
+- [x] Added deterministic multicore Python/HLS and physical-vector generation.
+- [x] Validated feed-forward, recurrence, simultaneous producers, fan-in, and
+      local/remote multicast in the two-core Python↔HLS differential corpus.
+- [x] Validated both forward and reversed legal packet-service orders.
+- [x] Corrected the packet-memory streamer completion handshake after the first
+      repeated-timestep controller run exposed a stale sticky `done` condition.
+- [x] Corrected controller XSim passed on 2026-09-29 with no `FAIL:` diagnostics.
+- [x] Full P04 source preflight passed after the correction.
+- [x] Integrated two-endpoint synthesis completed successfully on the K26 target.
 
-### P04.4 — K26 implementation/resource gate — **Pending P04.3**
+### P04.4 — K26 implementation/resource gate — **In progress**
 
-- [ ] Route the integrated P04 shell at 100 MHz.
-- [ ] Report LUT/register/BRAM/URAM/DSP use separately from logical Loihi
-      occupancy.
-- [ ] Record queue depth and physical-memory implementation observations.
-- [ ] Generate a bitstream only after timing/resource acceptance.
+- [x] Routed the integrated P04 shell at a requested 100 MHz.
+- [x] Closed routed setup timing with WNS `+0.987 ns`.
+- [x] Closed routed hold timing with WHS `+0.010 ns`.
+- [x] Recorded routed utilization: `7,065` CLB LUTs, `9,999` CLB registers,
+      `49 / 144` BRAM tiles, `0` URAM, and `4` DSPs.
+- [x] Recorded the physical validation allocation separately from logical Loihi
+      occupancy; routed metrics report `logical_capacity_changed=0`.
+- [x] Generated routed `.bit`, `.ltx`, checkpoint, timing, utilization, bus-skew,
+      DRC, and methodology artifacts.
+- [ ] Replace the attempted write to read-only `proc_sys_reset/C_EXT_RESET_HIGH`
+      with an explicit readback/assertion of the board-resolved reset polarity,
+      then rebuild/accept the final P04.4 board artifact.
+
+The resource result confirms the P04 memory decision: two genuine compute
+engines plus routing/control fit using 49 BRAM tiles rather than the roughly 193
+BRAM tiles that two literal full-capacity P03 memory shells would require. This
+is a physical validation-shell result, not a claim that two maximally populated
+logical cores are simultaneously resident; P05 remains responsible for that
+transparent context-storage problem.
 
 ### P04.5 — Physical multicore conformance — **Pending P04.4**
 
@@ -448,31 +475,36 @@ The complete rationale and interface contract are recorded in
 
 ## Required deliverables
 
-- [ ] Instantiate or schedule at least two logical cores in the integrated FPGA path.
+- [x] Instantiate or schedule at least two logical cores in the integrated FPGA path.
 - [x] Implement destination-core / destination-axon packet delivery in the standalone RTL fabric.
 - [x] Implement explicit local versus remote routing accounting.
 - [x] Support simultaneous packet sources at the routing boundary.
-- [ ] Demonstrate fan-in and fanout through integrated compute endpoints.
+- [x] Demonstrate fan-in and fanout through integrated compute endpoints in the
+      source-level Python↔HLS differential corpus.
 - [x] Define and implement explicit packet queue/backpressure behavior.
-- [x] Implement standalone quiescence/completion detection and timestep advancement.
-- [ ] Demonstrate cross-core recurrence without execution-order dependence in integrated hardware.
-- [x] Expose packet/core/timestep/barrier state in normalized software traces; integrated FPGA trace comparison remains pending.
+- [x] Implement quiescence/completion detection and timestep advancement.
+- [x] Demonstrate cross-core recurrence without execution-order dependence in
+      the integrated source-level differential corpus.
+- [x] Expose packet/core/timestep/barrier state in normalized software traces;
+      physical FPGA trace comparison remains the P04.5 gate.
 
 ## Required validation
 
-- [ ] Two-core feed-forward network through integrated FPGA compute endpoints.
-- [ ] Bidirectional/recurrent two-core network through integrated FPGA compute endpoints.
-- [x] Multiple simultaneous packet producers at the standalone routing boundary.
-- [ ] Multicast to local and remote destinations through integrated compute endpoints.
-- [ ] Different legal packet-service orders produce identical integrated normalized results.
-- [x] A timestep cannot advance while current-timestep traffic remains pending in the standalone RTL fabric.
+- [x] Two-core feed-forward network through integrated compute endpoints.
+- [x] Bidirectional/recurrent two-core network through integrated compute endpoints.
+- [x] Multiple simultaneous packet producers.
+- [x] Multicast to local and remote destinations through integrated compute endpoints.
+- [x] Different legal packet-service orders produce identical source-level
+      normalized results.
+- [x] A timestep cannot advance while current-timestep traffic remains pending.
 
 ## Completion gate
 
 P04 is complete when multicore hardware execution is deterministic at the
 normalized architectural boundary and independent of incidental FPGA service
-ordering. Standalone router success is necessary but not sufficient: integrated
-compute-endpoint and physical K26 evidence are still required.
+ordering. P04.1-P04.3 are verified. Routed implementation evidence exists for
+P04.4 but final board-artifact acceptance is pending reset-polarity cleanup;
+physical K26 differential evidence remains required in P04.5.
 
 **Next phase:** P05 — logical-core virtualization.
 
