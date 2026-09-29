@@ -43,11 +43,41 @@ proc p03_probe {direction port} {
     error "P03 VIO probe not found: direction=$direction port=$port"
 }
 
+# Vivado Hardware Manager's HEX VIO interface requires exactly ceil(width/4)
+# hexadecimal characters and does not accept a 0x prefix.  Callers, however,
+# intentionally use decimal Tcl integers for addresses/counts and 0x-prefixed
+# strings for packed memory words.  Normalize both forms here so decimal values
+# cannot accidentally be reinterpreted as hexadecimal text.
+proc p03_format_output_value {probe value} {
+    set bits [get_property PROBE_PORT_BIT_COUNT $probe]
+    set chars [expr {($bits + 3) / 4}]
+    set text [string trim $value]
+    regsub -all {_} $text "" text
+
+    if {[regexp -nocase {^0x([0-9a-f]+)$} $text -> digits]} {
+        set digits [string toupper $digits]
+        set numeric [expr "0x$digits"]
+    } elseif {[regexp {^[0-9]+$} $text]} {
+        set numeric [expr {$text + 0}]
+        set digits [format %X $numeric]
+    } else {
+        error "P03 cannot format VIO output value '$value'"
+    }
+
+    if {$numeric < 0 || $numeric >= (1 << $bits)} {
+        error "P03 VIO output value out of range: value=$value bits=$bits port=[get_property PROBE_PORT $probe]"
+    }
+    if {[string length $digits] > $chars} {
+        error "P03 VIO output value too wide: value=$value bits=$bits"
+    }
+    return [format "%0*s" $chars $digits]
+}
+
 proc p03_commit {settings} {
     global P03_VIO
     foreach {port value} $settings {
         set probe [p03_probe vio_output $port]
-        set_property OUTPUT_VALUE $value $probe
+        set_property OUTPUT_VALUE [p03_format_output_value $probe $value] $probe
     }
     commit_hw_vio $P03_VIO
 }
