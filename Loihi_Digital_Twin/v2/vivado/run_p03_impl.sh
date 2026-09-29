@@ -9,6 +9,7 @@ PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 HLS_DIR="$PROJECT_DIR/hls/core_v2"
 MONITOR_RTL="$PROJECT_DIR/rtl/p03_run_monitor.v"
 HOST_BRIDGE_RTL="$PROJECT_DIR/rtl/p03_memory_host_bridge.v"
+MEMORY_FABRIC_RTL="$PROJECT_DIR/rtl/p03_memory_fabric.v"
 TCL_SCRIPT="$SCRIPT_DIR/create_p03_impl_project.tcl"
 BUILD_DIR="$SCRIPT_DIR/build/p03_impl"
 REPORT_DIR="$BUILD_DIR/reports"
@@ -31,7 +32,7 @@ if [[ "$HLS_PART" != "$EXPECTED_PART" ]]; then
     exit 2
 fi
 
-for rtl in "$MONITOR_RTL" "$HOST_BRIDGE_RTL"; do
+for rtl in "$MONITOR_RTL" "$HOST_BRIDGE_RTL" "$MEMORY_FABRIC_RTL"; do
     [[ -f "$rtl" ]] || {
         echo "ERROR: required P03 RTL missing: $rtl" >&2
         exit 2
@@ -57,6 +58,7 @@ vivado -mode batch \
       "$EXPECTED_VLNV" \
       "$MONITOR_RTL" \
       "$HOST_BRIDGE_RTL" \
+      "$MEMORY_FABRIC_RTL" \
       "$REPORT_DIR" \
       "$JOBS" \
     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
@@ -65,6 +67,7 @@ for required in \
     "$REPORT_DIR/timing_summary_post_route.rpt" \
     "$REPORT_DIR/utilization_post_route.rpt" \
     "$REPORT_DIR/utilization_hierarchical_post_route.rpt" \
+    "$REPORT_DIR/memory_primitives_post_route.rpt" \
     "$REPORT_DIR/bus_skew_post_route.rpt" \
     "$REPORT_DIR/p03_post_route_metrics.txt" \
     "$REPORT_DIR/p03_post_route.dcp"; do
@@ -75,7 +78,7 @@ for required in \
 done
 
 echo
-echo '=== P03 retained-shell post-route metrics ==='
+echo '=== P03 XPM-shell post-route metrics ==='
 cat "$REPORT_DIR/p03_post_route_metrics.txt"
 echo
 echo '=== P03 utilization summary ==='
@@ -83,11 +86,11 @@ grep -E '^\| (CLB LUTs|CLB Registers|Slice LUTs|Slice Registers|Block RAM Tile|U
     "$REPORT_DIR/utilization_post_route.rpt" || true
 
 echo
-echo '=== P03 retained memory hierarchy ==='
+echo '=== P03 XPM memory hierarchy ==='
 grep -E \
-    'config_words_mem|state_words_mem|axon_words_mem|synapse_words_mem|route_desc_words_mem|route_words_mem|input_events_mem|trace_words_mem|packet_words_mem|p03_memory_host_bridge_0' \
+    'p03_memory_fabric_0|u_config_words|u_state_words|u_axon_words|u_synapse_words|u_route_desc_words|u_route_words|u_input_events|u_trace_words|u_packet_words' \
     "$REPORT_DIR/utilization_hierarchical_post_route.rpt" || true
 
 echo
-echo "P03 retained dual-port routed implementation gate completed."
+echo "P03 fixed-depth XPM routed implementation gate completed."
 echo "Reports: $REPORT_DIR"
