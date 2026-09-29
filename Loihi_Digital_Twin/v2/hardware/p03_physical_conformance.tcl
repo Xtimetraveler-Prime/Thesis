@@ -70,7 +70,7 @@ proc p03_format_output_value {probe value} {
     if {[string length $digits] > $chars} {
         error "P03 VIO output value too wide: value=$value bits=$bits"
     }
-    return [format "%0*s" $chars $digits]
+    return "[string repeat 0 [expr {$chars - [string length $digits]}]]$digits"
 }
 
 proc p03_commit {settings} {
