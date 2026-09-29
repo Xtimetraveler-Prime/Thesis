@@ -261,13 +261,13 @@ foreach tick $P03_TICKS {
     if {$cycles <= 0} { error "P03 timestep $timestep reported zero physical cycles" }
 
     for {set i 0} {$i < $P03_COMPARTMENT_COUNT} {incr i} {
-        p03_expect "timestep $timestep state[$i]" \
+        p03_expect "timestep $timestep state($i)" \
             [p03_host_read 1 $i] [p03_parse_value [lindex $expected_states $i]]
-        p03_expect "timestep $timestep trace[$i]" \
+        p03_expect "timestep $timestep trace($i)" \
             [p03_host_read 7 $i] [p03_parse_value [lindex $expected_traces $i]]
     }
     for {set i 0} {$i < [llength $expected_packets]} {incr i} {
-        p03_expect "timestep $timestep packet[$i]" \
+        p03_expect "timestep $timestep packet($i)" \
             [p03_host_read 8 $i] [p03_parse_value [lindex $expected_packets $i]]
     }
 
