@@ -10,6 +10,14 @@ class PacketClass(str, Enum):
     SPIKE = "spike"
 
 
+class RouteScope(str, Enum):
+    """Architectural classification of packet transport relative to its source."""
+
+    EXTERNAL = "external"
+    LOCAL = "local"
+    REMOTE = "remote"
+
+
 @dataclass(frozen=True, slots=True)
 class SpikePacket:
     """A logical destination-core/destination-axon spike event.
@@ -41,6 +49,14 @@ class SpikePacket:
         ):
             if value is not None and value < 0:
                 raise ValueError(f"{name} cannot be negative")
+
+    @property
+    def route_scope(self) -> RouteScope:
+        if self.source_core is None:
+            return RouteScope.EXTERNAL
+        if self.source_core == self.destination_core:
+            return RouteScope.LOCAL
+        return RouteScope.REMOTE
 
     @property
     def logical_key(self) -> tuple[int, int, int, int, int, int, str]:

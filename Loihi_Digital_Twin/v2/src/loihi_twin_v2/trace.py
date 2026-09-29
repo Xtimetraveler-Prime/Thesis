@@ -74,7 +74,7 @@ class ChipTrace:
     algorithmic_timestep: int
     cores: tuple[CoreTrace, ...]
     barrier: BarrierSnapshot
-    packet_traffic: tuple[tuple[int, int, int, int], ...]
+    packet_traffic: tuple[tuple[int, int, int, str, int], ...]
 
     def normalized(self) -> tuple:
         return (
