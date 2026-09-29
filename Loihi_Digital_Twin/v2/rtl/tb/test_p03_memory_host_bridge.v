@@ -122,19 +122,22 @@ module test_p03_memory_host_bridge;
     );
 
     reg start_request = 1'b0;
+    reg core_ready = 1'b1;
     reg done = 1'b0;
     wire core_start;
     wire run_busy;
     wire start_seen;
     wire start_blocked;
     wire [63:0] last_run_cycles;
+    wire [31:0] completed_runs;
     wire [31:0] heartbeat;
 
     p03_run_monitor monitor (
         .ap_clk(clk), .resetn(resetn), .start_request(start_request),
-        .host_busy(host_busy), .done(done), .core_start(core_start),
-        .busy(run_busy), .start_seen(start_seen), .start_blocked(start_blocked),
-        .last_run_cycles(last_run_cycles), .heartbeat(heartbeat)
+        .host_busy(host_busy), .core_ready(core_ready), .done(done),
+        .core_start(core_start), .busy(run_busy), .start_seen(start_seen),
+        .start_blocked(start_blocked), .last_run_cycles(last_run_cycles),
+        .completed_runs(completed_runs), .heartbeat(heartbeat)
     );
 
     task pulse_host_request;
@@ -176,6 +179,13 @@ module test_p03_memory_host_bridge;
         wait_for_ack();
         if (error) begin
             $display("FAIL: config write returned error");
+            $finish(1);
+        end
+        // JTAG can be much slower than the PL clock; completion must remain
+        // visible after the single-cycle memory operation has retired.
+        repeat (3) @(posedge clk);
+        if (!ack || error) begin
+            $display("FAIL: host completion was not sticky for debug polling");
             $finish(1);
         end
 
@@ -254,8 +264,24 @@ module test_p03_memory_host_bridge;
         start_request = 1'b0;
         wait_for_ack();
 
-        // Once the host path is idle, an isolated start request becomes one
-        // core_start pulse and the monitor measures completion latency.
+        // ap_start must also be blocked if HLS is not ready.
+        repeat (2) @(posedge clk);
+        core_ready = 1'b0;
+        @(negedge clk);
+        start_request = 1'b1;
+        @(posedge clk);
+        #1;
+        if (core_start || !start_blocked) begin
+            $display("FAIL: start was accepted while core_ready was low");
+            $finish(1);
+        end
+        @(negedge clk);
+        start_request = 1'b0;
+        core_ready = 1'b1;
+
+        // Once the host path is idle and HLS is ready, an isolated start
+        // request becomes one core_start pulse and completion increments the
+        // sticky completed_runs counter.
         repeat (2) @(posedge clk);
         @(negedge clk);
         start_request = 1'b1;
@@ -274,8 +300,8 @@ module test_p03_memory_host_bridge;
         @(negedge clk);
         done = 1'b0;
         repeat (2) @(posedge clk);
-        if (run_busy || !start_seen || last_run_cycles == 0) begin
-            $display("FAIL: run monitor completion accounting is incorrect");
+        if (run_busy || !start_seen || last_run_cycles == 0 || completed_runs != 32'd1) begin
+            $display("FAIL: run monitor completion accounting is incorrect runs=%0d cycles=%0d", completed_runs, last_run_cycles);
             $finish(1);
         end
 
