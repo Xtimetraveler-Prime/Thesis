@@ -5,6 +5,11 @@
 // writes packet_words without backpressure, so P04 drains that retained image
 // only after ap_done rather than trying to backpressure the HLS memory write
 // port directly.
+//
+// done is a one-cycle completion pulse for each accepted start.  It must not be
+// sticky across runs: a stale done from timestep t could otherwise make the
+// barrier believe timestep t+1 egress had drained before the new packet-memory
+// traversal actually started.
 module p04_packet_memory_streamer (
     input  wire        clk,
     input  wire        resetn,
@@ -44,15 +49,23 @@ module p04_packet_memory_streamer (
             packet_hold <= 64'd0;
             done <= 1'b0;
         end else begin
+            // Completion is a pulse, not retained state.  The router latches
+            // endpoint completion, so one cycle is sufficient and avoids stale
+            // completion leaking into a later algorithmic timestep.
+            done <= 1'b0;
+
             if (start) begin
                 latched_count <= packet_count;
                 index <= 12'd0;
-                done <= (packet_count == 0);
-                state <= (packet_count == 0) ? ST_IDLE : ST_ISSUE;
+                if (packet_count == 0) begin
+                    done <= 1'b1;
+                    state <= ST_IDLE;
+                end else begin
+                    state <= ST_ISSUE;
+                end
             end else begin
                 case (state)
                     ST_IDLE: begin
-                        // done remains sticky until the next start pulse.
                     end
                     ST_ISSUE: begin
                         // The synchronous memory samples mem_addr at this edge.
@@ -66,7 +79,7 @@ module p04_packet_memory_streamer (
                     end
                     ST_HOLD: begin
                         if (stream_valid && stream_ready) begin
-                            if ({1'b0, index} + 13'd1 >= latched_count) begin
+                            if (index + 12'd1 >= latched_count) begin
                                 done <= 1'b1;
                                 state <= ST_IDLE;
                             end else begin
@@ -77,7 +90,6 @@ module p04_packet_memory_streamer (
                     end
                     default: begin
                         state <= ST_IDLE;
-                        done <= 1'b0;
                     end
                 endcase
             end
