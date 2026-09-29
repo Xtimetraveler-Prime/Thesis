@@ -18,6 +18,17 @@ from .hardware_p03 import (
     unpack_compartment_state,
     unpack_output_packet,
 )
+from .hardware_p04 import (
+    P04_PHYSICAL_COMPARTMENTS,
+    P04_PHYSICAL_INPUT_AXONS,
+    P04_PHYSICAL_INPUT_EVENTS,
+    P04_PHYSICAL_OUTPUT_PACKETS,
+    P04_PHYSICAL_OUTPUT_ROUTES,
+    P04_PHYSICAL_SYNAPSE_ENTRIES,
+    P04_PROFILE_NAME,
+    TwoCoreValidationImage,
+    export_two_core_validation_image,
+)
 from .mapping import Deployment
 from .packet import PacketClass, RouteScope, SpikePacket
 from .reporting import deployment_report, trace_report
@@ -71,6 +82,15 @@ __all__ = [
     "unpack_compartment_state",
     "pack_output_packet",
     "unpack_output_packet",
+    "P04_PROFILE_NAME",
+    "TwoCoreValidationImage",
+    "export_two_core_validation_image",
+    "P04_PHYSICAL_COMPARTMENTS",
+    "P04_PHYSICAL_INPUT_AXONS",
+    "P04_PHYSICAL_SYNAPSE_ENTRIES",
+    "P04_PHYSICAL_OUTPUT_ROUTES",
+    "P04_PHYSICAL_INPUT_EVENTS",
+    "P04_PHYSICAL_OUTPUT_PACKETS",
     "MAX_LOGICAL_CORES",
     "MAX_COMPARTMENTS_PER_CORE",
     "MAX_INPUT_AXONS_PER_CORE",
