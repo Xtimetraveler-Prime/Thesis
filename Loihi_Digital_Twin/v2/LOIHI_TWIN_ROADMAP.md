@@ -39,22 +39,26 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P04 in progress — P04.3 verified; routed P04.4 cleanup is active.**
+> **P04 in progress — P04.4 verified; physical P04.5 conformance is active.**
 >
 > P04 started on 2026-09-28 from the accepted P03 baseline. P04.1 golden-model
-> contract closure, P04.2 standalone router/barrier RTL, and P04.3 two-endpoint
-> P03-core integration are verified. The corrected repeated-timestep controller
-> test and the consolidated source preflight both pass under Vivado/Vitis 2025.2,
-> including feed-forward and recurrent/multicast Python↔HLS differential cases
-> under forward and reversed legal service orders.
+> contract closure, P04.2 standalone router/barrier RTL, P04.3 two-endpoint
+> P03-core integration, and P04.4 routed K26 implementation are now verified.
+> The corrected repeated-timestep controller test and consolidated source
+> preflight pass under Vivado/Vitis 2025.2, including feed-forward and
+> recurrent/multicast Python↔HLS differential cases under forward and reversed
+> legal service orders.
 >
-> The integrated two-endpoint shell also synthesizes and routes on the K26. The
-> routed design closes 100 MHz with WNS `+0.987 ns` and WHS `+0.010 ns`, using
-> `7,065` CLB LUTs, `9,999` CLB registers, `49 / 144` BRAM tiles, `0` URAM, and
-> `4` DSPs. The emitted metrics explicitly record `logical_capacity_changed=0`.
-> P04.4 remains in progress until the `proc_sys_reset` polarity warning is
-> replaced by an explicit readback/assertion of the board-resolved active-low
-> reset configuration and the resulting routed artifact is accepted for board use.
+> The final integrated two-endpoint shell routes on the K26 at a requested
+> 100 MHz with WNS `+0.987 ns` and WHS `+0.010 ns`, using `7,065` CLB LUTs,
+> `9,999` CLB registers, `49 / 144` BRAM tiles, `0` URAM, and `4` DSPs. All
+> reported bus-skew constraints meet timing; the smallest reported bus-skew
+> slack is `+9.517 ns`. The final routed build has no reported `ERROR:` or
+> `CRITICAL WARNING:` diagnostics. The KV260 board preset resolves
+> `proc_sys_reset/C_EXT_RESET_HIGH=1`; the build now verifies that read-only
+> board-resolved active-high polarity explicitly, and the physical harness uses
+> the matching VIO reset sequence. The emitted metrics explicitly record
+> `logical_capacity_changed=0`.
 >
 > The accepted P03 shell occupies 96.5 of 144 K26 BRAM tiles, so blindly
 > duplicating two full-capacity P03 physical memory shells would require about
@@ -445,7 +449,7 @@ The complete rationale and interface contract are recorded in
 - [x] Full P04 source preflight passed after the correction.
 - [x] Integrated two-endpoint synthesis completed successfully on the K26 target.
 
-### P04.4 — K26 implementation/resource gate — **In progress**
+### P04.4 — K26 implementation/resource gate — **Verified**
 
 - [x] Routed the integrated P04 shell at a requested 100 MHz.
 - [x] Closed routed setup timing with WNS `+0.987 ns`.
@@ -456,9 +460,12 @@ The complete rationale and interface contract are recorded in
       occupancy; routed metrics report `logical_capacity_changed=0`.
 - [x] Generated routed `.bit`, `.ltx`, checkpoint, timing, utilization, bus-skew,
       DRC, and methodology artifacts.
-- [ ] Replace the attempted write to read-only `proc_sys_reset/C_EXT_RESET_HIGH`
-      with an explicit readback/assertion of the board-resolved reset polarity,
-      then rebuild/accept the final P04.4 board artifact.
+- [x] Replaced the invalid write to read-only `proc_sys_reset/C_EXT_RESET_HIGH`
+      with explicit board-preset readback; the accepted KV260 build reports
+      `C_EXT_RESET_HIGH=1` and the physical harness now uses active-high reset.
+- [x] Final routed build completed with no reported errors/critical warnings and
+      all reported bus-skew constraints met; minimum reported bus-skew slack was
+      `+9.517 ns`.
 
 The resource result confirms the P04 memory decision: two genuine compute
 engines plus routing/control fit using 49 BRAM tiles rather than the roughly 193
@@ -467,11 +474,13 @@ is a physical validation-shell result, not a claim that two maximally populated
 logical cores are simultaneously resident; P05 remains responsible for that
 transparent context-storage problem.
 
-### P04.5 — Physical multicore conformance — **Pending P04.4**
+### P04.5 — Physical multicore conformance — **In progress**
 
 - [ ] Execute the directed multicore corpus on the K26.
 - [ ] Compare core state, packets, barrier state, and status to Python.
 - [ ] Re-run with an alternate legal packet-service priority where supported.
+- [ ] Archive the physical result, generated vectors, run log, routed reports,
+      and bitstream/debug-probe SHA-256 identities under `hardware/evidence/`.
 
 ## Required deliverables
 
@@ -502,9 +511,9 @@ transparent context-storage problem.
 
 P04 is complete when multicore hardware execution is deterministic at the
 normalized architectural boundary and independent of incidental FPGA service
-ordering. P04.1-P04.3 are verified. Routed implementation evidence exists for
-P04.4 but final board-artifact acceptance is pending reset-polarity cleanup;
-physical K26 differential evidence remains required in P04.5.
+ordering. P04.1-P04.4 are verified. The remaining gate is P04.5: physical K26
+conformance against the Python-generated directed corpus under both legal packet
+service priorities.
 
 **Next phase:** P05 — logical-core virtualization.
 
