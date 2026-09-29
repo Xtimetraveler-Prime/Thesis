@@ -9,10 +9,22 @@
 //
 // Initializing the release pipeline to all ones also gives the newly programmed
 // fabric a deterministic startup reset even when the VIO output initializes low.
+// Explicit Xilinx signal-interface metadata prevents Vivado module-reference
+// polarity inference from misclassifying the two reset outputs and tells block-
+// design validation that both reset outputs are synchronous to clk.
 module p04_reset_conditioner (
+    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_RESET reset:resetn" *)
     input  wire clk,
+
     input  wire reset_request,
+
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 reset RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     output wire reset,
+
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 resetn RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
     output wire resetn
 );
     reg [15:0] release_pipe = 16'hFFFF;
