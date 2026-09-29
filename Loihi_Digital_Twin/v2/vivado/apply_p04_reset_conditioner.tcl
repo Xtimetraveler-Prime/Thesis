@@ -1,7 +1,7 @@
-# Replace only the functional P04 reset outputs in an existing generated project
-# with the source-controlled p04_reset_conditioner. The original proc_sys_reset
-# instance may remain present for diagnostic comparison, but it no longer drives
-# HLS/custom functional reset inputs after this patch.
+# Replace only the functional P04 reset outputs in an isolated copy of the
+# generated project with the source-controlled p04_reset_conditioner. The
+# original proc_sys_reset instance remains present for diagnostic comparison,
+# but it no longer drives HLS/custom functional reset inputs in the candidate.
 if {$argc != 4} {
     error "usage: apply_p04_reset_conditioner.tcl <project.xpr> <reset_rtl> <report_dir> <jobs>"
 }
@@ -16,14 +16,26 @@ foreach path [list $project_xpr $reset_rtl] {
 }
 file mkdir $report_dir
 
-open_project $project_xpr
+# Never mutate the reusable P04 implementation project in-place. Open it
+# read-only and clone it into the candidate build directory first.
+set candidate_project_dir [file normalize [file join $report_dir .. project]]
+file delete -force $candidate_project_dir
+open_project -read_only $project_xpr
+save_project_as -force -exclude_run_results p04_reset_conditioner_candidate $candidate_project_dir
+close_project
+set candidate_xpr [file join $candidate_project_dir p04_reset_conditioner_candidate.xpr]
+if {![file exists $candidate_xpr]} {
+    error "P04 reset-conditioner candidate project copy was not created: $candidate_xpr"
+}
+open_project $candidate_xpr
+
 set bd_file [lindex [get_files -quiet */loihi_twin_v2_p04_impl.bd] 0]
 if {$bd_file eq ""} { error "P04 reset-conditioner flow could not find the block design" }
 open_bd_design $bd_file
 
-# Ensure the current reset RTL is in the project, then create or refresh the
-# module-reference cell. Vivado's module-reference reset inference is not relied
-# on below; the required block-design pin properties are applied explicitly.
+# Ensure the current reset RTL is in the candidate project, then create or
+# refresh the module-reference cell. Reset metadata is forced explicitly below;
+# the candidate does not depend on name-based module-reference inference.
 if {[llength [get_files -quiet $reset_rtl]] == 0} {
     add_files -norecurse $reset_rtl
     set_property file_type Verilog [get_files $reset_rtl]
@@ -36,10 +48,8 @@ if {[llength [get_bd_cells -quiet p04_reset_conditioner_0]] == 0} {
     update_module_reference [get_bd_cells p04_reset_conditioner_0]
 }
 
-# Force the reset interface properties at the BD boundary. This is the same
-# mechanism used by Vivado-generated BD Tcl: reset polarity lives on the reset
-# pin and ASSOCIATED_RESET lives on the clock pin. Do not depend on name-based
-# inference (which classified the active-high 'reset' output incorrectly here).
+# Force the reset interface properties at the BD boundary. Vivado-generated BD
+# Tcl uses CONFIG.POLARITY on reset pins and CONFIG.ASSOCIATED_RESET on clocks.
 set cond_clk [get_bd_pins p04_reset_conditioner_0/clk]
 set cond_reset [get_bd_pins p04_reset_conditioner_0/reset]
 set cond_resetn [get_bd_pins p04_reset_conditioner_0/resetn]
@@ -74,9 +84,6 @@ if {[llength [get_bd_nets -quiet -of_objects [get_bd_pins p04_reset_conditioner_
     connect_bd_net -net $reset_cmd_net [get_bd_pins p04_reset_conditioner_0/reset_request]
 }
 
-# Disconnect each functional reset endpoint from whatever reset net currently
-# drives it. Querying the endpoint makes this flow idempotent and safe after a
-# partially completed earlier candidate run.
 proc p04_disconnect_pin {pin_path} {
     set pin [get_bd_pins $pin_path]
     set nets [get_bd_nets -quiet -of_objects $pin]
@@ -107,6 +114,16 @@ connect_bd_net $cond_resetn \
     [get_bd_pins p04_endpoint_memory_0/resetn] \
     [get_bd_pins p04_endpoint_memory_1/resetn] \
     [get_bd_pins p04_heartbeat_0/resetn]
+
+# Read the source-side properties again after connectivity/parameter propagation.
+# If Vivado changed either polarity, fail here with the actual value rather than
+# producing another opaque validate_bd_design mismatch.
+set reset_polarity_post [get_property CONFIG.POLARITY $cond_reset]
+set resetn_polarity_post [get_property CONFIG.POLARITY $cond_resetn]
+puts "P04 reset-conditioner post-connect polarities: reset=$reset_polarity_post resetn=$resetn_polarity_post"
+if {$reset_polarity_post ne "ACTIVE_HIGH" || $resetn_polarity_post ne "ACTIVE_LOW"} {
+    error "P04 reset-conditioner polarity propagation changed source pins: reset=$reset_polarity_post resetn=$resetn_polarity_post"
+}
 
 validate_bd_design
 save_bd_design
