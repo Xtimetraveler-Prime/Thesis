@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from mnist_v2_nxtf.physical_conformance import (
-    DEEP_CORE_ID,
-    DEEP_NAME,
     EXPECTED_FINAL_EVIDENCE,
     EXPECTED_PREDICTION,
+    INGRESS_CORE_ID,
+    INGRESS_NAME,
     OUTPUT_CORE_ID,
     OUTPUT_NAME,
     PHYSICAL_SEQUENCE,
@@ -18,9 +18,9 @@ from mnist_v2_nxtf.physical_conformance import (
 def test_p08_4_3b_fixed_selection_contract() -> None:
     assert PHYSICAL_TIMESTEP == 99
     assert PHYSICAL_SLOT == 2
-    assert DEEP_CORE_ID == 3
+    assert INGRESS_CORE_ID == 0
     assert OUTPUT_CORE_ID == 4
-    assert PHYSICAL_SEQUENCE == (DEEP_NAME, OUTPUT_NAME, DEEP_NAME)
+    assert PHYSICAL_SEQUENCE == (INGRESS_NAME, OUTPUT_NAME, INGRESS_NAME)
     assert EXPECTED_PREDICTION == 7
     assert EXPECTED_FINAL_EVIDENCE == (
         -284,
