@@ -1,14 +1,14 @@
 # P08.3.4 Accepted-ANN to Converted-SNN Gate
 
-**Status:** Verification candidate after source-backed weight-representation correction  
+**Status:** Verification candidate after source-bounded DThIR/Loihi representation corrections  
 **Input checkpoint:** accepted P08.3.3 ANN only  
 **Official MNIST test split:** locked
 
 ## Purpose
 
-P08.3.4 converts the exact P08.3.3 ANN into the integer spiking-network parameter set consumed by FPGA-v2. This gate freezes conversion artifacts before any official-test evaluation and before validation accuracy is used to judge the converted SNN.
+P08.3.4 converts the exact accepted P08.3.3 ANN into the integer spiking-network parameter set consumed by FPGA-v2. The conversion artifact is frozen before any converted-SNN validation accuracy or official-test accuracy is observed.
 
-The accepted ANN identity is:
+Accepted ANN identity:
 
 ```text
 selected-weight fingerprint:
@@ -18,93 +18,94 @@ checkpoint SHA-256:
 61f60eaa789dcf04131f658edb86db880999a5f0ad2c8f1bd06426d464dba7d2
 ```
 
-P08.3.4 refuses to convert a different checkpoint.
+## Calibration and floating normalization
 
-## Calibration boundary
+Calibration uses only the deterministic 55,000-image training remainder. Every tenth retained training image is used, yielding 5,500 calibration examples. Validation labels and the official 10,000-image test split are not used.
 
-Calibration uses only the deterministic 55,000-image training remainder. Following the already frozen P08.3.1 policy, every tenth retained training image is used, yielding exactly 5,500 calibration examples.
-
-No validation labels are used by parameter normalization, and the official 10,000-image test split remains unavailable to the conversion pipeline.
-
-## Floating ANN normalization
-
-The project uses the Rueckauer et al. data-normalization relationship:
+The floating network uses the already accepted Rueckauer-style normalization:
 
 ```text
 W_l(normalized) = W_l * lambda_(l-1) / lambda_l
 b_l(normalized) = b_l / lambda_l
-```
-
-where `lambda_l` is the measured activation scale of layer `l` on the calibration corpus.
-
-P08.3.4 resolves the previously unspecified normalization percentile before observing converted-SNN accuracy:
-
-```text
 normalization percentile = 100% (maximum activation)
 ```
 
-This is deliberately not tuned after conversion. The hidden-layer lambdas are measured from the ReLU outputs of `conv1`, `conv2`, and `conv3` with dropout inactive. The ANN's final softmax is not itself converted to a spiking operation; `conv4` is calibrated as its affine output followed by ReLU, and classification remains the frozen output-spike-count readout.
+This policy remains unchanged by the integer-representation corrections below.
 
-## Loihi weight-representation correction discovered by the first gate
+## What the two failed gates established
 
-The first P08.3.4 run reached the representation check and failed before any SNN-accuracy evaluation:
+The first P08.3.4 run failed before any SNN accuracy evaluation because the project incorrectly treated an 8-bit Loihi weight as conventional signed `int8`:
 
 ```text
-observed normalized integer-weight range: [-218, 103]
-initial assumed range:                    [-127, 127]
+observed: [-218, 103]
+incorrect assumed range: [-127, 127]
 ```
 
-That failure exposed an error in the **project representation assumption**, not an ANN or normalization failure. The initial gate had treated an 8-bit Loihi weight as a conventional signed two's-complement `int8`. Loihi's mixed-sign weight mantissa does not use that range.
-
-The source-backed Loihi arithmetic record used by FPGA-v2 (including the Brian2Loihi/M22 evidence in `LOIHI1_TARGET_SPEC.md`) describes the effective weight as a mantissa plus exponent. For mixed-sign 8-bit weights, the mantissa values have a two-count precision step and span:
+Loihi mixed-sign 8-bit weights instead use even mantissas spanning approximately:
 
 ```text
-{-256, -254, ..., -2, 0, 2, ..., 252, 254}
+{-256, -254, ..., 0, ..., 252, 254}
 ```
 
-Static initialization is represented here with truncation toward zero to the nearest representable step. The historical SNN Toolbox Loihi configuration used for P08 source-style evidence specifies:
+with static quantization represented in FPGA-v2 as rounding toward zero to a step of two.
+
+After correcting that representation, the second gate still failed:
 
 ```text
-numWeightBits = 8
-weightExponent = 0
-vThMant = 512
+observed: [-276, 210]
+Loihi mixed-sign range: [-256, 254]
 ```
 
-The threshold and exponent-zero weight paths share the same implicit native Loihi power-of-two scale. FPGA-v2 operates at the normalized architectural integer boundary rather than reproducing those hidden bitfield shifts, so the common scale is not applied a second time. The project therefore continues to store threshold mantissa `512` and the corresponding weight mantissas directly.
-
-This correction was made **before any converted-SNN validation accuracy was observed**. It does not change the ANN checkpoint, calibration corpus, activation lambdas, normalization formula, 100-timestep horizon, reset policy, or decoder, and it is not an accuracy-tuning step.
-
-## FPGA-v2 integer adaptation after correction
-
-The source normalization and FPGA-v2 integer representation remain recorded separately.
-
-For weights:
+This exposed a second project error: the converter multiplied every normalized parameter directly by `vThMant=512` even though the P08.3.1 hard-reset conversion policy had already frozen:
 
 ```text
-raw_weight_mantissa = normalized_weight * 512
-integer_weight = trunc_toward_zero(raw_weight_mantissa / 2) * 2
+desired_threshold_to_input_ratio = 8
+```
+
+Published Loihi conversion descriptions define DThIR as the fixed ratio between incoming neuron input and membrane threshold and state that conversion normalizes weights and biases to the hardware dynamic range while satisfying this ratio. The historical SNN Toolbox hard-reset example used DThIR `2**3 = 8` together with `vThMant=512`, `numWeightBits=8`, and `weightExponent=0`.
+
+The exact historical NxSDK backend formula is not public. Therefore FPGA-v2 makes the following explicit **PROJECT_RECONSTRUCTION**, fixed before any SNN validation accuracy is observed:
+
+```text
+effective normalized-parameter scale
+    = threshold_mantissa / desired_threshold_to_input_ratio
+    = 512 / 8
+    = 64
+```
+
+This interpretation directly applies the already-frozen DThIR rather than selecting a new scale after seeing accuracy.
+
+## Final integer adaptation under test
+
+Weights:
+
+```text
+raw_weight = normalized_weight * 64
+integer_weight = trunc_toward_zero(raw_weight / 2) * 2
 
 sign mode:       mixed
 weight bits:     8
 weight exponent: 0
-representable:   [-256, 254] in steps of 2
-threshold:       512
+range:            [-256, 254]
+step:             2
+clipping:         forbidden
 ```
 
-For biases, P08 retains the already frozen conservative project adaptation pending any need for a more detailed native-bias audit:
+Biases use the same DThIR-derived scale so the affine layer is not rescaled inconsistently relative to its synaptic inputs:
 
 ```text
-integer_bias = round(normalized_bias * 512)
+integer_bias = round(normalized_bias * 64)
 project bias range = [-2047, 2047]
+clipping: forbidden
 ```
 
-**No clipping is permitted.** A weight or bias outside its accepted representation still causes a hard conversion failure.
+The exact native Loihi bias exponent/bitfield representation remains outside the equivalence claim.
 
-The converted artifact explicitly records the weight sign mode, step, rounding policy, exponent, range, and the fact that this representation correction superseded the rejected conventional-int8 assumption.
+Neither correction changes the ANN checkpoint, 5,500-image calibration corpus, activation lambdas, floating normalization formula, hard-reset neuron semantics, primary 100-timestep horizon, input encoding, decoder, or official-test lock.
 
-## Converted graph
+## Converted graph and mapping boundary
 
-The converted P06 graph retains the accepted reconstruction exactly:
+The learned converted graph retains the accepted reconstruction:
 
 ```text
 neurons:               4,218
@@ -112,13 +113,11 @@ expanded connections: 338,880
 ANN parameters:        7,006
 ```
 
-Each output channel remains its own P06 population so its learned integer bias maps directly to the compartment configuration. Every spatial use of a convolution coefficient receives the converted integer value from the corresponding Keras kernel.
-
-The converted graph is compiled through the normal P06 mapper with the already accepted P08 mapping policy (`900` compartments/core). The gate expects five logical cores because the graph has a five-core compartment-count lower bound. This remains the project's P06 mapping, not a claim of equality with NxTF's reported 14-neurocore mapping.
+The graph is compiled through P06 with the accepted `900` compartments/core project mapping policy. The gate currently expects five project logical cores. This remains explicitly different from NxTF's reported 14 Loihi neurocores and will be reported as a compiler/resource-model discrepancy rather than presented as equivalent.
 
 ## Generated local artifacts
 
-On success the gate promotes:
+On success:
 
 ```text
 applications/mnist_v2_nxtf/artifacts/p08_3_4_conversion/
@@ -129,34 +128,20 @@ applications/mnist_v2_nxtf/artifacts/p08_3_4_conversion/
 └── gate_result.json
 ```
 
-The generated directory remains Git-ignored.
-
-The conversion manifest records:
-
-- accepted ANN identities;
-- training/calibration dataset and split fingerprints;
-- activation lambdas;
-- per-layer floating/normalized/integer ranges;
-- Loihi mixed-sign weight range, step, rounding, and exponent;
-- zero-valued integer coefficient counts;
-- normalization and bias-adaptation rules;
-- converted parameter fingerprint;
-- converted P06 network fingerprint;
-- compiled deployment fingerprint;
-- logical/resident/physical counts; and
-- explicit `official_test_used=false` / `test_examples_observed=0` fields.
+The manifest records the accepted ANN identity, calibration fingerprints, activation lambdas, floating and integer ranges, DThIR=8, derived parameter scale=64, Loihi mixed-sign weight semantics, graph/deployment fingerprints, and explicit `official_test_used=false` / `test_examples_observed=0` fields.
 
 ## Acceptance boundary
 
 P08.3.4 passes only if:
 
-1. the accepted P08.3.3 checkpoint and manifest identities match exactly;
-2. the fixed 5,500-image training-only calibration corpus is used;
+1. the exact P08.3.3 ANN checkpoint and manifest are used;
+2. calibration remains the fixed 5,500-image training-only corpus;
 3. all activation lambdas are finite and positive;
-4. every weight is a valid even mixed-sign mantissa in `[-256, 254]` and every bias fits the frozen project range, with no clipping;
-5. the converted graph retains 4,218 neurons and 338,880 expanded connections;
-6. P06 compiles the exact converted graph to five valid logical cores;
-7. serialized conversion/network/deployment fingerprints recompute; and
-8. no official-test examples are observed.
+4. DThIR remains 8 and the derived parameter scale is exactly 64;
+5. every weight is an even mixed-sign mantissa in `[-256, 254]`, every bias fits the frozen project range, and no clipping occurs;
+6. the learned graph retains 4,218 neurons and 338,880 expanded connections;
+7. P06 compiles the exact converted graph to five valid project logical cores;
+8. serialized conversion/network/deployment fingerprints recompute; and
+9. no official-test examples are observed.
 
-P08.3.4 does **not** set or tune an SNN-accuracy acceptance target. Validation-only 100-timestep SNN behavior belongs to the next gate after the conversion artifact itself is frozen.
+P08.3.4 still does **not** set or tune an SNN-accuracy target. Validation-only 100-timestep SNN behavior belongs to the next gate after this conversion artifact is independently accepted.
