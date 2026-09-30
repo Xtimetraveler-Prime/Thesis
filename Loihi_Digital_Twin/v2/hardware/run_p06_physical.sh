@@ -77,12 +77,14 @@ grep -q '^result=PASS$' "$RESULT_FILE" || {
     exit 5
 }
 
-DEPLOYMENT_FINGERPRINT="$((PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" python3 - "$DEPLOYMENT_FILE" <<'PY'
+DEPLOYMENT_FINGERPRINT="$(
+    PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 - "$DEPLOYMENT_FILE" <<'PY'
 from loihi_twin_v2 import CompiledDeployment
 import sys
 print(CompiledDeployment.read_json(sys.argv[1]).fingerprint)
 PY
-) 2>/dev/null)"
+)"
 if ! grep -q "^deployment_fingerprint=${DEPLOYMENT_FINGERPRINT}$" "$RESULT_FILE"; then
     echo "ERROR: P06 physical result fingerprint does not match compiled deployment" >&2
     exit 6
