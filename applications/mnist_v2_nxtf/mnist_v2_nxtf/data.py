@@ -23,9 +23,15 @@ class MnistDataset:
     y_test: np.ndarray
 
 
-def load_mnist() -> MnistDataset:
-    """Load the standard Keras MNIST split as raw uint8 images."""
+@dataclass(frozen=True, slots=True)
+class MnistTrainingSplit:
+    """Official MNIST training split only; no test arrays are exposed."""
 
+    x_train: np.ndarray
+    y_train: np.ndarray
+
+
+def _load_keras_mnist():
     try:
         import tensorflow as tf
     except ImportError as exc:  # pragma: no cover - environment dependent
@@ -33,12 +39,39 @@ def load_mnist() -> MnistDataset:
             "TensorFlow is required to download/load MNIST. Install the P08 "
             "application with its 'train' extra."
         ) from exc
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+    return tf.keras.datasets.mnist.load_data()
+
+
+def load_mnist() -> MnistDataset:
+    """Load the standard Keras MNIST train/test split.
+
+    This broad loader is retained for the later P08.4 evaluation phase. P08.3
+    training code must use :func:`load_mnist_training_split` instead so that the
+    official test arrays are not exposed to checkpoint selection.
+    """
+
+    (x_train, y_train), (x_test, y_test) = _load_keras_mnist()
     return MnistDataset(
         np.asarray(x_train, dtype=np.uint8),
         np.asarray(y_train, dtype=np.int64),
         np.asarray(x_test, dtype=np.uint8),
         np.asarray(y_test, dtype=np.int64),
+    )
+
+
+def load_mnist_training_split() -> MnistTrainingSplit:
+    """Load only the official 60k training split for P08.3.
+
+    Keras packages train/test in one dataset archive, so its loader returns both
+    tuples. P08.3 deliberately discards the test tuple immediately and never
+    exposes it to the training/checkpoint-selection pipeline.
+    """
+
+    training, _discarded_test = _load_keras_mnist()
+    x_train, y_train = training
+    return MnistTrainingSplit(
+        np.asarray(x_train, dtype=np.uint8),
+        np.asarray(y_train, dtype=np.int64),
     )
 
 
