@@ -40,8 +40,7 @@ from .accepted_ann import (
     ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
     validate_accepted_checkpoint,
 )
-from .data import prepare_full_training_arrays if False else None
-from .policy import ANN_POLICY, CONVERSION_POLICY, OFFICIAL_TEST_POLICY, validate_frozen_policy
+from .policy import CONVERSION_POLICY, OFFICIAL_TEST_POLICY, validate_frozen_policy
 from .reconstruction import OUTPUT_CLASSES, PROPOSED_FILTERS, PROPOSED_METRICS
 from .structural import P06_STRUCTURAL_COMPARTMENTS_PER_CORE
 from .training import prepare_full_training_arrays
@@ -168,7 +167,12 @@ def _extract_ann_parameters(model) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
     return tuple(result)
 
 
-def calibrate_activation_maxima(model, calibration_images: np.ndarray, *, batch_size: int = 128) -> tuple[float, ...]:
+def calibrate_activation_maxima(
+    model,
+    calibration_images: np.ndarray,
+    *,
+    batch_size: int = 128,
+) -> tuple[float, ...]:
     """Return lambda_0..lambda_4 using max activation normalization.
 
     Hidden lambdas are measured from the ReLU outputs of conv1..conv3. The ANN's
@@ -184,13 +188,19 @@ def calibrate_activation_maxima(model, calibration_images: np.ndarray, *, batch_
 
     images = np.asarray(calibration_images, dtype=np.float32)
     if images.ndim != 4 or images.shape[1:] != (28, 28, 1):
-        raise ValueError(f"calibration images must have shape (N,28,28,1); got {images.shape}")
+        raise ValueError(
+            f"calibration images must have shape (N,28,28,1); got {images.shape}"
+        )
     if not len(images):
         raise ValueError("calibration images cannot be empty")
 
     hidden_model = tf.keras.Model(
         model.inputs,
-        [model.get_layer("conv1").output, model.get_layer("conv2").output, model.get_layer("conv3").output],
+        [
+            model.get_layer("conv1").output,
+            model.get_layer("conv2").output,
+            model.get_layer("conv3").output,
+        ],
     )
     kernel4, bias4 = model.get_layer("conv4").get_weights()
     maxima = [float(np.max(images))]
@@ -201,16 +211,25 @@ def calibrate_activation_maxima(model, calibration_images: np.ndarray, *, batch_
         batch = images[start : start + batch_size]
         hidden = hidden_model(batch, training=False)
         for index, activation in enumerate(hidden):
-            hidden_max[index] = max(hidden_max[index], float(tf.reduce_max(activation).numpy()))
+            hidden_max[index] = max(
+                hidden_max[index], float(tf.reduce_max(activation).numpy())
+            )
         conv3 = hidden[-1]
-        logits = tf.nn.conv2d(conv3, kernel4, strides=[1, 1, 1, 1], padding="VALID")
+        logits = tf.nn.conv2d(
+            conv3,
+            kernel4,
+            strides=[1, 1, 1, 1],
+            padding="VALID",
+        )
         logits = tf.nn.bias_add(logits, bias4)
         relu_logits = tf.nn.relu(logits)
         output_max = max(output_max, float(tf.reduce_max(relu_logits).numpy()))
 
     maxima.extend(hidden_max)
     maxima.append(output_max)
-    if len(maxima) != 5 or any((not np.isfinite(value) or value <= 0.0) for value in maxima):
+    if len(maxima) != 5 or any(
+        (not np.isfinite(value) or value <= 0.0) for value in maxima
+    ):
         raise ValueError(f"invalid calibration activation maxima: {maxima}")
     return tuple(maxima)
 
@@ -244,8 +263,12 @@ def quantize_normalized_parameters(
     """
 
     scale = float(INTEGER_THRESHOLD_SCALE)
-    q_kernel_64 = np.rint(np.asarray(normalized_kernel, dtype=np.float64) * scale).astype(np.int64)
-    q_bias_64 = np.rint(np.asarray(normalized_bias, dtype=np.float64) * scale).astype(np.int64)
+    q_kernel_64 = np.rint(
+        np.asarray(normalized_kernel, dtype=np.float64) * scale
+    ).astype(np.int64)
+    q_bias_64 = np.rint(
+        np.asarray(normalized_bias, dtype=np.float64) * scale
+    ).astype(np.int64)
 
     if q_kernel_64.size and (
         int(q_kernel_64.min()) < CONVERSION_POLICY.signed_weight_min
@@ -254,7 +277,8 @@ def quantize_normalized_parameters(
         raise OverflowError(
             "P08.3 normalized weight does not fit the frozen signed 8-bit project range: "
             f"observed=[{int(q_kernel_64.min())},{int(q_kernel_64.max())}] "
-            f"allowed=[{CONVERSION_POLICY.signed_weight_min},{CONVERSION_POLICY.signed_weight_max}]"
+            f"allowed=[{CONVERSION_POLICY.signed_weight_min},"
+            f"{CONVERSION_POLICY.signed_weight_max}]"
         )
     if q_bias_64.size and (
         int(q_bias_64.min()) < CONVERSION_POLICY.signed_bias_min
@@ -263,7 +287,8 @@ def quantize_normalized_parameters(
         raise OverflowError(
             "P08.3 normalized bias does not fit the frozen signed 12-bit project range: "
             f"observed=[{int(q_bias_64.min())},{int(q_bias_64.max())}] "
-            f"allowed=[{CONVERSION_POLICY.signed_bias_min},{CONVERSION_POLICY.signed_bias_max}]"
+            f"allowed=[{CONVERSION_POLICY.signed_bias_min},"
+            f"{CONVERSION_POLICY.signed_bias_max}]"
         )
     return q_kernel_64.astype(np.int16), q_bias_64.astype(np.int16)
 
@@ -273,7 +298,9 @@ def convert_parameter_arrays(
     lambdas: tuple[float, ...],
 ) -> tuple[dict[str, np.ndarray], tuple[LayerConversion, ...]]:
     if len(ann_parameters) != 4 or len(lambdas) != 5:
-        raise ValueError("P08 conversion expects four convolution layers and lambda_0..lambda_4")
+        raise ValueError(
+            "P08 conversion expects four convolution layers and lambda_0..lambda_4"
+        )
 
     arrays: dict[str, np.ndarray] = {}
     reports: list[LayerConversion] = []
@@ -319,8 +346,12 @@ def build_converted_network(arrays: dict[str, np.ndarray]) -> NetworkSpec:
     input_projections: list[InputProjectionSpec] = []
 
     for stage_index, geometry in enumerate(conv_geometries(), start=1):
-        q_kernel = np.asarray(arrays[f"{geometry.name}_kernel_integer"], dtype=np.int64)
-        q_bias = np.asarray(arrays[f"{geometry.name}_bias_integer"], dtype=np.int64)
+        q_kernel = np.asarray(
+            arrays[f"{geometry.name}_kernel_integer"], dtype=np.int64
+        )
+        q_bias = np.asarray(
+            arrays[f"{geometry.name}_bias_integer"], dtype=np.int64
+        )
         spatial_size = geometry.output_height * geometry.output_width
 
         for output_channel in range(geometry.output_channels):
@@ -340,12 +371,16 @@ def build_converted_network(arrays: dict[str, np.ndarray]) -> NetworkSpec:
             )
 
         for output_channel in range(geometry.output_channels):
-            destination_population = _channel_population(geometry.name, output_channel)
+            destination_population = _channel_population(
+                geometry.name, output_channel
+            )
             for input_channel in range(geometry.input_channels):
                 source_name = (
                     "pixels"
                     if stage_index == 1
-                    else _channel_population(f"conv{stage_index - 1}", input_channel)
+                    else _channel_population(
+                        f"conv{stage_index - 1}", input_channel
+                    )
                 )
                 connections: list[ProjectionConnection] = []
                 for output_y in range(geometry.output_height):
@@ -438,11 +473,15 @@ def run_conversion(
     network = build_converted_network(arrays)
     compiled = compile_network(
         network,
-        MappingOptions(compartments_per_core=P06_STRUCTURAL_COMPARTMENTS_PER_CORE),
+        MappingOptions(
+            compartments_per_core=P06_STRUCTURAL_COMPARTMENTS_PER_CORE
+        ),
     )
     logical_core_count = len(compiled.logical_deployment.core_configs)
     if logical_core_count < 5:
-        raise AssertionError("converted graph cannot map below its five-core compartment lower bound")
+        raise AssertionError(
+            "converted graph cannot map below its five-core compartment lower bound"
+        )
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -461,7 +500,9 @@ def run_conversion(
         "accepted_ann_checkpoint_sha256": ACCEPTED_ANN_CHECKPOINT_SHA256,
         "accepted_ann_weights_fingerprint": ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
         "accepted_ann_best_epoch": int(training_manifest["best_epoch"]),
-        "accepted_ann_best_val_accuracy": float(training_manifest["best_val_accuracy"]),
+        "accepted_ann_best_val_accuracy": float(
+            training_manifest["best_val_accuracy"]
+        ),
         "official_test_policy": OFFICIAL_TEST_POLICY,
         "official_test_used": False,
         "test_examples_observed": 0,
@@ -475,8 +516,14 @@ def run_conversion(
         "normalization_formula_weights": "W_l * lambda_(l-1) / lambda_l",
         "normalization_formula_bias": "b_l / lambda_l",
         "activation_lambdas": [float(value) for value in lambdas],
-        "final_softmax_conversion": "conv4 affine output calibrated through ReLU; spike-count readout replaces softmax",
-        "integer_quantization": "round(normalized_parameter * threshold_mantissa); reject overflow; no clipping",
+        "final_softmax_conversion": (
+            "conv4 affine output calibrated through ReLU; "
+            "spike-count readout replaces softmax"
+        ),
+        "integer_quantization": (
+            "round(normalized_parameter * threshold_mantissa); "
+            "reject overflow; no clipping"
+        ),
         "integer_threshold_scale": INTEGER_THRESHOLD_SCALE,
         "weight_range": [
             CONVERSION_POLICY.signed_weight_min,
@@ -521,7 +568,9 @@ def run_conversion(
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert the accepted P08.3.3 ANN to a P08 SNN artifact")
+    parser = argparse.ArgumentParser(
+        description="Convert the accepted P08.3.3 ANN to a P08 SNN artifact"
+    )
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--training-manifest", required=True)
     parser.add_argument("--output-dir", required=True)
@@ -530,7 +579,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    result = run_conversion(args.checkpoint, args.training_manifest, args.output_dir)
+    result = run_conversion(
+        args.checkpoint,
+        args.training_manifest,
+        args.output_dir,
+    )
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     layer_ranges = ",".join(
         f"{item['name']}:[{item['integer_weight_min']},{item['integer_weight_max']}]"
