@@ -61,18 +61,18 @@ from pathlib import Path
 
 payload = json.loads(Path(sys.argv[1]).read_text())
 assert payload["schema"] == "p08-candidate-mapping-audit-v1"
-assert payload["topology"]["total_spiking_neurons"] == 2058
-assert payload["topology"]["trainable_weights"] == 7796
+assert payload["topology"]["total_spiking_neurons"] == 2474
+assert payload["topology"]["trainable_weights"] == 7597
 assert payload["logical_core_count"] == 3
 assert payload["physical_engine_count"] == 1
 assert payload["logical_capacity_changed"] is False
-assert payload["connection_sharing"]["expanded_connections"] == 81800
-assert payload["connection_sharing"]["stored_shared_parameters"] == 10076
-assert payload["static_route_estimate"] == {"total": 1772, "local": 812, "remote": 960}
+assert payload["connection_sharing"]["expanded_connections"] == 70162
+assert payload["connection_sharing"]["stored_shared_parameters"] == 7705
+assert payload["static_route_estimate"] == {"total": 2410, "local": 416, "remote": 1994}
 print(
     "PASS: P08 candidate artifact pipeline "
-    "neurons=2058 weights=7796 logical_cores=3 physical_engines=1 "
-    "expanded=81800 stored=10076 local_routes=812 remote_routes=960"
+    "neurons=2474 weights=7597 logical_cores=3 physical_engines=1 "
+    "expanded=70162 stored=7705 local_routes=416 remote_routes=1994"
 )
 PY
 
