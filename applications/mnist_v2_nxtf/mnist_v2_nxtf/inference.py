@@ -2,7 +2,7 @@
 
 This evaluator mirrors the v2 architectural timing contract: external pixel
 spikes may reach layer 0 in the current algorithmic timestep, while every neural
-projection emits packets targeting the following timestep.  It is intended for
+projection emits packets targeting the following timestep. It is intended for
 full-corpus accuracy characterization; representative cases are separately
 checked against the exact `LogicalChip` golden model and physical K26 path.
 """
@@ -13,7 +13,13 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from .config import CHARACTERIZATION_TIMESTEPS, PRIMARY_TIMESTEPS
+from .config import (
+    CHARACTERIZATION_TIMESTEPS,
+    CONV1,
+    CONV2,
+    DENSE_HIDDEN,
+    PRIMARY_TIMESTEPS,
+)
 from .data import quantize_input_spike_counts
 from .topology import IntegerModel
 from .training import require_tensorflow
@@ -42,9 +48,15 @@ def _simulate_batch(
     q3 = tf.convert_to_tensor(np.asarray(model.dense1), dtype=tf.float32)
     q4 = tf.convert_to_tensor(np.asarray(model.dense2), dtype=tf.float32)
 
-    v1 = tf.zeros((batch, 24, 24, 3), dtype=tf.float32)
-    v2 = tf.zeros((batch, 11, 11, 6), dtype=tf.float32)
-    v3 = tf.zeros((batch, 8), dtype=tf.float32)
+    v1 = tf.zeros(
+        (batch, CONV1.output_height, CONV1.output_width, CONV1.filters),
+        dtype=tf.float32,
+    )
+    v2 = tf.zeros(
+        (batch, CONV2.output_height, CONV2.output_width, CONV2.filters),
+        dtype=tf.float32,
+    )
+    v3 = tf.zeros((batch, DENSE_HIDDEN), dtype=tf.float32)
     v4 = tf.zeros((batch, 10), dtype=tf.float32)
     previous1 = tf.zeros_like(v1)
     previous2 = tf.zeros_like(v2)
@@ -58,10 +70,20 @@ def _simulate_batch(
         input_spikes = tf.cast(after > before, tf.float32)
         input_spikes = tf.reshape(input_spikes, (batch, 28, 28, 1))
 
-        syn1 = tf.nn.conv2d(input_spikes, q1, strides=1, padding="VALID")
+        syn1 = tf.nn.conv2d(
+            input_spikes,
+            q1,
+            strides=[1, CONV1.stride, CONV1.stride, 1],
+            padding="VALID",
+        )
         v1, spikes1 = _spike_and_reset(tf, v1, syn1, model.thresholds[0])
 
-        syn2 = tf.nn.conv2d(previous1, q2, strides=[1, 2, 2, 1], padding="VALID")
+        syn2 = tf.nn.conv2d(
+            previous1,
+            q2,
+            strides=[1, CONV2.stride, CONV2.stride, 1],
+            padding="VALID",
+        )
         v2, spikes2 = _spike_and_reset(tf, v2, syn2, model.thresholds[1])
 
         syn3 = tf.matmul(tf.reshape(previous2, (batch, -1)), q3)
