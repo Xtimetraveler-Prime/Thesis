@@ -52,7 +52,11 @@ from mnist_v2_nxtf import TOPOLOGY_STATUS
 from mnist_v2_nxtf.reconstruction import PROPOSED_METRICS, RECONSTRUCTION_STATUS
 from mnist_v2_nxtf.structural import compile_structural_probe
 
-assert TOPOLOGY_STATUS == "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
+accepted_or_later = {
+    "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING",
+    "P08_2_PAGING_ACCEPTED_P08_3_POLICY_FROZEN",
+}
+assert TOPOLOGY_STATUS in accepted_or_later
 assert RECONSTRUCTION_STATUS == "ACCEPTED_P08_1_SOURCE_BOUNDED"
 compiled = compile_structural_probe()
 paged = export_paged_compiled_fpga_image(compiled)
@@ -81,5 +85,4 @@ PY
 
 echo
 echo "P08.2 software/context-paging preflight completed successfully."
-echo "Run rtl/run_p08_paged_dispatch_controller_sim.sh with Vivado 2025.2 sourced for the RTL dispatch gate."
-echo "Do not begin ANN training or use the official MNIST test set until P08.2 is accepted."
+echo "P08.2 is accepted; later P08 phase markers are allowed by this regression gate."
