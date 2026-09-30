@@ -41,7 +41,6 @@ def _build_diagnostic_simulator(parameters: dict[str, np.ndarray], timesteps: in
         tf.constant(parameters[f"conv{i}_bias_integer"].astype(np.int32))
         for i in range(1, 5)
     ]
-    strides = (2, 1, 2, 1)
 
     @tf.function(
         input_signature=[tf.TensorSpec(shape=[None, 28, 28, 1], dtype=tf.int32)],
@@ -58,11 +57,11 @@ def _build_diagnostic_simulator(parameters: dict[str, np.ndarray], timesteps: in
         p3 = tf.zeros_like(v3, dtype=tf.bool)
 
         input_total = tf.constant(0, dtype=tf.int64)
-        layer_totals = [tf.constant(0, dtype=tf.int64) for _ in range(4)]
-        active_masks = [tf.zeros([batch], dtype=tf.bool) for _ in range(4)]
-        max_syn = [tf.constant(-(2**31), dtype=tf.int32) for _ in range(4)]
-        max_candidate = [tf.constant(-(2**31), dtype=tf.int32) for _ in range(4)]
-        first_spike_tick = [tf.constant(-1, dtype=tf.int32) for _ in range(4)]
+        layer_totals = tf.zeros([4], dtype=tf.int64)
+        active_masks = tf.zeros([4, batch], dtype=tf.bool)
+        max_syn = tf.fill([4], tf.constant(-(2**31), dtype=tf.int32))
+        max_candidate = tf.fill([4], tf.constant(-(2**31), dtype=tf.int32))
+        first_spike_tick = tf.fill([4], tf.constant(-1, dtype=tf.int32))
 
         for tick in tf.range(timesteps):
             before = tf.math.floordiv(tick * encoded_counts, timesteps)
@@ -75,42 +74,66 @@ def _build_diagnostic_simulator(parameters: dict[str, np.ndarray], timesteps: in
             syn2 = tf.cast(tf.nn.conv2d(tf.cast(p1, tf.float32), weights[1], [1, 1, 1, 1], "VALID"), tf.int32)
             syn3 = tf.cast(tf.nn.conv2d(tf.cast(p2, tf.float32), weights[2], [1, 2, 2, 1], "VALID"), tf.int32)
             syn4 = tf.cast(tf.nn.conv2d(tf.cast(p3, tf.float32), weights[3], [1, 1, 1, 1], "VALID"), tf.int32)
-            syns = [syn1, syn2, syn3, syn4]
 
             c1 = v1 + syn1 + biases[0]
             c2 = v2 + syn2 + biases[1]
             c3 = v3 + syn3 + biases[2]
             c4 = v4 + syn4 + biases[3]
-            candidates = [c1, c2, c3, c4]
-            spikes = [c1 > threshold, c2 > threshold, c3 > threshold, c4 > threshold]
+            s1 = c1 > threshold
+            s2 = c2 > threshold
+            s3 = c3 > threshold
+            s4 = c4 > threshold
 
-            for i in range(4):
-                count = tf.reduce_sum(tf.cast(spikes[i], tf.int64))
-                layer_totals[i] += count
-                axes = tf.range(1, tf.rank(spikes[i]))
-                active_masks[i] = tf.logical_or(active_masks[i], tf.reduce_any(spikes[i], axis=axes))
-                max_syn[i] = tf.maximum(max_syn[i], tf.reduce_max(syns[i]))
-                max_candidate[i] = tf.maximum(max_candidate[i], tf.reduce_max(candidates[i]))
-                first_spike_tick[i] = tf.where(
-                    tf.logical_and(first_spike_tick[i] < 0, count > 0),
-                    tf.cast(tick, tf.int32),
-                    first_spike_tick[i],
-                )
+            tick_counts = tf.stack([
+                tf.reduce_sum(tf.cast(s1, tf.int64)),
+                tf.reduce_sum(tf.cast(s2, tf.int64)),
+                tf.reduce_sum(tf.cast(s3, tf.int64)),
+                tf.reduce_sum(tf.cast(s4, tf.int64)),
+            ])
+            tick_active = tf.stack([
+                tf.reduce_any(s1, axis=[1, 2, 3]),
+                tf.reduce_any(s2, axis=[1, 2, 3]),
+                tf.reduce_any(s3, axis=[1, 2, 3]),
+                tf.reduce_any(s4, axis=[1, 2, 3]),
+            ])
+            tick_max_syn = tf.stack([
+                tf.reduce_max(syn1), tf.reduce_max(syn2),
+                tf.reduce_max(syn3), tf.reduce_max(syn4),
+            ])
+            tick_max_candidate = tf.stack([
+                tf.reduce_max(c1), tf.reduce_max(c2),
+                tf.reduce_max(c3), tf.reduce_max(c4),
+            ])
 
-            v1 = tf.where(spikes[0], tf.zeros_like(c1), c1)
-            v2 = tf.where(spikes[1], tf.zeros_like(c2), c2)
-            v3 = tf.where(spikes[2], tf.zeros_like(c3), c3)
-            v4 = tf.where(spikes[3], tf.zeros_like(c4), c4)
-            p1, p2, p3 = spikes[0], spikes[1], spikes[2]
+            layer_totals += tick_counts
+            active_masks = tf.logical_or(active_masks, tick_active)
+            max_syn = tf.maximum(max_syn, tick_max_syn)
+            max_candidate = tf.maximum(max_candidate, tick_max_candidate)
+            first_spike_tick = tf.where(
+                tf.logical_and(first_spike_tick < 0, tick_counts > 0),
+                tf.fill([4], tf.cast(tick, tf.int32)),
+                first_spike_tick,
+            )
 
+            v1 = tf.where(s1, tf.zeros_like(c1), c1)
+            v2 = tf.where(s2, tf.zeros_like(c2), c2)
+            v3 = tf.where(s3, tf.zeros_like(c3), c3)
+            v4 = tf.where(s4, tf.zeros_like(c4), c4)
+            p1, p2, p3 = s1, s2, s3
+
+        active_examples = tf.reduce_sum(tf.cast(active_masks, tf.int32), axis=1)
+        final_max_voltage = tf.stack([
+            tf.reduce_max(v1), tf.reduce_max(v2),
+            tf.reduce_max(v3), tf.reduce_max(v4),
+        ])
         return (
             input_total,
-            tf.stack(layer_totals),
-            tf.stack([tf.reduce_sum(tf.cast(mask, tf.int32)) for mask in active_masks]),
-            tf.stack(max_syn),
-            tf.stack(max_candidate),
-            tf.stack(first_spike_tick),
-            tf.stack([tf.reduce_max(v1), tf.reduce_max(v2), tf.reduce_max(v3), tf.reduce_max(v4)]),
+            layer_totals,
+            active_examples,
+            max_syn,
+            max_candidate,
+            first_spike_tick,
+            final_max_voltage,
         )
 
     return simulate
