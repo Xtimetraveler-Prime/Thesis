@@ -31,15 +31,19 @@ PY
 
 python -m py_compile \
     applications/mnist_v2_nxtf/mnist_v2_nxtf/config.py \
-    applications/mnist_v2_nxtf/mnist_v2_nxtf/data.py
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/data.py \
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/reconstruction.py \
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/structural.py
 
 python -m pytest -q \
     applications/mnist_v2_nxtf/tests/test_data_contract.py \
+    applications/mnist_v2_nxtf/tests/test_reconstruction.py \
     Loihi_Digital_Twin/v2/tests/test_p06_compiler.py \
     Loihi_Digital_Twin/v2/tests/test_p05_hardware_image.py
 
 python - <<'PY'
 from mnist_v2_nxtf import PRIMARY_TIMESTEPS, TOPOLOGY_STATUS
+from mnist_v2_nxtf.reconstruction import PROPOSED_METRICS, RECONSTRUCTION_STATUS
 
 assert TOPOLOGY_STATUS == "UNFROZEN_NXTF_EMULATION_REALIGN"
 assert PRIMARY_TIMESTEPS == 100
@@ -47,8 +51,15 @@ print(
     "PASS: P08 NxTF-emulation scaffold "
     f"topology_status={TOPOLOGY_STATUS} primary_timesteps={PRIMARY_TIMESTEPS}"
 )
+print(
+    "PASS: P08.1 source-bounded reconstruction proposal "
+    f"status={RECONSTRUCTION_STATUS} filters={PROPOSED_METRICS.filters} "
+    f"neurons={PROPOSED_METRICS.neuron_count} "
+    f"params={PROPOSED_METRICS.trainable_parameters} "
+    f"expanded={PROPOSED_METRICS.expanded_connections}"
+)
 PY
 
 echo
-echo "P08 scaffold/data-contract preflight completed successfully."
-echo "No ANN/SNN topology is currently frozen; do not train or evaluate the test set yet."
+echo "P08.1 source-reconstruction preflight completed successfully."
+echo "The topology is still proposed/unfrozen; do not train or evaluate the test set yet."
