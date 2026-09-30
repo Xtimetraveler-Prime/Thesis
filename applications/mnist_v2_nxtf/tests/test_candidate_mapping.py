@@ -18,15 +18,15 @@ def _compiled():
 
 
 def test_p08_candidate_shape_and_parameter_contract():
-    assert TOTAL_SPIKING_NEURONS == 2058
-    assert TOTAL_TRAINABLE_WEIGHTS == 7796
+    assert TOTAL_SPIKING_NEURONS == 2474
+    assert TOTAL_TRAINABLE_WEIGHTS == 7597
     assert topology_report() == {
         "conv1_neurons": 1728,
-        "conv2_neurons": 300,
-        "dense_hidden_neurons": 20,
+        "conv2_neurons": 726,
+        "dense_hidden_neurons": 10,
         "output_neurons": 10,
-        "total_spiking_neurons": 2058,
-        "trainable_weights": 7796,
+        "total_spiking_neurons": 2474,
+        "trainable_weights": 7597,
     }
 
 
@@ -38,43 +38,43 @@ def test_p08_candidate_maps_to_accepted_three_context_boundary():
     assert fpga["logical_core_count"] == 3
     assert fpga["physical_engine_count"] == 1
     assert fpga["logical_capacity_changed"] is False
-    assert [core["usage"]["compartments"] for core in report["cores"]] == [1024, 1024, 10]
+    assert [core["usage"]["compartments"] for core in report["cores"]] == [1024, 1024, 426]
 
 
 def test_p08_candidate_mapping_pressure_is_frozen():
     report = _compiled().report()
     assert report["static_route_estimate"] == {
-        "total": 1772,
-        "local": 812,
-        "remote": 960,
+        "total": 2410,
+        "local": 416,
+        "remote": 1994,
     }
-    assert report["connection_sharing"]["expanded_connections"] == 81800
-    assert report["connection_sharing"]["stored_shared_parameters"] == 10076
-    assert report["connection_sharing"]["expanded_per_stored_parameter"] == 81800 / 10076
+    assert report["connection_sharing"]["expanded_connections"] == 70162
+    assert report["connection_sharing"]["stored_shared_parameters"] == 7705
+    assert report["connection_sharing"]["expanded_per_stored_parameter"] == 70162 / 7705
     assert [core["usage"] for core in report["cores"]] == [
         {
             "compartments": 1024,
-            "input_axons": 473,
-            "output_routes": 940,
-            "synapse_bytes": 13388,
-            "shared_parameters": 2788,
+            "input_axons": 514,
+            "output_routes": 1069,
+            "synapse_bytes": 13680,
+            "shared_parameters": 2800,
             "expanded_connections": 25600,
         },
         {
             "compartments": 1024,
-            "input_axons": 2099,
-            "output_routes": 832,
-            "synapse_bytes": 37876,
-            "shared_parameters": 7088,
-            "expanded_connections": 56000,
+            "input_axons": 1134,
+            "output_routes": 925,
+            "synapse_bytes": 19152,
+            "shared_parameters": 3473,
+            "expanded_connections": 26240,
         },
         {
-            "compartments": 10,
-            "input_axons": 20,
-            "output_routes": 0,
-            "synapse_bytes": 960,
-            "shared_parameters": 200,
-            "expanded_connections": 200,
+            "compartments": 426,
+            "input_axons": 1663,
+            "output_routes": 416,
+            "synapse_bytes": 12972,
+            "shared_parameters": 1432,
+            "expanded_connections": 18322,
         },
     ]
 
