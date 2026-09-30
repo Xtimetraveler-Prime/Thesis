@@ -1,7 +1,7 @@
 """Deterministic, source-bounded P08.1 topology reconstruction helpers.
 
 This module does not claim to recover the unpublished layer dimensions of the
-NxTF paper's frame-based MNIST benchmark.  It keeps the published aggregate
+NxTF paper's frame-based MNIST benchmark. It keeps the published aggregate
 anchors separate from a project reconstruction that reuses the surviving
 public NxTF tutorial's four-convolution scaffold.
 
@@ -11,12 +11,13 @@ No training or official-test evaluation belongs in this module.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from heapq import nsmallest
 from math import prod
 
 
 RECONSTRUCTION_STATUS = "PROPOSED_P08_1_SOURCE_BOUNDED"
 
-# Published NxTF frame-based MNIST anchors.  The paper prints the neuron and
+# Published NxTF frame-based MNIST anchors. The paper prints the neuron and
 # trainable-parameter counts approximately ("~4k", "~7k") and the connection
 # counts as 341k discrete versus 6,746 shared weights.
 PAPER_NEURON_TARGET = 4_000
@@ -36,7 +37,7 @@ TUTORIAL_STRIDES = (2, 1, 2, 1)
 TUTORIAL_OUTPUT_SPATIAL = ((12, 12), (10, 10), (4, 4), (1, 1))
 OUTPUT_CLASSES = 10
 
-# Search bounds are a project policy.  Sixty-four is the largest channel count
+# Search bounds are a project policy. Sixty-four is the largest channel count
 # in the surviving public Intel MNIST tutorial and comfortably contains the
 # aggregate-matching solutions of interest.
 FILTER_SEARCH_MIN = 1
@@ -79,7 +80,7 @@ def metrics_for_filters(filters: tuple[int, int, int]) -> ReconstructionMetrics:
 
     ``kernel_weights`` is the ordinary convolution-kernel coefficient count.
     It is compared to the paper's 6,746 shared-weight anchor only as a
-    reconstruction objective.  It is not claimed to be byte-for-byte identical
+    reconstruction objective. It is not claimed to be byte-for-byte identical
     to NxTF/Loihi connection-sharing storage or to P06 shared-parameter counts.
     """
 
@@ -107,7 +108,7 @@ def metrics_for_filters(filters: tuple[int, int, int]) -> ReconstructionMetrics:
     trainable_parameters = kernel_weights + bias_count
 
     # Every output unit receives kernel_h * kernel_w * input_channels expanded
-    # connections.  This is the ordinary discrete graph edge count before any
+    # connections. This is the ordinary discrete graph edge count before any
     # convolutional sharing/compression.
     input_channels = (1, f1, f2, f3)
     expanded_connections = sum(
@@ -141,38 +142,40 @@ def metrics_for_filters(filters: tuple[int, int, int]) -> ReconstructionMetrics:
     )
 
 
+def _rank_key(item: ReconstructionMetrics) -> tuple[object, ...]:
+    return (
+        item.normalized_l1_score,
+        abs(item.expanded_connections - PAPER_EXPANDED_CONNECTION_TARGET),
+        abs(item.kernel_weights - PAPER_SHARED_WEIGHT_TARGET),
+        abs(item.trainable_parameters - PAPER_TRAINABLE_PARAMETER_TARGET),
+        abs(item.neuron_count - PAPER_NEURON_TARGET),
+        item.filters,
+    )
+
+
+def _candidate_stream():
+    for f1 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1):
+        for f2 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1):
+            for f3 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1):
+                yield metrics_for_filters((f1, f2, f3))
+
+
 def ranked_reconstructions(limit: int | None = None) -> tuple[ReconstructionMetrics, ...]:
     """Enumerate tutorial-scaffold candidates under the frozen project score.
 
     The score gives equal weight to relative error against the four published
-    aggregate anchors.  This weighting is a deterministic project convention,
+    aggregate anchors. This weighting is a deterministic project convention,
     not a claim about how the NxTF authors selected their network.
     """
 
-    candidates = [
-        metrics_for_filters((f1, f2, f3))
-        for f1 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1)
-        for f2 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1)
-        for f3 in range(FILTER_SEARCH_MIN, FILTER_SEARCH_MAX + 1)
-    ]
-    candidates.sort(
-        key=lambda item: (
-            item.normalized_l1_score,
-            abs(item.expanded_connections - PAPER_EXPANDED_CONNECTION_TARGET),
-            abs(item.kernel_weights - PAPER_SHARED_WEIGHT_TARGET),
-            abs(item.trainable_parameters - PAPER_TRAINABLE_PARAMETER_TARGET),
-            abs(item.neuron_count - PAPER_NEURON_TARGET),
-            item.filters,
-        )
-    )
     if limit is not None:
         if limit < 1:
             raise ValueError("limit must be positive")
-        candidates = candidates[:limit]
-    return tuple(candidates)
+        return tuple(nsmallest(limit, _candidate_stream(), key=_rank_key))
+    return tuple(sorted(_candidate_stream(), key=_rank_key))
 
 
-# Deterministic P08.1 proposal.  This stays explicitly proposed/unfrozen until
+# Deterministic P08.1 proposal. This stays explicitly proposed/unfrozen until
 # Diego accepts the P08.1 source reconstruction and resource audit.
 PROPOSED_FILTERS = (14, 20, 12)
 PROPOSED_METRICS = metrics_for_filters(PROPOSED_FILTERS)
