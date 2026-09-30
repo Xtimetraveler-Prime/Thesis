@@ -15,28 +15,59 @@ The authoritative P08 documents are:
 ```text
 Loihi_Digital_Twin/v2/docs/P08_MNIST_COMPARISON_CONTRACT.md
 Loihi_Digital_Twin/v2/docs/P08_NXTF_SOURCE_AUDIT.md
+Loihi_Digital_Twin/v2/docs/P08_NXTF_RECONSTRUCTION.md
 Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md
 ```
 
 ## Current status
 
-There is deliberately **no active/frozen network topology** in this package.
-Revision-1/2/3 candidate topology, training, conversion, inference, mapping-probe,
-and candidate CLI code were removed from the active tree so they cannot be
-mistaken for the accepted workload.
+P08.1 now contains a **source-bounded topology proposal**, but it is deliberately
+not marked accepted/frozen yet.
 
-The reusable pieces retained here are:
+The exact layer dimensions of the paper's frame-based MNIST benchmark were not
+recovered from the paper/preprint, Intel NRC repository history, SNN Toolbox
+history, or the public author-repository artifacts inspected in P08.1. The
+surviving Intel tutorial is clearly a different 33,802-parameter model.
 
-- the dedicated P08 Python package/environment boundary;
-- standard 28x28 MNIST loading;
-- the deterministic 55,000/5,000 train/validation split policy;
-- deterministic rate-encoding helpers; and
-- tests that verify the split/encoding contract and assert that the topology is
-  still unfrozen.
+Rather than invent an "exact" topology, P08.1 keeps the tutorial's public
+four-convolution spatial scaffold and deterministically searches the three hidden
+channel counts against the paper's aggregate anchors. The current proposal is:
 
-The official 10,000-image MNIST test set must remain untouched until the topology,
-training policy, ANN-to-SNN conversion, thresholds/scales, timestep policy, and
-decoder are frozen from source evidence plus training/validation data only.
+```text
+28x28x1
+ -> Conv2D(14, 5x5, stride 2, valid) -> 12x12x14
+ -> Conv2D(20, 3x3, stride 1, valid) -> 10x10x20
+ -> Conv2D(12, 3x3, stride 2, valid) ->  4x4x12
+ -> Conv2D(10, 4x4, stride 1, valid) ->  1x1x10
+```
+
+Its structural totals are:
+
+```text
+neurons:                 4,218
+convolution weights:     6,950
+bias parameters:            56
+trainable parameters:    7,006
+expanded connections: 338,880
+primary timesteps:          100
+```
+
+These values are close to the paper's approximately 4k neurons, approximately 7k
+parameters, 341k discrete connections, and 6,746 shared weights, but the graph is
+explicitly `PROJECT_RECONSTRUCTION`; it is not claimed to be the unpublished NxTF
+benchmark topology.
+
+`TOPOLOGY_STATUS` remains:
+
+```text
+UNFROZEN_NXTF_EMULATION_REALIGN
+```
+
+until Diego independently verifies and accepts the P08.1 reconstruction/resource
+audit.
+
+The official 10,000-image MNIST test set remains locked. No ANN training or SNN
+accuracy evaluation is authorized yet.
 
 ## Source-backed reference boundary
 
@@ -60,8 +91,45 @@ The surviving public Intel NxTF MNIST tutorial is a different, larger workload:
 That tutorial is all-convolutional, contains 33,802 trainable parameters, uses
 Dropout during ANN training, includes learned biases, and runs its example for
 512 Loihi timesteps. It is useful architectural evidence for NxTF style, but it
-must not be silently substituted for the paper's ~7k-parameter/100-timestep
-benchmark. See `P08_NXTF_SOURCE_AUDIT.md` for the distinction and source links.
+must not be silently substituted for the paper benchmark.
+
+The detailed evidence classifications and reconstruction rule are in
+`Loihi_Digital_Twin/v2/docs/P08_NXTF_RECONSTRUCTION.md`.
+
+## P06 structural probe
+
+`mnist_v2_nxtf/structural.py` expands the proposed CNN into the existing P06
+`NetworkSpec` boundary for connectivity/resource accounting only. It uses one
+P06 population per convolution output channel so a later trained deployment can
+represent the learned Conv2D bias per channel.
+
+The structural connection values are stable coefficient-identity tokens, **not
+trained weights**.
+
+A stock 1,024-compartment first-fit placement is expected to overflow the current
+project synapse-memory model. The P08.1 probe instead uses a mapping-only policy
+of:
+
+```text
+compartments_per_core = 900
+```
+
+without changing the neural graph. The deterministic contract is five logical
+cores, which is also the compartment-count lower bound for 4,218 neurons under
+the project's 1,024-compartment/core limit.
+
+Expected P06 totals asserted by the reconstruction test are:
+
+```text
+logical cores:                 5
+external ingress routes:       2,187
+expanded connections:        338,880
+P06 stored shared parameters: 64,235
+static output routes:           7,860
+```
+
+The P06 stored-shared-parameter count is intentionally not equated to NxTF's
+6,746 shared weights; the compiler/storage models are different.
 
 ## Important virtualization rule
 
@@ -69,12 +137,14 @@ The accepted P05 K26 shell retains three full logical-core contexts and services
 them with one physical HLS engine. **Three resident contexts are not a P08
 network-size limit.**
 
-If the source-faithful NxTF-style workload requires more logical cores than can be
-resident at once, P08 must extend the virtualization path with deterministic
-logical-context paging/loading while preserving logical IDs, architectural state,
-resource limits, packet semantics, barriers, and normalized Python/FPGA traces.
-The workload must not be shrunk merely to fit the current three-context physical
-shell.
+The current P08.1 proposal requires five logical cores under the capacity-safe
+P06 probe, so P08.2 must add deterministic logical-context paging/loading while
+preserving logical IDs, architectural state, resource limits, packet semantics,
+barriers, and normalized Python/FPGA traces. The workload must not be shrunk to
+fit the current three-context physical shell.
+
+The P06 five-core result is not expected to equal the paper's 14 native Loihi
+neurocores because P06 and NxTF use different placement and compression models.
 
 ## Environment
 
@@ -98,22 +168,28 @@ cd ~/Git/Thesis/Loihi_Digital_Twin/v2
 bash scripts/run_p08_preflight.sh
 ```
 
-The current preflight validates only the reusable P08 scaffold/data contract plus
-accepted P05/P06 regressions. It intentionally does **not** produce a candidate
-mapping artifact or permit ANN/SNN evaluation, because the NxTF-emulation
-topology has not yet been frozen.
+The preflight validates:
+
+- the reusable MNIST data/split/rate-encoding contract;
+- the deterministic P08.1 reconstruction search;
+- the expanded structural graph and P06 resource contract;
+- the expected default-P06 synapse-capacity failure;
+- the five-core capacity-safe P06 probe; and
+- relevant accepted P05/P06 regressions.
+
+Passing this preflight does not itself accept/freeze the topology. Diego's local
+verification and review are the P08.1 acceptance gate.
 
 ## Next development sequence
 
-1. Finish the P08.1 source reconstruction: recover the exact paper topology and
-   conversion details wherever public evidence supports them; label unknowns.
-2. Freeze the closest source-backed topology and quantify its expected neuron,
-   parameter, connection, and logical-core footprint before training.
-3. If it exceeds three resident K26 contexts, add deterministic context paging
-   rather than reducing the network to fit the current shell.
-4. Train using only the official training split plus the frozen validation split.
-5. Freeze ANN-to-SNN conversion using validation data only.
-6. Compile through P06, run full software accuracy, then perform representative
-   physical K26 differential validation.
-7. Compare against NxTF with directly comparable and contextual quantities kept
-   separate.
+1. Independently verify and accept/reject the P08.1 source-bounded reconstruction.
+2. If accepted, record the P08.1 freeze in the roadmap/application config.
+3. Begin P08.2 deterministic context paging because five logical cores exceed the
+   three resident K26 contexts.
+4. Preserve the exact reconstructed graph while adapting the execution mechanism.
+5. Only after P08.2 is validated, freeze the P08.3 ANN training/conversion policy
+   using training/validation data only.
+6. Keep the official test set locked until topology, training, conversion,
+   thresholds/scales, timestep policy, and decoder are frozen.
+7. Later run software accuracy and representative physical K26 differential
+   validation, then compare with NxTF using bounded/directly comparable metrics.
