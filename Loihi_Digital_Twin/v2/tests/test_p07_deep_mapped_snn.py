@@ -70,14 +70,15 @@ def test_p07_spike_wave_crosses_six_layers_with_alternating_local_remote_traffic
         {2: (2, 3)},
         {},
     )
-    expected_traffic = (
+    # packet_traffic is a cumulative normalized traffic snapshot.
+    expected_cumulative_traffic = (
         (2, 0),
-        (0, 2),
-        (2, 0),
-        (0, 2),
-        (2, 0),
-        (0, 0),
-        (0, 0),
+        (2, 2),
+        (4, 2),
+        (4, 4),
+        (6, 4),
+        (6, 4),
+        (6, 4),
     )
 
     for timestep in range(7):
@@ -90,7 +91,7 @@ def test_p07_spike_wave_crosses_six_layers_with_alternating_local_remote_traffic
         assert actual_spikes == expected_spikes[timestep]
         local = sum(row[4] for row in trace.packet_traffic if row[3] == "local")
         remote = sum(row[4] for row in trace.packet_traffic if row[3] == "remote")
-        assert (local, remote) == expected_traffic[timestep]
+        assert (local, remote) == expected_cumulative_traffic[timestep]
 
 
 def test_p07_forward_reverse_logical_service_order_is_invariant():
