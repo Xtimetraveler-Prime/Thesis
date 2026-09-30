@@ -82,6 +82,7 @@ from mnist_v2_nxtf.conversion_loihi import (
     CONVERSION_SCHEMA,
     CONVERTED_NETWORK_FILENAME,
     COMPILED_DEPLOYMENT_FILENAME,
+    DTHIR_PARAMETER_SCALE,
     INTEGER_THRESHOLD_SCALE,
     NORMALIZATION_PERCENTILE,
     _arrays_fingerprint,
@@ -111,6 +112,9 @@ required = {
     "calibration_examples": 5_500,
     "normalization_percentile": NORMALIZATION_PERCENTILE,
     "integer_threshold_scale": INTEGER_THRESHOLD_SCALE,
+    "desired_threshold_to_input_ratio": 8,
+    "dthir_parameter_scale": DTHIR_PARAMETER_SCALE,
+    "dthir_scaling_status": "PROJECT_RECONSTRUCTION_SOURCE_BOUNDED_NO_ACCURACY_TUNING",
     "weight_sign_mode": "mixed",
     "weight_quantization_step": 2,
     "weight_rounding": "toward_zero",
@@ -131,6 +135,11 @@ for key, expected in required.items():
         raise SystemExit(
             f"ERROR: P08.3.4 manifest field {key}={observed!r}, expected {expected!r}"
         )
+
+if DTHIR_PARAMETER_SCALE != 64.0:
+    raise SystemExit(
+        f"ERROR: P08.3.4 DThIR parameter scale={DTHIR_PARAMETER_SCALE}, expected 64"
+    )
 
 lambdas = manifest.get("activation_lambdas")
 if not isinstance(lambdas, list) or len(lambdas) != 5:
@@ -182,7 +191,7 @@ if recomputed_manifest_fingerprint != recorded_manifest_fingerprint:
     raise SystemExit("ERROR: P08.3.4 conversion manifest fingerprint does not recompute")
 
 gate = {
-    "schema": "p08-ann-to-snn-conversion-gate-v2-loihi-mixed",
+    "schema": "p08-ann-to-snn-conversion-gate-v3-dthir",
     "result": "PASS",
     "accepted_ann_checkpoint_sha256": ACCEPTED_ANN_CHECKPOINT_SHA256,
     "accepted_ann_weights_fingerprint": ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
@@ -198,6 +207,9 @@ gate = {
     "test_examples_observed": 0,
     "normalization_percentile": NORMALIZATION_PERCENTILE,
     "integer_threshold_scale": INTEGER_THRESHOLD_SCALE,
+    "desired_threshold_to_input_ratio": 8,
+    "dthir_parameter_scale": DTHIR_PARAMETER_SCALE,
+    "dthir_scaling_status": "PROJECT_RECONSTRUCTION_SOURCE_BOUNDED_NO_ACCURACY_TUNING",
     "weight_sign_mode": "mixed",
     "weight_quantization_step": 2,
     "weight_rounding": "toward_zero",
@@ -217,7 +229,7 @@ ranges = ",".join(
 print(
     "PASS: P08.3.4 conversion artifact "
     f"calibration_examples=5500 percentile={NORMALIZATION_PERCENTILE:g} "
-    f"threshold_scale={INTEGER_THRESHOLD_SCALE}"
+    f"threshold_mantissa={INTEGER_THRESHOLD_SCALE} dthir=8 parameter_scale={DTHIR_PARAMETER_SCALE:g}"
 )
 print(
     "PASS: P08.3.4 Loihi mixed-sign weights "
