@@ -45,7 +45,11 @@ def test_p08_3_conversion_policy_keeps_nxtf_anchors_and_labels_fpga_adaptations(
     assert CONVERSION_POLICY.primary_timesteps == 100
     assert CONVERSION_POLICY.characterization_timesteps == (16, 32, 64, 100)
     assert CONVERSION_POLICY.weight_bits == 8
-    assert (CONVERSION_POLICY.signed_weight_min, CONVERSION_POLICY.signed_weight_max) == (-127, 127)
+    assert CONVERSION_POLICY.weight_sign_mode == "mixed"
+    assert CONVERSION_POLICY.weight_quantization_step == 2
+    assert CONVERSION_POLICY.weight_rounding == "toward_zero"
+    assert (CONVERSION_POLICY.signed_weight_min, CONVERSION_POLICY.signed_weight_max) == (-256, 254)
+    assert CONVERSION_POLICY.weight_exponent == 0
     assert CONVERSION_POLICY.bias_bits == 12
     assert (CONVERSION_POLICY.signed_bias_min, CONVERSION_POLICY.signed_bias_max) == (-2047, 2047)
     assert CONVERSION_POLICY.source_bias_exponent_reference == 6
@@ -68,6 +72,9 @@ def test_p08_3_evidence_labels_keep_unknowns_and_project_choices_explicit():
     assert FIELD_EVIDENCE["ann_max_epochs_30"] == PROJECT_RECONSTRUCTION
     assert FIELD_EVIDENCE["ann_exact_paper_training_config"] == UNKNOWN_NOT_CLAIMED
     assert FIELD_EVIDENCE["conversion_rate_based_snn_toolbox"] == SOURCED_EXACT
+    assert FIELD_EVIDENCE["conversion_loihi_mixed_weight_range"] == SOURCED_STYLE_OR_RANGE
+    assert FIELD_EVIDENCE["conversion_loihi_mixed_weight_step_2"] == SOURCED_STYLE_OR_RANGE
+    assert FIELD_EVIDENCE["conversion_static_weight_round_toward_zero"] == SOURCED_STYLE_OR_RANGE
     assert FIELD_EVIDENCE["conversion_historical_soft_reset"] == SOURCED_STYLE_OR_RANGE
     assert FIELD_EVIDENCE["conversion_fpga_hard_reset"] == PROJECT_RECONSTRUCTION
     assert FIELD_EVIDENCE["conversion_exact_paper_quantizer"] == UNKNOWN_NOT_CLAIMED
