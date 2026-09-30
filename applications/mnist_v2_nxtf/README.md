@@ -25,13 +25,14 @@ The four weight-bearing layers contain 2,472 spiking neurons and 6,125 trainable
 weights. The current structural probe maps the fully nonzero candidate to three
 logical cores and one physical P05 engine.
 
-## Environments
+## Environment
 
-The source/mapping preflight only requires the existing v2 environment. Training
-and full-corpus TensorFlow evaluation should use a dedicated application virtual
-environment so TensorFlow dependencies do not disturb `.venv-v2`.
+P08 uses NumPy for the structural mapping probe and TensorFlow for training and
+conversion calibration. Keep those application dependencies out of the long-lived
+`.venv-v2` environment and use a dedicated P08 environment for **all** P08
+preflight/training/conversion commands.
 
-Example:
+From the repository root:
 
 ```bash
 python3.12 -m venv .venv-p08
@@ -43,7 +44,8 @@ python -m pip install -e 'applications/mnist_v2_nxtf[train,test]'
 
 ## Workflow
 
-1. Run the source/mapping preflight from `Loihi_Digital_Twin/v2`:
+1. With `.venv-p08` active, run the source/mapping preflight from
+   `Loihi_Digital_Twin/v2`:
 
 ```bash
 bash scripts/run_p08_preflight.sh
