@@ -10,8 +10,15 @@ from loihi_twin_v2.hardware_p03 import unpack_route_word
 from mnist_v2_nxtf.structural import compile_structural_probe
 
 
-def test_p08_2_frozen_structural_graph_exports_as_five_backing_three_resident_one_engine():
-    compiled = compile_structural_probe()
+@pytest.fixture(scope="module")
+def compiled_structural_probe():
+    return compile_structural_probe()
+
+
+def test_p08_2_frozen_structural_graph_exports_as_five_backing_three_resident_one_engine(
+    compiled_structural_probe,
+):
+    compiled = compiled_structural_probe
 
     with pytest.raises(ValueError, match="resident P05 FPGA context count"):
         export_compiled_fpga_image(compiled)
@@ -29,8 +36,10 @@ def test_p08_2_frozen_structural_graph_exports_as_five_backing_three_resident_on
     assert paged.hardware_image.initial_resident_core_ids == (0, 1, 2)
 
 
-def test_p08_2_backing_image_preserves_p06_resource_footprint_and_nonresident_route_identity():
-    compiled = compile_structural_probe()
+def test_p08_2_backing_image_preserves_p06_resource_footprint_and_nonresident_route_identity(
+    compiled_structural_probe,
+):
+    compiled = compiled_structural_probe
     compiled_report = compiled.report()
     paged = export_paged_compiled_fpga_image(compiled)
 
@@ -64,8 +73,10 @@ def test_p08_2_backing_image_preserves_p06_resource_footprint_and_nonresident_ro
     assert destinations_from_initial_page <= set(range(5))
 
 
-def test_p08_2_any_three_logical_cores_can_be_materialized_without_changing_backing_identity():
-    paged = export_paged_compiled_fpga_image(compile_structural_probe())
+def test_p08_2_any_three_logical_cores_can_be_materialized_without_changing_backing_identity(
+    compiled_structural_probe,
+):
+    paged = export_paged_compiled_fpga_image(compiled_structural_probe)
 
     page = paged.hardware_image.resident_page((4, 1, 3))
 
