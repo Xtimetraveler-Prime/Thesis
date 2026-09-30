@@ -39,43 +39,42 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P05 in progress — P04 multicore routing/barrier execution is complete and physically accepted.**
+> **P06 in progress — P05 logical-core virtualization is complete and physically accepted.**
 >
-> P04 completed on 2026-09-29 after the canonical two-endpoint K26 artifact
-> passed the complete automated physical conformance gate. The final run verified
-> reset release, write/read access to both endpoint memory fabrics, two-core
-> feed-forward routing, recurrent local+remote multicast, both forward and
-> reversed legal packet-service priorities, barrier/timestep advancement, and
-> Python/FPGA agreement for the directed state/trace/packet/event corpus. The
-> result record reported `schema=p04-physical-conformance-v1` and `result=PASS`.
+> P05 completed on 2026-09-29 after the canonical one-engine/three-context K26
+> artifact passed the complete automated physical virtualization conformance
+> gate. The accepted implementation retains three full logical-core contexts,
+> services them with one unchanged P03-compatible HLS compute engine, preserves
+> logical core IDs independently from physical context slots, and reports a
+> physical virtualization ratio of `3.0` without changing logical Loihi capacity.
 >
-> The accepted final evidence is archived under:
+> Post-route implementation closed the requested 100 MHz PL clock with WNS
+> `+0.588 ns` and WHS `+0.011 ns`. The routed shell uses `47 / 64` URAM288
+> primitives, `2 / 144` BRAM tiles, 5,062 LUTs, 7,686 registers, and 2 DSPs.
+> The 47-URAM result exactly matched the pre-route packing estimate and includes
+> two full input-event banks per logical context so next-timestep routed events
+> cannot overwrite current-timestep events for contexts that have not yet been
+> serviced.
+>
+> The physical conformance run verified reset release, full-depth host read/write
+> access to all retained context banks, rejection of nonexistent context slot 3,
+> logical IDs `7`, `42`, and `99` independent of physical slots, forward and
+> reverse legal context-service orders, double-buffered event-bank rollover,
+> recurrent local/remote fanout and fan-in, barrier/timestep advancement, and
+> Python/FPGA agreement for state, trace, packet, event, identity, traffic, and
+> status observations. All 14 directed physical ticks passed and the result
+> record reported `schema=p05-physical-conformance-v1` and `result=PASS`.
+>
+> The accepted evidence is archived under:
 >
 > ```text
-> hardware/evidence/p04_physical_20260929T211309Z/
+> hardware/evidence/p05_physical_20260930T011850Z/
 > ```
 >
-> Board bring-up exposed two hardware-only control problems before closure. The
-> original `proc_sys_reset` functional path remained asserted on the board even
-> after its input polarities were corrected; a reset-independent PL0 counter
-> proved the clock was running while `peripheral_aresetn` remained low. P04 now
-> uses a source-controlled synchronous reset conditioner with an active-high VIO
-> request and a 16-PL-cycle release interval. After reset was fixed, the first
-> multicore tick exposed a second issue: the controller incorrectly required HLS
-> `ap_ready` before issuing `ap_start`, which produced a circular startup
-> condition on hardware. `ap_ready` was removed from initial tick admission and
-> the controller regression now keeps ready low before start so the failure
-> cannot silently return. The full history is recorded in
-> `docs/P04_INTEGRATION_CHALLENGES.md`.
->
-> P04 retains full logical Loihi capacities while using resource-scaled physical
-> validation memories for its two simultaneously instantiated compute endpoints.
-> The accepted P03 shell uses `96.5 / 144` K26 BRAM tiles, so two literal full
-> copies would require about `193` BRAM tiles before routing/barrier storage.
-> P04 therefore validates genuine two-endpoint routing behavior without claiming
-> that two maximally populated logical cores are simultaneously resident. P05 is
-> now active to solve that exact problem through transparent logical-core context
-> storage and scheduling.
+> The P05 architecture is documented in `docs/P05_VIRTUALIZATION_ARCHITECTURE.md`
+> and the implementation decisions/challenges are recorded in
+> `docs/P05_INTEGRATION_CHALLENGES.md`. P06 is now active to turn the validated
+> architecture into a deterministic mapper/compiler and shared deployment format.
 
 ---
 
@@ -88,8 +87,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P02 | Build separate Python manycore golden model | Complete | 2026-09-28 | 2026-09-28 |
 | P03 | Implement and validate one FPGA-v2 logical core | Complete | 2026-09-28 | 2026-09-28 |
 | P04 | Add multicore packet routing and timestep/barrier semantics | Complete | 2026-09-28 | 2026-09-29 |
-| P05 | Add logical-core virtualization | In progress | 2026-09-29 | — |
-| P06 | Build deterministic mapper/compiler and deployment format | Planned | — | — |
+| P05 | Add logical-core virtualization | Complete | 2026-09-29 | 2026-09-29 |
+| P06 | Build deterministic mapper/compiler and deployment format | In progress | 2026-09-29 | — |
 | P07 | Validate deeper mapped multicore SNNs | Planned | — | — |
 | P08 | Build and compare NxTF-oriented deep MNIST workload | Planned | — | — |
 
@@ -494,8 +493,9 @@ conformance and archived evidence.
 
 # P05 — Logical-core virtualization
 
-**Status:** In progress  
-**Started:** 2026-09-29
+**Status:** Complete  
+**Started:** 2026-09-29  
+**Completed:** 2026-09-29
 
 ## Goal
 
@@ -506,36 +506,136 @@ P05 begins from the accepted P04 boundary: two physical compute endpoints,
 destination-core/destination-axon packet routing, quiescence/barrier semantics,
 normalized state/packet visibility, a physically verified reset/control path,
 and a clear distinction between logical Loihi capacity and physical FPGA
-allocation. P05 must remove the P04 validation fixture's context-retention
-limitation without changing those externally visible semantics.
+allocation. P05 removes the P04 validation fixture's context-retention limitation
+without changing those externally visible semantics.
+
+The architecture contract is documented in
+`docs/P05_VIRTUALIZATION_ARCHITECTURE.md`; the implementation decisions,
+constraints, failures, and physical closure are recorded in
+`docs/P05_INTEGRATION_CHALLENGES.md`.
+
+## Sub-milestone progress
+
+### P05.1 — Virtualization contract and software invariance — **Verified**
+
+- [x] Added explicit separation between logical-core identity and physical-engine
+      assignment.
+- [x] Added deterministic logical-core scheduling and explicit dispatch records.
+- [x] Added reporting for logical core count, physical engine count,
+      virtualization ratio, and scheduling waves.
+- [x] Kept physical-engine assignment out of normalized logical traces.
+- [x] Ran the same three-core recurrent network with one, two, and three abstract
+      physical engines and confirmed identical normalized traces.
+- [x] Ran different legal logical-core service orders and packet-drain orders and
+      confirmed identical normalized traces.
+- [x] Confirmed logical capacity errors are raised before and independently of
+      physical sharing.
+
+### P05.2 — Full-context K26 virtualization shell — **Verified**
+
+- [x] Reused one unchanged P03-compatible HLS compute engine.
+- [x] Added three independently retained full logical-core context slots.
+- [x] Moved full context retention to UltraRAM-backed shared memories while
+      preserving the accepted P03 local address widths/depths.
+- [x] Preserved logical core IDs in packets and added logical-ID-to-context-slot
+      resolution in the controller.
+- [x] Added double-buffered 4,096-entry event memories per context so early
+      `t+1` traffic cannot overwrite unconsumed `t` events for later-serviced
+      logical contexts.
+- [x] Preserved the P04 lesson that HLS `ap_ready` is diagnostic only and must
+      not gate the initial `ap_start` transaction.
+- [x] Added directed RTL/controller regression coverage for forward and reverse
+      three-context service order and event-bank rollover.
+- [x] Fixed the P05 hardware-image test fixture to use the accepted P03 required
+      saturating arithmetic profile rather than generic software defaults.
+- [x] Vivado synthesis used exactly 47 URAM288 primitives, matching the first-pass
+      packing estimate, plus 2 BRAM tiles and 2 DSPs.
+- [x] Routed the canonical P05 shell at the requested 100 MHz with WNS
+      `+0.588 ns` and WHS `+0.011 ns`.
+- [x] Post-route utilization: 47/64 URAM288, 2/144 BRAM tiles, 5,062 LUTs,
+      7,686 registers, and 2 DSPs.
+- [x] Implementation metrics report `logical_contexts=3`,
+      `physical_engines=1`, `double_buffered_events=1`, and
+      `logical_capacity_changed=0`.
+
+### P05.3 — Physical virtualization conformance — **Verified**
+
+- [x] Programmed the K26 with the canonical P05 `.bit/.ltx` artifacts.
+- [x] Verified reset release using the source-controlled synchronous reset path
+      and free-running heartbeat.
+- [x] Passed host read/write preflight at the final legal address of every full
+      retained bank in all three context slots, including both event banks.
+- [x] Verified nonexistent physical context slot 3 is rejected rather than
+      aliased.
+- [x] Executed a three-core ring using noncontiguous logical IDs 7, 42, and 99,
+      proving logical identity is independent of physical context slot.
+- [x] Executed recurrent local+remote fanout/fan-in traffic.
+- [x] Ran both directed scenarios under forward and reverse legal logical-context
+      service orders.
+- [x] Verified event-bank selection flips only after the logical barrier advances.
+- [x] Compared physical state, trace words, packet words, routed next-timestep
+      events, event counts, logical/context identity, traffic counters, barrier
+      state, HLS status, and memory/controller error flags against Python-generated
+      expectations.
+- [x] Verified nonzero physical cycle counts on every directed tick.
+- [x] Archived the accepted evidence under
+      `hardware/evidence/p05_physical_20260930T011850Z/`.
+- [x] Final result: `schema=p05-physical-conformance-v1`, `result=PASS`.
+
+Accepted physical observations:
+
+| Scenario | Reverse service | Timestep | PL cycles | Local packets | Remote packets |
+|---|---:|---:|---:|---:|---:|
+| logical_id_ring | 0 | 0 | 56 | 0 | 1 |
+| logical_id_ring | 0 | 1 | 56 | 0 | 1 |
+| logical_id_ring | 0 | 2 | 56 | 0 | 1 |
+| logical_id_ring | 0 | 3 | 56 | 0 | 1 |
+| logical_id_ring | 1 | 0 | 56 | 0 | 1 |
+| logical_id_ring | 1 | 1 | 56 | 0 | 1 |
+| logical_id_ring | 1 | 2 | 56 | 0 | 1 |
+| logical_id_ring | 1 | 3 | 56 | 0 | 1 |
+| local_remote_fanin | 0 | 0 | 77 | 2 | 2 |
+| local_remote_fanin | 0 | 1 | 100 | 3 | 3 |
+| local_remote_fanin | 0 | 2 | 112 | 3 | 3 |
+| local_remote_fanin | 1 | 0 | 77 | 2 | 2 |
+| local_remote_fanin | 1 | 1 | 100 | 3 | 3 |
+| local_remote_fanin | 1 | 2 | 112 | 3 | 3 |
+
+The accepted heartbeat check observed `2,410,690 -> 5,146,953` before the
+harness proceeded into full-depth memory and compute testing. These cycle counts
+are synchronous FPGA implementation observations for the directed corpus, not
+native-Loihi physical timing claims.
 
 ## Required deliverables
 
-- [ ] Separate logical-core state from physical execution-engine identity.
-- [ ] Store independent compartment/axon/synapse/routing state per logical core.
-- [ ] Add a deterministic scheduler for logical-core service.
-- [ ] Preserve logical per-core resource limits when memories are physically shared.
-- [ ] Report both logical core count and physical engine count.
-- [ ] Report physical FPGA occupancy separately from logical Loihi occupancy.
-- [ ] Maintain transparent logical-core-to-engine mapping.
-- [ ] Preserve the accepted P04 packet format, barrier contract, reset strategy,
+- [x] Separate logical-core state from physical execution-engine identity.
+- [x] Store independent compartment/axon/synapse/routing state per logical core.
+- [x] Add a deterministic scheduler for logical-core service.
+- [x] Preserve logical per-core resource limits when memories are physically shared.
+- [x] Report both logical core count and physical engine count.
+- [x] Report physical FPGA occupancy separately from logical Loihi occupancy.
+- [x] Maintain transparent logical-core-to-engine mapping.
+- [x] Preserve the accepted P04 packet format, barrier contract, reset strategy,
       and host/debug observability unless a change is explicitly justified and
       regression-tested.
 
 ## Required validation
 
-- [ ] Run the same network with different physical-engine counts.
-- [ ] Run the same network with different legal logical-core service orders.
-- [ ] Confirm identical normalized logical state/spike/packet traces.
-- [ ] Confirm logical capacity errors cannot be bypassed by physical sharing.
-- [ ] Demonstrate more logical cores/contexts than simultaneously resident
+- [x] Run the same network with different physical-engine counts.
+- [x] Run the same network with different legal logical-core service orders.
+- [x] Confirm identical normalized logical state/spike/packet traces.
+- [x] Confirm logical capacity errors cannot be bypassed by physical sharing.
+- [x] Demonstrate more logical cores/contexts than simultaneously resident
       physical compute endpoints on the K26.
 
 ## Completion gate
 
-P05 is complete when **virtualization invariance** is demonstrated: logical
-network behavior and normalized traces remain unchanged when the number or legal
-service order of physical execution engines changes.
+**Complete.** Virtualization invariance is demonstrated at the normalized
+architectural boundary. The software model produces identical logical results
+across one-, two-, and three-engine schedules and different legal service/drain
+orders; the physical K26 retains three full logical contexts and services them
+with one compute engine while matching the Python-directed corpus under both
+forward and reverse context-service orders.
 
 **Next phase:** P06 — deterministic mapper/compiler.
 
@@ -543,7 +643,8 @@ service order of physical execution engines changes.
 
 # P06 — Deterministic mapper/compiler and deployment format
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-29
 
 ## Goal
 
@@ -758,9 +859,11 @@ Loihi_Digital_Twin/
     │   ├── P03_VIVADO_IMPLEMENTATION.md
     │   ├── P04_MULTICORE_ARCHITECTURE.md
     │   ├── P04_INTEGRATION_IMPLEMENTATION.md
-    │   └── P04_INTEGRATION_CHALLENGES.md
+    │   ├── P04_INTEGRATION_CHALLENGES.md
+    │   ├── P05_VIRTUALIZATION_ARCHITECTURE.md
+    │   └── P05_INTEGRATION_CHALLENGES.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/               accepted P03/P04-compatible HLS compute core
+    ├── hls/core_v2/               accepted P03/P04/P05-compatible HLS compute core
     ├── rtl/                       v2 RTL integration/observability logic
     ├── vivado/                    source-controlled K26 build flows
     ├── hardware/                  physical programming/conformance flows
@@ -796,5 +899,5 @@ Before moving to the next phase:
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
 
-P04 satisfied this rule on 2026-09-29 when the canonical K26 physical evidence
-reported `result=PASS`; P05 is therefore the active phase.
+P05 satisfied this rule on 2026-09-29 when the canonical K26 physical evidence
+reported `result=PASS`; P06 is therefore the active phase.
