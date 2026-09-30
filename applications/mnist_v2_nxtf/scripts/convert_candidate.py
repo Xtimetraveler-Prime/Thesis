@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from loihi_twin_v2 import compile_network, export_compiled_fpga_image
-from mnist_v2_nxtf.config import CHARACTERIZATION_TIMESTEPS
+from mnist_v2_nxtf.config import CHARACTERIZATION_TIMESTEPS, TOTAL_TRAINABLE_WEIGHTS
 from mnist_v2_nxtf.conversion import convert_model
 from mnist_v2_nxtf.data import load_mnist
 from mnist_v2_nxtf.inference import accuracy_by_horizon
@@ -28,6 +28,12 @@ def main() -> None:
     training_metadata = json.loads((args.training / "p08_training.json").read_text())
     if training_metadata.get("official_test_images_evaluated") != 0:
         raise RuntimeError("training metadata indicates premature official-test evaluation")
+    if training_metadata.get("parameter_count") != TOTAL_TRAINABLE_WEIGHTS:
+        raise RuntimeError(
+            "training artifact belongs to a different P08 topology revision: "
+            f"parameter_count={training_metadata.get('parameter_count')} "
+            f"expected={TOTAL_TRAINABLE_WEIGHTS}"
+        )
     validation_indices = np.load(args.training / training_metadata["validation_indices"])
     dataset = load_mnist()
     calibration_images = dataset.x_train[validation_indices]
