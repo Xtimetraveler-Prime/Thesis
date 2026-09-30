@@ -10,6 +10,29 @@ BUILD_DIR="$PROJECT_DIR/build/p08_preflight"
 export PYTHONPATH="$PROJECT_DIR/src:$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
 cd "$REPO_DIR"
 
+# P08's structural mapping probe uses NumPy arrays even before TensorFlow
+# training begins.  Keep that dependency out of the long-lived .venv-v2
+# environment and require the dedicated P08 application environment instead.
+python - <<'PY'
+missing = []
+for module in ("numpy", "pytest"):
+    try:
+        __import__(module)
+    except ImportError:
+        missing.append(module)
+if missing:
+    raise SystemExit(
+        "ERROR: P08 preflight requires the dedicated .venv-p08 application "
+        "environment (missing: %s). From the repository root run:\n"
+        "  python3.12 -m venv .venv-p08\n"
+        "  source .venv-p08/bin/activate\n"
+        "  python -m pip install --upgrade pip\n"
+        "  python -m pip install -e Loihi_Digital_Twin/v2\n"
+        "  python -m pip install -e 'applications/mnist_v2_nxtf[train,test]'"
+        % ", ".join(missing)
+    )
+PY
+
 python -m py_compile \
     applications/mnist_v2_nxtf/mnist_v2_nxtf/config.py \
     applications/mnist_v2_nxtf/mnist_v2_nxtf/data.py \
