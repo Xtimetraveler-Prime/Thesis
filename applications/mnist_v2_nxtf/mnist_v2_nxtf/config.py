@@ -7,10 +7,12 @@ unpublished NxTF frame-MNIST topology. P08.2 then accepted deterministic paging
 of the five-logical-core P06 deployment over three resident K26 contexts and one
 physical HLS engine.
 
-P08.3.1 freezes the ANN training and ANN-to-SNN conversion policy before any new
-training run. The abandoned revision-1/2/3 candidate definitions remain
-intentionally excluded so later work cannot silently reuse them as the accepted
-P08 model.
+P08.3 froze the ANN checkpoint and the source-recovered ANN-to-SNN conversion,
+then accepted a full 5,000-example validation measurement before any official
+MNIST test result was observed. P08.4 is now allowed to evaluate the untouched
+official test split, but the accepted checkpoint, conversion, thresholds,
+readout, and primary 100-timestep horizon must not change in response to test
+performance.
 """
 
 from __future__ import annotations
@@ -28,7 +30,6 @@ VALIDATION_SEED = 0x4D4E4953
 PRIMARY_TIMESTEPS = 100
 CHARACTERIZATION_TIMESTEPS = (16, 32, 64, 100)
 
-# P08.1 topology and P08.2 paging are accepted. P08.3.1 freezes the training and
-# conversion rules; the official test split remains locked until the selected
-# ANN checkpoint and converted-SNN configuration are frozen without test feedback.
-TOPOLOGY_STATUS = "P08_2_PAGING_ACCEPTED_P08_3_POLICY_FROZEN"
+# P08.1 topology, P08.2 paging, and P08.3 ANN/conversion freeze are accepted.
+# P08.4 official-test evaluation is now active and is evaluation-only.
+TOPOLOGY_STATUS = "P08_3_ACCEPTED_P08_4_OFFICIAL_TEST_EVALUATION_ACTIVE"
