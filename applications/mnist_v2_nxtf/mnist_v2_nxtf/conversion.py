@@ -13,7 +13,7 @@ from .data import normalize_images
 from .topology import IntegerModel
 from .training import require_tensorflow
 
-LAYER_NAMES = ("stage0_conv1", "stage1_conv2", "stage2_dense8", "stage3_output10")
+LAYER_NAMES = ("stage0_conv1", "stage1_conv2", "stage2_dense_hidden", "stage3_output10")
 DEFAULT_ACTIVATION_PERCENTILE = 99.9
 MAX_INTEGER_SCALE = 4096
 
@@ -80,14 +80,7 @@ def convert_model(
     *,
     percentile: float = DEFAULT_ACTIVATION_PERCENTILE,
 ) -> tuple[IntegerModel, dict]:
-    """Convert a frozen ReLU ANN using layerwise activation normalization.
-
-    If ``lambda_l`` is the validation activation scale of layer ``l``, each
-    layer's floating weights are multiplied by ``lambda_(l-1)/lambda_l`` before
-    integer quantization.  The integer quantization scale itself becomes that
-    layer's spiking threshold, so firing rates approximate the normalized ANN
-    activations without changing topology.
-    """
+    """Convert a frozen ReLU ANN using layerwise activation normalization."""
 
     tf = require_tensorflow()
     model_file = Path(model_path)
