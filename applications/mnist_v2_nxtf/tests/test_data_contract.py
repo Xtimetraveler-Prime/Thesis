@@ -6,8 +6,8 @@ from mnist_v2_nxtf import PRIMARY_TIMESTEPS, TOPOLOGY_STATUS
 from mnist_v2_nxtf.data import encode_binary_spikes, stratified_train_validation_indices
 
 
-def test_p08_topology_is_explicitly_unfrozen_after_nxtf_realign():
-    assert TOPOLOGY_STATUS == "UNFROZEN_NXTF_EMULATION_REALIGN"
+def test_p08_reconstruction_is_accepted_while_p08_2_is_pending():
+    assert TOPOLOGY_STATUS == "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
     assert PRIMARY_TIMESTEPS == 100
 
 
