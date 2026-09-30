@@ -1,17 +1,32 @@
-"""P08.3.4 Loihi-mantissa correction layer for ANN-to-SNN conversion.
+"""P08.3.4 DThIR-aware Loihi quantization for ANN-to-SNN conversion.
 
-The first P08.3.4 gate correctly exposed that a conventional signed-int8 range
-is not Loihi's mixed-sign 8-bit mantissa representation. This module keeps the
-accepted calibration/normalization/graph/compiler path from :mod:`conversion`
-but replaces only its weight quantizer with the source-backed Loihi rule:
+The P08.3.4 verification gates exposed two representation mistakes before any
+converted-SNN accuracy was observed:
 
-- mixed-sign 8-bit mantissa range: -256 .. +254;
-- representable step: 2;
-- static initialization rounding: toward zero;
-- weight exponent: 0.
+1. Loihi mixed-sign 8-bit weights are not conventional signed int8 values.
+2. The already-frozen hard-reset Desired Threshold to Input Ratio (DThIR=8)
+   must participate in the hardware scaling; multiplying every normalized
+   parameter directly by vThMant=512 ignores that ratio.
 
-No clipping is permitted. Bias quantization remains the conservative project
-rule already frozen for P08.3.
+This module keeps the accepted calibration, Rueckauer normalization, graph
+construction, compiler path, ANN identity, and test lock from :mod:`conversion`,
+but replaces only the final integer quantizer with a source-bounded project
+interpretation of the documented Loihi/SNN-Toolbox settings:
+
+- threshold mantissa: 512;
+- hard-reset DThIR: 8;
+- effective normalized-parameter scale: 512 / 8 = 64;
+- mixed-sign 8-bit weight mantissa range: -256 .. +254;
+- representable weight step: 2;
+- static weight rounding: toward zero;
+- weight exponent reference: 0;
+- no clipping.
+
+Public sources establish that conversion normalizes weights and biases to the
+Loihi dynamic range while satisfying DThIR, but the exact historical NxSDK
+backend implementation is not public. Therefore the scale=threshold/DThIR rule
+is explicitly recorded as PROJECT_RECONSTRUCTION rather than claimed to be an
+exact native NxTF/NxSDK bit-level conversion.
 """
 
 from __future__ import annotations
@@ -42,18 +57,27 @@ conv_geometries = _base.conv_geometries
 normalize_layer_parameters = _base.normalize_layer_parameters
 _arrays_fingerprint = _base._arrays_fingerprint
 
+if CONVERSION_POLICY.desired_threshold_to_input_ratio <= 0:
+    raise AssertionError("P08.3.4 DThIR must be positive")
+DTHIR_PARAMETER_SCALE = (
+    float(INTEGER_THRESHOLD_SCALE)
+    / float(CONVERSION_POLICY.desired_threshold_to_input_ratio)
+)
+
 
 def quantize_normalized_parameters(
     normalized_kernel: np.ndarray,
     normalized_bias: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Quantize with Loihi mixed-sign 8-bit mantissa semantics.
+    """Quantize normalized parameters using frozen DThIR and Loihi mantissas.
 
-    The normalized mathematical threshold is 1 and the project stores the Loihi
-    threshold mantissa directly as 512. With weight exponent 0, the common native
-    Loihi 2**6 factor on threshold and weight cancels at this architectural
-    boundary. Static mixed-sign mantissas are rounded toward zero to a multiple
-    of two, matching the documented nwb=8 mixed-sign precision.
+    P08's floating normalization produces a mathematical SNN with threshold 1.
+    The hardware profile fixes vThMant=512 and DThIR=8. At this project boundary
+    we therefore map one normalized parameter unit to 512/8=64 integer units.
+    Weights are then rounded toward zero onto Loihi's mixed-sign step-2 lattice.
+    Biases use the same DThIR-derived scale so the affine layer is not distorted
+    relative to its synaptic inputs; their exact native Loihi exponent packing
+    remains outside the equivalence claim.
     """
 
     if CONVERSION_POLICY.weight_sign_mode != "mixed":
@@ -62,17 +86,16 @@ def quantize_normalized_parameters(
         raise AssertionError("P08.3.4 Loihi weight step must be two")
     if CONVERSION_POLICY.weight_rounding != "toward_zero":
         raise AssertionError("P08.3.4 Loihi static weights must round toward zero")
+    if CONVERSION_POLICY.desired_threshold_to_input_ratio != 8:
+        raise AssertionError("P08.3.4 must preserve the frozen hard-reset DThIR=8")
+    if DTHIR_PARAMETER_SCALE != 64.0:
+        raise AssertionError("P08.3.4 DThIR-derived parameter scale drifted")
 
-    scale = float(INTEGER_THRESHOLD_SCALE)
+    scale = DTHIR_PARAMETER_SCALE
     step = float(CONVERSION_POLICY.weight_quantization_step)
     raw_kernel = np.asarray(normalized_kernel, dtype=np.float64) * scale
-    q_kernel_64 = (
-        np.trunc(raw_kernel / step) * step
-    ).astype(np.int64)
+    q_kernel_64 = (np.trunc(raw_kernel / step) * step).astype(np.int64)
 
-    # Biases remain the previously frozen project adaptation. The Loihi bias
-    # representation is independently exponent-scaled; P08 has not claimed an
-    # exact native bias bitfield emulation.
     q_bias_64 = np.rint(
         np.asarray(normalized_bias, dtype=np.float64) * scale
     ).astype(np.int64)
@@ -82,21 +105,23 @@ def quantize_normalized_parameters(
         or int(q_kernel_64.max()) > CONVERSION_POLICY.signed_weight_max
     ):
         raise OverflowError(
-            "P08.3 normalized weight does not fit the Loihi mixed-sign 8-bit "
-            "mantissa range after step-2 rounding: "
+            "P08.3 DThIR-scaled normalized weight does not fit the Loihi "
+            "mixed-sign 8-bit mantissa range after step-2 rounding: "
             f"observed=[{int(q_kernel_64.min())},{int(q_kernel_64.max())}] "
             f"allowed=[{CONVERSION_POLICY.signed_weight_min},"
-            f"{CONVERSION_POLICY.signed_weight_max}]"
+            f"{CONVERSION_POLICY.signed_weight_max}] "
+            f"scale={scale:g}"
         )
     if q_bias_64.size and (
         int(q_bias_64.min()) < CONVERSION_POLICY.signed_bias_min
         or int(q_bias_64.max()) > CONVERSION_POLICY.signed_bias_max
     ):
         raise OverflowError(
-            "P08.3 normalized bias does not fit the frozen project bias range: "
+            "P08.3 DThIR-scaled normalized bias does not fit the frozen project "
+            "bias range: "
             f"observed=[{int(q_bias_64.min())},{int(q_bias_64.max())}] "
             f"allowed=[{CONVERSION_POLICY.signed_bias_min},"
-            f"{CONVERSION_POLICY.signed_bias_max}]"
+            f"{CONVERSION_POLICY.signed_bias_max}] scale={scale:g}"
         )
     return q_kernel_64.astype(np.int16), q_bias_64.astype(np.int16)
 
@@ -121,12 +146,21 @@ def run_conversion(
     result = _base.run_conversion(checkpoint_path, training_manifest_path, output_dir)
 
     # Correct the representation description written by the base module and bind
-    # the manifest fingerprint to the actual Loihi-mantissa rule used here.
+    # the manifest fingerprint to the actual DThIR-aware rule used here.
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     manifest.pop("manifest_fingerprint", None)
     manifest["integer_quantization"] = (
-        "weights: trunc_toward_zero(normalized_weight * threshold_mantissa / 2) * 2; "
-        "biases: round(normalized_bias * threshold_mantissa); reject overflow; no clipping"
+        "weights: trunc_toward_zero(normalized_weight * "
+        "threshold_mantissa / desired_threshold_to_input_ratio / 2) * 2; "
+        "biases: round(normalized_bias * threshold_mantissa / "
+        "desired_threshold_to_input_ratio); reject overflow; no clipping"
+    )
+    manifest["desired_threshold_to_input_ratio"] = (
+        CONVERSION_POLICY.desired_threshold_to_input_ratio
+    )
+    manifest["dthir_parameter_scale"] = DTHIR_PARAMETER_SCALE
+    manifest["dthir_scaling_status"] = (
+        "PROJECT_RECONSTRUCTION_SOURCE_BOUNDED_NO_ACCURACY_TUNING"
     )
     manifest["weight_sign_mode"] = CONVERSION_POLICY.weight_sign_mode
     manifest["weight_quantization_step"] = CONVERSION_POLICY.weight_quantization_step
@@ -137,8 +171,10 @@ def run_conversion(
         CONVERSION_POLICY.signed_weight_max,
     ]
     manifest["representation_correction"] = (
-        "P08.3.4 initial conventional-int8 assumption rejected by overflow gate; "
-        "replaced before SNN accuracy evaluation with Loihi mixed-sign 8-bit mantissa semantics"
+        "P08.3.4 gates first rejected conventional-int8 range and then rejected "
+        "threshold-only scaling; before SNN accuracy evaluation the converter was "
+        "corrected to Loihi mixed-sign mantissas plus the already-frozen hard-reset "
+        "DThIR=8 via project scale vThMant/DThIR"
     )
     manifest["manifest_fingerprint"] = _manifest_fingerprint(manifest)
     result.manifest_path.write_text(
@@ -150,7 +186,7 @@ def run_conversion(
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert accepted P08 ANN using corrected Loihi mantissa semantics"
+        description="Convert accepted P08 ANN using DThIR-aware Loihi quantization"
     )
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--training-manifest", required=True)
@@ -167,14 +203,17 @@ def main(argv: list[str] | None = None) -> int:
         for layer in manifest["layers"]
     )
     print(
-        "PASS: P08.3.4 corrected Loihi mantissa conversion "
-        f"step={CONVERSION_POLICY.weight_quantization_step} "
-        f"range=[{CONVERSION_POLICY.signed_weight_min},{CONVERSION_POLICY.signed_weight_max}] "
-        f"rounding={CONVERSION_POLICY.weight_rounding}"
+        "PASS: P08.3.4 DThIR-aware Loihi conversion "
+        f"threshold={INTEGER_THRESHOLD_SCALE} "
+        f"dthir={CONVERSION_POLICY.desired_threshold_to_input_ratio} "
+        f"parameter_scale={DTHIR_PARAMETER_SCALE:g}"
     )
     print(
-        "PASS: P08.3.4 integer conversion "
-        f"threshold={INTEGER_THRESHOLD_SCALE} weight_ranges={ranges} overflow=0 clipping=0"
+        "PASS: P08.3.4 Loihi mantissa conversion "
+        f"step={CONVERSION_POLICY.weight_quantization_step} "
+        f"range=[{CONVERSION_POLICY.signed_weight_min},{CONVERSION_POLICY.signed_weight_max}] "
+        f"rounding={CONVERSION_POLICY.weight_rounding} weight_ranges={ranges} "
+        "overflow=0 clipping=0"
     )
     print(
         "PASS: P08.3.4 P06 compile "
