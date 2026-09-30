@@ -3,11 +3,13 @@ from __future__ import annotations
 import pytest
 
 from loihi_twin_v2 import MappingError, MappingOptions, compile_network
-from examples.generate_p07_deep_network import build_network
+from loihi_twin_v2.workload_p07 import build_p07_deep_network
 
 
 def _compiled():
-    return compile_network(build_network(), MappingOptions(compartments_per_core=4))
+    return compile_network(
+        build_p07_deep_network(), MappingOptions(compartments_per_core=4)
+    )
 
 
 def test_p07_six_layers_pack_deterministically_into_three_cores():
@@ -49,7 +51,7 @@ def test_p07_mapping_exercises_sharing_and_local_remote_traffic():
 def test_p07_same_network_records_explicit_two_core_capacity_failure():
     with pytest.raises(MappingError) as failure:
         compile_network(
-            build_network(),
+            build_p07_deep_network(),
             MappingOptions(compartments_per_core=4, max_logical_cores=2),
         )
     assert failure.value.code == "logical_core_capacity"
