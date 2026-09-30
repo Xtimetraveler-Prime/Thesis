@@ -29,7 +29,9 @@ PY
 
 python -m py_compile \
     applications/mnist_v2_nxtf/mnist_v2_nxtf/accepted_ann.py \
-    applications/mnist_v2_nxtf/mnist_v2_nxtf/conversion.py
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/policy.py \
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/conversion.py \
+    applications/mnist_v2_nxtf/mnist_v2_nxtf/conversion_loihi.py
 
 python -m pytest -q \
     applications/mnist_v2_nxtf/tests/test_data_contract.py \
@@ -53,7 +55,7 @@ fi
 rm -rf "$CANDIDATE_DIR"
 mkdir -p "$CANDIDATE_DIR"
 
-python -m mnist_v2_nxtf.conversion \
+python -m mnist_v2_nxtf.conversion_loihi \
     --checkpoint "$CHECKPOINT" \
     --training-manifest "$TRAINING_MANIFEST" \
     --output-dir "$CANDIDATE_DIR"
@@ -74,7 +76,7 @@ from mnist_v2_nxtf.accepted_ann import (
     ACCEPTED_ANN_CHECKPOINT_SHA256,
     ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
 )
-from mnist_v2_nxtf.conversion import (
+from mnist_v2_nxtf.conversion_loihi import (
     CONVERSION_ARTIFACT_FILENAME,
     CONVERSION_MANIFEST_FILENAME,
     CONVERSION_SCHEMA,
@@ -109,6 +111,11 @@ required = {
     "calibration_examples": 5_500,
     "normalization_percentile": NORMALIZATION_PERCENTILE,
     "integer_threshold_scale": INTEGER_THRESHOLD_SCALE,
+    "weight_sign_mode": "mixed",
+    "weight_quantization_step": 2,
+    "weight_rounding": "toward_zero",
+    "weight_exponent": 0,
+    "weight_range": [-256, 254],
     "reset_mode": CONVERSION_POLICY.reset_mode,
     "primary_timesteps": 100,
     "logical_core_count": 5,
@@ -148,6 +155,9 @@ for layer in layers:
 
 with np.load(parameters_path, allow_pickle=False) as payload:
     arrays = {name: np.asarray(payload[name]) for name in payload.files}
+for name, array in arrays.items():
+    if name.endswith("_kernel_integer") and np.any(array.astype(np.int64) % 2 != 0):
+        raise SystemExit(f"ERROR: non-step-2 Loihi mixed-sign weight survived in {name}")
 observed_conversion_fingerprint = _arrays_fingerprint(arrays)
 if observed_conversion_fingerprint != manifest.get("conversion_fingerprint"):
     raise SystemExit("ERROR: converted parameter fingerprint does not recompute")
@@ -172,7 +182,7 @@ if recomputed_manifest_fingerprint != recorded_manifest_fingerprint:
     raise SystemExit("ERROR: P08.3.4 conversion manifest fingerprint does not recompute")
 
 gate = {
-    "schema": "p08-ann-to-snn-conversion-gate-v1",
+    "schema": "p08-ann-to-snn-conversion-gate-v2-loihi-mixed",
     "result": "PASS",
     "accepted_ann_checkpoint_sha256": ACCEPTED_ANN_CHECKPOINT_SHA256,
     "accepted_ann_weights_fingerprint": ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
@@ -188,6 +198,10 @@ gate = {
     "test_examples_observed": 0,
     "normalization_percentile": NORMALIZATION_PERCENTILE,
     "integer_threshold_scale": INTEGER_THRESHOLD_SCALE,
+    "weight_sign_mode": "mixed",
+    "weight_quantization_step": 2,
+    "weight_rounding": "toward_zero",
+    "weight_range": [-256, 254],
     "integer_clipping": False,
 }
 (root / "gate_result.json").write_text(
@@ -204,6 +218,10 @@ print(
     "PASS: P08.3.4 conversion artifact "
     f"calibration_examples=5500 percentile={NORMALIZATION_PERCENTILE:g} "
     f"threshold_scale={INTEGER_THRESHOLD_SCALE}"
+)
+print(
+    "PASS: P08.3.4 Loihi mixed-sign weights "
+    "range=[-256,254] step=2 rounding=toward_zero exponent=0 clipping=false"
 )
 print(f"PASS: P08.3.4 integer ranges {ranges} clipping=false")
 print(
