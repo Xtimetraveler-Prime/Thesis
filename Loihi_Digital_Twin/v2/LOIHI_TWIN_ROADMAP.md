@@ -39,42 +39,37 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P06 in progress — P05 logical-core virtualization is complete and physically accepted.**
+> **P07 in progress — P06 deterministic mapper/compiler is complete and physically accepted.**
 >
-> P05 completed on 2026-09-29 after the canonical one-engine/three-context K26
-> artifact passed the complete automated physical virtualization conformance
-> gate. The accepted implementation retains three full logical-core contexts,
-> services them with one unchanged P03-compatible HLS compute engine, preserves
-> logical core IDs independently from physical context slots, and reports a
-> physical virtualization ratio of `3.0` without changing logical Loihi capacity.
+> P06 completed on 2026-09-29 after the compiler-driven K26 conformance flow
+> mapped a high-level network specification into one versioned deployment and
+> used that same deployment artifact for both Python execution and FPGA context
+> loading. The accepted source fingerprint is
+> `8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383`
+> and the accepted compiled-deployment fingerprint is
+> `32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b`.
 >
-> Post-route implementation closed the requested 100 MHz PL clock with WNS
-> `+0.588 ns` and WHS `+0.011 ns`. The routed shell uses `47 / 64` URAM288
-> primitives, `2 / 144` BRAM tiles, 5,062 LUTs, 7,686 registers, and 2 DSPs.
-> The 47-URAM result exactly matched the pre-route packing estimate and includes
-> two full input-event banks per logical context so next-timestep routed events
-> cannot overwrite current-timestep events for contexts that have not yet been
-> serviced.
->
-> The physical conformance run verified reset release, full-depth host read/write
-> access to all retained context banks, rejection of nonexistent context slot 3,
-> logical IDs `7`, `42`, and `99` independent of physical slots, forward and
-> reverse legal context-service orders, double-buffered event-bank rollover,
-> recurrent local/remote fanout and fan-in, barrier/timestep advancement, and
-> Python/FPGA agreement for state, trace, packet, event, identity, traffic, and
-> status observations. All 14 directed physical ticks passed and the result
-> record reported `schema=p05-physical-conformance-v1` and `result=PASS`.
+> The physical gate reused the accepted P05 one-engine/three-context K26 shell,
+> so P06 changed configuration generation rather than the compute datapath. It
+> verified reset release, generated-context loading/readback, three compiled
+> input scenarios (`pixel0`, `pixel1`, and `both_pixels`), forward and reverse
+> legal logical-context service orders, mapped state/trace/packet/event behavior,
+> and Python/FPGA agreement. All 24 directed physical ticks passed. The result
+> record reported `schema=p06-physical-mapped-deployment-v1`,
+> `logical_contexts=3`, `physical_engines=1`, `logical_capacity_changed=0`, and
+> `result=PASS`.
 >
 > The accepted evidence is archived under:
 >
 > ```text
-> hardware/evidence/p05_physical_20260930T011850Z/
+> hardware/evidence/p06_physical_20260930T014904Z/
 > ```
 >
-> The P05 architecture is documented in `docs/P05_VIRTUALIZATION_ARCHITECTURE.md`
-> and the implementation decisions/challenges are recorded in
-> `docs/P05_INTEGRATION_CHALLENGES.md`. P06 is now active to turn the validated
-> architecture into a deterministic mapper/compiler and shared deployment format.
+> The P06 compiler contract is documented in `docs/P06_MAPPING_COMPILER.md` and
+> the implementation decisions/challenges are recorded in
+> `docs/P06_MAPPING_COMPILER_CHALLENGES.md`. P07 is now active to validate a
+> deeper mapped multicore SNN through the complete specification → compiler →
+> Python → FPGA flow before the final MNIST phase.
 
 ---
 
@@ -88,8 +83,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P03 | Implement and validate one FPGA-v2 logical core | Complete | 2026-09-28 | 2026-09-28 |
 | P04 | Add multicore packet routing and timestep/barrier semantics | Complete | 2026-09-28 | 2026-09-29 |
 | P05 | Add logical-core virtualization | Complete | 2026-09-29 | 2026-09-29 |
-| P06 | Build deterministic mapper/compiler and deployment format | In progress | 2026-09-29 | — |
-| P07 | Validate deeper mapped multicore SNNs | Planned | — | — |
+| P06 | Build deterministic mapper/compiler and deployment format | Complete | 2026-09-29 | 2026-09-29 |
+| P07 | Validate deeper mapped multicore SNNs | In progress | 2026-09-29 | — |
 | P08 | Build and compare NxTF-oriented deep MNIST workload | Planned | — | — |
 
 ---
@@ -643,32 +638,137 @@ forward and reverse context-service orders.
 
 # P06 — Deterministic mapper/compiler and deployment format
 
-**Status:** In progress  
-**Started:** 2026-09-29
+**Status:** Complete  
+**Started:** 2026-09-29  
+**Completed:** 2026-09-29
 
 ## Goal
 
 Map trained networks onto modeled Loihi-like resources and emit one
 deterministic deployment consumed by both Python and FPGA execution.
 
+P06 takes the manually configured architecture accepted through P05 and adds a
+single deterministic compiler boundary above it. High-level population and
+projection specifications are compiled into the same `Deployment` logical-core
+configuration consumed by Python and the accepted P05 FPGA image packer. No
+second FPGA-specific mapping format is maintained.
+
+The compiler contract is documented in `docs/P06_MAPPING_COMPILER.md`; the
+implementation decisions and closure lessons are recorded in
+`docs/P06_MAPPING_COMPILER_CHALLENGES.md`.
+
+## Sub-milestone progress
+
+### P06.1 — Network/deployment compiler contract — **Verified**
+
+- [x] Added versioned `p06-network-v1` high-level network specifications.
+- [x] Added versioned `v2.1-p06` compiled deployments around the validated P02
+      logical `Deployment` boundary.
+- [x] Added deterministic source and compiled-deployment SHA-256 fingerprints.
+- [x] Added explicit population/neuron → logical-core/compartment placement
+      records and external ingress-route metadata.
+- [x] Added deterministic JSON round-trip and tamper detection.
+
+### P06.2 — Deterministic placement/resource allocation — **Verified**
+
+- [x] Added deterministic population splitting and logical-core allocation.
+- [x] Added deterministic destination input-axon allocation and source output
+      route construction.
+- [x] Added normalized fanout-pattern sharing using reusable synapse templates
+      plus destination `target_offset`, without claiming native Loihi SRAM
+      compression.
+- [x] Added hard compartment, input-axon, output-route, and synapse-memory
+      capacity enforcement during mapping.
+- [x] Added explicit mapping diagnostics naming core/resource/used/limit.
+- [x] Added per-core occupancy/headroom, static local/remote traffic, placement,
+      and sharing reports.
+- [x] Added compiler regressions for reordered-equivalent inputs, population
+      splitting, template sharing, external ingress, capacity rejection, and
+      compiled Python execution.
+
+### P06.3 — Shared Python/FPGA deployment and physical conformance — **Verified**
+
+- [x] Added `CompiledDeployment.build_chip()` so Python executes the contained
+      logical deployment directly.
+- [x] Added `export_compiled_fpga_image()` so the same compiled deployment is
+      exported through the accepted P05 full-context hardware packer.
+- [x] Added CLI flow `network.json -> deployment.json + mapping report + FPGA
+      report + load vectors` with fingerprint continuity checks.
+- [x] Added a compiler-driven physical corpus and K26 conformance harness without
+      changing or resynthesizing the accepted P05 compute architecture.
+- [x] Loaded and read back the generated compiled context image before execution.
+- [x] Executed mapped `pixel0`, `pixel1`, and `both_pixels` scenarios under both
+      forward and reverse legal context-service orders.
+- [x] Compared mapped physical state, trace words, packet words, next-timestep
+      events, traffic counters, barrier state, HLS status, and error flags against
+      expectations generated from the exact compiled deployment.
+- [x] Verified the physical result records the same deployment fingerprint as the
+      compiled JSON artifact.
+- [x] Verified nonzero physical cycle counts on all 24 directed ticks.
+- [x] Archived the accepted evidence under
+      `hardware/evidence/p06_physical_20260930T014904Z/`.
+- [x] Final result: `schema=p06-physical-mapped-deployment-v1`, `result=PASS`.
+
+Accepted physical identity:
+
+```text
+source_fingerprint=8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383
+deployment_fingerprint=32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b
+logical_contexts=3
+physical_engines=1
+logical_capacity_changed=0
+```
+
+Accepted physical observations:
+
+| Scenario | Reverse service | Timestep | PL cycles | Local packets | Remote packets |
+|---|---:|---:|---:|---:|---:|
+| pixel0 | 0 | 0 | 74 | 0 | 1 |
+| pixel0 | 0 | 1 | 76 | 0 | 1 |
+| pixel0 | 0 | 2 | 68 | 0 | 0 |
+| pixel0 | 0 | 3 | 61 | 0 | 0 |
+| pixel0 | 1 | 0 | 74 | 0 | 1 |
+| pixel0 | 1 | 1 | 76 | 0 | 1 |
+| pixel0 | 1 | 2 | 68 | 0 | 0 |
+| pixel0 | 1 | 3 | 61 | 0 | 0 |
+| pixel1 | 0 | 0 | 74 | 0 | 1 |
+| pixel1 | 0 | 1 | 76 | 0 | 1 |
+| pixel1 | 0 | 2 | 68 | 0 | 0 |
+| pixel1 | 0 | 3 | 61 | 0 | 0 |
+| pixel1 | 1 | 0 | 74 | 0 | 1 |
+| pixel1 | 1 | 1 | 76 | 0 | 1 |
+| pixel1 | 1 | 2 | 68 | 0 | 0 |
+| pixel1 | 1 | 3 | 61 | 0 | 0 |
+| both_pixels | 0 | 0 | 87 | 0 | 2 |
+| both_pixels | 0 | 1 | 91 | 0 | 2 |
+| both_pixels | 0 | 2 | 75 | 0 | 0 |
+| both_pixels | 0 | 3 | 61 | 0 | 0 |
+| both_pixels | 1 | 0 | 87 | 0 | 2 |
+| both_pixels | 1 | 1 | 91 | 0 | 2 |
+| both_pixels | 1 | 2 | 75 | 0 | 0 |
+| both_pixels | 1 | 3 | 61 | 0 | 0 |
+
 ## Required deliverables
 
-- [ ] Finalize the machine-readable deployment schema.
-- [ ] Partition populations/compartments across logical cores.
-- [ ] Allocate input axons, synapse groups/lists, and output routes.
-- [ ] Implement supported connection sharing/compression or the explicit
+- [x] Finalize the machine-readable deployment schema.
+- [x] Partition populations/compartments across logical cores.
+- [x] Allocate input axons, synapse groups/lists, and output routes.
+- [x] Implement supported connection sharing/compression or the explicit
       project-defined equivalent.
-- [ ] Enforce hard per-core limits during mapping.
-- [ ] Reject invalid mappings with explicit diagnostics.
-- [ ] Make mapping deterministic for a fixed network/configuration.
-- [ ] Report per-core use/headroom and expected traffic where meaningful.
-- [ ] Hash/version deployment artifacts.
-- [ ] Load the same deployment artifact into Python and FPGA paths.
+- [x] Enforce hard per-core limits during mapping.
+- [x] Reject invalid mappings with explicit diagnostics.
+- [x] Make mapping deterministic for a fixed network/configuration.
+- [x] Report per-core use/headroom and expected traffic where meaningful.
+- [x] Hash/version deployment artifacts.
+- [x] Load the same deployment artifact into Python and FPGA paths.
 
 ## Completion gate
 
-P06 is complete when networks can be mapped deterministically into inspectable,
+**Complete.** Networks can be mapped deterministically into inspectable,
 resource-valid deployments without hand-editing FPGA-specific configuration.
+The accepted physical test demonstrates the same versioned compiled deployment
+feeding both Python expectations and FPGA context loading/execution while
+preserving its fingerprint through the physical result.
 
 **Next phase:** P07 — deeper mapped SNN validation.
 
@@ -676,7 +776,8 @@ resource-valid deployments without hand-editing FPGA-specific configuration.
 
 # P07 — Deeper mapped multicore SNN validation
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-29
 
 ## Goal
 
@@ -861,9 +962,11 @@ Loihi_Digital_Twin/
     │   ├── P04_INTEGRATION_IMPLEMENTATION.md
     │   ├── P04_INTEGRATION_CHALLENGES.md
     │   ├── P05_VIRTUALIZATION_ARCHITECTURE.md
-    │   └── P05_INTEGRATION_CHALLENGES.md
+    │   ├── P05_INTEGRATION_CHALLENGES.md
+    │   ├── P06_MAPPING_COMPILER.md
+    │   └── P06_MAPPING_COMPILER_CHALLENGES.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/               accepted P03/P04/P05-compatible HLS compute core
+    ├── hls/core_v2/               accepted P03-P06-compatible HLS compute core
     ├── rtl/                       v2 RTL integration/observability logic
     ├── vivado/                    source-controlled K26 build flows
     ├── hardware/                  physical programming/conformance flows
@@ -899,5 +1002,6 @@ Before moving to the next phase:
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
 
-P05 satisfied this rule on 2026-09-29 when the canonical K26 physical evidence
-reported `result=PASS`; P06 is therefore the active phase.
+P06 satisfied this rule on 2026-09-29 when the compiler-driven K26 physical
+evidence reported `result=PASS` and preserved the compiled deployment
+fingerprint through the physical result; P07 is therefore the active phase.

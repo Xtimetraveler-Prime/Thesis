@@ -1,0 +1,78 @@
+{
+  "compiler_version": "p06-deterministic-first-fit-v1",
+  "connection_sharing": {
+    "expanded_connections": 8,
+    "expanded_per_stored_parameter": 1.3333333333333333,
+    "stored_shared_parameters": 6
+  },
+  "cores": [
+    {
+      "core_id": 0,
+      "headroom": {
+        "compartments": 1022,
+        "input_axons": 4094,
+        "output_routes": 4094,
+        "synapse_bytes": 131056
+      },
+      "local_routes": 0,
+      "remote_routes": 2,
+      "usage": {
+        "compartments": 2,
+        "expanded_connections": 2,
+        "input_axons": 2,
+        "output_routes": 2,
+        "shared_parameters": 1,
+        "synapse_bytes": 16
+      }
+    },
+    {
+      "core_id": 1,
+      "headroom": {
+        "compartments": 1022,
+        "input_axons": 4094,
+        "output_routes": 4094,
+        "synapse_bytes": 131040
+      },
+      "local_routes": 0,
+      "remote_routes": 2,
+      "usage": {
+        "compartments": 2,
+        "expanded_connections": 4,
+        "input_axons": 2,
+        "output_routes": 2,
+        "shared_parameters": 4,
+        "synapse_bytes": 32
+      }
+    },
+    {
+      "core_id": 2,
+      "headroom": {
+        "compartments": 1022,
+        "input_axons": 4094,
+        "output_routes": 4096,
+        "synapse_bytes": 131056
+      },
+      "local_routes": 0,
+      "remote_routes": 0,
+      "usage": {
+        "compartments": 2,
+        "expanded_connections": 2,
+        "input_axons": 2,
+        "output_routes": 0,
+        "shared_parameters": 1,
+        "synapse_bytes": 16
+      }
+    }
+  ],
+  "fingerprint": "32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b",
+  "ingress_route_count": 2,
+  "logical_core_count": 3,
+  "placement_count": 6,
+  "schema": "v2.1-p06",
+  "source_fingerprint": "8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383",
+  "static_route_estimate": {
+    "local": 0,
+    "remote": 4,
+    "total": 4
+  }
+}

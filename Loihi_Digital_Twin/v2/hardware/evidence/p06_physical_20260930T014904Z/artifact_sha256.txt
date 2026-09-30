@@ -1,0 +1,7 @@
+bitstream=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p05_impl/reports/p05_virtualized.bit
+debug_probes=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p05_impl/reports/p05_virtualized.ltx
+compiled_deployment=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/hardware/build/p06_physical/deployment.json
+d57daeb35441c769c85ffa74002ea76809e270f840ddaa8ddd176b56c59252ad  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p05_impl/reports/p05_virtualized.bit
+e1a37678c46056f74ae96d52146b11feb4d6e7d35f8c190264ea1bc3e7f072f9  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p05_impl/reports/p05_virtualized.ltx
+29aedbe950c68bc4dc4a397c5a5ee0efeb36518912f9c628596e893420efe74b  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/hardware/build/p06_physical/deployment.json
+ee27560b3e76c2c71031b5907f3032570c71e4ae271b0150b30fc6be63d7bd7a  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/hardware/build/p06_physical/network.json
