@@ -38,27 +38,27 @@ def main() -> None:
     expected_usage = (
         {
             "compartments": 1024,
-            "input_axons": 473,
-            "output_routes": 940,
-            "synapse_bytes": 13388,
-            "shared_parameters": 2788,
+            "input_axons": 514,
+            "output_routes": 1069,
+            "synapse_bytes": 13680,
+            "shared_parameters": 2800,
             "expanded_connections": 25600,
         },
         {
             "compartments": 1024,
-            "input_axons": 2099,
-            "output_routes": 832,
-            "synapse_bytes": 37876,
-            "shared_parameters": 7088,
-            "expanded_connections": 56000,
+            "input_axons": 1134,
+            "output_routes": 925,
+            "synapse_bytes": 19152,
+            "shared_parameters": 3473,
+            "expanded_connections": 26240,
         },
         {
-            "compartments": 10,
-            "input_axons": 20,
-            "output_routes": 0,
-            "synapse_bytes": 960,
-            "shared_parameters": 200,
-            "expanded_connections": 200,
+            "compartments": 426,
+            "input_axons": 1663,
+            "output_routes": 416,
+            "synapse_bytes": 12972,
+            "shared_parameters": 1432,
+            "expanded_connections": 18322,
         },
     )
     actual_usage = tuple(core["usage"] for core in report["cores"])
@@ -67,10 +67,10 @@ def main() -> None:
             "P08 candidate mapping changed unexpectedly:\n"
             f"actual={actual_usage!r}\nexpected={expected_usage!r}"
         )
-    if report["static_route_estimate"] != {"total": 1772, "local": 812, "remote": 960}:
+    if report["static_route_estimate"] != {"total": 2410, "local": 416, "remote": 1994}:
         raise RuntimeError(f"unexpected P08 static route profile: {report['static_route_estimate']}")
     sharing = report["connection_sharing"]
-    if sharing["expanded_connections"] != 81800 or sharing["stored_shared_parameters"] != 10076:
+    if sharing["expanded_connections"] != 70162 or sharing["stored_shared_parameters"] != 7705:
         raise RuntimeError(f"unexpected P08 sharing profile: {sharing}")
     if report["logical_core_count"] != 3:
         raise RuntimeError("P08 candidate no longer maps to exactly three logical cores")
@@ -83,7 +83,7 @@ def main() -> None:
         f"weights={payload['topology']['trainable_weights']} "
         f"expanded={sharing['expanded_connections']} "
         f"stored={sharing['stored_shared_parameters']} "
-        "routes_local=812 routes_remote=960"
+        "routes_local=416 routes_remote=1994"
     )
 
 
