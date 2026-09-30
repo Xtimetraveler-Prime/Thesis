@@ -2,13 +2,13 @@
 
 ## Status
 
-**Phase:** P08.1 source reconstruction / topology proposal  
-**Topology state:** proposed, not yet accepted/frozen  
-**Training state:** prohibited until this reconstruction is accepted and P08.2 can host it  
+**Phase:** P08.1 source reconstruction / topology reconstruction  
+**Topology state:** accepted project reconstruction on 2026-09-30  
+**Training state:** prohibited until P08.2 proves the accepted graph can be hosted correctly  
 **Official MNIST test set:** locked
 
 This document separates facts recovered from the NxTF paper and surviving public
-code from project reconstruction choices.  It is intentionally conservative: an
+code from project reconstruction choices. It is intentionally conservative: an
 unpublished or unrecovered detail is not promoted to an NxTF fact merely because
 a nearby public tutorial makes one choice.
 
@@ -61,11 +61,11 @@ configuration for the paper's **frame-based MNIST Table-2 benchmark**.
 
 The surviving Intel notebook is not that benchmark: it contains 33,802 trainable
 parameters and uses 512 timesteps in the saved tutorial, while the paper reports
-approximately 7k parameters and 100 timesteps.  The historical SNN Toolbox Loihi
+approximately 7k parameters and 100 timesteps. The historical SNN Toolbox Loihi
 example supplies useful conversion/configuration evidence, but its network graph
 also does not match the paper's aggregate footprint.
 
-Therefore the exact paper topology remains `UNKNOWN_NOT_CLAIMED`.  P08 proceeds
+Therefore the exact paper topology remains `UNKNOWN_NOT_CLAIMED`. P08 proceeds
 with a bounded `PROJECT_RECONSTRUCTION`, rather than claiming that a reverse-
 engineered filter tuple is the unpublished NxTF network.
 
@@ -132,7 +132,7 @@ those exact dimensions.
 ### Deterministic selection rule
 
 `applications/mnist_v2_nxtf/mnist_v2_nxtf/reconstruction.py` enumerates integer
-`F1`, `F2`, and `F3` from 1 through 64.  It scores each graph by the unweighted
+`F1`, `F2`, and `F3` from 1 through 64. It scores each graph by the unweighted
 sum of absolute **relative** errors against four paper anchors:
 
 ```text
@@ -143,7 +143,7 @@ sum of absolute **relative** errors against four paper anchors:
 ```
 
 For the score only, ordinary convolution kernel-coefficient count is compared to
-the paper's shared-weight count.  This is a reconstruction heuristic, not a claim
+the paper's shared-weight count. This is a reconstruction heuristic, not a claim
 that Keras kernel count, NxTF native connection storage, and P06 shared-template
 storage are identical quantities.
 
@@ -155,7 +155,7 @@ F2 = 20
 F3 = 12
 ```
 
-so the proposed topology is:
+so the accepted P08.1 project topology is:
 
 ```text
 28 x 28 x 1
@@ -167,7 +167,7 @@ so the proposed topology is:
 
 Aggregate reconstruction metrics:
 
-| Quantity | NxTF paper anchor | Proposed reconstruction | Difference |
+| Quantity | NxTF paper anchor | Accepted reconstruction | Difference |
 |---|---:|---:|---:|
 | Neurons | ~4,000 | 4,218 | +218 (+5.45%) |
 | Trainable parameters incl. biases | ~7,000 | 7,006 | +6 (+0.086%) |
@@ -176,14 +176,14 @@ Aggregate reconstruction metrics:
 | Expanded connections | 341,000 | 338,880 | -2,120 (-0.62%) |
 | Algorithmic timesteps | 100 | 100 | exact match |
 
-This candidate is not called "the NxTF topology."  It is the current
-**source-bounded P08 reconstruction proposal**.
+This candidate is not called "the NxTF topology." It is the accepted
+**source-bounded P08 project reconstruction** used for subsequent development.
 
 ---
 
 ## 4. P06 structural representation
 
-`applications/mnist_v2_nxtf/mnist_v2_nxtf/structural.py` expands the proposed
+`applications/mnist_v2_nxtf/mnist_v2_nxtf/structural.py` expands the accepted
 convolutions into the existing P06 `NetworkSpec` boundary without adding any
 training assumptions.
 
@@ -200,13 +200,13 @@ Important representation choices:
 - the graph contains exactly 338,880 expanded projection connections.
 
 The P06 shared-template count is expected to differ substantially from the
-paper's 6,746 NxTF shared weights.  P06 uses the project's normalized template
+paper's 6,746 NxTF shared weights. P06 uses the project's normalized template
 representation and logical-core partition boundaries; it is not a byte-for-byte
 model of Loihi/NxTF convolution compression.
 
 ### Capacity probe policy
 
-The P06 default first-fit policy allows 1,024 compartments per logical core.  On
+The P06 default first-fit policy allows 1,024 compartments per logical core. On
 this graph that packing is expected to fail the project's modeled 128-KiB
 synapse-memory limit on an intermediate logical core even though the network has
 only 4,218 neurons.
@@ -217,11 +217,11 @@ P08.1 therefore defines a **mapping-only** structural probe at:
 compartments_per_core = 900
 ```
 
-This does not alter the neural graph.  It is chosen to keep the same graph within
+This does not alter the neural graph. It is chosen to keep the same graph within
 all current P06 logical resource limits while retaining the mathematical minimum
 of five logical cores (`ceil(4218 / 1024) = 5`).
 
-The deterministic test contract for that probe is:
+The accepted deterministic probe contract is:
 
 ```text
 logical cores:                 5
@@ -244,19 +244,20 @@ Expected per-core P06 usage:
 | 3 | 900 | 2,016 | 729 | 101,024 | 22,680 | 113,400 |
 | 4 | 618 | 3,828 | 521 | 95,464 | 18,966 | 88,896 |
 
-These values are asserted by the P08.1 test suite and must be independently
-verified in Diego's repository environment before P08.1 is accepted.
+Diego independently ran the P08.1 preflight on 2026-09-30. The suite reported
+`21 passed`, reproduced the accepted filter tuple and aggregate counts exactly,
+and completed the P08.1 source-reconstruction preflight successfully.
 
 ---
 
 ## 5. Consequence for P08.2
 
-The existing K26 shell retains three full logical contexts at once.  The proposed
+The existing K26 shell retains three full logical contexts at once. The accepted
 source-bounded workload requires **five logical cores under the current P06
-capacity-safe probe**.  It must therefore not be shrunk to fit the shell.
+capacity-safe probe**. It must therefore not be shrunk to fit the shell.
 
-P08.2 should implement deterministic backing-state/context paging for more
-logical cores than resident slots, preserving:
+P08.2 must implement deterministic backing-state/context paging for more logical
+cores than resident slots, preserving:
 
 ```text
 logical core identity
@@ -271,23 +272,35 @@ normalized trace equivalence
 The five-core P06 count is not expected to equal the paper's 14 Loihi neurocores:
 NxTF and P06 have different partitioning and storage models.
 
-P08.2 should also keep channel-specific bias representation in view when it turns
-the structural graph into a trained deployment.  The topology probe deliberately
+P08.2 must also keep channel-specific bias representation in view when it turns
+the structural graph into a trained deployment. The topology probe deliberately
 does not invent converted-SNN thresholds, trained biases, or quantized weights.
 
 ---
 
-## 6. Acceptance gate
+## 6. P08.1 acceptance record
 
-Before ANN training begins:
+P08.1 was accepted on 2026-09-30 after the repository preflight reported:
 
-1. independently run the P08.1 preflight and structural-resource tests;
-2. review/accept the `14 -> 20 -> 12 -> 10` reconstruction as an explicitly
-   project-defined proxy, not an exact NxTF topology;
-3. keep `TOPOLOGY_STATUS = "UNFROZEN_NXTF_EMULATION_REALIGN"` until that review is
-   complete;
-4. proceed to P08.2 context paging because five logical cores exceed the three
-   resident K26 context slots;
-5. do not unlock the official MNIST test set.
+```text
+21 passed
+filters=(14, 20, 12)
+neurons=4218
+params=7006
+expanded=338880
+```
 
-No ANN training run is authorized by this document alone.
+The accepted status markers are:
+
+```text
+TOPOLOGY_STATUS = "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
+RECONSTRUCTION_STATUS = "ACCEPTED_P08_1_SOURCE_BOUNDED"
+```
+
+This acceptance freezes the reconstruction choice for subsequent P08 work. It
+does **not** claim the unpublished NxTF topology was recovered, does not authorize
+official-test use, and does not authorize ANN training until P08.2 demonstrates
+that the five-logical-core graph is correctly hostable through the accepted K26
+virtualization boundary.
+
+**Next phase:** P08.2 — deterministic context paging / architecture adaptation.
