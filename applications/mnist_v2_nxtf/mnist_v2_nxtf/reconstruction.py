@@ -15,7 +15,7 @@ from heapq import nsmallest
 from math import prod
 
 
-RECONSTRUCTION_STATUS = "PROPOSED_P08_1_SOURCE_BOUNDED"
+RECONSTRUCTION_STATUS = "ACCEPTED_P08_1_SOURCE_BOUNDED"
 
 # Published NxTF frame-based MNIST anchors. The paper prints the neuron and
 # trainable-parameter counts approximately ("~4k", "~7k") and the connection
@@ -175,14 +175,15 @@ def ranked_reconstructions(limit: int | None = None) -> tuple[ReconstructionMetr
     return tuple(sorted(_candidate_stream(), key=_rank_key))
 
 
-# Deterministic P08.1 proposal. This stays explicitly proposed/unfrozen until
-# Diego accepts the P08.1 source reconstruction and resource audit.
+# Accepted P08.1 project reconstruction. The exact paper topology remains
+# unknown/not claimed; this tuple is frozen for subsequent P08 architecture,
+# training, conversion, and comparison work unless new primary evidence appears.
 PROPOSED_FILTERS = (14, 20, 12)
 PROPOSED_METRICS = metrics_for_filters(PROPOSED_FILTERS)
 
 
 def validate_proposed_reconstruction() -> None:
-    """Guard against accidental drift in the project reconstruction policy."""
+    """Guard against accidental drift in the accepted project reconstruction."""
 
     best = ranked_reconstructions(limit=1)[0]
     if best.filters != PROPOSED_FILTERS:
