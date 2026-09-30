@@ -1,9 +1,11 @@
 """Frozen P08 candidate topology and experiment constants.
 
-The active revision was selected after the initial 3/6-filter candidate plateaued
-at 88.10% validation accuracy after 50 epochs.  This revision spends a similar
-parameter budget on more feature channels while still fitting the already
-accepted three-context FPGA shell.
+Revision history:
+- revision 1 (3/6 conv filters, 8 hidden neurons) plateaued at 88.10% validation.
+- revision 2 (12/12 stride-2 conv filters, 20 hidden neurons) collapsed to 49.60% validation.
+- revision 3 restores the working revision-1 spatial geometry and widens only the
+  dense bottleneck from 8 to 10 neurons.  This preserves the accepted three-core
+  physical boundary while raising the trainable parameter budget to ~7.6k.
 """
 
 from __future__ import annotations
@@ -59,9 +61,9 @@ CONV1 = ConvStage(
     input_height=28,
     input_width=28,
     input_channels=1,
-    filters=12,
+    filters=3,
     kernel=5,
-    stride=2,
+    stride=1,
 )
 
 CONV2 = ConvStage(
@@ -69,12 +71,12 @@ CONV2 = ConvStage(
     input_height=CONV1.output_height,
     input_width=CONV1.output_width,
     input_channels=CONV1.filters,
-    filters=12,
+    filters=6,
     kernel=3,
     stride=2,
 )
 
-DENSE_HIDDEN = 20
+DENSE_HIDDEN = 10
 DENSE_OUTPUT = NUM_CLASSES
 
 CONV1_NEURONS = CONV1.output_neurons
@@ -89,11 +91,11 @@ TOTAL_TRAINABLE_WEIGHTS = CONV1.weight_count + CONV2.weight_count + DENSE1_WEIGH
 # per-neuron learned bias vectors.
 USE_BIAS = False
 
-if (CONV1.output_height, CONV1.output_width, CONV1.filters) != (12, 12, 12):
+if (CONV1.output_height, CONV1.output_width, CONV1.filters) != (24, 24, 3):
     raise RuntimeError("P08 conv1 shape contract changed")
-if (CONV2.output_height, CONV2.output_width, CONV2.filters) != (5, 5, 12):
+if (CONV2.output_height, CONV2.output_width, CONV2.filters) != (11, 11, 6):
     raise RuntimeError("P08 conv2 shape contract changed")
-if TOTAL_SPIKING_NEURONS != 2058:
-    raise RuntimeError("P08 candidate must contain exactly 2058 spiking neurons")
-if TOTAL_TRAINABLE_WEIGHTS != 7796:
-    raise RuntimeError("P08 candidate must contain exactly 7796 trainable weights")
+if TOTAL_SPIKING_NEURONS != 2474:
+    raise RuntimeError("P08 revision-3 candidate must contain exactly 2474 spiking neurons")
+if TOTAL_TRAINABLE_WEIGHTS != 7597:
+    raise RuntimeError("P08 revision-3 candidate must contain exactly 7597 trainable weights")
