@@ -3,9 +3,14 @@
 P08 was realigned on 2026-09-29 to emulate the published NxTF MNIST work as
 closely as public evidence and the FPGA-v2 architecture permit. P08.1 completed
 on 2026-09-30 with an accepted, explicitly project-defined reconstruction of the
-unpublished NxTF frame-MNIST topology. The abandoned revision-1/2/3 candidate
-definitions remain intentionally excluded so later work cannot silently reuse
-them as the accepted P08 model.
+unpublished NxTF frame-MNIST topology. P08.2 then accepted deterministic paging
+of the five-logical-core P06 deployment over three resident K26 contexts and one
+physical HLS engine.
+
+P08.3.1 freezes the ANN training and ANN-to-SNN conversion policy before any new
+training run. The abandoned revision-1/2/3 candidate definitions remain
+intentionally excluded so later work cannot silently reuse them as the accepted
+P08 model.
 """
 
 from __future__ import annotations
@@ -23,7 +28,7 @@ VALIDATION_SEED = 0x4D4E4953
 PRIMARY_TIMESTEPS = 100
 CHARACTERIZATION_TIMESTEPS = (16, 32, 64, 100)
 
-# P08.1 acceptance freezes the reconstruction choice, not the training or
-# conversion contract. P08.2 must first prove that the five-logical-core graph
-# can be serviced correctly through the three-resident-context K26 shell.
-TOPOLOGY_STATUS = "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
+# P08.1 topology and P08.2 paging are accepted. P08.3.1 freezes the training and
+# conversion rules; the official test split remains locked until the selected
+# ANN checkpoint and converted-SNN configuration are frozen without test feedback.
+TOPOLOGY_STATUS = "P08_2_PAGING_ACCEPTED_P08_3_POLICY_FROZEN"
