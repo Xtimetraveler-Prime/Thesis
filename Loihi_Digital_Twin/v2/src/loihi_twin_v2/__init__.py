@@ -29,6 +29,17 @@ from .hardware_p04 import (
     TwoCoreValidationImage,
     export_two_core_validation_image,
 )
+from .hardware_p05 import (
+    LogicalContextImage,
+    P05_CONTEXT_BITS_PER_CORE,
+    P05_ESTIMATED_URAM288,
+    P05_K26_URAM288_AVAILABLE,
+    P05_MAX_RESIDENT_CONTEXTS,
+    P05_PHYSICAL_ENGINE_COUNT,
+    P05_PROFILE_NAME,
+    VirtualizedHardwareImage,
+    export_virtualized_hardware_image,
+)
 from .mapping import Deployment
 from .packet import PacketClass, RouteScope, SpikePacket
 from .reporting import deployment_report, trace_report
@@ -44,6 +55,13 @@ from .resources import (
 )
 from .runtime import RunResult, run_deployment
 from .synapse import SynapseEntry, SynapseTemplate
+from .virtualization import (
+    DeterministicCoreScheduler,
+    VirtualDispatch,
+    VirtualizationReport,
+    VirtualizationSchedule,
+    VirtualizedLogicalChip,
+)
 
 __all__ = [
     "ArithmeticConfig",
@@ -91,6 +109,20 @@ __all__ = [
     "P04_PHYSICAL_OUTPUT_ROUTES",
     "P04_PHYSICAL_INPUT_EVENTS",
     "P04_PHYSICAL_OUTPUT_PACKETS",
+    "P05_PROFILE_NAME",
+    "P05_PHYSICAL_ENGINE_COUNT",
+    "P05_MAX_RESIDENT_CONTEXTS",
+    "P05_CONTEXT_BITS_PER_CORE",
+    "P05_ESTIMATED_URAM288",
+    "P05_K26_URAM288_AVAILABLE",
+    "LogicalContextImage",
+    "VirtualizedHardwareImage",
+    "export_virtualized_hardware_image",
+    "DeterministicCoreScheduler",
+    "VirtualDispatch",
+    "VirtualizationReport",
+    "VirtualizationSchedule",
+    "VirtualizedLogicalChip",
     "MAX_LOGICAL_CORES",
     "MAX_COMPARTMENTS_PER_CORE",
     "MAX_INPUT_AXONS_PER_CORE",
