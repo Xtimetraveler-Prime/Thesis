@@ -72,6 +72,7 @@ class TrainingResult:
     best_val_loss: float
     epochs_ran: int
     checkpoint_sha256: str
+    selected_weights_fingerprint: str
     manifest_fingerprint: str
 
 
@@ -199,6 +200,10 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _weights_fingerprint(weights: list[np.ndarray]) -> str:
+    return _sha256_bytes(*(_array_identity(weight) for weight in weights))
+
+
 def _json_fingerprint(payload: dict[str, Any]) -> str:
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -295,6 +300,7 @@ def train_arrays(
         raise AssertionError("serialized selected checkpoint changed parameter count")
 
     checkpoint_sha256 = _file_sha256(checkpoint_path)
+    selected_weights_fingerprint = _weights_fingerprint(selected.get_weights())
     manifest: dict[str, Any] = {
         "schema": TRAINING_SCHEMA,
         "mode": arrays.mode,
@@ -320,6 +326,7 @@ def train_arrays(
         "best_val_loss": best.val_loss,
         "checkpoint_filename": checkpoint_path.name,
         "checkpoint_sha256": checkpoint_sha256,
+        "selected_weights_fingerprint": selected_weights_fingerprint,
         "history": [asdict(record) for record in history],
         "random_seed": ANN_POLICY.random_seed,
         "deterministic_ops": ANN_POLICY.deterministic_ops,
@@ -340,6 +347,7 @@ def train_arrays(
         best_val_loss=best.val_loss,
         epochs_ran=len(history),
         checkpoint_sha256=checkpoint_sha256,
+        selected_weights_fingerprint=selected_weights_fingerprint,
         manifest_fingerprint=manifest_fingerprint,
     )
 
@@ -373,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         "PASS: P08.3.2 artifact manifest official_test_used=false "
         f"checkpoint_sha256={result.checkpoint_sha256} "
+        f"weights_fingerprint={result.selected_weights_fingerprint} "
         f"manifest_fingerprint={result.manifest_fingerprint}"
     )
     return 0
