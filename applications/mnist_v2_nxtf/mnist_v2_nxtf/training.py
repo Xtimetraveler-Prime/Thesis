@@ -8,7 +8,16 @@ import time
 
 import numpy as np
 
-from .config import BATCH_SIZE, LEARNING_RATE, MAX_EPOCHS, VALIDATION_SEED
+from .config import (
+    BATCH_SIZE,
+    CONV1,
+    CONV2,
+    DENSE_HIDDEN,
+    LEARNING_RATE,
+    MAX_EPOCHS,
+    TOTAL_TRAINABLE_WEIGHTS,
+    VALIDATION_SEED,
+)
 from .data import load_mnist, normalize_images, stratified_train_validation_indices
 
 
@@ -23,30 +32,35 @@ def require_tensorflow():
 
 
 def build_ann():
-    """Build the four weight-bearing layer P08 ANN candidate."""
+    """Build the active four weight-bearing layer P08 ANN candidate."""
 
     tf = require_tensorflow()
     inputs = tf.keras.Input(shape=(28, 28, 1), name="pixels")
     x = tf.keras.layers.Conv2D(
-        3,
-        5,
-        strides=1,
+        CONV1.filters,
+        CONV1.kernel,
+        strides=CONV1.stride,
         padding="valid",
         use_bias=False,
         activation="relu",
-        name="stage0_conv1",
+        name=CONV1.name,
     )(inputs)
     x = tf.keras.layers.Conv2D(
-        6,
-        3,
-        strides=2,
+        CONV2.filters,
+        CONV2.kernel,
+        strides=CONV2.stride,
         padding="valid",
         use_bias=False,
         activation="relu",
-        name="stage1_conv2",
+        name=CONV2.name,
     )(x)
     x = tf.keras.layers.Flatten(name="flatten")(x)
-    x = tf.keras.layers.Dense(8, use_bias=False, activation="relu", name="stage2_dense8")(x)
+    x = tf.keras.layers.Dense(
+        DENSE_HIDDEN,
+        use_bias=False,
+        activation="relu",
+        name="stage2_dense_hidden",
+    )(x)
     scores = tf.keras.layers.Dense(
         10,
         use_bias=False,
@@ -88,10 +102,10 @@ def train_ann(output_dir: str | Path, *, max_epochs: int = MAX_EPOCHS) -> dict:
     x_val, y_val = x[validation_idx], dataset.y_train[validation_idx]
 
     model = build_ann()
-    expected_parameters = 6125
-    if model.count_params() != expected_parameters:
+    if model.count_params() != TOTAL_TRAINABLE_WEIGHTS:
         raise RuntimeError(
-            f"P08 ANN parameter contract changed: {model.count_params()} != {expected_parameters}"
+            "P08 ANN parameter contract changed: "
+            f"{model.count_params()} != {TOTAL_TRAINABLE_WEIGHTS}"
         )
 
     best_weights = output / "p08_best.weights.h5"
