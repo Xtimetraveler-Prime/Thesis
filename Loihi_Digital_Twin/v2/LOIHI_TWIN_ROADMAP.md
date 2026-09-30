@@ -71,9 +71,14 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 >
 > The P07 workload/validation contract is documented in
 > `docs/P07_DEEP_SNN_VALIDATION.md`; the design decisions and closure lessons are
-> recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`. P08 is now active to build and
-> quantitatively characterize the final deeper MNIST workload and make an
-> explicitly bounded comparison with the NxTF-oriented reference workload.
+> recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`. P08 is now active with a revised
+> goal: emulate the published NxTF frame-based MNIST work as closely as public
+> evidence and the FPGA-v2 framework permit. The first P08 task is source
+> reconstruction and experiment freezing, not another hand-designed candidate
+> training run. The accepted three-context K26 shell is a resident-context limit,
+> not a logical-network-size limit; if the source-faithful workload requires more
+> logical cores, P08 must extend virtualization/context paging rather than shrink
+> the network for convenience.
 
 ---
 
@@ -89,7 +94,7 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P05 | Add logical-core virtualization | Complete | 2026-09-29 | 2026-09-29 |
 | P06 | Build deterministic mapper/compiler and deployment format | Complete | 2026-09-29 | 2026-09-29 |
 | P07 | Validate deeper mapped multicore SNNs | Complete | 2026-09-29 | 2026-09-29 |
-| P08 | Build and compare NxTF-oriented deep MNIST workload | In progress | 2026-09-29 | — |
+| P08 | Emulate and compare the NxTF frame-based MNIST workload | In progress | 2026-09-29 | — |
 
 ---
 
@@ -883,44 +888,188 @@ specification → mapper → Python → FPGA flow, exercises both local and remo
 multicore traffic plus connection sharing and capacity rejection, and agrees at
 the normalized architectural boundary across all 42 accepted physical ticks.
 
-**Next phase:** P08 — NxTF-oriented deep MNIST comparison.
+**Next phase:** P08 — NxTF MNIST emulation and comparison.
 
 ---
 
-# P08 — NxTF-oriented deep MNIST comparison
+# P08 — NxTF frame-based MNIST emulation and comparison
 
 **Status:** In progress  
-**Started:** 2026-09-29
+**Started:** 2026-09-29  
+**Realigned:** 2026-09-29
 
 ## Goal
 
-Build a substantially deeper MNIST workload that exercises the new multicore
-architecture and supports a defensible comparison with Rueckauer et al. NxTF.
+Emulate the frame-based MNIST workload reported in Rueckauer et al. NxTF as
+closely as public source evidence and the FPGA-v2 framework permit, execute that
+workload through the deterministic P06 → Python → FPGA path, and make a bounded,
+source-aware comparison of accuracy, mapping pressure, connection sharing,
+logical/physical virtualization, cycles, and resources.
 
-## Required deliverables
+P08 is **not** a generic search for a small MNIST network with approximately the
+same parameter count. Source fidelity has priority over fitting the current
+three-resident-context K26 shell.
 
-- [ ] Select a deeper MNIST topology comparable in purpose/mapping pressure to
-      the NxTF workload.
-- [ ] Freeze data/preprocessing, training/conversion, neuron, weight, timestep,
-      and decoder contracts.
-- [ ] Map the network with the P06 compiler.
-- [ ] Record logical placement/core count and per-resource occupancy.
-- [ ] Record sharing/compression effectiveness and packet traffic.
-- [ ] Validate Python-vs-FPGA inference behavior.
-- [ ] Run the physical K26 workload.
-- [ ] Measure/report accuracy, architectural cycles/latency, and FPGA resources.
-- [ ] Record mapping failures/headroom where relevant.
-- [ ] Build an explicit NxTF comparison table separating comparable from
-      contextual/non-comparable quantities.
+The detailed experiment contract is:
 
-Energy claims remain out of scope unless a defensible workload-specific physical
-measurement method is established.
+```text
+docs/P08_MNIST_COMPARISON_CONTRACT.md
+```
+
+The source audit and abandoned-candidate record are:
+
+```text
+docs/P08_NXTF_SOURCE_AUDIT.md
+```
+
+## Reference anchors
+
+The NxTF paper reports for its frame-based MNIST experiment:
+
+- a four-layer CNN;
+- approximately 4k neurons and 7k trainable parameters;
+- 341k discrete convolutional connections represented by 6,746 shared weights;
+- 14 Loihi neurocores after NxTF mapping;
+- SNN Toolbox rate-based ANN→SNN conversion;
+- 100 algorithmic timesteps/sample;
+- 0.74% ANN error and 0.79% converted-SNN error;
+- 0.66 mJ/sample and 6.65 ms/sample on native Loihi.
+
+The surviving public Intel NxTF MNIST tutorial is useful but is not the same
+benchmark: it uses a 16→32→64→10 all-convolutional network with 33,802 trainable
+parameters and a 512-timestep example. P08 must keep those sources distinct.
+
+## Realignment decision
+
+The initial three P08 candidates are rejected development history, not active
+models. They were hand-designed around a ~7k parameter target and the existing
+three-context physical shell, but contained only about 2.1-2.5k neurons, used two
+convolutional stages followed by dense bottlenecks, and achieved validation
+accuracies of 88.10%, 49.60%, and 69.18% respectively. Matching one aggregate
+parameter count was not sufficient to represent the paper's architecture or
+resource pressure.
+
+Their topology/training/conversion/inference/mapping-probe code has been removed
+from the active P08 application tree. The official MNIST test set remains locked;
+none of those rejected revisions was accepted on test-set performance.
+
+## P08.1 — NxTF source reconstruction and experiment freeze — **In progress**
+
+- [x] Record the paper's published aggregate MNIST metrics and comparison limits.
+- [x] Audit the surviving public Intel NxTF MNIST tutorial and distinguish it
+      from the paper's Table-2 benchmark.
+- [x] Record why revisions 1-3 are architecturally/resource-wise insufficient.
+- [x] Remove revision-2/revision-3 active candidate implementation assumptions
+      from the P08 source tree and mark the topology explicitly unfrozen.
+- [ ] Search paper/preprint/supplemental material, Intel NRC repository history,
+      SNN Toolbox artifacts, author repositories, and archived releases for the
+      exact ~7k-parameter paper topology and conversion details.
+- [ ] Classify every required topology/training/conversion fact as
+      `SOURCED_EXACT`, `SOURCED_STYLE_OR_RANGE`, `PROJECT_RECONSTRUCTION`, or
+      `UNKNOWN_NOT_CLAIMED`.
+- [ ] Freeze the closest source-backed topology and full experiment contract
+      before any new training run.
+- [ ] Commit a deterministic topology/resource audit before unlocking training.
+
+## P08.2 — FPGA-v2 adaptation for the source-faithful workload — **Planned**
+
+- [ ] Compile the frozen graph through P06 under unchanged logical per-core
+      capacity rules.
+- [ ] Record neuron/compartment count, expanded connections, stored/shared
+      parameters, axons, routes, and required logical core count.
+- [ ] Treat the P05 three-context shell as a resident-context count, not a
+      logical-core limit.
+- [ ] If the mapped workload requires more than three logical cores, implement
+      deterministic logical-context paging/loading above the accepted P05
+      resident-context mechanism instead of shrinking the network.
+- [ ] Preserve logical core IDs, full architectural state, current/next event
+      semantics, routing identity, barrier semantics, and normalized traces
+      across context swaps.
+- [ ] Add directed context-page/service-order invariance and capacity tests.
+- [ ] Report logical core count, resident context count, and physical engine
+      count separately.
+
+## P08.3 — ANN training and ANN-to-SNN conversion — **Planned**
+
+- [ ] Freeze preprocessing, optimizer, loss, batch size, epoch/model-selection,
+      bias, regularization/dropout, and determinism policies from source evidence
+      plus explicit reconstruction decisions.
+- [ ] Train using only the official MNIST training split plus the deterministic
+      frozen validation split.
+- [ ] Select the ANN checkpoint from validation data only.
+- [ ] Reproduce the NxTF/SNN-Toolbox rate conversion as closely as the validated
+      FPGA-v2 neuron arithmetic permits.
+- [ ] Freeze quantization, bias handling, normalization, thresholds, reset/leak,
+      input encoding, decoder, and timestep policies without test-set feedback.
+- [ ] Demonstrate validation behavior at the primary 100-timestep horizon.
+
+## P08.4 — Full software evaluation and physical K26 conformance — **Planned**
+
+- [ ] Evaluate the frozen ANN on the untouched 10,000-image official test split.
+- [ ] Evaluate the frozen SNN on the same test split, primarily at 100 algorithmic
+      timesteps.
+- [ ] Compile the exact converted graph through P06 and archive deployment/
+      mapping fingerprints.
+- [ ] Validate deterministic logical behavior under legal service ordering and,
+      if P08.2 adds it, legal context-page ordering.
+- [ ] Run a deterministic representative physical K26 corpus.
+- [ ] Compare physical state, spikes, packets, routed events, barrier state,
+      logical identity, status, and errors against Python expectations.
+- [ ] Record synchronous PL cycles separately from algorithmic timesteps.
+- [ ] Record FPGA utilization separately from logical Loihi-like occupancy.
+
+## P08.5 — NxTF comparison and closure — **Planned**
+
+- [ ] Build the final NxTF comparison table.
+- [ ] Separate sourced/directly comparable quantities from reconstructed,
+      contextual, project-specific, and non-comparable quantities.
+- [ ] Report ANN/SNN accuracy, neuron/parameter/connection counts, logical core
+      count, resident contexts, physical engines, sharing metrics, traffic,
+      FPGA cycles, utilization, and mapping headroom/failures.
+- [ ] Keep native-Loihi energy/latency contextual unless a defensible K26
+      workload-specific physical measurement method is separately established.
+- [ ] Archive accepted software and physical evidence plus source/deployment
+      fingerprints.
+
+## Stable P08 data boundary
+
+The reusable application scaffold retains:
+
+```text
+MNIST source image:      28 x 28 uint8
+official training split: 60,000 images
+validation split:        deterministic stratified 5,000 images
+training remainder:      55,000 images
+official test split:     10,000 images
+validation seed:         0x4D4E4953
+primary horizon:         100 algorithmic timesteps
+```
+
+The official test split may not be used for topology selection, checkpoint
+selection, conversion calibration, threshold selection, timestep selection, or
+decoder selection.
 
 ## Completion gate
 
-P08 is complete when the deep MNIST workload has been mapped, executed on the
-K26, quantitatively characterized, and compared to NxTF under an explicitly
-bounded comparison contract.
+P08 is complete only when:
+
+1. the NxTF paper workload has been reconstructed as far as public evidence
+   supports and all remaining gaps are labeled rather than invented;
+2. the frozen source-backed graph compiles through P06 under unchanged logical
+   limits;
+3. any required more-logical-cores-than-resident-contexts extension is explicitly
+   implemented and proven invariant;
+4. ANN training and ANN→SNN conversion are frozen without official-test tuning;
+5. full official-test ANN and SNN accuracy are recorded;
+6. representative Python/FPGA K26 conformance passes for the exact deployment;
+7. logical occupancy, physical residency/engine count, connection sharing,
+   traffic, PL cycles, FPGA utilization, and headroom/failures are reported; and
+8. the final comparison clearly separates direct measurements, sourced reference
+   facts, reconstruction choices, contextual quantities, and non-comparable
+   metrics.
+
+Energy claims remain out of scope unless a defensible workload-specific physical
+measurement method is established.
 
 ---
 
@@ -1050,7 +1199,9 @@ Loihi_Digital_Twin/
     │   ├── P06_MAPPING_COMPILER.md
     │   ├── P06_MAPPING_COMPILER_CHALLENGES.md
     │   ├── P07_DEEP_SNN_VALIDATION.md
-    │   └── P07_DEEP_SNN_CHALLENGES.md
+    │   ├── P07_DEEP_SNN_CHALLENGES.md
+    │   ├── P08_MNIST_COMPARISON_CONTRACT.md
+    │   └── P08_NXTF_SOURCE_AUDIT.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
     ├── hls/core_v2/               accepted P03-P07-compatible HLS compute core
     ├── rtl/                       v2 RTL integration/observability logic
@@ -1063,7 +1214,7 @@ Loihi_Digital_Twin/
 
 applications/
 ├── mnist_baseline/                preserved FPGA-v1 application
-└── <future deep MNIST app>/       FPGA-v2 / NxTF-oriented workload
+└── mnist_v2_nxtf/                 P08 NxTF-emulation application scaffold
 ```
 
 New FPGA-v2 implementation evidence belongs with v2 and should be referenced
@@ -1091,4 +1242,5 @@ Before moving to the next phase:
 P07 satisfied this rule on 2026-09-29 when the compiler-generated six-layer K26
 physical evidence reported `result=PASS`, preserved the compiled-deployment
 identity, and passed all 42 directed physical ticks; P08 is therefore the active
-phase.
+phase. P08.1 source reconstruction/topology freezing must complete before new ANN
+training resumes.
