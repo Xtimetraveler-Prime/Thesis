@@ -1,0 +1,408 @@
+{
+  "compiler_version": "p06-deterministic-first-fit-v1",
+  "fingerprint": "32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b",
+  "ingress_routes": [
+    {
+      "destination_axon": 0,
+      "destination_core": 0,
+      "input_index": 0,
+      "input_population": "pixels"
+    },
+    {
+      "destination_axon": 1,
+      "destination_core": 0,
+      "input_index": 1,
+      "input_population": "pixels"
+    }
+  ],
+  "logical_deployment": {
+    "cores": [
+      {
+        "arithmetic": {
+          "overflow": "saturate",
+          "state_bits": 24
+        },
+        "capacity": {
+          "compartments": 1024,
+          "input_axons": 4096,
+          "output_routes": 4096,
+          "synapse_bytes": 131072
+        },
+        "compartments": [
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          },
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          }
+        ],
+        "core_id": 0,
+        "input_axons": [
+          {
+            "axon_id": 0,
+            "target_offset": 0,
+            "template_id": 0
+          },
+          {
+            "axon_id": 1,
+            "target_offset": 1,
+            "template_id": 0
+          }
+        ],
+        "output_routes": [
+          {
+            "routes": [
+              {
+                "destination_axon": 0,
+                "destination_core": 1
+              }
+            ],
+            "source_compartment": 0
+          },
+          {
+            "routes": [
+              {
+                "destination_axon": 1,
+                "destination_core": 1
+              }
+            ],
+            "source_compartment": 1
+          }
+        ],
+        "synapse_cost_model": {
+          "bytes_per_axon_binding": 4,
+          "bytes_per_template_entry": 4,
+          "bytes_per_template_header": 4,
+          "name": "v2-simple-32bit-entry"
+        },
+        "synapse_templates": [
+          {
+            "encoding_profile": "effective-integer-v1-compatible",
+            "entries": [
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 0,
+                "weight": 6
+              }
+            ],
+            "template_id": 0
+          }
+        ]
+      },
+      {
+        "arithmetic": {
+          "overflow": "saturate",
+          "state_bits": 24
+        },
+        "capacity": {
+          "compartments": 1024,
+          "input_axons": 4096,
+          "output_routes": 4096,
+          "synapse_bytes": 131072
+        },
+        "compartments": [
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          },
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          }
+        ],
+        "core_id": 1,
+        "input_axons": [
+          {
+            "axon_id": 0,
+            "target_offset": 0,
+            "template_id": 1
+          },
+          {
+            "axon_id": 1,
+            "target_offset": 0,
+            "template_id": 0
+          }
+        ],
+        "output_routes": [
+          {
+            "routes": [
+              {
+                "destination_axon": 0,
+                "destination_core": 2
+              }
+            ],
+            "source_compartment": 0
+          },
+          {
+            "routes": [
+              {
+                "destination_axon": 1,
+                "destination_core": 2
+              }
+            ],
+            "source_compartment": 1
+          }
+        ],
+        "synapse_cost_model": {
+          "bytes_per_axon_binding": 4,
+          "bytes_per_template_entry": 4,
+          "bytes_per_template_header": 4,
+          "name": "v2-simple-32bit-entry"
+        },
+        "synapse_templates": [
+          {
+            "encoding_profile": "effective-integer-v1-compatible",
+            "entries": [
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 0,
+                "weight": 2
+              },
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 1,
+                "weight": 6
+              }
+            ],
+            "template_id": 0
+          },
+          {
+            "encoding_profile": "effective-integer-v1-compatible",
+            "entries": [
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 0,
+                "weight": 6
+              },
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 1,
+                "weight": 2
+              }
+            ],
+            "template_id": 1
+          }
+        ]
+      },
+      {
+        "arithmetic": {
+          "overflow": "saturate",
+          "state_bits": 24
+        },
+        "capacity": {
+          "compartments": 1024,
+          "input_axons": 4096,
+          "output_routes": 4096,
+          "synapse_bytes": 131072
+        },
+        "compartments": [
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          },
+          {
+            "bias": 0,
+            "current_decay": 4096,
+            "parent_compartment": null,
+            "refractory_ticks": 0,
+            "reset_voltage": 0,
+            "root_compartment": null,
+            "threshold": 5,
+            "voltage_decay": 4096
+          }
+        ],
+        "core_id": 2,
+        "input_axons": [
+          {
+            "axon_id": 0,
+            "target_offset": 0,
+            "template_id": 0
+          },
+          {
+            "axon_id": 1,
+            "target_offset": 1,
+            "template_id": 0
+          }
+        ],
+        "output_routes": [],
+        "synapse_cost_model": {
+          "bytes_per_axon_binding": 4,
+          "bytes_per_template_entry": 4,
+          "bytes_per_template_header": 4,
+          "name": "v2-simple-32bit-entry"
+        },
+        "synapse_templates": [
+          {
+            "encoding_profile": "effective-integer-v1-compatible",
+            "entries": [
+              {
+                "delay": 0,
+                "tag": null,
+                "target_compartment": 0,
+                "weight": 6
+              }
+            ],
+            "template_id": 0
+          }
+        ]
+      }
+    ],
+    "fingerprint": "66df090a1f93b10412fd707fe82c7e401c1565af43c1de9bba0fbb920776cf5f",
+    "version": "v2.0-p02"
+  },
+  "placement": [
+    {
+      "compartment_id": 0,
+      "core_id": 0,
+      "neuron_index": 0,
+      "population": "layer0"
+    },
+    {
+      "compartment_id": 1,
+      "core_id": 0,
+      "neuron_index": 1,
+      "population": "layer0"
+    },
+    {
+      "compartment_id": 0,
+      "core_id": 1,
+      "neuron_index": 0,
+      "population": "layer1"
+    },
+    {
+      "compartment_id": 1,
+      "core_id": 1,
+      "neuron_index": 1,
+      "population": "layer1"
+    },
+    {
+      "compartment_id": 0,
+      "core_id": 2,
+      "neuron_index": 0,
+      "population": "layer2"
+    },
+    {
+      "compartment_id": 1,
+      "core_id": 2,
+      "neuron_index": 1,
+      "population": "layer2"
+    }
+  ],
+  "report": {
+    "compiler_version": "p06-deterministic-first-fit-v1",
+    "connection_sharing": {
+      "expanded_connections": 8,
+      "expanded_per_stored_parameter": 1.3333333333333333,
+      "stored_shared_parameters": 6
+    },
+    "cores": [
+      {
+        "core_id": 0,
+        "headroom": {
+          "compartments": 1022,
+          "input_axons": 4094,
+          "output_routes": 4094,
+          "synapse_bytes": 131056
+        },
+        "local_routes": 0,
+        "remote_routes": 2,
+        "usage": {
+          "compartments": 2,
+          "expanded_connections": 2,
+          "input_axons": 2,
+          "output_routes": 2,
+          "shared_parameters": 1,
+          "synapse_bytes": 16
+        }
+      },
+      {
+        "core_id": 1,
+        "headroom": {
+          "compartments": 1022,
+          "input_axons": 4094,
+          "output_routes": 4094,
+          "synapse_bytes": 131040
+        },
+        "local_routes": 0,
+        "remote_routes": 2,
+        "usage": {
+          "compartments": 2,
+          "expanded_connections": 4,
+          "input_axons": 2,
+          "output_routes": 2,
+          "shared_parameters": 4,
+          "synapse_bytes": 32
+        }
+      },
+      {
+        "core_id": 2,
+        "headroom": {
+          "compartments": 1022,
+          "input_axons": 4094,
+          "output_routes": 4096,
+          "synapse_bytes": 131056
+        },
+        "local_routes": 0,
+        "remote_routes": 0,
+        "usage": {
+          "compartments": 2,
+          "expanded_connections": 2,
+          "input_axons": 2,
+          "output_routes": 0,
+          "shared_parameters": 1,
+          "synapse_bytes": 16
+        }
+      }
+    ],
+    "fingerprint": "32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b",
+    "ingress_route_count": 2,
+    "logical_core_count": 3,
+    "placement_count": 6,
+    "schema": "v2.1-p06",
+    "source_fingerprint": "8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383",
+    "static_route_estimate": {
+      "local": 0,
+      "remote": 4,
+      "total": 4
+    }
+  },
+  "schema": "v2.1-p06",
+  "source_fingerprint": "8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383"
+}
