@@ -72,7 +72,7 @@ class IntegerModel:
 POPULATION_NAMES = (
     "stage0_conv1",
     "stage1_conv2",
-    "stage2_dense8",
+    "stage2_dense_hidden",
     "stage3_output10",
 )
 
@@ -196,13 +196,13 @@ def build_network(model: IntegerModel) -> NetworkSpec:
                 _conv2_connections(np.asarray(model.conv2)),
             ),
             ProjectionSpec(
-                "conv2_to_dense8",
+                "conv2_to_dense_hidden",
                 POPULATION_NAMES[1],
                 POPULATION_NAMES[2],
                 _dense_connections(np.asarray(model.dense1)),
             ),
             ProjectionSpec(
-                "dense8_to_output10",
+                "dense_hidden_to_output10",
                 POPULATION_NAMES[2],
                 POPULATION_NAMES[3],
                 _dense_connections(np.asarray(model.dense2)),
