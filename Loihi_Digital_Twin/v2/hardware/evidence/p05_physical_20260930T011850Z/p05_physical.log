@@ -1,0 +1,451 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Sep 29 19:17:35 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/hardware/p05_physical_conformance.tcl
+# if {$argc != 5} {
+#     error "usage: p05_physical_conformance.tcl <bit> <ltx> <vectors.tcl> <result.txt> <hw_server_url>"
+# }
+# set bit_file [file normalize [lindex $argv 0]]
+# set ltx_file [file normalize [lindex $argv 1]]
+# set vector_file [file normalize [lindex $argv 2]]
+# set result_file [file normalize [lindex $argv 3]]
+# set hw_server_url [lindex $argv 4]
+# foreach path [list $bit_file $ltx_file $vector_file] {
+#     if {![file exists $path]} { error "P05 physical input missing: $path" }
+# }
+# source $vector_file
+## set P05_CONTEXTS 3
+## set P05_PHYSICAL_ENGINES 1
+## set P05_SCENARIOS {
+##     {name logical_id_ring context_metadata 0x00000004000400E300000004000400AA0000800400040087 contexts {{slot 0 logical_core_id 7 compartment_count 1 synapse_count 1 route_count 1 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{100 0x0000020000008000}} synapse_seeds {{0 0x0000000000001800}} route_desc_seeds {{0 0x02001000}} route_seeds {{0 0x0000642A}}} {slot 1 logical_core_id 42 compartment_count 1 synapse_count 1 route_count 1 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{200 0x0000020000008000}} synapse_seeds {{0 0x0000000000001800}} route_desc_seeds {{0 0x02001000}} route_seeds {{0 0x00009663}}} {slot 2 logical_core_id 99 compartment_count 1 synapse_count 1 route_count 1 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{300 0x0000020000008000}} synapse_seeds {{0 0x0000000000001800}} route_desc_seeds {{0 0x02001000}} route_seeds {{0 0x00003207}}}} initial_events0 {100} initial_events1 {} initial_events2 {} ticks {{timestep 0 contexts {{slot 0 logical_core_id 7 spike_count 1 packet_count 1 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x200000002000642A}} {slot 1 logical_core_id 42 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}} {slot 2 logical_core_id 99 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}}} next_events0 {} next_events1 {200} next_events2 {} local_packets 0 remote_packets 1} {timestep 1 contexts {{slot 0 logical_core_id 7 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}} {slot 1 logical_core_id 42 spike_count 1 packet_count 1 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x2000000040009663}} {slot 2 logical_core_id 99 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}}} next_events0 {} next_events1 {} next_events2 {300} local_packets 0 remote_packets 1} {timestep 2 contexts {{slot 0 logical_core_id 7 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}} {slot 1 logical_core_id 42 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}} {slot 2 logical_core_id 99 spike_count 1 packet_count 1 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x2000000060003207}}} next_events0 {100} next_events1 {} next_events2 {} local_packets 0 remote_packets 1} {timestep 3 contexts {{slot 0 logical_core_id 7 spike_count 1 packet_count 1 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x200000008000642A}} {slot 1 logical_core_id 42 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}} {slot 2 logical_core_id 99 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}}} next_events0 {} next_events1 {200} next_events2 {} local_packets 0 remote_packets 1}}}
+##     {name local_remote_fanin context_metadata 0x00000008000C00E300008008000800AA0000800800080087 contexts {{slot 0 logical_core_id 7 compartment_count 1 synapse_count 2 route_count 2 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{100 0x0000020000008000} {101 0x0000020000008001}} synapse_seeds {{0 0x0000000000001800} {1 0x0000000000001800}} route_desc_seeds {{0 0x02002000}} route_seeds {{0 0x00003287} {1 0x00009663}}} {slot 1 logical_core_id 42 compartment_count 1 synapse_count 2 route_count 2 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{200 0x0000020000008000} {201 0x0000020000008001}} synapse_seeds {{0 0x0000000000001800} {1 0x0000000000001800}} route_desc_seeds {{0 0x02002000}} route_seeds {{0 0x000064AA} {1 0x000096E3}}} {slot 2 logical_core_id 99 compartment_count 1 synapse_count 3 route_count 2 config_seeds {{0 0x00000000000000000000000016001000}} state_seeds {{0 0x0000000000000000}} axon_seeds {{300 0x0000020000008000} {301 0x0000020000008001} {302 0x0000020000008002}} synapse_seeds {{0 0x0000000000000C00} {1 0x0000000000001000} {2 0x0000000000001800}} route_desc_seeds {{0 0x02002000}} route_seeds {{0 0x00009763} {1 0x00003287}}}} initial_events0 {100} initial_events1 {200} initial_events2 {} ticks {{timestep 0 contexts {{slot 0 logical_core_id 7 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x2000000020003287 0x2000000020009663}} {slot 1 logical_core_id 42 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x20000000200064AA 0x20000000200096E3}} {slot 2 logical_core_id 99 spike_count 0 packet_count 0 states {0x0000000000000000} traces {0x0000000000000000000000000000000000000000000000000000000000000000} packets {}}} next_events0 {101} next_events1 {201} next_events2 {300 301} local_packets 2 remote_packets 2} {timestep 1 contexts {{slot 0 logical_core_id 7 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x2000000040003287 0x2000000040009663}} {slot 1 logical_core_id 42 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x20000000400064AA 0x20000000400096E3}} {slot 2 logical_core_id 99 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000070000000000000000} packets {0x2000000040003287 0x2000000040009763}}} next_events0 {101 101} next_events1 {201} next_events2 {300 301 302} local_packets 3 remote_packets 3} {timestep 2 contexts {{slot 0 logical_core_id 7 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x00000000000000010000000000000000000000000000000C0000000000000000} packets {0x2000000060003287 0x2000000060009663}} {slot 1 logical_core_id 42 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x0000000000000001000000000000000000000000000000060000000000000000} packets {0x20000000600064AA 0x20000000600096E3}} {slot 2 logical_core_id 99 spike_count 1 packet_count 2 states {0x0000000000000000} traces {0x00000000000000010000000000000000000000000000000D0000000000000000} packets {0x2000000060003287 0x2000000060009763}}} next_events0 {101 101} next_events1 {201} next_events2 {300 301 302} local_packets 3 remote_packets 3}}}
+## }
+# proc p05_parse_value {raw} {
+#     set text [string trim $raw]
+#     regsub -all {_} $text "" text
+#     if {[regexp -nocase {^0x([0-9a-f]+)$} $text -> digits]} {
+#         return [expr "0x$digits"]
+#     }
+#     if {[regexp -nocase {^[0-9a-f]+$} $text]} {
+#         return [expr "0x$text"]
+#     }
+#     error "P05 cannot parse VIO value '$raw'"
+# }
+# proc p05_probe {direction port} {
+#     global P05_VIO
+#     set wanted [string tolower $direction]
+#     foreach probe [get_hw_probes -of_objects $P05_VIO] {
+#         set type [string tolower [get_property TYPE $probe]]
+#         set probe_port [get_property PROBE_PORT $probe]
+#         if {$type eq $wanted && $probe_port == $port} { return $probe }
+#     }
+#     puts "P05 available VIO probes:"
+#     foreach probe [get_hw_probes -of_objects $P05_VIO] {
+#         puts "  name=[get_property NAME $probe] type=[get_property TYPE $probe] port=[get_property PROBE_PORT $probe] bits=[get_property PROBE_PORT_BIT_COUNT $probe]"
+#     }
+#     error "P05 VIO probe not found: direction=$direction port=$port"
+# }
+# proc p05_format_output_value {probe value} {
+#     set bits [get_property PROBE_PORT_BIT_COUNT $probe]
+#     set chars [expr {($bits + 3) / 4}]
+#     set text [string trim $value]
+#     regsub -all {_} $text "" text
+#     if {[regexp -nocase {^0x([0-9a-f]+)$} $text -> digits]} {
+#         set digits [string toupper $digits]
+#         set numeric [expr "0x$digits"]
+#     } elseif {[regexp {^[0-9]+$} $text]} {
+#         set numeric [expr {$text + 0}]
+#         set digits [format %X $numeric]
+#     } else {
+#         error "P05 cannot format VIO output value '$value'"
+#     }
+#     if {$numeric < 0 || $numeric >= (1 << $bits)} {
+#         error "P05 VIO output value out of range: value=$value bits=$bits port=[get_property PROBE_PORT $probe]"
+#     }
+#     if {[string length $digits] > $chars} {
+#         error "P05 VIO output value too wide: value=$value bits=$bits"
+#     }
+#     return "[string repeat 0 [expr {$chars - [string length $digits]}]]$digits"
+# }
+# proc p05_commit {settings} {
+#     global P05_VIO
+#     foreach {port value} $settings {
+#         set probe [p05_probe vio_output $port]
+#         set_property OUTPUT_VALUE [p05_format_output_value $probe $value] $probe
+#     }
+#     commit_hw_vio $P05_VIO
+# }
+# proc p05_refresh {} {
+#     global P05_VIO
+#     refresh_hw_vio $P05_VIO
+# }
+# proc p05_input {port} {
+#     p05_refresh
+#     return [p05_parse_value [get_property INPUT_VALUE [p05_probe vio_input $port]]]
+# }
+# proc p05_wait_input {port expected timeout_ms label} {
+#     set deadline [expr {[clock milliseconds] + $timeout_ms}]
+#     while {[clock milliseconds] <= $deadline} {
+#         set actual [p05_input $port]
+#         if {$actual == $expected} { return $actual }
+#         after 10
+#     }
+#     error "P05 timeout waiting for $label: expected=$expected actual=[p05_input $port]"
+# }
+# proc p05_expect {label actual expected} {
+#     if {$actual != $expected} {
+#         error "P05 mismatch $label: actual=0x[format %X $actual] expected=0x[format %X $expected]"
+#     }
+# }
+# proc p05_expect_list_unordered {label actual expected} {
+#     set actual_sorted [lsort -integer $actual]
+#     set expected_sorted [lsort -integer $expected]
+#     if {$actual_sorted ne $expected_sorted} {
+#         error "P05 mismatch $label: actual=$actual_sorted expected=$expected_sorted"
+#     }
+# }
+# proc p05_field {value offset width} {
+#     return [expr {($value >> $offset) & ((1 << $width) - 1)}]
+# }
+# proc p05_host_write {slot bank addr value} {
+#     p05_commit [list 6 0x0 7 0x1 8 $slot 9 $bank 10 $addr 11 $value]
+#     p05_commit [list 6 0x1]
+#     p05_wait_input 29 1 2000 "host write ack slot=$slot bank=$bank addr=$addr"
+#     set err [p05_input 31]
+#     p05_commit [list 6 0x0]
+#     if {$err != 0} { error "P05 host write failed: slot=$slot bank=$bank addr=$addr" }
+# }
+# proc p05_host_read {slot bank addr} {
+#     p05_commit [list 6 0x0 7 0x0 8 $slot 9 $bank 10 $addr 11 0x0]
+#     p05_commit [list 6 0x1]
+#     p05_wait_input 29 1 2000 "host read ack slot=$slot bank=$bank addr=$addr"
+#     set valid [p05_input 30]
+#     set err [p05_input 31]
+#     set value [p05_input 32]
+#     p05_commit [list 6 0x0]
+#     if {$err != 0 || $valid != 1} {
+#         error "P05 host read failed: slot=$slot bank=$bank addr=$addr valid=$valid error=$err"
+#     }
+#     return $value
+# }
+# proc p05_host_expect_error {slot bank addr} {
+#     p05_commit [list 6 0x0 7 0x0 8 $slot 9 $bank 10 $addr 11 0x0]
+#     p05_commit [list 6 0x1]
+#     p05_wait_input 29 1 2000 "expected host error slot=$slot bank=$bank addr=$addr"
+#     set err [p05_input 31]
+#     p05_commit [list 6 0x0]
+#     if {$err != 1} {
+#         error "P05 expected host rejection: slot=$slot bank=$bank addr=$addr"
+#     }
+# }
+# proc p05_load_seeds {slot bank seeds} {
+#     foreach seed $seeds {
+#         lassign $seed addr value
+#         p05_host_write $slot $bank $addr $value
+#     }
+# }
+# proc p05_clear_small_runtime_region {slot} {
+#     # The directed corpus uses one compartment and only a handful of events.
+#     # Clear the visible low runtime region so repeated scenarios cannot inherit
+#     # stale sparse route descriptors or event records.
+#     p05_host_write $slot 4 0 0x0
+#     for {set addr 0} {$addr < 8} {incr addr} {
+#         p05_host_write $slot 6 $addr 0x0
+#         p05_host_write $slot 9 $addr 0x0
+#     }
+# }
+# proc p05_load_context_image {context} {
+#     set slot [dict get $context slot]
+#     p05_clear_small_runtime_region $slot
+#     p05_load_seeds $slot 0 [dict get $context config_seeds]
+#     p05_load_seeds $slot 1 [dict get $context state_seeds]
+#     p05_load_seeds $slot 2 [dict get $context axon_seeds]
+#     p05_load_seeds $slot 3 [dict get $context synapse_seeds]
+#     p05_load_seeds $slot 4 [dict get $context route_desc_seeds]
+#     p05_load_seeds $slot 5 [dict get $context route_seeds]
+# }
+# proc p05_load_initial_events {slot events} {
+#     set addr 0
+#     foreach axon $events {
+#         p05_host_write $slot 6 $addr $axon
+#         incr addr
+#     }
+# }
+# proc p05_check_error_inputs {label} {
+#     # Controller sticky errors are inputs 13..18.
+#     for {set port 13} {$port <= 18} {incr port} {
+#         set value [p05_input $port]
+#         if {$value != 0} { error "P05 $label controller error port=$port value=$value" }
+#     }
+#     # Shared memory HLS/integration guards are inputs 34 and 35.
+#     p05_expect "$label hls address error" [p05_input 34] 0
+#     p05_expect "$label integration address error" [p05_input 35] 0
+#     # The currently exposed HLS status belongs to the final serviced context.
+#     p05_expect "$label final HLS status" [p05_input 27] 0
+# }
+# open_hw_manager
+# connect_hw_server -url $hw_server_url
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2025.2.0
+  ****** Build date   : Nov 13 2025-16:16:52
+    **** Build number : 2025.2.1763075812
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+# set targets [get_hw_targets]
+# if {[llength $targets] == 0} { error "P05 no hardware targets found" }
+# current_hw_target [lindex $targets 0]
+# open_hw_target
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA
+# set P05_DEVICE ""
+# foreach device [get_hw_devices] {
+#     set name [get_property NAME $device]
+#     if {[regexp -nocase {(xczu|xck26)} $name]} {
+#         set P05_DEVICE $device
+#         break
+#     }
+# }
+# if {$P05_DEVICE eq ""} {
+#     set devices [get_hw_devices]
+#     if {[llength $devices] == 1} {
+#         set P05_DEVICE [lindex $devices 0]
+#     } else {
+#         puts "P05 hardware devices: $devices"
+#         error "P05 could not identify the K26/UltraScale+ hardware device"
+#     }
+# }
+# current_hw_device $P05_DEVICE
+# refresh_hw_device -update_hw_probes false $P05_DEVICE
+INFO: [Labtools 27-1434] Device xck26 (JTAG device index = 0) is programmed with a design that has no supported soft debug core(s) in it.
+# set_property PROGRAM.FILE $bit_file $P05_DEVICE
+# if {[lsearch -exact [list_property $P05_DEVICE] PROBES.FILE] >= 0} {
+#     set_property PROBES.FILE $ltx_file $P05_DEVICE
+# }
+# if {[lsearch -exact [list_property $P05_DEVICE] FULL_PROBES.FILE] >= 0} {
+#     set_property FULL_PROBES.FILE $ltx_file $P05_DEVICE
+# }
+# program_hw_devices $P05_DEVICE
+INFO: [Labtools 27-3164] End of startup status: HIGH
+# refresh_hw_device $P05_DEVICE
+INFO: [Labtools 27-2302] Device xck26 (JTAG device index = 0) is programmed with a design that has 1 VIO core(s).
+INFO: [Labtools 27-1889] Uploading output probe values for VIO core [hw_vio_1]
+# set P05_VIO ""
+# set vios [get_hw_vios -of_objects $P05_DEVICE]
+# foreach vio $vios {
+#     set cell ""
+#     catch {set cell [get_property CELL_NAME $vio]}
+#     if {[string match "*vio_p05*" $cell]} {
+#         set P05_VIO $vio
+#         break
+#     }
+# }
+# if {$P05_VIO eq "" && [llength $vios] == 1} { set P05_VIO [lindex $vios 0] }
+# if {$P05_VIO eq ""} {
+#     puts "P05 discovered VIO cores: $vios"
+#     error "P05 VIO core was not found after programming"
+# }
+# puts "P05 hardware device: [get_property NAME $P05_DEVICE]"
+P05 hardware device: xck26_0
+# puts "P05 VIO core: $P05_VIO"
+P05 VIO core: hw_vio_1
+# foreach probe [get_hw_probes -of_objects $P05_VIO] {
+#     set type [string tolower [get_property TYPE $probe]]
+#     if {$type eq "vio_input"} { catch {set_property INPUT_VALUE_RADIX HEX $probe} }
+#     if {$type eq "vio_output"} { catch {set_property OUTPUT_VALUE_RADIX HEX $probe} }
+# }
+# reset_hw_vio_outputs $P05_VIO
+# refresh_hw_vio -update_output_values $P05_VIO
+# p05_commit [list 2 0x1]
+# after 20
+# p05_commit [list 2 0x0]
+# after 20
+# set heartbeat_before [p05_input 33]
+# after 20
+# set heartbeat_after [p05_input 33]
+# if {$heartbeat_before == $heartbeat_after} {
+#     error "P05 control fabric did not leave reset: heartbeat remained $heartbeat_after"
+# }
+# puts "P05 reset release verified: heartbeat $heartbeat_before -> $heartbeat_after"
+P05 reset release verified: heartbeat 2410690 -> 5146953
+# set bank_preflight [list \
+#     [list 0 1023 0x0123456789ABCDEFFEDCBA9876543210] \
+#     [list 1 1023 0x0123456789ABCDEF] \
+#     [list 2 4095 0x1122334455667788] \
+#     [list 3 32767 0x8877665544332211] \
+#     [list 4 1023 0x89ABCDEF] \
+#     [list 5 4095 0x13579BDF] \
+#     [list 6 4095 0x2468ACE0] \
+#     [list 7 1023 0x00112233445566778899AABBCCDDEEFFFFEEDDCCBBAA99887766554433221100] \
+#     [list 8 4095 0x0F1E2D3C4B5A6978] \
+#     [list 9 4095 0x55AA55AA]]
+# foreach slot {0 1 2} {
+#     foreach item $bank_preflight {
+#         lassign $item bank addr value
+#         p05_host_write $slot $bank $addr $value
+#         p05_expect "slot $slot bank $bank preflight" \
+#             [p05_host_read $slot $bank $addr] [p05_parse_value $value]
+#     }
+#     p05_host_expect_error $slot 0 1024
+# }
+# p05_host_expect_error 3 0 0
+# puts "P05 full-context memory preflight passed for all three retained contexts"
+P05 full-context memory preflight passed for all three retained contexts
+# set result [open $result_file w]
+# puts $result "schema=p05-physical-conformance-v1"
+# puts $result "device=[get_property NAME $P05_DEVICE]"
+# puts $result "logical_contexts=$P05_CONTEXTS"
+# puts $result "physical_engines=$P05_PHYSICAL_ENGINES"
+# puts $result "virtualization_ratio=3.0"
+# puts $result "full_logical_context_depths=1"
+# puts $result "double_buffered_events=1"
+# puts $result "logical_capacity_changed=0"
+# puts $result "scenarios=[llength $P05_SCENARIOS]"
+# foreach scenario $P05_SCENARIOS {
+#     set name [dict get $scenario name]
+#     set contexts [dict get $scenario contexts]
+#     set metadata [dict get $scenario context_metadata]
+#     set initial_events0 [dict get $scenario initial_events0]
+#     set initial_events1 [dict get $scenario initial_events1]
+#     set initial_events2 [dict get $scenario initial_events2]
+#     set ticks [dict get $scenario ticks]
+# 
+#     foreach reverse {0 1} {
+#         foreach context $contexts { p05_load_context_image $context }
+#         p05_load_initial_events 0 $initial_events0
+#         p05_load_initial_events 1 $initial_events1
+#         p05_load_initial_events 2 $initial_events2
+# 
+#         # out3=service_reverse, out4=epoch_timestep, out5=three packed metadata records.
+#         p05_commit [list 3 $reverse 4 0 5 $metadata 0 0x0 1 0x0]
+#         p05_commit [list 0 0x1]
+#         after 1
+#         p05_commit [list 0 0x0]
+#         p05_wait_input 3 1 2000 "epoch loaded scenario=$name reverse=$reverse"
+#         p05_expect "$name initial timestep" [p05_input 4] 0
+#         p05_expect "$name initial read bank" [p05_input 21] 0
+# 
+#         set current_counts [p05_input 5]
+#         p05_expect "$name initial events slot0" [p05_field $current_counts 0 13] [llength $initial_events0]
+#         p05_expect "$name initial events slot1" [p05_field $current_counts 13 13] [llength $initial_events1]
+#         p05_expect "$name initial events slot2" [p05_field $current_counts 26 13] [llength $initial_events2]
+# 
+#         set tick_index 0
+#         foreach tick $ticks {
+#             set timestep [dict get $tick timestep]
+#             set expected_contexts [dict get $tick contexts]
+#             set next_events0 [dict get $tick next_events0]
+#             set next_events1 [dict get $tick next_events1]
+#             set next_events2 [dict get $tick next_events2]
+#             set expected_local [dict get $tick local_packets]
+#             set expected_remote [dict get $tick remote_packets]
+# 
+#             set before_runs [p05_input 11]
+#             set target_runs [expr {$before_runs + 1}]
+#             p05_commit [list 1 0x1]
+#             after 1
+#             p05_commit [list 1 0x0]
+#             p05_wait_input 11 $target_runs 15000 "completed tick scenario=$name reverse=$reverse timestep=$timestep"
+# 
+#             p05_check_error_inputs "scenario=$name reverse=$reverse timestep=$timestep"
+#             p05_expect "$name t$timestep start blocked" [p05_input 2] 0
+#             p05_expect "$name t$timestep current timestep" [p05_input 4] [expr {$timestep + 1}]
+#             p05_expect "$name t$timestep barrier completed" [p05_input 7] 7
+#             p05_expect "$name t$timestep local packets" [p05_input 9] $expected_local
+#             p05_expect "$name t$timestep remote packets" [p05_input 10] $expected_remote
+# 
+#             set counts [p05_input 5]
+#             p05_expect "$name t$timestep current events slot0" [p05_field $counts 0 13] [llength $next_events0]
+#             p05_expect "$name t$timestep current events slot1" [p05_field $counts 13 13] [llength $next_events1]
+#             p05_expect "$name t$timestep current events slot2" [p05_field $counts 26 13] [llength $next_events2]
+# 
+#             set expected_bank [expr {($timestep + 1) & 1}]
+#             p05_expect "$name t$timestep event read bank" [p05_input 21] $expected_bank
+#             set event_host_bank [expr {$expected_bank ? 9 : 6}]
+# 
+#             set cycles [p05_input 12]
+#             if {$cycles <= 0} { error "P05 $name t$timestep reported zero physical cycles" }
+# 
+#             # The final serviced context is a useful physical confirmation that
+#             # service_reverse really selected opposite legal schedules.
+#             set final_slot [expr {$reverse ? 0 : 2}]
+#             p05_expect "$name t$timestep final context slot" [p05_input 19] $final_slot
+#             set final_expected [lindex $expected_contexts $final_slot]
+#             p05_expect "$name t$timestep final logical core" [p05_input 20] [dict get $final_expected logical_core_id]
+#             p05_expect "$name t$timestep final spike count" [p05_input 25] [dict get $final_expected spike_count]
+#             p05_expect "$name t$timestep final packet count" [p05_input 26] [dict get $final_expected packet_count]
+# 
+#             foreach expected $expected_contexts context $contexts {
+#                 set slot [dict get $expected slot]
+#                 set logical_id [dict get $expected logical_core_id]
+#                 p05_expect "$name t$timestep context slot identity" $slot [dict get $context slot]
+#                 p05_expect "$name t$timestep logical identity" $logical_id [dict get $context logical_core_id]
+# 
+#                 set compartment_count [dict get $context compartment_count]
+#                 set states [dict get $expected states]
+#                 set traces [dict get $expected traces]
+#                 for {set i 0} {$i < $compartment_count} {incr i} {
+#                     p05_expect "$name t$timestep logical$logical_id state($i)" \
+#                         [p05_host_read $slot 1 $i] [p05_parse_value [lindex $states $i]]
+#                     p05_expect "$name t$timestep logical$logical_id trace($i)" \
+#                         [p05_host_read $slot 7 $i] [p05_parse_value [lindex $traces $i]]
+#                 }
+# 
+#                 set packet_count [dict get $expected packet_count]
+#                 set actual_packets {}
+#                 for {set i 0} {$i < $packet_count} {incr i} {
+#                     lappend actual_packets [p05_host_read $slot 8 $i]
+#                 }
+#                 set expected_packets {}
+#                 foreach word [dict get $expected packets] {
+#                     lappend expected_packets [p05_parse_value $word]
+#                 }
+#                 p05_expect_list_unordered "$name t$timestep logical$logical_id packets" $actual_packets $expected_packets
+#             }
+# 
+#             foreach slot {0 1 2} expected_events [list $next_events0 $next_events1 $next_events2] {
+#                 set actual_events {}
+#                 for {set i 0} {$i < [llength $expected_events]} {incr i} {
+#                     lappend actual_events [p05_host_read $slot $event_host_bank $i]
+#                 }
+#                 p05_expect_list_unordered "$name t$timestep slot$slot next events" $actual_events $expected_events
+#             }
+# 
+#             puts $result "scenario=$name reverse=$reverse tick=$tick_index timestep=$timestep cycles=$cycles local=$expected_local remote=$expected_remote"
+#             puts "P05 physical tick PASS: scenario=$name reverse=$reverse timestep=$timestep cycles=$cycles local=$expected_local remote=$expected_remote"
+#             incr tick_index
+#         }
+#     }
+# }
+P05 physical tick PASS: scenario=logical_id_ring reverse=0 timestep=0 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=0 timestep=1 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=0 timestep=2 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=0 timestep=3 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=1 timestep=0 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=1 timestep=1 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=1 timestep=2 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=logical_id_ring reverse=1 timestep=3 cycles=56 local=0 remote=1
+P05 physical tick PASS: scenario=local_remote_fanin reverse=0 timestep=0 cycles=77 local=2 remote=2
+P05 physical tick PASS: scenario=local_remote_fanin reverse=0 timestep=1 cycles=100 local=3 remote=3
+P05 physical tick PASS: scenario=local_remote_fanin reverse=0 timestep=2 cycles=112 local=3 remote=3
+P05 physical tick PASS: scenario=local_remote_fanin reverse=1 timestep=0 cycles=77 local=2 remote=2
+P05 physical tick PASS: scenario=local_remote_fanin reverse=1 timestep=1 cycles=100 local=3 remote=3
+P05 physical tick PASS: scenario=local_remote_fanin reverse=1 timestep=2 cycles=112 local=3 remote=3
+# puts $result "result=PASS"
+# close $result
+# puts "P05 physical virtualization conformance PASS: result=$result_file"
+P05 physical virtualization conformance PASS: result=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/hardware/build/p05_physical/p05_physical_result.txt
+# close_hw_manager
+INFO: [Common 17-206] Exiting Vivado at Tue Sep 29 19:18:49 2026...
