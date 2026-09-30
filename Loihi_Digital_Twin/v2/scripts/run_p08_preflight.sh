@@ -11,7 +11,7 @@ export PYTHONPATH="$PROJECT_DIR/src:$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
 cd "$REPO_DIR"
 
 # P08's structural mapping probe uses NumPy arrays even before TensorFlow
-# training begins.  Keep that dependency out of the long-lived .venv-v2
+# training begins. Keep that dependency out of the long-lived .venv-v2
 # environment and require the dedicated P08 application environment instead.
 python - <<'PY'
 missing = []
@@ -61,18 +61,18 @@ from pathlib import Path
 
 payload = json.loads(Path(sys.argv[1]).read_text())
 assert payload["schema"] == "p08-candidate-mapping-audit-v1"
-assert payload["topology"]["total_spiking_neurons"] == 2472
-assert payload["topology"]["trainable_weights"] == 6125
+assert payload["topology"]["total_spiking_neurons"] == 2058
+assert payload["topology"]["trainable_weights"] == 7796
 assert payload["logical_core_count"] == 3
 assert payload["physical_engine_count"] == 1
 assert payload["logical_capacity_changed"] is False
-assert payload["connection_sharing"]["expanded_connections"] == 68690
-assert payload["connection_sharing"]["stored_shared_parameters"] == 7559
-assert payload["static_route_estimate"] == {"total": 2408, "local": 414, "remote": 1994}
+assert payload["connection_sharing"]["expanded_connections"] == 81800
+assert payload["connection_sharing"]["stored_shared_parameters"] == 10076
+assert payload["static_route_estimate"] == {"total": 1772, "local": 812, "remote": 960}
 print(
     "PASS: P08 candidate artifact pipeline "
-    "neurons=2472 weights=6125 logical_cores=3 physical_engines=1 "
-    "expanded=68690 stored=7559 local_routes=414 remote_routes=1994"
+    "neurons=2058 weights=7796 logical_cores=3 physical_engines=1 "
+    "expanded=81800 stored=10076 local_routes=812 remote_routes=960"
 )
 PY
 
