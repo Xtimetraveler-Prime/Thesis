@@ -62,8 +62,27 @@ from .hardware_p06 import (
     CompiledFpgaImage,
     export_compiled_fpga_image,
 )
+from .hardware_p08 import (
+    BackingLogicalContextImage,
+    P08_PAGED_FPGA_PROFILE_NAME,
+    P08_RESIDENT_CONTEXT_COUNT,
+    PagedCompiledFpgaImage,
+    PagedHardwareImage,
+    ResidentPageImage,
+    export_paged_compiled_fpga_image,
+    export_paged_hardware_image,
+)
 from .mapping import Deployment
 from .packet import PacketClass, RouteScope, SpikePacket
+from .paging import (
+    ContextPageDispatch,
+    ContextPagingReport,
+    ContextPagingSchedule,
+    DeterministicContextPager,
+    P08_PAGING_POLICY,
+    P08_ROUTE_DELIVERY_POLICY,
+    PagedVirtualizedLogicalChip,
+)
 from .reporting import deployment_report, trace_report
 from .resources import (
     MAX_COMPARTMENTS_PER_CORE,
@@ -160,6 +179,21 @@ __all__ = [
     "P06_FPGA_PROFILE_NAME",
     "CompiledFpgaImage",
     "export_compiled_fpga_image",
+    "P08_PAGED_FPGA_PROFILE_NAME",
+    "P08_RESIDENT_CONTEXT_COUNT",
+    "BackingLogicalContextImage",
+    "ResidentPageImage",
+    "PagedHardwareImage",
+    "PagedCompiledFpgaImage",
+    "export_paged_hardware_image",
+    "export_paged_compiled_fpga_image",
+    "P08_PAGING_POLICY",
+    "P08_ROUTE_DELIVERY_POLICY",
+    "ContextPageDispatch",
+    "ContextPagingSchedule",
+    "ContextPagingReport",
+    "DeterministicContextPager",
+    "PagedVirtualizedLogicalChip",
     "DeterministicCoreScheduler",
     "VirtualDispatch",
     "VirtualizationReport",
