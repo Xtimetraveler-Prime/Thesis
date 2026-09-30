@@ -25,6 +25,9 @@ htmlcov/
 # Generated simulator/comparison artifacts
 comparison_output/
 
+# Generated P08 training/conversion artifacts
+applications/mnist_v2_nxtf/artifacts/
+
 # Operating-system noise
 .DS_Store
 Thumbs.db
