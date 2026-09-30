@@ -10,20 +10,26 @@ The comparison and experiment boundary is defined in:
 Loihi_Digital_Twin/v2/docs/P08_MNIST_COMPARISON_CONTRACT.md
 ```
 
-## Candidate topology
+## Active candidate topology
+
+The initial 3-filter / 6-filter / Dense(8) candidate plateaued at 88.10%
+validation accuracy after 50 deterministic epochs and was rejected before
+conversion or official-test evaluation. The active revision spends the same
+order-of-magnitude parameter budget on substantially more feature channels:
 
 ```text
 28x28 MNIST
- -> Conv2D(3 filters, 5x5, stride 1, valid, ReLU, no bias)
- -> Conv2D(6 filters, 3x3, stride 2, valid, ReLU, no bias)
- -> Dense(8, ReLU, no bias)
+ -> Conv2D(12 filters, 5x5, stride 2, valid, ReLU, no bias)
+ -> Conv2D(12 filters, 3x3, stride 2, valid, ReLU, no bias)
+ -> Dense(20, ReLU, no bias)
  -> Dense(10, ReLU, no bias)
  -> spike-count / argmax decoder after conversion
 ```
 
-The four weight-bearing layers contain 2,472 spiking neurons and 6,125 trainable
-weights. The current structural probe maps the fully nonzero candidate to three
-logical cores and one physical P05 engine.
+The four weight-bearing layers contain 2,058 spiking neurons and 7,796 trainable
+weights. The deterministic worst-case structural probe maps the candidate to
+three logical cores and one physical P05 engine, with 81,800 expanded
+connections, 10,076 stored shared parameters, and 1,772 static source routes.
 
 ## Environment
 
@@ -56,21 +62,21 @@ bash scripts/run_p08_preflight.sh
 
 ```bash
 python applications/mnist_v2_nxtf/scripts/train_candidate.py \
-  --output applications/mnist_v2_nxtf/build/training
+  --output applications/mnist_v2_nxtf/build/training_revision2
 ```
 
 3. Convert/calibrate using only the frozen validation subset and compile the exact
-   integer SNN through P06:
+   integer SNN through P06 after the ANN gate is accepted:
 
 ```bash
 python applications/mnist_v2_nxtf/scripts/convert_candidate.py \
-  --training applications/mnist_v2_nxtf/build/training \
-  --output applications/mnist_v2_nxtf/build/conversion
+  --training applications/mnist_v2_nxtf/build/training_revision2 \
+  --output applications/mnist_v2_nxtf/build/conversion_revision2
 ```
 
 The conversion step reports validation SNN accuracy at 16, 32, 64, and 100
 algorithmic timesteps and writes the exact P06 network/deployment artifacts.
-The official test set is not touched by either of these steps.
+The official test set is not touched by training or conversion calibration.
 
 Official-test evaluation and physical K26 validation are enabled only after the
 candidate training/conversion gate is accepted.
