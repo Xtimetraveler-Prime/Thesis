@@ -1,0 +1,51 @@
+schema=p06-physical-mapped-deployment-v1
+device=xck26_0
+source_fingerprint=4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76
+deployment_fingerprint=5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9
+logical_contexts=3
+physical_engines=1
+logical_capacity_changed=0
+scenarios=3
+scenario=pixel0 reverse=0 tick=0 timestep=0 cycles=119 local=2 remote=0
+scenario=pixel0 reverse=0 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=pixel0 reverse=0 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=pixel0 reverse=0 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=pixel0 reverse=0 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=pixel0 reverse=0 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=pixel0 reverse=0 tick=6 timestep=6 cycles=97 local=0 remote=0
+scenario=pixel0 reverse=1 tick=0 timestep=0 cycles=119 local=2 remote=0
+scenario=pixel0 reverse=1 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=pixel0 reverse=1 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=pixel0 reverse=1 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=pixel0 reverse=1 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=pixel0 reverse=1 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=pixel0 reverse=1 tick=6 timestep=6 cycles=97 local=0 remote=0
+scenario=pixel0_pixel2 reverse=0 tick=0 timestep=0 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=0 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=pixel0_pixel2 reverse=0 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=0 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=pixel0_pixel2 reverse=0 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=0 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=pixel0_pixel2 reverse=0 tick=6 timestep=6 cycles=97 local=0 remote=0
+scenario=pixel0_pixel2 reverse=1 tick=0 timestep=0 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=1 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=pixel0_pixel2 reverse=1 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=1 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=pixel0_pixel2 reverse=1 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=pixel0_pixel2 reverse=1 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=pixel0_pixel2 reverse=1 tick=6 timestep=6 cycles=97 local=0 remote=0
+scenario=all_pixels reverse=0 tick=0 timestep=0 cycles=143 local=2 remote=0
+scenario=all_pixels reverse=0 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=all_pixels reverse=0 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=all_pixels reverse=0 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=all_pixels reverse=0 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=all_pixels reverse=0 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=all_pixels reverse=0 tick=6 timestep=6 cycles=97 local=0 remote=0
+scenario=all_pixels reverse=1 tick=0 timestep=0 cycles=143 local=2 remote=0
+scenario=all_pixels reverse=1 tick=1 timestep=1 cycles=127 local=0 remote=2
+scenario=all_pixels reverse=1 tick=2 timestep=2 cycles=127 local=2 remote=0
+scenario=all_pixels reverse=1 tick=3 timestep=3 cycles=127 local=0 remote=2
+scenario=all_pixels reverse=1 tick=4 timestep=4 cycles=127 local=2 remote=0
+scenario=all_pixels reverse=1 tick=5 timestep=5 cycles=115 local=0 remote=0
+scenario=all_pixels reverse=1 tick=6 timestep=6 cycles=97 local=0 remote=0
+result=PASS

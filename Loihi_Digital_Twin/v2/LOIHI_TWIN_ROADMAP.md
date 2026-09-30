@@ -39,37 +39,41 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 
 ## Current phase
 
-> **P07 in progress — P06 deterministic mapper/compiler is complete and physically accepted.**
+> **P08 in progress — P07 deeper mapped multicore SNN validation is complete and physically accepted.**
 >
-> P06 completed on 2026-09-29 after the compiler-driven K26 conformance flow
-> mapped a high-level network specification into one versioned deployment and
-> used that same deployment artifact for both Python execution and FPGA context
-> loading. The accepted source fingerprint is
-> `8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383`
+> P07 completed on 2026-09-29 after a compiler-generated six-layer feed-forward
+> SNN executed through the complete specification → P06 compiler → Python → FPGA
+> path and matched at the normalized architectural boundary on the physical K26.
+> The accepted source fingerprint is
+> `4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76`
 > and the accepted compiled-deployment fingerprint is
-> `32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b`.
+> `5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9`.
 >
-> The physical gate reused the accepted P05 one-engine/three-context K26 shell,
-> so P06 changed configuration generation rather than the compute datapath. It
-> verified reset release, generated-context loading/readback, three compiled
-> input scenarios (`pixel0`, `pixel1`, and `both_pixels`), forward and reverse
-> legal logical-context service orders, mapped state/trace/packet/event behavior,
-> and Python/FPGA agreement. All 24 directed physical ticks passed. The result
-> record reported `schema=p06-physical-mapped-deployment-v1`,
+> The accepted workload contains six neuron layers and 12 neurons mapped across
+> three logical contexts serviced by one physical engine. It exercises both
+> local and remote inter-layer traffic, records 28 expanded synaptic connections
+> represented by six stored shared parameters (`4.666666666666667` expanded per
+> stored parameter), and includes an expected mapper rejection when the same
+> workload is artificially limited to two logical cores (`required=3`, `limit=2`).
+>
+> Three physical input scenarios were executed for seven algorithmic timesteps
+> under both forward and reverse legal logical-context service orders. All 42
+> directed physical ticks passed with nonzero PL cycle counts and Python/FPGA
+> agreement. The result record reported `schema=p07-deep-mapped-snn-v1`,
 > `logical_contexts=3`, `physical_engines=1`, `logical_capacity_changed=0`, and
 > `result=PASS`.
 >
 > The accepted evidence is archived under:
 >
 > ```text
-> hardware/evidence/p06_physical_20260930T014904Z/
+> hardware/evidence/p07_physical_20260930T022814Z/
 > ```
 >
-> The P06 compiler contract is documented in `docs/P06_MAPPING_COMPILER.md` and
-> the implementation decisions/challenges are recorded in
-> `docs/P06_MAPPING_COMPILER_CHALLENGES.md`. P07 is now active to validate a
-> deeper mapped multicore SNN through the complete specification → compiler →
-> Python → FPGA flow before the final MNIST phase.
+> The P07 workload/validation contract is documented in
+> `docs/P07_DEEP_SNN_VALIDATION.md`; the design decisions and closure lessons are
+> recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`. P08 is now active to build and
+> quantitatively characterize the final deeper MNIST workload and make an
+> explicitly bounded comparison with the NxTF-oriented reference workload.
 
 ---
 
@@ -84,8 +88,8 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 | P04 | Add multicore packet routing and timestep/barrier semantics | Complete | 2026-09-28 | 2026-09-29 |
 | P05 | Add logical-core virtualization | Complete | 2026-09-29 | 2026-09-29 |
 | P06 | Build deterministic mapper/compiler and deployment format | Complete | 2026-09-29 | 2026-09-29 |
-| P07 | Validate deeper mapped multicore SNNs | In progress | 2026-09-29 | — |
-| P08 | Build and compare NxTF-oriented deep MNIST workload | Planned | — | — |
+| P07 | Validate deeper mapped multicore SNNs | Complete | 2026-09-29 | 2026-09-29 |
+| P08 | Build and compare NxTF-oriented deep MNIST workload | In progress | 2026-09-29 | — |
 
 ---
 
@@ -776,29 +780,108 @@ preserving its fingerprint through the physical result.
 
 # P07 — Deeper mapped multicore SNN validation
 
-**Status:** In progress  
-**Started:** 2026-09-29
+**Status:** Complete  
+**Started:** 2026-09-29  
+**Completed:** 2026-09-29
 
 ## Goal
 
 Demonstrate that FPGA-v2 supports networks that genuinely exercise multicore
 mapping, routing, sharing, and capacity constraints before final MNIST work.
 
+The workload and validation contract are documented in
+`docs/P07_DEEP_SNN_VALIDATION.md`; design decisions and closure lessons are
+recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`.
+
+## Achieved deliverables
+
+- [x] Built a deterministic six-layer feed-forward SNN with 12 neurons and four
+      external input channels.
+- [x] Defined the workload once in `src/loihi_twin_v2/workload_p07.py` and reused
+      that source for tests, JSON generation, compiler analysis, physical-vector
+      generation, and board execution.
+- [x] Mapped the network entirely through the P06 compiler with four compartments
+      per logical core, producing three logical cores with two layers per core.
+- [x] Exercised both local and remote inter-layer routing in one mapped graph.
+- [x] Exercised supported normalized fanout/template sharing on every feed-forward
+      stage.
+- [x] Recorded 28 expanded synaptic connections represented by six stored shared
+      parameters (`4.666666666666667` expanded per stored parameter).
+- [x] Added deterministic mapping/occupancy analysis and forward/reverse logical
+      service-order invariance regressions.
+- [x] Added an explicit mapping-capacity probe that rejects the same workload
+      when mapper policy is limited to two logical cores.
+- [x] Recorded the expected capacity diagnostic as
+      `logical_core_capacity`, `required=3`, `limit=2`.
+- [x] Reused the accepted P05 physical shell and P06 Hardware Manager checker so
+      the P07 validation delta remained the deeper compiled workload rather than
+      another FPGA-control implementation.
+- [x] Compared Python and physical FPGA state, normalized trace words, packets,
+      routed next-timestep events, local/remote traffic, barrier state, identity,
+      status, and error observations.
+- [x] Validated physical K26 execution under both forward and reverse legal
+      logical-context service orders.
+- [x] Preserved the accepted routed physical occupancy from the unchanged P05
+      shell: 47/64 URAM288, 2/144 BRAM, 5,062 LUTs, 7,686 registers, and 2 DSPs.
+
+## Accepted physical evidence
+
+The accepted physical identity is:
+
+```text
+schema=p07-deep-mapped-snn-v1
+source_fingerprint=4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76
+deployment_fingerprint=5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9
+layers=6
+neurons=12
+input_channels=4
+logical_contexts=3
+physical_engines=1
+logical_capacity_changed=0
+expanded_connections=28
+stored_shared_parameters=6
+capacity_probe_result=EXPECTED_REJECTION
+capacity_probe_code=logical_core_capacity
+capacity_probe_required=3
+capacity_probe_limit=2
+scenarios=3
+physical_ticks=42
+result=PASS
+```
+
+The three directed scenarios (`pixel0`, `pixel0_pixel2`, and `all_pixels`) each
+executed seven algorithmic timesteps under both forward and reverse context
+service order. All 42 directed physical ticks passed. The observed workload
+traffic alternated local and remote transfers across the six-layer chain and
+then reached quiescence as expected.
+
+The reset-release heartbeat changed from `5,903,621` to `8,486,799` before the
+physical workload proceeded. Tick costs ranged from 97 to 143 synchronous PL
+cycles for the accepted corpus; these are FPGA implementation observations, not
+native-Loihi timing claims.
+
+The accepted evidence is archived under:
+
+```text
+hardware/evidence/p07_physical_20260930T022814Z/
+```
+
 ## Required deliverables
 
-- [ ] Select/build a deeper feed-forward SNN with multiple mapped layers.
-- [ ] Map through the P06 compiler rather than manual placement.
-- [ ] Exercise multiple logical cores and inter-core traffic.
-- [ ] Exercise supported connection sharing/resource optimization.
-- [ ] Compare Python and FPGA normalized traces on representative cases.
-- [ ] Validate physical K26 execution.
-- [ ] Record logical occupancy, physical FPGA utilization, and capacity failures.
+- [x] Select/build a deeper feed-forward SNN with multiple mapped layers.
+- [x] Map through the P06 compiler rather than manual placement.
+- [x] Exercise multiple logical cores and inter-core traffic.
+- [x] Exercise supported connection sharing/resource optimization.
+- [x] Compare Python and FPGA normalized traces on representative cases.
+- [x] Validate physical K26 execution.
+- [x] Record logical occupancy, physical FPGA utilization, and capacity failures.
 
 ## Completion gate
 
-P07 is complete when a nontrivial deeper SNN executes reproducibly through the
-specification → mapper → Python → FPGA flow and agrees at the normalized
-architectural boundary.
+**Complete.** A nontrivial six-layer SNN executes reproducibly through the
+specification → mapper → Python → FPGA flow, exercises both local and remote
+multicore traffic plus connection sharing and capacity rejection, and agrees at
+the normalized architectural boundary across all 42 accepted physical ticks.
 
 **Next phase:** P08 — NxTF-oriented deep MNIST comparison.
 
@@ -806,7 +889,8 @@ architectural boundary.
 
 # P08 — NxTF-oriented deep MNIST comparison
 
-**Status:** Planned
+**Status:** In progress  
+**Started:** 2026-09-29
 
 ## Goal
 
@@ -964,9 +1048,11 @@ Loihi_Digital_Twin/
     │   ├── P05_VIRTUALIZATION_ARCHITECTURE.md
     │   ├── P05_INTEGRATION_CHALLENGES.md
     │   ├── P06_MAPPING_COMPILER.md
-    │   └── P06_MAPPING_COMPILER_CHALLENGES.md
+    │   ├── P06_MAPPING_COMPILER_CHALLENGES.md
+    │   ├── P07_DEEP_SNN_VALIDATION.md
+    │   └── P07_DEEP_SNN_CHALLENGES.md
     ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/               accepted P03-P06-compatible HLS compute core
+    ├── hls/core_v2/               accepted P03-P07-compatible HLS compute core
     ├── rtl/                       v2 RTL integration/observability logic
     ├── vivado/                    source-controlled K26 build flows
     ├── hardware/                  physical programming/conformance flows
@@ -1002,6 +1088,7 @@ Before moving to the next phase:
 4. change that phase to **Complete** with its completion date; and
 5. change the next phase from **Planned** to **In progress** with its start date.
 
-P06 satisfied this rule on 2026-09-29 when the compiler-driven K26 physical
-evidence reported `result=PASS` and preserved the compiled deployment
-fingerprint through the physical result; P07 is therefore the active phase.
+P07 satisfied this rule on 2026-09-29 when the compiler-generated six-layer K26
+physical evidence reported `result=PASS`, preserved the compiled-deployment
+identity, and passed all 42 directed physical ticks; P08 is therefore the active
+phase.
