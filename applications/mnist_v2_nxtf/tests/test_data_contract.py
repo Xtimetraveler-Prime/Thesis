@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from mnist_v2_nxtf import PRIMARY_TIMESTEPS, TOPOLOGY_STATUS
+from mnist_v2_nxtf import PRIMARY_TIMESTEPS
 from mnist_v2_nxtf.data import encode_binary_spikes, stratified_train_validation_indices
+from mnist_v2_nxtf.reconstruction import RECONSTRUCTION_STATUS
 
 
-def test_p08_reconstruction_is_accepted_while_p08_2_is_pending():
-    assert TOPOLOGY_STATUS == "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
+def test_p08_reconstruction_remains_accepted_across_later_subphases():
+    assert RECONSTRUCTION_STATUS == "ACCEPTED_P08_1_SOURCE_BOUNDED"
     assert PRIMARY_TIMESTEPS == 100
 
 

@@ -17,18 +17,14 @@ Loihi_Digital_Twin/v2/docs/P08_MNIST_COMPARISON_CONTRACT.md
 Loihi_Digital_Twin/v2/docs/P08_NXTF_SOURCE_AUDIT.md
 Loihi_Digital_Twin/v2/docs/P08_NXTF_RECONSTRUCTION.md
 Loihi_Digital_Twin/v2/docs/P08_CONTEXT_PAGING.md
+Loihi_Digital_Twin/v2/docs/P08_2_ACCEPTANCE.md
+Loihi_Digital_Twin/v2/docs/P08_3_TRAINING_CONVERSION_FREEZE.md
 Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md
 ```
 
 ## Current status
 
-P08.1 was accepted on 2026-09-30 after the independent local preflight reported
-21 passing tests and reproduced the reconstruction/resource counts exactly.
-
-The exact layer dimensions of the paper's frame-based MNIST benchmark were not
-recovered from the audited primary/public artifacts. The accepted network is
-therefore an explicit `PROJECT_RECONSTRUCTION`, not a claim that the unpublished
-NxTF graph was recovered:
+P08.1 was accepted on 2026-09-30 with the explicit `PROJECT_RECONSTRUCTION`:
 
 ```text
 28x28x1
@@ -38,7 +34,7 @@ NxTF graph was recovered:
  -> Conv2D(10, 4x4, stride 1, valid) ->  1x1x10
 ```
 
-Its frozen structural totals are:
+Frozen structural totals:
 
 ```text
 neurons:                 4,218
@@ -49,15 +45,29 @@ expanded connections: 338,880
 primary timesteps:          100
 ```
 
-The active status marker is:
+P08.2 was accepted after the deterministic paging software contract and Vivado
+RTL paged-dispatch simulation passed locally. The execution boundary is:
 
 ```text
-P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING
+P06 logical/backing contexts: 5
+resident K26 context slots:   3
+physical HLS engines:         1
 ```
 
-P08.2 is now implementing/validating deterministic logical-context paging. ANN
-training and the official 10,000-image MNIST test set remain locked until P08.2
-is accepted.
+The NxTF paper reports 14 Loihi neurocores for its benchmark. P08 keeps that
+published result separate from the project's five-core P06 placement. The
+5-versus-14 difference is a documented mapping/model discrepancy caused by the
+reconstructed topology and different partitioning, sharing, and storage models;
+it is not forced to match artificially.
+
+P08.3.1 now freezes the ANN training and ANN-to-SNN conversion policies before a
+new training run. The active status marker is:
+
+```text
+P08_2_PAGING_ACCEPTED_P08_3_POLICY_FROZEN
+```
+
+The official 10,000-image MNIST test split remains locked.
 
 ## Source-backed reference boundary
 
@@ -79,9 +89,8 @@ The surviving public Intel NxTF MNIST tutorial is a different, larger workload:
 ```
 
 That tutorial contains 33,802 trainable parameters and uses 512 timesteps in its
-saved example. It is architectural/conversion evidence, not a substitute for the
-paper benchmark. The evidence classifications and reconstruction rule are in
-`P08_NXTF_RECONSTRUCTION.md`.
+saved example. It is architectural/training/conversion evidence, not a substitute
+for the paper benchmark.
 
 ## P06 structural contract
 
@@ -110,37 +119,75 @@ shared weights; the representations and partitioners differ.
 
 ## P08.2 paging boundary
 
-The accepted P05 K26 shell has:
-
-```text
-3 resident full logical-context slots
-1 physical HLS compute engine
-```
-
-The accepted P08 graph requires five P06 logical cores, so it is not reduced to
-fit those three slots. P08.2 instead uses:
-
-```text
-5 logical/backing contexts
-3 resident K26 context slots
-1 physical HLS engine
-```
+The accepted P05 K26 shell has three resident full logical-context slots and one
+physical HLS compute engine. P08.2 keeps all five logical cores in backing state
+and pages any required core into one of those three resident slots.
 
 `loihi_twin_v2.hardware_p08` exports all five logical cores into backing images
-while allowing any three to be materialized into P05 slots. Routes retain
-logical destination IDs even when the destination is not resident.
+while preserving logical route identities. `loihi_twin_v2.paging` defines the
+deterministic paging policy and paged golden-model wrapper.
 
-`loihi_twin_v2.paging` defines a deterministic round-robin page schedule and a
-paged golden-model wrapper. Directed tests require normalized execution to remain
-identical across legal service/page/drain orders and explicitly verify that
-architectural state survives eviction and reload.
+`rtl/p08_paged_dispatch_controller.v` adds the accepted host-orchestrated one-core
+dispatch primitive. The host owns page save/load, logical-ID packet delivery into
+backing next-event images, and the global barrier.
 
-`rtl/p08_paged_dispatch_controller.v` adds a host-orchestrated one-core dispatch
-primitive. The host owns page save/load, logical-ID packet delivery into backing
-next-event images, and the global barrier. The existing three-slot P05 memory
-fabric is reused rather than enlarged.
+See `P08_CONTEXT_PAGING.md` and `P08_2_ACCEPTANCE.md` for the full protocol and
+acceptance boundary.
 
-See `Loihi_Digital_Twin/v2/docs/P08_CONTEXT_PAGING.md` for the full protocol.
+## P08.3.1 frozen training policy
+
+The ANN builder in `mnist_v2_nxtf/ann.py` uses the accepted topology with learned
+biases and source-style training choices:
+
+```text
+hidden activation:           ReLU
+output activation:           softmax
+Dropout:                     0.1 after each hidden convolution
+optimizer:                   Adam
+learning rate:               1e-3
+loss:                        categorical cross-entropy
+batch size:                  32
+maximum epochs:              30
+early-stop patience:         5
+checkpoint selection:        max validation accuracy
+selection tie breakers:      min validation loss, then earliest epoch
+input scaling:               float32 / 255
+training / validation:       55,000 / 5,000
+```
+
+The 30-epoch early-stopping rule and deterministic selection policy are project
+reconstruction choices because the paper does not publish its exact benchmark
+training configuration. The public NxTF tutorial supports the Keras/Adam/loss/
+batch/dropout style but its two-epoch demonstration is not treated as an exact
+paper rule.
+
+## P08.3.1 frozen conversion boundary
+
+The conversion policy in `mnist_v2_nxtf/policy.py` freezes:
+
+```text
+method:                       SNN-Toolbox-style rate conversion
+calibration:                  training remainder only, every 10th sample
+primary horizon:              100 timesteps
+characterization:             16, 32, 64, 100 timesteps
+weight precision:             signed 8-bit project range -127..127
+bias precision:               signed 12-bit project range -2047..2047
+weight exponent reference:    0
+source bias exponent ref:     6
+threshold mantissa:           512
+threshold normalization:      enabled
+reset:                        FPGA-v2 hard reset to zero
+threshold/input ratio:        8
+current decay:                4096
+voltage decay:                0
+refractory ticks:             0
+input encoding:               deterministic evenly-distributed rate
+output decoder:               argmax accumulated output spikes
+```
+
+The historical SNN Toolbox Loihi example uses soft reset. FPGA-v2 retains its
+already validated hard-reset neuron arithmetic and records that difference as a
+project adaptation rather than claiming soft-reset equivalence.
 
 ## Environment
 
@@ -155,35 +202,34 @@ python -m pip install -e Loihi_Digital_Twin/v2
 python -m pip install -e 'applications/mnist_v2_nxtf[train,test]'
 ```
 
-## P08.2 verification
+## Current verification gate
 
-Software/context-paging gate:
+P08.3.1 policy freeze:
 
 ```bash
 cd ~/Git/Thesis/Loihi_Digital_Twin/v2
-bash scripts/run_p08_2_preflight.sh
+bash scripts/run_p08_3_policy_preflight.sh
 ```
 
-RTL dispatch gate, after sourcing Vivado 2025.2:
+This gate builds and compiles the Keras model but does **not** load MNIST and does
+not train or inspect the official test split.
+
+Accepted P08.2 regression gates remain available:
 
 ```bash
-cd ~/Git/Thesis/Loihi_Digital_Twin/v2
+bash scripts/run_p08_2_preflight.sh
+# after sourcing Vivado 2025.2:
 bash rtl/run_p08_paged_dispatch_controller_sim.sh
 ```
 
-P08.2 is not accepted until both gates pass independently in the repository
-environment.
-
 ## Next development sequence
 
-1. Verify the P08.2 software/context-paging preflight.
-2. Verify the P08 paged-dispatch RTL simulation.
-3. Record P08.2 acceptance while keeping the five-core/three-resident/one-engine
-   quantities separate.
-4. Begin P08.3 by freezing ANN training and ANN-to-SNN conversion policies using
-   source evidence plus explicit reconstruction decisions.
-5. Train/select using only the training/validation split.
-6. Keep the official test set locked until training/conversion/decoder policies
-   are frozen.
-7. Later perform full software evaluation and representative physical K26
-   differential validation before the final NxTF comparison.
+1. Independently verify and accept P08.3.1 policy freeze.
+2. P08.3.2 trains the ANN using only the fixed 55k/5k training-validation split.
+3. Select exactly one ANN checkpoint from validation metrics only.
+4. P08.3.3 applies the frozen rate-conversion/quantization/reset/decoder policy
+   and demonstrates validation behavior at the primary 100-timestep horizon.
+5. Freeze the converted deployment and all conversion scales/thresholds.
+6. Only then unlock the official test split for P08.4 full ANN/SNN evaluation.
+7. Later run representative physical K26 differential validation and build the
+   final bounded NxTF comparison.

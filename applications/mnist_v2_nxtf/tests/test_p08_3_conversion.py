@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from mnist_v2_nxtf.accepted_ann import (
+    ACCEPTED_ANN_BEST_EPOCH,
+    ACCEPTED_ANN_BEST_VAL_ACCURACY,
+    ACCEPTED_ANN_CHECKPOINT_SHA256,
+    ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
+)
+from mnist_v2_nxtf.conversion_loihi import (
+    DTHIR_PARAMETER_SCALE,
+    INTEGER_THRESHOLD_SCALE,
+    NORMALIZATION_PERCENTILE,
+    build_converted_network,
+    conv_geometries,
+    normalize_layer_parameters,
+    quantize_normalized_parameters,
+)
+from mnist_v2_nxtf.policy import CONVERSION_POLICY
+from mnist_v2_nxtf.reconstruction import PROPOSED_METRICS
+
+
+def test_p08_3_3_accepted_ann_identity_is_frozen():
+    assert ACCEPTED_ANN_BEST_EPOCH == 13
+    assert ACCEPTED_ANN_BEST_VAL_ACCURACY == 0.992600
+    assert ACCEPTED_ANN_CHECKPOINT_SHA256 == (
+        "61f60eaa789dcf04131f658edb86db880999a5f0ad2c8f1bd06426d464dba7d2"
+    )
+    assert ACCEPTED_ANN_WEIGHTS_FINGERPRINT == (
+        "e5c07133b8d534d29596cbde9d637db695942dfb224a82c2533f59a17f1c74ce"
+    )
+
+
+def test_p08_3_4_normalization_formula_matches_rueckauer_rule():
+    kernel = np.asarray([[-2.0, 4.0]], dtype=np.float32)
+    bias = np.asarray([3.0], dtype=np.float32)
+    normalized_kernel, normalized_bias = normalize_layer_parameters(
+        kernel,
+        bias,
+        lambda_previous=2.0,
+        lambda_current=8.0,
+    )
+    assert np.allclose(normalized_kernel, [[-0.5, 1.0]])
+    assert np.allclose(normalized_bias, [0.375])
+    assert NORMALIZATION_PERCENTILE == 100.0
+
+
+def test_p08_3_4_integer_quantization_applies_frozen_dthir_before_loihi_step2():
+    kernel = np.asarray(
+        [-0.5390625, -0.4259, -0.2010, -0.125, 0.0, 0.125, 0.2010, 0.496],
+        dtype=np.float64,
+    )
+    bias = np.asarray([-1.0, 0.0, 1.0], dtype=np.float64)
+    q_kernel, q_bias = quantize_normalized_parameters(kernel, bias)
+
+    assert INTEGER_THRESHOLD_SCALE == 512
+    assert CONVERSION_POLICY.desired_threshold_to_input_ratio == 8
+    assert DTHIR_PARAMETER_SCALE == 64.0
+    assert CONVERSION_POLICY.weight_sign_mode == "mixed"
+    assert CONVERSION_POLICY.weight_quantization_step == 2
+    assert CONVERSION_POLICY.weight_rounding == "toward_zero"
+    assert (CONVERSION_POLICY.signed_weight_min, CONVERSION_POLICY.signed_weight_max) == (-256, 254)
+
+    # -0.5390625 is the normalized value that would become -276 if multiplied
+    # directly by 512. Applying the already-frozen DThIR=8 first maps it to -34.
+    assert q_kernel.tolist() == [-34, -26, -12, -8, 0, 8, 12, 30]
+    assert all(value % 2 == 0 for value in q_kernel.tolist())
+    assert q_bias.tolist() == [-64, 0, 64]
+
+    # With scale 64, the native mixed-sign mantissa boundaries occur at -4 and
+    # just below +4 normalized units. No saturation or clipping is permitted.
+    q_negative_boundary, _ = quantize_normalized_parameters(
+        np.asarray([-4.0]), np.asarray([0.0])
+    )
+    assert q_negative_boundary.tolist() == [-256]
+    with pytest.raises(OverflowError):
+        quantize_normalized_parameters(np.asarray([4.0]), np.asarray([0.0]))
+    with pytest.raises(OverflowError):
+        quantize_normalized_parameters(np.asarray([0.0]), np.asarray([32.0]))
+
+
+def _zero_integer_arrays() -> dict[str, np.ndarray]:
+    arrays: dict[str, np.ndarray] = {}
+    for geometry in conv_geometries():
+        arrays[f"{geometry.name}_kernel_integer"] = np.zeros(
+            (
+                geometry.kernel,
+                geometry.kernel,
+                geometry.input_channels,
+                geometry.output_channels,
+            ),
+            dtype=np.int16,
+        )
+        arrays[f"{geometry.name}_bias_integer"] = np.zeros(
+            (geometry.output_channels,), dtype=np.int16
+        )
+    return arrays
+
+
+def test_p08_3_4_converted_network_preserves_frozen_graph_shape_and_neuron_policy():
+    network = build_converted_network(_zero_integer_arrays())
+    assert sum(population.size for population in network.populations) == PROPOSED_METRICS.neuron_count
+    assert sum(
+        len(projection.connections)
+        for projection in (*network.projections, *network.input_projections)
+    ) == PROPOSED_METRICS.expanded_connections
+    assert len(network.populations) == sum(geometry.output_channels for geometry in conv_geometries())
+    for population in network.populations:
+        assert population.compartment.threshold == CONVERSION_POLICY.threshold_mantissa
+        assert population.compartment.current_decay == CONVERSION_POLICY.current_decay
+        assert population.compartment.voltage_decay == CONVERSION_POLICY.voltage_decay
+        assert population.compartment.reset_voltage == 0
+        assert population.compartment.bias == 0
