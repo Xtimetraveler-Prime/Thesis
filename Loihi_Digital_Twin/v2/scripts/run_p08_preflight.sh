@@ -45,14 +45,15 @@ python - <<'PY'
 from mnist_v2_nxtf import PRIMARY_TIMESTEPS, TOPOLOGY_STATUS
 from mnist_v2_nxtf.reconstruction import PROPOSED_METRICS, RECONSTRUCTION_STATUS
 
-assert TOPOLOGY_STATUS == "UNFROZEN_NXTF_EMULATION_REALIGN"
+assert TOPOLOGY_STATUS == "P08_1_RECONSTRUCTION_ACCEPTED_P08_2_PENDING"
+assert RECONSTRUCTION_STATUS == "ACCEPTED_P08_1_SOURCE_BOUNDED"
 assert PRIMARY_TIMESTEPS == 100
 print(
-    "PASS: P08 NxTF-emulation scaffold "
+    "PASS: P08 accepted reconstruction boundary "
     f"topology_status={TOPOLOGY_STATUS} primary_timesteps={PRIMARY_TIMESTEPS}"
 )
 print(
-    "PASS: P08.1 source-bounded reconstruction proposal "
+    "PASS: P08.1 source-bounded reconstruction accepted "
     f"status={RECONSTRUCTION_STATUS} filters={PROPOSED_METRICS.filters} "
     f"neurons={PROPOSED_METRICS.neuron_count} "
     f"params={PROPOSED_METRICS.trainable_parameters} "
@@ -61,5 +62,5 @@ print(
 PY
 
 echo
-echo "P08.1 source-reconstruction preflight completed successfully."
-echo "The topology is still proposed/unfrozen; do not train or evaluate the test set yet."
+echo "P08.1 accepted-reconstruction preflight completed successfully."
+echo "P08.2 architecture adaptation is still pending; do not train or evaluate the test set yet."
