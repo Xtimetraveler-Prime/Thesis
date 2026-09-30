@@ -6,13 +6,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from mnist_v2_nxtf.config import MAX_EPOCHS
 from mnist_v2_nxtf.training import train_ann
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--epochs", type=int, default=MAX_EPOCHS)
     args = parser.parse_args()
     result = train_ann(args.output, max_epochs=args.epochs)
     print(
