@@ -4,6 +4,23 @@ from .arithmetic import ArithmeticConfig, OverflowMode, round_away_from_zero
 from .axon import InputAxonBinding, OutputRoute, OutputRouteEntry
 from .chip import LogicalChip
 from .compartment import CompartmentConfig, CompartmentState, step_compartment
+from .compiler import (
+    CompiledDeployment,
+    IngressRoute,
+    InputPopulationSpec,
+    InputProjectionSpec,
+    MappingError,
+    MappingOptions,
+    NetworkSpec,
+    P06_COMPILER_VERSION,
+    P06_DEPLOYMENT_SCHEMA,
+    P06_NETWORK_SCHEMA,
+    PlacementRecord,
+    PopulationSpec,
+    ProjectionConnection,
+    ProjectionSpec,
+    compile_network,
+)
 from .core import LogicalCore, LogicalCoreConfig
 from .hardware_p03 import (
     OneCoreHardwareImage,
@@ -39,6 +56,11 @@ from .hardware_p05 import (
     P05_PROFILE_NAME,
     VirtualizedHardwareImage,
     export_virtualized_hardware_image,
+)
+from .hardware_p06 import (
+    P06_FPGA_PROFILE_NAME,
+    CompiledFpgaImage,
+    export_compiled_fpga_image,
 )
 from .mapping import Deployment
 from .packet import PacketClass, RouteScope, SpikePacket
@@ -77,6 +99,21 @@ __all__ = [
     "LogicalCore",
     "LogicalCoreConfig",
     "Deployment",
+    "PopulationSpec",
+    "InputPopulationSpec",
+    "ProjectionConnection",
+    "ProjectionSpec",
+    "InputProjectionSpec",
+    "NetworkSpec",
+    "MappingOptions",
+    "MappingError",
+    "PlacementRecord",
+    "IngressRoute",
+    "CompiledDeployment",
+    "compile_network",
+    "P06_NETWORK_SCHEMA",
+    "P06_DEPLOYMENT_SCHEMA",
+    "P06_COMPILER_VERSION",
     "PacketClass",
     "RouteScope",
     "SpikePacket",
@@ -118,6 +155,9 @@ __all__ = [
     "LogicalContextImage",
     "VirtualizedHardwareImage",
     "export_virtualized_hardware_image",
+    "P06_FPGA_PROFILE_NAME",
+    "CompiledFpgaImage",
+    "export_compiled_fpga_image",
     "DeterministicCoreScheduler",
     "VirtualDispatch",
     "VirtualizationReport",
