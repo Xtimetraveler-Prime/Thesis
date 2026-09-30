@@ -9,7 +9,7 @@ from mnist_v2_nxtf.accepted_ann import (
     ACCEPTED_ANN_CHECKPOINT_SHA256,
     ACCEPTED_ANN_WEIGHTS_FINGERPRINT,
 )
-from mnist_v2_nxtf.conversion import (
+from mnist_v2_nxtf.conversion_loihi import (
     INTEGER_THRESHOLD_SCALE,
     NORMALIZATION_PERCENTILE,
     build_converted_network,
@@ -46,14 +46,28 @@ def test_p08_3_4_normalization_formula_matches_rueckauer_rule():
     assert NORMALIZATION_PERCENTILE == 100.0
 
 
-def test_p08_3_4_integer_quantization_uses_threshold_scale_without_clipping():
-    kernel = np.asarray([-0.125, 0.0, 0.125], dtype=np.float64)
+def test_p08_3_4_integer_quantization_matches_loihi_mixed_sign_step2_rule():
+    kernel = np.asarray(
+        [-0.4259, -0.2010, -0.125, 0.0, 0.125, 0.2010, 0.496],
+        dtype=np.float64,
+    )
     bias = np.asarray([-1.0, 0.0, 1.0], dtype=np.float64)
     q_kernel, q_bias = quantize_normalized_parameters(kernel, bias)
+
     assert INTEGER_THRESHOLD_SCALE == 512
-    assert q_kernel.tolist() == [-64, 0, 64]
+    assert CONVERSION_POLICY.weight_sign_mode == "mixed"
+    assert CONVERSION_POLICY.weight_quantization_step == 2
+    assert CONVERSION_POLICY.weight_rounding == "toward_zero"
+    assert (CONVERSION_POLICY.signed_weight_min, CONVERSION_POLICY.signed_weight_max) == (-256, 254)
+    assert q_kernel.tolist() == [-218, -102, -64, 0, 64, 102, 252]
+    assert all(value % 2 == 0 for value in q_kernel.tolist())
     assert q_bias.tolist() == [-512, 0, 512]
 
+    # Native mixed-sign 8-bit boundary: -256 is representable, +256 is not.
+    q_negative_boundary, _ = quantize_normalized_parameters(
+        np.asarray([-0.5]), np.asarray([0.0])
+    )
+    assert q_negative_boundary.tolist() == [-256]
     with pytest.raises(OverflowError):
         quantize_normalized_parameters(np.asarray([0.5]), np.asarray([0.0]))
     with pytest.raises(OverflowError):
