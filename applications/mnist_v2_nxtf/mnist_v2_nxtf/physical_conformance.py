@@ -1,9 +1,9 @@
 """P08.4.3b representative physical K26 conformance corpus.
 
-The exhaustive 100-timestep paging proof belongs to P08.4.2.  This module takes
+The exhaustive 100-timestep paging proof belongs to P08.4.2. This module takes
 that already-fixed execution and emits two exact late-timestep logical-core
-snapshots for the physical K26 shell.  The board harness dispatches them through
-one physical slot in the fixed sequence core3 -> core4 -> core3, exercising two
+snapshots for the physical K26 shell. The board harness dispatches them through
+one physical slot in the fixed sequence core0 -> core4 -> core0, exercising two
 real page replacements and one reload while comparing complete state/trace/
 packet images against the Python architectural reference.
 """
@@ -44,11 +44,11 @@ PHYSICAL_MANIFEST = "p08_4_3b_physical_manifest.json"
 PHYSICAL_VECTORS_TCL = "p08_4_3b_physical_vectors.tcl"
 PHYSICAL_TIMESTEP = CONFORMANCE_TIMESTEPS - 1
 PHYSICAL_SLOT = 2
-DEEP_CORE_ID = 3
+INGRESS_CORE_ID = 0
 OUTPUT_CORE_ID = 4
-DEEP_NAME = "deep_core3_t99"
+INGRESS_NAME = "ingress_core0_t99"
 OUTPUT_NAME = "output_core4_t99"
-PHYSICAL_SEQUENCE = (DEEP_NAME, OUTPUT_NAME, DEEP_NAME)
+PHYSICAL_SEQUENCE = (INGRESS_NAME, OUTPUT_NAME, INGRESS_NAME)
 EXPECTED_TEST_LABEL = 7
 EXPECTED_PREDICTION = 7
 EXPECTED_FINAL_EVIDENCE = (
@@ -108,9 +108,12 @@ def _json_fingerprint(payload: dict[str, Any]) -> str:
     ).hexdigest()
 
 
-def _context_record(compiled: CompiledDeployment, core_trace) -> tuple[dict[str, Any], str]:
+def _context_record(compiled: CompiledDeployment, core_trace) -> tuple[dict[str, Any], dict[str, Any]]:
     logical_id = int(core_trace.logical_core_id)
-    config = compiled.logical_deployment.core_configs[logical_id]
+    config_by_id = {
+        int(config.core_id): config for config in compiled.logical_deployment.core_configs
+    }
+    config = config_by_id[logical_id]
     before_states = tuple(item.state for item in core_trace.compartment_state_before)
     image = export_one_core_image(config, initial_states=before_states)
 
@@ -144,7 +147,12 @@ def _context_record(compiled: CompiledDeployment, core_trace) -> tuple[dict[str,
         )
 
     expected_packets = [pack_output_packet(packet) for packet in core_trace.packets_out]
-    name = DEEP_NAME if logical_id == DEEP_CORE_ID else OUTPUT_NAME
+    if logical_id == INGRESS_CORE_ID:
+        name = INGRESS_NAME
+    elif logical_id == OUTPUT_CORE_ID:
+        name = OUTPUT_NAME
+    else:
+        raise AssertionError(f"unexpected P08.4.3b physical core {logical_id}")
 
     record = {
         "name": name,
@@ -179,7 +187,7 @@ def _context_record(compiled: CompiledDeployment, core_trace) -> tuple[dict[str,
         "trace_fingerprint": _sha_words(expected_traces, bits=256),
         "packet_fingerprint": _sha_words(expected_packets, bits=64),
     }
-    return record, json.dumps(summary, sort_keys=True, separators=(",", ":"))
+    return record, summary
 
 
 def _context_tcl(record: dict[str, Any]) -> str:
@@ -273,13 +281,11 @@ def build_physical_corpus(
         if timestep == PHYSICAL_TIMESTEP:
             selected = {int(core.logical_core_id): core for core in trace.cores}
 
-    if DEEP_CORE_ID not in selected or OUTPUT_CORE_ID not in selected:
-        raise AssertionError("P08.4.3b late-timestep core traces are missing")
+    if INGRESS_CORE_ID not in selected or OUTPUT_CORE_ID not in selected:
+        raise AssertionError("P08.4.3b late-timestep physical core traces are missing")
 
-    deep_record, deep_summary_json = _context_record(compiled, selected[DEEP_CORE_ID])
-    output_record, output_summary_json = _context_record(compiled, selected[OUTPUT_CORE_ID])
-    deep_summary = json.loads(deep_summary_json)
-    output_summary = json.loads(output_summary_json)
+    ingress_record, ingress_summary = _context_record(compiled, selected[INGRESS_CORE_ID])
+    output_record, output_summary = _context_record(compiled, selected[OUTPUT_CORE_ID])
 
     placements = sorted(
         (item for item in compiled.placement if item.population.startswith("conv4_c")),
@@ -316,7 +322,7 @@ def build_physical_corpus(
         f"set P08_EVIDENCE_COMPARTMENTS {_int_list(evidence_compartments)}",
         f"set P08_SEQUENCE {{{' '.join(PHYSICAL_SEQUENCE)}}}",
         "set P08_CONTEXTS {",
-        _context_tcl(deep_record),
+        _context_tcl(ingress_record),
         _context_tcl(output_record),
         "}",
         "",
@@ -352,7 +358,7 @@ def build_physical_corpus(
         "physical_engine_count": 1,
         "official_test_used_for_physical_conformance": True,
         "model_or_conversion_selection_after_test": False,
-        "contexts": [deep_summary, output_summary],
+        "contexts": [ingress_summary, output_summary],
     }
     manifest["manifest_fingerprint"] = _json_fingerprint(manifest)
     (output / PHYSICAL_MANIFEST).write_text(
@@ -388,9 +394,9 @@ def main(argv: list[str] | None = None) -> int:
         "reload=true"
     )
     print(
-        "PASS: P08.4.3b deep context "
-        f"core=3 events={context_map[3]['event_count']} spikes={context_map[3]['spike_count']} "
-        f"packets={context_map[3]['packet_count']}"
+        "PASS: P08.4.3b ingress context "
+        f"core=0 events={context_map[0]['event_count']} spikes={context_map[0]['spike_count']} "
+        f"packets={context_map[0]['packet_count']}"
     )
     print(
         "PASS: P08.4.3b output context "
