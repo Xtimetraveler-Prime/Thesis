@@ -49,6 +49,22 @@ def make_five_core_ring() -> tuple[LogicalCoreConfig, ...]:
     return tuple(ring_core(core_id) for core_id in range(5))
 
 
+def accumulating_core(core_id: int) -> LogicalCoreConfig:
+    return LogicalCoreConfig(
+        core_id=core_id,
+        compartments=(
+            CompartmentConfig(
+                current_decay=4096,
+                voltage_decay=0,
+                threshold=5,
+            ),
+        ),
+        input_axons=(InputAxonBinding(10 + core_id, 0),),
+        synapse_templates=(SynapseTemplate(0, (SynapseEntry(0, 3),)),),
+        arithmetic=P03_REQUIRED_ARITHMETIC,
+    )
+
+
 def run_reference(steps: int = 7) -> tuple[tuple, ...]:
     chip = LogicalChip(make_five_core_ring())
     traces = []
@@ -131,6 +147,36 @@ def test_p08_round_robin_pager_records_hits_loads_and_evictions_deterministicall
         0,
         1,
     ]
+
+
+def test_p08_architectural_state_survives_eviction_and_reload():
+    chip = PagedVirtualizedLogicalChip(
+        tuple(accumulating_core(core_id) for core_id in range(5)),
+        resident_context_count=3,
+    )
+
+    t0 = chip.step(
+        (SpikePacket(0, 0, 10),),
+        service_order=(0, 1, 2, 3, 4),
+    )
+    assert chip.cores[0].states[0].voltage == 3
+    assert next(core for core in t0.cores if core.logical_core_id == 0).spikes_out == ()
+    assert chip.last_page_schedule is not None
+    assert 0 not in chip.last_page_schedule.residency_after
+
+    t1 = chip.step(
+        (SpikePacket(1, 0, 10),),
+        service_order=(3, 4, 2, 1, 0),
+    )
+    core0 = next(core for core in t1.cores if core.logical_core_id == 0)
+    assert core0.spikes_out == (0,)
+    assert chip.last_page_schedule is not None
+    core0_dispatch = next(
+        dispatch
+        for dispatch in chip.last_page_schedule.dispatches
+        if dispatch.logical_core_id == 0
+    )
+    assert core0_dispatch.page_hit is False
 
 
 def test_p08_paged_execution_matches_unpaged_logical_reference_across_page_and_drain_orders():
