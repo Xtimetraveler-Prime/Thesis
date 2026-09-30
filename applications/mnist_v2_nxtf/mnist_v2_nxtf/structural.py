@@ -10,6 +10,7 @@ or official-test evaluation.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 from loihi_twin_v2 import (
     CompartmentConfig,
@@ -42,7 +43,6 @@ class _ConvStage:
     stride: int
 
 
-
 def _stages() -> tuple[_ConvStage, ...]:
     f1, f2, f3 = PROPOSED_FILTERS
     return (
@@ -61,6 +61,7 @@ def _spatial_index(y: int, x: int, width: int) -> int:
     return y * width + x
 
 
+@lru_cache(maxsize=1)
 def build_structural_network() -> NetworkSpec:
     """Build the proposed four-convolution graph for P06 resource accounting.
 
@@ -142,11 +143,7 @@ def build_structural_network() -> NetworkSpec:
                                     )
                                 )
 
-                projection_name = (
-                    f"{source_name}_to_{destination_population}"
-                    if stage_index == 1
-                    else f"{source_name}_to_{destination_population}"
-                )
+                projection_name = f"{source_name}_to_{destination_population}"
                 if stage_index == 1:
                     input_projections.append(
                         InputProjectionSpec(
