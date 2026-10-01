@@ -1,10 +1,10 @@
 # FPGA-v2 NxTF MNIST Emulation Application
 
-This directory contains the P08 application for the Loihi architectural digital twin v2. It is intentionally separate from the frozen FPGA-v1 MNIST application under `applications/mnist_baseline/`.
+This directory contains the completed P08 application for the Loihi architectural digital twin v2. It is intentionally separate from the frozen FPGA-v1 MNIST application under `applications/mnist_baseline/`.
 
-P08 was realigned on 2026-09-29 after the first three hand-designed candidates showed that matching only the published parameter count was not a sufficient basis for comparison. The accepted goal is to emulate the published NxTF frame-based MNIST work as closely as public evidence and FPGA-v2 permit, while explicitly labeling reconstruction choices and non-comparable quantities.
+P08 was realigned on 2026-09-29 after the first three hand-designed candidates showed that matching only the published parameter count was not a sufficient basis for comparison. The accepted goal became to emulate the published NxTF frame-based MNIST work as closely as public evidence and FPGA-v2 permit, while explicitly labeling reconstruction choices and non-comparable quantities.
 
-Authoritative documents include:
+Authoritative records include:
 
 ```text
 Loihi_Digital_Twin/v2/docs/P08_MNIST_COMPARISON_CONTRACT.md
@@ -13,12 +13,19 @@ Loihi_Digital_Twin/v2/docs/P08_NXTF_RECONSTRUCTION.md
 Loihi_Digital_Twin/v2/docs/P08_CONTEXT_PAGING.md
 Loihi_Digital_Twin/v2/docs/P08_3_ACCEPTANCE.md
 Loihi_Digital_Twin/v2/docs/P08_4_ACCEPTANCE.md
+Loihi_Digital_Twin/v2/docs/P08_5_1_ACCEPTANCE.md
+Loihi_Digital_Twin/v2/docs/P08_5_2_ACCEPTANCE.md
+Loihi_Digital_Twin/v2/docs/P08_5_3_ACCEPTANCE.md
 Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md
 ```
 
-## Current status
+## Status — Complete
 
-P08.1-P08.4 are accepted. P08.5 is the active final comparison/closure stage.
+P08.1 through P08.5.3 are accepted. The final closure gate was independently reproduced with 19 passing tests and closure fingerprint:
+
+```text
+135bdc7f64955972cab11472e5b4ada7d16c62a0bbd5ace8051d424988d81cce
+```
 
 The accepted `PROJECT_RECONSTRUCTION` is:
 
@@ -47,7 +54,7 @@ The exact paper topology remains unpublished/unrecovered and is not claimed.
 
 The accepted ANN checkpoint was selected using only the deterministic 55,000/5,000 training-validation partition. Its fixed-validation accuracy was 0.992600.
 
-The initial blanket-scale conversion was rejected after it produced a silent SNN. Source recovery of Intel's public NxTF/SNN-Toolbox backend established per-layer parameter/threshold normalization and softmax voltage readout. The accepted source-recovered thresholds are:
+Source recovery of Intel's public NxTF/SNN-Toolbox backend established per-layer parameter/threshold normalization and softmax voltage readout. The accepted source-recovered thresholds are:
 
 ```text
 input BIAS threshold: 2040
@@ -94,16 +101,12 @@ compiled deployment  = 5dc7c9af692ca375283ede186b81d135bd1c76708b114cc64e3f99c08
 
 ## Accepted mapping and paging boundary
 
-The reconstructed graph maps through P06 as:
-
 ```text
 logical/backing cores: 5
 resident K26 contexts: 3
 physical HLS engines:  1
 expanded connections:  338,880
 ```
-
-The NxTF paper reports 14 Loihi neurocores for its benchmark. P08 preserves the 14-versus-5 difference as a mapping/model discrepancy rather than forcing artificial agreement. The project compiler uses different partitioning and a project-defined synapse-storage/sharing model; it is not the NxTF compiler and does not claim native Loihi SRAM packing.
 
 For official-test index 0 (label 7), P08.4.2 executed the complete 100-timestep compiled deployment under unpaged, forward-paged, and reverse-paged schedules. All schedules produced the same normalized trace fingerprint and final evidence:
 
@@ -138,24 +141,42 @@ p08_host_paged.bit SHA-256 = 3538b8f7a23dbd923c77471cb533cd844af548c0d50d7679cd4
 p08_host_paged.ltx SHA-256 = e32376f31486b96b070b0b12c6131d7bed067e0dd05e0461b029baf3eeea6936
 ```
 
-P08.4.3b then physically replaced resident slot 0 with the real logical-core-4 state for official-test index 0 immediately before timestep 99 and dispatched that context through the K26 HLS engine. The physical run matched all 618 compartment states and traces, the complete packet image, and the ten-class evidence exactly. The dispatch took 3,865 synchronous PL cycles.
+P08.4.3b physically replaced resident slot 0 with the real logical-core-4 state for official-test index 0 immediately before timestep 99 and dispatched that context through the K26 HLS engine. The physical run matched all 618 compartment states and traces, the complete packet image, and the ten-class evidence exactly. The dispatch took 3,865 synchronous PL cycles, or 38.65 microseconds at the requested 100 MHz clock.
 
-This is representative physical conformance, not an assertion that all 100 timesteps / approximately 500 logical-core dispatch opportunities were replayed over JTAG. Full paging semantics are proven in P08.4.2; the physical gate proves the deep-network page-replacement, memory-image, arithmetic, trace, packet, and output-state boundary.
+That observation is one representative deep-core dispatch, not end-to-end sample latency. Full paging semantics are proven by P08.4.2; the physical gate proves the deep-network page-replacement, memory-image, arithmetic, trace, packet, and output-state boundary.
 
-## Source-backed reference boundary
+## Final bounded NxTF comparison
 
-The NxTF paper reports for its frame-based MNIST benchmark approximately 4k neurons, 7k trainable parameters, 341k discrete convolutional connections represented by 6,746 shared weights, 14 Loihi neurocores, 100 timesteps, 0.74% ANN error, 0.79% converted-SNN error, 0.66 mJ/sample, and 6.65 ms/sample on native Loihi.
+P08.5.1 froze the comparison ledger:
 
-The surviving public Intel tutorial is a different 16→32→64→10, 33,802-parameter, 512-timestep workload. It is used as source-style evidence only.
+```text
+574023d0e55cf3d5098cccd1f23e597ee63deb872ac119be30bf41a5f495511d
+```
 
-P08.5 must not present native-Loihi energy/latency as directly comparable to project FPGA timing unless an equivalent workload-specific physical measurement boundary is established. FPGA PL cycles, resource utilization, logical occupancy, paging traffic, and mapping behavior are reported as project-specific implementation measurements.
+P08.5.2 froze the thesis-facing comparison report:
+
+```text
+d3d47e95f928f0de77d2c1b59c2c16f5becdf5dd443f6600c187d3f56e1e68a0
+```
+
+The accepted reconstruction-bounded quantitative differences from the published NxTF result are:
+
+```text
+ANN test-error gap:              0.52 percentage points
+SNN test-error gap:              0.97 percentage points
+ANN-to-SNN conversion-loss gap: 0.45 percentage points
+```
+
+The paper's approximately 4k neurons, approximately 7k parameters, and approximately 341k expanded connections are treated as scale correspondence only. The paper's 6,746 shared weights versus the project's 64,235 P06 stored entries and 14 Loihi neurocores versus five P06 logical cores are contextual only because the representation/compiler models differ.
+
+The native-Loihi 0.66 mJ/sample and 6.65 ms/sample measurements remain published context. P08 has no equivalent end-to-end K26 workload-specific energy/latency measurement, so no direct FPGA-versus-Loihi energy or latency conclusion is drawn.
 
 ## Environment
 
-Use the dedicated P08 environment:
+The dedicated P08 environment remains the reproducibility environment:
 
 ```bash
 source ~/Git/Thesis/.venv-p08/bin/activate
 ```
 
-P08.5 is documentation/analysis oriented; it consumes the already accepted P08.1-P08.4 identities and measurements rather than retraining or reconverting the model.
+P08 is complete. Any additional topology recovery, energy instrumentation, full end-to-end physical replay, or higher-fidelity Loihi features are follow-on experiments rather than unfinished P08 deliverables.

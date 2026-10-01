@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the active development tracker for FPGA-v2. The normative architecture contract remains:
+This document is the development and acceptance tracker for FPGA-v2. The normative architecture contract remains:
 
 ```text
 Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md
@@ -22,27 +22,30 @@ Status meanings:
 
 ## Current phase
 
-> **P08.5 in progress — final bounded NxTF comparison and P08 closure.**
+> **All planned FPGA-v2 phases P00-P08 are complete.**
 >
-> P08.1-P08.4 are accepted. The source-bounded NxTF MNIST reconstruction contains
-> 4,218 neurons, 7,006 trainable parameters, and 338,880 expanded convolutional
-> connections at a frozen 100-timestep primary horizon. The accepted converted
-> deployment uses five project logical cores, three resident K26 context slots,
-> and one P03-compatible HLS compute engine.
+> P08 closed on 2026-09-30 after independent reproduction of the final P08.5.3
+> closure gate. The final run reported 19 passing tests and deterministic closure
+> fingerprint
+> `135bdc7f64955972cab11472e5b4ada7d16c62a0bbd5ace8051d424988d81cce`.
 >
-> The frozen official-test results are 98.74% ANN accuracy and 98.24% SNN
-> accuracy, a 0.50 percentage-point ANN-to-SNN drop. The exact five-core
-> deployment reproduces the source-recovered SNN under complete 100-timestep
-> paging in software. The routed host-paged K26 shell closes 100 MHz timing with
-> WNS `+0.734 ns`, WHS `+0.010 ns`, and 47 URAMs. A representative real MNIST
-> logical-core-4 snapshot at timestep 99 was then physically paged into resident
-> slot 0 and reproduced all 618 compartment states/traces plus the final ten-class
-> output evidence exactly.
+> The final P08 application is a source-bounded reconstruction of the NxTF
+> frame-based MNIST benchmark with 4,218 neurons, 7,006 trainable parameters,
+> 338,880 expanded convolutional connections, and a 100-timestep primary horizon.
+> The accepted converted deployment uses five project logical cores, three
+> resident K26 context slots, and one P03-compatible HLS compute engine.
 >
-> P08.5 now consolidates these accepted measurements against the published NxTF
-> Loihi result while explicitly separating directly comparable quantities,
-> source-bounded reconstruction, project-specific implementation measurements,
-> contextual reference values, and non-comparable metrics.
+> Frozen official-test results are 98.74% ANN accuracy and 98.24% SNN accuracy,
+> a 0.50 percentage-point ANN-to-SNN drop. Complete 100-timestep five-over-three
+> paging is proven at the compiled architectural boundary. A representative real
+> MNIST logical-core-4 state at timestep 99 was physically paged into resident
+> slot 0 on the K26 and reproduced all 618 compartment states/traces, packet
+> image, and ten-class output evidence exactly.
+>
+> The final NxTF comparison remains bounded: exact unpublished paper topology,
+> native storage equivalence, direct Loihi-vs-K26 energy/latency equivalence,
+> physical asynchronous-circuit equivalence, and a complete end-to-end JTAG
+> replay are not claimed.
 
 ---
 
@@ -58,7 +61,7 @@ Status meanings:
 | P05 | Add logical-core virtualization | Complete | 2026-09-29 | 2026-09-29 |
 | P06 | Build deterministic mapper/compiler and deployment format | Complete | 2026-09-29 | 2026-09-29 |
 | P07 | Validate deeper mapped multicore SNNs | Complete | 2026-09-29 | 2026-09-29 |
-| P08 | Emulate and compare the NxTF frame-based MNIST workload | In progress | 2026-09-29 | — |
+| P08 | Emulate and compare the NxTF frame-based MNIST workload | Complete | 2026-09-29 | 2026-09-30 |
 
 ---
 
@@ -152,16 +155,16 @@ Primary records: `docs/P07_DEEP_SNN_VALIDATION.md` and `docs/P07_DEEP_SNN_CHALLE
 
 # P08 — NxTF frame-based MNIST emulation and comparison
 
-**Status:** In progress  
+**Status:** Complete  
 **Started:** 2026-09-29  
 **Realigned:** 2026-09-29  
-**Active sub-phase:** P08.5
+**Completed:** 2026-09-30
 
 ## Goal
 
 Emulate the frame-based MNIST workload reported in Rueckauer et al. NxTF as closely as public evidence and FPGA-v2 permit, run that workload through the deterministic P06 → Python → FPGA path, and make a bounded source-aware comparison of accuracy, topology/resource pressure, connection sharing, logical/physical virtualization, traffic, FPGA execution observations, and implementation resources.
 
-P08 is not a generic search for a network with approximately the same parameter count. Source fidelity and explicit uncertainty take priority over forcing numerical agreement.
+P08 is not a claim of exact unpublished-model reproduction. Source fidelity and explicit uncertainty take priority over forcing numerical agreement.
 
 Primary experiment/source records:
 
@@ -209,9 +212,7 @@ expanded connections: 338,880
 primary timesteps:          100
 ```
 
-The exact unpublished NxTF benchmark layer dimensions/checkpoint were not recovered and remain `UNKNOWN_NOT_CLAIMED`. Topology/training/conversion facts are labeled as sourced exact, sourced style/range, project reconstruction, or unknown rather than silently filled in.
-
-Primary acceptance/reconstruction records: `docs/P08_NXTF_RECONSTRUCTION.md` and the P08.1 acceptance history.
+The exact unpublished NxTF benchmark layer dimensions/checkpoint were not recovered and remain `UNKNOWN_NOT_CLAIMED`.
 
 ## P08.2 — FPGA-v2 adaptation and context paging — **Complete**
 
@@ -227,15 +228,13 @@ P06 stored shared parameters: 64,235
 static output routes: 7,860
 ```
 
-The accepted deterministic paging layer preserves logical IDs, backing state, current/next event semantics, packet destination identity, and the global algorithmic barrier independently from physical residency. The host owns cross-page routing and the global barrier.
+The deterministic paging layer preserves logical IDs, backing state, current/next event semantics, packet destination identity, and the global algorithmic barrier independently from physical residency. The host owns cross-page routing and the global barrier.
 
-The NxTF paper's 14 Loihi neurocores and the project's five P06 logical cores remain intentionally different. P06 is not the NxTF compiler and the project's storage/sharing model is not native Loihi packing.
-
-Primary records: `docs/P08_CONTEXT_PAGING.md` and `docs/P08_2_ACCEPTANCE.md`.
+The NxTF paper's 14 Loihi neurocores and the project's five P06 logical cores remain intentionally contextual because P06 is not the NxTF compiler and the project's storage/sharing model is not native Loihi packing.
 
 ## P08.3 — ANN training and source-recovered ANN→SNN conversion — **Complete**
 
-Training/checkpoint/conversion policy was frozen before use of the official test set. The accepted ANN checkpoint achieved:
+The accepted ANN checkpoint achieved:
 
 ```text
 validation accuracy: 0.992600
@@ -244,7 +243,7 @@ semantic weights fingerprint:
 e5c07133b8d534d29596cbde9d637db695942dfb224a82c2533f59a17f1c74ce
 ```
 
-An initial blanket `threshold=512`/global-scale conversion was rejected after it produced a silent converted network. Source recovery of Intel's public NxTF/SNN-Toolbox backend established the missing per-layer parameter/threshold normalization and the softmax voltage-readout behavior.
+Source recovery of Intel's public NxTF/SNN-Toolbox backend established the required per-layer parameter/threshold normalization and softmax voltage-readout behavior.
 
 Accepted source-recovered thresholds:
 
@@ -265,7 +264,7 @@ network    = 6e47dc0c37d2f05828f0a0231406c7df8e4bf83652300fde0df1a0b8f9d83f13
 compiled   = 5dc7c9af692ca375283ede186b81d135bd1c76708b114cc64e3f99c085cd856b
 ```
 
-Full frozen validation measurement:
+Frozen validation measurement:
 
 ```text
 examples:      5,000
@@ -276,38 +275,20 @@ delta:         0.008200
 ties:          0
 ```
 
-All tracked SNN stages were active for all 5,000 validation examples. No official-test examples were used during P08.3.
-
-Primary record: `docs/P08_3_ACCEPTANCE.md` plus the P08.3.1-P08.3.5 sub-gate documents.
+No official-test examples were used during P08.3.
 
 ## P08.4 — Official-test evaluation and K26 conformance — **Complete**
 
-### P08.4.1 — Frozen official-test evaluation — **Complete**
-
-The untouched 10,000-image official MNIST test split was opened only after the accepted ANN/SNN identities and policies were frozen.
+Official test result:
 
 ```text
-ANN accuracy:       0.987400
-SNN accuracy:       0.982400
-ANN-SNN delta:      0.005000
-SNN readout ties:   1
-all-equal evidence: 0
-zero evidence:      0
-selection decisions after test: 0
+examples:            10,000
+ANN accuracy:        0.987400
+SNN accuracy:        0.982400
+ANN-SNN delta:       0.005000
+SNN readout ties:    1
+post-test selection: 0
 ```
-
-Agreement:
-
-```text
-both correct: 9797
-ANN only:       77
-SNN only:       27
-both wrong:     99
-```
-
-The converted SNN test error is 1.76%. The NxTF paper reports 0.79%; P08 treats this as a bounded contextual comparison rather than a like-for-like result because the exact paper topology/checkpoint/partitioning is not available.
-
-### P08.4.2 — Exact compiled execution conformance — **Complete**
 
 Representative official-test frame fixed by index:
 
@@ -317,7 +298,7 @@ label:      7
 timesteps:  100
 ```
 
-Unpaged logical execution, forward paging, and reverse paging produced the identical normalized trace fingerprint:
+Unpaged logical execution, forward paging, and reverse paging produced identical normalized trace fingerprint:
 
 ```text
 a81844443b6e5f6c278167a4aafc46dcfd74f7df5498179312b1fc39edba09d6
@@ -329,8 +310,6 @@ and identical final evidence:
 [-284, -1203, 104, 109, -2253, -599, -2659, 1446, -436, -63]
 ```
 
-with prediction 7.
-
 Paging/traffic observations:
 
 ```text
@@ -340,87 +319,106 @@ ingress packets:              2,382
 internal packet traffic:     17,910
 ```
 
-### P08.4.3a — Host-paged K26 shell — **Complete**
-
-The actual host-paged physical shell retains three full context memories and one HLS engine while exposing one resident dispatch at a time. Cross-page packet routing and the global barrier remain host-owned.
-
-Accepted routed implementation:
+The host-paged K26 shell routed at the requested 100 MHz with:
 
 ```text
-requested PL clock:       100 MHz
-WNS:                      +0.734 ns
-WHS:                      +0.010 ns
-URAM:                     47
+WNS:  +0.734 ns
+WHS:  +0.010 ns
+URAM: 47
 logical backing contexts: 5
 resident context slots:   3
 physical engines:         1
-on-fabric cross-page router: false
 ```
 
-Artifact identities:
+Accepted physical artifacts:
 
 ```text
 bitstream SHA-256 = 3538b8f7a23dbd923c77471cb533cd844af548c0d50d7679cd40844f465e8f83
 probes SHA-256    = e32376f31486b96b070b0b12c6131d7bed067e0dd05e0461b029baf3eeea6936
 ```
 
-### P08.4.3b — Representative physical MNIST conformance — **Complete**
-
-The frozen logical-core-4 state for official-test index 0 immediately before timestep 99 was physically paged into resident slot 0 after a distinct logical-core-0 decoy marker was first written and verified.
-
-Accepted physical result:
+The representative physical MNIST run paged logical core 4 into resident slot 0 at timestep 99 and observed:
 
 ```text
-logical core:           4
-resident slot:          0
-timestep:              99
 input events:           2
 compartments checked: 618
 dispatch cycles:     3,865
-spikes:                 0
-packets:                0
 state/trace exact:   true
 packet image exact:  true
 output evidence exact:true
 prediction:             7
 ```
 
-Physical evidence matched P08.4.2 exactly:
-
-```text
-[-284, -1203, 104, 109, -2253, -599, -2659, 1446, -436, -63]
-```
-
-The physical wrapper independently revalidates the generated result file after Vivado returns before emitting final success.
-
-### P08.4 accepted claim boundary
-
-P08.4 establishes complete 100-timestep paging semantics in compiled software plus physical conformance of a real deep-network page replacement/dispatch on the K26. It does **not** claim that the full approximately-500-dispatch representative inference was replayed end-to-end through JTAG.
+P08.4 proves complete 100-timestep paging semantics in compiled software plus physical conformance of a real deep-network page replacement/dispatch on the K26. It does **not** claim that the complete approximately-500-dispatch representative inference was replayed end-to-end over JTAG.
 
 Primary records: `docs/P08_4_ACCEPTANCE.md`, `docs/P08_4_3A_ACCEPTANCE.md`, and `docs/P08_4_3B_ACCEPTANCE.md`.
 
-## P08.5 — NxTF comparison and closure — **In progress**
+## P08.5 — NxTF comparison and closure — **Complete**
 
-### P08.5.1 — Comparison ledger and comparability classification — **In progress**
+### P08.5.1 — Comparison ledger and comparability classification — **Complete**
 
-- [ ] Build a machine-readable metric ledger for every final NxTF/project quantity.
-- [ ] Bind every project value to an accepted P08.1-P08.4 evidence source/fingerprint.
-- [ ] Classify comparison rows before writing conclusions so directly comparable, structural/caveated, project-specific, contextual, and non-comparable quantities cannot be conflated.
-- [ ] Encode guardrails preventing native-Loihi energy/latency values from being presented as direct K26 performance equivalents.
-- [ ] Validate the ledger deterministically with tests and a standalone gate.
+Independent reproduction passed with six tests. Accepted ledger fingerprint:
 
-### P08.5.2 — Final comparison table and quantitative interpretation — **Planned**
+```text
+574023d0e55cf3d5098cccd1f23e597ee63deb872ac119be30bf41a5f495511d
+```
 
-- [ ] Build the thesis-facing NxTF comparison table from the accepted ledger.
-- [ ] Report ANN/SNN accuracy, neuron/parameter/connection totals, core mapping, physical residency/engine count, sharing/accounting, paging/traffic, FPGA timing observations, utilization, and capacity boundaries.
-- [ ] Calculate only deltas/ratios whose measurement boundaries are compatible; label all others as contextual or non-comparable.
+The 24-row ledger freezes these comparison classes:
 
-### P08.5.3 — P08 final closure record — **Planned**
+```text
+DIRECTLY_COMPARABLE=3
+COMPARABLE_WITH_RECONSTRUCTION_CAVEAT=7
+CONTEXT_ONLY=2
+PROJECT_SPECIFIC=10
+NOT_COMPARABLE=2
+```
 
-- [ ] Summarize source-exact, source-style, reconstructed, project-specific, and unsupported elements of the final experiment.
-- [ ] Archive/bind the accepted software and physical evidence identities.
-- [ ] Record the strongest defensible thesis claims and explicit non-claims.
-- [ ] Mark P08 complete only after the final comparison gate is independently reproduced.
+Energy/latency, shared-weight accounting, mapped-core accounting, dispatch latency scope, full-JTAG-replay scope, and post-test-tuning guardrails are enforced programmatically.
+
+### P08.5.2 — Final comparison table and quantitative interpretation — **Complete**
+
+Independent reproduction passed with 13 tests. Accepted report fingerprint:
+
+```text
+d3d47e95f928f0de77d2c1b59c2c16f5becdf5dd443f6600c187d3f56e1e68a0
+```
+
+Accepted reconstruction-bounded quantitative differences:
+
+```text
+ANN test-error gap:              0.52 percentage points
+SNN test-error gap:              0.97 percentage points
+ANN-to-SNN conversion-loss gap: 0.45 percentage points
+```
+
+The approximately 4k-neuron, 7k-parameter, and 341k-connection paper values are treated as scale correspondence only. NxTF shared-weight counts and Loihi neurocore counts remain contextual because their representation/compiler boundaries differ from P06.
+
+Native-Loihi 0.66 mJ/sample and 6.65 ms/sample remain published context; no direct FPGA-versus-Loihi energy or latency conclusion is drawn.
+
+### P08.5.3 — Final P08 closure — **Complete**
+
+Independent reproduction passed with 19 tests. Accepted closure fingerprint:
+
+```text
+135bdc7f64955972cab11472e5b4ada7d16c62a0bbd5ace8051d424988d81cce
+```
+
+The pre-acceptance closure candidate intentionally recorded `p08_complete=false`; independent reproduction satisfied that final condition, and `docs/P08_5_3_ACCEPTANCE.md` is the authoritative post-reproduction acceptance record.
+
+The final non-claim set remains:
+
+```text
+exact_paper_topology = false
+native_storage_equivalence = false
+energy_direct = false
+latency_direct = false
+shared_weight_ratio = false
+mapped_core_ratio = false
+dispatch_is_sample_latency = false
+full_jtag_replay = false
+physical_async_equivalence = false
+post_test_tuning = false
+```
 
 ## Stable P08 data boundary
 
@@ -434,28 +432,26 @@ validation seed:           0x4D4E4953
 primary horizon:           100 algorithmic timesteps
 ```
 
-The official test split was not used for topology selection, checkpoint selection, conversion calibration, threshold selection, timestep selection, or decoder selection. P08.4/P08.5 may analyze the frozen result but must not retune the model or conversion in response to test outcomes.
+The official test split was not used for topology selection, checkpoint selection, conversion calibration, threshold selection, timestep selection, or decoder selection.
 
 ## P08 completion gate
 
-P08 is complete only when:
+**Satisfied.** P08 closes with all eight completion conditions met:
 
-1. the paper workload has been reconstructed as far as public evidence supports and remaining gaps are explicitly labeled;
-2. the frozen source-bounded graph compiles through P06 under unchanged logical limits;
+1. the paper workload is reconstructed as far as public evidence supports and remaining gaps are explicitly labeled;
+2. the source-bounded graph compiles through P06 under unchanged logical limits;
 3. five-over-three context paging is explicitly implemented and proven invariant;
 4. ANN training and ANN→SNN conversion are frozen without official-test tuning;
 5. full official-test ANN and SNN accuracy are recorded;
 6. exact compiled paging conformance and representative physical K26 conformance pass;
 7. logical occupancy, residency/engine count, sharing/accounting, traffic, FPGA cycles/resources, and relevant capacity boundaries are reported; and
-8. the final NxTF comparison explicitly distinguishes direct measurements, sourced reference facts, reconstruction choices, project-specific implementation quantities, contextual values, and non-comparable metrics.
-
-Energy/inference remains outside the direct FPGA-vs-Loihi claim set unless an equivalent workload-specific K26 physical power/energy measurement is separately established.
+8. the final comparison distinguishes direct measurements, sourced reference facts, reconstruction choices, project-specific implementation quantities, contextual values, and non-comparable metrics.
 
 ---
 
 # Cross-phase architectural requirements
 
-The v2 architecture must retain:
+The accepted v2 architecture retains:
 
 - multiple explicit logical neuromorphic cores;
 - per-core compartment, input-axon, synapse, and routing resources;
@@ -473,21 +469,9 @@ The project remains a **source-backed architectural digital twin**, not a transi
 
 ---
 
-# Cross-phase verification policy
+# Deferred/follow-on fidelity extensions
 
-Every architectural addition should be validated, where applicable, at three levels:
-
-1. directed unit behavior;
-2. mapped-network Python/FPGA differential behavior; and
-3. physical application behavior.
-
-Hardware evidence must preserve artifact/toolchain identities and explicit claim boundaries. FPGA cycles must remain separate from algorithmic timesteps and from native-Loihi latency claims.
-
----
-
-# Deferred fidelity extensions
-
-Priority-B/C features remain outside the P08 critical path unless separately promoted by source evidence and thesis need:
+The following are now follow-on research opportunities rather than unfinished P00-P08 work:
 
 - richer dendritic/multi-compartment structures;
 - broader programmable delays;
@@ -495,14 +479,16 @@ Priority-B/C features remain outside the P08 critical path unless separately pro
 - more detailed congestion/asynchronous/quiescence models;
 - on-chip learning/plasticity;
 - management-processor emulation;
-- chip-to-chip scaling; and
-- undocumented physical implementation details.
+- chip-to-chip scaling;
+- equivalent end-to-end K26 energy/latency instrumentation;
+- complete physical replay of every paged dispatch for the representative MNIST sample; and
+- recovery of any additional unpublished NxTF benchmark details if they become available.
 
 Insufficiently evidenced features remain unknown/not claimed.
 
 ---
 
-# Documentation and evidence structure
+# Final documentation and evidence structure
 
 ```text
 Loihi_Digital_Twin/v2/
@@ -516,7 +502,9 @@ Loihi_Digital_Twin/v2/
 │   ├── P08_2_ACCEPTANCE.md
 │   ├── P08_3_ACCEPTANCE.md
 │   ├── P08_4_ACCEPTANCE.md
-│   └── P08_4_3B_ACCEPTANCE.md
+│   ├── P08_5_1_ACCEPTANCE.md
+│   ├── P08_5_2_ACCEPTANCE.md
+│   └── P08_5_3_ACCEPTANCE.md
 ├── src/loihi_twin_v2/
 ├── hls/core_v2/
 ├── rtl/
@@ -532,10 +520,10 @@ applications/
 └── mnist_v2_nxtf/
 ```
 
-New accepted evidence must be referenced from the active phase and must not rewrite the frozen v1 history.
+Accepted FPGA-v2 evidence is referenced from the corresponding phase records and does not rewrite the frozen FPGA-v1 history.
 
 ---
 
 # Advancement rule
 
-Only one sub-phase should normally be marked **In progress**. P08.4 closed on 2026-09-30 after independent reproduction of the official-test, exact compiled paging, routed shell, and representative physical MNIST conformance gates. P08.5 is therefore the active sub-phase. P08 itself remains **In progress** until the final comparison and closure gate are independently reproduced.
+All planned P00-P08 phases are complete. There is no active unfinished phase in this roadmap. Any subsequent architecture extensions, measurements, or experiments should begin as explicitly named follow-on work rather than silently reopening a completed phase.
