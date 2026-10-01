@@ -1,0 +1,1 @@
+P08.5.1 was independently reproduced on 2026-09-30. The accepted ledger fingerprint is `574023d0e55cf3d5098cccd1f23e597ee63deb872ac119be30bf41a5f495511d`; all six regression tests passed and all comparison guardrails remained enforced. See `P08_5_1_ACCEPTANCE.md` for the complete record.
