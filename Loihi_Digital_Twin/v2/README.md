@@ -9,37 +9,49 @@ Development authority is split between:
 
 FPGA-v1 remains frozen under `../v1/`. No v2 implementation should silently import behavioral assumptions from v1 unless the target specification explicitly adopts them.
 
-## Current status — P08.4 official-test evaluation
+## Current status — P08.5 final NxTF comparison
 
-P00-P07 are complete. P08 is the active application/comparison phase for the reconstructed NxTF frame-based MNIST workload.
+P00-P07 are complete. P08.1-P08.4 are now accepted for the reconstructed NxTF frame-based MNIST workload; P08.5 is the active final comparison/closure phase.
 
-Accepted P08 foundations now include:
+Accepted P08 foundations are:
 
 - **P08.1:** source-bounded four-convolution reconstruction with 4,218 neurons, 7,006 trainable parameters, and 338,880 expanded convolutional connections;
 - **P08.2:** deterministic paging of the five-logical-core P06 deployment over three resident K26 contexts and one physical HLS engine;
-- **P08.3:** frozen ANN checkpoint plus source-recovered ANN-to-SNN conversion, followed by a 5,000-example validation measurement at the primary 100-timestep horizon.
+- **P08.3:** frozen ANN checkpoint plus source-recovered ANN-to-SNN conversion and 5,000-example validation at the primary 100-timestep horizon;
+- **P08.4:** official-test evaluation, exact compiled paging conformance, routed host-paged K26 shell, and representative physical MNIST deep-dispatch conformance.
 
-The accepted P08.3 validation result is:
+Accepted application measurements are:
 
 ```text
 ANN validation accuracy: 0.992600
 SNN validation accuracy: 0.984400
-ANN-SNN delta:           0.008200
+ANN official-test accuracy: 0.987400
+SNN official-test accuracy: 0.982400
+ANN-SNN official-test delta: 0.005000
+primary SNN horizon: 100 timesteps
 ```
 
-P08.4 is now allowed to evaluate the untouched 10,000-image official MNIST test split. The accepted ANN checkpoint, integer conversion, thresholds, readout behavior, topology, and primary 100-timestep horizon are frozen and must not be changed in response to test performance.
-
-The current gate is documented in:
+The accepted converted deployment is:
 
 ```text
-docs/P08_4_1_OFFICIAL_TEST_GATE.md
+logical cores:       5
+resident contexts:   3
+physical engines:    1
+compiled fingerprint: 5dc7c9af692ca375283ede186b81d135bd1c76708b114cc64e3f99c085cd856b
 ```
 
-and can be run from the dedicated P08 environment with:
+P08.4.2 proved complete 100-timestep paging-order invariance for the representative official-test frame. P08.4.3a routed the corresponding host-paged K26 shell at 100 MHz with positive setup/hold slack and 47 URAMs. P08.4.3b then physically paged a frozen logical-core-4 MNIST snapshot into resident slot 0 and reproduced all 618 compartment states/traces and the final ten-value output evidence exactly.
 
-```bash
-bash scripts/run_p08_4_1_official_test_evaluation.sh
+The physical acceptance boundary is intentionally narrow: the project does not claim that the entire 100-timestep representative inference was replayed through JTAG. Complete paging semantics are covered by P08.4.2; physical conformance is demonstrated by the representative deep-network page replacement and dispatch in P08.4.3b.
+
+P08.4 closure is recorded in:
+
+```text
+docs/P08_4_ACCEPTANCE.md
+docs/P08_4_3B_ACCEPTANCE.md
 ```
+
+P08.5 now builds the final bounded comparison against the published NxTF/Loihi result. It must keep sourced/directly comparable quantities separate from project reconstruction, FPGA-specific implementation measurements, and non-comparable quantities such as native-Loihi energy/latency where the measurement boundary is not equivalent.
 
 ## Core v2 implementation
 
