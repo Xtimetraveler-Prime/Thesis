@@ -2,83 +2,47 @@
 
 ## Purpose
 
-This document is the **active development tracker for FPGA-v2**. It records:
-
-- which development phase is currently active;
-- which deliverables have been completed in each phase;
-- which deliverables remain;
-- the completion gate for advancing to the next phase; and
-- the architectural and verification rules that apply across the whole v2 program.
-
-The detailed Loihi-1 architectural requirements are defined separately in:
+This document is the active development tracker for FPGA-v2. The normative architecture contract remains:
 
 ```text
 Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md
 ```
 
-That specification is the normative architecture contract. This roadmap tracks
-**development progress against that contract**.
+The preserved FPGA-v1 development history remains under `Loihi_Digital_Twin/v1/`; FPGA-v2 is a separate source-backed architectural twin.
 
-The preserved FPGA-v1 development history remains in:
-
-```text
-Loihi_Digital_Twin/v1/MILESTONES.md
-```
-
----
-
-## Status legend
+Status meanings:
 
 - **Complete** — all required deliverables and completion criteria are satisfied.
 - **In progress** — active work has started, but one or more required deliverables remain.
 - **Planned** — agreed work that has not yet started.
-- **Blocked** — progress is waiting on an unresolved dependency or decision.
+- **Blocked** — waiting on an unresolved dependency or decision.
 - **Deferred** — intentionally outside the current critical path.
 
 ---
 
 ## Current phase
 
-> **P08 in progress — P07 deeper mapped multicore SNN validation is complete and physically accepted.**
+> **P08.5 in progress — final bounded NxTF comparison and P08 closure.**
 >
-> P07 completed on 2026-09-29 after a compiler-generated six-layer feed-forward
-> SNN executed through the complete specification → P06 compiler → Python → FPGA
-> path and matched at the normalized architectural boundary on the physical K26.
-> The accepted source fingerprint is
-> `4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76`
-> and the accepted compiled-deployment fingerprint is
-> `5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9`.
+> P08.1-P08.4 are accepted. The source-bounded NxTF MNIST reconstruction contains
+> 4,218 neurons, 7,006 trainable parameters, and 338,880 expanded convolutional
+> connections at a frozen 100-timestep primary horizon. The accepted converted
+> deployment uses five project logical cores, three resident K26 context slots,
+> and one P03-compatible HLS compute engine.
 >
-> The accepted workload contains six neuron layers and 12 neurons mapped across
-> three logical contexts serviced by one physical engine. It exercises both
-> local and remote inter-layer traffic, records 28 expanded synaptic connections
-> represented by six stored shared parameters (`4.666666666666667` expanded per
-> stored parameter), and includes an expected mapper rejection when the same
-> workload is artificially limited to two logical cores (`required=3`, `limit=2`).
+> The frozen official-test results are 98.74% ANN accuracy and 98.24% SNN
+> accuracy, a 0.50 percentage-point ANN-to-SNN drop. The exact five-core
+> deployment reproduces the source-recovered SNN under complete 100-timestep
+> paging in software. The routed host-paged K26 shell closes 100 MHz timing with
+> WNS `+0.734 ns`, WHS `+0.010 ns`, and 47 URAMs. A representative real MNIST
+> logical-core-4 snapshot at timestep 99 was then physically paged into resident
+> slot 0 and reproduced all 618 compartment states/traces plus the final ten-class
+> output evidence exactly.
 >
-> Three physical input scenarios were executed for seven algorithmic timesteps
-> under both forward and reverse legal logical-context service orders. All 42
-> directed physical ticks passed with nonzero PL cycle counts and Python/FPGA
-> agreement. The result record reported `schema=p07-deep-mapped-snn-v1`,
-> `logical_contexts=3`, `physical_engines=1`, `logical_capacity_changed=0`, and
-> `result=PASS`.
->
-> The accepted evidence is archived under:
->
-> ```text
-> hardware/evidence/p07_physical_20260930T022814Z/
-> ```
->
-> The P07 workload/validation contract is documented in
-> `docs/P07_DEEP_SNN_VALIDATION.md`; the design decisions and closure lessons are
-> recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`. P08 is now active with a revised
-> goal: emulate the published NxTF frame-based MNIST work as closely as public
-> evidence and the FPGA-v2 framework permit. The first P08 task is source
-> reconstruction and experiment freezing, not another hand-designed candidate
-> training run. The accepted three-context K26 shell is a resident-context limit,
-> not a logical-network-size limit; if the source-faithful workload requires more
-> logical cores, P08 must extend virtualization/context paging rather than shrink
-> the network for convenience.
+> P08.5 now consolidates these accepted measurements against the published NxTF
+> Loihi result while explicitly separating directly comparable quantities,
+> source-bounded reconstruction, project-specific implementation measurements,
+> contextual reference values, and non-comparable metrics.
 
 ---
 
@@ -103,792 +67,86 @@ Loihi_Digital_Twin/v1/MILESTONES.md
 **Status:** Complete  
 **Completed:** 2026-09-25
 
-## Goal
-
-Freeze the validated first-generation architecture and MNIST application before
-beginning substantial Loihi-like architectural changes.
-
-## Achieved deliverables
-
-- Preserved the first MNIST application as `applications/mnist_baseline/`.
-- Preserved the first architecture under `Loihi_Digital_Twin/v1/`.
-- Archived accepted historical FPGA artifacts.
-- Rebuilt HLS/Vivado hardware from a fresh checkout.
-- Re-ran rebuilt images on the physical K26.
-- Confirmed preserved application behavior after repository reorganization.
-- Created the immutable source tag `fpga-v1-mnist-v1-final`.
-- Retained the compatibility symlink `Neuromorphic Digital Twin -> Loihi_Digital_Twin/v1`.
-
-## Completion gate
-
-Complete. FPGA-v1 behavior and accepted evidence are historical controls.
+FPGA-v1 and its first MNIST application are preserved as historical controls. The first architecture lives under `Loihi_Digital_Twin/v1/`; the preserved application lives under `applications/mnist_baseline/`; the immutable source tag is `fpga-v1-mnist-v1-final`.
 
 ---
 
 # P01 — Loihi-1 target definition and v2 project foundation
 
 **Status:** Complete  
-**Started:** 2026-09-28  
 **Completed:** 2026-09-28
 
-## Goal
+P01 established the separate v2 project and the source-backed Loihi-1 target specification. The project explicitly targets architectural fidelity rather than transistor-level or proprietary implementation equivalence. Logical Loihi-like resources, packets, timestep/barrier semantics, virtualization invariance, observability, and unsupported/unknown behavior are defined independently from physical FPGA implementation.
 
-Define exactly what this thesis means by a Loihi-1 architectural digital twin
-before implementing a new model or new FPGA datapath.
-
-## Achieved deliverables
-
-- Created `Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md`.
-- Added requirement-level citations to primary/reference literature.
-- Defined the project as a source-backed architectural digital twin, not a
-  transistor-level or timing-exact clone.
-- Defined logical Loihi-like resource limits independently from physical FPGA
-  instantiation.
-- Defined destination-core / destination-axon packet semantics.
-- Defined axon-to-synapse expansion and explicit source fanout.
-- Defined algorithmic timestep/quiescence/barrier semantics separately from
-  physical FPGA clock cycles.
-- Defined virtualization invariance and normalized trace requirements.
-- Defined Priority-A, deferred, and non-claimed features.
-- Defined directed validation tests T1-T10.
-- Reorganized the architecture as `Loihi_Digital_Twin/v1/` and `v2/`.
-- Moved historical M01-M13 tracking to `Loihi_Digital_Twin/v1/MILESTONES.md`.
-- Made this file the active v2 roadmap.
-- Verified the relocated v1 and preserved MNIST regression suites locally.
-- Merged the accepted P01 branch into `main`.
-
-## Completion gate
-
-Complete. The initial target specification is the architecture authority for
-P02 and later implementation.
+Primary record: `docs/LOIHI1_TARGET_SPEC.md`.
 
 ---
 
 # P02 — Separate Python manycore golden model
 
 **Status:** Complete  
-**Started:** 2026-09-28  
 **Completed:** 2026-09-28
 
-## Goal
+P02 established the independent Python manycore architecture package under `src/loihi_twin_v2/`, including explicit logical cores, axons, shared synapse templates, output routes, spike packets, event queues, resource limits, deterministic traces, deployment serialization/fingerprints, and barrier semantics. Directed architecture tests T1-T9 passed before hardware work; T10 was completed physically during P03.
 
-Create a new executable golden model for the Loihi-like manycore architecture
-without extending the v1 `NeuromorphicCore` in place.
-
-## Achieved implementation deliverables
-
-- [x] Created an independent v2 Python package under `Loihi_Digital_Twin/v2/`.
-- [x] Defined Loihi-1 logical chip/core resource constants and hard limits.
-- [x] Added explicit per-core resource accounting and named capacity failures.
-- [x] Defined a versioned project synapse-storage cost model behind an isolated
-      interface rather than claiming native Loihi SRAM packing.
-- [x] Defined a v2 compartment/neuron state interface.
-- [x] Re-versioned the validated v1 neuron arithmetic into v2 without a runtime
-      dependency on the v1 package.
-- [x] Added dedicated compatibility tests against the frozen v1 neuron step.
-- [x] Defined destination-side input-axon bindings.
-- [x] Defined reusable synapse templates and explicit expanded-connection counts.
-- [x] Defined source-side output routing/fanout entries.
-- [x] Defined normalized spike packets with target timestep, destination core,
-      destination axon, and optional source metadata.
-- [x] Implemented explicit packet queues and traffic accounting.
-- [x] Implemented logical-core ingress, axon expansion, accumulation,
-      compartment update, spike decision, egress, and completion behavior.
-- [x] Implemented a centralized logical drain/advance barrier.
-- [x] Implemented chip-level scheduling independent of packet-delivery order.
-- [x] Defined normalized core/chip traces containing packet, axon-expansion,
-      synaptic-contribution, state, spike, and barrier information.
-- [x] Added deterministic deployment fingerprints and a versioned JSON deployment
-      schema with round-trip loading and tamper detection.
-- [x] Added JSON-serializable deployment/capacity reports with per-core headroom.
-- [x] Added JSON-serializable architecture trace reports and deterministic trace
-      fingerprints.
-- [x] Added runnable two-core feed-forward and three-core recurrent examples.
-- [x] Added `docs/P02_IMPLEMENTATION_NOTES.md` and
-      `docs/P02_DEPLOYMENT_SCHEMA.md`.
-
-## Directed tests and verification
-
-- [x] **T1** — v1-compatible single-neuron/compartment arithmetic.
-- [x] **T2** — two-core feed-forward packet delivery.
-- [x] **T3** — multicast fanout.
-- [x] **T4** — within-timestep packet-order invariance.
-- [x] **T5** — barrier drain/advance behavior.
-- [x] **T6** — cross-core recurrence.
-- [x] **T7** — hard rejection of compartment, input-axon, output-route, and
-      synapse-memory capacity overflow.
-- [x] **T8** — connection-sharing/resource-accounting behavior.
-- [x] **T9** — logical service-order / packet-drain-order invariance at the
-      normalized architecture boundary.
-- [x] **T10** — Python/FPGA normalized trace comparison, completed during P03 on
-      the physical K26. T10 was not required to close P02 itself.
-- [x] Installed the v2 package in an independent `.venv-v2` environment.
-- [x] Full P02 test suite passed locally with **26 tests passing**.
-- [x] Two-core example demonstrated Core 0 firing at timestep 0 and Core 1
-      consuming the routed event/firing at timestep 1.
-- [x] Three-core recurrent replay produced the expected wave
-      `core0@t0 -> core1@t1 -> core2@t2 -> core0@t3`.
-- [x] Deployment round-trip fingerprint matched exactly.
-- [x] Reordered legal service/drain schedules produced the identical normalized
-      trace fingerprint `90a8300b7354744d00024cc9602a12b2f3ac432414ed027983b2c2cce28ad6d1`.
-
-## Completion gate
-
-Complete. The Python model executes representative multicore networks
-deterministically and all software-side directed architectural tests T1-T9 pass
-without requiring FPGA RTL/HLS.
-
-**Next phase:** P03 — one FPGA-v2 logical core.
+Primary records: `docs/P02_IMPLEMENTATION_NOTES.md` and `docs/P02_DEPLOYMENT_SCHEMA.md`.
 
 ---
 
 # P03 — One FPGA-v2 logical core
 
 **Status:** Complete  
-**Started:** 2026-09-28  
 **Completed:** 2026-09-28
 
-## Goal
+P03 implemented one full-capacity FPGA-v2 logical core around the source-backed Python boundary and validated it physically on the K26. The accepted hardware profile uses signed 24-bit saturating compartment state and retains transparent host/debug access to the hardware memory image. The accepted directed physical corpus matched Python state, traces, packets, spike counts, packet counts, and status.
 
-Implement one logical v2 neuromorphic core on the K26 against the target
-specification and the P02 Python golden model.
-
-## Required deliverables
-
-- [x] Define the FPGA-v2 one-core hardware boundary.
-- [x] Implement per-core compartment state.
-- [x] Implement input-axon lookup.
-- [x] Implement synapse traversal/accumulation.
-- [x] Implement output spike generation and routing-entry traversal.
-- [x] Implement the P03 runtime configuration/state loading and readback
-      interface through the transport-neutral banked host/debug bridge.
-- [x] Implement normalized trace/state inspection at the same semantic boundary
-      as the Python model.
-- [x] Add resource/capacity guards for one logical core.
-- [x] Add differential Python-vs-HLS/RTL tests.
-- [x] Synthesize/implement the complete one-core memory shell on the K26 target.
-- [x] Perform physical directed conformance against the Python model.
-
-## P03 implementation findings
-
-The accepted full-capacity XPM one-core shell closes a requested 100 MHz on the
-K26 with WNS `+1.148 ns`, WHS `+0.010 ns`, `3,545` LUTs, `5,607` registers,
-`96.5 / 144` BRAM tiles, `0` URAM, and `2` DSPs. The standalone external memory
-fabric uses 94.5 BRAM-tile equivalents; the additional two tiles belong to the
-HLS-local accumulator.
-
-The external-memory integration, VIO/JTAG handshakes, physical reset behavior,
-HLS `ap_ctrl_hs` start semantics, and reserved event-word bits required several
-iterations. The complete history is retained in
-`docs/P03_INTEGRATION_CHALLENGES.md`.
-
-## Accepted physical-conformance evidence
-
-- [x] Added a transport-neutral nine-bank host/debug bridge and compute/host
-      arbitration.
-- [x] Made host completion/status pollable over VIO/JTAG.
-- [x] Added deterministic physical-vector generation from the Python corpus.
-- [x] Verified reset release physically with a free-running PL heartbeat.
-- [x] Verified physical write/read access to all nine retained XPM banks.
-- [x] Programmed `xck26_0` and completed the automated five-tick T10 corpus.
-- [x] Every physical tick matched Python state, normalized trace, packet words,
-      spike count, packet count, and status.
-- [x] All five ticks completed with `status=0`.
-
-Physical observations for the accepted directed corpus:
-
-| Tick | Timestep | PL cycles | Spikes | Packets | Status |
-|---:|---:|---:|---:|---:|---:|
-| 0 | 0 | 36 | 1 | 2 | 0 |
-| 1 | 1 | 34 | 1 | 1 | 0 |
-| 2 | 2 | 36 | 0 | 0 | 0 |
-| 3 | 3 | 23 | 0 | 0 | 0 |
-| 4 | 4 | 36 | 1 | 2 | 0 |
-
-The physical harness wrote `schema=p03-physical-conformance-v1` and
-`result=PASS`. These cycle counts are implementation observations for the
-directed corpus, not algorithmic timesteps or native-Loihi latency claims.
-
-## Completion gate
-
-**Complete.** One hardware core reproduces the normalized golden-model
-state/spike/packet behavior for the directed suite on the physical K26, all nine
-physical memory banks are host-accessible, and T10 passes through the automated
-physical conformance flow.
-
-**Next phase:** P04 — multicore packet routing and barrier semantics.
+Primary records: `docs/P03_ONE_CORE_HARDWARE_BOUNDARY.md`, `docs/P03_VIVADO_IMPLEMENTATION.md`, and `docs/P03_INTEGRATION_CHALLENGES.md`.
 
 ---
 
 # P04 — Multicore packet routing and timestep/barrier semantics
 
 **Status:** Complete  
-**Started:** 2026-09-28  
 **Completed:** 2026-09-29
 
-## Goal
+P04 added explicit multicore packet routing, simultaneous source handling, backpressure, local/remote traffic accounting, and quiescence/barrier semantics. The resource-scaled physical validation shell preserved the full logical capacity contract and passed directed K26 conformance under legal packet-service orderings.
 
-Extend FPGA-v2 from an isolated logical core to a true multicore architectural
-model with explicit inter-core communication and deterministic algorithmic-time
-completion semantics.
-
-## Engineering decision: preserving logical capacity under the K26 memory limit
-
-P03 established a transparent full-capacity one-core physical reference shell,
-but that shell uses `96.5 / 144` K26 BRAM tiles. Two literal copies would need
-approximately `193` BRAM tiles before the P04 router, barrier, or any extra queue
-storage is counted. Therefore a naive two-full-shell implementation is not a
-physically valid P04 plan.
-
-The memory problem is treated as a **physical implementation constraint**, not
-an architectural permission to shrink the modeled Loihi core. P04 continues to
-enforce the source-backed logical limits of 1,024 compartments/core, 4,096 input
-axon IDs/core, 4,096 output-route slots/core, and 128 KiB modeled synaptic
-fan-in storage/core. A deployment that exceeds those logical limits remains
-invalid regardless of how little or how much FPGA memory happens to be present.
-
-The accepted design uses two unchanged P03-compatible compute endpoints with
-physical backing memories sized for the directed P04 validation deployment.
-This provides genuine simultaneous endpoint/routing behavior while clearly
-reporting that the test shell is not capable of retaining two maximally
-populated logical cores at once. P05 replaces this fixture limitation with
-transparent logical-context storage and scheduling.
-
-The complete architecture contract is recorded in
-`docs/P04_MULTICORE_ARCHITECTURE.md`; the integration implementation is recorded
-in `docs/P04_INTEGRATION_IMPLEMENTATION.md`; and the bring-up problems and fixes
-are recorded in `docs/P04_INTEGRATION_CHALLENGES.md`.
-
-## Sub-milestone progress
-
-### P04.1 — Golden-model multicore contract closure — **Verified**
-
-- [x] Added explicit `external` / `local` / `remote` route-scope accounting.
-- [x] Added simultaneous remote producers and fan-in regression coverage.
-- [x] Added local+remote multicast regression coverage.
-- [x] Preserved feed-forward, recurrence, barrier blocking, and legal
-      service-order invariance behavior.
-- [x] Targeted multicore pytest and the full v2 pytest suite passed.
-
-### P04.2 — Standalone packet-router/barrier RTL — **Verified**
-
-- [x] Added independent producer capture slots so simultaneous source assertions
-      are retained without depending on arbitration priority.
-- [x] Added deterministic arbitration with reversible legal service priority.
-- [x] Added per-destination FIFOs with explicit ready/valid backpressure.
-- [x] Added P03 packet valid/destination/target-timestep integrity checks.
-- [x] Added local/remote traffic counters.
-- [x] Added per-core completion latching, in-flight accounting, `can_advance`,
-      accepted advance, and blocked-advance behavior.
-- [x] Added a directed XSim test that stalls destination traffic and proves a
-      timestep cannot advance until all traffic drains.
-- [x] Vivado 2025.2 XSim passed with
-      `PASS: P04 packet router/barrier directed test completed successfully.`
-
-### P04.3 — Two-endpoint P03-core integration shell — **Verified**
-
-- [x] Instantiated two unchanged P03-compatible HLS compute endpoints.
-- [x] Added resource-scaled physical backing memories while preserving the full
-      logical-capacity contract.
-- [x] Converted routed destination-axon packets into each endpoint's next-tick
-      event list without adding an algorithmic timestep.
-- [x] Added deterministic multicore Python/HLS and physical-vector generation.
-- [x] Validated feed-forward, recurrence, simultaneous producers, fan-in, and
-      local/remote multicast in the Python↔HLS differential corpus.
-- [x] Validated forward and reversed legal packet-service orders.
-- [x] Corrected the packet-memory streamer completion handshake after repeated
-      timesteps exposed stale sticky `done` state.
-- [x] Added a regression for HLS-ready-low startup after physical bring-up showed
-      that pre-gating `ap_start` on `ap_ready` could deadlock the first tick.
-- [x] Corrected controller XSim and the full P04 source preflight passed.
-
-### P04.4 — K26 implementation/resource gate — **Verified**
-
-- [x] Routed the integrated P04 shell at a requested 100 MHz.
-- [x] Demonstrated a two-endpoint physical fixture using 49 BRAM tiles in the
-      preconditioned implementation, far below the approximately 193 BRAM tiles
-      required for two literal P03 full-memory shells.
-- [x] Recorded the physical validation allocation separately from logical Loihi
-      occupancy; implementation metrics report `logical_capacity_changed=0`.
-- [x] Generated `.bit`, `.ltx`, checkpoint, timing, utilization, bus-skew, DRC,
-      and methodology artifacts.
-- [x] Diagnosed the board reset path with a reset-independent PL0 counter and
-      direct observation of `peripheral_aresetn`.
-- [x] Replaced the functional `proc_sys_reset` dependency with the
-      source-controlled `p04_reset_conditioner` using active-high VIO reset
-      request and a 16-PL-cycle synchronous release interval.
-- [x] Promoted the conditioned project into the canonical `run_p04_impl.sh`
-      output so `p04_two_core.bit/.ltx` are the same artifact class used by the
-      normal physical harness.
-- [x] Rebuilt the canonical conditioned implementation before final board
-      acceptance.
-
-### P04.5 — Physical multicore conformance — **Verified**
-
-- [x] Programmed the K26 with the canonical P04 `.bit/.ltx` artifacts.
-- [x] Verified reset release using the free-running heartbeat.
-- [x] Passed physical write/read preflight for both endpoint memory fabrics.
-- [x] Executed the two-timestep feed-forward corpus under both legal packet
-      service priorities.
-- [x] Executed the three-timestep recurrent local+remote multicast corpus under
-      both legal packet service priorities.
-- [x] Compared physical core state, trace data, packets, next-timestep events,
-      spike counts, packet counts, local/remote traffic, barrier completion, and
-      status/error observations against Python-generated expectations.
-- [x] Verified nonzero physical cycle counts on every directed tick.
-- [x] Archived the final accepted evidence under
-      `hardware/evidence/p04_physical_20260929T211309Z/`.
-- [x] Final result: `schema=p04-physical-conformance-v1`, `result=PASS`.
-
-Accepted physical observations:
-
-| Scenario | Reverse priority | Timestep | PL cycles | Local packets | Remote packets |
-|---|---:|---:|---:|---:|---:|
-| feed_forward | 0 | 0 | 28 | 0 | 1 |
-| feed_forward | 0 | 1 | 21 | 0 | 0 |
-| feed_forward | 1 | 0 | 28 | 0 | 1 |
-| feed_forward | 1 | 1 | 21 | 0 | 0 |
-| recurrent_multicast | 0 | 0 | 33 | 2 | 2 |
-| recurrent_multicast | 0 | 1 | 39 | 2 | 2 |
-| recurrent_multicast | 0 | 2 | 39 | 2 | 2 |
-| recurrent_multicast | 1 | 0 | 33 | 2 | 2 |
-| recurrent_multicast | 1 | 1 | 39 | 2 | 2 |
-| recurrent_multicast | 1 | 2 | 39 | 2 | 2 |
-
-The final heartbeat check observed `4,710,844 -> 7,448,013` across the reset
-release interval before the harness proceeded into memory and compute testing.
-These physical cycle counts are implementation observations for the directed
-corpus, not native-Loihi timing claims.
-
-## Required deliverables
-
-- [x] Instantiate at least two logical compute endpoints in the integrated FPGA path.
-- [x] Implement destination-core / destination-axon packet delivery.
-- [x] Implement explicit local versus remote routing accounting.
-- [x] Support simultaneous packet sources at the routing boundary.
-- [x] Demonstrate fan-in and fanout through integrated compute endpoints.
-- [x] Define and implement packet queue/backpressure behavior.
-- [x] Implement quiescence/completion detection and timestep advancement.
-- [x] Demonstrate cross-core recurrence without execution-order dependence.
-- [x] Expose packet/core/timestep/barrier state in normalized software and
-      physical differential validation.
-
-## Required validation
-
-- [x] Two-core feed-forward network through integrated compute endpoints.
-- [x] Bidirectional/recurrent two-core network through integrated compute endpoints.
-- [x] Multiple simultaneous packet producers.
-- [x] Multicast to local and remote destinations through integrated compute endpoints.
-- [x] Different legal packet-service orders produce identical normalized results.
-- [x] A timestep cannot advance while current-timestep traffic remains pending.
-- [x] Physical K26 execution matches the Python-directed corpus under both legal
-      service priorities.
-
-## Completion gate
-
-**Complete.** Multicore hardware execution is deterministic at the normalized
-architectural boundary and independent of the tested legal FPGA packet-service
-ordering. P04.1-P04.5 are verified, including canonical physical K26
-conformance and archived evidence.
-
-**Next phase:** P05 — logical-core virtualization.
+Primary records: `docs/P04_MULTICORE_ARCHITECTURE.md`, `docs/P04_INTEGRATION_IMPLEMENTATION.md`, and `docs/P04_INTEGRATION_CHALLENGES.md`.
 
 ---
 
 # P05 — Logical-core virtualization
 
 **Status:** Complete  
-**Started:** 2026-09-29  
 **Completed:** 2026-09-29
 
-## Goal
+P05 separated logical-core identity from physical compute-engine identity and built the accepted K26 virtualization shell with three independently retained full logical contexts over one HLS compute engine. The final shell uses 47 URAM288s, two BRAM tiles, and two DSPs, and preserves logical state/packet semantics under legal context-service orders.
 
-Support more logical Loihi-like cores than physically instantiated FPGA compute
-engines while preserving visible architecture and logical limits.
-
-P05 begins from the accepted P04 boundary: two physical compute endpoints,
-destination-core/destination-axon packet routing, quiescence/barrier semantics,
-normalized state/packet visibility, a physically verified reset/control path,
-and a clear distinction between logical Loihi capacity and physical FPGA
-allocation. P05 removes the P04 validation fixture's context-retention limitation
-without changing those externally visible semantics.
-
-The architecture contract is documented in
-`docs/P05_VIRTUALIZATION_ARCHITECTURE.md`; the implementation decisions,
-constraints, failures, and physical closure are recorded in
-`docs/P05_INTEGRATION_CHALLENGES.md`.
-
-## Sub-milestone progress
-
-### P05.1 — Virtualization contract and software invariance — **Verified**
-
-- [x] Added explicit separation between logical-core identity and physical-engine
-      assignment.
-- [x] Added deterministic logical-core scheduling and explicit dispatch records.
-- [x] Added reporting for logical core count, physical engine count,
-      virtualization ratio, and scheduling waves.
-- [x] Kept physical-engine assignment out of normalized logical traces.
-- [x] Ran the same three-core recurrent network with one, two, and three abstract
-      physical engines and confirmed identical normalized traces.
-- [x] Ran different legal logical-core service orders and packet-drain orders and
-      confirmed identical normalized traces.
-- [x] Confirmed logical capacity errors are raised before and independently of
-      physical sharing.
-
-### P05.2 — Full-context K26 virtualization shell — **Verified**
-
-- [x] Reused one unchanged P03-compatible HLS compute engine.
-- [x] Added three independently retained full logical-core context slots.
-- [x] Moved full context retention to UltraRAM-backed shared memories while
-      preserving the accepted P03 local address widths/depths.
-- [x] Preserved logical core IDs in packets and added logical-ID-to-context-slot
-      resolution in the controller.
-- [x] Added double-buffered 4,096-entry event memories per context so early
-      `t+1` traffic cannot overwrite unconsumed `t` events for later-serviced
-      logical contexts.
-- [x] Preserved the P04 lesson that HLS `ap_ready` is diagnostic only and must
-      not gate the initial `ap_start` transaction.
-- [x] Added directed RTL/controller regression coverage for forward and reverse
-      three-context service order and event-bank rollover.
-- [x] Fixed the P05 hardware-image test fixture to use the accepted P03 required
-      saturating arithmetic profile rather than generic software defaults.
-- [x] Vivado synthesis used exactly 47 URAM288 primitives, matching the first-pass
-      packing estimate, plus 2 BRAM tiles and 2 DSPs.
-- [x] Routed the canonical P05 shell at the requested 100 MHz with WNS
-      `+0.588 ns` and WHS `+0.011 ns`.
-- [x] Post-route utilization: 47/64 URAM288, 2/144 BRAM tiles, 5,062 LUTs,
-      7,686 registers, and 2 DSPs.
-- [x] Implementation metrics report `logical_contexts=3`,
-      `physical_engines=1`, `double_buffered_events=1`, and
-      `logical_capacity_changed=0`.
-
-### P05.3 — Physical virtualization conformance — **Verified**
-
-- [x] Programmed the K26 with the canonical P05 `.bit/.ltx` artifacts.
-- [x] Verified reset release using the source-controlled synchronous reset path
-      and free-running heartbeat.
-- [x] Passed host read/write preflight at the final legal address of every full
-      retained bank in all three context slots, including both event banks.
-- [x] Verified nonexistent physical context slot 3 is rejected rather than
-      aliased.
-- [x] Executed a three-core ring using noncontiguous logical IDs 7, 42, and 99,
-      proving logical identity is independent of physical context slot.
-- [x] Executed recurrent local+remote fanout/fan-in traffic.
-- [x] Ran both directed scenarios under forward and reverse legal logical-context
-      service orders.
-- [x] Verified event-bank selection flips only after the logical barrier advances.
-- [x] Compared physical state, trace words, packet words, routed next-timestep
-      events, event counts, logical/context identity, traffic counters, barrier
-      state, HLS status, and memory/controller error flags against Python-generated
-      expectations.
-- [x] Verified nonzero physical cycle counts on every directed tick.
-- [x] Archived the accepted evidence under
-      `hardware/evidence/p05_physical_20260930T011850Z/`.
-- [x] Final result: `schema=p05-physical-conformance-v1`, `result=PASS`.
-
-Accepted physical observations:
-
-| Scenario | Reverse service | Timestep | PL cycles | Local packets | Remote packets |
-|---|---:|---:|---:|---:|---:|
-| logical_id_ring | 0 | 0 | 56 | 0 | 1 |
-| logical_id_ring | 0 | 1 | 56 | 0 | 1 |
-| logical_id_ring | 0 | 2 | 56 | 0 | 1 |
-| logical_id_ring | 0 | 3 | 56 | 0 | 1 |
-| logical_id_ring | 1 | 0 | 56 | 0 | 1 |
-| logical_id_ring | 1 | 1 | 56 | 0 | 1 |
-| logical_id_ring | 1 | 2 | 56 | 0 | 1 |
-| logical_id_ring | 1 | 3 | 56 | 0 | 1 |
-| local_remote_fanin | 0 | 0 | 77 | 2 | 2 |
-| local_remote_fanin | 0 | 1 | 100 | 3 | 3 |
-| local_remote_fanin | 0 | 2 | 112 | 3 | 3 |
-| local_remote_fanin | 1 | 0 | 77 | 2 | 2 |
-| local_remote_fanin | 1 | 1 | 100 | 3 | 3 |
-| local_remote_fanin | 1 | 2 | 112 | 3 | 3 |
-
-The accepted heartbeat check observed `2,410,690 -> 5,146,953` before the
-harness proceeded into full-depth memory and compute testing. These cycle counts
-are synchronous FPGA implementation observations for the directed corpus, not
-native-Loihi physical timing claims.
-
-## Required deliverables
-
-- [x] Separate logical-core state from physical execution-engine identity.
-- [x] Store independent compartment/axon/synapse/routing state per logical core.
-- [x] Add a deterministic scheduler for logical-core service.
-- [x] Preserve logical per-core resource limits when memories are physically shared.
-- [x] Report both logical core count and physical engine count.
-- [x] Report physical FPGA occupancy separately from logical Loihi occupancy.
-- [x] Maintain transparent logical-core-to-engine mapping.
-- [x] Preserve the accepted P04 packet format, barrier contract, reset strategy,
-      and host/debug observability unless a change is explicitly justified and
-      regression-tested.
-
-## Required validation
-
-- [x] Run the same network with different physical-engine counts.
-- [x] Run the same network with different legal logical-core service orders.
-- [x] Confirm identical normalized logical state/spike/packet traces.
-- [x] Confirm logical capacity errors cannot be bypassed by physical sharing.
-- [x] Demonstrate more logical cores/contexts than simultaneously resident
-      physical compute endpoints on the K26.
-
-## Completion gate
-
-**Complete.** Virtualization invariance is demonstrated at the normalized
-architectural boundary. The software model produces identical logical results
-across one-, two-, and three-engine schedules and different legal service/drain
-orders; the physical K26 retains three full logical contexts and services them
-with one compute engine while matching the Python-directed corpus under both
-forward and reverse context-service orders.
-
-**Next phase:** P06 — deterministic mapper/compiler.
+Primary records: `docs/P05_VIRTUALIZATION_ARCHITECTURE.md` and `docs/P05_INTEGRATION_CHALLENGES.md`.
 
 ---
 
 # P06 — Deterministic mapper/compiler and deployment format
 
 **Status:** Complete  
-**Started:** 2026-09-29  
 **Completed:** 2026-09-29
 
-## Goal
+P06 established the deterministic high-level network-to-deployment compiler. It partitions populations, allocates compartments/axons/routes/synapse templates, enforces modeled Loihi-like capacities, records placement and occupancy, emits deterministic fingerprints, and feeds the same deployment to Python and FPGA image generation.
 
-Map trained networks onto modeled Loihi-like resources and emit one
-deterministic deployment consumed by both Python and FPGA execution.
+The project synapse-storage model is explicitly project-defined and is not claimed to be native Loihi SRAM packing.
 
-P06 takes the manually configured architecture accepted through P05 and adds a
-single deterministic compiler boundary above it. High-level population and
-projection specifications are compiled into the same `Deployment` logical-core
-configuration consumed by Python and the accepted P05 FPGA image packer. No
-second FPGA-specific mapping format is maintained.
-
-The compiler contract is documented in `docs/P06_MAPPING_COMPILER.md`; the
-implementation decisions and closure lessons are recorded in
-`docs/P06_MAPPING_COMPILER_CHALLENGES.md`.
-
-## Sub-milestone progress
-
-### P06.1 — Network/deployment compiler contract — **Verified**
-
-- [x] Added versioned `p06-network-v1` high-level network specifications.
-- [x] Added versioned `v2.1-p06` compiled deployments around the validated P02
-      logical `Deployment` boundary.
-- [x] Added deterministic source and compiled-deployment SHA-256 fingerprints.
-- [x] Added explicit population/neuron → logical-core/compartment placement
-      records and external ingress-route metadata.
-- [x] Added deterministic JSON round-trip and tamper detection.
-
-### P06.2 — Deterministic placement/resource allocation — **Verified**
-
-- [x] Added deterministic population splitting and logical-core allocation.
-- [x] Added deterministic destination input-axon allocation and source output
-      route construction.
-- [x] Added normalized fanout-pattern sharing using reusable synapse templates
-      plus destination `target_offset`, without claiming native Loihi SRAM
-      compression.
-- [x] Added hard compartment, input-axon, output-route, and synapse-memory
-      capacity enforcement during mapping.
-- [x] Added explicit mapping diagnostics naming core/resource/used/limit.
-- [x] Added per-core occupancy/headroom, static local/remote traffic, placement,
-      and sharing reports.
-- [x] Added compiler regressions for reordered-equivalent inputs, population
-      splitting, template sharing, external ingress, capacity rejection, and
-      compiled Python execution.
-
-### P06.3 — Shared Python/FPGA deployment and physical conformance — **Verified**
-
-- [x] Added `CompiledDeployment.build_chip()` so Python executes the contained
-      logical deployment directly.
-- [x] Added `export_compiled_fpga_image()` so the same compiled deployment is
-      exported through the accepted P05 full-context hardware packer.
-- [x] Added CLI flow `network.json -> deployment.json + mapping report + FPGA
-      report + load vectors` with fingerprint continuity checks.
-- [x] Added a compiler-driven physical corpus and K26 conformance harness without
-      changing or resynthesizing the accepted P05 compute architecture.
-- [x] Loaded and read back the generated compiled context image before execution.
-- [x] Executed mapped `pixel0`, `pixel1`, and `both_pixels` scenarios under both
-      forward and reverse legal context-service orders.
-- [x] Compared mapped physical state, trace words, packet words, next-timestep
-      events, traffic counters, barrier state, HLS status, and error flags against
-      expectations generated from the exact compiled deployment.
-- [x] Verified the physical result records the same deployment fingerprint as the
-      compiled JSON artifact.
-- [x] Verified nonzero physical cycle counts on all 24 directed ticks.
-- [x] Archived the accepted evidence under
-      `hardware/evidence/p06_physical_20260930T014904Z/`.
-- [x] Final result: `schema=p06-physical-mapped-deployment-v1`, `result=PASS`.
-
-Accepted physical identity:
-
-```text
-source_fingerprint=8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383
-deployment_fingerprint=32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b
-logical_contexts=3
-physical_engines=1
-logical_capacity_changed=0
-```
-
-Accepted physical observations:
-
-| Scenario | Reverse service | Timestep | PL cycles | Local packets | Remote packets |
-|---|---:|---:|---:|---:|---:|
-| pixel0 | 0 | 0 | 74 | 0 | 1 |
-| pixel0 | 0 | 1 | 76 | 0 | 1 |
-| pixel0 | 0 | 2 | 68 | 0 | 0 |
-| pixel0 | 0 | 3 | 61 | 0 | 0 |
-| pixel0 | 1 | 0 | 74 | 0 | 1 |
-| pixel0 | 1 | 1 | 76 | 0 | 1 |
-| pixel0 | 1 | 2 | 68 | 0 | 0 |
-| pixel0 | 1 | 3 | 61 | 0 | 0 |
-| pixel1 | 0 | 0 | 74 | 0 | 1 |
-| pixel1 | 0 | 1 | 76 | 0 | 1 |
-| pixel1 | 0 | 2 | 68 | 0 | 0 |
-| pixel1 | 0 | 3 | 61 | 0 | 0 |
-| pixel1 | 1 | 0 | 74 | 0 | 1 |
-| pixel1 | 1 | 1 | 76 | 0 | 1 |
-| pixel1 | 1 | 2 | 68 | 0 | 0 |
-| pixel1 | 1 | 3 | 61 | 0 | 0 |
-| both_pixels | 0 | 0 | 87 | 0 | 2 |
-| both_pixels | 0 | 1 | 91 | 0 | 2 |
-| both_pixels | 0 | 2 | 75 | 0 | 0 |
-| both_pixels | 0 | 3 | 61 | 0 | 0 |
-| both_pixels | 1 | 0 | 87 | 0 | 2 |
-| both_pixels | 1 | 1 | 91 | 0 | 2 |
-| both_pixels | 1 | 2 | 75 | 0 | 0 |
-| both_pixels | 1 | 3 | 61 | 0 | 0 |
-
-## Required deliverables
-
-- [x] Finalize the machine-readable deployment schema.
-- [x] Partition populations/compartments across logical cores.
-- [x] Allocate input axons, synapse groups/lists, and output routes.
-- [x] Implement supported connection sharing/compression or the explicit
-      project-defined equivalent.
-- [x] Enforce hard per-core limits during mapping.
-- [x] Reject invalid mappings with explicit diagnostics.
-- [x] Make mapping deterministic for a fixed network/configuration.
-- [x] Report per-core use/headroom and expected traffic where meaningful.
-- [x] Hash/version deployment artifacts.
-- [x] Load the same deployment artifact into Python and FPGA paths.
-
-## Completion gate
-
-**Complete.** Networks can be mapped deterministically into inspectable,
-resource-valid deployments without hand-editing FPGA-specific configuration.
-The accepted physical test demonstrates the same versioned compiled deployment
-feeding both Python expectations and FPGA context loading/execution while
-preserving its fingerprint through the physical result.
-
-**Next phase:** P07 — deeper mapped SNN validation.
+Primary records: `docs/P06_MAPPING_COMPILER.md` and `docs/P06_MAPPING_COMPILER_CHALLENGES.md`.
 
 ---
 
 # P07 — Deeper mapped multicore SNN validation
 
 **Status:** Complete  
-**Started:** 2026-09-29  
 **Completed:** 2026-09-29
 
-## Goal
+P07 demonstrated a compiler-generated six-layer/12-neuron SNN across three logical cores, including local and remote traffic, supported sharing, deterministic placement, expected capacity rejection, legal service-order invariance, and physical K26 conformance. All 42 directed physical ticks passed.
 
-Demonstrate that FPGA-v2 supports networks that genuinely exercise multicore
-mapping, routing, sharing, and capacity constraints before final MNIST work.
-
-The workload and validation contract are documented in
-`docs/P07_DEEP_SNN_VALIDATION.md`; design decisions and closure lessons are
-recorded in `docs/P07_DEEP_SNN_CHALLENGES.md`.
-
-## Achieved deliverables
-
-- [x] Built a deterministic six-layer feed-forward SNN with 12 neurons and four
-      external input channels.
-- [x] Defined the workload once in `src/loihi_twin_v2/workload_p07.py` and reused
-      that source for tests, JSON generation, compiler analysis, physical-vector
-      generation, and board execution.
-- [x] Mapped the network entirely through the P06 compiler with four compartments
-      per logical core, producing three logical cores with two layers per core.
-- [x] Exercised both local and remote inter-layer routing in one mapped graph.
-- [x] Exercised supported normalized fanout/template sharing on every feed-forward
-      stage.
-- [x] Recorded 28 expanded synaptic connections represented by six stored shared
-      parameters (`4.666666666666667` expanded per stored parameter).
-- [x] Added deterministic mapping/occupancy analysis and forward/reverse logical
-      service-order invariance regressions.
-- [x] Added an explicit mapping-capacity probe that rejects the same workload
-      when mapper policy is limited to two logical cores.
-- [x] Recorded the expected capacity diagnostic as
-      `logical_core_capacity`, `required=3`, `limit=2`.
-- [x] Reused the accepted P05 physical shell and P06 Hardware Manager checker so
-      the P07 validation delta remained the deeper compiled workload rather than
-      another FPGA-control implementation.
-- [x] Compared Python and physical FPGA state, normalized trace words, packets,
-      routed next-timestep events, local/remote traffic, barrier state, identity,
-      status, and error observations.
-- [x] Validated physical K26 execution under both forward and reverse legal
-      logical-context service orders.
-- [x] Preserved the accepted routed physical occupancy from the unchanged P05
-      shell: 47/64 URAM288, 2/144 BRAM, 5,062 LUTs, 7,686 registers, and 2 DSPs.
-
-## Accepted physical evidence
-
-The accepted physical identity is:
-
-```text
-schema=p07-deep-mapped-snn-v1
-source_fingerprint=4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76
-deployment_fingerprint=5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9
-layers=6
-neurons=12
-input_channels=4
-logical_contexts=3
-physical_engines=1
-logical_capacity_changed=0
-expanded_connections=28
-stored_shared_parameters=6
-capacity_probe_result=EXPECTED_REJECTION
-capacity_probe_code=logical_core_capacity
-capacity_probe_required=3
-capacity_probe_limit=2
-scenarios=3
-physical_ticks=42
-result=PASS
-```
-
-The three directed scenarios (`pixel0`, `pixel0_pixel2`, and `all_pixels`) each
-executed seven algorithmic timesteps under both forward and reverse context
-service order. All 42 directed physical ticks passed. The observed workload
-traffic alternated local and remote transfers across the six-layer chain and
-then reached quiescence as expected.
-
-The reset-release heartbeat changed from `5,903,621` to `8,486,799` before the
-physical workload proceeded. Tick costs ranged from 97 to 143 synchronous PL
-cycles for the accepted corpus; these are FPGA implementation observations, not
-native-Loihi timing claims.
-
-The accepted evidence is archived under:
-
-```text
-hardware/evidence/p07_physical_20260930T022814Z/
-```
-
-## Required deliverables
-
-- [x] Select/build a deeper feed-forward SNN with multiple mapped layers.
-- [x] Map through the P06 compiler rather than manual placement.
-- [x] Exercise multiple logical cores and inter-core traffic.
-- [x] Exercise supported connection sharing/resource optimization.
-- [x] Compare Python and FPGA normalized traces on representative cases.
-- [x] Validate physical K26 execution.
-- [x] Record logical occupancy, physical FPGA utilization, and capacity failures.
-
-## Completion gate
-
-**Complete.** A nontrivial six-layer SNN executes reproducibly through the
-specification → mapper → Python → FPGA flow, exercises both local and remote
-multicore traffic plus connection sharing and capacity rejection, and agrees at
-the normalized architectural boundary across all 42 accepted physical ticks.
-
-**Next phase:** P08 — NxTF MNIST emulation and comparison.
+Primary records: `docs/P07_DEEP_SNN_VALIDATION.md` and `docs/P07_DEEP_SNN_CHALLENGES.md`.
 
 ---
 
@@ -896,351 +154,388 @@ the normalized architectural boundary across all 42 accepted physical ticks.
 
 **Status:** In progress  
 **Started:** 2026-09-29  
-**Realigned:** 2026-09-29
+**Realigned:** 2026-09-29  
+**Active sub-phase:** P08.5
 
 ## Goal
 
-Emulate the frame-based MNIST workload reported in Rueckauer et al. NxTF as
-closely as public source evidence and the FPGA-v2 framework permit, execute that
-workload through the deterministic P06 → Python → FPGA path, and make a bounded,
-source-aware comparison of accuracy, mapping pressure, connection sharing,
-logical/physical virtualization, cycles, and resources.
+Emulate the frame-based MNIST workload reported in Rueckauer et al. NxTF as closely as public evidence and FPGA-v2 permit, run that workload through the deterministic P06 → Python → FPGA path, and make a bounded source-aware comparison of accuracy, topology/resource pressure, connection sharing, logical/physical virtualization, traffic, FPGA execution observations, and implementation resources.
 
-P08 is **not** a generic search for a small MNIST network with approximately the
-same parameter count. Source fidelity has priority over fitting the current
-three-resident-context K26 shell.
+P08 is not a generic search for a network with approximately the same parameter count. Source fidelity and explicit uncertainty take priority over forcing numerical agreement.
 
-The detailed experiment contract is:
+Primary experiment/source records:
 
 ```text
 docs/P08_MNIST_COMPARISON_CONTRACT.md
-```
-
-The source audit and abandoned-candidate record are:
-
-```text
 docs/P08_NXTF_SOURCE_AUDIT.md
+docs/P08_NXTF_RECONSTRUCTION.md
 ```
 
-## Reference anchors
+## Published NxTF anchors
 
-The NxTF paper reports for its frame-based MNIST experiment:
+The NxTF paper reports for its frame-based MNIST benchmark:
 
-- a four-layer CNN;
+- four convolutional layers;
 - approximately 4k neurons and 7k trainable parameters;
-- 341k discrete convolutional connections represented by 6,746 shared weights;
+- approximately 341k discrete convolutional connections represented by 6,746 shared weights;
 - 14 Loihi neurocores after NxTF mapping;
 - SNN Toolbox rate-based ANN→SNN conversion;
 - 100 algorithmic timesteps/sample;
 - 0.74% ANN error and 0.79% converted-SNN error;
 - 0.66 mJ/sample and 6.65 ms/sample on native Loihi.
 
-The surviving public Intel NxTF MNIST tutorial is useful but is not the same
-benchmark: it uses a 16→32→64→10 all-convolutional network with 33,802 trainable
-parameters and a 512-timestep example. P08 must keep those sources distinct.
+The surviving public Intel NxTF tutorial is a different 16→32→64→10, 33,802-parameter, 512-timestep example and is used only as source-style evidence.
 
-## Realignment decision
+## P08.1 — NxTF source reconstruction and experiment freeze — **Complete**
 
-The initial three P08 candidates are rejected development history, not active
-models. They were hand-designed around a ~7k parameter target and the existing
-three-context physical shell, but contained only about 2.1-2.5k neurons, used two
-convolutional stages followed by dense bottlenecks, and achieved validation
-accuracies of 88.10%, 49.60%, and 69.18% respectively. Matching one aggregate
-parameter count was not sufficient to represent the paper's architecture or
-resource pressure.
+Accepted source-bounded project reconstruction:
 
-Their topology/training/conversion/inference/mapping-probe code has been removed
-from the active P08 application tree. The official MNIST test set remains locked;
-none of those rejected revisions was accepted on test-set performance.
+```text
+28x28x1
+ -> Conv2D(14, 5x5, stride 2, valid) -> 12x12x14
+ -> Conv2D(20, 3x3, stride 1, valid) -> 10x10x20
+ -> Conv2D(12, 3x3, stride 2, valid) ->  4x4x12
+ -> Conv2D(10, 4x4, stride 1, valid) ->  1x1x10
+```
 
-## P08.1 — NxTF source reconstruction and experiment freeze — **In progress**
+Accepted totals:
 
-- [x] Record the paper's published aggregate MNIST metrics and comparison limits.
-- [x] Audit the surviving public Intel NxTF MNIST tutorial and distinguish it
-      from the paper's Table-2 benchmark.
-- [x] Record why revisions 1-3 are architecturally/resource-wise insufficient.
-- [x] Remove revision-2/revision-3 active candidate implementation assumptions
-      from the P08 source tree and mark the topology explicitly unfrozen.
-- [ ] Search paper/preprint/supplemental material, Intel NRC repository history,
-      SNN Toolbox artifacts, author repositories, and archived releases for the
-      exact ~7k-parameter paper topology and conversion details.
-- [ ] Classify every required topology/training/conversion fact as
-      `SOURCED_EXACT`, `SOURCED_STYLE_OR_RANGE`, `PROJECT_RECONSTRUCTION`, or
-      `UNKNOWN_NOT_CLAIMED`.
-- [ ] Freeze the closest source-backed topology and full experiment contract
-      before any new training run.
-- [ ] Commit a deterministic topology/resource audit before unlocking training.
+```text
+neurons:                 4,218
+convolution weights:     6,950
+bias parameters:            56
+trainable parameters:    7,006
+expanded connections: 338,880
+primary timesteps:          100
+```
 
-## P08.2 — FPGA-v2 adaptation for the source-faithful workload — **Planned**
+The exact unpublished NxTF benchmark layer dimensions/checkpoint were not recovered and remain `UNKNOWN_NOT_CLAIMED`. Topology/training/conversion facts are labeled as sourced exact, sourced style/range, project reconstruction, or unknown rather than silently filled in.
 
-- [ ] Compile the frozen graph through P06 under unchanged logical per-core
-      capacity rules.
-- [ ] Record neuron/compartment count, expanded connections, stored/shared
-      parameters, axons, routes, and required logical core count.
-- [ ] Treat the P05 three-context shell as a resident-context count, not a
-      logical-core limit.
-- [ ] If the mapped workload requires more than three logical cores, implement
-      deterministic logical-context paging/loading above the accepted P05
-      resident-context mechanism instead of shrinking the network.
-- [ ] Preserve logical core IDs, full architectural state, current/next event
-      semantics, routing identity, barrier semantics, and normalized traces
-      across context swaps.
-- [ ] Add directed context-page/service-order invariance and capacity tests.
-- [ ] Report logical core count, resident context count, and physical engine
-      count separately.
+Primary acceptance/reconstruction records: `docs/P08_NXTF_RECONSTRUCTION.md` and the P08.1 acceptance history.
 
-## P08.3 — ANN training and ANN-to-SNN conversion — **Planned**
+## P08.2 — FPGA-v2 adaptation and context paging — **Complete**
 
-- [ ] Freeze preprocessing, optimizer, loss, batch size, epoch/model-selection,
-      bias, regularization/dropout, and determinism policies from source evidence
-      plus explicit reconstruction decisions.
-- [ ] Train using only the official MNIST training split plus the deterministic
-      frozen validation split.
-- [ ] Select the ANN checkpoint from validation data only.
-- [ ] Reproduce the NxTF/SNN-Toolbox rate conversion as closely as the validated
-      FPGA-v2 neuron arithmetic permits.
-- [ ] Freeze quantization, bias handling, normalization, thresholds, reset/leak,
-      input encoding, decoder, and timestep policies without test-set feedback.
-- [ ] Demonstrate validation behavior at the primary 100-timestep horizon.
+The frozen graph compiles through P06 under unchanged logical per-core limits to:
 
-## P08.4 — Full software evaluation and physical K26 conformance — **Planned**
+```text
+logical/backing cores: 5
+resident K26 contexts: 3
+physical HLS engines:  1
+expanded connections: 338,880
+external ingress routes: 2,187
+P06 stored shared parameters: 64,235
+static output routes: 7,860
+```
 
-- [ ] Evaluate the frozen ANN on the untouched 10,000-image official test split.
-- [ ] Evaluate the frozen SNN on the same test split, primarily at 100 algorithmic
-      timesteps.
-- [ ] Compile the exact converted graph through P06 and archive deployment/
-      mapping fingerprints.
-- [ ] Validate deterministic logical behavior under legal service ordering and,
-      if P08.2 adds it, legal context-page ordering.
-- [ ] Run a deterministic representative physical K26 corpus.
-- [ ] Compare physical state, spikes, packets, routed events, barrier state,
-      logical identity, status, and errors against Python expectations.
-- [ ] Record synchronous PL cycles separately from algorithmic timesteps.
-- [ ] Record FPGA utilization separately from logical Loihi-like occupancy.
+The accepted deterministic paging layer preserves logical IDs, backing state, current/next event semantics, packet destination identity, and the global algorithmic barrier independently from physical residency. The host owns cross-page routing and the global barrier.
 
-## P08.5 — NxTF comparison and closure — **Planned**
+The NxTF paper's 14 Loihi neurocores and the project's five P06 logical cores remain intentionally different. P06 is not the NxTF compiler and the project's storage/sharing model is not native Loihi packing.
 
-- [ ] Build the final NxTF comparison table.
-- [ ] Separate sourced/directly comparable quantities from reconstructed,
-      contextual, project-specific, and non-comparable quantities.
-- [ ] Report ANN/SNN accuracy, neuron/parameter/connection counts, logical core
-      count, resident contexts, physical engines, sharing metrics, traffic,
-      FPGA cycles, utilization, and mapping headroom/failures.
-- [ ] Keep native-Loihi energy/latency contextual unless a defensible K26
-      workload-specific physical measurement method is separately established.
-- [ ] Archive accepted software and physical evidence plus source/deployment
-      fingerprints.
+Primary records: `docs/P08_CONTEXT_PAGING.md` and `docs/P08_2_ACCEPTANCE.md`.
+
+## P08.3 — ANN training and source-recovered ANN→SNN conversion — **Complete**
+
+Training/checkpoint/conversion policy was frozen before use of the official test set. The accepted ANN checkpoint achieved:
+
+```text
+validation accuracy: 0.992600
+best epoch:          13
+semantic weights fingerprint:
+e5c07133b8d534d29596cbde9d637db695942dfb224a82c2533f59a17f1c74ce
+```
+
+An initial blanket `threshold=512`/global-scale conversion was rejected after it produced a silent converted network. Source recovery of Intel's public NxTF/SNN-Toolbox backend established the missing per-layer parameter/threshold normalization and the softmax voltage-readout behavior.
+
+Accepted source-recovered thresholds:
+
+```text
+input BIAS threshold: 2040
+conv1 threshold:       556
+conv2 threshold:       512
+conv3 threshold:       672
+conv4 readout:         final membrane voltage
+conv4 suppress-spike threshold: 131071
+```
+
+Accepted converted artifact identities:
+
+```text
+parameters = 9169939821201e4764813dbb17e254b796cd952e4707315eb61ecd0e0082926e
+network    = 6e47dc0c37d2f05828f0a0231406c7df8e4bf83652300fde0df1a0b8f9d83f13
+compiled   = 5dc7c9af692ca375283ede186b81d135bd1c76708b114cc64e3f99c085cd856b
+```
+
+Full frozen validation measurement:
+
+```text
+examples:      5,000
+timesteps:     100
+SNN accuracy:  0.984400
+ANN reference: 0.992600
+delta:         0.008200
+ties:          0
+```
+
+All tracked SNN stages were active for all 5,000 validation examples. No official-test examples were used during P08.3.
+
+Primary record: `docs/P08_3_ACCEPTANCE.md` plus the P08.3.1-P08.3.5 sub-gate documents.
+
+## P08.4 — Official-test evaluation and K26 conformance — **Complete**
+
+### P08.4.1 — Frozen official-test evaluation — **Complete**
+
+The untouched 10,000-image official MNIST test split was opened only after the accepted ANN/SNN identities and policies were frozen.
+
+```text
+ANN accuracy:       0.987400
+SNN accuracy:       0.982400
+ANN-SNN delta:      0.005000
+SNN readout ties:   1
+all-equal evidence: 0
+zero evidence:      0
+selection decisions after test: 0
+```
+
+Agreement:
+
+```text
+both correct: 9797
+ANN only:       77
+SNN only:       27
+both wrong:     99
+```
+
+The converted SNN test error is 1.76%. The NxTF paper reports 0.79%; P08 treats this as a bounded contextual comparison rather than a like-for-like result because the exact paper topology/checkpoint/partitioning is not available.
+
+### P08.4.2 — Exact compiled execution conformance — **Complete**
+
+Representative official-test frame fixed by index:
+
+```text
+test index: 0
+label:      7
+timesteps:  100
+```
+
+Unpaged logical execution, forward paging, and reverse paging produced the identical normalized trace fingerprint:
+
+```text
+a81844443b6e5f6c278167a4aafc46dcfd74f7df5498179312b1fc39edba09d6
+```
+
+and identical final evidence:
+
+```text
+[-284, -1203, 104, 109, -2253, -599, -2659, 1446, -436, -63]
+```
+
+with prediction 7.
+
+Paging/traffic observations:
+
+```text
+forward page loads/evictions: 497 / 497
+reverse page loads/evictions: 499 / 499
+ingress packets:              2,382
+internal packet traffic:     17,910
+```
+
+### P08.4.3a — Host-paged K26 shell — **Complete**
+
+The actual host-paged physical shell retains three full context memories and one HLS engine while exposing one resident dispatch at a time. Cross-page packet routing and the global barrier remain host-owned.
+
+Accepted routed implementation:
+
+```text
+requested PL clock:       100 MHz
+WNS:                      +0.734 ns
+WHS:                      +0.010 ns
+URAM:                     47
+logical backing contexts: 5
+resident context slots:   3
+physical engines:         1
+on-fabric cross-page router: false
+```
+
+Artifact identities:
+
+```text
+bitstream SHA-256 = 3538b8f7a23dbd923c77471cb533cd844af548c0d50d7679cd40844f465e8f83
+probes SHA-256    = e32376f31486b96b070b0b12c6131d7bed067e0dd05e0461b029baf3eeea6936
+```
+
+### P08.4.3b — Representative physical MNIST conformance — **Complete**
+
+The frozen logical-core-4 state for official-test index 0 immediately before timestep 99 was physically paged into resident slot 0 after a distinct logical-core-0 decoy marker was first written and verified.
+
+Accepted physical result:
+
+```text
+logical core:           4
+resident slot:          0
+timestep:              99
+input events:           2
+compartments checked: 618
+dispatch cycles:     3,865
+spikes:                 0
+packets:                0
+state/trace exact:   true
+packet image exact:  true
+output evidence exact:true
+prediction:             7
+```
+
+Physical evidence matched P08.4.2 exactly:
+
+```text
+[-284, -1203, 104, 109, -2253, -599, -2659, 1446, -436, -63]
+```
+
+The physical wrapper independently revalidates the generated result file after Vivado returns before emitting final success.
+
+### P08.4 accepted claim boundary
+
+P08.4 establishes complete 100-timestep paging semantics in compiled software plus physical conformance of a real deep-network page replacement/dispatch on the K26. It does **not** claim that the full approximately-500-dispatch representative inference was replayed end-to-end through JTAG.
+
+Primary records: `docs/P08_4_ACCEPTANCE.md`, `docs/P08_4_3A_ACCEPTANCE.md`, and `docs/P08_4_3B_ACCEPTANCE.md`.
+
+## P08.5 — NxTF comparison and closure — **In progress**
+
+### P08.5.1 — Comparison ledger and comparability classification — **In progress**
+
+- [ ] Build a machine-readable metric ledger for every final NxTF/project quantity.
+- [ ] Bind every project value to an accepted P08.1-P08.4 evidence source/fingerprint.
+- [ ] Classify comparison rows before writing conclusions so directly comparable, structural/caveated, project-specific, contextual, and non-comparable quantities cannot be conflated.
+- [ ] Encode guardrails preventing native-Loihi energy/latency values from being presented as direct K26 performance equivalents.
+- [ ] Validate the ledger deterministically with tests and a standalone gate.
+
+### P08.5.2 — Final comparison table and quantitative interpretation — **Planned**
+
+- [ ] Build the thesis-facing NxTF comparison table from the accepted ledger.
+- [ ] Report ANN/SNN accuracy, neuron/parameter/connection totals, core mapping, physical residency/engine count, sharing/accounting, paging/traffic, FPGA timing observations, utilization, and capacity boundaries.
+- [ ] Calculate only deltas/ratios whose measurement boundaries are compatible; label all others as contextual or non-comparable.
+
+### P08.5.3 — P08 final closure record — **Planned**
+
+- [ ] Summarize source-exact, source-style, reconstructed, project-specific, and unsupported elements of the final experiment.
+- [ ] Archive/bind the accepted software and physical evidence identities.
+- [ ] Record the strongest defensible thesis claims and explicit non-claims.
+- [ ] Mark P08 complete only after the final comparison gate is independently reproduced.
 
 ## Stable P08 data boundary
 
-The reusable application scaffold retains:
-
 ```text
-MNIST source image:      28 x 28 uint8
-official training split: 60,000 images
-validation split:        deterministic stratified 5,000 images
-training remainder:      55,000 images
-official test split:     10,000 images
-validation seed:         0x4D4E4953
-primary horizon:         100 algorithmic timesteps
+MNIST source image:       28 x 28 uint8
+official training split:  60,000 images
+validation split:          deterministic stratified 5,000 images
+training remainder:        55,000 images
+official test split:       10,000 images
+validation seed:           0x4D4E4953
+primary horizon:           100 algorithmic timesteps
 ```
 
-The official test split may not be used for topology selection, checkpoint
-selection, conversion calibration, threshold selection, timestep selection, or
-decoder selection.
+The official test split was not used for topology selection, checkpoint selection, conversion calibration, threshold selection, timestep selection, or decoder selection. P08.4/P08.5 may analyze the frozen result but must not retune the model or conversion in response to test outcomes.
 
-## Completion gate
+## P08 completion gate
 
 P08 is complete only when:
 
-1. the NxTF paper workload has been reconstructed as far as public evidence
-   supports and all remaining gaps are labeled rather than invented;
-2. the frozen source-backed graph compiles through P06 under unchanged logical
-   limits;
-3. any required more-logical-cores-than-resident-contexts extension is explicitly
-   implemented and proven invariant;
+1. the paper workload has been reconstructed as far as public evidence supports and remaining gaps are explicitly labeled;
+2. the frozen source-bounded graph compiles through P06 under unchanged logical limits;
+3. five-over-three context paging is explicitly implemented and proven invariant;
 4. ANN training and ANN→SNN conversion are frozen without official-test tuning;
 5. full official-test ANN and SNN accuracy are recorded;
-6. representative Python/FPGA K26 conformance passes for the exact deployment;
-7. logical occupancy, physical residency/engine count, connection sharing,
-   traffic, PL cycles, FPGA utilization, and headroom/failures are reported; and
-8. the final comparison clearly separates direct measurements, sourced reference
-   facts, reconstruction choices, contextual quantities, and non-comparable
-   metrics.
+6. exact compiled paging conformance and representative physical K26 conformance pass;
+7. logical occupancy, residency/engine count, sharing/accounting, traffic, FPGA cycles/resources, and relevant capacity boundaries are reported; and
+8. the final NxTF comparison explicitly distinguishes direct measurements, sourced reference facts, reconstruction choices, project-specific implementation quantities, contextual values, and non-comparable metrics.
 
-Energy claims remain out of scope unless a defensible workload-specific physical
-measurement method is established.
+Energy/inference remains outside the direct FPGA-vs-Loihi claim set unless an equivalent workload-specific K26 physical power/energy measurement is separately established.
 
 ---
 
 # Cross-phase architectural requirements
 
-These requirements apply throughout P02-P08. Normative definitions and source
-citations live in `docs/LOIHI1_TARGET_SPEC.md`.
+The v2 architecture must retain:
 
-## Priority-A requirements
-
-The first complete v2 architecture must support:
-
-- multiple logical neuromorphic cores;
-- explicit per-core compartment, input-axon, synapse, and output-routing resources;
-- Loihi-like hard capacity accounting;
-- destination-core / destination-axon spike packets;
-- explicit inter-core fanout and packet routing;
+- multiple explicit logical neuromorphic cores;
+- per-core compartment, input-axon, synapse, and routing resources;
+- enforced Loihi-like logical capacity limits;
+- destination-core / destination-axon packets;
+- inter-core fanout and routing;
 - deterministic placement and mapping;
-- algorithmic timestep/quiescence barriers independent of FPGA clock cycles;
-- convolution-oriented axon/synapse sharing or a clearly modeled equivalent;
-- transparent configuration, state, packet, spike, and resource traces;
-- deeper feed-forward SNN graphs; and
-- one deterministic mapping/compiler layer used by both Python and FPGA.
+- algorithmic timestep/barrier semantics independent of raw FPGA clock cycles;
+- supported sharing or an explicitly modeled project equivalent;
+- inspectable configuration/state/packet/spike/resource traces;
+- deeper mapped feed-forward SNN execution; and
+- one deterministic compiler/deployment artifact consumed by both Python and FPGA.
 
-## Digital-twin boundary
-
-The project targets a **source-backed architectural digital twin**, not a
-transistor-level clone.
-
-Logical resources may be virtualized or time-multiplexed on the K26 only when:
-
-- virtualization is explicit;
-- architectural state remains inspectable;
-- logical resource limits are enforced;
-- packet/timestep ordering rules remain deterministic and documented;
-- physical FPGA cycles are distinguished from algorithmic timesteps; and
-- Python and FPGA implementations compare at the same normalized boundary.
-
-Physical asynchronous-circuit equivalence is not required. FPGA-v2 is a
-synchronous FPGA realization of source-backed event-driven architectural
-semantics.
+The project remains a **source-backed architectural digital twin**, not a transistor-level clone. Physical asynchronous-circuit equivalence, proprietary NxSDK/NxTF micro-encoding, exact native-Loihi memory packing, and undocumented implementation details are not claimed.
 
 ---
 
 # Cross-phase verification policy
 
-Every architectural addition should be validated at three levels whenever the
-relevant implementation layer exists:
+Every architectural addition should be validated, where applicable, at three levels:
 
-1. **Directed unit behavior** — minimal tests isolate one semantic rule.
-2. **Mapped-network differential behavior** — Python and FPGA normalized traces
-   agree across representative multicore networks.
-3. **Physical application behavior** — a K26 deployment reproduces the golden
-   workload result.
+1. directed unit behavior;
+2. mapped-network Python/FPGA differential behavior; and
+3. physical application behavior.
 
-Hardware-only control assumptions must not be inferred solely from source-level
-simulation. P04 specifically demonstrated that reset release and HLS transaction
-startup can fail on the physical board despite passing software/HLS/RTL tests.
-When practical, regressions should therefore preserve the hardware condition
-that exposed the failure (for example, ready-low startup), and physical gates
-should retain direct observability such as reset-independent clocks/heartbeats,
-pollable completion counters, and archived artifact identities.
-
-The normalized v2 trace boundary should expose, when practical:
-
-```text
-algorithmic timestep
-logical core
-architectural phase
-packets in / packets out
-axon expansion
-synaptic contributions
-compartment state before / after
-spikes
-local completion
-barrier state
-physical FPGA cycle
-```
+Hardware evidence must preserve artifact/toolchain identities and explicit claim boundaries. FPGA cycles must remain separate from algorithmic timesteps and from native-Loihi latency claims.
 
 ---
 
 # Deferred fidelity extensions
 
-## Priority B — later architectural fidelity
+Priority-B/C features remain outside the P08 critical path unless separately promoted by source evidence and thesis need:
 
 - richer dendritic/multi-compartment structures;
-- programmable synaptic delays;
+- broader programmable delays;
 - broader native weight/compression formats;
-- more detailed event scheduling/queue/congestion behavior when source-backed;
-- richer configuration/state behavior; and
-- more detailed asynchronous/quiescence modeling at the architectural level.
-
-## Priority C — non-critical-path fidelity
-
-- on-chip plasticity/learning engines;
+- more detailed congestion/asynchronous/quiescence models;
+- on-chip learning/plasticity;
 - management-processor emulation;
-- chip-to-chip routing;
-- exact physical asynchronous circuit behavior; and
-- undocumented implementation details unsupported by public evidence.
+- chip-to-chip scaling; and
+- undocumented physical implementation details.
 
-A feature with insufficient public evidence remains **unknown/not claimed**.
+Insufficiently evidenced features remain unknown/not claimed.
 
 ---
 
 # Documentation and evidence structure
 
 ```text
-Loihi_Digital_Twin/
-├── v1/
-│   ├── MILESTONES.md              historical M01-M13 development record
-│   └── ...                        preserved implementation/evidence
-│
-└── v2/
-    ├── LOIHI_TWIN_ROADMAP.md      active phase/status tracker
-    ├── docs/
-    │   ├── LOIHI1_TARGET_SPEC.md
-    │   ├── P02_IMPLEMENTATION_NOTES.md
-    │   ├── P02_DEPLOYMENT_SCHEMA.md
-    │   ├── P03_INTEGRATION_CHALLENGES.md
-    │   ├── P03_ONE_CORE_HARDWARE_BOUNDARY.md
-    │   ├── P03_VIVADO_IMPLEMENTATION.md
-    │   ├── P04_MULTICORE_ARCHITECTURE.md
-    │   ├── P04_INTEGRATION_IMPLEMENTATION.md
-    │   ├── P04_INTEGRATION_CHALLENGES.md
-    │   ├── P05_VIRTUALIZATION_ARCHITECTURE.md
-    │   ├── P05_INTEGRATION_CHALLENGES.md
-    │   ├── P06_MAPPING_COMPILER.md
-    │   ├── P06_MAPPING_COMPILER_CHALLENGES.md
-    │   ├── P07_DEEP_SNN_VALIDATION.md
-    │   ├── P07_DEEP_SNN_CHALLENGES.md
-    │   ├── P08_MNIST_COMPARISON_CONTRACT.md
-    │   └── P08_NXTF_SOURCE_AUDIT.md
-    ├── src/loihi_twin_v2/         Python golden model + FPGA image tooling
-    ├── hls/core_v2/               accepted P03-P07-compatible HLS compute core
-    ├── rtl/                       v2 RTL integration/observability logic
-    ├── vivado/                    source-controlled K26 build flows
-    ├── hardware/                  physical programming/conformance flows
-    │   └── evidence/              archived accepted physical evidence
-    ├── tests/                     directed architecture/packing tests
-    ├── scripts/                   phase validation tools
-    └── examples/                  corpus generators and architecture examples
+Loihi_Digital_Twin/v2/
+├── LOIHI_TWIN_ROADMAP.md
+├── docs/
+│   ├── LOIHI1_TARGET_SPEC.md
+│   ├── P02...P07 phase records
+│   ├── P08_MNIST_COMPARISON_CONTRACT.md
+│   ├── P08_NXTF_SOURCE_AUDIT.md
+│   ├── P08_NXTF_RECONSTRUCTION.md
+│   ├── P08_2_ACCEPTANCE.md
+│   ├── P08_3_ACCEPTANCE.md
+│   ├── P08_4_ACCEPTANCE.md
+│   └── P08_4_3B_ACCEPTANCE.md
+├── src/loihi_twin_v2/
+├── hls/core_v2/
+├── rtl/
+├── vivado/
+├── hardware/
+│   └── evidence/
+├── tests/
+├── scripts/
+└── examples/
 
 applications/
-├── mnist_baseline/                preserved FPGA-v1 application
-└── mnist_v2_nxtf/                 P08 NxTF-emulation application scaffold
+├── mnist_baseline/
+└── mnist_v2_nxtf/
 ```
 
-New FPGA-v2 implementation evidence belongs with v2 and should be referenced
-from the corresponding roadmap phase. It must not be appended to preserved v1
-milestone history.
-
-`EXPERIMENTS.md` remains a repository-level collection of deferred/follow-on
-studies and is not the active implementation tracker while this roadmap is in
-progress.
+New accepted evidence must be referenced from the active phase and must not rewrite the frozen v1 history.
 
 ---
 
 # Advancement rule
 
-Only one phase should normally be marked **In progress** at a time.
-
-Before moving to the next phase:
-
-1. mark completed deliverables in the active phase;
-2. record the validation evidence needed by that phase;
-3. verify its completion gate;
-4. change that phase to **Complete** with its completion date; and
-5. change the next phase from **Planned** to **In progress** with its start date.
-
-P07 satisfied this rule on 2026-09-29 when the compiler-generated six-layer K26
-physical evidence reported `result=PASS`, preserved the compiled-deployment
-identity, and passed all 42 directed physical ticks; P08 is therefore the active
-phase. P08.1 source reconstruction/topology freezing must complete before new ANN
-training resumes.
+Only one sub-phase should normally be marked **In progress**. P08.4 closed on 2026-09-30 after independent reproduction of the official-test, exact compiled paging, routed shell, and representative physical MNIST conformance gates. P08.5 is therefore the active sub-phase. P08 itself remains **In progress** until the final comparison and closure gate are independently reproduced.

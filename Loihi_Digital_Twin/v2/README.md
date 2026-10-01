@@ -1,6 +1,6 @@
 # FPGA-v2 / Loihi-1 Architectural Twin
 
-This directory is the development home for the new source-backed Loihi-1 architectural digital twin.
+This directory is the development home for the source-backed Loihi-1 architectural digital twin.
 
 Development authority is split between:
 
@@ -9,72 +9,69 @@ Development authority is split between:
 
 FPGA-v1 remains frozen under `../v1/`. No v2 implementation should silently import behavioral assumptions from v1 unless the target specification explicitly adopts them.
 
-## P02 Python golden model — complete
+## Current status — P08.5 final NxTF comparison
 
-The independent v2 package lives under `src/loihi_twin_v2/`. It models logical resources, destination-side axons and synapse templates, explicit inter-core spike packets, logical cores, packet routing, timestep drain/advance barriers, deterministic deployment serialization, and multi-timestep replay separately from the FPGA implementation.
+P00-P07 are complete. P08.1-P08.4 are now accepted for the reconstructed NxTF frame-based MNIST workload; P08.5 is the active final comparison/closure phase.
 
-Install and run its directed tests from this directory:
+Accepted P08 foundations are:
+
+- **P08.1:** source-bounded four-convolution reconstruction with 4,218 neurons, 7,006 trainable parameters, and 338,880 expanded convolutional connections;
+- **P08.2:** deterministic paging of the five-logical-core P06 deployment over three resident K26 contexts and one physical HLS engine;
+- **P08.3:** frozen ANN checkpoint plus source-recovered ANN-to-SNN conversion and 5,000-example validation at the primary 100-timestep horizon;
+- **P08.4:** official-test evaluation, exact compiled paging conformance, routed host-paged K26 shell, and representative physical MNIST deep-dispatch conformance.
+
+Accepted application measurements are:
+
+```text
+ANN validation accuracy: 0.992600
+SNN validation accuracy: 0.984400
+ANN official-test accuracy: 0.987400
+SNN official-test accuracy: 0.982400
+ANN-SNN official-test delta: 0.005000
+primary SNN horizon: 100 timesteps
+```
+
+The accepted converted deployment is:
+
+```text
+logical cores:       5
+resident contexts:   3
+physical engines:    1
+compiled fingerprint: 5dc7c9af692ca375283ede186b81d135bd1c76708b114cc64e3f99c085cd856b
+```
+
+P08.4.2 proved complete 100-timestep paging-order invariance for the representative official-test frame. P08.4.3a routed the corresponding host-paged K26 shell at 100 MHz with positive setup/hold slack and 47 URAMs. P08.4.3b then physically paged a frozen logical-core-4 MNIST snapshot into resident slot 0 and reproduced all 618 compartment states/traces and the final ten-value output evidence exactly.
+
+The physical acceptance boundary is intentionally narrow: the project does not claim that the entire 100-timestep representative inference was replayed through JTAG. Complete paging semantics are covered by P08.4.2; physical conformance is demonstrated by the representative deep-network page replacement and dispatch in P08.4.3b.
+
+P08.4 closure is recorded in:
+
+```text
+docs/P08_4_ACCEPTANCE.md
+docs/P08_4_3B_ACCEPTANCE.md
+```
+
+P08.5 now builds the final bounded comparison against the published NxTF/Loihi result. It must keep sourced/directly comparable quantities separate from project reconstruction, FPGA-specific implementation measurements, and non-comparable quantities such as native-Loihi energy/latency where the measurement boundary is not equivalent.
+
+## Core v2 implementation
+
+The independent Python architecture package lives under:
+
+```text
+src/loihi_twin_v2/
+```
+
+The accepted hardware path spans the P03 one-core engine, P04 routed/barrier shell, P05 resident-context virtualization, P06 deterministic compiler/deployment format, and P08 paging/controller additions. Historical implementation and acceptance details are retained in the roadmap and phase-specific documents under `docs/`.
+
+Install and run the general v2 software tests from this directory with:
 
 ```bash
 python -m pip install -e ".[dev]"
 python -m pytest -q
 ```
 
-P02 closed with 26 tests passing plus verified two-core causality and three-core recurrent schedule invariance.
-
-Supporting material:
-
-- `docs/P02_IMPLEMENTATION_NOTES.md`
-- `docs/P02_DEPLOYMENT_SCHEMA.md`
-- `scripts/validate_p02.py`
-- `examples/run_two_core.py`
-- `examples/run_three_core_replay.py`
-
-## P03 one-core FPGA-v2 implementation — active
-
-P03 translates one verified P02 logical core into a synthesizable, transparent hardware boundary.
-
-The packed memory/export layer is:
-
-```text
-src/loihi_twin_v2/hardware_p03.py
-```
-
-The source-level hardware contract is:
-
-```text
-docs/P03_ONE_CORE_HARDWARE_BOUNDARY.md
-```
-
-The first HLS core is:
-
-```text
-hls/core_v2/
-├── include/loihi_core_v2.hpp
-├── src/loihi_core_v2.cpp
-├── tb/test_loihi_core_v2.cpp
-├── hls_config.cfg
-├── run_csim.sh
-└── run_synth_cosim.sh
-```
-
-The HLS testbench does not use hand-entered expected behavior. Before compilation, `examples/generate_p03_hls_vectors.py` runs the P02 Python `LogicalCore` and emits a deterministic five-timestep differential corpus covering shared synapse templates, positive/negative weights, refractory behavior, state persistence, spike generation, and explicit output routing.
-
-With Vitis/Vivado 2025.2 on `PATH`:
-
-```bash
-export HLS_PART='xck26-sfvc784-2LV-c'
-bash hls/core_v2/run_csim.sh
-```
-
-After C simulation passes:
-
-```bash
-bash hls/core_v2/run_synth_cosim.sh
-```
-
-The synthesis/co-simulation result is the next P03 gate. Its timing, inferred interfaces/memories, resource use, and RTL behavior will determine the Vivado/K26 wrapper without changing the normalized one-core architecture contract.
-
 ## Resource-accounting boundary
 
-The current logical synapse-memory model (`v2-simple-32bit-entry`) is a documented project accounting choice, not a claim of exact Loihi SRAM bit packing. P03 intentionally distinguishes this logical mapping budget from physical FPGA storage width and will report synthesized BRAM/URAM use separately.
+The logical synapse-memory model (`v2-simple-32bit-entry`) is a documented project accounting choice, not a claim of exact Loihi SRAM bit packing. Logical Loihi-like occupancy and physical FPGA BRAM/URAM/LUT/register/DSP utilization are reported separately throughout the project.
+
+The project is a source-backed architectural digital twin. It does not claim transistor-level, asynchronous-circuit, native-Loihi timing, or bit-for-bit proprietary NxSDK/NxTF micro-encoding equivalence.
