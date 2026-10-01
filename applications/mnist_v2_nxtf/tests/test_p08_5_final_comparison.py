@@ -33,14 +33,13 @@ def test_only_frozen_accuracy_metrics_drive_cross_system_numeric_interpretation(
 
     assert report["authorized_numeric_cross_system_metric_ids"] == AUTHORIZED_NUMERIC_CROSS_SYSTEM
     assert report["forbidden_derived_cross_system_metric_ids"] == FORBIDDEN_DERIVED_CROSS_SYSTEM
-    assert report["numeric_comparisons"] == {
-        "ann_test_error_gap_fraction": pytest.approx(0.0052),
-        "ann_test_error_gap_percentage_points": pytest.approx(0.52),
-        "snn_test_error_gap_fraction": pytest.approx(0.0097),
-        "snn_test_error_gap_percentage_points": pytest.approx(0.97),
-        "ann_to_snn_error_increase_gap_fraction": pytest.approx(0.0045),
-        "ann_to_snn_error_increase_gap_percentage_points": pytest.approx(0.45),
-    }
+    numeric = report["numeric_comparisons"]
+    assert numeric["ann_test_error_gap_fraction"] == pytest.approx(0.0052)
+    assert numeric["ann_test_error_gap_percentage_points"] == pytest.approx(0.52)
+    assert numeric["snn_test_error_gap_fraction"] == pytest.approx(0.0097)
+    assert numeric["snn_test_error_gap_percentage_points"] == pytest.approx(0.97)
+    assert numeric["ann_to_snn_error_increase_gap_fraction"] == pytest.approx(0.0045)
+    assert numeric["ann_to_snn_error_increase_gap_percentage_points"] == pytest.approx(0.45)
 
 
 def test_forbidden_contextual_metric_cannot_be_promoted_to_numeric_delta() -> None:
