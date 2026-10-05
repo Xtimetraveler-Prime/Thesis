@@ -69,7 +69,7 @@ module p02_page_host_arbiter (
     // Debug is blocked for the full duration of page ownership, including gaps
     // between individual scalar bank transactions.
     assign debug_busy =
-        page_active || fabric_busy ||
+        page_active || debug_req || fabric_busy ||
         (transaction_active && transaction_page_owner);
 
     assign debug_ack =
