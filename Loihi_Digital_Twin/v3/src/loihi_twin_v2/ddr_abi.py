@@ -321,6 +321,60 @@ def parse_ddr_context_header(
     )
 
 
+
+def refresh_ddr_context_runtime_header(
+    record: bytes | bytearray,
+    *,
+    current_event_bank: int | None = None,
+    event0_count: int | None = None,
+    event1_count: int | None = None,
+    packet_count: int | None = None,
+) -> bytes:
+    """Return a record with refreshed runtime metadata and payload digest.
+
+    Static identity/resource fields remain unchanged.  This is used after a
+    resident context has been written back into its DDR backing image.
+    """
+
+    if len(record) != P02_DDR_CONTEXT_STRIDE_BYTES:
+        raise ValueError(
+            f"DDR context record must be exactly {P02_DDR_CONTEXT_STRIDE_BYTES} bytes"
+        )
+
+    mutable = bytearray(record)
+    header = parse_ddr_context_header(bytes(mutable), verify_payload=False)
+
+    next_event_bank = (
+        header.current_event_bank if current_event_bank is None else current_event_bank
+    )
+    next_event0_count = header.event0_count if event0_count is None else event0_count
+    next_event1_count = header.event1_count if event1_count is None else event1_count
+    next_packet_count = header.packet_count if packet_count is None else packet_count
+
+    if next_event_bank not in (0, 1):
+        raise ValueError("current_event_bank must be 0 or 1")
+    for name, value in (
+        ("event0_count", next_event0_count),
+        ("event1_count", next_event1_count),
+        ("packet_count", next_packet_count),
+    ):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError(f"{name} must be an int")
+        if not 0 <= value <= 4096:
+            raise ValueError(f"{name} must be in [0, 4096]")
+
+    struct.pack_into("<I", mutable, 0x1C, next_event_bank)
+    struct.pack_into("<I", mutable, 0x2C, next_event0_count)
+    struct.pack_into("<I", mutable, 0x30, next_event1_count)
+    struct.pack_into("<I", mutable, 0x34, next_packet_count)
+
+    digest = _payload_digest(mutable)
+    mutable[
+        P02_DDR_HEADER_HASH_OFFSET :
+        P02_DDR_HEADER_HASH_OFFSET + P02_DDR_HEADER_HASH_BYTES
+    ] = digest
+    return bytes(mutable)
+
 def ddr_context_record_fingerprint(record: bytes) -> str:
     """Return the deterministic identity of the complete 512 KiB record."""
 
