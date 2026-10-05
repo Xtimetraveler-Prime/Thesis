@@ -303,11 +303,14 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 - **P02.3b — AXI DDR master/burst integration.** **In progress.** Connect the
   verified bank walker to the selected PS DDR high-performance path, add burst
   buffering/range checks, and integrate into the Vivado shell.
-  - **P02.3b1 — 128-bit AXI burst coalescer.** **Verification candidate.** Coalesce the
+  - **P02.3b1 — 128-bit AXI burst coalescer.** **Complete; accepted 2026-10-05.** Coalesce the
     scalar-correct walker transactions into 256-byte / 16-beat AXI4 bursts
     without changing the accepted DDR address stream.
-  - **P02.3b2 — HP0 Vivado integration.** **Planned.** Bind the verified AXI
-    master to the K26 PS `S_AXI_HP0_FPD` path and route the resulting shell.
+  - **P02.3b2 — HP0 Vivado integration.** **Verification candidate.** Bind the
+    verified AXI master to the K26 PS `S_AXI_HP0_FPD` path through
+    SmartConnect, confine paging to the fixed 64 MiB DDR backing window, and
+    synthesize/route the resulting shell. Primary record:
+    `docs/P02_3B2_HP0_INTEGRATION.md`.
 - **P02.4 — Physical DDR-backed paging acceptance.** Demonstrate that
   non-resident logical contexts live in K26 DDR and are paged into the three
   resident slots without PC RAM participating in the page loop.
