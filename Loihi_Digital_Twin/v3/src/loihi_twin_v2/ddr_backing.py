@@ -33,6 +33,12 @@ P02_MUTABLE_BANKS = ("state", "event0", "event1", "trace", "packet")
 P02_STATIC_BANKS = tuple(
     bank.name for bank in P02_DDR_BANK_LAYOUT if bank.name not in P02_MUTABLE_BANKS
 )
+P02_PAGE_IN_BYTES = sum(bank.size_bytes for bank in P02_DDR_BANK_LAYOUT)
+P02_FULL_PAGE_OUT_BYTES = P02_PAGE_IN_BYTES
+P02_MUTABLE_PAGE_OUT_BYTES = sum(
+    bank.size_bytes for bank in P02_DDR_BANK_LAYOUT
+    if bank.name in P02_MUTABLE_BANKS
+)
 
 
 class PageOutPolicy(str, Enum):
