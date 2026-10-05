@@ -47,7 +47,9 @@ def make_core(core_id: int = 7) -> LogicalCoreConfig:
         ),
         input_axons=(
             InputAxonBinding(axon_id=3, template_id=0, target_offset=0),
-            # Keep the maximum sparse axon ID while targeting the same valid\n            # two-compartment template range as the lower axon.\n            InputAxonBinding(axon_id=4095, template_id=0, target_offset=0),
+            # Keep the maximum sparse axon ID while targeting the same valid
+            # two-compartment template range as the lower axon.
+            InputAxonBinding(axon_id=4095, template_id=0, target_offset=0),
         ),
         synapse_templates=(
             SynapseTemplate(
