@@ -13,8 +13,8 @@
 # Dispatch, packet readback/routing, and global barrier ownership are still
 # host/VIO driven in P02.  P03 will move those orchestration functions onto the
 # A53.  P02.3b2 only proves the physical DDR paging data path.
-if {$argc != 14} {
-    error "usage: create_p02_ddr_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <report_dir> <jobs>"
+if {$argc != 15} {
+    error "usage: create_p02_ddr_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <report_dir> <jobs> <stage>"
 }
 
 set ip_repo_dir [file normalize [lindex $argv 0]]
@@ -31,6 +31,10 @@ set range_guard_rtl [file normalize [lindex $argv 10]]
 set adapter_rtl [file normalize [lindex $argv 11]]
 set report_dir [file normalize [lindex $argv 12]]
 set jobs [lindex $argv 13]
+set stage [lindex $argv 14]
+if {$stage ne "synth" && $stage ne "route"} {
+    error "P02.3b2 stage must be synth or route, got: $stage"
+}
 
 foreach path [list $ip_repo_dir $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl] {
     if {![file exists $path]} { error "Required P02.3b2 input does not exist: $path" }
@@ -448,6 +452,50 @@ if {[llength $wrapper_files] == 0} { error "P02.3b2 Vivado wrapper generation fa
 add_files -norecurse $wrapper_files
 set_property top ${bd_name}_wrapper [current_fileset]
 update_compile_order -fileset sources_1
+
+if {$stage eq "synth"} {
+    launch_runs synth_1 -jobs $jobs
+    wait_on_run synth_1
+    if {[get_property PROGRESS [get_runs synth_1]] ne "100%"} {
+        error "P02.3b2 synthesis did not complete: [get_property STATUS [get_runs synth_1]]"
+    }
+    open_run synth_1
+
+    set util_text [report_utilization -return_string]
+    set util_file [open [file join $report_dir utilization_post_synth.rpt] w]
+    puts $util_file $util_text
+    close $util_file
+    report_utilization -hierarchical -hierarchical_depth 10 -file [file join $report_dir utilization_hierarchical_post_synth.rpt]
+    report_timing_summary -delay_type min_max -max_paths 20 -report_unconstrained -file [file join $report_dir timing_summary_post_synth.rpt]
+    write_checkpoint -force [file join $report_dir p02_ddr_post_synth.dcp]
+
+    set metrics [open [file join $report_dir p02_post_synth_metrics.txt] w]
+    if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} { puts $metrics "block_ram_tiles=$bram_tiles" }
+    if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $metrics "uram=$uram_count" }
+    puts $metrics "resident_context_slots=3"
+    puts $metrics "physical_engines=1"
+    puts $metrics "logical_capacity_changed=0"
+    puts $metrics "p02_ddr_backing_base=0x40000000"
+    puts $metrics "p02_ddr_backing_bytes=0x04000000"
+    puts $metrics "p02_ddr_record_bytes=0x00080000"
+    puts $metrics "p02_ddr_logical_capacity=128"
+    puts $metrics "p02_hp0_enabled=1"
+    puts $metrics "p02_hp0_data_width_bits=128"
+    puts $metrics "p02_axi_burst_beats=16"
+    puts $metrics "p02_axi_burst_bytes=256"
+    puts $metrics "p02_ddr_range_guard=1"
+    puts $metrics "p02_page_walker=1"
+    puts $metrics "p02_page_host_arbiter=1"
+    puts $metrics "p02_host_controls_page_command=1"
+    puts $metrics "p02_ps_runtime_implemented=0"
+    puts $metrics "target_part=$target_part"
+    puts $metrics "board_part=$kv260_board_part"
+    puts $metrics "pl_clock_requested_mhz=100"
+    close $metrics
+
+    puts "P02.3b2 integration synthesis completed successfully."
+    return
+}
 
 set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
 launch_runs impl_1 -to_step route_design -jobs $jobs
