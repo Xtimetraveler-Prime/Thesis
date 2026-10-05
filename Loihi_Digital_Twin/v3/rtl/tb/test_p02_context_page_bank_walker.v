@@ -212,11 +212,11 @@ module test_p02_context_page_bank_walker;
         reg [63:0] byte_offset;
         begin
             case (bank_bytes(bank_id))
-                6'd4: byte_offset = index << 2;
-                6'd8: byte_offset = index << 3;
-                6'd16: byte_offset = index << 4;
-                6'd32: byte_offset = index << 5;
-                default: byte_offset = 0;
+                6'd4: byte_offset = {47'd0, index, 2'b00};
+                6'd8: byte_offset = {46'd0, index, 3'b000};
+                6'd16: byte_offset = {45'd0, index, 4'b0000};
+                6'd32: byte_offset = {44'd0, index, 5'b00000};
+                default: byte_offset = 64'd0;
             endcase
             expected_address = base + bank_offset(bank_id) + byte_offset;
         end
