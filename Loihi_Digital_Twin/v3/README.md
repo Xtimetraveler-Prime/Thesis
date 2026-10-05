@@ -18,7 +18,9 @@ Development authority is:
 
 ## Current status
 
-**P00 — Establish v3 baseline, directory, and roadmap: In progress.**
+**P00 — Establish v3 baseline, directory, and roadmap: Complete.**
+
+**Next phase: P01 — Board-local architecture, ownership, and v3 contract.**
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -52,4 +54,4 @@ cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 PYTHONPATH="$PWD/src" python -m pytest -q
 ```
 
-Do not treat P00 as accepted until the independent verification gate in the roadmap is completed.
+P00 was independently verified and accepted on 2026-10-05. See `docs/P00_ACCEPTANCE.md`.
