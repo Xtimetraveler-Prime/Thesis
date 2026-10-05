@@ -22,6 +22,19 @@ from .compiler import (
     compile_network,
 )
 from .core import LogicalCore, LogicalCoreConfig
+from .ddr_backing import (
+    ContextTransferModel,
+    DdrBackingStoreModel,
+    P02_FULL_PAGE_OUT_BYTES,
+    P02_MUTABLE_BANKS,
+    P02_MUTABLE_PAGE_OUT_BYTES,
+    P02_PAGE_IN_BANKS,
+    P02_PAGE_IN_BYTES,
+    P02_STATIC_BANKS,
+    PageOutPolicy,
+    PageTransfer,
+    ResidentContext,
+)
 from .ddr_abi import (
     DdrBankLayout,
     DdrContextHeader,
@@ -39,6 +52,7 @@ from .ddr_abi import (
     ddr_context_offset,
     ddr_context_record_fingerprint,
     parse_ddr_context_header,
+    refresh_ddr_context_runtime_header,
 )
 from .hardware_p03 import (
     OneCoreHardwareImage,
@@ -136,6 +150,17 @@ __all__ = [
     "step_compartment",
     "LogicalCore",
     "LogicalCoreConfig",
+    "ContextTransferModel",
+    "DdrBackingStoreModel",
+    "ResidentContext",
+    "PageTransfer",
+    "PageOutPolicy",
+    "P02_PAGE_IN_BANKS",
+    "P02_STATIC_BANKS",
+    "P02_MUTABLE_BANKS",
+    "P02_PAGE_IN_BYTES",
+    "P02_FULL_PAGE_OUT_BYTES",
+    "P02_MUTABLE_PAGE_OUT_BYTES",
     "DdrBankLayout",
     "DdrContextHeader",
     "P02_DDR_ABI_MAGIC",
@@ -148,6 +173,7 @@ __all__ = [
     "P02_DDR_RESERVED_TAIL_BYTES",
     "build_initial_ddr_context_record",
     "parse_ddr_context_header",
+    "refresh_ddr_context_runtime_header",
     "ddr_context_offset",
     "ddr_context_address",
     "ddr_bank_slice",
