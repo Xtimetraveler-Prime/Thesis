@@ -109,9 +109,10 @@ External PC
 |        +--> 3 resident full URAM context slots              |
 |        |          |                                         |
 |        |          v                                         |
-|        +--> 1 existing P03-compatible HLS core engine       |
-|                   |                                         |
-|                   +--> packet/trace/state images            |
+|        +--> initial: 1 P03-compatible HLS engine             |
+|        |    P04 target: 2 concurrent compatible engines      |
+|        |          |                                          |
+|        |          +--> packet/trace/state images             |
 |                                                             |
 |  PS DDR                                                     |
 |   - compiled deployment metadata                            |
@@ -135,7 +136,7 @@ External PC
 | non-resident context state | no during run | metadata owner | transfer agent | **owner/storage** |
 | logical packet destination interpretation | no | **owner initially** | exposes packet image | event backing |
 | cross-page packet routing | no | **owner initially** | optional local assist | destination event image |
-| HLS neuron/synapse arithmetic | no | no | **owner** | no |
+| HLS neuron/synapse arithmetic | no | schedules engines | **owner; 1 engine initially, 2-engine P04 target** | no |
 | global barrier | no | **owner** | completion/status | no |
 | global event-bank flip | no | **owner command** | applies selector | backing metadata |
 | algorithmic timestep | no | **owner** | receives current value | optional run record |
@@ -360,7 +361,129 @@ RESET
 
 P01.3 will freeze exact state/error transitions and recovery behavior.
 
-## 13. Timing/measurement boundary
+## 13. Multi-engine execution extension
+
+P01.1 freezes the board-local control architecture so that physical engine count
+is a parameter rather than a permanent constant of one.
+
+### 13.1 Why multi-engine execution is compatible with the logical model
+
+For a given algorithmic timestep, each logical core consumes its already-frozen
+CURRENT event/state boundary. Spikes produced by that work are committed to
+NEXT-timestep storage. Therefore two independent logical cores may execute
+physically at the same time as long as:
+
+- each engine accesses a different resident logical context;
+- neither engine observes NEXT traffic as CURRENT traffic;
+- output packets retain logical destination IDs;
+- all packet traffic is drained/committed before the global barrier advances;
+- engine assignment is excluded from normalized architectural traces.
+
+This is the same virtualization-invariance rule already tested in v2, now used
+to recover throughput rather than only save resources.
+
+### 13.2 Why two engines are the first target
+
+Accepted routed evidence shows:
+
+```text
+P05 one-engine / three-full-context shell:
+  LUTs       5,062
+  registers  7,686
+  DSPs       2
+  URAM       47
+
+P04 resource-scaled two-engine shell:
+  LUTs       7,059
+  registers  9,980
+  DSPs       4
+```
+
+These designs are not identical enough to subtract them into an exact per-engine
+resource cost, but they show that the compute engines are modest relative to the
+K26 logic/DSP budget. v2's full-capacity duplication problem was driven by
+retained memory.
+
+The current full-context fabric, however, is built from true-dual-port banks.
+That naturally supports at most two simultaneous compute-side accesses without
+changing the memory organization. Therefore P04 will target two physical HLS
+engines first.
+
+### 13.3 First two-engine memory-access model
+
+During a parallel compute wave:
+
+```text
+resident slot A <-> memory port A <-> HLS engine 0
+resident slot B <-> memory port B <-> HLS engine 1
+
+resident slot C remains retained but is not computed in that wave
+page/maintenance access to shared banks waits until compute ownership releases
+the required ports
+```
+
+The exact muxing differs by memory bank, but the ownership invariant is global:
+a resident slot cannot be paged or maintenance-written while an HLS engine owns
+that slot.
+
+After both engines finish, packet images are drained and routed into NEXT event
+storage. The next wave may then page/assign other logical cores.
+
+This first design does not require compute and page transfer to overlap.
+
+### 13.4 Scheduler behavior
+
+For `E=2`, the PS runtime schedules logical cores in deterministic waves. A
+five-core deployment can conceptually execute as:
+
+```text
+wave 0: logical cores 0, 1
+wave 1: logical cores 2, 3
+wave 2: logical core 4
+barrier after all five and all packet traffic complete
+```
+
+Actual residency/page-hit choices may change which logical IDs share a wave.
+Legal wave ordering must remain normalized-result invariant.
+
+The scheduler should use asymmetric core workload information when available so
+one very large core is not always paired with an idle engine unnecessarily, but
+correctness must not depend on that optimization.
+
+### 13.5 Expected performance behavior
+
+Two engines can at most reduce the serialized **compute** component toward 2x.
+End-to-end speedup will be smaller when any of these dominate:
+
+- page-in/page-out traffic;
+- packet draining/routing;
+- PS control overhead;
+- barrier work;
+- unequal logical-core dispatch sizes;
+- memory-port arbitration.
+
+For this reason v3 must measure one-engine and two-engine complete inference
+latency rather than reporting only an engine-count ratio.
+
+### 13.6 Three or more engines
+
+Three resident slots do not automatically imply three simultaneous engines.
+The current aggregated URAM organization does not provide three independent
+compute ports.
+
+A 3+ engine design may require:
+
+- per-slot resident-memory banking;
+- selective replication of read-mostly banks;
+- moving selected trace/packet/static storage classes out of URAM;
+- additional AXI/interconnect arbitration.
+
+Those changes can increase URAM/BRAM/routing pressure substantially. P04 may
+prototype them only after the accepted two-engine design is routed and measured.
+
+---
+
+## 14. Timing/measurement boundary
 
 The design must expose enough counters/timestamps to later separate:
 
@@ -377,7 +500,7 @@ use a PS hardware timer for board-local wall-clock boundaries. The external PC
 must not define the inference start/stop timing boundary used for final v3
 latency claims.
 
-## 14. Failure model
+## 15. Failure model
 
 At minimum, the board-local shell/runtime must fail closed on:
 
@@ -396,7 +519,7 @@ At minimum, the board-local shell/runtime must fail closed on:
 
 Errors must be sticky and observable until explicitly cleared/reset.
 
-## 15. Effect on the Loihi target specification
+## 16. Effect on the Loihi target specification
 
 **P01.1 decision:** no existing logical Loihi-1 semantic rule needs to change.
 
@@ -411,7 +534,7 @@ confuse:
 That addendum should be created in P01.3 after the DDR ABI and runtime state
 machine are frozen.
 
-## 16. P01.1 acceptance criteria
+## 17. P01.1 acceptance criteria
 
 P01.1 may be accepted when independent review agrees that:
 
@@ -421,7 +544,10 @@ P01.1 may be accepted when independent review agrees that:
 4. the first DDR data path does not require coherent CPU-cache behavior;
 5. current/next event separation and global barrier semantics are preserved;
 6. the design does not change accepted v2 logical Loihi claims;
-7. later P01 work has clear boundaries for the DDR ABI/cache contract and exact
+7. the board-local interfaces do not hard-code physical-engine count to one;
+8. two-engine parallel dispatch is identified as a later implementation phase
+   with explicit CURRENT/NEXT and barrier invariants;
+9. later P01 work has clear boundaries for the DDR ABI/cache contract and exact
    runtime state machine.
 
 No RTL or PS runtime implementation is claimed by P01.1.
