@@ -344,8 +344,8 @@ module test_p02_axi128_burst_adapter;
             check(!last_scalar_error && last_scalar_rvalid,
                   "valid 8-byte scalar read failed");
             check(
-                last_scalar_rdata[63:0] ==
-                    scalar_pattern(64'h4000_5000 + (i * 8), 6'd8)[63:0],
+                last_scalar_rdata ==
+                    scalar_pattern(64'h4000_5000 + (i * 8), 6'd8),
                 "8-byte read data mismatch"
             );
         end
