@@ -48,7 +48,7 @@ IP_REPO_DIR="$HLS_DIR/build/p03_package/ip_repo"
 
 vivado -mode batch     -source "$TCL_SCRIPT"     -tclargs       "$IP_REPO_DIR"       "$VIVADO_PROJECT_DIR"       "$EXPECTED_PART"       "$EXPECTED_VLNV"       "$CONTROLLER_RTL"       "$MEMORY_RTL"       "$RESET_RTL"       "$HOSTMUX_RTL"       "$WALKER_RTL"       "$ARBITER_RTL"       "$RANGE_GUARD_RTL"       "$ADAPTER_RTL"       "$REPORT_DIR"       "$JOBS"       route     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
 
-for required in     "$REPORT_DIR/timing_summary_post_route.rpt"     "$REPORT_DIR/utilization_post_route.rpt"     "$REPORT_DIR/utilization_hierarchical_post_route.rpt"     "$REPORT_DIR/memory_primitives_post_route.rpt"     "$REPORT_DIR/bus_skew_post_route.rpt"     "$REPORT_DIR/p08_post_route_metrics.txt"     "$REPORT_DIR/p02_ddr_post_route.dcp"     "$REPORT_DIR/p02_ddr_paged.bit"     "$REPORT_DIR/p02_ddr_paged.ltx"; do
+for required in     "$REPORT_DIR/timing_summary_post_route.rpt"     "$REPORT_DIR/utilization_post_route.rpt"     "$REPORT_DIR/utilization_hierarchical_post_route.rpt"     "$REPORT_DIR/memory_primitives_post_route.rpt"     "$REPORT_DIR/bus_skew_post_route.rpt"     "$REPORT_DIR/p02_post_route_metrics.txt"     "$REPORT_DIR/p02_ddr_post_route.dcp"     "$REPORT_DIR/p02_ddr_paged.bit"     "$REPORT_DIR/p02_ddr_paged.ltx"; do
     [[ -f "$required" ]] || {
         echo "ERROR: expected P02.3b2 route artifact missing: $required" >&2
         exit 4
@@ -57,7 +57,7 @@ done
 
 metric_value() {
     local key="$1"
-    sed -n "s/^${key}=//p" "$REPORT_DIR/p08_post_route_metrics.txt" | tail -n 1
+    sed -n "s/^${key}=//p" "$REPORT_DIR/p02_post_route_metrics.txt" | tail -n 1
 }
 
 WNS="$(metric_value wns_ns)"
@@ -102,7 +102,7 @@ printf 'PASS: P02.3b2 artifacts bitstream_sha256=%s probes_sha256=%s\n' "$BIT_SH
 
 echo
 echo '=== P02.3b2 post-route metrics ==='
-cat "$REPORT_DIR/p08_post_route_metrics.txt"
+cat "$REPORT_DIR/p02_post_route_metrics.txt"
 
 echo
 echo "PASS: P02.3b2 routed HP0 implementation gate completed successfully."
