@@ -1,0 +1,17 @@
+wns_ns=0.603
+whs_ns=0.011
+block_ram_tiles=49
+uram=0
+physical_fixture_compartments_per_endpoint=16
+physical_fixture_axons_per_endpoint=64
+physical_fixture_synapse_entries_per_endpoint=256
+physical_fixture_routes_per_endpoint=64
+physical_fixture_events_per_endpoint=64
+physical_fixture_packets_per_endpoint=64
+logical_capacity_changed=0
+reset_strategy=source_controlled_synchronous_conditioner
+reset_request_active_high=1
+reset_release_cycles=16
+target_part=xck26-sfvc784-2LV-c
+board_part=xilinx.com:kv260_som:part0:1.4
+pl_clock_requested_mhz=100

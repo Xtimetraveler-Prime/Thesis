@@ -1,0 +1,9 @@
+{
+  "code": "logical_core_capacity",
+  "context": {
+    "limit": 2,
+    "required": 3
+  },
+  "message": "logical_core_capacity: network requires more logical cores than mapper policy permits (limit=2 required=3)",
+  "result": "EXPECTED_REJECTION"
+}

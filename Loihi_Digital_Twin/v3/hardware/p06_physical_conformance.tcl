@@ -1,0 +1,363 @@
+# P06 compiled-deployment physical conformance using the accepted P05 shell.
+if {$argc != 5} {
+    error "usage: p06_physical_conformance.tcl <bit> <ltx> <vectors.tcl> <result.txt> <hw_server_url>"
+}
+
+set bit_file [file normalize [lindex $argv 0]]
+set ltx_file [file normalize [lindex $argv 1]]
+set vector_file [file normalize [lindex $argv 2]]
+set result_file [file normalize [lindex $argv 3]]
+set hw_server_url [lindex $argv 4]
+foreach path [list $bit_file $ltx_file $vector_file] {
+    if {![file exists $path]} { error "P06 physical input missing: $path" }
+}
+source $vector_file
+
+proc p06_parse_value {raw} {
+    set text [string trim $raw]
+    regsub -all {_} $text "" text
+    if {[regexp -nocase {^0x([0-9a-f]+)$} $text -> digits]} {
+        return [expr "0x$digits"]
+    }
+    if {[regexp -nocase {^[0-9a-f]+$} $text]} {
+        return [expr "0x$text"]
+    }
+    error "P06 cannot parse VIO value '$raw'"
+}
+
+proc p06_probe {direction port} {
+    global P06_VIO
+    set wanted [string tolower $direction]
+    foreach probe [get_hw_probes -of_objects $P06_VIO] {
+        if {[string tolower [get_property TYPE $probe]] eq $wanted &&
+            [get_property PROBE_PORT $probe] == $port} {
+            return $probe
+        }
+    }
+    error "P06 VIO probe not found: direction=$direction port=$port"
+}
+
+proc p06_format_output_value {probe value} {
+    set bits [get_property PROBE_PORT_BIT_COUNT $probe]
+    set chars [expr {($bits + 3) / 4}]
+    set text [string trim $value]
+    regsub -all {_} $text "" text
+    if {[regexp -nocase {^0x([0-9a-f]+)$} $text -> digits]} {
+        set digits [string toupper $digits]
+        set numeric [expr "0x$digits"]
+    } elseif {[regexp {^[0-9]+$} $text]} {
+        set numeric [expr {$text + 0}]
+        set digits [format %X $numeric]
+    } else {
+        error "P06 cannot format VIO output value '$value'"
+    }
+    if {$numeric < 0 || $numeric >= (1 << $bits)} {
+        error "P06 VIO output value out of range: value=$value bits=$bits"
+    }
+    return "[string repeat 0 [expr {$chars - [string length $digits]}]]$digits"
+}
+
+proc p06_commit {settings} {
+    global P06_VIO
+    foreach {port value} $settings {
+        set probe [p06_probe vio_output $port]
+        set_property OUTPUT_VALUE [p06_format_output_value $probe $value] $probe
+    }
+    commit_hw_vio $P06_VIO
+}
+
+proc p06_input {port} {
+    global P06_VIO
+    refresh_hw_vio $P06_VIO
+    return [p06_parse_value [get_property INPUT_VALUE [p06_probe vio_input $port]]]
+}
+
+proc p06_wait_input {port expected timeout_ms label} {
+    set deadline [expr {[clock milliseconds] + $timeout_ms}]
+    while {[clock milliseconds] <= $deadline} {
+        set actual [p06_input $port]
+        if {$actual == $expected} { return $actual }
+        after 10
+    }
+    error "P06 timeout waiting for $label: expected=$expected actual=[p06_input $port]"
+}
+
+proc p06_expect {label actual expected} {
+    if {$actual != $expected} {
+        error "P06 mismatch $label: actual=0x[format %X $actual] expected=0x[format %X $expected]"
+    }
+}
+
+proc p06_expect_list_unordered {label actual expected} {
+    set actual_sorted [lsort -integer $actual]
+    set expected_sorted [lsort -integer $expected]
+    if {$actual_sorted ne $expected_sorted} {
+        error "P06 mismatch $label: actual=$actual_sorted expected=$expected_sorted"
+    }
+}
+
+proc p06_field {value offset width} {
+    return [expr {($value >> $offset) & ((1 << $width) - 1)}]
+}
+
+# Same host/debug transport as the accepted P05 shell.
+proc p06_host_write {slot bank addr value} {
+    p06_commit [list 6 0 7 1 8 $slot 9 $bank 10 $addr 11 $value]
+    p06_commit [list 6 1]
+    p06_wait_input 29 1 2000 "host write ack slot=$slot bank=$bank addr=$addr"
+    set err [p06_input 31]
+    p06_commit [list 6 0]
+    if {$err != 0} { error "P06 host write failed: slot=$slot bank=$bank addr=$addr" }
+}
+
+proc p06_host_read {slot bank addr} {
+    p06_commit [list 6 0 7 0 8 $slot 9 $bank 10 $addr 11 0]
+    p06_commit [list 6 1]
+    p06_wait_input 29 1 2000 "host read ack slot=$slot bank=$bank addr=$addr"
+    set valid [p06_input 30]
+    set err [p06_input 31]
+    set value [p06_input 32]
+    p06_commit [list 6 0]
+    if {$err != 0 || $valid != 1} {
+        error "P06 host read failed: slot=$slot bank=$bank addr=$addr valid=$valid error=$err"
+    }
+    return $value
+}
+
+proc p06_load_seeds_verified {slot bank seeds} {
+    foreach seed $seeds {
+        lassign $seed addr value
+        p06_host_write $slot $bank $addr $value
+        p06_expect "seed readback slot=$slot bank=$bank addr=$addr" \
+            [p06_host_read $slot $bank $addr] [p06_parse_value $value]
+    }
+}
+
+proc p06_clear_runtime {slot} {
+    for {set addr 0} {$addr < 8} {incr addr} {
+        p06_host_write $slot 6 $addr 0
+        p06_host_write $slot 9 $addr 0
+        p06_host_write $slot 8 $addr 0
+    }
+    for {set addr 0} {$addr < 4} {incr addr} {
+        p06_host_write $slot 4 $addr 0
+        p06_host_write $slot 7 $addr 0
+    }
+}
+
+proc p06_load_context {context} {
+    set slot [dict get $context slot]
+    p06_clear_runtime $slot
+    p06_load_seeds_verified $slot 0 [dict get $context config_seeds]
+    p06_load_seeds_verified $slot 1 [dict get $context state_seeds]
+    p06_load_seeds_verified $slot 2 [dict get $context axon_seeds]
+    p06_load_seeds_verified $slot 3 [dict get $context synapse_seeds]
+    p06_load_seeds_verified $slot 4 [dict get $context route_desc_seeds]
+    p06_load_seeds_verified $slot 5 [dict get $context route_seeds]
+}
+
+proc p06_load_events {slot events} {
+    set addr 0
+    foreach axon $events {
+        p06_host_write $slot 6 $addr $axon
+        p06_expect "initial event readback slot=$slot addr=$addr" \
+            [p06_host_read $slot 6 $addr] $axon
+        incr addr
+    }
+}
+
+proc p06_check_errors {label} {
+    for {set port 13} {$port <= 18} {incr port} {
+        set value [p06_input $port]
+        if {$value != 0} { error "P06 $label controller error port=$port value=$value" }
+    }
+    p06_expect "$label final HLS status" [p06_input 27] 0
+    p06_expect "$label HLS address guard" [p06_input 34] 0
+    p06_expect "$label integration address guard" [p06_input 35] 0
+}
+
+open_hw_manager
+connect_hw_server -url $hw_server_url
+set targets [get_hw_targets]
+if {[llength $targets] == 0} { error "P06 no hardware targets found" }
+current_hw_target [lindex $targets 0]
+open_hw_target
+
+set P06_DEVICE ""
+foreach device [get_hw_devices] {
+    set name [get_property NAME $device]
+    if {[regexp -nocase {(xczu|xck26)} $name]} {
+        set P06_DEVICE $device
+        break
+    }
+}
+if {$P06_DEVICE eq ""} { error "P06 could not identify the K26 device" }
+current_hw_device $P06_DEVICE
+refresh_hw_device -update_hw_probes false $P06_DEVICE
+set_property PROGRAM.FILE $bit_file $P06_DEVICE
+if {[lsearch -exact [list_property $P06_DEVICE] PROBES.FILE] >= 0} {
+    set_property PROBES.FILE $ltx_file $P06_DEVICE
+}
+if {[lsearch -exact [list_property $P06_DEVICE] FULL_PROBES.FILE] >= 0} {
+    set_property FULL_PROBES.FILE $ltx_file $P06_DEVICE
+}
+program_hw_devices $P06_DEVICE
+refresh_hw_device $P06_DEVICE
+
+set P06_VIO ""
+set vios [get_hw_vios -of_objects $P06_DEVICE]
+foreach vio $vios {
+    set cell ""
+    catch {set cell [get_property CELL_NAME $vio]}
+    if {[string match "*vio_p05*" $cell]} {
+        set P06_VIO $vio
+        break
+    }
+}
+if {$P06_VIO eq "" && [llength $vios] == 1} { set P06_VIO [lindex $vios 0] }
+if {$P06_VIO eq ""} { error "P06 could not find the P05 VIO core" }
+puts "P06 hardware device: [get_property NAME $P06_DEVICE]"
+puts "P06 reused P05 VIO core: $P06_VIO"
+
+foreach probe [get_hw_probes -of_objects $P06_VIO] {
+    set type [string tolower [get_property TYPE $probe]]
+    if {$type eq "vio_input"} { catch {set_property INPUT_VALUE_RADIX HEX $probe} }
+    if {$type eq "vio_output"} { catch {set_property OUTPUT_VALUE_RADIX HEX $probe} }
+}
+reset_hw_vio_outputs $P06_VIO
+refresh_hw_vio -update_output_values $P06_VIO
+
+p06_commit [list 2 1]
+after 20
+p06_commit [list 2 0]
+after 20
+set heartbeat_before [p06_input 33]
+after 20
+set heartbeat_after [p06_input 33]
+if {$heartbeat_before == $heartbeat_after} {
+    error "P06 control fabric did not leave reset: heartbeat remained $heartbeat_after"
+}
+puts "P06 reset release verified: heartbeat $heartbeat_before -> $heartbeat_after"
+
+set result [open $result_file w]
+puts $result "schema=p06-physical-mapped-deployment-v1"
+puts $result "device=[get_property NAME $P06_DEVICE]"
+puts $result "source_fingerprint=$P06_SOURCE_FINGERPRINT"
+puts $result "deployment_fingerprint=$P06_DEPLOYMENT_FINGERPRINT"
+puts $result "logical_contexts=$P06_LOGICAL_CONTEXTS"
+puts $result "physical_engines=$P06_PHYSICAL_ENGINES"
+puts $result "logical_capacity_changed=0"
+puts $result "scenarios=[llength $P06_SCENARIOS]"
+
+foreach scenario $P06_SCENARIOS {
+    set name [dict get $scenario name]
+    set contexts [dict get $scenario contexts]
+    set metadata [dict get $scenario context_metadata]
+    set initial0 [dict get $scenario initial_events0]
+    set initial1 [dict get $scenario initial_events1]
+    set initial2 [dict get $scenario initial_events2]
+    set ticks [dict get $scenario ticks]
+
+    foreach reverse {0 1} {
+        foreach context $contexts { p06_load_context $context }
+        p06_load_events 0 $initial0
+        p06_load_events 1 $initial1
+        p06_load_events 2 $initial2
+
+        p06_commit [list 3 $reverse 4 0 5 $metadata 0 0 1 0]
+        p06_commit [list 0 1]
+        after 1
+        p06_commit [list 0 0]
+        p06_wait_input 3 1 2000 "epoch loaded scenario=$name reverse=$reverse"
+        p06_expect "$name initial timestep" [p06_input 4] 0
+
+        set initial_counts [p06_input 5]
+        p06_expect "$name initial events slot0" [p06_field $initial_counts 0 13] [llength $initial0]
+        p06_expect "$name initial events slot1" [p06_field $initial_counts 13 13] [llength $initial1]
+        p06_expect "$name initial events slot2" [p06_field $initial_counts 26 13] [llength $initial2]
+        puts "P06 compiled deployment load PASS: scenario=$name reverse=$reverse fingerprint=$P06_DEPLOYMENT_FINGERPRINT"
+
+        set tick_index 0
+        foreach tick $ticks {
+            set timestep [dict get $tick timestep]
+            set expected_contexts [dict get $tick contexts]
+            set next0 [dict get $tick next_events0]
+            set next1 [dict get $tick next_events1]
+            set next2 [dict get $tick next_events2]
+            set expected_local [dict get $tick local_packets]
+            set expected_remote [dict get $tick remote_packets]
+
+            set target_runs [expr {[p06_input 11] + 1}]
+            p06_commit [list 1 1]
+            after 1
+            p06_commit [list 1 0]
+            p06_wait_input 11 $target_runs 10000 "completed tick scenario=$name reverse=$reverse timestep=$timestep"
+
+            p06_check_errors "scenario=$name reverse=$reverse timestep=$timestep"
+            p06_expect "$name timestep" [p06_input 4] [expr {$timestep + 1}]
+            p06_expect "$name barrier mask" [p06_input 7] 7
+            p06_expect "$name local packets" [p06_input 9] $expected_local
+            p06_expect "$name remote packets" [p06_input 10] $expected_remote
+
+            set counts [p06_input 5]
+            p06_expect "$name events slot0" [p06_field $counts 0 13] [llength $next0]
+            p06_expect "$name events slot1" [p06_field $counts 13 13] [llength $next1]
+            p06_expect "$name events slot2" [p06_field $counts 26 13] [llength $next2]
+
+            set expected_bank [expr {($timestep + 1) & 1}]
+            p06_expect "$name event bank" [p06_input 21] $expected_bank
+            set event_host_bank [expr {$expected_bank ? 9 : 6}]
+            set cycles [p06_input 12]
+            if {$cycles <= 0} { error "P06 $name timestep=$timestep reported zero cycles" }
+
+            set final_slot [expr {$reverse ? 0 : 2}]
+            set final_expected [lindex $expected_contexts $final_slot]
+            p06_expect "$name final slot" [p06_input 19] $final_slot
+            p06_expect "$name final logical core" [p06_input 20] [dict get $final_expected logical_core_id]
+            p06_expect "$name final spike count" [p06_input 25] [dict get $final_expected spike_count]
+            p06_expect "$name final packet count" [p06_input 26] [dict get $final_expected packet_count]
+
+            foreach expected $expected_contexts context $contexts {
+                set slot [dict get $expected slot]
+                set logical_id [dict get $expected logical_core_id]
+                p06_expect "$name context slot identity" $slot [dict get $context slot]
+                p06_expect "$name logical identity" $logical_id [dict get $context logical_core_id]
+                set compartment_count [dict get $context compartment_count]
+                for {set i 0} {$i < $compartment_count} {incr i} {
+                    p06_expect "$name logical$logical_id state($i)" \
+                        [p06_host_read $slot 1 $i] \
+                        [p06_parse_value [lindex [dict get $expected states] $i]]
+                    p06_expect "$name logical$logical_id trace($i)" \
+                        [p06_host_read $slot 7 $i] \
+                        [p06_parse_value [lindex [dict get $expected traces] $i]]
+                }
+                set actual_packets {}
+                for {set i 0} {$i < [dict get $expected packet_count]} {incr i} {
+                    lappend actual_packets [p06_host_read $slot 8 $i]
+                }
+                set expected_packets {}
+                foreach word [dict get $expected packets] {
+                    lappend expected_packets [p06_parse_value $word]
+                }
+                p06_expect_list_unordered "$name logical$logical_id packets" $actual_packets $expected_packets
+            }
+
+            foreach slot {0 1 2} expected_events [list $next0 $next1 $next2] {
+                set actual_events {}
+                for {set i 0} {$i < [llength $expected_events]} {incr i} {
+                    lappend actual_events [p06_host_read $slot $event_host_bank $i]
+                }
+                p06_expect_list_unordered "$name slot$slot next events" $actual_events $expected_events
+            }
+
+            puts $result "scenario=$name reverse=$reverse tick=$tick_index timestep=$timestep cycles=$cycles local=$expected_local remote=$expected_remote"
+            puts "P06 physical tick PASS: scenario=$name reverse=$reverse timestep=$timestep cycles=$cycles local=$expected_local remote=$expected_remote"
+            incr tick_index
+        }
+    }
+}
+
+puts $result "result=PASS"
+close $result
+puts "P06 mapped deployment Python/FPGA conformance PASS: result=$result_file"
+close_hw_manager

@@ -1,0 +1,33 @@
+{
+  "compiled_deployment_fingerprint": "32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b",
+  "hardware": {
+    "context_bits_per_core": 3506176,
+    "estimated_uram288_for_three_context_target": 47,
+    "k26_uram288_available": 64,
+    "logical_capacity_changed": false,
+    "logical_core_count": 3,
+    "logical_core_ids": [
+      0,
+      1,
+      2
+    ],
+    "physical_engine_count": 1,
+    "profile": "p05-k26-three-context-one-engine-v1",
+    "resident_context_bits": 10518528,
+    "resident_context_slots": [
+      0,
+      1,
+      2
+    ]
+  },
+  "logical_capacity_changed": false,
+  "logical_core_count": 3,
+  "logical_to_context_slot": {
+    "0": 0,
+    "1": 1,
+    "2": 2
+  },
+  "physical_engine_count": 1,
+  "profile": "p06-compiled-p05-context-image-v1",
+  "source_fingerprint": "8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383"
+}

@@ -1,0 +1,4 @@
+bitstream=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p04_impl/reports/p04_two_core.bit
+debug_probes=/home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p04_impl/reports/p04_two_core.ltx
+1882114b151541c060806ffc98230d829e9b165c73ff43a71364135b53309828  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p04_impl/reports/p04_two_core.bit
+36d73aa90443a1d36b7859098b7f8788321bca33a5737f0c0a68ecda2d8e6a4b  /home/dna/Git/Thesis/Loihi_Digital_Twin/v2/vivado/build/p04_impl/reports/p04_two_core.ltx

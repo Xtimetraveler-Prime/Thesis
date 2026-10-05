@@ -1,0 +1,32 @@
+{
+  "schema": "p08-5-1-acceptance-v1",
+  "status": "ACCEPTED",
+  "accepted_date": "2026-09-30",
+  "independently_verified_candidate": "2f06abfd37d620bc0d2b06a0a75d2ffb49aafc55",
+  "ledger_schema": "p08-nxtf-comparison-ledger-v1",
+  "ledger_rows": 24,
+  "ledger_fingerprint": "574023d0e55cf3d5098cccd1f23e597ee63deb872ac119be30bf41a5f495511d",
+  "tests_passed": 6,
+  "comparison_classes": {
+    "DIRECTLY_COMPARABLE": 3,
+    "COMPARABLE_WITH_RECONSTRUCTION_CAVEAT": 7,
+    "CONTEXT_ONLY": 2,
+    "PROJECT_SPECIFIC": 10,
+    "NOT_COMPARABLE": 2
+  },
+  "safe_deltas": {
+    "ann_test_error": 0.0052,
+    "snn_test_error": 0.0097,
+    "ann_to_snn_error_increase": 0.0045
+  },
+  "guardrails": {
+    "native_loihi_energy_is_direct_fpga_comparison": false,
+    "native_loihi_latency_is_direct_fpga_comparison": false,
+    "shared_weight_counts_use_same_storage_model": false,
+    "mapped_core_counts_use_same_compiler_model": false,
+    "representative_dispatch_cycles_are_full_sample_latency": false,
+    "full_100_timestep_inference_physically_replayed_over_jtag": false,
+    "post_test_model_or_conversion_selection": false
+  },
+  "next_subphase": "P08.5.2"
+}
