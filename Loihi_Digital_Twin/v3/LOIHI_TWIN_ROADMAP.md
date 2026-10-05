@@ -169,7 +169,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 |---|---|---|
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
-| P02 | Move non-resident logical contexts into K26 DDR | Planned |
+| P02 | Move non-resident logical contexts into K26 DDR | In progress |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | Planned |
@@ -273,9 +273,12 @@ that DDR paging or the PS-resident runtime is implemented yet. Those are P02
 and P03 respectively.
 
 Primary record: `docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md`.
+
+---
+
 # P02 — DDR-backed logical-core virtualization
 
-**Status:** Planned
+**Status:** In progress
 
 ## Goal
 
@@ -283,10 +286,10 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 
 ## Sub-milestones
 
-- **P02.1 — DDR backing-image ABI and coherency contract.** Freeze layout,
+- **P02.1 — DDR backing-image ABI and coherency contract.** **Verification candidate.** Freeze layout,
   fixed/variable section sizes, alignment, versioning, address validation,
   page-transfer commands, ownership/cache-maintenance rules, and deterministic
-  serialization.
+  serialization. Primary record: `docs/P02_1_DDR_ABI.md`.
 - **P02.2 — Software reference and transfer-model validation.** Implement the
   board-local DDR image model and page-transfer reference path in software,
   including round-trip/fingerprint/error tests.
