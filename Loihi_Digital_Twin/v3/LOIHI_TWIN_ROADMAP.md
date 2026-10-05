@@ -86,7 +86,7 @@ Initial candidate for source audit, **not yet selected**:
 
 - Alpha Renner et al., "The backpropagation algorithm implemented on spiking neuromorphic hardware," Nature Communications (2024), DOI 10.1038/s41467-024-53827-9.
 - The paper describes a cropped-MNIST feed-forward inference module with 400 input neurons, 400 hidden neurons, and 10 output neurons, explicit Loihi CUBA parameters, a four-timestep reduced inference path, published Loihi inference measurements, and public implementation code.
-- P05 must independently audit the paper/code before this project treats it as the v3 benchmark.
+- P06 must independently audit the paper/code before this project treats it as the v3 benchmark.
 
 ### 4. Latency, throughput, power, and energy characterization
 
@@ -108,6 +108,37 @@ Measurements must keep distinct:
 - energy per inference.
 
 The KV260 SOM power telemetry may be used for reproducible board-level measurements, with an external meter retained as an optional validation path.
+
+### 5. Multiple physical HLS execution engines
+
+v3 should no longer assume that one physical HLS engine is the final execution
+topology. Once DDR-backed contexts and the autonomous board runtime are proven,
+the PL execution plane should be scaled so independent logical cores from the
+same algorithmic timestep can be evaluated concurrently.
+
+The first acceptance target is **two simultaneously active
+`loihi_core_v2_tick`-compatible engines**. A third or larger engine count is a
+measurement-driven extension, not a pre-committed requirement.
+
+The reason for this staged target is architectural as well as physical:
+
+- accepted v2 invariance already permits physical-engine count to differ from
+  logical-core count;
+- same-timestep logical cores consume frozen CURRENT inputs and produce NEXT
+  traffic, so independent cores can be serviced concurrently without changing
+  logical causality;
+- the routed one-engine/three-context P05 shell used 5,062 LUTs, 7,686
+  registers, and 2 DSPs, while the routed resource-scaled two-engine P04 shell
+  used 7,059 LUTs, 9,980 registers, and 4 DSPs;
+- v2's scaling problem was dominated by full retained context memory, not by
+  arithmetic-engine DSP/LUT demand;
+- the current resident-memory fabric is true-dual-port, which gives a practical
+  first path to two compute engines but not an unconstrained number of
+  simultaneous engines without further banking.
+
+The performance goal is reduced compute serialization, not an assumed 2x
+end-to-end speedup. DDR paging, packet drain/routing, barrier work, unequal core
+sizes, and PS overhead must be measured separately.
 
 ---
 
@@ -142,11 +173,12 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P01 | Define board-local architecture, ownership, and v3 contract | In progress |
 | P02 | Move non-resident logical contexts into K26 DDR | Planned |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
-| P04 | Build board-local regression, observability, and data-path hardening | Planned |
-| P05 | Audit and freeze an exact published MNIST benchmark | Planned |
-| P06 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
-| P07 | Characterize latency, throughput, power, and energy | Planned |
-| P08 | Final source-backed comparison and v3 closure | Planned |
+| P04 | Add multi-engine parallel logical-core execution | Planned |
+| P05 | Build board-local regression, observability, and data-path hardening | Planned |
+| P06 | Audit and freeze an exact published MNIST benchmark | Planned |
+| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
+| P08 | Characterize latency, throughput, power, and energy | Planned |
+| P09 | Final source-backed comparison and v3 closure | Planned |
 
 ---
 
@@ -286,7 +318,112 @@ The representative five-over-three 100-timestep workload must complete board-loc
 
 ---
 
-# P04 — Board-local regression, observability, and data-path hardening
+# P04 — Multi-engine parallel logical-core execution
+
+**Status:** Planned
+
+## Goal
+
+Increase physical compute parallelism without changing logical-core identity,
+capacity, timestep causality, or normalized results.
+
+The initial target is two simultaneous P03-compatible HLS evaluation engines
+sharing the existing three resident full-context slots. More engines are
+permitted only after measured resource/timing/memory-port evidence supports
+them.
+
+## Architectural model
+
+With `E` physical engines, the PS scheduler services each algorithmic timestep
+in **waves** of up to `E` independent logical cores:
+
+```text
+timestep t CURRENT state/events are frozen
+
+wave 0:
+    engine 0 -> resident logical core A
+    engine 1 -> resident logical core B
+    wait for both dispatches to finish
+    drain/commit A and B packets into NEXT state
+
+wave 1:
+    page/prepare contexts as required
+    engine 0 -> logical core C
+    engine 1 -> logical core D
+    ...
+
+final wave:
+    remaining logical cores
+
+global barrier:
+    only after every logical core is complete and all NEXT traffic is committed
+```
+
+Engine assignment is implementation-only metadata. Packets and traces continue
+to use logical core IDs.
+
+## Resident-memory consequence
+
+The current P05/P08 resident memory fabric uses true-dual-port memories with one
+side serving the single HLS engine and the other serving host/integration
+traffic. The first two-engine design should therefore investigate reusing the
+two memory ports as two compute ports during a parallel dispatch wave.
+
+During that wave:
+
+- engine 0 owns compute port A;
+- engine 1 owns compute port B;
+- page movement and packet-maintenance access to the affected shared banks are
+  paused/arbitrated until the wave completes;
+- packet draining/routing happens after the engines complete, before those slots
+  may be reused.
+
+This is the least invasive path to real parallelism. It intentionally does not
+promise concurrent DDR paging plus two-engine compute in the first
+implementation.
+
+Three or more simultaneous engines would require a different resident-memory
+organization, such as per-slot banks or selective replication/migration of
+memory classes. That option must be justified by post-route resource and
+performance data because naive per-slot separation can materially increase
+UltraRAM usage.
+
+## Deliverables
+
+- parameterized physical-engine count in the v3 execution scheduler/control
+  interface;
+- two instantiated P03-compatible HLS engines;
+- resident-slot-to-engine assignment logic;
+- dual-engine start/done/status/cycle accounting;
+- arbitration/ownership rules between compute, packet maintenance, and page
+  transfer;
+- parallel-wave scheduler support in the PS runtime;
+- normalized invariance tests comparing one-engine and two-engine execution;
+- simultaneous-producer packet tests;
+- routed timing/resource evidence for the two-engine shell;
+- measured one-engine versus two-engine dispatch/timestep/full-inference
+  performance on at least one representative multicore deployment.
+
+## Acceptance
+
+P04 is complete when:
+
+1. two different logical cores can physically execute at the same time on two
+   HLS engines;
+2. normalized architectural results match the accepted one-engine execution;
+3. same-timestep CURRENT/NEXT causality and the global barrier remain exact;
+4. routed K26 timing closes at the accepted target clock or any changed clock is
+   explicitly justified;
+5. resource use is reported separately for engines, resident contexts, and DDR
+   paging infrastructure;
+6. measured latency shows where parallelism helps and where paging/routing/
+   synchronization remains the bottleneck.
+
+A theoretical 2x speedup is not an acceptance criterion.
+
+---
+
+# P05 — Board-local regression, observability, and data-path hardening
 
 **Status:** Planned
 
@@ -310,7 +447,7 @@ The major v3 architecture regression corpus must be physically executed on the K
 
 ---
 
-# P05 — Exact published MNIST benchmark audit and freeze
+# P06 — Exact published MNIST benchmark audit and freeze
 
 **Status:** Planned
 
@@ -358,7 +495,7 @@ Before official-test evaluation:
 
 ---
 
-# P06 — Full board-local benchmark evaluation
+# P07 — Full board-local benchmark evaluation
 
 **Status:** Planned
 
@@ -383,7 +520,7 @@ If runtime and storage permit, execute the complete MNIST official test set on t
 
 ---
 
-# P07 — Latency, throughput, power, and energy characterization
+# P08 — Latency, throughput, power, and energy characterization
 
 **Status:** Planned
 
@@ -427,7 +564,7 @@ Published Loihi power/latency values may only be compared directly when workload
 
 ---
 
-# P08 — Final v3 comparison and closure
+# P09 — Final v3 comparison and closure
 
 **Status:** Planned
 
@@ -466,7 +603,6 @@ v3 should improve autonomy and physical evidence, but it still must not silently
 
 These are intentionally not prerequisites for the initial v3 roadmap unless later evidence makes them necessary:
 
-- multiple physical HLS compute engines;
 - full PL-owned scheduling instead of PS-owned orchestration;
 - on-FPGA/on-chip learning;
 - Loihi 2 architectural targeting;
