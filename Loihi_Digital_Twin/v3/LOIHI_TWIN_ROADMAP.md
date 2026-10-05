@@ -296,13 +296,18 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
   accounting, and full-versus-mutable-only writeback equivalence. Primary
   records: `docs/P02_2_DDR_TRANSFER_MODEL.md` and
   `docs/P02_2_ACCEPTANCE.md`.
-- **P02.3a — Resident-bank page walker and ownership path.** **Verification candidate.**
+- **P02.3a — Resident-bank page walker and ownership path.** **Complete; accepted 2026-10-05.**
   Implement the deterministic PL bank walker over the accepted P05 host-side
   memory access boundary, with full/mutable-only transfer sequencing and
   directed RTL verification.
-- **P02.3b — AXI DDR master/burst integration.** **Planned.** Connect the
+- **P02.3b — AXI DDR master/burst integration.** **In progress.** Connect the
   verified bank walker to the selected PS DDR high-performance path, add burst
   buffering/range checks, and integrate into the Vivado shell.
+  - **P02.3b1 — 128-bit AXI burst coalescer.** **In progress.** Coalesce the
+    scalar-correct walker transactions into 256-byte / 16-beat AXI4 bursts
+    without changing the accepted DDR address stream.
+  - **P02.3b2 — HP0 Vivado integration.** **Planned.** Bind the verified AXI
+    master to the K26 PS `S_AXI_HP0_FPD` path and route the resulting shell.
 - **P02.4 — Physical DDR-backed paging acceptance.** Demonstrate that
   non-resident logical contexts live in K26 DDR and are paged into the three
   resident slots without PC RAM participating in the page loop.
