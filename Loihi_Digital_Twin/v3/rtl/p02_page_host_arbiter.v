@@ -2,11 +2,17 @@
 
 // P02.3a arbitration for P05 context-memory Port B.
 //
-// While page_active is asserted, the page walker owns the existing P05
-// host/debug transaction port.  External debug access is back-pressured.
-// Compute ownership remains enforced inside p05_context_memory_fabric itself:
-// that fabric rejects host-side accesses while compute_busy is asserted.
+// While page_active is asserted, the page walker owns new transactions on the
+// existing P05 host/debug port and external debug access is back-pressured.
+//
+// Response ownership is latched per transaction.  This matters on the final
+// page-walker word: page_active may deassert immediately after the walker
+// samples fabric_ack, while the fabric response is still visible for the rest
+// of that clock cycle.  A latched owner prevents that response from appearing
+// spuriously on the debug side.
 module p02_page_host_arbiter (
+    input  wire         clk,
+    input  wire         resetn,
     input  wire         page_active,
 
     input  wire         debug_req,
@@ -45,6 +51,9 @@ module p02_page_host_arbiter (
     input  wire         fabric_error,
     input  wire [255:0] fabric_rdata
 );
+    reg transaction_active;
+    reg transaction_page_owner;
+
     assign fabric_req = page_active ? page_req : debug_req;
     assign fabric_write = page_active ? page_write : debug_write;
     assign fabric_context_slot =
@@ -53,15 +62,46 @@ module p02_page_host_arbiter (
     assign fabric_addr = page_active ? page_addr : debug_addr;
     assign fabric_wdata = page_active ? page_wdata : debug_wdata;
 
-    assign debug_busy = page_active ? 1'b1 : fabric_busy;
-    assign debug_ack = page_active ? 1'b0 : fabric_ack;
-    assign debug_rvalid = page_active ? 1'b0 : fabric_rvalid;
-    assign debug_error = page_active ? 1'b0 : fabric_error;
-    assign debug_rdata = page_active ? 256'd0 : fabric_rdata;
+    // A page command waits for an already-issued debug transaction to retire.
+    assign page_busy =
+        fabric_busy || (transaction_active && !transaction_page_owner);
 
-    assign page_busy = fabric_busy;
-    assign page_ack = page_active ? fabric_ack : 1'b0;
-    assign page_rvalid = page_active ? fabric_rvalid : 1'b0;
-    assign page_error = page_active ? fabric_error : 1'b0;
-    assign page_rdata = page_active ? fabric_rdata : 256'd0;
+    // Debug is blocked for the full duration of page ownership, including gaps
+    // between individual scalar bank transactions.
+    assign debug_busy =
+        page_active || fabric_busy ||
+        (transaction_active && transaction_page_owner);
+
+    assign debug_ack =
+        fabric_ack && transaction_active && !transaction_page_owner;
+    assign debug_rvalid =
+        fabric_rvalid && transaction_active && !transaction_page_owner;
+    assign debug_error =
+        fabric_error && transaction_active && !transaction_page_owner;
+    assign debug_rdata =
+        (transaction_active && !transaction_page_owner) ? fabric_rdata : 256'd0;
+
+    assign page_ack =
+        fabric_ack && transaction_active && transaction_page_owner;
+    assign page_rvalid =
+        fabric_rvalid && transaction_active && transaction_page_owner;
+    assign page_error =
+        fabric_error && transaction_active && transaction_page_owner;
+    assign page_rdata =
+        (transaction_active && transaction_page_owner) ? fabric_rdata : 256'd0;
+
+    always @(posedge clk) begin
+        if (!resetn) begin
+            transaction_active <= 1'b0;
+            transaction_page_owner <= 1'b0;
+        end else begin
+            if (!transaction_active && fabric_req) begin
+                transaction_active <= 1'b1;
+                transaction_page_owner <= page_active;
+            end
+
+            if (transaction_active && fabric_ack)
+                transaction_active <= 1'b0;
+        end
+    end
 endmodule
