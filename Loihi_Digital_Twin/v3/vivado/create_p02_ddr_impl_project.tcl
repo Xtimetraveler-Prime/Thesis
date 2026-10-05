@@ -523,14 +523,14 @@ foreach c [lsort [get_cells -hierarchical -filter {REF_NAME == RAMB36E2 || REF_N
 }
 close $primitive_file
 
-set metrics [open [file join $report_dir p08_post_route_metrics.txt] w]
+set metrics [open [file join $report_dir p02_post_route_metrics.txt] w]
 set setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
 set hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
 if {[llength $setup_paths] > 0} { puts $metrics "wns_ns=[get_property SLACK [lindex $setup_paths 0]]" } else { puts $metrics "wns_ns=NA" }
 if {[llength $hold_paths] > 0} { puts $metrics "whs_ns=[get_property SLACK [lindex $hold_paths 0]]" } else { puts $metrics "whs_ns=NA" }
 if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} { puts $metrics "block_ram_tiles=$bram_tiles" }
 if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $metrics "uram=$uram_count" }
-puts $metrics "p08_expected_logical_backing_contexts=5"
+puts $metrics "p02_reference_logical_backing_contexts=5"
 puts $metrics "resident_context_slots=3"
 puts $metrics "physical_engines=1"
 puts $metrics "host_paged_dispatch=1"
