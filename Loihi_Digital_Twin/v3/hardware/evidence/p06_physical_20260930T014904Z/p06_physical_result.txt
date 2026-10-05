@@ -1,0 +1,33 @@
+schema=p06-physical-mapped-deployment-v1
+device=xck26_0
+source_fingerprint=8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383
+deployment_fingerprint=32937f2fd8f861ac28f516509a054b03e6098c2c8a051512ad289fc3be49ea4b
+logical_contexts=3
+physical_engines=1
+logical_capacity_changed=0
+scenarios=3
+scenario=pixel0 reverse=0 tick=0 timestep=0 cycles=74 local=0 remote=1
+scenario=pixel0 reverse=0 tick=1 timestep=1 cycles=76 local=0 remote=1
+scenario=pixel0 reverse=0 tick=2 timestep=2 cycles=68 local=0 remote=0
+scenario=pixel0 reverse=0 tick=3 timestep=3 cycles=61 local=0 remote=0
+scenario=pixel0 reverse=1 tick=0 timestep=0 cycles=74 local=0 remote=1
+scenario=pixel0 reverse=1 tick=1 timestep=1 cycles=76 local=0 remote=1
+scenario=pixel0 reverse=1 tick=2 timestep=2 cycles=68 local=0 remote=0
+scenario=pixel0 reverse=1 tick=3 timestep=3 cycles=61 local=0 remote=0
+scenario=pixel1 reverse=0 tick=0 timestep=0 cycles=74 local=0 remote=1
+scenario=pixel1 reverse=0 tick=1 timestep=1 cycles=76 local=0 remote=1
+scenario=pixel1 reverse=0 tick=2 timestep=2 cycles=68 local=0 remote=0
+scenario=pixel1 reverse=0 tick=3 timestep=3 cycles=61 local=0 remote=0
+scenario=pixel1 reverse=1 tick=0 timestep=0 cycles=74 local=0 remote=1
+scenario=pixel1 reverse=1 tick=1 timestep=1 cycles=76 local=0 remote=1
+scenario=pixel1 reverse=1 tick=2 timestep=2 cycles=68 local=0 remote=0
+scenario=pixel1 reverse=1 tick=3 timestep=3 cycles=61 local=0 remote=0
+scenario=both_pixels reverse=0 tick=0 timestep=0 cycles=87 local=0 remote=2
+scenario=both_pixels reverse=0 tick=1 timestep=1 cycles=91 local=0 remote=2
+scenario=both_pixels reverse=0 tick=2 timestep=2 cycles=75 local=0 remote=0
+scenario=both_pixels reverse=0 tick=3 timestep=3 cycles=61 local=0 remote=0
+scenario=both_pixels reverse=1 tick=0 timestep=0 cycles=87 local=0 remote=2
+scenario=both_pixels reverse=1 tick=1 timestep=1 cycles=91 local=0 remote=2
+scenario=both_pixels reverse=1 tick=2 timestep=2 cycles=75 local=0 remote=0
+scenario=both_pixels reverse=1 tick=3 timestep=3 cycles=61 local=0 remote=0
+result=PASS

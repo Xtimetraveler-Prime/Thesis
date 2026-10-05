@@ -1,0 +1,24 @@
+schema=p05-physical-conformance-v1
+device=xck26_0
+logical_contexts=3
+physical_engines=1
+virtualization_ratio=3.0
+full_logical_context_depths=1
+double_buffered_events=1
+logical_capacity_changed=0
+scenarios=2
+scenario=logical_id_ring reverse=0 tick=0 timestep=0 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=0 tick=1 timestep=1 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=0 tick=2 timestep=2 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=0 tick=3 timestep=3 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=1 tick=0 timestep=0 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=1 tick=1 timestep=1 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=1 tick=2 timestep=2 cycles=56 local=0 remote=1
+scenario=logical_id_ring reverse=1 tick=3 timestep=3 cycles=56 local=0 remote=1
+scenario=local_remote_fanin reverse=0 tick=0 timestep=0 cycles=77 local=2 remote=2
+scenario=local_remote_fanin reverse=0 tick=1 timestep=1 cycles=100 local=3 remote=3
+scenario=local_remote_fanin reverse=0 tick=2 timestep=2 cycles=112 local=3 remote=3
+scenario=local_remote_fanin reverse=1 tick=0 timestep=0 cycles=77 local=2 remote=2
+scenario=local_remote_fanin reverse=1 tick=1 timestep=1 cycles=100 local=3 remote=3
+scenario=local_remote_fanin reverse=1 tick=2 timestep=2 cycles=112 local=3 remote=3
+result=PASS

@@ -1,0 +1,127 @@
+{
+  "fingerprint": "8e5fb969a806aac8bdc82d1129fc8ee50b53aef8e053ee10b6e11bd9748a1383",
+  "input_populations": [
+    {
+      "name": "pixels",
+      "size": 2
+    }
+  ],
+  "input_projections": [
+    {
+      "connections": [
+        {
+          "delay": 0,
+          "destination_index": 0,
+          "source_index": 0,
+          "weight": 6
+        },
+        {
+          "delay": 0,
+          "destination_index": 1,
+          "source_index": 1,
+          "weight": 6
+        }
+      ],
+      "destination_population": "layer0",
+      "name": "pixels_to_layer0",
+      "source_input": "pixels"
+    }
+  ],
+  "populations": [
+    {
+      "compartment": {
+        "bias": 0,
+        "current_decay": 4096,
+        "parent_compartment": null,
+        "refractory_ticks": 0,
+        "reset_voltage": 0,
+        "root_compartment": null,
+        "threshold": 5,
+        "voltage_decay": 4096
+      },
+      "name": "layer0",
+      "size": 2
+    },
+    {
+      "compartment": {
+        "bias": 0,
+        "current_decay": 4096,
+        "parent_compartment": null,
+        "refractory_ticks": 0,
+        "reset_voltage": 0,
+        "root_compartment": null,
+        "threshold": 5,
+        "voltage_decay": 4096
+      },
+      "name": "layer1",
+      "size": 2
+    },
+    {
+      "compartment": {
+        "bias": 0,
+        "current_decay": 4096,
+        "parent_compartment": null,
+        "refractory_ticks": 0,
+        "reset_voltage": 0,
+        "root_compartment": null,
+        "threshold": 5,
+        "voltage_decay": 4096
+      },
+      "name": "layer2",
+      "size": 2
+    }
+  ],
+  "projections": [
+    {
+      "connections": [
+        {
+          "delay": 0,
+          "destination_index": 0,
+          "source_index": 0,
+          "weight": 6
+        },
+        {
+          "delay": 0,
+          "destination_index": 1,
+          "source_index": 0,
+          "weight": 2
+        },
+        {
+          "delay": 0,
+          "destination_index": 0,
+          "source_index": 1,
+          "weight": 2
+        },
+        {
+          "delay": 0,
+          "destination_index": 1,
+          "source_index": 1,
+          "weight": 6
+        }
+      ],
+      "destination_population": "layer1",
+      "name": "layer0_to_layer1",
+      "source_population": "layer0"
+    },
+    {
+      "connections": [
+        {
+          "delay": 0,
+          "destination_index": 0,
+          "source_index": 0,
+          "weight": 6
+        },
+        {
+          "delay": 0,
+          "destination_index": 1,
+          "source_index": 1,
+          "weight": 6
+        }
+      ],
+      "destination_population": "layer2",
+      "name": "layer1_to_layer2",
+      "source_population": "layer1"
+    }
+  ],
+  "schema": "p06-network-v1"
+}

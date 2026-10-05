@@ -1,0 +1,89 @@
+{
+  "capacity_probe": {
+    "code": "logical_core_capacity",
+    "context": {
+      "limit": 2,
+      "required": 3
+    },
+    "message": "logical_core_capacity: network requires more logical cores than mapper policy permits (limit=2 required=3)",
+    "result": "EXPECTED_REJECTION"
+  },
+  "compartments_per_core_policy": 4,
+  "connection_sharing": {
+    "expanded_connections": 28,
+    "expanded_per_stored_parameter": 4.666666666666667,
+    "stored_shared_parameters": 6
+  },
+  "cores": [
+    {
+      "core_id": 0,
+      "headroom": {
+        "compartments": 1020,
+        "input_axons": 4090,
+        "output_routes": 4092,
+        "synapse_bytes": 131036
+      },
+      "local_routes": 2,
+      "remote_routes": 2,
+      "usage": {
+        "compartments": 4,
+        "expanded_connections": 12,
+        "input_axons": 6,
+        "output_routes": 4,
+        "shared_parameters": 2,
+        "synapse_bytes": 36
+      }
+    },
+    {
+      "core_id": 1,
+      "headroom": {
+        "compartments": 1020,
+        "input_axons": 4092,
+        "output_routes": 4092,
+        "synapse_bytes": 131044
+      },
+      "local_routes": 2,
+      "remote_routes": 2,
+      "usage": {
+        "compartments": 4,
+        "expanded_connections": 8,
+        "input_axons": 4,
+        "output_routes": 4,
+        "shared_parameters": 2,
+        "synapse_bytes": 28
+      }
+    },
+    {
+      "core_id": 2,
+      "headroom": {
+        "compartments": 1020,
+        "input_axons": 4092,
+        "output_routes": 4094,
+        "synapse_bytes": 131044
+      },
+      "local_routes": 2,
+      "remote_routes": 0,
+      "usage": {
+        "compartments": 4,
+        "expanded_connections": 8,
+        "input_axons": 4,
+        "output_routes": 2,
+        "shared_parameters": 2,
+        "synapse_bytes": 28
+      }
+    }
+  ],
+  "deployment_fingerprint": "5e5a16062faa8d92d0077de56fcbd07ff74c602f96e52f98e25ccf49a4af34f9",
+  "input_channels": 4,
+  "layers": 6,
+  "logical_cores": 3,
+  "neurons": 12,
+  "physical_engines": 1,
+  "schema": "p07-deep-mapped-snn-summary-v1",
+  "source_fingerprint": "4d11e473a427b153a23226bd3294d6a243292f14931d6d85f6705c9e85146b76",
+  "static_route_estimate": {
+    "local": 6,
+    "remote": 4,
+    "total": 10
+  }
+}
