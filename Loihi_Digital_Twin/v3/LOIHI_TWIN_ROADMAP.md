@@ -139,7 +139,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | ID | Phase | Status |
 |---|---|---|
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
-| P01 | Define board-local architecture, ownership, and v3 contract | Planned |
+| P01 | Define board-local architecture, ownership, and v3 contract | In progress |
 | P02 | Move non-resident logical contexts into K26 DDR | Planned |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
 | P04 | Build board-local regression, observability, and data-path hardening | Planned |
@@ -184,7 +184,7 @@ Primary acceptance record: `docs/P00_ACCEPTANCE.md`.
 
 # P01 — Board-local architecture, ownership, and v3 contract
 
-**Status:** Planned
+**Status:** In progress
 
 ## Research question
 
@@ -200,6 +200,14 @@ Unless measurements justify a different split:
 - **PC:** build/deploy, initial provisioning, optional debugging, and post-run collection only.
 
 This is a project implementation partition, not a claim about Loihi's physical microarchitecture.
+
+## Sub-milestones
+
+- **P01.1 — Board-local ownership and interface architecture.** Freeze the PC/PS/PL/DDR responsibility split and the intended PS↔PL / PL↔DDR interface directions before implementation.
+- **P01.2 — DDR backing-image ABI and coherency contract.** Freeze DDR layout, context sections/stride/alignment, page-transfer command format, address validation, cache-maintenance/ownership rules, and machine-checkable serialization.
+- **P01.3 — Runtime state machine, observability, and v3 target addendum.** Freeze exact run/barrier/error transitions, timing boundaries, and the v3 implementation addendum to the inherited Loihi target specification.
+
+P01.1 is currently a verification candidate in `docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md`.
 
 ## Deliverables
 
