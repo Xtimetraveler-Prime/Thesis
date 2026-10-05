@@ -21,7 +21,7 @@
 // AXI B response, so burst errors are visible to the page walker.
 module p02_axi128_burst_adapter (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF M_AXI, ASSOCIATED_RESET resetn, FREQ_HZ 100000000" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF M_AXI, ASSOCIATED_RESET resetn" *)
     input  wire         clk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 resetn RST" *)
     (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME resetn, POLARITY ACTIVE_LOW" *)
