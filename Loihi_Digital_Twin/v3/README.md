@@ -20,7 +20,9 @@ Development authority is:
 
 **P00 — Establish v3 baseline, directory, and roadmap: Complete.**
 
-**Next phase: P01 — Board-local architecture, ownership, and v3 contract.**
+**P01 — Board-local architecture, ownership, and v3 contract: Complete.**
+
+**Next phase: P02 — DDR-backed logical-core virtualization.**
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -34,7 +36,7 @@ host-owned cross-page routing/barrier
 host/PC-RAM backing for non-resident contexts
 ```
 
-The primary v3 target is:
+The accepted P01 board-local partition is:
 
 ```text
 logical cores backed by K26 DDR

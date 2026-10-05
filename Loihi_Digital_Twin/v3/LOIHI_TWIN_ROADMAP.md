@@ -86,7 +86,7 @@ Initial candidate for source audit, **not yet selected**:
 
 - Alpha Renner et al., "The backpropagation algorithm implemented on spiking neuromorphic hardware," Nature Communications (2024), DOI 10.1038/s41467-024-53827-9.
 - The paper describes a cropped-MNIST feed-forward inference module with 400 input neurons, 400 hidden neurons, and 10 output neurons, explicit Loihi CUBA parameters, a four-timestep reduced inference path, published Loihi inference measurements, and public implementation code.
-- P05 must independently audit the paper/code before this project treats it as the v3 benchmark.
+- P06 must independently audit the paper/code before this project treats it as the v3 benchmark.
 
 ### 4. Latency, throughput, power, and energy characterization
 
@@ -108,6 +108,35 @@ Measurements must keep distinct:
 - energy per inference.
 
 The KV260 SOM power telemetry may be used for reproducible board-level measurements, with an external meter retained as an optional validation path.
+
+### 5. Multiple physical HLS execution engines — deferred
+
+Multi-engine execution remains a valid v3 optimization direction, but it is
+**deferred from the current critical path** until the single-engine DDR-backed
+board-local architecture is implemented and characterized.
+
+The reason is not primarily HLS arithmetic cost. Accepted routed evidence
+suggests the compute engine itself is modest relative to K26 logic/DSP capacity.
+The limiting issue is the resident-context memory architecture:
+
+- the accepted three-context fabric uses true-dual-port URAM banks;
+- one port currently services the HLS compute path and the other services
+  host/integration/maintenance access;
+- a two-engine design could potentially repurpose both ports for compute during
+  a parallel wave, but page movement and packet/event maintenance would then
+  need explicit arbitration or serialization;
+- three or more simultaneous engines would require a deeper memory redesign,
+  such as per-slot banking, selective replication, or moving some storage
+  classes out of URAM.
+
+Because v3's primary research goal is first to eliminate PC-owned paging and
+control, introducing that memory redesign now would mix two independent
+questions: **board autonomy** and **compute parallelism**.
+
+The deferred optimization should be reconsidered after P02/P03/P08 measure the
+single-engine system and show whether HLS compute serialization is actually a
+dominant end-to-end latency term.
+
 
 ---
 
@@ -139,14 +168,15 @@ A passing developer-side test does not by itself close a hardware/software miles
 | ID | Phase | Status |
 |---|---|---|
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
-| P01 | Define board-local architecture, ownership, and v3 contract | Planned |
+| P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Planned |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
-| P04 | Build board-local regression, observability, and data-path hardening | Planned |
-| P05 | Audit and freeze an exact published MNIST benchmark | Planned |
-| P06 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
-| P07 | Characterize latency, throughput, power, and energy | Planned |
-| P08 | Final source-backed comparison and v3 closure | Planned |
+| P04 | Add multi-engine parallel logical-core execution | Deferred |
+| P05 | Build board-local regression, observability, and data-path hardening | Planned |
+| P06 | Audit and freeze an exact published MNIST benchmark | Planned |
+| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
+| P08 | Characterize latency, throughput, power, and energy | Planned |
+| P09 | Final source-backed comparison and v3 closure | Planned |
 
 ---
 
@@ -184,7 +214,8 @@ Primary acceptance record: `docs/P00_ACCEPTANCE.md`.
 
 # P01 — Board-local architecture, ownership, and v3 contract
 
-**Status:** Planned
+**Status:** Complete  
+**Accepted:** 2026-10-05
 
 ## Research question
 
@@ -201,25 +232,47 @@ Unless measurements justify a different split:
 
 This is a project implementation partition, not a claim about Loihi's physical microarchitecture.
 
-## Deliverables
+## Resolution
 
-- v3 architecture/ownership document;
-- explicit host/PS/PL/DDR responsibility table;
-- v3 runtime state machine;
-- DDR memory map and alignment rules;
-- context image ABI/versioning rules;
-- packet/event queue ownership rules;
-- cache/coherency policy;
-- error/status/recovery model;
-- timing/measurement boundary definitions;
-- determination of whether the inherited Loihi-1 target spec needs a v3 addendum.
+P01 closed on the ownership/interface architecture in
+`docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md`.
+
+The detailed implementation contracts originally sketched as P01.2/P01.3 are
+intentionally re-homed to the phases that implement them:
+
+- **P02.1 — DDR backing-image ABI and coherency contract** will freeze DDR
+  layout, context sections/stride/alignment, page-transfer commands, address
+  validation, cache-maintenance/ownership rules, and serialization.
+- **P03.1 — Autonomous runtime contract** will freeze exact run/barrier/error
+  transitions, board-local timing/observability boundaries, and the v3
+  implementation addendum to the inherited Loihi target specification.
+
+This avoids treating implementation details as completed merely because the
+high-level partition is accepted.
+
+## Accepted deliverables
+
+- v3 board-local architecture/ownership document;
+- explicit external-host / PS / PL / DDR responsibility table;
+- PS-to-PL control-plane direction;
+- PL-to-DDR bulk-data-plane direction;
+- first non-coherent ownership strategy;
+- preservation of logical-core / resident-slot / physical-engine separation;
+- preservation of CURRENT/NEXT event causality and global barrier semantics;
+- decision that no existing logical Loihi-1 semantic rule needs to change;
+- explicit decision to defer multi-engine execution until the memory system and
+  single-engine board-local runtime are measured.
 
 ## Acceptance
 
-The design must show how a complete inference can advance without PC intervention between timesteps.
+P01 is accepted based on independent design review and explicit approval of the
+PS/PL/DDR partition.
 
----
+This acceptance freezes the architectural direction only. It does **not** claim
+that DDR paging or the PS-resident runtime is implemented yet. Those are P02
+and P03 respectively.
 
+Primary record: `docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md`.
 # P02 — DDR-backed logical-core virtualization
 
 **Status:** Planned
@@ -227,6 +280,22 @@ The design must show how a complete inference can advance without PC interventio
 ## Goal
 
 Replace PC-RAM backing for non-resident cores with K26 DDR backing.
+
+## Sub-milestones
+
+- **P02.1 — DDR backing-image ABI and coherency contract.** Freeze layout,
+  fixed/variable section sizes, alignment, versioning, address validation,
+  page-transfer commands, ownership/cache-maintenance rules, and deterministic
+  serialization.
+- **P02.2 — Software reference and transfer-model validation.** Implement the
+  board-local DDR image model and page-transfer reference path in software,
+  including round-trip/fingerprint/error tests.
+- **P02.3 — PL page mover and resident-context integration.** Implement and
+  verify burst DDR↔resident-slot movement through the selected PS/PL memory
+  interface.
+- **P02.4 — Physical DDR-backed paging acceptance.** Demonstrate that
+  non-resident logical contexts live in K26 DDR and are paged into the three
+  resident slots without PC RAM participating in the page loop.
 
 ## Deliverables
 
@@ -254,6 +323,13 @@ At least the accepted v2 five-logical-core / three-resident-context workload mus
 
 Move host-owned algorithmic orchestration onto the KV260 PS.
 
+## First sub-milestone
+
+- **P03.1 — Autonomous runtime contract.** Freeze exact run/barrier/error
+  transitions, board-local timer/counter boundaries, recovery behavior, and the
+  v3 implementation addendum to the inherited Loihi target specification before
+  implementing the PS runtime.
+
 ## Deliverables
 
 A board-resident runtime that can:
@@ -278,7 +354,125 @@ The representative five-over-three 100-timestep workload must complete board-loc
 
 ---
 
-# P04 — Board-local regression, observability, and data-path hardening
+# P04 — Multi-engine parallel logical-core execution
+
+**Status:** Deferred
+
+## Motivation
+
+Replicating the P03-compatible HLS evaluation engine remains attractive because
+independent logical cores in the same algorithmic timestep can, in principle,
+consume frozen CURRENT state concurrently and produce NEXT-timestep traffic.
+That could reduce the serialized compute portion of inference latency.
+
+Accepted routed evidence also indicates that the compute logic itself is not the
+obvious K26 bottleneck:
+
+```text
+P05 one-engine / three-full-context shell:
+  LUTs       5,062
+  registers  7,686
+  DSPs       2
+  URAM       47
+
+P04 resource-scaled two-engine shell:
+  LUTs       7,059
+  registers  9,980
+  DSPs       4
+```
+
+The two shells are not otherwise identical, so these numbers are **not** an
+exact per-engine cost model. They do support the narrower conclusion that v2's
+full-capacity scaling problem was dominated by retained memory rather than by
+the HLS arithmetic datapath.
+
+## Why it is deferred
+
+The current three-full-context memory fabric is built from true-dual-port URAM
+banks. In the accepted one-engine design:
+
+- one memory side services the HLS compute path;
+- the second side services host/integration functions such as packet access,
+  next-event writes, and context maintenance.
+
+A plausible two-engine design would consume both memory ports for compute during
+a parallel wave:
+
+```text
+resident context A <-> port A <-> engine 0
+resident context B <-> port B <-> engine 1
+resident context C remains retained
+```
+
+That creates a new arbitration problem: page movement, packet draining, and
+event maintenance can no longer freely use the second port while both engines
+are active. The first implementation would therefore have to serialize those
+operations around compute or redesign the resident-memory access fabric.
+
+The problem becomes more fundamental at three or more engines. Three resident
+slots do **not** imply three independent memory read/write ports. Supporting
+3+ simultaneous engines would likely require one or more of:
+
+- per-slot memory banking;
+- selective replication of read-mostly configuration/axon/synapse/route banks;
+- relocation of trace/packet/event storage to other memory classes;
+- additional AXI/interconnect arbitration;
+- a different resident-context organization altogether.
+
+Those choices can increase URAM/BRAM usage and routing pressure enough to change
+the physical architecture that P02/P03 are trying to stabilize.
+
+## Why deferral is preferable
+
+The central v3 research question is first whether the KV260 can execute the
+virtualized architecture independently of PC RAM and PC-owned timestep control.
+
+Adding multi-engine execution before that is proven would couple two separate
+research problems:
+
+1. **memory/control localization** — DDR-backed paging plus PS/PL ownership;
+2. **compute parallelization** — multiple engines and a multiported/banked
+   resident-memory system.
+
+Keeping P04 deferred lets P02/P03 establish a clean single-engine baseline. P08
+can then quantify how much complete-inference time is actually spent in HLS
+compute versus DDR paging, packet routing, PS control, and barriers.
+
+If compute serialization is a dominant measured term, P04 should be reactivated
+with an evidence-based engine-count target.
+
+## Preserved design rules for later reactivation
+
+Any future multi-engine implementation must preserve:
+
+- logical-core ID independent of engine ID;
+- one engine may own at most one resident logical context at a time;
+- two engines may never write the same resident context concurrently;
+- CURRENT inputs remain frozen for the entire algorithmic timestep;
+- generated traffic is committed only to NEXT-timestep state;
+- all engines and all packet/page work must quiesce before the global barrier;
+- physical engine/wave assignment is excluded from normalized logical traces;
+- one-engine and multi-engine normalized results must be identical.
+
+A future two-engine experiment should measure actual complete-inference speedup;
+an assumed 2x speedup is not a valid result.
+
+## Reactivation trigger
+
+Reconsider P04 after the single-engine board-local implementation has accepted
+measurements for:
+
+- HLS dispatch time;
+- DDR page-in/page-out time;
+- packet drain/routing time;
+- PS scheduling/barrier overhead;
+- complete timestep latency;
+- complete inference latency;
+- routed resource/timing margin.
+
+---
+
+# P05 — Board-local regression, observability, and data-path hardening
 
 **Status:** Planned
 
@@ -302,7 +496,7 @@ The major v3 architecture regression corpus must be physically executed on the K
 
 ---
 
-# P05 — Exact published MNIST benchmark audit and freeze
+# P06 — Exact published MNIST benchmark audit and freeze
 
 **Status:** Planned
 
@@ -350,7 +544,7 @@ Before official-test evaluation:
 
 ---
 
-# P06 — Full board-local benchmark evaluation
+# P07 — Full board-local benchmark evaluation
 
 **Status:** Planned
 
@@ -375,7 +569,7 @@ If runtime and storage permit, execute the complete MNIST official test set on t
 
 ---
 
-# P07 — Latency, throughput, power, and energy characterization
+# P08 — Latency, throughput, power, and energy characterization
 
 **Status:** Planned
 
@@ -419,7 +613,7 @@ Published Loihi power/latency values may only be compared directly when workload
 
 ---
 
-# P08 — Final v3 comparison and closure
+# P09 — Final v3 comparison and closure
 
 **Status:** Planned
 
@@ -456,9 +650,10 @@ v3 should improve autonomy and physical evidence, but it still must not silently
 
 ## Deferred/future directions
 
+- multi-engine physical execution pending single-engine latency characterization;
+
 These are intentionally not prerequisites for the initial v3 roadmap unless later evidence makes them necessary:
 
-- multiple physical HLS compute engines;
 - full PL-owned scheduling instead of PS-owned orchestration;
 - on-FPGA/on-chip learning;
 - Loihi 2 architectural targeting;
