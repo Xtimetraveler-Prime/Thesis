@@ -286,13 +286,15 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 
 ## Sub-milestones
 
-- **P02.1 — DDR backing-image ABI and coherency contract.** **Verification candidate.** Freeze layout,
+- **P02.1 — DDR backing-image ABI and coherency contract.** **Focused verification passed; phase regression pending.** Freeze layout,
   fixed/variable section sizes, alignment, versioning, address validation,
   page-transfer commands, ownership/cache-maintenance rules, and deterministic
-  serialization. Primary record: `docs/P02_1_DDR_ABI.md`.
-- **P02.2 — Software reference and transfer-model validation.** Implement the
-  board-local DDR image model and page-transfer reference path in software,
-  including round-trip/fingerprint/error tests.
+  serialization. Primary records: `docs/P02_1_DDR_ABI.md` and
+  `docs/P02_1_VERIFICATION.md`.
+- **P02.2 — Software reference and transfer-model validation.** **Verification candidate.** Model authoritative DDR records, resident-slot
+  materialization, eviction/writeback, runtime metadata refresh, transfer byte
+  accounting, and full-versus-mutable-only writeback equivalence. Primary
+  record: `docs/P02_2_DDR_TRANSFER_MODEL.md`.
 - **P02.3 — PL page mover and resident-context integration.** Implement and
   verify burst DDR↔resident-slot movement through the selected PS/PL memory
   interface.
