@@ -291,13 +291,18 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
   page-transfer commands, ownership/cache-maintenance rules, and deterministic
   serialization. Primary records: `docs/P02_1_DDR_ABI.md` and
   `docs/P02_1_VERIFICATION.md`.
-- **P02.2 — Software reference and transfer-model validation.** **Verification candidate.** Model authoritative DDR records, resident-slot
+- **P02.2 — Software reference and transfer-model validation.** **Complete; accepted 2026-10-05.** Model authoritative DDR records, resident-slot
   materialization, eviction/writeback, runtime metadata refresh, transfer byte
   accounting, and full-versus-mutable-only writeback equivalence. Primary
-  record: `docs/P02_2_DDR_TRANSFER_MODEL.md`.
-- **P02.3 — PL page mover and resident-context integration.** Implement and
-  verify burst DDR↔resident-slot movement through the selected PS/PL memory
-  interface.
+  records: `docs/P02_2_DDR_TRANSFER_MODEL.md` and
+  `docs/P02_2_ACCEPTANCE.md`.
+- **P02.3a — Resident-bank page walker and ownership path.** **In progress.**
+  Implement the deterministic PL bank walker over the accepted P05 host-side
+  memory access boundary, with full/mutable-only transfer sequencing and
+  directed RTL verification.
+- **P02.3b — AXI DDR master/burst integration.** **Planned.** Connect the
+  verified bank walker to the selected PS DDR high-performance path, add burst
+  buffering/range checks, and integrate into the Vivado shell.
 - **P02.4 — Physical DDR-backed paging acceptance.** Demonstrate that
   non-resident logical contexts live in K26 DDR and are paged into the three
   resident slots without PC RAM participating in the page loop.
