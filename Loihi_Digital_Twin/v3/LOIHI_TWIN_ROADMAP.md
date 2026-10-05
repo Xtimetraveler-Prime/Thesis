@@ -296,7 +296,7 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
   accounting, and full-versus-mutable-only writeback equivalence. Primary
   records: `docs/P02_2_DDR_TRANSFER_MODEL.md` and
   `docs/P02_2_ACCEPTANCE.md`.
-- **P02.3a — Resident-bank page walker and ownership path.** **In progress.**
+- **P02.3a — Resident-bank page walker and ownership path.** **Verification candidate.**
   Implement the deterministic PL bank walker over the accepted P05 host-side
   memory access boundary, with full/mutable-only transfer sequencing and
   directed RTL verification.
