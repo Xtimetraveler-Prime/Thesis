@@ -303,7 +303,7 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 - **P02.3b — AXI DDR master/burst integration.** **In progress.** Connect the
   verified bank walker to the selected PS DDR high-performance path, add burst
   buffering/range checks, and integrate into the Vivado shell.
-  - **P02.3b1 — 128-bit AXI burst coalescer.** **In progress.** Coalesce the
+  - **P02.3b1 — 128-bit AXI burst coalescer.** **Verification candidate.** Coalesce the
     scalar-correct walker transactions into 256-byte / 16-beat AXI4 bursts
     without changing the accepted DDR address stream.
   - **P02.3b2 — HP0 Vivado integration.** **Planned.** Bind the verified AXI
