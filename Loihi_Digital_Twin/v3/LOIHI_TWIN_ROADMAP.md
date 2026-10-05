@@ -138,7 +138,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 
 | ID | Phase | Status |
 |---|---|---|
-| P00 | Establish v3 baseline, directory, and roadmap | In progress |
+| P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Planned |
 | P02 | Move non-resident logical contexts into K26 DDR | Planned |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
@@ -152,7 +152,8 @@ A passing developer-side test does not by itself close a hardware/software miles
 
 # P00 — Establish v3 baseline, directory, and roadmap
 
-**Status:** In progress
+**Status:** Complete  
+**Accepted:** 2026-10-05
 
 ## Goal
 
@@ -169,12 +170,15 @@ Create an isolated v3 development tree from the final accepted v2 implementation
 
 ## Acceptance
 
-P00 is complete only after independent verification confirms:
+P00 was accepted after independent verification confirmed:
 
 - the copied implementation matches the accepted v2 baseline except for intentional v3 documentation changes;
-- the inherited general regression suite still passes from the v3 tree;
+- all inherited `docs`, `examples`, `hardware`, `hls`, `rtl`, `scripts`, `src`, `tests`, and `vivado` Git subtrees are identical to v2;
+- `pyproject.toml` and `.gitignore` are identical to v2;
 - no accepted v2 files were modified;
-- the v3 roadmap correctly identifies all later work as new follow-on research rather than unfinished v2 work.
+- the inherited v3 regression suite completed at 100% with 67 passing test indicators and no reported failures/errors.
+
+Primary acceptance record: `docs/P00_ACCEPTANCE.md`.
 
 ---
 
