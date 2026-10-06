@@ -417,7 +417,7 @@ set hpm0_spaces [get_bd_addr_spaces -quiet -of_objects \
 if {[llength $hpm0_spaces] != 1} {
     error "P03.2 expected exactly one HPM0 master address space, got [llength $hpm0_spaces]"
 }
-assign_bd_address -offset 0xA0000000 -range 0x00001000 \
+assign_bd_address -offset 0xA4000000 -range 0x00001000 \
     -target_address_space [lindex $hpm0_spaces 0] \
     [lindex $mmio_segments 0] -force
 
@@ -553,7 +553,7 @@ if {$stage eq "synth"} {
     puts $metrics "p02_hp0_data_width_bits=128"
 puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
-puts $metrics "p03_mmio_base=0xA0000000"
+puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
 puts $metrics "p03_mmio_controls_dispatch=1"
@@ -627,7 +627,7 @@ puts $metrics "p02_hp0_enabled=1"
 puts $metrics "p02_hp0_data_width_bits=128"
 puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
-puts $metrics "p03_mmio_base=0xA0000000"
+puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
 puts $metrics "p03_mmio_controls_dispatch=1"
