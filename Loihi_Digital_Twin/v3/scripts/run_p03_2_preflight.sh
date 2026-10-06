@@ -127,6 +127,8 @@ if connected_vio_outputs != expected_vio_outputs:
         f"{connected_vio_outputs!r}"
     )
 
+if "launch_runs impl_1 -to_step write_bitstream" not in vivado:
+    raise SystemExit("FAIL: P03.2 implementation run does not own bitstream generation")
 if "write_hw_platform -fixed -include_bit -force -file $xsa_file" not in vivado:
     raise SystemExit("FAIL: P03.2 fixed XSA export is missing")
 
@@ -135,6 +137,7 @@ print("PASS: P03.2 HPM0/Vivado ownership static checks")
 PY
 
 bash -n "$V3_DIR/vivado/run_p03_mmio_impl.sh"
+bash -n "$V3_DIR/vivado/recover_p03_mmio_xsa.sh"
 
 PYTHONPATH="$V3_DIR/src" python -m pytest -q     | tee /tmp/v3_p03_2_full_pytest.log
 
