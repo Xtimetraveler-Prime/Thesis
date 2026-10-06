@@ -249,3 +249,16 @@ It does not prove:
 - final board-local latency/power/energy.
 
 Those belong to P03, P07, and P08.
+
+
+## Physical attempt 1 diagnostic update
+
+The first physical P02.4b attempt reached initial residency, then failed at
+timestep 0 because logical core 1 retained state `0x0` instead of the golden
+`0x03000000`.
+
+The retry candidate now performs exact resident-image readback after page-in and
+exact external-event readback before every dispatch. This is diagnostic
+instrumentation only; the workload and acceptance semantics are unchanged.
+
+See `docs/P02_4B_ATTEMPT1.md`.
