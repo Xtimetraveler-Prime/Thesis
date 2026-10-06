@@ -401,7 +401,27 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
     -target_address_space [get_bd_addr_spaces p02_axi128_burst_adapter_0/M_AXI] \
     $hp0_ddr_low -force
 
-# Paging command VIO.
+# PS -> PL AXI4-Lite control path on M_AXI_HPM0_FPD.
+connect_bd_intf_net [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
+    [get_bd_intf_pins p03_hpm0_smartconnect_0/S00_AXI]
+connect_bd_intf_net [get_bd_intf_pins p03_hpm0_smartconnect_0/M00_AXI] \
+    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
+
+set mmio_segments [get_bd_addr_segs -quiet -of_objects \
+    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]]
+if {[llength $mmio_segments] != 1} {
+    error "P03.2 expected exactly one MMIO slave address segment, got [llength $mmio_segments]"
+}
+set hpm0_spaces [get_bd_addr_spaces -quiet -of_objects \
+    [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD]]
+if {[llength $hpm0_spaces] != 1} {
+    error "P03.2 expected exactly one HPM0 master address space, got [llength $hpm0_spaces]"
+}
+assign_bd_address -offset 0xA0000000 -range 0x00010000 \
+    -target_address_space [lindex $hpm0_spaces 0] \
+    [lindex $mmio_segments 0] -force
+
+# Paging command inputs now come from PS-visible MMIO.
 connect_pair p03_ps_control_regs_0/page_start p02_context_page_bank_walker_0/cmd_start
 connect_pair p03_ps_control_regs_0/page_out p02_context_page_bank_walker_0/cmd_page_out
 connect_pair p03_ps_control_regs_0/page_mutable_only p02_context_page_bank_walker_0/cmd_mutable_only
@@ -423,6 +443,46 @@ connect_pair p02_axi128_burst_adapter_0/axi_bytes_moved vio_p02_page/probe_in11
 connect_pair p02_axi128_burst_adapter_0/protocol_error vio_p02_page/probe_in12
 connect_pair p02_ddr_backing_range_guard_0/range_error vio_p02_page/probe_in13
 connect_pair p02_axi128_burst_adapter_0/pending_write_bytes vio_p02_page/probe_in14
+
+# MMIO page status inputs.
+connect_pair p02_context_page_bank_walker_0/busy p03_ps_control_regs_0/page_busy
+connect_pair p02_context_page_bank_walker_0/transfer_done p03_ps_control_regs_0/page_done
+connect_pair p02_context_page_bank_walker_0/start_blocked p03_ps_control_regs_0/page_start_blocked
+connect_pair p02_context_page_bank_walker_0/bytes_transferred p03_ps_control_regs_0/page_bytes_transferred
+connect_pair p02_context_page_bank_walker_0/completed_transfers p03_ps_control_regs_0/page_completed_transfers
+connect_pair p02_context_page_bank_walker_0/last_transfer_cycles p03_ps_control_regs_0/page_last_transfer_cycles
+connect_pair p02_context_page_bank_walker_0/error_command p03_ps_control_regs_0/page_error_command
+connect_pair p02_context_page_bank_walker_0/error_host p03_ps_control_regs_0/page_error_host
+connect_pair p02_context_page_bank_walker_0/error_ddr p03_ps_control_regs_0/page_error_ddr
+connect_pair p02_axi128_burst_adapter_0/completed_read_bursts p03_ps_control_regs_0/page_completed_read_bursts
+connect_pair p02_axi128_burst_adapter_0/completed_write_bursts p03_ps_control_regs_0/page_completed_write_bursts
+connect_pair p02_axi128_burst_adapter_0/axi_bytes_moved p03_ps_control_regs_0/page_axi_bytes_moved
+connect_pair p02_axi128_burst_adapter_0/protocol_error p03_ps_control_regs_0/page_protocol_error
+connect_pair p02_ddr_backing_range_guard_0/range_error p03_ps_control_regs_0/page_range_error
+connect_pair p02_axi128_burst_adapter_0/pending_write_bytes p03_ps_control_regs_0/page_pending_write_bytes
+
+# MMIO dispatch status inputs.
+connect_pair p08_paged_dispatch_controller_0/busy p03_ps_control_regs_0/dispatch_busy
+connect_pair p08_paged_dispatch_controller_0/dispatch_done p03_ps_control_regs_0/dispatch_done
+connect_pair p08_paged_dispatch_controller_0/start_blocked p03_ps_control_regs_0/dispatch_start_blocked
+connect_pair p08_paged_dispatch_controller_0/active_context_slot p03_ps_control_regs_0/dispatch_active_context_slot
+connect_pair p08_paged_dispatch_controller_0/active_logical_core_id p03_ps_control_regs_0/dispatch_active_logical_core_id
+connect_pair p08_paged_dispatch_controller_0/event_read_bank p03_ps_control_regs_0/dispatch_active_event_bank
+connect_pair p08_paged_dispatch_controller_0/packet_count_latched p03_ps_control_regs_0/dispatch_packet_count
+connect_pair p08_paged_dispatch_controller_0/status_latched p03_ps_control_regs_0/dispatch_core_status
+connect_pair p08_paged_dispatch_controller_0/completed_dispatches p03_ps_control_regs_0/dispatch_completed
+connect_pair p08_paged_dispatch_controller_0/last_dispatch_cycles p03_ps_control_regs_0/dispatch_last_cycles
+connect_pair p08_paged_dispatch_controller_0/error_metadata p03_ps_control_regs_0/dispatch_error_metadata
+connect_pair p08_paged_dispatch_controller_0/error_packet_overflow p03_ps_control_regs_0/dispatch_error_packet_overflow
+connect_pair p08_paged_dispatch_controller_0/error_core_status p03_ps_control_regs_0/dispatch_error_core_status
+connect_pair p08_context_memory_0/hls_address_error p03_ps_control_regs_0/dispatch_memory_address_error
+
+# MMIO resident-memory response inputs.
+connect_pair p02_page_host_arbiter_0/debug_busy p03_ps_control_regs_0/debug_busy
+connect_pair p02_page_host_arbiter_0/debug_ack p03_ps_control_regs_0/debug_ack
+connect_pair p02_page_host_arbiter_0/debug_rvalid p03_ps_control_regs_0/debug_rvalid
+connect_pair p02_page_host_arbiter_0/debug_error p03_ps_control_regs_0/debug_error
+connect_pair p02_page_host_arbiter_0/debug_rdata p03_ps_control_regs_0/debug_rdata
 
 # Dispatch observations.
 connect_pair p08_paged_dispatch_controller_0/dispatch_done vio_p08/probe_in0
