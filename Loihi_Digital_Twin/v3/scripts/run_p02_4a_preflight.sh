@@ -32,7 +32,14 @@ for relative in (
     for left, right in (("{", "}"), ("[", "]")):
         if text.count(left) != text.count(right):
             raise SystemExit(f"FAIL: unbalanced {left}{right} delimiters in {relative}")
+
+vio = (root / "vivado/p02_4_vio_roundtrip.tcl").read_text(encoding="utf-8")
+if "set probes [array get p]" in vio or "array set p $probes" in vio:
+    raise SystemExit("FAIL: P02.4 VIO script serializes live hw_probe objects")
+if "upvar 1 $probe_array_name p" not in vio:
+    raise SystemExit("FAIL: P02.4 VIO script does not preserve live hw_probe objects")
 print("PASS: P02.4 Tcl source delimiter preflight")
+print("PASS: P02.4 VIO hw_probe object-preservation preflight")
 PY
 
 grep -q "PASS: P02.4 deterministic DDR fixture generated" "$TMP_DIR/generate.log"
