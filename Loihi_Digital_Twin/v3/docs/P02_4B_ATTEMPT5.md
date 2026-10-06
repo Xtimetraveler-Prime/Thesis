@@ -77,3 +77,32 @@ vivado/p02_4b_paging_stress.tcl
 If this gate reproduces the route loss, the defect is fully inside the paging
 transport/materialization path. If it passes, compute/debug activity is required
 to trigger the failure and the next diagnostic must include those interactions.
+
+
+## Paging-only physical replay result
+
+The directed paging-only replay completed successfully after a board reboot.
+
+Observed:
+
+```text
+P02_4B_STRESS_PAGE_INS=9
+P02_4B_STRESS_PAGE_OUTS=6
+P02_4B_STRESS_AXI_READ_BURSTS=15408
+P02_4B_STRESS_AXI_WRITE_BURSTS=2496
+P02_4B_STRESS_AXI_BYTES=4583424
+PASS: P02.4b paging-only stress reproduced exact pre-failure transfer sequence without compute
+PASS: P02.4b paging-only physical stress gate completed.
+```
+
+Every resident static image, including the final logical-core-3 to slot-2
+reload, matched its golden source.
+
+This proves the page-transfer sequence alone does not reproduce the route loss.
+The trigger requires activity present in the full workload path, such as
+dispatch, event/debug access, or an ownership handoff surrounding those
+operations.
+
+The full workload retry now checks static resident integrity immediately before
+and after every mutable eviction and requires zero pending write-buffer bytes
+after every page transfer.
