@@ -318,3 +318,20 @@ banks are compared against their initial fixture images to distinguish DDR
 corruption from later page-in materialization loss.
 
 See `docs/P02_4B_ATTEMPT5.md`.
+
+
+## Paging-only stress result
+
+The exact pre-failure page-transfer sequence was replayed physically without
+compute/event activity and passed:
+
+- 9 full page-ins;
+- 6 mutable-only page-outs;
+- 15,408 AXI read bursts;
+- 2,496 AXI write bursts;
+- 4,583,424 AXI bytes;
+- exact resident static-image verification after every load.
+
+The final core-3 to slot-2 reload was correct. Therefore the route-loss trigger
+is not the paging sequence by itself; it requires interaction with the full
+dispatch/debug workload path.
