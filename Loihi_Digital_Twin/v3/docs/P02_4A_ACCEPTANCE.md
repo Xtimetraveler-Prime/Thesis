@@ -197,3 +197,20 @@ store. That is P02.4b.
 
 It also does not prove board-autonomous scheduling/routing/barrier ownership.
 Those remain P03 responsibilities.
+
+
+## Reproduction hardening after acceptance
+
+The original accepted P02.4a run used `verify -data` successfully in the
+debugger state present during that run. Later P02.4b retries exposed that this is
+not reproducible across A53/MMU/target contexts.
+
+Future P02.4a reproduction now:
+
+1. halts visible A53 cores;
+2. selects the non-processor PSU target (APU fallback);
+3. provisions with `dow -data`;
+4. verifies by full 512 KiB `mrd -bin -file` physical readback and byte-exact
+   comparison.
+
+This hardening does not alter the previously accepted PL transport evidence.
