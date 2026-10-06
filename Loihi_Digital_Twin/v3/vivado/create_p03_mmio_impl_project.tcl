@@ -1,6 +1,6 @@
 # FPGA-v3 P03.2 PS-MMIO-controlled one-engine / three-resident-context K26 shell.
 #
-# This shell starts from the accepted P02.3b2 physical topology and replaces
+# This shell starts from the accepted P03.2 physical topology and replaces
 # host-driven scalar context loading with a PL page path:
 #
 #   P02 page walker
@@ -12,7 +12,7 @@
 #
 # Dispatch, packet readback/routing, and global barrier ownership are still
 # host/VIO driven in P02.  P03 will move those orchestration functions onto the
-# A53.  P02.3b2 only proves the physical DDR paging data path.
+# A53.  P03.2 only proves the physical DDR paging data path.
 if {$argc != 16} {
     error "usage: create_p03_mmio_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <mmio_rtl> <report_dir> <jobs> <stage>"
 }
@@ -34,11 +34,11 @@ set report_dir [file normalize [lindex $argv 13]]
 set jobs [lindex $argv 14]
 set stage [lindex $argv 15]
 if {$stage ne "synth" && $stage ne "route"} {
-    error "P02.3b2 stage must be synth or route, got: $stage"
+    error "P03.2 stage must be synth or route, got: $stage"
 }
 
 foreach path [list $ip_repo_dir $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl $mmio_rtl] {
-    if {![file exists $path]} { error "Required P02.3b2 input does not exist: $path" }
+    if {![file exists $path]} { error "Required P03.2 input does not exist: $path" }
 }
 file mkdir $report_dir
 file delete -force $project_dir
@@ -53,11 +53,11 @@ set_property XPM_LIBRARIES XPM_MEMORY [current_project]
 
 set kv260_board_parts [get_board_parts -quiet xilinx.com:kv260_som:part0:*]
 if {[llength $kv260_board_parts] == 0} {
-    error "P02.3b2 requires installed KV260 SOM board files (xilinx.com:kv260_som:part0:*)."
+    error "P03.2 requires installed KV260 SOM board files (xilinx.com:kv260_som:part0:*)."
 }
 set kv260_board_part [lindex [lsort -dictionary $kv260_board_parts] end]
 set_property BOARD_PART $kv260_board_part [current_project]
-puts "P02.3b2 K26 SOM board preset: $kv260_board_part"
+puts "P03.2 K26 SOM board preset: $kv260_board_part"
 
 foreach rtl [list $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl $mmio_rtl] {
     add_files -norecurse $rtl
@@ -68,7 +68,7 @@ update_compile_order -fileset sources_1
 set_property IP_REPO_PATHS [list $ip_repo_dir] [current_fileset]
 update_ip_catalog -rebuild
 if {[llength [get_ipdefs -all $expected_vlnv]] == 0} {
-    error "Expected P02.3b2/P03 HLS IP was not found in catalog: $expected_vlnv"
+    error "Expected P03.2/P03 HLS IP was not found in catalog: $expected_vlnv"
 }
 foreach required_ip {
     xilinx.com:ip:zynq_ultra_ps_e:3.5
@@ -96,12 +96,12 @@ proc hls_memory_pin {hls_name arg_name role required} {
         we      { set candidates [list ${arg_name}_we0 ${arg_name}_we ${arg_name}_WEN_A] }
         din     { set candidates [list ${arg_name}_d0 ${arg_name}_d ${arg_name}_Din_A] }
         dout    { set candidates [list ${arg_name}_q0 ${arg_name}_q ${arg_name}_Dout_A] }
-        default { error "Unknown P02.3b2 HLS memory-pin role: $role" }
+        default { error "Unknown P03.2 HLS memory-pin role: $role" }
     }
     set pin [first_bd_pin $hls_name $candidates]
     if {$required && $pin eq ""} {
         puts "Available HLS pins for $arg_name: [get_bd_pins -quiet ${hls_name}/${arg_name}_*]"
-        error "Required P02.3b2 HLS $role pin not found for ${hls_name}/${arg_name}"
+        error "Required P03.2 HLS $role pin not found for ${hls_name}/${arg_name}"
     }
     return $pin
 }
@@ -110,7 +110,7 @@ proc require_bd_pin {cell pin_name} {
     set pin [get_bd_pins -quiet ${cell}/${pin_name}]
     if {[llength $pin] != 1} {
         puts "Available pins for $cell: [get_bd_pins -quiet ${cell}/*]"
-        error "Required P02.3b2 pin missing: ${cell}/${pin_name}"
+        error "Required P03.2 pin missing: ${cell}/${pin_name}"
     }
     return $pin
 }
@@ -119,7 +119,7 @@ proc connect_pair {left right} {
     set lp [get_bd_pins -quiet $left]
     set rp [get_bd_pins -quiet $right]
     if {[llength $lp] != 1 || [llength $rp] != 1} {
-        error "Missing P02.3b2 connection pin: left=$left ($lp) right=$right ($rp)"
+        error "Missing P03.2 connection pin: left=$left ($lp) right=$right ($rp)"
     }
     connect_bd_net $lp $rp
 }
@@ -170,7 +170,7 @@ set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_cont
 set hpm0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p03_hpm0_smartconnect_0]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hpm0_smartconnect
 
-# The P02.3b2 controller deliberately leaves packet routing / next-event writes to
+# The P03.2 controller deliberately leaves packet routing / next-event writes to
 # the host after each dispatch.  Disable P05's former controller-side Port-B
 # integration path; packet/event banks remain fully accessible through host I/O.
 set const0_1 [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 p08_const0_1]
@@ -213,7 +213,7 @@ set_property -dict [list \
     CONFIG.C_PROBE_OUT10_WIDTH {15} CONFIG.C_PROBE_OUT10_INIT_VAL {0x0} \
     CONFIG.C_PROBE_OUT11_WIDTH {256} CONFIG.C_PROBE_OUT11_INIT_VAL {0x0}] $vio
 
-# Separate paging VIO preserves the accepted P02.3b2 dispatch/debug probe contract.
+# Separate paging VIO preserves the accepted P03.2 dispatch/debug probe contract.
 # Outputs: start, page_out, mutable_only, resident_slot, 512 KiB record base.
 # Inputs expose page completion/errors and AXI transport accounting.
 set page_vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_p02_page]
@@ -395,7 +395,7 @@ connect_bd_intf_net [get_bd_intf_pins p02_hp0_smartconnect_0/M00_AXI] \
 
 set hp0_ddr_low [get_bd_addr_segs -quiet zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_LOW]
 if {[llength $hp0_ddr_low] != 1} {
-    error "P02.3b2 HP0 DDR_LOW address segment was not found."
+    error "P03.2 HP0 DDR_LOW address segment was not found."
 }
 assign_bd_address -offset 0x00000000 -range 0x80000000 \
     -target_address_space [get_bd_addr_spaces p02_axi128_burst_adapter_0/M_AXI] \
@@ -512,13 +512,13 @@ connect_pair p08_context_memory_0/integration_address_error vio_p08/probe_in27
 
 validate_bd_design
 save_bd_design
-puts "P02.3b2 HP0 DDR-paged one-engine / three-resident-context block design validated successfully."
+puts "P03.2 HP0 DDR-paged one-engine / three-resident-context block design validated successfully."
 
 set bd_file [lindex [get_files -quiet */${bd_name}.bd] 0]
-if {$bd_file eq ""} { error "P02.3b2 block design file was not found" }
+if {$bd_file eq ""} { error "P03.2 block design file was not found" }
 generate_target all $bd_file
 set wrapper_files [make_wrapper -files $bd_file -top]
-if {[llength $wrapper_files] == 0} { error "P02.3b2 Vivado wrapper generation failed" }
+if {[llength $wrapper_files] == 0} { error "P03.2 Vivado wrapper generation failed" }
 add_files -norecurse $wrapper_files
 set_property top ${bd_name}_wrapper [current_fileset]
 update_compile_order -fileset sources_1
@@ -527,7 +527,7 @@ if {$stage eq "synth"} {
     launch_runs synth_1 -jobs $jobs
     wait_on_run synth_1
     if {[get_property PROGRESS [get_runs synth_1]] ne "100%"} {
-        error "P02.3b2 synthesis did not complete: [get_property STATUS [get_runs synth_1]]"
+        error "P03.2 synthesis did not complete: [get_property STATUS [get_runs synth_1]]"
     }
     open_run synth_1
 
@@ -537,9 +537,9 @@ if {$stage eq "synth"} {
     close $util_file
     report_utilization -hierarchical -hierarchical_depth 10 -file [file join $report_dir utilization_hierarchical_post_synth.rpt]
     report_timing_summary -delay_type min_max -max_paths 20 -report_unconstrained -file [file join $report_dir timing_summary_post_synth.rpt]
-    write_checkpoint -force [file join $report_dir p02_ddr_post_synth.dcp]
+    write_checkpoint -force [file join $report_dir p03_2_mmio_post_synth.dcp]
 
-    set metrics [open [file join $report_dir p02_post_synth_metrics.txt] w]
+    set metrics [open [file join $report_dir p03_2_post_synth_metrics.txt] w]
     if {[regexp {\| Block RAM Tile\s+\|\s+([0-9.]+)\s+\|} $util_text -> bram_tiles]} { puts $metrics "block_ram_tiles=$bram_tiles" }
     if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $metrics "uram=$uram_count" }
     puts $metrics "resident_context_slots=3"
@@ -551,19 +551,26 @@ if {$stage eq "synth"} {
     puts $metrics "p02_ddr_logical_capacity=128"
     puts $metrics "p02_hp0_enabled=1"
     puts $metrics "p02_hp0_data_width_bits=128"
+puts $metrics "p03_hpm0_enabled=1"
+puts $metrics "p03_hpm0_data_width_bits=32"
+puts $metrics "p03_mmio_base=0xA0000000"
+puts $metrics "p03_mmio_range_bytes=0x00010000"
+puts $metrics "p03_mmio_controls_page=1"
+puts $metrics "p03_mmio_controls_dispatch=1"
+puts $metrics "p03_mmio_controls_resident_memory=1"
     puts $metrics "p02_axi_burst_beats=16"
     puts $metrics "p02_axi_burst_bytes=256"
     puts $metrics "p02_ddr_range_guard=1"
     puts $metrics "p02_page_walker=1"
     puts $metrics "p02_page_host_arbiter=1"
-    puts $metrics "p02_host_controls_page_command=1"
-    puts $metrics "p02_ps_runtime_implemented=0"
+    puts $metrics "p02_host_controls_page_command=0"
+    puts $metrics "p03_ps_runtime_implemented=0"
     puts $metrics "target_part=$target_part"
     puts $metrics "board_part=$kv260_board_part"
     puts $metrics "pl_clock_requested_mhz=100"
     close $metrics
 
-    puts "P02.3b2 integration synthesis completed successfully."
+    puts "P03.2 integration synthesis completed successfully."
     return
 }
 
@@ -571,7 +578,7 @@ set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
 launch_runs impl_1 -to_step route_design -jobs $jobs
 wait_on_run impl_1
 if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {
-    error "P02.3b2 implementation did not complete: [get_property STATUS [get_runs impl_1]]"
+    error "P03.2 implementation did not complete: [get_property STATUS [get_runs impl_1]]"
 }
 open_run impl_1
 
@@ -585,7 +592,7 @@ report_clock_utilization -file [file join $report_dir clock_utilization_post_rou
 report_bus_skew -file [file join $report_dir bus_skew_post_route.rpt]
 report_drc -file [file join $report_dir drc_post_route.rpt]
 report_methodology -file [file join $report_dir methodology_post_route.rpt]
-write_checkpoint -force [file join $report_dir p02_ddr_post_route.dcp]
+write_checkpoint -force [file join $report_dir p03_2_mmio_post_route.dcp]
 
 set primitive_file [open [file join $report_dir memory_primitives_post_route.rpt] w]
 foreach c [lsort [get_cells -hierarchical -filter {REF_NAME == RAMB36E2 || REF_NAME == RAMB18E2 || REF_NAME == URAM288}]] {
@@ -593,7 +600,7 @@ foreach c [lsort [get_cells -hierarchical -filter {REF_NAME == RAMB36E2 || REF_N
 }
 close $primitive_file
 
-set metrics [open [file join $report_dir p02_post_route_metrics.txt] w]
+set metrics [open [file join $report_dir p03_2_post_route_metrics.txt] w]
 set setup_paths [get_timing_paths -quiet -delay_type max -max_paths 1 -nworst 1]
 set hold_paths [get_timing_paths -quiet -delay_type min -max_paths 1 -nworst 1]
 if {[llength $setup_paths] > 0} { puts $metrics "wns_ns=[get_property SLACK [lindex $setup_paths 0]]" } else { puts $metrics "wns_ns=NA" }
@@ -603,10 +610,10 @@ if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $m
 puts $metrics "p02_reference_logical_backing_contexts=5"
 puts $metrics "resident_context_slots=3"
 puts $metrics "physical_engines=1"
-puts $metrics "host_paged_dispatch=1"
+puts $metrics "host_paged_dispatch=0"
 puts $metrics "on_fabric_cross_page_router=0"
-puts $metrics "host_owns_cross_page_routing=1"
-puts $metrics "host_owns_global_barrier=1"
+puts $metrics "host_owns_cross_page_routing=0"
+puts $metrics "host_owns_global_barrier=0"
 puts $metrics "logical_capacity_changed=0"
 puts $metrics "reset_strategy=source_controlled_synchronous_conditioner"
 puts $metrics "target_part=$target_part"
@@ -618,20 +625,27 @@ puts $metrics "p02_ddr_record_bytes=0x00080000"
 puts $metrics "p02_ddr_logical_capacity=128"
 puts $metrics "p02_hp0_enabled=1"
 puts $metrics "p02_hp0_data_width_bits=128"
+puts $metrics "p03_hpm0_enabled=1"
+puts $metrics "p03_hpm0_data_width_bits=32"
+puts $metrics "p03_mmio_base=0xA0000000"
+puts $metrics "p03_mmio_range_bytes=0x00010000"
+puts $metrics "p03_mmio_controls_page=1"
+puts $metrics "p03_mmio_controls_dispatch=1"
+puts $metrics "p03_mmio_controls_resident_memory=1"
 puts $metrics "p02_axi_burst_beats=16"
 puts $metrics "p02_axi_burst_bytes=256"
 puts $metrics "p02_ddr_range_guard=1"
 puts $metrics "p02_page_walker=1"
 puts $metrics "p02_page_host_arbiter=1"
-puts $metrics "p02_host_controls_page_command=1"
-puts $metrics "p02_ps_runtime_implemented=0"
+puts $metrics "p02_host_controls_page_command=0"
+puts $metrics "p03_ps_runtime_implemented=0"
 close $metrics
 
-set bit_file [file join $report_dir p02_ddr_paged.bit]
-set ltx_file [file join $report_dir p02_ddr_paged.ltx]
+set bit_file [file join $report_dir p03_2_ps_mmio.bit]
+set ltx_file [file join $report_dir p03_2_ps_mmio.ltx]
 write_debug_probes -force $ltx_file
 write_bitstream -force $bit_file
-puts "P02.3b2 routed implementation completed successfully."
-puts "P02.3b2 bitstream: $bit_file"
-puts "P02.3b2 debug probes: $ltx_file"
-puts "P02.3b2 reports: $report_dir"
+puts "P03.2 routed implementation completed successfully."
+puts "P03.2 bitstream: $bit_file"
+puts "P03.2 debug probes: $ltx_file"
+puts "P03.2 reports: $report_dir"
