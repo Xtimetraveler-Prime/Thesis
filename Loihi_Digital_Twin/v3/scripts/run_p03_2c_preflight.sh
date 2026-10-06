@@ -40,6 +40,12 @@ manifest = json.loads((fixture / "manifest.json").read_text(encoding="utf-8"))
 record = (fixture / "core0_initial.bin").read_bytes()
 header = (fixture / "p03_2c_fixture.h").read_text(encoding="utf-8")
 app = (root / "software/p03/p03_2c_smoke.c").read_text(encoding="utf-8")
+build_py = (root / "software/p03/build_p03_2c_smoke.py").read_text(
+    encoding="utf-8"
+)
+build_sh = (root / "scripts/build_p03_2c_smoke.sh").read_text(
+    encoding="utf-8"
+)
 program_tcl = (root / "vivado/p03_2c_program_bitstream.tcl").read_text(
     encoding="utf-8"
 )
@@ -79,6 +85,23 @@ for token in (
 ):
     if token not in app:
         raise SystemExit(f"FAIL: P03.2c A53 app missing {token}")
+
+for token in (
+    'os="standalone"',
+    'cpu="psu_cortexa53_0"',
+    'domain_name=domain_name',
+    'no_boot_bsp=True',
+):
+    if token not in build_py:
+        raise SystemExit(f"FAIL: P03.2c Vitis platform contract missing {token}")
+
+for token in (
+    "aarch64-none-elf-gcc",
+    "P03_2C_XILINX_VITIS",
+    "P03_2C_A53_GCC",
+):
+    if token not in build_sh:
+        raise SystemExit(f"FAIL: P03.2c embedded-toolchain gate missing {token}")
 
 # VIO may be used only for the pre-run reset request.
 if "p03_probe $vio vio_output 1" not in program_tcl:
