@@ -22,6 +22,17 @@ foreach f [list $source_file $full_file $mutable_file] {
     }
 }
 
+proc p02_select_physical_memory_target {} {
+    foreach candidate {PSU APU} {
+        if {![catch {targets -set -filter "name =~ \"$candidate\""} err]} {
+            puts "P02.4 physical DDR access target: $candidate"
+            return $candidate
+        }
+        puts "P02.4 INFO: physical target $candidate unavailable: $err"
+    }
+    error "P02.4 could not select a non-processor PSU/APU target for physical DDR access"
+}
+
 connect -url $server_url
 
 set halted 0
@@ -40,7 +51,7 @@ if {$halted == 0} {
     error "P02.4 could not find any Cortex-A53 target. DDR must be initialized and the APU visible."
 }
 
-targets -set -filter {name =~ "Cortex-A53 #0"}
+p02_select_physical_memory_target
 
 puts "P02.4 provisioning source record at 0x40000000"
 dow -data $source_file 0x40000000
