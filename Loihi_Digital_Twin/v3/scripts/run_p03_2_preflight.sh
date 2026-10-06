@@ -27,6 +27,7 @@ root = Path(sys.argv[1])
 rtl = (root / "rtl/p03_ps_control_regs.v").read_text(encoding="utf-8")
 doc = (root / "docs/P03_2_PS_MMIO_CONTROL.md").read_text(encoding="utf-8")
 py = (root / "src/loihi_twin_v2/p03_mmio.py").read_text(encoding="utf-8")
+header = (root / "software/p03/include/p03_mmio.h").read_text(encoding="utf-8")
 
 rtl_tokens = (
     'XIL_INTERFACENAME S_AXI',
@@ -50,12 +51,23 @@ for token in (
 
 for token in (
     "P03_MMIO_BASE = 0xA4000000",
+    "P03_MMIO_RANGE_BYTES = 0x1000",
     "REG_PAGE_CONFIG = 0x020",
     "REG_DISPATCH_CONFIG = 0x080",
     "REG_DEBUG_CONFIG = 0x100",
 ):
     if token not in py:
-        raise SystemExit(f"FAIL: P03.2 software MMIO contract missing {token!r}")
+        raise SystemExit(f"FAIL: P03.2 Python MMIO contract missing {token!r}")
+
+for token in (
+    "((uintptr_t)0xA4000000u)",
+    "P03_MMIO_RANGE_BYTES       UINT32_C(0x00001000)",
+    "P03_REG_PAGE_CONFIG        UINT32_C(0x020)",
+    "P03_REG_DISPATCH_CONFIG    UINT32_C(0x080)",
+    "P03_REG_DEBUG_CONFIG         UINT32_C(0x100)",
+):
+    if token not in header:
+        raise SystemExit(f"FAIL: P03.2 C MMIO contract missing {token!r}")
 
 vivado = (root / "vivado/create_p03_mmio_impl_project.tcl").read_text(
     encoding="utf-8"
