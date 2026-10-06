@@ -141,16 +141,8 @@ int main(void)
         fail(FAIL_MMIO_VERSION);
 
     mailbox->capabilities = reg_read(P03_REG_CAPABILITIES);
-    if ((mailbox->capabilities & UINT32_C(0x001F071F)) !=
-        UINT32_C(0x0001031F)) {
-        /*
-         * Required capability fields:
-         * [4:0] all five base feature bits = 1
-         * [10:8] resident slot count = 3
-         * [23:16] physical engine count = 1
-         */
+    if (mailbox->capabilities != UINT32_C(0x0001031F))
         fail(FAIL_CAPABILITIES);
-    }
 
     /*
      * Page core0's accepted 512 KiB backing record into resident slot 0.
