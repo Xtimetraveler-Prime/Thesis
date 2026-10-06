@@ -33,6 +33,18 @@ proc p02_select_physical_memory_target {} {
     error "P02.4 could not select a non-processor PSU/APU target for physical DDR access"
 }
 
+proc p02_binary_files_equal {left right} {
+    set lf [open $left rb]
+    set rf [open $right rb]
+    fconfigure $lf -translation binary -encoding binary
+    fconfigure $rf -translation binary -encoding binary
+    set ldata [read $lf]
+    set rdata [read $rf]
+    close $lf
+    close $rf
+    return [expr {$ldata eq $rdata}]
+}
+
 connect -url $server_url
 
 set halted 0
@@ -55,15 +67,33 @@ p02_select_physical_memory_target
 
 puts "P02.4 provisioning source record at 0x40000000"
 dow -data $source_file 0x40000000
-verify -data $source_file 0x40000000
+set source_verify [file join $fixture_dir "source_physical_readback.bin"]
+file delete -force $source_verify
+mrd -bin -file $source_verify 0x40000000 131072
+if {![p02_binary_files_equal $source_file $source_verify]} {
+    error "P02.4 physical source DDR readback mismatch"
+}
+file delete -force $source_verify
 
 puts "P02.4 provisioning full-roundtrip scratch at 0x43F00000"
 dow -data $full_file 0x43F00000
-verify -data $full_file 0x43F00000
+set full_verify [file join $fixture_dir "full_physical_readback.bin"]
+file delete -force $full_verify
+mrd -bin -file $full_verify 0x43F00000 131072
+if {![p02_binary_files_equal $full_file $full_verify]} {
+    error "P02.4 physical full-scratch DDR readback mismatch"
+}
+file delete -force $full_verify
 
 puts "P02.4 provisioning mutable-roundtrip scratch at 0x43F80000"
 dow -data $mutable_file 0x43F80000
-verify -data $mutable_file 0x43F80000
+set mutable_verify [file join $fixture_dir "mutable_physical_readback.bin"]
+file delete -force $mutable_verify
+mrd -bin -file $mutable_verify 0x43F80000 131072
+if {![p02_binary_files_equal $mutable_file $mutable_verify]} {
+    error "P02.4 physical mutable-scratch DDR readback mismatch"
+}
+file delete -force $mutable_verify
 
-puts "PASS: P02.4 DDR fixtures provisioned and verified with A53 cores halted"
+puts "PASS: P02.4 DDR fixtures provisioned and byte-verified by physical readback with A53 cores halted"
 disconnect
