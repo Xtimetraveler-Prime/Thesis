@@ -129,6 +129,9 @@ proc p02b_page_commit {settings} {
 proc p02b_page_transfer {page_out mutable_only slot record_base label} {
     global P02B_PAGE_INS P02B_PAGE_OUTS P02B_PAGE_VIO
 
+    # Port-B ownership must be fully released by the debug path before paging.
+    p02b_wait_p08 20 0 2000 "debug idle before page $label"
+
     set completed_before [p02b_page_input 4]
     set read_before [p02b_page_input 9]
     set write_before [p02b_page_input 10]
@@ -153,6 +156,7 @@ proc p02b_page_transfer {page_out mutable_only slot record_base label} {
         after 10
     }
     if {!$complete} { error "P02.4b $label page transfer timeout" }
+    p02b_expect "$label start_blocked" [p02b_page_input 2] 0
 
     set bytes [p02b_page_input 3]
     set read_after [p02b_page_input 9]
@@ -230,6 +234,7 @@ proc p02b_dispatch {timestep core slot event_bank event_count} {
     set key "$timestep,$core"
     p02b_expect "event count t=$timestep core=$core" $event_count $P02B_EXPECT_EVENT_COUNT($key)
 
+    p02b_wait_p08 20 0 2000 "debug idle before dispatch t=$timestep core=$core"
     set dispatch_before [p02b_p08_input 8]
     set metadata [p02b_metadata $core $event_count]
     p02b_p08_commit [list 2 $slot 3 $metadata 4 $timestep 5 $event_bank 0 0]
