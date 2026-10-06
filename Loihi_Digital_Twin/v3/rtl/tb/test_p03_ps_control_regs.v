@@ -362,9 +362,7 @@ module test_p03_ps_control_regs;
         @(negedge clk);
         debug_ack = 1'b1;
         debug_rvalid = 1'b1;
-        debug_rdata = 256'h
-            FEDC_BA98_7654_3210_0123_4567_89AB_CDEF_
-            0BAD_F00D_CAFE_BABE_DEAD_BEEF_1234_5678;
+        debug_rdata = 256'hFEDC_BA98_7654_3210_0123_4567_89AB_CDEF_0BAD_F00D_CAFE_BABE_DEAD_BEEF_1234_5678;
         @(posedge clk);
         #1;
         @(negedge clk);
