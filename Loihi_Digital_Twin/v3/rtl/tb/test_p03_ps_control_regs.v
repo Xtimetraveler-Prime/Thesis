@@ -185,6 +185,10 @@ module test_p03_ps_control_regs;
         input [11:0] addr;
         input [31:0] value;
         begin
+            // Drive VALID on the falling edge and sample READY before the
+            // rising edge that performs the AXI handshake.  Sampling READY
+            // after that edge is incorrect for this DUT because the accepted
+            // request immediately raises its pending flag and deasserts READY.
             @(negedge clk);
             awaddr = addr;
             awvalid = 1'b1;
@@ -194,30 +198,34 @@ module test_p03_ps_control_regs;
             bready = 1'b0;
 
             timeout = 0;
-            while ((awvalid || wvalid) && timeout < 20) begin
-                @(posedge clk);
+            #1;
+            while (!(awready && wready) && timeout < 20) begin
+                @(negedge clk);
                 #1;
-                if (awvalid && awready)
-                    awvalid = 1'b0;
-                if (wvalid && wready)
-                    wvalid = 1'b0;
                 timeout = timeout + 1;
             end
-            check(timeout < 20, "AXI write address/data handshake timeout");
+            check(awready && wready,
+                  "AXI write address/data handshake timeout");
+
+            // AW and W are accepted on this rising edge.
+            @(posedge clk);
+            @(negedge clk);
+            awvalid = 1'b0;
+            wvalid = 1'b0;
 
             timeout = 0;
+            #1;
             while (!bvalid && timeout < 20) begin
-                @(posedge clk);
+                @(negedge clk);
                 #1;
                 timeout = timeout + 1;
             end
             check(bvalid, "AXI write response timeout");
             check(bresp == 2'b00, "AXI write returned non-OKAY response");
 
-            @(negedge clk);
             bready = 1'b1;
             @(posedge clk);
-            #1;
+            @(negedge clk);
             bready = 1'b0;
         end
     endtask
@@ -226,24 +234,32 @@ module test_p03_ps_control_regs;
         input [11:0] addr;
         output [31:0] value;
         begin
+            // As with writes, READY must be observed before the accepting
+            // rising edge.  Once the DUT captures ARVALID it raises RVALID and
+            // its combinational ARREADY falls.
             @(negedge clk);
             araddr = addr;
             arvalid = 1'b1;
             rready = 1'b0;
 
             timeout = 0;
-            while (arvalid && timeout < 20) begin
-                @(posedge clk);
+            #1;
+            while (!arready && timeout < 20) begin
+                @(negedge clk);
                 #1;
-                if (arvalid && arready)
-                    arvalid = 1'b0;
                 timeout = timeout + 1;
             end
-            check(timeout < 20, "AXI read address handshake timeout");
+            check(arready, "AXI read address handshake timeout");
+
+            // AR is accepted on this rising edge.
+            @(posedge clk);
+            @(negedge clk);
+            arvalid = 1'b0;
 
             timeout = 0;
+            #1;
             while (!rvalid && timeout < 20) begin
-                @(posedge clk);
+                @(negedge clk);
                 #1;
                 timeout = timeout + 1;
             end
@@ -251,10 +267,9 @@ module test_p03_ps_control_regs;
             check(rresp == 2'b00, "AXI read returned non-OKAY response");
             value = rdata;
 
-            @(negedge clk);
             rready = 1'b1;
             @(posedge clk);
-            #1;
+            @(negedge clk);
             rready = 1'b0;
         end
     endtask
