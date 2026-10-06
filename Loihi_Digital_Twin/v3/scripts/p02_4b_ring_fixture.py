@@ -326,6 +326,48 @@ def generate(output_dir: Path) -> dict[str, object]:
         + "}",
     ]
 
+    lines.append("array set P02B_EXPECT_CONFIG0 {")
+    for core_id in LOGICAL_CORES:
+        lines.append(f"  {core_id} {_hex(backing[core_id].image.config_words[0], 128)}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_INITIAL_STATE0 {")
+    for core_id in LOGICAL_CORES:
+        lines.append(f"  {core_id} {_hex(backing[core_id].image.state_words[0], 64)}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_AXON_INDEX {")
+    for core_id in LOGICAL_CORES:
+        seeds = backing[core_id].image.axon_words
+        if len(seeds) != 1:
+            raise AssertionError("P02.4b ring expects exactly one sparse axon descriptor")
+        lines.append(f"  {core_id} {seeds[0].index}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_AXON_WORD {")
+    for core_id in LOGICAL_CORES:
+        seeds = backing[core_id].image.axon_words
+        lines.append(f"  {core_id} {_hex(seeds[0].word, 64)}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_SYNAPSE0 {")
+    for core_id in LOGICAL_CORES:
+        lines.append(f"  {core_id} {_hex(backing[core_id].image.synapse_words[0], 64)}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_ROUTE_DESC0 {")
+    for core_id in LOGICAL_CORES:
+        seeds = backing[core_id].image.route_descriptor_words
+        if len(seeds) != 1 or seeds[0].index != 0:
+            raise AssertionError("P02.4b ring expects route descriptor 0")
+        lines.append(f"  {core_id} {_hex(seeds[0].word, 32)}")
+    lines.append("}")
+
+    lines.append("array set P02B_EXPECT_ROUTE0 {")
+    for core_id in LOGICAL_CORES:
+        lines.append(f"  {core_id} {_hex(backing[core_id].image.route_words[0], 32)}")
+    lines.append("}")
+
     lines.append("array set P02B_EXPECT_EVENT_COUNT {")
     for row in dispatch_rows:
         lines.append(f"  {row['timestep']},{row['core_id']} {row['event_count']}")
