@@ -39,7 +39,7 @@ this interface according to the accepted P03.1 runtime contract.
 The initial standalone software contract reserves:
 
 ```text
-MMIO base:   0xA0000000
+MMIO base:   0xA4000000
 MMIO range:  0x00001000  (4 KiB)
 data width:  32 bits
 protocol:    AXI4-Lite
@@ -56,7 +56,7 @@ src/loihi_twin_v2/p03_mmio.py
 
 ## Register map
 
-All offsets are relative to `0xA0000000`.
+All offsets are relative to `0xA4000000`.
 
 ### Identity/global
 
@@ -177,7 +177,7 @@ P03.2b Vivado integration must prove:
 
 - `M_AXI_HPM0_FPD` is enabled;
 - PS master reaches the MMIO block through SmartConnect;
-- fixed `0xA0000000/4KiB` address assignment;
+- fixed `0xA4000000/4KiB` address assignment;
 - P02 HP0 DDR path remains enabled and unchanged in direction;
 - MMIO drives page/dispatch/debug command inputs;
 - no VIO output drives those command inputs;
