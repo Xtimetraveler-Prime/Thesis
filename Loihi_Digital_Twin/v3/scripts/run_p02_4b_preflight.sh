@@ -38,6 +38,20 @@ for relative in paths:
         if text.count(left) != text.count(right):
             raise SystemExit(f"FAIL: unbalanced {left}{right} delimiters in {relative}")
 
+prepare = (root / "vivado/p02_4b_xsdb_prepare.tcl").read_text(encoding="utf-8")
+dump = (root / "vivado/p02_4b_xsdb_dump.tcl").read_text(encoding="utf-8")
+for label, text in (("prepare", prepare), ("dump", dump)):
+    for token in (
+        "p02b_select_physical_memory_target",
+        "foreach candidate {PSU APU}",
+        "physical DDR access target",
+    ):
+        if token not in text:
+            raise SystemExit(
+                f"FAIL: P02.4b XSDB {label} script missing physical-target contract {token!r}"
+            )
+print("PASS: P02.4b XSDB physical PSU/APU memory-target preflight")
+
 runtime = (root / "vivado/p02_4b_five_over_three.tcl").read_text(encoding="utf-8")
 required = (
     "p02b_page_transfer 1 1",
