@@ -1,6 +1,6 @@
 # P02.4 — Physical DDR-backed paging acceptance
 
-**Status:** P02.4a verification candidate  
+**Status:** P02.4a accepted; P02.4b planned  
 **Phase:** P02 — DDR-backed logical-core virtualization  
 **Branch:** `agent/v3-p02-4-physical-ddr`
 
@@ -21,7 +21,7 @@ P02.4 is intentionally split into:
   v2 PC-RAM backing role with the accepted K26 DDR records and reproduce the
   normalized v2/Python boundary.
 
-P02.4a is the current verification candidate.
+P02.4a is accepted. P02.4b is the remaining P02 acceptance work.
 
 ## 2. No FPGA redesign for P02.4a
 
@@ -111,28 +111,38 @@ The P02.4a verifier therefore compares the exact raw record expected from the
 hardware operation rather than pretending that the PL page mover updates
 control-plane metadata.
 
-## 6. Physical sequence
+## 6. Accepted physical sequence
 
-The one-command harness is:
+The accepted one-command harness is:
 
 ```text
 scripts/run_p02_4_physical_roundtrip.sh
 ```
 
-It performs:
+The sequence that worked on the physical KV260 is:
 
 1. generate deterministic records and expected results;
 2. verify that the selected bitstream/probes match P02.3b2 acceptance;
 3. connect with XSDB;
 4. halt all visible Cortex-A53 cores;
-5. provision source/scratch records into K26 DDR;
-6. disconnect XSDB;
-7. program the accepted P02.3b2 PL image;
-8. command one full page-in from DDR record 0 to resident slot 0;
-9. command one full page-out from resident slot 0 to record 126;
-10. command one mutable-only page-out from resident slot 0 to record 127;
-11. reconnect with XSDB and dump all three DDR records;
-12. compare the DDR dumps against byte-exact expected records and fingerprints.
+5. provision each 512 KiB record with `dow -data <file> <address>`;
+6. immediately verify each provisioned record with
+   `verify -data <file> <address>`;
+7. disconnect XSDB;
+8. program the accepted P02.3b2 PL image;
+9. locate the paging VIO;
+10. bind VIO probes by `TYPE`, `PROBE_PORT`, and
+    `PROBE_PORT_BIT_COUNT`, not by display name;
+11. preserve the returned Vivado `hw_probe` objects with Tcl `upvar`;
+12. configure VIO probes with UNSIGNED radix and normalize all command values
+    through Tcl `wide()` evaluation before `set_property OUTPUT_VALUE`;
+13. command one full page-in from DDR record 0 to resident slot 0;
+14. command one full page-out from resident slot 0 to record 126;
+15. command one mutable-only page-out from resident slot 0 to record 127;
+16. reconnect with XSDB and dump all three DDR records using binary
+    `mrd -bin -file`;
+17. compare the DDR dumps against byte-exact expected records and fingerprints;
+18. reboot the KV260 instead of resuming the halted Linux instance.
 
 ## 7. Linux / DDR safety rule
 
@@ -239,25 +249,38 @@ P02_4_PAGE_OUT_MUTABLE_CYCLES=...
 
 These are PL clock cycles and must not be confused with algorithmic timesteps.
 
-## 11. Source-backed debugger mechanism
+## 11. Accepted debugger/VIO mechanism
 
-AMD XSDB/XSDB supports binary target-memory writes with `mwr -bin -file` and
-binary target-memory dumps with `mrd -bin -file`.
+The physical bring-up that worked uses XSDB:
 
-AMD Vivado Hardware Manager exposes VIO output control through
-`OUTPUT_VALUE` + `commit_hw_vio` and input sampling through
+```text
+dow -data <file> <address>
+verify -data <file> <address>
+mrd -bin -file <file> <address> <word_count>
+```
+
+The first two commands provision and then verify the deterministic DDR records.
+The final command dumps the records after PL paging for byte-exact comparison.
+
+Vivado Hardware Manager controls the paging VIO with
+`OUTPUT_VALUE` + `commit_hw_vio` and samples it with
 `refresh_hw_vio` + `INPUT_VALUE`.
 
-P02.4a uses those debugger interfaces only for provisioning/control/observation;
-the payload mover remains the PL/HP0 path.
+The hardware-probe objects are discovered by port/type/width metadata and kept
+as live Vivado Tcl objects. VIO output values are normalized to decimal integers
+because the probes use UNSIGNED radix.
+
+These debugger interfaces are used only for provisioning, low-rate command
+issuance, and evidence collection. The payload movement itself remains the
+PL/HP0 path.
 
 ## 12. P02.4a acceptance
 
-P02.4a passes only if the board run reports all of:
+P02.4a passed independently on 2026-10-05. The accepted board run reported:
 
 ```text
 PASS: P02.4 deterministic DDR fixture generated
-PASS: P02.4 DDR fixtures provisioned with A53 cores halted
+PASS: P02.4 DDR fixtures provisioned and verified with A53 cores halted
 PASS: P02.4 PAGE_IN_FULL transfer completed
 PASS: P02.4 PAGE_OUT_FULL transfer completed
 PASS: P02.4 PAGE_OUT_MUTABLE transfer completed
@@ -267,8 +290,38 @@ PASS: P02.4 physical DDR round-trip dumps match expected records
 PASS: P02.4a physical DDR round-trip acceptance completed successfully.
 ```
 
-There must be no page-command, host, DDR, protocol, range, byte-count,
-burst-count, or fingerprint mismatch.
+There were no page-command, host, DDR, protocol, range, byte-count,
+burst-count, or fingerprint mismatches.
+
+Accepted physical measurements:
+
+```text
+PAGE_IN_FULL:
+  bytes       438272
+  cycles      535830
+  read bursts 1712
+  AXI bytes   438272
+
+PAGE_OUT_FULL:
+  bytes        438272
+  cycles       527232
+  write bursts 1712
+  AXI bytes    438272
+
+PAGE_OUT_MUTABLE:
+  bytes        106496
+  cycles       131328
+  write bursts 416
+  AXI bytes    106496
+
+TOTAL:
+  completed transfers 3
+  read bursts         1712
+  write bursts        2128
+  AXI bytes           983040
+```
+
+Primary acceptance record: `docs/P02_4A_ACCEPTANCE.md`.
 
 ## 13. Remaining P02 work
 
