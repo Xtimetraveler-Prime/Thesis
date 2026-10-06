@@ -123,15 +123,15 @@ It performs:
 
 1. generate deterministic records and expected results;
 2. verify that the selected bitstream/probes match P02.3b2 acceptance;
-3. connect with XSCT;
+3. connect with XSDB;
 4. halt all visible Cortex-A53 cores;
 5. provision source/scratch records into K26 DDR;
-6. disconnect XSCT;
+6. disconnect XSDB;
 7. program the accepted P02.3b2 PL image;
 8. command one full page-in from DDR record 0 to resident slot 0;
 9. command one full page-out from resident slot 0 to record 126;
 10. command one mutable-only page-out from resident slot 0 to record 127;
-11. reconnect with XSCT and dump all three DDR records;
+11. reconnect with XSDB and dump all three DDR records;
 12. compare the DDR dumps against byte-exact expected records and fingerprints.
 
 ## 7. Linux / DDR safety rule
@@ -241,7 +241,7 @@ These are PL clock cycles and must not be confused with algorithmic timesteps.
 
 ## 11. Source-backed debugger mechanism
 
-AMD XSCT/XSDB supports binary target-memory writes with `mwr -bin -file` and
+AMD XSDB/XSDB supports binary target-memory writes with `mwr -bin -file` and
 binary target-memory dumps with `mrd -bin -file`.
 
 AMD Vivado Hardware Manager exposes VIO output control through
