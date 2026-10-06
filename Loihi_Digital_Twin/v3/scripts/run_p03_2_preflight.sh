@@ -66,7 +66,7 @@ required_vivado = (
     "M_AXI_HPM0_FPD",
     "p03_ps_control_regs_0/S_AXI",
     "0xA0000000",
-    "0x00010000",
+    "0x00001000",
     "p03_ps_control_regs_0/page_start",
     "p03_ps_control_regs_0/dispatch_start",
     "p03_ps_control_regs_0/debug_req",
