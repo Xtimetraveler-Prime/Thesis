@@ -581,7 +581,7 @@ puts $metrics "p03_mmio_controls_resident_memory=1"
 }
 
 set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
-launch_runs impl_1 -to_step route_design -jobs $jobs
+launch_runs impl_1 -to_step write_bitstream -jobs $jobs
 wait_on_run impl_1
 if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {
     error "P03.2 implementation did not complete: [get_property STATUS [get_runs impl_1]]"
@@ -651,7 +651,14 @@ set bit_file [file join $report_dir p03_2_ps_mmio.bit]
 set ltx_file [file join $report_dir p03_2_ps_mmio.ltx]
 set xsa_file [file join $report_dir p03_2_ps_mmio.xsa]
 write_debug_probes -force $ltx_file
-write_bitstream -force $bit_file
+
+set impl_bit_files [get_files -quiet -of_objects [get_runs impl_1] -filter {FILE_TYPE == "Bitstream"}]
+if {[llength $impl_bit_files] < 1} {
+    error "P03.2 implementation run completed without a run-owned bitstream"
+}
+set impl_bit_file [lindex $impl_bit_files 0]
+file copy -force $impl_bit_file $bit_file
+
 write_hw_platform -fixed -include_bit -force -file $xsa_file
 puts "P03.2 routed implementation completed successfully."
 puts "P03.2 bitstream: $bit_file"
