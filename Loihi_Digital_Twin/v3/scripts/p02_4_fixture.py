@@ -86,6 +86,16 @@ def _payload_sha(record: bytes | bytearray) -> bytes:
 
 def build_record(logical_core_id: int, label: str) -> bytes:
     record = bytearray(RECORD_BYTES)
+
+    # Give non-resident bytes distinct sentinels too. The page mover must leave
+    # the unused header area and reserved tail untouched.
+    record[0x80:PAYLOAD_START] = _bank_bytes(
+        "header_reserved", label, PAYLOAD_START - 0x80
+    )
+    record[PAYLOAD_END:RECORD_BYTES] = _bank_bytes(
+        "reserved_tail", label, RECORD_BYTES - PAYLOAD_END
+    )
+
     for name, offset, word_bytes, depth in BANKS:
         size = word_bytes * depth
         record[offset : offset + size] = _bank_bytes(name, label, size)
