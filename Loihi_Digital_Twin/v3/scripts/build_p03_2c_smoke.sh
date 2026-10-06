@@ -12,12 +12,32 @@ WORKSPACE="$BUILD_DIR/vitis_workspace"
 
 XSA="${P03_XSA:-$V3_DIR/vivado/build/p03_2_mmio_impl/reports/p03_2_ps_mmio.xsa}"
 
-for tool in python vitis sha256sum readelf; do
+# Vivado's top-level settings can make the `vitis` launcher visible without
+# necessarily placing the embedded A53 cross-toolchain on PATH.  Recover the
+# Vitis installation root from XILINX_VITIS or from the launcher itself, then
+# source the embedded Vitis environment inside this build process.
+if [[ -n "${XILINX_VITIS:-}" && -f "$XILINX_VITIS/settings64.sh" ]]; then
+    # shellcheck disable=SC1090
+    source "$XILINX_VITIS/settings64.sh"
+elif command -v vitis >/dev/null 2>&1; then
+    VITIS_BIN="$(readlink -f "$(command -v vitis)")"
+    VITIS_ROOT="$(cd -- "$(dirname -- "$VITIS_BIN")/.." && pwd)"
+    if [[ -f "$VITIS_ROOT/settings64.sh" ]]; then
+        # shellcheck disable=SC1090
+        source "$VITIS_ROOT/settings64.sh"
+    fi
+fi
+
+for tool in python vitis aarch64-none-elf-gcc sha256sum readelf; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required P03.2c build tool is not on PATH: $tool" >&2
         exit 2
     }
 done
+
+echo "P03_2C_XILINX_VITIS=${XILINX_VITIS:-UNSET}"
+echo "P03_2C_A53_GCC=$(command -v aarch64-none-elf-gcc)"
+aarch64-none-elf-gcc --version | head -n 1
 
 [[ -f "$XSA" ]] || {
     echo "ERROR: accepted P03.2 XSA missing: $XSA" >&2
