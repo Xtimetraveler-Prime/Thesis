@@ -21,6 +21,7 @@ bash "$V3_DIR/rtl/run_p02_ddr_backing_range_guard_sim.sh"
 
 python - "$V3_DIR" <<'PY'
 from pathlib import Path
+import re
 import sys
 
 root = Path(sys.argv[1])
@@ -59,15 +60,25 @@ for token in (
     if token not in py:
         raise SystemExit(f"FAIL: P03.2 Python MMIO contract missing {token!r}")
 
-for token in (
-    "((uintptr_t)0xA4000000u)",
-    "P03_MMIO_RANGE_BYTES       UINT32_C(0x00001000)",
-    "P03_REG_PAGE_CONFIG        UINT32_C(0x020)",
-    "P03_REG_DISPATCH_CONFIG    UINT32_C(0x080)",
-    "P03_REG_DEBUG_CONFIG         UINT32_C(0x100)",
-):
-    if token not in header:
-        raise SystemExit(f"FAIL: P03.2 C MMIO contract missing {token!r}")
+header_defines = {}
+for line in header.splitlines():
+    match = re.match(r"^#define\\s+(P03_[A-Z0-9_]+)\\s+(.+?)\\s*$", line)
+    if match:
+        header_defines[match.group(1)] = match.group(2)
+
+expected_header_defines = {
+    "P03_MMIO_BASE": "((uintptr_t)0xA4000000u)",
+    "P03_MMIO_RANGE_BYTES": "UINT32_C(0x00001000)",
+    "P03_REG_PAGE_CONFIG": "UINT32_C(0x020)",
+    "P03_REG_DISPATCH_CONFIG": "UINT32_C(0x080)",
+    "P03_REG_DEBUG_CONFIG": "UINT32_C(0x100)",
+}
+for name, expected in expected_header_defines.items():
+    actual = header_defines.get(name)
+    if actual != expected:
+        raise SystemExit(
+            f"FAIL: P03.2 C MMIO define {name} expected {expected!r}, got {actual!r}"
+        )
 
 vivado = (root / "vivado/create_p03_mmio_impl_project.tcl").read_text(
     encoding="utf-8"
