@@ -195,7 +195,12 @@ P03.2b Vivado integration must prove:
 - MMIO drives page/dispatch/debug command inputs;
 - no VIO output drives those command inputs;
 - synthesis/route close timing on K26;
-- three resident contexts / one physical engine remain unchanged.
+- three resident contexts / one physical engine remain unchanged;
+- a fixed XSA with the routed bitstream is exported for the P03.2c/P03.3
+  standalone software flow.
+
+P03.2c then requires physical A53-side MMIO smoke evidence before the overall
+P03.2 sub-milestone is accepted.
 
 ## Claim boundary
 
