@@ -142,3 +142,13 @@ before pulsing the first page command because the helper serialized Vivado
 
 The retry candidate preserves the live probe objects using Tcl `upvar`.
 See `docs/P02_4A_ATTEMPT2.md`.
+
+
+## Physical attempt 3 update
+
+The third board attempt entered the first `PAGE_IN_FULL` helper after
+successful VIO binding, then stopped while staging the 64-bit DDR base because
+the VIO output used UNSIGNED radix while the helper passed a hexadecimal string.
+
+The retry candidate converts all VIO command values to Tcl wide integers before
+`set_property OUTPUT_VALUE`. See `docs/P02_4A_ATTEMPT3.md`.
