@@ -64,11 +64,11 @@ P02.4 HARDWARE NOTE:
   reboot the board when this acceptance run is complete.
 EOF
 
-xsdb vivado/p02_4_xsdb_prepare.tcl     "$FIXTURE_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsct_prepare.log"
+xsdb vivado/p02_4_xsdb_prepare.tcl     "$FIXTURE_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsdb_prepare.log"
 
 vivado -mode batch     -source vivado/p02_4_vio_roundtrip.tcl     -tclargs "$BIT_FILE" "$LTX_FILE" "$VIVADO_SERVER_URL"     2>&1 | tee "$LOG_DIR/vio_roundtrip.log"
 
-xsdb vivado/p02_4_xsdb_dump.tcl     "$DUMP_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsct_dump.log"
+xsdb vivado/p02_4_xsdb_dump.tcl     "$DUMP_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsdb_dump.log"
 
 python scripts/p02_4_fixture.py verify     --fixture-dir "$FIXTURE_DIR"     --source-dump "$DUMP_DIR/source_after.bin"     --full-dump "$DUMP_DIR/full_after.bin"     --mutable-dump "$DUMP_DIR/mutable_after.bin"     | tee "$LOG_DIR/fixture_verify.log"
 
