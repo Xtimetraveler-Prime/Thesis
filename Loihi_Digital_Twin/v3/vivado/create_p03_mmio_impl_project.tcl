@@ -1,4 +1,4 @@
-# FPGA-v3 P02.3b2 DDR-paged one-engine / three-resident-context K26 shell.
+# FPGA-v3 P03.2 PS-MMIO-controlled one-engine / three-resident-context K26 shell.
 #
 # This shell starts from the accepted P02.3b2 physical topology and replaces
 # host-driven scalar context loading with a PL page path:
@@ -13,8 +13,8 @@
 # Dispatch, packet readback/routing, and global barrier ownership are still
 # host/VIO driven in P02.  P03 will move those orchestration functions onto the
 # A53.  P02.3b2 only proves the physical DDR paging data path.
-if {$argc != 15} {
-    error "usage: create_p02_ddr_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <report_dir> <jobs> <stage>"
+if {$argc != 16} {
+    error "usage: create_p03_mmio_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <mmio_rtl> <report_dir> <jobs> <stage>"
 }
 
 set ip_repo_dir [file normalize [lindex $argv 0]]
@@ -29,14 +29,15 @@ set walker_rtl [file normalize [lindex $argv 8]]
 set arbiter_rtl [file normalize [lindex $argv 9]]
 set range_guard_rtl [file normalize [lindex $argv 10]]
 set adapter_rtl [file normalize [lindex $argv 11]]
-set report_dir [file normalize [lindex $argv 12]]
-set jobs [lindex $argv 13]
-set stage [lindex $argv 14]
+set mmio_rtl [file normalize [lindex $argv 12]]
+set report_dir [file normalize [lindex $argv 13]]
+set jobs [lindex $argv 14]
+set stage [lindex $argv 15]
 if {$stage ne "synth" && $stage ne "route"} {
     error "P02.3b2 stage must be synth or route, got: $stage"
 }
 
-foreach path [list $ip_repo_dir $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl] {
+foreach path [list $ip_repo_dir $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl $mmio_rtl] {
     if {![file exists $path]} { error "Required P02.3b2 input does not exist: $path" }
 }
 file mkdir $report_dir
@@ -58,7 +59,7 @@ set kv260_board_part [lindex [lsort -dictionary $kv260_board_parts] end]
 set_property BOARD_PART $kv260_board_part [current_project]
 puts "P02.3b2 K26 SOM board preset: $kv260_board_part"
 
-foreach rtl [list $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl] {
+foreach rtl [list $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl $mmio_rtl] {
     add_files -norecurse $rtl
     set_property file_type Verilog [get_files $rtl]
 }
@@ -144,7 +145,8 @@ create_bd_design $bd_name
 set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1"} $ps
 set_property -dict [list \
-    CONFIG.PSU__USE__M_AXI_GP0 {0} \
+    CONFIG.PSU__USE__M_AXI_GP0 {1} \
+    CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
     CONFIG.PSU__USE__M_AXI_GP1 {0} \
     CONFIG.PSU__USE__M_AXI_GP2 {0} \
     CONFIG.PSU__FPGA_PL0_ENABLE {1} \
@@ -164,6 +166,9 @@ set range_guard [create_bd_cell -type module -reference p02_ddr_backing_range_gu
 set axi_adapter [create_bd_cell -type module -reference p02_axi128_burst_adapter p02_axi128_burst_adapter_0]
 set hp0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p02_hp0_smartconnect_0]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hp0_smartconnect
+set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_control_regs_0]
+set hpm0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p03_hpm0_smartconnect_0]
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hpm0_smartconnect
 
 # The P02.3b2 controller deliberately leaves packet routing / next-event writes to
 # the host after each dispatch.  Disable P05's former controller-side Port-B
