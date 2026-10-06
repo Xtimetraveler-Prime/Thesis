@@ -53,11 +53,20 @@ proc p02_input_int {vio probe} {
 
 proc p02_commit_page_outputs {vio probe_array_name page_out mutable_only slot record_base start_value} {
     upvar 1 $probe_array_name p
-    set_property OUTPUT_VALUE $start_value $p(out0)
-    set_property OUTPUT_VALUE $page_out $p(out1)
-    set_property OUTPUT_VALUE $mutable_only $p(out2)
-    set_property OUTPUT_VALUE $slot $p(out3)
-    set_property OUTPUT_VALUE $record_base $p(out4)
+
+    # Outputs use UNSIGNED radix, so normalize Tcl numeric literals such as
+    # 0x40000000 to decimal strings before handing them to Hardware Manager.
+    set start_u [expr {wide($start_value)}]
+    set page_out_u [expr {wide($page_out)}]
+    set mutable_only_u [expr {wide($mutable_only)}]
+    set slot_u [expr {wide($slot)}]
+    set record_base_u [expr {wide($record_base)}]
+
+    set_property OUTPUT_VALUE $start_u $p(out0)
+    set_property OUTPUT_VALUE $page_out_u $p(out1)
+    set_property OUTPUT_VALUE $mutable_only_u $p(out2)
+    set_property OUTPUT_VALUE $slot_u $p(out3)
+    set_property OUTPUT_VALUE $record_base_u $p(out4)
     commit_hw_vio $vio
 }
 
