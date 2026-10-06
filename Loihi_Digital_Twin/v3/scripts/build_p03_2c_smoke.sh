@@ -12,7 +12,7 @@ WORKSPACE="$BUILD_DIR/vitis_workspace"
 
 XSA="${P03_XSA:-$V3_DIR/vivado/build/p03_2_mmio_impl/reports/p03_2_ps_mmio.xsa}"
 
-for tool in python vitis sha256sum; do
+for tool in python vitis sha256sum readelf; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required P03.2c build tool is not on PATH: $tool" >&2
         exit 2
@@ -46,6 +46,41 @@ ELF="$WORKSPACE/p03_2c_smoke.elf"
     echo "ERROR: P03.2c Vitis build did not produce $ELF" >&2
     exit 3
 }
+
+readelf -lW "$ELF" > "$BUILD_DIR/elf_program_headers.txt"
+
+python - "$BUILD_DIR/elf_program_headers.txt" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+reserved_lo = 0x40000000
+reserved_hi = 0x44000000
+
+loads = []
+for line in text.splitlines():
+    if not line.lstrip().startswith("LOAD"):
+        continue
+    fields = line.split()
+    if len(fields) < 7:
+        continue
+    vaddr = int(fields[2], 16)
+    memsz = int(fields[5], 16)
+    loads.append((vaddr, vaddr + memsz))
+
+if not loads:
+    raise SystemExit("FAIL: P03.2c could not identify ELF LOAD segments")
+
+for start, end in loads:
+    if start < reserved_hi and end > reserved_lo:
+        raise SystemExit(
+            "FAIL: P03.2c ELF LOAD segment overlaps reserved backing window: "
+            f"0x{start:X}..0x{end:X}"
+        )
+
+print("PASS: P03.2c ELF LOAD segments avoid reserved 64 MiB backing window")
+PY
 
 ELF_SHA="$(sha256sum "$ELF" | awk '{print $1}')"
 
