@@ -82,7 +82,16 @@ module test_p03_ps_control_regs;
 
     integer failures = 0;
     integer timeout = 0;
+    integer page_start_pulses = 0;
+    integer dispatch_start_pulses = 0;
     reg [31:0] read_value;
+
+    always @(posedge clk) begin
+        if (page_start)
+            page_start_pulses = page_start_pulses + 1;
+        if (dispatch_start)
+            dispatch_start_pulses = dispatch_start_pulses + 1;
+    end
 
     p03_ps_control_regs dut (
         .s_axi_aclk(clk),
@@ -278,6 +287,8 @@ module test_p03_ps_control_regs;
 
         // START is a one-cycle pulse.
         check(!page_start, "page_start did not retire to a pulse");
+        check(page_start_pulses == 1,
+              "page MMIO command did not emit exactly one START pulse");
 
         @(negedge clk);
         page_bytes_transferred = 32'h0001_A000;
@@ -317,6 +328,8 @@ module test_p03_ps_control_regs;
               "dispatch metadata mismatch");
         check(dispatch_timestep == 32'd42, "dispatch timestep mismatch");
         check(!dispatch_start, "dispatch_start did not retire to a pulse");
+        check(dispatch_start_pulses == 1,
+              "dispatch MMIO command did not emit exactly one START pulse");
 
         @(negedge clk);
         dispatch_packet_count = 13'd9;
