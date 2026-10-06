@@ -40,7 +40,7 @@ for token in rtl_tokens:
         raise SystemExit(f"FAIL: P03.2 RTL contract missing {token!r}")
 
 for token in (
-    "0xA0000000",
+    "0xA4000000",
     "M_AXI_HPM0_FPD",
     "S_AXI_HP0_FPD",
     "VIO must not remain connected as a competing",
@@ -49,7 +49,7 @@ for token in (
         raise SystemExit(f"FAIL: P03.2 document missing {token!r}")
 
 for token in (
-    "P03_MMIO_BASE = 0xA0000000",
+    "P03_MMIO_BASE = 0xA4000000",
     "REG_PAGE_CONFIG = 0x020",
     "REG_DISPATCH_CONFIG = 0x080",
     "REG_DEBUG_CONFIG = 0x100",
@@ -65,7 +65,7 @@ required_vivado = (
     "CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}",
     "M_AXI_HPM0_FPD",
     "p03_ps_control_regs_0/S_AXI",
-    "0xA0000000",
+    "0xA4000000",
     "0x00001000",
     "p03_ps_control_regs_0/page_start",
     "p03_ps_control_regs_0/dispatch_start",
