@@ -103,4 +103,11 @@ PY
 
 bash -n "$V3_DIR/vivado/run_p03_mmio_impl.sh"
 
+PYTHONPATH="$V3_DIR/src" python -m pytest -q     | tee /tmp/v3_p03_2_full_pytest.log
+
+if grep -Eq 'failed|error|ERROR|FAIL' /tmp/v3_p03_2_full_pytest.log; then
+    echo "ERROR: P03.2 full inherited v3 regression reported failure/error." >&2
+    exit 4
+fi
+
 echo "PASS: P03.2 PS-visible MMIO preflight completed successfully."
