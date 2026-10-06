@@ -3,7 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-P03_MMIO_BASE = 0xA0000000
+P03_MMIO_BASE = 0xA4000000
 P03_MMIO_RANGE_BYTES = 0x1000
 P03_MMIO_ID = 0x4C543302
 P03_MMIO_VERSION = 0x00010000
