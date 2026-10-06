@@ -15,8 +15,19 @@ foreach f [list $source_dump $full_dump $mutable_dump] {
     file delete -force $f
 }
 
+proc p02_select_physical_memory_target {} {
+    foreach candidate {PSU APU} {
+        if {![catch {targets -set -filter "name =~ \"$candidate\""} err]} {
+            puts "P02.4 physical DDR access target: $candidate"
+            return $candidate
+        }
+        puts "P02.4 INFO: physical target $candidate unavailable: $err"
+    }
+    error "P02.4 could not select a non-processor PSU/APU target for physical DDR access"
+}
+
 connect -url $server_url
-targets -set -filter {name =~ "Cortex-A53 #0"}
+p02_select_physical_memory_target
 
 # 0x80000 bytes / 4 bytes per default word = 131072 words.
 mrd -bin -file $source_dump 0x40000000 131072
