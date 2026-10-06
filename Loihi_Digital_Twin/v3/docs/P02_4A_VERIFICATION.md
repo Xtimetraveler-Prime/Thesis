@@ -81,7 +81,7 @@ operation.
 
 ```text
 PASS: P02.4 deterministic DDR fixture generated
-PASS: P02.4 DDR fixtures provisioned with A53 cores halted
+PASS: P02.4 DDR fixtures provisioned and verified with A53 cores halted
 PASS: P02.4 PAGE_IN_FULL transfer completed
 PASS: P02.4 PAGE_OUT_FULL transfer completed
 PASS: P02.4 PAGE_OUT_MUTABLE transfer completed
@@ -99,3 +99,20 @@ for all ten full-context banks plus the accepted mutable-only subset.
 It does not yet close P02. P02.4b must run the representative five-logical-core
 / three-resident-context workload with K26 DDR as the authoritative
 non-resident backing store.
+
+
+## XSDB 2025.2 provisioning note
+
+The first physical attempt exposed a debugger-command compatibility issue before
+any PL page operation began: the local XSDB rejected the `mwr -bin -file`
+form used by the initial harness.
+
+The provisioning step now uses the XSDB binary-download interface:
+
+```text
+dow -data <file> <address>
+verify -data <file> <address>
+```
+
+for each of the three 512 KiB records.  This both provisions the record and
+verifies the exact binary bytes before the PL page mover is exercised.
