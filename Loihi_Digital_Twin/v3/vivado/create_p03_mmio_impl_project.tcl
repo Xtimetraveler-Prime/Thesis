@@ -649,9 +649,12 @@ close $metrics
 
 set bit_file [file join $report_dir p03_2_ps_mmio.bit]
 set ltx_file [file join $report_dir p03_2_ps_mmio.ltx]
+set xsa_file [file join $report_dir p03_2_ps_mmio.xsa]
 write_debug_probes -force $ltx_file
 write_bitstream -force $bit_file
+write_hw_platform -fixed -include_bit -force -file $xsa_file
 puts "P03.2 routed implementation completed successfully."
 puts "P03.2 bitstream: $bit_file"
 puts "P03.2 debug probes: $ltx_file"
+puts "P03.2 fixed XSA: $xsa_file"
 puts "P03.2 reports: $report_dir"
