@@ -21,6 +21,18 @@ proc p02b_select_physical_memory_target {} {
     error "P02.4b could not select a non-processor PSU/APU target for physical DDR access"
 }
 
+proc p02_binary_files_equal {left right} {
+    set lf [open $left rb]
+    set rf [open $right rb]
+    fconfigure $lf -translation binary -encoding binary
+    fconfigure $rf -translation binary -encoding binary
+    set ldata [read $lf]
+    set rdata [read $rf]
+    close $lf
+    close $rf
+    return [expr {$ldata eq $rdata}]
+}
+
 connect -url $server_url
 
 set halted 0
@@ -49,8 +61,21 @@ for {set core 0} {$core < 5} {incr core} {
     set addr [expr {0x40000000 + ($core * 0x80000)}]
     puts [format "P02.4b provisioning logical_core=%d address=0x%08X" $core $addr]
     dow -data $path $addr
-    verify -data $path $addr
+
+    set verify_path [file join $fixture_dir [format "core%d_physical_readback.bin" $core]]
+    file delete -force $verify_path
+    mrd -bin -file $verify_path $addr 131072
+    if {![file exists $verify_path]} {
+        error "P02.4b physical readback missing: $verify_path"
+    }
+    if {[file size $verify_path] != 0x80000} {
+        error "P02.4b physical readback size mismatch: $verify_path size=[file size $verify_path]"
+    }
+    if {![p02_binary_files_equal $path $verify_path]} {
+        error "P02.4b physical DDR readback mismatch for logical core $core"
+    }
+    file delete -force $verify_path
 }
 
-puts "PASS: P02.4b five authoritative DDR backing records provisioned and verified through physical PSU/APU target"
+puts "PASS: P02.4b five authoritative DDR backing records provisioned and byte-verified by physical readback"
 disconnect
