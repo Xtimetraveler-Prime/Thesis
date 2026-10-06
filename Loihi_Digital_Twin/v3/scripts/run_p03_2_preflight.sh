@@ -57,7 +57,38 @@ for token in (
     if token not in py:
         raise SystemExit(f"FAIL: P03.2 software MMIO contract missing {token!r}")
 
+vivado = (root / "vivado/create_p03_mmio_impl_project.tcl").read_text(
+    encoding="utf-8"
+)
+required_vivado = (
+    "CONFIG.PSU__USE__M_AXI_GP0 {1}",
+    "CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}",
+    "M_AXI_HPM0_FPD",
+    "p03_ps_control_regs_0/S_AXI",
+    "0xA0000000",
+    "0x00010000",
+    "p03_ps_control_regs_0/page_start",
+    "p03_ps_control_regs_0/dispatch_start",
+    "p03_ps_control_regs_0/debug_req",
+)
+for token in required_vivado:
+    if token not in vivado:
+        raise SystemExit(f"FAIL: P03.2 Vivado integration missing {token!r}")
+
+for forbidden in (
+    "connect_pair vio_p08/probe_out0 p08_paged_dispatch_controller_0/dispatch_start",
+    "connect_pair vio_p08/probe_out6 p02_page_host_arbiter_0/debug_req",
+    "connect_pair vio_p02_page/probe_out0 p02_context_page_bank_walker_0/cmd_start",
+):
+    if forbidden in vivado:
+        raise SystemExit(
+            f"FAIL: P03.2 still has competing VIO command source {forbidden!r}"
+        )
+
 print("PASS: P03.2 MMIO contract static checks")
+print("PASS: P03.2 HPM0/Vivado ownership static checks")
 PY
 
-echo "PASS: P03.2a PS-visible MMIO preflight completed successfully."
+bash -n "$V3_DIR/vivado/run_p03_mmio_impl.sh"
+
+echo "PASS: P03.2 PS-visible MMIO preflight completed successfully."
