@@ -46,6 +46,9 @@ required = (
     "p02b_decode_packet",
     "authoritative_backing=k26-ddr",
     "completed_dispatches=35",
+    "debug idle before page",
+    "debug idle before dispatch",
+    "start_blocked",
 )
 for token in required:
     if token not in runtime:
