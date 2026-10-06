@@ -12,7 +12,7 @@ TCL_SCRIPT="$SCRIPT_DIR/create_p02_ddr_impl_project.tcl"
 BUILD_DIR="$SCRIPT_DIR/build/p02_ddr_impl"
 REPORT_DIR="$BUILD_DIR/reports"
 VIVADO_PROJECT_DIR="$BUILD_DIR/project"
-JOBS="${VIVADO_JOBS:-4}"
+JOBS="${VIVADO_JOBS:-1}"
 
 CONTROLLER_RTL="$PROJECT_DIR/rtl/p08_paged_dispatch_controller.v"
 MEMORY_RTL="$PROJECT_DIR/rtl/p05_context_memory_fabric.v"
