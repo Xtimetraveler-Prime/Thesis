@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define P03_MMIO_BASE              UINTPTR_C(0xA4000000)
+#define P03_MMIO_BASE              ((uintptr_t)0xA4000000u)
 #define P03_MMIO_RANGE_BYTES       UINT32_C(0x00001000)
 #define P03_MMIO_ID_VALUE          UINT32_C(0x4C543302)
 #define P03_MMIO_VERSION_VALUE     UINT32_C(0x00010000)
