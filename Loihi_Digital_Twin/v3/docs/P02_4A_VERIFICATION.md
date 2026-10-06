@@ -36,7 +36,7 @@ The gate checks:
      `f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe`
 2. Boot the KV260 normally far enough for PS DDR to be initialized.
 3. Have JTAG/hw_server available.
-4. Have Vivado and XSCT 2025.2 on PATH.
+4. Have Vivado and XSDB 2025.2 on PATH.
 5. Do not rely on the running Linux instance after the test starts. The harness
    halts all visible Cortex-A53 cores before touching the DDR backing window.
 6. Reboot the board after the test.
