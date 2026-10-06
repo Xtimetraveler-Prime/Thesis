@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import shutil
+import sys
+import traceback
 
 import vitis
 
@@ -41,16 +43,50 @@ def main() -> int:
     # the documented standalone A53 inputs and explicitly suppress boot BSP
     # generation.  This also avoids making platform creation depend on an FSBL
     # component that the smoke never consumes.
-    platform = client.create_platform_component(
-        name=platform_name,
-        hw_design=str(xsa),
-        os="standalone",
-        cpu="psu_cortexa53_0",
-        domain_name=domain_name,
-        no_boot_bsp=True,
-    )
-    platform = client.get_component(name=platform_name)
-    platform.build()
+    try:
+        platform = client.create_platform_component(
+            name=platform_name,
+            hw_design=str(xsa),
+            os="standalone",
+            cpu="psu_cortexa53_0",
+            domain_name=domain_name,
+            no_boot_bsp=True,
+        )
+        platform = client.get_component(name=platform_name)
+        platform.build()
+    except Exception:
+        print("ERROR: P03.2c Vitis standalone platform creation/build failed", file=sys.stderr)
+        print(f"P03_2C_VITIS_WORKSPACE={workspace}", file=sys.stderr)
+        component_dir = workspace / platform_name
+        if component_dir.exists():
+            print(
+                "P03_2C_PARTIAL_PLATFORM_FILES="
+                + ",".join(
+                    str(path.relative_to(workspace))
+                    for path in sorted(component_dir.rglob("*"))
+                    if path.is_file()
+                ),
+                file=sys.stderr,
+            )
+        logs = sorted(workspace.rglob("*.log"))
+        if logs:
+            print(
+                "P03_2C_VITIS_LOGS="
+                + ",".join(str(path.relative_to(workspace)) for path in logs),
+                file=sys.stderr,
+            )
+            for log in logs[-5:]:
+                try:
+                    lines = log.read_text(
+                        encoding="utf-8", errors="replace"
+                    ).splitlines()
+                except OSError:
+                    continue
+                print(f"--- tail {log} ---", file=sys.stderr)
+                for line in lines[-80:]:
+                    print(line, file=sys.stderr)
+        traceback.print_exc()
+        raise SystemExit(2)
 
     xpfm = (
         workspace
