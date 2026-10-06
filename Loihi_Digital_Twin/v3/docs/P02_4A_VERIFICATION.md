@@ -1,0 +1,101 @@
+# P02.4a Verification Candidate
+
+**Status:** Awaiting independent KV260 verification  
+**Branch:** `agent/v3-p02-4-physical-ddr`  
+**Candidate date:** 2026-10-05
+
+## Offline gate
+
+Run from the v3 root:
+
+```bash
+bash scripts/run_p02_4a_preflight.sh
+```
+
+Expected final marker:
+
+```text
+PASS: P02.4a software preflight completed successfully.
+```
+
+The gate checks:
+
+- P02 DDR ABI/reference tests;
+- deterministic physical fixture tests;
+- exact full/mutable transfer byte counts;
+- frozen fixture fingerprints;
+- offline generate/verify CLI behavior;
+- shell/Tcl delimiter sanity.
+
+## Hardware prerequisites
+
+1. Use the accepted P02.3b2 bitstream/probes:
+   - bitstream SHA-256
+     `e9c3fb490f726a1169ed4b7f0c330f5806961c6471e2b13f63f5e042e97421b1`
+   - probes SHA-256
+     `f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe`
+2. Boot the KV260 normally far enough for PS DDR to be initialized.
+3. Have JTAG/hw_server available.
+4. Have Vivado and XSCT 2025.2 on PATH.
+5. Do not rely on the running Linux instance after the test starts. The harness
+   halts all visible Cortex-A53 cores before touching the DDR backing window.
+6. Reboot the board after the test.
+
+## Physical gate
+
+```bash
+bash scripts/run_p02_4_physical_roundtrip.sh
+```
+
+The script performs fixture generation, A53 halt, K26 DDR provisioning, FPGA
+programming, VIO-controlled page operations, DDR dumping, and byte-exact
+comparison.
+
+## Required page-operation evidence
+
+```text
+PAGE_IN_FULL:
+  438272 semantic bytes
+  1712 AXI read bursts
+
+PAGE_OUT_FULL:
+  438272 semantic bytes
+  1712 AXI write bursts
+
+PAGE_OUT_MUTABLE:
+  106496 semantic bytes
+  416 AXI write bursts
+
+TOTAL:
+  3 completed transfers
+  1712 read bursts
+  2128 write bursts
+  983040 AXI bytes
+  0 pending write bytes
+```
+
+The Tcl sequence also records the physical PL-cycle count for each page
+operation.
+
+## Required final markers
+
+```text
+PASS: P02.4 deterministic DDR fixture generated
+PASS: P02.4 DDR fixtures provisioned with A53 cores halted
+PASS: P02.4 PAGE_IN_FULL transfer completed
+PASS: P02.4 PAGE_OUT_FULL transfer completed
+PASS: P02.4 PAGE_OUT_MUTABLE transfer completed
+PASS: P02.4 VIO physical paging sequence completed successfully
+PASS: P02.4 DDR source/full/mutable records dumped for comparison
+PASS: P02.4 physical DDR round-trip dumps match expected records
+PASS: P02.4a physical DDR round-trip acceptance completed successfully.
+```
+
+## Acceptance boundary
+
+A clean run accepts real physical DDR-to-resident and resident-to-DDR transport
+for all ten full-context banks plus the accepted mutable-only subset.
+
+It does not yet close P02. P02.4b must run the representative five-logical-core
+/ three-resident-context workload with K26 DDR as the authoritative
+non-resident backing store.
