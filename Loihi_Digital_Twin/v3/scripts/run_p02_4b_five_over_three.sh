@@ -83,7 +83,7 @@ xsdb vivado/p02_4b_xsdb_dump.tcl     "$DUMP_DIR" "$XSDB_SERVER_URL"     | tee "$
 
 PYTHONPATH="$V3_DIR/src" python scripts/p02_4b_ring_fixture.py verify     --fixture-dir "$FIXTURE_DIR"     --dump-dir "$DUMP_DIR"     | tee "$LOG_DIR/fixture_verify.log"
 
-for marker in     "PASS: P02.4b five-over-three golden fixture generated"     "PASS: P02.4b five authoritative DDR backing records provisioned and verified"     "PASS: P02.4b initial residency logical={0 1 2} physical_slots=3"     "PASS: P02.4b five-over-three physical execution completed with K26 DDR authoritative"     "PASS: P02.4b five final DDR backing records dumped"     "PASS: P02.4b all five DDR backing records match golden final images"; do
+for marker in     "PASS: P02.4b five-over-three golden fixture generated"     "PASS: P02.4b five authoritative DDR backing records provisioned and byte-verified by physical readback"     "PASS: P02.4b initial residency logical={0 1 2} physical_slots=3"     "PASS: P02.4b five-over-three physical execution completed with K26 DDR authoritative"     "PASS: P02.4b five final DDR backing records dumped"     "PASS: P02.4b all five DDR backing records match golden final images"; do
     grep -R -F -q "$marker" "$LOG_DIR" || {
         echo "ERROR: missing P02.4b acceptance marker: $marker" >&2
         exit 4
