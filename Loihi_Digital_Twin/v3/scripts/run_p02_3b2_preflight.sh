@@ -13,6 +13,7 @@ if grep -Eq 'failed|error|ERROR|FAIL' /tmp/v3_p02_3b2_pytest.log; then
     exit 3
 fi
 
+bash "$V3_DIR/rtl/run_p02_page_host_arbiter_held_request_sim.sh"
 bash "$V3_DIR/rtl/run_p02_context_page_bank_walker_sim.sh"
 bash "$V3_DIR/rtl/run_p02_axi128_burst_adapter_sim.sh"
 bash "$V3_DIR/rtl/run_p02_ddr_backing_range_guard_sim.sh"
