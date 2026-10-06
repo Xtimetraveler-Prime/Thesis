@@ -1,0 +1,251 @@
+# P02.4b — Five-Logical-Core / Three-Resident-Context DDR-Backed Workload
+
+**Status:** Verification candidate  
+**Phase:** P02 — DDR-backed logical-core virtualization  
+**Branch:** `agent/v3-p02-4-physical-ddr`
+
+## Purpose
+
+P02.4a proved byte-exact physical transfer between K26 DDR and one resident
+context slot.
+
+P02.4b raises the acceptance boundary to the architectural paging problem:
+five logical cores must execute through only three resident context slots while
+K26 DDR remains the authoritative store for every non-resident context.
+
+The external PC is still the P02 control plane. It may:
+
+- choose service order and page victims;
+- issue page/dispatch commands;
+- inspect emitted packets;
+- maintain small routing/event-count bookkeeping;
+- insert routed destination axons into resident NEXT-event banks;
+- collect final evidence.
+
+It must **not** retain or restore complete non-resident context images from PC
+RAM. Those images live in K26 DDR and move only through the accepted PL page
+path.
+
+## Workload
+
+The directed physical workload is a five-core ring derived from the accepted v2
+P08 paging regression boundary.
+
+Each logical core contains:
+
+- one compartment;
+- one logical input axon;
+- one synapse with weight 3;
+- threshold 5;
+- retained voltage state;
+- one output route to the next logical core in the ring.
+
+One external event is injected into every core on every algorithmic timestep.
+
+This produces:
+
+- an initial accumulation step with nonzero state and no spike;
+- later threshold crossings;
+- cross-core packets;
+- state that must survive repeated eviction/reload;
+- CURRENT/NEXT event-bank alternation;
+- logical destination IDs that are independent of resident slot identity.
+
+The frozen execution length is:
+
+```text
+logical cores       5
+resident slots      3
+physical engines    1
+timesteps           7
+dispatches          35
+service order       0,1,2,3,4
+initial residency   core 0 -> slot 0
+                    core 1 -> slot 1
+                    core 2 -> slot 2
+```
+
+## Golden fixture
+
+`scripts/p02_4b_ring_fixture.py` builds the workload with the accepted Python
+architectural model.
+
+It emits:
+
+- five initial 512 KiB DDR records;
+- a Tcl dispatch oracle;
+- expected event counts per core/timestep;
+- expected post-dispatch state words;
+- expected spike counts;
+- exact expected packed packet words;
+- five complete expected final 512 KiB DDR records;
+- a deterministic manifest and normalized trace fingerprint.
+
+The final-record oracle models the physical bank behavior, including stale raw
+event words outside the active count, last-dispatch trace/packet contents, and
+the fact that the PL page mover does not refresh the 4 KiB DDR header digest.
+
+## Physical runtime
+
+The accepted P02.3b2/P02.4a bitstream and probes are reused unchanged.
+
+Before execution XSDB:
+
+1. boots only as a debugger after PS DDR initialization;
+2. halts the visible Cortex-A53 cores;
+3. provisions logical records 0..4 at:
+
+```text
+core 0  0x4000_0000
+core 1  0x4008_0000
+core 2  0x4010_0000
+core 3  0x4018_0000
+core 4  0x4020_0000
+```
+
+using `dow -data`, followed by `verify -data`.
+
+Vivado then programs the accepted shell and drives both existing VIOs:
+
+- `vio_p02_page` for DDR page-in/page-out;
+- `vio_p08` for debug memory access and one-core dispatch.
+
+### Resident policy
+
+Three physical slots are explicitly initialized with logical cores 0, 1, and 2.
+
+A deterministic round-robin victim cursor is used on a miss.
+
+If a resident victim is dirty:
+
+```text
+resident URAM -> mutable-only page-out -> victim logical DDR record
+```
+
+Then the requested logical context is loaded with a full page-in:
+
+```text
+requested logical DDR record -> full page-in -> resident URAM
+```
+
+Static context banks are never rewritten during normal eviction. Runtime state,
+both event banks, trace, and packet images are written back through the accepted
+104 KiB mutable-only path.
+
+## Algorithmic timestep protocol
+
+For each timestep:
+
+1. Select CURRENT event bank from `timestep & 1`.
+2. Service logical cores in order 0..4.
+3. Before each core dispatch:
+   - ensure that core is resident;
+   - append one external event to its CURRENT bank;
+   - verify the resulting event count against the Python golden oracle.
+4. Dispatch that resident slot through the single HLS engine.
+5. Require exact equality for:
+   - active logical core ID;
+   - selected resident slot;
+   - selected event bank;
+   - HLS/core status;
+   - spike count;
+   - packet count;
+   - every packed output packet;
+   - packed compartment state.
+6. Mark the consumed CURRENT event count zero. Raw words are left in memory and
+   are overwritten when that physical bank is reused.
+7. After **all five logical cores have completed**, decode every actual packet.
+8. Route each packet by its logical destination core ID.
+9. Ensure the destination context is resident and append the destination axon to
+   that core's NEXT bank.
+10. Require every packet target timestep to equal `t + 1`.
+11. Compare NEXT-bank event counts with the golden model.
+12. Advance the global algorithmic barrier only after all packets have been
+    committed.
+
+The page policy is implementation-only and is excluded from logical identity.
+
+## End-of-run flush
+
+After timestep 6, every dirty resident slot is mutable-written back to its
+logical DDR record.
+
+At that point all five complete final context images are authoritative in K26
+DDR, regardless of final residency.
+
+Vivado records:
+
+- completed dispatches;
+- barriers;
+- routed packet count;
+- page-ins;
+- page-outs;
+- evictions;
+- page hits;
+- AXI read/write burst totals;
+- total AXI bytes.
+
+XSDB then dumps all five final 512 KiB records.
+
+The Python verifier requires each complete record to equal the corresponding
+golden expected record byte-for-byte.
+
+## Why this is the P02 workload
+
+The workload intentionally targets the P02 research question rather than
+benchmark accuracy.
+
+Compared with the single-dispatch v2 physical evidence, it physically exercises:
+
+- more logical cores than resident slots;
+- all three resident slots;
+- repeated dirty eviction and reload;
+- retained architectural state across page replacement;
+- logical packet destination independent of physical residency;
+- both event banks;
+- multiple global algorithmic barriers;
+- full and mutable DDR transfer paths;
+- five authoritative DDR backing records.
+
+The full source-recovered MNIST application remains a later P03/P07 end-to-end
+target. P02.4b is not presented as a physical MNIST inference result.
+
+## Acceptance
+
+P02.4b passes only if:
+
+- the offline golden/preflight gate passes;
+- the accepted P02.3b2 artifact identities are unchanged;
+- all five initial DDR records are provisioned and verified;
+- three initial physical resident slots are established;
+- all 35 dispatches match the golden event/state/spike/packet boundary;
+- all seven barriers complete only after packet delivery;
+- physical eviction/page-in occurs;
+- page transfer burst/byte accounting is internally exact;
+- all five final DDR records match their golden images byte-for-byte;
+- the final physical result identifies `authoritative_backing=k26-ddr`.
+
+Primary scripts:
+
+```text
+scripts/p02_4b_ring_fixture.py
+scripts/run_p02_4b_preflight.sh
+scripts/run_p02_4b_five_over_three.sh
+vivado/p02_4b_five_over_three.tcl
+vivado/p02_4b_xsdb_prepare.tcl
+vivado/p02_4b_xsdb_dump.tcl
+```
+
+## Claim boundary
+
+A clean P02.4b result proves the P02 DDR-backed virtualization mechanism for a
+directed five-logical-core workload.
+
+It does not prove:
+
+- autonomous PS scheduling/routing/barrier ownership;
+- absence of a PC control plane;
+- full MNIST physical inference;
+- final board-local latency/power/energy.
+
+Those belong to P03, P07, and P08.
