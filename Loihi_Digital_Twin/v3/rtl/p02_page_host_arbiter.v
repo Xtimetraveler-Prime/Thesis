@@ -53,17 +53,21 @@ module p02_page_host_arbiter (
 );
     reg transaction_active;
     reg transaction_page_owner;
-    reg wait_request_low;
+
+    // Debug/VIO is a slow level-based requester: it holds debug_req high until
+    // software observes ACK. Latch one completed debug response and keep it
+    // visible until debug_req returns low. This prevents a held request from
+    // re-arming on the previous P05 host ACK/RVALID while also keeping the
+    // response visible long enough for JTAG/VIO polling.
+    reg          debug_response_pending;
+    reg          debug_response_rvalid;
+    reg          debug_response_error;
+    reg [255:0]  debug_response_rdata;
 
     wire selected_req = page_active ? page_req : debug_req;
 
-    // The downstream P05 host contract is edge-sensitive. A requester may
-    // legally keep its request level asserted until it observes ACK. After a
-    // completed transaction, suppress that same request level until it has
-    // returned low at least once. Without this fence, transaction_active can
-    // re-arm on a held-high debug request while the prior fabric ACK/RVALID
-    // are still visible, exposing stale response data as a phantom transaction.
-    assign fabric_req = selected_req && !wait_request_low;
+    assign fabric_req =
+        selected_req && !debug_response_pending && !transaction_active;
     assign fabric_write = page_active ? page_write : debug_write;
     assign fabric_context_slot =
         page_active ? page_context_slot : debug_context_slot;
@@ -73,23 +77,22 @@ module p02_page_host_arbiter (
 
     // A page command waits for an already-issued debug transaction to retire.
     assign page_busy =
-        fabric_busy || wait_request_low ||
+        fabric_busy || debug_response_pending ||
         (transaction_active && !transaction_page_owner);
 
     // Debug is blocked for the full duration of page ownership, including gaps
     // between individual scalar bank transactions.
     assign debug_busy =
-        page_active || debug_req || fabric_busy || wait_request_low ||
+        page_active || debug_req || fabric_busy || debug_response_pending ||
         (transaction_active && transaction_page_owner);
 
-    assign debug_ack =
-        fabric_ack && transaction_active && !transaction_page_owner;
+    assign debug_ack = debug_response_pending;
     assign debug_rvalid =
-        fabric_rvalid && transaction_active && !transaction_page_owner;
+        debug_response_pending && debug_response_rvalid;
     assign debug_error =
-        fabric_error && transaction_active && !transaction_page_owner;
+        debug_response_pending && debug_response_error;
     assign debug_rdata =
-        (transaction_active && !transaction_page_owner) ? fabric_rdata : 256'd0;
+        debug_response_pending ? debug_response_rdata : 256'd0;
 
     assign page_ack =
         fabric_ack && transaction_active && transaction_page_owner;
@@ -104,19 +107,31 @@ module p02_page_host_arbiter (
         if (!resetn) begin
             transaction_active <= 1'b0;
             transaction_page_owner <= 1'b0;
-            wait_request_low <= 1'b0;
+            debug_response_pending <= 1'b0;
+            debug_response_rvalid <= 1'b0;
+            debug_response_error <= 1'b0;
+            debug_response_rdata <= 256'd0;
         end else begin
-            if (wait_request_low) begin
-                if (!selected_req)
-                    wait_request_low <= 1'b0;
-            end else if (!transaction_active && selected_req) begin
+            if (debug_response_pending && !debug_req) begin
+                debug_response_pending <= 1'b0;
+                debug_response_rvalid <= 1'b0;
+                debug_response_error <= 1'b0;
+                debug_response_rdata <= 256'd0;
+            end
+
+            if (!transaction_active && !debug_response_pending && selected_req) begin
                 transaction_active <= 1'b1;
                 transaction_page_owner <= page_active;
             end
 
             if (transaction_active && fabric_ack) begin
+                if (!transaction_page_owner) begin
+                    debug_response_pending <= 1'b1;
+                    debug_response_rvalid <= fabric_rvalid;
+                    debug_response_error <= fabric_error;
+                    debug_response_rdata <= fabric_rdata;
+                end
                 transaction_active <= 1'b0;
-                wait_request_low <= 1'b1;
             end
         end
     end
