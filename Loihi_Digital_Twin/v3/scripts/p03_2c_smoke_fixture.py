@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 from pathlib import Path
 
 from loihi_twin_v2 import (
@@ -85,6 +86,21 @@ def generate(output_dir: Path) -> None:
         encoding="utf-8",
     )
     sha = hashlib.sha256(record).hexdigest()
+    manifest = {
+        "schema": "p03-2c-a53-mmio-smoke-v1",
+        "record_base": f"0x{BACKING_BASE:08X}",
+        "mailbox_base": f"0x{MAILBOX_BASE:08X}",
+        "record_sha256": sha,
+        "expected_config0": f"0x{config0:X}",
+        "dispatch_metadata": f"0x{metadata:X}",
+        "expected_page_bytes": 438272,
+        "expected_page_read_bursts": 1712,
+        "expected_page_write_bursts": 0,
+    }
+    (output_dir / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(
         "PASS: P03.2c smoke fixture generated "
         f"record_sha256={sha} "
