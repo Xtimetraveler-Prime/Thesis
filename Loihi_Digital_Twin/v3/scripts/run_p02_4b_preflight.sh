@@ -45,7 +45,8 @@ required = (
     "P02B_EVENT_COUNT",
     "p02b_decode_packet",
     "authoritative_backing=k26-ddr",
-    "completed_dispatches=35",
+    'p02b_expect "completed dispatches" [p02b_p08_input 8] 35',
+    'puts $result "completed_dispatches=$P02B_DISPATCHES"',
     "debug idle before page",
     "debug idle before dispatch",
     "start_blocked",
@@ -53,6 +54,27 @@ required = (
 for token in required:
     if token not in runtime:
         raise SystemExit(f"FAIL: P02.4b runtime contract missing {token!r}")
+
+manifest = __import__("json").loads((root / "vivado/build/p02_4b_preflight/fixture/manifest.json").read_text(encoding="utf-8"))
+expected_manifest = {
+    "schema": "p02-4b-five-over-three-ring-v1",
+    "logical_core_count": 5,
+    "resident_context_count": 3,
+    "physical_engine_count": 1,
+    "timesteps": 7,
+    "dispatch_count": 35,
+    "expected_packet_count_total": 30,
+    "authoritative_backing": "k26-ddr",
+    "trace_fingerprint": "9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac",
+    "manifest_fingerprint": "15288f1f6245c39a98167f610802d9146debfc6e3266981eb4bcd5245a1c975d",
+}
+for key, expected in expected_manifest.items():
+    actual = manifest.get(key)
+    if actual != expected:
+        raise SystemExit(
+            f"FAIL: P02.4b frozen manifest {key}={actual!r}, expected {expected!r}"
+        )
+print("PASS: P02.4b frozen golden manifest preflight")
 
 print("PASS: P02.4b Tcl/runtime contract preflight")
 PY
