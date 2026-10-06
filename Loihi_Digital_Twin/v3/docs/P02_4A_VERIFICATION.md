@@ -1,8 +1,8 @@
-# P02.4a Verification Candidate
+# P02.4a Verification and Acceptance
 
-**Status:** Awaiting independent KV260 verification  
+**Status:** Complete; accepted 2026-10-05  
 **Branch:** `agent/v3-p02-4-physical-ddr`  
-**Candidate date:** 2026-10-05
+**Accepted:** 2026-10-05
 
 ## Offline gate
 
@@ -91,14 +91,51 @@ PASS: P02.4 physical DDR round-trip dumps match expected records
 PASS: P02.4a physical DDR round-trip acceptance completed successfully.
 ```
 
-## Acceptance boundary
+## Accepted result
 
-A clean run accepts real physical DDR-to-resident and resident-to-DDR transport
-for all ten full-context banks plus the accepted mutable-only subset.
+Independent hardware verification completed successfully.
+
+Observed physical results:
+
+```text
+P02_4_PAGE_IN_FULL_CYCLES=535830
+P02_4_PAGE_IN_FULL_READ_BURSTS=1712
+P02_4_PAGE_IN_FULL_WRITE_BURSTS=0
+P02_4_PAGE_IN_FULL_AXI_BYTES=438272
+
+P02_4_PAGE_OUT_FULL_CYCLES=527232
+P02_4_PAGE_OUT_FULL_READ_BURSTS=0
+P02_4_PAGE_OUT_FULL_WRITE_BURSTS=1712
+P02_4_PAGE_OUT_FULL_AXI_BYTES=438272
+
+P02_4_PAGE_OUT_MUTABLE_CYCLES=131328
+P02_4_PAGE_OUT_MUTABLE_READ_BURSTS=0
+P02_4_PAGE_OUT_MUTABLE_WRITE_BURSTS=416
+P02_4_PAGE_OUT_MUTABLE_AXI_BYTES=106496
+
+P02_4_COMPLETED_TRANSFERS=3
+P02_4_READ_BURSTS=1712
+P02_4_WRITE_BURSTS=2128
+P02_4_AXI_BYTES=983040
+```
+
+Final accepted markers:
+
+```text
+PASS: P02.4 VIO physical paging sequence completed successfully
+PASS: P02.4 DDR source/full/mutable records dumped for comparison
+PASS: P02.4 physical DDR round-trip dumps match expected records
+PASS: P02.4a physical DDR round-trip acceptance completed successfully.
+```
+
+This accepts real physical DDR-to-resident and resident-to-DDR transport for all
+ten full-context banks plus the accepted mutable-only subset.
 
 It does not yet close P02. P02.4b must run the representative five-logical-core
 / three-resident-context workload with K26 DDR as the authoritative
 non-resident backing store.
+
+Primary record: `docs/P02_4A_ACCEPTANCE.md`.
 
 
 ## XSDB 2025.2 provisioning note
@@ -152,3 +189,18 @@ the VIO output used UNSIGNED radix while the helper passed a hexadecimal string.
 
 The retry candidate converts all VIO command values to Tcl wide integers before
 `set_property OUTPUT_VALUE`. See `docs/P02_4A_ATTEMPT3.md`.
+
+
+## Final working harness notes
+
+The accepted run required all of the following harness behaviors:
+
+- XSDB provisioning through `dow -data` followed by `verify -data`;
+- binary post-run DDR dumping with `mrd -bin -file`;
+- VIO lookup by hardware metadata rather than display names;
+- preservation of live Vivado `hw_probe` objects using Tcl `upvar`;
+- decimal normalization of VIO values when using UNSIGNED radix.
+
+These are now the documented P02.4a reproduction path. The earlier failed
+attempts remain preserved in `P02_4A_ATTEMPT1.md`,
+`P02_4A_ATTEMPT2.md`, and `P02_4A_ATTEMPT3.md` as bring-up history.
