@@ -130,8 +130,9 @@ The sequence that worked on the physical KV260 is:
    project DDR addresses are accessed physically through the DAP rather than
    translated through an A53 MMU;
 6. provision each 512 KiB record with `dow -data <file> <address>`;
-7. immediately verify each provisioned record with
-   `verify -data <file> <address>`;
+7. read the same 512 KiB physical range back with
+   `mrd -bin -file <readback> <address> 131072`;
+8. compare the readback byte-for-byte with the source record;
 8. disconnect XSDB;
 9. program the accepted P02.3b2 PL image;
 9. locate the paging VIO;
@@ -356,3 +357,13 @@ Therefore the reproducible P02 physical procedure is: halt the A53s, then
 select PSU (APU fallback) before provisioning or dumping the project DDR window.
 The historical P02.4a acceptance evidence remains valid, but future reproduction
 must use the explicit physical-memory target.
+
+
+### Physical provisioning verification
+
+The reproducible PSU/APU path does not use `verify -data`. On the installed
+XSDB, that command rejects the non-processor PSU target with `Invalid context`
+even though physical memory download succeeds.
+
+Provisioning is therefore verified by a full 512 KiB physical `mrd` dump and
+exact binary comparison while the PSU/APU target remains selected.
