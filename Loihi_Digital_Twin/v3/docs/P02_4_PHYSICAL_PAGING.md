@@ -124,12 +124,16 @@ The sequence that worked on the physical KV260 is:
 1. generate deterministic records and expected results;
 2. verify that the selected bitstream/probes match P02.3b2 acceptance;
 3. connect with XSDB;
-4. halt all visible Cortex-A53 cores;
-5. provision each 512 KiB record with `dow -data <file> <address>`;
-6. immediately verify each provisioned record with
+4. halt all visible Cortex-A53 cores so Linux cannot access the temporary
+   project DDR window;
+5. switch XSDB to the non-processor `PSU` target (or `APU` fallback) so
+   project DDR addresses are accessed physically through the DAP rather than
+   translated through an A53 MMU;
+6. provision each 512 KiB record with `dow -data <file> <address>`;
+7. immediately verify each provisioned record with
    `verify -data <file> <address>`;
-7. disconnect XSDB;
-8. program the accepted P02.3b2 PL image;
+8. disconnect XSDB;
+9. program the accepted P02.3b2 PL image;
 9. locate the paging VIO;
 10. bind VIO probes by `TYPE`, `PROBE_PORT`, and
     `PROBE_PORT_BIT_COUNT`, not by display name;
@@ -339,3 +343,16 @@ five-logical-core / three-resident-context host-orchestrated regression so that:
 
 P03 then moves the remaining scheduling/routing/barrier orchestration itself
 onto the A53.
+
+
+### XSDB physical-address note
+
+A subsequent P02.4b reboot exposed why the active XSDB target matters. AMD's
+debugger treats memory addresses issued on a Cortex-A53 target through that
+processor's MMU/cache context; PSU/APU non-processor targets instead use the
+DAP/AXI-AP path to access physical memory.
+
+Therefore the reproducible P02 physical procedure is: halt the A53s, then
+select PSU (APU fallback) before provisioning or dumping the project DDR window.
+The historical P02.4a acceptance evidence remains valid, but future reproduction
+must use the explicit physical-memory target.
