@@ -47,8 +47,7 @@ module test_p02_page_host_arbiter_held_request;
     reg [255:0] fabric_rdata = 256'd0;
 
     integer failures = 0;
-    integer forwarded_req_high_cycles_after_completion = 0;
-    reg response_completed = 1'b0;
+    integer i = 0;
 
     p02_page_host_arbiter dut (
         .clk(clk),
@@ -100,11 +99,95 @@ module test_p02_page_host_arbiter_held_request;
         end
     endtask
 
-    always @(posedge clk) begin
-        if (response_completed && debug_req && fabric_req)
-            forwarded_req_high_cycles_after_completion =
-                forwarded_req_high_cycles_after_completion + 1;
-    end
+    task begin_debug_request;
+        input [14:0] addr;
+        begin
+            @(negedge clk);
+            debug_addr = addr;
+            debug_req = 1'b1;
+            #1;
+            check(fabric_req, "fresh debug request was not forwarded");
+            check(
+                fabric_context_slot == debug_context_slot &&
+                fabric_bank == debug_bank &&
+                fabric_addr == addr,
+                "forwarded debug request metadata mismatch"
+            );
+
+            // The ownership latch captures this request at the next clock.
+            @(posedge clk);
+            #1;
+            check(!fabric_req, "captured debug request remained forwarded");
+            check(debug_busy, "debug side was not busy for active request");
+        end
+    endtask
+
+    task complete_debug_read;
+        input [255:0] value;
+        begin
+            @(negedge clk);
+            fabric_ack = 1'b1;
+            fabric_rvalid = 1'b1;
+            fabric_error = 1'b0;
+            fabric_rdata = value;
+
+            @(posedge clk);
+            #1;
+            check(debug_ack, "completed debug response was not latched");
+            check(debug_rvalid, "completed debug read did not latch RVALID");
+            check(!debug_error, "completed debug read latched an error");
+            check(debug_rdata == value, "completed debug read latched wrong data");
+            check(!fabric_req, "completed debug request was re-forwarded");
+        end
+    endtask
+
+    task hold_response_visible;
+        input [255:0] value;
+        input integer cycles;
+        begin
+            for (i = 0; i < cycles; i = i + 1) begin
+                @(posedge clk);
+                #1;
+                check(debug_ack,
+                      "latched debug ACK did not remain visible while req stayed high");
+                check(debug_rvalid,
+                      "latched debug RVALID did not remain visible while req stayed high");
+                check(!debug_error,
+                      "latched debug response gained an error while held");
+                check(debug_rdata == value,
+                      "latched debug data changed while req stayed high");
+                check(!fabric_req,
+                      "held-high completed debug request was forwarded again");
+                check(debug_busy,
+                      "debug side stopped reporting busy before req release");
+            end
+        end
+    endtask
+
+    task release_debug_request;
+        begin
+            @(negedge clk);
+            debug_req = 1'b0;
+
+            @(posedge clk);
+            #1;
+            check(!debug_ack, "latched debug ACK did not clear after req went low");
+            check(!debug_rvalid,
+                  "latched debug RVALID did not clear after req went low");
+            check(!debug_error,
+                  "latched debug error did not clear after req went low");
+            check(debug_rdata == 256'd0,
+                  "latched debug data did not clear after req went low");
+            check(!debug_busy,
+                  "debug side did not release after request returned low");
+
+            @(negedge clk);
+            fabric_ack = 1'b0;
+            fabric_rvalid = 1'b0;
+            fabric_error = 1'b0;
+            fabric_rdata = 256'd0;
+        end
+    endtask
 
     initial begin
         repeat (4) @(posedge clk);
@@ -112,106 +195,21 @@ module test_p02_page_host_arbiter_held_request;
         resetn = 1'b1;
         repeat (2) @(posedge clk);
 
-        // Begin one debug transaction.
-        @(negedge clk);
-        debug_req = 1'b1;
+        // First transaction: leave the downstream response asserted for many
+        // clocks. The arbiter must expose one stable latched response and must
+        // not forward the still-high debug_req again.
+        begin_debug_request(15'd7);
+        complete_debug_read(256'hDEAD_BEEF);
+        hold_response_visible(256'hDEAD_BEEF, 6);
+        release_debug_request();
 
-        // Allow the arbiter to capture debug ownership.
-        repeat (2) @(posedge clk);
-        check(fabric_req, "initial debug request was not forwarded");
-
-        // Complete it, but intentionally hold ACK/RVALID/RDATA high for several
-        // clocks while debug_req also remains asserted. This models the
-        // accepted P05 host interface plus slow VIO/Tcl request deassertion.
-        @(negedge clk);
-        fabric_ack = 1'b1;
-        fabric_rvalid = 1'b1;
-        fabric_rdata = 256'hDEAD_BEEF;
-
-        @(posedge clk);
-        #1;
-        response_completed = 1'b1;
-        check(debug_ack, "completed debug response was not latched");
-        check(debug_rvalid, "completed debug read did not latch RVALID");
-        check(debug_rdata == 256'hDEAD_BEEF,
-              "completed debug read did not latch response data");
-
-        repeat (5) begin
-            @(posedge clk);
-            #1;
-            check(debug_ack,
-                  "latched debug ACK did not remain visible while req stayed high");
-            check(debug_rvalid,
-                  "latched debug RVALID did not remain visible while req stayed high");
-            check(debug_rdata == 256'hDEAD_BEEF,
-                  "latched debug data changed while req stayed high");
-            check(!fabric_req,
-                  "held-high completed debug request was forwarded again");
-        end
-
-        check(
-            forwarded_req_high_cycles_after_completion == 0,
-            "held-high completed request was re-forwarded before going low"
-        );
-        check(
-            debug_busy,
-            "debug side should remain busy while requester still holds req high"
-        );
-
-        // Requester finally acknowledges completion by dropping req. The
-        // latched response must retire and the fabric may accept a later edge.
-        @(negedge clk);
-        debug_req = 1'b0;
-        @(posedge clk);
-        #1;
-        response_completed = 1'b0;
-        check(!debug_ack, "latched debug ACK did not clear after req went low");
-        check(!debug_rvalid, "latched debug RVALID did not clear after req went low");
-
-        // Retire the old downstream response before issuing a new request.
-        @(negedge clk);
-        fabric_ack = 1'b0;
-        fabric_rvalid = 1'b0;
-        fabric_rdata = 256'd0;
         repeat (2) @(posedge clk);
 
-        check(!debug_busy, "debug side did not release after request returned low");
-
-        // A genuinely new request must be accepted normally.
-        @(negedge clk);
-        debug_addr = 15'd8;
-        debug_req = 1'b1;
-        @(posedge clk);
-        #1;
-        check(fabric_req, "new debug request was not accepted after response retirement");
-
-        @(negedge clk);
-        fabric_ack = 1'b1;
-        fabric_rvalid = 1'b1;
-        fabric_rdata = 256'h1234;
-        @(posedge clk);
-        #1;
-        check(debug_ack, "new transaction did not latch ACK");
-        check(debug_rvalid, "new transaction did not latch RVALID");
-        check(debug_rdata == 256'h1234, "new transaction returned wrong data");
-
-        repeat (3) begin
-            @(posedge clk);
-            #1;
-            check(debug_ack, "new latched ACK was not held for slow requester");
-            check(debug_rdata == 256'h1234,
-                  "new latched response data changed before req release");
-            check(!fabric_req,
-                  "new completed request was re-forwarded while req stayed high");
-        end
-
-        @(negedge clk);
-        debug_req = 1'b0;
-        @(posedge clk);
-        #1;
-        check(!debug_ack, "new latched ACK did not retire after req release");
-        fabric_ack = 1'b0;
-        fabric_rvalid = 1'b0;
+        // A genuinely new request after the low interval must work normally.
+        begin_debug_request(15'd8);
+        complete_debug_read(256'h1234);
+        hold_response_visible(256'h1234, 3);
+        release_debug_request();
 
         repeat (2) @(posedge clk);
 
