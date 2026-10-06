@@ -303,3 +303,18 @@ comparison. The entire transaction remains on PSU/APU and no processor/MMU
 context is required.
 
 See `docs/P02_4B_ATTEMPT4.md`.
+
+
+## Physical attempt 5 diagnostic update
+
+The latest physical run completed timestep 0 for all five logical cores and
+passed barrier 0. During timestep 1, logical cores 0, 1, and 2 reloaded with
+correct static images, but logical core 3 reloaded with route word 0 equal to
+zero instead of the expected `0x00000704`.
+
+Because core 3's route had verified correctly on its earlier timestep-0 page-in,
+the next diagnostic is a post-failure PSU/APU DDR dump before reboot. All static
+banks are compared against their initial fixture images to distinguish DDR
+corruption from later page-in materialization loss.
+
+See `docs/P02_4B_ATTEMPT5.md`.
