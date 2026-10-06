@@ -16,7 +16,7 @@ from loihi_twin_v2.p03_mmio import (
 
 
 def test_p03_2_mmio_identity_and_window_are_frozen():
-    assert P03_MMIO_BASE == 0xA0000000
+    assert P03_MMIO_BASE == 0xA4000000
     assert P03_MMIO_RANGE_BYTES == 0x1000
     assert P03_MMIO_ID == 0x4C543302
     assert P03_MMIO_VERSION == 0x00010000
