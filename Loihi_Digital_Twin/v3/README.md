@@ -115,7 +115,7 @@ Primary record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
 ## P03.2 verification candidate
 
 P03.2 now provides a 32-bit AXI4-Lite PS control endpoint at
-`0xA0000000..0xA000FFFF` through `M_AXI_HPM0_FPD`.
+`0xA0000000..0xA0000FFF` through `M_AXI_HPM0_FPD`.
 
 It replaces VIO command ownership for:
 
