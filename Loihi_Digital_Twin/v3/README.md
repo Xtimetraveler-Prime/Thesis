@@ -28,7 +28,7 @@ Development authority is:
 
 **P03.1 — Autonomous runtime contract: Complete.**
 
-Current sub-milestone: **P03.2 — PS-visible MMIO control/status shell**.
+Current sub-milestone: **P03.2c — Physical Cortex-A53 MMIO smoke**.
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -127,3 +127,28 @@ The accepted P02 HP0 DDR page data path is retained. VIO remains only for
 observation and pre-run reset during bring-up.
 
 Primary record: `docs/P03_2_PS_MMIO_CONTROL.md`.
+
+
+## P03.2b accepted routed shell
+
+The PS-visible HPM0/MMIO shell is now routed and accepted:
+
+```text
+MMIO base/range: 0xA4000000 / 0x00001000
+WNS:             +0.539 ns
+WHS:             +0.010 ns
+resident slots:  3
+physical engines:1
+URAM:            47
+```
+
+Accepted artifacts:
+
+```text
+bitstream_sha256=8b4d1d3996147e73bbe71ec2a5036f0a4d23efc5cc3fe3d25237f855acf72119
+probes_sha256=a745b96c24f4e01480d1d89d706e90c52c822b4a7fda7ea43d2ad794a0b86def
+xsa_sha256=703fa7a44abc56e88e67e1d09424ac59ea96e53aac1708c2c7e6028dcb616f40
+```
+
+P03.2c now verifies those registers physically from Cortex-A53 standalone
+software. Primary record: `docs/P03_2C_PHYSICAL_MMIO_SMOKE.md`.
