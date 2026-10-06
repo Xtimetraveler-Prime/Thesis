@@ -170,7 +170,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
-| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
+| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | In progress |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | Planned |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
@@ -369,18 +369,34 @@ five-over-three acceptance: `docs/P02_4B_ACCEPTANCE.md`.
 
 # P03 — Autonomous PS-resident runtime
 
-**Status:** Planned
+**Status:** In progress  
+**Branch:** `agent/v3-p03-autonomous-runtime`
 
 ## Goal
 
 Move host-owned algorithmic orchestration onto the KV260 PS.
 
-## First sub-milestone
+## Sub-milestones
 
-- **P03.1 — Autonomous runtime contract.** Freeze exact run/barrier/error
-  transitions, board-local timer/counter boundaries, recovery behavior, and the
-  v3 implementation addendum to the inherited Loihi target specification before
-  implementing the PS runtime.
+- **P03.1 — Autonomous runtime contract.** **Verification candidate.** Freeze
+  exact run/barrier/error transitions, board-local timer/counter boundaries,
+  recovery behavior, external-host exclusion, cache/ownership rules, and the v3
+  implementation addendum to the inherited Loihi target specification. Primary
+  record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
+- **P03.2 — PS-visible MMIO control/status shell.** **Planned.** Replace
+  VIO-owned page/dispatch/resident-memory control with a PS-accessible AXI-Lite
+  register block on the accepted `M_AXI_HPM0_FPD` direction while preserving
+  the accepted P02 data plane and response semantics.
+- **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
+  state machine, deterministic scheduling/replacement, packet routing,
+  cache-maintenance ownership, timer/counter collection, result records, and a
+  linker/memory layout that reserves the fixed P02 64 MiB backing window.
+- **P03.4 — Board-local five-over-three bring-up.** **Planned.** Execute the
+  accepted seven-timestep / 35-dispatch five-over-three workload after one start
+  action with the PC absent from the algorithmic loop.
+- **P03.5 — 100-timestep autonomous acceptance.** **Planned.** Execute the
+  representative five-over-three 100-timestep workload board-locally and require
+  normalized agreement with the frozen Python/v2 architectural boundary.
 
 ## Deliverables
 
