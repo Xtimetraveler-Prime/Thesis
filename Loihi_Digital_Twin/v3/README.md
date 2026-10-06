@@ -24,7 +24,9 @@ Development authority is:
 
 **P02 — DDR-backed logical-core virtualization: Complete.**
 
-**Next phase: P03 — Autonomous PS-resident runtime.**
+**P03 — Autonomous PS-resident runtime: In progress.**
+
+Current sub-milestone: **P03.1 — Autonomous runtime contract**.
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -88,3 +90,21 @@ probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
 
 The PC still owns scheduling, packet-routing bookkeeping, and global barriers in
 this P02 baseline. P03 moves those responsibilities onto the Cortex-A53.
+
+
+## P03 active direction
+
+P03 moves the algorithmic control loop from the external host to the
+Cortex-A53.
+
+The first verification candidate freezes:
+
+- exact runtime/barrier/error transitions;
+- deterministic service and page-replacement policy;
+- resident/non-resident packet-delivery behavior;
+- cache ownership and the reserved 64 MiB DDR backing window;
+- board-local timing/counter boundaries;
+- sticky fail-closed recovery;
+- the FPGA-v3 addendum to the inherited Loihi-1 target specification.
+
+Primary record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
