@@ -43,11 +43,16 @@ if {$halted == 0} {
 targets -set -filter {name =~ "Cortex-A53 #0"}
 
 puts "P02.4 provisioning source record at 0x40000000"
-mwr -bin -file $source_file 0x40000000
-puts "P02.4 provisioning full-roundtrip scratch at 0x43F00000"
-mwr -bin -file $full_file 0x43F00000
-puts "P02.4 provisioning mutable-roundtrip scratch at 0x43F80000"
-mwr -bin -file $mutable_file 0x43F80000
+dow -data $source_file 0x40000000
+verify -data $source_file 0x40000000
 
-puts "PASS: P02.4 DDR fixtures provisioned with A53 cores halted"
+puts "P02.4 provisioning full-roundtrip scratch at 0x43F00000"
+dow -data $full_file 0x43F00000
+verify -data $full_file 0x43F00000
+
+puts "P02.4 provisioning mutable-roundtrip scratch at 0x43F80000"
+dow -data $mutable_file 0x43F80000
+verify -data $mutable_file 0x43F80000
+
+puts "PASS: P02.4 DDR fixtures provisioned and verified with A53 cores halted"
 disconnect
