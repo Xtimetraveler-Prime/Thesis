@@ -40,20 +40,34 @@ for relative in paths:
 
 prepare = (root / "vivado/p02_4b_xsdb_prepare.tcl").read_text(encoding="utf-8")
 dump = (root / "vivado/p02_4b_xsdb_dump.tcl").read_text(encoding="utf-8")
+
+shared_physical_target_tokens = (
+    "p02b_select_physical_memory_target",
+    "foreach candidate {PSU APU}",
+    "physical DDR access target",
+    "mrd -bin -file",
+)
 for label, text in (("prepare", prepare), ("dump", dump)):
-    for token in (
-        "p02b_select_physical_memory_target",
-        "foreach candidate {PSU APU}",
-        "physical DDR access target",
-        "mrd -bin -file",
-        "p02_binary_files_equal",
-    ):
+    for token in shared_physical_target_tokens:
         if token not in text:
             raise SystemExit(
                 f"FAIL: P02.4b XSDB {label} script missing physical-target contract {token!r}"
             )
+
+prepare_only_tokens = (
+    "p02_binary_files_equal",
+    "physical DDR readback mismatch",
+    "byte-verified by physical readback",
+)
+for token in prepare_only_tokens:
+    if token not in prepare:
+        raise SystemExit(
+            f"FAIL: P02.4b XSDB prepare script missing readback-verification contract {token!r}"
+        )
+
 if "verify -data" in prepare:
     raise SystemExit("FAIL: P02.4b prepare script still uses context-dependent verify -data")
+
 print("PASS: P02.4b XSDB physical PSU/APU memory-target preflight")
 print("PASS: P02.4b physical DDR binary-readback verification preflight")
 
