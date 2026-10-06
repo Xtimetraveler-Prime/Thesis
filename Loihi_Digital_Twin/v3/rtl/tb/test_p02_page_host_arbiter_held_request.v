@@ -49,6 +49,7 @@ module test_p02_page_host_arbiter_held_request;
     integer failures = 0;
     integer ack_high_cycles = 0;
     integer forwarded_req_high_cycles_after_ack = 0;
+    reg seen_first_ack = 1'b0;
 
     p02_page_host_arbiter dut (
         .clk(clk),
@@ -101,12 +102,13 @@ module test_p02_page_host_arbiter_held_request;
     endtask
 
     always @(posedge clk) begin
-        if (debug_ack)
+        if (debug_ack) begin
             ack_high_cycles = ack_high_cycles + 1;
-
-        if (fabric_ack && debug_req && fabric_req)
+            seen_first_ack = 1'b1;
+        end else if (seen_first_ack && debug_req && fabric_req) begin
             forwarded_req_high_cycles_after_ack =
                 forwarded_req_high_cycles_after_ack + 1;
+        end
     end
 
     initial begin
@@ -129,8 +131,7 @@ module test_p02_page_host_arbiter_held_request;
         @(negedge clk);
         fabric_ack = 1'b1;
         fabric_rvalid = 1'b1;
-        fabric_rdata = 256'h0000_0000_0000_0000_0000_0000_0000_0000_
-                       0000_0000_0000_0000_0000_0000_DEAD_BEEF;
+        fabric_rdata = 256'hDEAD_BEEF;
 
         repeat (6) @(posedge clk);
 
