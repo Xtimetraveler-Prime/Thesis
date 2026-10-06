@@ -90,6 +90,9 @@ required = (
     "external event readback",
     "p02b_host_response_snapshot",
     "ACK/RVALID/ERROR/RDATA must be sampled from one VIO refresh",
+    "P02_4B_EVICT_PRECHECK",
+    "P02_4B_EVICT_POSTCHECK",
+    "pending write bytes",
 )
 for token in required:
     if token not in runtime:
