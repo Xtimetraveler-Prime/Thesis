@@ -275,3 +275,17 @@ This is a harness correction only. The original core-1 physical state mismatch
 remains unresolved pending the next board run.
 
 See `docs/P02_4B_ATTEMPT2.md`.
+
+
+## Physical attempt 3 diagnostic update
+
+A later reboot exposed an XSDB address-space dependency: leaving Cortex-A53 #0
+selected caused `dow -data ... 0x40000000` to treat the backing address through
+the processor MMU and fail with a level-0 translation fault.
+
+The reproduction path now halts the A53 cores for safety but performs all DDR
+provision/dump operations from the non-processor PSU target, with APU fallback.
+This makes the P02 backing addresses physical debugger addresses rather than
+Linux virtual addresses.
+
+See `docs/P02_4B_ATTEMPT3.md`.
