@@ -335,3 +335,24 @@ compute/event activity and passed:
 The final core-3 to slot-2 reload was correct. Therefore the route-loss trigger
 is not the paging sequence by itself; it requires interaction with the full
 dispatch/debug workload path.
+
+
+## Physical attempt 6 root cause
+
+An attach-only probe after the apparent post-page-out config mismatch repeatedly
+read the correct resident config and route without rebooting or reprogramming.
+The apparent zero was therefore a stale debug-response artifact, not URAM
+corruption.
+
+The root cause is a request-level re-arm in `p02_page_host_arbiter`: a VIO
+debug request can remain asserted after ACK long enough for the arbiter to
+re-arm while the previous P05 ACK/RVALID remain visible.
+
+The arbiter now requires the request level to return low after each completion
+before another transaction can arm. A dedicated held-request simulation freezes
+this behavior.
+
+This RTL change requires a newly routed P02 shell and new artifact fingerprints
+before the physical P02.4b gate can resume.
+
+See `docs/P02_4B_ATTEMPT6.md`.
