@@ -12,14 +12,37 @@ foreach f [list $bit_file $ltx_file] {
     if {![file exists $f]} { error "P02.4 hardware artifact missing: $f" }
 }
 
-proc p02_find_probe {vio suffix} {
+proc p02_dump_probe_inventory {vio} {
+    puts "P02.4 VIO probe inventory:"
     foreach probe [get_hw_probes -of_objects $vio] {
         set name [get_property NAME $probe]
-        if {[string match "*${suffix}" $name]} {
-            return $probe
+        set type [string tolower [get_property TYPE $probe]]
+        set port [get_property PROBE_PORT $probe]
+        set width [get_property PROBE_PORT_BIT_COUNT $probe]
+        puts "  name=$name type=$type port=$port width=$width"
+    }
+}
+
+proc p02_find_probe_by_port {vio expected_type expected_port expected_width} {
+    set matches {}
+    foreach probe [get_hw_probes -of_objects $vio] {
+        set type [string tolower [get_property TYPE $probe]]
+        set port [get_property PROBE_PORT $probe]
+        if {$type eq $expected_type && $port == $expected_port} {
+            lappend matches $probe
         }
     }
-    error "P02.4 VIO probe not found: $suffix"
+    if {[llength $matches] != 1} {
+        p02_dump_probe_inventory $vio
+        error "P02.4 expected exactly one $expected_type probe at port $expected_port, found [llength $matches]"
+    }
+    set probe [lindex $matches 0]
+    set width [get_property PROBE_PORT_BIT_COUNT $probe]
+    if {$width != $expected_width} {
+        p02_dump_probe_inventory $vio
+        error "P02.4 $expected_type port $expected_port width=$width expected=$expected_width"
+    }
+    return $probe
 }
 
 proc p02_input_int {vio probe} {
@@ -144,13 +167,20 @@ if {$page_vio eq ""} {
 }
 
 array set p {}
-for {set i 0} {$i <= 4} {incr i} {
-    set p(out$i) [p02_find_probe $page_vio probe_out$i]
+set out_widths {1 1 1 2 64}
+set in_widths {1 1 1 32 32 64 1 1 1 32 32 64 1 1 9}
+
+for {set i 0} {$i < [llength $out_widths]} {incr i} {
+    set width [lindex $out_widths $i]
+    set p(out$i) [p02_find_probe_by_port $page_vio vio_output $i $width]
+    set_property OUTPUT_VALUE_RADIX UNSIGNED $p(out$i)
 }
-for {set i 0} {$i <= 14} {incr i} {
-    set p(in$i) [p02_find_probe $page_vio probe_in$i]
+for {set i 0} {$i < [llength $in_widths]} {incr i} {
+    set width [lindex $in_widths $i]
+    set p(in$i) [p02_find_probe_by_port $page_vio vio_input $i $width]
     set_property INPUT_VALUE_RADIX UNSIGNED $p(in$i)
 }
+puts "PASS: P02.4 paging VIO probes bound by TYPE/PROBE_PORT metadata"
 set probes [array get p]
 
 # Fresh programming resets all page/AXI observability counters.
