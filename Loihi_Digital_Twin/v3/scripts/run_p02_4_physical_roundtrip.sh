@@ -72,7 +72,7 @@ xsdb vivado/p02_4_xsdb_dump.tcl     "$DUMP_DIR" "$XSDB_SERVER_URL"     | tee "$L
 
 python scripts/p02_4_fixture.py verify     --fixture-dir "$FIXTURE_DIR"     --source-dump "$DUMP_DIR/source_after.bin"     --full-dump "$DUMP_DIR/full_after.bin"     --mutable-dump "$DUMP_DIR/mutable_after.bin"     | tee "$LOG_DIR/fixture_verify.log"
 
-for marker in     "PASS: P02.4 deterministic DDR fixture generated"     "PASS: P02.4 DDR fixtures provisioned and verified with A53 cores halted"     "PASS: P02.4 VIO physical paging sequence completed successfully"     "PASS: P02.4 DDR source/full/mutable records dumped for comparison"     "PASS: P02.4 physical DDR round-trip dumps match expected records"; do
+for marker in     "PASS: P02.4 deterministic DDR fixture generated"     "PASS: P02.4 DDR fixtures provisioned and byte-verified by physical readback with A53 cores halted"     "PASS: P02.4 VIO physical paging sequence completed successfully"     "PASS: P02.4 DDR source/full/mutable records dumped for comparison"     "PASS: P02.4 physical DDR round-trip dumps match expected records"; do
     grep -R -F -q "$marker" "$LOG_DIR" || {
         echo "ERROR: missing P02.4 acceptance marker: $marker" >&2
         exit 3
