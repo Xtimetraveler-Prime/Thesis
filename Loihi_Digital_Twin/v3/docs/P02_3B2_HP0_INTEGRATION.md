@@ -1,6 +1,6 @@
 # P02.3b2 — K26 HP0 DDR Integration
 
-**Status:** Verification candidate  
+**Status:** Synthesis accepted; route verification candidate  
 **Phase:** P02 — DDR-backed logical-core virtualization  
 **Date drafted:** 2026-10-05
 
@@ -250,3 +250,18 @@ integrated and routable.
 
 P02.4 must still prove actual DDR-backed save/load behavior with known context
 data on the KV260.
+
+
+## 11. Synthesis acceptance update — 2026-10-05
+
+The integrated HP0 shell has now independently completed the P02.3b2 synthesis
+gate with a zero script exit status.
+
+The successful run required reducing Vivado run concurrency because the
+four-job configuration exhausted host memory. The P02.3b2 synthesis and route
+scripts now default to one Vivado job while still allowing
+`VIVADO_JOBS=<n>` as an explicit override.
+
+Primary synthesis acceptance record:
+
+`docs/P02_3B2_SYNTHESIS_ACCEPTANCE.md`
