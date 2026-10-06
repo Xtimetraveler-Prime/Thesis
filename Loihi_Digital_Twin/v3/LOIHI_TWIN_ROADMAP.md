@@ -169,7 +169,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 |---|---|---|
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
-| P02 | Move non-resident logical contexts into K26 DDR | In progress |
+| P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | Planned |
@@ -278,7 +278,8 @@ Primary record: `docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md`.
 
 # P02 — DDR-backed logical-core virtualization
 
-**Status:** In progress
+**Status:** Complete  
+**Accepted:** 2026-10-06
 
 ## Goal
 
@@ -286,7 +287,7 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 
 ## Sub-milestones
 
-- **P02.1 — DDR backing-image ABI and coherency contract.** **Focused verification passed; phase regression pending.** Freeze layout,
+- **P02.1 — DDR backing-image ABI and coherency contract.** **Complete; accepted 2026-10-05.** Freeze layout,
   fixed/variable section sizes, alignment, versioning, address validation,
   page-transfer commands, ownership/cache-maintenance rules, and deterministic
   serialization. Primary records: `docs/P02_1_DDR_ABI.md` and
@@ -311,7 +312,7 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
     SmartConnect, confine paging to the fixed 64 MiB DDR backing window, and
     synthesize/route the resulting shell. Primary record:
     `docs/P02_3B2_HP0_INTEGRATION.md`; routed acceptance: `docs/P02_3B2_ROUTE_ACCEPTANCE.md`.
-- **P02.4 — Physical DDR-backed paging acceptance.** **In progress.** Demonstrate that
+- **P02.4 — Physical DDR-backed paging acceptance.** **Complete; accepted 2026-10-06.** Demonstrate that
   non-resident logical contexts live in K26 DDR and are paged into the three
   resident slots without PC RAM participating in the page loop. Primary plan:
   `docs/P02_4_PHYSICAL_PAGING.md`.
@@ -320,7 +321,7 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
     mutable-only writeback through real K26 DDR, with exact burst/byte/cycle
     evidence and per-bank fingerprints. Primary acceptance record:
     `docs/P02_4A_ACCEPTANCE.md`.
-  - **P02.4b — five-over-three DDR-backed workload.** **Verification candidate.** Execute
+  - **P02.4b — five-over-three DDR-backed workload.** **Complete; accepted 2026-10-06.** Execute
     a directed seven-timestep / 35-dispatch five-logical-core workload through
     three resident slots and one physical engine with K26 DDR as the
     authoritative non-resident backing store. Require exact per-dispatch
@@ -341,7 +342,28 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
 
 ## Acceptance
 
-At least the accepted v2 five-logical-core / three-resident-context workload must execute with all non-resident context state stored on the KV260 rather than in PC memory, with normalized results matching the v2 golden boundary.
+Accepted on 2026-10-06.
+
+The directed five-logical-core / three-resident-context physical workload
+completed with K26 DDR as the authoritative backing store:
+
+```text
+dispatches=35
+barriers=7
+routed_packets=30
+page_ins=60
+page_outs=60
+evictions=57
+page_hits=8
+axi_read_bursts=102720
+axi_write_bursts=24960
+axi_bytes=32686080
+result=PASS
+```
+
+All five complete final 512 KiB DDR records matched their golden images
+byte-for-byte. Primary phase record: `docs/P02_ACCEPTANCE.md`; physical
+five-over-three acceptance: `docs/P02_4B_ACCEPTANCE.md`.
 
 ---
 
