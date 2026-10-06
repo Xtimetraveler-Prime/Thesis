@@ -87,25 +87,54 @@ proc p02b_wait_p08 {port expected timeout_ms label} {
     error "P02.4b timeout waiting for $label expected=$expected actual=$actual"
 }
 
+proc p02b_host_response_snapshot {} {
+    global P02B_DISPATCH_VIO
+    # The page/debug arbiter gates response visibility with transaction_active.
+    # Therefore ACK/RVALID/ERROR/RDATA must be sampled from one VIO refresh.
+    refresh_hw_vio $P02B_DISPATCH_VIO
+    set ack [p02b_parse_hex [get_property INPUT_VALUE [p02b_probe $P02B_DISPATCH_VIO vio_input 21]]]
+    set valid [p02b_parse_hex [get_property INPUT_VALUE [p02b_probe $P02B_DISPATCH_VIO vio_input 22]]]
+    set err [p02b_parse_hex [get_property INPUT_VALUE [p02b_probe $P02B_DISPATCH_VIO vio_input 23]]]
+    set value [p02b_parse_hex [get_property INPUT_VALUE [p02b_probe $P02B_DISPATCH_VIO vio_input 24]]]
+    return [list $ack $valid $err $value]
+}
+
+proc p02b_wait_host_response {timeout_ms label} {
+    set deadline [expr {[clock milliseconds] + $timeout_ms}]
+    set last {0 0 0 0}
+    while {[clock milliseconds] <= $deadline} {
+        set last [p02b_host_response_snapshot]
+        if {[lindex $last 0] == 1} {
+            return $last
+        }
+        after 1
+    }
+    error "P02.4b timeout waiting for $label last=$last"
+}
+
 proc p02b_host_write {slot bank addr value} {
     p02b_p08_commit [list 6 0 7 1 8 $slot 9 $bank 10 $addr 11 $value]
     p02b_p08_commit [list 6 1]
-    p02b_wait_p08 21 1 2000 "host write ack slot=$slot bank=$bank addr=$addr"
-    set err [p02b_p08_input 23]
+
+    set response [p02b_wait_host_response 2000 "host write slot=$slot bank=$bank addr=$addr"]
+    lassign $response ack valid err rdata
     p02b_p08_commit [list 6 0]
-    if {$err != 0} { error "P02.4b host write failed slot=$slot bank=$bank addr=$addr" }
+
+    if {$ack != 1 || $err != 0} {
+        error "P02.4b host write failed slot=$slot bank=$bank addr=$addr ack=$ack error=$err"
+    }
 }
 
 proc p02b_host_read {slot bank addr} {
     p02b_p08_commit [list 6 0 7 0 8 $slot 9 $bank 10 $addr 11 0]
     p02b_p08_commit [list 6 1]
-    p02b_wait_p08 21 1 2000 "host read ack slot=$slot bank=$bank addr=$addr"
-    set valid [p02b_p08_input 22]
-    set err [p02b_p08_input 23]
-    set value [p02b_p08_input 24]
+
+    set response [p02b_wait_host_response 2000 "host read slot=$slot bank=$bank addr=$addr"]
+    lassign $response ack valid err value
     p02b_p08_commit [list 6 0]
-    if {$err != 0 || $valid != 1} {
-        error "P02.4b host read failed slot=$slot bank=$bank addr=$addr valid=$valid error=$err"
+
+    if {$ack != 1 || $err != 0 || $valid != 1} {
+        error "P02.4b host read failed slot=$slot bank=$bank addr=$addr ack=$ack valid=$valid error=$err"
     }
     return $value
 }
