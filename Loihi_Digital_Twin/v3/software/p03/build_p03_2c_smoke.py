@@ -36,15 +36,18 @@ def main() -> int:
     domain_name = "standalone_psu_cortexa53_0"
     app_name = "p03_2c_smoke"
 
+    # P03.2c is loaded over XSDB onto an already initialized ZynqMP, so Vitis
+    # boot artifacts (FSBL/PMUFW) are unnecessary.  Keep platform creation to
+    # the documented standalone A53 inputs and explicitly suppress boot BSP
+    # generation.  This also avoids making platform creation depend on an FSBL
+    # component that the smoke never consumes.
     platform = client.create_platform_component(
         name=platform_name,
         hw_design=str(xsa),
         os="standalone",
         cpu="psu_cortexa53_0",
         domain_name=domain_name,
-        generate_dtb=False,
-        architecture="64-bit",
-        compiler="gcc",
+        no_boot_bsp=True,
     )
     platform = client.get_component(name=platform_name)
     platform.build()
