@@ -92,17 +92,29 @@ open_hw_manager
 connect_hw_server -url $server_url
 open_hw_target
 
-set device ""
-foreach candidate [get_hw_devices] {
-    set part ""
-    catch {set part [get_property PART $candidate]}
-    if {[string match "xck26*" [string tolower $part]]} {
-        set device $candidate
-        break
+set devices [get_hw_devices]
+if {[llength $devices] == 1} {
+    set device [lindex $devices 0]
+} else {
+    set device ""
+    foreach candidate $devices {
+        set part ""
+        set name ""
+        catch {set part [string tolower [get_property PART $candidate]]}
+        catch {set name [string tolower [get_property NAME $candidate]]}
+        if {
+            [string match "*xck26*" $part] ||
+            [string match "*xczu5*" $part] ||
+            [string match "*xck26*" $name] ||
+            [string match "*xczu5*" $name]
+        } {
+            set device $candidate
+            break
+        }
     }
 }
 if {$device eq ""} {
-    error "P02.4 could not find a connected xck26 hardware device"
+    error "P02.4 could not uniquely identify the connected K26/xczu5 hardware device"
 }
 current_hw_device $device
 refresh_hw_device $device
@@ -132,6 +144,7 @@ for {set i 0} {$i <= 4} {incr i} {
 }
 for {set i 0} {$i <= 14} {incr i} {
     set p(in$i) [p02_find_probe $page_vio probe_in$i]
+    set_property INPUT_VALUE_RADIX UNSIGNED $p(in$i)
 }
 set probes [array get p]
 
