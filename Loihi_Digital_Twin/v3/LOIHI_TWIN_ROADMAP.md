@@ -315,10 +315,11 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
   non-resident logical contexts live in K26 DDR and are paged into the three
   resident slots without PC RAM participating in the page loop. Primary plan:
   `docs/P02_4_PHYSICAL_PAGING.md`.
-  - **P02.4a — deterministic physical DDR round-trip.** **Verification candidate.** Reuse the
+  - **P02.4a — deterministic physical DDR round-trip.** **Complete; accepted 2026-10-05.** Reused the
     accepted P02.3b2 bitstream to prove byte-exact full page-in/full page-out and
     mutable-only writeback through real K26 DDR, with exact burst/byte/cycle
-    evidence and per-bank fingerprints.
+    evidence and per-bank fingerprints. Primary acceptance record:
+    `docs/P02_4A_ACCEPTANCE.md`.
   - **P02.4b — five-over-three DDR-backed workload.** **Planned.** Move the accepted
     representative workload's authoritative non-resident context storage from
     PC RAM into K26 DDR while retaining host orchestration until P03.
