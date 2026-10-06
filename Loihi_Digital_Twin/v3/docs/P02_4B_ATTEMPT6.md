@@ -58,17 +58,26 @@ attempts while later reads showed correct memory.
 
 ## RTL correction
 
-The arbiter now enters a `wait_request_low` fence after every completed
-transaction.
+The final correction treats debug/VIO as a slow level-based requester.
 
-While fenced:
+When a debug transaction completes, the arbiter now latches:
 
-- the selected request is not forwarded to the memory fabric;
-- no new transaction ownership is armed;
-- debug/page busy remains asserted;
-- the fence clears only after the requester returns its request level low.
+- ACK;
+- RVALID;
+- ERROR;
+- RDATA.
 
-Only a subsequent request assertion can start another transaction.
+That response remains visible until `debug_req` returns low. While the latched
+response is pending, the same held-high request cannot be forwarded or re-armed.
+
+This simultaneously provides two required properties:
+
+1. no stale-response / phantom second transaction can occur;
+2. the response remains visible long enough for software-driven VIO polling to
+   observe it reliably.
+
+The page-walker side remains synchronous and continues to consume the direct
+fabric response for its pulsed requests.
 
 ## Regression
 
@@ -77,8 +86,9 @@ A dedicated simulation now deliberately holds:
 - `debug_req` high after completion;
 - the prior fabric ACK/RVALID/data response visible for multiple clocks.
 
-Acceptance requires exactly one debug completion and no re-forwarding until the
-request returns low.
+Acceptance requires one stable latched debug completion, no re-forwarding while
+the request remains high, retirement when the request goes low, and successful
+acceptance of a later fresh request.
 
 Files:
 
