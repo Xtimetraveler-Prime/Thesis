@@ -31,3 +31,49 @@ Primary tools:
 scripts/run_p02_4b_forensic_ddr.sh
 scripts/p02_4b_forensic_ddr.py
 ```
+
+
+## Forensic result
+
+The post-failure physical DDR dump preserved every static bank for all five
+logical cores. In particular, logical core 3 retained:
+
+```text
+P02_4B_FORENSIC_ROUTE0 core=3
+actual=0x00000704
+expected=0x00000704
+```
+
+Therefore mutable page-out did not corrupt the authoritative DDR route image.
+
+The remaining failure boundary is the later DDR-to-resident materialization.
+
+## Paging-only replay
+
+A dedicated physical stress gate now reproduces the exact sequence of page
+transfers that occurred before the failure, but removes:
+
+- HLS dispatch;
+- external event injection;
+- routed packet handling;
+- algorithmic barrier logic.
+
+It performs 9 full page-ins and 6 mutable page-outs, ending with the same target
+operation:
+
+```text
+logical core 3 -> resident slot 2
+```
+
+Every page-in verifies the resident static image immediately.
+
+Primary harness:
+
+```text
+scripts/run_p02_4b_paging_stress.sh
+vivado/p02_4b_paging_stress.tcl
+```
+
+If this gate reproduces the route loss, the defect is fully inside the paging
+transport/materialization path. If it passes, compute/debug activity is required
+to trigger the failure and the next diagnostic must include those interactions.
