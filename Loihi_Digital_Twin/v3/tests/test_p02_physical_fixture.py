@@ -57,6 +57,7 @@ def test_p02_4_full_expected_replaces_payload_only() -> None:
         fixture.PAYLOAD_START : fixture.PAYLOAD_END
     ]
     assert expected[fixture.PAYLOAD_END :] == destination[fixture.PAYLOAD_END :]
+    assert destination[fixture.PAYLOAD_END :] != source[fixture.PAYLOAD_END :]
 
 
 def test_p02_4_mutable_expected_replaces_only_mutable_banks() -> None:
