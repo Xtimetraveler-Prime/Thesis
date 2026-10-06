@@ -166,6 +166,8 @@ if {$page_vio eq ""} {
     error "P02.4 paging VIO (vio_p02_page) was not found after programming"
 }
 
+p02_dump_probe_inventory $page_vio
+
 array set p {}
 set out_widths {1 1 1 2 64}
 set in_widths {1 1 1 32 32 64 1 1 1 32 32 64 1 1 9}
