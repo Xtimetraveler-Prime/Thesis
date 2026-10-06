@@ -53,6 +53,8 @@ required = (
     "p02b_verify_static_resident_image",
     "p02b_verify_initial_resident_image",
     "external event readback",
+    "p02b_host_response_snapshot",
+    "ACK/RVALID/ERROR/RDATA must be sampled from one VIO refresh",
 )
 for token in required:
     if token not in runtime:
