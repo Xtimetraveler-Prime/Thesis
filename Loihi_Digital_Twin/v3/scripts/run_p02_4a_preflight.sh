@@ -38,8 +38,13 @@ if "set probes [array get p]" in vio or "array set p $probes" in vio:
     raise SystemExit("FAIL: P02.4 VIO script serializes live hw_probe objects")
 if "upvar 1 $probe_array_name p" not in vio:
     raise SystemExit("FAIL: P02.4 VIO script does not preserve live hw_probe objects")
+if 'set record_base_u [expr {wide($record_base)}]' not in vio:
+    raise SystemExit("FAIL: P02.4 VIO script does not normalize UNSIGNED record base")
+if 'set_property OUTPUT_VALUE $record_base_u $p(out4)' not in vio:
+    raise SystemExit("FAIL: P02.4 VIO script bypasses normalized record base")
 print("PASS: P02.4 Tcl source delimiter preflight")
 print("PASS: P02.4 VIO hw_probe object-preservation preflight")
+print("PASS: P02.4 VIO unsigned-address normalization preflight")
 PY
 
 grep -q "PASS: P02.4 deterministic DDR fixture generated" "$TMP_DIR/generate.log"
