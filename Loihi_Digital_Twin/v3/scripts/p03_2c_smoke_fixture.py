@@ -27,9 +27,10 @@ MAILBOX_BASE = 0x43FF0000
 RECORD_BYTES = 0x80000
 
 
-def _core0() -> LogicalCoreConfig:
+def _ring_core(core_id: int) -> LogicalCoreConfig:
+    next_core = (core_id + 1) % 5
     return LogicalCoreConfig(
-        core_id=0,
+        core_id=core_id,
         compartments=(
             CompartmentConfig(
                 current_decay=4096,
@@ -37,19 +38,29 @@ def _core0() -> LogicalCoreConfig:
                 threshold=5,
             ),
         ),
-        input_axons=(InputAxonBinding(10, 0),),
+        input_axons=(InputAxonBinding(10 + core_id, 0),),
         synapse_templates=(SynapseTemplate(0, (SynapseEntry(0, 3),)),),
-        output_routes=(OutputRouteEntry(0, (OutputRoute(1, 11),)),),
+        output_routes=(
+            OutputRouteEntry(
+                0,
+                (OutputRoute(next_core, 10 + next_core),),
+            ),
+        ),
         arithmetic=P03_REQUIRED_ARITHMETIC,
     )
 
 
 def generate(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    configs = tuple(_ring_core(core_id) for core_id in range(5))
     deployment = export_paged_hardware_image(
-        (_core0(),),
-        resident_context_count=1,
+        configs,
+        resident_context_count=3,
     )
+    if deployment.logical_core_ids != (0, 1, 2, 3, 4):
+        raise AssertionError("P03.2c accepted ring logical-core IDs drifted")
+    if deployment.initial_resident_core_ids != (0, 1, 2):
+        raise AssertionError("P03.2c accepted ring initial residency drifted")
     backing = deployment.backing_by_logical_core[0]
     record = build_initial_ddr_context_record(backing)
     if len(record) != RECORD_BYTES:
