@@ -40,7 +40,7 @@ The initial standalone software contract reserves:
 
 ```text
 MMIO base:   0xA0000000
-MMIO range:  0x00010000  (64 KiB)
+MMIO range:  0x00001000  (4 KiB)
 data width:  32 bits
 protocol:    AXI4-Lite
 ```
@@ -177,7 +177,7 @@ P03.2b Vivado integration must prove:
 
 - `M_AXI_HPM0_FPD` is enabled;
 - PS master reaches the MMIO block through SmartConnect;
-- fixed `0xA0000000/64KiB` address assignment;
+- fixed `0xA0000000/4KiB` address assignment;
 - P02 HP0 DDR path remains enabled and unchanged in direction;
 - MMIO drives page/dispatch/debug command inputs;
 - no VIO output drives those command inputs;
