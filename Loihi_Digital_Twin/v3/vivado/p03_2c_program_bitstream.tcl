@@ -67,8 +67,10 @@ if {$vio eq ""} { error "P03.2c could not find reset/observation VIO" }
 
 foreach probe [get_hw_probes -of_objects $vio] {
     set type [string tolower [get_property TYPE $probe]]
-    if {$type eq "vio_input" || $type eq "vio_output"} {
-        set_property [expr {$type eq "vio_input" ? "INPUT_VALUE_RADIX" : "OUTPUT_VALUE_RADIX"}] HEX $probe
+    if {$type eq "vio_input"} {
+        set_property INPUT_VALUE_RADIX HEX $probe
+    } elseif {$type eq "vio_output"} {
+        set_property OUTPUT_VALUE_RADIX HEX $probe
     }
 }
 
