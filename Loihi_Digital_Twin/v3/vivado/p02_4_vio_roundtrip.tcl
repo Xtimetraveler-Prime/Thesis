@@ -128,8 +128,13 @@ refresh_hw_device $device
 set page_vio ""
 foreach candidate [get_hw_vios -of_objects $device] {
     set cell ""
+    set name ""
     catch {set cell [get_property CELL_NAME $candidate]}
-    if {[string match "*vio_p02_page*" $cell]} {
+    catch {set name [get_property NAME $candidate]}
+    if {
+        [string match "*vio_p02_page*" $cell] ||
+        [string match "*vio_p02_page*" $name]
+    } {
         set page_vio $candidate
         break
     }
