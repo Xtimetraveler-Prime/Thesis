@@ -54,3 +54,29 @@ routable against K26 DDR through HP0.
 
 It does **not** yet prove a real DDR round-trip of known logical-context data on
 the KV260. That is the responsibility of P02.4.
+
+
+## P02 final-shell addendum
+
+The original P02.3b2 routed shell above remains the accepted evidence for the
+initial HP0 integration milestone.
+
+During P02.4b physical debugging, `p02_page_host_arbiter.v` was corrected to
+latch slow VIO debug responses until request release. That RTL correction
+required a reroute before final P02 acceptance.
+
+The final accepted P02.4b shell retained the same topology and resources:
+
+```text
+resident_context_slots=3
+physical_engines=1
+uram=47
+wns_ns=+0.807
+whs_ns=+0.010
+bitstream_sha256=0d96ae6af0cc313ccbd8f9c802aeb0c8c7946bfeabaca3152ef5c7b9d2b23f26
+probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
+```
+
+The original P02.3b2 bitstream hash is historical and should not be used for
+final P02.4b reproduction. See `docs/P02_4B_ARBITER_FIX_ROUTE.md` and
+`docs/P02_4B_ACCEPTANCE.md`.
