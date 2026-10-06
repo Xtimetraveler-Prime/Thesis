@@ -116,3 +116,18 @@ verify -data <file> <address>
 
 for each of the three 512 KiB records.  This both provisions the record and
 verifies the exact binary bytes before the PL page mover is exercised.
+
+
+## Physical attempt 1 update
+
+The first post-XSDB-fix board attempt successfully provisioned and verified all
+three 512 KiB DDR records, then stopped before any page command because the
+initial Vivado harness assumed hardware-probe display names matched
+`probe_inN` / `probe_outN`.
+
+The retry candidate binds the VIO using `TYPE`, `PROBE_PORT`, and
+`PROBE_PORT_BIT_COUNT` metadata instead. See
+`docs/P02_4A_ATTEMPT1.md`.
+
+The board must be rebooted before retrying because the attempt intentionally
+left the A53 halted.
