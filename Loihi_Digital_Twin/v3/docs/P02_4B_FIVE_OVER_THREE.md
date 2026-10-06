@@ -358,3 +358,24 @@ This RTL change requires a newly routed P02 shell and new artifact fingerprints
 before the physical P02.4b gate can resume.
 
 See `docs/P02_4B_ATTEMPT6.md`.
+
+
+## Arbiter-fix routed candidate
+
+The corrected page/debug arbiter was rerouted successfully on K26 with:
+
+- WNS: +0.807 ns;
+- WHS: +0.010 ns;
+- 47 URAM;
+- 3 resident contexts;
+- 1 physical engine;
+- 128-bit HP0 transport.
+
+The current P02.4b candidate artifacts are:
+
+```text
+bitstream_sha256=0d96ae6af0cc313ccbd8f9c802aeb0c8c7946bfeabaca3152ef5c7b9d2b23f26
+probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
+```
+
+See `docs/P02_4B_ARBITER_FIX_ROUTE.md`.
