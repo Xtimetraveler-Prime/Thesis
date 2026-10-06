@@ -378,12 +378,12 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
 
 ## Sub-milestones
 
-- **P03.1 — Autonomous runtime contract.** **Verification candidate.** Freeze
+- **P03.1 — Autonomous runtime contract.** **Complete; accepted 2026-10-06.** Freeze
   exact run/barrier/error transitions, board-local timer/counter boundaries,
   recovery behavior, external-host exclusion, cache/ownership rules, and the v3
   implementation addendum to the inherited Loihi target specification. Primary
   record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
-- **P03.2 — PS-visible MMIO control/status shell.** **Planned.** Replace
+- **P03.2 — PS-visible MMIO control/status shell.** **In progress.** Replace
   VIO-owned page/dispatch/resident-memory control with a PS-accessible AXI-Lite
   register block on the accepted `M_AXI_HPM0_FPD` direction while preserving
   the accepted P02 data plane and response semantics.
