@@ -49,7 +49,7 @@ IP_REPO_DIR="$HLS_DIR/build/p03_package/ip_repo"
 
 vivado -mode batch     -source "$TCL_SCRIPT"     -tclargs         "$IP_REPO_DIR"         "$VIVADO_PROJECT_DIR"         "$EXPECTED_PART"         "$EXPECTED_VLNV"         "$CONTROLLER_RTL"         "$MEMORY_RTL"         "$RESET_RTL"         "$HOSTMUX_RTL"         "$WALKER_RTL"         "$ARBITER_RTL"         "$RANGE_GUARD_RTL"         "$ADAPTER_RTL"         "$MMIO_RTL"         "$REPORT_DIR"         "$JOBS"         route     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
 
-for required in     "$REPORT_DIR/timing_summary_post_route.rpt"     "$REPORT_DIR/utilization_post_route.rpt"     "$REPORT_DIR/utilization_hierarchical_post_route.rpt"     "$REPORT_DIR/memory_primitives_post_route.rpt"     "$REPORT_DIR/bus_skew_post_route.rpt"     "$REPORT_DIR/p03_2_post_route_metrics.txt"     "$REPORT_DIR/p03_2_mmio_post_route.dcp"     "$REPORT_DIR/p03_2_ps_mmio.bit"     "$REPORT_DIR/p03_2_ps_mmio.ltx"; do
+for required in     "$REPORT_DIR/timing_summary_post_route.rpt"     "$REPORT_DIR/utilization_post_route.rpt"     "$REPORT_DIR/utilization_hierarchical_post_route.rpt"     "$REPORT_DIR/memory_primitives_post_route.rpt"     "$REPORT_DIR/bus_skew_post_route.rpt"     "$REPORT_DIR/p03_2_post_route_metrics.txt"     "$REPORT_DIR/p03_2_mmio_post_route.dcp"     "$REPORT_DIR/p03_2_ps_mmio.bit"     "$REPORT_DIR/p03_2_ps_mmio.ltx"     "$REPORT_DIR/p03_2_ps_mmio.xsa"; do
     [[ -f "$required" ]] || {
         echo "ERROR: expected P03.2 route artifact missing: $required" >&2
         exit 4
@@ -94,6 +94,7 @@ fi
 
 BIT_SHA="$(sha256sum "$REPORT_DIR/p03_2_ps_mmio.bit" | awk '{print $1}')"
 LTX_SHA="$(sha256sum "$REPORT_DIR/p03_2_ps_mmio.ltx" | awk '{print $1}')"
+XSA_SHA="$(sha256sum "$REPORT_DIR/p03_2_ps_mmio.xsa" | awk '{print $1}')"
 
 printf 'PASS: P03.2 routed timing wns_ns=%s whs_ns=%s
 ' "$WNS" "$WHS"
@@ -105,8 +106,8 @@ printf 'PASS: P03.2 command ownership page=ps-mmio dispatch=ps-mmio resident-mem
 '
 printf 'PASS: P03.2 resources uram=%s
 ' "$URAM"
-printf 'PASS: P03.2 artifacts bitstream_sha256=%s probes_sha256=%s
-' "$BIT_SHA" "$LTX_SHA"
+printf 'PASS: P03.2 artifacts bitstream_sha256=%s probes_sha256=%s xsa_sha256=%s
+' "$BIT_SHA" "$LTX_SHA" "$XSA_SHA"
 
 echo
 echo '=== P03.2 post-route metrics ==='
@@ -116,4 +117,5 @@ echo
 echo "PASS: P03.2 routed PS-MMIO implementation gate completed successfully."
 echo "Bitstream: $REPORT_DIR/p03_2_ps_mmio.bit"
 echo "Debug probes: $REPORT_DIR/p03_2_ps_mmio.ltx"
+echo "Fixed XSA: $REPORT_DIR/p03_2_ps_mmio.xsa"
 echo "Reports: $REPORT_DIR"
