@@ -1,7 +1,7 @@
 # P02.4b Arbiter-Fix Routed Candidate
 
 **Date:** 2026-10-06  
-**Status:** Routed verification candidate for renewed P02.4b physical acceptance.
+**Status:** Accepted routed artifact for P02.4b physical acceptance.
 
 ## Reason for rebuild
 
@@ -43,6 +43,8 @@ The probe fingerprint is unchanged because the VIO topology did not change.
 ## Acceptance boundary
 
 This routed result proves that the arbiter fix still meets the physical shell
-constraints and timing closure. It does not yet accept P02.4b. The five-logical-
-core / three-resident-context physical workload must pass using these artifacts
-before P02 can close.
+constraints and timing closure.
+
+The subsequent five-logical-core / three-resident-context physical workload
+passed using these exact artifacts. They are therefore the accepted P02.4b
+physical shell fingerprints. See `docs/P02_4B_ACCEPTANCE.md`.
