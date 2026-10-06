@@ -170,9 +170,9 @@ set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_cont
 set hpm0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p03_hpm0_smartconnect_0]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hpm0_smartconnect
 
-# The P03.2 controller deliberately leaves packet routing / next-event writes to
-# the host after each dispatch.  Disable P05's former controller-side Port-B
-# integration path; packet/event banks remain fully accessible through host I/O.
+# P03.2 leaves packet routing / next-event policy to the forthcoming P03.3
+# Cortex-A53 runtime. Disable P05's former controller-side Port-B integration
+# path; packet/event banks remain accessible through the PS MMIO resident path.
 set const0_1 [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 p08_const0_1]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $const0_1
 set const0_2 [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 p08_const0_2]
@@ -610,10 +610,10 @@ if {[regexp {\| URAM\s+\|\s+([0-9.]+)\s+\|} $util_text -> uram_count]} { puts $m
 puts $metrics "p02_reference_logical_backing_contexts=5"
 puts $metrics "resident_context_slots=3"
 puts $metrics "physical_engines=1"
-puts $metrics "host_paged_dispatch=0"
+puts $metrics "external_host_paged_dispatch=0"
 puts $metrics "on_fabric_cross_page_router=0"
-puts $metrics "host_owns_cross_page_routing=0"
-puts $metrics "host_owns_global_barrier=0"
+puts $metrics "p03_ps_routing_runtime_implemented=0"
+puts $metrics "p03_ps_barrier_runtime_implemented=0"
 puts $metrics "logical_capacity_changed=0"
 puts $metrics "reset_strategy=source_controlled_synchronous_conditioner"
 puts $metrics "target_part=$target_part"
