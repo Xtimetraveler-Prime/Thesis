@@ -1,6 +1,6 @@
 # P02.4b — Five-Logical-Core / Three-Resident-Context DDR-Backed Workload
 
-**Status:** Verification candidate  
+**Status:** Complete — accepted 2026-10-06  
 **Phase:** P02 — DDR-backed logical-core virtualization  
 **Branch:** `agent/v3-p02-4-physical-ddr`
 
@@ -87,7 +87,7 @@ the fact that the PL page mover does not refresh the 4 KiB DDR header digest.
 
 ## Physical runtime
 
-The accepted P02.3b2/P02.4a bitstream and probes are reused unchanged.
+The final accepted run uses the rerouted P02 arbiter-fix shell documented in `docs/P02_4B_ARBITER_FIX_ROUTE.md`.
 
 Before execution XSDB:
 
@@ -103,7 +103,7 @@ core 3  0x4018_0000
 core 4  0x4020_0000
 ```
 
-using `dow -data`, followed by `verify -data`.
+using `dow -data`, followed by complete `mrd -bin -file` physical readback and byte-exact comparison.
 
 Vivado then programs the accepted shell and drives both existing VIOs:
 
@@ -379,3 +379,38 @@ probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
 ```
 
 See `docs/P02_4B_ARBITER_FIX_ROUTE.md`.
+
+
+## Final accepted physical run
+
+P02.4b was independently accepted on 2026-10-06 after the arbiter response
+handshake correction and reroute.
+
+The accepted execution completed:
+
+```text
+dispatches=35
+barriers=7
+routed_packets=30
+page_ins=60
+page_outs=60
+evictions=57
+page_hits=8
+axi_read_bursts=102720
+axi_write_bursts=24960
+axi_bytes=32686080
+authoritative_backing=k26-ddr
+result=PASS
+```
+
+Every pre/post mutable-eviction static-image check passed, and all five final
+512 KiB backing records matched the frozen golden final records byte-for-byte.
+
+Accepted artifacts:
+
+```text
+bitstream_sha256=0d96ae6af0cc313ccbd8f9c802aeb0c8c7946bfeabaca3152ef5c7b9d2b23f26
+probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
+```
+
+Primary acceptance record: `docs/P02_4B_ACCEPTANCE.md`.
