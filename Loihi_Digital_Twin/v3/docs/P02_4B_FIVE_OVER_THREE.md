@@ -262,3 +262,16 @@ exact external-event readback before every dispatch. This is diagnostic
 instrumentation only; the workload and acceptance semantics are unchanged.
 
 See `docs/P02_4B_ATTEMPT1.md`.
+
+
+## Physical attempt 2 diagnostic update
+
+The resident-image diagnostic initially failed because the Tcl helper sampled
+debug ACK and RVALID/RDATA using separate VIO refreshes across the arbiter's
+response-ownership window. The retry candidate captures ACK/RVALID/ERROR/RDATA
+from one VIO refresh for every debug transaction.
+
+This is a harness correction only. The original core-1 physical state mismatch
+remains unresolved pending the next board run.
+
+See `docs/P02_4B_ATTEMPT2.md`.
