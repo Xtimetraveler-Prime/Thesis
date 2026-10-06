@@ -17,14 +17,19 @@ XSA="${P03_XSA:-$V3_DIR/vivado/build/p03_2_mmio_impl/reports/p03_2_ps_mmio.xsa}"
 # Vitis installation root from XILINX_VITIS or from the launcher itself, then
 # source the embedded Vitis environment inside this build process.
 if [[ -n "${XILINX_VITIS:-}" && -f "$XILINX_VITIS/settings64.sh" ]]; then
+    # AMD settings scripts may inspect variables that are unset in the caller.
+    set +u
     # shellcheck disable=SC1090
     source "$XILINX_VITIS/settings64.sh"
+    set -u
 elif command -v vitis >/dev/null 2>&1; then
     VITIS_BIN="$(readlink -f "$(command -v vitis)")"
     VITIS_ROOT="$(cd -- "$(dirname -- "$VITIS_BIN")/.." && pwd)"
     if [[ -f "$VITIS_ROOT/settings64.sh" ]]; then
+        set +u
         # shellcheck disable=SC1090
         source "$VITIS_ROOT/settings64.sh"
+        set -u
     fi
 fi
 
