@@ -13,13 +13,13 @@ P02_IMPL_REPORT_DIR="${P02_IMPL_REPORT_DIR:-$V3_DIR/vivado/build/p02_ddr_impl/re
 BIT_FILE="${P02_BIT_FILE:-$P02_IMPL_REPORT_DIR/p02_ddr_paged.bit}"
 LTX_FILE="${P02_LTX_FILE:-$P02_IMPL_REPORT_DIR/p02_ddr_paged.ltx}"
 
-XSCT_SERVER_URL="${P02_XSCT_SERVER_URL:-tcp:127.0.0.1:3121}"
+XSDB_SERVER_URL="${P02_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 VIVADO_SERVER_URL="${P02_VIVADO_SERVER_URL:-localhost:3121}"
 
 EXPECTED_BIT_SHA="e9c3fb490f726a1169ed4b7f0c330f5806961c6471e2b13f63f5e042e97421b1"
 EXPECTED_LTX_SHA="f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe"
 
-for tool in python xsct vivado sha256sum; do
+for tool in python xsdb vivado sha256sum; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required P02.4 tool is not on PATH: $tool" >&2
         exit 2
@@ -64,11 +64,11 @@ P02.4 HARDWARE NOTE:
   reboot the board when this acceptance run is complete.
 EOF
 
-xsct vivado/p02_4_xsct_prepare.tcl     "$FIXTURE_DIR" "$XSCT_SERVER_URL"     | tee "$LOG_DIR/xsct_prepare.log"
+xsdb vivado/p02_4_xsdb_prepare.tcl     "$FIXTURE_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsct_prepare.log"
 
 vivado -mode batch     -source vivado/p02_4_vio_roundtrip.tcl     -tclargs "$BIT_FILE" "$LTX_FILE" "$VIVADO_SERVER_URL"     2>&1 | tee "$LOG_DIR/vio_roundtrip.log"
 
-xsct vivado/p02_4_xsct_dump.tcl     "$DUMP_DIR" "$XSCT_SERVER_URL"     | tee "$LOG_DIR/xsct_dump.log"
+xsdb vivado/p02_4_xsdb_dump.tcl     "$DUMP_DIR" "$XSDB_SERVER_URL"     | tee "$LOG_DIR/xsct_dump.log"
 
 python scripts/p02_4_fixture.py verify     --fixture-dir "$FIXTURE_DIR"     --source-dump "$DUMP_DIR/source_after.bin"     --full-dump "$DUMP_DIR/full_after.bin"     --mutable-dump "$DUMP_DIR/mutable_after.bin"     | tee "$LOG_DIR/fixture_verify.log"
 
