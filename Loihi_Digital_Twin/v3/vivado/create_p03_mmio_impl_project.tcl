@@ -1,18 +1,24 @@
 # FPGA-v3 P03.2 PS-MMIO-controlled one-engine / three-resident-context K26 shell.
 #
-# This shell starts from the accepted P03.2 physical topology and replaces
-# host-driven scalar context loading with a PL page path:
+# This shell starts from the final accepted P02 physical topology:
 #
-#   P02 page walker
-#     -> fixed 64 MiB backing-window guard
-#     -> 128-bit / 256-byte AXI burst coalescer
-#     -> SmartConnect
-#     -> PS S_AXI_HP0_FPD
-#     -> K26 DDR
+#   PL bulk paging:
+#     P02 page walker
+#       -> fixed 64 MiB backing-window guard
+#       -> 128-bit / 256-byte AXI burst coalescer
+#       -> SmartConnect
+#       -> PS S_AXI_HP0_FPD
+#       -> K26 DDR
 #
-# Dispatch, packet readback/routing, and global barrier ownership are still
-# host/VIO driven in P02.  P03 will move those orchestration functions onto the
-# A53.  P03.2 only proves the physical DDR paging data path.
+# P03.2 adds the opposite control direction:
+#
+#   Cortex-A53 / PS M_AXI_HPM0_FPD
+#       -> SmartConnect
+#       -> p03_ps_control_regs AXI4-Lite
+#       -> page / dispatch / resident-memory command signals
+#
+# VIO remains observation/reset-only. P03.3 will implement scheduling, routing,
+# barriers, cache ownership, and result collection in Cortex-A53 software.
 if {$argc != 16} {
     error "usage: create_p03_mmio_impl_project.tcl <ip_repo_dir> <project_dir> <target_part> <expected_vlnv> <controller_rtl> <memory_rtl> <reset_rtl> <hostmux_rtl> <walker_rtl> <arbiter_rtl> <range_guard_rtl> <adapter_rtl> <mmio_rtl> <report_dir> <jobs> <stage>"
 }
@@ -44,8 +50,8 @@ file mkdir $report_dir
 file delete -force $project_dir
 file mkdir $project_dir
 
-set project_name "loihi_twin_v3_p02_ddr_impl"
-set bd_name "loihi_twin_v3_p02_ddr_impl"
+set project_name "loihi_twin_v3_p03_mmio_impl"
+set bd_name "loihi_twin_v3_p03_mmio_impl"
 create_project $project_name $project_dir -part $target_part -force
 set_property TARGET_LANGUAGE Verilog [current_project]
 set_property SIMULATOR_LANGUAGE Mixed [current_project]
