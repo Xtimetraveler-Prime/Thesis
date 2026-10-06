@@ -252,7 +252,10 @@ connect_bd_net $pl_clk \
     [get_bd_pins p02_page_host_arbiter_0/clk] \
     [get_bd_pins p02_axi128_burst_adapter_0/clk] \
     [get_bd_pins p02_hp0_smartconnect_0/aclk] \
+    [get_bd_pins p03_ps_control_regs_0/s_axi_aclk] \
+    [get_bd_pins p03_hpm0_smartconnect_0/aclk] \
     [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] \
+    [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] \
     [get_bd_pins vio_p08/clk] \
     [get_bd_pins vio_p02_page/clk]
 
@@ -267,14 +270,16 @@ connect_bd_net [get_bd_pins p08_reset_conditioner_0/resetn] \
     [get_bd_pins p02_page_host_arbiter_0/resetn] \
     [get_bd_pins p02_axi128_burst_adapter_0/resetn] \
     [get_bd_pins p02_hp0_smartconnect_0/aresetn] \
+    [get_bd_pins p03_ps_control_regs_0/s_axi_aresetn] \
+    [get_bd_pins p03_hpm0_smartconnect_0/aresetn] \
     [get_bd_pins vio_p08/probe_in28]
 
-# Dispatch command inputs.
-connect_pair vio_p08/probe_out0 p08_paged_dispatch_controller_0/dispatch_start
-connect_pair vio_p08/probe_out2 p08_paged_dispatch_controller_0/requested_context_slot
-connect_pair vio_p08/probe_out3 p08_paged_dispatch_controller_0/context_metadata
-connect_pair vio_p08/probe_out4 p08_paged_dispatch_controller_0/dispatch_timestep
-connect_pair vio_p08/probe_out5 p08_paged_dispatch_controller_0/requested_event_read_bank
+# Dispatch command inputs now come from PS-visible MMIO.
+connect_pair p03_ps_control_regs_0/dispatch_start p08_paged_dispatch_controller_0/dispatch_start
+connect_pair p03_ps_control_regs_0/dispatch_context_slot p08_paged_dispatch_controller_0/requested_context_slot
+connect_pair p03_ps_control_regs_0/dispatch_metadata p08_paged_dispatch_controller_0/context_metadata
+connect_pair p03_ps_control_regs_0/dispatch_timestep p08_paged_dispatch_controller_0/dispatch_timestep
+connect_pair p03_ps_control_regs_0/dispatch_event_read_bank p08_paged_dispatch_controller_0/requested_event_read_bank
 connect_pair p02_page_host_arbiter_0/debug_busy p08_paged_dispatch_controller_0/host_busy
 
 # HLS control/scalar integration.
@@ -324,12 +329,12 @@ connect_bd_net [get_bd_pins p08_const0_12/dout] \
 connect_pair p08_const0_32/dout p08_context_memory_0/integration_event_data
 
 # Existing VIO debug access now enters the Port-B arbiter.
-connect_pair vio_p08/probe_out6 p02_page_host_arbiter_0/debug_req
-connect_pair vio_p08/probe_out7 p02_page_host_arbiter_0/debug_write
-connect_pair vio_p08/probe_out8 p02_page_host_arbiter_0/debug_context_slot
-connect_pair vio_p08/probe_out9 p02_page_host_arbiter_0/debug_bank
-connect_pair vio_p08/probe_out10 p02_page_host_arbiter_0/debug_addr
-connect_pair vio_p08/probe_out11 p02_page_host_arbiter_0/debug_wdata
+connect_pair p03_ps_control_regs_0/debug_req p02_page_host_arbiter_0/debug_req
+connect_pair p03_ps_control_regs_0/debug_write p02_page_host_arbiter_0/debug_write
+connect_pair p03_ps_control_regs_0/debug_context_slot p02_page_host_arbiter_0/debug_context_slot
+connect_pair p03_ps_control_regs_0/debug_bank p02_page_host_arbiter_0/debug_bank
+connect_pair p03_ps_control_regs_0/debug_addr p02_page_host_arbiter_0/debug_addr
+connect_pair p03_ps_control_regs_0/debug_wdata p02_page_host_arbiter_0/debug_wdata
 
 # Arbiter drives the accepted P05 memory-fabric Port B.
 connect_pair p02_page_host_arbiter_0/fabric_req p08_context_memory_0/host_req
@@ -397,11 +402,11 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
     $hp0_ddr_low -force
 
 # Paging command VIO.
-connect_pair vio_p02_page/probe_out0 p02_context_page_bank_walker_0/cmd_start
-connect_pair vio_p02_page/probe_out1 p02_context_page_bank_walker_0/cmd_page_out
-connect_pair vio_p02_page/probe_out2 p02_context_page_bank_walker_0/cmd_mutable_only
-connect_pair vio_p02_page/probe_out3 p02_context_page_bank_walker_0/cmd_context_slot
-connect_pair vio_p02_page/probe_out4 p02_context_page_bank_walker_0/cmd_record_base
+connect_pair p03_ps_control_regs_0/page_start p02_context_page_bank_walker_0/cmd_start
+connect_pair p03_ps_control_regs_0/page_out p02_context_page_bank_walker_0/cmd_page_out
+connect_pair p03_ps_control_regs_0/page_mutable_only p02_context_page_bank_walker_0/cmd_mutable_only
+connect_pair p03_ps_control_regs_0/page_context_slot p02_context_page_bank_walker_0/cmd_context_slot
+connect_pair p03_ps_control_regs_0/page_record_base p02_context_page_bank_walker_0/cmd_record_base
 
 connect_pair p02_context_page_bank_walker_0/busy vio_p02_page/probe_in0
 connect_pair p02_context_page_bank_walker_0/transfer_done vio_p02_page/probe_in1
