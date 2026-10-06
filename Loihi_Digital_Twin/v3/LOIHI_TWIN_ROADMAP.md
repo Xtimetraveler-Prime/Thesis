@@ -387,6 +387,16 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
   VIO-owned page/dispatch/resident-memory control with a PS-accessible AXI-Lite
   register block on the accepted `M_AXI_HPM0_FPD` direction while preserving
   the accepted P02 data plane and response semantics.
+  - **P03.2a — AXI-Lite register contract.** **Implementation candidate.**
+    Freeze the 32-bit register map, sticky completion semantics, slow resident
+    request handshake, Python/C software constants, and directed RTL regression.
+  - **P03.2b — Routed HPM0 integration.** **Verification candidate.** Connect
+    the register block through HPM0 at `0xA4000000..0xA4000FFF`, preserve the
+    accepted HP0 DDR data path, retain VIO as observation/reset-only, close
+    timing, and export bitstream/probes/fixed XSA.
+  - **P03.2c — Physical PS-MMIO smoke.** **Planned.** Use an A53-side smoke
+    program to read the MMIO identity/capabilities and physically issue
+    page/dispatch/resident-memory commands without JTAG/VIO command ownership.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
