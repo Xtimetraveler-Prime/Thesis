@@ -53,8 +53,17 @@ module p02_page_host_arbiter (
 );
     reg transaction_active;
     reg transaction_page_owner;
+    reg wait_request_low;
 
-    assign fabric_req = page_active ? page_req : debug_req;
+    wire selected_req = page_active ? page_req : debug_req;
+
+    // The downstream P05 host contract is edge-sensitive. A requester may
+    // legally keep its request level asserted until it observes ACK. After a
+    // completed transaction, suppress that same request level until it has
+    // returned low at least once. Without this fence, transaction_active can
+    // re-arm on a held-high debug request while the prior fabric ACK/RVALID
+    // are still visible, exposing stale response data as a phantom transaction.
+    assign fabric_req = selected_req && !wait_request_low;
     assign fabric_write = page_active ? page_write : debug_write;
     assign fabric_context_slot =
         page_active ? page_context_slot : debug_context_slot;
@@ -64,12 +73,13 @@ module p02_page_host_arbiter (
 
     // A page command waits for an already-issued debug transaction to retire.
     assign page_busy =
-        fabric_busy || (transaction_active && !transaction_page_owner);
+        fabric_busy || wait_request_low ||
+        (transaction_active && !transaction_page_owner);
 
     // Debug is blocked for the full duration of page ownership, including gaps
     // between individual scalar bank transactions.
     assign debug_busy =
-        page_active || debug_req || fabric_busy ||
+        page_active || debug_req || fabric_busy || wait_request_low ||
         (transaction_active && transaction_page_owner);
 
     assign debug_ack =
@@ -94,14 +104,20 @@ module p02_page_host_arbiter (
         if (!resetn) begin
             transaction_active <= 1'b0;
             transaction_page_owner <= 1'b0;
+            wait_request_low <= 1'b0;
         end else begin
-            if (!transaction_active && fabric_req) begin
+            if (wait_request_low) begin
+                if (!selected_req)
+                    wait_request_low <= 1'b0;
+            end else if (!transaction_active && selected_req) begin
                 transaction_active <= 1'b1;
                 transaction_page_owner <= page_active;
             end
 
-            if (transaction_active && fabric_ack)
+            if (transaction_active && fabric_ack) begin
                 transaction_active <= 1'b0;
+                wait_request_low <= 1'b1;
+            end
         end
     end
 endmodule
