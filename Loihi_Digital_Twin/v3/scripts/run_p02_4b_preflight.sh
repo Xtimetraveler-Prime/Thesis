@@ -10,6 +10,8 @@ mkdir -p "$TMP_DIR/fixture" "$TMP_DIR/dumps"
 
 cd "$V3_DIR"
 
+bash "$V3_DIR/rtl/run_p02_page_host_arbiter_held_request_sim.sh"
+
 PYTHONPATH="$V3_DIR/src" python -m pytest     tests/test_p02_ddr_abi.py     tests/test_p02_ddr_backing.py     tests/test_p02_physical_fixture.py     tests/test_p02_4b_ring_fixture.py     -q | tee "$TMP_DIR/pytest.log"
 
 PYTHONPATH="$V3_DIR/src" python scripts/p02_4b_ring_fixture.py generate     --output-dir "$TMP_DIR/fixture"     | tee "$TMP_DIR/generate.log"
