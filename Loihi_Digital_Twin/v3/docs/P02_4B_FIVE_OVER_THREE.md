@@ -348,9 +348,11 @@ The root cause is a request-level re-arm in `p02_page_host_arbiter`: a VIO
 debug request can remain asserted after ACK long enough for the arbiter to
 re-arm while the previous P05 ACK/RVALID remain visible.
 
-The arbiter now requires the request level to return low after each completion
-before another transaction can arm. A dedicated held-request simulation freezes
-this behavior.
+The arbiter now latches a completed debug ACK/RVALID/ERROR/RDATA response and
+holds it until the VIO request returns low. While that response is pending, the
+same request cannot re-arm. This both removes the stale-response race and keeps
+the response visible long enough for software polling. A dedicated held-request
+simulation freezes this behavior.
 
 This RTL change requires a newly routed P02 shell and new artifact fingerprints
 before the physical P02.4b gate can resume.
