@@ -21,7 +21,6 @@ bash "$V3_DIR/rtl/run_p02_ddr_backing_range_guard_sim.sh"
 
 python - "$V3_DIR" <<'PY'
 from pathlib import Path
-import re
 import sys
 
 root = Path(sys.argv[1])
@@ -62,9 +61,15 @@ for token in (
 
 header_defines = {}
 for line in header.splitlines():
-    match = re.match(r"^#define\\s+(P03_[A-Z0-9_]+)\\s+(.+?)\\s*$", line)
-    if match:
-        header_defines[match.group(1)] = match.group(2)
+    stripped = line.strip()
+    if not stripped.startswith("#define "):
+        continue
+    fields = stripped.split(None, 2)
+    if len(fields) != 3:
+        continue
+    _, name, value = fields
+    if name.startswith("P03_"):
+        header_defines[name] = value
 
 expected_header_defines = {
     "P03_MMIO_BASE": "((uintptr_t)0xA4000000u)",
