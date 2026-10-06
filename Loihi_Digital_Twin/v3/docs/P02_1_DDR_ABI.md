@@ -1,6 +1,6 @@
 # P02.1 — DDR Backing-Image ABI and Coherency Contract
 
-**Status:** Verification candidate  
+**Status:** Complete — accepted 2026-10-05  
 **Phase:** P02 — DDR-backed logical-core virtualization  
 **Date drafted:** 2026-10-05
 
