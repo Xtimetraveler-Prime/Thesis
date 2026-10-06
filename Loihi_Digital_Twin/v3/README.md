@@ -22,7 +22,9 @@ Development authority is:
 
 **P01 — Board-local architecture, ownership, and v3 contract: Complete.**
 
-**Next phase: P02 — DDR-backed logical-core virtualization.**
+**P02 — DDR-backed logical-core virtualization: Complete.**
+
+**Next phase: P03 — Autonomous PS-resident runtime.**
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -57,3 +59,32 @@ PYTHONPATH="$PWD/src" python -m pytest -q
 ```
 
 P00 was independently verified and accepted on 2026-10-05. See `docs/P00_ACCEPTANCE.md`.
+
+
+## P02 accepted physical baseline
+
+P02 closed on 2026-10-06 with:
+
+```text
+5 logical cores
+3 resident K26 context slots
+1 physical HLS engine
+K26 DDR authoritative for non-resident logical contexts
+35 physical dispatches
+7 algorithmic barriers
+30 routed packets
+60 page-ins
+60 mutable page-outs
+57 evictions
+all five final DDR records byte-exact to golden
+```
+
+Accepted P02 physical artifact identities:
+
+```text
+bitstream_sha256=0d96ae6af0cc313ccbd8f9c802aeb0c8c7946bfeabaca3152ef5c7b9d2b23f26
+probes_sha256=f4a9cb8c0ba676b86de784444968ec928cc4fc2be979f006bc39380ab86a8dbe
+```
+
+The PC still owns scheduling, packet-routing bookkeeping, and global barriers in
+this P02 baseline. P03 moves those responsibilities onto the Cortex-A53.
