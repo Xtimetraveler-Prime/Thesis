@@ -26,7 +26,9 @@ Development authority is:
 
 **P03 — Autonomous PS-resident runtime: In progress.**
 
-Current sub-milestone: **P03.1 — Autonomous runtime contract**.
+**P03.1 — Autonomous runtime contract: Complete.**
+
+Current sub-milestone: **P03.2 — PS-visible MMIO control/status shell**.
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
@@ -108,3 +110,20 @@ The first verification candidate freezes:
 - the FPGA-v3 addendum to the inherited Loihi-1 target specification.
 
 Primary record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
+
+
+## P03.2 verification candidate
+
+P03.2 now provides a 32-bit AXI4-Lite PS control endpoint at
+`0xA0000000..0xA000FFFF` through `M_AXI_HPM0_FPD`.
+
+It replaces VIO command ownership for:
+
+- DDR page commands;
+- HLS dispatch commands;
+- low-rate resident-memory reads/writes.
+
+The accepted P02 HP0 DDR page data path is retained. VIO remains only for
+observation and pre-run reset during bring-up.
+
+Primary record: `docs/P03_2_PS_MMIO_CONTROL.md`.
