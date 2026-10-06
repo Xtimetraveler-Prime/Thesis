@@ -48,10 +48,23 @@ protocol:    AXI4-Lite
 This address is an FPGA-v3 implementation choice, not a Loihi architectural
 property.
 
-Python/software constants are frozen in:
+AMD UG1085 places the low 32-bit `M_AXI_HPM0_FPD` PL window at
+`0xA400_0000..0xAFFF_FFFF`. P03.2 therefore uses the first 4 KiB of that
+window rather than the VCU-reserved region below it.
+
+Reference:
+
+```text
+AMD UG1085 — Zynq UltraScale+ Device Technical Reference Manual
+System Address Map / PL AXI Interface
+https://docs.amd.com/api/khub/documents/xzMsp_c5sG9J6A3u7NkJYQ/content
+```
+
+Software constants are frozen in both:
 
 ```text
 src/loihi_twin_v2/p03_mmio.py
+software/p03/include/p03_mmio.h
 ```
 
 ## Register map
