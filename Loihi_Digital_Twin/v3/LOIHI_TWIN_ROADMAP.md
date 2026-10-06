@@ -320,9 +320,12 @@ Replace PC-RAM backing for non-resident cores with K26 DDR backing.
     mutable-only writeback through real K26 DDR, with exact burst/byte/cycle
     evidence and per-bank fingerprints. Primary acceptance record:
     `docs/P02_4A_ACCEPTANCE.md`.
-  - **P02.4b — five-over-three DDR-backed workload.** **Planned.** Move the accepted
-    representative workload's authoritative non-resident context storage from
-    PC RAM into K26 DDR while retaining host orchestration until P03.
+  - **P02.4b — five-over-three DDR-backed workload.** **Verification candidate.** Execute
+    a directed seven-timestep / 35-dispatch five-logical-core workload through
+    three resident slots and one physical engine with K26 DDR as the
+    authoritative non-resident backing store. Require exact per-dispatch
+    state/spike/packet agreement and byte-exact final DDR images for all five
+    logical contexts. Primary record: `docs/P02_4B_FIVE_OVER_THREE.md`.
 
 ## Deliverables
 
