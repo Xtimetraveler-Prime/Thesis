@@ -289,3 +289,17 @@ This makes the P02 backing addresses physical debugger addresses rather than
 Linux virtual addresses.
 
 See `docs/P02_4B_ATTEMPT3.md`.
+
+
+## Physical attempt 4 diagnostic update
+
+The physical-target correction reached the non-processor `PSU` target and
+successfully issued the binary download, but XSDB `verify -data` rejected the
+PSU context.
+
+The current reproduction path therefore verifies each provisioned 512 KiB
+record using physical `mrd -bin -file` readback followed by an exact binary
+comparison. The entire transaction remains on PSU/APU and no processor/MMU
+context is required.
+
+See `docs/P02_4B_ATTEMPT4.md`.
