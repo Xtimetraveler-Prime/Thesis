@@ -19,8 +19,13 @@ bash -n scripts/build_p03_2c_smoke.sh
 bash -n scripts/run_p03_2c_physical.sh
 
 TMP_FIXTURE="$(mktemp -d)"
-trap 'rm -rf "$TMP_FIXTURE"' EXIT
+TMP_P02_FIXTURE="$(mktemp -d)"
+trap 'rm -rf "$TMP_FIXTURE" "$TMP_P02_FIXTURE"' EXIT
 PYTHONPATH="$V3_DIR/src" python scripts/p03_2c_smoke_fixture.py     --output-dir "$TMP_FIXTURE"     | tee /tmp/v3_p03_2c_fixture.log
+PYTHONPATH="$V3_DIR/src" python scripts/p02_4b_ring_fixture.py generate     --output-dir "$TMP_P02_FIXTURE"     >/tmp/v3_p03_2c_p02_fixture.log
+
+cmp "$TMP_FIXTURE/core0_initial.bin" "$TMP_P02_FIXTURE/core0_initial.bin"
+echo "PASS: P03.2c core0 backing record is byte-identical to accepted P02.4b fixture."
 
 python - "$V3_DIR" "$TMP_FIXTURE" <<'PY'
 from pathlib import Path
