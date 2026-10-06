@@ -652,9 +652,10 @@ set ltx_file [file join $report_dir p03_2_ps_mmio.ltx]
 set xsa_file [file join $report_dir p03_2_ps_mmio.xsa]
 write_debug_probes -force $ltx_file
 
-set impl_bit_files [get_files -quiet -of_objects [get_runs impl_1] -filter {FILE_TYPE == "Bitstream"}]
-if {[llength $impl_bit_files] < 1} {
-    error "P03.2 implementation run completed without a run-owned bitstream"
+set impl_run_dir [file join $project_dir "${project_name}.runs" impl_1]
+set impl_bit_files [glob -nocomplain [file join $impl_run_dir *.bit]]
+if {[llength $impl_bit_files] != 1} {
+    error "P03.2 expected exactly one run-owned bitstream in $impl_run_dir, got [llength $impl_bit_files]"
 }
 set impl_bit_file [lindex $impl_bit_files 0]
 file copy -force $impl_bit_file $bit_file
