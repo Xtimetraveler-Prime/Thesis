@@ -21,6 +21,7 @@ done
 PYTHONPATH="$V3_DIR/src" python scripts/p02_4b_ring_fixture.py verify     --fixture-dir "$TMP_DIR/fixture"     --dump-dir "$TMP_DIR/dumps"     | tee "$TMP_DIR/verify.log"
 
 bash -n scripts/run_p02_4b_five_over_three.sh
+bash -n scripts/run_p02_4b_paging_stress.sh
 
 python - "$V3_DIR" <<'PY'
 from pathlib import Path
@@ -31,6 +32,7 @@ paths = (
     "vivado/p02_4b_xsdb_prepare.tcl",
     "vivado/p02_4b_xsdb_dump.tcl",
     "vivado/p02_4b_five_over_three.tcl",
+    "vivado/p02_4b_paging_stress.tcl",
 )
 for relative in paths:
     text = (root / relative).read_text(encoding="utf-8")
@@ -114,6 +116,19 @@ for key, expected in expected_manifest.items():
         )
 print("PASS: P02.4b frozen golden manifest preflight")
 
+stress = (root / "vivado/p02_4b_paging_stress.tcl").read_text(encoding="utf-8")
+for token in (
+    "stress_load_core3_slot0",
+    "stress_evict_core3_slot0",
+    "stress_reload_core3_slot2_target",
+    "P02_4B_STRESS_PAGE_INS",
+    "P02_4B_STRESS_PAGE_OUTS",
+):
+    if token not in stress:
+        raise SystemExit(
+            f"FAIL: P02.4b paging-stress contract missing {token!r}"
+        )
+print("PASS: P02.4b paging-stress contract preflight")
 print("PASS: P02.4b Tcl/runtime contract preflight")
 PY
 
