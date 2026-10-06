@@ -97,6 +97,23 @@ for forbidden in (
             f"FAIL: P03.2 still has competing VIO command source {forbidden!r}"
         )
 
+connected_vio_outputs = [
+    line.strip()
+    for line in vivado.splitlines()
+    if line.strip().startswith("connect_pair vio_") and "/probe_out" in line
+]
+expected_vio_outputs = [
+    "connect_pair vio_p08/probe_out1 p08_reset_conditioner_0/reset_request"
+]
+if connected_vio_outputs != expected_vio_outputs:
+    raise SystemExit(
+        "FAIL: P03.2 connected VIO outputs drifted: "
+        f"{connected_vio_outputs!r}"
+    )
+
+if "write_hw_platform -fixed -include_bit -force -file $xsa_file" not in vivado:
+    raise SystemExit("FAIL: P03.2 fixed XSA export is missing")
+
 print("PASS: P03.2 MMIO contract static checks")
 print("PASS: P03.2 HPM0/Vivado ownership static checks")
 PY
