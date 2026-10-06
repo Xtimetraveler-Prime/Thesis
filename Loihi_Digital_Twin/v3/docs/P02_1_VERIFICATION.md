@@ -42,3 +42,13 @@ The full inherited v3 regression suite has **not yet been recorded as rerun for
 P02**. It remains a required phase-level gate before the P02 branch may merge.
 
 No physical DDR transfer is claimed by this verification.
+
+
+## Phase-closure note
+
+The phase-level regression and physical gates were subsequently completed during
+P02.2–P02.4. P02 itself was accepted on 2026-10-06.
+
+Therefore the P02.1 ABI is no longer pending a phase-level regression gate.
+It remains the accepted byte-level backing-image contract used by the final P02
+physical implementation.
