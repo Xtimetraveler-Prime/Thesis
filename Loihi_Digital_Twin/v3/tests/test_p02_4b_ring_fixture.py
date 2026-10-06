@@ -38,8 +38,16 @@ def test_p02_4b_generate_and_verify_expected_records() -> None:
         assert manifest["resident_context_count"] == 3
         assert manifest["physical_engine_count"] == 1
         assert manifest["dispatch_count"] == 35
-        assert manifest["expected_packet_count_total"] > 0
+        assert manifest["expected_packet_count_total"] == 30
         assert manifest["authoritative_backing"] == "k26-ddr"
+        assert (
+            manifest["trace_fingerprint"]
+            == "9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac"
+        )
+        assert (
+            manifest["manifest_fingerprint"]
+            == "15288f1f6245c39a98167f610802d9146debfc6e3266981eb4bcd5245a1c975d"
+        )
 
         for core_id in fixture.LOGICAL_CORES:
             initial = fixture_dir / f"core{core_id}_initial.bin"
