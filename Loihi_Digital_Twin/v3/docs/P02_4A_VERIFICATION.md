@@ -131,3 +131,14 @@ The retry candidate binds the VIO using `TYPE`, `PROBE_PORT`, and
 
 The board must be rebooted before retrying because the attempt intentionally
 left the A53 halted.
+
+
+## Physical attempt 2 update
+
+The second board attempt independently confirmed the entire P02 paging VIO
+port/type/width inventory and passed metadata-based binding. It then stopped
+before pulsing the first page command because the helper serialized Vivado
+`hw_probe` objects through `array get` / `array set`.
+
+The retry candidate preserves the live probe objects using Tcl `upvar`.
+See `docs/P02_4A_ATTEMPT2.md`.
