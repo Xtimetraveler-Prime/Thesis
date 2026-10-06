@@ -81,6 +81,13 @@ def test_p02_4_fixture_write_and_verify_roundtrip() -> None:
 
         assert manifest["addresses"]["source"] == "0x40000000"
         assert (root / fixture.FILES["source"]).stat().st_size == fixture.RECORD_BYTES
+        assert manifest["sha256"] == {
+            "source": "999e22fd93cd2b2dc81fb490ca2b9b0ec480956267dc509c88b4f1d6eab60acc",
+            "full_initial": "14695b15cd640bbf937683d9b5ba94fe8971b09c163436faaea7398cf341cd18",
+            "mutable_initial": "f76a937377774121eda9de4fa8a5c11f0a89d77a03c013ecb4a8a6ce746a9624",
+            "full_expected": "fa1921ce302ce931c1b7a5873e6f1b5b5c0943facf20d5f536b89bc01d2de41d",
+            "mutable_expected": "f39058fdac41b3f0d36a6882aedc66ba98f40f117589c172c9289fde1fa226c6",
+        }
 
         result = fixture.verify_dump_set(
             root,
