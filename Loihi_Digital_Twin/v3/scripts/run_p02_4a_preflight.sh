@@ -23,12 +23,12 @@ from pathlib import Path
 import sys
 root = Path(sys.argv[1])
 for relative in (
-    "vivado/p02_4_xsct_prepare.tcl",
-    "vivado/p02_4_xsct_dump.tcl",
+    "vivado/p02_4_xsdb_prepare.tcl",
+    "vivado/p02_4_xsdb_dump.tcl",
     "vivado/p02_4_vio_roundtrip.tcl",
 ):
     text = (root / relative).read_text(encoding="utf-8")
-    # Lightweight delimiter sanity for Tcl source before the real XSCT/Vivado run.
+    # Lightweight delimiter sanity for Tcl source before the real XSDB/Vivado run.
     for left, right in (("{", "}"), ("[", "]")):
         if text.count(left) != text.count(right):
             raise SystemExit(f"FAIL: unbalanced {left}{right} delimiters in {relative}")
