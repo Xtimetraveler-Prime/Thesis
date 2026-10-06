@@ -76,7 +76,7 @@ for pair in "wns_ns:$WNS" "whs_ns:$WHS"; do
     fi
 done
 
-for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_mmio_base:0xA0000000"     "p03_mmio_range_bytes:0x00010000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
+for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_mmio_base:0xA0000000"     "p03_mmio_range_bytes:0x00001000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
     key="${pair%%:*}"
     expected="${pair#*:}"
     actual="$(metric_value "$key")"
@@ -99,7 +99,7 @@ printf 'PASS: P03.2 routed timing wns_ns=%s whs_ns=%s
 ' "$WNS" "$WHS"
 printf 'PASS: P03.2 physical topology resident_contexts=3 physical_engines=1 hp0=128bit hpm0=32bit
 '
-printf 'PASS: P03.2 MMIO map base=0xA0000000 range=0x00010000
+printf 'PASS: P03.2 MMIO map base=0xA0000000 range=0x00001000
 '
 printf 'PASS: P03.2 command ownership page=ps-mmio dispatch=ps-mmio resident-memory=ps-mmio
 '
