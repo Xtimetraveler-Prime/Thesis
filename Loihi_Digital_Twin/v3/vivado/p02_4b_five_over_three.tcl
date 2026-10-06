@@ -110,6 +110,46 @@ proc p02b_host_read {slot bank addr} {
     return $value
 }
 
+proc p02b_verify_static_resident_image {core slot} {
+    global P02B_EXPECT_CONFIG0 P02B_EXPECT_AXON_INDEX P02B_EXPECT_AXON_WORD
+    global P02B_EXPECT_SYNAPSE0 P02B_EXPECT_ROUTE_DESC0 P02B_EXPECT_ROUTE0
+
+    set config_actual [p02b_host_read $slot 0 0]
+    set config_expected [p02b_parse_hex $P02B_EXPECT_CONFIG0($core)]
+    p02b_expect "resident config core=$core slot=$slot" $config_actual $config_expected
+
+    set axon_index $P02B_EXPECT_AXON_INDEX($core)
+    set axon_actual [p02b_host_read $slot 2 $axon_index]
+    set axon_expected [p02b_parse_hex $P02B_EXPECT_AXON_WORD($core)]
+    p02b_expect "resident axon core=$core slot=$slot addr=$axon_index" $axon_actual $axon_expected
+
+    set synapse_actual [p02b_host_read $slot 3 0]
+    set synapse_expected [p02b_parse_hex $P02B_EXPECT_SYNAPSE0($core)]
+    p02b_expect "resident synapse core=$core slot=$slot" $synapse_actual $synapse_expected
+
+    set route_desc_actual [p02b_host_read $slot 4 0]
+    set route_desc_expected [p02b_parse_hex $P02B_EXPECT_ROUTE_DESC0($core)]
+    p02b_expect "resident route descriptor core=$core slot=$slot" $route_desc_actual $route_desc_expected
+
+    set route_actual [p02b_host_read $slot 5 0]
+    set route_expected [p02b_parse_hex $P02B_EXPECT_ROUTE0($core)]
+    p02b_expect "resident route core=$core slot=$slot" $route_actual $route_expected
+
+    puts "PASS: P02.4b resident static image verified logical_core=$core slot=$slot"
+}
+
+proc p02b_verify_initial_resident_image {core slot} {
+    global P02B_EXPECT_INITIAL_STATE0
+    p02b_verify_static_resident_image $core $slot
+
+    set state_actual [p02b_host_read $slot 1 0]
+    set state_expected [p02b_parse_hex $P02B_EXPECT_INITIAL_STATE0($core)]
+    p02b_expect "initial resident state core=$core slot=$slot" $state_actual $state_expected
+
+    puts "PASS: P02.4b initial resident image verified logical_core=$core slot=$slot"
+}
+
+
 proc p02b_page_input {port} {
     global P02B_PAGE_VIO
     refresh_hw_vio $P02B_PAGE_VIO
@@ -208,6 +248,7 @@ proc p02b_ensure_resident {core} {
     p02b_page_transfer 0 0 $slot $P02B_RECORD_BASE($core) $label
     set P02B_SLOT_CORE($slot) $core
     set P02B_SLOT_DIRTY($slot) 0
+    p02b_verify_static_resident_image $core $slot
     set P02B_VICTIM_CURSOR [expr {($P02B_VICTIM_CURSOR + 1) % 3}]
     return $slot
 }
@@ -354,6 +395,7 @@ for {set slot 0} {$slot < 3} {incr slot} {
     set label [format "initial_core%d_slot%d" $core $slot]
     p02b_page_transfer 0 0 $slot $P02B_RECORD_BASE($core) $label
     set P02B_SLOT_CORE($slot) $core
+    p02b_verify_initial_resident_image $core $slot
 }
 puts "PASS: P02.4b initial residency logical={0 1 2} physical_slots=3"
 
@@ -368,6 +410,8 @@ for {set timestep 0} {$timestep < $P02B_TIMESTEPS} {incr timestep} {
         set addr $P02B_EVENT_COUNT($core,$current_bank)
         set event_bank_id [expr {$current_bank ? 9 : 6}]
         p02b_host_write $slot $event_bank_id $addr $P02B_EXTERNAL_AXON($core)
+        set event_readback [p02b_host_read $slot $event_bank_id $addr]
+        p02b_expect "external event readback t=$timestep core=$core slot=$slot"             $event_readback $P02B_EXTERNAL_AXON($core)
         incr P02B_EVENT_COUNT($core,$current_bank)
         set P02B_SLOT_DIRTY($slot) 1
 
