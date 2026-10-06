@@ -248,6 +248,7 @@ proc p02b_page_transfer {page_out mutable_only slot record_base label} {
     p02b_expect "$label read bursts" [expr {$read_after - $read_before}] $expected_read
     p02b_expect "$label write bursts" [expr {$write_after - $write_before}] $expected_write
     p02b_expect "$label AXI bytes" [expr {$axi_after - $axi_before}] $expected_bytes
+    p02b_expect "$label pending write bytes" [p02b_page_input 14] 0
 }
 
 proc p02b_ensure_resident {core} {
@@ -267,8 +268,14 @@ proc p02b_ensure_resident {core} {
     if {$evicted >= 0} {
         incr P02B_EVICTIONS
         if {$P02B_SLOT_DIRTY($slot)} {
+            puts "P02_4B_EVICT_PRECHECK logical_core=$evicted slot=$slot"
+            p02b_verify_static_resident_image $evicted $slot
+
             set label [format "evict_core%d_slot%d" $evicted $slot]
             p02b_page_transfer 1 1 $slot $P02B_RECORD_BASE($evicted) $label
+
+            puts "P02_4B_EVICT_POSTCHECK logical_core=$evicted slot=$slot"
+            p02b_verify_static_resident_image $evicted $slot
             set P02B_SLOT_DIRTY($slot) 0
         }
     }
@@ -482,8 +489,14 @@ for {set timestep 0} {$timestep < $P02B_TIMESTEPS} {incr timestep} {
 for {set slot 0} {$slot < 3} {incr slot} {
     set core $P02B_SLOT_CORE($slot)
     if {$core >= 0 && $P02B_SLOT_DIRTY($slot)} {
+        puts "P02_4B_FINAL_FLUSH_PRECHECK logical_core=$core slot=$slot"
+        p02b_verify_static_resident_image $core $slot
+
         set label [format "final_flush_core%d_slot%d" $core $slot]
         p02b_page_transfer 1 1 $slot $P02B_RECORD_BASE($core) $label
+
+        puts "P02_4B_FINAL_FLUSH_POSTCHECK logical_core=$core slot=$slot"
+        p02b_verify_static_resident_image $core $slot
         set P02B_SLOT_DIRTY($slot) 0
     }
 }
