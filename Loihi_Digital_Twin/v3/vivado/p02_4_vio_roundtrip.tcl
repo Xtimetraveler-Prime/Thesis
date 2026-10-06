@@ -51,25 +51,31 @@ proc p02_input_int {vio probe} {
     return [expr {wide($raw)}]
 }
 
-proc p02_commit_outputs {vio assignments} {
-    foreach {probe value} $assignments {
-        set_property OUTPUT_VALUE $value $probe
-    }
+proc p02_commit_page_outputs {vio probe_array_name page_out mutable_only slot record_base start_value} {
+    upvar 1 $probe_array_name p
+    set_property OUTPUT_VALUE $start_value $p(out0)
+    set_property OUTPUT_VALUE $page_out $p(out1)
+    set_property OUTPUT_VALUE $mutable_only $p(out2)
+    set_property OUTPUT_VALUE $slot $p(out3)
+    set_property OUTPUT_VALUE $record_base $p(out4)
     commit_hw_vio $vio
 }
 
-proc p02_page_command {vio probes label page_out mutable_only slot record_base expected_bytes} {
-    array set p $probes
+proc p02_page_command {vio probe_array_name label page_out mutable_only slot record_base expected_bytes} {
+    # Keep the hw_probe Tcl objects in the caller's array.  Serializing them
+    # through "array get" converts Vivado object handles into plain path strings
+    # that get_property/set_property reject as hardware objects.
+    upvar 1 $probe_array_name p
 
     set completed_before [p02_input_int $vio $p(in4)]
     set read_before [p02_input_int $vio $p(in9)]
     set write_before [p02_input_int $vio $p(in10)]
     set axi_before [p02_input_int $vio $p(in11)]
 
-    p02_commit_outputs $vio [list         $p(out0) 0         $p(out1) $page_out         $p(out2) $mutable_only         $p(out3) $slot         $p(out4) $record_base]
-    p02_commit_outputs $vio [list $p(out0) 1]
+    p02_commit_page_outputs $vio p $page_out $mutable_only $slot $record_base 0
+    p02_commit_page_outputs $vio p $page_out $mutable_only $slot $record_base 1
     after 10
-    p02_commit_outputs $vio [list $p(out0) 0]
+    p02_commit_page_outputs $vio p $page_out $mutable_only $slot $record_base 0
 
     set complete 0
     for {set poll 0} {$poll < 3000} {incr poll} {
@@ -183,12 +189,12 @@ for {set i 0} {$i < [llength $in_widths]} {incr i} {
     set_property INPUT_VALUE_RADIX UNSIGNED $p(in$i)
 }
 puts "PASS: P02.4 paging VIO probes bound by TYPE/PROBE_PORT metadata"
-set probes [array get p]
 
-# Fresh programming resets all page/AXI observability counters.
-p02_page_command $page_vio $probes PAGE_IN_FULL 0 0 0 0x40000000 438272
-p02_page_command $page_vio $probes PAGE_OUT_FULL 1 0 0 0x43F00000 438272
-p02_page_command $page_vio $probes PAGE_OUT_MUTABLE 1 1 0 0x43F80000 106496
+# Fresh programming resets all page/AXI observability counters. Pass the array
+# name so Vivado hw_probe objects remain live Tcl objects instead of strings.
+p02_page_command $page_vio p PAGE_IN_FULL 0 0 0 0x40000000 438272
+p02_page_command $page_vio p PAGE_OUT_FULL 1 0 0 0x43F00000 438272
+p02_page_command $page_vio p PAGE_OUT_MUTABLE 1 1 0 0x43F80000 106496
 
 refresh_hw_vio $page_vio
 set completed [expr {wide([get_property INPUT_VALUE $p(in4)])}]
