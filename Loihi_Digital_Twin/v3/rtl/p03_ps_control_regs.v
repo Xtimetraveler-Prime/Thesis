@@ -126,6 +126,10 @@ module p03_ps_control_regs (
 
     localparam [31:0] P03_MMIO_ID = 32'h4C54_3302; // "LT3" + P03.2
     localparam [31:0] P03_MMIO_VERSION = 32'h0001_0000;
+    // Temporary P03.2c physical diagnostic: if a read reaches this slave but
+    // misses every defined register/window, return a recognizable signature
+    // carrying the received low 12 address bits instead of an ambiguous zero.
+    localparam [31:0] P03_MMIO_UNMAPPED_SIGNATURE = 32'hD1A6_0000;
 
     // Register byte offsets.
     localparam [11:0] REG_ID                   = 12'h000;
@@ -331,6 +335,8 @@ module p03_ps_control_regs (
                         word_index =
                             ({addr[11:2], 2'b00} - REG_DEBUG_RDATA0) >> 2;
                         value = debug_rdata_latched[word_index*32 +: 32];
+                    end else begin
+                        value = P03_MMIO_UNMAPPED_SIGNATURE | {20'd0, addr};
                     end
                 end
             endcase
