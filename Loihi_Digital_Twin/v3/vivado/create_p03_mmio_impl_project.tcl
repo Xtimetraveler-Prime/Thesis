@@ -13,7 +13,7 @@
 # P03.2 adds the opposite control direction:
 #
 #   Cortex-A53 / PS M_AXI_HPM0_FPD
-#       -> SmartConnect
+#       -> AXI Protocol Converter
 #       -> p03_ps_control_regs AXI4-Lite
 #       -> page / dispatch / resident-memory command signals
 #
