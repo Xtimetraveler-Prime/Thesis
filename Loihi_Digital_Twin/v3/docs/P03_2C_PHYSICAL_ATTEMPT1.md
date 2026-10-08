@@ -259,3 +259,25 @@ Expected interpretation:
 
 This signature is temporary diagnostic logic and is not part of the final
 P03 MMIO ABI.
+
+
+## Diagnostic-signature preflight correction
+
+The first preflight after adding the unmapped-read signature reported:
+
+```text
+FAIL: resident-slot capability mismatch
+FAIL: physical-engine capability mismatch
+```
+
+This was a testbench ordering bug, not an RTL failure.
+
+The testbench read the capabilities register at `0x008`, checked only the
+low capability flags, then overwrote `read_value` by reading the diagnostic
+offset `0x018` before checking the resident-slot and physical-engine fields.
+
+The assertions are now ordered correctly:
+
+1. read `0x008`;
+2. check flags, resident slots, and engine count;
+3. then read/check `0x018`.
