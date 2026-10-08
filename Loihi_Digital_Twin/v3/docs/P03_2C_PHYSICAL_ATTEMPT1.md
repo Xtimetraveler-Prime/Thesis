@@ -121,3 +121,58 @@ puts [mrd -force -size w <address> <count>]
 ```
 
 No hardware, MMIO, or standalone application logic changed.
+
+
+## Realized block-design inspection
+
+The accepted routed project reports:
+
+```text
+M_AXI_HPM0_FPD  AXI4      ADDR_WIDTH=40 DATA_WIDTH=32
+SmartConnect SI AXI4      ADDR_WIDTH=40 DATA_WIDTH=32
+SmartConnect MI AXI4LITE  ADDR_WIDTH=12 DATA_WIDTH=32
+MMIO S_AXI      AXI4LITE  ADDR_WIDTH=12 DATA_WIDTH=32
+```
+
+The realized address assignment remains:
+
+```text
+offset=0x00A4000000
+range =0x0000001000
+```
+
+so the requested 4 KiB HPM0 window was not collapsed by the Address Editor.
+
+Physical forced reads with the accepted bitstream returned:
+
+```text
+0xA4000000 -> 0x4C543302
+0xA4000004 -> 0x00000000
+0xA4000008 -> 0x00000000
+0xA400000C -> 0x00000000
+```
+
+for both repeated multiword and individual transactions.
+
+This proves the failure exists in the realized PS-to-PL hardware path and is
+not specific to the standalone A53 application.
+
+## Corrective implementation under test
+
+The only address-width conversion remaining between HPM0 and the MMIO slave
+was SmartConnect's 40-bit AXI4 input to 12-bit AXI4-Lite output.
+
+The MMIO slave has therefore been changed to accept the full 40-bit system
+address and decode only `addr[11:0]` internally. This preserves:
+
+- base `0xA4000000`;
+- 4 KiB aperture;
+- every existing register offset;
+- 32-bit AXI4-Lite data width;
+- page/dispatch/resident command semantics.
+
+The RTL regression now drives full `0xA4000000 + offset` addresses and
+explicitly checks VERSION at `+0x004`.
+
+This correction is not accepted until a new routed shell passes timing and
+physical forced reads demonstrate the nonzero offsets.
