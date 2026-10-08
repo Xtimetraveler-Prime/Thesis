@@ -176,3 +176,26 @@ explicitly checks VERSION at `+0x004`.
 
 This correction is not accepted until a new routed shell passes timing and
 physical forced reads demonstrate the nonzero offsets.
+
+
+## Diagnostic attempt 3
+
+After programming the full-width candidate shell from a normal Linux boot,
+the read-only diagnostic failed before reaching PL:
+
+```text
+MMU fault at VA 0xA4000000
+Translation fault, level 0
+```
+
+Cause: the diagnostic selected `Cortex-A53 #0`, so XSDB attempted the read in
+the processor's current virtual-address/MMU context.
+
+Correction: the diagnostic now follows the same proven physical-memory access
+pattern as the P03.2c provisioning/mailbox scripts:
+
+1. halt visible Cortex-A53 cores;
+2. select the `PSU` physical target, falling back to `APU`;
+3. issue `mrd -force -size w` physical reads of the PL MMIO aperture.
+
+This bypasses the A53 MMU while retaining the debugger address-map override.
