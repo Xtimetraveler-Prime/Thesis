@@ -10,7 +10,10 @@
 // It deliberately does not implement the P03 scheduler/router itself.  P03.3
 // software running on the Cortex-A53 drives this register contract.
 //
-// AXI4-Lite: 32-bit data, 12-bit byte address, one outstanding read/write.
+// AXI4-Lite: 32-bit data, 40-bit system byte address, one outstanding
+// read/write.  Internal register decode uses addr[11:0] for the fixed 4 KiB
+// aperture.  Keeping the full HPM0 address width avoids relying on
+// interconnect-side 40->12 address localization.
 module p03_ps_control_regs (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axi_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXI, ASSOCIATED_RESET s_axi_aresetn" *)
@@ -21,8 +24,8 @@ module p03_ps_control_regs (
     input  wire         s_axi_aresetn,
 
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI AWADDR" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME S_AXI, PROTOCOL AXI4LITE, DATA_WIDTH 32, ADDR_WIDTH 12, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, SUPPORTS_NARROW_BURST 0, MAX_BURST_LENGTH 1, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1" *)
-    input  wire [11:0]  s_axi_awaddr,
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME S_AXI, PROTOCOL AXI4LITE, DATA_WIDTH 32, ADDR_WIDTH 40, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, SUPPORTS_NARROW_BURST 0, MAX_BURST_LENGTH 1, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1" *)
+    input  wire [39:0]  s_axi_awaddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI AWPROT" *)
     input  wire [2:0]   s_axi_awprot,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI AWVALID" *)
@@ -47,7 +50,7 @@ module p03_ps_control_regs (
     input  wire         s_axi_bready,
 
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI ARADDR" *)
-    input  wire [11:0]  s_axi_araddr,
+    input  wire [39:0]  s_axi_araddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI ARPROT" *)
     input  wire [2:0]   s_axi_arprot,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI ARVALID" *)
@@ -166,7 +169,7 @@ module p03_ps_control_regs (
     localparam [11:0] REG_DEBUG_RDATA0         = 12'h130;
 
     reg aw_pending;
-    reg [11:0] awaddr_q;
+    reg [39:0] awaddr_q;
     reg w_pending;
     reg [31:0] wdata_q;
     reg [3:0] wstrb_q;
@@ -341,7 +344,7 @@ module p03_ps_control_regs (
     always @(posedge s_axi_aclk) begin
         if (!s_axi_aresetn) begin
             aw_pending <= 1'b0;
-            awaddr_q <= 12'd0;
+            awaddr_q <= 40'd0;
             w_pending <= 1'b0;
             wdata_q <= 32'd0;
             wstrb_q <= 4'd0;
@@ -541,7 +544,7 @@ module p03_ps_control_regs (
                 rvalid_q <= 1'b0;
 
             if (s_axi_arvalid && s_axi_arready) begin
-                rdata_q <= read_register(s_axi_araddr);
+                rdata_q <= read_register(s_axi_araddr[11:0]);
                 rvalid_q <= 1'b1;
             end
         end
