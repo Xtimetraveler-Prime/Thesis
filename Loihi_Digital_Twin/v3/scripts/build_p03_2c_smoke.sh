@@ -49,8 +49,12 @@ if ! command -v aarch64-none-elf-gcc >/dev/null 2>&1; then
         fi
     done
     if [[ -z "$A53_GCC" && -n "${XILINX_VITIS:-}" &&
-          -d "$XILINX_VITIS/gnu/aarch64" ]]; then
-        A53_GCC="$(find "$XILINX_VITIS/gnu/aarch64" -type f             -name aarch64-none-elf-gcc -perm -u+x -print -quit 2>/dev/null || true)"
+          -d "$XILINX_VITIS" ]]; then
+        A53_GCC="$(find "$XILINX_VITIS" -type f             -name aarch64-none-elf-gcc -perm -u+x -print -quit 2>/dev/null || true)"
+    fi
+    if [[ -z "$A53_GCC" && -n "${XILINX_VITIS:-}" ]]; then
+        VITIS_VERSION_ROOT="$(cd -- "$XILINX_VITIS/.." && pwd)"
+        A53_GCC="$(find "$VITIS_VERSION_ROOT" -type f             -name aarch64-none-elf-gcc -perm -u+x -print -quit 2>/dev/null || true)"
     fi
     if [[ -n "$A53_GCC" ]]; then
         export PATH="$(dirname "$A53_GCC"):$PATH"
@@ -61,7 +65,7 @@ for tool in python vitis aarch64-none-elf-gcc sha256sum readelf; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required P03.2c build tool is unavailable: $tool" >&2
         if [[ "$tool" == "aarch64-none-elf-gcc" ]]; then
-            echo "ERROR: searched the bundled Vitis A53 toolchain under: ${XILINX_VITIS:-UNSET}/gnu/aarch64" >&2
+            echo "ERROR: searched the full Vitis installation tree under: ${XILINX_VITIS:-UNSET}" >&2
             echo "ERROR: the Vitis embedded Arm GNU toolchain component may not be installed." >&2
         fi
         exit 2
