@@ -283,6 +283,9 @@ module test_p03_ps_control_regs;
         axi_read(12'h000, read_value);
         check(read_value == 32'h4C54_3302, "MMIO ID mismatch");
 
+        axi_read(12'h004, read_value);
+        check(read_value == 32'h0001_0000, "MMIO version mismatch");
+
         axi_read(12'h008, read_value);
         check(read_value[4:0] == 5'b1_1111, "MMIO capability flags mismatch");
         check(read_value[10:8] == 3'd3, "resident-slot capability mismatch");
