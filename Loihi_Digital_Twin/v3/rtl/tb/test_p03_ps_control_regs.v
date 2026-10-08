@@ -182,7 +182,7 @@ module test_p03_ps_control_regs;
     endtask
 
     task axi_write;
-        input [39:0] addr;
+        input [11:0] addr;
         input [31:0] value;
         begin
             // Drive VALID on the falling edge and sample READY before the
@@ -190,7 +190,7 @@ module test_p03_ps_control_regs;
             // after that edge is incorrect for this DUT because the accepted
             // request immediately raises its pending flag and deasserts READY.
             @(negedge clk);
-            awaddr = addr;
+            awaddr = 40'h00_A4000000 + addr;
             awvalid = 1'b1;
             wdata = value;
             wstrb = 4'hF;
@@ -231,14 +231,14 @@ module test_p03_ps_control_regs;
     endtask
 
     task axi_read;
-        input [39:0] addr;
+        input [11:0] addr;
         output [31:0] value;
         begin
             // As with writes, READY must be observed before the accepting
             // rising edge.  Once the DUT captures ARVALID it raises RVALID and
             // its combinational ARREADY falls.
             @(negedge clk);
-            araddr = addr;
+            araddr = 40'h00_A4000000 + addr;
             arvalid = 1'b1;
             rready = 1'b0;
 
