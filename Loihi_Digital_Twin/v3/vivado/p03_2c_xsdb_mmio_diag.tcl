@@ -42,6 +42,8 @@ puts "P03_2C_MMIO_DIAG_SINGLE_CAPABILITIES"
 puts [mrd -force -size w 0xA4000008 1]
 puts "P03_2C_MMIO_DIAG_SINGLE_GLOBAL_STATUS"
 puts [mrd -force -size w 0xA400000C 1]
+puts "P03_2C_MMIO_DIAG_SINGLE_UNMAPPED"
+puts [mrd -force -size w 0xA4000018 1]
 puts "P03_2C_MMIO_DIAG_END"
 
 disconnect
