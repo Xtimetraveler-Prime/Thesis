@@ -104,3 +104,20 @@ itself is inaccessible.
 AMD's XSDB reference documents `mrd -force` for overriding reserved/invalid
 address-map protection. The diagnostic now uses forced 32-bit word reads for
 the MMIO aperture.
+
+
+## Diagnostic attempt 2
+
+The forced XSDB diagnostic executed without an access-policy error but printed
+only marker lines.
+
+Cause: inside an XSDB Tcl script, `mrd` returns the formatted read result;
+the script did not explicitly print that returned string.
+
+The diagnostic now wraps each read as:
+
+```tcl
+puts [mrd -force -size w <address> <count>]
+```
+
+No hardware, MMIO, or standalone application logic changed.
