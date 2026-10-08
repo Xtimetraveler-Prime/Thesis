@@ -8,6 +8,12 @@ if {![file exists $xpr]} { error "missing Vivado project: $xpr" }
 open_project $xpr
 open_bd_design [get_files *loihi_twin_v3_p03_mmio_impl.bd]
 
+proc prop_or {obj prop fallback} {
+    set value $fallback
+    catch {set value [get_property $prop $obj]}
+    return $value
+}
+
 puts "P03_2C_BD_INSPECT_BEGIN"
 
 set mmio_intf [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
@@ -18,9 +24,7 @@ set sc_s [get_bd_intf_pins p03_hpm0_smartconnect_0/S00_AXI]
 foreach obj [list $hpm0_intf $sc_s $sc_m $mmio_intf] {
     puts "INTF=[get_property NAME $obj]"
     foreach prop {VLNV MODE CONFIG.PROTOCOL CONFIG.ADDR_WIDTH CONFIG.DATA_WIDTH} {
-        set value ""
-        catch {set value [get_property $prop $obj]}
-        puts "  $prop=$value"
+        puts "  $prop=[prop_or $obj $prop NA]"
     }
 }
 
@@ -44,17 +48,15 @@ foreach pin_name {
 
 puts "MMIO_SLAVE_SEGMENTS"
 foreach seg [get_bd_addr_segs -quiet -of_objects $mmio_intf] {
-    puts "SEG=$seg OFFSET=[get_property OFFSET $seg] RANGE=[get_property RANGE $seg]"
+    puts "SEG=$seg OFFSET=[prop_or $seg OFFSET NA] RANGE=[prop_or $seg RANGE NA]"
     foreach prop {ADDR_WIDTH MIN_SIZE USAGE} {
-        set value ""
-        catch {set value [get_property $prop $seg]}
-        puts "  $prop=$value"
+        puts "  $prop=[prop_or $seg $prop NA]"
     }
 }
 
 puts "HPM0_MASTER_SEGMENTS"
 foreach seg [get_bd_addr_segs -quiet -of_objects [get_bd_addr_spaces -quiet -of_objects $hpm0_intf]] {
-    puts "SEG=$seg OFFSET=[get_property OFFSET $seg] RANGE=[get_property RANGE $seg]"
+    puts "SEG=$seg OFFSET=[prop_or $seg OFFSET NA] RANGE=[prop_or $seg RANGE NA]"
 }
 
 validate_bd_design
