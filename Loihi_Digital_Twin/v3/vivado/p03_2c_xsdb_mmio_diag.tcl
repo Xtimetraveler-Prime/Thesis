@@ -14,17 +14,17 @@ catch {stop}
 
 puts "P03_2C_MMIO_DIAG_TARGET=Cortex-A53 #0"
 puts "P03_2C_MMIO_DIAG_BEGIN"
-mrd 0xA4000000 4
+mrd -force -size w 0xA4000000 4
 puts "P03_2C_MMIO_DIAG_REPEAT"
-mrd 0xA4000000 4
+mrd -force -size w 0xA4000000 4
 puts "P03_2C_MMIO_DIAG_SINGLE_ID"
-mrd 0xA4000000 1
+mrd -force -size w 0xA4000000 1
 puts "P03_2C_MMIO_DIAG_SINGLE_VERSION"
-mrd 0xA4000004 1
+mrd -force -size w 0xA4000004 1
 puts "P03_2C_MMIO_DIAG_SINGLE_CAPABILITIES"
-mrd 0xA4000008 1
+mrd -force -size w 0xA4000008 1
 puts "P03_2C_MMIO_DIAG_SINGLE_GLOBAL_STATUS"
-mrd 0xA400000C 1
+mrd -force -size w 0xA400000C 1
 puts "P03_2C_MMIO_DIAG_END"
 
 disconnect
