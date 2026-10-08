@@ -32,6 +32,10 @@ header = (root / "software/p03/include/p03_mmio.h").read_text(encoding="utf-8")
 rtl_tokens = (
     'XIL_INTERFACENAME S_AXI',
     'P03_MMIO_ID = 32\'h4C54_3302',
+    'ADDR_WIDTH 40',
+    'input  wire [39:0]  s_axi_araddr',
+    'input  wire [39:0]  s_axi_awaddr',
+    'read_register(s_axi_araddr[11:0])',
     'debug_req && debug_ack',
     'page_done_latched',
     'dispatch_done_latched',
@@ -39,6 +43,14 @@ rtl_tokens = (
 for token in rtl_tokens:
     if token not in rtl:
         raise SystemExit(f"FAIL: P03.2 RTL contract missing {token!r}")
+
+tb = (root / "rtl/tb/test_p03_ps_control_regs.v").read_text(encoding="utf-8")
+for token in (
+    "40'h00_A4000000 + addr",
+    'check(read_value == 32\'h0001_0000, "MMIO version mismatch")',
+):
+    if token not in tb:
+        raise SystemExit(f"FAIL: P03.2 full-system-address RTL regression missing {token!r}")
 
 for token in (
     "0xA4000000",
