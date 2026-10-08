@@ -199,3 +199,63 @@ pattern as the P03.2c provisioning/mailbox scripts:
 3. issue `mrd -force -size w` physical reads of the PL MMIO aperture.
 
 This bypasses the A53 MMU while retaining the debugger address-map override.
+
+
+## Full-width candidate physical result
+
+After routing the 40-bit end-to-end HPM0/MMIO candidate, the realized path was:
+
+```text
+HPM0 master        AXI4      ADDR_WIDTH=40
+SmartConnect input AXI4      ADDR_WIDTH=40
+SmartConnect output AXI4LITE ADDR_WIDTH=40
+MMIO slave         AXI4LITE  ADDR_WIDTH=40
+```
+
+with the PS mapping still limited to:
+
+```text
+0xA4000000 + 0x1000
+```
+
+The candidate routed at:
+
+```text
+WNS=+0.604 ns
+WHS=+0.010 ns
+URAM=47
+```
+
+Its physical PSU-target reads nevertheless remained:
+
+```text
+0xA4000000 -> 0x4C543302
+0xA4000004 -> 0x00000000
+0xA4000008 -> 0x00000000
+0xA400000C -> 0x00000000
+```
+
+Thus removing SmartConnect's 40-to-12 address-width conversion did not by
+itself fix the physical nonzero-offset failure.
+
+## Next discriminating build
+
+A temporary read-only diagnostic behavior is added for otherwise unmapped
+register reads:
+
+```text
+value = 0xD1A60000 | received_addr[11:0]
+```
+
+The physical diagnostic additionally reads `0xA4000018`, which is
+intentionally unassigned by the MMIO ABI.
+
+Expected interpretation:
+
+- `0xA4000018 -> 0xD1A60018`: nonzero address accesses reach the custom
+  slave, so investigation moves into synthesized register-decode behavior.
+- `0xA4000018 -> 0x00000000`: the transaction/response is being lost or
+  rejected upstream of the RTL default decode.
+
+This signature is temporary diagnostic logic and is not part of the final
+P03 MMIO ABI.
