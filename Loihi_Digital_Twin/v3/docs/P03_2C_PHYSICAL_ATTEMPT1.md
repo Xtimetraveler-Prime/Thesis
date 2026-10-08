@@ -281,3 +281,49 @@ The assertions are now ordered correctly:
 1. read `0x008`;
 2. check flags, resident slots, and engine count;
 3. then read/check `0x018`.
+
+
+## Diagnostic-signature physical result
+
+The diagnostic-signature candidate routed successfully:
+
+```text
+WNS=+0.412 ns
+WHS=+0.014 ns
+URAM=47
+```
+
+Physical PSU-target reads were:
+
+```text
+0xA4000000 -> 0x4C543302
+0xA4000004 -> 0x00000000
+0xA4000008 -> 0x00000000
+0xA400000C -> 0x00000000
+0xA4000018 -> 0x00000000
+```
+
+The intentionally unmapped `0x018` offset therefore did not return the RTL
+diagnostic signature `0xD1A60018`.
+
+This is evidence that nonzero-offset reads are being answered or rejected
+upstream of the custom register block rather than reaching its default decode.
+
+## HPM0 topology correction under test
+
+The one-slave HPM0 control path no longer uses SmartConnect.
+
+New path:
+
+```text
+PS M_AXI_HPM0_FPD (AXI4)
+    -> AXI Protocol Converter
+    -> p03_ps_control_regs (AXI4-Lite)
+```
+
+The accepted HP0/DDR SmartConnect path is unchanged.
+
+The AXI Protocol Converter is a dedicated protocol bridge; with only one HPM0
+control slave, no address-routing fabric is required on this path. The
+temporary unmapped-read signature remains enabled until physical nonzero-offset
+access is proven.
