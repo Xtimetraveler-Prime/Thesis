@@ -82,3 +82,25 @@ twice as a four-word sequence and again as individual reads.
 
 It performs no page, resident-memory, or dispatch writes and is diagnostic
 evidence only, not acceptance evidence.
+
+
+## Diagnostic attempt 1
+
+The first read-only XSDB diagnostic selected Cortex-A53 #0 and attempted a
+normal `mrd` at `0xA4000000`.
+
+XSDB refused the request before issuing a hardware transaction:
+
+```text
+Memory read error at 0xA4000000.
+Blocked address 0xA4000000.
+PL AXI slave ports access is not allowed.
+This address has not been added to the memory map.
+```
+
+This is a debugger memory-map policy failure, not evidence that the PL slave
+itself is inaccessible.
+
+AMD's XSDB reference documents `mrd -force` for overriding reserved/invalid
+address-map protection. The diagnostic now uses forced 32-bit word reads for
+the MMIO aperture.
