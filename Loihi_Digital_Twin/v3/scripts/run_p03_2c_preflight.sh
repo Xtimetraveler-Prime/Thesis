@@ -91,14 +91,16 @@ for token in (
     'cpu="psu_cortexa53_0"',
     'domain_name=domain_name',
     'no_boot_bsp=True',
-    'template="hello_world"',
-    'PASS: P03.2c hello-world scaffold replaced with smoke sources',
+    'template="empty_application"',
+    'PASS: P03.2c embedded empty-application created and smoke sources imported',
 ):
     if token not in build_py:
         raise SystemExit(f"FAIL: P03.2c Vitis build contract missing {token}")
 
 if 'template="empty"' in build_py:
-    raise SystemExit("FAIL: P03.2c still requests broken embedded empty template")
+    raise SystemExit("FAIL: P03.2c still requests generic accelerated empty template")
+if 'template="hello_world"' in build_py:
+    raise SystemExit("FAIL: P03.2c still requests UART-dependent hello_world template")
 
 for token in (
     "aarch64-none-elf-gcc",
