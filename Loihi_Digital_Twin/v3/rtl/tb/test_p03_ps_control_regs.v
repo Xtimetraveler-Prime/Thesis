@@ -6,7 +6,7 @@ module test_p03_ps_control_regs;
 
     reg resetn = 1'b0;
 
-    reg [11:0] awaddr = 12'd0;
+    reg [39:0] awaddr = 40'd0;
     reg [2:0] awprot = 3'd0;
     reg awvalid = 1'b0;
     wire awready;
@@ -18,7 +18,7 @@ module test_p03_ps_control_regs;
     wire bvalid;
     reg bready = 1'b0;
 
-    reg [11:0] araddr = 12'd0;
+    reg [39:0] araddr = 40'd0;
     reg [2:0] arprot = 3'd0;
     reg arvalid = 1'b0;
     wire arready;
@@ -182,7 +182,7 @@ module test_p03_ps_control_regs;
     endtask
 
     task axi_write;
-        input [11:0] addr;
+        input [39:0] addr;
         input [31:0] value;
         begin
             // Drive VALID on the falling edge and sample READY before the
@@ -231,7 +231,7 @@ module test_p03_ps_control_regs;
     endtask
 
     task axi_read;
-        input [11:0] addr;
+        input [39:0] addr;
         output [31:0] value;
         begin
             // As with writes, READY must be observed before the accepting
