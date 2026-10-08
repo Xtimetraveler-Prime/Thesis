@@ -98,37 +98,17 @@ def main() -> int:
     if not xpfm.exists():
         raise SystemExit(f"P03.2c platform XPFM was not produced: {xpfm}")
 
-    # Vitis Embedded 2025.2 on this installation rejects the documented
-    # generic "empty" application template because its embedded template
-    # package has no src directory.  AMD's embedded examples use the
-    # "hello_world" template for standalone application components, so use it
-    # only as a recognized scaffold and replace its example source completely.
+    # Embedded Vitis uses embedded-application template names, which differ
+    # from the generic accelerated-application API.  The supported source-free
+    # standalone template is "empty_application".
     try:
         app = client.create_app_component(
             name=app_name,
             platform=str(xpfm),
             domain=domain_name,
-            template="hello_world",
+            template="empty_application",
         )
         app = client.get_component(name=app_name)
-
-        app_src_dir = workspace / app_name / "src"
-        if not app_src_dir.is_dir():
-            raise RuntimeError(
-                f"P03.2c application src directory was not created: {app_src_dir}"
-            )
-
-        removed_scaffold = []
-        for template_file in sorted(app_src_dir.rglob("*")):
-            if not template_file.is_file():
-                continue
-            if template_file.suffix.lower() in {
-                ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp"
-            }:
-                removed_scaffold.append(
-                    str(template_file.relative_to(workspace / app_name))
-                )
-                template_file.unlink()
 
         app.import_files(
             from_loc=str(source_dir),
@@ -136,6 +116,7 @@ def main() -> int:
             dest_dir_in_cmp="src",
         )
 
+        app_src_dir = workspace / app_name / "src"
         source_files = sorted(
             path
             for path in app_src_dir.rglob("*")
@@ -144,16 +125,11 @@ def main() -> int:
         )
         if source_files != [app_src_dir / "p03_2c_smoke.c"]:
             raise RuntimeError(
-                "P03.2c expected exactly its own smoke C source after replacing "
-                f"the template scaffold, got {source_files}"
+                "P03.2c expected exactly its own smoke C source in the "
+                f"empty application, got {source_files}"
             )
 
-        print(
-            "P03_2C_REMOVED_TEMPLATE_SOURCES="
-            + ",".join(removed_scaffold)
-        )
-        print("PASS: P03.2c hello-world scaffold replaced with smoke sources")
-
+        print("PASS: P03.2c embedded empty-application created and smoke sources imported")
         app.build()
     except Exception:
         print(
