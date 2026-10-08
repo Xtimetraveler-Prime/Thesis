@@ -18,10 +18,10 @@ puts "P03_2C_BD_INSPECT_BEGIN"
 
 set mmio_intf [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
 set hpm0_intf [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD]
-set sc_m [get_bd_intf_pins p03_hpm0_smartconnect_0/M00_AXI]
-set sc_s [get_bd_intf_pins p03_hpm0_smartconnect_0/S00_AXI]
+set pc_m [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI]
+set pc_s [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]
 
-foreach obj [list $hpm0_intf $sc_s $sc_m $mmio_intf] {
+foreach obj [list $hpm0_intf $pc_s $pc_m $mmio_intf] {
     puts "INTF=[get_property NAME $obj]"
     foreach prop {VLNV MODE CONFIG.PROTOCOL CONFIG.ADDR_WIDTH CONFIG.DATA_WIDTH} {
         puts "  $prop=[prop_or $obj $prop NA]"
@@ -30,12 +30,12 @@ foreach obj [list $hpm0_intf $sc_s $sc_m $mmio_intf] {
 
 foreach pin_name {
     zynq_ultra_ps_e_0/M_AXI_HPM0_FPD_ARADDR
-    p03_hpm0_smartconnect_0/S00_AXI_araddr
-    p03_hpm0_smartconnect_0/M00_AXI_araddr
+    p03_hpm0_protocol_converter_0/s_axi_araddr
+    p03_hpm0_protocol_converter_0/m_axi_araddr
     p03_ps_control_regs_0/s_axi_araddr
     zynq_ultra_ps_e_0/M_AXI_HPM0_FPD_AWADDR
-    p03_hpm0_smartconnect_0/S00_AXI_awaddr
-    p03_hpm0_smartconnect_0/M00_AXI_awaddr
+    p03_hpm0_protocol_converter_0/s_axi_awaddr
+    p03_hpm0_protocol_converter_0/m_axi_awaddr
     p03_ps_control_regs_0/s_axi_awaddr
 } {
     set pin [get_bd_pins -quiet $pin_name]
