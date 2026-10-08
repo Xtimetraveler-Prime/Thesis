@@ -288,12 +288,12 @@ module test_p03_ps_control_regs;
 
         axi_read(12'h008, read_value);
         check(read_value[4:0] == 5'b1_1111, "MMIO capability flags mismatch");
+        check(read_value[10:8] == 3'd3, "resident-slot capability mismatch");
+        check(read_value[23:16] == 8'd1, "physical-engine capability mismatch");
 
         axi_read(12'h018, read_value);
         check(read_value == 32'hD1A6_0018,
               "unmapped read diagnostic signature mismatch");
-        check(read_value[10:8] == 3'd3, "resident-slot capability mismatch");
-        check(read_value[23:16] == 8'd1, "physical-engine capability mismatch");
 
         // Page command programming and sticky completion.
         axi_write(12'h020, 32'h0000_0203); // slot2, mutable page-out
