@@ -106,6 +106,9 @@ required_vivado = (
     "CONFIG.PSU__USE__M_AXI_GP0 {1}",
     "CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}",
     "M_AXI_HPM0_FPD",
+    "xilinx.com:ip:axi_protocol_converter:2.1",
+    "p03_hpm0_protocol_converter_0/S_AXI",
+    "p03_hpm0_protocol_converter_0/M_AXI",
     "p03_ps_control_regs_0/S_AXI",
     "0xA4000000",
     "0x00001000",
@@ -118,6 +121,7 @@ for token in required_vivado:
         raise SystemExit(f"FAIL: P03.2 Vivado integration missing {token!r}")
 
 for forbidden in (
+    "p03_hpm0_smartconnect_0",
     "connect_pair vio_p08/probe_out0 p08_paged_dispatch_controller_0/dispatch_start",
     "connect_pair vio_p08/probe_out6 p02_page_host_arbiter_0/debug_req",
     "connect_pair vio_p02_page/probe_out0 p02_context_page_bank_walker_0/cmd_start",
