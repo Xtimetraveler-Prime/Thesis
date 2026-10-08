@@ -99,8 +99,19 @@ def main() -> int:
         raise SystemExit(f"P03.2c platform XPFM was not produced: {xpfm}")
 
     # Embedded Vitis uses embedded-application template names, which differ
-    # from the generic accelerated-application API.  The supported source-free
-    # standalone template is "empty_application".
+    # from the generic accelerated-application API.  Query the embedded
+    # template repository and require the source-free standalone template.
+    embedded_templates = client.get_templates(type="EMBD_APP")
+    print(
+        "P03_2C_EMBEDDED_TEMPLATES="
+        + ",".join(sorted(str(template) for template in embedded_templates))
+    )
+    if "empty_application" not in embedded_templates:
+        raise SystemExit(
+            "P03.2c Vitis embedded template repository does not expose "
+            "empty_application"
+        )
+
     try:
         app = client.create_app_component(
             name=app_name,
