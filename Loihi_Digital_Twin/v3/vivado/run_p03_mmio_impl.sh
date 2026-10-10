@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 HLS_DIR="$PROJECT_DIR/hls/core_v2"
 TCL_SCRIPT="$SCRIPT_DIR/create_p03_mmio_impl_project.tcl"
-BUILD_DIR="$SCRIPT_DIR/build/p03_2_mmio_impl"
+BUILD_DIR="${P03_MMIO_BUILD_DIR:-$SCRIPT_DIR/build/p03_2c_ila_diagnostic}"
 REPORT_DIR="$BUILD_DIR/reports"
 VIVADO_PROJECT_DIR="$BUILD_DIR/project"
 JOBS="${VIVADO_JOBS:-1}"
@@ -39,7 +39,11 @@ export HLS_PART="${HLS_PART:-$EXPECTED_PART}"
     exit 2
 }
 
-rm -rf "$BUILD_DIR"
+if [[ -e "$BUILD_DIR" ]]; then
+    echo "ERROR: diagnostic build output already exists: $BUILD_DIR" >&2
+    echo "ERROR: set P03_MMIO_BUILD_DIR to a NEW path to preserve previous evidence." >&2
+    exit 2
+fi
 mkdir -p "$REPORT_DIR"
 
 bash "$PROJECT_DIR/scripts/run_p03_2_preflight.sh"     | tee "$BUILD_DIR/p03_2_preflight.log"
