@@ -82,12 +82,15 @@ grep -E "P03_2C_ILA_|PASS:|ERROR:|CRITICAL WARNING" "$VIVADO_LOG" || true
 for required in \
     "$OUT_DIR/p03_2c_hpm0_capture.ila" \
     "$OUT_DIR/p03_2c_hpm0_capture.csv" \
-    "$OUT_DIR/p03_2c_hpm0_capture.vcd"; do
+    "$OUT_DIR/p03_2c_hpm0_capture.vcd" \
+    "$OUT_DIR/p03_2c_mmio_slave_capture.ila" \
+    "$OUT_DIR/p03_2c_mmio_slave_capture.csv" \
+    "$OUT_DIR/p03_2c_mmio_slave_capture.vcd"; do
     [[ -s "$required" ]] || {
         echo "ERROR: expected ILA capture artifact missing/empty: $required" >&2
         exit 4
     }
 done
 
-echo "PASS: P03.2c ILA diagnostic artifacts written to $OUT_DIR"
+echo "PASS: P03.2c upstream AXI4 and downstream AXI4-Lite read-channel ILA artifacts written to $OUT_DIR"
 echo "IMPORTANT: Cortex-A53 cores were halted. Reboot the KV260 after this diagnostic; do not resume Linux."
