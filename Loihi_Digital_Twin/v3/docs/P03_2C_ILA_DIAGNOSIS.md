@@ -131,3 +131,35 @@ After the root cause is identified and corrected:
 5. rerun the full P03.2c page/resident/dispatch smoke;
 6. close P03.2 only after independent physical verification;
 7. continue to the PS-resident autonomous runtime phases.
+
+
+## ILA integration attempt 1 — invalid monitor-interface connection
+
+The first ILA-instrumented route attempt stopped during block-design
+construction with:
+
+```text
+ERROR: [Common 17-161] Invalid option value
+'/p03_hpm0_system_ila_0/SLOT_0_AXI' specified for 'auto'.
+```
+
+No synthesis, implementation, or timing result was produced.
+
+Cause: the System ILA monitor interface was incorrectly treated as a normal
+third endpoint in `connect_bd_intf_net`.
+
+For System ILA interface debugging, the AXI functional connection remains a
+normal two-endpoint interface net. That interface net is marked for debug and
+Vivado's debug/Designer Assistance automation connects it to System ILA.
+
+The corrected diagnostic flow now:
+
+1. creates explicitly named functional interface nets:
+   - `p03_hpm0_ps_to_converter_axi`;
+   - `p03_hpm0_converter_to_mmio_axi`;
+2. sets `HDL_ATTRIBUTE.DEBUG=true` on both;
+3. invokes `xilinx.com:bd_rule:debug` once for both interfaces;
+4. requests read-address/read-data capture and protocol checking;
+5. requires Vivado to produce exactly one System ILA with two monitor slots.
+
+The functional HPM0 control topology did not change as part of this fix.
