@@ -176,19 +176,6 @@ set hp0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hp0_smartconnect
 set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_control_regs_0]
 set hpm0_protocol_converter [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_protocol_converter:2.1 p03_hpm0_protocol_converter_0]
-set hpm0_system_ila [create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 p03_hpm0_system_ila_0]
-set_property -dict [list \
-    CONFIG.C_MON_TYPE {INTERFACE} \
-    CONFIG.C_NUM_MONITOR_SLOTS {2} \
-    CONFIG.C_DATA_DEPTH {2048} \
-    CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
-    CONFIG.C_SLOT_1_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
-    CONFIG.C_SLOT_0_AXI_DATA_SEL {1} \
-    CONFIG.C_SLOT_1_AXI_DATA_SEL {1} \
-    CONFIG.C_SLOT_0_AXI_TRIG_SEL {1} \
-    CONFIG.C_SLOT_1_AXI_TRIG_SEL {1} \
-    CONFIG.C_SLOT_0_APC_EN {1} \
-    CONFIG.C_SLOT_1_APC_EN {1}] $hpm0_system_ila
 
 # P03.2 leaves packet routing / next-event policy to the forthcoming P03.3
 # Cortex-A53 runtime. Disable P05's former controller-side Port-B integration
@@ -274,7 +261,6 @@ connect_bd_net $pl_clk \
     [get_bd_pins p02_hp0_smartconnect_0/aclk] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aclk] \
     [get_bd_pins p03_hpm0_protocol_converter_0/aclk] \
-    [get_bd_pins p03_hpm0_system_ila_0/clk] \
     [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] \
     [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] \
     [get_bd_pins vio_p08/clk] \
@@ -293,7 +279,6 @@ connect_bd_net [get_bd_pins p08_reset_conditioner_0/resetn] \
     [get_bd_pins p02_hp0_smartconnect_0/aresetn] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aresetn] \
     [get_bd_pins p03_hpm0_protocol_converter_0/aresetn] \
-    [get_bd_pins p03_hpm0_system_ila_0/resetn] \
     [get_bd_pins vio_p08/probe_in28]
 
 # Dispatch command inputs now come from PS-visible MMIO.
@@ -426,12 +411,12 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
 # PS -> PL control path on M_AXI_HPM0_FPD.
 # A dedicated AXI Protocol Converter is used because there is exactly one
 # control slave; no HPM0 SmartConnect routing fabric is required.
-connect_bd_intf_net [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
-    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI] \
-    [get_bd_intf_pins p03_hpm0_system_ila_0/SLOT_0_AXI]
-connect_bd_intf_net [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI] \
-    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI] \
-    [get_bd_intf_pins p03_hpm0_system_ila_0/SLOT_1_AXI]
+connect_bd_intf_net -intf_net p03_hpm0_ps_to_converter_axi \
+    [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
+    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]
+connect_bd_intf_net -intf_net p03_hpm0_converter_to_mmio_axi \
+    [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI] \
+    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
 
 set mmio_segments [get_bd_addr_segs -quiet -of_objects \
     [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]]
@@ -446,6 +431,31 @@ if {[llength $hpm0_spaces] != 1} {
 assign_bd_address -offset 0xA4000000 -range 0x00001000 \
     -target_address_space [lindex $hpm0_spaces 0] \
     [lindex $mmio_segments 0] -force
+
+# P03.2c signal-level diagnosis: use Vivado's supported System ILA interface
+# debug flow. Monitor interfaces are NOT normal third endpoints on an AXI net.
+# Mark the two functional AXI interface nets for debug and let Designer
+# Assistance attach them to one System ILA with AXI protocol checking.
+set p03_hpm0_upstream_net [get_bd_intf_nets p03_hpm0_ps_to_converter_axi]
+set p03_hpm0_downstream_net [get_bd_intf_nets p03_hpm0_converter_to_mmio_axi]
+foreach debug_net [list $p03_hpm0_upstream_net $p03_hpm0_downstream_net] {
+    set_property HDL_ATTRIBUTE.DEBUG true $debug_net
+}
+apply_bd_automation -rule xilinx.com:bd_rule:debug -dict [list \
+    $p03_hpm0_upstream_net {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "Data" AXI_W_DATA "Data" AXI_W_RESPONSE "Data" CLK_SRC "/zynq_ultra_ps_e_0/pl_clk0" SYSTEM_ILA "Auto" APC_EN "1"} \
+    $p03_hpm0_downstream_net {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "Data" AXI_W_DATA "Data" AXI_W_RESPONSE "Data" CLK_SRC "/zynq_ultra_ps_e_0/pl_clk0" SYSTEM_ILA "Auto" APC_EN "1"} \
+]
+
+set p03_system_ila_cells [get_bd_cells -quiet -filter {VLNV =~ "xilinx.com:ip:system_ila:*"}]
+if {[llength $p03_system_ila_cells] != 1} {
+    error "P03.2c expected one System ILA after debug automation, got [llength $p03_system_ila_cells]: $p03_system_ila_cells"
+}
+set p03_system_ila [lindex $p03_system_ila_cells 0]
+set p03_ila_slots [get_property CONFIG.C_NUM_MONITOR_SLOTS $p03_system_ila]
+if {$p03_ila_slots != 2} {
+    error "P03.2c expected two System ILA monitor slots, got $p03_ila_slots"
+}
+puts "P03.2c System ILA automation: cell=$p03_system_ila slots=$p03_ila_slots"
 
 # Paging command inputs now come from PS-visible MMIO.
 connect_pair p03_ps_control_regs_0/page_start p02_context_page_bank_walker_0/cmd_start
