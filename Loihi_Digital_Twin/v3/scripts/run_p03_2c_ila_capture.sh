@@ -26,7 +26,11 @@ command -v xsdb >/dev/null 2>&1 || {
     exit 2
 }
 
-rm -rf "$OUT_DIR"
+if [[ -e "$OUT_DIR" ]]; then
+    echo "ERROR: ILA capture output already exists: $OUT_DIR" >&2
+    echo "ERROR: select a NEW output directory to preserve previous evidence." >&2
+    exit 2
+fi
 mkdir -p "$OUT_DIR"
 
 cd "$V3_DIR"
