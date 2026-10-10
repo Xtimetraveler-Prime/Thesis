@@ -83,6 +83,7 @@ foreach required_ip {
     xilinx.com:ip:smartconnect:1.0
     xilinx.com:ip:axi_protocol_converter:2.1
     xilinx.com:ip:system_ila:1.1
+    xilinx.com:ip:ila:6.2
 } {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found: $required_ip"
@@ -432,44 +433,63 @@ assign_bd_address -offset 0xA4000000 -range 0x00001000 \
     -target_address_space [lindex $hpm0_spaces 0] \
     [lindex $mmio_segments 0] -force
 
-# P03.2c signal-level diagnosis: use Vivado's supported System ILA interface
-# debug flow. Monitor interfaces are NOT normal third endpoints on an AXI net.
-# Mark the two functional AXI interface nets for debug and let Designer
-# Assistance attach them to one System ILA with AXI protocol checking.
+# P03.2c diagnostic: observe the PS-side AXI4 interface with System ILA.
+# Vivado 2025.2 retains AXI4 on a mixed System ILA's SLOT_1_AXI BD pin even
+# when C_SLOT_1_AXI_PROTOCOL reports AXI4LITE, causing BD 41-237. We avoid
+# connecting a System ILA AXI4 interface directly to an AXI4-Lite bus.
 set p03_hpm0_upstream_net [get_bd_intf_nets p03_hpm0_ps_to_converter_axi]
-set p03_hpm0_downstream_net [get_bd_intf_nets p03_hpm0_converter_to_mmio_axi]
-foreach debug_net [list $p03_hpm0_upstream_net $p03_hpm0_downstream_net] {
-    set_property HDL_ATTRIBUTE.DEBUG true $debug_net
-}
+set_property HDL_ATTRIBUTE.DEBUG true $p03_hpm0_upstream_net
 apply_bd_automation -rule xilinx.com:bd_rule:debug -dict [list \
     $p03_hpm0_upstream_net {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "Data" AXI_W_DATA "Data" AXI_W_RESPONSE "Data" CLK_SRC "/zynq_ultra_ps_e_0/pl_clk0" SYSTEM_ILA "Auto" APC_EN "1"} \
-    $p03_hpm0_downstream_net {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "Data" AXI_W_DATA "Data" AXI_W_RESPONSE "Data" CLK_SRC "/zynq_ultra_ps_e_0/pl_clk0" SYSTEM_ILA "Auto" APC_EN "1"} \
 ]
-
 set p03_system_ila_cells [get_bd_cells -quiet -filter {VLNV =~ "xilinx.com:ip:system_ila:*"}]
 if {[llength $p03_system_ila_cells] != 1} {
-    error "P03.2c expected one System ILA after debug automation, got [llength $p03_system_ila_cells]: $p03_system_ila_cells"
+    error "P03.2c expected one upstream System ILA, got $p03_system_ila_cells"
 }
 set p03_system_ila [lindex $p03_system_ila_cells 0]
 set p03_ila_slots [get_property CONFIG.C_NUM_MONITOR_SLOTS $p03_system_ila]
-if {$p03_ila_slots != 2} {
-    error "P03.2c expected two System ILA monitor slots, got $p03_ila_slots"
+if {$p03_ila_slots != 1} {
+    error "P03.2c expected one System ILA monitor slot, got $p03_ila_slots"
 }
-# Debug automation initially gives both monitor slots the AXI4 default.
-# The converter's M_AXI interface is AXI4-Lite, so slot 1 must explicitly
-# use AXI4LITE. Otherwise validate_bd_design fails with BD 41-237.
-# Slot 0 monitors the upstream PS AXI4 interface and remains AXI4.
+set p03_system_slot [get_bd_intf_pins ${p03_system_ila}/SLOT_0_AXI]
+set p03_system_slot_protocol [get_property CONFIG.PROTOCOL $p03_system_slot]
+set p03_upstream_protocol [get_property CONFIG.PROTOCOL \
+    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]]
+if {$p03_system_slot_protocol ne "AXI4" || $p03_upstream_protocol ne "AXI4"} {
+    error "P03.2c upstream System ILA pin protocol mismatch: slot=$p03_system_slot_protocol upstream=$p03_upstream_protocol"
+}
+puts "P03_2C_ILA_SLOT_0_PIN_PROTOCOL=$p03_system_slot_protocol"
+puts "P03_2C_ILA_UPSTREAM_PIN_PROTOCOL=$p03_upstream_protocol"
+
+# Observe the downstream slave using a native ILA connected to passive
+# read-channel mirror outputs. This preserves both functional AXI interfaces
+# and avoids the System ILA AXI4-versus-AXI4-Lite monitor pin conflict.
+set p03_mmio_native_ila [create_bd_cell -type ip \
+    -vlnv xilinx.com:ip:ila:6.2 p03_mmio_native_ila]
 set_property -dict [list \
-    CONFIG.C_SLOT_0_AXI_PROTOCOL {AXI4} \
-    CONFIG.C_SLOT_1_AXI_PROTOCOL {AXI4LITE}] $p03_system_ila
-set p03_ila_slot0_proto [get_property CONFIG.C_SLOT_0_AXI_PROTOCOL $p03_system_ila]
-set p03_ila_slot1_proto [get_property CONFIG.C_SLOT_1_AXI_PROTOCOL $p03_system_ila]
-if {$p03_ila_slot0_proto ne "AXI4" || $p03_ila_slot1_proto ne "AXI4LITE"} {
-    error "P03.2c ILA protocol mismatch after configuration: slot0=$p03_ila_slot0_proto slot1=$p03_ila_slot1_proto"
+    CONFIG.C_NUM_OF_PROBES {7} \
+    CONFIG.C_DATA_DEPTH {1024} \
+    CONFIG.C_PROBE0_WIDTH {1} \
+    CONFIG.C_PROBE1_WIDTH {40} \
+    CONFIG.C_PROBE2_WIDTH {1} \
+    CONFIG.C_PROBE3_WIDTH {1} \
+    CONFIG.C_PROBE4_WIDTH {1} \
+    CONFIG.C_PROBE5_WIDTH {32} \
+    CONFIG.C_PROBE6_WIDTH {2}] $p03_mmio_native_ila
+connect_bd_net $pl_clk [get_bd_pins p03_mmio_native_ila/clk]
+foreach {probe signal} {
+    0 p03_diag_arvalid
+    1 p03_diag_araddr
+    2 p03_diag_arready
+    3 p03_diag_rvalid
+    4 p03_diag_rready
+    5 p03_diag_rdata
+    6 p03_diag_rresp
+} {
+    connect_pair p03_ps_control_regs_0/$signal p03_mmio_native_ila/probe$probe
 }
-puts "P03.2c System ILA automation: cell=$p03_system_ila slots=$p03_ila_slots"
-puts "P03_2C_ILA_SLOT_0_PROTOCOL=$p03_ila_slot0_proto"
-puts "P03_2C_ILA_SLOT_1_PROTOCOL=$p03_ila_slot1_proto"
+puts "P03_2C_ILA_DOWNSTREAM_NATIVE_PROBES=7"
+puts "P03.2c instrumentation: upstream AXI4 System ILA (1 slot), downstream AXI4-Lite native ILA (7 passive probes)"
 
 # Paging command inputs now come from PS-visible MMIO.
 connect_pair p03_ps_control_regs_0/page_start p02_context_page_bank_walker_0/cmd_start
@@ -562,7 +582,7 @@ connect_pair p08_context_memory_0/integration_address_error vio_p08/probe_in27
 
 validate_bd_design
 save_bd_design
-puts "PASS: P03.2c HPM0 two-slot AXI4/AXI4-Lite System ILA block design validated."
+puts "PASS: P03.2c split upstream-AXI4/downstream-native ILA block design validated."
 puts "P03.2 HP0 DDR-paged one-engine / three-resident-context block design validated successfully."
 
 # Fast protocol/connectivity gate; stop before HLS wrapper and FPGA synthesis.
@@ -611,7 +631,9 @@ puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
 puts $metrics "p03_hpm0_transport=axi_protocol_converter"
 puts $metrics "p03_hpm0_system_ila=1"
-puts $metrics "p03_hpm0_ila_slots=2"
+puts $metrics "p03_hpm0_ila_slots=1"
+puts $metrics "p03_mmio_native_ila=1"
+puts $metrics "p03_mmio_native_probes=7"
 puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
@@ -688,7 +710,9 @@ puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
 puts $metrics "p03_hpm0_transport=axi_protocol_converter"
 puts $metrics "p03_hpm0_system_ila=1"
-puts $metrics "p03_hpm0_ila_slots=2"
+puts $metrics "p03_hpm0_ila_slots=1"
+puts $metrics "p03_mmio_native_ila=1"
+puts $metrics "p03_mmio_native_probes=7"
 puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
