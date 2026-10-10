@@ -33,19 +33,30 @@ proc p03_k26_device {} {
 }
 
 proc p03_hpm0_ila {device} {
+    set all_ilas [get_hw_ilas -of_objects $device]
+    if {[llength $all_ilas] == 1} {
+        return [lindex $all_ilas 0]
+    }
+
     set matches {}
-    foreach candidate [get_hw_ilas -of_objects $device] {
-        set cell ""
-        set name ""
-        catch {set cell [string tolower [get_property CELL_NAME $candidate]]}
-        catch {set name [string tolower [get_property NAME $candidate]]}
-        if {[string match "*p03_hpm0_system_ila*" $cell] ||
-            [string match "*p03_hpm0_system_ila*" $name]} {
+    foreach candidate $all_ilas {
+        set found_upstream 0
+        set found_downstream 0
+        foreach probe [get_hw_probes -of_objects $candidate] {
+            set pname [string tolower [get_property NAME $probe]]
+            if {[string match "*p03_hpm0_ps_to_converter_axi*" $pname]} {
+                set found_upstream 1
+            }
+            if {[string match "*p03_hpm0_converter_to_mmio_axi*" $pname]} {
+                set found_downstream 1
+            }
+        }
+        if {$found_upstream && $found_downstream} {
             lappend matches $candidate
         }
     }
     if {[llength $matches] != 1} {
-        puts "P03_2C_ILA_AVAILABLE=[get_hw_ilas -of_objects $device]"
+        puts "P03_2C_ILA_AVAILABLE=$all_ilas"
         error "P03.2c expected exactly one HPM0 System ILA, got [llength $matches]"
     }
     return [lindex $matches 0]
@@ -55,7 +66,8 @@ proc p03_slot0_arvalid_probe {ila} {
     set matches {}
     foreach probe [get_hw_probes -of_objects $ila] {
         set name [string tolower [get_property NAME $probe]]
-        if {[string match "*slot_0*arvalid*" $name] ||
+        if {[string match "*p03_hpm0_ps_to_converter_axi*arvalid*" $name] ||
+            [string match "*slot_0*arvalid*" $name] ||
             [string match "*slot0*arvalid*" $name]} {
             lappend matches $probe
         }
@@ -97,7 +109,6 @@ set arvalid_probe [p03_slot0_arvalid_probe $ila]
 puts "P03_2C_ILA_TRIGGER_PROBE=[get_property NAME $arvalid_probe]"
 
 reset_hw_ila $ila
-set_property CONTROL.DATA_DEPTH 2048 $ila
 set_property CONTROL.WINDOW_COUNT 1 $ila
 set_property CONTROL.TRIGGER_POSITION 512 $ila
 set_property CONTROL.TRIGGER_MODE BASIC_ONLY $ila
