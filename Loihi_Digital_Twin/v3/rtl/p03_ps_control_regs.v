@@ -121,8 +121,26 @@ module p03_ps_control_regs (
     input  wire         debug_ack,
     input  wire         debug_rvalid,
     input  wire         debug_error,
-    input  wire [255:0] debug_rdata
+    input  wire [255:0] debug_rdata,
+
+    // P03.2c temporary, passive downstream AXI4-Lite read-channel taps.
+    // These mirror existing signals; they do not drive or modify S_AXI.
+    output wire         p03_diag_arvalid,
+    output wire [39:0]  p03_diag_araddr,
+    output wire         p03_diag_arready,
+    output wire         p03_diag_rvalid,
+    output wire         p03_diag_rready,
+    output wire [31:0]  p03_diag_rdata,
+    output wire [1:0]   p03_diag_rresp
 );
+
+    assign p03_diag_arvalid = s_axi_arvalid;
+    assign p03_diag_araddr  = s_axi_araddr;
+    assign p03_diag_arready = s_axi_arready;
+    assign p03_diag_rvalid  = s_axi_rvalid;
+    assign p03_diag_rready  = s_axi_rready;
+    assign p03_diag_rdata   = s_axi_rdata;
+    assign p03_diag_rresp   = s_axi_rresp;
 
     localparam [31:0] P03_MMIO_ID = 32'h4C54_3302; // "LT3" + P03.2
     localparam [31:0] P03_MMIO_VERSION = 32'h0001_0000;
