@@ -80,6 +80,14 @@ module test_p03_ps_control_regs;
     reg debug_error = 1'b0;
     reg [255:0] debug_rdata = 256'd0;
 
+    wire p03_diag_arvalid;
+    wire [39:0] p03_diag_araddr;
+    wire p03_diag_arready;
+    wire p03_diag_rvalid;
+    wire p03_diag_rready;
+    wire [31:0] p03_diag_rdata;
+    wire [1:0] p03_diag_rresp;
+
     integer failures = 0;
     integer timeout = 0;
     integer page_start_pulses = 0;
@@ -167,7 +175,14 @@ module test_p03_ps_control_regs;
         .debug_ack(debug_ack),
         .debug_rvalid(debug_rvalid),
         .debug_error(debug_error),
-        .debug_rdata(debug_rdata)
+        .debug_rdata(debug_rdata),
+        .p03_diag_arvalid(p03_diag_arvalid),
+        .p03_diag_araddr(p03_diag_araddr),
+        .p03_diag_arready(p03_diag_arready),
+        .p03_diag_rvalid(p03_diag_rvalid),
+        .p03_diag_rready(p03_diag_rready),
+        .p03_diag_rdata(p03_diag_rdata),
+        .p03_diag_rresp(p03_diag_rresp)
     );
 
     task check;
@@ -244,6 +259,10 @@ module test_p03_ps_control_regs;
 
             timeout = 0;
             #1;
+            check(p03_diag_arvalid === arvalid &&
+                  p03_diag_araddr === araddr &&
+                  p03_diag_arready === arready,
+                  "passive AXI read-address diagnostic tap mismatch");
             while (!arready && timeout < 20) begin
                 @(negedge clk);
                 #1;
@@ -265,6 +284,11 @@ module test_p03_ps_control_regs;
             end
             check(rvalid, "AXI read data timeout");
             check(rresp == 2'b00, "AXI read returned non-OKAY response");
+            check(p03_diag_rvalid === rvalid &&
+                  p03_diag_rready === rready &&
+                  p03_diag_rdata === rdata &&
+                  p03_diag_rresp === rresp,
+                  "passive AXI read-response diagnostic tap mismatch");
             value = rdata;
 
             rready = 1'b1;
