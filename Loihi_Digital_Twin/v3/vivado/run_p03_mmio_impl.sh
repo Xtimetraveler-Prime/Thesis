@@ -13,6 +13,11 @@ BUILD_DIR="${P03_MMIO_BUILD_DIR:-$SCRIPT_DIR/build/p03_2c_ila_diagnostic}"
 REPORT_DIR="$BUILD_DIR/reports"
 VIVADO_PROJECT_DIR="$BUILD_DIR/project"
 JOBS="${VIVADO_JOBS:-1}"
+STAGE="${P03_MMIO_STAGE:-route}"
+case "$STAGE" in
+    bd|route) ;;
+    *) echo "ERROR: P03_MMIO_STAGE must be bd or route, got $STAGE" >&2; exit 2 ;;
+esac
 
 CONTROLLER_RTL="$PROJECT_DIR/rtl/p08_paged_dispatch_controller.v"
 MEMORY_RTL="$PROJECT_DIR/rtl/p05_context_memory_fabric.v"
@@ -51,7 +56,18 @@ bash "$PROJECT_DIR/scripts/run_p03_2_preflight.sh"     | tee "$BUILD_DIR/p03_2_p
 bash "$HLS_DIR/run_package.sh" | tee "$BUILD_DIR/hls_package.log"
 IP_REPO_DIR="$HLS_DIR/build/p03_package/ip_repo"
 
-vivado -mode batch     -source "$TCL_SCRIPT"     -tclargs         "$IP_REPO_DIR"         "$VIVADO_PROJECT_DIR"         "$EXPECTED_PART"         "$EXPECTED_VLNV"         "$CONTROLLER_RTL"         "$MEMORY_RTL"         "$RESET_RTL"         "$HOSTMUX_RTL"         "$WALKER_RTL"         "$ARBITER_RTL"         "$RANGE_GUARD_RTL"         "$ADAPTER_RTL"         "$MMIO_RTL"         "$REPORT_DIR"         "$JOBS"         route     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
+vivado -mode batch     -source "$TCL_SCRIPT"     -tclargs         "$IP_REPO_DIR"         "$VIVADO_PROJECT_DIR"         "$EXPECTED_PART"         "$EXPECTED_VLNV"         "$CONTROLLER_RTL"         "$MEMORY_RTL"         "$RESET_RTL"         "$HOSTMUX_RTL"         "$WALKER_RTL"         "$ARBITER_RTL"         "$RANGE_GUARD_RTL"         "$ADAPTER_RTL"         "$MMIO_RTL"         "$REPORT_DIR"         "$JOBS"         "$STAGE"     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
+
+if [[ "$STAGE" == "bd" ]]; then
+    grep -F -q "PASS: P03.2c HPM0 two-slot AXI4/AXI4-Lite System ILA block design validated." \
+        "$BUILD_DIR/vivado_impl.log" || {
+        echo "ERROR: P03.2c BD-only pass marker missing." >&2
+        exit 4
+    }
+    echo "PASS: P03.2c BD-only System ILA interface validation gate completed."
+    echo "Diagnostic build: $BUILD_DIR"
+    exit 0
+fi
 
 for required in     "$REPORT_DIR/timing_summary_post_route.rpt"     "$REPORT_DIR/utilization_post_route.rpt"     "$REPORT_DIR/utilization_hierarchical_post_route.rpt"     "$REPORT_DIR/memory_primitives_post_route.rpt"     "$REPORT_DIR/bus_skew_post_route.rpt"     "$REPORT_DIR/p03_2_post_route_metrics.txt"     "$REPORT_DIR/p03_2_mmio_post_route.dcp"     "$REPORT_DIR/p03_2_ps_mmio.bit"     "$REPORT_DIR/p03_2_ps_mmio.ltx"     "$REPORT_DIR/p03_2_ps_mmio.xsa"; do
     [[ -f "$required" ]] || {
