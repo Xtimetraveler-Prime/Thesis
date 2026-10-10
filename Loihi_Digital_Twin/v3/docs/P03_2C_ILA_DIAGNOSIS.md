@@ -205,3 +205,53 @@ Neither the System ILA change nor this documentation accepts P03.2c.
 
 Reference: AMD System ILA PG261,
 https://docs.amd.com/v/u/en-US/pg261-system-ila
+
+
+## ILA integration attempt 3 — slot parameter versus real interface pin
+
+The next independent Vivado 2025.2 BD-only run confirmed:
+
+```text
+P03_2C_ILA_SLOT_0_PROTOCOL=AXI4
+P03_2C_ILA_SLOT_1_PROTOCOL=AXI4LITE
+ERROR: [BD 41-237] Bus Interface property PROTOCOL does not match between
+/system_ila_0/SLOT_1_AXI(AXI4) and
+/p03_hpm0_protocol_converter_0/M_AXI(AXI4LITE)
+```
+
+**Diagnosis:** The `CONFIG.C_SLOT_1_AXI_PROTOCOL` *IP setting* reads back
+`AXI4LITE`, but the connected `SLOT_1_AXI` block-design *interface pin*
+remains `AXI4`. The prior check established only the IP parameter value,
+not the actual interface pin protocol, and therefore falsely indicated that
+the mismatch had been resolved. The preserved `AWUSER_WIDTH`/`ARUSER_WIDTH`
+notices are warnings, not the fatal issue in this log. AMD UG912 documents
+`CONFIG.PROTOCOL` on `bd_intf_pin` as read-only; do not try to force the
+monitor interface property or waive `validate_bd_design`.
+
+### Diagnostic replacement (awaiting Vivado verification)
+
+The new implementation deliberately does not connect a System ILA AXI
+interface to the converter's AXI4-Lite output. It instruments both functional
+boundaries without modifying the AXI protocol converter or the register
+decode:
+
+- **Upstream:** 1-slot System ILA on the genuine PS-HPM0 to converter AXI4
+  net; its *actual BD interface pin* `CONFIG.PROTOCOL` must read `AXI4`.
+- **Downstream:** a separate native ILA with seven **passive RTL mirror
+  outputs** from `p03_ps_control_regs`: `ARVALID`, `ARADDR[39:0]`,
+  `ARREADY`, `RVALID`, `RREADY`, `RDATA[31:0]`, `RRESP[1:0]`.
+  It uses ordinary scalar probe pins and has no AXI interface protocol
+  property. The mirrors are not new control inputs or alternative datapaths.
+- **Physical capture:** arm both ILAs for the same physical MMIO read. Export
+  the upstream `p03_2c_hpm0_capture.{ila,csv,vcd}` and downstream
+  `p03_2c_mmio_slave_capture.{ila,csv,vcd}`. Preserve upstream evidence
+  even if the downstream analyzer never triggers.
+
+Both diagnostic ILAs and the passive RTL probe outputs must be removed
+before producing the final, non-instrumented P03.2 acceptance bitstream.
+
+**Current status:** code and preflight updated on the active P03 branch.
+Independent BD-only `validate_bd_design`, route, and physical capture are
+**not yet completed**. P03.2c remains blocked until those gates pass.
+
+References: AMD PG261 (System ILA) and UG912 (BD_INTF_PIN properties).
