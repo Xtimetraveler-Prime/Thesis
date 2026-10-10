@@ -59,7 +59,7 @@ IP_REPO_DIR="$HLS_DIR/build/p03_package/ip_repo"
 vivado -mode batch     -source "$TCL_SCRIPT"     -tclargs         "$IP_REPO_DIR"         "$VIVADO_PROJECT_DIR"         "$EXPECTED_PART"         "$EXPECTED_VLNV"         "$CONTROLLER_RTL"         "$MEMORY_RTL"         "$RESET_RTL"         "$HOSTMUX_RTL"         "$WALKER_RTL"         "$ARBITER_RTL"         "$RANGE_GUARD_RTL"         "$ADAPTER_RTL"         "$MMIO_RTL"         "$REPORT_DIR"         "$JOBS"         "$STAGE"     2>&1 | tee "$BUILD_DIR/vivado_impl.log"
 
 if [[ "$STAGE" == "bd" ]]; then
-    grep -F -q "PASS: P03.2c HPM0 two-slot AXI4/AXI4-Lite System ILA block design validated." \
+    grep -F -q "PASS: P03.2c split upstream-AXI4/downstream-native ILA block design validated." \
         "$BUILD_DIR/vivado_impl.log" || {
         echo "ERROR: P03.2c BD-only pass marker missing." >&2
         exit 4
@@ -96,7 +96,7 @@ for pair in "wns_ns:$WNS" "whs_ns:$WHS"; do
     fi
 done
 
-for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_hpm0_transport:axi_protocol_converter"     "p03_hpm0_system_ila:1"     "p03_hpm0_ila_slots:2"     "p03_mmio_base:0xA4000000"     "p03_mmio_range_bytes:0x00001000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
+for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_hpm0_transport:axi_protocol_converter"     "p03_hpm0_system_ila:1"     "p03_hpm0_ila_slots:1"     "p03_mmio_native_ila:1"     "p03_mmio_native_probes:7"     "p03_mmio_base:0xA4000000"     "p03_mmio_range_bytes:0x00001000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
     key="${pair%%:*}"
     expected="${pair#*:}"
     actual="$(metric_value "$key")"
