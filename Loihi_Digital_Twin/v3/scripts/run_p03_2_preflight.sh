@@ -40,6 +40,10 @@ rtl_tokens = (
     'assign p03_diag_arvalid = s_axi_arvalid;',
     'assign p03_diag_araddr  = s_axi_araddr;',
     'assign p03_diag_rdata   = s_axi_rdata;',
+    'assign p03_diag_arready = s_axi_arready;',
+    'assign p03_diag_rvalid  = s_axi_rvalid;',
+    'assign p03_diag_rready  = s_axi_rready;',
+    'assign p03_diag_rresp   = s_axi_rresp;',
     'debug_req && debug_ack',
     'page_done_latched',
     'dispatch_done_latched',
@@ -49,6 +53,9 @@ for token in rtl_tokens:
         raise SystemExit(f"FAIL: P03.2 RTL contract missing {token!r}")
 
 tb = (root / "rtl/tb/test_p03_ps_control_regs.v").read_text(encoding="utf-8")
+if "passive AXI read-address diagnostic tap mismatch" not in tb or \
+   "passive AXI read-response diagnostic tap mismatch" not in tb:
+    raise SystemExit("FAIL: passive P03.2c read-channel taps lack simulation regression")
 for token in (
     "40'h00_A4000000 + addr",
     'check(read_value == 32\'h0001_0000, "MMIO version mismatch")',
