@@ -117,6 +117,10 @@ required_vivado = (
     "SYSTEM_ILA \"Auto\"",
     "APC_EN \"1\"",
     "P03.2c expected two System ILA monitor slots",
+    "CONFIG.C_SLOT_0_AXI_PROTOCOL {AXI4}",
+    "CONFIG.C_SLOT_1_AXI_PROTOCOL {AXI4LITE}",
+    "P03_2C_ILA_SLOT_1_PROTOCOL=",
+    'if {$stage eq "bd"}',
     "p03_ps_control_regs_0/S_AXI",
     "0xA4000000",
     "0x00001000",
@@ -163,6 +167,15 @@ print("PASS: P03.2 HPM0/Vivado ownership static checks")
 PY
 
 bash -n "$V3_DIR/vivado/run_p03_mmio_impl.sh"
+
+# Diagnostic builds must support fast BD validation and must not overwrite
+# previously accepted physical artifacts or diagnostic evidence.
+for token in 'P03_MMIO_STAGE:-route' 'bd|route' 'if [[ "$STAGE" == "bd" ]]' 'if [[ -e "$BUILD_DIR" ]]' ; do
+    grep -F -q "$token" "$V3_DIR/vivado/run_p03_mmio_impl.sh" || {
+        echo "FAIL: P03.2c diagnostic build gate missing $token" >&2
+        exit 3
+    }
+done
 bash -n "$V3_DIR/vivado/recover_p03_mmio_xsa.sh"
 
 PYTHONPATH="$V3_DIR/src" python -m pytest -q     | tee /tmp/v3_p03_2_full_pytest.log
