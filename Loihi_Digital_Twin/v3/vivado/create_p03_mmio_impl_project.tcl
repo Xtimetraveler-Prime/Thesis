@@ -82,6 +82,7 @@ foreach required_ip {
     xilinx.com:ip:xlconstant:1.1
     xilinx.com:ip:smartconnect:1.0
     xilinx.com:ip:axi_protocol_converter:2.1
+    xilinx.com:ip:system_ila:1.1
 } {
     if {[llength [get_ipdefs -all $required_ip]] == 0} {
         error "Required Vivado IP was not found: $required_ip"
@@ -175,6 +176,19 @@ set hp0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hp0_smartconnect
 set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_control_regs_0]
 set hpm0_protocol_converter [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_protocol_converter:2.1 p03_hpm0_protocol_converter_0]
+set hpm0_system_ila [create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 p03_hpm0_system_ila_0]
+set_property -dict [list \
+    CONFIG.C_MON_TYPE {INTERFACE} \
+    CONFIG.C_NUM_MONITOR_SLOTS {2} \
+    CONFIG.C_DATA_DEPTH {2048} \
+    CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
+    CONFIG.C_SLOT_1_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
+    CONFIG.C_SLOT_0_AXI_DATA_SEL {1} \
+    CONFIG.C_SLOT_1_AXI_DATA_SEL {1} \
+    CONFIG.C_SLOT_0_AXI_TRIG_SEL {1} \
+    CONFIG.C_SLOT_1_AXI_TRIG_SEL {1} \
+    CONFIG.C_SLOT_0_APC_EN {1} \
+    CONFIG.C_SLOT_1_APC_EN {1}] $hpm0_system_ila
 
 # P03.2 leaves packet routing / next-event policy to the forthcoming P03.3
 # Cortex-A53 runtime. Disable P05's former controller-side Port-B integration
@@ -260,6 +274,7 @@ connect_bd_net $pl_clk \
     [get_bd_pins p02_hp0_smartconnect_0/aclk] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aclk] \
     [get_bd_pins p03_hpm0_protocol_converter_0/aclk] \
+    [get_bd_pins p03_hpm0_system_ila_0/clk] \
     [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] \
     [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] \
     [get_bd_pins vio_p08/clk] \
@@ -278,6 +293,7 @@ connect_bd_net [get_bd_pins p08_reset_conditioner_0/resetn] \
     [get_bd_pins p02_hp0_smartconnect_0/aresetn] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aresetn] \
     [get_bd_pins p03_hpm0_protocol_converter_0/aresetn] \
+    [get_bd_pins p03_hpm0_system_ila_0/resetn] \
     [get_bd_pins vio_p08/probe_in28]
 
 # Dispatch command inputs now come from PS-visible MMIO.
@@ -411,9 +427,11 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
 # A dedicated AXI Protocol Converter is used because there is exactly one
 # control slave; no HPM0 SmartConnect routing fabric is required.
 connect_bd_intf_net [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
-    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]
+    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI] \
+    [get_bd_intf_pins p03_hpm0_system_ila_0/SLOT_0_AXI]
 connect_bd_intf_net [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI] \
-    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
+    [get_bd_intf_pins p03_ps_control_regs_0/S_AXI] \
+    [get_bd_intf_pins p03_hpm0_system_ila_0/SLOT_1_AXI]
 
 set mmio_segments [get_bd_addr_segs -quiet -of_objects \
     [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]]
@@ -562,6 +580,8 @@ if {$stage eq "synth"} {
 puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
 puts $metrics "p03_hpm0_transport=axi_protocol_converter"
+puts $metrics "p03_hpm0_system_ila=1"
+puts $metrics "p03_hpm0_ila_slots=2"
 puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
@@ -637,6 +657,8 @@ puts $metrics "p02_hp0_data_width_bits=128"
 puts $metrics "p03_hpm0_enabled=1"
 puts $metrics "p03_hpm0_data_width_bits=32"
 puts $metrics "p03_hpm0_transport=axi_protocol_converter"
+puts $metrics "p03_hpm0_system_ila=1"
+puts $metrics "p03_hpm0_ila_slots=2"
 puts $metrics "p03_mmio_base=0xA4000000"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
