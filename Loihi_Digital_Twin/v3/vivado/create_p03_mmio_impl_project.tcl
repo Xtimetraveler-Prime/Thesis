@@ -39,8 +39,8 @@ set mmio_rtl [file normalize [lindex $argv 12]]
 set report_dir [file normalize [lindex $argv 13]]
 set jobs [lindex $argv 14]
 set stage [lindex $argv 15]
-if {$stage ne "synth" && $stage ne "route"} {
-    error "P03.2 stage must be synth or route, got: $stage"
+if {$stage ni {"bd" "synth" "route"}} {
+    error "P03.2 stage must be bd, synth or route, got: $stage"
 }
 
 foreach path [list $ip_repo_dir $controller_rtl $memory_rtl $reset_rtl $hostmux_rtl $walker_rtl $arbiter_rtl $range_guard_rtl $adapter_rtl $mmio_rtl] {
@@ -455,7 +455,21 @@ set p03_ila_slots [get_property CONFIG.C_NUM_MONITOR_SLOTS $p03_system_ila]
 if {$p03_ila_slots != 2} {
     error "P03.2c expected two System ILA monitor slots, got $p03_ila_slots"
 }
+# Debug automation initially gives both monitor slots the AXI4 default.
+# The converter's M_AXI interface is AXI4-Lite, so slot 1 must explicitly
+# use AXI4LITE. Otherwise validate_bd_design fails with BD 41-237.
+# Slot 0 monitors the upstream PS AXI4 interface and remains AXI4.
+set_property -dict [list \
+    CONFIG.C_SLOT_0_AXI_PROTOCOL {AXI4} \
+    CONFIG.C_SLOT_1_AXI_PROTOCOL {AXI4LITE}] $p03_system_ila
+set p03_ila_slot0_proto [get_property CONFIG.C_SLOT_0_AXI_PROTOCOL $p03_system_ila]
+set p03_ila_slot1_proto [get_property CONFIG.C_SLOT_1_AXI_PROTOCOL $p03_system_ila]
+if {$p03_ila_slot0_proto ne "AXI4" || $p03_ila_slot1_proto ne "AXI4LITE"} {
+    error "P03.2c ILA protocol mismatch after configuration: slot0=$p03_ila_slot0_proto slot1=$p03_ila_slot1_proto"
+}
 puts "P03.2c System ILA automation: cell=$p03_system_ila slots=$p03_ila_slots"
+puts "P03_2C_ILA_SLOT_0_PROTOCOL=$p03_ila_slot0_proto"
+puts "P03_2C_ILA_SLOT_1_PROTOCOL=$p03_ila_slot1_proto"
 
 # Paging command inputs now come from PS-visible MMIO.
 connect_pair p03_ps_control_regs_0/page_start p02_context_page_bank_walker_0/cmd_start
@@ -548,7 +562,13 @@ connect_pair p08_context_memory_0/integration_address_error vio_p08/probe_in27
 
 validate_bd_design
 save_bd_design
+puts "PASS: P03.2c HPM0 two-slot AXI4/AXI4-Lite System ILA block design validated."
 puts "P03.2 HP0 DDR-paged one-engine / three-resident-context block design validated successfully."
+
+# Fast protocol/connectivity gate; stop before HLS wrapper and FPGA synthesis.
+if {$stage eq "bd"} {
+    return
+}
 
 set bd_file [lindex [get_files -quiet */${bd_name}.bd] 0]
 if {$bd_file eq ""} { error "P03.2 block design file was not found" }
