@@ -1,11 +1,8 @@
-# Arm/capture the two-slot P03.2c HPM0 System ILA.
+# P03.2c dual-analyzer diagnostic capture.
+# System ILA: PS HPM0 AXI4 -> AXI Protocol Converter (one interface slot).
+# Native ILA: passive read-channel taps at p03_ps_control_regs AXI4-Lite.
 #
-# SLOT_0_AXI monitors PS M_AXI_HPM0_FPD -> AXI Protocol Converter.
-# SLOT_1_AXI monitors AXI Protocol Converter -> p03_ps_control_regs.
-#
-# The script triggers on SLOT_0 read-address VALID. The wrapper halts all A53
-# cores before arming and issues exactly one physical MMIO read after the
-# P03_2C_ILA_ARMED marker is created.
+# Both analyzers are armed before the wrapper issues one physical 32-bit read.
 if {$argc < 3 || $argc > 4} {
     error "usage: p03_2c_ila_capture.tcl <output_dir> <armed_marker> <ltx> ?<hw_server_url>?"
 }
@@ -32,55 +29,73 @@ proc p03_k26_device {} {
     error "P03.2c ILA capture could not identify K26 device"
 }
 
-proc p03_hpm0_ila {device} {
-    set all_ilas [get_hw_ilas -of_objects $device]
-    if {[llength $all_ilas] == 1} {
-        return [lindex $all_ilas 0]
-    }
-
+proc p03_ila_by_cell {device needle} {
     set matches {}
-    foreach candidate $all_ilas {
-        set found_upstream 0
-        set found_downstream 0
-        foreach probe [get_hw_probes -of_objects $candidate] {
-            set pname [string tolower [get_property NAME $probe]]
-            if {[string match "*p03_hpm0_ps_to_converter_axi*" $pname]} {
-                set found_upstream 1
-            }
-            if {[string match "*p03_hpm0_converter_to_mmio_axi*" $pname]} {
-                set found_downstream 1
-            }
-        }
-        if {$found_upstream && $found_downstream} {
-            lappend matches $candidate
+    foreach ila [get_hw_ilas -of_objects $device] {
+        set name [string tolower [get_property CELL_NAME $ila]]
+        if {[string match "*$needle*" $name]} {
+            lappend matches $ila
         }
     }
     if {[llength $matches] != 1} {
-        puts "P03_2C_ILA_AVAILABLE=$all_ilas"
-        error "P03.2c expected exactly one HPM0 System ILA, got [llength $matches]"
+        puts "P03_2C_ILA_AVAILABLE=[get_hw_ilas -of_objects $device]"
+        error "Expected one ILA with cell name containing $needle, got $matches"
     }
     return [lindex $matches 0]
 }
 
-proc p03_slot0_arvalid_probe {ila} {
+proc p03_dump_probes {ila tag} {
+    puts "P03_2C_ILA_${tag}_PROBES_BEGIN"
+    foreach probe [get_hw_probes -of_objects $ila] {
+        puts "P03_2C_ILA_${tag}_PROBE=[get_property NAME $probe]"
+        catch {set_property DISPLAY_RADIX HEX $probe}
+    }
+    puts "P03_2C_ILA_${tag}_PROBES_END"
+}
+
+proc p03_trigger_probe {ila patterns} {
     set matches {}
     foreach probe [get_hw_probes -of_objects $ila] {
         set name [string tolower [get_property NAME $probe]]
-        if {[string match "*p03_hpm0_ps_to_converter_axi*arvalid*" $name] ||
-            [string match "*slot_0*arvalid*" $name] ||
-            [string match "*slot0*arvalid*" $name]} {
-            lappend matches $probe
+        foreach pattern $patterns {
+            if {[string match $pattern $name]} {
+                lappend matches $probe
+                break
+            }
         }
     }
     if {[llength $matches] != 1} {
-        puts "P03_2C_ILA_PROBE_INVENTORY_BEGIN"
-        foreach probe [get_hw_probes -of_objects $ila] {
-            puts "P03_2C_ILA_PROBE=[get_property NAME $probe]"
-        }
-        puts "P03_2C_ILA_PROBE_INVENTORY_END"
-        error "P03.2c could not uniquely identify SLOT_0 ARVALID probe"
+        error "P03.2c could not uniquely identify ARVALID trigger among [get_hw_probes -of_objects $ila] using $patterns; matches=$matches"
     }
     return [lindex $matches 0]
+}
+
+proc p03_arm_ila {ila trigger} {
+    reset_hw_ila $ila
+    set_property CONTROL.WINDOW_COUNT 1 $ila
+    set_property CONTROL.TRIGGER_POSITION 512 $ila
+    set_property CONTROL.TRIGGER_MODE BASIC_ONLY $ila
+    set_property CONTROL.TRIGGER_CONDITION AND $ila
+    set_property CONTROL.CAPTURE_MODE ALWAYS $ila
+    set_property TRIGGER_COMPARE_VALUE "eq1'b1" $trigger
+    puts "P03_2C_ILA_ARM_TRIGGER=[get_property NAME $trigger]"
+    run_hw_ila $ila
+}
+
+proc p03_export_ila {ila dir stem timeout_seconds} {
+    if {[catch {wait_on_hw_ila -timeout $timeout_seconds $ila} detail]} {
+        puts "P03_2C_ILA_NO_TRIGGER=${stem}:$detail"
+        return 0
+    }
+    set data [upload_hw_ila_data $ila]
+    set path [file join $dir $stem]
+    write_hw_ila_data -force "${path}.ila" $data
+    write_hw_ila_data -force -csv_file "${path}.csv" $data
+    write_hw_ila_data -force -vcd_file "${path}.vcd" $data
+    puts "P03_2C_ILA_CAPTURE=${path}.ila"
+    puts "P03_2C_ILA_CAPTURE=${path}.csv"
+    puts "P03_2C_ILA_CAPTURE=${path}.vcd"
+    return 1
 }
 
 open_hw_manager
@@ -92,51 +107,37 @@ set_property PROBES.FILE $ltx_file $device
 catch {set_property FULL_PROBES.FILE $ltx_file $device}
 refresh_hw_device $device
 
-set ila [p03_hpm0_ila $device]
-puts "P03_2C_ILA_OBJECT=$ila"
-puts "P03_2C_ILA_CELL=[get_property CELL_NAME $ila]"
+set upstream [p03_ila_by_cell $device "system_ila"]
+set downstream [p03_ila_by_cell $device "p03_mmio_native_ila"]
+puts "P03_2C_ILA_UPSTREAM_CELL=[get_property CELL_NAME $upstream]"
+puts "P03_2C_ILA_DOWNSTREAM_CELL=[get_property CELL_NAME $downstream]"
+p03_dump_probes $upstream UPSTREAM
+p03_dump_probes $downstream DOWNSTREAM
 
-puts "P03_2C_ILA_PROBE_INVENTORY_BEGIN"
-foreach probe [get_hw_probes -of_objects $ila] {
-    puts "P03_2C_ILA_PROBE=[get_property NAME $probe]"
-    catch {set_property DISPLAY_RADIX HEX $probe}
-    catch {set_property DISPLAY_AS_ENUM false $probe}
-    catch {set_property TRIGGER_COMPARE_VALUE X $probe}
-}
-puts "P03_2C_ILA_PROBE_INVENTORY_END"
+set upstream_arvalid [p03_trigger_probe $upstream {
+    *p03_hpm0_ps_to_converter_axi*arvalid* *slot_0*arvalid* *slot0*arvalid*
+}]
+set downstream_arvalid [p03_trigger_probe $downstream {
+    *p03_diag_arvalid* *probe0*
+}]
+p03_arm_ila $upstream $upstream_arvalid
+p03_arm_ila $downstream $downstream_arvalid
 
-set arvalid_probe [p03_slot0_arvalid_probe $ila]
-puts "P03_2C_ILA_TRIGGER_PROBE=[get_property NAME $arvalid_probe]"
-
-reset_hw_ila $ila
-set_property CONTROL.WINDOW_COUNT 1 $ila
-set_property CONTROL.TRIGGER_POSITION 512 $ila
-set_property CONTROL.TRIGGER_MODE BASIC_ONLY $ila
-set_property CONTROL.TRIGGER_CONDITION AND $ila
-set_property CONTROL.CAPTURE_MODE ALWAYS $ila
-set_property TRIGGER_COMPARE_VALUE "eq1'b1" $arvalid_probe
-
-run_hw_ila $ila
-
-set mf [open $armed_marker w]
-puts $mf "armed"
-close $mf
+set marker [open $armed_marker w]
+puts $marker "armed"
+close $marker
 puts "P03_2C_ILA_ARMED=1"
 flush stdout
 
-wait_on_hw_ila -timeout 30 $ila
-set data [upload_hw_ila_data $ila]
-
-set ila_path [file join $output_dir p03_2c_hpm0_capture.ila]
-set csv_path [file join $output_dir p03_2c_hpm0_capture.csv]
-set vcd_path [file join $output_dir p03_2c_hpm0_capture.vcd]
-write_hw_ila_data -force $ila_path $data
-write_hw_ila_data -force -csv_file $csv_path $data
-write_hw_ila_data -force -vcd_file $vcd_path $data
-
-puts "P03_2C_ILA_CAPTURE_ILA=$ila_path"
-puts "P03_2C_ILA_CAPTURE_CSV=$csv_path"
-puts "P03_2C_ILA_CAPTURE_VCD=$vcd_path"
-puts "PASS: P03.2c HPM0 System ILA capture completed"
+# Export upstream first: even if the converter never reaches the AXI4-Lite
+# slave and its native ILA does not trigger, the upstream capture is evidence.
+set upstream_ok [p03_export_ila $upstream $output_dir p03_2c_hpm0_capture 30]
+set downstream_ok [p03_export_ila $downstream $output_dir p03_2c_mmio_slave_capture 15]
 
 close_hw_manager
+if {!$upstream_ok} { error "P03.2c upstream PS HPM0 read did not trigger" }
+if {!$downstream_ok} {
+    puts "P03_2C_ILA_INFO=Upstream captured; downstream did not trigger. Inspect upstream evidence."
+    error "P03.2c downstream MMIO slave read did not trigger; upstream evidence preserved."
+}
+puts "PASS: P03.2c dual ILA read-channel capture completed"
