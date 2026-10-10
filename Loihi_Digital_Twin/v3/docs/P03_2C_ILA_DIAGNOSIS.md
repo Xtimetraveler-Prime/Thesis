@@ -163,3 +163,45 @@ The corrected diagnostic flow now:
 5. requires Vivado to produce exactly one System ILA with two monitor slots.
 
 The functional HPM0 control topology did not change as part of this fix.
+
+
+## ILA integration attempt 2 — mixed AXI4/AXI4-Lite monitor protocols
+
+The corrected Debug Automation flow created one two-slot System ILA and attached
+both functional HPM0 interface nets. Independent local preflight passed, but
+`validate_bd_design` failed before synthesis or routing:
+
+```text
+Debug Automation : Instantiating new System ILA block '/system_ila_0'
+P03.2c System ILA automation: cell=/system_ila_0 slots=2
+ERROR: [BD 41-237] Bus Interface property PROTOCOL does not match between
+/system_ila_0/SLOT_1_AXI(AXI4) and
+/p03_hpm0_protocol_converter_0/M_AXI(AXI4LITE)
+```
+
+The blocker is in the **debug monitor interface**, not yet evidence of a
+functional PS-to-PL AXI transaction failure. The converter's upstream AXI4
+and downstream AXI4-Lite protocols are intentional.
+
+The System ILA's documented per-slot `C_SLOT_<p>_AXI_PROTOCOL` parameter
+supports `AXI4LITE` (AMD PG261, System ILA Product Guide). Debug Automation
+left slot 1 at its AXI4 default, so the diagnostic Tcl now sets and checks:
+
+```tcl
+CONFIG.C_SLOT_0_AXI_PROTOCOL {AXI4}
+CONFIG.C_SLOT_1_AXI_PROTOCOL {AXI4LITE}
+```
+
+To avoid repeating a complete route merely to discover a block-design
+configuration error, `P03_MMIO_STAGE=bd` now stops after
+`validate_bd_design` and `save_bd_design`, with a required PASS marker.
+The normal `route` path and accepted P02/P03.2b functional architecture are
+unchanged. Each diagnostic build uses a new output directory; existing
+routed/acceptance artifacts are preserved.
+
+**Status:** Correction committed; awaiting independent Vivado 2025.2 BD-only
+validation, then a new routed ILA shell, then one physical HPM0 read capture.
+Neither the System ILA change nor this documentation accepts P03.2c.
+
+Reference: AMD System ILA PG261,
+https://docs.amd.com/v/u/en-US/pg261-system-ila
