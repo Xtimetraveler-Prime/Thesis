@@ -300,3 +300,89 @@ Hardware Manager script changes.
 AMD references:
 - https://docs.amd.com/r/2021.1-English/ug835-vivado-tcl-commands/reset_hw_ila
 - https://docs.amd.com/r/2023.2-English/ug912-vivado-properties/HW_ILA
+
+
+## 2026-10-11 — first successful physical dual-ILA capture: MMIO read returns correct PL data
+
+**Status: independently captured; root cause isolated past PS-facing PL AXI boundary, not yet resolved.** The user supplied the complete paired captures and XSDB result from a
+diagnostic K26 bitstream routed on 2026-10-10:
+
+- `p03_2c_hpm0_capture.csv`: 1,024 samples, SHA-256
+  `9bfb11bd9844aa5de7c665fb66db738858f035ce85807a90755eeddb01360896`.
+- `p03_2c_mmio_slave_capture.csv`: 1,024 samples, SHA-256
+  `63bc33a3da34b4f992fba48672bda9e91c0abf259efd8e86fc3875016ce1765d`.
+- `xsdb_single_read.log`: SHA-256
+  `17a2b5109c7c81684830cf4bcf6c9d39ed48b629d8ca5d4b653f1d577c69bffe`.
+- `vivado_ila_capture.log`: SHA-256
+  `abdb179ad3ebf65d6ea9df6a28089a9063dfb82486207657bf9c8857d3df9077`.
+
+Both ILAs triggered on the intended `0xA4000004` transaction. Sample numbers
+are independent windows; **do not subtract them to calculate bridge latency**.
+
+| Captured channel | Accepted request | Completed response | Other evidence |
+|---|---|---|---|
+| Downstream native ILA at `p03_ps_control_regs` | sample 0, `ARVALID=ARREADY=1`, `ARADDR=0xA4000004` | sample 1, `RVALID=RREADY=1`, `RDATA=0x00010000` | Captured `RRESP[0]=0` (only the low bit is present in this trace) |
+| Upstream System ILA at PS-facing converter input | sample 0, `ARVALID=ARREADY=1`, `ARADDR=0x00A4000004`, `ARSIZE=4 bytes` | sample 5, `RVALID=RREADY=RLAST=1`, `RDATA=0x00010000` | `RRESP=OKAY` |
+| XSDB PSU physical read | `mrd -force -size w 0xA4000004 1` | reports `0x00000000` | **Disagrees with observed PS-facing PL response** |
+
+Each capture has exactly **one** qualifying AR handshake and one R handshake.
+The slave-side `ARADDR` happens to change to `0xA4000008` after sample 0,
+but `ARVALID=0` at that time: it is an **inactive bus value**, not evidence
+of another read or an address translation defect.
+
+### Conclusions and corrected interpretation
+
+1. For the captured transaction, the custom MMIO RTL **does decode +0x004**
+   and returns its specified VERSION `0x00010000`.
+2. The AXI Protocol Converter delivers the correct, valid, OKAY read response
+   to the PS-facing AXI bus. The clocked AXI4 read handshakes complete.
+3. XSDB `PSU` nevertheless prints zero. The disagreement lies **after the
+   monitored PL-to-PS boundary, or in the XSDB debug access/reporting path**.
+   The capture alone does not determine which.
+4. **Supersedes earlier diagnostic-signature interpretations** in
+   `P03_2C_PHYSICAL_ATTEMPT1.md`: returning zero via XSDB is NOT evidence
+   that nonzero-offset accesses never reached the custom slave. The new
+   signal-level capture proves that +0x004 reaches the slave and returns
+   correct data.
+5. The earlier A53 standalone mailbox `FAIL_MMIO_VERSION` was observed with
+   an **older physical candidate**. It has **not** been repeated against this
+   newly routed, protocol-converter/split-ILA bitstream; do not combine the
+   two results as proof of a persistent A53 read defect.
+6. Do not modify the custom RTL decode or replace the HPM0 topology based on
+   the now-disproven "lost nonzero address" explanation.
+
+### Next discriminating experiment (no bitstream rebuild)
+
+Boot the KV260 into Linux, program the same proven diagnostic bitstream, and
+use a **real A53 Linux process**, not a `PSU`/DAP XSDB memory read, to
+perform *read-only* 32-bit device-memory accesses:
+
+```sh
+sudo busybox devmem 0xA4000000 32
+sudo busybox devmem 0xA4000004 32
+sudo busybox devmem 0xA4000008 32
+sudo busybox devmem 0xA4000018 32
+```
+
+Expected (diagnostic candidate):
+
+```text
+0x4C543302
+0x00010000
+0x0001031F
+0xD1A60018
+```
+
+If Linux observes the expected values, the current A53-visible MMIO read
+path works, and the XSDB `PSU` zero needs separate debugger-path
+investigation. Continue the accepted-behavior page/debug/dispatch smoke with
+an ELF built for the **same candidate XSA**, keeping its identity separate
+from accepted P03.2b artifacts.
+
+If Linux also reads zero, the failure remains in the PS software/translation
+or PS-side data-return path; investigate memory attributes and master-port
+width/byte-lane mapping before any speculative RTL topology changes.
+A53 and debug/DAP access paths are not equivalent.
+
+**P03.2c acceptance remains open:** this captures a working PL MMIO read,
+not a passing physical Cortex-A53 standalone page/resident/dispatch smoke.
