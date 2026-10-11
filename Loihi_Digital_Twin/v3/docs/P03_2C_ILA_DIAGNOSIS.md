@@ -255,3 +255,48 @@ Independent BD-only `validate_bd_design`, route, and physical capture are
 **not yet completed**. P03.2c remains blocked until those gates pass.
 
 References: AMD PG261 (System ILA) and UG912 (BD_INTF_PIN properties).
+
+
+## First dual-ILA physical capture attempt — HW_ILA trigger mode write refused
+
+Independent hardware programming of the routed split-ILA diagnostic design
+succeeded. Vivado Hardware Manager discovered both the upstream System ILA
+and downstream native ILA; the downstream probe inventory included the
+seven named passive MMIO read-channel taps. It also included many
+`<const0>`/`<const1>` synthetic probe aliases.
+
+**Capture did not arm.** The Tcl script failed in `p03_arm_ila` while
+configuring the first ILA:
+
+```text
+ERROR: [Labtoolstcl 44-156] hw_ila property 'CONTROL.TRIGGER_MODE' is read-only.
+```
+
+The failure occurred before the arming marker and before the wrapper issued
+its controlled `0xA4000004` read. No captured AXI transaction is available
+from this attempt; the physical MMIO root cause is still unknown.
+
+AMD UG835 documents that `reset_hw_ila` restores the basic-mode defaults:
+`CONTROL.TRIGGER_MODE=BASIC_ONLY`,
+`CONTROL.TRIGGER_CONDITION=AND`,
+`CONTROL.CAPTURE_MODE=ALWAYS`, `CONTROL.WINDOW_COUNT=1`.
+The capture Tcl now resets each analyzer, **reads and verifies** those
+properties, avoids *all* explicit `CONTROL.*` writes, and sets only the
+`TRIGGER_COMPARE_VALUE` on the selected `ARVALID` hardware probe.
+The default trigger position is zero, providing a post-trigger capture
+window. The script also summarizes synthetic constant probes to prevent
+diagnostic errors being hidden in long log tails.
+
+Added an offline regression
+`tests/test_p03_2c_ila_capture_contract.py` covering the default-property
+contract, both-analyzer arming, preserved trace outputs, and log filtering.
+
+**Next independent hardware gate:** Reboot the KV260 (the previous wrapper
+halted the Cortex-A53 cores), reprogram the *existing* successful diagnostic
+bitstream/probe pair if needed, and rerun the updated capture Tcl with a new
+output directory. A new route or XSA rebuild is **not required** for these
+Hardware Manager script changes.
+
+AMD references:
+- https://docs.amd.com/r/2021.1-English/ug835-vivado-tcl-commands/reset_hw_ila
+- https://docs.amd.com/r/2023.2-English/ug912-vivado-properties/HW_ILA
