@@ -32,12 +32,12 @@ def test_width_diag_reads_correct_zynqmp_slcr_addresses_without_writes():
         assert forbidden not in source
 
 
-def test_width_diagnostic_is_compared_to_32_bit_realized_ps_master():
+def test_width_diagnostic_is_compared_to_explicit_realized_ps_master_width():
     bd = BD.read_text(encoding="utf-8")
-    assert "CONFIG.PSU__MAXIGP0__DATA_WIDTH {32}" in bd
-    assert "CONFIG.PSU__MAXIGP2__DATA_WIDTH {32}" in bd
+    assert "CONFIG.PSU__MAXIGP0__DATA_WIDTH $p03_ps_hpm0_width" in bd
+    assert "CONFIG.PSU__MAXIGP2__DATA_WIDTH $p03_ps_hpm0_width" in bd
     assert "P03_2C_DIAG_MASTER_DATA_WIDTH=" in bd
-    assert 'if {$p03_ps_master_dw != 32}' in bd
+    assert 'if {$p03_ps_master_dw != $p03_ps_hpm0_width}' in bd
 
 
 def test_reset_widths_in_amd_register_reference_would_mismatch_pl():
