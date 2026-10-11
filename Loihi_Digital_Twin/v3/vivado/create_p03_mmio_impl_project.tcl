@@ -201,6 +201,19 @@ if {$p03_ps_mmio_master eq "LPD"} {
 }
 
 
+# Check the *realized* block-design interface instead of relying on an
+# IP wizard parameter. A mismatch would undermine the LPD hypothesis.
+# This is intentionally checked only after the PS cell has been customized.
+set p03_ps_master_bd_pin [get_bd_intf_pins zynq_ultra_ps_e_0/$p03_ps_master_pin]
+if {[llength $p03_ps_master_bd_pin] != 1} {
+    error "P03.2c PS master interface missing after configuration: $p03_ps_master_pin"
+}
+set p03_ps_master_dw [get_property CONFIG.DATA_WIDTH $p03_ps_master_bd_pin]
+puts "P03_2C_DIAG_MASTER_DATA_WIDTH=$p03_ps_master_dw"
+if {$p03_ps_master_dw != 32} {
+    error "P03.2c PS master must be 32 bits for this diagnostic: pin=$p03_ps_master_pin width=$p03_ps_master_dw"
+}
+
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv loihi_core_v2_tick_0]
 set ctrl [create_bd_cell -type module -reference p08_paged_dispatch_controller p08_paged_dispatch_controller_0]
 set mem [create_bd_cell -type module -reference p05_context_memory_fabric p08_context_memory_0]
