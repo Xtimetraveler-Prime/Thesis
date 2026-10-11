@@ -13,10 +13,13 @@ VERSION = 1
 COMPLETE = 0xC0DEF00D
 PASS_RESULT = 0x600D600D
 EXPECTED = (0x4C543302, 0x00010000, 0x0001031F, 0xD1A60018)
-ADDRESSES = (0xA4000000, 0xA4000004, 0xA4000008, 0xA4000018)
+OFFSETS = (0x0, 0x4, 0x8, 0x18)
 
 
-def verify(path: Path) -> bool:
+def verify(path: Path, base: int = 0xA4000000) -> bool:
+    if base not in (0xA4000000, 0x80000000):
+        raise ValueError("diagnostic base must be the FPD or LPD window")
+    addresses = tuple(base + offset for offset in OFFSETS)
     data = path.read_bytes()
     if len(data) != 64:
         print(f"FAIL: A53 read-only mailbox has {len(data)} bytes, expected 64")
@@ -30,7 +33,7 @@ def verify(path: Path) -> bool:
     print(f"P03_2C_A53_MAGIC=0x{magic:08X}")
     print(f"P03_2C_A53_RESULT=0x{result:08X}")
     print(f"P03_2C_A53_COMPLETE=0x{complete:08X}")
-    for address, observed, wanted in zip(ADDRESSES, actual, EXPECTED):
+    for address, observed, wanted in zip(addresses, actual, EXPECTED):
         status = "PASS" if observed == wanted else "FAIL"
         print(
             f"{status}: Cortex-A53 MMIO 0x{address:08X} "
@@ -44,7 +47,7 @@ def verify(path: Path) -> bool:
         ("completion marker", complete == COMPLETE),
         ("result", result == PASS_RESULT),
         ("match mask", mask == 0xF),
-        ("MMIO base", mmio_base == ADDRESSES[0]),
+        ("MMIO base", mmio_base == base),
         ("mailbox address", mailbox_base == 0x43FF0000),
         ("all reads", actual == EXPECTED),
     ]
@@ -68,8 +71,12 @@ def verify(path: Path) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mailbox", type=Path, required=True)
+    parser.add_argument(
+        "--base", type=lambda v: int(v, 0), default=0xA4000000,
+        help="Processor-visible diagnostic MMIO base (FPD or LPD)"
+    )
     args = parser.parse_args()
-    return 0 if verify(args.mailbox) else 1
+    return 0 if verify(args.mailbox, base=args.base) else 1
 
 
 if __name__ == "__main__":
