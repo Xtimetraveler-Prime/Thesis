@@ -408,13 +408,21 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     completed** on both the FPD and opt-in LPD candidates: mailbox
     magic/completion passed, ID returned `0x4C543302`, but VERSION/
     CAPABILITIES/unmapped returned zero.
-    This disproves the XSDB-only explanation, **and** establishes that
-    simply relocating control traffic to `M_AXI_HPM0_LPD` does not fix
-    the problem. The branch now supports a *same-execution* dual-ILA capture
-    of the actual A53 read-only ELF and its DDR mailbox, with zero FPGA
-    changes required. Next correlate the A53's upstream/downstream AXI
-    transaction with the mailbox before changing the control datapath.
-    The PuTTY freeze's cause is not yet known.
+    **2026-10-11 decisive same-run capture:** All four A53-generated
+    AXI requests reach the correct addresses and return correct, OKAY data
+    at the PS-facing PL boundary; the A53 DDR mailbox nevertheless contains
+    zeros at +0x004/+0x008/+0x018. This eliminates the custom slave,
+    protocol converter, and A53 address-generation hypotheses for these
+    reads. The strongest new candidate is an **uninitialized PS-side HPM
+    width selector**: Vivado builds 32-bit PL ports, but programming only
+    a PL bitstream after an unrelated KV260 Linux boot may leave the
+    static FPD/LPD HPM width registers at their 128-bit boot defaults.
+    A read-only XSDB register probe now checks `FPD_SLCR.afi_fs`
+    (`0xFD615000`) and `LPD_SLCR.afi_fs` (`0xFF419000`); it never
+    writes static PS registers. If width mismatch is confirmed, correct
+    during PS reset/boot initialization with the matching XSA before
+    re-running the four-read A53 and page/resident/dispatch smoke gates.
+    The PuTTY freeze remains a separate unproven symptom.
     See `docs/P03_2C_ILA_DIAGNOSIS.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
