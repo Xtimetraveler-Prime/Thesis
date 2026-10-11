@@ -33,9 +33,17 @@ fi
 for tool in xsdb vivado python sha256sum; do
     command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: missing $tool" >&2; exit 2; }
 done
-for file in "$BIT" "$LTX" "$XSA" "$ELF" "$FIXTURE_DIR/core0_initial.bin" "$FIXTURE_DIR/mailbox_zero.bin"; do
+for file in "$BIT" "$LTX" "$XSA" "$ELF" "$FIXTURE_DIR/core0_initial.bin" "$FIXTURE_DIR/mailbox_zero.bin" \
+    "$A53_BUILD_DIR/source/p03_2c_readonly.c"; do
     [[ -s "$file" ]] || { echo "ERROR: missing/empty diagnostic input: $file" >&2; exit 2; }
 done
+# The old, already-built ELF must target the matching FPD/LPD address,
+# not merely be paired with a matching XSA. Never mix accepted/diagnostic ABI.
+grep -Fq "#define P03_READONLY_MMIO_BASE ((uintptr_t)${MMIO_BASE}u)" \
+    "$A53_BUILD_DIR/source/p03_2c_readonly.c" || {
+    echo "ERROR: existing A53 ELF source was not built for MMIO base $MMIO_BASE" >&2
+    exit 2
+}
 [[ "$(sha256sum "$XSA" | awk '{print $1}')" == "$XSA_SHA" ]] || {
     echo "ERROR: diagnostic XSA hash mismatch" >&2; exit 2;
 }
