@@ -18,12 +18,12 @@ VITIS = ROOT / "software/p03/build_p03_2c_smoke.py"
 EXPECTED = (0x4C543302, 0x00010000, 0x0001031F, 0xD1A60018)
 
 
-def _mailbox(path: Path, actual: tuple[int, ...], complete: bool = True) -> None:
+def _mailbox(path: Path, actual: tuple[int, ...], complete: bool = True, base: int = 0xA4000000) -> None:
     mask = sum(1 << i for i, value in enumerate(actual) if value == EXPECTED[i])
     words = (
         0x50335244, 1, 0x600D600D if mask == 0xF else 0xDEAD0000 | mask, 4,
         *actual, *EXPECTED, mask,
-        0xC0DEF00D if complete else 0, 0xA4000000, 0x43FF0000,
+        0xC0DEF00D if complete else 0, base, 0x43FF0000,
     )
     assert len(words) == 16
     path.write_bytes(struct.pack("<16I", *words))
@@ -85,3 +85,24 @@ def test_readonly_build_is_explicit_and_preserves_accepted_xsa_gate():
     for token in ("p03_2c_xsdb_prepare.tcl", "p03_2c_xsdb_run.tcl",
                   "p03_2c_verify_readonly.py", "P03_2C_SKIP_PROGRAM"):
         assert token in driver
+
+
+def test_readonly_probe_accepts_isolated_lpd_base(tmp_path: Path):
+    mailbox = tmp_path / "lpd.bin"
+    _mailbox(mailbox, EXPECTED, base=0x80000000)
+    result = subprocess.run(
+        [sys.executable, str(VERIFY), "--mailbox", str(mailbox),
+         "--base", "0x80000000"],
+        text=True, capture_output=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Cortex-A53 MMIO 0x80000004" in result.stdout
+    assert "PASS: P03.2c read-only Cortex-A53 MMIO diagnostic" in result.stdout
+
+
+def test_readonly_probe_rejects_lpd_mailbox_with_fpd_expected_base(tmp_path: Path):
+    mailbox = tmp_path / "mismatch.bin"
+    _mailbox(mailbox, EXPECTED, base=0x80000000)
+    result = _verify(mailbox)
+    assert result.returncode != 0
+    assert "MMIO base" in result.stderr
