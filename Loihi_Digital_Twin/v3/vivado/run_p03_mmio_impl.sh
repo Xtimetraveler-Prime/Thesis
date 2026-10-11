@@ -14,6 +14,15 @@ REPORT_DIR="$BUILD_DIR/reports"
 VIVADO_PROJECT_DIR="$BUILD_DIR/project"
 JOBS="${VIVADO_JOBS:-1}"
 STAGE="${P03_MMIO_STAGE:-route}"
+PS_MMIO_MASTER="${P03_PS_MMIO_MASTER:-FPD}"
+case "$PS_MMIO_MASTER" in
+    FPD|LPD) ;;
+    *) echo "ERROR: P03_PS_MMIO_MASTER must be FPD or LPD" >&2; exit 2 ;;
+esac
+if [[ "$PS_MMIO_MASTER" == LPD && -z "${P03_MMIO_BUILD_DIR:-}" ]]; then
+    echo "ERROR: LPD diagnostic requires a fresh explicit P03_MMIO_BUILD_DIR" >&2
+    exit 2
+fi
 case "$STAGE" in
     bd|route) ;;
     *) echo "ERROR: P03_MMIO_STAGE must be bd or route, got $STAGE" >&2; exit 2 ;;
@@ -96,7 +105,11 @@ for pair in "wns_ns:$WNS" "whs_ns:$WHS"; do
     fi
 done
 
-for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_hpm0_transport:axi_protocol_converter"     "p03_hpm0_system_ila:1"     "p03_hpm0_ila_slots:1"     "p03_mmio_native_ila:1"     "p03_mmio_native_probes:7"     "p03_mmio_base:0xA4000000"     "p03_mmio_range_bytes:0x00001000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
+EXPECTED_MMIO_BASE="0xA4000000"
+if [[ "$PS_MMIO_MASTER" == LPD ]]; then
+    EXPECTED_MMIO_BASE="0x80000000"
+fi
+for pair in     "resident_context_slots:3"     "physical_engines:1"     "logical_capacity_changed:0"     "p02_hp0_enabled:1"     "p02_hp0_data_width_bits:128"     "p02_axi_burst_beats:16"     "p02_axi_burst_bytes:256"     "p02_ddr_range_guard:1"     "p02_page_walker:1"     "p02_page_host_arbiter:1"     "p02_host_controls_page_command:0"     "p03_hpm0_enabled:1"     "p03_hpm0_data_width_bits:32"     "p03_hpm0_transport:axi_protocol_converter"     "p03_hpm0_system_ila:1"     "p03_hpm0_ila_slots:1"     "p03_mmio_native_ila:1"     "p03_mmio_native_probes:7"     "p03_mmio_base:$EXPECTED_MMIO_BASE"     "p03_ps_mmio_master:$PS_MMIO_MASTER"     "p03_mmio_range_bytes:0x00001000"     "p03_mmio_controls_page:1"     "p03_mmio_controls_dispatch:1"     "p03_mmio_controls_resident_memory:1"     "p03_ps_runtime_implemented:0"; do
     key="${pair%%:*}"
     expected="${pair#*:}"
     actual="$(metric_value "$key")"
@@ -120,8 +133,8 @@ printf 'PASS: P03.2 routed timing wns_ns=%s whs_ns=%s
 ' "$WNS" "$WHS"
 printf 'PASS: P03.2 physical topology resident_contexts=3 physical_engines=1 hp0=128bit hpm0=32bit
 '
-printf 'PASS: P03.2 MMIO map base=0xA4000000 range=0x00001000
-'
+printf 'PASS: P03.2 MMIO map master=%s base=%s range=0x00001000\n' "$PS_MMIO_MASTER" "$EXPECTED_MMIO_BASE"
+
 printf 'PASS: P03.2 command ownership page=ps-mmio dispatch=ps-mmio resident-memory=ps-mmio
 '
 printf 'PASS: P03.2 resources uram=%s
@@ -134,7 +147,11 @@ echo '=== P03.2 post-route metrics ==='
 cat "$REPORT_DIR/p03_2_post_route_metrics.txt"
 
 echo
-echo "PASS: P03.2 routed PS-MMIO implementation gate completed successfully."
+if [[ "$PS_MMIO_MASTER" == LPD ]]; then
+    echo "PASS: P03.2c LPD diagnostic routed implementation gate completed (NOT P03.2c acceptance)."
+else
+    echo "PASS: P03.2 routed PS-MMIO implementation gate completed successfully."
+fi
 echo "Bitstream: $REPORT_DIR/p03_2_ps_mmio.bit"
 echo "Debug probes: $REPORT_DIR/p03_2_ps_mmio.ltx"
 echo "Fixed XSA: $REPORT_DIR/p03_2_ps_mmio.xsa"
