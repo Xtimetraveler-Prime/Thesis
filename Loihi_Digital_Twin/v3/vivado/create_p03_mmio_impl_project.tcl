@@ -58,7 +58,24 @@ if {$p03_ps_mmio_master eq "LPD"} {
     set p03_ps_master_clock "maxihpm0_fpd_aclk"
     set p03_mmio_base 0xA4000000
 }
+# Safe alternative to changing static PS-side width selectors on a running
+# KV260: match the booted 128-bit PS master and downsize to 32-bit AXI-Lite.
+# The default stays 32 bits to preserve historical candidate behavior.
+set p03_ps_hpm0_width 32
+if {[info exists ::env(P03_PS_HPM0_DATA_WIDTH)]} {
+    set p03_ps_hpm0_width $::env(P03_PS_HPM0_DATA_WIDTH)
+}
+if {$p03_ps_hpm0_width ni {32 128}} {
+    error "P03_PS_HPM0_DATA_WIDTH must be 32 or 128, got $p03_ps_hpm0_width"
+}
+if {$p03_ps_hpm0_width == 128} {
+    set p03_hpm0_transport smartconnect_width_protocol
+} else {
+    set p03_hpm0_transport axi_protocol_converter
+}
 puts "P03_2C_DIAG_MASTER=$p03_ps_mmio_master"
+puts "P03_2C_DIAG_MASTER_DATA_WIDTH_REQUESTED=$p03_ps_hpm0_width"
+puts "P03_2C_DIAG_BRIDGE=$p03_hpm0_transport"
 puts [format "P03_2C_DIAG_MMIO_BASE=0x%08X" $p03_mmio_base]
 if {$stage ni {"bd" "synth" "route"}} {
     error "P03.2 stage must be bd, synth or route, got: $stage"
@@ -181,7 +198,7 @@ if {$p03_ps_mmio_master eq "LPD"} {
         CONFIG.PSU__USE__M_AXI_GP0 {0} \
         CONFIG.PSU__USE__M_AXI_GP1 {0} \
         CONFIG.PSU__USE__M_AXI_GP2 {1} \
-        CONFIG.PSU__MAXIGP2__DATA_WIDTH {32} \
+        CONFIG.PSU__MAXIGP2__DATA_WIDTH $p03_ps_hpm0_width \
         CONFIG.PSU__FPGA_PL0_ENABLE {1} \
         CONFIG.PSU__USE__FABRIC__RST {0} \
         CONFIG.PSU__USE__S_AXI_GP2 {1} \
@@ -190,7 +207,7 @@ if {$p03_ps_mmio_master eq "LPD"} {
 } else {
     set_property -dict [list \
         CONFIG.PSU__USE__M_AXI_GP0 {1} \
-        CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
+        CONFIG.PSU__MAXIGP0__DATA_WIDTH $p03_ps_hpm0_width \
         CONFIG.PSU__USE__M_AXI_GP1 {0} \
         CONFIG.PSU__USE__M_AXI_GP2 {0} \
         CONFIG.PSU__FPGA_PL0_ENABLE {1} \
@@ -210,8 +227,8 @@ if {[llength $p03_ps_master_bd_pin] != 1} {
 }
 set p03_ps_master_dw [get_property CONFIG.DATA_WIDTH $p03_ps_master_bd_pin]
 puts "P03_2C_DIAG_MASTER_DATA_WIDTH=$p03_ps_master_dw"
-if {$p03_ps_master_dw != 32} {
-    error "P03.2c PS master must be 32 bits for this diagnostic: pin=$p03_ps_master_pin width=$p03_ps_master_dw"
+if {$p03_ps_master_dw != $p03_ps_hpm0_width} {
+    error "P03.2c PS master width mismatch: pin=$p03_ps_master_pin expected=$p03_ps_hpm0_width actual=$p03_ps_master_dw"
 }
 
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv loihi_core_v2_tick_0]
@@ -226,7 +243,21 @@ set axi_adapter [create_bd_cell -type module -reference p02_axi128_burst_adapter
 set hp0_smartconnect [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p02_hp0_smartconnect_0]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hp0_smartconnect
 set mmio [create_bd_cell -type module -reference p03_ps_control_regs p03_ps_control_regs_0]
-set hpm0_protocol_converter [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_protocol_converter:2.1 p03_hpm0_protocol_converter_0]
+if {$p03_ps_hpm0_width == 128} {
+    # PG247: SmartConnect converts 128-bit AXI4 to 32-bit AXI4-Lite.
+    set hpm0_bridge [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 p03_hpm0_width_smartconnect_0]
+    set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hpm0_bridge
+    set p03_bridge_s_axis p03_hpm0_width_smartconnect_0/S00_AXI
+    set p03_bridge_m_axis p03_hpm0_width_smartconnect_0/M00_AXI
+    set p03_bridge_clock_pin p03_hpm0_width_smartconnect_0/aclk
+    set p03_bridge_reset_pin p03_hpm0_width_smartconnect_0/aresetn
+} else {
+    set hpm0_bridge [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_protocol_converter:2.1 p03_hpm0_protocol_converter_0]
+    set p03_bridge_s_axis p03_hpm0_protocol_converter_0/S_AXI
+    set p03_bridge_m_axis p03_hpm0_protocol_converter_0/M_AXI
+    set p03_bridge_clock_pin p03_hpm0_protocol_converter_0/aclk
+    set p03_bridge_reset_pin p03_hpm0_protocol_converter_0/aresetn
+}
 
 # P03.2 leaves packet routing / next-event policy to the forthcoming P03.3
 # Cortex-A53 runtime. Disable P05's former controller-side Port-B integration
@@ -311,7 +342,7 @@ connect_bd_net $pl_clk \
     [get_bd_pins p02_axi128_burst_adapter_0/clk] \
     [get_bd_pins p02_hp0_smartconnect_0/aclk] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aclk] \
-    [get_bd_pins p03_hpm0_protocol_converter_0/aclk] \
+    [get_bd_pins $p03_bridge_clock_pin] \
     [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] \
     [get_bd_pins zynq_ultra_ps_e_0/$p03_ps_master_clock] \
     [get_bd_pins vio_p08/clk] \
@@ -329,7 +360,7 @@ connect_bd_net [get_bd_pins p08_reset_conditioner_0/resetn] \
     [get_bd_pins p02_axi128_burst_adapter_0/resetn] \
     [get_bd_pins p02_hp0_smartconnect_0/aresetn] \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aresetn] \
-    [get_bd_pins p03_hpm0_protocol_converter_0/aresetn] \
+    [get_bd_pins $p03_bridge_reset_pin] \
     [get_bd_pins vio_p08/probe_in28]
 
 # Dispatch command inputs now come from PS-visible MMIO.
@@ -464,9 +495,9 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
 # control slave; no HPM0 SmartConnect routing fabric is required.
 connect_bd_intf_net -intf_net p03_hpm0_ps_to_converter_axi \
     [get_bd_intf_pins zynq_ultra_ps_e_0/$p03_ps_master_pin] \
-    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]
+    [get_bd_intf_pins $p03_bridge_s_axis]
 connect_bd_intf_net -intf_net p03_hpm0_converter_to_mmio_axi \
-    [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI] \
+    [get_bd_intf_pins $p03_bridge_m_axis] \
     [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
 
 set mmio_segments [get_bd_addr_segs -quiet -of_objects \
@@ -504,7 +535,7 @@ if {$p03_ila_slots != 1} {
 set p03_system_slot [get_bd_intf_pins ${p03_system_ila}/SLOT_0_AXI]
 set p03_system_slot_protocol [get_property CONFIG.PROTOCOL $p03_system_slot]
 set p03_upstream_protocol [get_property CONFIG.PROTOCOL \
-    [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]]
+    [get_bd_intf_pins $p03_bridge_s_axis]]
 if {$p03_system_slot_protocol ne "AXI4" || $p03_upstream_protocol ne "AXI4"} {
     error "P03.2c upstream System ILA pin protocol mismatch: slot=$p03_system_slot_protocol upstream=$p03_upstream_protocol"
 }
@@ -678,8 +709,9 @@ if {$stage eq "synth"} {
     puts $metrics "p02_hp0_enabled=1"
     puts $metrics "p02_hp0_data_width_bits=128"
 puts $metrics "p03_hpm0_enabled=1"
-puts $metrics "p03_hpm0_data_width_bits=32"
-puts $metrics "p03_hpm0_transport=axi_protocol_converter"
+puts $metrics "p03_hpm0_data_width_bits=$p03_ps_hpm0_width"
+puts $metrics "p03_hpm0_transport=$p03_hpm0_transport"
+puts $metrics "p03_mmio_slave_data_width_bits=32"
 puts $metrics "p03_hpm0_system_ila=1"
 puts $metrics "p03_hpm0_ila_slots=1"
 puts $metrics "p03_mmio_native_ila=1"
@@ -759,8 +791,9 @@ puts $metrics "p02_ddr_logical_capacity=128"
 puts $metrics "p02_hp0_enabled=1"
 puts $metrics "p02_hp0_data_width_bits=128"
 puts $metrics "p03_hpm0_enabled=1"
-puts $metrics "p03_hpm0_data_width_bits=32"
-puts $metrics "p03_hpm0_transport=axi_protocol_converter"
+puts $metrics "p03_hpm0_data_width_bits=$p03_ps_hpm0_width"
+puts $metrics "p03_hpm0_transport=$p03_hpm0_transport"
+puts $metrics "p03_mmio_slave_data_width_bits=32"
 puts $metrics "p03_hpm0_system_ila=1"
 puts $metrics "p03_hpm0_ila_slots=1"
 puts $metrics "p03_mmio_native_ila=1"
