@@ -20,7 +20,7 @@ def test_lpd_opt_in_uses_valid_ps_master_and_address_window():
         "M_AXI_HPM0_FPD", "M_AXI_HPM0_LPD",
         "maxihpm0_fpd_aclk", "maxihpm0_lpd_aclk",
         "CONFIG.PSU__USE__M_AXI_GP2 {1}",
-        "CONFIG.PSU__MAXIGP2__DATA_WIDTH {32}",
+        "CONFIG.PSU__MAXIGP2__DATA_WIDTH $p03_ps_hpm0_width",
         "set p03_mmio_base 0x80000000",
         "set p03_mmio_base 0xA4000000",
         "assign_bd_address -offset $p03_mmio_base",
@@ -36,7 +36,7 @@ def test_lpd_route_requires_isolated_build_and_checks_recorded_base():
     for fragment in (
         'PS_MMIO_MASTER="${P03_PS_MMIO_MASTER:-FPD}"',
         "FPD|LPD",
-        "LPD diagnostic requires a fresh explicit P03_MMIO_BUILD_DIR",
+        "LPD or 128-bit diagnostic requires a fresh explicit P03_MMIO_BUILD_DIR",
         'EXPECTED_MMIO_BASE="0x80000000"',
         '"p03_mmio_base:$EXPECTED_MMIO_BASE"',
         '"p03_ps_mmio_master:$PS_MMIO_MASTER"',
