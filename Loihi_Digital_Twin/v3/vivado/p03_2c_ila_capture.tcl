@@ -84,7 +84,7 @@ proc p03_arm_ila {ila trigger} {
         CONTROL.WINDOW_COUNT 1
     } {
         set actual [get_property $property $ila]
-        puts "P03_2C_ILA_DEFAULT_\${property}=$actual"
+        puts "P03_2C_ILA_DEFAULT_${property}=$actual"
         if {$actual ne $expected} {
             error "P03.2c ILA $ila default $property expected $expected, got $actual"
         }
