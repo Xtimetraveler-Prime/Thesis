@@ -524,3 +524,53 @@ FPD builds retain the old base.
 **Status:** LPD diagnostic candidate code prepared, **not yet BD-validated,
 routed, or physically tested**. No P03.2c acceptance evidence has been
 produced, and the working FPD ILA evidence must be preserved.
+
+
+## 2026-10-11 — LPD routed/programmed and failed the same A53 read-only probe
+
+**Independent physical result:** The alternate `P03_PS_MMIO_MASTER=LPD` candidate
+completed BD validation, routing, bitstream programming, and standalone Cortex-A53
+mailbox collection. The mailbox reported:
+
+```text
+P03_2C_A53_MAGIC=0x50335244
+P03_2C_A53_RESULT=0xDEAD0001
+P03_2C_A53_COMPLETE=0xC0DEF00D
+PASS: Cortex-A53 MMIO 0x80000000 returned 0x4C543302
+FAIL: Cortex-A53 MMIO 0x80000004 returned 0x00000000 (expected 0x00010000)
+FAIL: Cortex-A53 MMIO 0x80000008 returned 0x00000000 (expected 0x0001031F)
+FAIL: Cortex-A53 MMIO 0x80000018 returned 0x00000000 (expected 0xD1A60018)
+```
+
+This directly **falsifies the proposed LPD relocation workaround** for the
+KV260 as configured: switching the PS-to-PL MMIO control interface and base
+address alone does **not** solve the nonzero-offset read failure. An isolated
+problem specific to the FPD master is no longer a sufficient explanation.
+The shared symptom may still arise from shared PS translation, data-width,
+lane handling, or another common factor. Do not reinterpret a completed
+mailbox as proof that data was correct; the result and match mask failed.
+Do not change the frozen baseline ABI or accept P03.2c.
+
+The LPD design has been independently routed and physically tested, superseding
+the previous section's "not yet physically tested" status. Preserve its build
+outputs and the FPD split-ILA captures as separate diagnostic evidence.
+
+### Next discriminating measurement: A53-originated ILA capture
+
+The previous dual-ILA capture showing correct `VERSION=0x00010000`
+was initiated by an XSDB **PSU** target read. Neither the previous capture
+nor the LPD mailbox captures the **A53-originated** transaction in the ILA.
+The next test must launch the existing A53 read-only ELF *after arming both*
+ILAs and capture the same execution's AXI read requests and responses, then
+dump the A53 DDR mailbox. This separates:
+
+- A53 sends a different address/size/protection and the PL returns zero:
+  investigate master transaction generation and byte-lane behavior.
+- A53 sends the intended request, PL returns the correct value, yet A53
+  mailbox reports zero: investigate PS read-return path, A53 mapping or
+  standalone software/runtime.
+- A53 reads are absent from one ILA: inspect master, routing and trigger
+  configuration before declaring success or failure.
+
+No new bitstream or hardware topology change is warranted solely by the
+latest LPD outcome. Continue on `agent/v3-p03-autonomous-runtime`.
