@@ -620,3 +620,83 @@ on VERSION or reorder only the diagnostic A53 ELF reads.
 This script does not require rebuilding or rerouting the FPGA or rebuilding
 the existing A53 ELF. Physical signal capture on the user's board remains
 pending; the persistent MMIO root cause has **not** yet been corrected.
+
+
+## 2026-10-11 — same-execution A53 LPD ILA resolves all four AXI transactions
+
+User-uploaded evidence: `p03_2c_hpm0_capture.csv`,
+`p03_2c_mmio_slave_capture.csv`, `p03_2c_a53_readonly_mailbox.bin`,
+`vivado_ila_capture.log`. Both traces contain 1024 samples and were
+triggered by the same real A53 diagnostic process. Analysis counts exactly
+four upstream and four downstream accepted address/data handshakes.
+
+| Address | Upstream AR sample / R sample | Downstream AR sample / R sample | PL/slave RDATA | Upstream RDATA / RRESP | A53 DDR mailbox |
+| --- | --- | --- | --- | --- | --- |
+| `0x80000000` | 0 / 5 | 0 / 1 | `4C543302` | `4C543302` / OKAY | `4C543302` |
+| `0x80000004` | 37 / 42 | 37 / 38 | `00010000` | `00010000` / OKAY | `00000000` |
+| `0x80000008` | 63 / 68 | 63 / 64 | `0001031F` | `0001031F` / OKAY | `00000000` |
+| `0x80000018` | 90 / 95 | 90 / 91 | `D1A60018` | `D1A60018` / OKAY | `00000000` |
+
+All upstream requests have `ARSIZE=4 bytes`; read responses
+have `RVALID=RREADY=RLAST=1` and `RRESP=OKAY`. Every slave
+response has `RVALID=RREADY=1`, `RRESP[0]=0`. The A53
+mailbox has valid `magic=0x50335244`, `complete=0xC0DEF00D` and
+`result=0xDEAD0001`, with only the ID match bit set.
+
+**High-confidence localization:** The slave and protocol converter
+return the correct data on all A53-originated transactions. The discrepancy
+appears on the **PS side of the observed 32-bit AXI master bus**, between
+that boundary and the A53-visible result, or in the A53 application's
+storage path. The earlier theory that the converter was dropping offsets
+is disproved for all four reads. Swapping to the LPD master did not help.
+
+### New leading hypothesis: mismatch between boot-time PS AXI width and bitstream
+
+The design's `CONFIG.PSU__MAXIGP{0,2}__DATA_WIDTH {32}` and the realized
+32-bit BD interface specify PL-side HPM width; they do **not prove** the
+PS-side runtime width registers were configured accordingly. The KV260
+boots its original firmware and the project subsequently programs only
+the PL bitstream through JTAG. The FSBL normally initializes the
+processing-system configuration, including AXI width settings.
+
+AMD UG1087 identifies these **static** PS registers:
+
+- `FPD_SLCR.afi_fs` at `0xFD615000`: `dw_ss0_sel[9:8]` controls
+  `M_AXI_HPM0_FPD`; `00=32`, `01=64`, `10=128` bits.
+- `LPD_SLCR.afi_fs` at `0xFF419000`: `dw_ss2_sel[9:8]` controls
+  `M_AXI_HPM0_LPD`; same encoding.
+- Their documented reset values `0x00000A00` and `0x00000200`
+  respectively select 128 bits on those masters, unless boot firmware
+  configures otherwise.
+
+**Critical safety:** The AMD register descriptions warn that these width
+selectors are **static** and should not be modified during normal
+operation. Do NOT write these registers from a halted Linux debugger
+session. First gather their actual values using the new *read-only*
+`vivado/p03_2c_xsdb_ps_axi_width_diag.tcl`, which selects a PSU/APU
+physical target and prints the raw values and decoded widths. It does
+not write any PS or PL register.
+
+References:
+- AMD UG1087 FPD `afi_fs`:
+  https://docs.amd.com/r/en-US/ug1087-zynq-ultrascale-registers/afi_fs-FPD_SLCR-Register
+- AMD UG1087 LPD `afi_fs`:
+  https://docs.amd.com/r/en-US/ug1087-zynq-ultrascale-registers/afi_fs-LPD_SLCR-Register
+- AMD PG201 `psu_init.tcl`/`psu_init.c` generated initialization
+  including PS clock/AXI/peripheral configuration:
+  https://docs.amd.com/r/3.4-English/pg201-zynq-ultrascale-plus-processing-system/Output-Generation
+
+If runtime width selectors are 128/64 but the routed design specifies
+32, this is a specific, testable **PS hardware/runtime configuration
+mismatch**, not an RTL bug. The corrective solution would be to configure
+the PS width **during boot/reset initialization** using the PS init from
+the *matching candidate XSA* and then program/run that design; the project
+must not depend on the boot firmware's unrelated default PS topology.
+Follow that with the four-register A53 read-only gate and subsequently
+the full page/resident/dispatch smoke gate. If widths already match
+32 bits, investigate A53 software/MMU/response handling rather than
+declaring the mismatch as root cause.
+
+**Current status:** Width mismatch is a strong hypothesis awaiting the
+two live PS register values; no firmware correction nor P03.2c acceptance
+has been physically verified.
