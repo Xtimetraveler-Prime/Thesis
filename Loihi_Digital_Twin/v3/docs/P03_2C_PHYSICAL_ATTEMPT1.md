@@ -327,3 +327,27 @@ The AXI Protocol Converter is a dedicated protocol bridge; with only one HPM0
 control slave, no address-routing fabric is required on this path. The
 temporary unmapped-read signature remains enabled until physical nonzero-offset
 access is proven.
+
+
+## 2026-10-11 correction — earlier inferred fault domain superseded by dual ILA
+
+**IMPORTANT: This section supersedes the earlier inference that a zero XSDB
+result meant nonzero-offset reads failed to reach the custom register block.**
+
+The new independent physical captures in
+[`P03_2C_ILA_DIAGNOSIS.md`](P03_2C_ILA_DIAGNOSIS.md)
+prove that a +0x004 read *does* arrive at the slave and returns the correct
+`0x00010000` on both the slave-side AXI4-Lite and PS-facing AXI4 buses,
+with accepted request and response handshakes and upstream `RRESP=OKAY`.
+A physical XSDB `PSU` read still reports zero for the same address.
+
+Therefore the earlier sentences claiming that this read was answered or
+rejected *upstream of the custom block* are **invalidated** by this more
+direct evidence. The remaining discrepancy is beyond the observed
+PS-facing PL AXI interface, or in the XSDB memory-access/readout path.
+
+The prior A53 standalone failure used an older bitstream and must not be
+assumed to reproduce on the new protocol-converter candidate. Next perform
+read-only A53/Linux `devmem` accesses with this bitstream before proposing
+an HPM0 topology or register-decode change. This note preserves the earlier
+observation as history without continuing to treat its interpretation as fact.
