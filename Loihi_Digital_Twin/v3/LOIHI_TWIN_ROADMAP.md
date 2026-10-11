@@ -405,15 +405,17 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     Linux/PuTTY became unresponsive after JTAG programming, so a new
     **diagnostic-only standalone A53 read-only probe** replaces the
     console-dependent `devmem` test. **Independent physical execution
-    completed** on the FPD candidate: mailbox magic/completion passed, ID
-    returned `0x4C543302`, but VERSION/CAPABILITIES/unmapped returned zero.
-    This definitively disproves the XSDB-only explanation. A similarly
-    affected ZCU102 project reported success moving its simple MMIO control
-    endpoint to `M_AXI_HPM0_LPD` at `0x80000000`; the branch now provides
-    an opt-in **LPD diagnostic candidate** (unvalidated; FPD default and
-    frozen ABI remain unchanged). Next validate LPD BD/route, then rerun the
-    read-only A53 test at its different base. The PuTTY freeze's cause is
-    not yet known. See `docs/P03_2C_ILA_DIAGNOSIS.md`.
+    completed** on both the FPD and opt-in LPD candidates: mailbox
+    magic/completion passed, ID returned `0x4C543302`, but VERSION/
+    CAPABILITIES/unmapped returned zero.
+    This disproves the XSDB-only explanation, **and** establishes that
+    simply relocating control traffic to `M_AXI_HPM0_LPD` does not fix
+    the problem. The branch now supports a *same-execution* dual-ILA capture
+    of the actual A53 read-only ELF and its DDR mailbox, with zero FPGA
+    changes required. Next correlate the A53's upstream/downstream AXI
+    transaction with the mailbox before changing the control datapath.
+    The PuTTY freeze's cause is not yet known.
+    See `docs/P03_2C_ILA_DIAGNOSIS.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
