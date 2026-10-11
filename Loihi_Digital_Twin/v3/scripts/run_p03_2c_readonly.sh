@@ -7,6 +7,7 @@ BUILD_DIR="${P03_2C_BUILD_DIR:?Set P03_2C_BUILD_DIR to the existing, fresh read-
 DIAG_REPORTS="${P03_DIAG_REPORTS:?Set P03_DIAG_REPORTS to the routed diagnostic bitstream/probes report directory}"
 XSDB_SERVER_URL="${P03_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 VIVADO_SERVER_URL="${P03_HW_SERVER_URL:-localhost:3121}"
+READONLY_MMIO_BASE="${P03_2C_READONLY_MMIO_BASE:-0xA4000000}"
 
 FIXTURE_DIR="$BUILD_DIR/fixture"
 ELF="$BUILD_DIR/vitis_workspace/p03_2c_readonly.elf"
@@ -15,6 +16,19 @@ LTX="$DIAG_REPORTS/p03_2_ps_mmio.ltx"
 XSA="$DIAG_REPORTS/p03_2_ps_mmio.xsa"
 MAILBOX="$BUILD_DIR/p03_2c_readonly_mailbox.bin"
 EVIDENCE="$BUILD_DIR/read_only_physical_evidence"
+case "$READONLY_MMIO_BASE" in
+    0xA4000000|0x80000000) ;;
+    *) echo "ERROR: unsupported diagnostic MMIO base $READONLY_MMIO_BASE" >&2; exit 2 ;;
+esac
+if [[ "${P03_XSA:-$XSA}" != "$XSA" ]]; then
+    echo "ERROR: P03_XSA must match the XSA in P03_DIAG_REPORTS" >&2
+    exit 2
+fi
+if [[ -z "${P03_2C_EXPECTED_XSA_SHA:-}" ||
+      "$(sha256sum "$XSA" | awk '{print $1}')" != "$P03_2C_EXPECTED_XSA_SHA" ]]; then
+    echo "ERROR: candidate XSA SHA-256 must match P03_2C_EXPECTED_XSA_SHA" >&2
+    exit 2
+fi
 
 for tool in xsdb vivado python sha256sum; do
     command -v "$tool" >/dev/null 2>&1 || {
@@ -64,7 +78,7 @@ fi
 xsdb vivado/p03_2c_xsdb_run.tcl "$ELF" "$MAILBOX" "$XSDB_SERVER_URL" \
     2>&1 | tee "$EVIDENCE/a53_run.log"
 
-python scripts/p03_2c_verify_readonly.py --mailbox "$MAILBOX" \
+python scripts/p03_2c_verify_readonly.py --mailbox "$MAILBOX" --base "$READONLY_MMIO_BASE" \
     2>&1 | tee "$EVIDENCE/verify.log"
 
 echo "PASS: P03.2c standalone A53 read-only MMIO diagnostic collected"
