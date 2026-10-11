@@ -18,6 +18,11 @@ if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
         exit 2
     }
     EXPECTED_XSA_SHA="$P03_2C_EXPECTED_XSA_SHA"
+    DIAG_MMIO_BASE="${P03_2C_READONLY_MMIO_BASE:-0xA4000000}"
+    case "$DIAG_MMIO_BASE" in
+        0xA4000000|0x80000000) ;;
+        *) echo "ERROR: unsupported diagnostic MMIO base $DIAG_MMIO_BASE" >&2; exit 2 ;;
+    esac
 else
     [[ "$APP_NAME" == "p03_2c_smoke" && "$SOURCE_NAME" == "p03_2c_smoke.c" ]] || {
         echo "ERROR: unknown P03.2c source/app configuration" >&2
@@ -120,7 +125,15 @@ mkdir -p "$FIXTURE_DIR" "$SOURCE_DIR"
 cd "$V3_DIR"
 PYTHONPATH="$V3_DIR/src" python scripts/p03_2c_smoke_fixture.py     --output-dir "$FIXTURE_DIR"     | tee "$BUILD_DIR/fixture.log"
 
-cp "software/p03/$SOURCE_NAME" "$SOURCE_DIR/"
+if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
+    {
+        printf '#define P03_READONLY_MMIO_BASE ((uintptr_t)%su)\n' "$DIAG_MMIO_BASE"
+        cat "software/p03/$SOURCE_NAME"
+    } > "$SOURCE_DIR/$SOURCE_NAME"
+    echo "P03_2C_READONLY_MMIO_BASE=$DIAG_MMIO_BASE"
+else
+    cp "software/p03/$SOURCE_NAME" "$SOURCE_DIR/"
+fi
 cp software/p03/include/p03_mmio.h "$SOURCE_DIR/"
 cp "$FIXTURE_DIR/p03_2c_fixture.h" "$SOURCE_DIR/"
 
