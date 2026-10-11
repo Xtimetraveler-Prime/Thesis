@@ -386,3 +386,71 @@ A53 and debug/DAP access paths are not equivalent.
 
 **P03.2c acceptance remains open:** this captures a working PL MMIO read,
 not a passing physical Cortex-A53 standalone page/resident/dispatch smoke.
+
+
+## 2026-10-11 — KV260 Linux/PuTTY terminal becomes unresponsive after programming
+
+**Observed by the user:** the diagnostic PL bitstream programmed successfully,
+but no new commands could be entered in the PuTTY serial terminal afterward.
+This prevents the planned Linux BusyBox `devmem` check. The cause is **not
+yet established**; a stopped/crashed A53 Linux instance, a serial-console
+connection problem, or JTAG/hardware-server interference are distinct
+possibilities. Successful programming does not prove Linux remains alive.
+
+### Next path: Cortex-A53 standalone read-only probe, no serial terminal
+
+The repo now contains a diagnostic-only `p03_2c_readonly.c` application
+that reuses the established Vitis 2025.2 standalone build/XSDB download path.
+
+- Reads ONLY `ID`, `VERSION`, `CAPABILITIES`, and temporary unmapped
+  signature at `0xA4000018` using `Xil_In32` from A53 #0.
+- Preserves **all four observed values**, even if they mismatch. Reports a
+  separate pass mask, completion marker, and expected constants.
+- Uses the existing reserved 64-byte DDR mailbox at `0x43FF0000`, read
+  through the established PSU/APU **DDR** debug path. A PSU debug read of
+  DDR is not equivalent to the problematic PSU **PL-MMIO** read.
+- **Does not write P03 MMIO registers** and does not issue page, debug,
+  resident-memory or dispatch commands.
+- Requires explicit per-candidate XSA SHA-256 identity and a fresh isolated
+  Vitis workspace. The previously accepted P03.2b SHA remains frozen.
+- Reuses `p03_2c_xsdb_prepare.tcl`, `p03_2c_program_bitstream.tcl`,
+  `p03_2c_xsdb_run.tcl` through `run_p03_2c_readonly.sh` and decodes
+  the returned mailbox with `p03_2c_verify_readonly.py`.
+
+**Reproduction after a board reboot and normal DDR initialization:**
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+export P03_DIAG_REPORTS="$PWD/vivado/build/p03_2c_native_route_20261010T202128Z/reports"
+export P03_XSA="$P03_DIAG_REPORTS/p03_2_ps_mmio.xsa"
+export P03_2C_APP_NAME=p03_2c_readonly
+export P03_2C_SOURCE_FILE=p03_2c_readonly.c
+export P03_2C_BUILD_DIR="$PWD/vivado/build/p03_2c_readonly_$(date -u +%Y%m%dT%H%M%SZ)"
+export P03_2C_EXPECTED_XSA_SHA="$(sha256sum "$P03_XSA" | awk '{print $1}')"
+bash scripts/build_p03_2c_smoke.sh
+bash scripts/run_p03_2c_readonly.sh
+```
+
+The run script provisions the accepted P02 core-0 512 KiB fixture and
+zeroes the 64-byte mailbox; programs the routed candidate bitstream and
+pulses PL reset; halts A53 cores, starts the new standalone application,
+and dumps/decodes the mailbox. It therefore **interrupts and replaces the
+normal Linux execution context on A53 #0**. Reboot after the run. It can
+skip programming if the same exact bitstream is already resident via
+`P03_2C_SKIP_PROGRAM=1`, but the user assumes responsibility for identity.
+
+**Interpretation:**
+
+- All four A53 values match: current processor-originated MMIO read path
+  works; the XSDB PSU/DAP readout remains independently anomalous. Proceed
+  to the existing full page/resident/dispatch smoke with an appropriately
+  rebuilt candidate ELF.
+- A53 reads also return zero: real processor-side data-path/software
+  problem; investigate A53 translation/memory attributes and PS read
+  handling, not an already-proven good RTL VERSION decoder.
+- No mailbox completion: A53 standalone program did not finish or DDR
+  evidence is not visible; inspect `a53_run.log` and rerun preparation
+  before attributing the result to AXI MMIO.
+
+This does not close P03.2c: no autonomous runtime or page/dispatch proof
+is claimed from the read-only diagnostic.
