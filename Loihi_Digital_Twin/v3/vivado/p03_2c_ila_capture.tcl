@@ -71,12 +71,28 @@ proc p03_trigger_probe {ila patterns} {
 }
 
 proc p03_arm_ila {ila trigger} {
+    # reset_hw_ila establishes BASIC_ONLY / AND / ALWAYS / 1 window.
+    # On the physical P03.2c System ILA, Vivado 2025.2 reports
+    # CONTROL.TRIGGER_MODE as read-only even though older versions and
+    # generic UG835 examples allow set_property. Never write a control
+    # property when the required default is already in effect.
     reset_hw_ila $ila
-    set_property CONTROL.WINDOW_COUNT 1 $ila
-    set_property CONTROL.TRIGGER_POSITION 512 $ila
-    set_property CONTROL.TRIGGER_MODE BASIC_ONLY $ila
-    set_property CONTROL.TRIGGER_CONDITION AND $ila
-    set_property CONTROL.CAPTURE_MODE ALWAYS $ila
+    foreach {property expected} {
+        CONTROL.TRIGGER_MODE BASIC_ONLY
+        CONTROL.TRIGGER_CONDITION AND
+        CONTROL.CAPTURE_MODE ALWAYS
+        CONTROL.WINDOW_COUNT 1
+    } {
+        set actual [get_property $property $ila]
+        puts "P03_2C_ILA_DEFAULT_\${property}=$actual"
+        if {$actual ne $expected} {
+            error "P03.2c ILA $ila default $property expected $expected, got $actual"
+        }
+    }
+    # Default TRIGGER_POSITION=0 gives a post-trigger read response window.
+    # The read transaction is initiated only after BOTH analyzers are armed.
+    # Leave CONTROL properties at their verified reset defaults and only
+    # configure the probe comparator used for the basic hardware trigger.
     set_property TRIGGER_COMPARE_VALUE "eq1'b1" $trigger
     puts "P03_2C_ILA_ARM_TRIGGER=[get_property NAME $trigger]"
     run_hw_ila $ila
