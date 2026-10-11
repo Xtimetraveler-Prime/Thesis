@@ -5,7 +5,29 @@ EXPECTED_XSA_SHA="703fa7a44abc56e88e67e1d09424ac59ea96e53aac1708c2c7e6028dcb616f
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 V3_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-BUILD_DIR="$V3_DIR/vivado/build/p03_2c_smoke"
+APP_NAME="${P03_2C_APP_NAME:-p03_2c_smoke}"
+SOURCE_NAME="${P03_2C_SOURCE_FILE:-p03_2c_smoke.c}"
+BUILD_DIR="${P03_2C_BUILD_DIR:-$V3_DIR/vivado/build/p03_2c_smoke}"
+if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
+    [[ "$SOURCE_NAME" == "p03_2c_readonly.c" ]] || {
+        echo "ERROR: read-only app must use p03_2c_readonly.c" >&2
+        exit 2
+    }
+    [[ -n "${P03_2C_BUILD_DIR:-}" && -n "${P03_2C_EXPECTED_XSA_SHA:-}" ]] || {
+        echo "ERROR: diagnostic build needs P03_2C_BUILD_DIR and P03_2C_EXPECTED_XSA_SHA" >&2
+        exit 2
+    }
+    EXPECTED_XSA_SHA="$P03_2C_EXPECTED_XSA_SHA"
+else
+    [[ "$APP_NAME" == "p03_2c_smoke" && "$SOURCE_NAME" == "p03_2c_smoke.c" ]] || {
+        echo "ERROR: unknown P03.2c source/app configuration" >&2
+        exit 2
+    }
+    [[ -z "${P03_2C_EXPECTED_XSA_SHA:-}" ]] || {
+        echo "ERROR: fixed smoke acceptance XSA fingerprint cannot be overridden" >&2
+        exit 2
+    }
+fi
 FIXTURE_DIR="$BUILD_DIR/fixture"
 SOURCE_DIR="$BUILD_DIR/source"
 WORKSPACE="$BUILD_DIR/vitis_workspace"
@@ -86,19 +108,28 @@ XSA_SHA="$(sha256sum "$XSA" | awk '{print $1}')"
     exit 2
 }
 
-rm -rf "$BUILD_DIR"
+if [[ "$APP_NAME" == "p03_2c_readonly" && -e "$BUILD_DIR" ]]; then
+    echo "ERROR: read-only build directory already exists: $BUILD_DIR" >&2
+    exit 2
+fi
+if [[ "$APP_NAME" == "p03_2c_smoke" ]]; then
+    rm -rf "$BUILD_DIR"
+fi
 mkdir -p "$FIXTURE_DIR" "$SOURCE_DIR"
 
 cd "$V3_DIR"
 PYTHONPATH="$V3_DIR/src" python scripts/p03_2c_smoke_fixture.py     --output-dir "$FIXTURE_DIR"     | tee "$BUILD_DIR/fixture.log"
 
-cp software/p03/p03_2c_smoke.c "$SOURCE_DIR/"
+cp "software/p03/$SOURCE_NAME" "$SOURCE_DIR/"
 cp software/p03/include/p03_mmio.h "$SOURCE_DIR/"
 cp "$FIXTURE_DIR/p03_2c_fixture.h" "$SOURCE_DIR/"
 
-vitis -s software/p03/build_p03_2c_smoke.py     --xsa "$XSA"     --workspace "$WORKSPACE"     --source-dir "$SOURCE_DIR"     2>&1 | tee "$BUILD_DIR/vitis_build.log"
+vitis -s software/p03/build_p03_2c_smoke.py \
+    --xsa "$XSA" --workspace "$WORKSPACE" --source-dir "$SOURCE_DIR" \
+    --source-file "$SOURCE_NAME" --app-name "$APP_NAME" \
+    2>&1 | tee "$BUILD_DIR/vitis_build.log"
 
-ELF="$WORKSPACE/p03_2c_smoke.elf"
+ELF="$WORKSPACE/$APP_NAME.elf"
 [[ -f "$ELF" ]] || {
     echo "ERROR: P03.2c Vitis build did not produce $ELF" >&2
     exit 3
@@ -142,9 +173,20 @@ PY
 ELF_SHA="$(sha256sum "$ELF" | awk '{print $1}')"
 
 grep -q '^PASS: P03.2c smoke fixture generated' "$BUILD_DIR/fixture.log"
-grep -q '^PASS: P03.2c standalone Cortex-A53 smoke application built' "$BUILD_DIR/vitis_build.log"
+if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
+    grep -q '^PASS: P03.2c standalone Cortex-A53 read-only application built' \
+        "$BUILD_DIR/vitis_build.log"
+else
+    grep -q '^PASS: P03.2c standalone Cortex-A53 smoke application built' \
+        "$BUILD_DIR/vitis_build.log"
+fi
 
 printf 'P03_2C_XSA_SHA256=%s\n' "$XSA_SHA"
 printf 'P03_2C_ELF_SHA256=%s\n' "$ELF_SHA"
 echo "P03_2C_ELF=$ELF"
-echo "PASS: P03.2c standalone smoke build gate completed successfully."
+echo "P03_2C_APP_NAME=$APP_NAME"
+if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
+    echo "PASS: P03.2c read-only Cortex-A53 diagnostic build gate completed successfully."
+else
+    echo "PASS: P03.2c standalone smoke build gate completed successfully."
+fi
