@@ -397,6 +397,14 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
   - **P03.2c — Physical PS-MMIO smoke.** **In progress.** Use an A53-side smoke
     program to read the MMIO identity/capabilities and physically issue
     page/dispatch/resident-memory commands without JTAG/VIO command ownership.
+    **2026-10-11 diagnostic milestone (not acceptance):** a routed split-ILA
+    capture independently proves that a read of VERSION at `0xA4000004`
+    receives `0x00010000` with valid/ready handshakes and `RRESP=OKAY` at
+    the PS-facing PL AXI interface, even though XSDB `PSU` reports zero.
+    The prior "nonzero-offset read misses the slave" theory is disproven.
+    Next discriminate XSDB/DAP reporting from live Cortex-A53 MMIO reads on
+    this exact candidate bitstream, then rerun the page/resident/dispatch
+    A53 smoke. See `docs/P03_2C_ILA_DIAGNOSIS.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
