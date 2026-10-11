@@ -662,6 +662,29 @@ connect_pair p08_context_memory_0/hls_address_error vio_p08/probe_in26
 connect_pair p08_context_memory_0/integration_address_error vio_p08/probe_in27
 
 validate_bd_design
+# On the opt-in 128-bit candidate, use Vivado's realized interface metadata
+# to prove SmartConnect has actually inserted 128 -> 32 AXI4-Lite adaptation.
+# This checks the boundary that previously accepted incorrect PL-side widths.
+if {$p03_ps_hpm0_width == 128} {
+    set bridge_s [get_bd_intf_pins $p03_bridge_s_axis]
+    set bridge_m [get_bd_intf_pins $p03_bridge_m_axis]
+    set slave_s [get_bd_intf_pins p03_ps_control_regs_0/S_AXI]
+    set bridge_s_width [get_property CONFIG.DATA_WIDTH $bridge_s]
+    set bridge_m_width [get_property CONFIG.DATA_WIDTH $bridge_m]
+    set slave_width [get_property CONFIG.DATA_WIDTH $slave_s]
+    set bridge_s_protocol [get_property CONFIG.PROTOCOL $bridge_s]
+    set bridge_m_protocol [get_property CONFIG.PROTOCOL $bridge_m]
+    puts "P03_2C_WIDTH_BRIDGE_INPUT_BITS=$bridge_s_width"
+    puts "P03_2C_WIDTH_BRIDGE_OUTPUT_BITS=$bridge_m_width"
+    puts "P03_2C_WIDTH_MMIO_SLAVE_BITS=$slave_width"
+    puts "P03_2C_WIDTH_BRIDGE_INPUT_PROTOCOL=$bridge_s_protocol"
+    puts "P03_2C_WIDTH_BRIDGE_OUTPUT_PROTOCOL=$bridge_m_protocol"
+    if {$bridge_s_width != 128 || $bridge_m_width != 32 || $slave_width != 32 ||
+        $bridge_s_protocol ne "AXI4" || $bridge_m_protocol ne "AXI4LITE"} {
+        error "P03.2c expected 128-bit AXI4 -> 32-bit AXI4-Lite width/protocol adapter; actual widths/protocols mismatch"
+    }
+    puts "PASS: P03.2c 128-bit boot-matched PS master / 32-bit MMIO SmartConnect validated."
+}
 save_bd_design
 puts "PASS: P03.2c split upstream-AXI4/downstream-native ILA block design validated."
 puts "P03.2 HP0 DDR-paged one-engine / three-resident-context block design validated successfully."
