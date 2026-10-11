@@ -574,3 +574,49 @@ dump the A53 DDR mailbox. This separates:
 
 No new bitstream or hardware topology change is warranted solely by the
 latest LPD outcome. Continue on `agent/v3-p03-autonomous-runtime`.
+
+### Implemented same-run Cortex-A53 + dual-ILA capture (pending board verification)
+
+Added:
+
+- `scripts/run_p03_2c_a53_ila_capture.sh`: a non-destructive capture driver
+  that validates the pre-existing LPD/FPD XSA and compiled C-source MMIO base,
+  provisions the reserved DDR fixture, programs the same diagnostic FPGA,
+  arms both existing System/native ILAs, **then** launches the already-built
+  Cortex-A53 read-only ELF, dumps the resulting DDR mailbox, exports the
+  upstream/downstream CSV/VCD/ILA traces, and preserves all logs/hashes in a
+  *new* evidence directory. The return status of the read-only mailbox
+  verifier is reported separately, so a genuine bad MMIO value does not
+  discard the hardware captures.
+- `scripts/p03_2c_summarize_a53_ila.py`: prints each sampled AXI
+  `ARVALID && ARREADY` request and `RVALID && RREADY` response (address,
+  data, response code, and AXI transfer size when available), alongside the
+  **same execution's** four Cortex-A53 result words.
+- `tests/test_p03_2c_a53_ila_capture_contract.py` and
+  `tests/test_p03_2c_a53_ila_trace_summary.py` for offline regression.
+
+Reuse the LPD candidate's successfully routed `reports/` directory and its
+matching existing A53 ELF build directory. From the development PC (not
+PuTTY), after a fresh board boot/DDR initialization:
+
+```bash
+export P03_DIAG_REPORTS="<absolute path to routed LPD reports>"
+export P03_2C_BUILD_DIR="<absolute path to matching LPD readonly ELF build>"
+export P03_XSA="$P03_DIAG_REPORTS/p03_2_ps_mmio.xsa"
+export P03_2C_EXPECTED_XSA_SHA="$(sha256sum "$P03_XSA" | awk '{print $1}')"
+export P03_2C_READONLY_MMIO_BASE=0x80000000
+export P03_A53_ILA_CAPTURE_DIR="/tmp/v3_p03_2c_a53_ila_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/run_p03_2c_a53_ila_capture.sh "$P03_A53_ILA_CAPTURE_DIR"
+python scripts/p03_2c_summarize_a53_ila.py \
+    --capture-dir "$P03_A53_ILA_CAPTURE_DIR" --base 0x80000000
+```
+
+The ILA trigger is `ARVALID` and may fire first on the ID register read
+at `+0x0`; later reads will only appear if they occur inside the 1024-sample
+post-trigger capture window. **Absence of VERSION from that window is not
+proof it never occurred.** If needed, a subsequent run can trigger explicitly
+on VERSION or reorder only the diagnostic A53 ELF reads.
+
+This script does not require rebuilding or rerouting the FPGA or rebuilding
+the existing A53 ELF. Physical signal capture on the user's board remains
+pending; the persistent MMIO root cause has **not** yet been corrected.
