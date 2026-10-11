@@ -17,6 +17,8 @@ def main() -> int:
     parser.add_argument("--xsa", type=Path, required=True)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--source-dir", type=Path, required=True)
+    parser.add_argument("--source-file", default="p03_2c_smoke.c")
+    parser.add_argument("--app-name", default="p03_2c_smoke")
     args = parser.parse_args()
 
     xsa = args.xsa.resolve()
@@ -36,7 +38,14 @@ def main() -> int:
 
     platform_name = "p03_2c_platform"
     domain_name = "standalone_psu_cortexa53_0"
-    app_name = "p03_2c_smoke"
+    app_name = args.app_name
+    source_name = args.source_file
+    if source_name not in {"p03_2c_smoke.c", "p03_2c_readonly.c"}:
+        raise SystemExit(f"unsupported P03.2c A53 application source: {source_name}")
+    if app_name not in {"p03_2c_smoke", "p03_2c_readonly"}:
+        raise SystemExit(f"unsupported P03.2c A53 application name: {app_name}")
+    if (source_name == "p03_2c_readonly.c") != (app_name == "p03_2c_readonly"):
+        raise SystemExit("P03.2c app name/source mismatch")
 
     # P03.2c is loaded over XSDB onto an already initialized ZynqMP, so Vitis
     # boot artifacts (FSBL/PMUFW) are unnecessary.  Keep platform creation to
@@ -123,7 +132,7 @@ def main() -> int:
 
         app.import_files(
             from_loc=str(source_dir),
-            files=["p03_2c_smoke.c", "p03_mmio.h", "p03_2c_fixture.h"],
+            files=[source_name, "p03_mmio.h", "p03_2c_fixture.h"],
             dest_dir_in_cmp="src",
         )
 
@@ -134,7 +143,7 @@ def main() -> int:
             if path.is_file()
             and path.suffix.lower() in {".c", ".cc", ".cpp", ".cxx"}
         )
-        if source_files != [app_src_dir / "p03_2c_smoke.c"]:
+        if source_files != [app_src_dir / source_name]:
             raise RuntimeError(
                 "P03.2c expected exactly its own smoke C source in the "
                 f"empty application, got {source_files}"
@@ -187,12 +196,15 @@ def main() -> int:
         )
 
     elf = elf_candidates[0]
-    out = workspace / "p03_2c_smoke.elf"
+    out = workspace / f"{app_name}.elf"
     shutil.copy2(elf, out)
 
     print(f"P03_2C_XPFM={xpfm}")
     print(f"P03_2C_ELF={out}")
-    print("PASS: P03.2c standalone Cortex-A53 smoke application built")
+    if app_name == "p03_2c_readonly":
+        print("PASS: P03.2c standalone Cortex-A53 read-only application built")
+    else:
+        print("PASS: P03.2c standalone Cortex-A53 smoke application built")
     return 0
 
 
