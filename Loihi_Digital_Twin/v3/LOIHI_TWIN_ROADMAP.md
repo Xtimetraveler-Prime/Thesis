@@ -413,17 +413,21 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     at the PS-facing PL boundary; the A53 DDR mailbox nevertheless contains
     zeros at +0x004/+0x008/+0x018. This eliminates the custom slave,
     protocol converter, and A53 address-generation hypotheses for these
-    reads. The strongest new candidate is an **uninitialized PS-side HPM
-    width selector**: Vivado builds 32-bit PL ports, but programming only
-    a PL bitstream after an unrelated KV260 Linux boot may leave the
-    static FPD/LPD HPM width registers at their 128-bit boot defaults.
-    A read-only XSDB register probe now checks `FPD_SLCR.afi_fs`
-    (`0xFD615000`) and `LPD_SLCR.afi_fs` (`0xFF419000`); it never
-    writes static PS registers. If width mismatch is confirmed, correct
-    during PS reset/boot initialization with the matching XSA before
-    re-running the four-read A53 and page/resident/dispatch smoke gates.
-    The PuTTY freeze remains a separate unproven symptom.
-    See `docs/P03_2C_ILA_DIAGNOSIS.md`.
+    reads. **The physical PS/PL width mismatch is now confirmed:**
+    an independent read-only XSDB probe measured both FPD and LPD HPM0
+    selectors at 128 bits (`0xFD615000=0x00000A00`,
+    `0xFF419000=0x00000200`), while both failed PL designs expected
+    32 bits. This plausibly explains the offset-0-only symptom, but
+    causality is not accepted until a matching design physically passes.
+    An **opt-in boot-compatible 128-bit FPD master** now uses a 1x1
+    SmartConnect to downsize/convert to the existing 32-bit AXI-Lite
+    register block at `0xA4000000`; the default design and accepted
+    artifacts remain unchanged. Next independently validate BD/route,
+    build a read-only A53 ELF from that candidate XSA, and require all
+    four MMIO reads. Then proceed to the full page/resident/dispatch
+    smoke. The PuTTY freeze remains a separate unproven symptom.
+    See `docs/P03_2C_ILA_DIAGNOSIS.md` and
+    `docs/P03_2C_PS_HPM_WIDTH_BOOT_REMEDIATION.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
