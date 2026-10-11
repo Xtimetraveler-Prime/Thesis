@@ -700,3 +700,58 @@ declaring the mismatch as root cause.
 **Current status:** Width mismatch is a strong hypothesis awaiting the
 two live PS register values; no firmware correction nor P03.2c acceptance
 has been physically verified.
+
+
+## 2026-10-11 — live PSU width registers confirm 128-bit PS versus 32-bit PL mismatch
+
+The user executed the new read-only `p03_2c_xsdb_ps_axi_width_diag.tcl` on
+the physical KV260 after normal PS boot:
+
+```text
+P03_2C_PS_WIDTH_TARGET=PSU
+P03_2C_PS_WIDTH_MRD=FD615000:   00000A00
+P03_2C_PS_WIDTH_MRD=FF419000:   00000200
+P03_2C_PS_FPD_AXIFS_RAW=0x00000A00
+P03_2C_PS_FPD_HPM0_WIDTH_BITS=128
+P03_2C_PS_LPD_AXIFS_RAW=0x00000200
+P03_2C_PS_LPD_HPM0_WIDTH_BITS=128
+P03_2C_PL_EXPECTED_HPM0_WIDTH_BITS=32
+P03_2C_PS_WIDTH_MISMATCH_FPD=1
+P03_2C_PS_WIDTH_MISMATCH_LPD=1
+PASS: P03.2c read-only PS AXI width diagnostic complete; no PS registers written.
+```
+
+**Hardware mismatch confirmed:** both physical HPM PS width selectors are
+128-bit, whereas the PS-facing AXI master BD ports in the failed bitstreams
+were configured for 32 bits. This is consistent with the ID-only A53 failure
+and four correct upstream ILA `RDATA` words. The fact of the mismatch is
+now observed rather than inferred from reset defaults.
+
+**Causality remains conditional:** until a compatible 128-bit routed design
+returns the four A53 register values correctly, do not claim this is a
+physically *fixed* MMIO path or close P03.2c.
+
+### Opt-in corrected hardware variant (awaiting independent BD/route/board run)
+
+Rather than writing to static PS SLCR width selectors in a running system,
+the branch can now compile `P03_PS_MMIO_MASTER=FPD` with
+`P03_PS_HPM0_DATA_WIDTH=128`. The PS-to-PL HPM0 bus becomes 128-bit
+AXI4 to match the actual booted hardware. An isolated 1x1 SmartConnect
+provides protocol conversion and data-width downsizing to the unchanged
+32-bit AXI4-Lite register endpoint. The alternative 32-bit FPD Protocol
+Converter implementation remains the default for reproducibility.
+
+`vivado/create_p03_mmio_impl_project.tcl` now checks the realized 128-bit
+AXI4 ingress and 32-bit AXI4-Lite egress; the route acceptance script
+checks a distinct 128-bit width/SmartConnect metrics signature. All
+new builds use unique directories. HP0/DDR paging remains unchanged.
+
+See `docs/P03_2C_PS_HPM_WIDTH_BOOT_REMEDIATION.md` for the full
+safe A53 build and read-only hardware test procedure. AMD PG247 documents
+SmartConnect's automatic 128-to-32 Lite width/protocol conversion:
+https://docs.amd.com/r/en-US/pg247-smartconnect/Downsizing-to-an-AXI4-Lite-Slave
+
+This candidate has **not** yet passed independent Vivado 2025.2
+implementation or KV260 validation; no P03.2c hardware acceptance is
+claimed. If the four A53 reads pass, the next gate remains the full
+page/debug/dispatch smoke, not merely a successful route.
