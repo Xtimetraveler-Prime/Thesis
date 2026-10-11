@@ -46,10 +46,20 @@ proc p03_ila_by_cell {device needle} {
 
 proc p03_dump_probes {ila tag} {
     puts "P03_2C_ILA_${tag}_PROBES_BEGIN"
+    set ignored_constants 0
     foreach probe [get_hw_probes -of_objects $ila] {
-        puts "P03_2C_ILA_${tag}_PROBE=[get_property NAME $probe]"
+        set name [get_property NAME $probe]
+        # Vivado creates many synthetic <const0>/<const1> probe aliases.
+        # Their enumeration hides useful errors in the captured console tail.
+        if {[string match "*<const0>*" $name] ||
+            [string match "*<const1>*" $name]} {
+            incr ignored_constants
+            continue
+        }
+        puts "P03_2C_ILA_${tag}_PROBE=$name"
         catch {set_property DISPLAY_RADIX HEX $probe}
     }
+    puts "P03_2C_ILA_${tag}_IGNORED_CONSTANT_PROBES=$ignored_constants"
     puts "P03_2C_ILA_${tag}_PROBES_END"
 }
 
