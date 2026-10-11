@@ -39,6 +39,27 @@ set mmio_rtl [file normalize [lindex $argv 12]]
 set report_dir [file normalize [lindex $argv 13]]
 set jobs [lindex $argv 14]
 set stage [lindex $argv 15]
+
+# Opt-in P03.2c research candidate. The frozen P03.2b FPD control path,
+# 0xA4000000 contract, and its physical evidence remain untouched by default.
+set p03_ps_mmio_master FPD
+if {[info exists ::env(P03_PS_MMIO_MASTER)]} {
+    set p03_ps_mmio_master [string toupper $::env(P03_PS_MMIO_MASTER)]
+}
+if {$p03_ps_mmio_master ni {FPD LPD}} {
+    error "P03_PS_MMIO_MASTER must be FPD or LPD, got $p03_ps_mmio_master"
+}
+if {$p03_ps_mmio_master eq "LPD"} {
+    set p03_ps_master_pin "M_AXI_HPM0_LPD"
+    set p03_ps_master_clock "maxihpm0_lpd_aclk"
+    set p03_mmio_base 0x80000000
+} else {
+    set p03_ps_master_pin "M_AXI_HPM0_FPD"
+    set p03_ps_master_clock "maxihpm0_fpd_aclk"
+    set p03_mmio_base 0xA4000000
+}
+puts "P03_2C_DIAG_MASTER=$p03_ps_mmio_master"
+puts [format "P03_2C_DIAG_MMIO_BASE=0x%08X" $p03_mmio_base]
 if {$stage ni {"bd" "synth" "route"}} {
     error "P03.2 stage must be bd, synth or route, got: $stage"
 }
@@ -153,16 +174,32 @@ proc connect_hls_memory_fabric {hls_name fabric_name arg_name mode} {
 create_bd_design $bd_name
 set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0]
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1"} $ps
-set_property -dict [list \
-    CONFIG.PSU__USE__M_AXI_GP0 {1} \
-    CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
-    CONFIG.PSU__USE__M_AXI_GP1 {0} \
-    CONFIG.PSU__USE__M_AXI_GP2 {0} \
-    CONFIG.PSU__FPGA_PL0_ENABLE {1} \
-    CONFIG.PSU__USE__FABRIC__RST {0} \
-    CONFIG.PSU__USE__S_AXI_GP2 {1} \
-    CONFIG.PSU__SAXIGP2__DATA_WIDTH {128} \
-    CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
+if {$p03_ps_mmio_master eq "LPD"} {
+    # For the diagnostic candidate only, route 32-bit LPD control traffic
+    # through GP2 while preserving the distinct S_AXI_HP0_FPD DDR path.
+    set_property -dict [list \
+        CONFIG.PSU__USE__M_AXI_GP0 {0} \
+        CONFIG.PSU__USE__M_AXI_GP1 {0} \
+        CONFIG.PSU__USE__M_AXI_GP2 {1} \
+        CONFIG.PSU__MAXIGP2__DATA_WIDTH {32} \
+        CONFIG.PSU__FPGA_PL0_ENABLE {1} \
+        CONFIG.PSU__USE__FABRIC__RST {0} \
+        CONFIG.PSU__USE__S_AXI_GP2 {1} \
+        CONFIG.PSU__SAXIGP2__DATA_WIDTH {128} \
+        CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
+} else {
+    set_property -dict [list \
+        CONFIG.PSU__USE__M_AXI_GP0 {1} \
+        CONFIG.PSU__MAXIGP0__DATA_WIDTH {32} \
+        CONFIG.PSU__USE__M_AXI_GP1 {0} \
+        CONFIG.PSU__USE__M_AXI_GP2 {0} \
+        CONFIG.PSU__FPGA_PL0_ENABLE {1} \
+        CONFIG.PSU__USE__FABRIC__RST {0} \
+        CONFIG.PSU__USE__S_AXI_GP2 {1} \
+        CONFIG.PSU__SAXIGP2__DATA_WIDTH {128} \
+        CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}] $ps
+}
+
 
 set hls [create_bd_cell -type ip -vlnv $expected_vlnv loihi_core_v2_tick_0]
 set ctrl [create_bd_cell -type module -reference p08_paged_dispatch_controller p08_paged_dispatch_controller_0]
@@ -263,7 +300,7 @@ connect_bd_net $pl_clk \
     [get_bd_pins p03_ps_control_regs_0/s_axi_aclk] \
     [get_bd_pins p03_hpm0_protocol_converter_0/aclk] \
     [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] \
-    [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] \
+    [get_bd_pins zynq_ultra_ps_e_0/$p03_ps_master_clock] \
     [get_bd_pins vio_p08/clk] \
     [get_bd_pins vio_p02_page/clk]
 
@@ -413,7 +450,7 @@ assign_bd_address -offset 0x00000000 -range 0x80000000 \
 # A dedicated AXI Protocol Converter is used because there is exactly one
 # control slave; no HPM0 SmartConnect routing fabric is required.
 connect_bd_intf_net -intf_net p03_hpm0_ps_to_converter_axi \
-    [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] \
+    [get_bd_intf_pins zynq_ultra_ps_e_0/$p03_ps_master_pin] \
     [get_bd_intf_pins p03_hpm0_protocol_converter_0/S_AXI]
 connect_bd_intf_net -intf_net p03_hpm0_converter_to_mmio_axi \
     [get_bd_intf_pins p03_hpm0_protocol_converter_0/M_AXI] \
@@ -425,11 +462,11 @@ if {[llength $mmio_segments] != 1} {
     error "P03.2 expected exactly one MMIO slave address segment, got [llength $mmio_segments]"
 }
 set hpm0_spaces [get_bd_addr_spaces -quiet -of_objects \
-    [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD]]
+    [get_bd_intf_pins zynq_ultra_ps_e_0/$p03_ps_master_pin]]
 if {[llength $hpm0_spaces] != 1} {
     error "P03.2 expected exactly one HPM0 master address space, got [llength $hpm0_spaces]"
 }
-assign_bd_address -offset 0xA4000000 -range 0x00001000 \
+assign_bd_address -offset $p03_mmio_base -range 0x00001000 \
     -target_address_space [lindex $hpm0_spaces 0] \
     [lindex $mmio_segments 0] -force
 
@@ -634,7 +671,9 @@ puts $metrics "p03_hpm0_system_ila=1"
 puts $metrics "p03_hpm0_ila_slots=1"
 puts $metrics "p03_mmio_native_ila=1"
 puts $metrics "p03_mmio_native_probes=7"
-puts $metrics "p03_mmio_base=0xA4000000"
+puts $metrics [format "p03_mmio_base=0x%08X" $p03_mmio_base]
+puts $metrics "p03_ps_mmio_master=$p03_ps_mmio_master"
+puts $metrics "p03_ps_mmio_pin=$p03_ps_master_pin"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
 puts $metrics "p03_mmio_controls_dispatch=1"
@@ -713,7 +752,9 @@ puts $metrics "p03_hpm0_system_ila=1"
 puts $metrics "p03_hpm0_ila_slots=1"
 puts $metrics "p03_mmio_native_ila=1"
 puts $metrics "p03_mmio_native_probes=7"
-puts $metrics "p03_mmio_base=0xA4000000"
+puts $metrics [format "p03_mmio_base=0x%08X" $p03_mmio_base]
+puts $metrics "p03_ps_mmio_master=$p03_ps_mmio_master"
+puts $metrics "p03_ps_mmio_pin=$p03_ps_master_pin"
 puts $metrics "p03_mmio_range_bytes=0x00001000"
 puts $metrics "p03_mmio_controls_page=1"
 puts $metrics "p03_mmio_controls_dispatch=1"
