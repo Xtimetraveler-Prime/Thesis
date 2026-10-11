@@ -402,9 +402,14 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     receives `0x00010000` with valid/ready handshakes and `RRESP=OKAY` at
     the PS-facing PL AXI interface, even though XSDB `PSU` reports zero.
     The prior "nonzero-offset read misses the slave" theory is disproven.
-    Next discriminate XSDB/DAP reporting from live Cortex-A53 MMIO reads on
-    this exact candidate bitstream, then rerun the page/resident/dispatch
-    A53 smoke. See `docs/P03_2C_ILA_DIAGNOSIS.md`.
+    Linux/PuTTY became unresponsive after JTAG programming, so a new
+    **diagnostic-only standalone A53 read-only probe** now replaces the
+    console-dependent `devmem` test: it captures ID/VERSION/CAPABILITIES/
+    unmapped-signature into the reserved DDR result mailbox via XSDB
+    without relying on PSU-target PL-MMIO read values. Await independent
+    physical execution on this same candidate bitstream, then rerun the
+    page/resident/dispatch A53 smoke. The freeze's cause is not yet known.
+    See `docs/P03_2C_ILA_DIAGNOSIS.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
