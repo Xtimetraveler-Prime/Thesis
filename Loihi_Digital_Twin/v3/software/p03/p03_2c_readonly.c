@@ -13,6 +13,10 @@
  * eventual P03.2c page/resident-memory/dispatch acceptance smoke.
  * The only writes are to the existing reserved DDR result mailbox.
  */
+#ifndef P03_READONLY_MMIO_BASE
+#define P03_READONLY_MMIO_BASE P03_MMIO_BASE
+#endif
+
 #define READONLY_MAGIC       UINT32_C(0x50335244) /* P3RD */
 #define READONLY_VERSION     UINT32_C(1)
 #define READONLY_PENDING     UINT32_C(0xC0DE0000)
@@ -47,7 +51,7 @@ static uint32_t read_mmio(uint32_t offset)
 {
     /* Full ARM system barrier before/after each device memory read. */
     __asm__ volatile("dsb sy" ::: "memory");
-    uint32_t value = Xil_In32(P03_MMIO_BASE + (uintptr_t)offset);
+    uint32_t value = Xil_In32(P03_READONLY_MMIO_BASE + (uintptr_t)offset);
     __asm__ volatile("dsb sy" ::: "memory");
     return value;
 }
@@ -64,7 +68,7 @@ int main(void)
     mailbox[M_RESULT] = READONLY_PENDING;
     mailbox[M_READ_COUNT] = READONLY_COUNT;
     mailbox[M_COMPLETE] = 0;
-    mailbox[M_MMIO_BASE] = (uint32_t)P03_MMIO_BASE;
+    mailbox[M_MMIO_BASE] = (uint32_t)P03_READONLY_MMIO_BASE;
     mailbox[M_MAILBOX_BASE] = (uint32_t)P03_SMOKE_MAILBOX_BASE;
     publish();
 
