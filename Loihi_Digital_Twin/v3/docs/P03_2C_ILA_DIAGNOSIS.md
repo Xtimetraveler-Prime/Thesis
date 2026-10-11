@@ -454,3 +454,73 @@ skip programming if the same exact bitstream is already resident via
 
 This does not close P03.2c: no autonomous runtime or page/dispatch proof
 is claimed from the read-only diagnostic.
+
+
+## 2026-10-11 — actual A53 read-only mailbox confirms the fault persists
+
+The first `p03_2c_readonly.c` diagnostic ran successfully under XSDB on
+Cortex-A53 #0 and wrote a complete DDR mailbox. The host verified:
+
+```text
+P03_2C_A53_MAGIC=0x50335244
+P03_2C_A53_RESULT=0xDEAD0001
+P03_2C_A53_COMPLETE=0xC0DEF00D
+0xA4000000 -> 0x4C543302 (PASS)
+0xA4000004 -> 0x00000000 (expected 0x00010000)
+0xA4000008 -> 0x00000000 (expected 0x0001031F)
+0xA4000018 -> 0x00000000 (expected 0xD1A60018)
+```
+
+`result=0xDEAD0001` encodes a failing four-register check with **only
+bit 0 / ID passing**. The completion marker is present, so this is not a
+mere XSDB failure to start the application or a missing JTAG server:
+`hw_server` already provides the USB/JTAG connection for Vivado and XSDB.
+The A53 **itself** reproduces the nonzero-offset failure on the present
+candidate. This **supersedes** the earlier open possibility that the
+problem is restricted to PSU-target XSDB reads.
+
+The prior dual-ILA capture of an XSDB-initiated +0x004 read independently
+established that the custom MMIO slave returned `0x00010000` and the
+PS-facing AXI4 interface delivered `RDATA=0x00010000` with
+`RRESP=OKAY`. The capture and this A53-only mailbox are from different
+transactions; **do not claim that the A53 read itself has been
+ILA-captured**. The combination strongly motivates investigating the PS
+master data-width/byte-lane or PS-side read-return path rather than
+speculatively rewriting the already verified slave VERSION decoder.
+
+### Tested external precedent and opt-in LPD diagnostic candidate
+
+A separate ZCU102 AXI-Lite project documented the same
+`+0x0` works / `+0x4` returns zero pattern on
+`M_AXI_HPM0_FPD`, and reported recovery after moving a control
+register aperture to the 32-bit `M_AXI_HPM0_LPD` master:
+https://github.com/Binoculars-X/zynq-axi-lite/blob/main/research-history.md
+
+This report is an **external precedent**, not proof of the KV260 root
+cause (their decisive bad beat was a *write*; ours is a *read*).
+AMD PG201 documents `PSU__MAXIGP2__DATA_WIDTH` as a configurable PS master
+setting. AMD UG1085 gives LPD-to-PL a 512 MiB aperture
+`0x80000000..0x9FFFFFFF`; the FPD HPM0 low aperture starts at
+`0xA4000000`.
+
+An isolated candidate can now be built using `P03_PS_MMIO_MASTER=LPD`.
+It changes **only** the diagnostic PS-to-PL control master and low
+address mapping:
+
+```text
+FPD default (unchanged):  M_AXI_HPM0_FPD -> converter -> MMIO @ 0xA4000000
+LPD candidate (opt-in):  M_AXI_HPM0_LPD -> converter -> MMIO @ 0x80000000
+Existing HP0/DDR path:   unchanged (S_AXI_HP0_FPD, 128 bits)
+```
+
+It retains the two diagnostic analyzers. The LPD bitstream gets a separate
+explicit build directory and must pass the BD-only gate before routing.
+The unchanged frozen `p03_mmio.h` ABI still declares `0xA4000000`.
+Only the copied `p03_2c_readonly.c` inside the isolated candidate build
+is prefixed with `P03_READONLY_MMIO_BASE=0x80000000` so the A53
+diagnostic reads the correct **LPD** address; acceptance smoke and baseline
+FPD builds retain the old base.
+
+**Status:** LPD diagnostic candidate code prepared, **not yet BD-validated,
+routed, or physically tested**. No P03.2c acceptance evidence has been
+produced, and the working FPD ILA evidence must be preserved.
