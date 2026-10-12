@@ -147,12 +147,25 @@ def test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed(tmp_path):
     good=check(tmp_path,golden,original)
     assert good.returncode==0,good.stdout+good.stderr
     assert "byte-exact" in good.stdout
-    for index,value in [(2,0xDEAD0002),(7,6),(14,34),(15,29),
-                        (16,6),(19,31),(21,2),(37,0xFFFFFFFF),(38,0),(45,0)]:
-        data=list(struct.unpack("<64I",original))
-        data[index]=value
-        failed=check(tmp_path,golden,struct.pack("<64I",*data))
-        assert failed.returncode != 0,(index,failed.stdout,failed.stderr)
+    original_words = struct.unpack("<64I", original)
+    # Each negative case must actually change the baseline mailbox.
+    # Core0's golden state can legitimately be zero, so replacing word 45
+    # with 0 was a no-op and incorrectly expected verification to fail.
+    mutations = [
+        (2, 0xDEAD0002), (7, 6), (14, 34), (15, 29),
+        (16, 6), (19, 31), (21, 2), (37, 0xFFFFFFFF),
+        (38, 0), (45, original_words[45] ^ 1),
+    ]
+    for index, value in mutations:
+        data = list(original_words)
+        assert data[index] != value, (
+            f"negative test must modify mailbox word {index}"
+        )
+        data[index] = value
+        failed = check(tmp_path, golden, struct.pack("<64I", *data))
+        assert failed.returncode != 0, (index, failed.stdout, failed.stderr)
+        if index == 45:
+            assert "core0.state0" in failed.stderr
     # Exact 512 KiB check: one modified byte must be rejected even if the
     # mailbox/counters and all five returned state words are valid.
     altered=bytearray((dumps/"core3_after.bin").read_bytes())
