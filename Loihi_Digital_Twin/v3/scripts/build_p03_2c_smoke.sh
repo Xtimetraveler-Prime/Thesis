@@ -28,10 +28,28 @@ else
         echo "ERROR: unknown P03.2c source/app configuration" >&2
         exit 2
     }
-    [[ -z "${P03_2C_EXPECTED_XSA_SHA:-}" ]] || {
-        echo "ERROR: fixed smoke acceptance XSA fingerprint cannot be overridden" >&2
-        exit 2
-    }
+    if [[ "${P03_2C_SMOKE_CANDIDATE:-0}" == 1 ]]; then
+        [[ -n "${P03_2C_BUILD_DIR:-}" && -n "${P03_2C_EXPECTED_XSA_SHA:-}" &&
+           -n "${P03_XSA:-}" ]] || {
+            echo "ERROR: candidate full-smoke build requires explicit P03_2C_BUILD_DIR, P03_XSA and P03_2C_EXPECTED_XSA_SHA" >&2
+            exit 2
+        }
+        EXPECTED_XSA_SHA="$P03_2C_EXPECTED_XSA_SHA"
+        # The corrected candidate preserves the frozen FPD base/ABI.
+        [[ "${P03_2C_READONLY_MMIO_BASE:-0xA4000000}" == 0xA4000000 ]] || {
+            echo "ERROR: full smoke supports only the frozen FPD MMIO base 0xA4000000" >&2
+            exit 2
+        }
+    else
+        [[ -z "${P03_2C_EXPECTED_XSA_SHA:-}" ]] || {
+            echo "ERROR: fixed smoke acceptance XSA fingerprint cannot be overridden" >&2
+            exit 2
+        }
+        [[ -z "${P03_2C_BUILD_DIR:-}" || "$BUILD_DIR" == "$V3_DIR/vivado/build/p03_2c_smoke" ]] || {
+            echo "ERROR: baseline smoke cannot override its accepted output directory" >&2
+            exit 2
+        }
+    fi
 fi
 FIXTURE_DIR="$BUILD_DIR/fixture"
 SOURCE_DIR="$BUILD_DIR/source"
@@ -113,11 +131,11 @@ XSA_SHA="$(sha256sum "$XSA" | awk '{print $1}')"
     exit 2
 }
 
-if [[ "$APP_NAME" == "p03_2c_readonly" && -e "$BUILD_DIR" ]]; then
-    echo "ERROR: read-only build directory already exists: $BUILD_DIR" >&2
+if [[ ( "$APP_NAME" == "p03_2c_readonly" || "${P03_2C_SMOKE_CANDIDATE:-0}" == 1 ) && -e "$BUILD_DIR" ]]; then
+    echo "ERROR: isolated P03.2c build directory already exists: $BUILD_DIR" >&2
     exit 2
 fi
-if [[ "$APP_NAME" == "p03_2c_smoke" ]]; then
+if [[ "$APP_NAME" == "p03_2c_smoke" && "${P03_2C_SMOKE_CANDIDATE:-0}" != 1 ]]; then
     rm -rf "$BUILD_DIR"
 fi
 mkdir -p "$FIXTURE_DIR" "$SOURCE_DIR"
@@ -200,6 +218,8 @@ echo "P03_2C_ELF=$ELF"
 echo "P03_2C_APP_NAME=$APP_NAME"
 if [[ "$APP_NAME" == "p03_2c_readonly" ]]; then
     echo "PASS: P03.2c read-only Cortex-A53 diagnostic build gate completed successfully."
+elif [[ "${P03_2C_SMOKE_CANDIDATE:-0}" == 1 ]]; then
+    echo "PASS: P03.2c candidate full A53 smoke build gate completed (physical acceptance pending)."
 else
     echo "PASS: P03.2c standalone smoke build gate completed successfully."
 fi
