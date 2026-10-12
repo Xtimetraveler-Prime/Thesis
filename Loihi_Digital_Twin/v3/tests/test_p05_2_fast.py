@@ -181,7 +181,7 @@ def test_fast_historical_physical_sha_pin_is_required(physical_mock,capsys):
     gatefile.write_text(json.dumps(gate))
     passed,log=checked(physical_mock,capsys)
     assert not passed
-    assert "differs from accepted diagnostic physical P05.1" in log
+    assert "historical accepted P05.1 physical SHA256 identity drift" in log
 
 
 def test_fast_forged_crc_sha_still_cannot_change_neural_events(physical_mock,capsys):
