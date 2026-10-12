@@ -420,8 +420,8 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
   P03.1's board-local state machine, deterministic scheduling/replacement,
   packet routing, cache-maintenance ownership, timer/counter collection,
   fail-closed result records, and the fixed P02 64 MiB DDR reservation.
-  - **P03.3a — Portable C runtime policy engine.** **Implementation
-    complete; independent native-compiler regression pending.**
+  - **P03.3a — Portable C runtime policy engine.** **Complete;
+    independently accepted 2026-10-11.**
     Introduce `software/p03/include/p03_runtime.h`,
     `software/p03/p03_runtime.c` and a host-native hardware-mock test
     harness. Test compiled logical-core service order, initial resident
@@ -430,12 +430,23 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     event-bank swaps, sticky first-error, and 35 dispatches / seven
     barriers for a five-over-three plan. This does **not** prove
     packet encoding, actual MMIO control or inference equivalence.
-  - **P03.3b — Physical MMIO/DDR/packet adapter.** **Planned.**
-    Implement P02 cache ownership, A53 device-register I/O,
-    low-rate resident-memory event/packet transfers, event counts,
-    and page/dispatch command completion using the accepted FPD128
-    hardware; then rebuild standalone A53 runtime ELF and validate
-    on K26.
+  - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress,
+    P03.3b1 authored; independent native regression pending.**
+    Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
+    transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
+    shell. The adapter implements page-in/mutable-only page-out,
+    sticky DONE/error polling, resident bank 6/9 event writes,
+    bank 8 packet reads, P03 packet decoding and sparse-axon
+    validation, nonresident DDR NEXT delivery with cache cleaning,
+    event counts, dispatch metadata and barrier quiescence. A native
+    simulated AXI/DDR harness checks resident/nonresident delivery,
+    source/destination validity, capacity and fault paths, and a
+    two-timestep policy-to-MMIO run. Next independently compile
+    those C tests (P03.3b1), construct a dedicated A53 adapter probe
+    against the physically accepted XSA (P03.3b2), then demonstrate
+    real packet/page-out round trips on the board (P03.3b3).
+    **Not yet physically accepted.** See
+    `docs/P03_3B_PHYSICAL_ADAPTER.md`.
   - **P03.3c — Autonomous launch/results and failure coverage.**
     **Planned.** Connect deployment/input, timer/result schema,
     cache-safe DDR layout and board-local start-to-DONE/ERROR
