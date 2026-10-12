@@ -143,9 +143,9 @@ for line in (target/"preflight_identity.txt").read_text().splitlines():
         raise SystemExit("FAIL: P05.2e composite preflight SHA drift: "+original)
 print("PASS: P05.2e composite offline evidence SHA identities unchanged")
 PY
-XSDB_URL="${P05_1_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
-HW_URL="${P05_1_HW_SERVER_URL:-localhost:3121}"
-MAX_SECONDS="${P05_1_RUN_MAX_SECONDS:-600}"
+XSDB_URL="${P05_2_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
+HW_URL="${P05_2_HW_SERVER_URL:-localhost:3121}"
+MAX_SECONDS="${P05_2_RUN_MAX_SECONDS:-600}"
 {
     echo "phase=P05.2e independent 5-over-3 mixed-threshold/fanout/reordered/dirty-paging golden"
     echo "git_commit=$(git rev-parse HEAD)"
