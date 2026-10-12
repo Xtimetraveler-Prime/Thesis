@@ -394,40 +394,29 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     the register block through HPM0 at `0xA4000000..0xA4000FFF`, preserve the
     accepted HP0 DDR data path, retain VIO as observation/reset-only, close
     timing, and export bitstream/probes/fixed XSA.
-  - **P03.2c — Physical PS-MMIO smoke.** **In progress.** Use an A53-side smoke
-    program to read the MMIO identity/capabilities and physically issue
-    page/dispatch/resident-memory commands without JTAG/VIO command ownership.
-    **2026-10-11 diagnostic milestone (not acceptance):** a routed split-ILA
-    capture independently proves that a read of VERSION at `0xA4000004`
-    receives `0x00010000` with valid/ready handshakes and `RRESP=OKAY` at
-    the PS-facing PL AXI interface, even though XSDB `PSU` reports zero.
-    The prior "nonzero-offset read misses the slave" theory is disproven.
-    Linux/PuTTY became unresponsive after JTAG programming, so a new
-    **diagnostic-only standalone A53 read-only probe** replaces the
-    console-dependent `devmem` test. **Independent physical execution
-    completed** on both the FPD and opt-in LPD candidates: mailbox
-    magic/completion passed, ID returned `0x4C543302`, but VERSION/
-    CAPABILITIES/unmapped returned zero.
-    **2026-10-11 decisive same-run capture:** All four A53-generated
-    AXI requests reach the correct addresses and return correct, OKAY data
-    at the PS-facing PL boundary; the A53 DDR mailbox nevertheless contains
-    zeros at +0x004/+0x008/+0x018. This eliminates the custom slave,
-    protocol converter, and A53 address-generation hypotheses for these
-    reads. **The physical PS/PL width mismatch is now confirmed:**
-    an independent read-only XSDB probe measured both FPD and LPD HPM0
-    selectors at 128 bits (`0xFD615000=0x00000A00`,
-    `0xFF419000=0x00000200`), while both failed PL designs expected
-    32 bits. This plausibly explains the offset-0-only symptom, but
-    causality is not accepted until a matching design physically passes.
-    An **opt-in boot-compatible 128-bit FPD master** now uses a 1x1
-    SmartConnect to downsize/convert to the existing 32-bit AXI-Lite
-    register block at `0xA4000000`; the default design and accepted
-    artifacts remain unchanged. Next independently validate BD/route,
-    build a read-only A53 ELF from that candidate XSA, and require all
-    four MMIO reads. Then proceed to the full page/resident/dispatch
-    smoke. The PuTTY freeze remains a separate unproven symptom.
-    See `docs/P03_2C_ILA_DIAGNOSIS.md` and
-    `docs/P03_2C_PS_HPM_WIDTH_BOOT_REMEDIATION.md`.
+  - **P03.2c — Physical PS-MMIO smoke.** **In progress; four-register
+    read-only Cortex-A53 physical gate PASSED 2026-10-11; full command
+    acceptance still pending.** The user independently validated an
+    opt-in routed 128-bit FPD control-master / SmartConnect 128-to-32-bit
+    AXI4-to-AXI4-Lite bridge. The A53 mailbox completed successfully
+    (`magic=0x50335244`, `result=0x600D600D`,
+    `complete=0xC0DEF00D`) and read ID `0x4C543302`, VERSION
+    `0x00010000`, CAPABILITIES `0x0001031F`, and diagnostic signature
+    `0xD1A60018`. The previous FPD32 and LPD32 candidates had failed
+    at nonzero offsets despite correct dual-ILA AXI responses. A read-only
+    PS SLCR probe measured physical FPD/LPD widths of 128 bits
+    (`0xFD615000=0x00000A00`, `0xFF419000=0x00000200`);
+    this proved the PS/PL width mismatch, and the compatible bridge
+    physically resolved the read failure without changes to the MMIO ABI
+    or 128-bit HP0 DDR paging path. The standalone *full* A53 smoke
+    (physical page-in, resident `config[0]` readback, no-event HLS dispatch)
+    now has an isolated candidate-XSA build and physical runner.
+    **Next independent gate:** build that ELF from the same FPD128 XSA
+    and collect a passing full `p03_2c_verify_mailbox.py` report.
+    Do not close P03.2c/P03.2 until the full command gate and final-shell
+    instrumentation decision are independently accepted.
+    Primary engineering record:
+    `docs/P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md`.
 - **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
   state machine, deterministic scheduling/replacement, packet routing,
   cache-maintenance ownership, timer/counter collection, result records, and a
