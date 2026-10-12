@@ -1,7 +1,7 @@
 """P05.1 second *different neural network* host rehearsal.
 
 A synthetic mailbox is only verifier testing; no physical acceptance
-until the KV260 actually reports 15 direct-resident packet deliveries,
+until the KV260 actually reports 12 direct-resident packet deliveries,
 15 checkpoints and three byte-exact oracle final records.
 """
 from __future__ import annotations
