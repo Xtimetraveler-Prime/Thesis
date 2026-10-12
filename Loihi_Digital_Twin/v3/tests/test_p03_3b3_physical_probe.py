@@ -146,3 +146,64 @@ def test_vitis_sources_and_hardware_provisioning_guarded():
     assert "mrd -bin -file $verify_record $record_addr 131072" in prep
     assert "mrd -bin -file $mailbox_dump 0x43FF0000 32" in run_tcl
     assert "rm -rf" not in build and "rm -rf" not in run
+
+
+def test_b3_a53_c_sources_pass_host_syntax_with_xilinx_bsp_shim(tmp_path: Path):
+    """Catch A53 C source type/signature errors before expensive Vitis build.
+
+    The shim only supplies header declarations. No FPGA behavior is simulated,
+    and the ARM-specific wfe/dsb instructions are not assembled (-fsyntax-only).
+    """
+    import shutil
+    compiler = shutil.which("cc") or shutil.which("gcc")
+    if compiler is None:
+        return  # Vitis still independently compiles on the user's machine
+    folder, _ = fixture(tmp_path)
+    xil_io = tmp_path / "xil_io.h"
+    xil_io.write_text(
+        "#ifndef TEST_XIL_IO_H\\n#define TEST_XIL_IO_H\\n"
+        "#include <stdint.h>\\n"
+        "typedef uintptr_t UINTPTR;\\ntypedef intptr_t INTPTR;\\n"
+        "typedef unsigned int u32;\\n"
+        "static inline uint32_t Xil_In32(UINTPTR addr)"
+        "{(void)addr;return 0;}\\n"
+        "static inline void Xil_Out32(UINTPTR addr, uint32_t val)"
+        "{(void)addr;(void)val;}\\n"
+        "#endif\\n"
+    )
+    (tmp_path / "xil_cache.h").write_text(
+        "#ifndef TEST_XIL_CACHE_H\\n#define TEST_XIL_CACHE_H\\n"
+        "#include \"xil_io.h\"\\n"
+        "static inline void Xil_DCacheFlushRange(INTPTR addr, u32 size)"
+        "{(void)addr;(void)size;}\\n"
+        "static inline void Xil_DCacheInvalidateRange(INTPTR addr, u32 size)"
+        "{(void)addr;(void)size;}\\n"
+        "#endif\\n"
+    )
+    sources = (
+        PROBE,
+        ROOT / "software/p03/p03_runtime.c",
+        ROOT / "software/p03/p03_hw_adapter.c",
+        ROOT / "software/p03/p03_hw_runtime_bridge.c",
+        ROOT / "software/p03/p03_hw_xilinx_io.c",
+    )
+    for source in sources:
+        result = subprocess.run(
+            [compiler, "-std=c11", "-Wall", "-Wextra", "-Werror", "-pedantic",
+             "-fsyntax-only", "-I", str(tmp_path),
+             "-I", str(ROOT / "software/p03/include"),
+             "-I", str(folder), str(source)],
+            capture_output=True, text=True, check=False, timeout=20,
+        )
+        assert result.returncode == 0, (
+            str(source) + ": " + result.stdout + result.stderr
+        )
+
+
+def test_b3_build_and_board_scripts_parse_in_bash():
+    for shell in (BUILD, RUN):
+        result = subprocess.run(
+            ["bash", "-n", str(shell)],
+            capture_output=True, text=True, check=False, timeout=10,
+        )
+        assert result.returncode == 0, result.stderr
