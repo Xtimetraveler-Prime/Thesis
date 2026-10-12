@@ -368,7 +368,10 @@ static int write_result(void *ctx,const p03_rt *rt)
        readbacks[3]!=0 || readbacks[4]!=0 ||
        p03_hw_quiescent(adapter)!=P03_HW_OK)
         return -1;
-    result[M_RESULT]=RUN_PASS;
+    /* Do NOT publish terminal PASS inside WRITE_RESULT. P03.3a only
+     * transitions to DONE after this callback returns successfully.
+     * The XSDB poller may stop the A53 as soon as PASS is visible.
+     */
     result[M_ERROR]=0;
     flush_result();
     return 0;
@@ -433,10 +436,15 @@ int main(void)
     if(p03_rt_execute(&runtime,&ops,&bridge)!=0) {
         report_error(FAIL_RUNTIME); halt_forever();
     }
-    if(result[M_RESULT]!=RUN_PASS) {
+    if(runtime.phase!=P03_RT_DONE || result[M_ERROR]!=0) {
         report_error(FAIL_RESULT); halt_forever();
     }
+    /* Terminal success is published only after scheduler entered DONE,
+     * every resident dirty image was written to DDR, and all diagnostic
+     * results were committed. This is the XSDB passive-poll handoff.
+     */
     result[M_RT_PHASE]=(uint32_t)runtime.phase;
+    result[M_RESULT]=RUN_PASS;
     flush_result();
     halt_forever();
     return 0;
