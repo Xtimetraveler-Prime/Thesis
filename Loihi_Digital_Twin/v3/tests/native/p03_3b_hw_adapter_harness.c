@@ -13,6 +13,9 @@ typedef struct {
     uint32_t last_event_bank, last_event_index;
     uint64_t last_ddr_addr;
     int fail_page, fail_debug, fail_dispatch, fail_store;
+    int generate_packets;
+    uint64_t first_ddr_addr, last_packet_generated;
+    uint32_t first_ddr_value;
     uint32_t program_count, result_count, faults;
 } mock;
 
@@ -51,6 +54,23 @@ static int mwrite(void *cookie, uint32_t off, uint32_t value)
             m->last_dispatch_config;
         m->regs[P03_REG_DISPATCH_CORE_STATUS / 4u] = 0;
         m->regs[P03_REG_DISPATCH_PACKET_CNT / 4u] = 0;
+        if (m->generate_packets) {
+            uint32_t source_id = m->regs[P03_REG_DISPATCH_META_LO / 4u] & 0x7Fu;
+            uint32_t step = m->regs[P03_REG_DISPATCH_TIMESTEP / 4u];
+            uint64_t spike = 0;
+            if (source_id == 0 && step == 0)
+                spike = UINT64_C(1) | (UINT64_C(11) << 7) |
+                        (UINT64_C(1) << 29) | (UINT64_C(1) << 61);
+            if (source_id == 1 && step == 1)
+                spike = (UINT64_C(20) << 7) |
+                        (UINT64_C(2) << 29) | (UINT64_C(1) << 61);
+            if (spike != 0) {
+                m->regs[P03_REG_DISPATCH_PACKET_CNT / 4u] = 1;
+                m->regs[P03_REG_DEBUG_RDATA0 / 4u] = (uint32_t)spike;
+                m->regs[(P03_REG_DEBUG_RDATA0 + 4u) / 4u] = (uint32_t)(spike >> 32);
+                m->last_packet_generated = spike;
+            }
+        }
     }
     if (off == P03_REG_DEBUG_COMMAND && (value & P03_CMD_START)) {
         m->regs[P03_REG_DEBUG_STATUS / 4u] = m->fail_debug ? 8u :
@@ -85,6 +105,10 @@ static int mstore(void *cookie, uint64_t addr, uint32_t value)
     mock *m = cookie;
     if (m->fail_store) return -1;
     m->stores++;
+    if (m->stores == 1) {
+        m->first_ddr_addr = addr;
+        m->first_ddr_value = value;
+    }
     m->last_ddr_addr = addr;
     m->last_event_value = value;
     return 0;
@@ -264,12 +288,69 @@ static void test_native_runtime_bridge(void)
     assert(rt.counters.page_ins == 0 && rt.counters.page_hits == 2);
     puts("PASS: P03.3b 2-step native policy-to-MMIO bridge");
 }
+static int b3_result(void *ctx, const p03_rt *rt)
+{
+    mock *m = ctx;
+    assert(rt->counters.logical_dispatches == 4);
+    assert(rt->counters.barriers == 2);
+    assert(rt->counters.routed_packets == 2);
+    assert(rt->counters.initial_page_ins == 1);
+    assert(rt->counters.page_ins == 3);
+    assert(rt->counters.page_outs == 3);
+    assert(rt->resident[0] == 1);
+    ++m->result_count;
+    return 0;
+}
+
+static void test_physical_packet_plan_native_simulation(void)
+{
+    /* This executes exactly the P03.3b3 logical plan with simulated
+     * HLS packets. The independent FPGA must subsequently produce them.
+     */
+    mock m;
+    p03_hw_adapter hw;
+    p03_rt rt;
+    p03_hw_runtime_bridge bridge;
+    p03_rt_ops ops;
+    const uint8_t ids[] = {0, 1};
+    setup(&m, &hw);
+    m.generate_packets = 1;
+    assert(p03_rt_init(&rt, ids, 2, 1, 2) == 0);
+    assert(p03_hw_register_core(&hw, 0, meta(0), 1, 0) == 0);
+    assert(p03_hw_register_core(&hw, 1, meta(1), 0, 0) == 0);
+    assert(p03_hw_register_axon(&hw, 0, 10) == 0);
+    assert(p03_hw_register_axon(&hw, 0, 20) == 0);
+    assert(p03_hw_register_axon(&hw, 1, 11) == 0);
+    memset(&bridge, 0, sizeof(bridge));
+    bridge.hw = &hw;
+    bridge.runtime = &rt;
+    bridge.app_cookie = &m;
+    bridge.validate_deployment = good;
+    bridge.validate_backing = good;
+    bridge.load_input = good;
+    bridge.write_result = b3_result;
+    bridge.on_error = fault;
+    assert(p03_hw_bind_runtime(&bridge, &ops) == 0);
+    assert(p03_rt_execute(&rt, &ops, &bridge) == 0);
+    assert(rt.phase == P03_RT_DONE && rt.first_fault == P03_RT_FAULT_NONE);
+    assert(m.result_count == 1 && m.faults == 0);
+    assert(m.stores == 2);
+    assert(m.first_ddr_addr == P03_HW_BACKING_BASE + P03_HW_RECORD_BYTES +
+                               P03_HW_EVENT1_OFFSET);
+    assert(m.first_ddr_value == 11);
+    assert(m.last_ddr_addr == P03_HW_BACKING_BASE + P03_HW_EVENT0_OFFSET);
+    assert(m.last_event_value == 20);
+    assert(hw.event_counts[0][0] == 1 && hw.event_counts[1][1] == 0);
+    puts("PASS: P03.3b3 native two-core nonresident packet and dirty-page plan");
+}
+
 int main(void)
 {
     test_page_debug_dispatch();
     test_packet_routing();
     test_overflow_and_bus_failure();
     test_native_runtime_bridge();
+    test_physical_packet_plan_native_simulation();
     puts("PASS: P03.3b host-native hardware adapter suite");
     return 0;
 }
