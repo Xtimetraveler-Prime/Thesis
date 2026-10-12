@@ -27,7 +27,7 @@ OUT="$2"
 XSDB_URL="${P03_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 HW_URL="${P03_HW_SERVER_URL:-localhost:3121}"
 MAX_SECONDS="${P03_RUN_MAX_SECONDS:-600}"
-STAMP='P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1'
+STAMP='P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2'
 for tool in python xsdb vivado grep cmp sha256sum awk; do
     command -v "$tool" >/dev/null || { echo "ERROR: missing $tool" >&2; exit 2; }
 done
