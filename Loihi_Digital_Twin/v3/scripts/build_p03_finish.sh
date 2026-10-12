@@ -129,7 +129,7 @@ ELF="$WORKSPACE/p03_finish_run.elf"
 [[ -s "$ELF" ]] || { echo "ERROR: P03 final ELF not produced" >&2; exit 3; }
 # Verify the complete Vitis process really emitted the current diagnostics.
 # This is an ELF content check, not merely a source-string grep.
-if ! grep -aFq 'P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1' "$ELF"; then
+if ! grep -aFq 'P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2' "$ELF"; then
     echo "ERROR: built ELF does NOT contain the P03 final firmware diagnostic identity" >&2
     echo "ERROR: ensure the current p03_finish_run.c was imported and rebuilt" >&2
     exit 3
