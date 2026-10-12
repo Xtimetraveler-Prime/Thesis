@@ -1,6 +1,14 @@
 # P03.2c PS HPM width at boot: diagnosis and corrective integration
 
-**Status: strong, hardware-specific hypothesis; awaiting live PS width register dump.**
+> **Latest authoritative outcome (2026-10-11):** The 128-bit FPD PS master
+> combined with SmartConnect downsizing to the unchanged 32-bit AXI-Lite
+> slave physically passed the four-register standalone A53 diagnostic.
+> Earlier sections are preserved as chronological hypotheses and plans.
+> See [the full root-cause case study](P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md)
+> for the before/after evidence, the mechanism, and remaining acceptance gates.
+
+
+**Status (2026-10-11): measured 128-bit PS/32-bit PL mismatch and physically verified corrected FPD128 read-only MMIO; full P03.2c command smoke still pending.**
 **Branch:** `agent/v3-p03-autonomous-runtime`.
 **Do not merge or close P03.2c from this note alone.**
 
