@@ -2,7 +2,7 @@
 
 **Status:** Accepted from independently provided KV260 physical output, 2026-10-12 UTC (2026-10-11 Denver local).  
 **Branch:** `agent/v3-p03-autonomous-runtime`; do not merge without explicit approval.  
-**P03.5:** pending 100-step physical run.
+**P03.5:** subsequently **ACCEPTED** on 2026-10-12; see `docs/P03_5_ACCEPTANCE.md`.
 
 ## User-verified seven-timestep physical results
 
@@ -59,4 +59,10 @@ This creates a fresh 100-step frozen P02-ring model oracle requiring
 **500 dispatches, 100 barriers** and five byte-exact final DDR records,
 while keeping all scheduling/routing/barrier decisions on the A53.
 Reboot the KV260 before and after the standalone physical run.
-No P03.5 physical acceptance is claimed yet.
+The above was the original next-gate instruction at P03.4
+acceptance. **Subsequently, the 100-step P03.5 run passed**:
+500 dispatches, 495 routed HLS packets, 100 barriers, 500
+page-ins and 500 page-outs, with all five final DDR images
+byte-exact to the independent 100-step oracle.
+See `docs/P03_5_ACCEPTANCE.md` and
+`docs/P03_FINAL_ACCEPTANCE.md`.
