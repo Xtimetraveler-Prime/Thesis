@@ -23,7 +23,7 @@ FIELDS = (
     "evictions","hits","pl_dispatch_lo","pl_dispatch_hi",
     "pl_page_lo","pl_page_hi","route_ticks_lo","route_ticks_hi",
     "barrier_ticks_lo","barrier_ticks_hi","infer_ticks_lo","infer_ticks_hi",
-    "control_ticks_lo","control_ticks_hi","cntfrq_hz","timer_reserved",
+    "control_ticks_lo","control_ticks_hi","cntfrq_hz","resident_routes",
     "page_operations","hw_dispatches","last_page_bytes","global_status",
     "page_pending","read_bursts","write_bursts",
 )
@@ -76,6 +76,11 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
             fields[55+core],
             len(manifest["final_next_events"][str(core)]),
         )
+    if not 0 < observed["resident_routes"] <= observed["packets"]:
+        errors.append(
+            "resident_routes must be positive and not exceed total "
+            "packets (independent physical MMIO resident-delivery coverage)"
+        )
     for name in ("cntfrq_hz","read_bursts","write_bursts"):
         if observed[name]==0:
             errors.append(f"{name} cannot be zero in a physical 5-core run")
@@ -107,7 +112,9 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
     print(
         "PASS: P03 autonomous five-over-three P02/v2 normalized golden "
         f"timesteps={steps} dispatches={5*steps} "
-        f"packets={observed['packets']} barriers={observed['barriers']} "
+        f"packets={observed['packets']} "
+        f"resident_deliveries={observed['resident_routes']} "
+        f"barriers={observed['barriers']} "
         f"page_ins={3+observed['replacement_ins']} "
         f"page_outs={observed['runtime_outs']+observed['flush_outs']} "
         f"trace_sha256={manifest['trace_fingerprint']} "
@@ -122,6 +129,7 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
             "timesteps":steps,
             "dispatches":observed["dispatches"],
             "packets":observed["packets"],
+            "resident_deliveries":observed["resident_routes"],
             "ps_timer_hz":observed["cntfrq_hz"],
             "inference_ticks":(
                 observed["infer_ticks_lo"]+(observed["infer_ticks_hi"]<<32)
