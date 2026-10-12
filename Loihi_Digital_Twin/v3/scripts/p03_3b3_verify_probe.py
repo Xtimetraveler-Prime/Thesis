@@ -67,9 +67,11 @@ def verify(mailbox: Path, manifest: Path) -> bool:
                 )
         else:
             print(
-                "FAIL: P03.3b3 record header rejected BEFORE runtime launch; "
-                "this older probe build lacks raw-header diagnostics. "
-                "Use the updated A53 ELF to identify the mismatched field.",
+                "FAIL: P03.3b3 error=2 without HDR3 mismatch snapshot. "
+                "Earlier probe firmware inverted validate_backing()'s "
+                "0=success result and falsely reported a header error. "
+                "Check the exact A53 ELF build identity and retry with "
+                "the corrected startup condition.",
                 file=sys.stderr,
             )
         print(
