@@ -78,7 +78,7 @@ def staged(tmp_path,original):
     dump=target/"final_ddr"
     dump.mkdir()
     for core in range(5):
-        shutil.copy2(target/"composite_golden"/f"core{core}_expected.bin",
+        shutil.copy2(target/"composite_physical_golden"/f"core{core}_expected.bin",
                      dump/f"core{core}_after.bin")
     return target
 
@@ -114,6 +114,59 @@ def run_check(root,capsys):
     ok=VERIFY.verify(root/"p05_a53_result.bin",root)
     out=capsys.readouterr()
     return ok,out.out+out.err
+
+
+
+def test_wraparound_packet0_is_route_ordered_not_destination_sorted(staged):
+    """Regression for exact core3 packet0 0x04 vs normalized 0x00.
+
+    Preserve the original model and all non-packet bytes.
+    """
+    source=staged/"composite_golden"
+    phys=staged/"composite_physical_golden"
+    proof=json.loads((staged/"p05_2_packet_layout_ledger.json").read_text())
+    assert proof["per_core"]["3"]["physical_route_destinations"]==[4,0]
+    assert proof["per_core"]["3"]["changed_word_indices"]==[0,1]
+    for core in range(5):
+        original=(source/f"core{core}_expected.bin").read_bytes()
+        mapped=(phys/f"core{core}_expected.bin").read_bytes()
+        assert len(original)==len(mapped)==0x80000
+        if core!=3:
+            assert mapped==original
+        else:
+            assert original[0x64000]==0x00
+            assert mapped[0x64000]==0x04
+            assert original[:0x64000]==mapped[:0x64000]
+            assert original[0x64010:]==mapped[0x64010:]
+            a=struct.unpack_from("<2Q",original,0x64000)
+            b=struct.unpack_from("<2Q",mapped,0x64000)
+            assert a==(b[1],b[0])
+            assert (b[0]&0x7F,b[1]&0x7F)==(4,0)
+
+
+def test_original_sorted_packet_order_still_fails_full_device_golden(staged,capsys):
+    """Previously failing normalized full-DDR image must be rejected."""
+    (staged/"p05_a53_result.bin").write_bytes(plausible_mailbox(staged))
+    shutil.copy2(
+        staged/"composite_golden/core3_expected.bin",
+        staged/"final_ddr/core3_after.bin"
+    )
+    good,out=run_check(staged,capsys)
+    assert not good
+    assert "P05_2E_COMPOSITE_FINAL_DDR=FAIL" in out
+    assert "core 3 final record mismatch at 0x64000 (packet)" in out
+
+
+def test_packet_layout_derivation_idempotent_not_fit_to_physical_ddr(staged):
+    f=staged/"final_ddr/core3_after.bin"
+    raw=bytearray(f.read_bytes())
+    raw[0x64000]=0x70
+    f.write_bytes(raw)
+    before=(staged/"composite_physical_golden/core3_expected.bin").read_bytes()
+    again=VERIFY.PHYSICAL_PACKET_LAYOUT.derive(staged)
+    after=(staged/"composite_physical_golden/core3_expected.bin").read_bytes()
+    assert before==after
+    assert again["per_core"]["3"]["physical_final_packet0_dest"]==4
 
 
 def test_independent_model_packets_and_c_scheduler_paging_match(staged):
