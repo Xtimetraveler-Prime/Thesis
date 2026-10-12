@@ -383,7 +383,7 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
   recovery behavior, external-host exclusion, cache/ownership rules, and the v3
   implementation addendum to the inherited Loihi target specification. Primary
   record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
-- **P03.2 — PS-visible MMIO control/status shell.** **In progress.** Replace
+- **P03.2 — PS-visible MMIO control/status shell.** **Complete; accepted 2026-10-11 for the physical experimental control shell.** Replace
   VIO-owned page/dispatch/resident-memory control with a PS-accessible AXI-Lite
   register block on the accepted `M_AXI_HPM0_FPD` direction while preserving
   the accepted P02 data plane and response semantics.
@@ -394,33 +394,53 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     the register block through HPM0 at `0xA4000000..0xA4000FFF`, preserve the
     accepted HP0 DDR data path, retain VIO as observation/reset-only, close
     timing, and export bitstream/probes/fixed XSA.
-  - **P03.2c — Physical PS-MMIO smoke.** **In progress; four-register
-    read-only Cortex-A53 physical gate PASSED 2026-10-11; full command
-    acceptance still pending.** The user independently validated an
-    opt-in routed 128-bit FPD control-master / SmartConnect 128-to-32-bit
-    AXI4-to-AXI4-Lite bridge. The A53 mailbox completed successfully
-    (`magic=0x50335244`, `result=0x600D600D`,
-    `complete=0xC0DEF00D`) and read ID `0x4C543302`, VERSION
-    `0x00010000`, CAPABILITIES `0x0001031F`, and diagnostic signature
-    `0xD1A60018`. The previous FPD32 and LPD32 candidates had failed
-    at nonzero offsets despite correct dual-ILA AXI responses. A read-only
-    PS SLCR probe measured physical FPD/LPD widths of 128 bits
-    (`0xFD615000=0x00000A00`, `0xFF419000=0x00000200`);
-    this proved the PS/PL width mismatch, and the compatible bridge
-    physically resolved the read failure without changes to the MMIO ABI
-    or 128-bit HP0 DDR paging path. The standalone *full* A53 smoke
-    (physical page-in, resident `config[0]` readback, no-event HLS dispatch)
-    now has an isolated candidate-XSA build and physical runner.
-    **Next independent gate:** build that ELF from the same FPD128 XSA
-    and collect a passing full `p03_2c_verify_mailbox.py` report.
-    Do not close P03.2c/P03.2 until the full command gate and final-shell
-    instrumentation decision are independently accepted.
-    Primary engineering record:
+  - **P03.2c — Physical PS-MMIO smoke.** **Complete; independently
+    accepted 2026-10-11.** The KV260's physical PS HPM0 width selectors
+    were measured at 128 bits while the original FPD/LPD PL designs
+    expected 32 bits. The corrected FPD 128-bit AXI4 master plus
+    1x1 SmartConnect 128-to-32-bit AXI4-Lite bridge preserves the
+    `0xA4000000` MMIO ABI and existing HP0/DDR paging path.
+    The independent A53 read-only diagnostic passed all four registers.
+    Subsequently the independent **full A53 page/resident/dispatch
+    smoke passed**: strict 64-byte mailbox verifier reported
+    `id=0x4C543302`, `capabilities=0x0001031F`,
+    `page_bytes=438272`, `config0=0x14001000`,
+    `dispatches=1`, with full verifier exit `0`. The full
+    verifier additionally checked VERSION, page burst counts, sticky
+    done/errors, resident read-valid, dispatch/global errors and
+    completion. Physical evidence directory:
+    `/tmp/v3_p03_2c_fullsmoke_20261012T020320Z` (user PC).
+    **Accepted experimental-shell decision:** retain diagnostic ILAs
+    and temporary otherwise-unmapped signature during P03.3; track
+    their removal and a final release route as a separate cleanup
+    gate, not as a blocking functional requirement. See
+    `docs/P03_2C_ACCEPTANCE.md` and
     `docs/P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md`.
-- **P03.3 — Standalone Cortex-A53 runtime.** **Planned.** Implement the P03.1
-  state machine, deterministic scheduling/replacement, packet routing,
-  cache-maintenance ownership, timer/counter collection, result records, and a
-  linker/memory layout that reserves the fixed P02 64 MiB backing window.
+- **P03.3 — Standalone Cortex-A53 runtime.** **In progress.** Implement
+  P03.1's board-local state machine, deterministic scheduling/replacement,
+  packet routing, cache-maintenance ownership, timer/counter collection,
+  fail-closed result records, and the fixed P02 64 MiB DDR reservation.
+  - **P03.3a — Portable C runtime policy engine.** **Implementation
+    complete; independent native-compiler regression pending.**
+    Introduce `software/p03/include/p03_runtime.h`,
+    `software/p03/p03_runtime.c` and a host-native hardware-mock test
+    harness. Test compiled logical-core service order, initial resident
+    selection, dirty-victim writeback before page-in, round-robin
+    eviction, exact packet-drain accounting, no-premature-barrier
+    event-bank swaps, sticky first-error, and 35 dispatches / seven
+    barriers for a five-over-three plan. This does **not** prove
+    packet encoding, actual MMIO control or inference equivalence.
+  - **P03.3b — Physical MMIO/DDR/packet adapter.** **Planned.**
+    Implement P02 cache ownership, A53 device-register I/O,
+    low-rate resident-memory event/packet transfers, event counts,
+    and page/dispatch command completion using the accepted FPD128
+    hardware; then rebuild standalone A53 runtime ELF and validate
+    on K26.
+  - **P03.3c — Autonomous launch/results and failure coverage.**
+    **Planned.** Connect deployment/input, timer/result schema,
+    cache-safe DDR layout and board-local start-to-DONE/ERROR
+    execution; validate no PC algorithmic control.
+  P03.4 and P03.5 remain independent physical model-equivalence gates.
 - **P03.4 — Board-local five-over-three bring-up.** **Planned.** Execute the
   accepted seven-timestep / 35-dispatch five-over-three workload after one start
   action with the PC absent from the algorithmic loop.
