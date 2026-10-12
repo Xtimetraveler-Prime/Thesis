@@ -253,3 +253,50 @@ preserves those event payloads. It does **not** yet prove:
 Keep P03.3b3 open until the independent native tests, Vitis build,
 physical mailbox verification and review have passed. Do **not** merge
 the branch without user authorization.
+
+
+## 7. Pre-Vitis regression repair (2026-10-11)
+
+The first independently executed P03.3b3 pytest run reported **two fixture/
+test-infrastructure failures**, with no Vitis build or KV260 execution yet:
+
+1. `scripts/p03_3b3_packet_fixture.py` generated a **64-byte** zero
+   mailbox inherited from P03.3b2. P03.3b3's 32-word evidence schema
+   requires **128 bytes**; the P03.3b3 fixture now generates exactly
+   `bytes(128)`. The XSDB prepare/readback script and independent
+   mailbox verifier already expected 128 bytes.
+2. The host-native synthetic `xil_io.h`/`xil_cache.h` files in
+   `tests/test_p03_3b3_physical_probe.py` contained literal
+   backslash-n text within preprocessor directives because the Python
+   fixture was double-escaping `\\n`. The fixture now emits actual
+   header newlines via normal Python `\n` escapes and asserts the
+   generated headers contain valid guard lines and no literal
+   backslash-n sequence. The dozens of missing Xilinx C-type/function
+   errors in the log were caused by those malformed test stubs.
+
+No accepted P03.3b2 fixture, generated artifacts, hardware RTL, XSA,
+bitstream, MMIO ABI or production P03.3b3 packet-path semantics
+were changed by these two corrections.
+
+**Verification:** the corrected stub-header contents were reproduced
+and successfully compiled in a local strict `gcc -std=c11 -Wall
+-Wextra -Werror -pedantic -fsyntax-only` syntax check. This isolated
+header check is not the full repository regression. **The user must
+rerun the focused tests and obtain PASS before attempting the Vitis
+build or programming the KV260.**
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python -m pytest -q \
+    tests/test_p03_3b3_physical_probe.py \
+    tests/test_p03_3b2_physical_probe.py \
+    tests/test_p03_3b_hw_adapter.py \
+    tests/test_p03_3a_native_runtime.py
+```
+
+Do not classify a fixture/shim issue as a failed physical HLS packet or
+FPGA page-out test. Physical acceptance remains pending.
