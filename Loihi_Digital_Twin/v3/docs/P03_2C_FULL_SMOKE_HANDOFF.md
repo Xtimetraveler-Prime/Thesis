@@ -1,5 +1,13 @@
 # P03.2c handoff — close the full A53 page/resident/dispatch smoke
 
+> **Completed/accepted 2026-10-11:** The user independently ran the full
+> FPD128 A53 smoke and the strict mailbox verifier passed (438272 bytes,
+> resident `config[0]=0x14001000`, one completed HLS dispatch, all
+> error/status checks clean). This handoff remains as reproducible
+> test instructions and archival pre-acceptance planning. See
+> [P03_2C_ACCEPTANCE.md](P03_2C_ACCEPTANCE.md). P03.3 is now active.
+
+
 **Prepared:** 2026-10-11  
 **Hardware gate:** not yet independently run  
 **Prerequisite physically passed:** standalone four-register read-only A53
