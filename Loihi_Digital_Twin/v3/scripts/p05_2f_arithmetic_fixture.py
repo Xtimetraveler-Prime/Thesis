@@ -14,7 +14,7 @@ from pathlib import Path
 import struct
 import zlib
 
-from p05_2_composite_fixture import load, vectors, scheduler_prediction
+from p05_2_composite_fixture import load
 
 ROOT=Path(__file__).resolve().parents[1]
 TRI=ROOT/"scripts/p05_1_triangle_fixture.py"
@@ -78,6 +78,14 @@ def read_vectors(directory:Path,block:str):
     parser.CORES=CORES
     parser.TIMESTEPS=STEPS
     return parser.vectors(directory,block)
+
+def scheduler_prediction(packets):
+    replay=load("p05_2f_p03_victim_replay",ROOT/"scripts/p05_2_composite_fixture.py")
+    replay.CORES=CORES
+    replay.ORDER=ORDER
+    replay.TIMESTEPS=STEPS
+    replay.SLOTS=SLOTS
+    return replay.scheduler_prediction(packets)
 
 def make(out:Path):
     if out.exists():
