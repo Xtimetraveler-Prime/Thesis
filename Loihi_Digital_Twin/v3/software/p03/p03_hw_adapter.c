@@ -130,6 +130,14 @@ int p03_hw_register_core(p03_hw_adapter *hw, uint8_t id, uint64_t metadata,
     return P03_HW_OK;
 }
 
+int p03_hw_register_axon(p03_hw_adapter *hw, uint8_t id, uint16_t axon)
+{
+    if (!ready(hw) || !valid_id(hw, id) || axon >= 4096u)
+        return reject(hw, P03_HW_BAD_ARGUMENT);
+    hw->valid_axons[id][axon >> 3] |= (uint8_t)(1u << (axon & 7u));
+    return P03_HW_OK;
+}
+
 int p03_hw_identify(p03_hw_adapter *hw)
 {
     uint32_t id, version, caps;
@@ -324,6 +332,8 @@ int p03_hw_route_word(p03_hw_adapter *hw, uint8_t source_id,
         !(packet & (UINT64_C(1) << 61)) ||
         (packet >> 62) != 0 || target_step != timestep + 1u ||
         !valid_id(hw, dest) ||
+        (hw->valid_axons[dest][axon >> 3] &
+         (uint8_t)(1u << (axon & 7u))) == 0 ||
         source_comp >= ((hw->metadata[source_id] >> 7) & UINT64_C(0x7FF)))
         return reject(hw, P03_HW_PACKET_INVALID);
     count = hw->event_counts[dest][next_bank];
