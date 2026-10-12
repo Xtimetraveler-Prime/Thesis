@@ -195,7 +195,7 @@ def test_failed_p03_4_finalization_decodes_reason_and_inspects_golden_ddr(tmp_pa
     words[8] = 17
     words[9] = 19
     words[21] = 0x00800023
-    words[61] = 1 << 12   # final_flush_count check
+    words[61] = 0xDA600000 | (1 << 12)   # tagged final_flush_count check
     words[62] = 0x00800023
     output = check(tmp_path, golden, struct.pack("<64I", *words))
     assert output.returncode != 0
@@ -284,8 +284,11 @@ def test_vitis_and_board_single_launch_guards():
     assert "p03_hw_page(adapter" in c
     assert "p03_hw_quiescent(adapter)" in c
     assert "final_bad(12,flush_outs)" in c
+    assert "static volatile uint32_t flush_outs;" in c
+    assert "flush_outs = 0u;" in c
+    assert "FINAL_DIAG_MAGIC UINT32_C(0xDA600000)" in c
     assert "final_bad(14,readbacks[0])" in c
-    assert "result[M_LAST_PACKET_LO] = final_diag_mask;" in c
+    assert "result[M_LAST_PACKET_LO] = FINAL_DIAG_MAGIC | final_diag_mask;" in c
     assert "result[M_LAST_PACKET_HI] = final_diag_first_actual;" in c
     assert "if(runtime.phase!=P03_RT_DONE" in c
     assert c.count("result[M_RESULT]=RUN_PASS;")==1
