@@ -228,6 +228,16 @@ failing fields and the initial runtime fault/phase where available.
 
 ## 6. Acceptance boundary
 
+**This is the P03.3b3 first directed physical gate (nonresident routing
+and dirty-page survival).** The resident destination **packet-delivery
+branch** (`p03_hw_route_word` writing directly via MMIO while the
+destination is already resident) is covered by the native mock but is
+**not independently exercised by this particular physical 1-slot
+scenario**. A separate resident-destination board test is still
+required before accepting P03.3b as a *whole*. We deliberately do not
+count normal resident event *consumption* as evidence of that distinct
+direct resident *routing* path.
+
 A **physical PASS** would establish that two actual HLS core evaluations
 emit the expected packets, that the runtime routes them to
 nonresident DDR-backed NEXT event banks, and that page replacement
