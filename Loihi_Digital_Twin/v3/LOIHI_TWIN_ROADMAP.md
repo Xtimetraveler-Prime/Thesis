@@ -685,9 +685,18 @@ redesigning the inference engine.
 
 ## P05.1 — Configurable PS regression runner and test infrastructure
 
-**Status:** In progress. **First checkpoint:** versioned, fail-closed
-deployment/test-vector ABI and host-native validation, before any A53
-build or physical run.
+**Status:** In progress. **P05.1 contract checkpoint implemented
+on branch; awaiting independent host pytest/C11 verification.**
+Versioned, fail-closed deployment/test-vector ABI exists before
+any new A53 build or physical run. The new
+`scripts/p05_deployment.py`, portable
+`software/p05/{include/p05_deployment.h,p05_deployment.c}`, and
+`tests/test_p05_1_deployment.py` implement/reject bounded
+core descriptors, sorted ingress vectors, checkpoint requests,
+metadata/bank/CRC guards, and conversion of accepted P03
+fixture inputs. Reference and verification commands:
+`docs/P05_1_DEPLOYMENT_CONTRACT.md`. **This is host-only
+implementation, not a P05.1 physical PASS.**
 
 ### Deliverables
 
