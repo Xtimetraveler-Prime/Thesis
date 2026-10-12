@@ -37,7 +37,7 @@ def isolated_golden_env(tmp_path: Path) -> dict[str, str]:
     fake = tmp_path / "shadow_python_package" / "loihi_twin_v2"
     fake.mkdir(parents=True, exist_ok=True)
     (fake / "__init__.py").write_text(
-        'raise RuntimeError("wrong environment package imported")\\n',
+        'raise RuntimeError("wrong environment package imported")\n',
         encoding="utf-8",
     )
     env = os.environ.copy()
