@@ -22,6 +22,14 @@
 #define B3_FAIL UINT32_C(0xDEAD0000)
 #define B3_POLL UINT32_C(100000000)
 
+/* Deliberately referenced volatile ELF build stamp. The board runner MUST
+ * verify this exact string in the deployed ELF, not just in source. This
+ * distinguishes the updated HDR3 preflight firmware from older builds.
+ * The volatile load prevents compiler constant-folding/link-time removal.
+ */
+static const volatile char b3_probe_build_stamp[] =
+    "P03_3B3_HDR3_CAPTURE_V2";
+
 enum {
     B3_ERR_WIDTH = 1, B3_ERR_HEADER = 2, B3_ERR_INIT = 3,
     B3_ERR_REGISTER = 4, B3_ERR_BIND = 5, B3_ERR_PACKET = 6,
@@ -306,6 +314,10 @@ int main(void)
     mailbox[M_VERSION] = B3_VERSION;
     mailbox[M_PS_WIDTH] = raw;
     flush_mailbox();
+    if (b3_probe_build_stamp[0] != 'P') {
+        publish_failure(B3_ERR_INIT);
+        halt_forever();
+    }
     if (p03_hw_xilinx_fpd128_ready() != 0) {
         publish_failure(B3_ERR_WIDTH); halt_forever();
     }
