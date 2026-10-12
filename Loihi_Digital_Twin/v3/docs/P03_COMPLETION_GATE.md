@@ -2,8 +2,11 @@
 
 **Implementation branch:** `agent/v3-p03-autonomous-runtime`  
 **P03.3b3 physical status:** ACCEPTED from independent user KV260 evidence, 2026-10-11.  
-**Combined remaining implementation:** Prepared; **native/Vitis/board verification pending**.  
-**Do not merge into main** until independently verified and explicitly approved.
+**Combined P03.3c/P03.4/P03.5 status:** **COMPLETE — accepted by independent KV260 results on 2026-10-12.**  
+**Merge authorization:** explicitly granted by user at P03 phase closeout.  
+**Detailed app and final evidence:** `docs/P03_PS_AUTONOMOUS_APPLICATION.md` and `docs/P03_FINAL_ACCEPTANCE.md`.
+
+> **Document history:** Sections 4–9 below preserve the original development handoff and failed-run investigation chronologically. Instructions there to withhold acceptance were written **before** the successful V2 physical gates and are superseded by the final closeout in section 10.
 
 ## 1. Accepted prerequisite: actual packet routing and dirty page survival
 
@@ -311,3 +314,62 @@ artifact gates now require retained
 **P03.4 and P03.5 are NOT accepted; full native regression, new Vitis
 build and new seven-step physical test are required. Do not start
 the hundred-step test or merge to main yet.**
+
+
+## 10. Final closeout — 7/100-step physical PASS (2026-10-12)
+
+**P03.4 accepted** after the corrected V2 terminal run produced
+35 dispatches, 30 HLS packets, 7 barriers, 35 total page-ins,
+35 total page-outs, and **all five final 512 KiB DDR context
+records byte-exact to the frozen Python P02/v2 physical oracle**.
+See `docs/P03_4_ACCEPTANCE.md`.
+
+**P03.5 independently accepted** from the user's subsequent
+100-timestep V2 A53 physical run:
+
+```text
+P03 board-local terminal result=0x600D600D after 5 poll(s)
+PASS: ... timesteps=100 dispatches=500 packets=495 resident_deliveries=0
+        barriers=100 page_ins=500 page_outs=500
+PASS: P03 all five final 512KiB DDR records byte-exact to frozen Python P02 oracle
+P03_FINISH_VERIFY_EXIT=0
+PASS: P03 100-step independent board-autonomous physical golden gate
+```
+
+Evidence folder on the user's host:
+`/tmp/v3_p03_finish_100_20261012T145336Z`. The 100-step
+reference trace fingerprint is
+`b10387cb7930e6e4452548ff4d025c8dffe52e9eeebde2d5b43ed9c5475cfcac`
+and the launch-manifest fingerprint is
+`30076c118d312e57674f716e50fe3d080e7a057ed55ba1f2ae58a9a7dba51c4b`.
+The original stdout omitted a separator between
+`packets=495` and `resident_deliveries=0`; it did not
+affect strict mailbox or final-DDR verification.
+
+The PS app, callback bindings, cache/DDR and mailbox ABI,
+exact hardware/software startup procedure, and documented
+solutions/workarounds for HPM0 width, MMU target, inverted
+zero-is-success check, Python imports, negative test mutation,
+premature terminal success, and P03.4 final-flush anomaly are
+maintained in `docs/P03_PS_AUTONOMOUS_APPLICATION.md`.
+
+**Decision:** Original P03 functional acceptance goal fulfilled:
+algorithmic scheduling, virtualized context replacement,
+real HLS inference, packet routing, barrier/step ownership
+are all on the KV260 PS; the PC only provisions, starts once,
+passively observes completion and acquires final evidence.
+`resident_deliveries=0` is an explicit physical coverage
+gap (native direct-to-resident adapter tests only), not a
+contradiction of the defined P03 acceptance run.
+
+The developer's native full pytest and Vitis build were
+reported passing by the user prior to board verification;
+the assistant did not execute the hardware. The older
+failed runs in preceding sections are retained as historical
+lessons rather than current blockers.
+
+P03 functional phase is **COMPLETE** and authorized for
+merge into `main`. Future P05 hardening can target the
+direct-to-resident route and the optional diagnostic ILA/VIO
+release-shell cleanup; P07/P08/P09 own their respective
+application/measurement/comparison claims.
