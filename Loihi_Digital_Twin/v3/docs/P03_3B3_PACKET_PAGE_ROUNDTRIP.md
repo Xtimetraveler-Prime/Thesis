@@ -217,7 +217,7 @@ Expected marker **only if real board verification passes**:
 ```text
 PASS: P03.3b3 physical packet/page roundtrip ps_width=128 ... page_ins=3 page_outs=3 dispatches=4 barriers=2 routed_packets=2
 P03_3B3_VERIFY_EXIT=0
-PASS: P03.3b3 physical Cortex-A53 two-timestep runtime-adapter probe
+PASS: P03.3b3 physical Cortex-A53 two-core HLS packet/DDR/dirty-page roundtrip
 ```
 
 On failure, preserve the evidence directory:
