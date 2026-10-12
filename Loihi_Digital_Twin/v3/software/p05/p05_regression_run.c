@@ -384,7 +384,7 @@ static int checkpoint_crc(uint32_t id,uint32_t cls,uint32_t *crc)
     if(!crc)return -1;
     switch(cls) {
         case P05_OBS_STATE0:
-            offset=0x5000u;bank=5u;size=8u;break;
+            offset=0x5000u;bank=1u;size=8u;break;
         case P05_OBS_EVENT0:
             offset=P03_HW_EVENT0_OFFSET;
             bank=P03_HW_EVENT0_DEBUG_BANK;size=4u;break;
