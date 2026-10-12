@@ -34,6 +34,14 @@ assert gate["expected_packets"]==12
 assert gate["expected_replacement_page_ins"]==0
 assert gate["expected_final_page_outs"]==3
 assert gate["expected_checkpoints"]==0
+assert info["input_spec_sha256"]==hashlib.sha256((root/"p05_2_fast_spec.json").read_bytes()).hexdigest()
+old=(root/"p05_diag_reference_header.bin").read_bytes()
+old_payload=(root/"p05_diag_reference_payload.bin").read_bytes()
+dw=struct.unpack("<64I",old)
+assert (dw[3],dw[13],dw[14])==(1,15,15)
+assert payload==old_payload[:dw[18]]
+assert gate["frozen_diagnostic_reference_header_sha256"]==hashlib.sha256(old).hexdigest()
+assert gate["frozen_diagnostic_reference_payload_sha256"]==hashlib.sha256(old_payload).hexdigest()
 for cid in range(3):
     image=(a/f"core{cid}_initial.bin").read_bytes()
     assert len(image)==0x80000
@@ -46,7 +54,9 @@ PY
       echo "status=host-only; NO physical FPGA acceptance"
       echo "branch=agent/v3-p05-board-regression"
       echo "profile=p05-2-fast-no-checkpoints-triangle-v1"
-      for name in p05_2_fast_gate.json triangle_golden/manifest.json \
+      for name in p05_2_fast_gate.json p05_2_fast_spec.json \
+          p05_diag_reference_header.bin p05_diag_reference_payload.bin \
+          triangle_golden/manifest.json \
           p05_artifacts/p05_header.bin p05_artifacts/p05_payload.bin \
           p05_artifacts/p05_manifest.json; do
           sha256sum "$OUT/$name"
