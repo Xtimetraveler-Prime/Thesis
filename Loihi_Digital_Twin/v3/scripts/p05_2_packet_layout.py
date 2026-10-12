@@ -65,8 +65,14 @@ def derive(directory:Path)->dict:
     if len(manifest["expected_final_record_sha256"])!=len(model.CORES):
         raise ValueError("original model complete DDR SHA mapping is incomplete")
 
-    configs=model.model().make_workload()
+    oracle=model.model()
+    configs=oracle.make_workload()
     config_map={c.core_id:c for c in configs}
+    # Cross-check the physical order against the actual compiled
+    # 32-bit route RAM words, not only the high-level route tuple.
+    packed=oracle.export_paged_hardware_image(
+        configs,resident_context_count=model.SLOTS
+    ).backing_by_logical_core
     if set(config_map)!=set(model.CORES):
         raise ValueError("model neural configuration IDs differ")
     logical_words=model.vectors(logical,"P02B_EXPECT_PACKETS")
@@ -88,6 +94,11 @@ def derive(directory:Path)->dict:
             raise ValueError(f"core {cid} is not two-destination fanout")
         if ids!=((cid+1)%5,(cid+2)%5):
             raise ValueError(f"composite output route sequence changed core {cid}")
+        route_words=packed[cid].image.route_words
+        if (tuple(word&0x7F for word in route_words)!=ids or
+            any(((word>>7)&0xFFF)!=10+(word&0x7F)
+                for word in route_words)):
+            raise ValueError(f"core {cid} 32-bit hardware route RAM order differs")
         routes[cid]=ids
 
     final_normal={}
