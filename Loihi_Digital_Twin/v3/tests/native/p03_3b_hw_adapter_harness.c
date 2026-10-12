@@ -147,6 +147,10 @@ static void test_page_debug_dispatch(void)
     assert(m.last_page_config ==
           (1u << 8 | P03_PAGE_CONFIG_PAGE_OUT | P03_PAGE_CONFIG_MUTABLE_ONLY));
     assert(m.invalidates == 2);
+    /* This cookie-backed callback must be exercised, not bypassed.
+     * Multiple page/debug/dispatch MMIO command fences are expected.
+     */
+    assert(m.fences >= 6);
     puts("PASS: P03.3b native MMIO page/debug/dispatch nonzero core and mutable save");
 }
 static void test_packet_routing(void)
