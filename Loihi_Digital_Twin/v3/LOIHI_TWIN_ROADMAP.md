@@ -477,9 +477,24 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     oracle. The PS runtime uses a different packet-delivery/paging
     policy than PC-controlled P02, so its *paging counts* may differ
     without changing logical results.
-    **Neither physical gate is accepted yet.** See
-    `docs/P03_COMPLETION_GATE.md`. Do not merge or call P03
-    complete before independent two-run verification.
+    **P03.4 physical attempt 1 FAILED on 2026-10-11 at the
+    `WRITE_RESULT` callback (fault=12, phase=17, result=0xDEAD000B).**
+    The mailbox confirmed 35 dispatches, seven barriers and all 30
+    expected packets, but reported an impossible final flush count
+    `0x800023` instead of 3. The five complete DDR records were
+    dumped successfully but the original verifier aborted before
+    comparing them against the Python oracle. A V2 corrective
+    candidate explicitly initializes application-owned counters,
+    preserves every acceptance predicate while encoding the exact
+    failed check in a tagged error-only mailbox overlay, and runs
+    byte-exact final-DDR comparison even on a failed mailbox. The
+    build/physical runner require a V2 ELF marker, not the older V1
+    binary. The exact root of the counter anomaly remains
+    **unconfirmed** until fresh physical evidence. See
+    `docs/P03_4_PHYSICAL_ATTEMPT1.md`.
+    **Neither P03.4 nor P03.5 is physically accepted.** Do not start
+    P03.5 until P03.4 passes. Do not merge or call P03 complete
+    before independent two-run verification.
 
 ## Deliverables
 
