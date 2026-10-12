@@ -1,9 +1,16 @@
 # P05.1 — First physical A53 regression probe (35 checkpoints)
 
-**Status:** Scripts and verifier committed to `agent/v3-p05-board-regression`;
-**new physical verification pending**. The user independently confirmed
-a successful new P05 Vitis executable build, but no P05 KV260 run has yet
-been reported. P03 remains accepted and unchanged.
+**Status:** **First physical P05.1 probe independently ACCEPTED
+2026-10-12**, from the user's own KV260 terminal and strict final
+`verify.log`: 7 steps/35 dispatches/30 packets/7 barriers,
+**35/35 model-derived physical intermediate state checkpoints**,
+five byte-exact final DDR images, `P05_1_VERIFY_EXIT=0`.
+Evidence: `/tmp/v3_p05_1_probe_20261012T173751Z`.
+Acceptance ledger: `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`.
+The second independent **three-core resident triangle** network,
+which checks `resident_deliveries=12`, is now prepared;
+procedure: `docs/P05_1_TRIANGLE_PHYSICAL_GATE.md`.
+P03 remains accepted and unchanged; P05.1 overall is not complete yet.
 
 ## Why this first workload is deliberately not a new network
 
