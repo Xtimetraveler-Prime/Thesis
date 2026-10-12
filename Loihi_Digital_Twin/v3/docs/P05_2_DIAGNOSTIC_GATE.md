@@ -1,11 +1,22 @@
 # P05.2a — Directed first-mismatch hardware diagnostics and coverage plan
 
-**Status:** Software implementation staged on
-`agent/v3-p05-board-regression`. **No P05.2 physical evidence yet.**
-P05.1 has been accepted from TWO independent board-local neural runs;
-see `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md` and
-`docs/P05_1_TRIANGLE_ACCEPTANCE.md`. The current `main` and
-the accepted P03 source/bitstream are not modified.
+**Status:** **P05.2a first-mismatch gate ACCEPTED on KV260**
+2026-10-12. User-supplied physical A53 terminal
+`0xDEAD000A` and independent strict verifier
+`P05_2_FAULT_VERIFY_EXIT=0` confirmed first mismatch
+timestep 2/core 1/state0 with seven earlier passing
+checkpoints. Evidence:
+`/tmp/v3_p05_2_fault_20261012T181015Z`.
+Acceptance ledger:
+`docs/P05_2A_FIRST_MISMATCH_ACCEPTANCE.md`.
+P05.1's two physically accepted neural workloads remain in
+`docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md` and
+`docs/P05_1_TRIANGLE_ACCEPTANCE.md`.
+The rest of this file preserves original pre-acceptance
+instructions/expected markers as historical steps.
+**Next P05.2b fast/no-checkpoint hardware equivalence:**
+`docs/P05_2_FAST_EQUIVALENCE_GATE.md`.
+No merge to `main`, accepted P03 implementation unchanged.
 
 ## Purpose of first P05.2 development slice
 
