@@ -685,18 +685,33 @@ redesigning the inference engine.
 
 ## P05.1 — Configurable PS regression runner and test infrastructure
 
-**Status:** In progress. **P05.1 contract checkpoint implemented
-on branch; awaiting independent host pytest/C11 verification.**
-Versioned, fail-closed deployment/test-vector ABI exists before
-any new A53 build or physical run. The new
+**Status:** In progress. **P05.1 host deployment contract accepted
+after user independently reported all regressions passing and
+inspected the real P03-derived 7-step manifest (35 inputs,
+35 dispatches, five core CRC identities).** A distinct P05.1
+Cortex-A53 source and isolated Vitis build flow are now prepared
+and await independent **native C11 tests and first Vitis build**.
+Nothing has been physically run under P05. The new
 `scripts/p05_deployment.py`, portable
 `software/p05/{include/p05_deployment.h,p05_deployment.c}`, and
 `tests/test_p05_1_deployment.py` implement/reject bounded
 core descriptors, sorted ingress vectors, checkpoint requests,
 metadata/bank/CRC guards, and conversion of accepted P03
 fixture inputs. Reference and verification commands:
-`docs/P05_1_DEPLOYMENT_CONTRACT.md`. **This is host-only
-implementation, not a P05.1 physical PASS.**
+`docs/P05_1_DEPLOYMENT_CONTRACT.md`. **The first
+host-only checkpoint PASSED independently; this is not P05.1
+physical acceptance.** The next source/build checkpoint implements
+`software/p05/p05_regression_run.c`, reuses the unchanged
+P03 scheduler/adapter and accepts per-core/timestep external
+events plus optional independent model-derived post-barrier
+state/checkpoint CRCs. It builds a separate
+`p05_regression_run.elf` via
+`software/p05/build_p05_regression.py` and
+`scripts/build_p05_regression.sh`. New host C11 source
+guard: `tests/test_p05_1_runtime_source.py`.
+Instructions: `docs/P05_1_A53_REGRESSION_RUNNER.md`.
+**All new PS runtime code and the Vitis build are still
+pending independent tests; no board/RTL acceptance yet.**
 
 ### Deliverables
 
