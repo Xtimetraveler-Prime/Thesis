@@ -81,3 +81,12 @@ def test_p03_3b_hw_contract_preserves_physical_mapping_and_fail_closed_delivery(
     assert "Xil_In32(" in xilinx and "Xil_Out32(" in xilinx
     assert "Xil_DCacheFlushRange" in xilinx
     assert "Xil_DCacheInvalidateRange" in xilinx
+
+
+def test_p03_3b_barrier_callback_receives_opaque_io_context():
+    """Prevent omitted cookie args from silently reappearing between native runs."""
+    header = (HEADERS / "p03_hw_adapter.h").read_text(encoding="utf-8")
+    source = (SRC / "p03_hw_adapter.c").read_text(encoding="utf-8")
+    assert "void (*barrier)(void *cookie);" in header
+    assert "hw->io.barrier();" not in source
+    assert source.count("hw->io.barrier(hw->cookie);") == 6
