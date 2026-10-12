@@ -780,7 +780,16 @@ fanout all **physically accepted** on KV260.
 P05.2e composite five-over-three fanout + heterogeneous
 normal-range arithmetic + dirty paging + reordered service
 has software fixtures/physical runner implemented;
-independent new native and KV260 verification pending.
+**physical first run completed A53 successfully but full-DDR
+comparison FAILED at core3 packet RAM offset 0x64000
+(actual byte 0x04, normalized logical golden 0x00)**.
+Source-level root cause traced to physical FPGA output-route
+order [4,0] versus normalized sorted Loihi packet trace
+order [0,4]. A surgical **separate physical packet-RAM
+oracle** is implemented without changing the original
+neural model or accepted FPGA/A53. Existing physical
+evidence recheck pending; see
+`docs/P05_2E_PACKET_ORDER_INCIDENT.md`.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -954,9 +963,22 @@ source changed.
 `vivado/p05_2_composite_prepare.tcl`,
 `tests/test_p05_2_composite.py`,
 `docs/P05_2_COMPOSITE_GATE.md`.
-**No independently observed P05.2e native or physical
-PASS yet.** Requires user's native and board logs before
-closing the combined coverage.
+**P05.2e original physical terminal was SUCCESS
+(`0x600D600D`), but `P05_2_COMPOSITE_VERIFY_EXIT=1`
+on packet bank core3 `0x64000`.**
+No physical acceptance yet.
+The standalone source-informed packet-order golden fix
+(`scripts/p05_2_packet_layout.py`) explicitly preserves
+all neural/state/event/trace bytes and the original
+independent normalized Python oracle. A non-destructive
+existing-evidence recheck
+(`scripts/recheck_p05_2_composite_evidence.py`)
+must verify all five complete original physical DDR
+dumps before closing this gate. The corrected
+`tests/test_p05_2_composite.py` includes a regression
+for the exact previously missed core3 0x04-vs-0x00
+packet-word ordering failure. **Native and repaired
+full-DDR physical-evidence recheck remain PENDING**.
 
 **Remaining P05.2 work:** true signed/saturation
 arithmetic and decay boundary vectors, near-capacity
