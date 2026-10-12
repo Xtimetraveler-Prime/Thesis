@@ -1,10 +1,13 @@
 # P05.1 — New A53 regression application (implementation checkpoint)
 
 **Branch:** `agent/v3-p05-board-regression`  
-**Status:** P05.1 A53 source/build flow **implemented but pending independent
-native C11 and Vitis verification**. No P05 Cortex-A53 ELF or FPGA physical
-PASS has been observed yet. The accepted P03 golden executable and RTL
-remain unmodified; `main` remains untouched.
+**Status:** New standalone P05.1 A53 Vitis ELF build independently
+reported **successful** by the user (2026-10-12). P05 physical KV260
+execution is **not yet accepted**; new provisioning/verification scripts
+are ready for independent host rehearsal and first physical run.
+See `docs/P05_1_PHYSICAL_PROBE.md`.
+The accepted P03 golden executable and RTL remain unmodified;
+`main` remains untouched.
 
 ## What changed since the binary deployment contract checkpoint
 
@@ -160,10 +163,22 @@ new P05-specific ELF builds with a retained marker and no reserved
 DDR load segment. This is NOT a board PASS. Source and Vitis
 build must be independently verified on the user's machine.
 
-**Next** (after these PASS): create/verify P05 physical
-provision/run/dump scripts for the 7-step checkpoint-enabled
-ring replay, compare the P05R mailbox **and five final full
-DDR records** to the untouched P02 golden, and then exercise a
-second genuinely distinct valid profile. Do not start the
-board before the physical scripts and independent offline/Vitis
-gate have been accepted.
+**Now implemented:** `scripts/run_p05_1_probe.sh` has a
+**host-only `prepare`** and a separately opt-in destructive
+**`physical`** mode. `vivado/p05_1_xsdb_prepare.tcl`
+provisions/readbacks the P05G ABI from the PSU physical target,
+and `scripts/p05_1_verify.py` checks the new P05R mailbox
+plus **every byte of all five DDR records** against the frozen
+P02 model. It independently rechecks all 35 model-derived
+checkpoint values and 35 external ingress rows, even if
+the supplied manifest's CRC/SHA fields have been recomputed
+to cover an incorrect workload.
+
+First independently run the new host synthetic verifier tests:
+`python -m pytest -q tests/test_p05_1_physical_probe.py`.
+Then follow the preparation/physical board commands in
+`docs/P05_1_PHYSICAL_PROBE.md`. The Vitis ELF was already
+reported successful; reuse that **exact** build if its staged
+source and XSA still match. No P05 hardware PASS is claimed.
+A second genuinely distinct network is still needed for
+P05.1 closure.
