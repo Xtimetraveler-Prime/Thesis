@@ -226,14 +226,14 @@ def test_b3_startup_uses_zero_is_success_contract_and_elf_attestation():
     # before any XSDB provisioning or board programming is attempted.
     for value in (
         'P03_3B3_SELECTED_BUILD_DIR=$BUILD_DIR',
-        'strings -a "$ELF"',
+        'grep -aFq "$EXPECTED_STAMP" "$ELF"',
         'cmp -s "$STAGED_SOURCE" "$CURRENT_SOURCE"',
         'PASS: P03.3b3 selected A53 ELF contains current HDR3 firmware marker',
     ):
         assert value in run
-    assert run.index('strings -a "$ELF"') < run.index('xsdb vivado/p03_3b3_xsdb_prepare.tcl')
+    assert run.index('grep -aFq "$EXPECTED_STAMP" "$ELF"') < run.index('xsdb vivado/p03_3b3_xsdb_prepare.tcl')
     assert "P03_3B3_HDR3_CAPTURE_V2" in build
-    assert 'strings -a "$ELF"' in build
+    assert 'grep -aFq \'P03_3B3_HDR3_CAPTURE_V2\' "$ELF"' in build
 
 
 def test_b3_a53_c_sources_pass_host_syntax_with_xilinx_bsp_shim(tmp_path: Path):
