@@ -128,8 +128,11 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
                 "hw_page_operation_count", "hw_page_bytes",
                 "global_status", "page_pending_bytes", "quiescent",
             )
-            mask=fields[61]
-            if mask and not (mask & ~((1 << len(diag_names))-1)):
+            # The V2 firmware tags its error-only overlay. Untagged
+            # V1 fields[61:62] held the last raw packet, NOT diagnostics.
+            tagged=fields[61]
+            mask=tagged & ((1 << len(diag_names))-1)
+            if (tagged & 0xFFF80000) == 0xDA600000 and mask:
                 matches=[name for bit,name in enumerate(diag_names)
                          if mask & (1 << bit)]
                 print(
