@@ -187,7 +187,7 @@ def test_b3_a53_c_sources_pass_host_syntax_with_xilinx_bsp_shim(tmp_path: Path):
         shim_contents = shim.read_text(encoding="utf-8")
         assert shim_contents.splitlines()[0].startswith("#ifndef ")
         assert shim_contents.splitlines()[1].startswith("#define ")
-        assert "\\\\n" not in shim_contents
+        assert "\\n" not in shim_contents
     sources = (
         PROBE,
         ROOT / "software/p03/p03_runtime.c",
