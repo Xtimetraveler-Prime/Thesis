@@ -297,3 +297,28 @@ def test_4097_external_events_rejected_before_artifact_write(tmp_path):
     with pytest.raises(ValueError, match="event overflow"):
         mod.build(spec_path, tmp_path / "overflow")
     assert not (tmp_path / "overflow" / "p05_payload.bin").exists()
+
+
+def test_p03_golden_per_step_checkpoint_crc_roundtrip(tmp_path, c_validate):
+    p03 = tmp_path / "frozen"
+    proc = subprocess.run([
+        sys.executable, str(P03), "--output-dir", str(p03),
+        "--timesteps", "7",
+    ], capture_output=True, text=True, timeout=90)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    spec = tmp_path / "model_checkpoints.json"
+    mod.from_p03_fixture(p03, spec, state_checkpoints=True)
+    profile = json.loads(spec.read_text())
+    assert len(profile["checkpoints"]) == 35
+    assert profile["checkpoints"][0]["state_class"] == "state0"
+    manifest, header, payload = deployment(spec)
+    ret, parsed = c_validate(header, payload)
+    assert ret == 0
+    assert parsed.checkpoint_count == 35
+    assert manifest["checkpoints"] == 35
+    assert manifest["events"] == 35
+    assert manifest["dispatches"] == 35
+    table_off = struct.unpack_from("<I", header, 18*4)[0]
+    first = struct.unpack_from("<4I", payload, table_off)
+    assert first[:3] == (0, 0, mod.CLASSES["state0"])
+    assert first[3] == int(profile["checkpoints"][0]["expected_crc32"], 16)
