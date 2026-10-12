@@ -22,6 +22,44 @@ MANIFEST_WORDS = 64
 MAILBOX_BYTES = 256
 
 
+def expected_residency(timesteps: int) -> dict[str, int]:
+    """Exact P03.3a initial-three + RR victim policy, not P02 host pager.
+
+    P02 chose additional paging for routed destination delivery, whereas
+    P03.3b sends nonresident traffic directly to DDR. Its logical golden
+    remains identical; page/eviction counts may legitimately differ.
+    """
+    resident = [0, 1, 2]
+    dirty = [False] * 3
+    next_slot = 0
+    page_ins = page_outs = evictions = hits = 0
+    for _ in range(timesteps):
+        for core in range(5):
+            if core in resident:
+                slot = resident.index(core)
+                hits += 1
+            else:
+                slot = next_slot
+                next_slot = (next_slot + 1) % 3
+                if dirty[slot]:
+                    page_outs += 1
+                evictions += 1
+                page_ins += 1
+                resident[slot] = core
+                dirty[slot] = False
+            dirty[slot] = True
+    flush_outs = sum(dirty)
+    return {
+        "expected_initial_page_ins": 3,
+        "expected_replacement_page_ins": page_ins,
+        "expected_runtime_page_outs": page_outs,
+        "expected_evictions": evictions,
+        "expected_page_hits": hits,
+        "expected_final_flush_page_outs": flush_outs,
+        "expected_page_operations": 3 + page_ins + page_outs + flush_outs,
+    }
+
+
 def make(output: Path, timesteps: int) -> dict:
     if timesteps not in (7, 100):
         raise ValueError("P03 physical gate is frozen to 7 or 100 timesteps")
@@ -75,6 +113,7 @@ def make(output: Path, timesteps: int) -> dict:
     manifest = dict(golden)
     manifest["p03_schema"] = "p03-autonomous-p02-ring-launch-v1"
     manifest["p03_timesteps"] = timesteps
+    manifest.update(expected_residency(timesteps))
     manifest["p03_record_crc32"] = record_crc
     manifest["p03_run_config_crc32"] = f"0x{words[63]:08X}"
     manifest["p03_launch_sha256"] = hashlib.sha256(blob).hexdigest()
