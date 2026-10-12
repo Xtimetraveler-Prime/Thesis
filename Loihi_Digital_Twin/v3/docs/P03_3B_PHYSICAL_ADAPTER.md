@@ -194,3 +194,110 @@ FPGA PASS is asserted until the user runs those commands.**
 
 The subsequent P03.3c launch/runtime result integration and P03.4
 seven-timestep/35-dispatch golden comparison remain independent gates.
+
+
+## 8. P03.3b1 accepted; P03.3b2 physical-probe implementation (2026-10-11)
+
+The user independently ran and **passed both** the focused pytest regression
+and the direct native C build for P03.3b1 after correction of the six
+`hw->io.barrier(hw->cookie)` calls. Mark **P03.3b1 accepted**. This establishes
+host-native C adapter behavior; it is not proof of physical packet routing.
+
+A new **P03.3b2** probe and isolated build/board runner are now committed:
+
+- `software/p03/p03_3b2_probe.c`: a real standalone A53 program exercising
+  **the same P03.3a scheduler and P03.3b adapter/bridge C code** used in the
+  native regressions. It runs *one logical core*, *one resident slot*,
+  *two timesteps*, *no incoming or outgoing packets*.
+- `software/p03/build_p03_3b2_probe.py`: Vitis 2025.2 standalone application,
+  importing/linking all five C files (`p03_3b2_probe.c`,
+  `p03_runtime.c`, `p03_hw_adapter.c`, `p03_hw_runtime_bridge.c`,
+  `p03_hw_xilinx_io.c`) and their existing headers.
+- `scripts/build_p03_3b2_probe.sh`: regenerates the accepted deterministic
+  P03.2c fixture, checks the **FPD128 SmartConnect** route metrics and
+  exact XSA fingerprint, creates a **new** Vitis workspace, and checks
+  every ELF PT_LOAD segment avoids the P02 reserved 64 MiB DDR aperture.
+- `scripts/run_p03_3b2_probe.sh`: reuses accepted XSDB provisioning,
+  PL programming and A53 execution scripts. Independently checks the live
+  FPD width and records program/firmware/ELF/fixture SHA identities and a
+  64-byte mailbox in a fresh evidence directory.
+- `scripts/p03_3b2_verify_probe.py`: requires all 16 mailbox fields to
+  match the fixed identity, page-in, two-dispatch/two-barrier, and fault-free
+  results. Includes a separate schema magic `0x50333342` (P33B).
+- `tests/test_p03_3b2_physical_probe.py`: synthetic pass/fail mailboxes,
+  source linkage and candidate identity/safety guards.
+
+This physical test is intentionally stronger than P03.2c. The A53
+executes `p03_rt_execute()` and the actual hardware callbacks
+`p03_hw_page()`, `p03_hw_debug_word()`, `p03_hw_dispatch()`,
+`p03_hw_quiescent()` rather than a second handwritten MMIO command
+sequence. The probe validates the P02 header magic, version,
+record size, core0 ID, zero initial event counts, and `config[0]`.
+**It does not yet validate the P02 payload SHA256 digest**, nor packet
+production/delivery, dirty writeback, or multiresident eviction. These
+remain separate P03.3b3/P03.3c acceptance responsibilities.
+
+### Build (on the same PC as the accepted P03.2c FPD128 route)
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+python -m pytest -q \
+    tests/test_p03_3b2_physical_probe.py \
+    tests/test_p03_3b_hw_adapter.py \
+    tests/test_p03_3a_native_runtime.py
+
+export P03_DIAG_REPORTS="$(ls -dt "$PWD"/vivado/build/p03_2c_fpd128_route_*/reports | head -1)"
+export P03_XSA="$P03_DIAG_REPORTS/p03_2_ps_mmio.xsa"
+export P03_2C_EXPECTED_XSA_SHA="$(sha256sum "$P03_XSA" | awk '{print $1}')"
+export P03_3B2_BUILD_DIR="$PWD/vivado/build/p03_3b2_probe_$(date -u +%Y%m%dT%H%M%SZ)"
+
+set -o pipefail
+bash scripts/build_p03_3b2_probe.sh \
+    2>&1 | tee /tmp/v3_p03_3b2_build.log
+```
+
+Required build PASS:
+`PASS: P03.3b2 standalone A53 runtime-adapter probe build ready for board verification`.
+
+### Physical KV260 board gate
+
+Power-cycle/reboot KV260 for normal PS/DDR initialization, keep
+`hw_server` up, then run on the development PC:
+
+```bash
+export P03_3B2_EVIDENCE_DIR="/tmp/v3_p03_3b2_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/run_p03_3b2_probe.sh "$P03_3B2_EVIDENCE_DIR" \
+    2>&1 | tee /tmp/v3_p03_3b2_physical.log
+cat "$P03_3B2_EVIDENCE_DIR/verify.log"
+```
+
+The physical probe **halts the A53 processors**, replaces the running
+Linux execution context, writes only the project-designated
+`0x40000000..0x4007FFFF` DDR record and `0x43FF0000..0x43FF003F`
+mailbox, and drives real FPGA page/debug/dispatch MMIO commands.
+**Reboot the board afterward, even if the test fails; do not resume
+the stopped Linux session.** No PL rebuild or static PS width writes.
+
+Physical PASS requires:
+
+```text
+PASS: P03.3b2 physical A53 adapter probe ps_width=128 id=0x4C543302 config0=0x14001000 page_bytes=438272 page_ins=1 dispatches=2 barriers=2
+P03_3B2_VERIFY_EXIT=0
+PASS: P03.3b2 physical Cortex-A53 two-timestep runtime-adapter probe
+```
+
+The verifier will reject a 60-byte/partial mailbox, nonzero fault,
+mismatched hardware ID/version/capabilities/config, wrong page count,
+wrong dispatch/barrier count, or non-128-bit PS selector. On failure,
+submit `verify.log`, `a53_run.log`, `ps_width.log` and
+`artifact_identity.txt` from the evidence directory for diagnosis.
+
+**Status:** P03.3b2 code and offline tests committed; physical acceptance
+**not yet** demonstrated by the user. Do not begin P03.3b3 unless
+the P03.3b2 physical gate passes or a clearly isolated blocker is
+diagnosed/resolved.
