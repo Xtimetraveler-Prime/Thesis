@@ -288,3 +288,26 @@ golden reference, RTL and Vitis builder were not changed.**
 Correction committed; independent user rerun still required. Proceed to
 Vitis only after `python -m pytest -q tests/test_p03_finish_autonomy.py`
 passes.
+
+
+## 9. P03.4 first physical attempt failed during WRITE_RESULT
+
+**Update 2026-10-11:** The first seven-step physical A53 run **did
+not pass**: `result=0xDEAD000B`, `first_fault=12`,
+`fault_phase=17 (WRITE_RESULT)`. The full 35-dispatch, 30-packet,
+seven-barrier counters were in range but `flush_outs=0x00800023`
+rather than 3; the original verifier did not inspect the physically
+captured final DDR because it failed the mailbox first.
+
+See `docs/P03_4_PHYSICAL_ATTEMPT1.md` for the exact evidence path,
+commands to compare its five saved DDR records *without rerunning the
+board*, and the V2 correction. V2 explicitly resets counters before
+the standalone run, retains all original strict finalization
+predicates, adds a tag-validated per-predicate failure mask at mailbox
+words 61/62, and checks final DDR on error. All three executable
+artifact gates now require retained
+`P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2` identity.
+
+**P03.4 and P03.5 are NOT accepted; full native regression, new Vitis
+build and new seven-step physical test are required. Do not start
+the hundred-step test or merge to main yet.**
