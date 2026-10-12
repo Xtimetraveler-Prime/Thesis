@@ -1,11 +1,19 @@
 # P05.2b — Fast-mode hardware equivalence (pending physical test)
 
-**Status:** Implementation committed to
-`agent/v3-p05-board-regression`; **host tests and KV260
-physical execution pending**. P05.1 is accepted from two
-independently verified physical workloads; P05.2a hardware
-negative-checkpoint localization is also accepted from user
-evidence `/tmp/v3_p05_2_fault_20261012T181015Z`.
+**Status:** **P05.2b physical equivalence ACCEPTED
+on user's KV260 2026-10-12**.
+The user independently supplied `verify.log` confirming
+5 steps, 15 dispatches, 12 packets, 12 resident
+deliveries, **zero checkpoint observations**, and
+all three actual full DDR images byte-exact to
+both independent Python and previously accepted diagnostic
+physical SHA256s. Formal record:
+`docs/P05_2B_FAST_ACCEPTANCE.md`.
+The original pre-acceptance procedure below is retained
+for reproducibility, but its "pending" language is historical.
+P05.1 remains accepted; P05.2a accepted from
+`/tmp/v3_p05_2_fault_20261012T181015Z`.
+Next: `docs/P05_2_ORDER_INVARIANCE_GATE.md`.
 
 ## Precisely what changes and what must remain invariant
 
