@@ -76,7 +76,7 @@ static int (*base_dispatch)(void *,uint8_t,uint8_t,uint32_t,uint8_t,
                             uint32_t *,uint64_t *);
 static int (*base_drain)(void *,uint8_t,uint32_t,uint32_t,uint8_t,uint32_t *);
 static uint32_t initial_crc[RUN_CORE_COUNT];
-static uint32_t flush_outs;
+static volatile uint32_t flush_outs;
 static uint64_t last_packet;
 static uint32_t resident_routes;
 static uint32_t first_error;
@@ -435,6 +435,20 @@ int main(void)
     p03_hw_io io=p03_hw_xilinx_io();
     const uint8_t ids[RUN_CORE_COUNT]={0,1,2,3,4};
     uint32_t i;
+    /* Do not implicitly depend on debugger/FSBL/BSP startup clearing
+     * application-owned BSS between standalone ELF launches. In the
+     * first five-over-three physical run, flush_outs=0x800023 was
+     * exactly (three final outs + 0x800020); that is *consistent with*
+     * a nonzero baseline, but the underlying cause is not yet proven.
+     * A volatile store makes this explicit reset observable in A53 code.
+     */
+    flush_outs = 0u;
+    resident_routes = 0u;
+    last_packet = UINT64_C(0);
+    first_error = 0u;
+    final_diag_mask = 0u;
+    final_diag_first_actual = 0u;
+    fence();
     for(i=0;i<RUN_WORDS;++i) result[i]=0;
     result[M_MAGIC]=RUN_RESULT_MAGIC;
     result[M_SCHEMA]=RUN_VERSION;
