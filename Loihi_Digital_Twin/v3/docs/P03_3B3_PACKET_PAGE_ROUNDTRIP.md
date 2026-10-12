@@ -399,3 +399,117 @@ that the packet-path RTL is broken on the basis of this early exit.
 
 **P03.3b3 remains OPEN and physically blocked at preflight** until
 the A53 header check and subsequent packet/paging verification pass.
+
+
+## 9. Root cause FOUND after second physical preflight attempt
+
+The user independently rebuilt and re-ran P03.3b3. On
+2026-10-11 the second run again completed PL programming, A53 download,
+execution, and the 128-byte DDR mailbox readback, but returned:
+
+```text
+result=0xDEAD0002 error=2 first_fault=0 phase=0
+FAIL: ... older probe build lacks raw-header diagnostics
+P03_3B3_VERIFY_EXIT=1
+P03_3B3_EVIDENCE_DIR=/tmp/v3_p03_3b3_header_diag_20261012T033107Z
+```
+
+**Corrected root cause:** The C preflight caller in
+`software/p03/p03_3b3_probe.c` was WRONG:
+
+```c
+/* OLD: incorrectly fails when header validation SUCCEEDS (return 0). */
+if (!validate_backing(NULL)) {
+    publish_failure(B3_ERR_HEADER);
+    halt_forever();
+}
+```
+
+`validate_backing()` follows the standard P03 callback convention:
+**0 means valid**, **-1 means failure**. Consequently, the older
+expression jumped to `B3_ERR_HEADER=2` precisely when the two header
+reads passed. The mismatch-snapshot `HDR3` marker was absent on the
+second physical run because the preflight function found **no
+mismatch** and did not generate the overlay; the caller then inverted
+its successful return. This directly explains the repeated error-2
+mailboxes with zero scheduler activity, without needing an AXI,
+DDR-cache or FPGA explanation. It is a C control-flow mistake
+introduced in P03.3b3.
+
+**Fixed:**
+
+```c
+if (validate_backing(NULL) != 0) {
+    publish_failure(B3_ERR_HEADER);
+    halt_forever();
+}
+```
+
+A new source-level regression explicitly forbids the inverted check.
+The standalone ELF also includes a deliberately retained
+`P03_3B3_HDR3_CAPTURE_V2` firmware identity. The **Vitis builder
+inspects the actual compiled ELF** for the marker using
+`strings -a`. The physical runner validates both that marker and
+that the five staged C sources match the current repository **before
+provisioning DDR or programming the KV260**, so an environment
+variable pointing at an older build directory produces a clear
+error instead of another ambiguous physical run.
+
+The verifier's formerly misleading message implying that the missing
+HDR3 marker proved an old ELF was in use was replaced with an
+explanation of the inverted success convention and the remaining
+build-freshness checks. This distinction is important: the second
+physical trace itself **does not prove** that an old ELF was used;
+a newly built ELF containing the inverted condition would produce
+the same signature.
+
+**Acceptance status:** Root cause of the premature error-2 rejection
+is fixed in source, but the revised executable has **not yet passed
+independent native tests, Vitis compilation, or physical execution**.
+The actual HLS packet/DDR page roundtrip remains untested on KV260.
+Do not merge or advance P03.3b3 until a physical mailbox PASS.
+
+### Fresh-build and physical repeat
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python -m pytest -q \
+  tests/test_p03_3b3_physical_probe.py \
+  tests/test_p03_3b2_physical_probe.py \
+  tests/test_p03_3b_hw_adapter.py \
+  tests/test_p03_3a_native_runtime.py
+
+# Fresh timestamped directory; the physical runner MUST use this EXACT path.
+export P03_3B3_BUILD_DIR="$PWD/vivado/build/p03_3b3_fixed_gate_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p03_3b3_probe.sh 2>&1 | tee /tmp/v3_p03_3b3_fixed_gate_build.log
+
+# Confirm the expected ELF identity exists, and the correct directory
+# is still exported in the SAME terminal before physical test.
+echo "P03_3B3_BUILD_DIR=$P03_3B3_BUILD_DIR"
+strings -a "$P03_3B3_BUILD_DIR/vitis_workspace/p03_3b3_probe.elf" |
+  grep -Fx 'P03_3B3_HDR3_CAPTURE_V2'
+
+# Reboot KV260 before test; keep hw_server active.
+export P03_3B3_EVIDENCE_DIR="/tmp/v3_p03_3b3_fixed_gate_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/run_p03_3b3_probe.sh "$P03_3B3_EVIDENCE_DIR" \
+    2>&1 | tee /tmp/v3_p03_3b3_fixed_gate_physical.log
+cat "$P03_3B3_EVIDENCE_DIR/verify.log"
+# Reboot KV260 afterward, including after any failure.
+```
+
+The runner will now print
+`P03_3B3_SELECTED_BUILD_DIR`,
+`P03_3B3_SELECTED_ELF`, and
+`P03_3B3_SELECTED_ELF_SHA256` and require:
+
+```text
+PASS: P03.3b3 selected A53 ELF contains current HDR3 firmware marker
+```
+
+before any hardware-side writes. Keep independent Vitis and board
+PASS requirements unchanged; do not fabricate successful packet
+results from the earlier preflight failure.
