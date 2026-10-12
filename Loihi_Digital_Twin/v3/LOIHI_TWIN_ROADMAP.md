@@ -773,10 +773,12 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 ## P05.2 — Directed physical regression and observability validation
 
-**Status:** IN PROGRESS — P05.2a first hardware fault detection
-accepted, P05.2b fast/no-checkpoint equivalence physically accepted;
-P05.2c independent service-order permutation implementation committed,
-native and KV260 acceptance pending.
+**Status:** IN PROGRESS — P05.2a first-fault localization,
+P05.2b checkpoint-disabled equivalence and P05.2c legal
+core-service permutation all **physically accepted** on KV260.
+P05.2d 2-route packet fanout/multi-input NEXT-bank
+accumulation implemented; independent native and board
+acceptance pending.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -848,7 +850,7 @@ power/energy benchmark**. Acceptance:
 `docs/P05_2B_FAST_ACCEPTANCE.md`.
 
 **P05.2c — Legal logical-core service-order invariance
-(IMPLEMENTED; independent host and KV260 PENDING).**
+(PHYSICAL ACCEPTED on KV260, 2026-10-12).**
 Same physically accepted diagnostic three-core triangle
 on the unchanged P05 ELF and accepted FPGA.
 Change actual A53 service order **`[0,1,2]` →
@@ -866,7 +868,44 @@ Scripts: `scripts/p05_2_order_fixture.py`,
 `scripts/run_p05_2_order.sh`, native tests
 `tests/test_p05_2_order.py`,
 `docs/P05_2_ORDER_INVARIANCE_GATE.md`.
-**No P05.2c physical PASS yet.**
+**Observed P05.2c PHYSICAL PASS:** User supplied independent
+`verify.log` showing real A53 service order **[2,0,1]**,
+15 dispatches, 12 packets, **12 resident deliveries**,
+5 barriers and 15/15 actual golden neural checkpoints.
+All **three complete 512KiB final DDR records** matched
+both independently simulated Python service-order variants
+and the previously accepted original-order KV260 SHA256s.
+P05G header CRC32 `0x22ECC007`, payload CRC32
+`0xC0AFC18C`. Acceptance record:
+`docs/P05_2C_ORDER_ACCEPTANCE.md`.
+This establishes physical invariance for **one legal
+three-resident permutation only**, not all possible
+virtualization/paging schedules.
+
+**P05.2d — Two-route physical packet fanout / convergent
+NEXT-bank event aggregation (IMPLEMENTED; physical PENDING).**
+Generate a **new** independent `LogicalChip` three-core
+all-to-all-except-self topology where each firing
+source emits **two distinct packets**, each destination
+receives two routed next-timestep spikes plus one
+external spike, without violating global barriers.
+With five timesteps, weight 3 and threshold 4, the
+independent model is expected to produce
+**15 dispatches, 24 emitted packets and 24 direct
+resident deliveries**, 15 actual-device state0
+checkpoints, three initial page-ins/three final
+page-outs and no replacement paging.
+Require all three **complete** physical DDR records
+byte-exact to a fresh fanout Python oracle.
+Fixture `scripts/p05_2_fanout_fixture.py`,
+strict verifier `scripts/p05_2_fanout_verify.py`,
+physical provisioning `vivado/p05_2_fanout_prepare.tcl`,
+two-mode runner `scripts/run_p05_2_fanout.sh`,
+host negative tests `tests/test_p05_2_fanout.py`,
+instructions `docs/P05_2_FANOUT_GATE.md`.
+No P05.2d independent native or physical PASS yet.
+**This small fanout gate is not 4096-entry buffer
+saturation or true backpressure coverage.**
 
 **Remaining P05.2 work:** directed arithmetic boundary/decay,
 fanout, event-buffer/backpressure, dirty paging stress,
