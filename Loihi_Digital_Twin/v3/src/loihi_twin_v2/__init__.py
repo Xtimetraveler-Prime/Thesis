@@ -128,6 +128,13 @@ from .resources import (
     SynapseCostModel,
 )
 from .runtime import RunResult, run_deployment
+from .runtime_v3 import (
+    AutonomousRuntimeContract,
+    RuntimeContractError,
+    RuntimeCounters,
+    RuntimeFault,
+    RuntimeState,
+)
 from .synapse import SynapseEntry, SynapseTemplate
 from .virtualization import (
     DeterministicCoreScheduler,
@@ -201,6 +208,11 @@ __all__ = [
     "trace_report",
     "RunResult",
     "run_deployment",
+    "AutonomousRuntimeContract",
+    "RuntimeContractError",
+    "RuntimeCounters",
+    "RuntimeFault",
+    "RuntimeState",
     "CoreCapacity",
     "ResourceCapacityError",
     "ResourceUsage",

@@ -170,7 +170,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
-| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Planned |
+| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | Planned |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
@@ -369,18 +369,161 @@ five-over-three acceptance: `docs/P02_4B_ACCEPTANCE.md`.
 
 # P03 — Autonomous PS-resident runtime
 
-**Status:** Planned
+**Status:** Complete — independently accepted 2026-10-12
+**Development branch:** `agent/v3-p03-autonomous-runtime` (merged into `main` at closeout).
+**Authoritative acceptance:** `docs/P03_FINAL_ACCEPTANCE.md`.
+**Detailed PS application architecture, DDR/packet/mailbox ABI,
+debugging chronology and reproduction:** `docs/P03_PS_AUTONOMOUS_APPLICATION.md`.
 
 ## Goal
 
 Move host-owned algorithmic orchestration onto the KV260 PS.
 
-## First sub-milestone
+## Sub-milestones
 
-- **P03.1 — Autonomous runtime contract.** Freeze exact run/barrier/error
-  transitions, board-local timer/counter boundaries, recovery behavior, and the
-  v3 implementation addendum to the inherited Loihi target specification before
-  implementing the PS runtime.
+- **P03.1 — Autonomous runtime contract.** **Complete; accepted 2026-10-06.** Freeze
+  exact run/barrier/error transitions, board-local timer/counter boundaries,
+  recovery behavior, external-host exclusion, cache/ownership rules, and the v3
+  implementation addendum to the inherited Loihi target specification. Primary
+  record: `docs/P03_1_AUTONOMOUS_RUNTIME_CONTRACT.md`.
+- **P03.2 — PS-visible MMIO control/status shell.** **Complete; accepted 2026-10-11 for the physical experimental control shell.** Replace
+  VIO-owned page/dispatch/resident-memory control with a PS-accessible AXI-Lite
+  register block on the accepted `M_AXI_HPM0_FPD` direction while preserving
+  the accepted P02 data plane and response semantics.
+  - **P03.2a — AXI-Lite register contract.** **Complete; accepted 2026-10-06.**
+    Freeze the 32-bit register map, sticky completion semantics, slow resident
+    request handshake, Python/C software constants, and directed RTL regression.
+  - **P03.2b — Routed HPM0 integration.** **Complete; accepted 2026-10-06.** Connect
+    the register block through HPM0 at `0xA4000000..0xA4000FFF`, preserve the
+    accepted HP0 DDR data path, retain VIO as observation/reset-only, close
+    timing, and export bitstream/probes/fixed XSA.
+  - **P03.2c — Physical PS-MMIO smoke.** **Complete; independently
+    accepted 2026-10-11.** The KV260's physical PS HPM0 width selectors
+    were measured at 128 bits while the original FPD/LPD PL designs
+    expected 32 bits. The corrected FPD 128-bit AXI4 master plus
+    1x1 SmartConnect 128-to-32-bit AXI4-Lite bridge preserves the
+    `0xA4000000` MMIO ABI and existing HP0/DDR paging path.
+    The independent A53 read-only diagnostic passed all four registers.
+    Subsequently the independent **full A53 page/resident/dispatch
+    smoke passed**: strict 64-byte mailbox verifier reported
+    `id=0x4C543302`, `capabilities=0x0001031F`,
+    `page_bytes=438272`, `config0=0x14001000`,
+    `dispatches=1`, with full verifier exit `0`. The full
+    verifier additionally checked VERSION, page burst counts, sticky
+    done/errors, resident read-valid, dispatch/global errors and
+    completion. Physical evidence directory:
+    `/tmp/v3_p03_2c_fullsmoke_20261012T020320Z` (user PC).
+    **Accepted experimental-shell decision:** retain diagnostic ILAs
+    and temporary otherwise-unmapped signature during P03.3; track
+    their removal and a final release route as a separate cleanup
+    gate, not as a blocking functional requirement. See
+    `docs/P03_2C_ACCEPTANCE.md` and
+    `docs/P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md`.
+- **P03.3 — Standalone Cortex-A53 runtime.** **Complete; independently accepted through P03.4/P03.5 on 2026-10-12.** Implement
+  P03.1's board-local state machine, deterministic scheduling/replacement,
+  packet routing, cache-maintenance ownership, timer/counter collection,
+  fail-closed result records, and the fixed P02 64 MiB DDR reservation.
+  - **P03.3a — Portable C runtime policy engine.** **Complete;
+    independently accepted 2026-10-11.**
+    Introduce `software/p03/include/p03_runtime.h`,
+    `software/p03/p03_runtime.c` and a host-native hardware-mock test
+    harness. Test compiled logical-core service order, initial resident
+    selection, dirty-victim writeback before page-in, round-robin
+    eviction, exact packet-drain accounting, no-premature-barrier
+    event-bank swaps, sticky first-error, and 35 dispatches / seven
+    barriers for a five-over-three plan. This does **not** prove
+    packet encoding, actual MMIO control or inference equivalence.
+  - **P03.3b — Physical MMIO/DDR/packet adapter.**
+    **Directed P03.3b1–b3 acceptance complete 2026-10-11; resident
+    destination physical coverage explicitly tracked.** Native C
+    MMIO/DDR packet adapter passed, the one-core/two-step real A53
+    scheduler/adapter probe passed, and the two-core/one-slot
+    physical real-HLS packet/dirty-page roundtrip independently passed:
+    `ps_width=128`, `first_packet=0x2000000020000581`,
+    `second_packet=0x2000000040000A00`,
+    `core1_ddr_event1=11`, `core0_ddr_event0=20`,
+    `page_ins=3`, `page_outs=3`, `dispatches=4`,
+    `barriers=2`, `routed_packets=2`,
+    `P03_3B3_VERIFY_EXIT=0`.
+    Accepted local evidence folder:
+    `/tmp/v3_p03_3b3_fixed_20261012T034337Z`.
+    This verified actual PL packets, PS-owned nonresident DDR routing
+    and mutable context persistence. The one-slot probe did not
+    exercise direct MMIO delivery to an already-resident destination;
+    that path remains native-tested and is counted explicitly by
+    the new unified P03 runner. Primary acceptance record:
+    `docs/P03_3B3_ACCEPTANCE.md`.
+  - **P03.3c + P03.4 + P03.5 — Consolidated implementation and
+    two independent physical acceptance runs.** **Complete; combined C11/Vitis implementation and physical P03.4/P03.5 gates accepted on 2026-10-12.** To minimize extra subphases, these use one immutable
+    software/ABI/hardware path. New
+    `software/p03/p03_finish_run.c` links the accepted C
+    scheduler, real P03.3b adapter/bridge, and A53 Xilinx BSP. A
+    versioned 256-byte CRC32-checked DDR launch manifest selects
+    **7 or 100 timesteps** for the **exact accepted P02.4b
+    five-logical-core/three-resident-slot ring**. The A53 owns
+    the formerly host-driven per-core ingress injection immediately
+    before dispatch, RR page replacement, cross-core routing, global
+    barrier and bank swaps, CNTVCT timing/counters, failure
+    persistence, and final dirty resident flush. XSDB passively
+    waits for terminal mailbox and only then retrieves five full
+    final 512 KiB records. The Python verifier compares those
+    records byte-exactly to the frozen P02 golden and the 256-byte
+    mailbox to the scheduler/timing/status oracle. The 7-step
+    profile must demonstrate **35 dispatches, 7 barriers, 30
+    packets** and the accepted trace fingerprint
+    `9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac`.
+    The 100-step profile requires **500 dispatches, 100 barriers**,
+    and the 100-step Python reference's own packet count and five
+    full normalized final records; it may not borrow the 7-step
+    oracle. The PS runtime uses a different packet-delivery/paging
+    policy than PC-controlled P02, so its *paging counts* may differ
+    without changing logical results.
+    **P03.4 physical attempt 1 FAILED on 2026-10-11 at the
+    `WRITE_RESULT` callback (fault=12, phase=17, result=0xDEAD000B).**
+    The mailbox confirmed 35 dispatches, seven barriers and all 30
+    expected packets, but reported an impossible final flush count
+    `0x800023` instead of 3. The five complete DDR records were
+    dumped successfully but the original verifier aborted before
+    comparing them against the Python oracle. A V2 corrective
+    candidate explicitly initializes application-owned counters,
+    preserves every acceptance predicate while encoding the exact
+    failed check in a tagged error-only mailbox overlay, and runs
+    byte-exact final-DDR comparison even on a failed mailbox. The
+    build/physical runner require a V2 ELF marker, not the older V1
+    binary. The exact root of the counter anomaly remains
+    **unconfirmed** until fresh physical evidence. See
+    `docs/P03_4_PHYSICAL_ATTEMPT1.md`.
+    **P03.4 ACCEPTED from independent physical KV260 seven-step V2
+    verification on 2026-10-11 local / 2026-10-12 UTC.**
+    The five-core/three-slot A53 autonomous run completed 35 dispatches,
+    30 routed HLS packets, seven barriers, 35 page-ins and 35 page-outs,
+    and all five final 512 KiB DDR records matched the frozen P02/v2
+    Python oracle byte-exactly; trace fingerprint
+    `9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac`.
+    Measured `resident_deliveries=0`: this ring provides physical
+    nonresident routing evidence, not direct-to-resident packet delivery.
+    Acceptance: `docs/P03_4_ACCEPTANCE.md`.
+    **P03.5 ACCEPTED on 2026-10-12 (same V2 A53 ELF and FPD128
+    experimental bitstream).** The independent 100-timestep
+    five-core/three-slot physical test reported terminal
+    `result=0x600D600D`, **500 real HLS dispatches, 495 routed
+    packets, 100 barriers, 500 page-ins, 500 page-outs**, and all
+    five final 512 KiB DDR records byte-exact to the independent
+    100-step P02/v2 Python oracle. Reference trace fingerprint:
+    `b10387cb7930e6e4452548ff4d025c8dffe52e9eeebde2d5b43ed9c5475cfcac`.
+    Launch manifest SHA-256:
+    `30076c118d312e57674f716e50fe3d080e7a057ed55ba1f2ae58a9a7dba51c4b`.
+    User evidence:
+    `/tmp/v3_p03_finish_100_20261012T145336Z`;
+    `P03_FINISH_VERIFY_EXIT=0`.
+    **P03 functionally COMPLETE.** P03.4 and P03.5 both reported
+    `resident_deliveries=0`; this acceptance does **not** claim
+    a real FPGA direct-to-resident destination packet test.
+    Preserve it as a P05 hardening/coverage item, along with
+    optional release cleanup for the accepted ILA/VIO diagnostic
+    shell. See `docs/P03_5_ACCEPTANCE.md`,
+    `docs/P03_FINAL_ACCEPTANCE.md` and
+    `docs/P03_PS_AUTONOMOUS_APPLICATION.md`.
 
 ## Deliverables
 

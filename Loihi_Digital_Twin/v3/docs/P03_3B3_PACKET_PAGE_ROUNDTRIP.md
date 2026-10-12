@@ -1,0 +1,515 @@
+# P03.3b3 — Physical FPGA spike packets and dirty-context page roundtrips
+
+**State:** code prepared on `agent/v3-p03-autonomous-runtime`; **independent
+native/Vitis/physical verification pending**. Do not merge to main.
+**Predecessors physically verified:** P03.2c, P03.3b2. **P03.3b1
+host-native regression verified.**
+
+## 1. The first actual multi-logical-core hardware test
+
+P03.3b2 proved the board-local scheduler, MMIO transport and FPGA execution
+work together for **one core, two timesteps, no packets**. It did not
+verify output packet encoding, cross-core routing or dirty context save.
+
+P03.3b3 deliberately uses **two logical cores and just one resident slot**.
+The workload uses real P03 packed-memory core images (NOT mock-spike
+injection from the PC):
+
+```
+One physical HLS engine + ONE selected resident slot (slot 0)
+                 timestep 0              timestep 1
+core0            1 input axon10          no input; (reloaded from DDR)
+    |                    |                            |
+    |                    v                            |
+    |        emits packet -> core1 axon11 t1           |
+    |                    |                            |
+    |         core1 is NONRESIDENT                    |
+    |          NEXT event1 written to DDR            |
+    v                                                v
+  page-out core0 --> page-in core1 --> page-out core1 --> page-in core0
+                                    (event1 preserved)
+                                  --> page-out core0 --> page-in core1
+                                                    |
+                                          core1 consumes axon11
+                                                    |
+                                          emits packet -> core0
+                                                   axon20 t2
+                                                    |
+                                          core0 NONRESIDENT
+                                          NEXT event0 written DDR
+```
+
+The initial `core0.event0[0]` is **axon10**; after core1 emits a packet
+at timestep1, the same backing word must become **axon20**. This prevents
+an unchanged DDR fixture from spuriously passing packet routing.
+
+The intended real HLS packet ABI is the accepted
+`pack_output_packet()` format from `hardware_p03.py`:
+
+```text
+bits  0.. 6: destination core
+bits  7..18: destination axon
+bits 19..28: source compartment
+bits 29..60: target timestep
+bit      61: packet valid
+bits 62..63: reserved zero
+```
+
+Expected packets:
+
+| Source operation | Expected physical 64-bit packet | Destination |
+|---|---|---|
+| Core0 dispatch at timestep0 | `0x2000000020000581` | Core1, axon11, NEXT timestep1 |
+| Core1 dispatch at timestep1 | `0x2000000040000A00` | Core0, axon20, NEXT timestep2 |
+
+The directed model fixture sets a low spike threshold `1` and
+synapse weight `3`, with a single input event `axon10` for core0.
+Core0 has bindings for axons 10 **and 20** so the returned packet
+targets a valid sparse axon. Core1 has binding axon11. The FPGA must
+generate BOTH output packets; neither is simulated by the real
+standalone A53 probe.
+
+## 2. Physical DDR and memory ownership
+
+The accepted P02.1 record layout remains unmodified:
+
+| Logical core | DDR backing record | Initial event |
+|---|---|---|
+| Core0 | `0x40000000..0x4007FFFF` | Event0[0] = axon10 |
+| Core1 | `0x40080000..0x400FFFFF` | No initial events |
+| Result mailbox | `0x43FF0000..0x43FF007F` | 128-byte zeroed result |
+
+Each complete record is **512 KiB**. A full page-in transfers
+438,272 bytes; each dirty mutable-only page-out writes **106,496
+bytes** (104 KiB) without rewriting the static config/synapse/route
+images. Resident event debug bank IDs are **6 (event0)** and **9
+(event1)**; DDR event offsets are `0x54000` and `0x58000`.
+Host packet debug bank is 8.
+
+The Cortex-A53 hardware adapter must:
+1. Inject no algorithmic control from the PC after launching.
+2. Page in core0; verify its resident event0 word.
+3. Dispatch core0, read a real packet from resident bank8, and compare
+   to the exact encoded expected word **before routing**.
+4. Write axon11 into nonresident core1's DDR NEXT event1 bank using
+   the adapter's cache-ordered store.
+5. Page out dirty core0, load core1, and run its timestep0 with CURRENT
+   bank0 (no input). Its NEXT event1 must remain intact.
+6. Page out dirty core1, load core0 and dispatch timestep1, then page out
+   dirty core0 and **reload core1**. This is the explicit roundtrip that
+   must preserve core1.event1[0].
+7. Dispatch core1 at timestep1 consuming its event1[0]=11, read
+   the **second real HLS packet**, and route axon20 into nonresident
+   core0's DDR NEXT event0[0].
+8. Confirm the resulting DDR/core1 resident bytes, counters, and clean
+   global status before writing the pass mailbox.
+
+Expected board-local counters:
+
+| Counter | Expected |
+|---|---:|
+| Logical dispatches | 4 |
+| Barriers/timesteps | 2 |
+| Real packets routed | 2 |
+| Initial page-ins | 1 |
+| Replacement page-ins | 3 |
+| Dirty page-outs | 3 |
+| FPGA total page operations | 7 |
+| Final resident core | 1 |
+| Final current bank | 0 |
+
+**Note on assumptions:** The packet values follow the accepted P03
+hardware ABI and the compiled directed fixture; they are **physical
+expectations**, not previously observed hardware data. A failing
+physical test is diagnostic evidence, not proof of a successful packet
+pipeline. The original P03.2c data read smoke and P03.3b2 zero-packet
+run cannot establish these claims.
+
+## 3. Source and verification implementation
+
+- `scripts/p03_3b3_packet_fixture.py` generates two model-backed
+  512-KiB records, a C header and a JSON golden manifest.
+- `software/p03/p03_3b3_probe.c` links the **real**
+  `p03_runtime.c`, `p03_hw_adapter.c`,
+  `p03_hw_runtime_bridge.c` and `p03_hw_xilinx_io.c`.
+  It hooks the packet drain only to **read and verify raw FPGA packet
+  output**, then calls the original hardware adapter drain/route
+  callback. It does not inject artificial packets.
+- `software/p03/build_p03_3b3_probe.py` creates a fixed-source Vitis
+  Cortex-A53 standalone application from the accepted FPD128 XSA.
+- `scripts/build_p03_3b3_probe.sh` locks the actual FPD128 route
+  metrics and XSA SHA, copies exact source/fixtures, creates a fresh
+  workspace and rejects any ELF LOAD section touching the reserved
+  64-MiB P02 backing region.
+- `vivado/p03_3b3_xsdb_prepare.tcl` independently provisions/reads
+  back both 512-KiB records plus the cleared 128-byte mailbox.
+- `vivado/p03_3b3_xsdb_run.tcl` executes A53 #0 and reads 32 words
+  from the result mailbox.
+- `scripts/p03_3b3_verify_probe.py` independently requires the exact
+  two packet words, both DDR event values, resident core1 event1,
+  page/dispatch/barrier counts, no faults and AXI page-in/out activity.
+- `tests/test_p03_3b3_physical_probe.py` checks fixture bytes, packet
+  constants, synthetic pass/fail mailboxes and safety guards.
+- The P03.3b native AXI mock has an additional two-core packetized
+  run that exercises the unchanged core scheduler and adapter
+  sequencing before the real board test.
+
+**Failure evidence:** If the FPGA emits a packet with unexpected bits,
+the probe records the *actual* packet low/high words in the DDR
+mailbox, marks the packet mismatch, and fails closed rather than
+silently discarding the sample.
+
+## 4. Native and Vitis build
+
+Use the same development PC, Vivado/Vitis 2025.2, and accepted FPD128
+routed bitstream/XSA that passed P03.2c and P03.3b2.
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+python -m pytest -q \
+  tests/test_p03_3b3_physical_probe.py \
+  tests/test_p03_3b2_physical_probe.py \
+  tests/test_p03_3b_hw_adapter.py \
+  tests/test_p03_3a_native_runtime.py
+
+export P03_DIAG_REPORTS="$(ls -dt "$PWD"/vivado/build/p03_2c_fpd128_route_*/reports | head -1)"
+export P03_XSA="$P03_DIAG_REPORTS/p03_2_ps_mmio.xsa"
+export P03_2C_EXPECTED_XSA_SHA="$(sha256sum "$P03_XSA" | awk '{print $1}')"
+export P03_3B3_BUILD_DIR="$PWD/vivado/build/p03_3b3_probe_$(date -u +%Y%m%dT%H%M%SZ)"
+set -o pipefail
+bash scripts/build_p03_3b3_probe.sh 2>&1 | tee /tmp/v3_p03_3b3_build.log
+```
+
+Required new build marker:
+
+```text
+PASS: P03.3b3 ELF avoids 64 MiB reserved DDR fixture/mailbox window
+PASS: P03.3b3 standalone A53 runtime-adapter probe build ready for board verification
+```
+
+## 5. Physical board verification
+
+Reboot/power-cycle the KV260 and allow its **normal** PS/DDR firmware
+initialization. Keep `hw_server` running. **Do not reuse a prior
+A53 Linux execution context after stopping it.**
+
+```bash
+export P03_3B3_EVIDENCE_DIR="/tmp/v3_p03_3b3_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/run_p03_3b3_probe.sh "$P03_3B3_EVIDENCE_DIR" \
+  2>&1 | tee /tmp/v3_p03_3b3_physical.log
+cat "$P03_3B3_EVIDENCE_DIR/verify.log"
+```
+
+This **will halt running Linux, program the FPGA, overwrite the
+project-designated 1-MiB backing fixture plus 128-byte mailbox,
+perform page-outs and packet routing, and require a board reboot
+afterward**. It must not run in any environment where those DDR
+addresses are used for unrelated data. No post-boot SLCR width writes
+are attempted; the FPD HPM0 width is checked read-only.
+
+Expected marker **only if real board verification passes**:
+
+```text
+PASS: P03.3b3 physical packet/page roundtrip ps_width=128 ... page_ins=3 page_outs=3 dispatches=4 barriers=2 routed_packets=2
+P03_3B3_VERIFY_EXIT=0
+PASS: P03.3b3 physical Cortex-A53 two-core HLS packet/DDR/dirty-page roundtrip
+```
+
+On failure, preserve the evidence directory:
+`verify.log`, `ps_width.log`, `provision.log`,
+`program.log`, `a53_run.log`, `artifact_identity.txt`,
+and `p03_3b3_a53_mailbox.bin`. The verifier's diagnostic includes
+failing fields and the initial runtime fault/phase where available.
+
+## 6. Acceptance boundary
+
+**This is the P03.3b3 first directed physical gate (nonresident routing
+and dirty-page survival).** The resident destination **packet-delivery
+branch** (`p03_hw_route_word` writing directly via MMIO while the
+destination is already resident) is covered by the native mock but is
+**not independently exercised by this particular physical 1-slot
+scenario**. A separate resident-destination board test is still
+required before accepting P03.3b as a *whole*. We deliberately do not
+count normal resident event *consumption* as evidence of that distinct
+direct resident *routing* path.
+
+A **physical PASS** would establish that two actual HLS core evaluations
+emit the expected packets, that the runtime routes them to
+nonresident DDR-backed NEXT event banks, and that page replacement
+preserves those event payloads. It does **not** yet prove:
+
+- arbitrary five-over-three placement/eviction or the P03.4 35-dispatch test;
+- broad event overflow/fault cases physically, or trace-by-trace
+  normalized architecture agreement;
+- SHA-256 validation and refresh of dynamically mutated DDR payloads;
+- P03.3c launch/result packaging and memory/cache ownership under Linux;
+- the P03.5 100-timestep golden-equivalence result.
+
+Keep P03.3b3 open until the independent native tests, Vitis build,
+physical mailbox verification and review have passed. Do **not** merge
+the branch without user authorization.
+
+
+## 7. Pre-Vitis regression repair (2026-10-11)
+
+The first independently executed P03.3b3 pytest run reported **two fixture/
+test-infrastructure failures**, with no Vitis build or KV260 execution yet:
+
+1. `scripts/p03_3b3_packet_fixture.py` generated a **64-byte** zero
+   mailbox inherited from P03.3b2. P03.3b3's 32-word evidence schema
+   requires **128 bytes**; the P03.3b3 fixture now generates exactly
+   `bytes(128)`. The XSDB prepare/readback script and independent
+   mailbox verifier already expected 128 bytes.
+2. The host-native synthetic `xil_io.h`/`xil_cache.h` files in
+   `tests/test_p03_3b3_physical_probe.py` contained literal
+   backslash-n text within preprocessor directives because the Python
+   fixture was double-escaping `\\n`. The fixture now emits actual
+   header newlines via normal Python `\n` escapes and asserts the
+   generated headers contain valid guard lines and no literal
+   backslash-n sequence. The dozens of missing Xilinx C-type/function
+   errors in the log were caused by those malformed test stubs.
+
+No accepted P03.3b2 fixture, generated artifacts, hardware RTL, XSA,
+bitstream, MMIO ABI or production P03.3b3 packet-path semantics
+were changed by these two corrections.
+
+**Verification:** the corrected stub-header contents were reproduced
+and successfully compiled in a local strict `gcc -std=c11 -Wall
+-Wextra -Werror -pedantic -fsyntax-only` syntax check. This isolated
+header check is not the full repository regression. **The user must
+rerun the focused tests and obtain PASS before attempting the Vitis
+build or programming the KV260.**
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python -m pytest -q \
+    tests/test_p03_3b3_physical_probe.py \
+    tests/test_p03_3b2_physical_probe.py \
+    tests/test_p03_3b_hw_adapter.py \
+    tests/test_p03_3a_native_runtime.py
+```
+
+Do not classify a fixture/shim issue as a failed physical HLS packet or
+FPGA page-out test. Physical acceptance remains pending.
+
+
+## 8. Physical preflight failure — A53 DDR header rejected (2026-10-11)
+
+**Independent results:** The user passed the full native regression and
+Vitis A53 build, and then independently programmed/ran the P03.3b3
+candidate on KV260. The 128-byte mailbox was retrieved successfully,
+but the strict physical verifier rejected it:
+
+```text
+P03_3B3_VERIFY_EXIT=1
+FAIL: P03.3b3 result actual=0xDEAD0002 expected=0x600D600D
+FAIL: P03.3b3 error actual=0x2 expected=0x0
+FAIL: P03.3b3 physical HLS packet delivery / dirty-page roundtrip
+  result=0xDEAD0002 first_fault=0 error=2 phase=0
+```
+
+Local evidence bundle:
+`/tmp/v3_p03_3b3_20261012T032020Z`.
+
+**Diagnosis supported by the failing run:** `B3_ERR_HEADER=2` comes
+from the standalone A53's `validate_backing()` call in
+`p03_3b3_probe.c`, **before** adapter initialization,
+page-in, dispatch, packet routing or any logical timestep. Thus the
+verifier's subsequent zero packet, page, dispatch and barrier fields
+are *consequences of that early exit*, not independent FPGA failures.
+The runtime's `first_fault=0` independently confirms that the C
+scheduler never started. The previous P03.3b2 physical acceptance
+remains valid.
+
+The fixture's v1 ABI packs **two 512 KiB records** at
+`0x40000000`/`0x40080000`. Its header uses offsets `0x00/0x04`
+for the two 32-bit halves of `LTV3CTX1`, `0x08` version=1,
+`0x0C` header size=`0x1000`, `0x10` record size=`0x80000`,
+`0x14` logical ID (0 or 1), `0x18` flags=0, `0x1C` CURRENT
+bank=0, `0x2C` event0 count (core0=1, core1=0), and
+`0x30/0x34` event1/packet count=0. The generator and its
+model-backed Python fixture test agree on this layout. **The provided
+physical evidence does not identify which A53 load differed** from
+the expected header, so the precise cause remains undetermined.
+
+### New read-only A53 header snapshot
+
+On the next failing early header check, the updated probe reads **all
+eleven checked words of BOTH records** before returning failure,
+and writes an error-only 128-byte mailbox overlay:
+
+| Mailbox word(s) | Failure-only meaning |
+|---|---|
+| 0..6 | Unchanged P03.3b3 magic/version/fault metadata |
+| 7 | `0x48445233` (`HDR3`) |
+| 8 | Core0 mismatch bitmask (`bit i` selects offset `i`) |
+| 9 | Core1 mismatch bitmask |
+| 10..20 | Eleven A53-observed core0 header words |
+| 21..31 | Eleven A53-observed core1 header words |
+
+Offset order: `00, 04, 08, 0C, 10, 14, 18, 1C, 2C, 30, 34`.
+An independent verifier now emits errors in the form:
+
+```text
+P03_3B3_HEADER_CORE1_FAIL_MASK=0x00000020
+FAIL: P03.3b3 A53 DDR header core=1 offset=0x14
+  address=0x40080014 actual=0x00000011 expected=0x00000001
+FAIL: P03.3b3 early DDR-header preflight
+  result=0xDEAD0002 error=2 (no packet or page activity attempted)
+```
+
+The values above are **an illustrative synthetic regression**, NOT
+actual KV260 output. Real errors will be populated from live A53
+physical DDR reads. When both headers pass, the overlay is not written
+and the original 32-word PASS mailbox ABI is completely unchanged.
+Neither ABI validation nor PS cache maintenance is relaxed.
+
+### Added regressions
+
+`tests/test_p03_3b3_physical_probe.py` now checks every generated P02
+header field that the A53 uses, requires matching C offset
+constants, and verifies synthetic early header failures report the
+correct core, exact offset, physical address, actual/expected value,
+and do **not** misreport 0 packet words as genuine HLS failures.
+The existing host C syntax-check regression also compiles the added
+read-only header-capture logic.
+
+### Handoff
+
+Pull the current branch and rerun the focused regression, then build
+a **NEW isolated** P03.3b3 ELF with a fresh
+`P03_3B3_BUILD_DIR` (do not reuse the earlier built ELF, which cannot
+emit `HDR3`). No FPGA synthesis, route, or changes to the accepted
+FPD128 bitstream are required.
+
+If the KV260 again reports `B3_ERR_HEADER=2`, preserve the full
+mailbox and paste the new `verify.log`: it will give the first
+direct A53-observed evidence needed to distinguish an unexpected
+field from cache/PS DDR visibility or another cause. Do not guess
+that the packet-path RTL is broken on the basis of this early exit.
+
+**P03.3b3 remains OPEN and physically blocked at preflight** until
+the A53 header check and subsequent packet/paging verification pass.
+
+
+## 9. Root cause FOUND after second physical preflight attempt
+
+The user independently rebuilt and re-ran P03.3b3. On
+2026-10-11 the second run again completed PL programming, A53 download,
+execution, and the 128-byte DDR mailbox readback, but returned:
+
+```text
+result=0xDEAD0002 error=2 first_fault=0 phase=0
+FAIL: ... older probe build lacks raw-header diagnostics
+P03_3B3_VERIFY_EXIT=1
+P03_3B3_EVIDENCE_DIR=/tmp/v3_p03_3b3_header_diag_20261012T033107Z
+```
+
+**Corrected root cause:** The C preflight caller in
+`software/p03/p03_3b3_probe.c` was WRONG:
+
+```c
+/* OLD: incorrectly fails when header validation SUCCEEDS (return 0). */
+if (!validate_backing(NULL)) {
+    publish_failure(B3_ERR_HEADER);
+    halt_forever();
+}
+```
+
+`validate_backing()` follows the standard P03 callback convention:
+**0 means valid**, **-1 means failure**. Consequently, the older
+expression jumped to `B3_ERR_HEADER=2` precisely when the two header
+reads passed. The mismatch-snapshot `HDR3` marker was absent on the
+second physical run because the preflight function found **no
+mismatch** and did not generate the overlay; the caller then inverted
+its successful return. This directly explains the repeated error-2
+mailboxes with zero scheduler activity, without needing an AXI,
+DDR-cache or FPGA explanation. It is a C control-flow mistake
+introduced in P03.3b3.
+
+**Fixed:**
+
+```c
+if (validate_backing(NULL) != 0) {
+    publish_failure(B3_ERR_HEADER);
+    halt_forever();
+}
+```
+
+A new source-level regression explicitly forbids the inverted check.
+The standalone ELF also includes a deliberately retained
+`P03_3B3_HDR3_CAPTURE_V2` firmware identity. The **Vitis builder
+inspects the actual compiled ELF** for the marker using
+`strings -a`. The physical runner validates both that marker and
+that the five staged C sources match the current repository **before
+provisioning DDR or programming the KV260**, so an environment
+variable pointing at an older build directory produces a clear
+error instead of another ambiguous physical run.
+
+The verifier's formerly misleading message implying that the missing
+HDR3 marker proved an old ELF was in use was replaced with an
+explanation of the inverted success convention and the remaining
+build-freshness checks. This distinction is important: the second
+physical trace itself **does not prove** that an old ELF was used;
+a newly built ELF containing the inverted condition would produce
+the same signature.
+
+**Acceptance status:** Root cause of the premature error-2 rejection
+is fixed in source, but the revised executable has **not yet passed
+independent native tests, Vitis compilation, or physical execution**.
+The actual HLS packet/DDR page roundtrip remains untested on KV260.
+Do not merge or advance P03.3b3 until a physical mailbox PASS.
+
+### Fresh-build and physical repeat
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p03-autonomous-runtime
+git pull --ff-only origin agent/v3-p03-autonomous-runtime
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python -m pytest -q \
+  tests/test_p03_3b3_physical_probe.py \
+  tests/test_p03_3b2_physical_probe.py \
+  tests/test_p03_3b_hw_adapter.py \
+  tests/test_p03_3a_native_runtime.py
+
+# Fresh timestamped directory; the physical runner MUST use this EXACT path.
+export P03_3B3_BUILD_DIR="$PWD/vivado/build/p03_3b3_fixed_gate_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p03_3b3_probe.sh 2>&1 | tee /tmp/v3_p03_3b3_fixed_gate_build.log
+
+# Confirm the expected ELF identity exists, and the correct directory
+# is still exported in the SAME terminal before physical test.
+echo "P03_3B3_BUILD_DIR=$P03_3B3_BUILD_DIR"
+strings -a "$P03_3B3_BUILD_DIR/vitis_workspace/p03_3b3_probe.elf" |
+  grep -Fx 'P03_3B3_HDR3_CAPTURE_V2'
+
+# Reboot KV260 before test; keep hw_server active.
+export P03_3B3_EVIDENCE_DIR="/tmp/v3_p03_3b3_fixed_gate_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/run_p03_3b3_probe.sh "$P03_3B3_EVIDENCE_DIR" \
+    2>&1 | tee /tmp/v3_p03_3b3_fixed_gate_physical.log
+cat "$P03_3B3_EVIDENCE_DIR/verify.log"
+# Reboot KV260 afterward, including after any failure.
+```
+
+The runner will now print
+`P03_3B3_SELECTED_BUILD_DIR`,
+`P03_3B3_SELECTED_ELF`, and
+`P03_3B3_SELECTED_ELF_SHA256` and require:
+
+```text
+PASS: P03.3b3 selected A53 ELF contains current HDR3 firmware marker
+```
+
+before any hardware-side writes. Keep independent Vitis and board
+PASS requirements unchanged; do not fabricate successful packet
+results from the earlier preflight failure.
