@@ -27,9 +27,11 @@ verifier = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verifier)
 
 
-@pytest.fixture
-def prepared(tmp_path):
-    out = tmp_path / "physical_evidence"
+@pytest.fixture(scope="module")
+def prepared_seed(tmp_path_factory):
+    # P03 golden generation is expensive: only run once. Each test gets
+    # independent copied evidence so deliberate corruption cannot leak.
+    out = tmp_path_factory.mktemp("p05_1_physical") / "seed"
     proc = subprocess.run(
         ["bash", str(RUN), "prepare", str(out)],
         capture_output=True, text=True, timeout=120, cwd=ROOT,
@@ -40,6 +42,14 @@ def prepared(tmp_path):
     manifest = json.loads((out/"p05_artifacts/p05_manifest.json").read_text())
     assert golden["expected_packet_count_total"] == 30
     assert manifest["events"] == 35 and manifest["checkpoints"] == 35
+    return out, golden, manifest
+
+
+@pytest.fixture
+def prepared(tmp_path, prepared_seed):
+    seed, golden, manifest = prepared_seed
+    out = tmp_path / "physical_evidence"
+    shutil.copytree(seed, out)
     out_dir = out / "final_ddr"
     out_dir.mkdir()
     for k in range(5):
