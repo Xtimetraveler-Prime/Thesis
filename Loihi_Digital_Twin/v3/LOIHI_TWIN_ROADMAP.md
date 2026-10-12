@@ -431,8 +431,9 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     barriers for a five-over-three plan. This does **not** prove
     packet encoding, actual MMIO control or inference equivalence.
   - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress;
-    P03.3b1 and P03.3b2 independently accepted; P03.3b3 directed
-    packet/dirty-page physical gate implemented, awaiting verification.**
+    P03.3b1 and P03.3b2 independently accepted; P03.3b3 native and
+    Vitis build PASSED, initial physical run stopped at A53 DDR-header
+    preflight (B3_ERR_HEADER=2), awaiting targeted re-test.**
     Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
     transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
     shell. The adapter implements page-in/mutable-only page-out,
@@ -462,9 +463,18 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     resident event survival, three mutable dirty page-outs and
     three replacement page-ins. Vitis/XSA build, XSDB provisioning,
     128-byte mailbox verifier, native AXI packet regression, and
-    full hardware evidence scripts are committed but **not yet
-    independently tested**. Do not claim P03.3b3/P03.3b accepted
-    until physical PASS. See `docs/P03_3B_PHYSICAL_ADAPTER.md` and
+    full hardware evidence scripts have been independently built and
+    host-regression-tested. The initial KV260 run downloaded the ELF
+    and retrieved the 128-byte mailbox, but returned
+    `result=0xDEAD0002`, `error=2`, `first_fault=0` **before any
+    page/dispatch/packet operation**. This isolates the blocker to the
+    A53's two-record DDR header preflight, not the packet pipeline.
+    Updated preflight code captures both records' eleven checked
+    A53-observed fields and per-core mismatch bitmasks in an error-only
+    mailbox overlay; the verifier now reports exact physical addresses
+    and actual/expected words. These changes require a fresh ELF,
+    focused native regression and targeted physical retest.
+    Do not claim P03.3b3/P03.3b accepted until physical PASS. See `docs/P03_3B_PHYSICAL_ADAPTER.md` and
     `docs/P03_3B3_PACKET_PAGE_ROUNDTRIP.md`.
   - **P03.3c — Autonomous launch/results and failure coverage.**
     **Planned.** Connect deployment/input, timer/result schema,
