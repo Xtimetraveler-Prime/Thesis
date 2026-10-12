@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # P03.3b3 independent physical Cortex-A53 policy + adapter verification.
 # Program the accepted FPD128 SmartConnect shell, execute actual adapter code,
-# and preserve a new 64-byte mailbox + identity/log evidence bundle.
+# and preserve a new 128-byte mailbox + identity/log evidence bundle.
 set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 V3_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
@@ -116,7 +116,7 @@ echo "P03_3B3_VERIFY_EXIT=$VERIFY_EXIT"
 echo "P03_3B3_EVIDENCE_DIR=$OUT_DIR"
 echo 'IMPORTANT: reboot KV260 now; running Linux was replaced by standalone A53'
 if [[ "$VERIFY_EXIT" != 0 ]]; then
-    echo "FAIL: P03.3b3 physical Cortex-A53 runtime-adapter probe; evidence preserved"
+    echo "FAIL: P03.3b3 physical HLS packet/DDR/dirty-page roundtrip; evidence preserved"
     exit 5
 fi
-echo "PASS: P03.3b3 physical Cortex-A53 two-timestep runtime-adapter probe"
+echo "PASS: P03.3b3 physical Cortex-A53 two-core HLS packet/DDR/dirty-page roundtrip"
