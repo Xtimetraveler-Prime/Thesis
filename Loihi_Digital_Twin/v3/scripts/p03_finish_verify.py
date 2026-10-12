@@ -94,6 +94,20 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
     for name in ("pl_dispatch_lo","pl_page_lo","infer_ticks_lo"):
         if observed[name]==0:
             errors.append(f"{name} cannot be zero in a physical run")
+    # Independently compare the captured physical DDR records EVEN WHEN
+    # terminal mailbox checks fail. A WRITE_RESULT failure can occur after
+    # 35 correct HLS dispatches; diagnosing the five saved records is
+    # essential to distinguish corrupted neural state from bookkeeping.
+    spec=importlib.util.spec_from_file_location("p03_p02_golden",ORACLE)
+    assert spec is not None and spec.loader is not None
+    module=importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    verification=None
+    ddr_error=None
+    try:
+        verification=module.verify(fixture_dir,dump_dir)
+    except (OSError,ValueError,AssertionError) as error:
+        ddr_error=str(error)
     if errors:
         for e in errors:
             print("FAIL: P03 "+e,file=sys.stderr)
@@ -104,16 +118,47 @@ def verify(mailbox: Path, fixture_dir: Path, dump_dir: Path) -> bool:
             f"result=0x{observed['result']:08X}",
             file=sys.stderr,
         )
+        if observed["fault"] == 12 and observed["fault_phase"] == 17:
+            diag_names=(
+                "callback_context", "final_page_out", "mmio_read",
+                "mmio_id", "capabilities", "prior_runtime_fault",
+                "logical_dispatches", "routed_packets", "barriers",
+                "timesteps", "current_bank", "initial_page_ins",
+                "final_flush_count", "hw_dispatch_count",
+                "hw_page_operation_count", "hw_page_bytes",
+                "global_status", "page_pending_bytes", "quiescent",
+            )
+            mask=fields[61]
+            if mask and not (mask & ~((1 << len(diag_names))-1)):
+                matches=[name for bit,name in enumerate(diag_names)
+                         if mask & (1 << bit)]
+                print(
+                    f"P03_FINALIZE_DIAG_MASK=0x{mask:08X} "
+                    f"failed_checks={','.join(matches)} "
+                    f"first_actual=0x{fields[62]:08X}",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "P03_FINALIZE_DIAG=missing-or-legacy-ELF; "
+                    "the previous firmware did not capture a "
+                    "failure-only per-predicate mask.",
+                    file=sys.stderr,
+                )
+        if ddr_error is None:
+            print(
+                "P03_FINAL_DDR_COMPARISON=PASS "
+                "(five byte-exact golden records; mailbox still FAIL)",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "P03_FINAL_DDR_COMPARISON=FAIL "+ddr_error,
+                file=sys.stderr,
+            )
         return False
-
-    spec=importlib.util.spec_from_file_location("p03_p02_golden",ORACLE)
-    assert spec is not None and spec.loader is not None
-    module=importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    try:
-        verification=module.verify(fixture_dir,dump_dir)
-    except (OSError,ValueError,AssertionError) as error:
-        print("FAIL: P03 DDR normalized golden mismatch: "+str(error),
+    if ddr_error is not None:
+        print("FAIL: P03 DDR normalized golden mismatch: "+ddr_error,
               file=sys.stderr)
         return False
     print(
