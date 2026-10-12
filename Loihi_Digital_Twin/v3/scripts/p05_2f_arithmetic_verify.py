@@ -94,7 +94,7 @@ def verify(mailbox:Path, folder:Path)->bool:
                 raise ValueError("physical route count drift")
         states=read_vectors(golden,"P02B_EXPECT_STATE")
         packets=read_vectors(golden,"P02B_EXPECT_PACKETS")
-        from p05_2_composite_fixture import scheduler_prediction
+        from p05_2f_arithmetic_fixture import scheduler_prediction
         replay=scheduler_prediction(packets)
         if (replay!=gate["scheduler_model"] or
             gate["expected_packets"]!=replay["emitted_packets"] or
