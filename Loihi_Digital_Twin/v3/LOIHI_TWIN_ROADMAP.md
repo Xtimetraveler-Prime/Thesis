@@ -689,9 +689,13 @@ redesigning the inference engine.
 after user independently reported all regressions passing and
 inspected the real P03-derived 7-step manifest (35 inputs,
 35 dispatches, five core CRC identities).** A distinct P05.1
-Cortex-A53 source and isolated Vitis build flow are now prepared
-and await independent **native C11 tests and first Vitis build**.
-Nothing has been physically run under P05. The new
+Cortex-A53 source and isolated Vitis build flow were verified
+on the user's development machine: after correcting the
+`P05_DEPLOY_EVENT_DEPTH`/P03 hardware-depth source-guard mismatch
+with a compile-time equality assertion, **the new Vitis ELF build
+passed**, per user on 2026-10-12. Neither full P05 native regression
+results nor KV260 P05 physical execution is independently recorded
+as an acceptance gate in this update. The new
 `scripts/p05_deployment.py`, portable
 `software/p05/{include/p05_deployment.h,p05_deployment.c}`, and
 `tests/test_p05_1_deployment.py` implement/reject bounded
@@ -710,8 +714,18 @@ state/checkpoint CRCs. It builds a separate
 `scripts/build_p05_regression.sh`. New host C11 source
 guard: `tests/test_p05_1_runtime_source.py`.
 Instructions: `docs/P05_1_A53_REGRESSION_RUNNER.md`.
-**All new PS runtime code and the Vitis build are still
-pending independent tests; no board/RTL acceptance yet.**
+**A53 Vitis build was independently reported successful.**
+The first **physical P05.1 run is next**, using a dedicated
+preflight/physical entrypoint
+`scripts/run_p05_1_probe.sh` and P05R mailbox verifier
+`scripts/p05_1_verify.py`. The initial diagnostic profile
+uses frozen P03/P02 seven-timestep neuron inputs, but now
+requires 35 **on-board** state0 checkpoints at global barriers
+and five independently byte-exact final DDR records.
+Host-only mutation/DDR first-failure coverage is in
+`tests/test_p05_1_physical_probe.py`.
+See `docs/P05_1_PHYSICAL_PROBE.md`. **Not yet physically accepted;
+P05.1/2 not complete.**
 
 ### Deliverables
 
