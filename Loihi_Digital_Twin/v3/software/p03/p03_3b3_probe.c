@@ -75,21 +75,41 @@ static void halt_forever(void)
 {
     for (;;) __asm__ volatile("wfe");
 }
-static int correct_header(uintptr_t base, uint32_t core, uint32_t event0)
+/*
+ * P03.3b3 read-only header preflight: preserve every PS-observed field on
+ * error. The previous boolean short-circuited, hiding which core/offset
+ * failed. JTAG DDR readback alone cannot prove the A53 saw identical bytes.
+ *
+ * Error-only mailbox overlay (indices 7..31):
+ *   [7] = HDR3 marker; [8]/[9] = core0/core1 mismatch bitmasks;
+ *   [10..20] = core0 observed 11 words; [21..31] = core1 observed words.
+ * This overlay is NEVER written for a successful preflight.
+ */
+#define B3_HEADER_DIAG_MAGIC UINT32_C(0x48445233) /* HDR3 */
+#define B3_HEADER_FIELD_COUNT 11u
+static const uint32_t header_offsets[B3_HEADER_FIELD_COUNT] = {
+    0u, 4u, 8u, 12u, 16u, 20u, 24u, 28u, 44u, 48u, 52u
+};
+
+static uint32_t check_header(uintptr_t base, uint32_t core,
+                             uint32_t event0, uint32_t observed[11])
 {
+    uint32_t expected[B3_HEADER_FIELD_COUNT] = {
+        UINT32_C(0x3356544C), UINT32_C(0x31585443),
+        1u, UINT32_C(0x1000), UINT32_C(0x80000),
+        core, 0u, 0u, event0, 0u, 0u
+    };
+    uint32_t mismatches = 0u;
+    unsigned i;
+
     Xil_DCacheInvalidateRange((INTPTR)base, 0x80000);
     __asm__ volatile("dsb sy" ::: "memory");
-    return Xil_In32(base) == UINT32_C(0x3356544C) &&
-           Xil_In32(base+4) == UINT32_C(0x31585443) &&
-           Xil_In32(base+8) == 1u &&
-           Xil_In32(base+12) == 0x1000u &&
-           Xil_In32(base+16) == 0x80000u &&
-           Xil_In32(base+20) == core &&
-           Xil_In32(base+24) == 0u &&
-           Xil_In32(base+28) == 0u &&
-           Xil_In32(base+44) == event0 &&
-           Xil_In32(base+48) == 0u &&
-           Xil_In32(base+52) == 0u;
+    for (i = 0; i < B3_HEADER_FIELD_COUNT; ++i) {
+        observed[i] = Xil_In32(base + (uintptr_t)header_offsets[i]);
+        if (observed[i] != expected[i])
+            mismatches |= (UINT32_C(1) << i);
+    }
+    return mismatches;
 }
 static int validate_deployment(void *ctx)
 {
@@ -99,9 +119,28 @@ static int validate_deployment(void *ctx)
 }
 static int validate_backing(void *ctx)
 {
+    uint32_t first[11], second[11], bad0, bad1;
+    unsigned i;
     (void)ctx;
-    return (correct_header(P03_B3_RECORD0,0,1) &&
-            correct_header(P03_B3_RECORD1,1,0)) ? 0 : -1;
+
+    /* Read both records even when core0 fails, so a single failed
+     * physical run distinguishes a bad record from a visibility issue
+     * affecting the entire PS DDR aperture.
+     */
+    bad0 = check_header(P03_B3_RECORD0, 0, 1, first);
+    bad1 = check_header(P03_B3_RECORD1, 1, 0, second);
+    if (bad0 != 0u || bad1 != 0u) {
+        mailbox[7] = B3_HEADER_DIAG_MAGIC;
+        mailbox[8] = bad0;
+        mailbox[9] = bad1;
+        for (i = 0; i < B3_HEADER_FIELD_COUNT; ++i) {
+            mailbox[10u + i] = first[i];
+            mailbox[21u + i] = second[i];
+        }
+        flush_mailbox();
+        return -1;
+    }
+    return 0;
 }
 static int validate_resident_input(void *ctx)
 {
