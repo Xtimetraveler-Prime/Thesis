@@ -127,7 +127,7 @@ ELF="$WORKSPACE/p03_3b3_probe.elf"
 [[ -s "$ELF" ]] || { echo "ERROR: P03.3b3 ELF not produced" >&2; exit 3; }
 # Verify the complete Vitis process really emitted the current diagnostics.
 # This is an ELF content check, not merely a source-string grep.
-if ! strings -a "$ELF" | grep -Fxq 'P03_3B3_HDR3_CAPTURE_V2'; then
+if ! grep -aFq 'P03_3B3_HDR3_CAPTURE_V2' "$ELF"; then
     echo "ERROR: built ELF does NOT contain the HDR3 firmware diagnostic identity" >&2
     echo "ERROR: ensure the current p03_3b3_probe.c was imported and rebuilt" >&2
     exit 3
