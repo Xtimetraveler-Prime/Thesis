@@ -54,6 +54,11 @@ def test_runtime_guards_external_host_autonomy_and_state_observations():
         "result[R_RESULT]=P05_RESULT_OK;",
     ):
         assert required in c, required
+    # The deployment schema and FPGA hardware must agree on capacity.
+    # Preserve both the compiled ABI equality check and the actual
+    # dispatch-time limit; a substring-only source guard is insufficient.
+    assert "_Static_assert(P05_DEPLOY_EVENT_DEPTH == P03_HW_EVENT_DEPTH" in c
+    assert "if(count>=P05_DEPLOY_EVENT_DEPTH) return -1;" in c
     assert c.count("result[R_RESULT]=P05_RESULT_OK;")==1
     assert c.index("if(runtime.phase!=P03_RT_DONE") < (
         c.index("result[R_RESULT]=P05_RESULT_OK;")
