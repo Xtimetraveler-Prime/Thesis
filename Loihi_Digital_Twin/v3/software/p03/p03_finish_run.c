@@ -33,7 +33,7 @@
 
 /* Do not allow accidental launch of earlier zero-packet b3 probes. */
 static const volatile char run_build_id[] =
-    "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1";
+    "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2";
 
 enum {
     FAIL_WIDTH=1, FAIL_MANIFEST=2, FAIL_DDR=3, FAIL_ADAPTER=4,
