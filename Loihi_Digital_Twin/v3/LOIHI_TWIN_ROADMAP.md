@@ -492,9 +492,21 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     binary. The exact root of the counter anomaly remains
     **unconfirmed** until fresh physical evidence. See
     `docs/P03_4_PHYSICAL_ATTEMPT1.md`.
-    **Neither P03.4 nor P03.5 is physically accepted.** Do not start
-    P03.5 until P03.4 passes. Do not merge or call P03 complete
-    before independent two-run verification.
+    **P03.4 ACCEPTED from independent physical KV260 seven-step V2
+    verification on 2026-10-11 local / 2026-10-12 UTC.**
+    The five-core/three-slot A53 autonomous run completed 35 dispatches,
+    30 routed HLS packets, seven barriers, 35 page-ins and 35 page-outs,
+    and all five final 512 KiB DDR records matched the frozen P02/v2
+    Python oracle byte-exactly; trace fingerprint
+    `9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac`.
+    Measured `resident_deliveries=0`: this ring provides physical
+    nonresident routing evidence, not direct-to-resident packet delivery.
+    Acceptance: `docs/P03_4_ACCEPTANCE.md`.
+    **P03.5 is next, NOT YET accepted**: 100 timesteps / 500 dispatches
+    / 100 barriers, exact 100-step packet count and five final DDR
+    images, using the **same** V2 A53 ELF and accepted FPD128 bitstream.
+    Do not merge or call P03 complete until independent 100-step
+    physical verification and explicit user approval.
 
 ## Deliverables
 
