@@ -228,6 +228,7 @@ def test_semantic_mutation_even_if_crcs_recomputed(
         # The third entry is lower service rank than the second;
         # CRC recomputation must not bypass order verification.
         struct.pack_into("<I", payload, event_b + 2 * 16 + 4, 2)
+        struct.pack_into("<I", payload, event_b + 2 * 16 + 8, 12)
     elif entry == "bad_checkpoint":
         struct.pack_into("<I", payload, check_b + 8, 42)
     else:
@@ -274,3 +275,25 @@ def test_p03_fixture_interoperability_keeps_frozen_model_unchanged(
                 f"core{cid}_initial.bin").read_bytes() == (
                     p03 / f"core{cid}_initial.bin").read_bytes()
     assert struct.unpack_from("<I", (p03 / "p03_run_config.bin").read_bytes())[0] == 0x50334346
+
+
+def test_record_header_mismatch_rejected_by_producer(tmp_path):
+    spec_path = make_spec(tmp_path, 1, 2, "fast")
+    broken = bytearray((tmp_path / "context_2.bin").read_bytes())
+    struct.pack_into("<I", broken, 0x14, 1)  # claims wrong logical ID
+    (tmp_path / "context_2.bin").write_bytes(broken)
+    with pytest.raises(ValueError, match="record header/ID/stride invalid"):
+        mod.build(spec_path, tmp_path / "bad")
+
+
+def test_4097_external_events_rejected_before_artifact_write(tmp_path):
+    spec_path = make_spec(tmp_path, 1, 2, "fast")
+    spec = json.loads(spec_path.read_text())
+    spec["events"] = [
+        {"timestep": 0, "core": 2, "axon": 12}
+        for _ in range(4097)
+    ]
+    spec_path.write_text(json.dumps(spec), encoding="utf-8")
+    with pytest.raises(ValueError, match="event overflow"):
+        mod.build(spec_path, tmp_path / "overflow")
+    assert not (tmp_path / "overflow" / "p05_payload.bin").exists()
