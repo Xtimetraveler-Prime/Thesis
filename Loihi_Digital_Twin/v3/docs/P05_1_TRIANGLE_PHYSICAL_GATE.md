@@ -20,13 +20,13 @@ The second P05.1 model-derived test uses:
 | Physical resident slots | 3 (all logical cores remain resident) |
 | Physical engines | 1 |
 | Timesteps | 5 |
-| Compartment threshold | 2 (instead of frozen ring's 5) |
+| Compartment threshold | 4 (instead of frozen ring's 5) |
 | Synaptic weight | 3 |
 | Input stimulus | One external axon 10+core at each timestep |
 | Directed connectivity | 0→1, 1→2, 2→0 |
 | Expected dispatches | 15 |
-| Expected emitted and routed packets | 15, one per core/timestep |
-| **Expected direct resident packet deliveries** | **15** |
+| Expected emitted and routed packets | 12, three per timestep after initial integration |
+| **Expected direct resident packet deliveries** | **12** |
 | Barriers / state0 checkpoints | 5 barriers; 15 independent model-derived post-dispatch/pre-swap state CRC32s |
 | Initial page-ins | 3 |
 | Replacement page-ins / mutable evictions | 0 / 0 |
@@ -86,7 +86,7 @@ cat "$P05_1_TRIANGLE/triangle_gate.json"
 cat "$P05_1_TRIANGLE/p05_artifacts/p05_manifest.json"
 ```
 
-The gate file must show 15 model spikes, 15 resident destinations,
+The gate file must show 12 model spikes, 12 resident destinations,
 15 checkpoints, three core IDs and six page commands. The offline
 script checks the initial record CRC/SHA against all three
 model-generated contexts, and the P05G header/payload ABI.
@@ -141,7 +141,7 @@ Strict expected output **if** hardware matches the independently
 generated model:
 
 ```text
-PASS: P05.1 3-core resident triangle physical golden timesteps=5 dispatches=15 packets=15 barriers=5 events=15 checkpoints=15 resident_deliveries=15 initial_ins=3 replacement_ins=0 final_outs=3
+PASS: P05.1 3-core resident triangle physical golden timesteps=5 dispatches=15 packets=12 barriers=5 events=15 checkpoints=15 resident_deliveries=12 initial_ins=3 replacement_ins=0 final_outs=3
 PASS: P05.1 three 512KiB final DDR records byte-exact to independent 3-core Python LogicalChip oracle
 P05_1_TRIANGLE_VERIFY_EXIT=0
 PASS: P05.1 SECOND independent 3-core resident triangle 15-checkpoint physical gate
@@ -159,7 +159,7 @@ halted Linux.**
 
 ## Closeout after independent second physical PASS
 
-Record the actual 15 packets/resident deliveries,
+Record the actual 12 packets/resident deliveries,
 15 checkpoints, five barriers, three final raw DDR SHA256s,
 mailbox/ELF/XSA identities and evidence location. Then
 review failure-injection evidence and whether an additional
