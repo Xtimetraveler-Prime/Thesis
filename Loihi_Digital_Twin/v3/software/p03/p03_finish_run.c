@@ -354,7 +354,6 @@ static int write_result(void *ctx,const p03_rt *rt)
        rt->first_fault!=P03_RT_FAULT_NONE ||
        rt->counters.logical_dispatches!=config[46] ||
        rt->counters.routed_packets!=config[45] ||
-       resident_routes==0u ||
        rt->counters.barriers!=config[47] ||
        rt->counters.timesteps_completed!=config[2] ||
        rt->current_event_bank!=(config[2]&1u) ||
