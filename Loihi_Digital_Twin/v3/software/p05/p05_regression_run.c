@@ -20,6 +20,13 @@
 #include "p03_mmio.h"
 #include "p05_deployment.h"
 
+/* P05 input-vector validation and the accepted P03 physical adapter
+ * must agree on the same event-bank capacity. Catch ABI drift at build
+ * time rather than allowing a descriptor the FPGA cannot accommodate.
+ */
+_Static_assert(P05_DEPLOY_EVENT_DEPTH == P03_HW_EVENT_DEPTH,
+               "P05 deployment and P03 FPGA event-bank depths disagree");
+
 #define P05_RESULT_MAGIC UINT32_C(0x52353050) /* bytes "P05R" */
 #define P05_RESULT_OK UINT32_C(0x600D600D)
 #define P05_RESULT_FAIL UINT32_C(0xDEAD0000)
@@ -319,7 +326,7 @@ static int inject_and_dispatch(void *ctx,uint8_t id,uint8_t slot,
         const volatile uint8_t *row=event_row(event_cursor);
         uint32_t t=little32(row), target=little32(row+4u);
         if(t!=step || target!=id) break;
-        if(count>=P03_HW_EVENT_DEPTH) return -1;
+        if(count>=P05_DEPLOY_EVENT_DEPTH) return -1;
         words[0]=little32(row+8u);
         if(p03_hw_debug_word(&hw,slot,
             bank?P03_HW_EVENT1_DEBUG_BANK:P03_HW_EVENT0_DEBUG_BANK,
