@@ -204,9 +204,9 @@ def test_vitis_and_board_single_launch_guards():
         assert source in vitis
         assert source in r
     assert "p03_finish_fixture.py" in b
-    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1" in b
-    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1" in c
-    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V1" in r
+    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2" in b
+    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2" in c
+    assert "P03_AUTONOMOUS_P02_GOLDEN_7_OR_100_V2" in r
     assert "p03_hpm0_data_width_bits=128" in r
     assert "p03_finish_xsdb_prepare.tcl" in r
     assert "p03_finish_xsdb_run.tcl" in r
