@@ -6,7 +6,7 @@ LogicalChip and P02 DDR image/oracle functions. Frozen P02/P03 source and
 goldens are NEVER modified. Intended second independent KV260 profile
 using the SAME P05 A53 ELF and accepted FPD128 PL shell.
 
-Threshold=2, weight=3, one external axon/core/step: spike every dispatch.
+Threshold=4, weight=3, one external axon/core/step: spike every dispatch.
 Routes 0->1,1->2,2->0. All three destinations remain resident (no
 paging replacements), so this specifically exercises direct-resident
 packet routing, absent from P03/first P05 physical workloads.
@@ -32,7 +32,7 @@ PRODUCER = ROOT / "scripts/p05_deployment.py"
 STEPS = 5
 CORES = (0, 1, 2)
 SLOTS = 3
-PROFILE = "p05-1-three-core-resident-triangle-threshold2-v1"
+PROFILE = "p05-1-three-core-resident-triangle-threshold4-v1"
 
 
 def oracle_module():
@@ -56,7 +56,7 @@ def oracle_module():
         return oracle.LogicalCoreConfig(
             core_id=core_id,
             compartments=(oracle.CompartmentConfig(
-                current_decay=4096, voltage_decay=0, threshold=2,
+                current_decay=4096, voltage_decay=0, threshold=4,
             ),),
             input_axons=(oracle.InputAxonBinding(10 + core_id, 0),),
             synapse_templates=(oracle.SynapseTemplate(
@@ -82,7 +82,7 @@ def make(root: Path) -> dict:
         STEPS,list(CORES),STEPS * len(CORES)
     ):
         raise ValueError("independent triangle model did not select 3 x 5")
-    if model["expected_packet_count_total"] != STEPS * len(CORES):
+    if model["expected_packet_count_total"] != (STEPS-1) * len(CORES):
         raise ValueError("triangle must emit exactly one packet per dispatch")
     cfg = a.make_workload()
     image = a.export_paged_hardware_image(
@@ -151,7 +151,7 @@ def make(root: Path) -> dict:
     (root/"p05_mailbox_zero.bin").write_bytes(bytes(256))
     ledger = {
         "profile":PROFILE,
-        "neural_parameters":{"threshold":2,"synaptic_weight":3,
+        "neural_parameters":{"threshold":4,"synaptic_weight":3,
                              "current_decay":4096,"voltage_decay":0},
         "topology":{"0":1,"1":2,"2":0},
         "logical_cores":list(CORES),
@@ -161,7 +161,7 @@ def make(root: Path) -> dict:
         "expected_barriers":STEPS,
         "expected_events":len(events),
         "expected_checkpoints":len(checkpoints),
-        "expected_resident_deliveries":15,
+        "expected_resident_deliveries":12,
         "expected_initial_page_ins":3,
         "expected_replacement_page_ins":0,
         "expected_runtime_page_outs":0,
