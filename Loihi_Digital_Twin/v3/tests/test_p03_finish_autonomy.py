@@ -127,7 +127,7 @@ def test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed(tmp_path):
     assert good.returncode==0,good.stdout+good.stderr
     assert "byte-exact" in good.stdout
     for index,value in [(2,0xDEAD0002),(7,6),(14,34),(15,29),
-                        (16,6),(19,31),(21,2),(37,0),(38,0),(45,0)]:
+                        (16,6),(19,31),(21,2),(37,0xFFFFFFFF),(38,0),(45,0)]:
         data=list(struct.unpack("<64I",original))
         data[index]=value
         failed=check(tmp_path,golden,struct.pack("<64I",*data))
@@ -172,7 +172,7 @@ def test_vitis_and_board_single_launch_guards():
     assert "p03_rt_execute(&runtime,&ops,&bridge)" in c
     assert "ops.dispatch=inject_external_and_dispatch" in c
     assert "ops.drain_route=observe_and_drain" in c
-    assert "resident_routes==0u" in c
+    assert "++resident_routes;" in c
     assert "M_RESIDENT_ROUTES" in c
     assert "p03_hw_page(adapter" in c
     assert "p03_hw_quiescent(adapter)" in c
