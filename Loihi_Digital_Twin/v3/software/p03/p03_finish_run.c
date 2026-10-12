@@ -80,6 +80,18 @@ static uint32_t flush_outs;
 static uint64_t last_packet;
 static uint32_t resident_routes;
 static uint32_t first_error;
+/* Error-only word[61:62] overlay. PASS retains last real HLS packet.
+ * bit 0: bad callback cookie, 1: flush page failed, 2: MMIO read failed,
+ * 3..18: individual final acceptance predicates (documented below).
+ */
+static uint32_t final_diag_mask;
+static uint32_t final_diag_first_actual;
+static void final_bad(uint32_t bit, uint32_t actual)
+{
+    if (final_diag_mask == 0u)
+        final_diag_first_actual = actual;
+    final_diag_mask |= UINT32_C(1) << bit;
+}
 
 static void fence(void) { __asm__ volatile("dsb sy" ::: "memory"); }
 static void flush_result(void)
@@ -155,6 +167,14 @@ static void report_error(uint32_t code)
 {
     if (!first_error) first_error=code;
     snapshot(&runtime);
+    /* Error-only overlay after snapshot: snapshot normally places the
+     * last HLS packet in these two words. Only WRITE_RESULT failures
+     * repurpose them; all normal DONE ABI words remain unchanged.
+     */
+    if (runtime.fault_phase == P03_RT_WRITE_RESULT) {
+        result[M_LAST_PACKET_LO] = final_diag_mask;
+        result[M_LAST_PACKET_HI] = final_diag_first_actual;
+    }
     result[M_RESULT]=RUN_FAIL | first_error;
     result[M_ERROR]=first_error;
     flush_result();
@@ -297,7 +317,10 @@ static int write_result(void *ctx,const p03_rt *rt)
     uint32_t i, id,cap;
     uint32_t addr;
     uint32_t readbacks[7]={0};
-    if (adapter!=&hw) return -1;
+    if (adapter!=&hw) {
+        final_bad(0, (uint32_t)(uintptr_t)adapter);
+        return -1;
+    }
     /* Complete the authoritative DDR backing state: eviction policy does
      * not normally save the still-resident final three contexts.
      * Explicit finalization is mandatory for byte-exact P02/v2 comparison.
@@ -306,8 +329,10 @@ static int write_result(void *ctx,const p03_rt *rt)
         if(rt->resident[i]!=P03_RT_EMPTY_SLOT && rt->dirty[i]) {
             uint64_t cycles=0;
             if(p03_hw_page(adapter,(uint8_t)rt->resident[i],
-                           (uint8_t)i,1,1,&cycles)!=P03_HW_OK)
+                           (uint8_t)i,1,1,&cycles)!=P03_HW_OK) {
+                final_bad(1, (uint32_t)adapter->last_error);
                 return -1;
+            }
             ++flush_outs;
         }
     }
@@ -319,8 +344,10 @@ static int write_result(void *ctx,const p03_rt *rt)
        adapter->io.read32(adapter->cookie,P03_REG_GLOBAL_STATUS,&readbacks[3]) ||
        adapter->io.read32(adapter->cookie,P03_REG_PAGE_PENDING_BYTES,&readbacks[4]) ||
        adapter->io.read32(adapter->cookie,P03_REG_PAGE_READ_BURSTS,&readbacks[5]) ||
-       adapter->io.read32(adapter->cookie,P03_REG_PAGE_WRITE_BURSTS,&readbacks[6]))
+       adapter->io.read32(adapter->cookie,P03_REG_PAGE_WRITE_BURSTS,&readbacks[6])) {
+        final_bad(2, (uint32_t)adapter->last_error);
         return -1;
+    }
     result[M_MMIO_ID]=id;
     result[M_CAPS]=cap;
     result[M_PAGE_COMPLETED]=readbacks[0];
@@ -350,22 +377,44 @@ static int write_result(void *ctx,const p03_rt *rt)
     result[M_CNTFRQ_HZ]=read_frequency();
     result[M_RESIDENT_ROUTES]=resident_routes;
 
-    if(id!=P03_MMIO_ID_VALUE || cap!=UINT32_C(0x0001031F) ||
-       rt->first_fault!=P03_RT_FAULT_NONE ||
-       rt->counters.logical_dispatches!=config[46] ||
-       rt->counters.routed_packets!=config[45] ||
-       rt->counters.barriers!=config[47] ||
-       rt->counters.timesteps_completed!=config[2] ||
-       rt->current_event_bank!=(config[2]&1u) ||
-       rt->counters.initial_page_ins!=3u ||
-       flush_outs!=3u ||
-       readbacks[1]!=config[46] ||
-       readbacks[0]!=(rt->counters.initial_page_ins +
-                      rt->counters.page_ins +
-                      rt->counters.page_outs + flush_outs) ||
-       readbacks[2]!=P03_HW_MUTABLE_BYTES ||
-       readbacks[3]!=0 || readbacks[4]!=0 ||
-       p03_hw_quiescent(adapter)!=P03_HW_OK)
+    /* Evaluate each final predicate independently. The original single
+     * OR chain returned an undifferentiated -1 (fault=12, phase=17),
+     * making an implausible flush count indistinguishable from a failed
+     * MMIO status read or final quiescence. No predicate is relaxed.
+     */
+    if (id != P03_MMIO_ID_VALUE) final_bad(3,id);
+    if (cap != UINT32_C(0x0001031F)) final_bad(4,cap);
+    if (rt->first_fault != P03_RT_FAULT_NONE)
+        final_bad(5,(uint32_t)rt->first_fault);
+    if (rt->counters.logical_dispatches != config[46])
+        final_bad(6,rt->counters.logical_dispatches);
+    if (rt->counters.routed_packets != config[45])
+        final_bad(7,rt->counters.routed_packets);
+    if (rt->counters.barriers != config[47])
+        final_bad(8,rt->counters.barriers);
+    if (rt->counters.timesteps_completed != config[2])
+        final_bad(9,rt->counters.timesteps_completed);
+    if (rt->current_event_bank != (config[2] & 1u))
+        final_bad(10,rt->current_event_bank);
+    if (rt->counters.initial_page_ins != 3u)
+        final_bad(11,rt->counters.initial_page_ins);
+    if (flush_outs != 3u)
+        final_bad(12,flush_outs);
+    if (readbacks[1] != config[46])
+        final_bad(13,readbacks[1]);
+    if (readbacks[0] != (rt->counters.initial_page_ins +
+                        rt->counters.page_ins +
+                        rt->counters.page_outs + flush_outs))
+        final_bad(14,readbacks[0]);
+    if (readbacks[2] != P03_HW_MUTABLE_BYTES)
+        final_bad(15,readbacks[2]);
+    if (readbacks[3] != 0u)
+        final_bad(16,readbacks[3]);
+    if (readbacks[4] != 0u)
+        final_bad(17,readbacks[4]);
+    if (p03_hw_quiescent(adapter) != P03_HW_OK)
+        final_bad(18,(uint32_t)adapter->last_error);
+    if (final_diag_mask != 0u)
         return -1;
     /* Do NOT publish terminal PASS inside WRITE_RESULT. P03.3a only
      * transitions to DONE after this callback returns successfully.
