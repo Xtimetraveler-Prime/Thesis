@@ -1,11 +1,21 @@
 # P05.2d — Two-route packet fanout and NEXT-bank aggregation
 
-**Status:** Implemented on `agent/v3-p05-board-regression`;
-**independent host regressions and KV260 physical acceptance PENDING**.
-P05.2a wrong-expected-state detection, P05.2b fast/no-checkpoint
-equivalence and P05.2c permuted service-order invariance
-were already physically accepted. No new C, Vitis, RTL,
-Vivado XSA/bitstream or native P03 source changes here.
+**Status:** **PHYSICAL ACCEPTED** from user's independent
+KV260 `verify.log` on 2026-10-12: 15 dispatches,
+**24 real packets and 24 direct resident deliveries**,
+15/15 device-observed checkpoints and all three final
+512KiB DDR records byte-exact to the new Python fanout
+oracle. Full acceptance ledger:
+`docs/P05_2D_FANOUT_ACCEPTANCE.md`.
+Remaining instructions below preserve the original
+pre-acceptance test procedure, including expected markers
+that have since been observed.
+P05.2a first-error, P05.2b fast-mode and P05.2c
+service-order cases were already physically accepted.
+Next combined gate:
+`docs/P05_2_COMPOSITE_GATE.md`.
+The existing P03/P05 C runtime and FPD128 bitstream
+remain unchanged.
 
 ## Architectural question
 
