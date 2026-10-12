@@ -120,14 +120,14 @@ XSDB_URL="${P05_2F_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 HW_URL="${P05_2F_HW_SERVER_URL:-localhost:3121}"
 MAX_SECONDS="${P05_2F_RUN_MAX_SECONDS:-600}"
 {
-    echo "phase=P05.2f independent 5-over-3 mixed-threshold/fanout/reordered/dirty-paging golden"
+    echo "phase=P05.2f independent 5-over-3 signed-saturation/decay/refractory/reordered-DDR-paging golden"
     echo "git_commit=$(git rev-parse HEAD)"
     for file in "$XSA" "$BIT" "$LTX" "$ELF"; do
         sha256sum "$file"
     done
 } | tee "$OUT/physical_identity.txt"
 cat <<'EOF'
-P05.2f MULTI-TARGET PHYSICAL GATE — FANOUT + DIRTY PAGING + REORDER
+P05.2f PHYSICAL GATE — SIGNED 24-BIT SATURATION + DECAY + REFRACTORY + DIRTY PAGING
   Requires rebooted KV260 with DDR initialized and accessible JTAG/hw_server.
   This HALTS Linux and OVERWRITES project DDR 0x40000000..0x43FFFFFF.
   Uses new P05 A53 ELF, same accepted P03.2c FPD128 bitstream.
