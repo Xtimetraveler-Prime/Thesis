@@ -67,7 +67,7 @@ fi
     echo "ERROR: reboot KV260 first; then set P05_2_CONFIRM_KV260_DDR_OVERWRITE=YES" >&2; exit 2;
 }
 [[ -s "$OUT/preflight_identity.txt" && -s "$OUT/p05_2_fanout_gate.json" ]] || {
-    echo "ERROR: prepare the triangle offline first" >&2; exit 2;
+    echo "ERROR: prepare the fanout oracle offline first" >&2; exit 2;
 }
 [[ ! -e "$OUT/p05_a53_result.bin" && ! -e "$OUT/verify.log" ]] || {
     echo "ERROR: evidence path was already run; never overwrite evidence" >&2; exit 2;
