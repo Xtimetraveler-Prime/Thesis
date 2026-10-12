@@ -54,6 +54,10 @@ for cid in range(5):
     final=(gold/f"core{cid}_expected.bin").read_bytes()
     assert len(final)==0x80000
     assert hashlib.sha256(final).hexdigest()==gate["oracle_final_record_sha256"][str(cid)]
+    physical=(root/"composite_physical_golden"/f"core{cid}_expected.bin").read_bytes()
+    assert len(physical)==0x80000
+    assert hashlib.sha256(physical).hexdigest()==gate["physical_route_order_final_record_sha256"][str(cid)]
+assert hashlib.sha256((root/"p05_2_packet_layout_ledger.json").read_bytes()).hexdigest()==gate["physical_packet_layout_proof_sha256"]
 assert (root/"p05_mailbox_zero.bin").read_bytes()==bytes(256)
 print("PASS: P05.2e host-only five-core dual-fanout, dirty paging, mixed-residency and 40 state checkpoints")
 PY
@@ -63,6 +67,7 @@ PY
       echo "profile=p05-2e-five-over-three-reordered-fanout-paging-v1"
       for name in p05_2_composite_gate.json p05_2_composite_spec.json \
           composite_golden/manifest.json \
+          composite_physical_golden/manifest.json p05_2_packet_layout_ledger.json \
           p05_artifacts/p05_header.bin p05_artifacts/p05_payload.bin \
           p05_artifacts/p05_manifest.json; do
           sha256sum "$OUT/$name"
@@ -70,7 +75,8 @@ PY
       for core in 0 1 2 3 4; do
           sha256sum "$OUT/p05_artifacts/core${core}_initial.bin" \
                     "$OUT/composite_golden/core${core}_initial.bin" \
-                    "$OUT/composite_golden/core${core}_expected.bin"
+                    "$OUT/composite_golden/core${core}_expected.bin" \
+                    "$OUT/composite_physical_golden/core${core}_expected.bin"
       done
     } | tee "$OUT/preflight_identity.txt"
     echo "P05_2_COMPOSITE_DIR=$OUT"
