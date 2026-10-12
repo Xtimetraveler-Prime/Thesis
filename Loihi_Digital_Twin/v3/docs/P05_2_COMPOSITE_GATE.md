@@ -1,5 +1,15 @@
 # P05.2e — Combined physical five-over-three regression (pending board)
 
+> **Subsequent independent verification (2026-10-12):** The user
+> completed the non-destructive retained-KV260-evidence recheck and
+> reported `P05_2E_RECHECK_EXIT=0`: all five complete DDR records,
+> 40 state checkpoints, 48 packets (24 resident/24 nonresident), and
+> original evidence preservation PASS. See
+> [P05.2e physical recheck acceptance](P05_2E_RECHECK_ACCEPTANCE.md).
+> This document retains the original first-run FAIL and pending-recheck
+> instructions **as historical incident context**, not current status.
+> Reproduced native pytest totals were not included in that user output.
+>
 **Status:** First actual KV260 run produced **A53 terminal
 success `0x600D600D`**, but the original independent
 whole-DDR comparator **FAILED**:
