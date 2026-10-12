@@ -1,10 +1,22 @@
 # P05.2e — Combined physical five-over-three regression (pending board)
 
-**Status:** Implementation committed to
-`agent/v3-p05-board-regression`; independent native Pytest
-and new KV260 physical execution **PENDING**. P05.2d's
-independently reported two-route physical fanout PASS is now
-recorded in `docs/P05_2D_FANOUT_ACCEPTANCE.md`.
+**Status:** First actual KV260 run produced **A53 terminal
+success `0x600D600D`**, but the original independent
+whole-DDR comparator **FAILED**:
+`core3 packet bank offset 0x64000 actual=0x04
+old expected=0x00`.
+This gate remains **NOT ACCEPTED** until a strict
+recheck of the original retained actual DDR records.
+Source-level cause is normalized Loihi sorted
+destination trace [0,4] vs packed FPGA
+output-route descriptor order [4,0].
+A separate immutable physical-memory golden and a
+**NO NEW BOARD RUN** recheck tool have been committed:
+`docs/P05_2E_PACKET_ORDER_INCIDENT.md`.
+Run that non-destructive recheck **first**; only
+return to board if another non-ordering mismatch
+is found. P05.2d physical fanout PASS remains accepted:
+`docs/P05_2D_FANOUT_ACCEPTANCE.md`.
 
 **Goal:** One deliberately designed hardware test covers
 several previously separate architectural gaps with **one**
@@ -112,6 +124,21 @@ backpressure and overflow recovery remain
 unverified**. This composite also covers only one
 specific core permutation over three slots, not
 every legal scheduler order.
+
+## Important: reverify ORIGINAL captured physical evidence first
+
+For the user-confirmed first-run directory,
+`/tmp/v3_p05_2_composite_20261012T190000Z`,
+retain `verify.log` (the original FAIL) and execute
+the new `scripts/recheck_p05_2_composite_evidence.py`
+according to `docs/P05_2E_PACKET_ORDER_INCIDENT.md`.
+This creates only a new derived route-order golden
+and reports a complete DDR recheck for all five
+originally captured physical DDR images. It does
+**not** reprogram KV260 or change the A53/PL
+model. If this recheck fails on any other byte,
+preserve both logs and debug that discrepancy;
+do not relax the comparator.
 
 ## First independent native checkpoint — must PASS
 
