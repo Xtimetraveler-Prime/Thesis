@@ -91,6 +91,7 @@ def generate(output: Path) -> None:
 #define P03_B3_META1 UINT64_C(0x{info[1]['metadata']:016X})
 #define P03_B3_CONFIG0 UINT32_C(0x{info[0]['config0']:08X})
 #define P03_B3_CONFIG1 UINT32_C(0x{info[1]['config0']:08X})
+#define P03_B3_EXPECT_PACKET0 UINT64_C(0x{packet(1,11,1):016X})
 #define P03_B3_EXPECT_PACKET1 UINT64_C(0x{packet(0,20,2):016X})
 #define P03_B3_EXPECT_EVENT1_CORE1 UINT32_C(11)
 #define P03_B3_EXPECT_EVENT0_CORE0 UINT32_C(20)
