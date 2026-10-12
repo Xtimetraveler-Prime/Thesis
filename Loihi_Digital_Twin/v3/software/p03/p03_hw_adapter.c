@@ -175,7 +175,7 @@ int p03_hw_page(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
     if (page_out &&
         hw->io.invalidate_range(hw->cookie, base, (uint32_t)P03_HW_RECORD_BYTES))
         return reject(hw, P03_HW_CACHE_ERROR);
-    hw->io.barrier();
+    hw->io.barrier(hw->cookie);
     config = ((uint32_t)slot << P03_PAGE_CONFIG_SLOT_SHIFT) |
              (page_out ? P03_PAGE_CONFIG_PAGE_OUT : 0u) |
              (mutable_only ? P03_PAGE_CONFIG_MUTABLE_ONLY : 0u);
@@ -183,7 +183,7 @@ int p03_hw_page(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
         write_reg(hw, P03_REG_PAGE_BASE_LO, (uint32_t)base) ||
         write_reg(hw, P03_REG_PAGE_BASE_HI, (uint32_t)(base >> 32)))
         return hw->last_error;
-    hw->io.barrier();
+    hw->io.barrier(hw->cookie);
     if (write_reg(hw, P03_REG_PAGE_COMMAND, P03_CMD_START) ||
         wait_done(hw, P03_REG_PAGE_STATUS, UINT32_C(0xFC), NULL))
         return hw->last_error;
@@ -193,7 +193,7 @@ int p03_hw_page(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
     if (bytes != expected || pending != 0)
         return reject(hw, P03_HW_PROTOCOL);
     if (page_out) {
-        hw->io.barrier();
+        hw->io.barrier(hw->cookie);
         if (hw->io.invalidate_range(hw->cookie, base,
                                     (uint32_t)P03_HW_RECORD_BYTES))
             return reject(hw, P03_HW_CACHE_ERROR);
@@ -236,7 +236,7 @@ int p03_hw_debug_word(p03_hw_adapter *hw, uint8_t slot, uint8_t bank,
     if (write_reg(hw, P03_REG_DEBUG_CONFIG, config) ||
         write_reg(hw, P03_REG_DEBUG_ADDR, index))
         return hw->last_error;
-    hw->io.barrier();
+    hw->io.barrier(hw->cookie);
     if (write_reg(hw, P03_REG_DEBUG_COMMAND, P03_CMD_START) ||
         wait_done(hw, P03_REG_DEBUG_STATUS, UINT32_C(0x18), &status))
         return hw->last_error;
@@ -272,7 +272,7 @@ int p03_hw_dispatch(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
         write_reg(hw, P03_REG_DISPATCH_META_HI, (uint32_t)(metadata >> 32)) ||
         write_reg(hw, P03_REG_DISPATCH_TIMESTEP, timestep))
         return hw->last_error;
-    hw->io.barrier();
+    hw->io.barrier(hw->cookie);
     if (write_reg(hw, P03_REG_DISPATCH_COMMAND, P03_CMD_START) ||
         wait_done(hw, P03_REG_DISPATCH_STATUS, UINT32_C(0x7C), &status))
         return hw->last_error;
@@ -362,7 +362,7 @@ int p03_hw_route_word(p03_hw_adapter *hw, uint8_t source_id,
             return reject(hw, P03_HW_CACHE_ERROR);
         if (hw->io.clean_range(hw->cookie, ddr_addr, 4u))
             return reject(hw, P03_HW_CACHE_ERROR);
-        hw->io.barrier();
+        hw->io.barrier(hw->cookie);
     }
     hw->event_counts[dest][next_bank] = (uint16_t)(count + 1u);
     return P03_HW_OK;
