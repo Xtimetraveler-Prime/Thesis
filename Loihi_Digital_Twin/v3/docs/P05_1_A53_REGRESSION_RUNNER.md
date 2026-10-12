@@ -1,12 +1,18 @@
 # P05.1 — New A53 regression application (implementation checkpoint)
 
 **Branch:** `agent/v3-p05-board-regression`  
-**Status:** New standalone P05.1 A53 Vitis ELF build independently
-reported **successful** by the user (2026-10-12). P05 physical KV260
-execution is **not yet accepted**; new provisioning/verification scripts
-are ready for independent host rehearsal and first physical run.
-See `docs/P05_1_PHYSICAL_PROBE.md`.
-The accepted P03 golden executable and RTL remain unmodified;
+**Status:** **P05.1 functional subphase COMPLETE (2026-10-12).**
+The user's independent seven-step five-core and five-step
+three-core triangle physical runs passed a combined **50 real
+model-derived checkpoints**, validated both nonresident and
+resident packet-routing paths, and produced respectively five
+and three complete final DDR records byte-exact to independent
+Python oracles. See `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`
+and `docs/P05_1_TRIANGLE_ACCEPTANCE.md`.
+The remainder of this document preserves the historical
+implementation/verification instructions. Early first-failure
+negative probes and fast-mode equivalence remain P05.2 work.
+The accepted P03 executable and RTL remain unchanged;
 `main` remains untouched.
 
 ## What changed since the binary deployment contract checkpoint
