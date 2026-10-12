@@ -190,6 +190,9 @@ def test_vitis_and_board_single_launch_guards():
     assert "M_RESIDENT_ROUTES" in c
     assert "p03_hw_page(adapter" in c
     assert "p03_hw_quiescent(adapter)" in c
+    assert "if(runtime.phase!=P03_RT_DONE" in c
+    assert c.count("result[M_RESULT]=RUN_PASS;")==1
+    assert c.index("if(runtime.phase!=P03_RT_DONE") < c.index("result[M_RESULT]=RUN_PASS;")
     assert "if(validate_manifest()!=0)" in c
     assert "if(check_records(NULL)!=0)" in c
     assert "CNTFRQ" not in c or "cntfrq_el0" in c
