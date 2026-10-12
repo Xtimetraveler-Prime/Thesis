@@ -29,8 +29,8 @@ assert w[22]==zlib.crc32(payload)
 assert w[23]==zlib.crc32(raw[:92]+bytes(4)+raw[96:])
 assert info["header_sha256"]==hashlib.sha256(raw).hexdigest()
 assert info["payload_sha256"]==hashlib.sha256(payload).hexdigest()
-assert gate["expected_resident_deliveries"]==15
-assert gate["expected_packets"]==15
+assert gate["expected_resident_deliveries"]==12
+assert gate["expected_packets"]==12
 assert gate["expected_replacement_page_ins"]==0
 assert gate["expected_final_page_outs"]==3
 for cid in range(3):
@@ -39,12 +39,12 @@ for cid in range(3):
     assert image==(g/f"core{cid}_initial.bin").read_bytes()
     assert info["record_sha256"][str(cid)]==hashlib.sha256(image).hexdigest()
 assert (root/"p05_mailbox_zero.bin").read_bytes()==bytes(256)
-print("PASS: P05.1 distinct triangle offline neural model and P05G binary preflight (15 real resident-delivery predictions)")
+print("PASS: P05.1 distinct triangle offline neural model and P05G binary preflight (12 real resident-delivery predictions)")
 PY
     {
       echo "status=host-only; NO physical FPGA acceptance"
       echo "branch=agent/v3-p05-board-regression"
-      echo "profile=p05-1-three-core-resident-triangle-threshold2-v1"
+      echo "profile=p05-1-three-core-resident-triangle-threshold4-v1"
       for name in triangle_gate.json triangle_golden/manifest.json \
           p05_artifacts/p05_header.bin p05_artifacts/p05_payload.bin \
           p05_artifacts/p05_manifest.json; do
