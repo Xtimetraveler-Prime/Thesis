@@ -129,23 +129,40 @@ static int strict_drain(void *ctx, uint8_t src, uint32_t emitted,
     } else if (step == 1 && src == 1) {
         expected = P03_B3_EXPECT_PACKET1;
     } else if (emitted != 0) {
+        publish_failure(B3_ERR_PACKET);
         return -1;
     }
 
     if (expected != 0) {
         uint8_t slot;
-        if (emitted != 1u)
+        if (emitted != 1u) {
+            publish_failure(B3_ERR_PACKET);
             return -1;
+        }
         for (slot=0;slot<runtime.slot_count;++slot)
             if (runtime.resident[slot] == (int16_t)src) break;
         if (slot>=runtime.slot_count ||
-            p03_hw_read_packet(&hw,slot,0,&packet) != P03_HW_OK ||
-            packet != expected)
+            p03_hw_read_packet(&hw,slot,0,&packet) != P03_HW_OK) {
+            publish_failure(B3_ERR_PACKET);
             return -1;
-        if (src == 0)
+        }
+        /* Persist actual HLS packet bytes EVEN ON A MISMATCH, so a failed
+         * hardware run can be diagnosed without a live JTAG debugger.
+         */
+        if (src == 0) {
             observed_packet0 = packet;
-        else
+            mailbox[M_PACKET0_LO] = (uint32_t)packet;
+            mailbox[M_PACKET0_HI] = (uint32_t)(packet >> 32);
+        } else {
             observed_packet1 = packet;
+            mailbox[M_PACKET1_LO] = (uint32_t)packet;
+            mailbox[M_PACKET1_HI] = (uint32_t)(packet >> 32);
+        }
+        flush_mailbox();
+        if (packet != expected) {
+            publish_failure(B3_ERR_PACKET);
+            return -1;
+        }
     }
     return real_drain(ctx,src,emitted,step,next_bank,committed);
 }
