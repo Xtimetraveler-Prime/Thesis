@@ -120,7 +120,7 @@ for file in \
 done
 
 
-vitis -s software/p03/build_p03_finish_run.py \
+vitis -s software/p03/build_p03_finish.py \
     --xsa "$XSA" --workspace "$WORKSPACE" --source-dir "$SOURCE" \
     --app-name p03_finish_run --source-file p03_finish_run.c \
     2>&1 | tee "$BUILD_DIR/vitis_build.log"
