@@ -26,8 +26,60 @@ def verify(mailbox: Path, manifest: Path) -> bool:
     if len(data) != 128:
         print(f"FAIL: P03.3b3 physical mailbox size {len(data)} != 128", file=sys.stderr)
         return False
-    observed = dict(zip(NAMES, struct.unpack("<32I", data)))
+    raw = struct.unpack("<32I", data)
+    observed = dict(zip(NAMES, raw))
     fixture = json.loads(manifest.read_text(encoding="utf-8"))
+
+    # An error=2 is a *preflight header failure before any dispatch*.
+    # Never misreport the reused diagnostic words as generated packets.
+    # The new A53 probe captures exact observed bytes for both records;
+    # the old probe did not and can only be classified by its error code.
+    if observed["error"] == 2:
+        offsets = (0, 4, 8, 12, 16, 20, 24, 28, 44, 48, 52)
+        if raw[7] == 0x48445233:  # HDR3 error-only mailbox overlay
+            masks = (raw[8], raw[9])
+            for core, mask in enumerate(masks):
+                expected_header = (
+                    0x3356544C, 0x31585443, 1, 0x1000, 0x80000,
+                    core, 0, 0, 1 if core == 0 else 0, 0, 0,
+                )
+                header_words = raw[(10 + core * 11):(21 + core * 11)]
+                print(
+                    f"P03_3B3_HEADER_CORE{core}_FAIL_MASK=0x{mask:08X}",
+                    file=sys.stderr,
+                )
+                for i, (offset, actual, expected_value) in enumerate(
+                    zip(offsets, header_words, expected_header)
+                ):
+                    if (mask & (1 << i)) or actual != expected_value:
+                        print(
+                            "FAIL: P03.3b3 A53 DDR header "
+                            f"core={core} offset=0x{offset:02X} "
+                            f"address=0x{0x40000000 + core * 0x80000 + offset:08X} "
+                            f"actual=0x{actual:08X} expected=0x{expected_value:08X}",
+                            file=sys.stderr,
+                        )
+            if not any(masks):
+                print(
+                    "FAIL: P03.3b3 HDR3 overlay present but neither mismatch "
+                    "mask is set; capture and inspect the raw 128-byte mailbox.",
+                    file=sys.stderr,
+                )
+        else:
+            print(
+                "FAIL: P03.3b3 record header rejected BEFORE runtime launch; "
+                "this older probe build lacks raw-header diagnostics. "
+                "Use the updated A53 ELF to identify the mismatched field.",
+                file=sys.stderr,
+            )
+        print(
+            "FAIL: P03.3b3 early DDR-header preflight "
+            f"result=0x{observed['result']:08X} error={observed['error']} "
+            "(no packet or page activity attempted)",
+            file=sys.stderr,
+        )
+        return False
+
     packet0 = observed["packet0_lo"] | observed["packet0_hi"] << 32
     packet1 = observed["packet1_lo"] | observed["packet1_hi"] << 32
 
