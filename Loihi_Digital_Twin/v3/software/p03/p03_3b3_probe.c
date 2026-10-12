@@ -124,7 +124,7 @@ static int strict_drain(void *ctx, uint8_t src, uint32_t emitted,
      * memory before invoking the unchanged production packet router.
      */
     if (step == 0 && src == 0) {
-        expected = UINT64_C(0x2000000020000581);
+        expected = P03_B3_EXPECT_PACKET0;
         /* Source0 -> dest core1, axon11, target timestep1. */
     } else if (step == 1 && src == 1) {
         expected = P03_B3_EXPECT_PACKET1;
@@ -238,7 +238,7 @@ static int result(void *ctx, const p03_rt *rt)
         rt->counters.timesteps_completed != 2u ||
         rt->current_event_bank != 0u ||
         rt->first_fault != P03_RT_FAULT_NONE ||
-        observed_packet0 != UINT64_C(0x2000000020000581) ||
+        observed_packet0 != P03_B3_EXPECT_PACKET0 ||
         observed_packet1 != P03_B3_EXPECT_PACKET1 ||
         cfg[0] != P03_B3_CONFIG1 ||
         event[0] != P03_B3_EXPECT_EVENT1_CORE1 ||
