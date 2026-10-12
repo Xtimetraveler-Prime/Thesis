@@ -773,9 +773,10 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 ## P05.2 — Directed physical regression and observability validation
 
-**Status:** IN PROGRESS — P05.2a accepted; P05.2b first
-physical fast/no-checkpoint equivalence awaiting native and KV260
-verification.
+**Status:** IN PROGRESS — P05.2a first hardware fault detection
+accepted, P05.2b fast/no-checkpoint equivalence physically accepted;
+P05.2c independent service-order permutation implementation committed,
+native and KV260 acceptance pending.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -812,7 +813,7 @@ intentionally stopped before final dirty DDR flush; **no
 completed golden DDR equality was claimed**.
 
 **P05.2b — Low-overhead/fast mode versus accepted diagnostic
-mode (IMPLEMENTED; physical PENDING).** Run the **same** accepted
+mode (PHYSICAL ACCEPTED on KV260, 2026-10-12).** Run the **same** accepted
 three-core/three-resident, threshold-4 spiking triangle and
 15 input events on the **unchanged** P05 A53 ELF and FPGA PL.
 Byte-exactly preserve all three initial core images and core/
@@ -827,7 +828,45 @@ KV260 SHA-256 results. Host builder/verifier/shell:
 `scripts/run_p05_2_fast.sh`;
 native tests: `tests/test_p05_2_fast.py`;
 procedure: `docs/P05_2_FAST_EQUIVALENCE_GATE.md`.
-**No independent P05.2b native or physical PASS yet.**
+**Observed P05.2b PHYSICAL PASS:** User supplied
+`verify.log` with `timesteps=5`, 15 FPGA dispatches,
+12 packets, 12 resident deliveries, five barriers,
+`checkpoints=0`, and all three **actual full DDR
+record SHA256s byte-exact to both independent Python
+oracle and previously accepted diagnostic KV260 records**.
+Real P05G header CRC32 `0x76E6409B`, payload CRC32
+`0x1AF530B0`; physical record SHA256s remain
+`5c4288e41e1599aea5f854a4022fb88a6b04ddc003b01238e16f5a7c59665381`
+(core0),
+`2767f8cbca59d8e9bb85d0f37d055a7b4a7c4e94676d56bbd3efeff4f4f6c0f2`
+(core1),
+`d6c8982882023c8b0065ca856a3caf35a1b6fa54196a6fb546b774deca32c82f`
+(core2).
+`pl_dispatch_cycles=357` and `ps_inference_ticks=25994`
+are raw observations, **not a calibrated performance or
+power/energy benchmark**. Acceptance:
+`docs/P05_2B_FAST_ACCEPTANCE.md`.
+
+**P05.2c — Legal logical-core service-order invariance
+(IMPLEMENTED; independent host and KV260 PENDING).**
+Same physically accepted diagnostic three-core triangle
+on the unchanged P05 ELF and accepted FPGA.
+Change actual A53 service order **`[0,1,2]` →
+`[2,0,1]`**, while keeping all three cores resident,
+all original neuroparameters and 15 input events,
+five timesteps, 12 packets and 12 resident deliveries.
+Recompute an independent Python LogicalChip oracle with
+the new service order and require every per-core neural
+state and all three *complete* model final DDR images
+equal the baseline. Then verify 15 real board checkpoints
+and byte-exact physical DDR equality to **both independent
+models and the pinned accepted baseline physical SHA256s**.
+Scripts: `scripts/p05_2_order_fixture.py`,
+`scripts/p05_2_order_verify.py`,
+`scripts/run_p05_2_order.sh`, native tests
+`tests/test_p05_2_order.py`,
+`docs/P05_2_ORDER_INVARIANCE_GATE.md`.
+**No P05.2c physical PASS yet.**
 
 **Remaining P05.2 work:** directed arithmetic boundary/decay,
 fanout, event-buffer/backpressure, dirty paging stress,
