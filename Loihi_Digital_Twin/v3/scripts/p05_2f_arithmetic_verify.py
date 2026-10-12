@@ -87,7 +87,7 @@ def verify(mailbox:Path, folder:Path)->bool:
             for key in ("current_decay","voltage_decay","threshold","bias","refractory_ticks"):
                 if config[key]!=parameters[key]:
                     raise ValueError(f"core {cid} packed config {key} differs from independent target")
-            packed_synapse=int.from_bytes(initial[0x30000:0x30008],"little")
+            packed_synapse=int.from_bytes(initial[0x0F000:0x0F008],"little")
             if unpack_synapse_word(packed_synapse)["weight"]!=parameters["weight"]:
                 raise ValueError(f"core {cid} physical packed signed weight drift")
             if images[cid].image.route_count!=1:
