@@ -55,6 +55,11 @@ typedef struct {
     uint64_t metadata[P03_RT_MAX_CORES]; /* packed P03.2 dispatch metadata */
     uint16_t event_counts[P03_RT_MAX_CORES][2];
     uint8_t configured[P03_RT_MAX_CORES];
+    /* Deploy-time sparse axon binding bitset: 128 cores x 4096 axons.
+     * Explicit registration is required before any packet can be delivered.
+     * Keep the adapter in static storage in bare-metal launch code (~65 KiB).
+     */
+    uint8_t valid_axons[P03_RT_MAX_CORES][P03_HW_EVENT_DEPTH / 8u];
     /* Active runtime needed for resident destination discovery. */
     const p03_rt *runtime;
     int last_error;
@@ -68,6 +73,10 @@ int p03_hw_init(p03_hw_adapter *hw, const p03_hw_io *io, void *cookie,
                 uint64_t backing_base, uint32_t poll_limit);
 int p03_hw_register_core(p03_hw_adapter *hw, uint8_t id, uint64_t metadata,
                          uint16_t event0_count, uint16_t event1_count);
+/* Deployment must register the accepted sparse input-axon bindings for
+ * each configured logical core; otherwise packet delivery fails closed.
+ */
+int p03_hw_register_axon(p03_hw_adapter *hw, uint8_t id, uint16_t axon);
 int p03_hw_identify(p03_hw_adapter *hw);
 int p03_hw_page(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
                 int page_out, int mutable_only, uint64_t *cycles);
