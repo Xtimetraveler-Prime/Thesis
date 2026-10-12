@@ -169,6 +169,48 @@ def test_packet_layout_derivation_idempotent_not_fit_to_physical_ddr(staged):
     assert again["per_core"]["3"]["physical_final_packet0_dest"]==4
 
 
+
+def test_offline_evidence_recheck_preserves_original_evidence(staged):
+    (staged/"p05_a53_result.bin").write_bytes(plausible_mailbox(staged))
+    protected=[
+        staged/"p05_a53_result.bin",
+        staged/"p05_artifacts/p05_header.bin",
+        staged/"p05_artifacts/p05_payload.bin",
+        staged/"composite_golden/manifest.json",
+        *[staged/"composite_golden"/f"core{cid}_expected.bin"
+          for cid in range(5)],
+        *[staged/"final_ddr"/f"core{cid}_after.bin"
+          for cid in range(5)],
+    ]
+    previous={str(f):hashlib.sha256(f.read_bytes()).hexdigest()
+              for f in protected}
+    p=subprocess.run(
+        ["python",str(ROOT/"scripts/recheck_p05_2_composite_evidence.py"),
+         "--directory",str(staged)],
+        cwd=ROOT,capture_output=True,text=True,timeout=120,
+    )
+    assert p.returncode==0,p.stdout+p.stderr
+    assert "P05_2E_RECHECK_EXIT=0" in p.stdout
+    assert "full" in p.stdout.lower()
+    assert previous=={str(f):hashlib.sha256(f.read_bytes()).hexdigest()
+                      for f in protected}
+
+
+def test_recheck_never_passes_unrelated_packet_corruption(staged):
+    (staged/"p05_a53_result.bin").write_bytes(plausible_mailbox(staged))
+    target=staged/"final_ddr/core3_after.bin"
+    broken=bytearray(target.read_bytes())
+    broken[0x64002]^=1
+    target.write_bytes(broken)
+    p=subprocess.run(
+        ["python",str(ROOT/"scripts/recheck_p05_2_composite_evidence.py"),
+         "--directory",str(staged)],
+        cwd=ROOT,capture_output=True,text=True,timeout=120,
+    )
+    assert p.returncode!=0
+    assert "P05_2E_RECHECK_EXIT=0" not in p.stdout
+
+
 def test_independent_model_packets_and_c_scheduler_paging_match(staged):
     mod=VERIFY.MODEL
     expected=mod.scheduler_prediction(mod.vectors(
