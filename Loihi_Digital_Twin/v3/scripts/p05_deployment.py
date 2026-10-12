@@ -209,7 +209,8 @@ def build(spec_path: Path, output: Path) -> dict:
     return manifest
 
 
-def from_p03_fixture(fixture: Path, output_path: Path) -> None:
+def from_p03_fixture(fixture: Path, output_path: Path,
+                     state_checkpoints: bool = False) -> None:
     """Build a P05 spec using immutable P03 fixture records/metadata.
 
     This does NOT independently generate neural golden results and is
@@ -239,6 +240,39 @@ def from_p03_fixture(fixture: Path, output_path: Path) -> None:
         ],
         "checkpoints": [],
     }
+    if state_checkpoints:
+        # Read frozen P02 model's per-dispatch expected compartment
+        # states from its *actual* oracle vectors (not guessed values).
+        # Sample ALL five logical cores at every post-barrier step;
+        # this exercises both currently resident and DDR-only cases.
+        vectors = (fixture / "p02_4b_vectors.tcl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        in_table = False
+        rows: dict[tuple[int, int], int] = {}
+        for line in vectors:
+            if line.strip() == "array set P02B_EXPECT_STATE {":
+                in_table = True
+                continue
+            if in_table and line.strip() == "}":
+                break
+            if in_table:
+                fields = line.split()
+                if len(fields) != 2:
+                    raise ValueError("malformed P02 model state vector")
+                step_id, core_id = map(int, fields[0].split(","))
+                rows[step_id, core_id] = int(fields[1], 0)
+        if len(rows) != words[2] * 5:
+            raise ValueError("missing P02 model per-step state vectors")
+        profile["checkpoints"] = [
+            {
+                "timestep": step,
+                "core": core_id,
+                "state_class": "state0",
+                "expected_crc32": f"0x{zlib.crc32(struct.pack('<Q', rows[step, core_id])):08X}",
+            }
+            for step in range(words[2]) for core_id in range(5)
+        ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(profile, indent=2) + "\n",
                            encoding="utf-8")
@@ -253,6 +287,8 @@ def main() -> int:
     convert = command.add_parser("from-p03", help="Make ABI smoke spec from accepted fixture")
     convert.add_argument("--fixture-dir", type=Path, required=True)
     convert.add_argument("--output-spec", type=Path, required=True)
+    convert.add_argument("--state-checkpoints", action="store_true",
+                         help="Include model-derived per-core state0 CRC at each post-barrier step")
     args = parser.parse_args()
     try:
         if args.command == "build":
@@ -262,7 +298,8 @@ def main() -> int:
                               ("timesteps", "events", "checkpoints", "dispatches",
                                "header_crc32", "payload_crc32")}, sort_keys=True))
         else:
-            from_p03_fixture(args.fixture_dir, args.output_spec)
+            from_p03_fixture(args.fixture_dir, args.output_spec,
+                             state_checkpoints=args.state_checkpoints)
             print(f"PASS: P05.1 P03-compatible contract spec: {args.output_spec}")
         return 0
     except (OSError, ValueError, KeyError, TypeError) as exc:
