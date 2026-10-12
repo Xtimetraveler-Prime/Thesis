@@ -300,3 +300,102 @@ python -m pytest -q \
 
 Do not classify a fixture/shim issue as a failed physical HLS packet or
 FPGA page-out test. Physical acceptance remains pending.
+
+
+## 8. Physical preflight failure — A53 DDR header rejected (2026-10-11)
+
+**Independent results:** The user passed the full native regression and
+Vitis A53 build, and then independently programmed/ran the P03.3b3
+candidate on KV260. The 128-byte mailbox was retrieved successfully,
+but the strict physical verifier rejected it:
+
+```text
+P03_3B3_VERIFY_EXIT=1
+FAIL: P03.3b3 result actual=0xDEAD0002 expected=0x600D600D
+FAIL: P03.3b3 error actual=0x2 expected=0x0
+FAIL: P03.3b3 physical HLS packet delivery / dirty-page roundtrip
+  result=0xDEAD0002 first_fault=0 error=2 phase=0
+```
+
+Local evidence bundle:
+`/tmp/v3_p03_3b3_20261012T032020Z`.
+
+**Diagnosis supported by the failing run:** `B3_ERR_HEADER=2` comes
+from the standalone A53's `validate_backing()` call in
+`p03_3b3_probe.c`, **before** adapter initialization,
+page-in, dispatch, packet routing or any logical timestep. Thus the
+verifier's subsequent zero packet, page, dispatch and barrier fields
+are *consequences of that early exit*, not independent FPGA failures.
+The runtime's `first_fault=0` independently confirms that the C
+scheduler never started. The previous P03.3b2 physical acceptance
+remains valid.
+
+The fixture's v1 ABI packs **two 512 KiB records** at
+`0x40000000`/`0x40080000`. Its header uses offsets `0x00/0x04`
+for the two 32-bit halves of `LTV3CTX1`, `0x08` version=1,
+`0x0C` header size=`0x1000`, `0x10` record size=`0x80000`,
+`0x14` logical ID (0 or 1), `0x18` flags=0, `0x1C` CURRENT
+bank=0, `0x2C` event0 count (core0=1, core1=0), and
+`0x30/0x34` event1/packet count=0. The generator and its
+model-backed Python fixture test agree on this layout. **The provided
+physical evidence does not identify which A53 load differed** from
+the expected header, so the precise cause remains undetermined.
+
+### New read-only A53 header snapshot
+
+On the next failing early header check, the updated probe reads **all
+eleven checked words of BOTH records** before returning failure,
+and writes an error-only 128-byte mailbox overlay:
+
+| Mailbox word(s) | Failure-only meaning |
+|---|---|
+| 0..6 | Unchanged P03.3b3 magic/version/fault metadata |
+| 7 | `0x48445233` (`HDR3`) |
+| 8 | Core0 mismatch bitmask (`bit i` selects offset `i`) |
+| 9 | Core1 mismatch bitmask |
+| 10..20 | Eleven A53-observed core0 header words |
+| 21..31 | Eleven A53-observed core1 header words |
+
+Offset order: `00, 04, 08, 0C, 10, 14, 18, 1C, 2C, 30, 34`.
+An independent verifier now emits errors in the form:
+
+```text
+P03_3B3_HEADER_CORE1_FAIL_MASK=0x00000020
+FAIL: P03.3b3 A53 DDR header core=1 offset=0x14
+  address=0x40080014 actual=0x00000011 expected=0x00000001
+FAIL: P03.3b3 early DDR-header preflight
+  result=0xDEAD0002 error=2 (no packet or page activity attempted)
+```
+
+The values above are **an illustrative synthetic regression**, NOT
+actual KV260 output. Real errors will be populated from live A53
+physical DDR reads. When both headers pass, the overlay is not written
+and the original 32-word PASS mailbox ABI is completely unchanged.
+Neither ABI validation nor PS cache maintenance is relaxed.
+
+### Added regressions
+
+`tests/test_p03_3b3_physical_probe.py` now checks every generated P02
+header field that the A53 uses, requires matching C offset
+constants, and verifies synthetic early header failures report the
+correct core, exact offset, physical address, actual/expected value,
+and do **not** misreport 0 packet words as genuine HLS failures.
+The existing host C syntax-check regression also compiles the added
+read-only header-capture logic.
+
+### Handoff
+
+Pull the current branch and rerun the focused regression, then build
+a **NEW isolated** P03.3b3 ELF with a fresh
+`P03_3B3_BUILD_DIR` (do not reuse the earlier built ELF, which cannot
+emit `HDR3`). No FPGA synthesis, route, or changes to the accepted
+FPD128 bitstream are required.
+
+If the KV260 again reports `B3_ERR_HEADER=2`, preserve the full
+mailbox and paste the new `verify.log`: it will give the first
+direct A53-observed evidence needed to distinguish an unexpected
+field from cache/PS DDR visibility or another cause. Do not guess
+that the packet-path RTL is broken on the basis of this early exit.
+
+**P03.3b3 remains OPEN and physically blocked at preflight** until
+the A53 header check and subsequent packet/paging verification pass.
