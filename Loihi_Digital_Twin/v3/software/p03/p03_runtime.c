@@ -196,6 +196,17 @@ int p03_rt_execute(p03_rt *rt, const p03_rt_ops *ops, void *ctx)
             rt->counters.routed_packets += committed;
             if (rt->pending_packets != 0)
                 return fail(rt, ops, ctx, P03_RT_FAULT_BARRIER_INCOMPLETE);
+            if (committed != 0) {
+                /* NEXT-event insertion may mutate *any* resident slot,
+                 * not just the dispatched source. Until P03.3b exposes
+                 * per-destination dirty acknowledgments, conservatively
+                 * save every resident victim before its later eviction.
+                 */
+                uint8_t r;
+                for (r = 0; r < rt->slot_count; ++r)
+                    if (rt->resident[r] != P03_RT_EMPTY_SLOT)
+                        rt->dirty[r] = 1;
+            }
 
             rt->phase = P03_RT_MARK_LOGICAL_CORE_COMPLETE;
             rt->completed[k] = 1;
