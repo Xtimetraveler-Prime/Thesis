@@ -161,6 +161,9 @@ static void test_packet_routing(void)
     assert(p03_hw_register_core(&hw, 0, meta(0), 0, 0) == 0);
     assert(p03_hw_register_core(&hw, 1, meta(1), 0, 0) == 0);
     assert(p03_hw_register_core(&hw, 2, meta(2), 0, 0) == 0);
+    assert(p03_hw_register_axon(&hw, 1, 43) == 0);
+    assert(p03_hw_register_axon(&hw, 2, 59) == 0);
+    assert(p03_hw_register_axon(&hw, 2, 41) == 0);
     rt.resident[0] = 0;
     rt.resident[1] = 1;
     assert(p03_hw_route_word(&hw, 0, packet(1, 43, 1), 0, 1) == 0);
@@ -194,6 +197,7 @@ static void test_overflow_and_bus_failure(void)
     assert(p03_rt_init(&rt, ids, 1, 1, 1) == 0);
     hw.runtime = &rt;
     assert(p03_hw_register_core(&hw, 0, meta(0), 0, 4096) == 0);
+    assert(p03_hw_register_axon(&hw, 0, 3) == 0);
     rt.resident[0] = 0;
     assert(p03_hw_route_word(&hw, 0, packet(0, 3, 1), 0, 1) ==
            P03_HW_OVERFLOW);
