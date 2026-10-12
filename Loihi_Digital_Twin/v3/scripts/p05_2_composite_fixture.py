@@ -165,6 +165,19 @@ def scheduler_prediction(packets:dict)->dict:
     counts["final_outs"]=sum(dirty)
     counts["page_commands"]=(counts["initial_ins"]+
         counts["replacement_ins"]+counts["runtime_outs"]+counts["final_outs"])
+    # PL page payload bytes requested by firmware, NOT measured DDR bus
+    # traffic: full page-in = P03_HW_FULL_PAGE_BYTES (0x6B000);
+    # dirty mutable page-out = P03_HW_MUTABLE_BYTES (0x1A000).
+    counts["programmed_page_in_payload_bytes"]=(
+        counts["initial_ins"]+counts["replacement_ins"]
+    )*0x6B000
+    counts["programmed_page_out_payload_bytes"]=(
+        counts["runtime_outs"]+counts["final_outs"]
+    )*0x1A000
+    counts["programmed_total_page_payload_bytes"]=(
+        counts["programmed_page_in_payload_bytes"]+
+        counts["programmed_page_out_payload_bytes"]
+    )
     counts["final_resident"]=resident
     counts["per_step"]=by_step
     return counts
