@@ -41,8 +41,9 @@ static int valid_id(const p03_hw_adapter *hw, uint8_t id)
 
 static int ready(p03_hw_adapter *hw)
 {
-    return hw != NULL && hw->io.read32 != NULL &&
-           hw->io.write32 != NULL && hw->io.barrier != NULL;
+    return hw != NULL && hw->last_error == P03_HW_OK &&
+           hw->io.read32 != NULL && hw->io.write32 != NULL &&
+           hw->io.barrier != NULL;
 }
 
 static int read_cycles(p03_hw_adapter *hw, uint32_t lo,
@@ -271,8 +272,13 @@ int p03_hw_dispatch(p03_hw_adapter *hw, uint8_t id, uint8_t slot,
         read_reg(hw, P03_REG_DISPATCH_CORE_STATUS, &core_status) ||
         read_reg(hw, P03_REG_DISPATCH_ACTIVE, &active))
         return hw->last_error;
-    if (*emitted > P03_RT_MAX_PACKETS ||
-        core_status != 0 || (active & UINT32_C(0x007F0103)) != 0)
+    /* ACTIVE reflects the selected core/slot/bank even after DONE.
+     * A nonzero logical core ID is not an error.
+     */
+    if (*emitted > P03_RT_MAX_PACKETS || core_status != 0 ||
+        (active & UINT32_C(0x007F0103)) !=
+        (((uint32_t)id << 16) |
+         ((uint32_t)current_bank << 8) | slot))
         return reject(hw, P03_HW_PROTOCOL);
     if (read_cycles(hw, P03_REG_DISPATCH_CYCLES_LO,
                     P03_REG_DISPATCH_CYCLES_HI, cycles))
@@ -314,7 +320,8 @@ int p03_hw_route_word(p03_hw_adapter *hw, uint8_t source_id,
     axon = (uint32_t)((packet >> 7) & UINT64_C(0xFFF));
     source_comp = (uint32_t)((packet >> 19) & UINT64_C(0x3FF));
     target_step = (uint32_t)((packet >> 29) & UINT64_C(0xFFFFFFFF));
-    if (!(packet & (UINT64_C(1) << 61)) ||
+    if (timestep == UINT32_MAX ||
+        !(packet & (UINT64_C(1) << 61)) ||
         (packet >> 62) != 0 || target_step != timestep + 1u ||
         !valid_id(hw, dest) ||
         source_comp >= ((hw->metadata[source_id] >> 7) & UINT64_C(0x7FF)))
