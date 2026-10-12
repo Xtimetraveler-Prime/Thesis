@@ -131,8 +131,13 @@ XSA_SHA="$(sha256sum "$XSA" | awk '{print $1}')"
     exit 2
 }
 
-if [[ ( "$APP_NAME" == "p03_2c_readonly" || "${P03_2C_SMOKE_CANDIDATE:-0}" == 1 ) && -e "$BUILD_DIR" ]]; then
-    echo "ERROR: isolated P03.2c build directory already exists: $BUILD_DIR" >&2
+if [[ "$APP_NAME" == "p03_2c_readonly" && -e "$BUILD_DIR" ]]; then
+    echo "ERROR: read-only build directory already exists: $BUILD_DIR" >&2
+    exit 2
+fi
+if [[ "${P03_2C_SMOKE_CANDIDATE:-0}" == 1 && "$APP_NAME" == "p03_2c_smoke" &&
+      -e "$BUILD_DIR" ]]; then
+    echo "ERROR: corrected candidate full-smoke build directory already exists: $BUILD_DIR" >&2
     exit 2
 fi
 if [[ "$APP_NAME" == "p03_2c_smoke" && "${P03_2C_SMOKE_CANDIDATE:-0}" != 1 ]]; then
