@@ -184,6 +184,16 @@ static void test_packet_routing(void)
     assert(hw.event_counts[2][1] == 2 && m.stores == 2);
     /* Sticky fault requires explicit re-init; no more MMIO on invalid. */
     assert(p03_hw_route_word(&hw, 0, packet(2, 1, 1), 0, 1) != 0);
+    /* Independent misbound axon test: valid packet structure, invalid
+     * destination binding. Reinitialize to clear previous sticky fault.
+     */
+    setup(&m, &hw);
+    assert(p03_hw_register_core(&hw, 0, meta(0), 0, 0) == 0);
+    assert(p03_hw_register_core(&hw, 2, meta(2), 0, 0) == 0);
+    hw.runtime = &rt;
+    assert(p03_hw_route_word(&hw, 0, packet(2, 59, 1), 0, 1) ==
+           P03_HW_PACKET_INVALID);
+    assert(hw.event_counts[2][1] == 0 && m.stores == 0);
     puts("PASS: P03.3b resident/DDR NEXT packet delivery and timestep validation");
 }
 static void test_overflow_and_bus_failure(void)
