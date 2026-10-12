@@ -513,6 +513,12 @@ int main(void)
     failed_step=failed_core=failed_class=0u;
     expected_crc=observed_crc=0u;
     memset(&deployment,0,sizeof(deployment));
+    /* The original P03 finalization incident showed why debugger-launched
+     * standalone images must not assume all pre-launch RAM/BSS is fresh.
+     * Make early-failure snapshots deterministic too, before any PS MMIO.
+     */
+    memset(&runtime,0,sizeof(runtime));
+    memset(&hw,0,sizeof(hw));
     fence();
     for(i=0;i<64u;++i)result[i]=0u;
     result[R_MAGIC]=P05_RESULT_MAGIC;
