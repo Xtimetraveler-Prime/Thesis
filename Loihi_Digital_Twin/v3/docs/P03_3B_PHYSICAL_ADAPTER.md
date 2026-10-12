@@ -1,9 +1,11 @@
 # P03.3b — Cortex-A53 physical AXI/DDR/packet adapter
 
 **Implementation started:** 2026-10-11  
-**Current gate:** P03.3b1 C transport, callback binding and host-native mock
-regression — **authored, awaiting independent C compile/test**.  
-**Physical board acceptance:** **NOT YET**.  
+**Current gate (2026-10-11):** **P03.3b1 host-native C and P03.3b2
+actual Cortex-A53 physical two-timestep probe ACCEPTED independently.**
+P03.3b3's directed two-core packet/dirty-page roundtrip is implemented
+and **awaits local native/Vitis and physical verification**.
+**Full P03.3b physical acceptance:** **NOT YET**.  
 **Branch:** `agent/v3-p03-autonomous-runtime`; do not merge without approval.
 
 ## 1. Independent prerequisite
@@ -301,3 +303,33 @@ submit `verify.log`, `a53_run.log`, `ps_width.log` and
 **not yet** demonstrated by the user. Do not begin P03.3b3 unless
 the P03.3b2 physical gate passes or a clearly isolated blocker is
 diagnosed/resolved.
+
+
+## 9. Independent P03.3b2 PASS and the P03.3b3 package
+
+The user independently reported:
+
+```text
+PASS: P03.3b2 physical A53 adapter probe ps_width=128 id=0x4C543302 config0=0x14001000 page_bytes=438272 page_ins=1 dispatches=2 barriers=2
+P03_3B2_VERIFY_EXIT=0
+P03_3B2_EVIDENCE_DIR=/tmp/v3_p03_3b2_20261012T025233Z
+PASS: P03.3b2 physical Cortex-A53 two-timestep runtime-adapter probe
+```
+
+This verifies that the **real** C scheduler and adapter can complete a
+board-local zero-packet run over two barriers on the accepted FPD128 shell.
+P03.3b2 is **accepted**.
+
+P03.3b3 now has an isolated model-derived two-core input/packet fixture,
+a standalone physical A53 probe, deterministic dirty page-in/page-out
+sequence, guarded Vitis builder, two-record XSDB readback, 128-byte
+mailbox, strict independent verifier, and native mock/synthetic tests.
+
+See **`docs/P03_3B3_PACKET_PAGE_ROUNDTRIP.md`** for exact expected physical
+packet words, DDR bytes, 4-dispatch/2-barrier/3-page-out counts,
+local commands and independent acceptance requirements.
+
+The P03.3b3 code has **not** yet been independently compiled or run on
+the KV260. Preserve all previous P03.3b2 physical evidence, do not
+overwrite its accepted ELF/bitstream files, and do not mark P03.3b3 or
+P03.3b complete before its distinct physical pass.
