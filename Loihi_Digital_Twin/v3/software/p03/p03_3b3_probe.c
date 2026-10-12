@@ -321,7 +321,7 @@ int main(void)
     if (p03_hw_xilinx_fpd128_ready() != 0) {
         publish_failure(B3_ERR_WIDTH); halt_forever();
     }
-    if (!validate_backing(NULL)) {
+    if (validate_backing(NULL) != 0) {
         publish_failure(B3_ERR_HEADER); halt_forever();
     }
     if (p03_hw_init(&hw,&io,NULL,P03_HW_BACKING_BASE,B3_POLL)) {
