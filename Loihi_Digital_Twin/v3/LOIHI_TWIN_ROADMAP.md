@@ -170,7 +170,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P00 | Establish v3 baseline, directory, and roadmap | Complete |
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
-| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | In progress |
+| P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | Planned |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
@@ -369,8 +369,11 @@ five-over-three acceptance: `docs/P02_4B_ACCEPTANCE.md`.
 
 # P03 — Autonomous PS-resident runtime
 
-**Status:** In progress  
-**Branch:** `agent/v3-p03-autonomous-runtime`
+**Status:** Complete — independently accepted 2026-10-12
+**Development branch:** `agent/v3-p03-autonomous-runtime` (merged into `main` at closeout).
+**Authoritative acceptance:** `docs/P03_FINAL_ACCEPTANCE.md`.
+**Detailed PS application architecture, DDR/packet/mailbox ABI,
+debugging chronology and reproduction:** `docs/P03_PS_AUTONOMOUS_APPLICATION.md`.
 
 ## Goal
 
@@ -416,7 +419,7 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     gate, not as a blocking functional requirement. See
     `docs/P03_2C_ACCEPTANCE.md` and
     `docs/P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md`.
-- **P03.3 — Standalone Cortex-A53 runtime.** **In progress.** Implement
+- **P03.3 — Standalone Cortex-A53 runtime.** **Complete; independently accepted through P03.4/P03.5 on 2026-10-12.** Implement
   P03.1's board-local state machine, deterministic scheduling/replacement,
   packet routing, cache-maintenance ownership, timer/counter collection,
   fail-closed result records, and the fixed P02 64 MiB DDR reservation.
@@ -451,9 +454,7 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     the new unified P03 runner. Primary acceptance record:
     `docs/P03_3B3_ACCEPTANCE.md`.
   - **P03.3c + P03.4 + P03.5 — Consolidated implementation and
-    two independent physical acceptance runs.** **Implementation
-    prepared on branch; independent native/Vitis/board verification
-    pending.** To minimize extra subphases, these use one immutable
+    two independent physical acceptance runs.** **Complete; combined C11/Vitis implementation and physical P03.4/P03.5 gates accepted on 2026-10-12.** To minimize extra subphases, these use one immutable
     software/ABI/hardware path. New
     `software/p03/p03_finish_run.c` links the accepted C
     scheduler, real P03.3b adapter/bridge, and A53 Xilinx BSP. A
@@ -502,11 +503,27 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     Measured `resident_deliveries=0`: this ring provides physical
     nonresident routing evidence, not direct-to-resident packet delivery.
     Acceptance: `docs/P03_4_ACCEPTANCE.md`.
-    **P03.5 is next, NOT YET accepted**: 100 timesteps / 500 dispatches
-    / 100 barriers, exact 100-step packet count and five final DDR
-    images, using the **same** V2 A53 ELF and accepted FPD128 bitstream.
-    Do not merge or call P03 complete until independent 100-step
-    physical verification and explicit user approval.
+    **P03.5 ACCEPTED on 2026-10-12 (same V2 A53 ELF and FPD128
+    experimental bitstream).** The independent 100-timestep
+    five-core/three-slot physical test reported terminal
+    `result=0x600D600D`, **500 real HLS dispatches, 495 routed
+    packets, 100 barriers, 500 page-ins, 500 page-outs**, and all
+    five final 512 KiB DDR records byte-exact to the independent
+    100-step P02/v2 Python oracle. Reference trace fingerprint:
+    `b10387cb7930e6e4452548ff4d025c8dffe52e9eeebde2d5b43ed9c5475cfcac`.
+    Launch manifest SHA-256:
+    `30076c118d312e57674f716e50fe3d080e7a057ed55ba1f2ae58a9a7dba51c4b`.
+    User evidence:
+    `/tmp/v3_p03_finish_100_20261012T145336Z`;
+    `P03_FINISH_VERIFY_EXIT=0`.
+    **P03 functionally COMPLETE.** P03.4 and P03.5 both reported
+    `resident_deliveries=0`; this acceptance does **not** claim
+    a real FPGA direct-to-resident destination packet test.
+    Preserve it as a P05 hardening/coverage item, along with
+    optional release cleanup for the accepted ILA/VIO diagnostic
+    shell. See `docs/P03_5_ACCEPTANCE.md`,
+    `docs/P03_FINAL_ACCEPTANCE.md` and
+    `docs/P03_PS_AUTONOMOUS_APPLICATION.md`.
 
 ## Deliverables
 
