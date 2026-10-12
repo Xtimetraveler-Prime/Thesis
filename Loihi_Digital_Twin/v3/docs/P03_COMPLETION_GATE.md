@@ -230,3 +230,39 @@ do not silently replace the accepted FPGA candidate.
 **Do not merge the branch or claim P03 complete** until independent
 7/100 evidence passes, failure cases are handled, and the user
 explicitly approves acceptance.
+
+
+## 7. Local Python package resolution regression repaired (2026-10-11)
+
+The first user-run consolidated P03 regression reported four failures,
+all from the same early subprocess import:
+
+```text
+scripts/p03_finish_fixture.py -> scripts/p02_4b_ring_fixture.py
+ModuleNotFoundError: No module named 'loihi_twin_v2.ddr_abi'
+```
+
+Unlike the parent pytest process, a direct `python scripts/file.py`
+process searches `scripts/` rather than `v3/src/` by default.
+The existing `.venv-p08` can also have an older package with the same
+`loihi_twin_v2` name but without the newer `ddr_abi` module.
+
+Both `scripts/p03_finish_fixture.py` and
+`scripts/p03_finish_verify.py` now explicitly prepend the **current
+v3 checkout's** `src/` directory before dynamically loading the
+unchanged accepted P02.4b oracle. This resolves the same defect during
+generation and independent post-run DDR verification.
+
+The existing `tests/test_p03_finish_autonomy.py` subprocess helper now
+deliberately supplies a shadowing `loihi_twin_v2` package via
+`PYTHONPATH`, and runs from an unrelated temporary working directory.
+A script that imports the environment's older package, rather than
+`v3/src/`, therefore fails the regression. No golden model,
+7/100 workload, FPGA C implementation, or accepted P02 source was
+modified by these import-path changes.
+
+**Verification:** fix committed; full user-side pytest and Vitis
+build remain pending. The four reported failures did not reach
+manifest or physical-inference assertions. Do not label P03.3c/P03.4/
+P03.5 accepted until the focused test suite and independent board
+gates have completed.
