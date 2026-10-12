@@ -775,21 +775,23 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 **Status:** IN PROGRESS — P05.2a first-fault localization,
 P05.2b checkpoint-disabled equivalence,
-P05.2c reordered service and P05.2d two-destination
-fanout all **physically accepted** on KV260.
-P05.2e composite five-over-three fanout + heterogeneous
-normal-range arithmetic + dirty paging + reordered service
-has software fixtures/physical runner implemented;
-**physical first run completed A53 successfully but full-DDR
-comparison FAILED at core3 packet RAM offset 0x64000
-(actual byte 0x04, normalized logical golden 0x00)**.
-Source-level root cause traced to physical FPGA output-route
-order [4,0] versus normalized sorted Loihi packet trace
-order [0,4]. A surgical **separate physical packet-RAM
-oracle** is implemented without changing the original
-neural model or accepted FPGA/A53. Existing physical
-evidence recheck pending; see
-`docs/P05_2E_PACKET_ORDER_INCIDENT.md`.
+P05.2c reordered service, P05.2d two-destination fanout
+and **P05.2e composite physical evidence recheck accepted**
+on real KV260 (independent user-reported results, 2026-10-12).
+The first P05.2e full-DDR comparison correctly failed at
+core3 packet RAM offset 0x64000 because the normalized
+destination-sorted model order [0,4] differs from physical
+registered output-route order [4,0].
+The independent **non-destructive recheck PASS**
+`P05_2E_RECHECK_EXIT=0` verifies 40/40 checkpoints, 48
+packets (24 resident and 24 nonresident), 37 dirty evictions,
+and all five complete real DDR images against the separate
+derived physical packet-layout oracle **without modifying the
+original A53/FPGA evidence or neural model**. Its acceptance
+record is `docs/P05_2E_RECHECK_ACCEPTANCE.md`; the user has
+not supplied a fresh native pytest summary alongside this
+physical recheck. P05.2f bundled signed/arithmetic/refractory
+gate is implemented but not independently verified.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -932,7 +934,8 @@ Acceptance: `docs/P05_2D_FANOUT_ACCEPTANCE.md`.
 event-bank saturation/backpressure coverage.**
 
 **P05.2e — Composite multifeature physical regression
-(IMPLEMENTED; native and KV260 physical PENDING).**
+(PHYSICAL RECHECK PASS, user reported 2026-10-12; native-suite
+reconfirmation outstanding).**
 New fully model-derived **five logical cores over three
 resident slots**, eight timesteps and actual service order
 **[4,1,3,0,2]**. Every source has **two outgoing fanout
@@ -963,31 +966,53 @@ source changed.
 `vivado/p05_2_composite_prepare.tcl`,
 `tests/test_p05_2_composite.py`,
 `docs/P05_2_COMPOSITE_GATE.md`.
-**P05.2e original physical terminal was SUCCESS
-(`0x600D600D`), but `P05_2_COMPOSITE_VERIFY_EXIT=1`
-on packet bank core3 `0x64000`.**
-No physical acceptance yet.
-The standalone source-informed packet-order golden fix
-(`scripts/p05_2_packet_layout.py`) explicitly preserves
-all neural/state/event/trace bytes and the original
-independent normalized Python oracle. A non-destructive
-existing-evidence recheck
-(`scripts/recheck_p05_2_composite_evidence.py`)
-must verify all five complete original physical DDR
-dumps before closing this gate. The corrected
-`tests/test_p05_2_composite.py` includes a regression
-for the exact previously missed core3 0x04-vs-0x00
-packet-word ordering failure. **Native and repaired
-full-DDR physical-evidence recheck remain PENDING**.
+**P05.2e originally failed** on full physical packet-RAM
+comparison at core3 0x64000, although the standalone A53
+terminal reported `0x600D600D`. The source-informed
+physical packet-layout oracle was added in
+`scripts/p05_2_packet_layout.py`, without changing the
+normalized Loihi model, native FPGA routing or accepted A53.
+**The user independently reran the non-destructive existing-
+evidence check and reported `P05_2E_RECHECK_EXIT=0`.**
+All five complete physical final 512KiB DDR records
+matched the separately derived route-ordered reference;
+the check also confirmed the original P05G, model, mailbox
+and FPGA DDR dump evidence was unchanged.
+Original failed evidence is retained; the new check's PASS
+does not rewrite that history. Full reproduced output and
+scope: `docs/P05_2E_RECHECK_ACCEPTANCE.md`. Native pytest
+regression output remains to be confirmed independently.
 
-**Remaining P05.2 work:** true signed/saturation
-arithmetic and decay boundary vectors, near-capacity
-4096-event-bank overflow/backpressure with explicit
-stall/overflow recovery, adversarial barrier behavior,
-and verifiable physical AXI transfer/counter
-provenance. Mixed normal-range thresholds are **not**
-arithmetic limits; programmed payload bytes are **not**
-actual measured DDR bus traffic. P05.2 **not complete**.
+**P05.2f — Combined signed-24 saturation, fractional/end-point
+decay, negative weights, refractory and paging regression
+(IMPLEMENTED; independent native and KV260 physical pending).**
+A single six-step five-logical-core / three-slot profile combines
++/- 24-bit saturation, +/- signed weights, decay 0/1024/2048/4096,
+threshold/reset/refractory, packet routing, dirty victim paging
+and 30 real-device state0 barrier checkpoints. The unchanged
+P05 A53 ELF and routed FPD128 shell are reused; **no new bitstream**.
+The strict verifier checks all five complete raw DDR contexts,
+actual encoded neural parameters, mailbox counters and independent
+model SHA/CRC. Native synthetic FAIL tests protect the complete
+DDR comparison, accepted P05G identity and result invariants.
+Sources: `scripts/p05_2f_arithmetic_fixture.py`,
+`scripts/p05_2f_arithmetic_verify.py`,
+`scripts/run_p05_2f_arithmetic.sh`,
+`vivado/p05_2f_arithmetic_prepare.tcl`,
+`tests/test_p05_2f_arithmetic.py`.
+Independent procedure: `docs/P05_2F_ARITHMETIC_GATE.md`.
+**No P05.2f hardware PASS may be inferred until the user actually
+runs the complete 30-checkpoint/FIVE-DDR gate.**
+
+**Remaining P05.2 work after P05.2f:** a separate physical
+near-/at-capacity 4096-event and overflowing 4097-event
+test with explicit expected reject/success, safe recovery,
+and no invalid SRAM overflow; adversarial high-traffic
+barrier checks and actual PS/PL AXI transfer-counter
+provenance. A future capacity test may require a new fixture
+and limited hardware instrumentation, unlike P05.2f.
+Programmed payload bytes are NOT measured AXI bus traffic.
+P05.2 **not complete**.
 
 ### Deliverables
 
