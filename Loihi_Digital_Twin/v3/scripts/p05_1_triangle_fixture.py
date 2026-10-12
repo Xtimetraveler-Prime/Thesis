@@ -6,7 +6,7 @@ LogicalChip and P02 DDR image/oracle functions. Frozen P02/P03 source and
 goldens are NEVER modified. Intended second independent KV260 profile
 using the SAME P05 A53 ELF and accepted FPD128 PL shell.
 
-Threshold=4, weight=3, one external axon/core/step: spike every dispatch.
+Threshold=4, weight=3, one external axon/core/step: the state integrates\non t=0, then recurrent spikes emerge on all subsequent timesteps.
 Routes 0->1,1->2,2->0. All three destinations remain resident (no
 paging replacements), so this specifically exercises direct-resident
 packet routing, absent from P03/first P05 physical workloads.
@@ -83,7 +83,7 @@ def make(root: Path) -> dict:
     ):
         raise ValueError("independent triangle model did not select 3 x 5")
     if model["expected_packet_count_total"] != (STEPS-1) * len(CORES):
-        raise ValueError("triangle must emit exactly one packet per dispatch")
+        raise ValueError("triangle must emit three packets each timestep after the first")
     cfg = a.make_workload()
     image = a.export_paged_hardware_image(
         cfg,resident_context_count=SLOTS
