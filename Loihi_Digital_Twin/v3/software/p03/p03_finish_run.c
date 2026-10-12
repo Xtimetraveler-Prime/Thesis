@@ -84,6 +84,7 @@ static uint32_t first_error;
  * bit 0: bad callback cookie, 1: flush page failed, 2: MMIO read failed,
  * 3..18: individual final acceptance predicates (documented below).
  */
+#define FINAL_DIAG_MAGIC UINT32_C(0xDA600000)
 static uint32_t final_diag_mask;
 static uint32_t final_diag_first_actual;
 static void final_bad(uint32_t bit, uint32_t actual)
@@ -172,7 +173,11 @@ static void report_error(uint32_t code)
      * repurpose them; all normal DONE ABI words remain unchanged.
      */
     if (runtime.fault_phase == P03_RT_WRITE_RESULT) {
-        result[M_LAST_PACKET_LO] = final_diag_mask;
+        /* Tag distinguishes this V2 overlay from the low word of
+         * the last valid HLS packet in the legacy V1 failure mailbox.
+         * The predicate bitmask consumes bits [18:0] only.
+         */
+        result[M_LAST_PACKET_LO] = FINAL_DIAG_MAGIC | final_diag_mask;
         result[M_LAST_PACKET_HI] = final_diag_first_actual;
     }
     result[M_RESULT]=RUN_FAIL | first_error;
