@@ -58,6 +58,16 @@ static int ps_store_ddr32(void *cookie, uint64_t addr, uint32_t value)
     return 0;
 }
 
+int p03_hw_xilinx_fpd128_ready(void)
+{
+    /* AMD UG1087 FPD_SLCR.afi_fs (static width selector).
+     * The booted KV260 was physically measured at 0x00000A00.
+     * Refuse to run on an incompatible PS boot image.
+     */
+    uint32_t raw = Xil_In32((UINTPTR)0xFD615000u);
+    return (((raw >> 8) & 3u) == 2u) ? 0 : -1;
+}
+
 p03_hw_io p03_hw_xilinx_io(void)
 {
     p03_hw_io io = {
