@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# P05.1 SECOND genuine physical profile: 3-core/3-slot, threshold-2 triangle.
+# P05.1 SECOND genuine physical profile: 3-core/3-slot, threshold-4 triangle.
 # Reuses SAME P05 configurable standalone A53 ELF and accepted FPD128 shell.
 # Usage: bash scripts/run_p05_1_triangle.sh prepare <absolute-new-evidence-dir>
 #        P05_1_CONFIRM_KV260_DDR_OVERWRITE=YES bash scripts/run_p05_1_triangle.sh physical <absolute-prepared-dir>
