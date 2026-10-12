@@ -161,24 +161,24 @@ def test_b3_a53_c_sources_pass_host_syntax_with_xilinx_bsp_shim(tmp_path: Path):
     folder, _ = fixture(tmp_path)
     xil_io = tmp_path / "xil_io.h"
     xil_io.write_text(
-        "#ifndef TEST_XIL_IO_H\\n#define TEST_XIL_IO_H\\n"
-        "#include <stdint.h>\\n"
-        "typedef uintptr_t UINTPTR;\\ntypedef intptr_t INTPTR;\\n"
-        "typedef unsigned int u32;\\n"
+        "#ifndef TEST_XIL_IO_H\n#define TEST_XIL_IO_H\n"
+        "#include <stdint.h>\n"
+        "typedef uintptr_t UINTPTR;\ntypedef intptr_t INTPTR;\n"
+        "typedef unsigned int u32;\n"
         "static inline uint32_t Xil_In32(UINTPTR addr)"
-        "{(void)addr;return 0;}\\n"
+        "{(void)addr;return 0;}\n"
         "static inline void Xil_Out32(UINTPTR addr, uint32_t val)"
-        "{(void)addr;(void)val;}\\n"
-        "#endif\\n"
+        "{(void)addr;(void)val;}\n"
+        "#endif\n"
     )
     (tmp_path / "xil_cache.h").write_text(
-        "#ifndef TEST_XIL_CACHE_H\\n#define TEST_XIL_CACHE_H\\n"
-        "#include \"xil_io.h\"\\n"
+        "#ifndef TEST_XIL_CACHE_H\n#define TEST_XIL_CACHE_H\n"
+        "#include \"xil_io.h\"\n"
         "static inline void Xil_DCacheFlushRange(INTPTR addr, u32 size)"
-        "{(void)addr;(void)size;}\\n"
+        "{(void)addr;(void)size;}\n"
         "static inline void Xil_DCacheInvalidateRange(INTPTR addr, u32 size)"
-        "{(void)addr;(void)size;}\\n"
-        "#endif\\n"
+        "{(void)addr;(void)size;}\n"
+        "#endif\n"
     )
     sources = (
         PROBE,
