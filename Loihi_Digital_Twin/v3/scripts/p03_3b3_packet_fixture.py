@@ -79,7 +79,7 @@ def generate(output: Path) -> None:
             "config0": image.config_words[0] & 0xFFFFFFFF,
             "sha256": hashlib.sha256(record).hexdigest(),
         })
-    (output / "mailbox_zero.bin").write_bytes(bytes(64))
+    (output / "mailbox_zero.bin").write_bytes(bytes(128))
     (output / "p03_3b3_fixture.h").write_text(
         f"""#ifndef P03_3B3_FIXTURE_H
 #define P03_3B3_FIXTURE_H
