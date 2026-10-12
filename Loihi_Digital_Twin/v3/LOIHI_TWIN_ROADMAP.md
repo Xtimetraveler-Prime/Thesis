@@ -715,17 +715,38 @@ state/checkpoint CRCs. It builds a separate
 guard: `tests/test_p05_1_runtime_source.py`.
 Instructions: `docs/P05_1_A53_REGRESSION_RUNNER.md`.
 **A53 Vitis build was independently reported successful.**
-The first **physical P05.1 run is next**, using a dedicated
-preflight/physical entrypoint
-`scripts/run_p05_1_probe.sh` and P05R mailbox verifier
-`scripts/p05_1_verify.py`. The initial diagnostic profile
-uses frozen P03/P02 seven-timestep neuron inputs, but now
-requires 35 **on-board** state0 checkpoints at global barriers
-and five independently byte-exact final DDR records.
-Host-only mutation/DDR first-failure coverage is in
-`tests/test_p05_1_physical_probe.py`.
-See `docs/P05_1_PHYSICAL_PROBE.md`. **Not yet physically accepted;
-P05.1/2 not complete.**
+The **first physical P05.1 gate PASSED independently on KV260
+on 2026-10-12**: 7 timesteps, five logical cores, three
+resident slots, 35 real HLS dispatches, 30 packets,
+7 barriers, **35/35 device-observed golden state0 checkpoints**,
+and five complete 512KiB final DDR records byte-exact
+to frozen Python P02. Physical result `0x600D600D`,
+`P05_1_VERIFY_EXIT=0`. Evidence:
+`/tmp/v3_p05_1_probe_20261012T173751Z`.
+See `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`.
+The original run still had `resident_deliveries=0`.
+
+**Second distinct physical workload PREPARED, NOT YET ACCEPTED:**
+`scripts/p05_1_triangle_fixture.py` generates a **three-core /
+three-resident** closed spiking triangle with threshold 4,
+five timesteps and the independent Python LogicalChip oracle.
+Expected: 15 dispatches, 12 real routed packets, **12 actual
+direct-to-resident packet deliveries**, 5 barriers, 15
+on-board intermediate state0 checkpoints, zero replacement
+paging and three byte-exact final 512KiB DDR images.
+No P03 source/bitstream or accepted neural oracle files changed.
+Independent host rehearsals:
+`tests/test_p05_1_triangle.py`.
+The new two-mode physical script
+`scripts/run_p05_1_triangle.sh`, provisioning via
+`vivado/p05_1_triangle_prepare.tcl`, independent
+`scripts/p05_1_triangle_verify.py`, and DDR capture
+`vivado/p05_1_triangle_dump.tcl` are pending user's
+native/KV260 tests. Procedure:
+`docs/P05_1_TRIANGLE_PHYSICAL_GATE.md`.
+**Do not mark P05.1 or P05.2 complete until the second
+physical test and remaining diagnostic/fast-mode coverage
+have independent evidence. Do not merge to main.**
 
 ### Deliverables
 
