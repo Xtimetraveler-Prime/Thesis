@@ -74,7 +74,7 @@ static p03_hw_runtime_bridge bridge;
 static p03_rt_ops ops;
 static int (*base_dispatch)(void *,uint8_t,uint8_t,uint32_t,uint8_t,
                             uint32_t *,uint64_t *);
-static int (*base_drain)(void *,uint8_t,uint32_t,uint8_t,uint32_t *);
+static int (*base_drain)(void *,uint8_t,uint32_t,uint32_t,uint8_t,uint32_t *);
 static uint32_t initial_crc[RUN_CORE_COUNT];
 static uint32_t flush_outs;
 static uint64_t last_packet;
