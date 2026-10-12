@@ -5,6 +5,7 @@ Offline PASS does not mean standalone Vitis or physical acceptance.
 from __future__ import annotations
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -26,11 +27,30 @@ EXEC=ROOT/"vivado/p03_finish_xsdb_run.tcl"
 DUMP=ROOT/"vivado/p03_finish_xsdb_dump.tcl"
 
 
+def isolated_golden_env(tmp_path: Path) -> dict[str, str]:
+    """Force both subprocess CLIs to select THIS checkout's v3/src.
+
+    The active .venv-p08 can resolve an older loihi_twin_v2 install
+    lacking ddr_abi. A deliberately shadowing package detects leakage:
+    if the script does not prepend v3/src, its imports must fail.
+    """
+    fake = tmp_path / "shadow_python_package" / "loihi_twin_v2"
+    fake.mkdir(parents=True, exist_ok=True)
+    (fake / "__init__.py").write_text(
+        'raise RuntimeError("wrong environment package imported")\\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(fake.parent)
+    return env
+
+
 def fixture(tmp_path:Path,steps:int):
     target=tmp_path/f"golden{steps}"
     proc=subprocess.run(
         [sys.executable,str(GEN),"--output-dir",str(target),
          "--timesteps",str(steps)],
+        env=isolated_golden_env(tmp_path), cwd=tmp_path,
         capture_output=True,text=True,timeout=90,
     )
     assert proc.returncode==0,proc.stdout+proc.stderr
@@ -110,6 +130,7 @@ def check(tmp:Path,profile:Path,blob:bytes)->subprocess.CompletedProcess:
         [sys.executable,str(VERIFY),"--mailbox",str(mbox),
          "--fixture-dir",str(profile),
          "--dump-dir",str(tmp/"after")],
+        env=isolated_golden_env(tmp), cwd=tmp,
         capture_output=True,text=True,timeout=60,
     )
 
