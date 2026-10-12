@@ -1,8 +1,15 @@
 # P05.1 second physical profile — 3-core resident spiking triangle
 
-**Status:** Hardware execution NOT YET VERIFIED. Prepared on
-`agent/v3-p05-board-regression`; first 5-core/35-checkpoint P05
-physical gate is accepted (`docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`).
+**Status:** **PHYSICAL PASS and P05.1 accepted on 2026-10-12.**
+The user's independent run confirmed 15 real FPGA dispatches,
+12 packets, **12 direct resident destinations**, 15/15 physical
+state checkpoints and **three complete final DDR images byte-exact**
+to the independent triangle Python golden:
+`/tmp/v3_p05_1_triangle_20261012T175547Z`.
+Formal record: `docs/P05_1_TRIANGLE_ACCEPTANCE.md`.
+The rest of this document preserves the original pre-acceptance
+test procedure; expected output markers below are now supported
+by the independently supplied result (not assistant-run hardware).
 **Same P05 A53 ELF and same accepted P03.2c FPD128 FPGA bitstream:**
 no rebuild is needed if the Vitis staged files still match this branch.
 
