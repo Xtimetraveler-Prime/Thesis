@@ -433,7 +433,9 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
   - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress;
     P03.3b1 and P03.3b2 independently accepted; P03.3b3 native and
     Vitis build PASSED, initial physical run stopped at A53 DDR-header
-    preflight (B3_ERR_HEADER=2), awaiting targeted re-test.**
+    preflight (B3_ERR_HEADER=2); **root cause found: inverted
+    zero-is-success return check in the A53 probe; code corrected,
+    awaiting fresh Vitis/physical re-test.**
     Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
     transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
     shell. The adapter implements page-in/mutable-only page-out,
@@ -467,13 +469,23 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     host-regression-tested. The initial KV260 run downloaded the ELF
     and retrieved the 128-byte mailbox, but returned
     `result=0xDEAD0002`, `error=2`, `first_fault=0` **before any
-    page/dispatch/packet operation**. This isolates the blocker to the
-    A53's two-record DDR header preflight, not the packet pipeline.
-    Updated preflight code captures both records' eleven checked
-    A53-observed fields and per-core mismatch bitmasks in an error-only
-    mailbox overlay; the verifier now reports exact physical addresses
-    and actual/expected words. These changes require a fresh ELF,
-    focused native regression and targeted physical retest.
+    page/dispatch/packet operation**. A second physical run also
+    returned error 2 but had no HDR3 mismatch snapshot. Code review
+    identified a deterministic A53 startup bug:
+    `if (!validate_backing(NULL))` treated `0` (successful header
+    validation) as a failure and immediately published
+    `B3_ERR_HEADER=2`. **Fixed to
+    `if (validate_backing(NULL) != 0)`.** The absence of HDR3 on
+    the second run was consistent with valid DDR headers, not proof
+    that the updated ELF was stale. To prevent future build-path
+    confusion, a retained HDR3 version string is embedded in the
+    executable; the Vitis builder and physical runner both verify the
+    **actual ELF** contains it, and the runner compares the staged
+    C sources against the current repository before XSDB is invoked.
+    The error-only HDR3 overlay remains available for genuine future
+    A53-observed record mismatches. A fresh ELF, native regression and
+    physical retest are required to demonstrate progress into the
+    real HLS packet and paging path.
     Do not claim P03.3b3/P03.3b accepted until physical PASS. See `docs/P03_3B_PHYSICAL_ADAPTER.md` and
     `docs/P03_3B3_PACKET_PAGE_ROUNDTRIP.md`.
   - **P03.3c — Autonomous launch/results and failure coverage.**
