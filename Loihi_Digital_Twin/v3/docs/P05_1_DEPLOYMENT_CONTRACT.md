@@ -1,9 +1,13 @@
 # P05.1 first checkpoint — Versioned PS regression deployment contract
 
-**Status:** Implemented on `agent/v3-p05-board-regression`; independent
-host verification PENDING. **No new Cortex-A53 ELF has been built
-or physically accepted.** P03 is preserved and remains the
-known-good physical baseline.
+**Status:** Host C11/Python deployment contract independently
+reported PASS, followed by successful separate P05 Cortex-A53
+Vitis ELF build and two independently accepted physical KV260
+workloads on 2026-10-12. P05.1 functional subphase is
+**COMPLETE**. Historical host-only checkpoint expectations
+below were recorded before board execution and are retained
+as reproducible instructions, not current acceptance blockers.
+See `docs/P05_1_TRIANGLE_ACCEPTANCE.md`. P03 remains intact.
 
 ## Why this checkpoint comes before the new PS executable
 
