@@ -71,10 +71,10 @@ def verify(mailbox: Path, directory: Path) -> bool:
             raise ValueError("triangle gate binary identity drift")
         if (gate["timesteps"],gate["logical_cores"],gate["slots"],
             gate["expected_packets"],gate["expected_resident_deliveries"])!=(
-            5,[0,1,2],3,15,15):
+            5,[0,1,2],3,12,12):
             raise ValueError("triangle reference gate expectations drift")
         if (model["logical_core_ids"],model["dispatch_count"],
-            model["expected_packet_count_total"])!=([0,1,2],15,15):
+            model["expected_packet_count_total"])!=([0,1,2],15,12):
             raise ValueError("triangle independent LogicalChip output drift")
         if (gate["oracle_trace_sha256"]!=model["trace_fingerprint"] or
             gate["oracle_manifest_sha256"]!=hashlib.sha256(
@@ -84,7 +84,7 @@ def verify(mailbox: Path, directory: Path) -> bool:
             spec["slot_count"]!=3 or spec["timesteps"]!=5 or
             [core["id"] for core in spec["cores"]]!=[0,1,2]):
             raise ValueError("triangle neural spec parameters drift")
-        if (gate["neural_parameters"]!={"threshold":2,"synaptic_weight":3,
+        if (gate["neural_parameters"]!={"threshold":4,"synaptic_weight":3,
              "current_decay":4096,"voltage_decay":0} or
             gate["topology"]!={"0":1,"1":2,"2":0}):
             raise ValueError("triangle neuro-architecture schema drift")
@@ -120,8 +120,8 @@ def verify(mailbox: Path, directory: Path) -> bool:
             # Explicitly confirm the *different* configured threshold
             # from each real packed DDR compartment word.
             config=int.from_bytes(fcore[0x1000:0x1010],"little")
-            if ((config>>26)&0xFFFFFF)!=2:
-                raise ValueError(f"triangle core {core} threshold is not 2")
+            if ((config>>26)&0xFFFFFF)!=4:
+                raise ValueError(f"triangle core {core} threshold is not 4")
             route_word=int.from_bytes(fcore[0x50000:0x50004],"little")
             target=(core+1)%3
             if (route_word & 0x7F)!=target or (
@@ -151,13 +151,13 @@ def verify(mailbox: Path, directory: Path) -> bool:
         "magic":MAGIC,"version":1,"result":0x600D600D,"error":0,
         "steps":5,"completed_steps":5,"cores":3,"slots":3,
         "phase":18,"fault":0,"fault_phase":0,
-        "dispatches":15,"packets":15,"barriers":5,
+        "dispatches":15,"packets":12,"barriers":5,
         "initial_ins":3,"replacement_ins":0,"runtime_outs":0,
         "final_outs":3,"evictions":0,"hits":15,
         "hw_id":0x4C543302,"hw_caps":0x0001031F,
         "hw_dispatches":15,"hw_pages":6,
         "hw_last_page_bytes":106496,"hw_status":0,
-        "hw_pending_bytes":0,"resident_deliveries":15,
+        "hw_pending_bytes":0,"resident_deliveries":12,
         "inputs_consumed":15,"checkpoints_passed":15,
         "failed_step":0,"failed_core":0,"failed_class":0,
         "expected_crc":0,"observed_crc":0,
@@ -205,8 +205,8 @@ def verify(mailbox: Path, directory: Path) -> bool:
         return False
     print(
         "PASS: P05.1 3-core resident triangle physical golden "
-        "timesteps=5 dispatches=15 packets=15 barriers=5 "
-        "events=15 checkpoints=15 resident_deliveries=15 "
+        "timesteps=5 dispatches=15 packets=12 barriers=5 "
+        "events=15 checkpoints=15 resident_deliveries=12 "
         "initial_ins=3 replacement_ins=0 final_outs=3"
     )
     print("PASS: P05.1 three 512KiB final DDR records byte-exact to independent 3-core Python LogicalChip oracle")
