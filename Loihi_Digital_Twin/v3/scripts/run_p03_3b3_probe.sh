@@ -74,7 +74,7 @@ for source in p03_runtime.c p03_hw_adapter.c p03_hw_runtime_bridge.c p03_hw_xili
         exit 2
     fi
 done
-if ! strings -a "$ELF" | grep -Fxq "$EXPECTED_STAMP"; then
+if ! grep -aFq "$EXPECTED_STAMP" "$ELF"; then
     echo "ERROR: selected A53 ELF does not embed $EXPECTED_STAMP." >&2
     echo "ERROR: it may be an old ELF even if its source files are newer." >&2
     echo "ERROR: rebuild in a NEW directory before touching the KV260." >&2
