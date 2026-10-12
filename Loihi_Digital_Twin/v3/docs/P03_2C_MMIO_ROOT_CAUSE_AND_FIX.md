@@ -1,5 +1,15 @@
 # P03.2c engineering case study — KV260 AXI MMIO failure, root cause, and verified read-path fix
 
+> **Acceptance update — 2026-10-11:** The independent FULL standalone
+> Cortex-A53 page/resident/dispatch smoke has now passed. Its strict
+> 64-byte mailbox verifier reported `page_bytes=438272`,
+> `config0=0x14001000`, `dispatches=1`, and exit status `0`.
+> **P03.2c and the experimental P03.2 functional shell are accepted.**
+> The subsequent sections discussing pending full smoke remain as
+> chronological pre-acceptance documentation. See
+> [P03_2C_ACCEPTANCE.md](P03_2C_ACCEPTANCE.md).
+
+
 **Date:** 2026-10-11  
 **Hardware:** AMD/Xilinx Kria KV260 / K26 (Zynq UltraScale+ MPSoC)  
 **Toolchain:** Vivado / Vitis 2025.2  
