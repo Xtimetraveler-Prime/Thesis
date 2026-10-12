@@ -83,6 +83,11 @@ static int dispatch(void *ctx, uint8_t id, uint8_t slot, uint32_t timestep,
     fake_hw *hw = ctx;
     assert(hw->hw_slot[slot] == (int16_t)id);
     assert(current_bank == (timestep & 1u));
+    /* For this five-core fixture, compiled logical order must be 0..4
+     * on every timestep; a count-only check would miss reordering.
+     */
+    assert(id == (uint8_t)(hw->dispatches % 5u));
+    assert(timestep == hw->dispatches / 5u);
     hw->hw_dirty[slot] = 1;
     hw->dispatches++;
     *emitted = 1;
