@@ -67,6 +67,11 @@ PY
           p05_artifacts/p05_manifest.json; do
           sha256sum "$OUT/$name"
       done
+      for core in 0 1 2 3 4; do
+          sha256sum "$OUT/p05_artifacts/core${core}_initial.bin" \
+                    "$OUT/composite_golden/core${core}_initial.bin" \
+                    "$OUT/composite_golden/core${core}_expected.bin"
+      done
     } | tee "$OUT/preflight_identity.txt"
     echo "P05_2_COMPOSITE_DIR=$OUT"
     echo "PASS: P05.2e composite offline prepare finished; KV260 was NOT touched"
