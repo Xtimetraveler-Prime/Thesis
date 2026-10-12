@@ -66,7 +66,7 @@ if ! command -v aarch64-none-elf-gcc >/dev/null 2>&1; then
     fi
 fi
 
-for tool in python vitis aarch64-none-elf-gcc sha256sum readelf; do
+for tool in python vitis aarch64-none-elf-gcc sha256sum readelf strings grep; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required P03.3b3 build tool is unavailable: $tool" >&2
         if [[ "$tool" == "aarch64-none-elf-gcc" ]]; then
@@ -125,6 +125,14 @@ vitis -s software/p03/build_p03_3b3_probe.py \
 
 ELF="$WORKSPACE/p03_3b3_probe.elf"
 [[ -s "$ELF" ]] || { echo "ERROR: P03.3b3 ELF not produced" >&2; exit 3; }
+# Verify the complete Vitis process really emitted the current diagnostics.
+# This is an ELF content check, not merely a source-string grep.
+if ! strings -a "$ELF" | grep -Fxq 'P03_3B3_HDR3_CAPTURE_V2'; then
+    echo "ERROR: built ELF does NOT contain the HDR3 firmware diagnostic identity" >&2
+    echo "ERROR: ensure the current p03_3b3_probe.c was imported and rebuilt" >&2
+    exit 3
+fi
+echo "PASS: P03.3b3 A53 ELF contains retained HDR3 diagnostic firmware identity"
 readelf -lW "$ELF" > "$BUILD_DIR/elf_program_headers.txt"
 python - "$BUILD_DIR/elf_program_headers.txt" <<'PY'
 from pathlib import Path
