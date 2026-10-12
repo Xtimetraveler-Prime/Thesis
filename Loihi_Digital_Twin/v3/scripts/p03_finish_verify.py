@@ -13,6 +13,13 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+# When invoked as "python scripts/p03_finish_*.py", Python puts scripts/
+# rather than v3/src on sys.path. Use THIS checkout's golden package,
+# not an older similarly-named package in the activated v2 virtualenv.
+V3_SRC = str(ROOT / "src")
+if V3_SRC in sys.path:
+    sys.path.remove(V3_SRC)
+sys.path.insert(0, V3_SRC)
 ORACLE = ROOT / "scripts/p02_4b_ring_fixture.py"
 
 FIELDS = (
