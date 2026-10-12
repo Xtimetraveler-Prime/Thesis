@@ -1,5 +1,17 @@
 # P03.2c HPM0 System ILA Diagnosis
 
+> **2026-10-11 resolution:** The *read-only MMIO* failure is now resolved
+> on the KV260. Live PS HPM0 is **128 bits**; both earlier failed PL
+> candidates expected **32 bits**. An independently routed FPD128 design
+> with SmartConnect 128->32-bit width/protocol conversion physically passed
+> all four standalone A53 read-only register checks. All sections below
+> record the chronological debugging process—including superseded early
+> hypotheses—not the current fault status. **P03.2c full page/debug/dispatch
+> command acceptance remains open.** See
+> [P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md](P03_2C_MMIO_ROOT_CAUSE_AND_FIX.md)
+> for the authoritative evidence and fix.
+
+
 **Phase:** P03 — autonomous PS-resident runtime  
 **Sub-milestone:** P03.2c — physical Cortex-A53 MMIO smoke  
 **Status:** diagnostic instrumentation candidate  
