@@ -176,6 +176,65 @@ def test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed(tmp_path):
     assert "core 3 final record mismatch" in failed.stderr
 
 
+def test_failed_p03_4_finalization_decodes_reason_and_inspects_golden_ddr(tmp_path):
+    # Faithfully model the user's first real P03.4 mailbox:
+    # 35 dispatches, 30 packets, 7 barriers, with WRITE_RESULT fault 12
+    # and a nonsensical final-flush count. The *new* firmware records
+    # check-specific diagnostics in words 61/62 on this failure only.
+    golden, manifest = fixture(tmp_path, 7)
+    dumps = tmp_path / "after"
+    dumps.mkdir()
+    for core in range(5):
+        (dumps / f"core{core}_after.bin").write_bytes(
+            (golden / f"core{core}_expected.bin").read_bytes()
+        )
+    words = list(struct.unpack("<64I", good_mailbox(manifest)))
+    words[2] = 0xDEAD000B
+    words[3] = 11
+    words[7] = 12
+    words[8] = 17
+    words[9] = 19
+    words[21] = 0x00800023
+    words[61] = 1 << 12   # final_flush_count check
+    words[62] = 0x00800023
+    output = check(tmp_path, golden, struct.pack("<64I", *words))
+    assert output.returncode != 0
+    assert "final_flush_count" in output.stderr
+    assert "P03_FINALIZE_DIAG_MASK=0x00001000" in output.stderr
+    assert "first_actual=0x00800023" in output.stderr
+    assert "P03_FINAL_DDR_COMPARISON=PASS" in output.stderr
+
+    # Mailbox verification must still FAIL even if full DDR is golden.
+    # Conversely, never hide an independent final-DDR mismatch just
+    # because the terminal firmware mailbox was already a failure.
+    corrupt = bytearray((dumps / "core0_after.bin").read_bytes())
+    corrupt[0x5000] ^= 1
+    (dumps / "core0_after.bin").write_bytes(corrupt)
+    output = check(tmp_path, golden, struct.pack("<64I", *words))
+    assert output.returncode != 0
+    assert "P03_FINAL_DDR_COMPARISON=FAIL" in output.stderr
+    assert "core 0 final record mismatch" in output.stderr
+
+
+def test_legacy_p03_4_finalize_failure_reports_missing_diagnostics(tmp_path):
+    golden, manifest = fixture(tmp_path, 7)
+    dumps = tmp_path / "after"
+    dumps.mkdir()
+    for core in range(5):
+        (dumps / f"core{core}_after.bin").write_bytes(
+            (golden / f"core{core}_expected.bin").read_bytes()
+        )
+    words = list(struct.unpack("<64I", good_mailbox(manifest)))
+    words[2], words[3], words[7], words[8], words[9] = (
+        0xDEAD000B, 11, 12, 17, 19,
+    )
+    words[61] = 0  # last packet from legacy firmware, no mask
+    words[62] = 0
+    output = check(tmp_path, golden, struct.pack("<64I", *words))
+    assert output.returncode != 0
+    assert "P03_FINALIZE_DIAG=missing-or-legacy-ELF" in output.stderr
+
+
 def test_100_step_synthetic_mailbox_and_full_record_conformance(tmp_path):
     profile,manifest=fixture(tmp_path,100)
     records=tmp_path/"after"
@@ -224,6 +283,10 @@ def test_vitis_and_board_single_launch_guards():
     assert "M_RESIDENT_ROUTES" in c
     assert "p03_hw_page(adapter" in c
     assert "p03_hw_quiescent(adapter)" in c
+    assert "final_bad(12,flush_outs)" in c
+    assert "final_bad(14,readbacks[0])" in c
+    assert "result[M_LAST_PACKET_LO] = final_diag_mask;" in c
+    assert "result[M_LAST_PACKET_HI] = final_diag_first_actual;" in c
     assert "if(runtime.phase!=P03_RT_DONE" in c
     assert c.count("result[M_RESULT]=RUN_PASS;")==1
     assert c.index("if(runtime.phase!=P03_RT_DONE") < c.index("result[M_RESULT]=RUN_PASS;")
