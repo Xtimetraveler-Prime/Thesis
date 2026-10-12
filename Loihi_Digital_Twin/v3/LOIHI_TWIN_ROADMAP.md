@@ -773,11 +773,12 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 ## P05.2 — Directed physical regression and observability validation
 
-**Status:** IN PROGRESS — first directed failure-localization
-infrastructure implemented; native and physical acceptance PENDING.
+**Status:** IN PROGRESS — P05.2a accepted; P05.2b first
+physical fast/no-checkpoint equivalence awaiting native and KV260
+verification.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
-(first development slice).** Reuse the physically accepted
+(ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
 three-core fully resident triangle, unchanged 3×512KiB initial
 neural records, same 15 stimulus events, same 15 dispatch
 metadata entries, same PS/PL binary identities. Flip **one bit
@@ -797,10 +798,43 @@ Host native/injected-malformed-mailbox tests:
 `tests/test_p05_2_fault.py`.
 Reproduction, measurement caveats and directed coverage backlog:
 `docs/P05_2_DIAGNOSTIC_GATE.md`.
-**This is not an observed physical PASS and P05.2 is not complete.**
-After its acceptance, proceed to independent fast-mode equivalence
-and a fixture matrix for arithmetic, fanout, packet pressure,
-paging/barrier and legal service-order changes.
+**Observed P05.2a PHYSICAL PASS**: user captured real A53
+`0xDEAD000A` after one passive poll, with first-fault 11,
+phase 13, failing step 2/core 1/state0, injected expected
+CRC `0x6522DF68`, physically observed/reference-model CRC
+`0x6522DF69`, 9 prior dispatches, 6 packets,
+6 direct resident deliveries, 2 complete barriers and 7 passing
+prior checkpoints. Strict `P05_2_FAULT_VERIFY_EXIT=0`;
+physical evidence:
+`/tmp/v3_p05_2_fault_20261012T181015Z`.
+See `docs/P05_2A_FIRST_MISMATCH_ACCEPTANCE.md`. This
+intentionally stopped before final dirty DDR flush; **no
+completed golden DDR equality was claimed**.
+
+**P05.2b — Low-overhead/fast mode versus accepted diagnostic
+mode (IMPLEMENTED; physical PENDING).** Run the **same** accepted
+three-core/three-resident, threshold-4 spiking triangle and
+15 input events on the **unchanged** P05 A53 ELF and FPGA PL.
+Byte-exactly preserve all three initial core images and core/
+input table; only mode flag changes 1→0 and 15 checkpoints
+are removed. Require 15 dispatches, 12 packets, 12 direct
+resident deliveries, 5 completed barriers, no checkpoints
+and **three complete final DDR records equal to both**
+independent Python golden and separately accepted diagnostic
+KV260 SHA-256 results. Host builder/verifier/shell:
+`scripts/p05_2_fast_fixture.py`,
+`scripts/p05_2_fast_verify.py`,
+`scripts/run_p05_2_fast.sh`;
+native tests: `tests/test_p05_2_fast.py`;
+procedure: `docs/P05_2_FAST_EQUIVALENCE_GATE.md`.
+**No independent P05.2b native or physical PASS yet.**
+
+**Remaining P05.2 work:** directed arithmetic boundary/decay,
+fanout, event-buffer/backpressure, dirty paging stress,
+barrier order, legal service-order invariance and accurate
+PS/PL/DDR metric provenance; no assumed Vivado RTL changes
+until existing instrumentation is insufficient. P05.2 is
+**not complete**.
 
 ### Deliverables
 
