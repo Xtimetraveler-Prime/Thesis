@@ -430,8 +430,9 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     event-bank swaps, sticky first-error, and 35 dispatches / seven
     barriers for a five-over-three plan. This does **not** prove
     packet encoding, actual MMIO control or inference equivalence.
-  - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress,
-    P03.3b1 authored; independent native regression pending.**
+  - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress;
+    P03.3b1 independently accepted, P03.3b2 hardware probe prepared
+    (native/Vitis/physical verification pending).**
     Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
     transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
     shell. The adapter implements page-in/mutable-only page-out,
@@ -441,11 +442,16 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     event counts, dispatch metadata and barrier quiescence. A native
     simulated AXI/DDR harness checks resident/nonresident delivery,
     source/destination validity, capacity and fault paths, and a
-    two-timestep policy-to-MMIO run. Next independently compile
-    those C tests (P03.3b1), construct a dedicated A53 adapter probe
-    against the physically accepted XSA (P03.3b2), then demonstrate
-    real packet/page-out round trips on the board (P03.3b3).
-    **Not yet physically accepted.** See
+    two-timestep policy-to-MMIO run. The user independently passed
+    the focused pytest regression and direct native C build (P03.3b1).
+    For P03.3b2, a new fixed-XSA Vitis probe builds the actual scheduler
+    plus adapter/bridge and Xilinx BSP; a guarded physical runner
+    provisions a single DDR fixture, checks the measured 128-bit PS
+    configuration, programs the accepted FPD128 bitstream, runs one core
+    for two zero-packet timesteps, and verifies a 64-byte result mailbox.
+    This test **has not yet been physically executed**. P03.3b3 will
+    separately demonstrate packet delivery and dirty page-out/in.
+    **P03.3b not yet physically accepted.** See
     `docs/P03_3B_PHYSICAL_ADAPTER.md`.
   - **P03.3c — Autonomous launch/results and failure coverage.**
     **Planned.** Connect deployment/input, timer/result schema,
