@@ -142,6 +142,20 @@ def test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed(tmp_path):
     assert "core 3 final record mismatch" in failed.stderr
 
 
+def test_100_step_synthetic_mailbox_and_full_record_conformance(tmp_path):
+    profile,manifest=fixture(tmp_path,100)
+    records=tmp_path/"after"
+    records.mkdir()
+    for core in range(5):
+        (records/f"core{core}_after.bin").write_bytes(
+            (profile/f"core{core}_expected.bin").read_bytes()
+        )
+    result=check(tmp_path,profile,good_mailbox(manifest))
+    assert result.returncode==0,result.stdout+result.stderr
+    assert "timesteps=100 dispatches=500" in result.stdout
+    assert "byte-exact" in result.stdout
+
+
 def test_vitis_and_board_single_launch_guards():
     b=BUILD.read_text()
     r=PHYSICAL.read_text()
