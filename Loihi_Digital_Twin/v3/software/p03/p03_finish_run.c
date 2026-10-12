@@ -56,7 +56,7 @@ enum {
     M_BARRIER_TICKS_LO=30, M_BARRIER_TICKS_HI=31,
     M_INFER_TICKS_LO=32, M_INFER_TICKS_HI=33,
     M_CONTROL_TICKS_LO=34, M_CONTROL_TICKS_HI=35,
-    M_CNTFRQ_HZ=36, M_TIMER_RESERVED=37,
+    M_CNTFRQ_HZ=36, M_RESIDENT_ROUTES=37,
     M_PAGE_COMPLETED=38, M_DISPATCH_COMPLETED=39, M_LAST_PAGE_BYTES=40,
     M_GLOBAL_STATUS=41, M_PAGE_PENDING=42, M_READ_BURSTS=43,
     M_WRITE_BURSTS=44, M_STATES_BEGIN=45,
@@ -78,6 +78,7 @@ static int (*base_drain)(void *,uint8_t,uint32_t,uint32_t,uint8_t,uint32_t *);
 static uint32_t initial_crc[RUN_CORE_COUNT];
 static uint32_t flush_outs;
 static uint64_t last_packet;
+static uint32_t resident_routes;
 static uint32_t first_error;
 
 static void fence(void) { __asm__ volatile("dsb sy" ::: "memory"); }
@@ -277,6 +278,16 @@ static int observe_and_drain(void *ctx,uint8_t id,uint32_t emitted,
         if(p03_hw_read_packet(&hw,slot,(uint16_t)k,&packet)!=P03_HW_OK)
             return -1;
         last_packet=packet; /* evidence only; normal router re-reads and commits */
+        {
+            uint8_t dest=(uint8_t)(packet & UINT64_C(0x7F));
+            uint8_t s;
+            for(s=0;s<runtime.slot_count;++s) {
+                if(runtime.resident[s]==(int16_t)dest) {
+                    ++resident_routes;
+                    break;
+                }
+            }
+        }
     }
     return base_drain(ctx,id,emitted,timestep,next_bank,committed);
 }
@@ -337,12 +348,13 @@ static int write_result(void *ctx,const p03_rt *rt)
     result[M_CORES]=RUN_CORE_COUNT;
     result[M_SLOTS]=RUN_SLOTS;
     result[M_CNTFRQ_HZ]=read_frequency();
-    result[M_TIMER_RESERVED]=0;
+    result[M_RESIDENT_ROUTES]=resident_routes;
 
     if(id!=P03_MMIO_ID_VALUE || cap!=UINT32_C(0x0001031F) ||
        rt->first_fault!=P03_RT_FAULT_NONE ||
        rt->counters.logical_dispatches!=config[46] ||
        rt->counters.routed_packets!=config[45] ||
+       resident_routes==0u ||
        rt->counters.barriers!=config[47] ||
        rt->counters.timesteps_completed!=config[2] ||
        rt->current_event_bank!=(config[2]&1u) ||
