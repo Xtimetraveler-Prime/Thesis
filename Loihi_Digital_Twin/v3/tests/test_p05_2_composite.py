@@ -57,6 +57,9 @@ def original(tmp_path_factory):
     assert counts["hits"]==3
     assert counts["final_outs"]==3
     assert counts["page_commands"]==80
+    assert counts["programmed_page_in_payload_bytes"]==40*0x6B000
+    assert counts["programmed_page_out_payload_bytes"]==40*0x1A000
+    assert counts["programmed_total_page_payload_bytes"]==40*(0x6B000+0x1A000)
     assert counts["resident_deliveries"]>0
     assert counts["nonresident_deliveries"]>0
     assert counts["emitted_packets"]==(
