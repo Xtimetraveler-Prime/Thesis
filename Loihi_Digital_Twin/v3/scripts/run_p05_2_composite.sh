@@ -127,24 +127,21 @@ grep -aFq P05_CONFIGURABLE_A53_REGRESSION_V1 "$ELF" || {
 }
 # Critical: independently revalidate original profile/data before touching DDR.
 python - "$OUT" <<'PY'
-import sys,importlib.util
+import sys,hashlib
 from pathlib import Path
-root=Path.cwd()
-spec=importlib.util.spec_from_file_location("p05_triangle_check",root/"scripts/p05_1_triangle_verify.py")
-checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
-# Reuse the strict physical admission portion with synthetic mailbox/dump
-# is not appropriate here, so verify each immutable preflight SHA instead.
+# Admission before JTAG must never use a fabricated mailbox; verify
+# immutable offline model, spec and binary SHA ledger, then the strict
+# P05.2e physical verifier will revalidate neural rows and DDR after run.
 target=Path(sys.argv[1])
 for line in (target/"preflight_identity.txt").read_text().splitlines():
     parts=line.split()
     if len(parts)!=2 or len(parts[0])!=64:
         continue
-    import hashlib
     original=parts[1]
     actual=hashlib.sha256(Path(original).read_bytes()).hexdigest()
     if parts[0]!=actual:
-        raise SystemExit("FAIL: triangle preflight SHA drift: "+original)
-print("PASS: P05.1 triangle offline evidence SHA identities unchanged")
+        raise SystemExit("FAIL: P05.2e composite preflight SHA drift: "+original)
+print("PASS: P05.2e composite offline evidence SHA identities unchanged")
 PY
 XSDB_URL="${P05_1_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 HW_URL="${P05_1_HW_SERVER_URL:-localhost:3121}"
