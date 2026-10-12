@@ -163,7 +163,7 @@ def test_legacy_header_failure_identified_without_false_packet_claims(
     words[7] = 0  # original P03.3b3 ELF did not capture header snapshots
     result = verify(tmp_path, info, words)
     assert result.returncode != 0
-    assert "older probe build lacks raw-header diagnostics" in result.stderr
+    assert "Earlier probe firmware inverted validate_backing()" in result.stderr
     assert "real core0 HLS packet" not in result.stderr
 
 
@@ -208,6 +208,32 @@ def test_vitis_sources_and_hardware_provisioning_guarded():
     assert "mrd -bin -file $verify_record $record_addr 131072" in prep
     assert "mrd -bin -file $mailbox_dump 0x43FF0000 32" in run_tcl
     assert "rm -rf" not in build and "rm -rf" not in run
+
+
+def test_b3_startup_uses_zero_is_success_contract_and_elf_attestation():
+    probe = PROBE.read_text(encoding="utf-8")
+    build = BUILD.read_text(encoding="utf-8")
+    run = RUN.read_text(encoding="utf-8")
+    # Regression for the exact physical error=2: the original probe used
+    # if (!validate_backing(NULL)), which *failed on valid records*.
+    assert "if (validate_backing(NULL) != 0)" in probe
+    assert "if (!validate_backing(NULL))" not in probe
+    assert "return -1;" in probe
+    assert "return 0;" in probe
+    assert "P03_3B3_HDR3_CAPTURE_V2" in probe
+    assert "b3_probe_build_stamp[0]" in probe
+    # The physical runner must refuse stale build-dir/environment ELF paths
+    # before any XSDB provisioning or board programming is attempted.
+    for value in (
+        'P03_3B3_SELECTED_BUILD_DIR=$BUILD_DIR',
+        'strings -a "$ELF"',
+        'cmp -s "$STAGED_SOURCE" "$CURRENT_SOURCE"',
+        'PASS: P03.3b3 selected A53 ELF contains current HDR3 firmware marker',
+    ):
+        assert value in run
+    assert run.index('strings -a "$ELF"') < run.index('xsdb vivado/p03_3b3_xsdb_prepare.tcl')
+    assert "P03_3B3_HDR3_CAPTURE_V2" in build
+    assert 'strings -a "$ELF"' in build
 
 
 def test_b3_a53_c_sources_pass_host_syntax_with_xilinx_bsp_shim(tmp_path: Path):
