@@ -1,11 +1,17 @@
 # P03.3b — Cortex-A53 physical AXI/DDR/packet adapter
 
 **Implementation started:** 2026-10-11  
-**Current gate (2026-10-11):** **P03.3b1 host-native C and P03.3b2
-actual Cortex-A53 physical two-timestep probe ACCEPTED independently.**
-P03.3b3's directed two-core packet/dirty-page roundtrip is implemented
-and **awaits local native/Vitis and physical verification**.
-**Full P03.3b physical acceptance:** **NOT YET**.  
+**Current gate (2026-10-11):** **P03.3b1 host-native C, P03.3b2
+Cortex-A53 physical two-timestep MMIO probe, and P03.3b3 two-core
+real-HLS nonresident packet/dirty-page test ACCEPTED independently.**
+P03.3b3 physical evidence: `P03_3B3_VERIFY_EXIT=0`,
+two correct real packet words, 3 page-ins/3 dirty page-outs, 4
+dispatches, 2 barriers, 2 routed packets.
+**Remaining coverage:** direct physical routing into an already-resident
+destination still needs independent evidence (native C branch tested);
+combined five-over-three 7/100 golden runner records this count.
+See `docs/P03_3B3_ACCEPTANCE.md` and
+`docs/P03_COMPLETION_GATE.md`.  
 **Branch:** `agent/v3-p03-autonomous-runtime`; do not merge without approval.
 
 ## 1. Independent prerequisite
