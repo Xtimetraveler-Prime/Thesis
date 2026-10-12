@@ -172,7 +172,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
-| P05 | Build board-local regression, observability, and data-path hardening | Planned |
+| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.1) |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
 | P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
 | P08 | Characterize latency, throughput, power, and energy | Planned |
@@ -669,25 +669,114 @@ measurements for:
 
 # P05 — Board-local regression, observability, and data-path hardening
 
-**Status:** Planned
+**Status:** In progress — P05.1  
+**Development branch:** `agent/v3-p05-board-regression` (branched from P03-accepted `main`).  
+**Baseline:** Immutable accepted P03 standalone `p03_finish_run.c`, P03.2c
+FPD128 bitstream/XSA, and P02/P03 frozen goldens. No new PS or RTL
+execution claim is accepted simply because offline tests pass.
 
 ## Goal
 
-Make the KV260 the primary execution target for accepted regression evidence.
+Make the KV260 the primary execution target for accepted regression
+evidence, with the Python reference acting as an independent oracle.
+Preserve P03's working board-local scheduler, MMIO/DDR adapter and
+physical artifact identities; expand test coverage rather than
+redesigning the inference engine.
 
-## Deliverables
+## P05.1 — Configurable PS regression runner and test infrastructure
 
-- board-resident regression runner;
-- compact test-vector/deployment loading format;
-- device-side pass/fail summaries and deterministic fingerprints;
-- directed tests for arithmetic, routing, fanout, backpressure, barriers, paging, page replacement, and service-order invariance;
-- full-run trace/checksum capture at selected observation points;
-- hardware counters for core dispatches, page loads/evictions, DDR bytes moved, packet counts, barrier waits, PL cycles, and PS/runtime timing;
-- failure diagnostics that identify the first mismatching logical core/timestep/state class.
+**Status:** In progress. **First checkpoint:** versioned, fail-closed
+deployment/test-vector ABI and host-native validation, before any A53
+build or physical run.
 
-## Acceptance
+### Deliverables
 
-The major v3 architecture regression corpus must be physically executed on the KV260, with the Python model used as the reference/oracle rather than as the primary execution path.
+- New P05 test-oriented standalone Cortex-A53 executable, separate
+  from the accepted fixed P03.4/P03.5 ELF, **reusing** the same
+  `p03_runtime.c` scheduler and `p03_hw_adapter.c` physical callbacks;
+  no per-test recompilation of the algorithmic runtime.
+- Versioned bounded deployment descriptor and test-vector format
+  supporting selectable logical-core count, time horizon, valid
+  logical-core/slot configuration, input events per timestep/core,
+  service order where legal, and deterministic observation checkpoints.
+  Include checksum/integrity, range, capacity and memory-reservation
+  validation on **both host and device**; failures halt before MMIO.
+- Python deployment builder, test-vector/golden generation and
+  independent verifier with reproducible test IDs and fingerprints;
+  initial workload must reproduce an accepted P03 five-core ring
+  without modifying or substituting the frozen P03 oracle.
+- Device-side per-run and selected per-timestep/per-core observations:
+  first-mismatch metadata (logical core, timestep, state class),
+  packet/barrier/page counters, and reproducible checksums at safe
+  synchronization points. Separate diagnostic and low-overhead modes.
+- Retain a replayable fail-closed result format and a fresh ELF marker;
+  PS runtime may not delegate paging/routing/step decisions to the PC.
+
+### P05.1 acceptance / hold points
+
+1. **Contract checkpoint:** deterministic host-generated deployment,
+   strict portable C11 reader/validator, field-layout and corruption/
+   bounds tests, P03 baseline integrity tests. Request independent
+   host validation before adding the PS execution path.
+2. **Runtime checkpoint:** new separately identifiable standalone A53
+   program can autonomously execute at least two distinct valid
+   deployment profiles using the accepted PS–PL and DDR interface,
+   with byte-exact Python oracle outputs and interpretable
+   telemetry. Verify staged ELF/XSA/bitstream identity.
+3. **Checkpoint/diagnostic checkpoint:** selected state/event/packet
+   checkpoints and first-error reporting agree with model fixtures
+   without changes to neural arithmetic; production/passive
+   measurements do not silently change the test workload.
+
+**Not P05.1 acceptance yet:** A host-only schema or mocked runner,
+an unbuilt ELF, or a new host-controlled per-dispatch loop. A directed
+physical already-resident destination packet test may be included in
+the P05.1 trial profile; broader coverage is P05.2.
+
+## P05.2 — Directed physical regression and observability validation
+
+**Status:** Planned — begins after independent P05.1 acceptance.
+
+### Deliverables
+
+- Execute the major architectural regression corpus **physically on
+  KV260**: neuron arithmetic, spike packet encoding/routing,
+  **direct-to-resident delivery (unexercised in P03: measured
+  `resident_deliveries=0`)**, nonresident DDR delivery, fanout,
+  event saturation and backpressure, page transfers/dirty eviction,
+  repeated page replacement, barriers, and legal service-order
+  invariance. For every test, define independently reproducible
+  Python golden outputs and target coverage before running hardware.
+- Capture/checkpoint complete or selected trace/state fingerprints
+  at well-defined safe observation points, with the first incorrect
+  core/timestep/state class reported on mismatch.
+- Audit existing PS/PL counters for dispatches, page-ins/out,
+  actual transferred DDR bytes, routed packets, barrier waiting,
+  hardware PL cycles and PS generic-timer intervals. Implement
+  additional PL instrumentation **only where existing MMIO and
+  PS software cannot supply a reliable measure**, maintaining a
+  known-good accepted P03 bitstream as fallback.
+- Maintain evidence provenance (ELF, XSA, bitstream, source SHA,
+  manifest, output/trace digest), reproducible scripts and
+  explicit failure/reboot instructions. Compare results with
+  Python as oracle, not as runtime orchestration.
+
+### P05.2 acceptance
+
+The major frozen v3 architectural regression corpus executes on the
+KV260 with zero unresolved deviations from its independently
+generated software oracle. Every supported physical feature has
+documented directed coverage; unexercised features remain clearly
+labelled. The full evidence package identifies the first failing
+core/timestep/state class when hardware diverges. A fresh hardware
+route, if required, is independently revalidated before adoption.
+
+## Relationship to later phases
+
+P05 measures correctness and coverage; P06 freezes the exact MNIST
+benchmark, P07 runs it primarily on board, and P08 measures
+latency/throughput/power/energy with distinct rigor. P05 does **not**
+retroactively change P03's accepted source or golden evidence.
 
 ---
 
