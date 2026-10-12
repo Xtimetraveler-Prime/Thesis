@@ -2,7 +2,7 @@
 # All DDR via nonprocessor PSU/APU; never route/dispatch by XSDB.
 # Explicitly limited to 0..2 / 5 steps for the FIRST independent probe.
 if {$argc < 1 || $argc > 2} {
-    error "usage: p05_1_xsdb_prepare.tcl <probe-dir> ?server-url?"
+    error "usage: p05_2_fanout_prepare.tcl <probe-dir> ?server-url?"
 }
 set root [file normalize [lindex $argv 0]]
 set server "tcp:127.0.0.1:3121"
@@ -18,7 +18,7 @@ proc p05_physical {} {
             return
         }
     }
-    error "P05.1: no physical PSU/APU target"
+    error "P05.2d: no physical PSU/APU target"
 }
 proc p05_equal {a b} {
     set x [open $a rb]; set y [open $b rb]
@@ -33,7 +33,7 @@ for {set core 0} {$core < 3} {incr core} {
     set frozen [file join $fixture [format "core%d_initial.bin" $core]]
     if {![file exists $path] || [file size $path] != 0x80000 ||
         ![file exists $frozen] || ![p05_equal $path $frozen]} {
-        error "P05.1 requires triangle-model-identical 512KiB initial DDR core $core"
+        error "P05.2d requires fanout-model-identical 512KiB initial DDR core $core"
     }
     lappend files [list $path [expr {0x40000000+$core*0x80000}] 131072]
 }
