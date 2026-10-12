@@ -83,6 +83,23 @@ def test_two_model_derived_record_headers_and_sparse_axons(tmp_path: Path):
     c1 = (folder / "core1_initial.bin").read_bytes()
     assert struct.unpack_from("<I", c1, 0x58000)[0] == 0
     assert len((folder / "mailbox_zero.bin").read_bytes()) == 128
+    # All 11 words read by the actual A53 early-header preflight must
+    # match the fixture's P02.1 header ABI, for BOTH logical cores.
+    # This would have detected any wrong C offset/shape assumption before
+    # a new Vitis/physical run.
+    check_offsets = (0, 4, 8, 12, 16, 20, 24, 28, 44, 48, 52)
+    for core_id in (0, 1):
+        record = (folder / f"core{core_id}_initial.bin").read_bytes()
+        actual = tuple(struct.unpack_from("<I", record, off)[0]
+                       for off in check_offsets)
+        expected = (
+            0x3356544C, 0x31585443, 1, 0x1000, 0x80000,
+            core_id, 0, 0, 1 if core_id == 0 else 0, 0, 0,
+        )
+        assert actual == expected
+    c_source = PROBE.read_text(encoding="utf-8")
+    assert "0u, 4u, 8u, 12u, 16u, 20u, 24u, 28u, 44u, 48u, 52u" in c_source
+    assert "B3_HEADER_FIELD_COUNT 11u" in c_source
 
 
 def test_expected_mailbox_pass_and_each_failing_gate(tmp_path: Path):
@@ -103,6 +120,51 @@ def test_expected_mailbox_pass_and_each_failing_gate(tmp_path: Path):
         failed = verify(tmp_path, info, bad)
         assert failed.returncode != 0, (idx, failed.stdout, failed.stderr)
         assert "FAIL: P03.3b3" in failed.stderr
+
+
+def test_early_a53_header_failure_reports_actual_field_and_skips_packet_noise(
+    tmp_path: Path,
+):
+    _, info = fixture(tmp_path)
+    words = valid_words(info)
+    words[2] = 0xDEAD0002  # exact B3_ERR_HEADER
+    words[3] = 2
+    words[7] = 0x48445233  # HDR3 diagnostic overlay
+    words[8] = 0
+    words[9] = 1 << 5  # core1 header logical_core_id at offset 0x14
+
+    offsets = (0, 4, 8, 12, 16, 20, 24, 28, 44, 48, 52)
+    assert len(offsets) == 11
+    for core_id in (0, 1):
+        expected = (
+            0x3356544C, 0x31585443, 1, 0x1000, 0x80000,
+            core_id, 0, 0, 1 if core_id == 0 else 0, 0, 0,
+        )
+        for i, value in enumerate(expected):
+            words[10 + core_id * 11 + i] = value
+    words[21 + 5] = 17  # A53 observed WRONG logical core ID
+    result = verify(tmp_path, info, words)
+    assert result.returncode != 0
+    assert "P03_3B3_HEADER_CORE0_FAIL_MASK=0x00000000" in result.stderr
+    assert "P03_3B3_HEADER_CORE1_FAIL_MASK=0x00000020" in result.stderr
+    assert "core=1 offset=0x14 address=0x40080014" in result.stderr
+    assert "actual=0x00000011 expected=0x00000001" in result.stderr
+    assert "no packet or page activity attempted" in result.stderr
+    assert "real core0 HLS packet" not in result.stderr
+
+
+def test_legacy_header_failure_identified_without_false_packet_claims(
+    tmp_path: Path,
+):
+    _, info = fixture(tmp_path)
+    words = valid_words(info)
+    words[2] = 0xDEAD0002
+    words[3] = 2
+    words[7] = 0  # original P03.3b3 ELF did not capture header snapshots
+    result = verify(tmp_path, info, words)
+    assert result.returncode != 0
+    assert "older probe build lacks raw-header diagnostics" in result.stderr
+    assert "real core0 HLS packet" not in result.stderr
 
 
 def test_vitis_sources_and_hardware_provisioning_guarded():
