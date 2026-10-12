@@ -103,6 +103,15 @@ static int drain_route(void *ctx, uint8_t id, uint32_t emitted,
     log_op(hw, 'R', id, next_bank);
     *committed = hw->partial_route ? 0 : emitted;
     hw->packets += *committed;
+    if (*committed != 0) {
+        uint8_t slot;
+        /* Model NEXT event insertion touching any resident destination;
+         * policy conservatively treats all resident slots as dirty.
+         */
+        for (slot = 0; slot < P03_RT_MAX_SLOTS; ++slot)
+            if (hw->hw_slot[slot] != P03_RT_EMPTY_SLOT)
+                hw->hw_dirty[slot] = 1;
+    }
     return 0;
 }
 static int barrier_ready(void *ctx, uint32_t timestep, uint8_t next_bank)
