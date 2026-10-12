@@ -774,11 +774,13 @@ the P05.1 trial profile; broader coverage is P05.2.
 ## P05.2 — Directed physical regression and observability validation
 
 **Status:** IN PROGRESS — P05.2a first-fault localization,
-P05.2b checkpoint-disabled equivalence and P05.2c legal
-core-service permutation all **physically accepted** on KV260.
-P05.2d 2-route packet fanout/multi-input NEXT-bank
-accumulation implemented; independent native and board
-acceptance pending.
+P05.2b checkpoint-disabled equivalence,
+P05.2c reordered service and P05.2d two-destination
+fanout all **physically accepted** on KV260.
+P05.2e composite five-over-three fanout + heterogeneous
+normal-range arithmetic + dirty paging + reordered service
+has software fixtures/physical runner implemented;
+independent new native and KV260 verification pending.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -883,7 +885,7 @@ three-resident permutation only**, not all possible
 virtualization/paging schedules.
 
 **P05.2d — Two-route physical packet fanout / convergent
-NEXT-bank event aggregation (IMPLEMENTED; physical PENDING).**
+NEXT-bank event aggregation (PHYSICAL ACCEPTED 2026-10-12).**
 Generate a **new** independent `LogicalChip` three-core
 all-to-all-except-self topology where each firing
 source emits **two distinct packets**, each destination
@@ -903,16 +905,67 @@ physical provisioning `vivado/p05_2_fanout_prepare.tcl`,
 two-mode runner `scripts/run_p05_2_fanout.sh`,
 host negative tests `tests/test_p05_2_fanout.py`,
 instructions `docs/P05_2_FANOUT_GATE.md`.
-No P05.2d independent native or physical PASS yet.
-**This small fanout gate is not 4096-entry buffer
-saturation or true backpressure coverage.**
+**Observed P05.2d PHYSICAL PASS:** User-supplied independent
+KV260 `verify.log` confirms 15 dispatches,
+**24 routed packets and 24 actual resident deliveries**,
+5 barriers, 15/15 model-derived hardware state0 checks,
+and three complete physical 512KiB final records byte-exact
+to the new fanout LogicalChip golden. P05G header CRC32
+`0xD6B1D9AC`, payload CRC32 `0x20423406`.
+Reference Python trace SHA256:
+`931ce506074695b567f97076b0b58bc65d796dd4c468e4d320a9e02b9182a759`.
+Actual final physical SHA256s:
+core0 `f545f5d7fa3d896ad2792ada1515f2db9676d80b7095ec8c8c817ca1d5e95da6`,
+core1 `051d61da564a0d160265c620f384c7ede18c88f2551b146a6bdb556edb428a27`,
+core2 `b806caf750a820b050a73f280d3ebdf08893b4d8b66a6a2d87ccdc77630807c4`.
+Acceptance: `docs/P05_2D_FANOUT_ACCEPTANCE.md`.
+**Fanout with 3 incoming events/core is not 4096-entry
+event-bank saturation/backpressure coverage.**
 
-**Remaining P05.2 work:** directed arithmetic boundary/decay,
-fanout, event-buffer/backpressure, dirty paging stress,
-barrier order, legal service-order invariance and accurate
-PS/PL/DDR metric provenance; no assumed Vivado RTL changes
-until existing instrumentation is insufficient. P05.2 is
-**not complete**.
+**P05.2e — Composite multifeature physical regression
+(IMPLEMENTED; native and KV260 physical PENDING).**
+New fully model-derived **five logical cores over three
+resident slots**, eight timesteps and actual service order
+**[4,1,3,0,2]**. Every source has **two outgoing fanout
+destinations** (core+1/core+2 mod 5), each with normal-range
+heterogeneous thresholds **4,5,6,7,8** and weight 3.
+Require 40 logical A53 dispatches, 40 ingress events,
+40 real-device state0 barrier checks, five complete
+byte-exact physical DDR records, and **both resident and
+nonresident packet deliveries**, while stressing repeated
+round-robin victim replacement and dirty page flush/reload
+over eight barriers.
+Golden neural states, packet vectors and entire five final
+DDR images come from independently generated Python
+`LogicalChip`. A second standalone Python replay of the
+exact accepted C victim-pointer/dirty marking policy
+computes page hits, evictions, full page-ins,
+mutable-outs, packet residency at actual emission and
+final page-command counts; the generator fails if it does
+not cover 20+ real replacements/out and both routing paths.
+The gate also audits expected **programmed payload bytes**
+per physical page command (full-in `0x6B000`, mutable-out
+`0x1A000`), **not calibrated AXI traffic or throughput**.
+No software C, existing bitstream or accepted v2 oracle
+source changed.
+`scripts/p05_2_composite_fixture.py`,
+`scripts/p05_2_composite_verify.py`,
+`scripts/run_p05_2_composite.sh`,
+`vivado/p05_2_composite_prepare.tcl`,
+`tests/test_p05_2_composite.py`,
+`docs/P05_2_COMPOSITE_GATE.md`.
+**No independently observed P05.2e native or physical
+PASS yet.** Requires user's native and board logs before
+closing the combined coverage.
+
+**Remaining P05.2 work:** true signed/saturation
+arithmetic and decay boundary vectors, near-capacity
+4096-event-bank overflow/backpressure with explicit
+stall/overflow recovery, adversarial barrier behavior,
+and verifiable physical AXI transfer/counter
+provenance. Mixed normal-range thresholds are **not**
+arithmetic limits; programmed payload bytes are **not**
+actual measured DDR bus traffic. P05.2 **not complete**.
 
 ### Deliverables
 
