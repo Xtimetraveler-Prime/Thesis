@@ -266,3 +266,25 @@ build remain pending. The four reported failures did not reach
 manifest or physical-inference assertions. Do not label P03.3c/P03.4/
 P03.5 accepted until the focused test suite and independent board
 gates have completed.
+
+
+## 8. P03 pre-Vitis mailbox mutation regression repair (2026-10-11)
+
+After the import path fix, the user's focused P03 pytest suite progressed to
+the negative-case mailbox assertions. The sole reported failure was
+`test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed`, case
+`index=45`: it assigned `core0.state0` low word to `0` but the
+seven-step golden mailbox already contained `0` at that location.
+Consequently, the purported corrupt mailbox was byte-identical to the
+passing mailbox and the strict verifier **correctly returned PASS**.
+
+The test now uses `original_words[45] ^ 1`, guaranteeing a changed
+state bit irrespective of the frozen golden state value. Each negative
+case also asserts `data[index] != value` before running the verifier;
+the core0-state case specifically requires `core0.state0` in the
+rejection diagnostic. **Production verifier, physical A53 firmware,
+golden reference, RTL and Vitis builder were not changed.**
+
+Correction committed; independent user rerun still required. Proceed to
+Vitis only after `python -m pytest -q tests/test_p03_finish_autonomy.py`
+passes.
