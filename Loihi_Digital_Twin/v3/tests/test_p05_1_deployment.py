@@ -225,8 +225,9 @@ def test_semantic_mutation_even_if_crcs_recomputed(
     elif entry == "bad_event":
         struct.pack_into("<I", payload, event_b + 8, 999)
     elif entry == "bad_rank":
-        # Entry 1 must not precede entry 0 when t/rank sorting fixed.
-        struct.pack_into("<I", payload, event_b + 16 + 4, 0)
+        # The third entry is lower service rank than the second;
+        # CRC recomputation must not bypass order verification.
+        struct.pack_into("<I", payload, event_b + 2 * 16 + 4, 2)
     elif entry == "bad_checkpoint":
         struct.pack_into("<I", payload, check_b + 8, 42)
     else:
@@ -272,4 +273,4 @@ def test_p03_fixture_interoperability_keeps_frozen_model_unchanged(
         assert (spec_path.parent / "out" /
                 f"core{cid}_initial.bin").read_bytes() == (
                     p03 / f"core{cid}_initial.bin").read_bytes()
-    assert (p03 / "p03_run_config.bin").read_bytes()[:4] == b"P3CF"
+    assert struct.unpack_from("<I", (p03 / "p03_run_config.bin").read_bytes())[0] == 0x50334346
