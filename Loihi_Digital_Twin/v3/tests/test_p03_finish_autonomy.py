@@ -89,7 +89,7 @@ def good_mailbox(manifest:dict)->bytes:
         21:3,22:manifest["expected_evictions"],
         23:manifest["expected_page_hits"],
         24:12345,26:23456,32:34567,
-        36:100000000,38:manifest["expected_page_operations"],
+        36:100000000,37:1,38:manifest["expected_page_operations"],
         39:5*steps,40:106496,41:0,42:0,43:1712,44:416,
         60:int(manifest["p03_run_config_crc32"],16),
         63:manifest["expected_packet_count_total"],
@@ -127,7 +127,7 @@ def test_strict_mailbox_pass_and_full_ddr_golden_and_fail_closed(tmp_path):
     assert good.returncode==0,good.stdout+good.stderr
     assert "byte-exact" in good.stdout
     for index,value in [(2,0xDEAD0002),(7,6),(14,34),(15,29),
-                        (16,6),(19,31),(21,2),(38,0),(45,0)]:
+                        (16,6),(19,31),(21,2),(37,0),(38,0),(45,0)]:
         data=list(struct.unpack("<64I",original))
         data[index]=value
         failed=check(tmp_path,golden,struct.pack("<64I",*data))
@@ -172,6 +172,8 @@ def test_vitis_and_board_single_launch_guards():
     assert "p03_rt_execute(&runtime,&ops,&bridge)" in c
     assert "ops.dispatch=inject_external_and_dispatch" in c
     assert "ops.drain_route=observe_and_drain" in c
+    assert "resident_routes==0u" in c
+    assert "M_RESIDENT_ROUTES" in c
     assert "p03_hw_page(adapter" in c
     assert "p03_hw_quiescent(adapter)" in c
     assert "if(validate_manifest()!=0)" in c
