@@ -7,11 +7,13 @@ module to control any A53 timestep, page replacement, route, or barrier.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
 import struct
 import sys
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 V3_SRC = str(ROOT / "src")
@@ -69,6 +71,65 @@ def verify(mailbox: Path, fixture_dir: Path, artifact_dir: Path,
             raise ValueError("frozen P02 golden must be 7 steps / 30 packets")
         if p05["header_crc32"] != f"0x{h[23]:08X}" or p05["payload_crc32"] != f"0x{h[22]:08X}":
             raise ValueError("generated deployment manifest checksum mismatch")
+        # Recompute both CRCs and SHA256 directly from physical-stage
+        # files; matching only a JSON-claimed CRC to a header word would
+        # allow the *same* corrupted claim in both files.
+        if zlib.crc32(payload) != h[22]:
+            raise ValueError("P05 payload CRC32 mismatch")
+        if zlib.crc32(header[:92] + bytes(4) + header[96:]) != h[23]:
+            raise ValueError("P05 header CRC32 mismatch")
+        if hashlib.sha256(header).hexdigest() != p05["header_sha256"]:
+            raise ValueError("P05 header SHA256 mismatch")
+        if hashlib.sha256(payload).hexdigest() != p05["payload_sha256"]:
+            raise ValueError("P05 payload SHA256 mismatch")
+        if h[12] != len(payload) or h[20] != 35 or (
+            h[17],h[18]) != (5*32,5*32+35*16):
+            raise ValueError("P05 deployment table length/offset mismatch")
+        frozen = struct.unpack("<64I", (fixture_dir/"p03_run_config.bin").read_bytes())
+        if frozen[0] != 0x50334346 or frozen[2:5] != (7,5,3):
+            raise ValueError("P03 frozen launch identity mismatch")
+        # The new P05G core records and 35 ingress rows must actually be
+        # the *same* neural workload as P03, not only the same counts.
+        for core in range(5):
+            entry = struct.unpack_from("<8I", payload, core*32)
+            metadata = frozen[10+2*core] | (frozen[11+2*core]<<32)
+            raw_core = (artifact_dir/f"core{core}_initial.bin").read_bytes()
+            frozen_core = (fixture_dir/f"core{core}_initial.bin").read_bytes()
+            if (entry[0] != core or
+                (entry[1] | (entry[2]<<32)) != metadata or
+                entry[3] != frozen[20+core] or
+                entry[4] != zlib.crc32(raw_core) or
+                entry[5] != frozen[30+core] or
+                entry[6:] != (0,0) or
+                raw_core != frozen_core or len(raw_core) != 0x80000):
+                raise ValueError(f"P05 core {core} fixture mismatch against P03")
+        for i in range(35):
+            t,core,axon,reserved=struct.unpack_from("<4I",payload,h[17]+16*i)
+            if (t,core,axon,reserved)!=(i//5,i%5,10+(i%5),0):
+                raise ValueError(f"P05 external input {i} does not match frozen P03")
+        states={}
+        reading=False
+        for line in (fixture_dir/"p02_4b_vectors.tcl").read_text().splitlines():
+            if line.strip()=="array set P02B_EXPECT_STATE {":
+                reading=True
+                continue
+            if reading and line.strip()=="}":
+                break
+            if reading:
+                step_id, value = line.split()
+                step, core = map(int,step_id.split(","))
+                states[(step,core)]=int(value,0)
+        if len(states)!=35:
+            raise ValueError("frozen P02 oracle state vector incomplete")
+        for i in range(35):
+            t,core,klass,crc=struct.unpack_from("<4I",payload,h[18]+16*i)
+            expected_crc=zlib.crc32(struct.pack("<Q",states[(i//5,i%5)]))
+            if (t,core,klass,crc)!=(i//5,i%5,1,expected_crc):
+                raise ValueError(f"P05 checkpoint {i} differs from frozen P02 oracle")
+        if golden["trace_fingerprint"] != (
+            "9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac"
+        ):
+            raise ValueError("frozen seven-step reference fingerprint drift")
         if mb[60:] != (0, 0, 0, 0):
             errors.append("reserved result words 60..63 must be zero")
     except (OSError, ValueError, KeyError, TypeError, struct.error) as err:
