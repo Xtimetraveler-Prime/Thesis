@@ -32,6 +32,7 @@ def load(name:str,path:Path):
 
 P05R=load("p05_2b_mailbox",ROOT/"scripts/p05_1_verify.py")
 TRI=load("p05_2b_oracle",ROOT/"scripts/p05_1_triangle_fixture.py")
+FAST_BUILDER=load("p05_2b_historical_record_pin",ROOT/"scripts/p05_2_fast_fixture.py")
 PROFILE="p05-2-fast-no-checkpoints-triangle-v1"
 
 
@@ -58,6 +59,13 @@ def verify(mailbox:Path,folder:Path)->bool:
         if (gate["profile"],gate["neural_reference_profile"])!=(
             PROFILE,TRI.PROFILE):
             raise ValueError("incorrect fast-mode profile identity")
+        # A generated JSON gate must not be trusted as its own
+        # independent history of previously accepted physical SHA.
+        # Reconcile against the immutable user-observed P05.1 hashes.
+        if gate["accepted_prior_physical_final_ddr_sha256"] != (
+            FAST_BUILDER.ACCEPTED_RECORD_SHA
+        ):
+            raise ValueError("historical accepted P05.1 physical SHA256 identity drift")
         if (h[0],h[1],h[2],h[3],h[4],h[5],
             h[6],h[13],h[14],h[20])!=(
             0x47353050,1,256,0,5,3,3,15,0,15):
