@@ -4,8 +4,10 @@ These synthetic mailbox tests are NOT evidence of execution on the KV260.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
+import zlib
 from pathlib import Path
 import shutil
 import struct
@@ -195,3 +197,61 @@ def test_physical_scripts_are_explicitly_opt_in_and_preserve_p03():
     assert "dow -data" in tcl
     assert "Cortex-A53" in tcl
     assert "name =~" in tcl
+
+
+def test_recomputed_matching_crc_sha_cannot_hide_wrong_oracle_checkpoint(
+    prepared, capsys
+):
+    out,golden,manifest=prepared
+    (out/"p05_a53_result.bin").write_bytes(good_mailbox(out,golden,manifest))
+    artifact=out/"p05_artifacts"
+    header=list(struct.unpack("<64I",(artifact/"p05_header.bin").read_bytes()))
+    payload=bytearray((artifact/"p05_payload.bin").read_bytes())
+    assert header[14]==35
+    crc_location=header[18]+12
+    original=struct.unpack_from("<I",payload,crc_location)[0]
+    struct.pack_into("<I",payload,crc_location,original^1)
+    assert struct.unpack_from("<I",payload,crc_location)[0]!=original
+    header[22]=zlib.crc32(payload)
+    header[23]=0
+    header[23]=zlib.crc32(struct.pack("<64I",*header))
+    modified_header=struct.pack("<64I",*header)
+    (artifact/"p05_header.bin").write_bytes(modified_header)
+    (artifact/"p05_payload.bin").write_bytes(payload)
+    info=json.loads((artifact/"p05_manifest.json").read_text())
+    info["header_crc32"]=f"0x{header[23]:08X}"
+    info["payload_crc32"]=f"0x{header[22]:08X}"
+    info["header_sha256"]=hashlib.sha256(modified_header).hexdigest()
+    info["payload_sha256"]=hashlib.sha256(payload).hexdigest()
+    (artifact/"p05_manifest.json").write_text(json.dumps(info))
+    good,logs=run_verifier(out,capsys)
+    assert not good
+    assert "checkpoint 0 differs from frozen P02 oracle" in logs
+
+
+def test_mutated_external_event_rejected_even_with_refreshed_crc_sha(
+    prepared, capsys
+):
+    out,golden,manifest=prepared
+    (out/"p05_a53_result.bin").write_bytes(good_mailbox(out,golden,manifest))
+    artifact=out/"p05_artifacts"
+    header=list(struct.unpack("<64I",(artifact/"p05_header.bin").read_bytes()))
+    payload=bytearray((artifact/"p05_payload.bin").read_bytes())
+    # Edit first input from correct axon 10 to incorrect 11, but
+    # recompute CRC/SHA fields in both corresponding files.
+    struct.pack_into("<I",payload,header[17]+8,11)
+    header[22]=zlib.crc32(payload)
+    header[23]=0
+    header[23]=zlib.crc32(struct.pack("<64I",*header))
+    raw=struct.pack("<64I",*header)
+    (artifact/"p05_header.bin").write_bytes(raw)
+    (artifact/"p05_payload.bin").write_bytes(payload)
+    info=json.loads((artifact/"p05_manifest.json").read_text())
+    info["header_crc32"]=f"0x{header[23]:08X}"
+    info["payload_crc32"]=f"0x{header[22]:08X}"
+    info["header_sha256"]=hashlib.sha256(raw).hexdigest()
+    info["payload_sha256"]=hashlib.sha256(payload).hexdigest()
+    (artifact/"p05_manifest.json").write_text(json.dumps(info))
+    good,logs=run_verifier(out,capsys)
+    assert not good
+    assert "external input 0 does not match frozen P03" in logs
