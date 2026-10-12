@@ -191,7 +191,7 @@ def test_offline_evidence_recheck_preserves_original_evidence(staged):
     )
     assert p.returncode==0,p.stdout+p.stderr
     assert "P05_2E_RECHECK_EXIT=0" in p.stdout
-    assert "full" in p.stdout.lower()
+    assert "five complete 512KiB physical DDR records" in p.stdout
     assert previous=={str(f):hashlib.sha256(f.read_bytes()).hexdigest()
                       for f in protected}
 
