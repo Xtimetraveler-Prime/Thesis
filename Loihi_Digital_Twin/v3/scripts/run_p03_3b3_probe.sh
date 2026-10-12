@@ -19,7 +19,7 @@ OUT_DIR="${1:?Usage: run_p03_3b3_probe.sh <new-output-evidence-directory>}"
 XSDB_URL="${P03_XSDB_SERVER_URL:-tcp:127.0.0.1:3121}"
 HW_URL="${P03_HW_SERVER_URL:-localhost:3121}"
 
-for tool in xsdb vivado python sha256sum grep; do
+for tool in xsdb vivado python sha256sum grep strings cmp; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "ERROR: required hardware probe tool missing: $tool" >&2
         exit 2
@@ -47,6 +47,42 @@ for expected in \
         exit 2
     }
 done
+# Verify the ACTUAL ELF selected by P03_3B3_BUILD_DIR contains the
+# executable's retained HDR3 diagnostic identity. Otherwise a successful
+# Vitis build in a different timestamp directory can accidentally be
+# followed by programming the older ELF from an unchanged environment.
+EXPECTED_STAMP="P03_3B3_HDR3_CAPTURE_V2"
+STAGED_SOURCE="$BUILD_DIR/source/p03_3b3_probe.c"
+CURRENT_SOURCE="$V3_DIR/software/p03/p03_3b3_probe.c"
+echo "P03_3B3_SELECTED_BUILD_DIR=$BUILD_DIR"
+echo "P03_3B3_SELECTED_ELF=$ELF"
+if [[ ! -s "$STAGED_SOURCE" ]] ||
+   ! grep -Fq "$EXPECTED_STAMP" "$STAGED_SOURCE"; then
+    echo "ERROR: selected build does NOT contain the updated HDR3 probe source." >&2
+    echo "ERROR: rebuild into a NEW P03_3B3_BUILD_DIR and export that exact directory." >&2
+    exit 2
+fi
+if ! cmp -s "$STAGED_SOURCE" "$CURRENT_SOURCE"; then
+    echo "ERROR: selected ELF build is sourced from a stale P03.3b3 probe snapshot." >&2
+    echo "ERROR: source=$CURRENT_SOURCE staged=$STAGED_SOURCE" >&2
+    echo "ERROR: rebuild into a NEW P03_3B3_BUILD_DIR." >&2
+    exit 2
+fi
+for source in p03_runtime.c p03_hw_adapter.c p03_hw_runtime_bridge.c p03_hw_xilinx_io.c; do
+    if ! cmp -s "$BUILD_DIR/source/$source" "$V3_DIR/software/p03/$source"; then
+        echo "ERROR: stale hardware/runtime source in build: $source" >&2
+        exit 2
+    fi
+done
+if ! strings -a "$ELF" | grep -Fxq "$EXPECTED_STAMP"; then
+    echo "ERROR: selected A53 ELF does not embed $EXPECTED_STAMP." >&2
+    echo "ERROR: it may be an old ELF even if its source files are newer." >&2
+    echo "ERROR: rebuild in a NEW directory before touching the KV260." >&2
+    exit 2
+fi
+echo "PASS: P03.3b3 selected A53 ELF contains current HDR3 firmware marker"
+echo "P03_3B3_SELECTED_ELF_SHA256=$(sha256sum "$ELF" | awk '{print $1}')"
+
 [[ ! -e "$OUT_DIR" ]] || {
     echo "ERROR: evidence directory already exists: $OUT_DIR" >&2; exit 2;
 }
