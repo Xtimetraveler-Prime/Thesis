@@ -430,75 +430,56 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     event-bank swaps, sticky first-error, and 35 dispatches / seven
     barriers for a five-over-three plan. This does **not** prove
     packet encoding, actual MMIO control or inference equivalence.
-  - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress;
-    P03.3b1 and P03.3b2 independently accepted; P03.3b3 native and
-    Vitis build PASSED, initial physical run stopped at A53 DDR-header
-    preflight (B3_ERR_HEADER=2); **root cause found: inverted
-    zero-is-success return check in the A53 probe; code corrected,
-    awaiting fresh Vitis/physical re-test.**
-    Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
-    transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
-    shell. The adapter implements page-in/mutable-only page-out,
-    sticky DONE/error polling, resident bank 6/9 event writes,
-    bank 8 packet reads, P03 packet decoding and sparse-axon
-    validation, nonresident DDR NEXT delivery with cache cleaning,
-    event counts, dispatch metadata and barrier quiescence. A native
-    simulated AXI/DDR harness checks resident/nonresident delivery,
-    source/destination validity, capacity and fault paths, and a
-    two-timestep policy-to-MMIO run. The user independently passed
-    the focused pytest regression and direct native C build (P03.3b1).
-    For P03.3b2, a new fixed-XSA Vitis probe builds the actual scheduler
-    plus adapter/bridge and Xilinx BSP; a guarded physical runner
-    provisions a single DDR fixture, checks the measured 128-bit PS
-    configuration, programs the accepted FPD128 bitstream, runs one core
-    for two zero-packet timesteps, and verifies a 64-byte result mailbox.
-    The user independently ran the 2026-10-11 P03.3b2 physical gate:
-    `ps_width=128`, `id=0x4C543302`,
-    `config0=0x14001000`, `page_bytes=438272`,
-    `page_ins=1`, `dispatches=2`, `barriers=2`,
-    `P03_3B2_VERIFY_EXIT=0`, with its strict 64-byte A53 mailbox
-    verified. **P03.3b2 accepted.** For P03.3b3, a deterministic
-    two-logical-core / one-slot / two-timestep model-derived fixture
-    now generates real physical HLS packet expectations. The A53 probe
-    checks source0->core1-axon11 NEXT and source1->core0-axon20
-    NEXT packet words, both nonresident DDR event writes, core1
-    resident event survival, three mutable dirty page-outs and
-    three replacement page-ins. Vitis/XSA build, XSDB provisioning,
-    128-byte mailbox verifier, native AXI packet regression, and
-    full hardware evidence scripts have been independently built and
-    host-regression-tested. The initial KV260 run downloaded the ELF
-    and retrieved the 128-byte mailbox, but returned
-    `result=0xDEAD0002`, `error=2`, `first_fault=0` **before any
-    page/dispatch/packet operation**. A second physical run also
-    returned error 2 but had no HDR3 mismatch snapshot. Code review
-    identified a deterministic A53 startup bug:
-    `if (!validate_backing(NULL))` treated `0` (successful header
-    validation) as a failure and immediately published
-    `B3_ERR_HEADER=2`. **Fixed to
-    `if (validate_backing(NULL) != 0)`.** The absence of HDR3 on
-    the second run was consistent with valid DDR headers, not proof
-    that the updated ELF was stale. To prevent future build-path
-    confusion, a retained HDR3 version string is embedded in the
-    executable; the Vitis builder and physical runner both verify the
-    **actual ELF** contains it, and the runner compares the staged
-    C sources against the current repository before XSDB is invoked.
-    The error-only HDR3 overlay remains available for genuine future
-    A53-observed record mismatches. A fresh ELF, native regression and
-    physical retest are required to demonstrate progress into the
-    real HLS packet and paging path.
-    Do not claim P03.3b3/P03.3b accepted until physical PASS. See `docs/P03_3B_PHYSICAL_ADAPTER.md` and
-    `docs/P03_3B3_PACKET_PAGE_ROUNDTRIP.md`.
-  - **P03.3c — Autonomous launch/results and failure coverage.**
-    **Planned.** Connect deployment/input, timer/result schema,
-    cache-safe DDR layout and board-local start-to-DONE/ERROR
-    execution; validate no PC algorithmic control.
-  P03.4 and P03.5 remain independent physical model-equivalence gates.
-- **P03.4 — Board-local five-over-three bring-up.** **Planned.** Execute the
-  accepted seven-timestep / 35-dispatch five-over-three workload after one start
-  action with the PC absent from the algorithmic loop.
-- **P03.5 — 100-timestep autonomous acceptance.** **Planned.** Execute the
-  representative five-over-three 100-timestep workload board-locally and require
-  normalized agreement with the frozen Python/v2 architectural boundary.
+  - **P03.3b — Physical MMIO/DDR/packet adapter.**
+    **Directed P03.3b1–b3 acceptance complete 2026-10-11; resident
+    destination physical coverage explicitly tracked.** Native C
+    MMIO/DDR packet adapter passed, the one-core/two-step real A53
+    scheduler/adapter probe passed, and the two-core/one-slot
+    physical real-HLS packet/dirty-page roundtrip independently passed:
+    `ps_width=128`, `first_packet=0x2000000020000581`,
+    `second_packet=0x2000000040000A00`,
+    `core1_ddr_event1=11`, `core0_ddr_event0=20`,
+    `page_ins=3`, `page_outs=3`, `dispatches=4`,
+    `barriers=2`, `routed_packets=2`,
+    `P03_3B3_VERIFY_EXIT=0`.
+    Accepted local evidence folder:
+    `/tmp/v3_p03_3b3_fixed_20261012T034337Z`.
+    This verified actual PL packets, PS-owned nonresident DDR routing
+    and mutable context persistence. The one-slot probe did not
+    exercise direct MMIO delivery to an already-resident destination;
+    that path remains native-tested and is counted explicitly by
+    the new unified P03 runner. Primary acceptance record:
+    `docs/P03_3B3_ACCEPTANCE.md`.
+  - **P03.3c + P03.4 + P03.5 — Consolidated implementation and
+    two independent physical acceptance runs.** **Implementation
+    prepared on branch; independent native/Vitis/board verification
+    pending.** To minimize extra subphases, these use one immutable
+    software/ABI/hardware path. New
+    `software/p03/p03_finish_run.c` links the accepted C
+    scheduler, real P03.3b adapter/bridge, and A53 Xilinx BSP. A
+    versioned 256-byte CRC32-checked DDR launch manifest selects
+    **7 or 100 timesteps** for the **exact accepted P02.4b
+    five-logical-core/three-resident-slot ring**. The A53 owns
+    the formerly host-driven per-core ingress injection immediately
+    before dispatch, RR page replacement, cross-core routing, global
+    barrier and bank swaps, CNTVCT timing/counters, failure
+    persistence, and final dirty resident flush. XSDB passively
+    waits for terminal mailbox and only then retrieves five full
+    final 512 KiB records. The Python verifier compares those
+    records byte-exactly to the frozen P02 golden and the 256-byte
+    mailbox to the scheduler/timing/status oracle. The 7-step
+    profile must demonstrate **35 dispatches, 7 barriers, 30
+    packets** and the accepted trace fingerprint
+    `9a925277fdeffbcce837954b6d44ce118d88e839f3a6b2d9d6e4956cf32747ac`.
+    The 100-step profile requires **500 dispatches, 100 barriers**,
+    and the 100-step Python reference's own packet count and five
+    full normalized final records; it may not borrow the 7-step
+    oracle. The PS runtime uses a different packet-delivery/paging
+    policy than PC-controlled P02, so its *paging counts* may differ
+    without changing logical results.
+    **Neither physical gate is accepted yet.** See
+    `docs/P03_COMPLETION_GATE.md`. Do not merge or call P03
+    complete before independent two-run verification.
 
 ## Deliverables
 
