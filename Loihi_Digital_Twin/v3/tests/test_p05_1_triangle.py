@@ -37,11 +37,11 @@ def triangle_seed(tmp_path_factory):
     assert "KV260 was NOT touched" in proc.stdout
     gate=json.loads((target/"triangle_gate.json").read_text())
     assert gate["expected_dispatches"]==15
-    assert gate["expected_packets"]==15
-    assert gate["expected_resident_deliveries"]==15
+    assert gate["expected_packets"]==12
+    assert gate["expected_resident_deliveries"]==12
     assert gate["expected_checkpoints"]==15
     assert gate["expected_page_operations"]==6
-    assert gate["neural_parameters"]["threshold"]==2
+    assert gate["neural_parameters"]["threshold"]==4
     assert gate["topology"]=={"0":1,"1":2,"2":0}
     return target
 
@@ -63,7 +63,7 @@ def synthetic_mailbox(root:Path):
     words[:20]=[
         0x52353050,1,0x600D600D,0,
         5,5,3,3,18,0,0,
-        15,15,5,
+        15,12,5,
         3,0,0,3,0,15,
     ]
     words[20]=10
@@ -72,7 +72,7 @@ def synthetic_mailbox(root:Path):
     words[32:42]=[
         99999001,0x4C543302,0x1031F,15,6,106496,0,0,50,50
     ]
-    words[42:45]=[15,15,15]
+    words[42:45]=[12,15,15]
     head=struct.unpack("<64I",(root/"p05_artifacts/p05_header.bin").read_bytes())
     words[50],words[51]=head[23],head[22]
     words[54:58]=[1,15,15,15]
@@ -90,7 +90,7 @@ def test_triangle_new_neural_profile_is_not_frozen_p03(triangle):
     gate=json.loads((triangle/"triangle_gate.json").read_text())
     desc=json.loads((triangle/"p05_artifacts/p05_manifest.json").read_text())
     assert model["logical_core_ids"]==[0,1,2]
-    assert model["expected_packet_count_total"]==15
+    assert model["expected_packet_count_total"]==12
     assert desc["timesteps"]==5
     assert desc["events"]==desc["checkpoints"]==15
     assert gate["oracle_trace_sha256"]!=(
@@ -99,7 +99,7 @@ def test_triangle_new_neural_profile_is_not_frozen_p03(triangle):
     for cid in range(3):
         raw=(triangle/"triangle_golden"/f"core{cid}_initial.bin").read_bytes()
         cfg=int.from_bytes(raw[0x1000:0x1010],"little")
-        assert (cfg>>26)&0xFFFFFF==2
+        assert (cfg>>26)&0xFFFFFF==4
         route=int.from_bytes(raw[0x50000:0x50004],"little")
         assert route&127==(cid+1)%3
 
@@ -108,7 +108,7 @@ def test_synthetic_complete_triangle_mailbox_and_three_exact_ddr(triangle,capsys
     (triangle/"p05_a53_result.bin").write_bytes(synthetic_mailbox(triangle))
     success,logs=run_verify(triangle,capsys)
     assert success,logs
-    assert "resident_deliveries=15" in logs
+    assert "resident_deliveries=12" in logs
     assert "three 512KiB final DDR records byte-exact" in logs
     assert "P05_TRIANGLE_METADATA=" in logs
 
