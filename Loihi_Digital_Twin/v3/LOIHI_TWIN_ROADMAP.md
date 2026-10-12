@@ -431,8 +431,8 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     barriers for a five-over-three plan. This does **not** prove
     packet encoding, actual MMIO control or inference equivalence.
   - **P03.3b — Physical MMIO/DDR/packet adapter.** **In progress;
-    P03.3b1 independently accepted, P03.3b2 hardware probe prepared
-    (native/Vitis/physical verification pending).**
+    P03.3b1 and P03.3b2 independently accepted; P03.3b3 directed
+    packet/dirty-page physical gate implemented, awaiting verification.**
     Added `p03_hw_adapter.c`, runtime callback bridge and Xilinx BSP
     transport for the accepted boot-matched FPD128 -> 32-bit AXI-Lite
     shell. The adapter implements page-in/mutable-only page-out,
@@ -449,10 +449,23 @@ Move host-owned algorithmic orchestration onto the KV260 PS.
     provisions a single DDR fixture, checks the measured 128-bit PS
     configuration, programs the accepted FPD128 bitstream, runs one core
     for two zero-packet timesteps, and verifies a 64-byte result mailbox.
-    This test **has not yet been physically executed**. P03.3b3 will
-    separately demonstrate packet delivery and dirty page-out/in.
-    **P03.3b not yet physically accepted.** See
-    `docs/P03_3B_PHYSICAL_ADAPTER.md`.
+    The user independently ran the 2026-10-11 P03.3b2 physical gate:
+    `ps_width=128`, `id=0x4C543302`,
+    `config0=0x14001000`, `page_bytes=438272`,
+    `page_ins=1`, `dispatches=2`, `barriers=2`,
+    `P03_3B2_VERIFY_EXIT=0`, with its strict 64-byte A53 mailbox
+    verified. **P03.3b2 accepted.** For P03.3b3, a deterministic
+    two-logical-core / one-slot / two-timestep model-derived fixture
+    now generates real physical HLS packet expectations. The A53 probe
+    checks source0->core1-axon11 NEXT and source1->core0-axon20
+    NEXT packet words, both nonresident DDR event writes, core1
+    resident event survival, three mutable dirty page-outs and
+    three replacement page-ins. Vitis/XSA build, XSDB provisioning,
+    128-byte mailbox verifier, native AXI packet regression, and
+    full hardware evidence scripts are committed but **not yet
+    independently tested**. Do not claim P03.3b3/P03.3b accepted
+    until physical PASS. See `docs/P03_3B_PHYSICAL_ADAPTER.md` and
+    `docs/P03_3B3_PACKET_PAGE_ROUNDTRIP.md`.
   - **P03.3c — Autonomous launch/results and failure coverage.**
     **Planned.** Connect deployment/input, timer/result schema,
     cache-safe DDR layout and board-local start-to-DONE/ERROR
