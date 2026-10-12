@@ -256,6 +256,14 @@ def make(out:Path)->dict:
             raise ValueError(f"composite core{core} initial image drift")
     if len(sim["expected_final_record_sha256"])!=len(CORES):
         raise ValueError("not all golden DDR images generated")
+    # Do not mutate this P02 logical oracle: its packet traces have
+    # normalized sorted destinations, while HLS physical packet RAM
+    # follows configured output-route descriptor order. In this new
+    # wraparound case core3 routes [4,0], not sorted [0,4].
+    physical_layout=load(
+        "p05_2e_packet_physical_adapter",
+        ROOT/"scripts/p05_2_packet_layout.py"
+    ).derive(out)
     gate={
         "profile":PROFILE,
         "status":"MODEL_ONLY_NOT_PHYSICAL_ACCEPTANCE",
@@ -275,6 +283,11 @@ def make(out:Path)->dict:
         "oracle_manifest_sha256":hashlib.sha256(
             (golden/"manifest.json").read_bytes()).hexdigest(),
         "oracle_final_record_sha256":sim["expected_final_record_sha256"],
+        "physical_route_order_final_record_sha256":
+            physical_layout["physical_full_record_sha256"],
+        "physical_packet_layout_proof_sha256":hashlib.sha256(
+            (out/"p05_2_packet_layout_ledger.json").read_bytes()
+        ).hexdigest(),
         "p05_header_sha256":manifest["header_sha256"],
         "p05_payload_sha256":manifest["payload_sha256"],
         "p05_input_spec_sha256":manifest["input_spec_sha256"],
