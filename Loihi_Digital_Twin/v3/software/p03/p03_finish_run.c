@@ -17,7 +17,7 @@
 #include "p03_hw_runtime_bridge.h"
 #include "p03_mmio.h"
 
-#define RUN_CONFIG_ADDR UINTPTR_C(0x43FE0000) /* set below via uintptr_t */
+#define RUN_CONFIG_ADDR ((uintptr_t)0x43FE0000u)
 #define RUN_MAILBOX_ADDR ((uintptr_t)0x43FF0000u)
 #define RUN_BACKING_ADDR ((uintptr_t)0x40000000u)
 #define RUN_MAGIC UINT32_C(0x50334346)
@@ -67,7 +67,7 @@ enum {
 
 static volatile uint32_t *const result = (volatile uint32_t *)RUN_MAILBOX_ADDR;
 static volatile const uint32_t *const config =
-    (volatile const uint32_t *)(uintptr_t)0x43FE0000u;
+    (volatile const uint32_t *)RUN_CONFIG_ADDR;
 static p03_rt runtime;
 static p03_hw_adapter hw;
 static p03_hw_runtime_bridge bridge;
@@ -111,9 +111,9 @@ static uint32_t crc_physical(uintptr_t base, uint32_t bytes)
 }
 static uint32_t config_crc(void)
 {
-    const volatile uint8_t *p = (const volatile uint8_t *)(uintptr_t)0x43FE0000u;
+    const volatile uint8_t *p = (const volatile uint8_t *)RUN_CONFIG_ADDR;
     uint32_t crc=UINT32_C(0xFFFFFFFF), i;
-    Xil_DCacheInvalidateRange((INTPTR)0x43FE0000u,256);
+    Xil_DCacheInvalidateRange((INTPTR)RUN_CONFIG_ADDR,256);
     fence();
     for (i=0;i<252;++i) crc=crc_update(crc,p[i]);
     return crc ^ UINT32_C(0xFFFFFFFF);
