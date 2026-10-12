@@ -172,7 +172,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
-| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.1) |
+| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.2; P05.1 accepted) |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
 | P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
 | P08 | Characterize latency, throughput, power, and energy | Planned |
@@ -669,84 +669,63 @@ measurements for:
 
 # P05 — Board-local regression, observability, and data-path hardening
 
-**Status:** In progress — P05.1  
-**Development branch:** `agent/v3-p05-board-regression` (branched from P03-accepted `main`).  
-**Baseline:** Immutable accepted P03 standalone `p03_finish_run.c`, P03.2c
-FPD128 bitstream/XSA, and P02/P03 frozen goldens. No new PS or RTL
-execution claim is accepted simply because offline tests pass.
+**Status:** In progress — **P05.1 complete, P05.2 active** (2026-10-12).  
+**Development branch:** `agent/v3-p05-board-regression` (unmerged;
+no authorization to merge `main`).  
+**Baseline:** P03 accepted A53 scheduler, FPGA MMIO/DDR adapter, FPD128
+bitstream/XSA and frozen P02/P03 reference goldens remain unchanged.
 
 ## Goal
 
-Make the KV260 the primary execution target for accepted regression
-evidence, with the Python reference acting as an independent oracle.
-Preserve P03's working board-local scheduler, MMIO/DDR adapter and
-physical artifact identities; expand test coverage rather than
-redesigning the inference engine.
+Make KV260 the primary execution target for independent Python-oracle
+regression evidence. Demonstrate correctness across different network
+sizes, packet residency paths and selected intermediate checkpoints;
+then harden error diagnostics, fanout, input saturation/backpressure,
+paging, arithmetic, service-order variation and counter provenance.
 
 ## P05.1 — Configurable PS regression runner and test infrastructure
 
-**Status:** In progress. **P05.1 host deployment contract accepted
-after user independently reported all regressions passing and
-inspected the real P03-derived 7-step manifest (35 inputs,
-35 dispatches, five core CRC identities).** A distinct P05.1
-Cortex-A53 source and isolated Vitis build flow were verified
-on the user's development machine: after correcting the
-`P05_DEPLOY_EVENT_DEPTH`/P03 hardware-depth source-guard mismatch
-with a compile-time equality assertion, **the new Vitis ELF build
-passed**, per user on 2026-10-12. Neither full P05 native regression
-results nor KV260 P05 physical execution is independently recorded
-as an acceptance gate in this update. The new
-`scripts/p05_deployment.py`, portable
-`software/p05/{include/p05_deployment.h,p05_deployment.c}`, and
-`tests/test_p05_1_deployment.py` implement/reject bounded
-core descriptors, sorted ingress vectors, checkpoint requests,
-metadata/bank/CRC guards, and conversion of accepted P03
-fixture inputs. Reference and verification commands:
-`docs/P05_1_DEPLOYMENT_CONTRACT.md`. **The first
-host-only checkpoint PASSED independently; this is not P05.1
-physical acceptance.** The next source/build checkpoint implements
-`software/p05/p05_regression_run.c`, reuses the unchanged
-P03 scheduler/adapter and accepts per-core/timestep external
-events plus optional independent model-derived post-barrier
-state/checkpoint CRCs. It builds a separate
-`p05_regression_run.elf` via
-`software/p05/build_p05_regression.py` and
-`scripts/build_p05_regression.sh`. New host C11 source
-guard: `tests/test_p05_1_runtime_source.py`.
-Instructions: `docs/P05_1_A53_REGRESSION_RUNNER.md`.
-**A53 Vitis build was independently reported successful.**
-The **first physical P05.1 gate PASSED independently on KV260
-on 2026-10-12**: 7 timesteps, five logical cores, three
-resident slots, 35 real HLS dispatches, 30 packets,
-7 barriers, **35/35 device-observed golden state0 checkpoints**,
-and five complete 512KiB final DDR records byte-exact
-to frozen Python P02. Physical result `0x600D600D`,
-`P05_1_VERIFY_EXIT=0`. Evidence:
-`/tmp/v3_p05_1_probe_20261012T173751Z`.
-See `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`.
-The original run still had `resident_deliveries=0`.
+**Status: COMPLETE — functional acceptance from two independent user-run
+KV260 gates on 2026-10-12.**
 
-**Second distinct physical workload PREPARED, NOT YET ACCEPTED:**
-`scripts/p05_1_triangle_fixture.py` generates a **three-core /
-three-resident** closed spiking triangle with threshold 4,
-five timesteps and the independent Python LogicalChip oracle.
-Expected: 15 dispatches, 12 real routed packets, **12 actual
-direct-to-resident packet deliveries**, 5 barriers, 15
-on-board intermediate state0 checkpoints, zero replacement
-paging and three byte-exact final 512KiB DDR images.
-No P03 source/bitstream or accepted neural oracle files changed.
-Independent host rehearsals:
-`tests/test_p05_1_triangle.py`.
-The new two-mode physical script
-`scripts/run_p05_1_triangle.sh`, provisioning via
-`vivado/p05_1_triangle_prepare.tcl`, independent
-`scripts/p05_1_triangle_verify.py`, and DDR capture
-`vivado/p05_1_triangle_dump.tcl` are pending user's
-native/KV260 tests. Procedure:
-`docs/P05_1_TRIANGLE_PHYSICAL_GATE.md`.
-**Do not mark P05.1 or P05.2 complete until the second
-physical test and remaining diagnostic/fast-mode coverage
-have independent evidence. Do not merge to main.**
+- New standalone `p05_regression_run.elf` successfully built using
+  accepted routed XSA, versioned/CRC-bounded P05G descriptors,
+  strictly validated complete initial DDR records, and original
+  unmodified P03 scheduler and PS hardware adapter. Host
+  Python↔C11 ABI/negative regressions were independently reported PASS.
+- **First physical gate:** Five logical cores, three resident slots,
+  seven timesteps, 35 dispatches, 30 real packet events,
+  seven barriers, **35/35 independent actual-device state0
+  checkpoints**, and **all five complete 512 KiB final DDR records
+  byte-exact to frozen P02**. `resident_deliveries=0`;
+  `P05_1_VERIFY_EXIT=0`. User evidence:
+  `/tmp/v3_p05_1_probe_20261012T173751Z`.
+  Acceptance: `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`.
+- **Second physical gate:** Genuinely different three-core / three-slot
+  spiking triangle, threshold=4, five timesteps,
+  **15 real dispatches, 12 real packets,
+  12 confirmed direct-to-resident deliveries**, five barriers,
+  **15/15 model-derived actual-device checkpoints**, zero
+  page replacements, and **three complete 512 KiB DDR final
+  records byte-exact to its separate LogicalChip model**.
+  `P05_1_TRIANGLE_VERIFY_EXIT=0`, real terminal
+  `0x600D600D`. User evidence:
+  `/tmp/v3_p05_1_triangle_20261012T175547Z`.
+  Reference trace fingerprint:
+  `c2fde59f694508003fb6b0d17f5ed2945db5f03c427a2690b13acc7bc71b717e`.
+  Acceptance: `docs/P05_1_TRIANGLE_ACCEPTANCE.md`.
+- Both tests used the **same P05 ELF and accepted FPGA shell**,
+  with only initial deployment records/table changed. Python
+  compared **actual** physically retrieved complete DDR images;
+  reference trace digests are model fingerprints, not full
+  physical intermediate trace captures.
+- **Qualified acceptance:** Functional deployment, model-relative
+  checkpoints and both residency routing paths accepted.
+  Independent **physical fault-injection/first-error and
+  fast-mode/no-checkpoint equivalence remain untested**. User
+  explicitly accepted P05.1 functional closeout with these
+  limitations carried into the P05.2 hardening scope.
+  Do not imply these two additional hardware gates already passed.
 
 ### Deliverables
 
@@ -794,7 +773,34 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 ## P05.2 — Directed physical regression and observability validation
 
-**Status:** Planned — begins after independent P05.1 acceptance.
+**Status:** IN PROGRESS — first directed failure-localization
+infrastructure implemented; native and physical acceptance PENDING.
+
+**P05.2a — Deterministic negative-checkpoint hardware diagnostic
+(first development slice).** Reuse the physically accepted
+three-core fully resident triangle, unchanged 3×512KiB initial
+neural records, same 15 stimulus events, same 15 dispatch
+metadata entries, same PS/PL binary identities. Flip **one bit
+of the EXPECTED state0 CRC at checkpoint 7** (timestep 2,
+logical core 1); the real A53 must intentionally
+stop at barrier 2 and report `result=0xDEAD000A`, runtime fault 11,
+fault phase 13, first mismatch (step=2, core=1, class=state0)
+with observed CRC **equal to the independent clean model**.
+Do not call some unrelated hardware ERROR a test PASS.
+No final DDR equality is expected after early fault because
+final dirty-slot flush never executes.
+
+Scripts: `scripts/p05_2_fault_fixture.py`,
+`scripts/p05_2_fault_verify.py`,
+`scripts/run_p05_2_fault.sh`.
+Host native/injected-malformed-mailbox tests:
+`tests/test_p05_2_fault.py`.
+Reproduction, measurement caveats and directed coverage backlog:
+`docs/P05_2_DIAGNOSTIC_GATE.md`.
+**This is not an observed physical PASS and P05.2 is not complete.**
+After its acceptance, proceed to independent fast-mode equivalence
+and a fixture matrix for arithmetic, fanout, packet pressure,
+paging/barrier and legal service-order changes.
 
 ### Deliverables
 
