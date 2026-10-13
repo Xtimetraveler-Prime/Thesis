@@ -56,6 +56,29 @@ def test_corrupt_or_unsafe_npy_never_parses(bad):
     with pytest.raises(ValueError):
         AUDIT.parse_npy_header(bytes(data))
 
+def test_actual_weight_count_math_is_independent_of_github_size():
+    header=AUDIT.parse_npy_header(make_npy((2,3),descr="<i4"))
+    import struct
+    raw=bytearray(make_npy((2,3),descr="<i4"))
+    struct.pack_into("<6i",raw,header["header_bytes"],0,1,-2,0,300,-1)
+    observed=AUDIT.measure_weight_payload(bytes(raw),header)
+    assert observed["entries"]==6
+    assert observed["nonzero_entries"]==4
+    assert observed["zero_entries"]==2
+    assert (observed["positive_entries"],observed["negative_entries"])==(2,2)
+    assert (observed["min_value"],observed["max_value"])==(-2,300)
+    assert observed["density_fraction"]==pytest.approx(4/6)
+
+
+def test_unusable_nan_float_weight_fails_closed():
+    import struct
+    blob=bytearray(make_npy((2,3),descr="<f4"))
+    header=AUDIT.parse_npy_header(blob)
+    struct.pack_into("<f",blob,header["header_bytes"],float("nan"))
+    with pytest.raises(ValueError,match="NaN or infinite"):
+        AUDIT.measure_weight_payload(bytes(blob),header)
+
+
 def test_paper_is_not_silently_frozen_and_source_blobs_are_pinned():
     m=json.loads(AUDIT.MANIFEST.read_text())
     assert m["status"]=="CANDIDATE_SOURCE_PIN_ONLY_NOT_FROZEN_OR_REPRODUCED"
