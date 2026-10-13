@@ -37,6 +37,19 @@ def test_synthetic_784_32_10_export_is_genuine_one_core_hardware_image(physical_
     assert r["logical_compiler_report"]["logical_core_count"]==1
     assert all(v>0 for v in r["logical_compiler_report"]["cores"][0]["headroom"].values())
 
+def test_actual_versioned_v3_synapse_cost_has_healthy_headroom(physical_packed_probe):
+    # 816 unique template headers + 25,408 four-byte logical synapse entries
+    # + 816 destination-axon binding words; P03 HLS bank has 32,768 entries.
+    usage=physical_packed_probe["logical_compiler_report"]["cores"][0]["usage"]
+    headroom=physical_packed_probe["logical_compiler_report"]["cores"][0]["headroom"]
+    assert usage["shared_parameters"]==25408
+    assert usage["expanded_connections"]==25408
+    assert usage["synapse_bytes"]==25408*4 + 816*4 + 816*4
+    assert usage["synapse_bytes"]==108160
+    assert headroom["synapse_bytes"]==131072-108160
+    assert headroom["synapse_bytes"]==22912
+
+
 def test_resident_worst_case_input_and_generated_events_fit(physical_packed_probe):
     c=physical_packed_probe["hard_capacities"]
     events=physical_packed_probe["theoretical_worst_case_events_per_step"]
