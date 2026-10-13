@@ -26,13 +26,13 @@ def test_extrema_quota_rate_input_and_output_flush():
 def test_mid_gray_produces_deterministic_bounded_rate_pattern():
     pixels=[0]*784
     pixels[0]=128
-    pixels[100]=128
+    pixels[101]=128
     spikes=[P.rate_coded_pixel_indices(pixels,t) for t in range(25)]
     assert sum(0 in row for row in spikes)==(25*128)//255
-    assert sum(100 in row for row in spikes)==(25*128)//255
-    # Different pixel phases reduce pathological synchrony, deterministically.
+    assert sum(101 in row for row in spikes)==(25*128)//255
+    # Pixel indices 0 and 101 have different modulo-25 phase offsets.
     assert [t for t,row in enumerate(spikes) if 0 in row] != [
-        t for t,row in enumerate(spikes) if 100 in row]
+        t for t,row in enumerate(spikes) if 101 in row]
     assert spikes==[P.rate_coded_pixel_indices(pixels,t) for t in range(25)]
 
 @pytest.mark.parametrize("bad,step",[
