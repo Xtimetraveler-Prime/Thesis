@@ -19,8 +19,24 @@ if {![file exists [file join $out p05_a53_result.bin]] ||
     error "P05.2i requires original finalized A53 and DDR evidence first"
 }
 set witness [file join $out p05_2i_axi_witness.bin]
-if {[file exists $witness] || [file exists "$witness.second"]} {
-    error "P05.2i never overwrites previously captured physical counter evidence"
+set first_file "$witness.first"
+set second_file "$witness.second"
+# A previous (unforced) XSDB mrd can create an EMPTY witness before the
+# memory-map guard rejects the address. Retain that original failed
+# artifact separately; NEVER overwrite any nonempty captured witness.
+if {[file exists $witness]} {
+    if {[file size $witness] != 0} {
+        error "P05.2i never overwrites nonempty physical AXI evidence"
+    }
+    set blocked "$witness.original_unforced_block.bin"
+    if {[file exists $blocked]} {
+        error "P05.2i previous blocked-mrd artifact already archived"
+    }
+    file rename -- $witness $blocked
+    puts "P05_2I_ORIGINAL_BLOCKED_MRD_ARCHIVE=$blocked"
+}
+if {[file exists $first_file] || [file exists $second_file]} {
+    error "P05.2i prior partial AXI counter read exists; do not overwrite evidence"
 }
 connect -url $server
 set found 0
@@ -34,32 +50,38 @@ foreach target {PSU APU} {
 if {!$found} {error "P05.2i no nonprocessor PSU/APU memory access target"}
 # The A53 is already halted by accepted P03_finish_xsdb_run.tcl.
 # Two identical passive reads provide a stable terminal counter snapshot.
-mrd -bin -file $witness 0xA4000044 4
-if {![file exists $witness] || [file size $witness] != 16} {
-    error "P05.2i physical PL counter register read did not return four 32-bit words"
+# AMD UG1725 / UG1400 mrd -force: override debugger SOFTWARE memory
+# map validation. This never changes PS/PL hardware XMPU/XPPU policy,
+# issues NO writes, and cannot overcome a truly blocked AXI path.
+# The accepted A53 had just used the SAME PS->PL 0xA4000000 window.
+mrd -force -bin -file $first_file 0xA4000044 4
+if {![file exists $first_file] || [file size $first_file] != 16} {
+    error "P05.2i forced PL read did not produce four actual MMIO words"
 }
-mrd -bin -file "$witness.second" 0xA4000044 4
-if {![file exists "$witness.second"] || [file size "$witness.second"] != 16} {
-    error "P05.2i second physical PL AXI counter snapshot incomplete"
+mrd -force -bin -file $second_file 0xA4000044 4
+if {![file exists $second_file] || [file size $second_file] != 16} {
+    error "P05.2i second forced PL AXI read incomplete"
 }
-set a [open $witness rb]
+set a [open $first_file rb]
 fconfigure $a -translation binary -encoding binary
 set first [read $a]
 close $a
-set b [open "$witness.second" rb]
+set b [open $second_file rb]
 fconfigure $b -translation binary -encoding binary
 set second [read $b]
 close $b
 if {$first ne $second} {
     error "P05.2i hardware page AXI counters changed AFTER A53 terminal; unstable snapshot"
 }
-file delete -force "$witness.second"
 binary scan $first i4 values
 set readb [expr {[lindex $values 0] & 0xFFFFFFFF}]
 set writeb [expr {[lindex $values 1] & 0xFFFFFFFF}]
 set lo [expr {[lindex $values 2] & 0xFFFFFFFF}]
 set hi [expr {[lindex $values 3] & 0xFFFFFFFF}]
 set bytes [expr {($hi << 32) | $lo}]
+# Promote physical evidence ONLY after two stable reads have completed.
+file rename -- $first_file $witness
+file delete -- $second_file
 puts "P05_2I_PL_HARDWARE_AXI_READ_BURSTS=$readb"
 puts "P05_2I_PL_HARDWARE_AXI_WRITE_BURSTS=$writeb"
 puts "P05_2I_PL_HARDWARE_AXI_SUCCESSFUL_BYTES=$bytes"
