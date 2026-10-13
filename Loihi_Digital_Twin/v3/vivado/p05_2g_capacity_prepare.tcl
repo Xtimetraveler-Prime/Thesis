@@ -1,4 +1,4 @@
-# P05.2g physical one-core one-core 4096/4097 event-bank boundary regression: provision P05G v1 deployment.
+# P05.2g physical one-core 4096/4097 event-bank boundary regression: provision P05G v1 deployment.
 # All DDR via nonprocessor PSU/APU; never route/dispatch by XSDB.
 # Explicitly limited to core0, one timestep and one physical slot.
 if {$argc < 1 || $argc > 2} {
