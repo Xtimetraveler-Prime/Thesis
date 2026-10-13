@@ -115,10 +115,10 @@ audited by this project yet.
 **Eshraghian et al. (2023)**,
 *Training Spiking Neural Networks Using
 Lessons From Deep Learning*, Proceedings
-of the IEEE, 111(9):1016–1054, DOI
-https://doi.org/10.1109/JPROC.2023.3308082
-(check exact DOI against version of record
-before cite freeze). Associated maintained
+of the IEEE, 111(9):1016–1054, DOI:
+https://doi.org/10.1109/JPROC.2023.3308088
+(confirmed from the IEEE Xplore publisher
+entry and Proceedings of the IEEE issue). Associated maintained
 training library and published MNIST
 LIF/classification examples:
 https://github.com/jeshraghian/snntorch
