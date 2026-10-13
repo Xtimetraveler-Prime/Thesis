@@ -1291,7 +1291,103 @@ retroactively change P03's accepted source or golden evidence.
 
 # P06 — Exact published MNIST benchmark audit and freeze
 
-**Status:** Planned
+**Status:** IN PROGRESS — P06.1 source-backed paper
+and pretrained checkpoint audit implemented, independent
+native/source-file validation PENDING (2026-10-13).
+**Development branch:** `agent/v3-p06-benchmark-audit`,
+created from accepted P05 `main`; not merged.
+**Important:** NO PAPER BENCHMARK FROZEN and NO
+MNIST official test labels evaluated. NxTF is
+explicitly excluded from benchmark selection.
+
+**Current first-choice CANDIDATE (NOT FROZEN):**
+Arjun Rao, Philipp Plank, Andreas Wild and Wolfgang Maass,
+"A Long Short-Term Memory for AI Applications in Spike-based
+Neuromorphic Hardware" (Nature Machine Intelligence, 2022,
+DOI: 10.1038/s42256-022-00480-w).
+This study evaluated **sequential MNIST**, which is
+not single-frame MNIST. The paper-linked Intel repository
+provides an immutable source snapshot
+`3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8`
+and three released *trained* `w_in.npy`,
+`w_rec.npy`, `w_out.npy` matrices for 80 input
+channels, 140 regular/100 AHP recurrent units
+and 10 non-spiking output compartments.
+This is materially more reproducible at the
+**trained-weights** level than the alternative
+Renner et al. 2024 Loihi 400–400–10 model,
+whose inspected official public repository
+exposes training code but no trained checkpoint
+that reproduces the published headline accuracy.
+
+**Critical caveat:** Rao's network requires an
+auxiliary AHP compartment per adaptive neuron
+and a 784-pixel sequential variable-axon input
+encoder; the accepted P05 FPGA currently only
+implements independent one-compartment primitive
+dynamics and the P05 deployment test schema
+allows one registered external axon/core.
+The candidate is therefore **NOT YET accepted
+as fully representable by the existing P05
+hardware**. We cannot silently replace it by
+a basic LIF, reuse another network's weights,
+or claim the paper's energy/accuracy under a
+different model. Source checksum and shape
+checks are not model equivalence.
+
+Work items / independent hold points:
+
+- **P06.1 — Source-backed benchmark selection audit
+  [IN PROGRESS; source-verifier implemented,
+  not independently executed].** Compare Rao 2022
+  LSNN, Renner 2024 nBP, and Loihi-2
+  source-only MNIST tutorial. Identify the
+  exact original paper-linked code/weight
+  source (Git blob fingerprints), audit
+  task/baseline/evaluation claims, and refuse
+  any inferred original weights or paper
+  benchmark from a model filename. Artifacts:
+  `docs/P06_1_PAPER_CANDIDATE_AUDIT.md`,
+  `docs/P06_1_LSNN_SOURCE_MANIFEST.json`,
+  `scripts/p06_1_lsnn_source_audit.py`,
+  `tests/test_p06_1_lsnn_source_audit.py`.
+  **Need user-native source extraction and
+  review before P06.1 acceptance.**
+- **P06.2 — Exact model-versus-hardware compatibility
+  [PLANNED; gap analysis drafted].** Read original
+  Loihi current/voltage/auxiliary and source
+  input SNIP/readout/delay/quantization code
+  rather than fitting a new model to reported
+  accuracy. Prove a backwards-compatible
+  two-compartment AHP/streamed multiple-axon
+  extension is feasible, OR reject the candidate
+  and audit another published model with
+  released trained weights. Artifact:
+  `docs/P06_2_AHP_KV260_FEASIBILITY.md`.
+  Requires explicit independent regression
+  before changing the accepted HLS/P03 A53.
+- **P06.3 — Freeze paper, weights, data,
+  implementation contract [BLOCKED on P06.1+2].**
+  Freeze one source commit, genuine trained
+  tensor SHA/dtype/shape, canonical MNIST
+  image checksum/split and sequential
+  encoder, Loihi-neuron/timestep/readout
+  equations, model reference results,
+  matching publication's original evaluation
+  population and measurement scope. Only
+  then unseal official-test accuracy.
+- **P06.4 — Source-equivalent model/mapping
+  and reproducibility package [PLANNED].
+  Validate independent original-equivalent
+  software trace versus versioned packed
+  fixed-point model, entire 512KiB contexts,
+  throughput/page budget and first-difference
+  tests; no board MNIST performance claim
+  until P07. Keep the P05 golden unchanged.
+
+**Proceed in order; P06 is NOT complete just
+because the public paper and pretrained weights
+have been found.**
 
 ## Goal
 
