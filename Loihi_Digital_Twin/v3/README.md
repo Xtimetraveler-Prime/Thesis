@@ -39,9 +39,24 @@ KV260 within the documented scope; see
 [Phase 5 consolidated acceptance](docs/P05_FINAL_ACCEPTANCE.md)
 and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
 
-**P06 — Published MNIST benchmark audit and freeze: Planned / next.**
-No P06 benchmark paper, weights, architecture, encoding
-or score is yet accepted.
+**P06 — Published MNIST benchmark audit and freeze: IN PROGRESS
+(P06.1 source research and official pretrained weight provenance
+implemented; independent verification pending).** No paper
+or FPGA inference contract has been frozen; **NxTF
+is excluded** from benchmark selection. The primary
+provisional candidate is Rao et al. 2022's Loihi
+**sequential MNIST** AHP-LSNN, with three actual
+author-released `.npy` pretrained matrices.
+This candidate requires a 100-neuron auxiliary
+AHP compartment extension and exact temporal
+input encoder which the accepted P05 chip
+does **not** currently implement. A benchmark
+freeze or official-test accuracy claim is
+prohibited until that gap is independently
+resolved. See
+[paper and alternatives audit](docs/P06_1_PAPER_CANDIDATE_AUDIT.md),
+[source + checkpoint provenance gate](docs/P06_1_SOURCE_GATE.md),
+and [architecture feasibility](docs/P06_2_AHP_KV260_FEASIBILITY.md).
 
 **P07–P09 — Pending** (see the authoritative roadmap).
 
