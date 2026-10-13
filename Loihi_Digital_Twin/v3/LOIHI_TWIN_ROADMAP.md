@@ -793,11 +793,15 @@ not supplied a fresh native pytest summary alongside this
 physical recheck. P05.2f signed arithmetic/refractory/paging and P05.2g
 exact 4096 CURRENT-event-bank saturation plus CRC-valid
 4097-event early device-admission rejection are independently
-physically ACCEPTED. P05.2h 16-barrier mixed-residency
-multi-bank/packet stress gate has been implemented and awaits
-independent host/KV260 verification. True live routed NEXT-bank
-overflow recovery and calibrated AXI bus-counter provenance
-remain open.
+physically ACCEPTED. P05.2h 16-barrier mixed-residency dual-bank/packet
+stress gate is independently PHYSICALLY ACCEPTED, with 318
+checkpoints, 156 packets split 78 resident/78 nonresident,
+77 evictions and five byte-exact DDR records (user-confirmed).
+P05.2i is the final closeout counter-provenance gate:
+independently check live PL page AXI burst counts and
+64-bit AXI byte counter against original A53 P05R and
+frozen 16-barrier paging oracle. Live routed NEXT-bank
+overflow recovery remains explicitly unverified.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -1076,8 +1080,8 @@ Host native suite passed independently per user, but a
 full pytest count/log was not provided.
 
 **P05.2h — Adversarial multi-bank/boundary and routing-barrier
-stress (IMPLEMENTED; independent native and KV260 physical
-verification PENDING).** The new integration test deliberately
+stress (PHYSICAL ACCEPTED; independent user-verified real KV260
+2026-10-13).** The new integration test deliberately
 extends service time to **16 global timesteps** on five logical
 cores / three physical context slots, retains real service
 order [4,1,3,0,2], uses two outgoing fanout destinations per
@@ -1108,16 +1112,72 @@ Implemented:
 `tests/test_p05_2h_barrier.py`.
 Full native-first reproduction:
 `docs/P05_2H_BARRIER_GATE.md`.
-**No hardware acceptance is claimed until user independently
-runs native and original KV260 physical verifier.**
+User-observed original physical proof:
+`docs/P05_2H_ACCEPTANCE.md`:
+```text
+PASS: P05.2h physical adversarial 5-over-3 bank/barrier order steps=16 dispatches=80 packets=156 resident_deliveries=78 nonresident_deliveries=78 barriers=16 checkpoints=318 evictions=77
+PASS: P05.2h both event-bank first words, state0 and emitted physical packet0 checkpointed at each barrier
+PASS: P05.2h all five complete physical 512KiB DDR records byte-exact to model-derived route-ordered golden
+P05_2H_VERIFY_EXIT=0
+```
+This satisfies P05.2h's independently checked real
+double-bank/barrier, routing and full physical DDR gate;
+a numeric native pytest summary was not supplied alongside
+this final physical result.
 
-**Still OPEN after P05.2h:** True physically overflowing
-routed NEXT banks at 4,097 with measured live backpressure
-and recoverability; and AXI physical byte/cycle counter
-provenance. P05.2g proved exactly full CURRENT bank and
-descriptor rejection, **not** live route overflow/recovery.
-Programmed page payload bytes are **not** measured AXI data
-traffic. P05.2 remains IN PROGRESS; do not merge/close.
+**P05.2i — FINAL Phase-5 read-only AXI transfer-counter
+provenance and comprehensive physical closeout
+(IMPLEMENTED; independent native and KV260 physical
+verification PENDING).** Reuse exactly the accepted
+five-logical-core / three-slot, 16-barrier P05.2h neural
+profile in **one more standalone real KV260 execution**.
+After the A53 finishes, capture twice (read-only) the live
+FPGA page-AXI counter MMIO words at
+`0xA4000044, 0xA4000048, 0xA400004C, 0xA4000050`.
+Cross-verify the physical 128-bit AXI successful read/
+write burst counters and successful-byte register against
+(a) the original A53 `P05R` hardware-read counters,
+(b) the independent P03 victim/page replay, (c) the
+256-byte/16-beat physical AXI transport geometry,
+and (d) the full repeated strict P05.2h neural, 318 CRC
+checkpoint, 5 complete 512 KiB DDR goldens.
+
+Frozen P05.2h page replay: 3 initial full-ins, 77
+replacement full-ins, 77 dirty runtime mutable-outs,
+and 3 final mutable-outs, so 80 × 0x6B000 full-in
+bytes = 35,061,760 and 80 × 0x1A000 mutable-out
+bytes = 8,519,680. Required **independently measured
+PL HP0 AXI page counters**:
+**136,960 completed 256-byte read bursts**, **33,280
+completed write bursts**, **43,581,440 successful AXI
+page bytes**. These are **PL page-engine** bytes only,
+not total system traffic; no synthetic counter or
+host-computed page payload alone is physical acceptance.
+Require nonzero PL page cycle/PS generic-timer measurements
+and zero pending/error status. No changes to accepted
+ELF/C runtime/HLS/bitstream.
+
+Implemented:
+`scripts/p05_2i_axi_closeout.py`,
+`scripts/run_p05_2i_axi_closeout.sh`,
+`vivado/p05_2i_read_axi_counters.tcl`,
+`tests/test_p05_2i_axi_closeout.py`.
+Native-first reproduction and failure policy:
+`docs/P05_2I_AXI_CLOSEOUT_GATE.md`.
+
+**P05 closeout guard:** Do not mark P05 accepted/merge
+until user independently verifies P05.2i physical and
+confirms the explicitly bounded physical coverage.
+The supported P05 correctness/observability scope
+can then be closed with documented exclusions:
+a runtime FPGA-generated *routed* 4097th NEXT-bank
+overflow/backpressure and recovery, as distinct from
+the accepted 4096 CURRENT external events, 4097
+deployment rejection and native C route guard; plus
+unmeasured whole-system AXI energy/bandwidth.
+A failure of read-only XSDB access to PL MMIO requires
+new counter retrieval work, **not fabricated data**.
+P05.2 remains IN PROGRESS.
 
 ### Deliverables
 
