@@ -23,9 +23,12 @@ cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 
 python -m py_compile \
     scripts/p06_1_lsnn_source_audit.py \
-    tests/test_p06_1_lsnn_source_audit.py
+    scripts/p06_1_lsnn_io_contract.py \
+    tests/test_p06_1_lsnn_source_audit.py \
+    tests/test_p06_1_lsnn_io_contract.py
 PYTHONPATH="$PWD/src" python -m pytest -q \
     tests/test_p06_1_lsnn_source_audit.py \
+    tests/test_p06_1_lsnn_io_contract.py \
     2>&1 | tee /tmp/v3_p06_1_native.log
 ```
 
@@ -114,3 +117,39 @@ If the source fetch succeeds, paste the native pytest
 summary and the last PASS/metadata lines; P06.2 can
 then validate the source timestep/update/readout
 semantics against v3 before formal benchmark freeze.
+
+## 4. Source-specific I/O behavior already extracted
+
+The pinned author C `snips/spiking.c`, `snips/snip_mgmt.c`
+and `snips/common.h` are verified along with the
+three weight arrays and three Python model sources.
+`scripts/p06_1_lsnn_io_contract.py` is a separately
+tested, pure logical port-index and decision-rule
+transliteration (**not** an Loihi/AHP execution oracle):
+
+- Exactly 840 timesteps/sample: 784 pixel steps
+  + 56 classification-cue steps.
+- 40 evenly spaced thresholds (original
+  `floor(linspace(0,255,40))`), but t=0 is
+  skipped; thresholds t=1..38 emit
+  rising/falling crossing ports `2*t` and
+  `2*t+1`, crossing from pixel[i] to pixel[i+1].
+  No crossing may look past the last image pixel.
+- t=39 emits **touch** only when current
+  pixel==255 (port 78). Input ports 0 and 1
+  never occur. Cue emits port 79 for all
+  final 56 timesteps. Ports reflect C's
+  on-chip input index, not a made-up rate code.
+- Classification compares **the ten signed
+  output membrane V states**, returns the index
+  of the largest V at the end of 840 steps;
+  ties pick the **lowest index**. Output
+  is not a count of outgoing spikes.
+
+`tests/test_p06_1_lsnn_io_contract.py`
+verifies these boundaries against the exact
+upstream code and `numpy.floor(linspace(...))`
+thresholds in the existing v3 Python environment.
+This only freezes an **I/O component's identified
+source-level semantics**, not the full SNN
+or an approved P06 benchmark.
