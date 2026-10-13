@@ -1175,8 +1175,24 @@ overflow/backpressure and recovery, as distinct from
 the accepted 4096 CURRENT external events, 4097
 deployment rejection and native C route guard; plus
 unmeasured whole-system AXI energy/bandwidth.
-A failure of read-only XSDB access to PL MMIO requires
-new counter retrieval work, **not fabricated data**.
+The first independently run P05.2i physical trial on
+2026-10-13 repeated all 318 P05.2h checks and five full
+DDR comparisons successfully, but the new XSDB PSU
+`mrd -bin -file` of PL register `0xA4000044`
+failed the debugger's software memory-map admission:
+"PL AXI slave ports access is not allowed. This address
+has not been added to the memory map." P05.2i **DID
+NOT PASS**; no AXI witness or final verifier output
+was produced. The directed, documented
+`mrd -force -bin -file` correction bypasses this
+software map guard but must still measure the actual
+registers successfully. A read-only no-reboot recovery
+script can reuse that same preserved A53 P05R/DDR
+folder while PL state remains live; after a reboot,
+require a NEW full run with fresh evidence. See
+`docs/P05_2I_AXI_CLOSEOUT_GATE.md`. A true
+hardware access fault instead requires new retrieval
+work, **not fabricated data**.
 P05.2 remains IN PROGRESS.
 
 ### Deliverables
