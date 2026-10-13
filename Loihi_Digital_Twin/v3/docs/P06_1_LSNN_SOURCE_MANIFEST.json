@@ -48,10 +48,15 @@
         "git_blob": "e1ed712f3af5af64cc3680bb5e50dc9447bd13aa",
         "size_bytes": 76928,
         "expected_shape": [
+          80,
+          240
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
           240,
           80
         ],
-        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+        "expected_stored_dtype": "<f4"
       },
       {
         "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_rec.npy",
@@ -61,17 +66,27 @@
           240,
           240
         ],
-        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
+          240,
+          240
+        ],
+        "expected_stored_dtype": "<f4"
       },
       {
         "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_out.npy",
         "git_blob": "b067c855de56cdcb6f4e8ce468f56581544a178f",
         "size_bytes": 9728,
         "expected_shape": [
+          240,
+          10
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
           10,
           240
         ],
-        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+        "expected_stored_dtype": "<f4"
       },
       {
         "path": "nxsdk_modules_ncl/lsnn/src/lsnn.py",
@@ -109,7 +124,48 @@
         "size_bytes": 2102,
         "type": "SOURCE_SNIP_PUBLISHED_TIMING_CONSTANTS"
       }
-    ]
+    ],
+    "proven_stored_matrix_orientation": "SOURCE_THEN_DESTINATION; seq_mnist.loadWeightsAndDelays() returns (wIn.T, wRec.T, wOut.T)",
+    "stored_matrix_header_retrieved_from_pinned_immutable_github_blobs": true,
+    "observed_matrix_statistics_from_pinned_blobs": {
+      "w_in.npy": {
+        "entries": 19200,
+        "nonzero": 4263,
+        "zeros": 14937,
+        "positive": 1957,
+        "negative": 2306,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.22203125
+      },
+      "w_rec.npy": {
+        "entries": 57600,
+        "nonzero": 10566,
+        "zeros": 47034,
+        "positive": 7196,
+        "negative": 3370,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.1834375
+      },
+      "w_out.npy": {
+        "entries": 2400,
+        "nonzero": 846,
+        "zeros": 1554,
+        "positive": 581,
+        "negative": 265,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.3525
+      },
+      "total": {
+        "entries": 79200,
+        "nonzero": 15675,
+        "zeros": 63525,
+        "density_fraction": 0.19791666666666666
+      }
+    },
+    "binary_provenance_note": "GitHub authenticated pinned blob decoding provides expected float32 headers and occupancy; independent native user source-audit validation still PENDING"
   },
   "source_read_parameters": {
     "input_channels": 80,
@@ -154,7 +210,7 @@
     "image_pixel_steps": 784,
     "image_total_timesteps": 840,
     "decision_rule": "At timestep 840 initialize maxV=-8388608/maxVId=-1, scan 10 signed Loihi V values with STRICT '>', return first index of tied max when max>-8388608; all-minimum returns source sentinel -1 (unclassified), NOT class 0",
-    "actual_trained_sparse_density": "MUST_MEASURE_FROM_PINNED_NPY_BYTES_PAPER_SAYS_20_PERCENT_FOR_PUBLISHED_MODEL_ONLY",
+    "actual_trained_sparse_density": 0.19791666666666666,
     "actual_soma_auxiliary_compartment_count": 350,
     "per_image_clear_behavior": "Pinned SNIP resets cx_state/cx_meta_state/dendrite_accum registers after each 840-step classification",
     "code_vs_supplement_encoder_disagreement": "Supplement listing uses <=/>= inclusive pseudo-conditions; pinned C SNIP uses < and >= in directional threshold crossings, with touch and cue exceptions"
