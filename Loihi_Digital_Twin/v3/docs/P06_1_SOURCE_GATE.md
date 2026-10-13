@@ -82,7 +82,7 @@ PYTHONPATH="$PWD/src" python scripts/p06_1_lsnn_source_audit.py \
 Expected end:
 
 ```text
-PASS: P06.1 official paper-linked upstream git commit and all six immutable author artifacts exact
+PASS: P06.1 official paper-linked upstream git commit and all nine immutable author artifacts exact
 PASS: P06.1 all three genuine pretrained source weight files verified, no retraining or fabricated weights
 P06_1_SOURCE_AUDIT_EXIT=0
 P06_1_PAPER_FREEZE=NOT_ACCEPTED_AHP_EXTENSION_AND_BENCHMARK_METRIC_AUDIT_REQUIRED
@@ -97,7 +97,7 @@ The source checker uses git blob identifiers and independent
 
 Dtype is intentionally extracted from the actual
 binary header; it is not guessed from the file name.
-All six source/weight Git blobs must match the pinned
+All nine source/weight Git blobs must match the pinned
 paper-linked tree byte-for-byte. A missing artifact,
 modified source, unexpected rank/shape/dtype, or altered
 Git checkout **FAILS**. The final JSON includes both
