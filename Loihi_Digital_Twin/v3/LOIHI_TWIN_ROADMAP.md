@@ -1377,8 +1377,8 @@ physical acceptance.
   it establishes no P07 hardware or MNIST-trained accuracy.
   No P05/HLS changes or physical MNIST.
 - **P06-A3 — Train and validation-select
-  a compact checkpoint [IN PROGRESS: A3.1–A3.3 IMPLEMENTED;
-  NATIVE DATASET PREFLIGHT / SYNTHETIC SMOKE AWAIT USER].**
+  a compact checkpoint [IN PROGRESS: A3.1–A3.3 INITIAL NATIVE GATE ACCEPTED;
+  A3.4 BOUNDED REAL-TRAIN-ONLY PILOT NATIVE VERIFICATION PENDING].**
   Canonical MNIST dataset/split/hashes,
   reproducible train/validation-only
   optimization, training seed/versions,
@@ -1394,9 +1394,17 @@ physical acceptance.
   integrity checks are committed. The **60% validation GO/NO-GO
   floor was declared before real dataset results**. No actual MNIST
   training has occurred and no real validation accuracy is known.
-  Next gate: user's native pytest, synthetic optimizer smoke and
-  canonical 60k TRAIN-only dataset preflight; see
-  `docs/P06_A3_1_TO_3_NATIVE_GATE.md`. Stop before long training.
+  User on 2026-10-13 confirmed native pytest PASS and supplied
+  `P06_A3_SYNTHETIC_SMOKE_PASS=1`, TRAIN-only archive MD5 and SHA256,
+  `P06_A3_DATA_PREFLIGHT_PASS=1`, split seed/size and ordered-index
+  hashes. Source identity and train/validation split verification:
+  ACCEPTED. Synthetic smoke validation was 12/12 ALL SILENT,
+  0.33333 accuracy and ln(10) cross entropy; this is computational
+  success only, NOT learning evidence. A3.4 now implements a bounded
+  256 TRAIN/128 validation, 2-epoch, no-checkpoint activity pilot with
+  gradient, actual quantized-weight-change and output-spike diagnostics.
+  Its native user test and real-dataset outcome are PENDING.
+  See `docs/P06_A3_1_TO_3_NATIVE_GATE.md`. Stop before long training.
 - **P06-A4 — Freeze trained packed
   benchmark and reproducibility [PLANNED].**
   Exact real-weight compiler/exporter
@@ -1517,7 +1525,8 @@ tracks. NxTF remains excluded.
 - Proceed in the A→B order stated above.
   **P06 is not complete today**: P06-A1 and **all of P06-A2**
   are user-accepted; P06-A3.1–A3.3 are code-implemented but
-  require real dataset provenance/optimizer smoke verification.
+  have an accepted canonical TRAIN-only data preflight and computational
+  smoke. The A3.4 real-data activity pilot is unverified.
   No trained compact candidate, official test or physical MNIST.
 
 **Detailed execution/resource contract:**
