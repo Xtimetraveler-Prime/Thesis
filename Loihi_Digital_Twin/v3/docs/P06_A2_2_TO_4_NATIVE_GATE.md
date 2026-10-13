@@ -1,11 +1,10 @@
-# P06-A2.2–A2.4 — Native acceptance gate (not yet user-accepted)
+# P06-A2.2–A2.4 — User-attested native acceptance record
 
 **Branch:** `agent/v3-p06-lif-feasibility`
 
-**Status:** IMPLEMENTED / COMMITTED; independent native verification **PENDING**.
+**Status:** USER-ACCEPTED (2026-10-13), based on user follow-up confirming the prior native verification looked good.
 P06-A2.1 scalar reference was user-accepted on 2026-10-13 after native
-pytest PASS and both compiler-probe PASS results. P06-A2 overall is NOT
-complete; P06-A2.5 differentiable training-forward compatibility remains next.
+pytest PASS and both compiler-probe PASS results. P06-A2 overall is NOT yet complete; A2.5 is implemented and awaits its own native gate.
 
 ## Implementation scope
 
@@ -129,11 +128,23 @@ destinations, or ten-class counts for the three synthetic input frames.
 If any fail, preserve the first failing trace and investigate before
 altering any golden or accepting A2.2–A2.4.
 
+## Acceptance evidence and exact limitation
+
+On 2026-10-13 the user replied "yep everything is looking good! again,
+proceed as far as you can on development. I'll verify once you need me to"
+in direct response to the A2.2–A2.4 verification commands. This is
+recorded as **user-attested acceptance of the previous native gate**;
+the detailed pytest log, count and repeated probe transcripts were not
+pasted in that reply and were **not independently rerun by the assistant**.
+Prior author-local mirror counts do not substitute for this native attestation.
+Any later regression discrepancy remains subject to investigation without
+changing P05 goldens.
+
 ## Remaining next step
 
-P06-A2.5 must establish *differentiable* train-time forward semantics,
-independent integer inference parity and an agreed treatment of
-per-neuron learned biases and quantized weight export. The existing
+P06-A2.5 differentiable forward, exported weights and native differential
+regressions are now committed (see `P06_A2_5_TRAINING_FORWARD_GATE.md`),
+but need new independent native verification before A2 can close. The existing
 high-level compiler's population-level shared `CompartmentConfig`
 still lacks per-neuron parameter support. Do not train on or inspect
 official MNIST test labels or claim physical MNIST accuracy here.
