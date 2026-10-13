@@ -1343,9 +1343,7 @@ physical acceptance.
   and NEXT-barrier golden test passed.
   **Not trained; not a KV260 physical inference pass.**
 - **P06-A2 — Integer-equivalent forward and
-  input/readout protocol [IN PROGRESS: A2.1 USER-ACCEPTED 2026-10-13;
-  A2.2–A2.4 USER-ACCEPTED 2026-10-13;
-  A2.5 COMMITTED, NATIVE VERIFICATION PENDING].**
+  input/readout protocol [CLOSED / USER-ACCEPTED 2026-10-13].**
   Independent signed-24-bit P03 LIF oracle
   covering exact decay rounding, threshold,
   saturation, signed weights, reset, refractory,
@@ -1370,13 +1368,17 @@ physical acceptance.
   A2.5 now provides integer-exact forward/STE surrogate gradients,
   signed24 fail-closed weight export and compiler-mapping adapter,
   with 7 PyTorch forward unit tests and 2 *native-only* export tests.
-  Local mirrored verification: 56 passed, 1 native integration test
-  deselected, plus 2 not run export/integration tests. A2.5's
-  full native gate is pending; see
-  `docs/P06_A2_5_TRAINING_FORWARD_GATE.md`.
-  No P05/HLS changes, training or physical MNIST.
+  The user explicitly confirmed verification of the A2.5 tests and
+  authorized closing P06-A2 on 2026-10-13. The detailed native
+  pytest counts/log were not pasted, so this is recorded as
+  user-attested acceptance (not assistant-executed native testing).
+  See `docs/P06_A2_5_TRAINING_FORWARD_GATE.md`. P06-A2 is
+  CLOSED at the host-software numerical/training-forward boundary;
+  it establishes no P07 hardware or MNIST-trained accuracy.
+  No P05/HLS changes or physical MNIST.
 - **P06-A3 — Train and validation-select
-  a compact checkpoint [PLANNED].**
+  a compact checkpoint [IN PROGRESS: A3.1–A3.3 IMPLEMENTED;
+  NATIVE DATASET PREFLIGHT / SYNTHETIC SMOKE AWAIT USER].**
   Canonical MNIST dataset/split/hashes,
   reproducible train/validation-only
   optimization, training seed/versions,
@@ -1386,6 +1388,15 @@ physical acceptance.
   criterion. No sealed official MNIST
   test peeking and no borrowing paper
   accuracy/weights.
+  A3.1 canonical TRAIN-only archive checksums/50k-10k seeded split,
+  A3.2 exact integer-forward surrogate training and validation-only
+  best-epoch selection, and A3.3 candidate checkpoint manifest and
+  integrity checks are committed. The **60% validation GO/NO-GO
+  floor was declared before real dataset results**. No actual MNIST
+  training has occurred and no real validation accuracy is known.
+  Next gate: user's native pytest, synthetic optimizer smoke and
+  canonical 60k TRAIN-only dataset preflight; see
+  `docs/P06_A3_1_TO_3_NATIVE_GATE.md`. Stop before long training.
 - **P06-A4 — Freeze trained packed
   benchmark and reproducibility [PLANNED].**
   Exact real-weight compiler/exporter
@@ -1504,10 +1515,10 @@ tracks. NxTF remains excluded.
   differences in accuracy are not pure
   hardware efficiency comparisons.
 - Proceed in the A→B order stated above.
-  **P06 is not complete today**: **P06-A1 and P06-A2.1–A2.4**
-  are user-accepted within their native gate scopes; A2.5 is
-  implemented but needs independent native verification.
-  No training or physical MNIST.
+  **P06 is not complete today**: P06-A1 and **all of P06-A2**
+  are user-accepted; P06-A3.1–A3.3 are code-implemented but
+  require real dataset provenance/optimizer smoke verification.
+  No trained compact candidate, official test or physical MNIST.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
