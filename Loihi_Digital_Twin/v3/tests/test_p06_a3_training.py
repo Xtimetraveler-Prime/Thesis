@@ -59,7 +59,7 @@ def test_synthetic_train_epoch_and_validation_dont_access_mnist():
     assert len(val["predicted_class_histogram"]) == 10
     assert sum(val["predicted_class_histogram"]) == val["count"]
     assert len(val["output_spike_counts_by_class"]) == 10
-    assert sum(val["output_spike_counts_by_class"]) == int(val["mean_output_spikes_per_image"] * val["count"])
+    assert val["mean_output_spikes_per_image"] == pytest.approx(sum(val["output_spike_counts_by_class"]) / val["count"])
     assert torch.equal(after,after.round())
     assert torch.isfinite(model.w_input_hidden).all()
     assert torch.isfinite(model.w_hidden_output).all()
