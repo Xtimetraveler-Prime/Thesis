@@ -1289,441 +1289,350 @@ retroactively change P03's accepted source or golden evidence.
 
 ---
 
-# P06 — Exact published MNIST benchmark audit and freeze
+# P06 — Two-track LIF MNIST model, mapping and benchmark freeze
 
-**Status:** IN PROGRESS — Rao P06.1 corrected
-native I/O regression independently accepted; original
-paper/supplement metrics audited. The authentic
-Rao nine-blob source audit still needs the user's
-rerun after fixing a mistaken on-disk weight
-transpose. **New P06 LIF one-core actual-compiler
-native feasibility PROBE IMPLEMENTED, tests and
-board execution PENDING (2026-10-13).**
-Benchmark method and model checkpoint NOT FROZEN.
-**Development branch:** `agent/v3-p06-lif-feasibility`,
-forked from `agent/v3-p06-benchmark-audit`
-(original Rao paper/weight investigation),
-which was created from accepted P05 `main`.
-Nothing merged to `main`.
-**Important:** NO PAPER BENCHMARK FROZEN and NO
-MNIST official test labels evaluated. NxTF is
-explicitly excluded from benchmark selection.
+**Direction: APPROVED — sequential compact then scaled tracks.**
+**Branch:** `agent/v3-p06-lif-feasibility` (forked from the
+unmerged Rao `agent/v3-p06-benchmark-audit`; accepted P05
+`main` and its evidence unchanged). **No official
+MNIST test-set accuracy evaluated; no trained model yet.**
 
-**CURRENT DIRECTION: simpler single-compartment
-LIF MNIST classifier feasibility, NOT FROZEN.**
-The user requested a hardware-compatible LIF
-path based on published non-Loihi SNN methods.
-The defensible published methodological
-reference is **Eshraghian et al. (2023),
-Training Spiking Neural Networks Using
-Lessons From Deep Learning**,
-DOI:10.1109/JPROC.2023.3308088,
-with companion [snnTorch Tutorial 5]
-(https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html)
-and [Tutorial 1 rate coding]
-(https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_1.html).
-**Published tutorial actual network:
-784→1000→10, 25 steps, β=0.95,
-float `snn.Leaky`, continuous
-analog static-pixel injection and output
-spike-count readout**; does NOT have
-a published identified pretrained
-784→32→10 checkpoint. Tutorial 5
-uses analog first-layer input and by
-default subtract-reset + source
-same-step layer propagation, not the
-v3 FPGA's actual integer hard-reset
-and NEXT bank.
+**Published foundation, not an original checkpoint claim:**
+Eshraghian et al. (2023), *Training Spiking Neural Networks Using Lessons
+From Deep Learning* (DOI `10.1109/JPROC.2023.3308088`),
+and its snnTorch MNIST examples. The tutorial's actual
+784→1000→10 model uses **floating-point**, 25-step
+analog image input, subtract-reset `Leaky` and same-step
+forward-layer processing. Our **project models** deliberately
+use deterministic spike events, P03 integer hard-reset
+LIF and P05 NEXT-bank routing. Both resulting
+checkpoints, accuracy results and timing measurements
+will be **project-specific**; no tutorial or original
+Loihi number may be attributed to them.
 
-**Project-specific structural PROBE:
-784→32→10, 25 input-event ticks +
-1 empty final NEXT-bank flush;
-42 compartments; 25,408 deliberately
-unshared synthetic packed HLS synapses;
-816 destination axons; 32 route words;
-max 816 aggregate input+generated
-events/step versus 4096 event-bank
-depth.** This compact model is
-*resized and adapted*, not the
-authors' original 1000-hidden
-forward and not trained.
-New native source:
-`scripts/p06_lif_compiler_probe.py`
-and `scripts/p06_lif_input_probe.py`;
-regressions:
-`tests/test_p06_lif_compiler_probe.py`,
-`tests/test_p06_lif_input_probe.py`.
-The programmatically built image is
-required to pass the **existing**
-`compile_network` plus
-`export_one_core_image` in native
-verification. No HLS bitstream was
-recompiled, no A53 multi-image
-runtime written, and no accuracy
-or energy measured at this stage.
-See `docs/P06_LIF_FEASIBILITY.md`.
-The actual upstream published
-784→1000→10 **794,000 dense
-synapses** exceed the current five
-DDR-record profile's uncompressed
-163,840-entry total. The 32-unit
-synthetic sample might fit one core;
-a valid trained-checkpoint mapping
-is still a separate proof.
+**Mandatory execution sequence:**
 
-**Benchmark-scope scientific fork:**
-If using a published **architecture/
-training method** but training and
-freezing **our own network**, the
-thesis can compare *that same*
-checkpoint on a CPU software
-oracle and KV260, but it **cannot**
-attribute to it the paper's
-original accuracy/energy.
-If exact published **trained
-weights and published result**
-are mandatory, this resized LIF
-candidate is ineligible and the
-source search must continue.
-Don't conceal this distinction.
+`P06-A compact reference/training/freeze → P07-A
+physical 1-core MNIST → P08-A accepted baseline →
+P06-B scaled mapping/training/freeze → P07-B physical
+virtualized network → P08-B scaling measurements →
+P09 final comparison`.
 
-**Earlier alternative under investigation — Rao (NOT FROZEN, now SECONDARY):**
-Arjun Rao, Philipp Plank, Andreas Wild and Wolfgang Maass,
-"A Long Short-Term Memory for AI Applications in Spike-based
-Neuromorphic Hardware" (Nature Machine Intelligence, 2022,
-DOI: 10.1038/s42256-022-00480-w).
-This study evaluated **sequential MNIST**, which is
-not single-frame MNIST. The paper-linked Intel repository
-provides an immutable source snapshot
-`3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8`
-and three released *trained* `w_in.npy`,
-`w_rec.npy`, `w_out.npy` matrices for 80 input
-channels, 140 regular/100 AHP recurrent units
-and 10 non-spiking output compartments.
-This is materially more reproducible at the
-**trained-weights** level than the alternative
-Renner et al. 2024 Loihi 400–400–10 model,
-whose inspected official public repository
-exposes training code but no trained checkpoint
-that reproduces the published headline accuracy.
+Track B's *design* is recorded here now, but **Track A physical
+accuracy and a measured performance/power baseline take
+priority**. Track A may proceed to P07-A when its
+own P06 freeze gate passes even while P06-B remains
+scheduled for later. Track B cannot retroactively
+change Track A's approved checkpoint, protocol or
+physical acceptance.
 
-**P06.1 REAL ORIGINAL NPY SHAPE REPAIR /
-PRETRAINED CONTENT CHECK (2026-10-12/13):**
-The user's first nine-file physical-source audit
-reported a FAIL because our expected
-`w_in.npy` shape was **transposed**.
-Direct authenticated Git blob byte inspection
-showed the actual original on-disk `<f4`
-arrays are **(80,240), (240,240),
-(240,10)**. The author's
-`seq_mnist.py` explicitly performs
-`out = (wIn.T, wRec.T, wOut.T)`;
-runtime shapes are the opposites.
-Our original source manifest verifier was
-wrong, not the source pretrained weights.
-The corrected verifier now checks both
-on-disk and runtime shapes, original
-float32 dtype and content. Independent
-decoded source counts: **4263 input
-+ 10566 recurrent + 846 output =
-15,675 nonzero trained weights out
-of 79,200 = 19.79% sparse**, with
-all finite signed integral values
-in [-254,255]. Await corrected user
-native + actual nine-file source-audit
-rerun before accepting the source gate.
+### Track A — Small single-core 784→32→10
 
-**Potential research-direction change:**
-The user proposed selecting a **published
-MNIST SNN not originally run on Loihi**.
-This is scientifically valid and may reduce
-hardware-model changes, while still
-testing porting, FPGA neural correctness,
-software-vs-KV260 accuracy and our own
-performance/energy. However, a non-Loihi
-paper offers **no original measured
-Loihi chip energy/latency** to compare;
-paper accuracy correspondence still
-requires author checkpoint identity.
-A candidate with an actual released
-pretrained model and legitimate
-held-out labels is preferable.
-See `docs/P06_1_NON_LOIHI_BENCHMARK_PIVOT.md`.
-Potential example Diehl & Cook (2015)
-provides author pretrained arrays and
-code, but its 784×400 input weights
-need substantial partitioning, and the
-authors warn the distributed demo's
-91.56% uses **test-set labels in
-neuron assignment**, contrary to the
-paper's clean procedure. Another
-LIF/surrogate-gradient published
-recipe might be FPGA-easier but if
-we train it ourselves the result
-is **our** checkpoint, not exact
-published trained weights. **No choice
-has been frozen or evaluation started.**
+- **P06-A1 — Existing compiler/hardware-image structural
+  feasibility [ACCEPTED — independent user native PASS,
+  2026-10-12].** Actual
+  `compile_network`→`export_one_core_image`
+  with **synthetic**, non-trained integer weights:
+  **42 compartments, 25,408 real packed synapses,
+  816 axon bindings, 32 static routes, 108,160 bytes
+  v3 logical synapse cost**. Native regressions
+  `test_p06_lif_compiler_probe.py` and
+  `test_p06_lif_input_probe.py` PASSED after
+  the source-faithful 31-spike/310-next-step-fanin
+  test correction. The input-event feasibility
+  and NEXT-barrier golden test passed.
+  **Not trained; not a KV260 physical inference pass.**
+- **P06-A2 — Integer-equivalent forward and
+  input/readout protocol [NEXT, NOT STARTED].**
+  Independent signed-24-bit P03 LIF oracle
+  covering exact decay rounding, threshold,
+  saturation, signed weights, reset, refractory,
+  25 event steps + 1 NEXT-bank drain, per-image
+  zeroing, and 10-spike-count readout. Pin
+  deterministic uint8 pixel→event encoder
+  and parity against existing `LogicalChip`
+  and packed P03 bank, including overflow/
+  threshold/no-spike negative tests. Prove
+  training-forward *inference* equivalence
+  to the integer oracle, not just approximate
+  float `snn.Leaky` behavior.
+- **P06-A3 — Train and validation-select
+  a compact checkpoint [PLANNED].**
+  Canonical MNIST dataset/split/hashes,
+  reproducible train/validation-only
+  optimization, training seed/versions,
+  source weights, legal integer weight/
+  bias/decay/threshold quantization and
+  a predeclared validation-only GO/NO-GO
+  criterion. No sealed official MNIST
+  test peeking and no borrowing paper
+  accuracy/weights.
+- **P06-A4 — Freeze trained packed
+  benchmark and reproducibility [PLANNED].**
+  Exact real-weight compiler/exporter
+  bank/resource gates, independent
+  first-divergence software traces,
+  model/weight SHA256 and parameter
+  contract, decoder/readout/state-reset,
+  26-step inference, model/data
+  provenance and official-test/physical
+  measurement boundaries recorded
+  *before* P07-A. Explicit P06-A4
+  native acceptance. This is the
+  **Track A P06 exit**; P07-A may
+  start without waiting for Track B.
 
-**Important P06.1 publication audit correction:**
-The author-hosted paper + supplement
-https://igi-web.tugraz.at/PDF/259maass.pdf
-report **96.0% Loihi sMNIST test accuracy,
-14.11 ms wall-clock latency, 0.36 mJ
-Loihi chip energy per inference, and 20%
-overall input/recurrent/output connection
-density**. The exact released `v25_94per`
-weight blobs are NOT explicitly identified
-as the published 96%-result checkpoint.
-**Neither filename nor matching source
-architecture proves benchmark-model identity.**
-The source's nine original Git objects
-are pinned, but their independent byte
-identity, actual dtype and nonzero sparsity
-still require real upstream checkout
-verification. See
+### Track B — Larger DDR-virtualized 784→1000→10
+
+**Research target, not frozen or mapped:**
+**794,000** possible dense synapses;
+approximately **26 destination-partitioned
+hidden logical cores plus 1 readout core** is
+only a **~27-core planning hypothesis**,
+not compiler acceptance or a guaranteed
+optimal partition. At 27 full 512 KiB DDR
+records, backing usage is **13.5 MiB**;
+up to 126 logical core IDs are addressable
+by the accepted P05 A53 diagnostic deployment
+map, with **3 resident FPGA contexts
+and 1 physical HLS compute engine**.
+Important limitations are per-core 128 KiB
+**logical** template/axon/synapse accounting,
+32,768 physical synapse words, the input fanout
+of up to 784 ports to roughly 26 destinations,
+the old P05 ABI's **one valid external axon
+per core**, the **896 KiB** diagnostic payload
+bound, routing/buffering/barriers and DDR
+page traffic. A new model/packet streaming
+deployment ABI and **synapse-aware
+destination partitioner** will be required.
+Simply increasing `max_logical_cores`
+in the present `compile_network` will
+**NOT** partition by synapse pressure.
+
+- **P06-B1 — Prove scalable packing and
+  route semantics [PLANNED AFTER P08-A].**
+  Deterministic synapse-aware partitioner;
+  fail-closed axon/synapse/route/event
+  budgets per logical core and exact
+  512 KiB per-core images. Compare
+  a partitioned integer oracle vs an
+  independent monolithic reference,
+  source input event replication, packet
+  arrival at the correct NEXT epoch,
+  scheduling invariance, page-traffic
+  and estimated throughput. Model
+  a worst-case all-255 timestep
+  without overflowing per-core banks.
+- **P06-B2 — Train, quantize and freeze
+  independent larger checkpoint [PLANNED
+  AFTER P06-B1].** Keep the same
+  deterministic 25+1-step event/input,
+  neuron/readout and dataset split;
+  train a new project large-model
+  checkpoint on train/validation ONLY.
+  Freeze its own tensor SHAs, mapping,
+  independent parity traces, per-core
+  occupancy and a predeclared official
+  test protocol. If the full 1000-hidden
+  topology is infeasible, declare
+  and evaluate a transparent intermediate
+  model *before* accessing test results;
+  do not silently relabel the model.
+
+**Track B P06 exit:** a separately
+audited, real trained *project*
+checkpoint mapped with real 128 KiB/
+32,768-entry bounds and independently
+verified event/packet/state semantics.
+No scaled KV260 claims until P07-B.
+**Do not initiate this work until
+Track A P07/P08 acceptance**, except
+non-mutating resource planning.
+
+### Archived alternate source audit
+
+The earlier Rao et al. Loihi AHP-LSNN
+investigation remains intact in
+`docs/P06_1_PAPER_CANDIDATE_AUDIT.md`,
 `docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md`
-and `docs/P06_1_SOURCE_GATE.md`.
+and its exact Intel manifest. It was
+**not selected**, because original paper
+accuracy-to-released-checkpoint linkage
+was unresolved and AHP hardware would
+require a different neuron contract.
+The corrected Rao original-binary
+nine-file native audit remains **not
+independently accepted** and is no
+longer a blocker for these two LIF
+tracks. NxTF remains excluded.
 
-20% sparsity also corrects the original
-dense 3-core lower-bound guess: 79,200
-matrix entries do **not** imply 79,200
-configured synapses; an ~15,840-entry
-network (+100 AHP couplings) might
-fit one 32,768-entry synapse bank and
-350 available compartments, but real
-weight occupancy and P03 exporter
-capacity have not been demonstrated.
-The paper's `β=96` cannot automatically
-be equated to source `_beta=1390000`
-without fixed-point AHP scaling.
-The code's source-specific encoder is
-not identical to supplementary high-level
-pseudocode; preserve both.
+### P06 acceptance policy
 
-**Critical caveat:** Rao's network requires an
-auxiliary AHP compartment per adaptive neuron
-and a 784-pixel sequential variable-axon input
-encoder; the accepted P05 FPGA currently only
-implements independent one-compartment primitive
-dynamics and the P05 deployment test schema
-allows one registered external axon/core.
-The candidate is therefore **NOT YET accepted
-as fully representable by the existing P05
-hardware**. We cannot silently replace it by
-a basic LIF, reuse another network's weights,
-or claim the paper's energy/accuracy under a
-different model. Source checksum and shape
-checks are not model equivalence.
+- Distinguish **published LIF methodology**,
+  **project-trained model**,
+  **source-level integer oracle**,
+  **compiler/HLS image structural acceptance**,
+  **actual KV260 inference** and
+  **measured FPGA performance**; none
+  implies the next.
+- Preserve P05/HLS acceptance goldens; P06
+  changes require independent regressions.
+- Freeze each track's model and official-test
+  protocol before evaluating the sealed test
+  set; model A and B have **different
+  project-trained checkpoints**, so
+  differences in accuracy are not pure
+  hardware efficiency comparisons.
+- Proceed in the A→B order stated above.
+  **P06 is not complete today**: only
+  **P06-A1** is accepted.
 
-Work items / independent hold points:
-
-- **P06.1 — Source-backed benchmark selection audit
-  [PAPER / SUPPLEMENT AUDIT DONE; native
-  corrected tests user-confirmed PASS;
-  nine-file independent weight audit PENDING].**
-  Compare Rao 2022
-  LSNN, Renner 2024 nBP, and Loihi-2
-  source-only MNIST tutorial. Identify the
-  exact original paper-linked code/weight
-  source (Git blob fingerprints), audit
-  task/baseline/evaluation claims, and refuse
-  any inferred original weights or paper
-  benchmark from a model filename. Artifacts:
-  `docs/P06_1_PAPER_CANDIDATE_AUDIT.md`,
-  `docs/P06_1_LSNN_SOURCE_MANIFEST.json`,
-  `scripts/p06_1_lsnn_source_audit.py`,
-  `tests/test_p06_1_lsnn_source_audit.py`.
-  Paper's result is now source-backed as
-  96.0%, 14.11ms and 0.36mJ; **not proven**
-  to belong to public `v25_94per`
-  model. Need user's independent **nine
-  original-source-blob verification and
-  real NPY density/dtype audit** before
-  P06.1 artifact gate may be accepted.
-  Direct paper-checkpoint identity remains
-  explicitly UNRESOLVED; no official
-  MNIST test evaluation or P06.3 freeze.
-- **P06.2 — Exact model-versus-hardware compatibility
-  [PLANNED; gap analysis drafted].** Read original
-  Loihi current/voltage/auxiliary and source
-  input SNIP/readout/delay/quantization code
-  rather than fitting a new model to reported
-  accuracy. Prove a backwards-compatible
-  two-compartment AHP/streamed multiple-axon
-  extension is feasible, OR reject the candidate
-  and audit another published model with
-  released trained weights. Artifact:
-  `docs/P06_2_AHP_KV260_FEASIBILITY.md`.
-  Requires explicit independent regression
-  before changing the accepted HLS/P03 A53.
-- **P06.3 — Freeze paper, weights, data,
-  implementation contract [BLOCKED on P06.1+2].**
-  Freeze one source commit, genuine trained
-  tensor SHA/dtype/shape, canonical MNIST
-  image checksum/split and sequential
-  encoder, Loihi-neuron/timestep/readout
-  equations, model reference results,
-  matching publication's original evaluation
-  population and measurement scope. Only
-  then unseal official-test accuracy.
-- **P06.4 — Source-equivalent model/mapping
-  and reproducibility package [PLANNED].**
-  Validate independent original-equivalent
-  software trace versus versioned packed
-  fixed-point model, entire 512KiB contexts,
-  throughput/page budget and first-difference
-  tests; no board MNIST performance claim
-  until P07. Keep the P05 golden unchanged.
-
-**Proceed in order; P06 is NOT complete just
-because the public paper and pretrained weights
-have been found.**
-
-## Goal
-
-Select one publication that supports a substantially tighter reconstruction/comparison than the NxTF benchmark.
-
-## Candidate audit requirements
-
-For each candidate, classify each important field as:
-
-- directly source-backed;
-- recoverable from public source code;
-- reproducible project choice;
-- ambiguous;
-- unavailable/not claimed.
-
-Audit at minimum:
-
-- dataset preprocessing;
-- input dimensions and encoding;
-- full layer topology;
-- neuron count;
-- synapse/connection count;
-- weight precision/quantization;
-- neuron model/parameters;
-- timestep/phase schedule;
-- readout;
-- training method;
-- checkpoint/weight availability;
-- published accuracy;
-- published hardware resource/mapping data;
-- published latency/power/energy methodology;
-- public code/license/reproducibility.
-
-## Acceptance
-
-Before official-test evaluation:
-
-- one benchmark is selected and frozen;
-- exact known quantities are recorded;
-- remaining unknowns are explicit;
-- the benchmark is representable by the v3 architectural contract, or any required v3 extension is separately justified and accepted;
-- model/conversion/timestep/readout choices are frozen before using official-test results for comparison.
+**Detailed execution/resource contract:**
+`docs/P06_TWO_TRACK_LIF_PLAN.md`.
+See also `docs/P06_LIF_FEASIBILITY.md`,
+`docs/P06_LIF_NATIVE_GATE.md`, and
+`docs/P06_LIF_CANDIDATE_PROFILE.json`.
 
 ---
 
-# P07 — Full board-local benchmark evaluation
+# P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status:** Planned
+**Status:** PLANNED. **P07-A starts after P06-A4; P07-B starts
+only after a physically measured/accepted P08-A baseline
+and completion of P06-B1/B2.**
 
-## Goal
+## P07-A — One-core proof of useful physical MNIST inference
 
-Run the frozen benchmark through the complete compiler/runtime/KV260 path and make the FPGA, not the PC, the primary inference executor.
+Using frozen Track A 784→32→10 weights and event input,
+extend (not replace) the accepted A53 P05 diagnostic path
+to support **many different external axon IDs per timestep**
+instead of its current one registered valid axon/core,
+image streams and autonomous per-image state/packet/
+readout reset. Execute the exact 25+1-step protocol and
+produce independent FPGA predictions from real 10-output
+spike counts. Verify full-model compiler/runtime
+fingerprints, image provenance, first-mismatch
+timestep/current/voltage/packet traces and independent
+golden predictions. Run the sealed official test
+population only after the model/accuracy protocol
+is frozen; if the full 10,000-image test isn't feasible,
+predeclare the reduced test scope **before**
+reviewing test predictions.
 
-## Deliverables
+**Gate:** useful trained model actually
+running inference on the **physical PL** under
+autonomous A53 scheduling, not a simulated
+test that only checks packed memory.
 
-- deterministic compiler/deployment artifact;
-- board-local DDR/context image;
-- full end-to-end physical execution;
-- accuracy evaluation;
-- selected exact trace/state comparisons against Python;
-- traffic/page/dispatch statistics;
-- full-sample execution evidence rather than only representative logical-core dispatches;
-- official-test protocol with zero post-test model-selection decisions.
+## P07-B — Scaled multi-logical-core physical inference
 
-## Preferred acceptance target
+After P08-A, independently validate the scaled
+frozen P06-B checkpoint across P05's same
+one physical engine and three resident slots,
+the additional DDR logical contexts, routed
+input fanout, NEXT-event-bank packets and
+barrier scheduling. Accept a bounded
+physical multi-core trace corpus first,
+then sealed official-test inference
+if hardware time/storage permits.
+Do not claim a 27-core demonstration
+until physical independent evidence
+confirms **all** cores, per-core full
+DDR images, page swaps and predictions.
 
-If runtime and storage permit, execute the complete MNIST official test set on the KV260. If a smaller physical set is necessary, the reason and statistical/coverage limits must be frozen before viewing comparative results.
-
----
-
-# P08 — Latency, throughput, power, and energy characterization
-
-**Status:** Planned
-
-## Goal
-
-Produce defensible board-level performance measurements with clearly defined boundaries.
-
-## Latency/throughput measurements
-
-Measure separately:
-
-- PL logical-core dispatch latency;
-- DDR page-in/page-out latency;
-- routing/barrier overhead;
-- complete algorithmic timestep latency;
-- complete sample latency from board-local input start to final result;
-- steady-state samples/second where batching or repeated execution is meaningful.
-
-Report distributions, not only a single best observation.
-
-## Power/energy measurements
-
-Establish a repeatable protocol using the KV260/K26 telemetry path where suitable:
-
-- board/SOM idle baseline;
-- configured-but-idle baseline;
-- active board-local inference;
-- sampling cadence;
-- warm-up duration;
-- temperature/thermal state;
-- average/median/variation;
-- energy-per-inference integration over a defined interval.
-
-If idle power is subtracted, label the result explicitly as dynamic/incremental energy rather than total board energy.
-
-An external inline power meter may be used to validate the onboard telemetry path.
-
-## Comparison rule
-
-Published Loihi power/latency values may only be compared directly when workload and measurement boundaries are genuinely aligned. Otherwise they remain contextual reference values.
+**Always distinguish Track A and Track B
+accuracy and checkpoints.**
 
 ---
 
-# P09 — Final v3 comparison and closure
+# P08 — Independent physical baseline and scaling measurements
 
-**Status:** Planned
+**Status:** PLANNED. **P08-A ACCEPTANCE IS A REQUIRED ENTRY GATE
+TO SCALED P06-B1/B2 AND P07-B.**
 
-## Goal
+## P08-A — Compact physical KV260 baseline
 
-Close v3 with a reproducible evidence chain covering architecture, board autonomy, physical correctness, application accuracy, and measured performance.
+For Track A, report measured:
+- HLS per-core dispatch, event-source time, complete image
+  latency (26 timesteps), idle/active throughput;
+- PS/barrier overhead and zero/nonzero DDR paging,
+  A53 control time and memory/packet transfers;
+- K26/SOM or board whole-system idle, configured-idle,
+  dynamic/incremental and total power and energy, sampled
+  with declared equipment/rails, steady-state/thermal
+  controls, raw logs and error bars;
+- the precise endpoint and setup costs included
+  or excluded in software CPU reference timing.
 
-## Required closure evidence
+Accept the accuracy and physical measured
+baseline *before starting B's hardware implementation*.
 
-- source-backed architecture contract plus any v3 addendum;
-- exact accepted repository commit;
-- compiled-deployment fingerprints;
-- board-local runtime fingerprint/version;
-- bitstream/probes identities;
-- regression acceptance;
-- benchmark source audit;
-- official benchmark result;
-- physical trace/conformance evidence;
-- latency/throughput report;
-- power/energy report;
-- comparison ledger distinguishing source-backed facts, project reconstruction choices, direct project measurements, contextual comparisons, and unsupported/non-comparable claims.
+## P08-B — Scaled physical resource/traffic/energy study
 
-## Final claim boundary
+Repeat the same measurement method for the
+frozen scaled model. In addition, record
+logical core count, 3 resident slots,
+actual HLS dispatches, per-core paging
+hits/misses/evictions, bytes moved, routed
+packet fanout/barrier time, event-bank
+occupancy and resource mapping across
+all cores; compare these against P08-A.
 
-v3 should improve autonomy and physical evidence, but it still must not silently claim:
+Report *two different model sizes and
+checkpoints*: improvements in classification
+accuracy and costs from model scaling
+are not pure FPGA architecture speedups.
+Avoid claiming direct Intel Loihi
+power/latency comparisons where workload
+or scope differs. An extra physical
+engine is a **deferred, optional**
+optimization only after one-engine
+baseline and scaled bottlenecks are measured.
 
-- transistor-level Loihi equivalence;
-- physically asynchronous-circuit equivalence;
-- proprietary NxSDK/NxTF binary/microcode equivalence;
-- native Loihi SRAM packing unless separately proven;
-- direct energy/latency superiority from unlike measurement boundaries.
+---
+
+# P09 — Thesis comparison and closure
+
+**Status:** PLANNED.
+
+First close the complete **Track A evidence
+chain** (published-method scope, independently
+trained/frozen exact checkpoint, source oracle,
+P03 HLS image, board-local physical predictions,
+official-test accuracy, power/energy, and
+measurement provenance). **If Track B is not
+successful**, this result must remain a fully
+valid standalone thesis contribution.
+
+If Track B passes P06-B/P07-B/P08-B,
+add its **separate** reproducible
+checkpoint, accuracy and physical data,
+plus a measured compact-vs-scaled comparison:
+model capacity, classification accuracy,
+contexts, paging, routed event traffic,
+true complete-sample latency, throughput
+and total/dynamic energy.
+
+**No hidden claim inflation:** project-trained
+snnTorch-method checkpoints are not
+released author pretrained weights;
+static-analog input is not our
+deterministic event encoder; hardware
+P03 integer reset is not snnTorch
+subtract-reset; a faster/smaller
+model is not a pure architecture
+comparison to a different model;
+Loihi-1 transistor/native SRAM/NoC
+or published chip-level energy
+equivalence is not established.
+
+Close only with immutable commit,
+checkpoint/data/bitstream/ELF
+fingerprints, independent regressions,
+physical first-mismatch and board
+performance evidence, and explicit
+unknowns/non-comparable claims.
 
 ---
 
