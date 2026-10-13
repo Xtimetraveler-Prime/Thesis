@@ -40,22 +40,29 @@ KV260 within the documented scope; see
 and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
 
 **P06 — Published MNIST benchmark audit and freeze: IN PROGRESS
-(P06.1 source research and official pretrained weight provenance
-implemented; independent verification pending).** No paper
+(P06.1 native regression independently PASSED and original paper/
+supplement research audited; real released-weight SHA/dtype/sparsity
+gate not yet independently run).** No paper
 or FPGA inference contract has been frozen; **NxTF
 is excluded** from benchmark selection. The primary
 provisional candidate is Rao et al. 2022's Loihi
 **sequential MNIST** AHP-LSNN, with three actual
 author-released `.npy` pretrained matrices.
-This candidate requires a 100-neuron auxiliary
-AHP compartment extension and exact temporal
-input encoder which the accepted P05 chip
-does **not** currently implement. A benchmark
+The paper reports **96.0% Loihi sequential-MNIST
+accuracy, 14.11 ms latency, 0.36 mJ energy/inference
+and 20% overall synaptic connectivity**. Its
+released `v25_94per` weight files are **NOT
+demonstrably the checkpoint that produced the
+paper's 96.0%**. A correct adaptation still
+requires 100 AHP auxiliary compartments and
+the original temporal input/reset protocol;
+these are not implemented by accepted P05. A benchmark
 freeze or official-test accuracy claim is
 prohibited until that gap is independently
 resolved. See
 [paper and alternatives audit](docs/P06_1_PAPER_CANDIDATE_AUDIT.md),
 [source + checkpoint provenance gate](docs/P06_1_SOURCE_GATE.md),
+[paper-to-checkpoint metric and GO/NO-GO ledger](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md),
 and [architecture feasibility](docs/P06_2_AHP_KV260_FEASIBILITY.md).
 
 **P07–P09 — Pending** (see the authoritative roadmap).
