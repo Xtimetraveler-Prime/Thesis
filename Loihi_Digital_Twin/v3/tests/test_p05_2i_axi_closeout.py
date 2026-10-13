@@ -196,13 +196,13 @@ def test_readonly_no_reboot_recovery_does_not_rerun_inference_or_overwrite_evide
                    "p05_2i_read_axi_counters.tcl",
                    "p05_2i_axi_closeout.py",
                    "hw_read_bursts","hw_write_bursts",
-                   "run_p05_2h_barrier.sh" if False else "P05_2I_EVIDENCE_DIR"):
+                   "P05_2I_EVIDENCE_DIR"):
         assert marker in content
     # Unlike the full P05.2i runner, recovery only captures/validates
     # old live hardware counters. It must NEVER download an ELF, program
     # the bitstream, provision DDR, resume the A53, or mutate PL MMIO.
     import re
     assert not re.search(r"(?m)^\\s*(?:mwr|dow|rst|con|vivado)\\b",content)
-    assert "physical \\"$OUT\\"" not in content
+    assert ' physical "$OUT"' not in content
     assert subprocess.run(["bash","-n",str(path)],
                           capture_output=True).returncode==0
