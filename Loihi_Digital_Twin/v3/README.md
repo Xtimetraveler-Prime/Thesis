@@ -65,6 +65,41 @@ resolved. See
 [paper-to-checkpoint metric and GO/NO-GO ledger](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md),
 and [architecture feasibility](docs/P06_2_AHP_KV260_FEASIBILITY.md).
 
+**P06 LIF hardware-first experimental branch (NEW, UNFROZEN):**
+`agent/v3-p06-lif-feasibility`, forked from P06's
+Rao source-audit branch, implements a native
+**784→32→10** deliberately **synthetic**
+single-compartment integer-LIF compiler test.
+It uses the actual existing P06 deterministic
+`compile_network` and P03 FPGA
+`export_one_core_image` to check exact
+42-compartment/25,408-synapse/816-axon/
+32-route **one-core** physical-image
+limits, plus a versioned exploratory
+deterministic uint8→25-step event encoder
+and physical-compatible **one NEXT-bank
+hidden→output delay**.
+It is explicitly **not** the source
+[snnTorch Tutorial 5](https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html)
+**784→1000→10 analog-input model** and
+has no pretrained weights or measured
+MNIST accuracy/power. The original
+snnTorch `Leaky` beta/subtract-reset
+behavior also differs from the
+existing P03 hard-reset saturating
+integer profile. Training and
+benchmark freeze are **pending**,
+as are multi-image autonomous A53
+streaming and KV260 physical tests.
+
+Documentation:
+[P06 native gate](docs/P06_LIF_NATIVE_GATE.md),
+[P06 detailed feasibility](docs/P06_LIF_FEASIBILITY.md),
+[provisional source-vs-project contract](docs/P06_LIF_CANDIDATE_PROFILE.json).
+Do not merge/modify the accepted P05
+reference simply to make an altered
+training model appear compatible.
+
 **P07–P09 — Pending** (see the authoritative roadmap).
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
