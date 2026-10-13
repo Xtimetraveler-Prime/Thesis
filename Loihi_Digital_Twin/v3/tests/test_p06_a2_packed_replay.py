@@ -133,3 +133,23 @@ def test_native_compiler_image_logicalchip_and_uncompiled_reference_agree():
             assert observed.output_counts == reference.output_spike_counts
             assert len(core.packets_out) == len(observed.next_packet_axons)
             assert sorted(p.destination_axon for p in core.packets_out) == sorted(observed.next_packet_axons)
+
+
+def test_signed_negative_packed_synapse_and_repeat_frame_reset():
+    img = fixture_small_packed()
+    img.synapse_words = (img.synapse_words[0], ((1 << 24) - 2) << 10)
+    img.axon_words = (
+        SimpleNamespace(index=0, word=img.axon_words[0].word),
+        SimpleNamespace(index=900, word=img.axon_words[1].word),
+    ) + tuple(SimpleNamespace(index=i, word=1 << 41) for i in range(1, 784))
+    img.route_words = (900 << 7,)
+    white_pixel = bytes([255] + [0] * 783)
+    first = replay_p03_image(img, tuple(range(784)), white_pixel)
+    assert first.ticks[1].accumulators[32] == -2
+    assert first.output_counts == (0,) * 10
+    assert first.predicted_class == 0
+    # Full-frame replay always resets states, counters and current/NEXT banks.
+    blank = replay_p03_image(img, tuple(range(784)), bytes(784))
+    assert blank.ticks[0].axons_current == ()
+    assert blank.output_counts == (0,) * 10
+    assert replay_p03_image(img, tuple(range(784)), white_pixel) == first
