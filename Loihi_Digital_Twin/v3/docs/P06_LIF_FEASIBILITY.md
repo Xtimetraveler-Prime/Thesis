@@ -126,6 +126,58 @@ this should fit the one physical 32,768
 bank *if the native test passes*. No
 KV260 bitstream/run has tested it yet.
 
+### Scaling contingency (before test data, not post hoc)
+
+The one-core 32-unit probe is the **minimum
+structural demonstration**, not a promise
+of competitive MNIST accuracy. A dense
+`784→64→10` network has
+`784×64 + 64×10 = 50,816`
+source synapses, which **does not fit
+one existing 32,768-entry HLS synapse
+bank**. It might fit in **two distinct
+destination-partitioned logical contexts**
+if the P06 mapper, route barrier
+schedule and repeated external
+input fanout are extended and verified.
+The existing deterministic mapper
+assigns compartments first, then
+validates synapse resources; it does
+**not** automatically partition a
+single population based on synapse
+overflow, so a one-core 64-hidden
+dense attempt is expected to fail
+closed rather than become a valid
+two-core deployment.
+
+A 64-, 128-, or sparse variant
+must be **selected based only on
+training/validation and documented
+hardware feasibility**, not on
+the sealed 10,000-image test
+performance. A 32-unit classifier
+may have materially lower accuracy
+than the author's 1000-unit
+tutorial and should not inherit
+its published learning/result
+claims.
+
+**External sample storage planning:**
+one raw 28×28 8-bit image is 784
+bytes, so all 10,000 official test
+images require **7,840,000 bytes**
+of board DDR input storage, excluding
+metadata; a full worst-case
+pre-expanded 25-step stream is
+19,600 one-event words per image
+(78,400 bytes if packed as 4-byte
+axon events). It is more practical
+to provision raw image bytes once
+and generate deterministic 784-port
+events in the autonomous A53 per
+time step. This has NOT been
+built or benchmarked.
+
 ### Project-only input encoding and scheduler design
 
 `scripts/p06_lif_input_probe.py` implements an
