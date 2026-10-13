@@ -30,7 +30,7 @@ def make_npy(shape=(240,80),descr="<i4",fortran=False,extra=b"")->bytes:
     return b"\x93NUMPY\x01\x00"+struct.pack("<H",len(header))+header+bytes(size)+extra
 
 def test_accept_correct_matrix_headers_without_numpy_dependency():
-    shape={"w_in.npy":(240,80),"w_rec.npy":(240,240),"w_out.npy":(10,240)}
+    shape={"w_in.npy":(80,240),"w_rec.npy":(240,240),"w_out.npy":(240,10)}
     for name,expected in shape.items():
         info=AUDIT.parse_npy_header(make_npy(shape=expected))
         assert tuple(info["shape"])==expected
@@ -94,8 +94,40 @@ def test_paper_is_not_silently_frozen_and_source_blobs_are_pinned():
         row=next(r for r in weights if r["path"].endswith(name))
         assert row["size_bytes"]==AUDIT.EXPECTED_BYTES[name]
         assert tuple(row["expected_shape"])==AUDIT.EXPECTED_SHAPES[name]
+        assert tuple(row["expected_runtime_shape_after_author_transpose"])==AUDIT.EXPECTED_SHAPES[name][::-1]
+        assert row["expected_stored_dtype"]=="<f4"
     assert m["paper_accuracy_for_THIS_specific_checkpoint"]=="NOT_YET_VERIFIED"
     assert "BLOCKED" in m["v3_single_compartment_compatibility"]
+
+def test_stored_vs_runtime_author_transpose_cannot_be_confused():
+    m=json.loads(AUDIT.MANIFEST.read_text())
+    weights=[r for r in m["upstream"]["files"] if r["path"].endswith(".npy")]
+    assert len(weights)==3
+    expected={"w_in.npy":((80,240),(240,80)),
+              "w_rec.npy":((240,240),(240,240)),
+              "w_out.npy":((240,10),(10,240))}
+    for row in weights:
+        name=row["path"].split("/")[-1]
+        assert tuple(row["expected_shape"])==expected[name][0]
+        assert tuple(row["expected_runtime_shape_after_author_transpose"])==expected[name][1]
+        assert tuple(reversed(row["expected_shape"]))==expected[name][1]
+
+
+def test_previously_mistaken_transposed_file_shape_is_detected():
+    assert tuple(AUDIT.parse_npy_header(make_npy((240,80)))["shape"])!=AUDIT.EXPECTED_SHAPES["w_in.npy"]
+    assert tuple(AUDIT.parse_npy_header(make_npy((10,240)))["shape"])!=AUDIT.EXPECTED_SHAPES["w_out.npy"]
+
+
+def test_exact_pinned_public_source_coefficient_ledger_matches_paper_20_percent():
+    m=json.loads(AUDIT.MANIFEST.read_text())
+    ledger=m["upstream"]["observed_matrix_statistics_from_pinned_blobs"]
+    assert sum(ledger[n]["nonzero"] for n in AUDIT.EXPECTED_SHAPES)==15675
+    assert ledger["total"]["nonzero"]==15675
+    assert ledger["total"]["zeros"]==63525
+    assert ledger["total"]["entries"]==79200
+    assert ledger["total"]["density_fraction"]==pytest.approx(15675/79200)
+    assert 0.19 < ledger["total"]["density_fraction"] < 0.20
+
 
 def test_missing_upstream_source_cannot_create_fake_pass(tmp_path):
     with pytest.raises((OSError,ValueError)):
