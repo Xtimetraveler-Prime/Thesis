@@ -1,5 +1,16 @@
 # P05.2f — Combined signed saturation, decay, refractory and paging physical regression
 
+> **Subsequently physically accepted (2026-10-12).** The independent
+> user-provided KV260 result reported 30/30 checkpoints,
+> six barriers, 27 evictions, eight real packets, and all
+> five final 512 KiB DDR images matching the independent
+> Python model (`P05_2F_VERIFY_EXIT=0`). All eight packets
+> were resident-delivered; the P05.2e composite separately
+> covers nonresident traffic. See
+> [P05.2f acceptance](P05_2F_ACCEPTANCE.md).
+> The original verification commands below remain reproducible
+> instructions, not a statement that the test is still pending.
+>
 **Status:** IMPLEMENTED ON DEVELOPMENT BRANCH; **NOT independently verified**.
 **Branch:** `agent/v3-p05-board-regression`.
 **Hardware target:** accepted FPD128 P03.2c FPGA shell and unchanged
