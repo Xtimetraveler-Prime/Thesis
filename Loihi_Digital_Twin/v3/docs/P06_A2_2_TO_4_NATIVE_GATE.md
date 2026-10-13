@@ -76,10 +76,10 @@ not contain the entire v3 checkout. The following results were observed:
 
 - 14 A2.2 unit tests PASSED;
 - 13 A2.3 unit tests PASSED;
-- 2 self-contained A2.4 unit tests PASSED;
+- 3 self-contained A2.4 unit tests PASSED (including negative packed synapses and frame-reset);
 - 19 prior A2.1 unit tests PASSED.
 
-**48 tests PASSED, 1 native-repository integration test DESELECTED.**
+**49 tests PASSED, 1 native-repository integration test DESELECTED.**
 The extra two native A2 encoder-vs-A1 contract tests were also not run
 in this mirror. These are NOT proof that the complete native repository
 suite, real compiled image, Vitis HLS, or actual KV260 works.
