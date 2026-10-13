@@ -1,0 +1,112 @@
+{
+  "schema": "p06-lsnn-source-candidate-v1",
+  "status": "CANDIDATE_SOURCE_PIN_ONLY_NOT_FROZEN_OR_REPRODUCED",
+  "source_paper": {
+    "title": "A Long Short-Term Memory for AI Applications in Spike-based Neuromorphic Hardware",
+    "authors": [
+      "Arjun Rao",
+      "Philipp Plank",
+      "Andreas Wild",
+      "Wolfgang Maass"
+    ],
+    "published": "Nature Machine Intelligence 4, 467–479 (2022)",
+    "doi": "10.1038/s42256-022-00480-w",
+    "article_url": "https://www.nature.com/articles/s42256-022-00480-w",
+    "arxiv_url": "https://arxiv.org/abs/2107.03992",
+    "task": "sequential MNIST; NOT conventional static MNIST"
+  },
+  "upstream": {
+    "repository": "https://github.com/intel-nrc-ecosystem/models",
+    "commit": "3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8",
+    "source_root": "nxsdk_modules_ncl/lsnn",
+    "github_tree_verified": true,
+    "files": [
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_in.npy",
+        "git_blob": "e1ed712f3af5af64cc3680bb5e50dc9447bd13aa",
+        "size_bytes": 76928,
+        "expected_shape": [
+          240,
+          80
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_rec.npy",
+        "git_blob": "c75f4c731b38b017f8d232b326801cba0fa65e40",
+        "size_bytes": 230528,
+        "expected_shape": [
+          240,
+          240
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_out.npy",
+        "git_blob": "b067c855de56cdcb6f4e8ce468f56581544a178f",
+        "size_bytes": 9728,
+        "expected_shape": [
+          10,
+          240
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/src/lsnn.py",
+        "git_blob": "c958b3e3a0f510dc14cf17deacb1a05b8f145c66",
+        "size_bytes": 34141,
+        "type": "LOIHI_NETWORK_CODE"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/seq_mnist.py",
+        "git_blob": "9551c2b2d399649cce9ccbbc3bd049694095540a",
+        "size_bytes": 7239,
+        "type": "INPUT_DATA_EXPERIMENT"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/seq_img_classifier.py",
+        "git_blob": "6be7b2f27f840e23ccbc69b9ad393971b3aa8b40",
+        "size_bytes": 17494,
+        "type": "NETWORK_BUILDER"
+      }
+    ]
+  },
+  "source_read_parameters": {
+    "input_channels": 80,
+    "regular_recurrent": 140,
+    "adaptive_recurrent": 100,
+    "output_readout": 10,
+    "mnist_pixels": 784,
+    "cue_steps": 56,
+    "input_threshold_channels_each_polarity": 40,
+    "model_params_initial": {
+      "vth_mantissa": 127,
+      "tauU": 0,
+      "tauV": 20,
+      "refrac": 1,
+      "tauAdaption": 700,
+      "beta": 1390000
+    },
+    "thrAdaScale": 4,
+    "numDelayBits": 4,
+    "output_readout_spiking": false,
+    "demo_num_test_images": 100,
+    "demo_numpy_random_seed": 0,
+    "demo_batch_size": 10,
+    "source_markers": [
+      "v25_94per IS ONLY AN ARTIFACT LABEL NOT PAPER ACCURACY"
+    ],
+    "approximate_dense_weight_count_excludes_aux": 79200
+  },
+  "paper_accuracy_for_THIS_specific_checkpoint": "NOT_YET_VERIFIED",
+  "verified_paper_measurement_protocol_for_THIS_checkpoint": "NOT_YET_VERIFIED",
+  "v3_single_compartment_compatibility": "BLOCKED_ON_AHP_TWO_COMPARTMENT_AND_MULTI_AXON_INPUT_STREAM",
+  "freeze_status": "PROHIBITED_UNTIL_SOURCE_ASSET_AUDIT_AND_FPGA_CONTRACT_PROVEN_AND_REVIEWED",
+  "dataset_split_provenance": "OpenML mnist_784 source + rows[0:60000]/rows[60000:]; checksum UNFROZEN",
+  "comparisons_prohibited": [
+    "NxTF paper",
+    "static MNIST vs sequential MNIST same metric",
+    "retrained weights asserted to equal paper",
+    "headline accuracy inferred from v25_94per directory name"
+  ]
+}
