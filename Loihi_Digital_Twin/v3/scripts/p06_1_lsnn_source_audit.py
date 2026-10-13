@@ -100,8 +100,8 @@ def audit(upstream:Path)->dict:
     if git_output(upstream,"status","--porcelain","--untracked-files=no"):
         raise ValueError("upstream tracked files modified; cannot audit source identity")
     assets={}
-    if len(man["upstream"]["files"])!=6:
-        raise ValueError("all 3 weight files and 3 source files required")
+    if len(man["upstream"]["files"])!=9:
+        raise ValueError("all 3 weight files and 6 source files required")
     seen=set()
     for entry in man["upstream"]["files"]:
         rel=entry["path"]
@@ -165,7 +165,7 @@ def main()->int:
         print("FAIL: P06.1 official source/weights audit: "+str(e),file=sys.stderr)
         print("P06_1_SOURCE_AUDIT_EXIT=1",file=sys.stderr)
         return 1
-    print("PASS: P06.1 official paper-linked upstream git commit and all six immutable author artifacts exact")
+    print("PASS: P06.1 official paper-linked upstream git commit and all nine immutable author artifacts exact")
     print("PASS: P06.1 all three genuine pretrained source weight files verified, no retraining or fabricated weights")
     print("P06_1_SOURCE_AUDIT_METADATA="+json.dumps({
         "commit":EXPECTED_COMMIT,
