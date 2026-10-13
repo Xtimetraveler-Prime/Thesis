@@ -29,7 +29,7 @@ EXPECTED_BYTES={"w_in.npy":76928,"w_rec.npy":230528,"w_out.npy":9728}
 
 def parse_npy_header(blob:bytes)->dict:
     """Parse and validate NumPy .npy v1/v2/v3 header without executing data."""
-    if blob[:6]!=b"\\x93NUMPY" or len(blob)<12:
+    if blob[:6]!=b"\x93NUMPY" or len(blob)<12:
         raise ValueError("not a NumPy .npy data file")
     major,minor=blob[6],blob[7]
     if (major,minor) not in ((1,0),(2,0),(3,0)):
@@ -58,7 +58,7 @@ def parse_npy_header(blob:bytes)->dict:
         raise ValueError("unexpected Fortran-order matrix; inspect source before mapping")
     dtype=header["descr"]
     # No object, structured, big-endian or variable-length payloads.
-    if not isinstance(dtype,str) or not re.fullmatch(r"(?:<|=|\\|)(?:f|i|u)4",dtype):
+    if dtype not in ("<f4","<i4","<u4","=f4","=i4","=u4","|i4","|u4","|f4"):
         raise ValueError(f"unexpected weight dtype {dtype!r}; no coerced assumptions")
     values=shape[0]*shape[1]
     bytes_expected=offset+size+values*4
