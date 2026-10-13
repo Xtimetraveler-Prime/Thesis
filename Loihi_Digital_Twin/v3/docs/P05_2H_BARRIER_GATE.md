@@ -1,6 +1,12 @@
 # P05.2h — Adversarial 16-barrier dual-event-bank and mixed-residency routing
 
-**Status: IMPLEMENTED — native and physical independent verification PENDING.**
+**Status: PHYSICAL ACCEPTED — independent user-reported 2026-10-13**
+(16/16 barriers, 318 checkpoints, 156 packets, 77 evictions,
+five complete 512 KiB DDR images). See
+[P05.2h physical acceptance](P05_2H_ACCEPTANCE.md).
+The original native-first/physical reproduction instructions below
+remain available for a new run; they are not an assertion that the
+already completed P05.2h gate is still pending.
 The independently user-confirmed P05.2g 4096-full and 4097-admission
 physical PASS is recorded separately at [P05.2g acceptance](P05_2G_ACCEPTANCE.md).
 
