@@ -7,6 +7,11 @@ MODE="$1"; ROOT="$2"
 [[ "$ROOT" == /* ]] || { echo "ERROR: absolute evidence directory required" >&2;exit 2; }
 V3_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$V3_DIR"
+# Fail before any JTAG/DDR work if a new P05.2g Python module is malformed.
+python -m py_compile \
+  scripts/p05_2g_capacity_fixture.py \
+  scripts/p05_2g_capacity_verify.py \
+  tests/test_p05_2g_capacity.py
 if [[ "$MODE" == prepare ]]; then
   [[ ! -e "$ROOT" ]] || { echo "ERROR: refuse overwrite of existing capacity evidence" >&2;exit 2; }
   PYTHONPATH="$V3_DIR/src" python scripts/p05_2g_capacity_fixture.py --output-dir "$ROOT"
