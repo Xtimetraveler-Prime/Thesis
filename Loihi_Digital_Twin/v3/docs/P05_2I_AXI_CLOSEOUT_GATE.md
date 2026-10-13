@@ -1,6 +1,10 @@
 # P05.2i — Final P05 page-AXI transfer-counter provenance / closeout gate
 
-**Status: IMPLEMENTED — independent native and physical KV260 verification PENDING.**
+**Status: ACCEPTED — independently user-confirmed real KV260 PASS, 2026-10-13.**
+See [P05.2i physical acceptance](P05_2I_ACCEPTANCE.md) and
+[P05 complete](P05_FINAL_ACCEPTANCE.md). The original native-first
+and physical instructions below are retained for reproduction,
+not because the accepted gate remains pending.
 P05.2h is independently physically accepted:
 [318 checkpoints, 156 packets (78 resident/78 nonresident), 77 evictions,
 five full DDR records](P05_2H_ACCEPTANCE.md).
@@ -134,9 +138,13 @@ DDR records), then the ORIGINAL XSDB `mrd -bin -file`
 attempt at `0xA4000044` stopped because the debugger
 had not added PS-to-PL memory to its address map.
 This was a **debugger address admission failure**, not a
-neural/HLS failure. No final P05.2i AXI witness or
-`p05_2i_verify.log` was produced; overall P05.2i
-remains **PENDING**.
+neural/HLS failure. **At that point** no final P05.2i AXI
+witness or `p05_2i_verify.log` had been produced, so
+the initial attempt remained pending. **The same-run,
+no-reboot recovery subsequently PASSED**, documented
+in `P05_2I_ACCEPTANCE.md`, with genuine 136,960
+AXI read bursts, 33,280 write bursts and 43,581,440
+successful FPGA page-transfer bytes.
 
 AMD UG1725/UG1400 documents `mrd -force` to override
 debugger-side reserved/invalid address **software**
@@ -227,7 +235,10 @@ three separate claims:
    counted as accepted measurements. Document as explicit
    limitations and revisit if the benchmark requires them.
 
-**Do not merge or mark P05 complete before the user
-independently verifies this gate and explicitly approves
-the closeout scope.** Model-derived numbers alone are
-not an actual AXI measurement.
+**Closure satisfied:** The user independently verified the
+original A53, complete DDR and real read-only FPGA MMIO
+witness, supplied `P05_2I_VERIFY_EXIT=0` and explicitly
+authorized P05 closure and merge. P05.2i is **ACCEPTED**
+under the scope listed above, with the original device
+measurement, not a model-derived number alone.
+See `P05_2I_ACCEPTANCE.md` and `P05_FINAL_ACCEPTANCE.md`.
