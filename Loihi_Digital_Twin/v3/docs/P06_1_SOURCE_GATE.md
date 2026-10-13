@@ -118,6 +118,28 @@ summary and the last PASS/metadata lines; P06.2 can
 then validate the source timestep/update/readout
 semantics against v3 before formal benchmark freeze.
 
+### P06.1 native readout-boundary correction (awaiting independent rerun)
+
+The first user-run P06.1 regression surfaced a mismatch in
+`test_argmax_reads_nonspiking_membrane_V_not_output_spikes`:
+our model returned `ValueError` (and the test incorrectly
+expected digit 0) when all ten `V == -8388608`.
+
+The **author's actual** `snips/snip_mgmt.c` initializes
+`maxV=-8388608`, `maxVId=-1` and updates only for
+`v>maxV`. Ten minimum voltages therefore return `-1`;
+this is a source sentinel/unclassified boundary, not a
+digit and not a simulator error. The Python port readout
+now returns `-1` without changing the valid 0..9
+readout behavior. Added minimum/+1 and strict-tie
+tests, and corrected source manifest/audit prose.
+A standalone compiled-C versus Python semantic cross-check
+covered **2506** original-loop vectors with **2506/2506
+identical decisions** (including all-minimum); this is
+NOT a full local repository pytest run or an upstream NxSDK
+runtime execution. Await user-native pytest rerun before
+accepting P06.1.
+
 ## 4. Source-specific I/O behavior already extracted
 
 The pinned author C `snips/spiking.c`, `snips/snip_mgmt.c`
