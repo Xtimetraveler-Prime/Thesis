@@ -159,11 +159,19 @@ the Thesis repository.
 
 ### FPGA compatibility: changed by the 20% sparsity finding
 
-The released matrix files store **79,200
-potential coefficients** (80×240 + 240×240
-+ 240×10). That is not the hardware's
-actual nonzero synapse count: the
-paper specifies **20% overall connectivity**,
+The pinned author `<f4` source matrix
+binary headers are (80,240), (240,240),
+(240,10); `seq_mnist.py` **transposes**
+these to runtime (240,80), (240,240),
+(10,240). They store **79,200 potential
+coefficients**. Direct inspection of
+the original authenticated Git blobs
+found **15,675 nonzero** (4,263 input;
+10,566 recurrent; 846 output), or
+**19.79%** true trained sparsity.
+This is not the hardware's
+actual mapped/compressed synapse count:
+the paper specifies **20% overall connectivity**,
 and the Loihi author's source explicitly
 uses `connectionMask=(wgts>0)` and
 `connectionMask=(wgts<0)` for sparse
