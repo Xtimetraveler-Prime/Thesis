@@ -13,10 +13,18 @@ test set was run and no KV260 classifier accuracy/energy was measured.
    *A Long Short-Term Memory for AI Applications in Spike-based
    Neuromorphic Hardware*, *Nature Machine Intelligence* 4:467–479,
    DOI https://doi.org/10.1038/s42256-022-00480-w.
-   Author-hosted article **including supplementary information**:
+   Author-hosted **arXiv v1 preprint dated 2021-07-08**
+   **including its original supplementary information**:
    https://igi-web.tugraz.at/PDF/259maass.pdf
-   (paper pages 3–4 / PDF physical pages 3–4; Methods PDF
-   pp. 12–14; supplement Table S1 PDF p. 19).
+   (preprint Results PDF p. 4, Methods PDF pp. 13–14,
+   supplement Table S1 PDF p. 19).
+   The Nature site confirms the peer-reviewed journal
+   paper and points to supplementary material, but its
+   full version-of-record body was not independently
+   retrievable in this audit. **Treat 96.0%/14.11ms/
+   0.36mJ as exact author-hosted preprint/S1
+   numbers, not independently verified numeric
+   quotes from the paywalled final journal PDF.**
 2. **Paper-linked released code**:
    https://github.com/intel-nrc-ecosystem/models/tree/3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8/nxsdk_modules_ncl/lsnn
    (pinned author-linked Intel Git commit
