@@ -92,7 +92,7 @@ mapping, compression and placement matter.
 - `apps/seqmnist/seq_img_classifier.py`:
   `thrAdaScale=4`, `_numDelayBits=4`,
   40 thresholds = floor(linspace(0,255,40)),
-  batch configuration 10. Exactly **38 threshold indices 1..38** drive paired onset/offset channels, threshold 39 is a *pixel==255 touch* on port 78, and the 56-step output cue uses port 79; ports 0 and 1 are unused. Adjacent-pixel crossings use current→**next** pixel; there are no onset/offset crossings at pixel index 783. The output management SNIP reads the 10 membrane V registers at timestep 840 and chooses argmax, with ties favoring the lowest index. Output readout groups
+  batch configuration 10. Exactly **38 threshold indices 1..38** drive paired onset/offset channels, threshold 39 is a *pixel==255 touch* on port 78, and the 56-step output cue uses port 79; ports 0 and 1 are unused. Adjacent-pixel crossings use current→**next** pixel; there are no onset/offset crossings at pixel index 783. The output management SNIP reads the 10 membrane V registers at timestep 840 and uses strict `v>maxV` with `maxV=-8388608`, `maxVId=-1`: ties **above the minimum** favor the lowest index, but ten equal minimum voltages yield the original **`-1` sentinel**, not digit zero. Source-exact reconstruction must preserve this rare failure-to-classify boundary. Output readout groups
   use very high threshold mantissa `2**17-1`,
   specifically non-spiking integrated output;
   a simple count of output spikes would be
