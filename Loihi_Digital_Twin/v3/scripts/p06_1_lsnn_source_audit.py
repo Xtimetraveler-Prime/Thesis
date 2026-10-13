@@ -11,8 +11,8 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 from pathlib import Path
-import re
 import struct
 import subprocess
 import sys
@@ -72,6 +72,46 @@ def parse_npy_header(blob:bytes)->dict:
         "header_bytes":offset+size,
     }
 
+def measure_weight_payload(blob:bytes,header:dict)->dict:
+    """Inspect actual original 4-byte coefficients; never guess sparsity.
+
+    This only counts source .npy values, not Loihi compressed synapse
+    entries or physical mapped synapse occupancy.
+    """
+    descr=header["descr"]
+    kind=descr[-2]
+    fmt={"f":"<f","i":"<i","u":"<I"}.get(kind)
+    if fmt is None:
+        raise ValueError("unsupported four-byte numeric weight kind")
+    data=memoryview(blob)[header["header_bytes"]:]
+    positive=negative=zeros=0
+    minimum=None
+    maximum=None
+    for (v,) in struct.iter_unpack(fmt,data):
+        if kind=="f" and not math.isfinite(v):
+            raise ValueError("NaN or infinite weight in original pretrained matrix")
+        if v>0:
+            positive+=1
+        elif v<0:
+            negative+=1
+        else:
+            zeros+=1
+        if minimum is None or v<minimum:
+            minimum=v
+        if maximum is None or v>maximum:
+            maximum=v
+    entries=positive+negative+zeros
+    if entries!=header["payload_elements"] or entries==0:
+        raise ValueError("trained matrix payload element count inconsistent")
+    return {
+        "entries":entries,"positive_entries":positive,
+        "negative_entries":negative,"zero_entries":zeros,
+        "nonzero_entries":positive+negative,
+        "density_fraction":(positive+negative)/entries,
+        "min_value":minimum,"max_value":maximum,
+    }
+
+
 def git_output(folder:Path,*args:str)->str:
     p=subprocess.run(
         ["git","-C",str(folder),*args],text=True,capture_output=True,
@@ -121,18 +161,30 @@ def audit(upstream:Path)->dict:
             "file_bytes":p.stat().st_size,
         }
         if entry["type"]=="WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION":
-            header=parse_npy_header(p.read_bytes())
+            raw=p.read_bytes()
+            header=parse_npy_header(raw)
             expected=EXPECTED_SHAPES.get(p.name)
             if expected is None or tuple(header["shape"])!=expected:
                 raise ValueError("unexpected paper-linked pretrained matrix shape: "+rel)
-            if len(p.read_bytes())!=EXPECTED_BYTES[p.name]:
+            if len(raw)!=EXPECTED_BYTES[p.name]:
                 raise ValueError("unexpected paper-linked pretrained matrix byte count")
             row["numpy_header"]=header
+            row["source_coefficients"]=measure_weight_payload(raw,header)
         assets[rel]=row
     all_weights=sum(a["numpy_header"]["payload_elements"]
                     for a in assets.values() if "numpy_header" in a)
     if all_weights!=79200:
-        raise ValueError("unexpected exact physical candidate dense connection count")
+        raise ValueError("unexpected exact physical candidate matrix position count")
+    physical_coefficients={
+        "entries":all_weights,
+        "nonzero_entries":sum(a["source_coefficients"]["nonzero_entries"]
+                              for a in assets.values()
+                              if "source_coefficients" in a),
+    }
+    physical_coefficients["zero_entries"]=(
+        all_weights-physical_coefficients["nonzero_entries"])
+    physical_coefficients["density_fraction"]=(
+        physical_coefficients["nonzero_entries"]/all_weights)
     info={
         "profile":man["schema"],
         "status":"IMMUTABLE_AUTHOR_SOURCE_VERIFIED; NO_FPGA_FREEZE",
@@ -142,7 +194,8 @@ def audit(upstream:Path)->dict:
         "candidate":"Rao et al. 2022 sMNIST Loihi 1 AHP-LSNN",
         "topology":{"input_channels":80,"regular_units":140,
                     "adaptive_units":100,"nonspiking_outputs":10,
-                    "source_dense_weight_entries":79200},
+                    "source_dense_matrix_positions":79200,
+                    "source_weight_occupancy":physical_coefficients},
         "source_files":assets,
         "limitations":"Exact source/header provenance only. No NxSDK reference run, "
                       "paper-specified accuracy association, AHP FPGA support, "
@@ -174,6 +227,7 @@ def main()->int:
         "dtype_by_file":{p:a["numpy_header"]["descr"] for p,a in data["source_files"].items()
                          if "numpy_header" in a},
         "source_manifest_sha256":data["source_manifest_sha256"],
+        "real_trained_coefficients":data["topology"]["source_weight_occupancy"],
     },sort_keys=True))
     print("P06_1_SOURCE_AUDIT_EXIT=0")
     print("P06_1_PAPER_FREEZE=NOT_ACCEPTED_AHP_EXTENSION_AND_BENCHMARK_METRIC_AUDIT_REQUIRED")
