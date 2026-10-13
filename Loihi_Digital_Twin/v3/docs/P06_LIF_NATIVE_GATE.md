@@ -1,6 +1,18 @@
 # P06 LIF pre-freeze feasibility gate — existing compiler and HLS packer
 
-**Status: HOST NATIVE VERIFICATION PENDING.**
+**Status: NATIVE HOST STRUCTURAL GATE ACCEPTED
+BY USER (2026-10-12) after the corrected 31-spike/
+310-NEXT-bank-fanin directed routing regression.**
+The user reported that both the regression suite
+and the actual 32-hidden packed-image and
+published-size resource-limit probe commands
+passed. No full test log or immutable output
+artifact was provided in this thread;
+this is recorded as **user-attested native
+acceptance**, not independent re-execution
+by the assistant. Re-run commands below
+remain the standard reproduction protocol.
+
 The two probes use only the accepted v3 Python
 compiler/golden and existing P03 packed FPGA
 `OneCoreHardwareImage`; **not** trained weights,
@@ -33,7 +45,8 @@ compartments 0 and 2..31 spike; therefore exactly
 timestep **31 × 10 = 310** downstream synaptic
 contributions, are expected.
 
-The regression now checks the **exact identities**
+The corrected regression **passed on the user's native host**,
+and checks the **exact identities**
 of firing compartments and outgoing packet sources,
 their target timestep **1**, delivery equality to
 the next timestep's ingress packet set, readout
@@ -47,8 +60,11 @@ No network weights, thresholds, HLS RTL,
 P05 acceptance artifacts, or golden neuron
 equations were changed to manufacture
 32 spikes. This is a **TEST ONLY** correction.
-Native rerun and structural acceptance are
-still pending.
+Native test and both compiler feasibility
+probe modes are **user-confirmed PASS**.
+Training, accuracy, complete physical
+inference and real board power remain
+pending.
 
 ## 1. Check out the sandbox branch
 
@@ -157,3 +173,16 @@ verify software-vs-KV260 image predictions.
 Do not use the published snnTorch
 1000-unit tutorial's result as this
 resized candidate's ground-truth accuracy.
+
+**Submilestone disposition:** P06-A1
+(compact structural compiler and routing
+gate) **ACCEPTED** based on reported
+native PASS. The active next step is
+P06-A2 integer-equivalent training-forward/
+independent reference, then P06-A3
+training and P06-A4 checkpoint freeze.
+The scaled P06-B work is postponed
+until P07-A/P08-A physically establish
+a robust compact baseline; see
+[P06 two-track master plan](P06_TWO_TRACK_LIF_PLAN.md).
+
