@@ -61,7 +61,7 @@ def test_paper_is_not_silently_frozen_and_source_blobs_are_pinned():
     assert m["status"]=="CANDIDATE_SOURCE_PIN_ONLY_NOT_FROZEN_OR_REPRODUCED"
     assert m["upstream"]["commit"]==AUDIT.EXPECTED_COMMIT
     assert m["freeze_status"].startswith("PROHIBITED")
-    assert len(m["upstream"]["files"])==6
+    assert len(m["upstream"]["files"])==9
     weights=[r for r in m["upstream"]["files"] if r["path"].endswith(".npy")]
     assert len(weights)==3
     for row in m["upstream"]["files"]:
