@@ -53,16 +53,24 @@ one real packed **42-neuron, 25,408-synapse,
 with **synthetic test weights**, not trained
 accuracy or physical KV260 inference.
 
-**P06-A2 progress (2026-10-13):** A2.1–A2.4 are user-attested
-accepted within their native gates; detailed A2.2–A2.4 native logs were
-not pasted. A2.5's PyTorch integer-exact quantized forward, approximate
-surrogate gradients and strict compiler export bridge are committed,
-but **A2.5 native verification is pending**. A partial local checkout
-passed 56 tests with one prior native-only integration test deselected;
-the two new actual-compiler export tests still require native execution.
-No accepted P05/HLS arithmetic was changed, no MNIST training or official
-test-set evaluation happened, and no KV260 MNIST accuracy is claimed.
-[Training-forward native gate](docs/P06_A2_5_TRAINING_FORWARD_GATE.md).
+**P06-A2 CLOSED / user-accepted (2026-10-13):** A2.1–A2.5's
+independent signed24 LIF oracle, deterministic 25+1-event encoder,
+separately decoded P03 packed-image replay and PyTorch forward parity
+have all been accepted by user native verification. Detailed native
+pytest logs were not all provided; this does not imply physical FPGA
+MNIST. Accepted P05/HLS goldens remain untouched.
+[Closeout record](docs/P06_A2_5_TRAINING_FORWARD_GATE.md).
+
+**P06-A3 IN PROGRESS (2026-10-13):** Implemented A3.1 canonical
+MNIST TRAIN-only checksum/IDX validation, deterministic 50k train /
+10k validation provenance; A3.2 seeded quantization-aware surrogate
+learning and validation-only model selection; A3.3 signed24 checkpoint
+candidates with config/data/weight hashes and tamper checks.
+**Native dataset preflight, training smoke and actual MNIST training
+are not yet accepted or performed.** Validation GO/NO-GO criterion
+was set at 60% before any dataset evaluation. Test labels stay sealed;
+no accuracy, P07 execution or KV260 power/energy claim is made.
+[Current native preflight gate](docs/P06_A3_1_TO_3_NATIVE_GATE.md).
 
 **Official sequential development plan:**
 
