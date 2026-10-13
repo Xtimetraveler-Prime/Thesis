@@ -92,7 +92,7 @@ mapping, compression and placement matter.
 - `apps/seqmnist/seq_img_classifier.py`:
   `thrAdaScale=4`, `_numDelayBits=4`,
   40 thresholds = floor(linspace(0,255,40)),
-  batch configuration 10. Output readout groups
+  batch configuration 10. Exactly **38 threshold indices 1..38** drive paired onset/offset channels, threshold 39 is a *pixel==255 touch* on port 78, and the 56-step output cue uses port 79; ports 0 and 1 are unused. Adjacent-pixel crossings use current→**next** pixel; there are no onset/offset crossings at pixel index 783. The output management SNIP reads the 10 membrane V registers at timestep 840 and chooses argmax, with ties favoring the lowest index. Output readout groups
   use very high threshold mantissa `2**17-1`,
   specifically non-spiking integrated output;
   a simple count of output spikes would be
@@ -125,7 +125,7 @@ mapping, compression and placement matter.
   selects rows 60000 onward for test. Preserve
   original image pixel `uint8` values; audit the
   SNIP `spiking.c` threshold-crossing rules (including
-  the preceding pixel and edge conditions) rather
+  the *next* pixel, last-pixel suppression and edge conditions) rather
   than invent Bernoulli/rate-coded spikes.
 
 **Publication/source support, but NOT yet imported or demonstrated:**
