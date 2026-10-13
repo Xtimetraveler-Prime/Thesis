@@ -1,6 +1,6 @@
 # P06-A2.5 — Integer-equivalent differentiable forward / native gate
 
-**Status:** CODE COMMITTED / NATIVE USER VERIFICATION PENDING (2026-10-13).
+**Status:** USER-ACCEPTED (2026-10-13), based on user's explicit confirmation that P06-A2 tests were verified and authorization to close P06-A2.
 **Branch:** `agent/v3-p06-lif-feasibility`.
 **Scope:** Synthetic test inputs and weight fixtures only; no actual MNIST
 training, official test labels, FPGA execution, accuracy or energy data.
@@ -109,6 +109,16 @@ PYTHONPATH="$PWD/src" python scripts/p06_lif_compiler_probe.py --mode original_t
 skip**, packed/export parity of the signed/synthetic dense model passes,
 and both old feasibility modes preserve the accepted PASS. Send back the
 pytest summary, any first divergent assertion, and the two probe exits.
+
+## User acceptance (2026-10-13)
+
+The user explicitly stated, "I verified the tests. we can close p06-A2."
+This is the native verification acceptance for A2.5. The full pytest
+summary/count and two new compiler integration transcripts were not
+included in this specific message, so their exact statistics are not
+independently attested by the assistant. No physical board/FPGA test is
+inferred. **P06-A2 is now formally closed** at the native software
+numerical/training-forward contract level; all physical MNIST gates remain.
 
 ## Next research stage (P06-A3 after independent acceptance)
 
