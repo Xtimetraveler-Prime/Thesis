@@ -1,5 +1,18 @@
 # P06.1 — Evaluating a published MNIST SNN not originally run on Loihi
 
+> **Subsequent project decision (2026-10-12):** This file preserves
+> the earlier candidate research; it is **not** the active milestone
+> decision record. The user selected **snnTorch-inspired,
+> project-trained LIF** on the KV260, to be implemented **compact
+> 784→32→10 first**, then **scaled 784→1000→10 only after the
+> compact physical baseline**. Track A's synthetic native
+> compiler/HLS-image feasibility gate passed on the user's host;
+> no trained checkpoint, official MNIST accuracy or KV260 application
+> pass exists yet. See [authoritative two-track plan](P06_TWO_TRACK_LIF_PLAN.md)
+> and the [roadmap](../LOIHI_TWIN_ROADMAP.md). Rao and Diehl/Cook
+> remain historical alternatives, **not parallel blockers**.
+
+
 **Status: RESEARCH-ONLY OPTION REVIEW — NOT AN ACCEPTED BENCHMARK
 SELECTION.** User asked whether a published non-Loihi model would
 be a better target for the KV260 Loihi-1-inspired digital twin.
