@@ -27,12 +27,12 @@ def test_compiler_export_produces_exact_dense_weights_config_and_image_parity():
     with torch.no_grad():
         for dest in range(32):
             train.w_input_hidden[dest] = torch.tensor(
-                [((src * (dest + 3) + dest * 11) % 89 - 44) + 0.25 for src in range(784)],
+                [((src * (dest + 3) + dest * 11) % 89 - 24) + 0.25 for src in range(784)],
                 dtype=torch.float32,
             )
         for dest in range(10):
             train.w_hidden_output[dest] = torch.tensor(
-                [((src * (dest + 7) + 3 * dest) % 73 - 36) - 0.25 for src in range(32)],
+                [((src * (dest + 7) + 3 * dest) % 73 - 12) - 0.25 for src in range(32)],
                 dtype=torch.float32,
             )
     model = train.to_integer_network()
@@ -52,6 +52,9 @@ def test_compiler_export_produces_exact_dense_weights_config_and_image_parity():
     for i, raw in enumerate(images):
         dense = infer_image(model, raw)
         packed = replay_p03_image(img, pixel_to_axon, raw)
+        if i == 1:
+            assert dense.traces[0].hidden_spikes, "maximal input must route actual hidden spikes"
+            assert dense.traces[1].output_spikes, "maximal input must fire output neurons"
         chip = compiled.build_chip()
         assert tuple(int(v) for v in counts[i]) == dense.output_counts == packed.output_counts
         for t in range(26):
