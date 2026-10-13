@@ -20,10 +20,14 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/"docs/P06_1_LSNN_SOURCE_MANIFEST.json"
 EXPECTED_COMMIT="3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8"
+# ORIGINAL ON-DISK matrices are (source, destination). The author's
+# apps/seqmnist/seq_mnist.py loadWeightsAndDelays() returns
+# (wIn.T, wRec.T, wOut.T); the runtime expects (destination, source).
+# Do not confuse the stored checkpoint with the runtime connectivity arrays.
 EXPECTED_SHAPES={
-    "w_in.npy":(240,80),
+    "w_in.npy":(80,240),
     "w_rec.npy":(240,240),
-    "w_out.npy":(10,240),
+    "w_out.npy":(240,10),
 }
 EXPECTED_BYTES={"w_in.npy":76928,"w_rec.npy":230528,"w_out.npy":9728}
 
@@ -168,7 +172,12 @@ def audit(upstream:Path)->dict:
                 raise ValueError("unexpected paper-linked pretrained matrix shape: "+rel)
             if len(raw)!=EXPECTED_BYTES[p.name]:
                 raise ValueError("unexpected paper-linked pretrained matrix byte count")
+            if tuple(entry["expected_shape"])!=expected:
+                raise ValueError("pinned checkpoint stored-shape manifest mismatch: "+rel)
+            if tuple(entry.get("expected_runtime_shape_after_author_transpose",[]))!=expected[::-1]:
+                raise ValueError("pinned author runtime transpose contract mismatch: "+rel)
             row["numpy_header"]=header
+            row["author_runtime_shape_after_transpose"]=[expected[1],expected[0]]
             row["source_coefficients"]=measure_weight_payload(raw,header)
         assets[rel]=row
     all_weights=sum(a["numpy_header"]["payload_elements"]
