@@ -36,8 +36,16 @@ synapses—must be **measured from the original immutable .npy
 bytes** rather than counting zeros as physical synapses.
 `scripts/p06_1_lsnn_source_audit.py` reports their true
 signed/zero/nonzero populations, per-matrix density and SHA.
-Until that audit passes, neither the paper's 20% nor a
-directory label proves *these released arrays'* sparsity.
+We decoded the genuine pinned author Git blobs and
+confirmed source stored orientations (80,240),
+(240,240), (240,10), each `<f4` and all
+finite integral weights in [-254,255].
+Their observed true nonzero counts are
+**4,263**, **10,566**, **846**:
+**15,675 source synapses / 79,200 = 19.79%**.
+The local independent audit must reproduce
+those counts before this data is accepted
+as a physical mapping input.
 
 At exactly 20% occupancy, the illustrative connected matrix
 count is `79200×0.2≈15,840` (PLUS the author's 100
