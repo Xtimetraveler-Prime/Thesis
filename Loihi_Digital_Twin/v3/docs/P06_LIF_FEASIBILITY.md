@@ -126,6 +126,35 @@ this should fit the one physical 32,768
 bank *if the native test passes*. No
 KV260 bitstream/run has tested it yet.
 
+### Native self-routing boundary verified by source arithmetic;
+board gate still pending
+
+The first user native run exposed a bad
+test assumption: the test demanded **32
+spikes from 32 configured hidden routes**
+when driven by 784 fully active
+synthetic pixel axons at timestep 0.
+But hidden cell 1's synthetic input
+weights sum to **1,696**, strictly below
+the `2,048` configured threshold;
+the other **31** cells cross it.
+Thus the hardware model should create
+**31 next-bank packet events**, and
+the next timestep should expand these
+into **310 hidden→readout synaptic
+contributions** (10 per incoming packet).
+
+The fixed directed native test asserts
+the actual spiking-source identities,
+packet delivery across the timestep
+barrier, exact fan-in count, and
+zero-input/zero-route-traffic negative
+control. This fixes a **test expectation**,
+not LIF runtime behavior. The user's
+native regression remains to be rerun;
+nothing here establishes a physical
+KV260 MNIST run.
+
 ### Scaling contingency (before test data, not post hoc)
 
 The one-core 32-unit probe is the **minimum
