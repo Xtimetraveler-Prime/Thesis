@@ -82,7 +82,7 @@ deterministic test-only stimulus. Negative inputs produce
 no invented route traffic. These tests validate the
 model/exporter's structural semantics **only**.
 
-### P06-A2 — Freeze the precise *training-time forward contract* [NEXT]
+### P06-A2 — Freeze the precise *training-time forward contract* [IN PROGRESS]
 
 Write an **independently testable integer oracle** for P03
 LIF arithmetic (signed 24-bit saturation, current/voltage
@@ -100,6 +100,17 @@ The training forward may use surrogate gradients, but its
 **forward inference** must equal the independent integer
 oracle; learning gradients need not be bit-exact.
 *No MNIST test-set labels consulted.*
+
+**2026-10-13 incremental status:** P06-A2.1 independent integer LIF
+scalar oracle is user-accepted from native pytest PASS and both structural
+probe PASS outputs. A2.2's versioned 25+1 quota encoder/readout, A2.3's
+uncompiled full-frame integer oracle and A2.4's separately decoded packed-P03
+replay/differential tests are committed **but not user-native-accepted**.
+The local mirrored sanity test ran 48 tests successfully; the real compiler
+integration and accepted A1 encoder parity require a real repository run.
+See `P06_A2_1_INTEGER_ORACLE_GATE.md` and
+`P06_A2_2_TO_4_NATIVE_GATE.md`. A2.5 differentiable training forward is
+not yet implemented, and no checkpoint or real MNIST test was used.
 
 ### P06-A3 — Train and select the compact network on train/validation only [PLANNED]
 
@@ -359,7 +370,7 @@ reproducible result.
 
 **P06 is NOT complete.** Only the
 *Track A structural/native feasibility*
-subgate is user-accepted. The next
+subgate is user-accepted. The active
 engineering deliverable is **P06-A2**
 (exact integer LIF reference and
 training-forward contract, including
