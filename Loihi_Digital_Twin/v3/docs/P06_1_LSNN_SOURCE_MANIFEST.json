@@ -131,7 +131,7 @@
     ],
     "image_pixel_steps": 784,
     "image_total_timesteps": 840,
-    "decision_rule": "Read V from 10 Loihi output compartments at 840th step; argmax, ties lowest index"
+    "decision_rule": "At timestep 840 initialize maxV=-8388608/maxVId=-1, scan 10 signed Loihi V values with STRICT '>', return first index of tied max when max>-8388608; all-minimum returns source sentinel -1 (unclassified), NOT class 0"
   },
   "paper_accuracy_for_THIS_specific_checkpoint": "NOT_YET_VERIFIED",
   "verified_paper_measurement_protocol_for_THIS_checkpoint": "NOT_YET_VERIFIED",
