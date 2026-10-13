@@ -93,12 +93,19 @@ def evaluate(model: IntegerForwardSNN, loader) -> dict:
     model.eval()
     correct = samples = silent = 0
     loss_total = 0.0
+    output_spike_total = 0
+    predicted = [0] * 10
+    per_class_spikes = [0] * 10
     with torch.no_grad():
         for pixels, labels in loader:
             counts = model(pixels)
             loss_total += float(F.cross_entropy(counts * LOGIT_SCALE, labels, reduction="sum"))
             correct += int((counts.argmax(dim=1) == labels).sum())
             silent += int((counts.sum(dim=1) == 0).sum())
+            output_spike_total += int(counts.sum().item())
+            for class_index in range(10):
+                predicted[class_index] += int((counts.argmax(dim=1) == class_index).sum().item())
+                per_class_spikes[class_index] += int(counts[:, class_index].sum().item())
             samples += len(labels)
     if not samples:
         raise ValueError("empty validation loader")
@@ -107,6 +114,9 @@ def evaluate(model: IntegerForwardSNN, loader) -> dict:
         "mean_cross_entropy": loss_total / samples,
         "all_silent_count": silent,
         "all_silent_fraction": silent / samples,
+        "mean_output_spikes_per_image": output_spike_total / samples,
+        "predicted_class_histogram": predicted,
+        "output_spike_counts_by_class": per_class_spikes,
     }
 
 
