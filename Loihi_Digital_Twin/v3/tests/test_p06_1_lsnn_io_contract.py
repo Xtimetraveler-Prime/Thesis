@@ -59,7 +59,22 @@ def test_argmax_reads_nonspiking_membrane_V_not_output_spikes():
     assert IO.classify_output_membrane_voltages([0]*10)==0
     assert IO.classify_output_membrane_voltages([-20]*9+[99])==9
     assert IO.classify_output_membrane_voltages([123,45,123]+[-7]*7)==0
-    assert IO.classify_output_membrane_voltages([-8388608]*10)==0
+    # Upstream snip_mgmt.c: maxV starts at -8388608, maxVId at -1.
+    # Since comparison is STRICT '>', ten minima never select a class.
+    assert IO.classify_output_membrane_voltages([-8388608]*10)==-1
+
+
+def test_argmax_upstream_strict_greater_than_minimum_boundary():
+    low=-(1<<23)
+    # Only a value strictly larger than maxV=-8388608 establishes a winner.
+    assert IO.classify_output_membrane_voltages([low]*9+[low+1])==9
+    assert IO.classify_output_membrane_voltages([low+1]+[low]*9)==0
+    # A tie strictly above the sentinel keeps the earlier winning index.
+    assert IO.classify_output_membrane_voltages(
+        [low,low+1,low+1]+[low]*7
+    )==1
+    # -1 is an exact published-source sentinel, NOT a valid MNIST class.
+    assert IO.classify_output_membrane_voltages([low]*10) not in range(10)
 
 @pytest.mark.parametrize("item,step",[
     ([0]*783,1),([0]*785,1),([0]*784,0),([0]*784,841),
