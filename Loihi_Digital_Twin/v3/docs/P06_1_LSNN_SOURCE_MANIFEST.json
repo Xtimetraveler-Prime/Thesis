@@ -13,7 +13,29 @@
     "doi": "10.1038/s42256-022-00480-w",
     "article_url": "https://www.nature.com/articles/s42256-022-00480-w",
     "arxiv_url": "https://arxiv.org/abs/2107.03992",
-    "task": "sequential MNIST; NOT conventional static MNIST"
+    "task": "sequential MNIST; NOT conventional static MNIST",
+    "reported_loihi_smnist_accuracy_percent": 96,
+    "reported_loihi_wall_clock_latency_ms": 14.11,
+    "reported_loihi_energy_per_inference_mJ": 0.36,
+    "reported_loihi_power_mW": {
+      "static": 0.59,
+      "dynamic": 25.24,
+      "total": 25.83
+    },
+    "reported_loihi_cores": 1,
+    "reported_loihi_toolchain": "NxSDK v0.95 Nahuku board",
+    "reported_metrics_from": "Author-hosted paper + supplement Table S1 (https://igi-web.tugraz.at/PDF/259maass.pdf)",
+    "reported_overall_connection_density_fraction": 0.2,
+    "reported_recurrent_neurons": {
+      "total": 240,
+      "excitatory": 180,
+      "inhibitory": 60,
+      "adaptive_excitatory": 100,
+      "nonadaptive_or_inhibitory": 140
+    },
+    "reported_AHP_beta_in_paper_units": 96,
+    "released_checkpoint_association_with_published_96_percent": "UNKNOWN_NOT_PROVEN",
+    "metric_scope_warning": "Paper's published Loihi accuracy/latency/energy are NOT measured for the pinned v25_94per three trained weight blobs unless independent correspondence is proven"
   },
   "upstream": {
     "repository": "https://github.com/intel-nrc-ecosystem/models",
@@ -131,7 +153,11 @@
     ],
     "image_pixel_steps": 784,
     "image_total_timesteps": 840,
-    "decision_rule": "At timestep 840 initialize maxV=-8388608/maxVId=-1, scan 10 signed Loihi V values with STRICT '>', return first index of tied max when max>-8388608; all-minimum returns source sentinel -1 (unclassified), NOT class 0"
+    "decision_rule": "At timestep 840 initialize maxV=-8388608/maxVId=-1, scan 10 signed Loihi V values with STRICT '>', return first index of tied max when max>-8388608; all-minimum returns source sentinel -1 (unclassified), NOT class 0",
+    "actual_trained_sparse_density": "MUST_MEASURE_FROM_PINNED_NPY_BYTES_PAPER_SAYS_20_PERCENT_FOR_PUBLISHED_MODEL_ONLY",
+    "actual_soma_auxiliary_compartment_count": 350,
+    "per_image_clear_behavior": "Pinned SNIP resets cx_state/cx_meta_state/dendrite_accum registers after each 840-step classification",
+    "code_vs_supplement_encoder_disagreement": "Supplement listing uses <=/>= inclusive pseudo-conditions; pinned C SNIP uses < and >= in directional threshold crossings, with touch and cue exceptions"
   },
   "paper_accuracy_for_THIS_specific_checkpoint": "NOT_YET_VERIFIED",
   "verified_paper_measurement_protocol_for_THIS_checkpoint": "NOT_YET_VERIFIED",
