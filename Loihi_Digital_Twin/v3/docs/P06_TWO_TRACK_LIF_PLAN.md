@@ -157,9 +157,16 @@ threshold 8, eight epochs, batch 64, Adam 0.05, width 16 and
 **precommitted 60% validation GO/NO-GO floor**. This floor is a planning
 criterion and is **not an accuracy claim**. No real MNIST preflight,
 training/validation run or held-out official-test access was executed by
-the assistant. See `P06_A3_1_TO_3_NATIVE_GATE.md`; native tests, synthetic
-smoke and verified train-only archive/split hashes are the next user
-gate before long optimization.
+the assistant. The user subsequently verified the native pytest
+suite and supplied PASS for synthetic smoke and canonical 60k training
+archive preflight with hashes and a fully sealed official test set.
+Critically, the synthetic smoke yielded 12/12 all-silent validation
+outputs (train/val 33.3%, val loss ln(10)); this is a computational
+pass, not evidence of training. The new A3.4 256-train/128-validation,
+two-epoch real-data pilot independently checks gradients, changes to
+actual integer weights and non-silent per-class readout before any
+full eight-epoch run. A3.4 requires native user verification. See
+`P06_A3_1_TO_3_NATIVE_GATE.md`; no actual full-MNIST checkpoint exists.
 
 ### P06-A4 — Byte-precise deployment + freeze [PLANNED]
 
