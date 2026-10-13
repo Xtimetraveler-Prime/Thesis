@@ -72,7 +72,7 @@ def verify_full(root:Path)->bool:
         man=json.loads((root/"p05_artifacts/p05_manifest.json").read_text())
         spec=json.loads((root/"p05_2g_full_spec.json").read_text())
         ref=json.loads((root/"capacity_golden/manifest.json").read_text())
-        if (w[13],w[14])!=(CAPACITY,3) or g["event_count"]!=CAPACITY or
+        if ((w[13],w[14])!=(CAPACITY,3) or g["event_count"]!=CAPACITY or
             g["status"]!="MODEL_ONLY_NOT_HARDWARE_ACCEPTED"):
             raise ValueError("full bank limit/identity differs from frozen 4096 profile")
         if (man["header_sha256"]!=g["p05_header_sha256"]!=hashlib.sha256(header).hexdigest() or
@@ -151,7 +151,7 @@ def verify_overflow(root:Path)->bool:
         d,actual=physical_files(root)
         w,header,payload,init=provenance(root)
         g=json.loads((root/"p05_2g_overflow_gate.json").read_text())
-        if (w[13],w[14])!=(OVER,3) or
+        if ((w[13],w[14])!=(OVER,3) or
             g["profile"]!="p05-2g-crc-valid-4097-overflow-admission-v1" or
             g["expected_result"]!="0xDEAD0002"):
             raise ValueError("invalid CRC-valid overdepth negative test configuration")
