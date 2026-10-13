@@ -28,6 +28,23 @@ Development authority is:
 
 **P03.1–P03.5: Complete.** The final seven- and hundred-timestep functional KV260 gates passed; see `docs/P03_FINAL_ACCEPTANCE.md`.
 
+**P04 — Multi-engine HLS parallelism: Deferred.** The accepted
+physical design uses one FPGA HLS inference engine and
+three resident logical-context slots.
+
+**P05 — Board-local regression, observability and data-path
+hardening: COMPLETE / physically accepted, 2026-10-13.**
+P05.1 and P05.2a–P05.2i are independently confirmed on real
+KV260 within the documented scope; see
+[Phase 5 consolidated acceptance](docs/P05_FINAL_ACCEPTANCE.md)
+and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
+
+**P06 — Published MNIST benchmark audit and freeze: Planned / next.**
+No P06 benchmark paper, weights, architecture, encoding
+or score is yet accepted.
+
+**P07–P09 — Pending** (see the authoritative roadmap).
+
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
 The v2 accepted architecture remains:
@@ -49,6 +66,56 @@ PC removed from the algorithmic timestep loop
 full board-local inference where practical
 substantially more physical regression/application testing
 ```
+
+## Accepted P05 physical coverage at a glance
+
+The unchanged accepted P03.2c FPGA and P05 standalone A53
+successfully executed independently modeled multi-core
+paging/routing and neuron arithmetic scenarios with a PC
+restricted to initial provisioning, launch and evidence capture.
+
+- Full directed corpus: separately accepted deployment
+  variations, fast-vs-diagnostic identity, negative
+  first-fault reporting, legal service permutation,
+  two-destination fanout, signed 24-bit saturation and
+  refractory behavior, both resident and nonresident
+  packet routing, global barrier/bank alternation and
+  dirty paging.
+- P05.2g physical capacity: exactly **4096 external
+  CURRENT-bank events** passed full-model state/DDR checks;
+  separately CRC-valid 4097-event **deployment** rejected
+  before A53 MMIO/dispatch and left full DDR unchanged.
+- P05.2h: 5 logical cores, 3 resident slots,
+  **16 barriers / 80 dispatches / 318 CRC checkpoints /
+  156 routed packets (78 resident, 78 nonresident) /
+  77 evictions**, five independent complete **512 KiB**
+  actual FPGA DDR records byte-identical to the separate
+  Python/model-derived physical ordering reference.
+- Final P05.2i direct physical PL HP0 AXI:
+  **136,960 completed read bursts** and **33,280
+  completed write bursts**, 256 bytes each,
+  **43,581,440 actually measured successful page-engine
+  transfer bytes**. The A53-reported burst counters and
+  the raw read-only FPGA register witness matched the
+  independent P03 page replay; the final same-run
+  P05.2h/DDR checks remained PASS.
+
+**Deliberate coverage limits:** No physical demonstration
+of a runtime HLS-routed **4097th NEXT-bank packet**
+causing backpressure or successful continuation/recovery,
+and no whole-system DDR traffic, calibrated benchmark
+latency, energy or power, or simultaneous multi-HLS
+engine execution. The portable C NEXT bank overflow
+guard is a separate native-only result. Actual AXI
+measurement is the **PL page-engine only**. P06–P08
+will determine and separately qualify further
+application requirements.
+
+Primary records:
+[P05 final accepted evidence](docs/P05_FINAL_ACCEPTANCE.md),
+[P05.2i direct PL page AXI acceptance](docs/P05_2I_ACCEPTANCE.md),
+[P05.2i reproduction and same-run debugger workaround](docs/P05_2I_AXI_CLOSEOUT_GATE.md),
+and [roadmap](LOIHI_TWIN_ROADMAP.md).
 
 ## Baseline software verification
 

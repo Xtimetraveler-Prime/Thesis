@@ -172,7 +172,7 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
-| P05 | Build board-local regression, observability, and data-path hardening | Planned |
+| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.2; P05.1 accepted) |
 | P06 | Audit and freeze an exact published MNIST benchmark | Planned |
 | P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
 | P08 | Characterize latency, throughput, power, and energy | Planned |
@@ -669,25 +669,623 @@ measurements for:
 
 # P05 — Board-local regression, observability, and data-path hardening
 
-**Status:** Planned
+**Status:** **COMPLETE / PHYSICALLY ACCEPTED, 2026-10-13** —
+**P05.1 complete; all P05.2a–P05.2i gates physically accepted
+within the documented scope.**  
+**Historical development branch:** `agent/v3-p05-board-regression`;
+user explicitly authorized P05 closeout and merge to `main`.
+Phase acceptance: `docs/P05_FINAL_ACCEPTANCE.md`.  
+**Baseline:** P03 accepted A53 scheduler, FPGA MMIO/DDR adapter, FPD128
+bitstream/XSA and frozen P02/P03 reference goldens remain unchanged.
 
 ## Goal
 
-Make the KV260 the primary execution target for accepted regression evidence.
+Make KV260 the primary execution target for independent Python-oracle
+regression evidence. Demonstrate correctness across different network
+sizes, packet residency paths and selected intermediate checkpoints;
+then harden error diagnostics, fanout, input saturation/backpressure,
+paging, arithmetic, service-order variation and counter provenance.
 
-## Deliverables
+## P05.1 — Configurable PS regression runner and test infrastructure
 
-- board-resident regression runner;
-- compact test-vector/deployment loading format;
-- device-side pass/fail summaries and deterministic fingerprints;
-- directed tests for arithmetic, routing, fanout, backpressure, barriers, paging, page replacement, and service-order invariance;
-- full-run trace/checksum capture at selected observation points;
-- hardware counters for core dispatches, page loads/evictions, DDR bytes moved, packet counts, barrier waits, PL cycles, and PS/runtime timing;
-- failure diagnostics that identify the first mismatching logical core/timestep/state class.
+**Status: COMPLETE — functional acceptance from two independent user-run
+KV260 gates on 2026-10-12.**
 
-## Acceptance
+- New standalone `p05_regression_run.elf` successfully built using
+  accepted routed XSA, versioned/CRC-bounded P05G descriptors,
+  strictly validated complete initial DDR records, and original
+  unmodified P03 scheduler and PS hardware adapter. Host
+  Python↔C11 ABI/negative regressions were independently reported PASS.
+- **First physical gate:** Five logical cores, three resident slots,
+  seven timesteps, 35 dispatches, 30 real packet events,
+  seven barriers, **35/35 independent actual-device state0
+  checkpoints**, and **all five complete 512 KiB final DDR records
+  byte-exact to frozen P02**. `resident_deliveries=0`;
+  `P05_1_VERIFY_EXIT=0`. User evidence:
+  `/tmp/v3_p05_1_probe_20261012T173751Z`.
+  Acceptance: `docs/P05_1_FIRST_PHYSICAL_ACCEPTANCE.md`.
+- **Second physical gate:** Genuinely different three-core / three-slot
+  spiking triangle, threshold=4, five timesteps,
+  **15 real dispatches, 12 real packets,
+  12 confirmed direct-to-resident deliveries**, five barriers,
+  **15/15 model-derived actual-device checkpoints**, zero
+  page replacements, and **three complete 512 KiB DDR final
+  records byte-exact to its separate LogicalChip model**.
+  `P05_1_TRIANGLE_VERIFY_EXIT=0`, real terminal
+  `0x600D600D`. User evidence:
+  `/tmp/v3_p05_1_triangle_20261012T175547Z`.
+  Reference trace fingerprint:
+  `c2fde59f694508003fb6b0d17f5ed2945db5f03c427a2690b13acc7bc71b717e`.
+  Acceptance: `docs/P05_1_TRIANGLE_ACCEPTANCE.md`.
+- Both tests used the **same P05 ELF and accepted FPGA shell**,
+  with only initial deployment records/table changed. Python
+  compared **actual** physically retrieved complete DDR images;
+  reference trace digests are model fingerprints, not full
+  physical intermediate trace captures.
+- **Qualified acceptance:** Functional deployment, model-relative
+  checkpoints and both residency routing paths accepted.
+  Independent **physical fault-injection/first-error and
+  fast-mode/no-checkpoint equivalence remain untested**. User
+  explicitly accepted P05.1 functional closeout with these
+  limitations carried into the P05.2 hardening scope.
+  Do not imply these two additional hardware gates already passed.
 
-The major v3 architecture regression corpus must be physically executed on the KV260, with the Python model used as the reference/oracle rather than as the primary execution path.
+### Deliverables
+
+- New P05 test-oriented standalone Cortex-A53 executable, separate
+  from the accepted fixed P03.4/P03.5 ELF, **reusing** the same
+  `p03_runtime.c` scheduler and `p03_hw_adapter.c` physical callbacks;
+  no per-test recompilation of the algorithmic runtime.
+- Versioned bounded deployment descriptor and test-vector format
+  supporting selectable logical-core count, time horizon, valid
+  logical-core/slot configuration, input events per timestep/core,
+  service order where legal, and deterministic observation checkpoints.
+  Include checksum/integrity, range, capacity and memory-reservation
+  validation on **both host and device**; failures halt before MMIO.
+- Python deployment builder, test-vector/golden generation and
+  independent verifier with reproducible test IDs and fingerprints;
+  initial workload must reproduce an accepted P03 five-core ring
+  without modifying or substituting the frozen P03 oracle.
+- Device-side per-run and selected per-timestep/per-core observations:
+  first-mismatch metadata (logical core, timestep, state class),
+  packet/barrier/page counters, and reproducible checksums at safe
+  synchronization points. Separate diagnostic and low-overhead modes.
+- Retain a replayable fail-closed result format and a fresh ELF marker;
+  PS runtime may not delegate paging/routing/step decisions to the PC.
+
+### P05.1 acceptance / hold points
+
+1. **Contract checkpoint:** deterministic host-generated deployment,
+   strict portable C11 reader/validator, field-layout and corruption/
+   bounds tests, P03 baseline integrity tests. Request independent
+   host validation before adding the PS execution path.
+2. **Runtime checkpoint:** new separately identifiable standalone A53
+   program can autonomously execute at least two distinct valid
+   deployment profiles using the accepted PS–PL and DDR interface,
+   with byte-exact Python oracle outputs and interpretable
+   telemetry. Verify staged ELF/XSA/bitstream identity.
+3. **Checkpoint/diagnostic checkpoint:** selected state/event/packet
+   checkpoints and first-error reporting agree with model fixtures
+   without changes to neural arithmetic; production/passive
+   measurements do not silently change the test workload.
+
+**Not P05.1 acceptance yet:** A host-only schema or mocked runner,
+an unbuilt ELF, or a new host-controlled per-dispatch loop. A directed
+physical already-resident destination packet test may be included in
+the P05.1 trial profile; broader coverage is P05.2.
+
+## P05.2 — Directed physical regression and observability validation
+
+**Status:** COMPLETE / PHYSICALLY ACCEPTED (2026-10-13) —
+P05.2a first-fault localization,
+P05.2b checkpoint-disabled equivalence,
+P05.2c reordered service, P05.2d two-destination fanout
+and **P05.2e composite physical evidence recheck accepted**
+on real KV260 (independent user-reported results, 2026-10-12).
+The first P05.2e full-DDR comparison correctly failed at
+core3 packet RAM offset 0x64000 because the normalized
+destination-sorted model order [0,4] differs from physical
+registered output-route order [4,0].
+The independent **non-destructive recheck PASS**
+`P05_2E_RECHECK_EXIT=0` verifies 40/40 checkpoints, 48
+packets (24 resident and 24 nonresident), 37 dirty evictions,
+and all five complete real DDR images against the separate
+derived physical packet-layout oracle **without modifying the
+original A53/FPGA evidence or neural model**. Its acceptance
+record is `docs/P05_2E_RECHECK_ACCEPTANCE.md`; the user has
+not supplied a fresh native pytest summary alongside this
+physical recheck. P05.2f signed arithmetic/refractory/paging and P05.2g
+exact 4096 CURRENT-event-bank saturation plus CRC-valid
+4097-event early device-admission rejection are independently
+physically ACCEPTED. P05.2h 16-barrier mixed-residency dual-bank/packet
+stress gate is independently PHYSICALLY ACCEPTED, with 318
+checkpoints, 156 packets split 78 resident/78 nonresident,
+77 evictions and five byte-exact DDR records (user-confirmed).
+P05.2i **PHYSICALLY ACCEPTED** as the final
+counter-provenance closeout gate: the same-run,
+no-reboot XSDB `mrd -force` read-only capture
+measured **136,960 completed read bursts,
+33,280 completed write bursts and 43,581,440
+successful FPGA page-engine AXI bytes** in hardware.
+The independent A53 `P05R` burst counts, separate
+model-derived page totals, full 318-checkpoint neural
+oracle and all five 512 KiB physical DDR records
+agreed; `P05_2I_VERIFY_EXIT=0`. User expressly
+approved final P05 closure and merge. See
+`docs/P05_2I_ACCEPTANCE.md`. Live routed NEXT-bank
+overflow recovery remains explicitly unverified.
+
+**P05.2a — Deterministic negative-checkpoint hardware diagnostic
+(ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
+three-core fully resident triangle, unchanged 3×512KiB initial
+neural records, same 15 stimulus events, same 15 dispatch
+metadata entries, same PS/PL binary identities. Flip **one bit
+of the EXPECTED state0 CRC at checkpoint 7** (timestep 2,
+logical core 1); the real A53 must intentionally
+stop at barrier 2 and report `result=0xDEAD000A`, runtime fault 11,
+fault phase 13, first mismatch (step=2, core=1, class=state0)
+with observed CRC **equal to the independent clean model**.
+Do not call some unrelated hardware ERROR a test PASS.
+No final DDR equality is expected after early fault because
+final dirty-slot flush never executes.
+
+Scripts: `scripts/p05_2_fault_fixture.py`,
+`scripts/p05_2_fault_verify.py`,
+`scripts/run_p05_2_fault.sh`.
+Host native/injected-malformed-mailbox tests:
+`tests/test_p05_2_fault.py`.
+Reproduction, measurement caveats and directed coverage backlog:
+`docs/P05_2_DIAGNOSTIC_GATE.md`.
+**Observed P05.2a PHYSICAL PASS**: user captured real A53
+`0xDEAD000A` after one passive poll, with first-fault 11,
+phase 13, failing step 2/core 1/state0, injected expected
+CRC `0x6522DF68`, physically observed/reference-model CRC
+`0x6522DF69`, 9 prior dispatches, 6 packets,
+6 direct resident deliveries, 2 complete barriers and 7 passing
+prior checkpoints. Strict `P05_2_FAULT_VERIFY_EXIT=0`;
+physical evidence:
+`/tmp/v3_p05_2_fault_20261012T181015Z`.
+See `docs/P05_2A_FIRST_MISMATCH_ACCEPTANCE.md`. This
+intentionally stopped before final dirty DDR flush; **no
+completed golden DDR equality was claimed**.
+
+**P05.2b — Low-overhead/fast mode versus accepted diagnostic
+mode (PHYSICAL ACCEPTED on KV260, 2026-10-12).** Run the **same** accepted
+three-core/three-resident, threshold-4 spiking triangle and
+15 input events on the **unchanged** P05 A53 ELF and FPGA PL.
+Byte-exactly preserve all three initial core images and core/
+input table; only mode flag changes 1→0 and 15 checkpoints
+are removed. Require 15 dispatches, 12 packets, 12 direct
+resident deliveries, 5 completed barriers, no checkpoints
+and **three complete final DDR records equal to both**
+independent Python golden and separately accepted diagnostic
+KV260 SHA-256 results. Host builder/verifier/shell:
+`scripts/p05_2_fast_fixture.py`,
+`scripts/p05_2_fast_verify.py`,
+`scripts/run_p05_2_fast.sh`;
+native tests: `tests/test_p05_2_fast.py`;
+procedure: `docs/P05_2_FAST_EQUIVALENCE_GATE.md`.
+**Observed P05.2b PHYSICAL PASS:** User supplied
+`verify.log` with `timesteps=5`, 15 FPGA dispatches,
+12 packets, 12 resident deliveries, five barriers,
+`checkpoints=0`, and all three **actual full DDR
+record SHA256s byte-exact to both independent Python
+oracle and previously accepted diagnostic KV260 records**.
+Real P05G header CRC32 `0x76E6409B`, payload CRC32
+`0x1AF530B0`; physical record SHA256s remain
+`5c4288e41e1599aea5f854a4022fb88a6b04ddc003b01238e16f5a7c59665381`
+(core0),
+`2767f8cbca59d8e9bb85d0f37d055a7b4a7c4e94676d56bbd3efeff4f4f6c0f2`
+(core1),
+`d6c8982882023c8b0065ca856a3caf35a1b6fa54196a6fb546b774deca32c82f`
+(core2).
+`pl_dispatch_cycles=357` and `ps_inference_ticks=25994`
+are raw observations, **not a calibrated performance or
+power/energy benchmark**. Acceptance:
+`docs/P05_2B_FAST_ACCEPTANCE.md`.
+
+**P05.2c — Legal logical-core service-order invariance
+(PHYSICAL ACCEPTED on KV260, 2026-10-12).**
+Same physically accepted diagnostic three-core triangle
+on the unchanged P05 ELF and accepted FPGA.
+Change actual A53 service order **`[0,1,2]` →
+`[2,0,1]`**, while keeping all three cores resident,
+all original neuroparameters and 15 input events,
+five timesteps, 12 packets and 12 resident deliveries.
+Recompute an independent Python LogicalChip oracle with
+the new service order and require every per-core neural
+state and all three *complete* model final DDR images
+equal the baseline. Then verify 15 real board checkpoints
+and byte-exact physical DDR equality to **both independent
+models and the pinned accepted baseline physical SHA256s**.
+Scripts: `scripts/p05_2_order_fixture.py`,
+`scripts/p05_2_order_verify.py`,
+`scripts/run_p05_2_order.sh`, native tests
+`tests/test_p05_2_order.py`,
+`docs/P05_2_ORDER_INVARIANCE_GATE.md`.
+**Observed P05.2c PHYSICAL PASS:** User supplied independent
+`verify.log` showing real A53 service order **[2,0,1]**,
+15 dispatches, 12 packets, **12 resident deliveries**,
+5 barriers and 15/15 actual golden neural checkpoints.
+All **three complete 512KiB final DDR records** matched
+both independently simulated Python service-order variants
+and the previously accepted original-order KV260 SHA256s.
+P05G header CRC32 `0x22ECC007`, payload CRC32
+`0xC0AFC18C`. Acceptance record:
+`docs/P05_2C_ORDER_ACCEPTANCE.md`.
+This establishes physical invariance for **one legal
+three-resident permutation only**, not all possible
+virtualization/paging schedules.
+
+**P05.2d — Two-route physical packet fanout / convergent
+NEXT-bank event aggregation (PHYSICAL ACCEPTED 2026-10-12).**
+Generate a **new** independent `LogicalChip` three-core
+all-to-all-except-self topology where each firing
+source emits **two distinct packets**, each destination
+receives two routed next-timestep spikes plus one
+external spike, without violating global barriers.
+With five timesteps, weight 3 and threshold 4, the
+independent model is expected to produce
+**15 dispatches, 24 emitted packets and 24 direct
+resident deliveries**, 15 actual-device state0
+checkpoints, three initial page-ins/three final
+page-outs and no replacement paging.
+Require all three **complete** physical DDR records
+byte-exact to a fresh fanout Python oracle.
+Fixture `scripts/p05_2_fanout_fixture.py`,
+strict verifier `scripts/p05_2_fanout_verify.py`,
+physical provisioning `vivado/p05_2_fanout_prepare.tcl`,
+two-mode runner `scripts/run_p05_2_fanout.sh`,
+host negative tests `tests/test_p05_2_fanout.py`,
+instructions `docs/P05_2_FANOUT_GATE.md`.
+**Observed P05.2d PHYSICAL PASS:** User-supplied independent
+KV260 `verify.log` confirms 15 dispatches,
+**24 routed packets and 24 actual resident deliveries**,
+5 barriers, 15/15 model-derived hardware state0 checks,
+and three complete physical 512KiB final records byte-exact
+to the new fanout LogicalChip golden. P05G header CRC32
+`0xD6B1D9AC`, payload CRC32 `0x20423406`.
+Reference Python trace SHA256:
+`931ce506074695b567f97076b0b58bc65d796dd4c468e4d320a9e02b9182a759`.
+Actual final physical SHA256s:
+core0 `f545f5d7fa3d896ad2792ada1515f2db9676d80b7095ec8c8c817ca1d5e95da6`,
+core1 `051d61da564a0d160265c620f384c7ede18c88f2551b146a6bdb556edb428a27`,
+core2 `b806caf750a820b050a73f280d3ebdf08893b4d8b66a6a2d87ccdc77630807c4`.
+Acceptance: `docs/P05_2D_FANOUT_ACCEPTANCE.md`.
+**Fanout with 3 incoming events/core is not 4096-entry
+event-bank saturation/backpressure coverage.**
+
+**P05.2e — Composite multifeature physical regression
+(PHYSICAL RECHECK PASS, user reported 2026-10-12; native-suite
+reconfirmation outstanding).**
+New fully model-derived **five logical cores over three
+resident slots**, eight timesteps and actual service order
+**[4,1,3,0,2]**. Every source has **two outgoing fanout
+destinations** (core+1/core+2 mod 5), each with normal-range
+heterogeneous thresholds **4,5,6,7,8** and weight 3.
+Require 40 logical A53 dispatches, 40 ingress events,
+40 real-device state0 barrier checks, five complete
+byte-exact physical DDR records, and **both resident and
+nonresident packet deliveries**, while stressing repeated
+round-robin victim replacement and dirty page flush/reload
+over eight barriers.
+Golden neural states, packet vectors and entire five final
+DDR images come from independently generated Python
+`LogicalChip`. A second standalone Python replay of the
+exact accepted C victim-pointer/dirty marking policy
+computes page hits, evictions, full page-ins,
+mutable-outs, packet residency at actual emission and
+final page-command counts; the generator fails if it does
+not cover 20+ real replacements/out and both routing paths.
+The gate also audits expected **programmed payload bytes**
+per physical page command (full-in `0x6B000`, mutable-out
+`0x1A000`), **not calibrated AXI traffic or throughput**.
+No software C, existing bitstream or accepted v2 oracle
+source changed.
+`scripts/p05_2_composite_fixture.py`,
+`scripts/p05_2_composite_verify.py`,
+`scripts/run_p05_2_composite.sh`,
+`vivado/p05_2_composite_prepare.tcl`,
+`tests/test_p05_2_composite.py`,
+`docs/P05_2_COMPOSITE_GATE.md`.
+**P05.2e originally failed** on full physical packet-RAM
+comparison at core3 0x64000, although the standalone A53
+terminal reported `0x600D600D`. The source-informed
+physical packet-layout oracle was added in
+`scripts/p05_2_packet_layout.py`, without changing the
+normalized Loihi model, native FPGA routing or accepted A53.
+**The user independently reran the non-destructive existing-
+evidence check and reported `P05_2E_RECHECK_EXIT=0`.**
+All five complete physical final 512KiB DDR records
+matched the separately derived route-ordered reference;
+the check also confirmed the original P05G, model, mailbox
+and FPGA DDR dump evidence was unchanged.
+Original failed evidence is retained; the new check's PASS
+does not rewrite that history. Full reproduced output and
+scope: `docs/P05_2E_RECHECK_ACCEPTANCE.md`. Native pytest
+regression output remains to be confirmed independently.
+
+**P05.2f — Combined signed-24 saturation, fractional/end-point
+decay, negative weights, refractory and paging regression
+(PHYSICAL ACCEPTED from user's independent KV260 results 2026-10-12).**
+A single six-step five-logical-core / three-slot profile combines
++/- 24-bit saturation, +/- signed weights, decay 0/1024/2048/4096,
+threshold/reset/refractory, packet routing, dirty victim paging
+and 30 actual-device state0 barrier checkpoints. The unchanged
+P05 A53 ELF and routed FPD128 shell were reused; **no new bitstream**.
+The strict verifier checked all five complete 512 KiB raw DDR
+contexts, encoded signed parameters, P05R counters and frozen model
+SHA/CRC. The user independently reported:
+
+```text
+PASS: P05.2f physical five-over-three signed/decay/saturation/refractory steps=6 dispatches=30 packets=8 resident_deliveries=8 nonresident_deliveries=0 barriers=6 checkpoints=30 evictions=27
+PASS: P05.2f five complete 512KiB physical DDR images byte-exact to independent signed 24-bit LogicalChip reference
+P05_2F_VERIFY_EXIT=0
+```
+
+**Limit:** The eight real HLS packets all reached resident destinations;
+P05.2f does NOT independently exercise nonresident routing. P05.2e
+already covered 24 resident + 24 nonresident deliveries.
+A native pytest summary and full local binary/evidence hashes were
+not included in the user's P05.2f reply; these are not invented.
+Original sources: `scripts/p05_2f_arithmetic_fixture.py`,
+`scripts/p05_2f_arithmetic_verify.py`,
+`scripts/run_p05_2f_arithmetic.sh`,
+`vivado/p05_2f_arithmetic_prepare.tcl`,
+`tests/test_p05_2f_arithmetic.py`.
+Procedure: `docs/P05_2F_ARITHMETIC_GATE.md`.
+Physical sign-off: `docs/P05_2F_ACCEPTANCE.md`.
+
+**P05.2g — Exactly full 4096-event CURRENT-bank and
+CRC-valid 4097-event device-rejection gates
+(PHYSICAL ACCEPTED; independently user-verified on real KV260
+2026-10-12/13).**
+Two intentionally distinct, separate booted physical runs, on one
+unchanged P05 A53 ELF and accepted P03 FPGA shell:
+
+- **Physical FULL:** One logical core, one resident slot, one
+  timestep, 4,096 registered external events, one HLS dispatch,
+  one barrier, three barrier checkpoints (state0/event0/event1),
+  one initial page-in, one final page-out, and a complete 512 KiB
+  physical DDR record compared byte-exactly to a fresh model.
+  The independent model predicts current=4096/voltage=4096 with
+  no outgoing spikes or packets. This demonstrates the **maximum
+  accepted CURRENT-event bank depth**, not routed congestion.
+- **Physical OVERFLOW:** One additional valid axon event makes
+  4,097, and the payload/header remain independently CRC-valid.
+  The accepted P05 A53 must fail **before any dispatch/MMIO**
+  with terminal 0xDEAD0002 / error=2, zero runtime activity,
+  and an unchanged initial 512 KiB physical DDR context.
+  A header/checksum error or unrelated terminal cannot PASS.
+  The host builder independently rejects 4,097 before creating
+  such a descriptor; the deliberately invalid CRC-valid
+  descriptor is produced only for the physical admission test.
+- **Portable C adapter:** Compile original `p03_hw_adapter.c`
+  and directed `tests/p05_2g_route_guard.c` to demonstrate that
+  a NEXT bank at 4,095 allows exactly one packet append and at
+  4,096 rejects any further packet before DDR store/cache clean.
+  This last gate is HOST-MOCKED, not physical packet pressure.
+
+Sources:
+`scripts/p05_2g_capacity_fixture.py`,
+`scripts/p05_2g_capacity_verify.py`,
+`scripts/run_p05_2g_capacity.sh`,
+`vivado/p05_2g_capacity_prepare.tcl`,
+`tests/test_p05_2g_capacity.py`,
+`tests/p05_2g_route_guard.c`.
+Full acceptance/reproduction plan:
+`docs/P05_2G_CAPACITY_GATE.md`.
+Independent original reported physical evidence:
+`docs/P05_2G_ACCEPTANCE.md`.
+**Observed P05.2g PHYSICAL PASS:** User supplied TWO separate
+original KV260 `verify.log` results from
+`/tmp/v3_p05_2g_capacity_20261013T004149Z`.
+Full profile: 4,096 CURRENT-bank input spikes, 1 real HLS
+dispatch, 1 barrier, 3 actual-device post-barrier checkpoints,
+and complete original physical 512 KiB DDR byte-exact to
+the independent model (`P05_2G_FULL_VERIFY_EXIT=0`).
+CRC-valid 4,097-event profile: real A53 rejection
+`0xDEAD0002` before any MMIO/dispatch/page/barrier with
+unchanged complete original 512 KiB DDR context
+(`P05_2G_OVERFLOW_VERIFY_EXIT=0`).
+Host native suite passed independently per user, but a
+full pytest count/log was not provided.
+
+**P05.2h — Adversarial multi-bank/boundary and routing-barrier
+stress (PHYSICAL ACCEPTED; independent user-verified real KV260
+2026-10-13).** The new integration test deliberately
+extends service time to **16 global timesteps** on five logical
+cores / three physical context slots, retains real service
+order [4,1,3,0,2], uses two outgoing fanout destinations per
+spike and core-specific thresholds [2,3,4,5,6].
+The independent `LogicalChip` produces all complete immutable
+neural core DDR records and per-step model vectors; a separate
+conservative P03 victim replay computes real paging and
+resident/nonresident routing counters.
+
+An **independently replayed double-event-bank oracle** computes
+every post-barrier `event0` and `event1` first-word CRC,
+alongside `state0` for **all five cores at all 16 barriers**,
+plus actual `packet0` whenever emitted. This means **at least
+240 live physical diagnostic checkpoints**, alongside
+80 physical dispatches, 80 external stimuli, repeated dirty
+evictions, both routing residency modes, and entire five
+512 KiB physical DDR records byte-exact to a derived
+output-route-ordered packet RAM reference. Crucially, the
+original destination-sorted logical Python oracle remains
+unchanged. The accepted P05 ELF and P03.2c bitstream are reused;
+no hardware RTL, C or FPGA shell is modified.
+
+Implemented:
+`scripts/p05_2h_barrier_fixture.py`,
+`scripts/p05_2h_barrier_verify.py`,
+`scripts/run_p05_2h_barrier.sh`,
+`vivado/p05_2h_barrier_prepare.tcl`,
+`tests/test_p05_2h_barrier.py`.
+Full native-first reproduction:
+`docs/P05_2H_BARRIER_GATE.md`.
+User-observed original physical proof:
+`docs/P05_2H_ACCEPTANCE.md`:
+```text
+PASS: P05.2h physical adversarial 5-over-3 bank/barrier order steps=16 dispatches=80 packets=156 resident_deliveries=78 nonresident_deliveries=78 barriers=16 checkpoints=318 evictions=77
+PASS: P05.2h both event-bank first words, state0 and emitted physical packet0 checkpointed at each barrier
+PASS: P05.2h all five complete physical 512KiB DDR records byte-exact to model-derived route-ordered golden
+P05_2H_VERIFY_EXIT=0
+```
+This satisfies P05.2h's independently checked real
+double-bank/barrier, routing and full physical DDR gate;
+a numeric native pytest summary was not supplied alongside
+this final physical result.
+
+**P05.2i — FINAL Phase-5 read-only AXI transfer-counter
+provenance and comprehensive physical closeout
+(PHYSICAL ACCEPTED; user-verified real KV260
+2026-10-13; `P05_2I_VERIFY_EXIT=0`).** Reuse exactly the accepted
+five-logical-core / three-slot, 16-barrier P05.2h neural
+profile in **one more standalone real KV260 execution**.
+After the A53 finishes, capture twice (read-only) the live
+FPGA page-AXI counter MMIO words at
+`0xA4000044, 0xA4000048, 0xA400004C, 0xA4000050`.
+Cross-verify the physical 128-bit AXI successful read/
+write burst counters and successful-byte register against
+(a) the original A53 `P05R` hardware-read counters,
+(b) the independent P03 victim/page replay, (c) the
+256-byte/16-beat physical AXI transport geometry,
+and (d) the full repeated strict P05.2h neural, 318 CRC
+checkpoint, 5 complete 512 KiB DDR goldens.
+
+Frozen P05.2h page replay: 3 initial full-ins, 77
+replacement full-ins, 77 dirty runtime mutable-outs,
+and 3 final mutable-outs, so 80 × 0x6B000 full-in
+bytes = 35,061,760 and 80 × 0x1A000 mutable-out
+bytes = 8,519,680. Required **independently measured
+PL HP0 AXI page counters**:
+**136,960 completed 256-byte read bursts**, **33,280
+completed write bursts**, **43,581,440 successful AXI
+page bytes**. These are **PL page-engine** bytes only,
+not total system traffic; no synthetic counter or
+host-computed page payload alone is physical acceptance.
+Require nonzero PL page cycle/PS generic-timer measurements
+and zero pending/error status. No changes to accepted
+ELF/C runtime/HLS/bitstream.
+
+Implemented:
+`scripts/p05_2i_axi_closeout.py`,
+`scripts/run_p05_2i_axi_closeout.sh`,
+`vivado/p05_2i_read_axi_counters.tcl`,
+`tests/test_p05_2i_axi_closeout.py`.
+Native-first reproduction and failure policy:
+`docs/P05_2I_AXI_CLOSEOUT_GATE.md`.
+
+**Final independently confirmed P05.2i physical PASS (2026-10-13).**
+The first P05.2i trial completed all P05.2h neural
+checkpoint and 5-DDR comparisons but hit the XSDB
+debugger **software** memory-map restriction on
+`0xA4000044` during unforced `mrd`. That first attempt
+did not satisfy P05.2i. With the KV260 **not rebooted**,
+the user ran the read-only `mrd -force` recovery on
+the same physical A53/DDR evidence. The new read-only
+actual FPGA AXI register witness matched the independent
+A53 `P05R` and software page replay exactly.
+The user supplied the following actual physical verifier
+outcome (the underlying raw binaries remain on the
+user's machine; don't pretend they are repository files):
+
+```text
+PASS: P05.2h physical adversarial 5-over-3 bank/barrier order steps=16 dispatches=80 packets=156 resident_deliveries=78 nonresident_deliveries=78 barriers=16 checkpoints=318 evictions=77
+PASS: P05.2h both event-bank first words, state0 and emitted physical packet0 checkpointed at each barrier
+PASS: P05.2h all five complete physical 512KiB DDR records byte-exact to model-derived route-ordered golden
+PASS: P05.2i KV260 PL HP0 AXI successful 256-byte burst counters read=136960 write=33280 and direct read-only hardware bytes=43581440 exactly equal 80 complete full page-ins + 80 mutable-only page-outs
+PASS: P05.2i independent A53 P05R page counters match halted-PL MMIO burst registers and directly measured page AXI byte register
+PASS: P05.2i original 16-barrier/318-checkpoint neural and all five 512KiB physical DDR oracle preserved
+P05_2I_VERIFY_EXIT=0
+```
+
+Reconstructed page transfers: 3 initial full page-ins,
+77 replacement full-ins, 77 dirty runtime mutable-outs,
+3 final mutable-outs. Successful 256-byte read bursts:
+136,960; successful write bursts: 33,280;
+directly read actual PL HP0 successful-transfer bytes:
+43,581,440. These are **FPGA page-engine physical
+AXI transfers**, not overall PS+PL memory traffic.
+User-reported P05R SHA-256
+`3de43163e98d3368ee1bf52afcdbdc4737840962f449850b842f4e1ab68f4cfb`,
+counter-witness SHA-256
+`51ea572f1cb83902d6d853da2fc1b657bcfc28371763201fad32de41cc7d01f9`.
+Whole-DDR SHA-256s, timing and preserved investigative
+history: `docs/P05_2I_ACCEPTANCE.md`.
+
+**P05 closeout disposition: COMPLETE / ACCEPTED.**
+Independent physical P05.1 deployment/route tests and
+P05.2a–i directed architectural tests all satisfy their
+documented acceptance gates. User expressly requested
+closure and merge to `main`.
+Consolidated record: `docs/P05_FINAL_ACCEPTANCE.md`.
+
+**Scope limitations carried forward (not silently closed):**
+
+- Native C routing guard covers 4095→4096 NEXT packet append
+  and reject-on-full; **the physical HLS-originating 4097th
+  routed NEXT-bank packet, stall/backpressure timing, and
+  successful runtime overflow recovery were NOT exercised**.
+  CRC-valid 4097-**deployment** rejection is different.
+- The directly observed AXI byte count covers only
+  successful PL page-engine HP0 transfers, **not**
+  host provisioning/PS DDR stores/cache traffic, total
+  platform DDR traffic or application throughput/energy.
+- P05 raw board regression timer data are **not**
+  P07 MNIST inference latency nor P08 calibrated
+  energy/power results. One physical HLS engine,
+  not P04 deferred multi-engine parallelism, was tested.
+- Several historical physical PASS excerpts did not
+  include full fresh native pytest totals or original
+  uploaded binary identities. Do not invent them.
+
+The completed P05 correctness/observability scope is
+accepted with these documented exclusions. P04 remains
+deferred; **P06 is next**. Preserve accepted P02/P03
+binary/RTL/software reference evidence unchanged.
+
+### Deliverables
+
+- Execute the major architectural regression corpus **physically on
+  KV260**: neuron arithmetic, spike packet encoding/routing,
+  **direct-to-resident delivery (unexercised in P03: measured
+  `resident_deliveries=0`)**, nonresident DDR delivery, fanout,
+  event saturation and backpressure, page transfers/dirty eviction,
+  repeated page replacement, barriers, and legal service-order
+  invariance. For every test, define independently reproducible
+  Python golden outputs and target coverage before running hardware.
+- Capture/checkpoint complete or selected trace/state fingerprints
+  at well-defined safe observation points, with the first incorrect
+  core/timestep/state class reported on mismatch.
+- Audit existing PS/PL counters for dispatches, page-ins/out,
+  actual transferred DDR bytes, routed packets, barrier waiting,
+  hardware PL cycles and PS generic-timer intervals. Implement
+  additional PL instrumentation **only where existing MMIO and
+  PS software cannot supply a reliable measure**, maintaining a
+  known-good accepted P03 bitstream as fallback.
+- Maintain evidence provenance (ELF, XSA, bitstream, source SHA,
+  manifest, output/trace digest), reproducible scripts and
+  explicit failure/reboot instructions. Compare results with
+  Python as oracle, not as runtime orchestration.
+
+### P05.2 acceptance
+
+The major frozen v3 architectural regression corpus executes on the
+KV260 with zero unresolved deviations from its independently
+generated software oracle. Every supported physical feature has
+documented directed coverage; unexercised features remain clearly
+labelled. The full evidence package identifies the first failing
+core/timestep/state class when hardware diverges. A fresh hardware
+route, if required, is independently revalidated before adoption.
+
+## Relationship to later phases
+
+P05 measures correctness and coverage; P06 freezes the exact MNIST
+benchmark, P07 runs it primarily on board, and P08 measures
+latency/throughput/power/energy with distinct rigor. P05 does **not**
+retroactively change P03's accepted source or golden evidence.
 
 ---
 
