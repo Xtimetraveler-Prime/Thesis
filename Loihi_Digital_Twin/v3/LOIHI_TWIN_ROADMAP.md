@@ -1291,19 +1291,103 @@ retroactively change P03's accepted source or golden evidence.
 
 # P06 — Exact published MNIST benchmark audit and freeze
 
-**Status:** IN PROGRESS — P06.1 corrected native
-regression USER-CONFIRMED PASS; author-hosted paper +
-supplement original 96%-Loihi benchmark metric
-audit DONE. P06.1 **real nine-source-file
-and pretrained matrix SHA/dtype/nonzero-density
-verification PENDING** (2026-10-13).
-**Development branch:** `agent/v3-p06-benchmark-audit`,
-created from accepted P05 `main`; not merged.
+**Status:** IN PROGRESS — Rao P06.1 corrected
+native I/O regression independently accepted; original
+paper/supplement metrics audited. The authentic
+Rao nine-blob source audit still needs the user's
+rerun after fixing a mistaken on-disk weight
+transpose. **New P06 LIF one-core actual-compiler
+native feasibility PROBE IMPLEMENTED, tests and
+board execution PENDING (2026-10-13).**
+Benchmark method and model checkpoint NOT FROZEN.
+**Development branch:** `agent/v3-p06-lif-feasibility`,
+forked from `agent/v3-p06-benchmark-audit`
+(original Rao paper/weight investigation),
+which was created from accepted P05 `main`.
+Nothing merged to `main`.
 **Important:** NO PAPER BENCHMARK FROZEN and NO
 MNIST official test labels evaluated. NxTF is
 explicitly excluded from benchmark selection.
 
-**Current first-choice CANDIDATE (NOT FROZEN):**
+**CURRENT DIRECTION: simpler single-compartment
+LIF MNIST classifier feasibility, NOT FROZEN.**
+The user requested a hardware-compatible LIF
+path based on published non-Loihi SNN methods.
+The defensible published methodological
+reference is **Eshraghian et al. (2023),
+Training Spiking Neural Networks Using
+Lessons From Deep Learning**,
+DOI:10.1109/JPROC.2023.3308088,
+with companion [snnTorch Tutorial 5]
+(https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html)
+and [Tutorial 1 rate coding]
+(https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_1.html).
+**Published tutorial actual network:
+784→1000→10, 25 steps, β=0.95,
+float `snn.Leaky`, continuous
+analog static-pixel injection and output
+spike-count readout**; does NOT have
+a published identified pretrained
+784→32→10 checkpoint. Tutorial 5
+uses analog first-layer input and by
+default subtract-reset + source
+same-step layer propagation, not the
+v3 FPGA's actual integer hard-reset
+and NEXT bank.
+
+**Project-specific structural PROBE:
+784→32→10, 25 input-event ticks +
+1 empty final NEXT-bank flush;
+42 compartments; 25,408 deliberately
+unshared synthetic packed HLS synapses;
+816 destination axons; 32 route words;
+max 816 aggregate input+generated
+events/step versus 4096 event-bank
+depth.** This compact model is
+*resized and adapted*, not the
+authors' original 1000-hidden
+forward and not trained.
+New native source:
+`scripts/p06_lif_compiler_probe.py`
+and `scripts/p06_lif_input_probe.py`;
+regressions:
+`tests/test_p06_lif_compiler_probe.py`,
+`tests/test_p06_lif_input_probe.py`.
+The programmatically built image is
+required to pass the **existing**
+`compile_network` plus
+`export_one_core_image` in native
+verification. No HLS bitstream was
+recompiled, no A53 multi-image
+runtime written, and no accuracy
+or energy measured at this stage.
+See `docs/P06_LIF_FEASIBILITY.md`.
+The actual upstream published
+784→1000→10 **794,000 dense
+synapses** exceed the current five
+DDR-record profile's uncompressed
+163,840-entry total. The 32-unit
+synthetic sample might fit one core;
+a valid trained-checkpoint mapping
+is still a separate proof.
+
+**Benchmark-scope scientific fork:**
+If using a published **architecture/
+training method** but training and
+freezing **our own network**, the
+thesis can compare *that same*
+checkpoint on a CPU software
+oracle and KV260, but it **cannot**
+attribute to it the paper's
+original accuracy/energy.
+If exact published **trained
+weights and published result**
+are mandatory, this resized LIF
+candidate is ineligible and the
+source search must continue.
+Don't conceal this distinction.
+
+**Earlier alternative under investigation — Rao (NOT FROZEN, now SECONDARY):**
 Arjun Rao, Philipp Plank, Andreas Wild and Wolfgang Maass,
 "A Long Short-Term Memory for AI Applications in Spike-based
 Neuromorphic Hardware" (Nature Machine Intelligence, 2022,
