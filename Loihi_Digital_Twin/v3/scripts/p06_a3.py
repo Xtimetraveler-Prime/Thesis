@@ -104,6 +104,8 @@ def main() -> None:
     if args.train:
         if args.output_dir is None:
             p.error("--train requires a fresh --output-dir (cannot overwrite existing trial)")
+        if args.output_dir.exists():
+            raise FileExistsError("training trial directory already exists: refuse before any costly training")
         config = TrainSettings(
             seed=args.seed, epochs=args.epochs, batch_size=args.batch_size,
             learning_rate=args.learning_rate, surrogate_width=args.surrogate_width,
