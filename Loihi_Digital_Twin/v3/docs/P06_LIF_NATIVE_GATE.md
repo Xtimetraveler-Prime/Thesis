@@ -16,6 +16,40 @@ event-driven integer LIF alternative,
 25 image events + one NEXT-bank drain.
 They are **not the same model**.
 
+## Native routing regression correction (user-reported failure)
+
+The initial directed test incorrectly required **32 output
+packets** from a synthetic 784-pixel all-255 stimulus
+at timestep 0. That assertion confused 32 **configured
+potential routes** with 32 **actual hidden-neuron spikes**.
+
+From the unchanged deterministic synthetic weights,
+hidden compartment 1 receives
+`sum(1 + floor(pixel_index/240)) = 1696`,
+which is **below** the existing strict
+`voltage > 2048` firing threshold. Hidden
+compartments 0 and 2..31 spike; therefore exactly
+**31** routed NEXT-bank packets, and on the next
+timestep **31 × 10 = 310** downstream synaptic
+contributions, are expected.
+
+The regression now checks the **exact identities**
+of firing compartments and outgoing packet sources,
+their target timestep **1**, delivery equality to
+the next timestep's ingress packet set, readout
+target bounds, and the 310 actual fan-in
+contributions. A separate **zero-event**
+negative control proves that an allocated
+output-route table does not generate
+phantom routed packets.
+
+No network weights, thresholds, HLS RTL,
+P05 acceptance artifacts, or golden neuron
+equations were changed to manufacture
+32 spikes. This is a **TEST ONLY** correction.
+Native rerun and structural acceptance are
+still pending.
+
 ## 1. Check out the sandbox branch
 
 ```bash
