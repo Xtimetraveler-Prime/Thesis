@@ -148,7 +148,9 @@ def original_tutorial_limit()->dict:
             synapses+P03_HARD_SYNAPSE_ENTRIES-1)//P03_HARD_SYNAPSE_ENTRIES,
         "accepted_p05_ddr_logical_core_records":P05_PROVEN_DDR_CORES,
         "max_dense_synapses_over_five_records":P05_PROVEN_DDR_CORES*P03_HARD_SYNAPSE_ENTRIES,
-        "fits_accepted_five_record_hardware":False,
+        "fits_accepted_five_record_hardware":(
+            synapses <= P05_PROVEN_DDR_CORES*P03_HARD_SYNAPSE_ENTRIES
+        ),
         "qualification":"Exact source tutorial uses analog x repeated for 25 steps; no released corresponding trained weights proven.",
     }
 
