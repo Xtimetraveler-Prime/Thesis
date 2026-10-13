@@ -2,8 +2,9 @@
 
 **Date:** 2026-10-13
 **Branch:** `agent/v3-p06-lif-feasibility`
-**Status:** IMPLEMENTED / COMMITTED — native dataset preflight and training
-smoke **AWAIT USER VERIFICATION**. Do NOT mark P06-A3 accepted or start
+**Status:** A3.1–A3.3 initial dataset/smoke gate USER-ATTESTED PASS; A3.4
+learning-activity pilot CODE COMMITTED / NATIVE VERIFICATION PENDING.
+Do NOT mark P06-A3 accepted or start
 P06-A4 / P07 from this implementation alone.
 
 ## Scope and official-test firewall
@@ -113,6 +114,73 @@ are ACCEPTED, as user-attested. No real training/validation model has run,
 and the 100% all-silent synthetic output motivates an explicit *bounded
 real-data learning-activity pilot* before full eight-epoch fitting.
 This early gate alone does NOT accept P06-A3.
+
+## NEW next verification gate: P06-A3.4 learning-activity pilot
+
+User-supplied training-only archive integrity and the earlier computational
+smoke passed. However, that smoke produced **100% silent output activity**
+on its synthetic stimuli. This is not a learning-performance result and
+must not be mistaken for adequate evidence to start lengthy full training.
+
+The newly implemented `p06_a3_pilot.py` takes the **first 256 examples of
+the previously frozen 50,000 shuffled train indices** and the **first 128
+examples of the frozen 10,000 shuffled validation indices**, executes
+**two epochs with batch size 32**, and **never reads the official test
+partition**. It uses the currently declared training profile and records
+a no-update gradient probe, before/after validation accuracy and silent
+fraction, per-class spike/prediction histograms, and the number of
+*changed quantized 24-bit* synapses per layer. No checkpoint is written.
+
+To pass the narrow numerical activity gate, the measured run must have:
+nonzero finite gradients in both layers, at least one exported integer
+weight changing in EACH layer, and at least one validation example
+producing an output spike after training. This is only a learning-activity
+preflight, NOT proof of converged MNIST accuracy and NOT the independent
+P06-A3 60% validation GO/NO-GO criterion.
+
+`P06_A3_PILOT_STATUS=DIAGNOSE_BEFORE_FULL_TRAIN` is **not an exception**
+and need not make the CLI exit nonzero: the diagnostic JSON will explain
+which activity conditions failed. In that case, stop and inspect before
+running the eight-epoch trial. This pilot deliberately does not silently
+retune thresholds, scale weights, edit A2 goldens or alter the model
+reference to manufacture a pass.
+
+### Run exactly this
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p06-lif-feasibility
+git pull --ff-only origin agent/v3-p06-lif-feasibility
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+set -o pipefail
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p06_a3_pilot.py \
+  tests/test_p06_a3_data.py \
+  tests/test_p06_a3_training.py \
+  tests/test_p06_a2_train_forward.py \
+  tests/test_p06_a2_train_export.py \
+  2>&1 | tee /tmp/v3_p06_a3_4_native.log
+
+PYTHONPATH="$PWD/src" python scripts/p06_a3.py \
+  --pilot --data-dir data/mnist_raw \
+  2>&1 | tee /tmp/v3_p06_a3_4_pilot.log
+```
+
+Expected: native pytest PASS, no Torch skips; the pilot reports
+`P06_A3_PILOT=` JSON, one of two explicit `P06_A3_PILOT_STATUS=`
+values, and `P06_A3_OFFICIAL_TEST_STATUS=SEALED`.
+
+**Stop and return** the complete native pytest summary and
+`P06_A3_PILOT_STATUS` plus the JSON diagnostics,
+`baseline_validation`, `gradient_probe`,
+`changed_integer_weight_counts`, and final validation metrics.
+Do **not** run full MNIST training yet.
+
+---
 
 ## Native verification gate — do this before a full MNIST training run
 
