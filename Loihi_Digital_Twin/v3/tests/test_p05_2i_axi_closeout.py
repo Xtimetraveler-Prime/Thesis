@@ -202,7 +202,7 @@ def test_readonly_no_reboot_recovery_does_not_rerun_inference_or_overwrite_evide
     # old live hardware counters. It must NEVER download an ELF, program
     # the bitstream, provision DDR, resume the A53, or mutate PL MMIO.
     import re
-    assert not re.search(r"(?m)^\\s*(?:mwr|dow|rst|con|vivado)\\b",content)
+    assert not re.search(r"(?m)^\s*(?:mwr|dow|rst|con|vivado)\b",content)
     assert ' physical "$OUT"' not in content
     assert subprocess.run(["bash","-n",str(path)],
                           capture_output=True).returncode==0
