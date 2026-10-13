@@ -57,7 +57,7 @@ fi
   echo "ERROR: physical evidence already exists; NEVER reuse path" >&2;exit 2;
 }
 # Before touching hardware, validate the independent frozen AXI byte ledger.
-PYTHONPATH="$V3/src" python - "$OUT" <<'PY'
+PYTHONPATH="$V3/src:$V3/scripts" python - "$OUT" <<'PY'
 import hashlib,json,sys
 from pathlib import Path
 root=Path(sys.argv[1])
