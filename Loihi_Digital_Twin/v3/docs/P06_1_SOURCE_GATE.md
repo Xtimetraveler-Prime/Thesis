@@ -1,8 +1,11 @@
 # P06.1 offline official author checkpoint audit (no Loihi/FPGA required)
 
-**Status: ready for independent source/weight verification; candidate,
-NOT a paper benchmark freeze.** Exact rationale and limitations:
-`P06_1_PAPER_CANDIDATE_AUDIT.md`.
+**Status: INITIAL NATIVE REGRESSION USER-CONFIRMED PASS;
+additional source-coefficient-density unit tests and actual nine-file
+author-source/weight audit PENDING.** Candidate NOT frozen.
+Exact paper-96%-checkpoint identity remains UNKNOWN. Detailed
+original paper/supplement metrics and GO/NO-GO analysis:
+`P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md`.
 
 The candidate is Rao et al. (Nature Machine Intelligence 2022)
 **sequential MNIST** with source files and pretrained weights from
@@ -105,6 +108,14 @@ The source checker uses git blob identifiers and independent
 
 Dtype is intentionally extracted from the actual
 binary header; it is not guessed from the file name.
+The tool also enumerates the **actual sign and zero/nonzero
+populations** and minimum/maximum coefficients for each
+unchanged .npy array. The paper quotes 20% sparse
+connectivity for **its tested network**; the released
+array occupancy is an **independent measurement**,
+not automatically 20%. Inspect the JSON
+`topology.source_weight_occupancy` before planning
+how many resident logical cores are necessary.
 All nine source/weight Git blobs must match the pinned
 paper-linked tree byte-for-byte. A missing artifact,
 modified source, unexpected rank/shape/dtype, or altered
@@ -118,10 +129,15 @@ independently frozen. `P06_1_SOURCE_AUDIT_EXIT=0`
 proves only authentic data provenance, not equality
 to the published accuracy or FPGA suitability.
 
-If the source fetch succeeds, paste the native pytest
-summary and the last PASS/metadata lines; P06.2 can
-then validate the source timestep/update/readout
-semantics against v3 before formal benchmark freeze.
+If this source fetch succeeds, paste **the native pytest
+summary, `P06_1_SOURCE_AUDIT_EXIT=0` and
+`P06_1_SOURCE_AUDIT_METADATA`** (especially the
+measured nonzero density and real weight dtype).
+The source audit's PASS is **not** proof that
+these weights produced the published 96.0%.
+We will review whether a source-verified
+replication is acceptable or instead change
+papers, before committing to AHP HLS modifications.
 
 ### P06.1 native readout-boundary correction (awaiting independent rerun)
 
@@ -187,3 +203,42 @@ thresholds in the existing v3 Python environment.
 This only freezes an **I/O component's identified
 source-level semantics**, not the full SNN
 or an approved P06 benchmark.
+
+## 5. Publication cross-check and benchmark decision
+
+The author-hosted complete manuscript + supplement
+https://igi-web.tugraz.at/PDF/259maass.pdf reports
+**96.0% Loihi sMNIST test accuracy** and
+**14.11 ms wall-clock / 0.36 mJ Loihi chip-level
+energy per inference**, with **20% overall source
+connectivity** and **100 AHP neurons** among
+240 recurrent cells. The paper's abstract/Methods
+do not identify the released
+`weights/v25_94per/*.npy` SHA values
+as the checkpoint that achieved 96.0%.
+The label `94per` is **not** an
+accepted numerical accuracy measurement.
+
+Therefore **P06.1 checkpoint-to-paper link
+is OPEN** despite accurate paper-level
+metric transcription and genuine files.
+The correct options are either obtain
+author-confirmed original weights/commit,
+compare the source-released weights
+only to their **own separately measured
+source-level accuracy**, or choose a
+different paper with public checkpoint identity.
+Don't freeze 96.0% as this artifact's baseline.
+
+The supplement's threshold pseudo-code uses
+inclusive boundary tests, while the pinned
+Loihi C `snips/spiking.c` has additional
+strict comparisons and special touch/cue
+ports. Our versioned I/O reference follows
+the **specific released executable C code**
+without quietly substituting the broader
+paper pseudo-code. The end-of-image C SNIP
+also clears neuron states and accumulators,
+a requirement for the future board inference.
+
+See `P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md`.
