@@ -53,8 +53,7 @@ git clone --filter=blob:none --no-checkout \
 cd ~/Git/paper_lsnn_intel_models
 git sparse-checkout init --cone
 git sparse-checkout set \
-    nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per \
-    nxsdk_modules_ncl/lsnn/apps/seqmnist/snips \
+    nxsdk_modules_ncl/lsnn/apps/seqmnist \
     nxsdk_modules_ncl/lsnn/src
 
 git checkout 3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8
@@ -62,6 +61,12 @@ git checkout 3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8
 git rev-parse HEAD
 git status --short
 ```
+
+The checkout must also include `apps/seqmnist/seq_mnist.py` and
+`apps/seqmnist/seq_img_classifier.py`. The prior sparse selection
+included `weights/`, `snips/` and `src/` but omitted these **two
+mandatory Python source files**, so it could not pass the actual
+nine-artifact source audit. This corrected selection includes both.
 
 `git rev-parse HEAD` MUST produce the pinned full commit
 SHA above; `git status --short` should be empty.
