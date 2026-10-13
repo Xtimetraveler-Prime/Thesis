@@ -82,7 +82,7 @@ deterministic test-only stimulus. Negative inputs produce
 no invented route traffic. These tests validate the
 model/exporter's structural semantics **only**.
 
-### P06-A2 — Freeze the precise *training-time forward contract* [IN PROGRESS]
+### P06-A2 — Freeze the precise *training-time forward contract* [CLOSED / USER-ACCEPTED 2026-10-13]
 
 Write an **independently testable integer oracle** for P03
 LIF arithmetic (signed 24-bit saturation, current/voltage
@@ -118,10 +118,13 @@ changes; learned weights export through `p06_train_export.py` into the
 unchanged P06 compiler, failing closed on unsupported per-neuron configs,
 nonfinite or out-of-range weights. Local partial checkout verified 56 tests
 with 1 native-only test deselected, while two new real-compiler exporter
-tests await native run. See `P06_A2_5_TRAINING_FORWARD_GATE.md`. Neither
-MNIST training nor official test evaluation has begun; P06-A2 is not closed.
+tests await native run. See `P06_A2_5_TRAINING_FORWARD_GATE.md`. The user subsequently
+confirmed the native A2.5 verification and explicitly authorized
+**P06-A2 closeout on 2026-10-13** (the detailed pytest transcript
+was not pasted). No actual MNIST training, official test-set evaluation,
+or physical inference has occurred.
 
-### P06-A3 — Train and select the compact network on train/validation only [PLANNED]
+### P06-A3 — Train and select the compact network on train/validation only [A3.1–A3.3 IMPLEMENTED / NATIVE PREFLIGHT PENDING]
 
 Pin MNIST source, original dataset file hashes, train
 split/held-out validation split and preprocessing; pin
@@ -138,6 +141,25 @@ biases, thresholds and decays** within P03 packer
 ranges. Export independently verifiable checksum/dtype/
 shape and a frozen per-class readout contract.
 **Never call the tutorial's weights or accuracy ours.**
+
+**2026-10-13 A3 work:** New `p06_a3_data.py` pins canonical
+MNIST *training-only* gzip MD5, SHA256 provenance, strict IDX format,
+seeded 50k/10k train/validation split and sealed official test boundary.
+New `p06_a3_training.py` provides reproducible nonzero initialization,
+quantization-aware PyTorch surrogate optimization, validation-only
+best-epoch selection, error/silence telemetry, explicit model configs,
+checkpoint/quantized weight SHA256 and tamper-checked candidate loading.
+`scripts/p06_a3.py` adds explicit canonical-train-only download,
+dataset preflight, *dataset-free* synthetic optimizer smoke and later
+full-train modes. The fixed first-pass hypothesis uses signed24 hard-reset
+LIF with full current and voltage decay, hidden threshold 32 and output
+threshold 8, eight epochs, batch 64, Adam 0.05, width 16 and
+**precommitted 60% validation GO/NO-GO floor**. This floor is a planning
+criterion and is **not an accuracy claim**. No real MNIST preflight,
+training/validation run or held-out official-test access was executed by
+the assistant. See `P06_A3_1_TO_3_NATIVE_GATE.md`; native tests, synthetic
+smoke and verified train-only archive/split hashes are the next user
+gate before long optimization.
 
 ### P06-A4 — Byte-precise deployment + freeze [PLANNED]
 
