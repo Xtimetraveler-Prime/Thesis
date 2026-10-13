@@ -58,7 +58,15 @@ def spike_ports(image:Sequence[int],timestep:int)->tuple[int,...]:
     return tuple(ports)
 
 def classify_output_membrane_voltages(voltage:Sequence[int])->int:
-    """Loihi management SNIP: 10 signed membrane Vs; first index breaks ties."""
+    """Match the original Loihi management SNIP's strict maximum-V readout.
+
+    The upstream C code initializes maxV=-8388608 and maxVId=-1, then
+    selects a new winner ONLY for v > maxV (strict, not >=). Thus ties
+    above the minimum choose their first index, but an all-minimum vector
+    returns -1. Do not reinterpret that sentinel as MNIST class 0.
+    Source: intel-nrc-ecosystem/models @ 3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8
+      nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/snip_mgmt.c
+    """
     if len(voltage)!=10 or any(type(v)!=int or not -(1<<23)<=v<(1<<23)
                                for v in voltage):
         raise ValueError("requires 10 valid signed 24-bit physical V readings")
@@ -67,7 +75,6 @@ def classify_output_membrane_voltages(voltage:Sequence[int])->int:
     for i,v in enumerate(voltage):
         if v>winning:
             index=i;winning=v
-    if index<0:raise ValueError("no output winner")
     return index
 
 def stream_sparse_ports(image:Sequence[int])->dict[int,tuple[int,...]]:
