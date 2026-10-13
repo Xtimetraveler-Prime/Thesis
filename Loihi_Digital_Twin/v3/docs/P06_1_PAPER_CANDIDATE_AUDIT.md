@@ -233,6 +233,62 @@ digital twin. Useful for code experiments,
 not a defensible paper-to-chip direct
 benchmark claim.
 
+## Primary paper and supplementary benchmark audit (2026-10-13)
+
+**Published result:** The author-hosted 30-page PDF (which includes
+its original supplementary benchmark pages) explicitly reports
+**96.0% Loihi sMNIST test accuracy**. Its Supplement Table S1
+reports **14.11 ms wall-clock per input**, **16.79 µs per
+Loihi compute step**, and **0.36 mJ Loihi chip-level
+total energy per inference** (25.83 mW total power;
+0.59 mW static and 25.24 mW dynamic). These are paper
+measurements, not our hardware results, and their
+physical/power boundary is different from the KV260.
+
+**Paper network:** 240 recurrent units = 180 excitatory,
+60 inhibitory; 100 of the excitatory ones have AHP
+auxiliary compartments (140 one-compartment, 100
+two-compartment recurrent neurons), 80 input ports and
+10 nonspiking readout compartments. Methods specifies
+**20% overall sparse connectivity via DEEP-R**,
+which invalidates the earlier assumption that all
+79,200 array positions consume physical synapse
+entries. At 20% occupancy the illustrative source
+coefficient count is ~15,840 before the 100 AHP
+couplings/encoding overhead. The real released
+matrix density is *still pending local measurement*.
+
+**Critical open linkage:** Neither paper nor supplement
+specifically names the three public
+`v25_94per/*.npy` blob SHAs as the network that
+yielded the reported **96.0%**. The suffix is a
+label only; no published result can be attributed
+to these particular coefficients without more
+evidence. A paper-level 96.0% finding does
+**NOT** close the trained-checkpoint benchmark
+identity requirement.
+
+**Paper/prototype nonidentity:** Supplement Listing S1
+uses inclusive threshold comparisons whereas the
+pinned actual Loihi C source `spiking.c` uses
+strict source-conditional input thresholds and
+one pixel-equals-255 touch stream. Source
+`snip_mgmt.c` also clears all Loihi compartment/
+meta/accumulator state between images. P06
+must use the **documented, pinned executable
+source** for its candidate and disclose that
+not every conceptual paper pseudo-code line
+is identical. The paper's AHP `β=96` in its
+equations and the author's Loihi
+`ModelParams._beta=1390000` are **different
+representation/scaling contexts**, not numbers
+we may interchange until exact compartment
+weights/shifts are derived.
+
+The complete original-source metric and
+compatibility go/no-go decision is in
+`docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md`.
+
 ## P06.1 hold point / next deliverables
 
 1. [IMPLEMENTED SOURCE INVENTORY; VERIFICATION PENDING]
@@ -274,9 +330,15 @@ benchmark claim.
    P07 can call hardware MNIST accuracy/latency
    measured after physical KV260 evaluation.
 
-**Recommendation at this point: prioritize Rao et
-al.'s paper because the actual pretrained synaptic
-arrays exist. Do NOT mark P06 complete or freeze
-the network until the two-compartment compatibility
-gap and paper/checkpoint metric association are
-resolved.**
+**Updated P06.1 recommendation:** Preserve Rao
+et al. as a valuable candidate for an **exact
+source-released-network** replication, not an
+identical reproduction of the paper's 96.0%
+result: that checkpoint linkage is unverified.
+The AHP/streamed input state gap is real,
+although the original 20% connectivity may
+make the network fit one physical FPGA logical
+context. Do NOT freeze the benchmark until
+both real weight-file identity/density and
+Loihi-equivalent AHP mapping are verified.
+See the P06.1 go/no-go decision document.**
