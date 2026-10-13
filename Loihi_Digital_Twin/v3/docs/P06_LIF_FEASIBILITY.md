@@ -1,8 +1,12 @@
 # P06 LIF MNIST feasibility: a bounded hardware-first candidate
 
-**Status: DEVELOPMENT / NATIVE HARDWARE-IMAGE PROBE IMPLEMENTED,
-INDEPENDENT HOST VERIFICATION PENDING; NO PAPER NETWORK OR TRAINED
-WEIGHTS FROZEN; NO MNIST ACCURACY/BOARD MEASUREMENT.**
+**Status: TRACK A NATIVE STRUCTURAL COMPILER/HLS-IMAGE
+FEASIBILITY USER-ACCEPTED PASS (2026-10-12);
+ACTUAL TRAINED WEIGHTS / QUANTIZATION / FULL MNIST FPGA
+INFERENCE STILL NOT IMPLEMENTED. TRACK B PLANNED AFTER
+THE TRACK A PHYSICAL BASELINE.**
+Neither track has official MNIST accuracy or physical
+board power/timing evidence.
 
 **Branch** `agent/v3-p06-lif-feasibility` forked from
 `agent/v3-p06-benchmark-audit`, which contains the independent Rao
@@ -122,9 +126,11 @@ destination axons, 32 route words and 42
 compartments**. The compiler's more
 conservative 128KiB logical template cost
 must also pass. Unlike the source tutorial,
-this should fit the one physical 32,768
-bank *if the native test passes*. No
-KV260 bitstream/run has tested it yet.
+the native user-verified compiler and packed HLS
+image **fit** the one physical 32,768-entry
+bank under the synthetic feasibility profile.
+No trained weights or KV260 bitstream
+application run has tested it yet.
 
 ### Native self-routing boundary verified by source arithmetic;
 board gate still pending
@@ -150,10 +156,13 @@ packet delivery across the timestep
 barrier, exact fan-in count, and
 zero-input/zero-route-traffic negative
 control. This fixes a **test expectation**,
-not LIF runtime behavior. The user's
-native regression remains to be rerun;
-nothing here establishes a physical
-KV260 MNIST run.
+not LIF runtime behavior. The user independently reran all
+feasibility regressions and both probe
+modes and reported **PASS** after the
+source-driven test correction. This
+accepts the **software-native
+structural gate**, not physical
+KV260 MNIST execution.
 
 ### Scaling contingency (before test data, not post hoc)
 
@@ -256,6 +265,57 @@ exists for this feasibility branch. These
 are P06.2/P06.4 engineering requirements,
 not claimed PASS items.
 
+
+## Approved two-track execution order (supersedes earlier conditional hold)
+
+**Track A, mandatory first:** P06-A2 exact integer inference
+oracle and training-forward contract → P06-A3 valid
+train/validation checkpoint → P06-A4 frozen compiler image/
+dataset/official-test protocol → P07-A physical A53-driven
+many-axon MNIST → P08-A independently accepted single-core
+timing/accuracy/energy baseline. The host-native source test
+and actual HLS packed bank are **already structurally accepted**
+with synthetic weights. Do not repeat hardware model development
+to make synthetic weights accidentally score MNIST.
+
+**Track B, only after Track A P08-A:** P06-B1
+synapse-aware destination partitioner + ~27-core
+resource and packet/DDR test (estimate not promise)
+→ P06-B2 separate 784→1000→10 checkpoint and freeze
+→ P07-B independently verified multi-core physical
+MNIST → P08-B measured paging/routing/throughput/power
+comparison. Same one physical compute engine and three
+resident contexts initially, with additional logical
+contexts paged from 512KiB DDR records. The original
+tutorial uses analog static image currents, so the
+scaled candidate is also a **project-trained FPGA-
+compatible LIF model**, not a reproduction
+of the tutorial's published checkpoint.
+
+**Scaling is feasible in principle but not proven:**
+at 39 hidden destinations/core, a no-template-sharing
+input shard needs `784×39×4 +
+784×(4+4) = 128,576 bytes` of versioned
+logical synapse/axon/template memory (under 128 KiB);
+40 hidden destinations require `131,712 B`
+(exceeding the logical limit). Thus roughly
+26 hidden shards + 1 output logical core
+are worth attempting. `27×512KiB=13.5MiB`
+of DDR backing is within the reserved
+126-context P05 A53 address map, but
+event fanout, the *one registered input
+axon/core* P05 diagnostic ABI, 896KiB
+payload limit, source-to-destination
+routing and scheduling still require
+new independently tested software.
+**The present compiler cannot
+automatically add logical cores
+based on synaptic memory pressure.**
+
+Full acceptance stages, claim scope
+and first-do-this-next instructions:
+[`P06_TWO_TRACK_LIF_PLAN.md`](P06_TWO_TRACK_LIF_PLAN.md).
+
 ## Main residual feasibility blockers
 
 1. **Original trained checkpoint/provenance.**
@@ -307,9 +367,9 @@ not claimed PASS items.
 
 ## Decision gate
 
-**GO for a one-core, single-compartment
-structural prototype, conditional on the
-independent native actual-compiler gate.**
+**P06-A1 one-core, single-compartment
+structural prototype: ACCEPTED after
+independent native user PASS.**
 This is significantly lower hardware
 scope than extending the P05 HLS model
 to Rao's AHP, and the small graph fits
@@ -330,7 +390,9 @@ weights and published accuracy**, this
 project choice alone does **not**
 satisfy it.
 
-P06.1 native feasibility and the user's
-benchmark-scope decision should precede
-P06.2 modeling/training. No original
-P05 acceptance artifact was changed.
+Next work is **P06-A2** exact
+integer inference model/training-forward
+parity. Scale-up P06-B1/B2 is
+**deferred until after P07-A/P08-A**.
+No original P05 acceptance
+artifact was changed.
