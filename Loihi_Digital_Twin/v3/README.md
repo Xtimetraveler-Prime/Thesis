@@ -53,16 +53,16 @@ one real packed **42-neuron, 25,408-synapse,
 with **synthetic test weights**, not trained
 accuracy or physical KV260 inference.
 
-**P06-A2 progress (2026-10-13):** A2.1 independent signed-24 LIF
-scalar oracle is user-accepted following native pytest PASS and both
-compiler feasibility probe PASS results. The separate fixed 25+1 event
-contract (A2.2), uncompiled 784→32→10 integer inference oracle (A2.3)
-and P03 hardware-word replay/differential tests (A2.4) are committed,
-but require independent real-repository native verification. A mirrored
-local harness passed 49 tests; its repository integration check was not
-run. A2.5 differentiable training-forward parity remains unimplemented.
-No FPGA MNIST inference, trained checkpoint, official test-set accuracy,
-or P05 source changes are claimed. [Current A2.2–A2.4 native gate](docs/P06_A2_2_TO_4_NATIVE_GATE.md).
+**P06-A2 progress (2026-10-13):** A2.1–A2.4 are user-attested
+accepted within their native gates; detailed A2.2–A2.4 native logs were
+not pasted. A2.5's PyTorch integer-exact quantized forward, approximate
+surrogate gradients and strict compiler export bridge are committed,
+but **A2.5 native verification is pending**. A partial local checkout
+passed 56 tests with one prior native-only integration test deselected;
+the two new actual-compiler export tests still require native execution.
+No accepted P05/HLS arithmetic was changed, no MNIST training or official
+test-set evaluation happened, and no KV260 MNIST accuracy is claimed.
+[Training-forward native gate](docs/P06_A2_5_TRAINING_FORWARD_GATE.md).
 
 **Official sequential development plan:**
 
