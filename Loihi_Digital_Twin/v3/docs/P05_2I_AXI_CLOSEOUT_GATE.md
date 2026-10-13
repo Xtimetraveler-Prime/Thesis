@@ -124,6 +124,69 @@ grep -E 'PASS|FAIL|P05_2I_VERIFY_EXIT|P05_2I_MEASUREMENTS' \
 Do not overwrite evidence and never rerun physical on the
 same directory.
 
+### Recovery from the observed XSDB software memory-map rejection
+
+**Observed on the real KV260, 2026-10-13**: The fully
+accepted P05.2h physical workload completed again (80
+dispatches, 318 checkpoints, 156 packets, 78 resident
+and 78 nonresident, 77 evictions, five complete byte-exact
+DDR records), then the ORIGINAL XSDB `mrd -bin -file`
+attempt at `0xA4000044` stopped because the debugger
+had not added PS-to-PL memory to its address map.
+This was a **debugger address admission failure**, not a
+neural/HLS failure. No final P05.2i AXI witness or
+`p05_2i_verify.log` was produced; overall P05.2i
+remains **PENDING**.
+
+AMD UG1725/UG1400 documents `mrd -force` to override
+debugger-side reserved/invalid address **software**
+protection. It does not bypass a true hardware firewall or
+recreate page-engine registers after a PL reset. The new
+capture script uses `mrd -force -bin -file`, twice and
+checks stable values. It preserves any zero-byte file
+created by the original rejected unforced read under
+`p05_2i_axi_witness.bin.original_unforced_block.bin`.
+It never overwrites a nonempty counter witness.
+
+**If the KV260 has NOT rebooted, reset or been
+reprogrammed since this physical run**, leave the halted
+board intact and reuse the existing evidence folder.
+Pull the updated branch and run the guarded **read-only**
+recovery, without re-running FPGA inference:
+
+```bash
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p05-board-regression
+git pull --ff-only origin agent/v3-p05-board-regression
+cd Loihi_Digital_Twin/v3
+
+export P05_2I_DIR=/tmp/v3_p05_2i_axi_20261013T010913Z
+P05_2I_CONFIRM_READONLY_RECOVERY=YES \
+bash scripts/run_p05_2i_axi_recover.sh "$P05_2I_DIR" \
+  2>&1 | tee /tmp/v3_p05_2i_recovery.log
+grep -E 'PASS|FAIL|P05_2I_VERIFY_EXIT|P05_2I_MEASUREMENTS' \
+    "$P05_2I_DIR/p05_2i_verify.log"
+```
+
+The recovery script validates the prior original A53
+`P05R`, manifest SHA and physically captured full DDR,
+then captures the four counters via read-only JTAG,
+and runs the entire final independent P05.2i
+verification. **Reboot the KV260 afterward**, even on
+a failure. If direct `mrd -force` produces an actual
+hardware bus-access fault, preserve the evidence and
+stop. Do not create artificial byte data or weaken checks.
+
+**If the board has ALREADY rebooted**, no live
+PL counter recovery is possible from the earlier run.
+Keep that directory unchanged and perform the ordinary
+`prepare` + `physical` flow above in a completely
+NEW evidence folder. The patched physical flow will
+now use `-force` at the final MMIO capture. It must
+still pass the exact physical counter equality checks.
+
 ### If the read-only debugger-side MMIO capture fails
 
 Some debugger/PSU target configurations might not forward
