@@ -68,6 +68,11 @@ def test_real_v3_ingress_uses_784_distinct_allocated_destination_axons(real_comp
 
 def test_real_logical_chip_self_routing_is_next_step_not_analog_same_step(real_compiled):
     # This is the *existing v3 LogicalChip golden*, not FPGA bitstream execution.
+    # A route-table entry is NOT itself a packet: only a neuron that actually
+    # crosses its threshold generates a packet. This deterministic all-255
+    # synthetic input leaves hidden neuron 1 subthreshold (1696 <= 2048).
+    assert sum(M.dense_weights(src,1,784,32) for src in range(784))==1696
+    expected_hidden_spikes=tuple(i for i in range(32) if i!=1)
     chip=real_compiled.build_chip()
     p=P.verified_external_packets(real_compiled,[255]*784,0)
     first=chip.step(p)
@@ -75,11 +80,34 @@ def test_real_logical_chip_self_routing_is_next_step_not_analog_same_step(real_c
     assert len(first.cores)==1
     first_core=first.cores[0]
     assert len(first_core.packet_in)==784
-    assert len(first_core.packets_out)==32
-    assert all(p.target_timestep==1 for p in first_core.packets_out)
+    assert first_core.spikes_out==expected_hidden_spikes
+    assert len(first_core.packets_out)==len(expected_hidden_spikes)==31
+    assert tuple(packet.source_compartment for packet in first_core.packets_out)==expected_hidden_spikes
+    assert all(packet.target_timestep==1 and packet.source_timestep==0
+               and packet.destination_core==0 for packet in first_core.packets_out)
     assert all(x.state.voltage==0 for x in first_core.compartment_state_after[32:])
     second=chip.step(())
     assert second.algorithmic_timestep==1
-    assert len(second.cores[0].packet_in)==32
-    assert len(second.cores[0].synaptic_contributions)==320
-    assert any(id>=32 for id in second.cores[0].spikes_out)
+    second_core=second.cores[0]
+    # NEXT-bank arrivals, not same-tick feedforward contributions.
+    assert len(second_core.packet_in)==len(first_core.packets_out)
+    assert {packet.logical_key for packet in second_core.packet_in}=={
+        packet.logical_key for packet in first_core.packets_out
+    }
+    assert len(second_core.synaptic_contributions)==31*10
+    assert all(32<=entry.target_compartment<42
+               for entry in second_core.synaptic_contributions)
+    assert any(i>=32 for i in second_core.spikes_out)
+
+
+def test_allocated_routes_do_not_generate_spikes_without_threshold_crossing(real_compiled):
+    # 32 physical route descriptors are *potential* routes. No event, no
+    # hidden spike, no routed NEXT-bank traffic or downstream contribution.
+    assert real_compiled.report()["static_route_estimate"]["total"]==32
+    chip=real_compiled.build_chip()
+    first=chip.step(P.verified_external_packets(real_compiled,[0]*784,0))
+    assert first.cores[0].spikes_out==()
+    assert first.cores[0].packets_out==()
+    second=chip.step(())
+    assert second.cores[0].packet_in==()
+    assert second.cores[0].synaptic_contributions==()
