@@ -790,11 +790,14 @@ derived physical packet-layout oracle **without modifying the
 original A53/FPGA evidence or neural model**. Its acceptance
 record is `docs/P05_2E_RECHECK_ACCEPTANCE.md`; the user has
 not supplied a fresh native pytest summary alongside this
-physical recheck. P05.2f bundled signed arithmetic/refractory/paging
-gate is independently physically accepted; P05.2g exact-capacity
-and over-limit device-admission tests are implemented,
-awaiting user verification. True physical packet-route backpressure,
-barrier stress and counter provenance remain open.
+physical recheck. P05.2f signed arithmetic/refractory/paging and P05.2g
+exact 4096 CURRENT-event-bank saturation plus CRC-valid
+4097-event early device-admission rejection are independently
+physically ACCEPTED. P05.2h 16-barrier mixed-residency
+multi-bank/packet stress gate has been implemented and awaits
+independent host/KV260 verification. True live routed NEXT-bank
+overflow recovery and calibrated AXI bus-counter provenance
+remain open.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -1019,7 +1022,8 @@ Physical sign-off: `docs/P05_2F_ACCEPTANCE.md`.
 
 **P05.2g — Exactly full 4096-event CURRENT-bank and
 CRC-valid 4097-event device-rejection gates
-(IMPLEMENTED; native and KV260 physical INDEPENDENT VERIFICATION PENDING).**
+(PHYSICAL ACCEPTED; independently user-verified on real KV260
+2026-10-12/13).**
 Two intentionally distinct, separate booted physical runs, on one
 unchanged P05 A53 ELF and accepted P03 FPGA shell:
 
@@ -1055,15 +1059,65 @@ Sources:
 `tests/p05_2g_route_guard.c`.
 Full acceptance/reproduction plan:
 `docs/P05_2G_CAPACITY_GATE.md`.
+Independent original reported physical evidence:
+`docs/P05_2G_ACCEPTANCE.md`.
+**Observed P05.2g PHYSICAL PASS:** User supplied TWO separate
+original KV260 `verify.log` results from
+`/tmp/v3_p05_2g_capacity_20261013T004149Z`.
+Full profile: 4,096 CURRENT-bank input spikes, 1 real HLS
+dispatch, 1 barrier, 3 actual-device post-barrier checkpoints,
+and complete original physical 512 KiB DDR byte-exact to
+the independent model (`P05_2G_FULL_VERIFY_EXIT=0`).
+CRC-valid 4,097-event profile: real A53 rejection
+`0xDEAD0002` before any MMIO/dispatch/page/barrier with
+unchanged complete original 512 KiB DDR context
+(`P05_2G_OVERFLOW_VERIFY_EXIT=0`).
+Host native suite passed independently per user, but a
+full pytest count/log was not provided.
 
-**Still OPEN after P05.2g:** True physical routed NEXT-bank
-near-capacity/backpressure and in-loop packet-overflow recovery;
-adversarial high-traffic barrier/quiescence behavior; and
-actual AXI physical byte/cycle counter provenance. A cleanly
-rejected over-limit **deployment** is not a demonstrated
-inference-time packet stall/recovery. Programmed page payload
-bytes are **not** measured AXI data traffic. P05.2 remains
-IN PROGRESS; P05 may not merge/close.
+**P05.2h — Adversarial multi-bank/boundary and routing-barrier
+stress (IMPLEMENTED; independent native and KV260 physical
+verification PENDING).** The new integration test deliberately
+extends service time to **16 global timesteps** on five logical
+cores / three physical context slots, retains real service
+order [4,1,3,0,2], uses two outgoing fanout destinations per
+spike and core-specific thresholds [2,3,4,5,6].
+The independent `LogicalChip` produces all complete immutable
+neural core DDR records and per-step model vectors; a separate
+conservative P03 victim replay computes real paging and
+resident/nonresident routing counters.
+
+An **independently replayed double-event-bank oracle** computes
+every post-barrier `event0` and `event1` first-word CRC,
+alongside `state0` for **all five cores at all 16 barriers**,
+plus actual `packet0` whenever emitted. This means **at least
+240 live physical diagnostic checkpoints**, alongside
+80 physical dispatches, 80 external stimuli, repeated dirty
+evictions, both routing residency modes, and entire five
+512 KiB physical DDR records byte-exact to a derived
+output-route-ordered packet RAM reference. Crucially, the
+original destination-sorted logical Python oracle remains
+unchanged. The accepted P05 ELF and P03.2c bitstream are reused;
+no hardware RTL, C or FPGA shell is modified.
+
+Implemented:
+`scripts/p05_2h_barrier_fixture.py`,
+`scripts/p05_2h_barrier_verify.py`,
+`scripts/run_p05_2h_barrier.sh`,
+`vivado/p05_2h_barrier_prepare.tcl`,
+`tests/test_p05_2h_barrier.py`.
+Full native-first reproduction:
+`docs/P05_2H_BARRIER_GATE.md`.
+**No hardware acceptance is claimed until user independently
+runs native and original KV260 physical verifier.**
+
+**Still OPEN after P05.2h:** True physically overflowing
+routed NEXT banks at 4,097 with measured live backpressure
+and recoverability; and AXI physical byte/cycle counter
+provenance. P05.2g proved exactly full CURRENT bank and
+descriptor rejection, **not** live route overflow/recovery.
+Programmed page payload bytes are **not** measured AXI data
+traffic. P05.2 remains IN PROGRESS; do not merge/close.
 
 ### Deliverables
 
