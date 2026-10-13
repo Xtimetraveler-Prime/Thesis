@@ -102,15 +102,24 @@ oracle; learning gradients need not be bit-exact.
 *No MNIST test-set labels consulted.*
 
 **2026-10-13 incremental status:** P06-A2.1 independent integer LIF
-scalar oracle is user-accepted from native pytest PASS and both structural
-probe PASS outputs. A2.2's versioned 25+1 quota encoder/readout, A2.3's
-uncompiled full-frame integer oracle and A2.4's separately decoded packed-P03
-replay/differential tests are committed **but not user-native-accepted**.
-The local mirrored sanity test ran 49 tests successfully; the real compiler
-integration and accepted A1 encoder parity require a real repository run.
+scalar oracle was user-accepted with native pytest PASS and both feasibility
+probe PASS outputs. A2.2's versioned 25+1 input/readout, A2.3's independent
+full-frame reference and A2.4's packed-image differential tests were
+subsequently **user-attested accepted** (without a pasted pytest summary).
 See `P06_A2_1_INTEGER_ORACLE_GATE.md` and
-`P06_A2_2_TO_4_NATIVE_GATE.md`. A2.5 differentiable training forward is
-not yet implemented, and no checkpoint or real MNIST test was used.
+`P06_A2_2_TO_4_NATIVE_GATE.md`.
+
+**A2.5 now IMPLEMENTED / PENDING native acceptance:**
+`p06_train_forward.py` runs the exact signed integer 26-step inference
+forward on quantized weights while using STE and surrogate spikes for
+*approximate backward gradients*. A fixed per-layer, uniform LIF config
+(including optional fixed bias) avoids unaccepted per-neuron compiler
+changes; learned weights export through `p06_train_export.py` into the
+unchanged P06 compiler, failing closed on unsupported per-neuron configs,
+nonfinite or out-of-range weights. Local partial checkout verified 56 tests
+with 1 native-only test deselected, while two new real-compiler exporter
+tests await native run. See `P06_A2_5_TRAINING_FORWARD_GATE.md`. Neither
+MNIST training nor official test evaluation has begun; P06-A2 is not closed.
 
 ### P06-A3 — Train and select the compact network on train/validation only [PLANNED]
 
