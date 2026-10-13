@@ -4,3 +4,8 @@ vivado.jou
 vivado_*.backup.log
 vivado_*.backup.jou
 hardware/build/
+
+# P06-A3 local raw MNIST archives, held-out indices, and trained candidates
+# Never commit personally downloaded data or unreviewed training artifacts.
+data/
+artifacts/
