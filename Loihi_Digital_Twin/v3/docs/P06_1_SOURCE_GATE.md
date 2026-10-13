@@ -102,18 +102,38 @@ P06_1_PAPER_FREEZE=NOT_ACCEPTED_AHP_EXTENSION_AND_BENCHMARK_METRIC_AUDIT_REQUIRE
 The source checker uses git blob identifiers and independent
 `.npy` literal-header parsing, requiring **exact shapes**:
 
-- `w_in.npy`: **240 × 80** pre→post input weights;
-- `w_rec.npy`: **240 × 240** recurrent weights;
-- `w_out.npy`: **10 × 240** recurrent→readout weights.
+- `w_in.npy`: on disk **80 × 240** (source × destination), runtime **240 × 80** after `.T`;
+- `w_rec.npy`: on disk **240 × 240**, runtime **240 × 240** after `.T`;
+- `w_out.npy`: on disk **240 × 10** (source × destination), runtime **10 × 240** after `.T`.
+
+**Previously observed P06.1 source-audit FAIL:** the
+original verifier wrongly demanded the **runtime
+transposed** shape from the genuine **on-disk**
+`w_in.npy`. The author loader in
+`apps/seqmnist/seq_mnist.py` actually says
+`out = (wIn.T, wRec.T, wOut.T)`. The pinned
+author Git blob bytes contain `<f4` stored
+matrices of shapes (80,240), (240,240),
+(240,10). The checker, manifest and regression
+have been corrected to enforce **both**
+the authentic stored and transposed runtime
+shapes. There was never evidence of a
+bad published weight file.
 
 Dtype is intentionally extracted from the actual
 binary header; it is not guessed from the file name.
 The tool also enumerates the **actual sign and zero/nonzero
 populations** and minimum/maximum coefficients for each
 unchanged .npy array. The paper quotes 20% sparse
-connectivity for **its tested network**; the released
-array occupancy is an **independent measurement**,
-not automatically 20%. Inspect the JSON
+connectivity for **its tested network**. We
+independently decoded the pinned Git blobs:
+**4,263** `w_in`, **10,566** `w_rec`,
+**846** `w_out` nonzero values, or **15,675
+of 79,200 positions = 19.79%**. All are
+finite `float32` containing integer-valued
+coefficients in [-254,255]. These content
+counts are now part of the pinned manifest
+and are rechecked locally by the tool. Inspect the JSON
 `topology.source_weight_occupancy` before planning
 how many resident logical cores are necessary.
 All nine source/weight Git blobs must match the pinned
