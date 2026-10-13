@@ -66,8 +66,14 @@ MNIST TRAIN-only checksum/IDX validation, deterministic 50k train /
 10k validation provenance; A3.2 seeded quantization-aware surrogate
 learning and validation-only model selection; A3.3 signed24 checkpoint
 candidates with config/data/weight hashes and tamper checks.
-**Native dataset preflight, training smoke and actual MNIST training
-are not yet accepted or performed.** Validation GO/NO-GO criterion
+**The user accepted native tests, canonical TRAIN-only archive
+preflight and initial optimizer smoke on 2026-10-13.** The smoke's
+12/12 validation frames were entirely silent (synthetic accuracy 33.3%),
+so it does not establish meaningful learning. A3.4 adds a bounded
+256-TRAIN/128-validation, two-epoch learning-activity pilot with
+quantized-weight, surrogate-gradient and per-class spike diagnostics.
+**Its native verification is pending; full MNIST training has not run.**
+Validation GO/NO-GO criterion
 was set at 60% before any dataset evaluation. Test labels stay sealed;
 no accuracy, P07 execution or KV260 power/energy claim is made.
 [Current native preflight gate](docs/P06_A3_1_TO_3_NATIVE_GATE.md).
