@@ -1,6 +1,6 @@
-# P06-A2.1 — Independent integer LIF scalar reference (native verification gate)
+# P06-A2.1 — Independent integer LIF scalar reference (native acceptance record)
 
-**Status: IMPLEMENTED / COMMITTED — USER NATIVE ACCEPTANCE PENDING.**
+**Status: COMPLETE / USER-ACCEPTED (2026-10-13), within scalar A2.1 scope.**
 
 Branch: `agent/v3-p06-lif-feasibility`. This is the first, deliberately
 limited submilestone of P06-A2. It does **not** close P06-A2.
@@ -77,9 +77,17 @@ PYTHONPATH="$PWD/src" python scripts/p06_lif_compiler_probe.py --mode probe32
 PYTHONPATH="$PWD/src" python scripts/p06_lif_compiler_probe.py --mode original_tutorial
 ```
 
-**Acceptance rule:** report the final pytest summary and both feasibility
-probe PASS/fail lines. Only user confirmation of the real native repo run
-can close P06-A2.1.
+**Acceptance evidence (2026-10-13):** user explicitly reported that the listed
+native pytest regressions passed; no complete pytest summary/count was pasted.
+User provided both compiler-probe outputs: `probe32` reports PASS,
+`P06_LIF_FEASIBILITY_EXIT=0`, 42 compartments, 25,408 packed synapses,
+816 destination axons, 32 routes, and 22,912 bytes of logical synapse
+headroom; `original_tutorial` likewise reports PASS,
+`P06_LIF_FEASIBILITY_EXIT=0`, and 794,000 original dense connections.
+Both outputs explicitly retain `NO_TRAINED_WEIGHTS_NO_ACCURACY_NO_NUMERICAL_PARITY`.
+This is independent **user-attested host/native acceptance of A2.1**; the
+assistant did not re-execute the entire checkout or a physical FPGA gate.
+A2.2–A2.4 remain awaiting their own native differential verification.
 
 ## Evidence classification
 
