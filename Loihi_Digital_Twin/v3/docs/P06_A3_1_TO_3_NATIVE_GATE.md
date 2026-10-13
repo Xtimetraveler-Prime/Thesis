@@ -84,6 +84,36 @@ hardware image or official-test performance result. A4 must independently
 prove actual trained image compilation, packet/state parity and frozen
 test protocol; the official test stays sealed until A4.
 
+## 2026-10-13 user-provided native acceptance (A3.1–A3.3 early gate)
+
+The user explicitly confirmed the native pytest regressions PASS, and supplied:
+
+- `P06_A3_SYNTHETIC_SMOKE_PASS=1`: optimizer and model invocation
+  executed; 12/12 synthetic validation images were all-silent, with
+  train/validation accuracy 0.333333 and validation cross-entropy
+  2.302585092994046 = ln(10). **This is a computational smoke PASS,
+  not evidence that actual learning/output activity is healthy.**
+- Both training-only archives verified against the canonical pinned MD5,
+  with no official MNIST test archives retrieved.
+- `P06_A3_DATA_PREFLIGHT_PASS=1`, 60,000 canonical training records,
+  50,000 training / 10,000 validation, split seed 20261013.
+- Archive SHA256 compressed / decoded IDX:
+  images 440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609 /
+  ba891046e6505d7aadcbbe25680a0738ad16aec93bde7f9b65e87a2fc25776db;
+  labels 3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c /
+  65a50cbbf4e906d70832878ad85ccda5333a97f0f4c3dd2ef09a8a9eef7101c5.
+- Train ordered-index SHA256:
+  1cbcb0b2bf481958d6c917ea6d70fa44a20839406f0c824540f8e691edfdd851;
+  validation:
+  3b9520013f30742c3818f55024ea39e3e0632113c487c589fdfbb73c7d274831.
+- Official test `SEALED`.
+
+**Decision:** canonical dataset integrity and early A3 computational smoke
+are ACCEPTED, as user-attested. No real training/validation model has run,
+and the 100% all-silent synthetic output motivates an explicit *bounded
+real-data learning-activity pilot* before full eight-epoch fitting.
+This early gate alone does NOT accept P06-A3.
+
 ## Native verification gate — do this before a full MNIST training run
 
 Run these commands in the user's ordinary Linux VS Code terminal:
