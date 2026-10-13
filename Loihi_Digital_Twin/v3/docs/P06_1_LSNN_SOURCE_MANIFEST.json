@@ -68,6 +68,24 @@
         "git_blob": "6be7b2f27f840e23ccbc69b9ad393971b3aa8b40",
         "size_bytes": 17494,
         "type": "NETWORK_BUILDER"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/spiking.c",
+        "git_blob": "61b0b42be2b7e6b60a5943498c499badf5e2d36d",
+        "size_bytes": 5070,
+        "type": "SOURCE_SNIP_EXACT_SEQUENTIAL_ENCODER"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/snip_mgmt.c",
+        "git_blob": "d71cff860ee2f88dbe062ac6c6e0e91c978fcb09",
+        "size_bytes": 3698,
+        "type": "SOURCE_SNIP_EXACT_VOLTAGE_ARGMAX"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/common.h",
+        "git_blob": "47bf4ffd2ec6713bc27d12fb26a0f0cdbfdecf9f",
+        "size_bytes": 2102,
+        "type": "SOURCE_SNIP_PUBLISHED_TIMING_CONSTANTS"
       }
     ]
   },
@@ -78,7 +96,6 @@
     "output_readout": 10,
     "mnist_pixels": 784,
     "cue_steps": 56,
-    "input_threshold_channels_each_polarity": 40,
     "model_params_initial": {
       "vth_mantissa": 127,
       "tauU": 0,
@@ -96,7 +113,25 @@
     "source_markers": [
       "v25_94per IS ONLY AN ARTIFACT LABEL NOT PAPER ACCURACY"
     ],
-    "approximate_dense_weight_count_excludes_aux": 79200
+    "approximate_dense_weight_count_excludes_aux": 79200,
+    "thresholds_total": 40,
+    "threshold_values": "floor(linspace(0,255,40))",
+    "active_onset_offset_threshold_indices": "1..38",
+    "onset_ports": "2*t for t=1..38",
+    "offset_ports": "2*t+1 for t=1..38",
+    "on_off_last_pixel_behavior": "No t=1..38 onset/offset at last pixel index 783",
+    "touch_threshold_index": 39,
+    "touch_port": 78,
+    "touch_condition": "current pixel equals threshold[39] (255)",
+    "output_cue_port": 79,
+    "output_cue_steps": 56,
+    "unused_input_ports": [
+      0,
+      1
+    ],
+    "image_pixel_steps": 784,
+    "image_total_timesteps": 840,
+    "decision_rule": "Read V from 10 Loihi output compartments at 840th step; argmax, ties lowest index"
   },
   "paper_accuracy_for_THIS_specific_checkpoint": "NOT_YET_VERIFIED",
   "verified_paper_measurement_protocol_for_THIS_checkpoint": "NOT_YET_VERIFIED",
