@@ -59,7 +59,7 @@ compiler feasibility probe PASS results. The separate fixed 25+1 event
 contract (A2.2), uncompiled 784→32→10 integer inference oracle (A2.3)
 and P03 hardware-word replay/differential tests (A2.4) are committed,
 but require independent real-repository native verification. A mirrored
-local harness passed 48 tests; its repository integration check was not
+local harness passed 49 tests; its repository integration check was not
 run. A2.5 differentiable training-forward parity remains unimplemented.
 No FPGA MNIST inference, trained checkpoint, official test-set accuracy,
 or P05 source changes are claimed. [Current A2.2–A2.4 native gate](docs/P06_A2_2_TO_4_NATIVE_GATE.md).
