@@ -64,12 +64,33 @@ source-file shape/dtype/content audit comes next.
 
 | Artifact | Git blob SHA-1 | Bytes | Expected matrix orientation |
 |---|---|---:|---|
-| `weights/v25_94per/w_in.npy` | `e1ed712f3af5af64cc3680bb5e50dc9447bd13aa` | 76,928 | (240 post, 80 pre) — verify from .npy header |
-| `weights/v25_94per/w_rec.npy` | `c75f4c731b38b017f8d232b326801cba0fa65e40` | 230,528 | (240 post, 240 pre) — verify |
-| `weights/v25_94per/w_out.npy` | `b067c855de56cdcb6f4e8ce468f56581544a178f` | 9,728 | (10 post, 240 pre) — verify |
+| `weights/v25_94per/w_in.npy` | `e1ed712f3af5af64cc3680bb5e50dc9447bd13aa` | 76,928 | **ON DISK (80 pre, 240 post); runtime `.T`: (240 post, 80 pre)** |
+| `weights/v25_94per/w_rec.npy` | `c75f4c731b38b017f8d232b326801cba0fa65e40` | 230,528 | **ON DISK (240 pre, 240 post); runtime `.T`: (240 post, 240 pre)** |
+| `weights/v25_94per/w_out.npy` | `b067c855de56cdcb6f4e8ce468f56581544a178f` | 9,728 | **ON DISK (240 pre, 10 post); runtime `.T`: (10 post, 240 pre)** |
 | `src/lsnn.py` | `c958b3e3a0f510dc14cf17deacb1a05b8f145c66` | 34,141 | Actual Loihi source for adaptive/regular neuron dynamics |
 | `apps/seqmnist/seq_mnist.py` | `9551c2b2d399649cce9ccbbc3bd049694095540a` | 7,239 | Main network creation / test selection |
 | `apps/seqmnist/seq_img_classifier.py` | `6be7b2f27f840e23ccbc69b9ad393971b3aa8b40` | 17,494 | Input/decision cue & on-Loihi construction |
+
+**P06.1 authenticated-file correction:** the first
+real user source audit failed because our
+manifest incorrectly demanded transposed
+runtime shapes as on-disk array shapes.
+The real author Python source returns
+`out = (wIn.T, wRec.T, wOut.T)`.
+The original pinned Git blob headers verify
+`<f4` float32 arrays of (80,240),
+(240,240), (240,10). All coefficient
+values are finite integers encoded as
+float32, with nonzero/zero counts
+**4,263 / 14,937; 10,566 / 47,034;
+846 / 1,554** respectively:
+**15,675 nonzero across 79,200 =
+19.79%** total. These observed original
+data properties are now pinned in the
+manifest. The independent local
+nine-file verifier is still to be rerun.
+This is a verifier error, not corruption
+of the public trained weights.
 
 Those three weight files represent an expected **79,200**
 dense feedforward/recurrent synapses
