@@ -172,6 +172,8 @@ def audit(upstream:Path)->dict:
                 raise ValueError("unexpected paper-linked pretrained matrix shape: "+rel)
             if len(raw)!=EXPECTED_BYTES[p.name]:
                 raise ValueError("unexpected paper-linked pretrained matrix byte count")
+            if header["descr"]!=entry["expected_stored_dtype"]:
+                raise ValueError("pinned checkpoint actual stored dtype mismatch: "+rel)
             if tuple(entry["expected_shape"])!=expected:
                 raise ValueError("pinned checkpoint stored-shape manifest mismatch: "+rel)
             if tuple(entry.get("expected_runtime_shape_after_author_transpose",[]))!=expected[::-1]:
@@ -179,11 +181,22 @@ def audit(upstream:Path)->dict:
             row["numpy_header"]=header
             row["author_runtime_shape_after_transpose"]=[expected[1],expected[0]]
             row["source_coefficients"]=measure_weight_payload(raw,header)
+            declared=man["upstream"]["observed_matrix_statistics_from_pinned_blobs"][p.name]
+            measured=row["source_coefficients"]
+            for key,obs_key in (("entries","entries"),("nonzero","nonzero_entries"),
+                                ("zeros","zero_entries"),("positive","positive_entries"),
+                                ("negative","negative_entries"),("min","min_value"),
+                                ("max","max_value")):
+                if declared[key]!=measured[obs_key]:
+                    raise ValueError("pinned genuine coefficient statistics mismatch: "+p.name)
         assets[rel]=row
     all_weights=sum(a["numpy_header"]["payload_elements"]
                     for a in assets.values() if "numpy_header" in a)
     if all_weights!=79200:
         raise ValueError("unexpected exact physical candidate matrix position count")
+    combined=man["upstream"]["observed_matrix_statistics_from_pinned_blobs"]["total"]
+    if combined["entries"]!=all_weights:
+        raise ValueError("pinned total coefficient count mismatch")
     physical_coefficients={
         "entries":all_weights,
         "nonzero_entries":sum(a["source_coefficients"]["nonzero_entries"]
@@ -194,6 +207,9 @@ def audit(upstream:Path)->dict:
         all_weights-physical_coefficients["nonzero_entries"])
     physical_coefficients["density_fraction"]=(
         physical_coefficients["nonzero_entries"]/all_weights)
+    if (physical_coefficients["nonzero_entries"]!=combined["nonzero"]
+        or physical_coefficients["zero_entries"]!=combined["zeros"]):
+        raise ValueError("pinned aggregate weight-sparsity provenance mismatch")
     info={
         "profile":man["schema"],
         "status":"IMMUTABLE_AUTHOR_SOURCE_VERIFIED; NO_FPGA_FREEZE",
