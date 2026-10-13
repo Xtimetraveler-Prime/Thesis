@@ -1344,8 +1344,8 @@ physical acceptance.
   **Not trained; not a KV260 physical inference pass.**
 - **P06-A2 — Integer-equivalent forward and
   input/readout protocol [IN PROGRESS: A2.1 USER-ACCEPTED 2026-10-13;
-  A2.2–A2.4 COMMITTED, NATIVE VERIFICATION PENDING;
-  A2.5 TRAINING-FORWARD NEXT].**
+  A2.2–A2.4 USER-ACCEPTED 2026-10-13;
+  A2.5 COMMITTED, NATIVE VERIFICATION PENDING].**
   Independent signed-24-bit P03 LIF oracle
   covering exact decay rounding, threshold,
   saturation, signed weights, reset, refractory,
@@ -1363,11 +1363,18 @@ physical acceptance.
   see `docs/P06_A2_1_INTEGER_ORACLE_GATE.md`.
   The new independent event contract, complete 26-step dense SNN
   oracle and self-decoded packed-image replay are committed in
-  A2.2–A2.4. Their 49-test mirrored local sanity gate passed,
-  but real-compiler/LogicalChip native parity is NOT yet
-  independently accepted; see
-  `docs/P06_A2_2_TO_4_NATIVE_GATE.md`. No P05/HLS changes.
-  P06-A2.5 remains unimplemented.
+  A2.2–A2.4. Their 49-test mirrored local sanity gate passed;
+  the user subsequently confirmed the A2.2–A2.4 native gate looked
+  good (detailed pytest log not supplied). See
+  `docs/P06_A2_2_TO_4_NATIVE_GATE.md`.
+  A2.5 now provides integer-exact forward/STE surrogate gradients,
+  signed24 fail-closed weight export and compiler-mapping adapter,
+  with 7 PyTorch forward unit tests and 2 *native-only* export tests.
+  Local mirrored verification: 56 passed, 1 native integration test
+  deselected, plus 2 not run export/integration tests. A2.5's
+  full native gate is pending; see
+  `docs/P06_A2_5_TRAINING_FORWARD_GATE.md`.
+  No P05/HLS changes, training or physical MNIST.
 - **P06-A3 — Train and validation-select
   a compact checkpoint [PLANNED].**
   Canonical MNIST dataset/split/hashes,
@@ -1497,9 +1504,10 @@ tracks. NxTF remains excluded.
   differences in accuracy are not pure
   hardware efficiency comparisons.
 - Proceed in the A→B order stated above.
-  **P06 is not complete today**: **P06-A1 and P06-A2.1**
-  are accepted; A2.2–A2.4 await native user verification
-  and A2.5 has not begun. No training or physical MNIST.
+  **P06 is not complete today**: **P06-A1 and P06-A2.1–A2.4**
+  are user-accepted within their native gate scopes; A2.5 is
+  implemented but needs independent native verification.
+  No training or physical MNIST.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
