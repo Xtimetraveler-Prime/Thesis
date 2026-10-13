@@ -1291,9 +1291,12 @@ retroactively change P03's accepted source or golden evidence.
 
 # P06 — Exact published MNIST benchmark audit and freeze
 
-**Status:** IN PROGRESS — P06.1 source-backed paper
-and pretrained checkpoint audit implemented, independent
-native/source-file validation PENDING (2026-10-13).
+**Status:** IN PROGRESS — P06.1 corrected native
+regression USER-CONFIRMED PASS; author-hosted paper +
+supplement original 96%-Loihi benchmark metric
+audit DONE. P06.1 **real nine-source-file
+and pretrained matrix SHA/dtype/nonzero-density
+verification PENDING** (2026-10-13).
 **Development branch:** `agent/v3-p06-benchmark-audit`,
 created from accepted P05 `main`; not merged.
 **Important:** NO PAPER BENCHMARK FROZEN and NO
@@ -1320,6 +1323,42 @@ whose inspected official public repository
 exposes training code but no trained checkpoint
 that reproduces the published headline accuracy.
 
+**Important P06.1 publication audit correction:**
+The author-hosted paper + supplement
+https://igi-web.tugraz.at/PDF/259maass.pdf
+report **96.0% Loihi sMNIST test accuracy,
+14.11 ms wall-clock latency, 0.36 mJ
+Loihi chip energy per inference, and 20%
+overall input/recurrent/output connection
+density**. The exact released `v25_94per`
+weight blobs are NOT explicitly identified
+as the published 96%-result checkpoint.
+**Neither filename nor matching source
+architecture proves benchmark-model identity.**
+The source's nine original Git objects
+are pinned, but their independent byte
+identity, actual dtype and nonzero sparsity
+still require real upstream checkout
+verification. See
+`docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md`
+and `docs/P06_1_SOURCE_GATE.md`.
+
+20% sparsity also corrects the original
+dense 3-core lower-bound guess: 79,200
+matrix entries do **not** imply 79,200
+configured synapses; an ~15,840-entry
+network (+100 AHP couplings) might
+fit one 32,768-entry synapse bank and
+350 available compartments, but real
+weight occupancy and P03 exporter
+capacity have not been demonstrated.
+The paper's `β=96` cannot automatically
+be equated to source `_beta=1390000`
+without fixed-point AHP scaling.
+The code's source-specific encoder is
+not identical to supplementary high-level
+pseudocode; preserve both.
+
 **Critical caveat:** Rao's network requires an
 auxiliary AHP compartment per adaptive neuron
 and a 784-pixel sequential variable-axon input
@@ -1338,8 +1377,10 @@ checks are not model equivalence.
 Work items / independent hold points:
 
 - **P06.1 — Source-backed benchmark selection audit
-  [IN PROGRESS; source-verifier implemented,
-  not independently executed].** Compare Rao 2022
+  [PAPER / SUPPLEMENT AUDIT DONE; native
+  corrected tests user-confirmed PASS;
+  nine-file independent weight audit PENDING].**
+  Compare Rao 2022
   LSNN, Renner 2024 nBP, and Loihi-2
   source-only MNIST tutorial. Identify the
   exact original paper-linked code/weight
@@ -1351,8 +1392,16 @@ Work items / independent hold points:
   `docs/P06_1_LSNN_SOURCE_MANIFEST.json`,
   `scripts/p06_1_lsnn_source_audit.py`,
   `tests/test_p06_1_lsnn_source_audit.py`.
-  **Need user-native source extraction and
-  review before P06.1 acceptance.**
+  Paper's result is now source-backed as
+  96.0%, 14.11ms and 0.36mJ; **not proven**
+  to belong to public `v25_94per`
+  model. Need user's independent **nine
+  original-source-blob verification and
+  real NPY density/dtype audit** before
+  P06.1 artifact gate may be accepted.
+  Direct paper-checkpoint identity remains
+  explicitly UNRESOLVED; no official
+  MNIST test evaluation or P06.3 freeze.
 - **P06.2 — Exact model-versus-hardware compatibility
   [PLANNED; gap analysis drafted].** Read original
   Loihi current/voltage/auxiliary and source
