@@ -179,5 +179,8 @@ def test_no_new_HLS_RTL_A53_source_or_acceptance_from_host():
     for address in ("0xA4000044","0xA4000048","0xA400004C","0xA4000050"):
         assert address in tcl
     assert "mrd -bin -file" in tcl
-    assert "mwr" not in tcl and "dow" not in tcl and "rst" not in tcl
+    # Inspect Tcl COMMANDS rather than text substrings: "burst" itself
+    # contains "rst", and comments may mention forbidden operations.
+    import re
+    assert not re.search(r"(?m)^\\s*(?:mwr|dow|rst|reset)\\b",tcl)
     assert subprocess.run(["bash","-n",str(RUN)],capture_output=True).returncode==0
