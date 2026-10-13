@@ -1363,7 +1363,7 @@ physical acceptance.
   see `docs/P06_A2_1_INTEGER_ORACLE_GATE.md`.
   The new independent event contract, complete 26-step dense SNN
   oracle and self-decoded packed-image replay are committed in
-  A2.2–A2.4. Their 48-test mirrored local sanity gate passed,
+  A2.2–A2.4. Their 49-test mirrored local sanity gate passed,
   but real-compiler/LogicalChip native parity is NOT yet
   independently accepted; see
   `docs/P06_A2_2_TO_4_NATIVE_GATE.md`. No P05/HLS changes.
