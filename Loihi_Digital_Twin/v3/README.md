@@ -39,68 +39,98 @@ KV260 within the documented scope; see
 [Phase 5 consolidated acceptance](docs/P05_FINAL_ACCEPTANCE.md)
 and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
 
-**P06 — Published MNIST benchmark audit and freeze: IN PROGRESS
-(P06.1 native regression independently PASSED and original paper/
-supplement research audited; real released-weight SHA/dtype/sparsity
-gate not yet independently run).** No paper
-or FPGA inference contract has been frozen; **NxTF
-is excluded** from benchmark selection. The primary
-provisional candidate is Rao et al. 2022's Loihi
-**sequential MNIST** AHP-LSNN, with three actual
-author-released `.npy` pretrained matrices.
-The paper reports **96.0% Loihi sequential-MNIST
-accuracy, 14.11 ms latency, 0.36 mJ energy/inference
-and 20% overall synaptic connectivity**. Its
-released `v25_94per` weight files are **NOT
-demonstrably the checkpoint that produced the
-paper's 96.0%**. A correct adaptation still
-requires 100 AHP auxiliary compartments and
-the original temporal input/reset protocol;
-these are not implemented by accepted P05. A benchmark
-freeze or official-test accuracy claim is
-prohibited until that gap is independently
-resolved. See
-[paper and alternatives audit](docs/P06_1_PAPER_CANDIDATE_AUDIT.md),
-[source + checkpoint provenance gate](docs/P06_1_SOURCE_GATE.md),
-[paper-to-checkpoint metric and GO/NO-GO ledger](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md),
-and [architecture feasibility](docs/P06_2_AHP_KV260_FEASIBILITY.md).
+**P06 — Two-track LIF MNIST research: IN PROGRESS.**
+Published foundation: Eshraghian et al. (2023)
+and the author's snnTorch MNIST LIF tutorial
+(methodology, **not** a proven pretrained
+checkpoint identity). User accepted the
+**Track A 784→32→10 native structural
+compiler-to-HLS-image feasibility gate** on
+2026-10-12, including the corrected 31-spike /
+310-next-bank fan-in regression. This proves
+one real packed **42-neuron, 25,408-synapse,
+816-axon, 32-route** one-core test image
+with **synthetic test weights**, not trained
+accuracy or physical KV260 inference.
 
-**P06 LIF hardware-first experimental branch (NEW, UNFROZEN):**
-`agent/v3-p06-lif-feasibility`, forked from P06's
-Rao source-audit branch, implements a native
-**784→32→10** deliberately **synthetic**
-single-compartment integer-LIF compiler test.
-It uses the actual existing P06 deterministic
-`compile_network` and P03 FPGA
-`export_one_core_image` to check exact
-42-compartment/25,408-synapse/816-axon/
-32-route **one-core** physical-image
-limits, plus a versioned exploratory
-deterministic uint8→25-step event encoder
-and physical-compatible **one NEXT-bank
-hidden→output delay**.
-It is explicitly **not** the source
-[snnTorch Tutorial 5](https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html)
-**784→1000→10 analog-input model** and
-has no pretrained weights or measured
-MNIST accuracy/power. The original
-snnTorch `Leaky` beta/subtract-reset
-behavior also differs from the
-existing P03 hard-reset saturating
-integer profile. Training and
-benchmark freeze are **pending**,
-as are multi-image autonomous A53
-streaming and KV260 physical tests.
+**Official sequential development plan:**
 
-Documentation:
-[P06 native gate](docs/P06_LIF_NATIVE_GATE.md),
-[P06 detailed feasibility](docs/P06_LIF_FEASIBILITY.md),
-[provisional source-vs-project contract](docs/P06_LIF_CANDIDATE_PROFILE.json).
-Do not merge/modify the accepted P05
-reference simply to make an altered
-training model appear compatible.
+**Track A — Compact single-core classifier FIRST.**
+P06-A2: exact P03 integer 24-bit LIF +
+25 event ticks + 1 NEXT-bank drain
+independent software oracle, with
+deterministic uint8→spike input and
+readout; P06-A3: train/freeze a real
+project checkpoint on MNIST train/
+validation only; P06-A4: checksum
+dataset/weights/compiled context and
+freeze the official test protocol;
+P07-A: A53-autonomous per-image
+many-axon injection, hardware
+predictions and accuracy; P08-A:
+full-system latency/throughput/
+board energy baseline.
 
-**P07–P09 — Pending** (see the authoritative roadmap).
+**Track B — Larger virtualized
+classifier SECOND, only after P08-A.**
+Target **784→1000→10**, roughly **27
+logical DDR-backed contexts**
+(26 hidden shards + 1 output,
+a **hypothesis** not an accepted
+resource-aware map), using the
+same 3 resident contexts and one
+physical engine. P06-B1: new
+**synapse-aware destination partitioner**
+and full-core resource/route/paging
+feasibility; P06-B2: separately trained
+and frozen scaled checkpoint; P07-B:
+actual multi-context autonomous
+FPGA classification; P08-B:
+measure real routing/page-in/out
+overhead, latency, energy and
+classification tradeoffs. Do not
+assume increasing the
+`max_logical_cores` option alone
+will partition the network; the
+present compiler partitions
+compartments first and fails
+on synapse-memory oversubscription.
+Current A53 P05 event manifest
+also permits only one registered
+external input axon/core and
+must be extended before either
+full classifier physically runs.
+
+**Experimental claim boundary:**
+Both checkpoints are **our trained
+project models**, based on published
+LIF methodology, not identical to
+the original 784→1000→10
+snnTorch floating-analog-input
+tutorial (different reset,
+event encoder and timesteps).
+Their measured accuracy and
+hardware costs are separate
+findings, not original author
+Loihi metrics. NxTF remains
+excluded. Archived Rao/AHP
+source research is retained
+but is **not** a prerequisite
+for the chosen LIF paths.
+No official MNIST test-set
+evaluation has happened.
+
+[**Complete compact-first, scaled-second plan**](docs/P06_TWO_TRACK_LIF_PLAN.md)
+|
+[Feasibility/resource audit](docs/P06_LIF_FEASIBILITY.md)
+|
+[Accepted native regression details](docs/P06_LIF_NATIVE_GATE.md)
+|
+[Exploratory frozen-schema candidate record](docs/P06_LIF_CANDIDATE_PROFILE.json)
+|
+[Original Rao source research (unselected)](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md).
+
+**P07–P09 — Pending; staged A then B as specified above.**
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
