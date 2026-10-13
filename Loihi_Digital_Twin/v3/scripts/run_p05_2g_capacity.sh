@@ -127,7 +127,7 @@ MAX_SECONDS="${P05_2G_RUN_MAX_SECONDS:-600}"
     done
 } | tee "$OUT/physical_identity.txt"
 cat <<'EOF'
-P05.2g PHYSICAL GATE — event-bank 4096 success OR CRC-valid 4097 rejection
+P05.2g PHYSICAL GATE — event-bank 4096 success OR CRC-valid 4097 rejection (one separate boot each)
   Requires rebooted KV260 with DDR initialized and accessible JTAG/hw_server.
   This HALTS Linux and OVERWRITES project DDR 0x40000000..0x43FFFFFF.
   Uses new P05 A53 ELF, same accepted P03.2c FPD128 bitstream.
@@ -165,7 +165,7 @@ echo "P05_2G_${PROFILE^^}_VERIFY_EXIT=$CHECK"
 echo "P05_2G_${PROFILE^^}_EVIDENCE_DIR=$OUT"
 echo "IMPORTANT: reboot KV260 now; do not resume Linux."
 if [[ "$CHECK" != 0 ]]; then
-    echo "FAIL: P05.2g five-over-three arithmetic golden; evidence kept"
+    echo "FAIL: P05.2g $PROFILE strict capacity/rejection gate; original evidence retained"
     exit 5
 fi
 echo "PASS: P05.2g physical $PROFILE mode strict verification passed"
