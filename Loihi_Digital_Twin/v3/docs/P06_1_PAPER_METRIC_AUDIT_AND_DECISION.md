@@ -61,6 +61,17 @@ arbitrarily.
 
 ### The critical missing source-to-result link
 
+**Git provenance nuance:** GitHub history for the specific
+`w_in.npy` and `seq_mnist.py` files shows
+a generic `Add files via upload` commit
+`fc1726700bead6a3f8e8b7be8668d4e34d2c9f46`
+dated **2021-08-07**. This confirms the source
+assets were publicly uploaded after the
+**2021-07-08** arXiv v1 submission, but the
+commit has no experimental identity/accuracy
+metadata and **does not prove they correspond
+to the journal's 96.0% Loihi experiment**.
+
 The paper's code-availability section links the Intel
 `models` repository and `lsnn` module at a **mutable**
 branch name, not a unique training checkpoint hash.
