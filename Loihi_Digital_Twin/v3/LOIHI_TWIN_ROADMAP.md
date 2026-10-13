@@ -790,8 +790,11 @@ derived physical packet-layout oracle **without modifying the
 original A53/FPGA evidence or neural model**. Its acceptance
 record is `docs/P05_2E_RECHECK_ACCEPTANCE.md`; the user has
 not supplied a fresh native pytest summary alongside this
-physical recheck. P05.2f bundled signed/arithmetic/refractory
-gate is implemented but not independently verified.
+physical recheck. P05.2f bundled signed arithmetic/refractory/paging
+gate is independently physically accepted; P05.2g exact-capacity
+and over-limit device-admission tests are implemented,
+awaiting user verification. True physical packet-route backpressure,
+barrier stress and counter provenance remain open.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
 (ACCEPTED on real KV260, 2026-10-12).** Reuse the physically accepted
@@ -985,34 +988,82 @@ regression output remains to be confirmed independently.
 
 **P05.2f — Combined signed-24 saturation, fractional/end-point
 decay, negative weights, refractory and paging regression
-(IMPLEMENTED; independent native and KV260 physical pending).**
+(PHYSICAL ACCEPTED from user's independent KV260 results 2026-10-12).**
 A single six-step five-logical-core / three-slot profile combines
 +/- 24-bit saturation, +/- signed weights, decay 0/1024/2048/4096,
 threshold/reset/refractory, packet routing, dirty victim paging
-and 30 real-device state0 barrier checkpoints. The unchanged
-P05 A53 ELF and routed FPD128 shell are reused; **no new bitstream**.
-The strict verifier checks all five complete raw DDR contexts,
-actual encoded neural parameters, mailbox counters and independent
-model SHA/CRC. Native synthetic FAIL tests protect the complete
-DDR comparison, accepted P05G identity and result invariants.
-Sources: `scripts/p05_2f_arithmetic_fixture.py`,
+and 30 actual-device state0 barrier checkpoints. The unchanged
+P05 A53 ELF and routed FPD128 shell were reused; **no new bitstream**.
+The strict verifier checked all five complete 512 KiB raw DDR
+contexts, encoded signed parameters, P05R counters and frozen model
+SHA/CRC. The user independently reported:
+
+```text
+PASS: P05.2f physical five-over-three signed/decay/saturation/refractory steps=6 dispatches=30 packets=8 resident_deliveries=8 nonresident_deliveries=0 barriers=6 checkpoints=30 evictions=27
+PASS: P05.2f five complete 512KiB physical DDR images byte-exact to independent signed 24-bit LogicalChip reference
+P05_2F_VERIFY_EXIT=0
+```
+
+**Limit:** The eight real HLS packets all reached resident destinations;
+P05.2f does NOT independently exercise nonresident routing. P05.2e
+already covered 24 resident + 24 nonresident deliveries.
+A native pytest summary and full local binary/evidence hashes were
+not included in the user's P05.2f reply; these are not invented.
+Original sources: `scripts/p05_2f_arithmetic_fixture.py`,
 `scripts/p05_2f_arithmetic_verify.py`,
 `scripts/run_p05_2f_arithmetic.sh`,
 `vivado/p05_2f_arithmetic_prepare.tcl`,
 `tests/test_p05_2f_arithmetic.py`.
-Independent procedure: `docs/P05_2F_ARITHMETIC_GATE.md`.
-**No P05.2f hardware PASS may be inferred until the user actually
-runs the complete 30-checkpoint/FIVE-DDR gate.**
+Procedure: `docs/P05_2F_ARITHMETIC_GATE.md`.
+Physical sign-off: `docs/P05_2F_ACCEPTANCE.md`.
 
-**Remaining P05.2 work after P05.2f:** a separate physical
-near-/at-capacity 4096-event and overflowing 4097-event
-test with explicit expected reject/success, safe recovery,
-and no invalid SRAM overflow; adversarial high-traffic
-barrier checks and actual PS/PL AXI transfer-counter
-provenance. A future capacity test may require a new fixture
-and limited hardware instrumentation, unlike P05.2f.
-Programmed payload bytes are NOT measured AXI bus traffic.
-P05.2 **not complete**.
+**P05.2g — Exactly full 4096-event CURRENT-bank and
+CRC-valid 4097-event device-rejection gates
+(IMPLEMENTED; native and KV260 physical INDEPENDENT VERIFICATION PENDING).**
+Two intentionally distinct, separate booted physical runs, on one
+unchanged P05 A53 ELF and accepted P03 FPGA shell:
+
+- **Physical FULL:** One logical core, one resident slot, one
+  timestep, 4,096 registered external events, one HLS dispatch,
+  one barrier, three barrier checkpoints (state0/event0/event1),
+  one initial page-in, one final page-out, and a complete 512 KiB
+  physical DDR record compared byte-exactly to a fresh model.
+  The independent model predicts current=4096/voltage=4096 with
+  no outgoing spikes or packets. This demonstrates the **maximum
+  accepted CURRENT-event bank depth**, not routed congestion.
+- **Physical OVERFLOW:** One additional valid axon event makes
+  4,097, and the payload/header remain independently CRC-valid.
+  The accepted P05 A53 must fail **before any dispatch/MMIO**
+  with terminal 0xDEAD0002 / error=2, zero runtime activity,
+  and an unchanged initial 512 KiB physical DDR context.
+  A header/checksum error or unrelated terminal cannot PASS.
+  The host builder independently rejects 4,097 before creating
+  such a descriptor; the deliberately invalid CRC-valid
+  descriptor is produced only for the physical admission test.
+- **Portable C adapter:** Compile original `p03_hw_adapter.c`
+  and directed `tests/p05_2g_route_guard.c` to demonstrate that
+  a NEXT bank at 4,095 allows exactly one packet append and at
+  4,096 rejects any further packet before DDR store/cache clean.
+  This last gate is HOST-MOCKED, not physical packet pressure.
+
+Sources:
+`scripts/p05_2g_capacity_fixture.py`,
+`scripts/p05_2g_capacity_verify.py`,
+`scripts/run_p05_2g_capacity.sh`,
+`vivado/p05_2g_capacity_prepare.tcl`,
+`tests/test_p05_2g_capacity.py`,
+`tests/p05_2g_route_guard.c`.
+Full acceptance/reproduction plan:
+`docs/P05_2G_CAPACITY_GATE.md`.
+
+**Still OPEN after P05.2g:** True physical routed NEXT-bank
+near-capacity/backpressure and in-loop packet-overflow recovery;
+adversarial high-traffic barrier/quiescence behavior; and
+actual AXI physical byte/cycle counter provenance. A cleanly
+rejected over-limit **deployment** is not a demonstrated
+inference-time packet stall/recovery. Programmed page payload
+bytes are **not** measured AXI data traffic. P05.2 remains
+IN PROGRESS; P05 may not merge/close.
 
 ### Deliverables
 
