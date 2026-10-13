@@ -136,6 +136,27 @@ Do not claim the source's threshold
 encoding necessarily matches every
 published experimental checkpoint.
 
+### Open-source/licensing reproducibility audit
+
+The pinned `intel-nrc-ecosystem/models` root
+`LICENSE` contains permissive, BSD-style
+redistribution conditions requiring preservation
+of Intel notices/disclaimers. The root
+`README.md` explicitly states Intel **has
+discontinued maintenance and does not accept
+new contributions**. The public LSNN code uses
+the old **NxSDK v0.95** APIs; public Python
+source and released NPY files are available,
+but their existence does **not** grant
+the proprietary Loihi/NxSDK run environment
+or establish a bit-exact original Loihi
+simulation on our KV260. License/notice
+compliance must be checked before redistributing
+any adapted author code or pretrained weights.
+Our source-audit script reads metadata and
+does not vendor the upstream binaries into
+the Thesis repository.
+
 ### FPGA compatibility: changed by the 20% sparsity finding
 
 The released matrix files store **79,200
