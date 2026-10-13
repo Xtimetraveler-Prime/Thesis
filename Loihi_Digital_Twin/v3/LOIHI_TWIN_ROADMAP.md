@@ -1377,7 +1377,7 @@ Work items / independent hold points:
   population and measurement scope. Only
   then unseal official-test accuracy.
 - **P06.4 — Source-equivalent model/mapping
-  and reproducibility package [PLANNED].
+  and reproducibility package [PLANNED].**
   Validate independent original-equivalent
   software trace versus versioned packed
   fixed-point model, entire 512KiB contexts,
