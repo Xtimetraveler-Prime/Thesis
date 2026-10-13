@@ -15,7 +15,7 @@ one-step 28×28 image feedforward inference.
 | Requirement | Rao source contract | Accepted P05 status | Next evidence required |
 |---|---|---|---|
 | Per-sample input | 784 ordered 8-bit pixel values; 38 onset and 38 offset threshold streams, one pixel==255 touch and one 56-step cue stream (80 total declared input ports, 2 unused) | P05 input descriptor currently registers **one external axon per core**, not arbitrary 80-source spike trains | Freeze exact SNIP threshold algorithm and build a separate versioned variable-axon input descriptor; prove sample sequencing/reset, full 10k comparison uses no per-sample host scheduler |
-| Recurrent neuron state | 140 regular and 100 AHP adaptive recurrent units | P05 computes independent Loihi-like 1-compartment current/voltage/refractory primitives | Implement independently tested source-equivalent auxiliary AHP compartment, coupling and two-state update order, or find another paper |
+| Recurrent neuron state | Paper: 180 excitatory / 60 inhibitory, of which 100 excitatory neurons are AHP-adaptive (therefore 140 one-compartment plus 100 two-compartment in source) | P05 computes independent Loihi-like 1-compartment current/voltage/refractory primitives | Implement independently tested source-equivalent auxiliary AHP compartment, coupling and two-state update order, or find another paper |
 | Synapse weights | **actual official w_in / w_rec / w_out .npy bytes** (80×240, 240×240, 240×10) | P05 packed signed synapses with hardware 24-bit weight; not necessarily Loihi native 8-bit quantization/shift/saturation | Determine original array dtypes/ranges, Loihi weight exponent/effective shifts and actual per-connection delay, then fail-closed transform with bit-exact trace parity |
 | Dense fan-in | 80 input and 240 recurrent source neurons converge onto 240 recurrent targets | 4096 input axons and up to 32768 packed synapse slots per logical context, 1024 compartments per core; P05 models explicit axon→synapse list | Partition by **destination compartment**, preserve all 79,200 source weight entries and recurrent route fanout; no unmeasured dropped connections |
 | Source-route multicast | recurrent spikes must reach targets in multiple logical shards and output integration | P05 physically accepted resident/nonresident fanout, NEXT banks and 16 barriers | Verify source/target mapping maintains original multi-shard delay; avoid per-source route list overflow and hidden per-step spikes |
@@ -23,28 +23,48 @@ one-step 28×28 image feedforward inference.
 | Timing/power | measured **Loihi 1 sMNIST** on its original Loihi board; single-image latency/EDP method paper-specific | P05 raw PS timer and PL cycle counters; no power/energy calibration | Freeze included/excluded time, workload/batching, supply rails and scope; P07/P08 only compare like with like |
 | Test data | source uses OpenML `mnist_784`, rows 60k–70k and demo samples 100 with seed0 | No application loader/protected dataset freeze yet | Pin dataset origin, byte digest, conversion, labels and single evaluation universe before looking at official test accuracy |
 
-### Minimum hypothetical mapping (NOT validated)
+### Corrected sparse weight-resource interpretation (NOT YET VERIFIED)
 
-Recurrent dense weights require
-`240×240 + 80×240 = 76,800` individual
-input/recurrent entries. The accepted backing
-schema provides 32,768 × 8-byte synapse records
-per logical 512KiB core. At least
-`ceil(76,800 / 32,768)=3` logical target-core
-shards are needed, **assuming NO deduplication**.
-A first design exploration might use **three
-recurrent shards of 80 primary neurons each**:
-`80×(240+80)=25,600` per shard, plus their
-adaptive auxiliary state and any extra coupling
-connections. Separate output readout requires
-another `240×10=2400` connections. These
-figures are a **resource lower-bound estimate**,
-not a proven legal Loihi 1 or P03 hardware image.
-Each core's actual axon/route/synapse descriptors,
-128KiB Loihi logical budget, physical bank
-occupancy and dirty-paging costs must be
-counted independently with the real exporter.
-No claim of 3-core mapping or performance yet.
+The author paper's Methods specify **20% overall connectivity**
+for the original trained input/recurrent/output network, obtained
+through DEEP-R; this is **not a 79,200-synapse dense Loihi
+network**. The released three source matrices have a combined
+**79,200 possible coefficient positions**:
+`80×240 + 240×240 + 240×10`. Actual nonzero
+source weights—and therefore the number of programmed sparse
+synapses—must be **measured from the original immutable .npy
+bytes** rather than counting zeros as physical synapses.
+`scripts/p06_1_lsnn_source_audit.py` reports their true
+signed/zero/nonzero populations, per-matrix density and SHA.
+Until that audit passes, neither the paper's 20% nor a
+directory label proves *these released arrays'* sparsity.
+
+At exactly 20% occupancy, the illustrative connected matrix
+count is `79200×0.2≈15,840` (PLUS the author's 100
+main→AHP auxiliary connections and compiler/mapping overhead);
+our physical backing bank has **32,768 synapse slots** per
+512 KiB logical context. The model's 140 ordinary
+compartments, 100 adaptive *pairs* and 10 nonspiking
+readouts total **350 compartments**, below the
+**1,024** limit for a single logical core. The
+80 external input IDs and source neurons/route patterns
+still require proper mapping and may consume additional
+axon/route slots. Therefore a **one-core virtualized
+network may be feasible**, *not proven*. The earlier
+claim that at least three recurrent context shards
+were required was based on treating every **zero**
+matrix entry as an allocated synapse and is **NOT
+a valid lower bound for this sparse paper model**.
+
+A proper P06.2 exporter must accept the real matrices
+only with explicit per-core fan-in/axon/route/synapse
+capacity accounting, exact Loihi weight sign/exponent
+and source AHP coupling. No physical resource/timing
+claim can be made from matrix dimensions alone. A
+single logical core could also avoid P05's heavy
+repeated nonresident DDR paging, so it is invalid
+to extrapolate the P05 5-over-3 dispatch timing
+to a full 840-step benchmark.
 
 ### Most significant scientific risk
 
