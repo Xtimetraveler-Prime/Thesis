@@ -1323,6 +1323,63 @@ whose inspected official public repository
 exposes training code but no trained checkpoint
 that reproduces the published headline accuracy.
 
+**P06.1 REAL ORIGINAL NPY SHAPE REPAIR /
+PRETRAINED CONTENT CHECK (2026-10-12/13):**
+The user's first nine-file physical-source audit
+reported a FAIL because our expected
+`w_in.npy` shape was **transposed**.
+Direct authenticated Git blob byte inspection
+showed the actual original on-disk `<f4`
+arrays are **(80,240), (240,240),
+(240,10)**. The author's
+`seq_mnist.py` explicitly performs
+`out = (wIn.T, wRec.T, wOut.T)`;
+runtime shapes are the opposites.
+Our original source manifest verifier was
+wrong, not the source pretrained weights.
+The corrected verifier now checks both
+on-disk and runtime shapes, original
+float32 dtype and content. Independent
+decoded source counts: **4263 input
++ 10566 recurrent + 846 output =
+15,675 nonzero trained weights out
+of 79,200 = 19.79% sparse**, with
+all finite signed integral values
+in [-254,255]. Await corrected user
+native + actual nine-file source-audit
+rerun before accepting the source gate.
+
+**Potential research-direction change:**
+The user proposed selecting a **published
+MNIST SNN not originally run on Loihi**.
+This is scientifically valid and may reduce
+hardware-model changes, while still
+testing porting, FPGA neural correctness,
+software-vs-KV260 accuracy and our own
+performance/energy. However, a non-Loihi
+paper offers **no original measured
+Loihi chip energy/latency** to compare;
+paper accuracy correspondence still
+requires author checkpoint identity.
+A candidate with an actual released
+pretrained model and legitimate
+held-out labels is preferable.
+See `docs/P06_1_NON_LOIHI_BENCHMARK_PIVOT.md`.
+Potential example Diehl & Cook (2015)
+provides author pretrained arrays and
+code, but its 784×400 input weights
+need substantial partitioning, and the
+authors warn the distributed demo's
+91.56% uses **test-set labels in
+neuron assignment**, contrary to the
+paper's clean procedure. Another
+LIF/surrogate-gradient published
+recipe might be FPGA-easier but if
+we train it ourselves the result
+is **our** checkpoint, not exact
+published trained weights. **No choice
+has been frozen or evaluation started.**
+
 **Important P06.1 publication audit correction:**
 The author-hosted paper + supplement
 https://igi-web.tugraz.at/PDF/259maass.pdf
