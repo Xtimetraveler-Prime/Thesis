@@ -106,7 +106,7 @@ scalar oracle is user-accepted from native pytest PASS and both structural
 probe PASS outputs. A2.2's versioned 25+1 quota encoder/readout, A2.3's
 uncompiled full-frame integer oracle and A2.4's separately decoded packed-P03
 replay/differential tests are committed **but not user-native-accepted**.
-The local mirrored sanity test ran 48 tests successfully; the real compiler
+The local mirrored sanity test ran 49 tests successfully; the real compiler
 integration and accepted A1 encoder parity require a real repository run.
 See `P06_A2_1_INTEGER_ORACLE_GATE.md` and
 `P06_A2_2_TO_4_NATIVE_GATE.md`. A2.5 differentiable training forward is
