@@ -178,9 +178,31 @@ def test_no_new_HLS_RTL_A53_source_or_acceptance_from_host():
     tcl=(ROOT/"vivado/p05_2i_read_axi_counters.tcl").read_text()
     for address in ("0xA4000044","0xA4000048","0xA400004C","0xA4000050"):
         assert address in tcl
-    assert "mrd -bin -file" in tcl
+    assert "mrd -force -bin -file" in tcl
+    assert "original_unforced_block.bin" in tcl
+    assert "file rename -- $first_file $witness" in tcl
     # Inspect Tcl COMMANDS rather than text substrings: "burst" itself
     # contains "rst", and comments may mention forbidden operations.
     import re
     assert not re.search(r"(?m)^\s*(?:mwr|dow|rst|reset)\b",tcl)
     assert subprocess.run(["bash","-n",str(RUN)],capture_output=True).returncode==0
+
+def test_readonly_no_reboot_recovery_does_not_rerun_inference_or_overwrite_evidence():
+    path=ROOT/"scripts/run_p05_2i_axi_recover.sh"
+    content=path.read_text()
+    for marker in ("P05_2I_CONFIRM_READONLY_RECOVERY",
+                   "p05_2i_axi_capture_retry.log","p05_2i_verify.log",
+                   "P05_2H_VERIFY_EXIT=0",
+                   "p05_2i_read_axi_counters.tcl",
+                   "p05_2i_axi_closeout.py",
+                   "hw_read_bursts","hw_write_bursts",
+                   "run_p05_2h_barrier.sh" if False else "P05_2I_EVIDENCE_DIR"):
+        assert marker in content
+    # Unlike the full P05.2i runner, recovery only captures/validates
+    # old live hardware counters. It must NEVER download an ELF, program
+    # the bitstream, provision DDR, resume the A53, or mutate PL MMIO.
+    import re
+    assert not re.search(r"(?m)^\\s*(?:mwr|dow|rst|con|vivado)\\b",content)
+    assert "physical \\"$OUT\\"" not in content
+    assert subprocess.run(["bash","-n",str(path)],
+                          capture_output=True).returncode==0
