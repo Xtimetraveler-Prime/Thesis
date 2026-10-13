@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from loihi_twin_v2.p06_a3_data import download_training_archives, load_train_validation
+from loihi_twin_v2.p06_a3_pilot import run_pilot_cli
 from loihi_twin_v2.p06_a3_training import (
     TrainSettings, MIN_VALIDATION_ACCURACY, evaluate, fit_canonical_mnist,
     initialize_model, load_candidate, train_epoch,
@@ -50,6 +51,7 @@ def main() -> None:
     modes = p.add_mutually_exclusive_group(required=True)
     modes.add_argument("--download-train-only", action="store_true")
     modes.add_argument("--preflight", action="store_true")
+    modes.add_argument("--pilot", action="store_true")
     modes.add_argument("--synthetic-smoke", action="store_true")
     modes.add_argument("--train", action="store_true")
     modes.add_argument("--validate-candidate", action="store_true")
@@ -83,6 +85,9 @@ def main() -> None:
 
     # Both preflight and real training enforce canonical 60,000 TRAIN records.
     split = load_train_validation(args.data_dir)
+    if args.pilot:
+        run_pilot_cli(split)
+        return
     if args.preflight:
         if args.manifest_file is not None:
             args.manifest_file.parent.mkdir(parents=True, exist_ok=True)
