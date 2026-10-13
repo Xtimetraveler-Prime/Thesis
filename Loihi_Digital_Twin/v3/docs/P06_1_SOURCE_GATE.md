@@ -141,10 +141,17 @@ transliteration (**not** an Loihi/AHP execution oracle):
   final 56 timesteps. Ports reflect C's
   on-chip input index, not a made-up rate code.
 - Classification compares **the ten signed
-  output membrane V states**, returns the index
-  of the largest V at the end of 840 steps;
-  ties pick the **lowest index**. Output
-  is not a count of outgoing spikes.
+  output membrane V states** at the end of
+  840 steps. The original `snip_mgmt.c` initializes
+  `maxV=-8388608` and `maxVId=-1` and uses
+  **strict `v>maxV`**. Thus ties **strictly
+  above the minimum** select the lowest
+  matching index, but if all ten V readings
+  equal the signed 24-bit minimum, the original
+  SNIP returns the sentinel **`-1`**, not
+  digit `0`. Preserve and flag that result
+  as unclassified, not a valid MNIST class.
+  Output is not a count of outgoing spikes.
 
 `tests/test_p06_1_lsnn_io_contract.py`
 verifies these boundaries against the exact
