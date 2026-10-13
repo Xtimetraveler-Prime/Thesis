@@ -669,9 +669,12 @@ measurements for:
 
 # P05 — Board-local regression, observability, and data-path hardening
 
-**Status:** In progress — **P05.1 complete, P05.2 active** (2026-10-12).  
-**Development branch:** `agent/v3-p05-board-regression` (unmerged;
-no authorization to merge `main`).  
+**Status:** **COMPLETE / PHYSICALLY ACCEPTED, 2026-10-13** —
+**P05.1 complete; all P05.2a–P05.2i gates physically accepted
+within the documented scope.**  
+**Historical development branch:** `agent/v3-p05-board-regression`;
+user explicitly authorized P05 closeout and merge to `main`.
+Phase acceptance: `docs/P05_FINAL_ACCEPTANCE.md`.  
 **Baseline:** P03 accepted A53 scheduler, FPGA MMIO/DDR adapter, FPD128
 bitstream/XSA and frozen P02/P03 reference goldens remain unchanged.
 
@@ -773,7 +776,8 @@ the P05.1 trial profile; broader coverage is P05.2.
 
 ## P05.2 — Directed physical regression and observability validation
 
-**Status:** IN PROGRESS — P05.2a first-fault localization,
+**Status:** COMPLETE / PHYSICALLY ACCEPTED (2026-10-13) —
+P05.2a first-fault localization,
 P05.2b checkpoint-disabled equivalence,
 P05.2c reordered service, P05.2d two-destination fanout
 and **P05.2e composite physical evidence recheck accepted**
@@ -797,10 +801,18 @@ physically ACCEPTED. P05.2h 16-barrier mixed-residency dual-bank/packet
 stress gate is independently PHYSICALLY ACCEPTED, with 318
 checkpoints, 156 packets split 78 resident/78 nonresident,
 77 evictions and five byte-exact DDR records (user-confirmed).
-P05.2i is the final closeout counter-provenance gate:
-independently check live PL page AXI burst counts and
-64-bit AXI byte counter against original A53 P05R and
-frozen 16-barrier paging oracle. Live routed NEXT-bank
+P05.2i **PHYSICALLY ACCEPTED** as the final
+counter-provenance closeout gate: the same-run,
+no-reboot XSDB `mrd -force` read-only capture
+measured **136,960 completed read bursts,
+33,280 completed write bursts and 43,581,440
+successful FPGA page-engine AXI bytes** in hardware.
+The independent A53 `P05R` burst counts, separate
+model-derived page totals, full 318-checkpoint neural
+oracle and all five 512 KiB physical DDR records
+agreed; `P05_2I_VERIFY_EXIT=0`. User expressly
+approved final P05 closure and merge. See
+`docs/P05_2I_ACCEPTANCE.md`. Live routed NEXT-bank
 overflow recovery remains explicitly unverified.
 
 **P05.2a — Deterministic negative-checkpoint hardware diagnostic
@@ -1127,8 +1139,8 @@ this final physical result.
 
 **P05.2i — FINAL Phase-5 read-only AXI transfer-counter
 provenance and comprehensive physical closeout
-(IMPLEMENTED; independent native and KV260 physical
-verification PENDING).** Reuse exactly the accepted
+(PHYSICAL ACCEPTED; user-verified real KV260
+2026-10-13; `P05_2I_VERIFY_EXIT=0`).** Reuse exactly the accepted
 five-logical-core / three-slot, 16-barrier P05.2h neural
 profile in **one more standalone real KV260 execution**.
 After the A53 finishes, capture twice (read-only) the live
@@ -1165,35 +1177,74 @@ Implemented:
 Native-first reproduction and failure policy:
 `docs/P05_2I_AXI_CLOSEOUT_GATE.md`.
 
-**P05 closeout guard:** Do not mark P05 accepted/merge
-until user independently verifies P05.2i physical and
-confirms the explicitly bounded physical coverage.
-The supported P05 correctness/observability scope
-can then be closed with documented exclusions:
-a runtime FPGA-generated *routed* 4097th NEXT-bank
-overflow/backpressure and recovery, as distinct from
-the accepted 4096 CURRENT external events, 4097
-deployment rejection and native C route guard; plus
-unmeasured whole-system AXI energy/bandwidth.
-The first independently run P05.2i physical trial on
-2026-10-13 repeated all 318 P05.2h checks and five full
-DDR comparisons successfully, but the new XSDB PSU
-`mrd -bin -file` of PL register `0xA4000044`
-failed the debugger's software memory-map admission:
-"PL AXI slave ports access is not allowed. This address
-has not been added to the memory map." P05.2i **DID
-NOT PASS**; no AXI witness or final verifier output
-was produced. The directed, documented
-`mrd -force -bin -file` correction bypasses this
-software map guard but must still measure the actual
-registers successfully. A read-only no-reboot recovery
-script can reuse that same preserved A53 P05R/DDR
-folder while PL state remains live; after a reboot,
-require a NEW full run with fresh evidence. See
-`docs/P05_2I_AXI_CLOSEOUT_GATE.md`. A true
-hardware access fault instead requires new retrieval
-work, **not fabricated data**.
-P05.2 remains IN PROGRESS.
+**Final independently confirmed P05.2i physical PASS (2026-10-13).**
+The first P05.2i trial completed all P05.2h neural
+checkpoint and 5-DDR comparisons but hit the XSDB
+debugger **software** memory-map restriction on
+`0xA4000044` during unforced `mrd`. That first attempt
+did not satisfy P05.2i. With the KV260 **not rebooted**,
+the user ran the read-only `mrd -force` recovery on
+the same physical A53/DDR evidence. The new read-only
+actual FPGA AXI register witness matched the independent
+A53 `P05R` and software page replay exactly.
+The user supplied the following actual physical verifier
+outcome (the underlying raw binaries remain on the
+user's machine; don't pretend they are repository files):
+
+```text
+PASS: P05.2h physical adversarial 5-over-3 bank/barrier order steps=16 dispatches=80 packets=156 resident_deliveries=78 nonresident_deliveries=78 barriers=16 checkpoints=318 evictions=77
+PASS: P05.2h both event-bank first words, state0 and emitted physical packet0 checkpointed at each barrier
+PASS: P05.2h all five complete physical 512KiB DDR records byte-exact to model-derived route-ordered golden
+PASS: P05.2i KV260 PL HP0 AXI successful 256-byte burst counters read=136960 write=33280 and direct read-only hardware bytes=43581440 exactly equal 80 complete full page-ins + 80 mutable-only page-outs
+PASS: P05.2i independent A53 P05R page counters match halted-PL MMIO burst registers and directly measured page AXI byte register
+PASS: P05.2i original 16-barrier/318-checkpoint neural and all five 512KiB physical DDR oracle preserved
+P05_2I_VERIFY_EXIT=0
+```
+
+Reconstructed page transfers: 3 initial full page-ins,
+77 replacement full-ins, 77 dirty runtime mutable-outs,
+3 final mutable-outs. Successful 256-byte read bursts:
+136,960; successful write bursts: 33,280;
+directly read actual PL HP0 successful-transfer bytes:
+43,581,440. These are **FPGA page-engine physical
+AXI transfers**, not overall PS+PL memory traffic.
+User-reported P05R SHA-256
+`3de43163e98d3368ee1bf52afcdbdc4737840962f449850b842f4e1ab68f4cfb`,
+counter-witness SHA-256
+`51ea572f1cb83902d6d853da2fc1b657bcfc28371763201fad32de41cc7d01f9`.
+Whole-DDR SHA-256s, timing and preserved investigative
+history: `docs/P05_2I_ACCEPTANCE.md`.
+
+**P05 closeout disposition: COMPLETE / ACCEPTED.**
+Independent physical P05.1 deployment/route tests and
+P05.2a–i directed architectural tests all satisfy their
+documented acceptance gates. User expressly requested
+closure and merge to `main`.
+Consolidated record: `docs/P05_FINAL_ACCEPTANCE.md`.
+
+**Scope limitations carried forward (not silently closed):**
+
+- Native C routing guard covers 4095→4096 NEXT packet append
+  and reject-on-full; **the physical HLS-originating 4097th
+  routed NEXT-bank packet, stall/backpressure timing, and
+  successful runtime overflow recovery were NOT exercised**.
+  CRC-valid 4097-**deployment** rejection is different.
+- The directly observed AXI byte count covers only
+  successful PL page-engine HP0 transfers, **not**
+  host provisioning/PS DDR stores/cache traffic, total
+  platform DDR traffic or application throughput/energy.
+- P05 raw board regression timer data are **not**
+  P07 MNIST inference latency nor P08 calibrated
+  energy/power results. One physical HLS engine,
+  not P04 deferred multi-engine parallelism, was tested.
+- Several historical physical PASS excerpts did not
+  include full fresh native pytest totals or original
+  uploaded binary identities. Do not invent them.
+
+The completed P05 correctness/observability scope is
+accepted with these documented exclusions. P04 remains
+deferred; **P06 is next**. Preserve accepted P02/P03
+binary/RTL/software reference evidence unchanged.
 
 ### Deliverables
 
