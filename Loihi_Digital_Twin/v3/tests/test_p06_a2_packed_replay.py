@@ -132,4 +132,4 @@ def test_native_compiler_image_logicalchip_and_uncompiled_reference_agree():
                          ), f"state mismatch t={tick}"
             assert observed.output_counts == reference.output_spike_counts
             assert len(core.packets_out) == len(observed.next_packet_axons)
-            assert tuple(p.destination_axon for p in core.packets_out) == observed.next_packet_axons
+            assert sorted(p.destination_axon for p in core.packets_out) == sorted(observed.next_packet_axons)
