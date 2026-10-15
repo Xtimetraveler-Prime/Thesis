@@ -1378,7 +1378,8 @@ physical acceptance.
   No P05/HLS changes or physical MNIST.
 - **P06-A3 — Train and validation-select
   a compact checkpoint [IN PROGRESS: A3.1–A3.3 INITIAL NATIVE GATE ACCEPTED;
-  A3.4 BOUNDED REAL-TRAIN-ONLY PILOT NATIVE VERIFICATION PENDING].**
+  A3.4 BOUNDED REAL-TRAIN-ONLY PILOT USER-ACCEPTED 2026-10-15;
+  FIRST FULL TRAIN/VALIDATION TRIAL NOW AUTHORIZED / NOT RUN].**
   Canonical MNIST dataset/split/hashes,
   reproducible train/validation-only
   optimization, training seed/versions,
@@ -1403,8 +1404,17 @@ physical acceptance.
   success only, NOT learning evidence. A3.4 now implements a bounded
   256 TRAIN/128 validation, 2-epoch, no-checkpoint activity pilot with
   gradient, actual quantized-weight-change and output-spike diagnostics.
-  Its native user test and real-dataset outcome are PENDING.
-  See `docs/P06_A3_1_TO_3_NATIVE_GATE.md`. Stop before long training.
+  The user reported native pytest PASS and supplied A3.4's canonical
+  pilot output on 2026-10-15: PASS, no diagnostic reasons, 14,816 and
+  320 nonzero layer gradient elements, 4,864 and 105 changed integer
+  weights. Pilot baseline 128-image validation 10.16%, final 21.09%,
+  but 77/128 (60.16%) final all-silent and class-0 tie bias.
+  This is MECHANICAL ACTIVITY acceptance, not an accuracy guarantee.
+  Next gate: the previously declared full 50k-train/10k-validation
+  eight-epoch trial at fixed seed 20261013, batch64, Adam LR0.05,
+  surrogate width16. Evaluate the PREDECLARED 60% validation floor
+  without touching the official sealed test partition.
+  See `docs/P06_A3_1_TO_3_NATIVE_GATE.md`.
 - **P06-A4 — Freeze trained packed
   benchmark and reproducibility [PLANNED].**
   Exact real-weight compiler/exporter
@@ -1526,7 +1536,8 @@ tracks. NxTF remains excluded.
   **P06 is not complete today**: P06-A1 and **all of P06-A2**
   are user-accepted; P06-A3.1–A3.3 are code-implemented but
   have an accepted canonical TRAIN-only data preflight and computational
-  smoke. The A3.4 real-data activity pilot is unverified.
+  smoke; A3.4's bounded train-only learning-activity pilot is now
+  user-accepted as mechanically active. Full training has NOT run.
   No trained compact candidate, official test or physical MNIST.
 
 **Detailed execution/resource contract:**
