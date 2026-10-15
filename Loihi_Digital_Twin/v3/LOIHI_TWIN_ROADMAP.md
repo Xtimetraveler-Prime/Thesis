@@ -1379,7 +1379,8 @@ physical acceptance.
 - **P06-A3 — Train and validation-select
   a compact checkpoint [IN PROGRESS: A3.1–A3.3 INITIAL NATIVE GATE ACCEPTED;
   A3.4 BOUNDED REAL-TRAIN-ONLY PILOT USER-ACCEPTED 2026-10-15;
-  FIRST FULL TRAIN/VALIDATION TRIAL NOW AUTHORIZED / NOT RUN].**
+  FIRST FULL TRIAL COMPLETED / VALIDATION GO REPORTED;
+  CHECKPOINT NATIVE HASH RELOAD PENDING].**
   Canonical MNIST dataset/split/hashes,
   reproducible train/validation-only
   optimization, training seed/versions,
@@ -1393,8 +1394,11 @@ physical acceptance.
   A3.2 exact integer-forward surrogate training and validation-only
   best-epoch selection, and A3.3 candidate checkpoint manifest and
   integrity checks are committed. The **60% validation GO/NO-GO
-  floor was declared before real dataset results**. No actual MNIST
-  training has occurred and no real validation accuracy is known.
+  floor was declared before real dataset results**. The user has now
+  supplied a first 8-epoch full 50k/10k training manifest with best
+  validation accuracy 0.9439, best epoch 8, GO=True, 2/10,000 silent,
+  and intact split provenance. These are the user's reported metrics;
+  the checkpoint bytes have NOT been independently reloaded here.
   User on 2026-10-13 confirmed native pytest PASS and supplied
   `P06_A3_SYNTHETIC_SMOKE_PASS=1`, TRAIN-only archive MD5 and SHA256,
   `P06_A3_DATA_PREFLIGHT_PASS=1`, split seed/size and ordered-index
@@ -1410,13 +1414,20 @@ physical acceptance.
   weights. Pilot baseline 128-image validation 10.16%, final 21.09%,
   but 77/128 (60.16%) final all-silent and class-0 tie bias.
   This is MECHANICAL ACTIVITY acceptance, not an accuracy guarantee.
-  Next gate: the previously declared full 50k-train/10k-validation
-  eight-epoch trial at fixed seed 20261013, batch64, Adam LR0.05,
-  surrogate width16. Evaluate the PREDECLARED 60% validation floor
-  without touching the official sealed test partition.
-  See `docs/P06_A3_1_TO_3_NATIVE_GATE.md`.
+  The user completed that predeclared eight-epoch full-data experiment:
+  epoch 8 was best, train accuracy 0.9534, held-out validation 0.9439
+  on 10k images, and 0.0002 silent fraction. The 60% validation
+  floor is EXCEEDED by 34.39 percentage points; official test sealed.
+  Saved weight-file SHA256 0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88
+  and exported integer weights SHA256 1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b.
+  A3 conclusion: validation-model-selection GO is user-attested,
+  but the native --validate-candidate integrity pass marker is
+  still requested as A4 entry evidence. No official test results.
+  See `docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
 - **P06-A4 — Freeze trained packed
-  benchmark and reproducibility [PLANNED].**
+  benchmark and reproducibility [IN PROGRESS: A4.1 TRAINED
+  P03 WORD SNAPSHOT / FOUR-WAY PARITY CODE COMMITTED;
+  NATIVE ACCEPTANCE PENDING].**
   Exact real-weight compiler/exporter
   bank/resource gates, independent
   first-divergence software traces,
@@ -1429,6 +1440,15 @@ physical acceptance.
   native acceptance. This is the
   **Track A P06 exit**; P07-A may
   start without waiting for Track B.
+  A4.1 now pins the accepted candidate byte hash, signed24-weight
+  hash and canonical training split; compiles actual weights through
+  original P06 one-core compiler and P03 word exporter; compares
+  26-step PyTorch/dense/packed/LogicalChip traces on synthetic and
+  fixed validation frames. Emits explicitly little-endian P03
+  logical word streams plus SHA256 manifests only after parity passes.
+  These are NOT full P05 DDR context records, A53 input-streaming
+  software, or on-board KV260 inference. See
+  `docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
 
 ### Track B — Larger DDR-virtualized 784→1000→10
 
@@ -1536,9 +1556,10 @@ tracks. NxTF remains excluded.
   **P06 is not complete today**: P06-A1 and **all of P06-A2**
   are user-accepted; P06-A3.1–A3.3 are code-implemented but
   have an accepted canonical TRAIN-only data preflight and computational
-  smoke; A3.4's bounded train-only learning-activity pilot is now
-  user-accepted as mechanically active. Full training has NOT run.
-  No trained compact candidate, official test or physical MNIST.
+  smoke; A3.4 activity pilot user-accepted. A3 full training now
+  reports 94.39% held-out validation GO with a saved checkpoint;
+  byte integrity and A4.1 native trained-image parity are PENDING.
+  No official test or physical MNIST.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
