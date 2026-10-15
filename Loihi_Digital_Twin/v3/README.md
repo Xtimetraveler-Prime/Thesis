@@ -79,12 +79,28 @@ hidden→output). Pilot validation rose 10.16%→21.09%, but **77/128
 (60.16%)** final validation cases still emitted zero output spikes,
 biasing the tie-break toward class 0. The activity gate permits the
 first unchanged full 50k/10k training experiment; the **60% full
-validation GO criterion is not yet met or assessed**. No full MNIST
-training or candidate checkpoint has been produced at this point.
+validation GO criterion is now **EXCEEDED** by the first completed
+full 50k/10k train/validation trial. The user-provided candidate manifest
+reports epoch-8 best validation **94.39%**, train **95.34%**, and just
+**2/10,000** all-silent validation images. This remains a reported
+held-out validation result, NOT official MNIST test or KV260 accuracy.
+The native checkpoint integrity reload is still required.
 Validation GO/NO-GO criterion
 was set at 60% before any dataset evaluation. Test labels stay sealed;
 no accuracy, P07 execution or KV260 power/energy claim is made.
 [Current native preflight gate](docs/P06_A3_1_TO_3_NATIVE_GATE.md).
+
+**P06-A4.1 IMPLEMENTED — NATIVE VERIFICATION PENDING (2026-10-15):**
+Pinned the exact candidate checkpoint SHA256
+`0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88`
+and effective signed integer weight SHA256
+`1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b`.
+The new snapshot generator checks current 50k/10k dataset provenance,
+compiles actual learned signed24 weights through unchanged P06/P03,
+compares PyTorch/dense integer/packed replay/LogicalChip for 26-step
+frames, then records endian-defined P03 words and hashes. **These
+streams are not the A53/DDR full-page ABI or an FPGA run.**
+[Current A4 native verification instructions](docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md).
 
 **Official sequential development plan:**
 
