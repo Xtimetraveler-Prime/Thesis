@@ -72,7 +72,15 @@ preflight and initial optimizer smoke on 2026-10-13.** The smoke's
 so it does not establish meaningful learning. A3.4 adds a bounded
 256-TRAIN/128-validation, two-epoch learning-activity pilot with
 quantized-weight, surrogate-gradient and per-class spike diagnostics.
-**Its native verification is pending; full MNIST training has not run.**
+**A3.4 pilot native verification is now user-accepted (2026-10-15).**
+The canonical 256/128, two-epoch train-only pilot showed gradients in
+both layers and integer-weight changes (4,864 input→hidden; 105
+hidden→output). Pilot validation rose 10.16%→21.09%, but **77/128
+(60.16%)** final validation cases still emitted zero output spikes,
+biasing the tie-break toward class 0. The activity gate permits the
+first unchanged full 50k/10k training experiment; the **60% full
+validation GO criterion is not yet met or assessed**. No full MNIST
+training or candidate checkpoint has been produced at this point.
 Validation GO/NO-GO criterion
 was set at 60% before any dataset evaluation. Test labels stay sealed;
 no accuracy, P07 execution or KV260 power/energy claim is made.
