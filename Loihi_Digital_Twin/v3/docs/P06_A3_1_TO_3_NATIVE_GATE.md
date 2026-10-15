@@ -115,6 +115,88 @@ and the 100% all-silent synthetic output motivates an explicit *bounded
 real-data learning-activity pilot* before full eight-epoch fitting.
 This early gate alone does NOT accept P06-A3.
 
+## 2026-10-15 P06-A3.4 native learning pilot — USER ACCEPTED
+
+The user reported native pytest PASS and pasted the complete actual canonical
+train-only 256/128, 2-epoch pilot report. Status is
+`P06_A3_PILOT_STATUS=GO_TO_CONTROLLED_FULL_TRAIN`; no diagnostic failure
+reasons; official MNIST test stays `SEALED`. This accepts **only** the
+learning-activity gate, not full-MNIST training or validation performance.
+
+- Verified freeze metadata match accepted 2026-10-13 split:
+  train indices SHA256 `1cbcb0b2bf481958d6c917ea6d70fa44a20839406f0c824540f8e691edfdd851`,
+  validation SHA256 `3b9520013f30742c3818f55024ea39e3e0632113c487c589fdfbb73c7d274831`.
+- Pre-training 128-image pilot validation: accuracy `0.1015625`;
+  silent `8/128 = 0.0625`; mean cross entropy `12.66766499322431`;
+  mean output spikes/image `16.125`.
+- Epoch 1, 256 train: accuracy `0.109375`; 128 validation:
+  accuracy `0.1171875`, silent `87/128 = 0.6796875`,
+  mean CE `2.8762597756242765`.
+- Epoch 2, 256 train: accuracy `0.19921875`; 128 validation:
+  accuracy `0.2109375`, silent `77/128 = 0.6015625`,
+  mean CE `2.713536458834782`, output spikes/image `1.3203125`.
+- Gradient probe: **14,816** nonzero input→hidden gradient elements and
+  **320** nonzero hidden→output elements; finite in both layers.
+- Exported signed integer synapse changes: **4,864** input→hidden and
+  **105** hidden→output.
+- Effective integer weights SHA256 before:
+  `9712bfc2fa500764b34b1a78e6e7f6cd13031cbeaf57cd6818ce02860096fc7d`;
+  after:
+  `a27543a30c03522a7b5ec57cb36781b2c89f55aa09064da8215df0f97fc4bc84`.
+- At epoch 2, predicted class histogram
+  `[77,6,9,7,18,8,2,0,1,0]`; this is dominated by class 0 because
+  all-silent outputs predict 0 by the **accepted** lowest-index tie rule.
+
+**Interpretation:** forward and gradients are active, quantized weights
+change in both layers, and some validation examples spike. The validation
+accuracy increases above its ~10% pilot baseline, but **60.16%** of
+validation cases remain all-silent. No claim that training will reach
+the predeclared **60% full validation GO floor**, that this small pilot
+estimates final MNIST accuracy, or that the pilot demonstrated robust
+classification. It establishes sufficient *mechanical training activity*
+to attempt the **unchanged predeclared full-data baseline**, with separate
+validation accept/reject afterward.
+
+### Next independent experimental gate — full canonical training trial
+
+Use the already accepted A3.1–A3.4 code and the original predeclared
+`seed=20261013, epochs=8, batch=64, lr=0.05, surrogate_width=16`
+profile, unchanged, on the verified **50,000 canonical training /
+10,000 validation** split. The published test `t10k*` remains sealed.
+Create a fresh candidate directory (never overwrite a previous run):
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p06-lif-feasibility
+git pull --ff-only origin agent/v3-p06-lif-feasibility
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+set -o pipefail
+
+PYTHONPATH="$PWD/src" python scripts/p06_a3.py --train \
+  --data-dir data/mnist_raw \
+  --output-dir artifacts/p06_a3_candidate_seed20261013 \
+  --seed 20261013 --epochs 8 --batch-size 64 \
+  --learning-rate 0.05 --surrogate-width 16 \
+  2>&1 | tee /tmp/v3_p06_a3_full_training.log
+
+PYTHONPATH="$PWD/src" python scripts/p06_a3.py --validate-candidate \
+  --output-dir artifacts/p06_a3_candidate_seed20261013
+```
+
+Expected completion markers: `P06_A3_TRAINED_CANDIDATE_SAVED=1`,
+`P06_A3_VALIDATION_BEST=...`, `P06_A3_VALIDATION_GO=True/False`,
+`P06_A3_OFFICIAL_TEST_STATUS=SEALED` and
+`P06_A3_CANDIDATE_INTEGRITY_PASS=1`.
+**No GO is assumed before running**. If best validation accuracy <0.60
+report NO-GO, retain the manifest/log and do not open the official test.
+Both success/failure results are valid research outcomes; do not silently
+change settings or call a validation accuracy "test accuracy".
+P06-A3 and P06-A4 remain open until their respective gates are accepted.
+
+---
+
 ## NEW next verification gate: P06-A3.4 learning-activity pilot
 
 User-supplied training-only archive integrity and the earlier computational
