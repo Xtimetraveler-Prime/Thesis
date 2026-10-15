@@ -124,7 +124,7 @@ confirmed the native A2.5 verification and explicitly authorized
 was not pasted). No actual MNIST training, official test-set evaluation,
 or physical inference has occurred.
 
-### P06-A3 — Train and select compact network on train/validation only [A3.1–A3.4 PILOT ACCEPTED / FIRST FULL TRIAL NEXT]
+### P06-A3 — Train and select compact network on train/validation only [TRAINED CANDIDATE GO REPORTED / CHECKPOINT RELOAD NATIVE PENDING]
 
 Pin MNIST source, original dataset file hashes, train
 split/held-out validation split and preprocessing; pin
@@ -183,7 +183,18 @@ batch64, surrogate width16. No official test use or tuning changes
 before its first completed outcome. See
 `P06_A3_1_TO_3_NATIVE_GATE.md`.
 
-### P06-A4 — Byte-precise deployment + freeze [PLANNED]
+**2026-10-15 full-data candidate update:** User supplied the completed
+eight-epoch first trial `candidate_manifest.json` with epoch 8
+selected, 50k train accuracy **95.34%**, 10k held-out validation
+accuracy **94.39%**, 2/10k validation silent outputs, and
+`candidate_go=True` against the predeclared **60%** threshold.
+Official MNIST test set remains `SEALED / NOT READ`. This is a
+user-provided report of a checkpoint, NOT assistant-verification
+of the `.pt` file. Native `--validate-candidate` checksum/reload
+confirmation is an explicit A4 entry gate. Full record:
+`P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
+
+### P06-A4 — Byte-precise deployment + freeze [A4.1 SOFTWARE WORD SNAPSHOT COMMITTED / NATIVE PENDING]
 
 Map the **trained**, quantized network through the real
 P06 compiler into P03/DDR 512 KiB records. Prove
@@ -197,6 +208,22 @@ schema, training recipe, split, image normalization
 and encoder, execution timesteps, reset/readout and
 evaluation protocol **before unsealing the official
 10,000-image test**. No golden P05 edits.
+
+**P06-A4.1 initial implementation (2026-10-15):** The new
+`p06_a4_snapshot.py` pins the exact first trained checkpoint and
+exported integer weight SHA256, rechecks canonical split hashes,
+compiles actual learned weights through accepted P06/P03,
+checks 42 compartments, 784 external axons and image banks,
+and runs exact full-26-tick PyTorch, independent dense integer,
+independent packed hardware-word replay, and `LogicalChip`
+differential traces on synthetic + three held-out validation
+frames. Only after parity does it create reproducible little-endian
+logical word streams and SHA256 manifests. This is **not** a
+P05 physical DDR context record or working board inference.
+Checkpoint integrity, trained-image compilation, parity traces,
+and snapshot hashes require native verification before A4.1
+can be user-accepted. Official test-set remains sealed.
+See `P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
 
 **P06 compact exit:** versioned training+inference
 reference, reproducible legitimate trained checkpoint,
