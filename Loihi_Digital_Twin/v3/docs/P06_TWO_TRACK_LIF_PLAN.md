@@ -124,7 +124,7 @@ confirmed the native A2.5 verification and explicitly authorized
 was not pasted). No actual MNIST training, official test-set evaluation,
 or physical inference has occurred.
 
-### P06-A3 — Train and select the compact network on train/validation only [A3.1–A3.3 IMPLEMENTED / NATIVE PREFLIGHT PENDING]
+### P06-A3 — Train and select compact network on train/validation only [A3.1–A3.4 PILOT ACCEPTED / FIRST FULL TRIAL NEXT]
 
 Pin MNIST source, original dataset file hashes, train
 split/held-out validation split and preprocessing; pin
@@ -167,6 +167,21 @@ two-epoch real-data pilot independently checks gradients, changes to
 actual integer weights and non-silent per-class readout before any
 full eight-epoch run. A3.4 requires native user verification. See
 `P06_A3_1_TO_3_NATIVE_GATE.md`; no actual full-MNIST checkpoint exists.
+
+**2026-10-15 next gate:** The user reported A3.4 native pytest PASS and
+pasted its pilot output (`GO_TO_CONTROLLED_FULL_TRAIN`): positive
+finite gradients in both layers; 4,864 input→hidden and 105
+hidden→output exported signed integer weights changed. Small-pilot
+validation went from 10.16% to 21.09% over two epochs, but the final
+validation still had **77/128 (60.16%) all-silent outputs**, resulting
+in heavy class-0 argmax ties. This is enough to pass the bounded
+learning-activity gate, **not** enough to assert MNIST benchmark
+accuracy or likelihood of reaching the predeclared 60% validation
+floor. The next controlled experiment is the originally fixed
+8-epoch, 50k/10k train/validation trial, seed 20261013, Adam 0.05,
+batch64, surrogate width16. No official test use or tuning changes
+before its first completed outcome. See
+`P06_A3_1_TO_3_NATIVE_GATE.md`.
 
 ### P06-A4 — Byte-precise deployment + freeze [PLANNED]
 
