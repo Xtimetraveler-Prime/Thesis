@@ -53,7 +53,7 @@ one real packed **42-neuron, 25,408-synapse,
 with **synthetic test weights**, not trained
 accuracy or physical KV260 inference.
 
-## P06 Track A closeout / entry to P07 (2026-10-17)
+## P06 Track A CLOSED / accepted — entry to P07 (2026-10-17)
 
 **A1/A2/A3 accepted, A4.1 trained host benchmark freeze accepted.**
 The user trained our project-defined 784→32→10 signed24 integer-forward
@@ -74,13 +74,16 @@ one-core image contains **42 compartments, 816 input axons,
 SHA256 and byte counts are frozen in
 [the software benchmark manifest](docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json).
 
-**A4.2 static DDR handoff audit remains the only new native gate:**
-`scripts/p06_a4_freeze.py` uses the already accepted P02.1
-`LTV3CTX1` ABI to build a **524,288-byte initial core-0 DDR record**
-and validate its banks and hashes. The new generator and tests have
-NOT yet been rerun on the user's PC; the final full-record SHA256
-is therefore not yet known. Read
-[the final P06-A4 closeout record](docs/P06_A4_FINAL_CLOSEOUT.md)
+**A4.2 COMPLETED — user-attested native DDR validation PASS (2026-10-17):**
+`scripts/p06_a4_freeze.py` uses the accepted P02.1 `LTV3CTX1`
+ABI to build the **524,288-byte initial core-0 DDR record** and
+checks the banks, snapshot hashes and record digest. The user confirmed
+this DDR gate passed. **The actual full-file SHA256 was not pasted**;
+retrieve it from the existing local binary before P07 deployment.
+The milestone is closed; an explicit DDR-file provenance value remains
+to be recorded in the P07 loading manifest. See
+[the final P06-A4 closeout record](docs/P06_A4_FINAL_CLOSEOUT.md),
+[frozen Track A manifest](docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json),
 and [sealed official-test protocol](docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md).
 
 **P07 is next:** the accepted P05 diagnostic A53 ABI accepts only
