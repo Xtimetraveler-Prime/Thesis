@@ -475,30 +475,32 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P07-A3.3 status (updated 2026-10-17)
+## Immediate next step / P07-A4 pre-unseal status (updated 2026-10-17)
 
-**P06 Track A, P07-A1, P07-A2, P07-A3.1, and P07-A3.2
-are user-accepted.** A3.2 physically ran exactly 16 canonical
-TRAIN-derived held-out validation images on the KV260 using
-autonomous Cortex-A53→PL execution. The user supplied
-`P07_A3_VALIDATION_ACCURACY=15/16`,
-`P07_A3_VALIDATION_SILENT=0/16`,
-`P07_A3_PHYSICAL_VALIDATION_EXACT=1`, and
-`P07_A3_PHYSICAL_GATE_PASS=1`. The lone error
-was image 32157, truth 3 predicted 9; FPGA output and
-frozen model matched exactly. Physical mailbox SHA256:
-`f467427dbb6c35a6dae0e1b94f291c278e84f337ce8a9b0d38ddce546404f6d9`.
-This 93.75% **small diagnostic validation subset** must
-not be presented as 10k validation accuracy or official
-TEST accuracy. See `P07_A3_2_PHYSICAL_ACCEPTANCE.md`.
+**P07-A1 through P07-A3.3 accepted**, with the final A3.3
+KV260 physical ten-launch validation diagnostic confirmed by the user:
+**116/128** correct, **0/128** silent, exactly matched software
+oracle for all primary/repeat runs, **2/2** byte-identical
+cold-start repeat result mailboxes, and
+`P07_A3_3_PHYSICAL_GATE_PASS=1`.
+The 90.625% figure is TRAIN-derived held-out validation
+accuracy, **NOT** canonical official TEST accuracy. See
+`P07_A3_3_PHYSICAL_ACCEPTANCE.md`.
 
-**P07-A3.3 now IMPLEMENTED / PENDING independent user native
-and physical acceptance**: 128 prespecified validation
-images in 8×16 primary batches, plus 2 independently rebooted
-repeat A53 launches of the first/last batch. Ten numerical
-oracle passes and repeat mailbox byte equality are required
-before any new score is accepted. Exact protocol, immutable
-selection and negative tests are in
-`P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`. Official
-canonical MNIST TEST remains **SEALED**. P08-A and
-scaled Track B remain separate, not yet accepted.
+**Next: P07-A4.1 protocol freeze and native unseal safety.**
+The prespecified primary population is the **full 10,000-image
+original-order canonical t10k TEST**. Existing 16-frame
+autonomous A53 batch limitations imply **625 separately
+launched/rebooted FPGA batches** if firmware stays unchanged.
+This is a major physical feasibility cost, not already
+completed work. Exact source archive MD5s, provenance,
+selection, failure denominator, no retuning, independent
+hardware parity checks and scoring policies are committed in
+`P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`. All new native
+unit gates use synthetic IDX data and leave official TEST
+**SEALED / NOT READ**. Do not download/open t10k until
+independent A4.1 user acceptance and an explicit executable
+physical run-budget decision. A future separately versioned
+board-local streaming facility may reduce this overhead
+without altering the frozen study unit, but is not assumed.
+P08-A and Track B remain independently gated.
