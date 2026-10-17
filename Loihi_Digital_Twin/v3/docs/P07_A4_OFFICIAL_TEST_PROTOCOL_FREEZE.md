@@ -2,8 +2,8 @@
 
 **Precommitted:** 2026-10-17 **BEFORE** opening, downloading, staging,
 scoring or physically running any `t10k` test sample for this
-project. **Official TEST remains SEALED** at the end of this document
-authoring and A4.1 native implementation. No measured TEST result
+project. **A4.1 user-native accepted. Official TEST remains SEALED**
+through the A4.2 persistent engineering extension. No measured TEST result
 is present. Development branch
 `agent/v3-p07-a-784-axon-streaming`; do not merge without approval.
 
@@ -146,34 +146,59 @@ preapprove or silently substitute such a reduced run.
   separately. Hardware programming/boot/staging
   overhead is a separate setup cost, never hidden.
 
-## Required acceptance stages
+## Required acceptance stages — 2026-10-17 approved amendment BEFORE unseal
 
-**A4.1 — FREEZE and independently verify (CURRENT):**
-Commit this full-10k protocol, canonical MD5, immutability/
-no-skip logic, 625-batch hardware feasibility gate, mock
-dataset parsing and no-unseal Python tests. CI pass does not
-open official test data.
+This amendment changes **the implementation mechanism and phase numbering**,
+**not the frozen study population**. A4.1 native full-TEST protocol review
+has been user-accepted. User approved the persistent A53/DDR application
+direction on 2026-10-17, still before opening any official TEST file.
+The original primary 10000-image order, checkpoint, pixel encoder,
+timestep/oracle semantics and failure denominator remain unchanged.
+The original 625-reboot path is the **validated A2 implementation
+baseline**. No one-launch persistent FPGA result is yet claimed.
 
-**A4.2 — Authorize explicit unseal/data provenance:**
-Only after user accepts A4.1 and 625-launch feasibility
-(or formally versions an alternative pretest protocol).
-Execute *explicit* test-only archive download and
-native manifest/importer integrity gate, pin observed
-SHA256; never let test labels affect checkpoint/hardware
-design. No GitHub CI should fetch MNIST TEST.
+**A4.1 — COMPLETE / USER NATIVE ACCEPTED (2026-10-17):**
+Full original-order 10000 TEST protocol committed, exact official
+archive MD5s pinned, sealed-source synthetic-only regressions passed,
+manual 625-launch feasibility constraint declared. `--review`
+returns SEALED and cannot download TEST.
 
-**A4.3 — Complete FPGA physical primary population:**
-Reproduce exact per-index records and run every sample
-with the accepted hardware; strict first-divergence gate
-and evidence ledger for each batch. Do not start until
-hardware scheduling/dataset unseal gates clear.
+**A4.2 — NEW: persistent A53 inference infrastructure,
+official TEST remains SEALED:**
+- **A4.2a (IMPLEMENTED / CI NATIVE PASS, USER NATIVE GATE PENDING):**
+  distinct versioned `P07A4P01` 256B descriptor + 1568B
+  immutable mapping, 8MiB raw image DDR staging, 1MiB
+  compact result journal, independent little-endian
+  Python/C11 CRC/overflow/digest/record parity and 1/16/128/10000
+  synthetic capacity tests, plus a validation-only native stage
+  CLI and inspector. See `P07_A4_2_PERSISTENT_DDR_DESIGN.md`.
+- **A4.2b (NOT YET IMPLEMENTED):** separate new persistent
+  bare-metal A53 application using the unchanged accepted
+  P07-A2 per-image neural runtime and existing accepted FPGA,
+  new safe journal-progress/failure storage, compiled
+  with a **new** ELF identity. Do not modify the A2
+  firmware, P03 arithmetic or trained checkpoint.
+- **A4.2c (NOT YET PHYSICALLY RUN):** independent KV260 acceptance
+  for deterministic synthetic and TRAIN-derived 16/128/larger
+  validation corpora including full reset, numerical parity,
+  cold-launch repeatability and fault/error propagation
+  with raw physical first-mismatch evidence.
 
-**A4.4 — Independent final scoring and closeout:**
-Verify every run, original-order 10k label alignment,
-all raw evidence and correct denominator before
-calculating official physical accuracy; publish failures
-and comparability limitations without retuning.
+**A4.3 — LATER: independently authorize official TEST unseal and
+source provenance:** only after all A4.2 physical native gates
+pass and a realistic physical dataset run procedure is frozen.
+Explicit `--i-accept-unseal` TEST archive download, strict
+canonical MD5/IDX and observed SHA256 and exactly original-order
+full 10000 test-image staging. A4.1 precommit binds the sample
+population; no hardware improvements may change it.
 
-The first failed acceptance condition halts this phase
-until separately investigated. **There is no accepted
-P07-A4 official test score yet.**
+**A4.4 — LATER: full original-order 10000-image physical
+evaluation and independent accuracy closeout:** require
+complete evidence for every image and entire inference
+numerical parity at the declared observability boundary,
+terminal status, failures and 10000 exact original-order
+labels. Release full score only after the complete
+population is independently verified; no retuning.
+
+**There is no accepted P07-A4 physical persistent result or
+official TEST score. The canonical TEST remains SEALED/NOT READ.**
