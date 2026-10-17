@@ -1,8 +1,11 @@
 # P07-A4.2a native gate — persistent DDR transport prototype
 
-**Status 2026-10-17:** Python/C11 wire prototype **IMPLEMENTED, CI PASS**;
-**user-native independent verification PENDING**. P07-A4.2b A53 ELF
-and P07-A4.2c KV260 persistent physical execution NOT BUILT / NOT RUN.
+**Status 2026-10-17:** Python/C11 DDR wire prototype **CLOSED /
+USER NATIVE ACCEPTED**. P07-A4.2b persistent A53 source,
+portable C11 tests and isolated Vitis build scripts are
+implemented/CI-green; **new user Vitis ELF build PENDING**.
+P07-A4.2c physical XSDB gate tools are implemented/CI-green,
+but persistent KV260 inference is **NOT PHYSICALLY RUN**.
 Full canonical 10k MNIST **TEST remains SEALED**.
 Branch `agent/v3-p07-a-784-axon-streaming`, do not merge without
 user approval.
@@ -128,3 +131,11 @@ ELF and P03 bitstream remain regression baselines.
 Only after passing A4.2c can A4.3 explicitly unseal the frozen
 full 10000 canonical MNIST TEST. No official image, label
 or official score has been consulted by this work.
+
+## Recorded user-native acceptance (2026-10-17)
+
+The user explicitly reported A4.2a was verified.
+A4.2b implementation is now available; see
+`P07_A4_2B_2C_PERSISTENT_GATE.md` for next native
+C11/Vitis ELF and subsequent physical-gate commands.
+No official TEST source files have been opened.
