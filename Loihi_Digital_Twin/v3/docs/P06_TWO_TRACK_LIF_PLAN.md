@@ -475,24 +475,30 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P07-A3 status (updated 2026-10-17)
+## Immediate next step / P07-A3.3 status (updated 2026-10-17)
 
-**P06 Track A, P07-A1 and P07-A2 are user-accepted.**
-P07-A2's user-reported actual KV260 physical run achieved
-`P07_A2_PHYSICAL_TRACES_EXACT=1` with three deterministic sample
-frames and full selected-frame 26×42 compartment traces.
-The frozen DDR full-file SHA256 is
-`9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955`;
-the frozen compiler fingerprint is
-`e612a971cda11fae3f1be215c0ca3ed7de7b2af7339446e926ce559658db2f7f`.
-See `P07_A2_FINAL_ACCEPTANCE.md`.
+**P06 Track A, P07-A1, P07-A2, P07-A3.1, and P07-A3.2
+are user-accepted.** A3.2 physically ran exactly 16 canonical
+TRAIN-derived held-out validation images on the KV260 using
+autonomous Cortex-A53→PL execution. The user supplied
+`P07_A3_VALIDATION_ACCURACY=15/16`,
+`P07_A3_VALIDATION_SILENT=0/16`,
+`P07_A3_PHYSICAL_VALIDATION_EXACT=1`, and
+`P07_A3_PHYSICAL_GATE_PASS=1`. The lone error
+was image 32157, truth 3 predicted 9; FPGA output and
+frozen model matched exactly. Physical mailbox SHA256:
+`f467427dbb6c35a6dae0e1b94f291c278e84f337ce8a9b0d38ddce546404f6d9`.
+This 93.75% **small diagnostic validation subset** must
+not be presented as 10k validation accuracy or official
+TEST accuracy. See `P07_A3_2_PHYSICAL_ACCEPTANCE.md`.
 
-**P07-A3 is active.** A3.1 prepares the first sixteen source indices
-in the already-frozen canonical training-derived validation order,
-with SHA-bound input frames, separate labels, and the unchanged P07-A2
-A53/FPGA physical ABI. CI host-native tests pass; independent user
-A3.1 and A3.2 physical verification are pending. This is a
-**diagnostic 16-image subset**, not an unbiased estimate of 10k
-validation accuracy. **Official MNIST TEST remains SEALED.**
-See `P07_A3_VALIDATION_GATE.md`. P06-B1/B2 are deferred until
-P08-A physical baseline acceptance.
+**P07-A3.3 now IMPLEMENTED / PENDING independent user native
+and physical acceptance**: 128 prespecified validation
+images in 8×16 primary batches, plus 2 independently rebooted
+repeat A53 launches of the first/last batch. Ten numerical
+oracle passes and repeat mailbox byte equality are required
+before any new score is accepted. Exact protocol, immutable
+selection and negative tests are in
+`P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`. Official
+canonical MNIST TEST remains **SEALED**. P08-A and
+scaled Track B remain separate, not yet accepted.
