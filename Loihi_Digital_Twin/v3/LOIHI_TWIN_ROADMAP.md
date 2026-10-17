@@ -1584,30 +1584,32 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17):** P07-A1 and P07-A2 **CLOSED /
-USER-ACCEPTED**. P07-A3.1 and P07-A3.2 **CLOSED / USER-ACCEPTED**
-after real KV260 autonomous trained inference on 16 canonical
-TRAIN-derived validation frames: **15/16 correct (93.75%)**,
-0/16 silent; all 16 per-timestep output spike trains and routes
-were identical to frozen software replay, and the selected
-26×42 compartment hardware traces matched frame 0.
-`P07_A3_PHYSICAL_VALIDATION_EXACT=1` and
-`P07_A3_PHYSICAL_GATE_PASS=1`. User-recorded mailbox SHA256
-`f467427dbb6c35a6dae0e1b94f291c278e84f337ce8a9b0d38ddce546404f6d9`.
-The one incorrect digit (source image 32157, 3→9)
-was identical to the software model's prediction.
+**Status (2026-10-17):** P07-A1, P07-A2, P07-A3.1, P07-A3.2,
+and **P07-A3.3 CLOSED / USER-ACCEPTED**, most recently on actual
+KV260 with the precommitted 128-image TRAIN-derived validation
+diagnostic and **ten** independent A53 launches (eight primary,
+two repeats). The independent physical verifier reported
+`P07_A3_3_VALIDATION_CORRECT=116/128` (**90.625%** diagnostic
+validation accuracy), 0/128 silent, ten/ten numerical and
+physical run-log PASS, and **2/2 byte-identical cold-start
+repeat mailboxes**. The earlier A3.2 first sixteen images gave
+15/16 correct; they are included in the 128, so not an
+independent 144-image validation corpus. See
+`docs/P07_A3_3_PHYSICAL_ACCEPTANCE.md`.
 
-**P07-A3.3 IMPLEMENTED / USER NATIVE + TEN-RUN PHYSICAL VERIFICATION
-PENDING.** The immutable protocol preselects the first 128 canonical
-TRAIN-derived validation source IDs, eight primary 16-frame batches
-and two repeat launches of batches 0/7 after board reboots.
-Exact 10-run P03 oracle parity and repeat mailbox equivalence are
-required *before* diagnostic scoring. The first 16 overlap
-already-seen A3.2 samples; no independent official TEST accuracy is
-claimed. See `docs/P07_A3_2_PHYSICAL_ACCEPTANCE.md` and
-`docs/P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`.
-Official MNIST TEST remains **SEALED**. P08-A power/throughput
-and scaled Track B results remain pending.
+**P07-A4.1 IMPLEMENTED / USER NATIVE PRE-UNSEAL VERIFICATION PENDING.**
+The precommitted official **full canonical 10,000-image TEST**
+protocol preserves original t10k IDX order, accepted Track A
+weight/compiler/DDR identities, no retuning, one board result
+and full label provenance per image; scoring remains sealed.
+Accepted current A53 wire format handles **16 images per launch**,
+implying **625 separately rebooted/JTAG-launched batches** for
+a full unchanged-firmware device evaluation. This hardware
+run-budget feasibility must be addressed **before test-data
+unsealing**; a reduced population is NOT silently selected.
+See `docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`.
+**Official TEST is SEALED / NOT READ.** No official TEST
+accuracy, P08-A performance/power, or Track B result is claimed.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
