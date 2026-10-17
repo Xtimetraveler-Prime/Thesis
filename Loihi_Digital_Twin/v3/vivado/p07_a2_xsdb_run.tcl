@@ -11,6 +11,17 @@ set timeout 900
 if {$argc == 4} {set timeout [lindex $argv 3]}
 if {$timeout < 10 || $timeout > 7200} {error "P07-A2 timeout must be 10..7200"}
 if {![file exists $elf]} {error "P07-A2 ELF missing"}
+# The initial 2026-10-17 ELF built successfully but used the wrong
+# trace timestep context. REFUSE its execution even if XSDB could load it.
+if {[catch {exec grep -aFq "P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX" $elf}]} {
+    error "P07-A2 refusing stale pre-trace-fix ELF; rebuild from latest branch"
+}
+if {[file exists $output] || [file exists "$output.partial"]} {
+    error "P07-A2 refusing to overwrite existing physical evidence output"
+}
+if {[file dirname $elf] eq [file dirname $output]} {
+    puts "P07-A2 note: keep ELF and physical evidence artifacts independently immutable"
+}
 proc physical_target {} {
     foreach name {PSU APU} {
         if {![catch {targets -set -filter "name =~ \"$name\""}]} {return}
