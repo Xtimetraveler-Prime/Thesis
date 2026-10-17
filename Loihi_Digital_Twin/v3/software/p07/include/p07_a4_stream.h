@@ -69,6 +69,8 @@ int p07_a4_make_ingress(const p07_a4_descriptor *verified,
  * Packer computes 10 spike counts, readout and per-tick 10-bit mask
  * from binary output_spikes; no labels supplied to hardware.
  */
+/* Raw IEEE CRC32, identical to zlib.crc32; used for raw pixel provenance. */
+uint32_t p07_a4_crc32(const uint8_t *source, size_t bytes);
 int p07_a4_pack_result(const p07_a4_compact_result *src,
                        uint8_t *dst, size_t dst_bytes);
 int p07_a4_validate_result(const uint8_t *record, size_t bytes,
