@@ -1,10 +1,81 @@
 # P07-A2 — Autonomous A53 frame runtime / first physical inference candidate
 
 **Branch:** `agent/v3-p07-a-784-axon-streaming`.
-**Status:** IMPLEMENTATION CANDIDATE; CI HOST/NATIVE-C ACCEPTED AS TESTED,
-**USER VITIS/XSDB/KV260 VALIDATION PENDING**. P07-A1 was separately
-user-accepted on 2026-10-17 (see `P07_A1_FINAL_CLOSEOUT.md`).
-Do not merge until user explicitly approves.
+**Status:** P07-A1 USER-ACCEPTED. P07-A2 **USER VITIS BUILD GATE PASSED**
+on 2026-10-17, as evidenced in `P07_A2_NATIVE_BUILD_ATTESTATION.md`;
+**XSDB/KV260 PHYSICAL TRACE GATE PENDING**. The first build's ELF has
+been **superseded** by the mandatory live-scheduler-timestep trace fix.
+The corrected source must be rebuilt to a fresh ELF before programming
+the board. No merge until the user explicitly approves.
+
+
+## 2026-10-17 native build outcome and corrected physical admission
+
+The user's successful Vitis build produced the original standalone
+`p07_a2_board.elf` SHA-256
+`64601cc0ea491f9ae3e3ba8287cd9d52640b8c1d12273e8c8601c1f1aeac4c96`
+using accepted routed XSA SHA-256
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+It passed the Vitis build and DDR program-headers audit.
+
+**STOP: do not execute that original ELF.** Source review uncovered the
+board trace-reader using an unbound static `p03_rt` rather than the live
+per-frame P03 runtime. It would record all 26 timestep samples into the
+timestep-zero full-trace slot. The fix binds the actual runtime object
+and has distinct firmware identity:
+`P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX`.
+The build shell **and** XSDB launch both reject the stale identity.
+
+For the first device gate, after pulling the current P07 branch and
+re-running native tests, create the deterministic three-image batch in
+the earlier section. Rebuild into a **new** absolute, unique
+`P07_A2_BUILD_DIR`, using the known accepted XSA. Repeat the same build
+command earlier but use a fresh timestamp:
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+export P07_A2_XSA="$P03_DIAG_REPORTS/p03_2_ps_mmio.xsa"
+export P07_A2_XSA_SHA256=52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f
+export P07_A2_BUILD_DIR="/tmp/v3_p07_a2_tracefix_$(date +%Y%m%dT%H%M%S)"
+bash scripts/build_p07_a2.sh
+```
+
+The new ELF SHA-256 is a **new, distinct identity**, which must be
+collected. Native success marker is
+`P07_A2_VITIS_NATIVE_GATE_PASS=1`.
+
+Once the corrected rebuild and batch creation pass, use the guarded
+physical gate script instead of manually repeating independent XSDB
+commands. This script checks the XSA/bitstream/ELF source equivalence
+against the checked-out branch; validates P07 batch and immutable DDR
+hashes; refuses an existing evidence directory; checks the live FPD128
+bus width; stages/readbacks the exact bytes; programs the *accepted*
+P03.2c bitstream; launches the A53 **once**; captures the entire 64KiB
+mailbox; and runs the software first-divergence comparison.
+
+**Requires the KV260 be freshly rebooted into the accepted JTAG-owned,
+bare-metal, non-Linux DDR test environment.** These steps halt A53
+processors, overwrite 0x40000000..0x43FFFFFF, and require a reboot
+afterward whether they pass or fail. Never run while Linux is actively
+using this DDR.
+
+```bash
+export P07_A2_BATCH_DIR="$PWD/artifacts/p07_a2_batch3_v1"
+export P07_A2_RUN_DIR="/tmp/v3_p07_a2_physical_$(date +%Y%m%dT%H%M%S)"
+export P07_A2_CONFIRM_KV260_DDR_OVERWRITE=YES
+bash scripts/run_p07_a2_physical.sh
+```
+
+If the board has not been rebooted or physically prepared with the
+accepted P03.2c boot/FPD128 configuration, do not set the overwrite
+confirmation flag; first restore that established board test state.
+Successful physical end markers:
+`P07_A2_KV260_STATUS=TERMINAL_SUCCESS_UNVERIFIED_NUMERICS`,
+`P07_A2_PHYSICAL_TRACES_EXACT=1` and
+`P07_A2_GATE_FULL_PHYSICAL_PASS=1`. These MUST be obtained from the
+**real XSDB mailbox**, not inferred from a build log. If the first
+failure occurs, stop, preserve the entire evidence directory, reboot
+the KV260, and report the earliest error/trace mismatch.
 
 ## Completed engineering work, NOT a board result
 
@@ -195,7 +266,8 @@ arithmetic, labels or goldens to make it pass.
 
 P07-A2 is **NOT CLOSED** as of this document. GitHub CI and host-native
 C mock validation are a legitimate implementation checkpoint only.
-The next user gate is actual Linux tests and Vitis ELF build. Only
-after those pass should physical KV260 bringup/verification be
-attempted and its output independently accepted. P07-A3 and official
+The first native Vitis ELF gate passed for the original build,
+but the trace-timestep fix supersedes that ELF and requires a clean
+rebuild. After the corrected ELF passes, physical KV260
+bringup/verification must be independently attempted and its output independently accepted. P07-A3 and official
 P07-A4 sealed TEST remain pending. P08-A measurements are deferred.
