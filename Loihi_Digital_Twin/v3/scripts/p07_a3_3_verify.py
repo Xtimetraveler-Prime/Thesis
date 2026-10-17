@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 from loihi_twin_v2.p06_a3_data import load_train_validation
@@ -104,6 +105,16 @@ def main() -> None:
             })
     if len(predictions) != 128 or sum(sum(row) for row in confusion) != 128:
         raise AssertionError("P07-A3.3 skipped or duplicated primary validation images")
+    # Descriptive Wilson 95% interval for this locked 128-validation sample.
+    # It is NOT an official independent TEST confidence interval because the
+    # validation partition previously informed checkpoint selection.
+    z = 1.959963984540054
+    n = len(predictions)
+    phat = correct/n
+    denom = 1.0 + (z*z)/n
+    middle = (phat+(z*z)/(2*n))/denom
+    radius = z*math.sqrt(phat*(1-phat)/n + (z*z)/(4*n*n))/denom
+    interval = [max(0.0,middle-radius),min(1.0,middle+radius)]
     report = {
         "schema": plan["schema"]+"-physical-acceptance-v1",
         "scope": "physical TRAIN-derived validation diagnostic, NOT official TEST",
@@ -112,7 +123,9 @@ def main() -> None:
         "primary_unique_frames": 128, "physical_launches": 10,
         "hardware_frame_executions": 160, "repeat_count": 2,
         "correct": correct, "denominator": 128, "silent": silent,
-        "accuracy": correct/128, "confusion": confusion,
+        "accuracy": correct/128, "descriptive_wilson_95": interval,
+        "confidence_limit": "TRAIN-derived validation subset, tuned model; NOT independent test accuracy",
+        "confusion": confusion,
         "mailbox_sha256_by_run": evidence_hashes, "frames": predictions,
         "official_mnist_test": "SEALED",
     }
@@ -122,6 +135,7 @@ def main() -> None:
             out.write(json_bytes(report))
     print(f"P07_A3_3_VALIDATION_CORRECT={correct}/128")
     print(f"P07_A3_3_VALIDATION_SILENT={silent}/128")
+    print(f"P07_A3_3_DIAGNOSTIC_WILSON95={interval[0]:.6f},{interval[1]:.6f}")
     print("P07_A3_3_PHYSICAL_LAUNCHES_EXACT=10/10")
     print("P07_A3_3_RESTART_REPEATS_BYTE_EXACT=2/2")
     print("P07_A3_3_PHYSICAL_ORACLE_EXACT=1")
