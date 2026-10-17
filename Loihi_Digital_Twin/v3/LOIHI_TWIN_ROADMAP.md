@@ -1377,10 +1377,8 @@ physical acceptance.
   it establishes no P07 hardware or MNIST-trained accuracy.
   No P05/HLS changes or physical MNIST.
 - **P06-A3 — Train and validation-select
-  a compact checkpoint [IN PROGRESS: A3.1–A3.3 INITIAL NATIVE GATE ACCEPTED;
-  A3.4 BOUNDED REAL-TRAIN-ONLY PILOT USER-ACCEPTED 2026-10-15;
-  FIRST FULL TRIAL COMPLETED / VALIDATION GO REPORTED;
-  CHECKPOINT NATIVE HASH RELOAD PENDING].**
+  a compact checkpoint [CLOSED / USER-ACCEPTED SOURCE-GO 2026-10-17;
+  94.39% HELD-OUT VALIDATION / OFFICIAL TEST SEALED].**
   Canonical MNIST dataset/split/hashes,
   reproducible train/validation-only
   optimization, training seed/versions,
@@ -1397,8 +1395,11 @@ physical acceptance.
   floor was declared before real dataset results**. The user has now
   supplied a first 8-epoch full 50k/10k training manifest with best
   validation accuracy 0.9439, best epoch 8, GO=True, 2/10,000 silent,
-  and intact split provenance. These are the user's reported metrics;
-  the checkpoint bytes have NOT been independently reloaded here.
+  and intact split provenance. The later native A4.1 PASS necessarily
+  executed the A3 load_candidate() file SHA256 check, state_dict reload,
+  exported-integer-weight digest and frozen-source guard; thus the
+  accepted A4.1 software run also established host checkpoint reload
+  integrity (separate --validate-candidate marker not pasted).
   User on 2026-10-13 confirmed native pytest PASS and supplied
   `P06_A3_SYNTHETIC_SMOKE_PASS=1`, TRAIN-only archive MD5 and SHA256,
   `P06_A3_DATA_PREFLIGHT_PASS=1`, split seed/size and ordered-index
@@ -1420,14 +1421,14 @@ physical acceptance.
   floor is EXCEEDED by 34.39 percentage points; official test sealed.
   Saved weight-file SHA256 0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88
   and exported integer weights SHA256 1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b.
-  A3 conclusion: validation-model-selection GO is user-attested,
-  but the native --validate-candidate integrity pass marker is
-  still requested as A4 entry evidence. No official test results.
-  See `docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
+  A3 conclusion: user-attested validation GO plus native A4.1
+  checkpoint-integrity prerequisite passed; A3 is CLOSED.
+  Official test still SEALED; no physical accuracy claim.
+  See `docs/P06_A4_FINAL_CLOSEOUT.md`.
 - **P06-A4 — Freeze trained packed
-  benchmark and reproducibility [IN PROGRESS: A4.1 TRAINED
-  P03 WORD SNAPSHOT / FOUR-WAY PARITY CODE COMMITTED;
-  NATIVE ACCEPTANCE PENDING].**
+  benchmark and reproducibility [A4.1 USER-ACCEPTED P03 SOURCE FREEZE;
+  A4.2 EXISTING P02 512KiB DDR RECORD BUILDER COMMITTED;
+  FINAL STATIC DDR BYTE AUDIT USER-NATIVE PENDING].**
   Exact real-weight compiler/exporter
   bank/resource gates, independent
   first-divergence software traces,
@@ -1446,9 +1447,20 @@ physical acceptance.
   26-step PyTorch/dense/packed/LogicalChip traces on synthetic and
   fixed validation frames. Emits explicitly little-endian P03
   logical word streams plus SHA256 manifests only after parity passes.
-  These are NOT full P05 DDR context records, A53 input-streaming
-  software, or on-board KV260 inference. See
-  `docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
+  The user reported native P06_A4_SOFTWARE_SNAPSHOT_PASS=1 and exact
+  five-frame, 26-tick, four-engine parity on the trained weights;
+  that A4.1 software freeze is now ACCEPTED. All six resulting P03
+  word-stream lengths and SHA256 were supplied and are pinned in
+  `docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json`.
+  A4.2 now audits those bytes against user's snapshot and constructs
+  the EXISTING P02.1 complete 524288-byte `LTV3CTX1` static DDR
+  initial core record, checking all dense/sparse banks and header
+  digest. NEW A4.2 code has NOT been natively executed by user;
+  the resulting full-record SHA256 is not yet pinned.
+  See `docs/P06_A4_FINAL_CLOSEOUT.md` and
+  `docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md`.
+  The P02 static record is NOT the old P05 diagnostic payload or
+  a P07 A53 784-input event streamer. No board inference.
 
 ### Track B — Larger DDR-virtualized 784→1000→10
 
@@ -1553,13 +1565,11 @@ tracks. NxTF remains excluded.
   differences in accuracy are not pure
   hardware efficiency comparisons.
 - Proceed in the A→B order stated above.
-  **P06 is not complete today**: P06-A1 and **all of P06-A2**
-  are user-accepted; P06-A3.1–A3.3 are code-implemented but
-  have an accepted canonical TRAIN-only data preflight and computational
-  smoke; A3.4 activity pilot user-accepted. A3 full training now
-  reports 94.39% held-out validation GO with a saved checkpoint;
-  byte integrity and A4.1 native trained-image parity are PENDING.
-  No official test or physical MNIST.
+  **P06-A1–A3 + A4.1 host software benchmark freeze are accepted.**
+  The A4.2 complete 512KiB initial DDR core-record generator is
+  committed; its native byte audit/hash is the remaining narrow
+  source-to-P07 handoff gate. No official test, P07 physical
+  MNIST inference, or P08 energy/performance data exist.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
