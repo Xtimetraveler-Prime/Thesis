@@ -1597,19 +1597,46 @@ repeat mailboxes**. The earlier A3.2 first sixteen images gave
 independent 144-image validation corpus. See
 `docs/P07_A3_3_PHYSICAL_ACCEPTANCE.md`.
 
-**P07-A4.1 IMPLEMENTED / USER NATIVE PRE-UNSEAL VERIFICATION PENDING.**
-The precommitted official **full canonical 10,000-image TEST**
-protocol preserves original t10k IDX order, accepted Track A
-weight/compiler/DDR identities, no retuning, one board result
-and full label provenance per image; scoring remains sealed.
-Accepted current A53 wire format handles **16 images per launch**,
-implying **625 separately rebooted/JTAG-launched batches** for
-a full unchanged-firmware device evaluation. This hardware
-run-budget feasibility must be addressed **before test-data
-unsealing**; a reduced population is NOT silently selected.
-See `docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`.
-**Official TEST is SEALED / NOT READ.** No official TEST
-accuracy, P08-A performance/power, or Track B result is claimed.
+**P07-A4.1 COMPLETE / USER NATIVE PRE-UNSEAL ACCEPTED**
+(2026-10-17). Official **full canonical 10,000-image TEST**
+population, original IDX order, pinned identities, no retuning,
+strict 10000-image denominator and provenance remain unchanged.
+The existing 16-frame A53 batch protocol would require
+**625 board reboots, reprovisioning and ELF launches**. The
+user authorized a **pre-unsealing engineering extension** to
+replace that operational constraint with **persistent, DDR-backed,
+A53-owned inference**, while keeping the already-accepted P03
+FPGA arithmetic, frozen Track A model, encoder, readout and
+reference oracle unchanged.
+
+**New P07-A4.2: PERSISTENT INFERENCE INFRASTRUCTURE — ACTIVE**.
+A4.2a specifies a distinct versioned A53 dataset/result DDR ABI,
+reserving 8 MiB for 10000×784 raw pixels, a 1 MiB compact output
+journal, a frozen 784-axon mapping and immutable P02 master,
+without touching A2/P05 wire formats. First verify Python/C11
+parser parity, capacity/overflow, fingerprints/CRC, independent
+per-image conversion into the accepted P07-A1 format and fail-closed
+native tests. A4.2b creates a **new standalone A53 ELF** that
+executes the unchanged per-image 26-tick neural path repeatedly,
+restores full state and writes one indexed record per image.
+A4.2c stages the new application on the existing accepted
+KV260 FPGA bitstream and proves exact independent
+synthetic/validation numerical equivalence over 16/128 and
+a larger preselected TRAIN-derived population, reset/restart
+behavior, journal integrity and first-error recovery.
+**None of this is yet a physical acceptance claim.**
+
+**P07-A4.3 is the separately authorized official TEST unseal
+and canonical archive provenance gate** only after A4.2
+persistent execution and validation pass. **P07-A4.4**
+physically evaluates all 10000 original-order TEST images,
+preserves complete per-image numerical evidence and separately
+scores the full population. No changed weights, no silent sample
+exclusions, no early peeking. See
+`docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md` and
+`docs/P07_A4_2_PERSISTENT_DDR_DESIGN.md`.
+**Official TEST SEALED / NOT READ**; no official accuracy,
+P08-A power/performance or Track B result is claimed.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
