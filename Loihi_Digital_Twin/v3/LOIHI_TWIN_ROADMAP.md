@@ -1426,9 +1426,8 @@ physical acceptance.
   Official test still SEALED; no physical accuracy claim.
   See `docs/P06_A4_FINAL_CLOSEOUT.md`.
 - **P06-A4 — Freeze trained packed
-  benchmark and reproducibility [A4.1 USER-ACCEPTED P03 SOURCE FREEZE;
-  A4.2 EXISTING P02 512KiB DDR RECORD BUILDER COMMITTED;
-  FINAL STATIC DDR BYTE AUDIT USER-NATIVE PENDING].**
+  benchmark and reproducibility [CLOSED / USER-ACCEPTED 2026-10-17:
+  TRAINED P03 SOFTWARE FREEZE + P02 512KiB STATIC DDR NATIVE PASS].**
   Exact real-weight compiler/exporter
   bank/resource gates, independent
   first-divergence software traces,
@@ -1452,11 +1451,13 @@ physical acceptance.
   that A4.1 software freeze is now ACCEPTED. All six resulting P03
   word-stream lengths and SHA256 were supplied and are pinned in
   `docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json`.
-  A4.2 now audits those bytes against user's snapshot and constructs
+  A4.2 audits those bytes against the user's snapshot and constructs
   the EXISTING P02.1 complete 524288-byte `LTV3CTX1` static DDR
   initial core record, checking all dense/sparse banks and header
-  digest. NEW A4.2 code has NOT been natively executed by user;
-  the resulting full-record SHA256 is not yet pinned.
+  digest. User explicitly reported native A4.2 DDR validation PASS
+  on 2026-10-17. The produced full-file SHA256 was not pasted,
+  so its source-frozen metadata remains null; capture it from the
+  pre-existing local artifact before P07 load, never fabricate it.
   See `docs/P06_A4_FINAL_CLOSEOUT.md` and
   `docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md`.
   The P02 static record is NOT the old P05 diagnostic payload or
@@ -1565,11 +1566,13 @@ tracks. NxTF remains excluded.
   differences in accuracy are not pure
   hardware efficiency comparisons.
 - Proceed in the A→B order stated above.
-  **P06-A1–A3 + A4.1 host software benchmark freeze are accepted.**
-  The A4.2 complete 512KiB initial DDR core-record generator is
-  committed; its native byte audit/hash is the remaining narrow
-  source-to-P07 handoff gate. No official test, P07 physical
-  MNIST inference, or P08 energy/performance data exist.
+  **P06 Track A (A1–A4) is CLOSED / USER-ACCEPTED 2026-10-17.**
+  A4.2 completed the static P02.1 512KiB DDR record native audit.
+  Exact DDR full-file SHA256 still needs provenance capture from
+  the user's existing local binary; this does not reopen the
+  accepted numerical/byte-layout gate. Official test remains
+  sealed. P07 physical MNIST inference and P08 physical metrics
+  have not been demonstrated.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
