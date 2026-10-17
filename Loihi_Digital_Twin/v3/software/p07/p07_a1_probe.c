@@ -42,6 +42,37 @@ int main(int argc, char **argv)
         printf("%u %zu %016llx\n", tick, count,
                (unsigned long long)fnv_axons(axons, count));
     }
+    /* Prove fail-before-write behavior with a full-white stimulus: 784
+     * events are legal, 783 available output entries must be rejected. */
+    {
+        uint8_t white[P07_A1_RECORD_BYTES];
+        /* Run capacity checks against whichever stimulus was supplied.
+         * If it contains any spikes, check a deficient buffer at tick t. */
+        (void)white;
+        for (tick = 0; tick < P07_A1_INPUT_TICKS; ++tick) {
+            size_t full_count, out_count = 123u, i;
+            uint16_t untouched[P07_A1_PIXEL_COUNT];
+            int rc;
+            if (p07_a1_tick_events(record, got, tick, axons,
+                                   P07_A1_PIXEL_COUNT, &full_count) != P07_A1_OK)
+                return 6;
+            if (full_count == 0u) continue;
+            for (i = 0; i < P07_A1_PIXEL_COUNT; ++i)
+                untouched[i] = UINT16_C(0xBEEF);
+            rc = p07_a1_tick_events(record, got, tick, untouched,
+                                    full_count - 1u, &out_count);
+            if (rc != P07_A1_BAD_CAPACITY || out_count != 0u)
+                return 7;
+            for (i = 0; i < P07_A1_PIXEL_COUNT; ++i)
+                if (untouched[i] != UINT16_C(0xBEEF)) return 8;
+            break;
+        }
+    }
+    count = 7u;
+    if (p07_a1_tick_events(record, got, 26u, axons,
+                           P07_A1_PIXEL_COUNT, &count) != P07_A1_BAD_TICK ||
+        count != 0u)
+        return 9;
     puts("P07_A1_C_NATIVE_PASS=1");
     return 0;
 }
