@@ -1,7 +1,7 @@
 {
   "schema": "p06-track-a-compact-software-benchmark-freeze-v1",
   "frozen_on": "2026-10-17",
-  "decision": "A4.1 HOST SOFTWARE PARITY USER-ACCEPTED / A4.2 P02 STATIC DDR NATIVE AUDIT PENDING",
+  "decision": "P06 TRACK A HOST SOFTWARE + STATIC P02 DDR GENERATOR ACCEPTED BY USER; P07 PHYSICAL MNIST PENDING",
   "track": "A: compact 784 input x 32 hidden LIF x 10 output LIF; KV260 target",
   "source_branch": "agent/v3-p06-lif-feasibility",
   "checkpoint": {
@@ -102,15 +102,25 @@
     }
   },
   "p02_static_ddr": {
-    "status": "IMPLEMENTED BUT NATIVE AUDIT PENDING",
+    "status": "USER-ATTESTED NATIVE PASS 2026-10-17",
     "abi": "P02.1 LTV3CTX1",
     "context_size_bytes": 524288,
     "file": "core0_initial_p02_ddr_512k.bin",
     "sha256": null,
     "tool": "scripts/p06_a4_freeze.py",
-    "note": "static core context only; NOT A53 P05 diagnostic workload or end-to-end MNIST input streaming"
+    "note": "static core context only; NOT A53 P05 diagnostic workload or end-to-end MNIST input streaming",
+    "sha256_evidence": "The user reported the DDR validation passed but did not paste P06_A4_DDR_SHA256. The produced binary and digest remain local and should be captured from the existing manifest or sha256sum; do not invent or alter the frozen artifact.",
+    "evidence_level": "user-confirmed native A4.2 validation; no pasted pytest log or full DDR hash",
+    "native_acceptance_date": "2026-10-17",
+    "next_step": "Audit and record the generated 512KiB full-file hash as the P07 deployment input, without retraining or regenerating if existing artifact is already verified."
   },
   "physical": "P07 KV260 MNIST inference NOT RUN; no physical accuracy/latency/power claims",
   "test_policy": "Official test partition sealed. Before evaluation freeze full 10k selection, image encoding, readout, per-frame reset, and measurement denominators; no test-driven tuning.",
-  "evidence": "User supplied P06_A4_SOFTWARE_SNAPSHOT_PASS and four-engine five-frame exact parity. New A4.2 static DDR generator tests and hash still require user native verification."
+  "evidence": "A4.1 log (five frames x 26 ticks exact across four engines) supplied by user; A4.2 full DDR static record validation subsequently user-confirmed PASS. New native log and full 512KiB digest were not pasted; P07 must pin that digest to the already generated local artifact.",
+  "closeout": {
+    "milestone": "P06-A4",
+    "status": "COMPLETE / USER ACCEPTED",
+    "date": "2026-10-17",
+    "scope": "host trained checkpoint, P03 four-path exact software parity, P02 512KiB static DDR record validation; no physical PS/PL MNIST inference"
+  }
 }
