@@ -1,0 +1,25 @@
+name: P07-A1 ingress native regression
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-a-784-axon-streaming
+  workflow_dispatch:
+
+jobs:
+  ingress-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python test dependencies
+        run: python -m pip install pytest
+      - name: P07-A1 Python and independent native C regression
+        working-directory: Loihi_Digital_Twin/v3
+        run: |
+          PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+            tests/test_p07_a1_ingress.py \
+            tests/test_p06_a2_input_contract.py
