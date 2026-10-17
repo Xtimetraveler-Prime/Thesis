@@ -1610,7 +1610,7 @@ FPGA arithmetic, frozen Track A model, encoder, readout and
 reference oracle unchanged.
 
 **New P07-A4.2: PERSISTENT INFERENCE INFRASTRUCTURE — ACTIVE**.
-**A4.2a IMPLEMENTED / CI NATIVE PASS / USER NATIVE PENDING.**
+**A4.2a COMPLETE / USER NATIVE ACCEPTED (2026-10-17).**
 A distinct versioned `P07A4P01` dataset descriptor and
 `P07A4R01` progress/result DDR ABI reserve 8 MiB for
 10000×784 raw pixels, a 1 MiB compact 96B/frame output
@@ -1623,17 +1623,34 @@ CRC/overflow/footprint/identity/tamper rejection and
 independently checked staged synthetic/validation
 native files. User-native commands and current test
 markers are in `docs/P07_A4_2A_NATIVE_GATE.md`.
-No new A53 ELF or physical persistent KV260 inference
-has been executed.
-A4.2b creates a **new standalone A53 ELF** that
-executes the unchanged per-image 26-tick neural path repeatedly,
-restores full state and writes one indexed record per image.
-A4.2c stages the new application on the existing accepted
-KV260 FPGA bitstream and proves exact independent
-synthetic/validation numerical equivalence over 16/128 and
-a larger preselected TRAIN-derived population, reset/restart
-behavior, journal integrity and first-error recovery.
-**None of this is yet a physical acceptance claim.**
+**A4.2b IMPLEMENTED / CI C11 NATIVE PASS / USER VITIS A53
+ELF BUILD PENDING:** separate `p07_a4_board.c`, accepted
+`p07_a2_run_frame` reused unchanged with new
+`P07A4P01` input/1MiB `P07A4R01` result journal,
+immutable master and mapping admission, whole dataset
+preflight, selected full trace and fail-first progress
+supervisor. Native tests inject image and journal-write
+faults, reject skipped images and premature terminal
+success; candidate A53 board compiles with C11 vendor
+signature shims. `build_p07_a4.sh` stages an isolated
+new Vitis 2025.2 workspace, exact accepted FPD128 XSA,
+different persistent firmware identity and ELF DDR
+isolation. **The user has NOT YET cross-built this ELF.**
+
+**A4.2c guarded physical HOST tooling IMPLEMENTED /
+FIRST KV260 RUN PENDING:** new dedicated XSDB binary
+stage/readback and one-launch progress polling;
+separate physical runner and independent full
+dataset P03 packed oracle + selected 26×42 hardware
+trace comparator. Native CI checks shell syntax
+and refuses missing explicit DDR-overwrite consent.
+The first stage is deterministic ramp16, then
+previously accepted TRAIN-derived validation128,
+cold-start rerun and a predeclared larger validation
+test. Physical correctness/reproducibility remain
+**UNVERIFIED** until user's KV260 evidence passes;
+do not claim this is one-shot 10000 inference yet.
+Commands in `docs/P07_A4_2B_2C_PERSISTENT_GATE.md`.
 
 **P07-A4.3 is the separately authorized official TEST unseal
 and canonical archive provenance gate** only after A4.2
