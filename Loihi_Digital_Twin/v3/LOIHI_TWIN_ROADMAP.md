@@ -1584,11 +1584,14 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17):** P07-A1 HOST INGRESS IMPLEMENTATION ON
-`agent/v3-p07-a-784-axon-streaming` (NATIVE USER GATE PENDING);
-**P07 PHYSICAL WORK NOT YET STARTED**. See
-`docs/P07_A1_INGRESS_CONTRACT.md` for versioned ABI, negative tests,
-independent C encoder, and local frozen-artifact provenance gate. P06 Track A host/static
+**Status (2026-10-17):** P07-A1 COMPLETE / USER-ACCEPTED, pinned
+real P02 static DDR SHA256 and trained compiler fingerprint. P07-A2
+autonomous A53 C11 scheduler and standalone FPGA application candidate
+implemented on `agent/v3-p07-a-784-axon-streaming`, with native CI
+mock/syntax tests; user Vitis ELF build and physical numerical
+confirmation PENDING. **P07 PHYSICAL TRAINED MNIST INFERENCE NOT YET
+VERIFIED.** See `docs/P07_A1_FINAL_CLOSEOUT.md` and
+`docs/P07_A2_A53_RUNTIME_GATE.md`. Official TEST remains sealed. P06 Track A host/static
 DDR source gates are user-accepted. P07-B starts only after a
 physically measured/accepted P08-A baseline and successful
 P06-B1/B2 larger-model mapping/training.
