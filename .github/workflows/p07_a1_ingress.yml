@@ -1,4 +1,4 @@
-name: P07-A1 ingress native regression
+name: P07-A ingress and A53 policy native regression
 
 on:
   push:
@@ -22,5 +22,6 @@ jobs:
         run: |
           PYTHONPATH="$PWD/src" python -m pytest -q -rs \
             tests/test_p07_a1_ingress.py \
+            tests/test_p07_a2_runtime.py \
             tests/test_p06_a2_input_contract.py \
             tests/test_p05_1_deployment.py
