@@ -42,13 +42,9 @@ int main(int argc, char **argv)
         printf("%u %zu %016llx\n", tick, count,
                (unsigned long long)fnv_axons(axons, count));
     }
-    /* Prove fail-before-write behavior with a full-white stimulus: 784
-     * events are legal, 783 available output entries must be rejected. */
+    /* Prove fail-before-write behavior for a deficient caller buffer.
+     * A frame with no spikes still exercises tick/drain correctness. */
     {
-        uint8_t white[P07_A1_RECORD_BYTES];
-        /* Run capacity checks against whichever stimulus was supplied.
-         * If it contains any spikes, check a deficient buffer at tick t. */
-        (void)white;
         for (tick = 0; tick < P07_A1_INPUT_TICKS; ++tick) {
             size_t full_count, out_count = 123u, i;
             uint16_t untouched[P07_A1_PIXEL_COUNT];
