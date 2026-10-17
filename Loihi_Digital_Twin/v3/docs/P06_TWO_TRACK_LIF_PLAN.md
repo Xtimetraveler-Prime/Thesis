@@ -194,7 +194,7 @@ of the `.pt` file. Native `--validate-candidate` checksum/reload
 confirmation is an explicit A4 entry gate. Full record:
 `P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
 
-### P06-A4 — Byte-precise deployment + freeze [A4.1 SOFTWARE FREEZE ACCEPTED / A4.2 NATIVE DDR AUDIT PENDING]
+### P06-A4 — Byte-precise deployment + freeze [CLOSED / USER-ACCEPTED A4.1 + A4.2, 2026-10-17]
 
 Map the **trained**, quantized network through the real
 P06 compiler into P03/DDR 512 KiB records. Prove
@@ -220,9 +220,9 @@ differential traces on synthetic + three held-out validation
 frames. Only after parity does it create reproducible little-endian
 logical word streams and SHA256 manifests. This is **not** a
 P05 physical DDR context record or working board inference.
-Checkpoint integrity, trained-image compilation, parity traces,
-and snapshot hashes require native verification before A4.1
-can be user-accepted. Official test-set remains sealed.
+Checkpoint integrity, trained-image compilation, parity traces and
+snapshot hashes were subsequently accepted in the user native A4.1
+run, as recorded below. Official test-set remains sealed.
 See `P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md`.
 
 **2026-10-17 acceptance/closeout:** User ran the trained A4.1
@@ -238,13 +238,16 @@ The official 10k MNIST test partition remains sealed. Real
 trained one-core hardware-word image: 42 compartments,
 816 axons, 25,408 synapses, 32 routes.
 
-A4.2's new `p06_a4_freeze.py` invokes the existing P02.1
+A4.2's `p06_a4_freeze.py` invokes the existing P02.1
 `build_initial_ddr_context_record` to produce a versioned
 **512KiB static DDR core context**, verifying every bank and
-record header digest after checking the pinned P03 bytes.
-The new utility has **not yet been run by the user**; its DDR file
-SHA256 must be reported before calling the full static DDR
-record separately accepted. See `P06_A4_FINAL_CLOSEOUT.md`.
+record header digest after checking pinned P03 bytes. On 2026-10-17,
+the user explicitly reported **DDR native validation PASS** and requested
+A4 closeout. Thus both A4.1 software and A4.2 static DDR host
+verification are user-attested accepted. The full record file SHA256
+was not pasted; it can be read without regeneration from the already
+verified local artifact before P07 deploys it. See
+`P06_A4_FINAL_CLOSEOUT.md`.
 The P07 A53 784-axon streamer, board readout, reset and end-to-end
 timing remain wholly unimplemented. The old P05 diagnostic
 header/payload is NOT an executable MNIST inference deployment.
