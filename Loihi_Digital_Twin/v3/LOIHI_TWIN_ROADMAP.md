@@ -1584,26 +1584,30 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17):** P07-A1 **COMPLETE / USER-ACCEPTED**;
-P07-A2 **COMPLETE / PHYSICAL KV260 EXACT-TRACE USER-ACCEPTED**;
-P07-A3.1 **IMPLEMENTED / NATIVE USER VERIFICATION PENDING**. The
-P07-A2 autonomous Cortex-A53/PL application executed the frozen
-project-trained 784→32→10 model on black/white/ramp. Physical terminal
-status was `0x600D600D`; independent first-divergence verification
-reported `P07_A2_PHYSICAL_TRACES_EXACT=1` and
-`P07_A2_GATE_FULL_PHYSICAL_PASS=1`. Per-tick output spike and routing
-evidence matched all three frames, and full 26×42 traces matched the
-selected white frame.
+**Status (2026-10-17):** P07-A1 and P07-A2 **CLOSED /
+USER-ACCEPTED**. P07-A3.1 and P07-A3.2 **CLOSED / USER-ACCEPTED**
+after real KV260 autonomous trained inference on 16 canonical
+TRAIN-derived validation frames: **15/16 correct (93.75%)**,
+0/16 silent; all 16 per-timestep output spike trains and routes
+were identical to frozen software replay, and the selected
+26×42 compartment hardware traces matched frame 0.
+`P07_A3_PHYSICAL_VALIDATION_EXACT=1` and
+`P07_A3_PHYSICAL_GATE_PASS=1`. User-recorded mailbox SHA256
+`f467427dbb6c35a6dae0e1b94f291c278e84f337ce8a9b0d38ddce546404f6d9`.
+The one incorrect digit (source image 32157, 3→9)
+was identical to the software model's prediction.
 
-A3 begins real TRAIN-derived, 10k split held-out **validation-only**
-sample diagnostics using first sixteen fixed validation IDs. Its
-source/label pinning and existing A2 batch ABI are in CI; native
-and physical A3 user validation remain **PENDING**. Official
-MNIST TEST is still **SEALED**. No physical MNIST validation
-accuracy, throughput or energy has yet been reported. See
-`docs/P07_A2_FINAL_ACCEPTANCE.md` and
-`docs/P07_A3_VALIDATION_GATE.md`. P07-B starts only after P08-A
-physical baseline acceptance and P06-B1/B2 separately pass.
+**P07-A3.3 IMPLEMENTED / USER NATIVE + TEN-RUN PHYSICAL VERIFICATION
+PENDING.** The immutable protocol preselects the first 128 canonical
+TRAIN-derived validation source IDs, eight primary 16-frame batches
+and two repeat launches of batches 0/7 after board reboots.
+Exact 10-run P03 oracle parity and repeat mailbox equivalence are
+required *before* diagnostic scoring. The first 16 overlap
+already-seen A3.2 samples; no independent official TEST accuracy is
+claimed. See `docs/P07_A3_2_PHYSICAL_ACCEPTANCE.md` and
+`docs/P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`.
+Official MNIST TEST remains **SEALED**. P08-A power/throughput
+and scaled Track B results remain pending.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
