@@ -62,7 +62,6 @@ def test_physical_one_shot_scripts_pin_new_identity_and_full_evidence():
     assert "compare_trace" in checker
     assert "replay_p03_image" in checker
     assert "load_train_validation" in checker
-    assert "OFFICIAL" not in shell or "TEST" not in shell or True
     assert "--i-accept-unseal" not in shell
     assert "p07_a4_2_verify.py" in shell
 
