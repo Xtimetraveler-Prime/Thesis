@@ -136,7 +136,7 @@ def mutated_header(obj, pos, value):
 
 def test_reject_noncanonical_layout_with_valid_recomputed_crc(native):
     obj=stream.make_stream(bytes(784*2),MAPPING,trace_index=1)
-    for pos in (0,8,12,16,20,24,28,32,36,40,44,48,52,64,68,72,76,
+    for pos in (0,8,12,16,20,24,28,32,36,40,44,52,56,64,68,72,76,
                 80,112,144,251):
         changed=mutated_header(obj,pos,obj.header[pos]^1)
         with pytest.raises(ValueError):
@@ -145,6 +145,17 @@ def test_reject_noncanonical_layout_with_valid_recomputed_crc(native):
         assert native.p07_a4_validate_staging(
             cbuf(changed),len(changed),cbuf(obj.mapping_bytes),1568,
             cbuf(obj.images),len(obj.images),ctypes.byref(desc)) != 0
+    # Trace index is intentionally selectable; only OUT-OF-RANGE values
+    # should be rejected after a valid CRC recomputation.
+    head=bytearray(obj.header)
+    struct.pack_into("<I",head,48,obj.image_count)
+    struct.pack_into("<I",head,252,zlib.crc32(head[:252]))
+    with pytest.raises(ValueError,match="trace"):
+        stream.parse_stream(bytes(head),obj.mapping_bytes,obj.images)
+    desc=Descriptor()
+    assert native.p07_a4_validate_staging(
+        cbuf(bytes(head)),256,cbuf(obj.mapping_bytes),1568,
+        cbuf(obj.images),len(obj.images),ctypes.byref(desc)) != 0
     assert not any(obj.header[144:252])
 
 
