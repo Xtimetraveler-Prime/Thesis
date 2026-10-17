@@ -205,6 +205,11 @@ int main(int argc, char **argv)
                result.dropped_final_packets);
     }
     if (load(argv[2], raw)) return 9;
+    /* Overflow is meaningful only if the frame injects at least one
+     * external spike; select the non-silent user-provided fixture. */
+    if (raw[P07_A1_HEADER_BYTES + P07_A1_MAP_BYTES] == 0u &&
+        load(argv[1], raw)) return 9;
+    if (raw[P07_A1_HEADER_BYTES + P07_A1_MAP_BYTES] == 0u) return 9;
     m.force_overflow = 1;
     code = p07_a2_run_frame(raw, P07_A1_RECORD_BYTES, &driver, &result);
     if (code != P07_A2_BAD_EXECUTION ||
