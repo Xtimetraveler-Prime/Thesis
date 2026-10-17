@@ -1584,20 +1584,26 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17):** P07-A1 COMPLETE / USER-ACCEPTED, pinned
-real P02 static DDR SHA256 and trained compiler fingerprint. P07-A2
-autonomous A53 C11 scheduler and standalone FPGA application candidate
-implemented on `agent/v3-p07-a-784-axon-streaming`, with native CI
-mock/syntax tests. **User Vitis/XSA ELF build PASSED 2026-10-17**;
-initial ELF must be rebuilt after the trace ownership fix before
-physical XSDB execution (see native build attestation). **Physical
-KV260 inference/first-divergence validation PENDING.**
-See `docs/P07_A1_FINAL_CLOSEOUT.md`,
-`docs/P07_A2_NATIVE_BUILD_ATTESTATION.md`, and
-`docs/P07_A2_A53_RUNTIME_GATE.md`. Official TEST remains sealed. P06 Track A host/static
-DDR source gates are user-accepted. P07-B starts only after a
-physically measured/accepted P08-A baseline and successful
-P06-B1/B2 larger-model mapping/training.
+**Status (2026-10-17):** P07-A1 **COMPLETE / USER-ACCEPTED**;
+P07-A2 **COMPLETE / PHYSICAL KV260 EXACT-TRACE USER-ACCEPTED**;
+P07-A3.1 **IMPLEMENTED / NATIVE USER VERIFICATION PENDING**. The
+P07-A2 autonomous Cortex-A53/PL application executed the frozen
+project-trained 784→32→10 model on black/white/ramp. Physical terminal
+status was `0x600D600D`; independent first-divergence verification
+reported `P07_A2_PHYSICAL_TRACES_EXACT=1` and
+`P07_A2_GATE_FULL_PHYSICAL_PASS=1`. Per-tick output spike and routing
+evidence matched all three frames, and full 26×42 traces matched the
+selected white frame.
+
+A3 begins real TRAIN-derived, 10k split held-out **validation-only**
+sample diagnostics using first sixteen fixed validation IDs. Its
+source/label pinning and existing A2 batch ABI are in CI; native
+and physical A3 user validation remain **PENDING**. Official
+MNIST TEST is still **SEALED**. No physical MNIST validation
+accuracy, throughput or energy has yet been reported. See
+`docs/P07_A2_FINAL_ACCEPTANCE.md` and
+`docs/P07_A3_VALIDATION_GATE.md`. P07-B starts only after P08-A
+physical baseline acceptance and P06-B1/B2 separately pass.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
