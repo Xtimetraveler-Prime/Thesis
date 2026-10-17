@@ -3,10 +3,12 @@
 **Recorded:** 2026-10-17
 **Branch for closeout:** `agent/v3-p06-lif-feasibility`
 **Merge target:** `main` (user explicitly authorized).
-**Acceptance scope:** Trained Track A *host software P03 benchmark freeze*
-**USER-ACCEPTED**; the separately generated P02.1 **512KiB static DDR
-context byte hash has NOT yet been natively reported**. P07 cannot
-claim an accepted physical deployment on that basis.
+**Acceptance scope: P06-A4 COMPLETE / USER-ACCEPTED (2026-10-17).**
+The trained Track A host software P03 benchmark and separately generated
+P02.1 **512 KiB initial static DDR context** both passed the user's native
+verification. The 512 KiB record's full-file SHA256 was not pasted and
+must be recorded from the existing local artifact before P07 loads it.
+**This milestone does not establish FPGA MNIST inference or official-test accuracy.**
 
 ## Verified user-supplied evidence (not assistant's independent board run)
 
@@ -71,12 +73,14 @@ The accepted source-level freeze also includes
    `p06_a4_static_ddr_freeze_manifest.json`.
 5. Refuse overwriting any pre-existing freeze directory.
 
-**Evidence limitation:** This extra tool and tests are committed and
-reviewable, but the user's last provided log was from A4.1, NOT A4.2.
-Do not claim native A4.2 PASS or a frozen 512KiB record SHA256 until
-the next command below succeeds on the user's computer.
+**Updated user evidence 2026-10-17:** After the A4.2 command was supplied,
+the user stated **"nice, the DDR validation passed"** and instructed
+P06-A4 closure and merge. Record this as **user-attested native PASS**
+for A4.2, without inventing a test count or printed marker. The explicit
+full-file SHA256 and stdout were not pasted. The existing local record
+must be preserved and its digest captured before P07 deployment.
 
-## One remaining native handoff gate
+## Accepted final A4.2 native gate — reproduction and SHA capture
 
 After the authorized merge to `main`, from user's VS Code terminal:
 
@@ -101,21 +105,32 @@ PYTHONPATH="$PWD/src" python scripts/p06_a4_freeze.py \
   2>&1 | tee /tmp/v3_p06_a4_final_ddr_freeze.log
 ```
 
-Expected: all A4 tests pass (no PyTorch skips) and
-`P06_A4_STATIC_DDR_FREEZE_PASS=1`, `P06_A4_OFFICIAL_TEST_STATUS=SEALED`,
-`P06_A4_P07_A53_INPUT_STREAMING=NOT_IMPLEMENTED`. Record
-`P06_A4_DDR_SHA256=<actual sha>` for the next handoff.
+The user now confirms this A4.2 gate passed; these commands are retained
+for reproduction **in a fresh output directory** only. **Do not rerun
+the generator using an existing output directory: it intentionally
+refuses to overwrite.** To capture the digest of the already generated
+file without modifying it, run:
 
-Once that result is user-confirmed, update the source freeze manifest
-with the actual generated DDR record SHA256. No re-training, optimizer
-tweaks or official MNIST test peeking are authorized.
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+sha256sum artifacts/p06_a4_static_ddr_seed20261013/core0_initial_p02_ddr_512k.bin
+python -m json.tool artifacts/p06_a4_static_ddr_seed20261013/p06_a4_static_ddr_freeze_manifest.json
+```
+
+Expected original generation markers: `P06_A4_STATIC_DDR_FREEZE_PASS=1`,
+`P06_A4_OFFICIAL_TEST_STATUS=SEALED`,
+`P06_A4_P07_A53_INPUT_STREAMING=NOT_IMPLEMENTED`.
+The current source manifest deliberately stores `sha256: null` until the
+user provides the actual recorded digest. This is **artifact provenance
+follow-up**, not an unaccepted computational milestone. Do not retrain,
+change frozen model arithmetic or access official MNIST test data.
 
 **Do not replace this with a P05 diagnostic core table/header**:
 that old P05 ABI's external-input restrictions do not support
 all 784 MNIST input axons. The static P02 record is a memory backing
 artifact, not a runnable A53/PL MNIST application.
 
-## P07-A objective after the remaining preflight
+## P07-A objective after P06-A4 completion
 
 In a NEW development branch from the merged `main`, design and test
 a **versioned, many-axon A53 FPGA inference ABI** to consume the frozen
