@@ -1610,13 +1610,22 @@ FPGA arithmetic, frozen Track A model, encoder, readout and
 reference oracle unchanged.
 
 **New P07-A4.2: PERSISTENT INFERENCE INFRASTRUCTURE — ACTIVE**.
-A4.2a specifies a distinct versioned A53 dataset/result DDR ABI,
-reserving 8 MiB for 10000×784 raw pixels, a 1 MiB compact output
-journal, a frozen 784-axon mapping and immutable P02 master,
-without touching A2/P05 wire formats. First verify Python/C11
-parser parity, capacity/overflow, fingerprints/CRC, independent
-per-image conversion into the accepted P07-A1 format and fail-closed
-native tests. A4.2b creates a **new standalone A53 ELF** that
+**A4.2a IMPLEMENTED / CI NATIVE PASS / USER NATIVE PENDING.**
+A distinct versioned `P07A4P01` dataset descriptor and
+`P07A4R01` progress/result DDR ABI reserve 8 MiB for
+10000×784 raw pixels, a 1 MiB compact 96B/frame output
+journal, one frozen 784-axon mapping and immutable P02
+master, leaving accepted A2/P05 wire files unchanged.
+The Python/C11 native tests already verify exact
+byte-for-byte reconstruction into accepted P07-A1 ingress,
+CRC/overflow/footprint/identity/tamper rejection and
+1/16/128/10000 synthetic corpus capacities plus
+independently checked staged synthetic/validation
+native files. User-native commands and current test
+markers are in `docs/P07_A4_2A_NATIVE_GATE.md`.
+No new A53 ELF or physical persistent KV260 inference
+has been executed.
+A4.2b creates a **new standalone A53 ELF** that
 executes the unchanged per-image 26-tick neural path repeatedly,
 restores full state and writes one indexed record per image.
 A4.2c stages the new application on the existing accepted
