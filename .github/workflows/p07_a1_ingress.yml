@@ -21,6 +21,7 @@ jobs:
         working-directory: Loihi_Digital_Twin/v3
         run: |
           bash -n scripts/build_p07_a2.sh
+          bash -n scripts/run_p07_a2_physical.sh
           python -m py_compile software/p07/build_p07_a2.py scripts/p07_a2_batch.py scripts/p07_a2_verify.py
       - name: P07-A1 Python and independent native C regression
         working-directory: Loihi_Digital_Twin/v3
