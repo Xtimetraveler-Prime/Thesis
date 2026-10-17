@@ -2,10 +2,29 @@
 
 **Date:** 2026-10-15
 **Branch:** `agent/v3-p06-lif-feasibility`
-**Status:** A3 full training GO **REPORTED IN USER'S CANDIDATE MANIFEST**;
-checkpoint `--validate-candidate` *terminal success has not yet been
-provided*. P06-A4.1 implementation **COMMITTED; NATIVE GATE PENDING**.
+**Status update (2026-10-17): A4.1 USER-ACCEPTED.** The user's
+actual trained A4.1 run reports PASS and all five 26-tick frames
+exactly equal. That command necessarily executed load_candidate()'s
+checkpoint byte SHA256 and signed-integer tensor digest validation.
+The separate --validate-candidate stdout was not pasted. A4.2's
+static P02 DDR freeze native audit remains pending; see
+`P06_A4_FINAL_CLOSEOUT.md`.
 This is not official MNIST test accuracy and not KV260 inference.
+
+## Final A4.1 user log after instructions were issued
+
+`P06_A4_SOFTWARE_SNAPSHOT_PASS=1`
+`P06_A4_PARITY.status=ALL_TRACES_EXACTLY_EQUAL`,
+`frames=5`, `timesteps_per_frame=26`,
+`P06_A4_OFFICIAL_TEST_STATUS=SEALED`,
+`P06_A4_FPGA_STATUS=NO_PHYSICAL_RUN_NO_DDR_PAGE_IMAGE`.
+
+Native P03: core 0, 42 compartments, 816 axons, 25,408 synapses,
+32 route descriptors and 32 routes. Six stream hashes are recorded
+in `P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json`.
+
+The acceptance below originally requested further verification; it
+remains as an archival reproduction recipe, not an open A4.1 blocker.
 
 ## First completed project-trained candidate (user-reported manifest)
 
