@@ -14,11 +14,6 @@ import hashlib
 from pathlib import Path
 
 from loihi_twin_v2.ddr_abi import parse_ddr_context_header
-from loihi_twin_v2.p06_a3_training import load_candidate, integer_weights_sha256
-from loihi_twin_v2.p06_a4_snapshot import (
-    compile_and_check_traces, require_pinned_training_candidate,
-)
-from loihi_twin_v2.p07_a1_ingress import mapping_from_compiled
 from loihi_twin_v2.p07_a2_batch import COMPILED_FINGERPRINT, DDR_SHA256
 from loihi_twin_v2.p07_a4_protocol import (
     TEST_FILES, FRAME_COUNT, BATCH_COUNT, SCHEMA,
@@ -74,6 +69,15 @@ def main() -> None:
         print("P07_A4_OFFICIAL_TEST_UNSEALED_PROVENANCE_PASS=1")
         print("P07_A4_KV260_OFFICIAL_TEST=NOT_RUN")
         return
+
+    # Keep --review and --download-test independent of torch. These
+    # preflight/explicit provenance modes are valuable in minimal CI
+    # environments and must not have a hidden checkpoint dependency.
+    from loihi_twin_v2.p06_a3_training import load_candidate, integer_weights_sha256
+    from loihi_twin_v2.p06_a4_snapshot import (
+        compile_and_check_traces, require_pinned_training_candidate,
+    )
+    from loihi_twin_v2.p07_a1_ingress import mapping_from_compiled
 
     if args.out is None:
         p.error("--prepare requires a NEW --out directory")
