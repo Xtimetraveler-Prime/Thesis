@@ -224,3 +224,21 @@ comparison. No results should be imagined from the previously
 observed 15/16. No official test-set accuracy, P08 throughput/power
 or scaled Track B results are implied. Do not merge without the
 user's explicit authorization.
+
+## Post-run user acceptance (2026-10-17)
+
+**A3.3 CLOSED / independently user-accepted** after all eight primary
+and two repeat physical runs were passed and the official aggregate
+validation verifier reported `116/128` correct, `0/128` silent,
+`P07_A3_3_PHYSICAL_LAUNCHES_EXACT=10/10`,
+`P07_A3_3_RESTART_REPEATS_BYTE_EXACT=2/2`,
+`P07_A3_3_PHYSICAL_ORACLE_EXACT=1` and
+`P07_A3_3_PHYSICAL_GATE_PASS=1`. The original pre-run frozen
+experimental plan above is retained for reproducibility and should
+not be reinterpreted as still pending. See
+`P07_A3_3_PHYSICAL_ACCEPTANCE.md` for user evidence and limitations.
+
+**Next gate:** `P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`,
+which freezes full canonical 10,000-image TEST scope *before*
+test archives are opened. The unchanged 16-frame A53 ABI implies
+625 separate board launches; assess feasibility before unsealing.
