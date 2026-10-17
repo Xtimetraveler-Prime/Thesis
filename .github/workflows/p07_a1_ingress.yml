@@ -25,7 +25,7 @@ jobs:
           python -m py_compile software/p07/build_p07_a2.py scripts/p07_a2_batch.py scripts/p07_a2_verify.py scripts/p07_a3_prepare.py scripts/p07_a3_verify.py src/loihi_twin_v2/p07_a3_validation.py \
             scripts/p07_a3_3_prepare.py scripts/p07_a3_3_one.py scripts/p07_a3_3_verify.py src/loihi_twin_v2/p07_a3_3_protocol.py \
             scripts/p07_a4_prepare.py src/loihi_twin_v2/p07_a4_protocol.py \
-            src/loihi_twin_v2/p07_a4_stream.py
+            src/loihi_twin_v2/p07_a4_stream.py scripts/p07_a4_2_prepare.py
       - name: P07-A1 Python and independent native C regression
         working-directory: Loihi_Digital_Twin/v3
         run: |
