@@ -41,7 +41,8 @@ static int page_out(void *ctx, uint8_t id, uint8_t slot, uint64_t *cycles)
 }
 static int load_input(void *ctx)
 {
-    (void)ctx;
+    simulated_hardware *m = (simulated_hardware *)ctx;
+    if (m->force_overflow) m->bank_count[0] = 4096u;
     return 0;
 }
 static int dispatch(void *ctx, uint8_t id, uint8_t slot,
@@ -103,7 +104,7 @@ static int prepare(void *cookie, const uint8_t *record, size_t length,
                                     P07_A1_MAP_BYTES] == 255u) ? 7u : 0u);
     m->silent = (uint8_t)(record[P07_A1_HEADER_BYTES +
                                     P07_A1_MAP_BYTES] == 0u);
-    m->bank_count[0] = m->force_overflow ? 4096u : 0u;
+    m->bank_count[0] = 0u;
     m->bank_count[1] = 0;
     memset(ops, 0, sizeof(*ops));
     ops->load_deployment = start;
