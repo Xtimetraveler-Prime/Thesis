@@ -475,25 +475,24 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P07-A2 status (updated 2026-10-17)
+## Immediate next step / P07-A3 status (updated 2026-10-17)
 
-**P06 Track A (A1–A4) and P07-A1 are complete and user-accepted.**
-P06 produced a project-trained 784→32→10 compact SNN, exact software
-word/trace replay and a frozen static P02.1 512KiB DDR context. P07-A1
-then validated the many-axon ingress contract on the user's native
-machine, with real DDR SHA256
-`9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955`
-and compiler fingerprint
+**P06 Track A, P07-A1 and P07-A2 are user-accepted.**
+P07-A2's user-reported actual KV260 physical run achieved
+`P07_A2_PHYSICAL_TRACES_EXACT=1` with three deterministic sample
+frames and full selected-frame 26×42 compartment traces.
+The frozen DDR full-file SHA256 is
+`9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955`;
+the frozen compiler fingerprint is
 `e612a971cda11fae3f1be215c0ca3ed7de7b2af7339446e926ce559658db2f7f`.
+See `P07_A2_FINAL_ACCEPTANCE.md`.
 
-**P07-A2 is the active engineering gate:** autonomous Cortex-A53 image
-execution, 26 barriers per image, full reset, real output trace counts,
-and first-mismatch verification. The portable P03 scheduler wrapper,
-candidate bare-metal A53/DDR/PL integration, versioned image batching,
-CI-native C/CRC/SHA tests, and evidence analysis tools exist on
-`agent/v3-p07-a-784-axon-streaming`, but the user's Vitis ELF build
-and physical KV260 trace acceptance are **PENDING**. See
-`P07_A1_FINAL_CLOSEOUT.md` and `P07_A2_A53_RUNTIME_GATE.md`.
-The official MNIST TEST partition is **SEALED**; no A53 MNIST
-accuracy/latency/energy is claimed. P06-B1/B2 are deferred until
-P08-A is physically measured and accepted.
+**P07-A3 is active.** A3.1 prepares the first sixteen source indices
+in the already-frozen canonical training-derived validation order,
+with SHA-bound input frames, separate labels, and the unchanged P07-A2
+A53/FPGA physical ABI. CI host-native tests pass; independent user
+A3.1 and A3.2 physical verification are pending. This is a
+**diagnostic 16-image subset**, not an unbiased estimate of 10k
+validation accuracy. **Official MNIST TEST remains SEALED.**
+See `P07_A3_VALIDATION_GATE.md`. P06-B1/B2 are deferred until
+P08-A physical baseline acceptance.
