@@ -39,11 +39,136 @@ KV260 within the documented scope; see
 [Phase 5 consolidated acceptance](docs/P05_FINAL_ACCEPTANCE.md)
 and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
 
-**P06 — Published MNIST benchmark audit and freeze: Planned / next.**
-No P06 benchmark paper, weights, architecture, encoding
-or score is yet accepted.
+**P06 — Two-track LIF MNIST research: IN PROGRESS.**
+Published foundation: Eshraghian et al. (2023)
+and the author's snnTorch MNIST LIF tutorial
+(methodology, **not** a proven pretrained
+checkpoint identity). User accepted the
+**Track A 784→32→10 native structural
+compiler-to-HLS-image feasibility gate** on
+2026-10-12, including the corrected 31-spike /
+310-next-bank fan-in regression. This proves
+one real packed **42-neuron, 25,408-synapse,
+816-axon, 32-route** one-core test image
+with **synthetic test weights**, not trained
+accuracy or physical KV260 inference.
 
-**P07–P09 — Pending** (see the authoritative roadmap).
+## P06 Track A closeout / entry to P07 (2026-10-17)
+
+**A1/A2/A3 accepted, A4.1 trained host benchmark freeze accepted.**
+The user trained our project-defined 784→32→10 signed24 integer-forward
+spiking classifier using the canonical 50,000-example MNIST TRAIN split
+and selected epoch 8 based on the predeclared 10,000-image held-out
+validation split. **Train accuracy: 95.34%. Validation: 94.39%.**
+The official test partition remains sealed; these numbers are NOT
+physical KV260 accuracy. Checkpoint byte SHA256 and signed-integer
+weight SHA256 are pinned, and the A4.1 native software run necessarily
+reloaded and verified the checkpoint before exporting memory words.
+
+The user reported **P06_A4_SOFTWARE_SNAPSHOT_PASS=1** with all four
+host inference paths exactly equal on **5 frames × 26 logical steps**:
+PyTorch integer forward, separate signed24 dense oracle, independent
+P03 packed-word replay, and `LogicalChip`. The trained P03
+one-core image contains **42 compartments, 816 input axons,
+25,408 packed synapses and 32 routes**. Six packed-stream file
+SHA256 and byte counts are frozen in
+[the software benchmark manifest](docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json).
+
+**A4.2 static DDR handoff audit remains the only new native gate:**
+`scripts/p06_a4_freeze.py` uses the already accepted P02.1
+`LTV3CTX1` ABI to build a **524,288-byte initial core-0 DDR record**
+and validate its banks and hashes. The new generator and tests have
+NOT yet been rerun on the user's PC; the final full-record SHA256
+is therefore not yet known. Read
+[the final P06-A4 closeout record](docs/P06_A4_FINAL_CLOSEOUT.md)
+and [sealed official-test protocol](docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md).
+
+**P07 is next:** the accepted P05 diagnostic A53 ABI accepts only
+one external input axon per logical core. It does **not** perform
+the 784-axon, 25+1-timestep, fresh-state-per-image inference needed
+for autonomous FPGA MNIST. P07 must implement and independently
+validate that separate versioned A53 streaming interface before
+unsealing the official test. No P07 FPGA MNIST, P08 power, or
+original Loihi silicon performance is claimed.
+
+**Official sequential development plan:**
+
+**Track A — Compact single-core classifier FIRST.**
+P06-A2: exact P03 integer 24-bit LIF +
+25 event ticks + 1 NEXT-bank drain
+independent software oracle, with
+deterministic uint8→spike input and
+readout; P06-A3: train/freeze a real
+project checkpoint on MNIST train/
+validation only; P06-A4: checksum
+dataset/weights/compiled context and
+freeze the official test protocol;
+P07-A: A53-autonomous per-image
+many-axon injection, hardware
+predictions and accuracy; P08-A:
+full-system latency/throughput/
+board energy baseline.
+
+**Track B — Larger virtualized
+classifier SECOND, only after P08-A.**
+Target **784→1000→10**, roughly **27
+logical DDR-backed contexts**
+(26 hidden shards + 1 output,
+a **hypothesis** not an accepted
+resource-aware map), using the
+same 3 resident contexts and one
+physical engine. P06-B1: new
+**synapse-aware destination partitioner**
+and full-core resource/route/paging
+feasibility; P06-B2: separately trained
+and frozen scaled checkpoint; P07-B:
+actual multi-context autonomous
+FPGA classification; P08-B:
+measure real routing/page-in/out
+overhead, latency, energy and
+classification tradeoffs. Do not
+assume increasing the
+`max_logical_cores` option alone
+will partition the network; the
+present compiler partitions
+compartments first and fails
+on synapse-memory oversubscription.
+Current A53 P05 event manifest
+also permits only one registered
+external input axon/core and
+must be extended before either
+full classifier physically runs.
+
+**Experimental claim boundary:**
+Both checkpoints are **our trained
+project models**, based on published
+LIF methodology, not identical to
+the original 784→1000→10
+snnTorch floating-analog-input
+tutorial (different reset,
+event encoder and timesteps).
+Their measured accuracy and
+hardware costs are separate
+findings, not original author
+Loihi metrics. NxTF remains
+excluded. Archived Rao/AHP
+source research is retained
+but is **not** a prerequisite
+for the chosen LIF paths.
+No official MNIST test-set
+evaluation has happened.
+
+[**Complete compact-first, scaled-second plan**](docs/P06_TWO_TRACK_LIF_PLAN.md)
+|
+[Feasibility/resource audit](docs/P06_LIF_FEASIBILITY.md)
+|
+[Accepted native regression details](docs/P06_LIF_NATIVE_GATE.md)
+|
+[Exploratory frozen-schema candidate record](docs/P06_LIF_CANDIDATE_PROFILE.json)
+|
+[Original Rao source research (unselected)](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md).
+
+**P07–P09 — Pending; staged A then B as specified above.**
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 

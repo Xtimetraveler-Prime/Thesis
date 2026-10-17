@@ -1,0 +1,116 @@
+{
+  "schema": "p06-track-a-compact-software-benchmark-freeze-v1",
+  "frozen_on": "2026-10-17",
+  "decision": "A4.1 HOST SOFTWARE PARITY USER-ACCEPTED / A4.2 P02 STATIC DDR NATIVE AUDIT PENDING",
+  "track": "A: compact 784 input x 32 hidden LIF x 10 output LIF; KV260 target",
+  "source_branch": "agent/v3-p06-lif-feasibility",
+  "checkpoint": {
+    "local_dir": "artifacts/p06_a3_candidate_seed20261013",
+    "file": "weights_state_dict.pt",
+    "checkpoint_sha256": "0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88",
+    "integer_weights_sha256": "1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b",
+    "best_epoch": 8,
+    "epochs": 8,
+    "seed": 20261013,
+    "train_count": 50000,
+    "validation_count": 10000,
+    "train_accuracy": 0.9534,
+    "validation_accuracy": 0.9439,
+    "predeclared_validation_floor": 0.6,
+    "validation_go": true,
+    "validation_silent_count": 2
+  },
+  "source_data": {
+    "train_only": true,
+    "official_test": "SEALED / NOT READ",
+    "train_indices_sha256": "1cbcb0b2bf481958d6c917ea6d70fa44a20839406f0c824540f8e691edfdd851",
+    "validation_indices_sha256": "3b9520013f30742c3818f55024ea39e3e0632113c487c589fdfbb73c7d274831",
+    "images_compressed_sha256": "440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609",
+    "labels_compressed_sha256": "3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c",
+    "pixels": "uint8 28x28 row major no normalization"
+  },
+  "forward_contract": {
+    "encoder": "p06-uint8-quota-phase17-v1",
+    "readout": "p06-26tick-count-argmax-first-v1",
+    "steps": 26,
+    "input_steps": 25,
+    "drain_step": 25,
+    "integer": "signed24 saturating; current/voltage decay round-away; strict voltage > threshold",
+    "hidden": {
+      "current_decay": 4096,
+      "voltage_decay": 4096,
+      "threshold": 32,
+      "bias": 0,
+      "reset_voltage": 0,
+      "refractory_ticks": 0
+    },
+    "output": {
+      "current_decay": 4096,
+      "voltage_decay": 4096,
+      "threshold": 8,
+      "bias": 0,
+      "reset_voltage": 0,
+      "refractory_ticks": 0
+    },
+    "routing": "hidden t -> output t+1; drop last generated routes at frame boundary",
+    "frame_reset": "clear states, event banks, readout counters",
+    "classification": "26-tick output counts, argmax, ties lowest class"
+  },
+  "p03_snapshot": {
+    "local_dir": "artifacts/p06_a4_trained_word_snapshot_seed20261013",
+    "profile": "p03-k26-one-core-sat24-v1-compat",
+    "core": 0,
+    "compartments": 42,
+    "input_axons": 816,
+    "synapses": 25408,
+    "route_descriptors": 32,
+    "route_words": 32,
+    "frames": 5,
+    "steps_each": 26,
+    "engines": [
+      "P06 independent integer dense",
+      "PyTorch integer forward",
+      "independent P03 packed-word replay",
+      "LogicalChip"
+    ],
+    "parity": "ALL_TRACES_EXACTLY_EQUAL",
+    "streams": {
+      "axon_index_le16_word_le64.bin": {
+        "bytes": 8160,
+        "sha256": "bfec16a76eab97afd5d208e7c1dfd9e6f75ce9f3ff6f1a8f194d52a998d1de72"
+      },
+      "compartment_config_le128.bin": {
+        "bytes": 672,
+        "sha256": "a3b520f46a65cc8ee7c1f616337d535d20b6d4f7200ababcd271d1eac1381b5a"
+      },
+      "compartment_state_le64.bin": {
+        "bytes": 336,
+        "sha256": "52a3e0804d93dc525ec3c67ef8ac5b01756ecf0513e36f3c19435e4c82cb5d29"
+      },
+      "route_descriptor_index_le16_word_le32.bin": {
+        "bytes": 192,
+        "sha256": "56769029563e60e87d68082e3a11977ec56cf267291ab42893a5f4721edb3510"
+      },
+      "route_words_le32.bin": {
+        "bytes": 128,
+        "sha256": "0caaba89a0927126aaee06fff208c07c41f380ed9c4f18bb5cf2ccea6ae4a806"
+      },
+      "synapses_le64.bin": {
+        "bytes": 203264,
+        "sha256": "d83b4e401cae33f92a2cba7c53f2f681453f88395b65d503c2c590f6c60e31d7"
+      }
+    }
+  },
+  "p02_static_ddr": {
+    "status": "IMPLEMENTED BUT NATIVE AUDIT PENDING",
+    "abi": "P02.1 LTV3CTX1",
+    "context_size_bytes": 524288,
+    "file": "core0_initial_p02_ddr_512k.bin",
+    "sha256": null,
+    "tool": "scripts/p06_a4_freeze.py",
+    "note": "static core context only; NOT A53 P05 diagnostic workload or end-to-end MNIST input streaming"
+  },
+  "physical": "P07 KV260 MNIST inference NOT RUN; no physical accuracy/latency/power claims",
+  "test_policy": "Official test partition sealed. Before evaluation freeze full 10k selection, image encoding, readout, per-frame reset, and measurement denominators; no test-driven tuning.",
+  "evidence": "User supplied P06_A4_SOFTWARE_SNAPSHOT_PASS and four-engine five-frame exact parity. New A4.2 static DDR generator tests and hash still require user native verification."
+}

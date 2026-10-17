@@ -1,0 +1,132 @@
+{
+  "schema": "p06-lif-exploratory-v1",
+  "status": "TRACK_A_STRUCTURAL_NATIVE_USER_ACCEPTED__P06_A2_MODEL_ORACLE_PENDING__NO_CHECKPOINT__NO_FPGA_MNIST",
+  "authority": "User approved sequential compact one-core then scaled DDR-virtualized LIF project checkpoints; source is published snnTorch methodology, not original pretrained checkpoint",
+  "published_methodology": {
+    "doi": "10.1109/JPROC.2023.3308088",
+    "name": "Eshraghian et al. (2023) Training Spiking Neural Networks Using Lessons From Deep Learning",
+    "paper_kind": "review/tutorial methodology",
+    "tutorial": "https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html",
+    "rate_encoding_reference": "https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_1.html",
+    "actual_example_network": [
+      784,
+      1000,
+      10
+    ],
+    "actual_example_timesteps": 25,
+    "actual_example_beta": 0.95,
+    "actual_example_input": "STATIC ANALOG PIXEL CURRENT REPEATED EACH STEP; NOT RATE INPUT",
+    "actual_example_lif_reset": "snn.Leaky default reset_mechanism=subtract and reset_delay=True",
+    "actual_example_readout": "argmax of output neuron spike count over steps",
+    "author_identical_pretrained_checkpoint_available": "NOT_PROVEN",
+    "reported_paper_accuracy_attributable_to_exploratory_profile": "NO"
+  },
+  "exploratory_v3_profile": {
+    "network": [
+      784,
+      32,
+      10
+    ],
+    "model_is_resized_project_choice": true,
+    "input": "deterministic project-quota rate code of MNIST uint8 pixels; NOT exact snnTorch Bernoulli",
+    "image_input_steps": 25,
+    "readout_drain_steps": 1,
+    "total_inference_steps_per_image": 26,
+    "label_readout": "output spikes summed over all 26 steps, first max class wins",
+    "physical_core_configuration": {
+      "logical_cores": 1,
+      "physical_hls_engines": 1,
+      "physical_resident_slots_available": 3
+    },
+    "event_packet_routing": "single-core self-routed hidden spikes enter following timestep NEXT bank",
+    "hardware_state": {
+      "bits": 24,
+      "mode": "SATURATE",
+      "current_decay": 4096,
+      "voltage_decay": 205,
+      "threshold": 2048,
+      "reset_voltage": 0,
+      "refractory_ticks": 0
+    },
+    "weights": "SYNTHETIC ALL-UNIQUE DENSE POSITIVE INTEGER TEST VALUES ONLY; NOT TRAINED",
+    "physical_expected": {
+      "synapses": 25408,
+      "compartments": 42,
+      "destination_axons": 816,
+      "route_words": 32,
+      "max_external_events_per_timestep": 784,
+      "conservative_max_total_events_per_timestep": 816,
+      "synapse_entry_capacity_per_core": 32768,
+      "event_bank_capacity": 4096
+    },
+    "accuracy": "NOT_MEASURED",
+    "quantization_parity": "NOT_PROVEN",
+    "board_runtime": "NOT_IMPLEMENTED",
+    "validity": "ONLY NATIVE ACTUAL COMPILER -> HLS PACKER STRUCTURAL PROBE; NOT PHYSICAL ACCEPTANCE"
+  },
+  "prior_candidate": "Rao Loihi AHP-LSNN research preserved in P06.1 paper audit",
+  "scientific_comparison_scope": {
+    "allowed_if_checkpoint_frozen": "Same independently trained checkpoint with same quantized event input and FPGA-compatible timestep/readout on CPU/independent oracle and KV260",
+    "forbidden": "Claim pretrained published 1000-hidden network accuracy, identical snnTorch tutorial forward, Loihi measured energy, or complete MNIST result without training and official test"
+  },
+  "unresolved": [
+    "Publish concrete train/validation and data checksums",
+    "Actual packed exporter native gate ACCEPTED; quantized REAL weights and board execution remain pending",
+    "Surrogate-gradient training against verified integer hardware-equivalent forward with delay",
+    "FPGA A53 autonomous per-image 784-event streaming and state reset",
+    "Independent first-mismatch model-versus-hardware traces",
+    "Same checkpoint CPU-vs-KV260 full test and power/energy boundary",
+    "Scaled P06-B1 synapse-aware destination partitioner, 26-shard external event fanout and A53 diagnostic ABI extension after P08-A"
+  ],
+  "structural_native_acceptance": {
+    "status": "USER_REPORTED_PASS",
+    "reported_date": "2026-10-12",
+    "scope": "Both compiler_probe modes and full P06 LIF plus retained P06.1 native pytest, after fixing synthetic 31 vs 32 spikes",
+    "assumed_artifacts": "No native log/JSON digest provided in thread; report is user attestation, not assistant re-execution",
+    "scientific_limit": "Structural compiler image plus Python NEXT-bank routing only; no trained model, board MNIST inference, measured timing or energy"
+  },
+  "execution_tracks": {
+    "order": [
+      "P06-A1 accepted",
+      "P06-A2 exact integer oracle",
+      "P06-A3 train validation-only model",
+      "P06-A4 trained checkpoint and benchmark freeze",
+      "P07-A board-local inference",
+      "P08-A physical baseline",
+      "P06-B1 scaled mapper and resource gate",
+      "P06-B2 scaled training/freeze",
+      "P07-B physical multi-core inference",
+      "P08-B scaling characterization",
+      "P09 closure"
+    ],
+    "compact": {
+      "architecture": [
+        784,
+        32,
+        10
+      ],
+      "checkpoint": "NOT_TRAINED",
+      "physical_acceptance": "NOT_RUN",
+      "reference": "Existing actual compiler->P03 hardware image native accepted with test-only synthetic 25408 synapses",
+      "terminal_scope": "Independently verified KV260 inference and reproducible board/SOM power-performance baseline"
+    },
+    "scaled": {
+      "architecture_target": [
+        784,
+        1000,
+        10
+      ],
+      "physical_engine_target": 1,
+      "resident_context_slots": 3,
+      "projected_logical_contexts": "APPROX_27_ONLY_NOT_COMPILER_VERIFIED",
+      "projected_ddr_bytes": 14155776,
+      "dense_synapse_positions": 794000,
+      "hardware_mapping": "NOT_BUILT_NEEDS_SYNAPSE_AWARE_DESTINATION_PARTITIONER",
+      "external_input": "784 axons per destination hidden shard, replicated to ~26 destination cores; current P05 one external axon/core diagnostic ABI insufficient",
+      "training": "SEPARATE_PROJECT_CHECKPOINT_REQUIRED",
+      "start_gate": "AFTER_P08_A_PHYSICAL_BASELINE_ACCEPTED",
+      "claim_scope": "Compare separate project checkpoint inference accuracy, paging, throughput, runtime and board energy; not native published snnTorch checkpoint"
+    }
+  },
+  "plan": "docs/P06_TWO_TRACK_LIF_PLAN.md"
+}

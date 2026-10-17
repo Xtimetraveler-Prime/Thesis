@@ -1,0 +1,229 @@
+{
+  "schema": "p06-lsnn-source-candidate-v1",
+  "status": "CANDIDATE_SOURCE_PIN_ONLY_NOT_FROZEN_OR_REPRODUCED",
+  "source_paper": {
+    "title": "A Long Short-Term Memory for AI Applications in Spike-based Neuromorphic Hardware",
+    "authors": [
+      "Arjun Rao",
+      "Philipp Plank",
+      "Andreas Wild",
+      "Wolfgang Maass"
+    ],
+    "published": "Nature Machine Intelligence 4, 467–479 (2022)",
+    "doi": "10.1038/s42256-022-00480-w",
+    "article_url": "https://www.nature.com/articles/s42256-022-00480-w",
+    "arxiv_url": "https://arxiv.org/abs/2107.03992",
+    "task": "sequential MNIST; NOT conventional static MNIST",
+    "reported_loihi_smnist_accuracy_percent": 96,
+    "reported_loihi_wall_clock_latency_ms": 14.11,
+    "reported_loihi_energy_per_inference_mJ": 0.36,
+    "reported_loihi_power_mW": {
+      "static": 0.59,
+      "dynamic": 25.24,
+      "total": 25.83
+    },
+    "reported_loihi_cores": 1,
+    "reported_loihi_toolchain": "NxSDK v0.95 Nahuku board",
+    "reported_metrics_from": "Author-hosted paper + supplement Table S1 (https://igi-web.tugraz.at/PDF/259maass.pdf)",
+    "reported_overall_connection_density_fraction": 0.2,
+    "reported_recurrent_neurons": {
+      "total": 240,
+      "excitatory": 180,
+      "inhibitory": 60,
+      "adaptive_excitatory": 100,
+      "nonadaptive_or_inhibitory": 140
+    },
+    "reported_AHP_beta_in_paper_units": 96,
+    "released_checkpoint_association_with_published_96_percent": "UNKNOWN_NOT_PROVEN",
+    "metric_scope_warning": "Paper's published Loihi accuracy/latency/energy are NOT measured for the pinned v25_94per three trained weight blobs unless independent correspondence is proven"
+  },
+  "upstream": {
+    "repository": "https://github.com/intel-nrc-ecosystem/models",
+    "commit": "3dc53bfcfae1efe8772b8cb5e2c512bb28c872f8",
+    "source_root": "nxsdk_modules_ncl/lsnn",
+    "github_tree_verified": true,
+    "files": [
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_in.npy",
+        "git_blob": "e1ed712f3af5af64cc3680bb5e50dc9447bd13aa",
+        "size_bytes": 76928,
+        "expected_shape": [
+          80,
+          240
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
+          240,
+          80
+        ],
+        "expected_stored_dtype": "<f4"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_rec.npy",
+        "git_blob": "c75f4c731b38b017f8d232b326801cba0fa65e40",
+        "size_bytes": 230528,
+        "expected_shape": [
+          240,
+          240
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
+          240,
+          240
+        ],
+        "expected_stored_dtype": "<f4"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/weights/v25_94per/w_out.npy",
+        "git_blob": "b067c855de56cdcb6f4e8ce468f56581544a178f",
+        "size_bytes": 9728,
+        "expected_shape": [
+          240,
+          10
+        ],
+        "type": "WEIGHTS_REQUIRE_LOCAL_DTYPE_HEADER_VERIFICATION",
+        "expected_runtime_shape_after_author_transpose": [
+          10,
+          240
+        ],
+        "expected_stored_dtype": "<f4"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/src/lsnn.py",
+        "git_blob": "c958b3e3a0f510dc14cf17deacb1a05b8f145c66",
+        "size_bytes": 34141,
+        "type": "LOIHI_NETWORK_CODE"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/seq_mnist.py",
+        "git_blob": "9551c2b2d399649cce9ccbbc3bd049694095540a",
+        "size_bytes": 7239,
+        "type": "INPUT_DATA_EXPERIMENT"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/seq_img_classifier.py",
+        "git_blob": "6be7b2f27f840e23ccbc69b9ad393971b3aa8b40",
+        "size_bytes": 17494,
+        "type": "NETWORK_BUILDER"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/spiking.c",
+        "git_blob": "61b0b42be2b7e6b60a5943498c499badf5e2d36d",
+        "size_bytes": 5070,
+        "type": "SOURCE_SNIP_EXACT_SEQUENTIAL_ENCODER"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/snip_mgmt.c",
+        "git_blob": "d71cff860ee2f88dbe062ac6c6e0e91c978fcb09",
+        "size_bytes": 3698,
+        "type": "SOURCE_SNIP_EXACT_VOLTAGE_ARGMAX"
+      },
+      {
+        "path": "nxsdk_modules_ncl/lsnn/apps/seqmnist/snips/common.h",
+        "git_blob": "47bf4ffd2ec6713bc27d12fb26a0f0cdbfdecf9f",
+        "size_bytes": 2102,
+        "type": "SOURCE_SNIP_PUBLISHED_TIMING_CONSTANTS"
+      }
+    ],
+    "proven_stored_matrix_orientation": "SOURCE_THEN_DESTINATION; seq_mnist.loadWeightsAndDelays() returns (wIn.T, wRec.T, wOut.T)",
+    "stored_matrix_header_retrieved_from_pinned_immutable_github_blobs": true,
+    "observed_matrix_statistics_from_pinned_blobs": {
+      "w_in.npy": {
+        "entries": 19200,
+        "nonzero": 4263,
+        "zeros": 14937,
+        "positive": 1957,
+        "negative": 2306,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.22203125
+      },
+      "w_rec.npy": {
+        "entries": 57600,
+        "nonzero": 10566,
+        "zeros": 47034,
+        "positive": 7196,
+        "negative": 3370,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.1834375
+      },
+      "w_out.npy": {
+        "entries": 2400,
+        "nonzero": 846,
+        "zeros": 1554,
+        "positive": 581,
+        "negative": 265,
+        "min": -254,
+        "max": 255,
+        "density_fraction": 0.3525
+      },
+      "total": {
+        "entries": 79200,
+        "nonzero": 15675,
+        "zeros": 63525,
+        "density_fraction": 0.19791666666666666
+      }
+    },
+    "binary_provenance_note": "GitHub authenticated pinned blob decoding provides expected float32 headers and occupancy; independent native user source-audit validation still PENDING"
+  },
+  "source_read_parameters": {
+    "input_channels": 80,
+    "regular_recurrent": 140,
+    "adaptive_recurrent": 100,
+    "output_readout": 10,
+    "mnist_pixels": 784,
+    "cue_steps": 56,
+    "model_params_initial": {
+      "vth_mantissa": 127,
+      "tauU": 0,
+      "tauV": 20,
+      "refrac": 1,
+      "tauAdaption": 700,
+      "beta": 1390000
+    },
+    "thrAdaScale": 4,
+    "numDelayBits": 4,
+    "output_readout_spiking": false,
+    "demo_num_test_images": 100,
+    "demo_numpy_random_seed": 0,
+    "demo_batch_size": 10,
+    "source_markers": [
+      "v25_94per IS ONLY AN ARTIFACT LABEL NOT PAPER ACCURACY"
+    ],
+    "approximate_dense_weight_count_excludes_aux": 79200,
+    "thresholds_total": 40,
+    "threshold_values": "floor(linspace(0,255,40))",
+    "active_onset_offset_threshold_indices": "1..38",
+    "onset_ports": "2*t for t=1..38",
+    "offset_ports": "2*t+1 for t=1..38",
+    "on_off_last_pixel_behavior": "No t=1..38 onset/offset at last pixel index 783",
+    "touch_threshold_index": 39,
+    "touch_port": 78,
+    "touch_condition": "current pixel equals threshold[39] (255)",
+    "output_cue_port": 79,
+    "output_cue_steps": 56,
+    "unused_input_ports": [
+      0,
+      1
+    ],
+    "image_pixel_steps": 784,
+    "image_total_timesteps": 840,
+    "decision_rule": "At timestep 840 initialize maxV=-8388608/maxVId=-1, scan 10 signed Loihi V values with STRICT '>', return first index of tied max when max>-8388608; all-minimum returns source sentinel -1 (unclassified), NOT class 0",
+    "actual_trained_sparse_density": 0.19791666666666666,
+    "actual_soma_auxiliary_compartment_count": 350,
+    "per_image_clear_behavior": "Pinned SNIP resets cx_state/cx_meta_state/dendrite_accum registers after each 840-step classification",
+    "code_vs_supplement_encoder_disagreement": "Supplement listing uses <=/>= inclusive pseudo-conditions; pinned C SNIP uses < and >= in directional threshold crossings, with touch and cue exceptions"
+  },
+  "paper_accuracy_for_THIS_specific_checkpoint": "NOT_YET_VERIFIED",
+  "verified_paper_measurement_protocol_for_THIS_checkpoint": "NOT_YET_VERIFIED",
+  "v3_single_compartment_compatibility": "BLOCKED_ON_AHP_TWO_COMPARTMENT_AND_MULTI_AXON_INPUT_STREAM",
+  "freeze_status": "PROHIBITED_UNTIL_SOURCE_ASSET_AUDIT_AND_FPGA_CONTRACT_PROVEN_AND_REVIEWED",
+  "dataset_split_provenance": "OpenML mnist_784 source + rows[0:60000]/rows[60000:]; checksum UNFROZEN",
+  "comparisons_prohibited": [
+    "NxTF paper",
+    "static MNIST vs sequential MNIST same metric",
+    "retrained weights asserted to equal paper",
+    "headline accuracy inferred from v25_94per directory name"
+  ]
+}
