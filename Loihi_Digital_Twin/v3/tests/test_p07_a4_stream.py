@@ -6,6 +6,9 @@ Preserves accepted P07-A1/P07-A2 byte-level ABI.
 from __future__ import annotations
 
 import ctypes
+import json
+import os
+import sys
 from pathlib import Path
 import shutil
 import struct
@@ -283,3 +286,39 @@ def test_initial_and_completed_journal_native_header_parity(native):
     wrong[256+96+4]^=1
     with pytest.raises(ValueError):
         stream.parse_journal(bytes(wrong),obj)
+
+
+def test_offline_staging_inspector_accepts_synthetic_and_rejects_mutation(tmp_path):
+    obj=stream.make_stream(bytes([255])*784*16,MAPPING,trace_index=4)
+    staged=tmp_path/"staged"
+    staged.mkdir()
+    raw={
+        "descriptor":("p07_a4_descriptor_256.bin",obj.header),
+        "mapping":("p07_a4_mapping_1568.bin",obj.mapping_bytes),
+        "pixels":("p07_a4_pixels_raw.bin",obj.images),
+        "zero_journal_1m":("p07_a4_journal_initial_1m.bin",
+                           stream.initial_journal(obj)),
+    }
+    for filename,payload in raw.values():
+        (staged/filename).write_bytes(payload)
+    manifest={
+        "schema":"p07-a4-2a-persistent-ddr-stage-v1",
+        "scope":"SYNTHETIC_WHITE", "frame_count":16, "trace_index":4,
+        "official_mnist_test":"SEALED", "physical_hardware":"NOT_RUN",
+        "sha256":{key:stream.sha256(contents) for key,(_,contents) in raw.items()},
+    }
+    (staged/"p07_a4_2a_stage_manifest.json").write_text(json.dumps(manifest))
+    script=ROOT/"scripts/p07_a4_2_check.py"
+    command=[sys.executable,str(script),"--stage-dir",str(staged)]
+    env={**os.environ,"PYTHONPATH":str(ROOT/"src")}
+    result=subprocess.run(command,env=env,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    assert "P07_A4_2A_STAGING_CHECK_PASS=1" in result.stdout
+    assert "P07_A4_OFFICIAL_TEST=SEALED" in result.stdout
+    pixels=staged/"p07_a4_pixels_raw.bin"
+    wrong=bytearray(pixels.read_bytes())
+    wrong[75]^=1
+    pixels.write_bytes(wrong)
+    result=subprocess.run(command,env=env,capture_output=True,text=True)
+    assert result.returncode!=0
+    assert "SHA256 mismatch" in result.stderr
