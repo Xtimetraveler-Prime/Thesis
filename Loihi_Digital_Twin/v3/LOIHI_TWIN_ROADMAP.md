@@ -1584,9 +1584,11 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status:** PLANNED. **P07-A starts after P06-A4; P07-B starts
-only after a physically measured/accepted P08-A baseline
-and completion of P06-B1/B2.**
+**Status:** READY TO START P07-A ON A NEW DEVELOPMENT BRANCH;
+**P07 PHYSICAL WORK NOT YET STARTED**. P06 Track A host/static
+DDR source gates are user-accepted. P07-B starts only after a
+physically measured/accepted P08-A baseline and successful
+P06-B1/B2 larger-model mapping/training.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
