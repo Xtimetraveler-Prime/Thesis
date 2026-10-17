@@ -475,20 +475,19 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P06 status
+## Immediate next step / P07-A1 status (updated 2026-10-17)
 
-**P06 is NOT complete.** Only the
-*Track A structural/native feasibility*
-subgate is user-accepted. The active
-engineering deliverable is **P06-A2**
-(exact integer LIF reference and
-training-forward contract, including
-hidden→readout one-step delay and
-regression). This must precede
-real model training, trained export,
-data/evaluation freeze and P07-A.
-P06-B1/B2 are deliberately
-deferred until P08-A establishes
-a sound physical baseline.
-Do not resurrect the Rao AHP
+**P06 Track A (A1–A4) is complete and user-accepted**, including the
+trained compact checkpoint, four-way software parity, and frozen P02.1
+512 KiB static DDR-image validation. The current engineering task is
+**P07-A1**, versioned 784-axon image ingress and A53 event-stream
+preparation on the separate branch
+`agent/v3-p07-a-784-axon-streaming`. The first host ABI/C11/test
+implementation is in development; its independent user-native gate and
+all P07 physical MNIST inference remain **NOT ACCEPTED/NOT RUN**.
+See `P06_A4_FINAL_CLOSEOUT.md`, `P07_A_HANDOFF_SEED.md`, and
+`P07_A1_INGRESS_CONTRACT.md`. The actual accepted full DDR binary SHA-256
+remains local and must be captured before board loading. The official
+MNIST TEST partition remains sealed. P06-B1/B2 remain deferred until
+P08-A is physically measured and accepted. Do not resurrect the Rao AHP
 adaptation as a prerequisite.
