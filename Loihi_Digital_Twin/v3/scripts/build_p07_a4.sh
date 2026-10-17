@@ -45,7 +45,7 @@ vitis -s "$V3/software/p07/build_p07_a4.py" \
     --source-dir "$BUILD/source" 2>&1 | tee "$BUILD/vitis_build.log"
 ELF="$BUILD/vitis_workspace/p07_a4_board.elf"
 [[ -s "$ELF" ]] || { echo "P07-A4.2b no ELF generated" >&2; exit 3; }
-grep -aFq "P07_A4_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX" "$ELF" || {
+grep -aFq "P07_A4_2B_PERSISTENT_KV260_A53_FROZEN_TRACK_A_V1" "$ELF" || {
     echo "P07-A4.2b wrong compiled firmware identity" >&2; exit 3;
 }
 readelf -lW "$ELF" > "$BUILD/elf_program_headers.txt"
