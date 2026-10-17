@@ -1,8 +1,9 @@
 # P07-A4.2 — Persistent DDR-backed A53 inference implementation
 
 **2026-10-17 — approved engineering direction after user accepted A4.1.**
-**Current phase:** A4.2a wire contract + independent Python/C11 host gates.
-**Hardware runtime / actual KV260 validation:** NOT YET IMPLEMENTED / NOT RUN.
+**Current phase:** A4.2a **USER-ACCEPTED**; A4.2b **candidate A53
+firmware, Vitis-native build pending**; A4.2c **physical entry tooling
+implemented, KV260 numerical gate NOT RUN**. Native host CI green.
 **Official canonical t10k TEST remains SEALED / NOT READ.**
 
 ## Why this is a distinct version, not an A2 modification
@@ -139,19 +140,19 @@ explicitly report this measurement boundary.
 
 ## Engineering gates — no official TEST unseal yet
 
-- **A4.2a ACTIVE:** versioned host/Python and portable C11
+- **A4.2a CLOSED / USER-NATIVE ACCEPTED:** versioned host/Python and portable C11
   descriptor/mapper/journal format, byte-exact parity with
   accepted P07-A1 record builder; strict boundaries,
   1/16/128/10000 stress fixtures, negative tamper/CRC,
   no-load/no-download of actual MNIST TEST.
-- **A4.2b NEXT:** new *separate* standalone A53 board firmware,
+- **A4.2b CODE IMPLEMENTED / USER VITIS BUILD PENDING:** new *separate* standalone A53 board firmware,
   extending accepted per-frame `p07_a2_run_frame`
   with a persistent dataset loop, full per-image context
   reset, progress commits and fatal-first-error telemetry;
   deterministic fault-injection native tests. Rebuild
   a new ELF against the same accepted XSA; never mutate
   accepted A2 source or claim reuse of A2 ELF identity.
-- **A4.2c NEXT:** guarded new physical XSDB staging and one-shot
+- **A4.2c HOST TOOLING IMPLEMENTED / BOARD NOT YET RUN:** guarded new physical XSDB staging and one-shot
   runner, independent real KV260 validation on selected
   synthetic and TRAIN-derived validation samples,
   16/128/large corpus equivalence, byte-identical cold-start
@@ -172,3 +173,14 @@ explicitly report this measurement boundary.
 **NO CURRENT CLAIM** that a single hardware launch works,
 that FPGA DDR has been staged with this new ABI, that official
 MNIST TEST was read or that measured power/latency improved.
+
+## Development note (2026-10-17)
+
+The user independently verified A4.2a. A4.2b source and
+CI portable tests now exist; A4.2c independent staging/run
+and packed-oracle verification scripts also exist, but no
+new A53 ELF Vitis build or KV260 device execution has been
+accepted. The authoritative next-user-gate instructions
+are in `P07_A4_2B_2C_PERSISTENT_GATE.md`. The official
+TEST has not been opened. Do not confuse source completion
+or a native CI pass with actual physical inference.
