@@ -173,8 +173,8 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
 | P04 | Add multi-engine parallel logical-core execution | Deferred |
 | P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.2; P05.1 accepted) |
-| P06 | Audit and freeze an exact published MNIST benchmark | Planned |
-| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | Planned |
+| P06 | Audit and freeze an exact published MNIST benchmark | In progress (Track A accepted; Track B gated by P08-A) |
+| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | In progress (A1/A2 accepted; A3 validation pending) |
 | P08 | Characterize latency, throughput, power, and energy | Planned |
 | P09 | Final source-backed comparison and v3 closure | Planned |
 
