@@ -67,6 +67,10 @@ static uint32_t crc32_ieee(const uint8_t *p, size_t length)
     }
     return ~crc;
 }
+uint32_t p07_a4_crc32(const uint8_t *p, size_t len)
+{
+    return p ? crc32_ieee(p,len) : 0u;
+}
 static int zeros(const uint8_t *p, size_t len)
 {
     size_t i;
