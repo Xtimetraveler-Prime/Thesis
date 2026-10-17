@@ -46,3 +46,15 @@ def test_a53_board_source_compiles_with_vendor_header_signatures(tmp_path):
     assert "active_runtime->current_timestep" in board
     assert "tick=rt.current_timestep" not in board
     assert "P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX" in board
+
+
+def test_physical_xsdb_runner_rejects_superseded_elf_and_clobbering():
+    runner = (ROOT / "vivado/p07_a2_xsdb_run.tcl").read_text(encoding="utf-8")
+    marker = "P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX"
+    assert marker in runner
+    assert "refusing stale pre-trace-fix ELF" in runner
+    assert "refusing to overwrite existing physical evidence" in runner
+    assert "mrd -bin -file $output 0x43FF0000 16384" in runner
+    builder = (ROOT / "scripts/build_p07_a2.sh").read_text(encoding="utf-8")
+    assert marker in builder
+    assert "ELF overlaps reserved DDR" not in builder or "readelf" in builder
