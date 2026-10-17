@@ -1584,8 +1584,11 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status:** READY TO START P07-A ON A NEW DEVELOPMENT BRANCH;
-**P07 PHYSICAL WORK NOT YET STARTED**. P06 Track A host/static
+**Status (2026-10-17):** P07-A1 HOST INGRESS IMPLEMENTATION ON
+`agent/v3-p07-a-784-axon-streaming` (NATIVE USER GATE PENDING);
+**P07 PHYSICAL WORK NOT YET STARTED**. See
+`docs/P07_A1_INGRESS_CONTRACT.md` for versioned ABI, negative tests,
+independent C encoder, and local frozen-artifact provenance gate. P06 Track A host/static
 DDR source gates are user-accepted. P07-B starts only after a
 physically measured/accepted P08-A baseline and successful
 P06-B1/B2 larger-model mapping/training.
