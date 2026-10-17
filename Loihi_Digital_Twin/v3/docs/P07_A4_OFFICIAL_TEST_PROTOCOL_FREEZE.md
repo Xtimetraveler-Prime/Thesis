@@ -165,24 +165,34 @@ returns SEALED and cannot download TEST.
 
 **A4.2 — NEW: persistent A53 inference infrastructure,
 official TEST remains SEALED:**
-- **A4.2a (IMPLEMENTED / CI NATIVE PASS, USER NATIVE GATE PENDING):**
+- **A4.2a COMPLETE / USER NATIVE ACCEPTED on 2026-10-17:**
   distinct versioned `P07A4P01` 256B descriptor + 1568B
   immutable mapping, 8MiB raw image DDR staging, 1MiB
   compact result journal, independent little-endian
   Python/C11 CRC/overflow/digest/record parity and 1/16/128/10000
   synthetic capacity tests, plus a validation-only native stage
   CLI and inspector. See `P07_A4_2_PERSISTENT_DDR_DESIGN.md`.
-- **A4.2b (NOT YET IMPLEMENTED):** separate new persistent
-  bare-metal A53 application using the unchanged accepted
-  P07-A2 per-image neural runtime and existing accepted FPGA,
-  new safe journal-progress/failure storage, compiled
-  with a **new** ELF identity. Do not modify the A2
-  firmware, P03 arithmetic or trained checkpoint.
-- **A4.2c (NOT YET PHYSICALLY RUN):** independent KV260 acceptance
-  for deterministic synthetic and TRAIN-derived 16/128/larger
-  validation corpora including full reset, numerical parity,
-  cold-launch repeatability and fault/error propagation
-  with raw physical first-mismatch evidence.
+- **A4.2b IMPLEMENTED / CI NATIVE PASS / USER VITIS
+  A53 CROSS-BUILD PENDING:** separate candidate persistent
+  Cortex-A53 application in `p07_a4_board.c` uses the
+  unchanged accepted P07-A2 per-image neural runtime
+  and accepted P03 FPGA, new `p07_a4_supervisor.c`
+  journal commit/error order, independently checked
+  result fields and one selected full diagnostic
+  compartment trace. New `build_p07_a4.sh` and
+  `build_p07_a4.py` create a separate SHA-bound
+  Vitis standalone ELF, with no edits to the accepted
+  A2 application, P03 arithmetic or Track A checkpoint.
+- **A4.2c HOST IMPLEMENTED / KV260 PHYSICAL ACCEPTANCE
+  PENDING:** guarded independent readback/provision and
+  single persistent A53 launch on the accepted FPGA,
+  1MiB result journal plus 64KiB trace capture and
+  host independent P03 packed oracle first divergence
+  on synthetic/TRAIN-derived validation only.
+  Native CI does not represent a real FPGA run.
+  Accept validation16, validation128, larger coverage,
+  reset/repeats, failure cases and first-error evidence.
+  See `P07_A4_2B_2C_PERSISTENT_GATE.md`.
 
 **A4.3 — LATER: independently authorize official TEST unseal and
 source provenance:** only after all A4.2 physical native gates
@@ -202,3 +212,23 @@ population is independently verified; no retuning.
 
 **There is no accepted P07-A4 physical persistent result or
 official TEST score. The canonical TEST remains SEALED/NOT READ.**
+
+### Frozen full-TEST observability clarification before unseal
+
+The previously accepted 625-launch A2 baseline stored **one
+selected full 26×42 trace per 16-frame batch** (625
+selected traces for all 10000 TEST frames); the candidate
+persistent A4.2b journal stores **all 26×10 hardware
+output spike bits and routes for every one of 10000**
+but only **ONE** selected 26×42 full-compartment trace
+per autonomous dataset launch. This is *different
+diagnostic observability*, not a claim of identical
+full-state readback coverage. A4.2c must independently
+validate full selected trace integrity, every physical
+output spike and route, resetting across many frames
+and byte-identical cold runs. Before A4.3 unsealing,
+explicitly accept the reduced selected-trace coverage
+as part of a separately frozen measurement policy
+or plan supplemental traces without changing
+the official 10000-image population. No validated
+full official TEST accuracy has been produced.
