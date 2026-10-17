@@ -1,10 +1,12 @@
-# P07-A1 — Versioned 784-pixel/A53 ingress, host gate (UNDER DEVELOPMENT)
+# P07-A1 — Versioned 784-pixel/A53 ingress, host gate (USER-ACCEPTED)
 
 **Branch:** `agent/v3-p07-a-784-axon-streaming` (from
 `main@11440d6604b9c591388dd60a5f7a5a92b5d9ce3e`).
 **Scope:** contract, portable Python builder/parser, independent C11 validator
-and pixel event planner, host regressions. **NOT P07-A1 user-accepted yet; no
-physical KV260 MNIST inference and no official TEST evaluation.**
+and pixel event planner, host regressions. **USER-ACCEPTED on 2026-10-17**;
+see `P07_A1_FINAL_CLOSEOUT.md` for user-attested native PASS, actual
+full DDR SHA256 and trained compiler fingerprint. No physical KV260
+MNIST inference or official TEST evaluation is implied.
 
 ## Why a new contract is necessary
 
@@ -143,10 +145,10 @@ alongside user-native command output. This is a host gate only.
 
 ## Acceptance boundary
 
-P07-A1 can be declared user-accepted only after the independent user-native
-Python/C tests, real trained static-artifact builder and C probe pass,
-including negative CRC/duplicate/bounds regressions and P05 ABI regression.
-No XSDB/Vivado/Vitis run is required for **A1**; A2/A3 require those physical
-tools and the actual board. No assistant-provided C/Python host result should
-be described as an FPGA observation. Do not merge this branch without
-the user's explicit authorization.
+**P07-A1 completed its native user acceptance gate on 2026-10-17.**
+The user verified the actual P02 static DDR digest, produced a real
+compiler-bound ramp ingress record and passed the independent C probe.
+All first-gate details are in `P07_A1_FINAL_CLOSEOUT.md`. No XSDB/Vivado/
+Vitis run was needed for the scoped A1 host interface; those remain
+mandatory for P07-A2/A3 trained physical inference. Do not treat host
+validation as FPGA observation or merge without explicit authorization.
