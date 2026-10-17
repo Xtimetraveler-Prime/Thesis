@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dedicated Vitis 2025.2 standalone A53 build, separate from accepted P05.
 
-Use with scripts/build_p07_a2.sh after selecting a verified physical XSA.
+Use with scripts/build_p07_a4.sh after selecting a verified physical XSA.
 Never reuse an existing Vitis workspace or overwrite golden firmware.
 """
 from __future__ import annotations
