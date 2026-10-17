@@ -25,7 +25,7 @@
 #define P07_A2_MAILBOX_MAGIC UINT32_C(0x52373050) /* "P07R" */
 #define P07_A2_MAILBOX_OK UINT32_C(0x600D600D)
 #define P07_A2_MAILBOX_FAIL UINT32_C(0xDEAD0000)
-#define P07_A2_BUILD_ID "P07_A2_KV260_A53_FROZEN_TRACK_A_V1"
+#define P07_A2_BUILD_ID "P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX"
 
 _Static_assert(P03_HW_EVENT_DEPTH == P07_A1_AXON_CAPACITY,
                "P07/P03 event bank capacity mismatch");
@@ -37,7 +37,10 @@ static const volatile char firmware_identity[] = P07_A2_BUILD_ID;
 static const uint8_t expected_ddr_sha[32] = {0x96u,0x17u,0xa8u,0x22u,0xf7u,0x4fu,0xaau,0x87u,0x23u,0x86u,0x9bu,0xb5u,0x76u,0xcfu,0x57u,0xb3u,0x8au,0xf1u,0xa1u,0xa9u,0x1au,0xc8u,0x1cu,0x47u,0xc2u,0x46u,0xa9u,0x42u,0x5du,0x0du,0xd9u,0x55u};
 static const uint8_t expected_compiled_sha[32] = {0xe6u,0x12u,0xa9u,0x71u,0xcdu,0xa1u,0x1fu,0xaeu,0x3fu,0x1bu,0xe2u,0x15u,0xc0u,0xcau,0x3eu,0xd7u,0xdeu,0x7bu,0x2au,0xf7u,0x33u,0x94u,0x46u,0xe9u,0x26u,0xceu,0x55u,0x96u,0x58u,0xdbu,0x2fu,0x7fu};
 
-static p03_rt rt;
+/* The scheduler owns its runtime on its own stack. Never read a second
+ * static p03_rt here: that object remains at timestep zero forever.
+ * Bound once in prepare(), invalidated at each frame boundary. */
+static const p03_rt *active_runtime;
 static p03_hw_adapter hw;
 static p03_hw_runtime_bridge bridge;
 static p03_rt_ops bridge_ops;
@@ -235,6 +238,7 @@ static int prepare(void *cookie,const uint8_t *record,size_t bytes,
     uint64_t metadata;
     p03_hw_io io=p03_hw_xilinx_io();
     (void)cookie;
+    active_runtime=NULL;
     if(!master_verified || record!=ingress || bytes!=sizeof(ingress) ||
        !runtime || !ops || !ops_ctx || validate_deployment(NULL)!=0)
         return -1;
@@ -283,6 +287,7 @@ static int prepare(void *cookie,const uint8_t *record,size_t bytes,
         return -1;
     *ops=bridge_ops;
     *ops_ctx=&bridge;
+    active_runtime=runtime;
     return 0;
 }
 static int append_current(void *cookie,uint8_t slot,uint8_t bank,
@@ -315,8 +320,10 @@ static int append_current(void *cookie,uint8_t slot,uint8_t bank,
 static int read_trace(void *cookie,uint8_t slot,uint16_t compartment,
                       uint32_t words[8])
 {
-    uint32_t i,k,tick=rt.current_timestep;
+    uint32_t i,k,tick;
     (void)cookie;
+    if(!active_runtime) return -1;
+    tick=active_runtime->current_timestep;
     if(!words || slot!=0u || compartment<32u || compartment>=42u ||
        tick>=26u)
         return -1;
