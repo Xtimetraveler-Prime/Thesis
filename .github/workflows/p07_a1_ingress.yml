@@ -17,6 +17,11 @@ jobs:
           python-version: '3.11'
       - name: Install Python test dependencies
         run: python -m pip install pytest
+      - name: P07-A2 build script syntax checks
+        working-directory: Loihi_Digital_Twin/v3
+        run: |
+          bash -n scripts/build_p07_a2.sh
+          python -m py_compile software/p07/build_p07_a2.py scripts/p07_a2_batch.py scripts/p07_a2_verify.py
       - name: P07-A1 Python and independent native C regression
         working-directory: Loihi_Digital_Twin/v3
         run: |
