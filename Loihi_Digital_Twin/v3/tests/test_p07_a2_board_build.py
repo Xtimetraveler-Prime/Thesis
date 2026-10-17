@@ -42,3 +42,7 @@ def test_a53_board_source_compiles_with_vendor_header_signatures(tmp_path):
     ]
     result = subprocess.run(command, text=True, capture_output=True)
     assert result.returncode == 0, result.stdout + result.stderr
+    board = (ROOT / "software/p07/p07_a2_board.c").read_text(encoding="utf-8")
+    assert "active_runtime->current_timestep" in board
+    assert "tick=rt.current_timestep" not in board
+    assert "P07_A2_KV260_A53_FROZEN_TRACK_A_V1_TRACE_CONTEXT_FIX" in board
