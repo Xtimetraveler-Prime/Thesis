@@ -85,7 +85,7 @@ def test_index_hash_pins_and_validation_provenance_reject_fake_split():
         val.select_validation_sources(training[:2], validation)
     fake = SimpleNamespace(
         manifest={"schema":"synthetic-idx-test-not-benchmark"},
-        count=60000, images=bytes(60000*784), labels=bytes(60000),
+        count=60000, images=bytes(10), labels=bytes(10),
         train_indices=training, validation_indices=validation)
     with pytest.raises(ValueError, match="exact accepted canonical train-only"):
         val.extract_validation_frames(fake)
