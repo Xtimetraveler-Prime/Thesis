@@ -1,13 +1,14 @@
 # P07-A2 — Autonomous A53 frame runtime / first physical inference candidate
 
 **Branch:** `agent/v3-p07-a-784-axon-streaming`.
-**Status:** P07-A1 USER-ACCEPTED. P07-A2 **USER VITIS BUILD GATE PASSED**
-on 2026-10-17, as evidenced in `P07_A2_NATIVE_BUILD_ATTESTATION.md`;
-**XSDB/KV260 PHYSICAL TRACE GATE PENDING**. The first build's ELF has
-been **superseded** by the mandatory live-scheduler-timestep trace fix.
-The corrected source must be rebuilt to a fresh ELF before programming
-the board. No merge until the user explicitly approves.
-
+**Final status:** **P07-A2 CLOSED / USER-ACCEPTED 2026-10-17** after
+a real one-shot autonomous A53/PL KV260 physical batch and exact frozen
+independent oracle comparison. See the authoritative
+`P07_A2_FINAL_ACCEPTANCE.md`. The older build/physical instructions
+below are retained as the chronology and reproduction steps. Initial
+pre-trace-fix ELF was superseded and never an accepted physical result.
+Official MNIST TEST is still SEALED. No merge without explicit user
+approval.
 
 ## 2026-10-17 native build outcome and corrected physical admission
 
@@ -257,17 +258,23 @@ Only `P07_A2_PHYSICAL_TRACES_EXACT=1` from a genuine 64KiB
 physical mailbox *after* the A53 terminal success and software
 first-difference comparison could establish the device numerical
 gate for the selected trace frame; other frames' class-output parity
-is checked as well. This board result is **NOT PRESENT** in the
-repository. If first mismatch, report its first tick/compartment/field
+is checked as well. The successful physical user log was subsequently attested and
+recorded in `P07_A2_FINAL_ACCEPTANCE.md`; the raw physical mailbox
+remains on the user's PC and was not uploaded to this repository. If first mismatch, report its first tick/compartment/field
 and preserve the raw physical evidence; never alter frozen P06
 arithmetic, labels or goldens to make it pass.
 
-## Acceptance stop
+## Final acceptance / next step
 
-P07-A2 is **NOT CLOSED** as of this document. GitHub CI and host-native
-C mock validation are a legitimate implementation checkpoint only.
-The first native Vitis ELF gate passed for the original build,
-but the trace-timestep fix supersedes that ELF and requires a clean
-rebuild. After the corrected ELF passes, physical KV260
-bringup/verification must be independently attempted and its output independently accepted. P07-A3 and official
-P07-A4 sealed TEST remain pending. P08-A measurements are deferred.
+**2026-10-17 independent user gate: PASS and P07-A2 CLOSED.**
+The user executed the corrected A53 ELF on the KV260, reported
+`P07_A2_MAILBOX_STATUS=0x600D600D`, and successfully ran independent
+frozen packed-oracle comparison of three diagnostic frames, including
+selected-image 26×42 full FPGA trace
+(`P07_A2_PHYSICAL_TRACES_EXACT=1` and
+`P07_A2_GATE_FULL_PHYSICAL_PASS=1`).
+Full evidence scope, classifications, packet counts and limitations are
+in `P07_A2_FINAL_ACCEPTANCE.md`. This is **not** a physical MNIST
+accuracy or energy result. Follow `P07_A3_VALIDATION_GATE.md`
+for fixed TRAIN-derived validation-only physical corpus entry.
+P07-A4 sealed official TEST and P08-A performance/power remain pending.
