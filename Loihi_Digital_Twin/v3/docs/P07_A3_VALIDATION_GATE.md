@@ -1,10 +1,16 @@
 # P07-A3 — Frozen validation-only KV260 trained inference
 
 **2026-10-17:** A2 exact-trace **PHYSICAL PASS, USER-ACCEPTED**
-(`P07_A2_FINAL_ACCEPTANCE.md`). **A3.1 IMPLEMENTED,
-PENDING INDEPENDENT USER NATIVE GATE.** A3 physical numerical and
-validation-accuracy evaluation is **NOT YET RUN**. Branch
-`agent/v3-p07-a-784-axon-streaming`; do not merge without explicit approval.
+(`P07_A2_FINAL_ACCEPTANCE.md`). **A3.1 and A3.2 CLOSED / INDEPENDENTLY
+USER-ACCEPTED on actual KV260**: 15/16 correct (93.75%),
+0/16 silent, all-frame physical spike/route parity, selected frame
+26×42 exact trace, and user-supplied raw evidence SHA256.
+See `P07_A3_2_PHYSICAL_ACCEPTANCE.md`. **A3.3 NOW IMPLEMENTED /
+NATIVE USER VERIFICATION AND PHYSICAL 128-IMAGE/RESTART GATE PENDING.**
+The authoritative precommitted new protocol is
+`P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`.
+Official TEST SEALED. Branch
+`agent/v3-p07-a-784-axon-streaming`; no merge without approval.
 
 ## Purpose, phases, boundaries
 
@@ -33,11 +39,14 @@ numerical parity is established.
   frozen packed oracle, and only then disclose 16 validation labels,
   top-1 correct/denominator, all-silent rate and confusion counts.
   The label file is **never** staged into physical DDR.
-- **A3.3 (separate future gate):** Before broad physical validation or
-  official test evaluation, predeclare a larger validation sampling
-  plan and evaluate board reproducibility, independent run variation,
-  timeout/error handling, A53 restart and batch boundaries. No chosen
-  number, population success rate or physical accuracy claim yet.
+- **A3.3 (active):** The separate prespecified 128-image / ten-launch
+  validation-only protocol is now source-frozen BEFORE new A3.3 device
+  results: eight 16-frame primary batches, with independently rebooted
+  repeat launches of the first and last batch. Score exactly 128 unique
+  labels; demand ten independent numerical/oracle passes and two exact
+  repeat mailboxes; report all attempted errors. See
+  `P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`. **No A3.3 physical
+  result or 128-frame score has yet been accepted.**
 - **A4 (separate future gate):** official *test* 10k remains sealed.
   Prespecify evaluation population/run budget, test IDX identities,
   repetitions, failure denominator and no-retuning policy **before**
@@ -143,3 +152,23 @@ raw mailbox and entire `P07_A2_RUN_DIR` with original file hashes,
 reboot the KV260, and report the failure. No changes to the
 frozen P06 checkpoint, Loihi numerical semantics, acceptance
 goldens, or sealed TEST are justified by one diagnostic mismatch.
+
+## A3.2 physical acceptance and A3.3 successor
+
+**2026-10-17 A3.2 PHYSICAL PASS**: the user reported 16 real
+TRAIN-derived validation frames, 15 correct, 0 silent and
+`P07_A3_PHYSICAL_VALIDATION_EXACT=1`,
+`P07_A2_PHYSICAL_TRACES_EXACT=1`, and
+`P07_A3_PHYSICAL_GATE_PASS=1`. The sole model misclassification
+was source index 32157, truth 3 → prediction 9, *with exact oracle parity*.
+The exact mailbox SHA-256 is
+`f467427dbb6c35a6dae0e1b94f291c278e84f337ce8a9b0d38ddce546404f6d9`.
+These logs and their limitations are recorded in
+`P07_A3_2_PHYSICAL_ACCEPTANCE.md`.
+
+The old A3.1/A3.2 pending instructions above are retained as
+reproduction history, not current unresolved acceptance checks.
+The **next active gate is A3.3.1 canonical first-128 validation
+protocol native verification**. Follow
+`P07_A3_3_RESTART_VALIDATION_PROTOCOL.md`. A3.3 accepts no
+physical claims before the user's ten-run evidence.
