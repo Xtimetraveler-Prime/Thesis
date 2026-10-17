@@ -475,19 +475,25 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P07-A1 status (updated 2026-10-17)
+## Immediate next step / P07-A2 status (updated 2026-10-17)
 
-**P06 Track A (A1–A4) is complete and user-accepted**, including the
-trained compact checkpoint, four-way software parity, and frozen P02.1
-512 KiB static DDR-image validation. The current engineering task is
-**P07-A1**, versioned 784-axon image ingress and A53 event-stream
-preparation on the separate branch
-`agent/v3-p07-a-784-axon-streaming`. The first host ABI/C11/test
-implementation is in development; its independent user-native gate and
-all P07 physical MNIST inference remain **NOT ACCEPTED/NOT RUN**.
-See `P06_A4_FINAL_CLOSEOUT.md`, `P07_A_HANDOFF_SEED.md`, and
-`P07_A1_INGRESS_CONTRACT.md`. The actual accepted full DDR binary SHA-256
-remains local and must be captured before board loading. The official
-MNIST TEST partition remains sealed. P06-B1/B2 remain deferred until
-P08-A is physically measured and accepted. Do not resurrect the Rao AHP
-adaptation as a prerequisite.
+**P06 Track A (A1–A4) and P07-A1 are complete and user-accepted.**
+P06 produced a project-trained 784→32→10 compact SNN, exact software
+word/trace replay and a frozen static P02.1 512KiB DDR context. P07-A1
+then validated the many-axon ingress contract on the user's native
+machine, with real DDR SHA256
+`9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955`
+and compiler fingerprint
+`e612a971cda11fae3f1be215c0ca3ed7de7b2af7339446e926ce559658db2f7f`.
+
+**P07-A2 is the active engineering gate:** autonomous Cortex-A53 image
+execution, 26 barriers per image, full reset, real output trace counts,
+and first-mismatch verification. The portable P03 scheduler wrapper,
+candidate bare-metal A53/DDR/PL integration, versioned image batching,
+CI-native C/CRC/SHA tests, and evidence analysis tools exist on
+`agent/v3-p07-a-784-axon-streaming`, but the user's Vitis ELF build
+and physical KV260 trace acceptance are **PENDING**. See
+`P07_A1_FINAL_CLOSEOUT.md` and `P07_A2_A53_RUNTIME_GATE.md`.
+The official MNIST TEST partition is **SEALED**; no A53 MNIST
+accuracy/latency/energy is claimed. P06-B1/B2 are deferred until
+P08-A is physically measured and accepted.
