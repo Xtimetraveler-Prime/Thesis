@@ -53,54 +53,43 @@ one real packed **42-neuron, 25,408-synapse,
 with **synthetic test weights**, not trained
 accuracy or physical KV260 inference.
 
-**P06-A2 CLOSED / user-accepted (2026-10-13):** A2.1–A2.5's
-independent signed24 LIF oracle, deterministic 25+1-event encoder,
-separately decoded P03 packed-image replay and PyTorch forward parity
-have all been accepted by user native verification. Detailed native
-pytest logs were not all provided; this does not imply physical FPGA
-MNIST. Accepted P05/HLS goldens remain untouched.
-[Closeout record](docs/P06_A2_5_TRAINING_FORWARD_GATE.md).
+## P06 Track A closeout / entry to P07 (2026-10-17)
 
-**P06-A3 IN PROGRESS (2026-10-13):** Implemented A3.1 canonical
-MNIST TRAIN-only checksum/IDX validation, deterministic 50k train /
-10k validation provenance; A3.2 seeded quantization-aware surrogate
-learning and validation-only model selection; A3.3 signed24 checkpoint
-candidates with config/data/weight hashes and tamper checks.
-**The user accepted native tests, canonical TRAIN-only archive
-preflight and initial optimizer smoke on 2026-10-13.** The smoke's
-12/12 validation frames were entirely silent (synthetic accuracy 33.3%),
-so it does not establish meaningful learning. A3.4 adds a bounded
-256-TRAIN/128-validation, two-epoch learning-activity pilot with
-quantized-weight, surrogate-gradient and per-class spike diagnostics.
-**A3.4 pilot native verification is now user-accepted (2026-10-15).**
-The canonical 256/128, two-epoch train-only pilot showed gradients in
-both layers and integer-weight changes (4,864 input→hidden; 105
-hidden→output). Pilot validation rose 10.16%→21.09%, but **77/128
-(60.16%)** final validation cases still emitted zero output spikes,
-biasing the tie-break toward class 0. The activity gate permits the
-first unchanged full 50k/10k training experiment; the **60% full
-validation GO criterion is now **EXCEEDED** by the first completed
-full 50k/10k train/validation trial. The user-provided candidate manifest
-reports epoch-8 best validation **94.39%**, train **95.34%**, and just
-**2/10,000** all-silent validation images. This remains a reported
-held-out validation result, NOT official MNIST test or KV260 accuracy.
-The native checkpoint integrity reload is still required.
-Validation GO/NO-GO criterion
-was set at 60% before any dataset evaluation. Test labels stay sealed;
-no accuracy, P07 execution or KV260 power/energy claim is made.
-[Current native preflight gate](docs/P06_A3_1_TO_3_NATIVE_GATE.md).
+**A1/A2/A3 accepted, A4.1 trained host benchmark freeze accepted.**
+The user trained our project-defined 784→32→10 signed24 integer-forward
+spiking classifier using the canonical 50,000-example MNIST TRAIN split
+and selected epoch 8 based on the predeclared 10,000-image held-out
+validation split. **Train accuracy: 95.34%. Validation: 94.39%.**
+The official test partition remains sealed; these numbers are NOT
+physical KV260 accuracy. Checkpoint byte SHA256 and signed-integer
+weight SHA256 are pinned, and the A4.1 native software run necessarily
+reloaded and verified the checkpoint before exporting memory words.
 
-**P06-A4.1 IMPLEMENTED — NATIVE VERIFICATION PENDING (2026-10-15):**
-Pinned the exact candidate checkpoint SHA256
-`0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88`
-and effective signed integer weight SHA256
-`1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b`.
-The new snapshot generator checks current 50k/10k dataset provenance,
-compiles actual learned signed24 weights through unchanged P06/P03,
-compares PyTorch/dense integer/packed replay/LogicalChip for 26-step
-frames, then records endian-defined P03 words and hashes. **These
-streams are not the A53/DDR full-page ABI or an FPGA run.**
-[Current A4 native verification instructions](docs/P06_A3_TRAINED_CANDIDATE_A4_1_GATE.md).
+The user reported **P06_A4_SOFTWARE_SNAPSHOT_PASS=1** with all four
+host inference paths exactly equal on **5 frames × 26 logical steps**:
+PyTorch integer forward, separate signed24 dense oracle, independent
+P03 packed-word replay, and `LogicalChip`. The trained P03
+one-core image contains **42 compartments, 816 input axons,
+25,408 packed synapses and 32 routes**. Six packed-stream file
+SHA256 and byte counts are frozen in
+[the software benchmark manifest](docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json).
+
+**A4.2 static DDR handoff audit remains the only new native gate:**
+`scripts/p06_a4_freeze.py` uses the already accepted P02.1
+`LTV3CTX1` ABI to build a **524,288-byte initial core-0 DDR record**
+and validate its banks and hashes. The new generator and tests have
+NOT yet been rerun on the user's PC; the final full-record SHA256
+is therefore not yet known. Read
+[the final P06-A4 closeout record](docs/P06_A4_FINAL_CLOSEOUT.md)
+and [sealed official-test protocol](docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md).
+
+**P07 is next:** the accepted P05 diagnostic A53 ABI accepts only
+one external input axon per logical core. It does **not** perform
+the 784-axon, 25+1-timestep, fresh-state-per-image inference needed
+for autonomous FPGA MNIST. P07 must implement and independently
+validate that separate versioned A53 streaming interface before
+unsealing the official test. No P07 FPGA MNIST, P08 power, or
+original Loihi silicon performance is claimed.
 
 **Official sequential development plan:**
 
