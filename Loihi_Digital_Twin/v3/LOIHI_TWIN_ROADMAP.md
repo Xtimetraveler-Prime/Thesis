@@ -1588,9 +1588,12 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 real P02 static DDR SHA256 and trained compiler fingerprint. P07-A2
 autonomous A53 C11 scheduler and standalone FPGA application candidate
 implemented on `agent/v3-p07-a-784-axon-streaming`, with native CI
-mock/syntax tests; user Vitis ELF build and physical numerical
-confirmation PENDING. **P07 PHYSICAL TRAINED MNIST INFERENCE NOT YET
-VERIFIED.** See `docs/P07_A1_FINAL_CLOSEOUT.md` and
+mock/syntax tests. **User Vitis/XSA ELF build PASSED 2026-10-17**;
+initial ELF must be rebuilt after the trace ownership fix before
+physical XSDB execution (see native build attestation). **Physical
+KV260 inference/first-divergence validation PENDING.**
+See `docs/P07_A1_FINAL_CLOSEOUT.md`,
+`docs/P07_A2_NATIVE_BUILD_ATTESTATION.md`, and
 `docs/P07_A2_A53_RUNTIME_GATE.md`. Official TEST remains sealed. P06 Track A host/static
 DDR source gates are user-accepted. P07-B starts only after a
 physically measured/accepted P08-A baseline and successful
