@@ -94,15 +94,12 @@ def make_stream(images: bytes, mapping: tuple[int, ...],
     _check_capacity(count, trace_index)
     packed_map = _check_mapping(mapping)
     head = bytearray(HEADER_BYTES)
-    struct.pack_into("<8s19I", head, 0,
+    struct.pack_into("<8s18I", head, 0,
                      MAGIC, VERSION, HEADER_BYTES, count, IMAGE_BYTES,
                      IMAGE_BASE, IMAGE_CAPACITY, RESULT_BASE, RESULT_CAPACITY,
                      RESULT_RECORD_BYTES, TRACE_BASE, trace_index, 0,
                      crc(images), crc(packed_map), MAP_COUNT, MAP_BASE,
-                     MASTER_BASE, BACKING_BASE, 0)
-    # 19th integer (offset 80) must NOT be written: header offset 80
-    # is the beginning of the 32B DDR SHA. Repack the 18 fields only.
-    # The temporary word above is overwritten by exact 32B immutable SHA.
+                     MASTER_BASE, BACKING_BASE)
     head[80:112] = bytes.fromhex(DDR_SHA256)
     head[112:144] = bytes.fromhex(COMPILED_FINGERPRINT)
     struct.pack_into("<I", head, 252, crc(head[:252]))
