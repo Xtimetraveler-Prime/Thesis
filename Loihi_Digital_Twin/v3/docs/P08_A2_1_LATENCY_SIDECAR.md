@@ -1,7 +1,7 @@
 # P08-A2.1 — Experimental A53 image-latency sidecar (source candidate)
 
 **Status (2026-10-18): IMPLEMENTED ON FEATURE BRANCH / HOST TESTS AND USER VITIS BUILD NOT YET VERIFIED / PHYSICAL KV260 NOT RUN.**  
-**Scope revision approved by user:** latency, throughput and their PS/PL overhead first; **power and energy characterization deferred** to a future user-authorized phase. No invented power readings. The P08-A1 measurement boundary proposal was accepted in this narrower sense; power-equipment selection is not an active gate.
+**Scope revision approved by user:** latency and its PS/PL overhead first; dataset-level throughput is a supplemental derived statistic, not an acceptance gate; **power and energy characterization deferred** to a future user-authorized phase. No invented power readings. The P08-A1 measurement boundary proposal was accepted in this narrower sense; power-equipment selection is not an active gate.
 
 ## Why a separate firmware?
 
