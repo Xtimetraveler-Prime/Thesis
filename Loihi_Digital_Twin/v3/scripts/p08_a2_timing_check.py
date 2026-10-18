@@ -45,7 +45,7 @@ def main() -> None:
         "image_service_seconds_median": statistics.median(services),
         "image_service_seconds_min": min(services),
         "image_service_seconds_max": max(services),
-        "p03_26tick_call_seconds_median": statistics.median(neural),
+        "prepare_plus_26tick_call_seconds_median": statistics.median(neural),
         "selected_trace_image_service_seconds": seconds(selected.service_ticks),
         "pl_dispatch_cycles_domain": "FPGA_COUNTER_FREQUENCY_NOT_YET_CONFIRMED",
         "pl_dispatch_cycles_total":
