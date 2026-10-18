@@ -143,7 +143,7 @@ REBOOT THE KV260; do not resume the halted operating system.
 - Correct: **9456 / 10000**
 - Incorrect: **544 / 10000**
 - Official MNIST TEST classification accuracy:
-  **94.56%** (946? no: exact score `9456/10000`).
+  **94.56%** (exact `9456/10000`).
 - All-silent: **2 / 10000** (0.02%). These remain included
   in the test denominator; not dropped.
 - Numerical parity: **all 10000 indexed CRC-validated
