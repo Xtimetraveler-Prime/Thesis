@@ -1,6 +1,6 @@
 # P08-A3.1 — Initial physical KV260 latency pilot (16 TRAIN validation images)
 
-**Status (2026-10-18): PHYSICALLY PASSED — USER-ATTESTED 16-FRAME P07 NUMERICAL PARITY + BOTH P08 TIMING-CAPTURE CHECKS. 1,024-FRAME BASELINE NOT RUN; NUMERIC TIMING VALUES NOT YET POSTED.**  
+**Status (2026-10-18): PHYSICALLY PASSED — USER-ATTESTED 16-FRAME P07 NUMERICAL PARITY + BOTH P08 TIMING-CAPTURE CHECKS. 16-FRAME NUMERIC PILOT TIMES NOW PROVIDED; SEE [EXACT RESULT TABLES](P08_A3_1_PHYSICAL_LATENCY_RESULTS.md). 1,024-FRAME BASELINE NOT RUN.**  
 **Scope:** user-approved latency characterization only; **power/energy deferred**. This is the first engineering hardware pilot, **not** the full 1,024-image repeated latency baseline and not a new official MNIST TEST accuracy study.
 
 ## 1. Prior accepted evidence and candidate build state
@@ -128,4 +128,4 @@ Our **primary implementation-level sources** are the already accepted project fi
 - `software/p08/p08_a2_2_runtime.c`, `src/loihi_twin_v2/p08_a2_2_ticks.py`: actual new instrumented boundaries and consistency checks.
 - [P08-A2.2 Timing Methods](P08_A2_2_TIMING_METHODS.md): Arm Generic Timer/CNTFRQ documentation references, AMD Vitis HLS UG1399 clock-target-vs-counter caveats. **No additional external metrology method was invented for A3.1.**
 
-A3.1 **has now closed** the **correctness and readback feasibility of a 16-image instrumented real-board pilot** from the user's supplied physical pass log; numerical latency distributions still need inspection of the preserved JSON. Next A3.2, subject to user acceptance, would compare the same first 1,024 images in separate A2.1/A2.2 cold-boot runs and quantify profiler perturbation and run-to-run uncertainty. **No power characterization will be resumed without explicit permission.**
+A3.1 **has now closed** the **correctness and readback feasibility of a 16-image instrumented real-board pilot** from the user's supplied physical pass log; user-supplied numerical latency excerpts are now documented in [A3.1 latency results](P08_A3_1_PHYSICAL_LATENCY_RESULTS.md), while preserved raw files/JSON still await an independent file-level inspection. Next A3.2, subject to user acceptance, would compare the same first 1,024 images in separate A2.1/A2.2 cold-boot runs and quantify profiler perturbation and run-to-run uncertainty. **No power characterization will be resumed without explicit permission.**
