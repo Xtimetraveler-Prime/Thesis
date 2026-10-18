@@ -54,6 +54,15 @@ done
 grep -aFq "$MARKER" "$ELF" || {
   echo "ERROR: ELF must be NEW A4.2b persistent Vitis ELF (not A2)" >&2; exit 2;
 }
+# Pin the first A4.2c pilot to the EXACT user-attested 2026-10-17
+# Vitis native A4.2b ELF. New source/ELF revisions require an explicit,
+# separately recorded rebuild and hardware-entry acceptance.
+ACCEPTED_ELF_SHA256=dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb
+ACTUAL_ELF_SHA256="$(sha256sum "$ELF" | awk '{print $1}')"
+[[ "$ACTUAL_ELF_SHA256" == "$ACCEPTED_ELF_SHA256" ]] || {
+  echo "ERROR: ELF digest differs from user-accepted persistent A4.2b Vitis build" >&2; exit 2;
+}
+echo "P07_A4_2C_ACCEPTED_PERSISTENT_ELF_SHA256=$ACTUAL_ELF_SHA256"
 for expected in   p03_hpm0_data_width_bits=128   p03_hpm0_transport=smartconnect_width_protocol   p03_mmio_slave_data_width_bits=32   p03_ps_mmio_master=FPD   p03_mmio_base=0xA4000000; do
   grep -Fxq "$expected" "$METRICS" || {
     echo "ERROR: mismatch in accepted routed FPD128 fabric: $expected" >&2; exit 2;
