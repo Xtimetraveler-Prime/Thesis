@@ -1,6 +1,6 @@
 # P08-A2.1 — Experimental A53 image-latency sidecar (source candidate)
 
-**Status (2026-10-18): IMPLEMENTED ON FEATURE BRANCH / HOST TESTS AND USER VITIS BUILD NOT YET VERIFIED / PHYSICAL KV260 NOT RUN.**  
+**Status (2026-10-18): A2.1 BUILD-ONLY VERIFIED BY USER, NATIVE TEST LOG NOT POSTED, PHYSICAL KV260 NOT RUN.**  
 **Scope revision approved by user:** latency and its PS/PL overhead first; dataset-level throughput is a supplemental derived statistic, not an acceptance gate; **power and energy characterization deferred** to a future user-authorized phase. No invented power readings. The P08-A1 measurement boundary proposal was accepted in this narrower sense; power-equipment selection is not an active gate.
 
 ## Why a separate firmware?
@@ -62,7 +62,7 @@ Candidate ELF: `$P08_A2_BUILD_DIR/vitis_workspace/p08_a2_board.elf`; its observe
 
 ## Pending: P08-A2.2 per-tick timing, A3 KV260 verification
 
-A2.1 deliberately provides **per-image aggregate** counters, not individual 26 per-tick event-source and event-bank MMIO timings. A2.2 should separately add encoder, append, dispatch MMIO wrapper, output trace, route and barrier **per-tick endpoints** with fixed-size, fail-closed telemetry; this must be native-tested and built/verified independently before claiming pure event-source latency. We should test A2.1 on your machine and finish its gate before beginning A2.2.
+User-supplied A2.1 build from `/tmp/v3_p08_a2_build_20261018T193149Z` **PASSED** with new experimental ELF SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`, pinned P03.2c XSA SHA256 `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`, ELF DDR isolation PASS and physical status NOT_RUN. A2.1 deliberately provides **per-image aggregate** counters, not individual 26 per-tick event-source and event-bank MMIO timings. A2.2 now has a **candidate source implementation**, with seven A53 tick boundaries, C/Python/CRC tests and a new isolated build. See [P08_A2_2_TIMING_METHODS.md](P08_A2_2_TIMING_METHODS.md). **A2.2 native, Vitis and physical tests remain pending.** We should test A2.1 on your machine and finish its gate before beginning A2.2.
 
 For the later P08-A3 **physical** gate, use ONLY synthetic or the predeclared 1,024 TRAIN-derived validation images, never rerun the official TEST by default. Preserve all original P07 numerical journal/trace and six provisioning readbacks. Confirm the board is rebooted to dedicated **JTAG-only bare-metal DDR ownership**, collect new raw sidecar and hashes with a **fresh** no-overwrite output directory, and run the existing independent `scripts/p07_a4_2_verify.py` against the *unchanged* P07 journal/trace plus the P08 timing parser. No such KV260 run is claimed now.
 
