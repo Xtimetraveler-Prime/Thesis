@@ -88,12 +88,14 @@ def test_a3_1_crosscheck_when_raw_is_already_parsed(monkeypatch,tmp_path):
     image=SimpleNamespace(
         count=16, trace_index=0, cntfrq_hz=100000000,
         dataset_start=1,dataset_stop=10000,
-        records=[SimpleNamespace(service_ticks=100,pl_dispatch_cycles=200)
-                 for _ in range(16)])
+        records=[SimpleNamespace(index=i,service_ticks=100,pl_dispatch_cycles=200)
+                 for i in range(16)])
     tickrecords=[
         SimpleNamespace(frame=i,tick=t,external_events=0,
                         emitted_packets=2 if t==25 else 1,
-                        acknowledged_packets=2 if t==25 else 1)
+                        acknowledged_packets=2 if t==25 else 1,
+                        source_ticks=1,bank_ticks=2,dispatch_wrapper_ticks=3,
+                        trace_ticks=4,route_ticks=5,barrier_ticks=6)
         for i in range(16) for t in range(26)
     ]
     timed=SimpleNamespace(count=16,ticks=tuple(tickrecords))
