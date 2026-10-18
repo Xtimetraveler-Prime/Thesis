@@ -142,6 +142,22 @@ print("P08_A3_1_ELF_DDR_ISOLATION_PASS=1")
 '
 
 mkdir -p "$RUN/readback"
+# Preserve artifact hashes and the exit status even when provisioning,
+# hardware, timeout or independent oracle validation fails.
+capture_attempt_exit() {
+    local rc=$?
+    printf 'script_exit_status=%s\n' "$rc" > "$RUN/attempt_exit_status.txt"
+    {
+        for f in "$RUN"/p07_a4_journal_1m.bin \
+                 "$RUN"/p07_a4_trace_64k.bin \
+                 "$RUN"/p08_a2_1_images_1m.bin \
+                 "$RUN"/p08_a2_2_ticks_3m.bin \
+                 "$RUN"/p08_a3_1_verified_pilot.json;do
+            [[ ! -f "$f" ]] || sha256sum "$f"
+        done
+    } > "$RUN/available_output_sha256.txt"
+}
+trap capture_attempt_exit EXIT
 python - "$RUN/trace_zero_64k.bin" <<'PY'
 from pathlib import Path
 import sys
