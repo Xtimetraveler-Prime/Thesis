@@ -130,6 +130,32 @@ if (m.get("scope")!="TRAIN_DERIVED_VALIDATION_FIRST_16" or
     raise SystemExit("P08-A3.1 refuses anything but first-16 TRAIN-validation")
 print("P08_A3_1_STAGE_FIRST16_ACCEPTED_SCOPE_PASS=1")
 PY
+# Stronger pre-hardware check: authenticate the ORIGINAL first16 TRAIN split
+# against user-local frozen canonical TRAIN, not just manifest/ledger hashes.
+# This prevents a forged TRAIN label on a different image population.
+PYTHONPATH="$V3/src" python - "$STAGE" <<'PY'
+from pathlib import Path
+import json
+import sys
+from scripts.p07_a4_2_verify import validate_staging
+from loihi_twin_v2.p06_a3_data import load_train_validation
+from loihi_twin_v2.p06_a3_training import load_candidate
+from loihi_twin_v2.p07_a4_validation import (
+    select_validation_prefix, validate_ledger,
+)
+stage=Path(sys.argv[1])
+meta,stream=validate_staging(stage)
+split=load_train_validation(Path("data/mnist_raw"))
+_,candidate=load_candidate(Path("artifacts/p06_a3_candidate_seed20261013"))
+if split.manifest != candidate.get("source_dataset"):
+    raise SystemExit("P08-A3.1 original canonical TRAIN split/model mismatch")
+frames=select_validation_prefix(split,16)
+ledger=json.loads((stage/"p07_a4_2a_validation_labels_HOST_ONLY.json").read_text())
+validate_ledger(ledger,frames,stream.images)
+if meta["scope"]!="TRAIN_DERIVED_VALIDATION_FIRST_16":
+    raise SystemExit("P08-A3.1 wrong sealed pilot scope")
+print("P08_A3_1_ORIGINAL_TRAIN_FIRST16_PHYSICAL_PREFLIGHT_PASS=1")
+PY
 readelf -lW "$ELF" | python -c '
 import sys
 loads=[f for line in sys.stdin if (f:=line.split()) and f[0]=="LOAD"]
