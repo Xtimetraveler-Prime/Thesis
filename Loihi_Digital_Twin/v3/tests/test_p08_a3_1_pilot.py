@@ -44,6 +44,28 @@ def test_physical_runner_denies_without_three_explicit_approvals(tmp_path,approv
     assert not run.exists()
 
 
+def test_physical_runner_rejects_git_worktree_evidence_without_hardware(tmp_path):
+    # No file created and no possible JTAG call if output resides inside Git.
+    inside = ROOT / "UNSAFE_DO_NOT_CREATE_A3_1_PHYSICAL_OUTPUT"
+    assert not inside.exists()
+    env = {
+        **os.environ,
+        "P08_A3_1_RUN_DIR": str(inside),
+        "P08_A2_2_BUILD_DIR": str(tmp_path / "nonexistent-build"),
+        "P03_DIAG_REPORTS": str(tmp_path / "nonexistent-reports"),
+        "P08_A3_1_STAGE_DIR": str(tmp_path / "stage"),
+        "P08_A3_1_EXPECTED_ELF_SHA256": "0"*64,
+        "P08_A3_1_CONFIRM_JTAG_ONLY": "YES",
+        "P08_A3_1_CONFIRM_DDR_OVERWRITE": "YES",
+        "P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY": "YES",
+    }
+    got=subprocess.run(["bash", str(ROOT/"scripts/run_p08_a3_1_pilot.sh")],
+                       cwd=ROOT,env=env,text=True,capture_output=True)
+    assert got.returncode!=0
+    assert "outside the Git checkout" in got.stderr
+    assert not inside.exists()
+
+
 def test_a3_1_invalid_population_refused_before_oracle(monkeypatch,tmp_path):
     called=[]
     stream=SimpleNamespace(image_count=128)
