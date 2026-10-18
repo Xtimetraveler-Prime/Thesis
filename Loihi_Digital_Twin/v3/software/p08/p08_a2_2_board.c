@@ -317,7 +317,7 @@ static uint64_t read_ticks(void *cookie)
 {
     uint64_t ticks;
     (void)cookie;
-    __asm__ volatile("isb; mrs %0, cntvct_el0":"=r"(ticks));
+    __asm__ volatile("isb; mrs %0, cntvct_el0":"=r"(ticks)::"memory");
     return ticks;
 }
 static void on_error(void *cookie,const p03_rt *runtime)
