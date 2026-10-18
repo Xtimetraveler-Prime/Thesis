@@ -106,7 +106,7 @@ def compare_prior_physical(
         header=(batch_dir/"p07_a2_header_64.bin").read_bytes()
         payload=(batch_dir/"p07_a2_ingress_payload.bin").read_bytes()
         expected=a3_plan["batches"][batch_idx]
-        if (expected.get("batch_name")!=f"batch_{batch_idx:02d}" or
+        if (expected.get("name")!=f"batch_{batch_idx:02d}" or
             expected.get("header_sha256")!=sha256(header) or
             expected.get("payload_sha256")!=sha256(payload) or
             batch_info.get("sha256",{}).get("header")!=sha256(header) or
