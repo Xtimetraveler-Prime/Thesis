@@ -1623,8 +1623,7 @@ CRC/overflow/footprint/identity/tamper rejection and
 independently checked staged synthetic/validation
 native files. User-native commands and current test
 markers are in `docs/P07_A4_2A_NATIVE_GATE.md`.
-**A4.2b IMPLEMENTED / CI C11 NATIVE PASS / USER VITIS A53
-ELF BUILD PENDING:** separate `p07_a4_board.c`, accepted
+**A4.2b CLOSED / USER VITIS-NATIVE ACCEPTED (2026-10-17):** separate `p07_a4_board.c`, accepted
 `p07_a2_run_frame` reused unchanged with new
 `P07A4P01` input/1MiB `P07A4R01` result journal,
 immutable master and mapping admission, whole dataset
@@ -1635,7 +1634,16 @@ success; candidate A53 board compiles with C11 vendor
 signature shims. `build_p07_a4.sh` stages an isolated
 new Vitis 2025.2 workspace, exact accepted FPD128 XSA,
 different persistent firmware identity and ELF DDR
-isolation. **The user has NOT YET cross-built this ELF.**
+isolation. **The user independently built this ELF** in
+`/tmp/v3_p07_a4_persistent_20261017T190943`,
+confirmed `P07_A4_A53_VITIS_BUILD_PASS=1`,
+`P07_A4_VITIS_NATIVE_GATE_PASS=1`, the routed XSA
+SHA256 `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`,
+and ELF SHA256
+`dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`.
+The candidate Vitis ELF is build-accepted **but never
+yet run on the KV260**. Record:
+`docs/P07_A4_2B_VITIS_ACCEPTANCE.md`.
 
 **A4.2c guarded physical HOST tooling IMPLEMENTED /
 FIRST KV260 RUN PENDING:** new dedicated XSDB binary
