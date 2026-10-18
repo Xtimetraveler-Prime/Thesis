@@ -1,8 +1,12 @@
 # P08-A1 — Compact KV260 Measurement Architecture Audit and Proposed Benchmark Protocol
 
-**Status: CANDIDATE DESIGN / NOT YET USER ACCEPTED / NO P08 PHYSICAL METRICS.**  
+**Status: LATENCY-ONLY PROTOCOL DIRECTION ACCEPTED BY USER 2026-10-18; POWER/ENERGY DEFERRED; NO P08 PHYSICAL METRICS.**  
 **Started:** 2026-10-17. **Branch:** `agent/v3-p08-a-physical-baseline`.  
 **Starting point:** merged `main` commit `d31df0ba73568c5e6c3023e0eda7269945f5294d`.
+
+## 2026-10-18 approved scope update
+
+The user approved proceeding to P08-A2 with **latency and throughput characterization only for now**. All power/energy telemetry, rail selection and sensor sampling from sections 5 and 7 are **DEFERRED, NOT PART OF THE CURRENT PHYSICAL ACCEPTANCE GATE**. Those sections are preserved as non-executed future design notes. No sensor search or energy estimate is authorized. P08-A2.1 candidate code and local verification instructions: [P08_A2_1_LATENCY_SIDECAR.md](P08_A2_1_LATENCY_SIDECAR.md). P08-A1's proposed three independent 1,024-image repeat policy remains a **proposal** for P08-A3 and is not considered physically approved or executed.
 
 ## 1. Purpose, scope and non-negotiable baseline
 
@@ -60,7 +64,7 @@ For each launch require original-order image ledger, raw sidecar samples, unmodi
 
 Preserve all attempts (including timeouts and failures) in unique timestamped **no-overwrite** evidence directories **outside Git-tracked source**, with input/image map hashes, SHA256 manifest, ELF/XSA/bitstream fingerprint, runner logs, raw counters, profiler schema, exact clock sources/frequencies, thermal/sampling conditions and verifier output. `/tmp` evidence is temporary until deliberately archived. A4 official full-test data must not be rewritten, fault injected or used to tune P08.
 
-## 5. Proposed power/energy measurement contract — equipment not yet accepted
+## 5. DEFERRED — future power/energy measurement contract, NOT an active task
 
 **No KV260/K26 usable rail sensor, exact rail boundary, sample cadence or metrological accuracy has yet been verified for this P08 setup.** The roadmap permits SOM telemetry as an *option*, not proof of a live accessible channel in bare-metal JTAG mode. P08-A1 leaves its selection **open** pending documented actual sensor/equipment discovery and the user's physical access confirmation. External DC input power measurement is an alternative if it can be safely and independently performed.
 
@@ -86,9 +90,9 @@ Publish **at least two named endpoints** rather than a single unexplained `FPGA 
 | Stage | Deliverable | Required gate |
 | --- | --- | --- |
 | **P08-A1 (this document)** | Source audit, metric definitions, repeat/correctness plan, raw evidence/telemetry scope, frozen-file separation | Review and explicit user acceptance; text-only branch changes, native regression/CI source checks; **no P08 physical acceptance** |
-| P08-A2 | New minimal A53 timing sidecar, host parser/validator, independent unit tests, optional externally verified clock characterization | Host/native + CI; separate ELF hash, unchanged bitstream and original numerical result ABI; no real timing claim |
+| P08-A2 | **IN PROGRESS:** A2.1 per-image sidecar, host parser and native tests implemented as a candidate; A2.2 per-tick source/dispatch instrumentation pending | User host/native/Vitis verification pending; no real KV260 timing claim |
 | P08-A3 | Actual KV260 16-image pilot, then validation 1,024 × cold repeats with independent numerical proof and timestamp integrity | User-run physical PASS, raw immutable artifacts, measured timer/PL clocks, uncertainties |
-| P08-A4 | Equipment/rail discovery, fixed power baseline and repeated physical active power/energy | User-run physical PASS; sampling & synchronization feasibility established; no guessed sensor |
+| P08-A4 | **DEFERRED BY USER:** equipment/rail discovery and physical power/energy | Not part of current latency-only acceptance; restart only with explicit user direction |
 | P08-A5 | Scope-matched CPU baseline, reproducible statistical reports and Track A P08-A acceptance closeout | User-accepted comparison and uncertainty; only then consider Track B |
 
 **A1 completion criteria:** documentation reviewed, boundaries distinguish PL from PS and host, power hardware explicitly unverified, original journal/ELF/XSA/weights unchanged, candidate branch diff documentation-only, local native test commands given, and GitHub CI status recorded if available. **A1 cannot be labeled ACCEPTED until the user checks it.** A2 is intentionally not started in this changeset.
