@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import statistics
 from pathlib import Path
 import subprocess
 import sys
@@ -81,6 +82,24 @@ def validate_evidence(
             raise ValueError(f"frame={frame}: final drain drop differs from journal")
         if sum(row.external_events for row in rows) != out.external_events:
             raise ValueError(f"frame={frame}: sum of physical event-source counts invalid")
+    hz=image_times.cntfrq_hz
+    service_seconds=[rec.service_ticks/hz for rec in image_times.records]
+    tick_stages={
+        "event_encode":lambda t:t.source_ticks,
+        "event_bank_append":lambda t:t.bank_ticks,
+        "dispatch_MMIO_and_poll":lambda t:t.dispatch_wrapper_ticks,
+        "output_trace_readback":lambda t:t.trace_ticks,
+        "route":lambda t:t.route_ticks,
+        "barrier":lambda t:t.barrier_ticks,
+    }
+    stage_medians={
+        name:statistics.median(fn(row)/hz for row in tick_times.ticks)
+        for name,fn in tick_stages.items()
+    }
+    ordinary=[
+        rec.service_ticks/hz for rec in image_times.records
+        if rec.index!=stream.trace_index
+    ]
     paths={"journal":journal, "selected_trace":trace,
            "a2_1_image_timing":images,"a2_2_tick_timing":ticks,
            "descriptor":stage/"p07_a4_descriptor_256.bin",
@@ -98,6 +117,16 @@ def validate_evidence(
         "a53_timestamp_domain":"CNTVCT_EL0 with ISB; conversion uses CNTFRQ_EL0",
         "pl_dispatch_cycles_domain":"separate FPGA counter; Hz not yet independently confirmed",
         "raw_a53_image_service_ticks":[r.service_ticks for r in image_times.records],
+        "a53_image_service_seconds":service_seconds,
+        "median_16image_service_seconds_instrumented":
+            statistics.median(service_seconds),
+        "min_16image_service_seconds_instrumented":min(service_seconds),
+        "max_16image_service_seconds_instrumented":max(service_seconds),
+        "selected_trace_frame_service_seconds":
+            service_seconds[stream.trace_index],
+        "ordinary_15frame_service_seconds_median":
+            statistics.median(ordinary),
+        "per_tick_stage_seconds_median_instrumented":stage_medians,
         "raw_a53_26tick_dispatch_cycles":[r.pl_dispatch_cycles for r in image_times.records],
         "full_dataset_a53_ticks":image_times.dataset_stop - image_times.dataset_start,
         "bytes_sha256":{name:sha256(path) for name,path in paths.items()},
