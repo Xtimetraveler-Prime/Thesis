@@ -37,10 +37,10 @@ A53 bare-metal (one persistent launch, one logical core)
 A2.2 reuses the existing, board-implemented `read_ticks()` callback in `p08_a2_2_board.c`:
 
 ```c
-__asm__ volatile("isb; mrs %0, cntvct_el0":"=r"(ticks));
+__asm__ volatile("isb; mrs %0, cntvct_el0":"=r"(ticks)::"memory");
 ```
 
-This reads the A53-accessible Arm Generic Timer **virtual count** (`CNTVCT_EL0`), not core-instruction cycles and not the PL fabric clock. `CNTFRQ_EL0` is read once at startup and stored **without substituting an assumed clock**. The reported A53 duration for same-domain, monotone timestamps `t_start` and `t_end` is:
+The A2.2 version includes a compiler `"memory"` clobber to keep C loads/stores on their intended side of each timing boundary; `ISB` supplies the processor-side instruction-synchronization step, and neither provides automatic calibration for the act of reading the timer. This reads the A53-accessible Arm Generic Timer **virtual count** (`CNTVCT_EL0`), not core-instruction cycles and not the PL fabric clock. `CNTFRQ_EL0` is read once at startup and stored **without substituting an assumed clock**. The reported A53 duration for same-domain, monotone timestamps `t_start` and `t_end` is:
 
 `delta_seconds = (t_end - t_start) / CNTFRQ_EL0_hz`.
 
