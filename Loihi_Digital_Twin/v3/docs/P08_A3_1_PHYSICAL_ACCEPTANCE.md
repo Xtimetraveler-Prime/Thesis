@@ -48,7 +48,9 @@ The intermediate XSDB marker `TERMINAL_ALL_THREE_SUCCESS_UNVERIFIED_NUMERICS` me
 
 ## What remains open and what to inspect next
 
-**Do not invent latency numbers.** The terminal log reports pass markers but does **not** include numerical measured latency values. Request or inspect the on-disk physical report:
+**Measured values supplied subsequently by user (2026-10-18):** 16-frame median A53 image service **35.4432 ms** (min **31.2682 ms**, max **41.2175 ms**), ordinary-15 median **35.6239 ms**, full-trace frame **33.8655 ms**, firmware-reported CNTFRQ_EL0 **99,999,001 Hz**. Per-tick median encode **499.955 µs**, event-bank append **312.458 µs**, dispatch MMIO/poll **70.011 µs**, route **54.631 µs**, output trace **33.030 µs**, barrier **0.940 µs**. All 16 raw PL dispatch cycle totals are preserved in [the exact user-supplied A3.1 latency report](P08_A3_1_PHYSICAL_LATENCY_RESULTS.md). These values are not an instrumented-overhead-free baseline and PL cycles are unconverted.
+
+The original terminal log itself reports pass markers but does **not** include numerical measured latency values. The user subsequently posted the JSON extraction. Preserve the on-disk source report:
 
 ```text
 /home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z/p08_a3_1_verified_pilot.json
