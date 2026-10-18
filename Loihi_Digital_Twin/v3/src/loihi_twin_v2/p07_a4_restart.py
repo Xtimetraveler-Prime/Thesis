@@ -117,6 +117,29 @@ def _read_run(stage: Path, evidence: Path, stream) -> RunEvidence:
                 )
         logs[filename]=sha256(raw)
     hashes=_physical_identity(evidence,stage)
+    # Confirm the original physical XSDB provision's actual *byte-for-byte*
+    # readback files are preserved, not merely its terminal PASS assertion.
+    identity_text=(evidence/"physical_identity.txt").read_text(encoding="utf-8")
+    master_lines=[HASH_LINE.fullmatch(line) for line in identity_text.splitlines()]
+    master_paths=[Path(m.group(2)) for m in master_lines
+                  if m is not None and Path(m.group(2)).name==
+                  "core0_initial_p02_ddr_512k.bin"]
+    if len(master_paths)!=1:
+        raise ValueError("A4.2c cannot resolve unique physical immutable master")
+    exact_staging={
+        0x43F00000:master_paths[0].read_bytes(),
+        0x41000000:(stage/"p07_a4_pixels_raw.bin").read_bytes(),
+        0x43FE0000:(stage/"p07_a4_descriptor_256.bin").read_bytes(),
+        0x43FE0100:(stage/"p07_a4_mapping_1568.bin").read_bytes(),
+        0x42000000:(stage/"p07_a4_journal_initial_1m.bin").read_bytes(),
+        0x43FF0000:(evidence/"trace_zero_64k.bin").read_bytes(),
+    }
+    if len(exact_staging[0x43FF0000])!=65536 or any(exact_staging[0x43FF0000]):
+        raise ValueError("A4.2c expected zero-initialized 64KiB full trace")
+    for address,wanted in exact_staging.items():
+        readback=evidence/"readback"/f"readback_{address:08X}.bin"
+        if readback.read_bytes()!=wanted:
+            raise ValueError(f"A4.2c physical staged DDR readback mismatch at 0x{address:08X}")
     journal=(evidence/"p07_a4_journal_1m.bin").read_bytes()
     trace=(evidence/"p07_a4_trace_64k.bin").read_bytes()
     results=parse_journal(journal,stream)
