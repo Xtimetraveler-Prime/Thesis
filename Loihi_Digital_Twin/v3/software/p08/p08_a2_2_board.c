@@ -307,7 +307,8 @@ static int write_result_callback(void *cookie,const p03_rt *runtime)
        runtime->counters.barriers!=26u ||
        runtime->first_fault!=P03_RT_FAULT_NONE)
         return -1;
-    /* Final result is written only after p07_a2_run_frame returned DONE. */
+    /* P03 has reached WRITE_RESULT; require physical quiescence before
+     * accepting the instrumented frame. The frame wrapper has not returned yet. */
     if(p03_hw_quiescent(&hw)!=P03_HW_OK)return -1;
     p08_saved_counters=runtime->counters;
     p08_counters_valid=1u;
