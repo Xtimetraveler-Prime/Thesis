@@ -165,6 +165,30 @@ def test_tick_corruption_and_cross_source_mismatch_fail_closed(synthetic, mutati
         parse_ticks(bytes(ticks),image,expected_descriptor_crc32=0x12345678)
 
 
+def _calls_c_function(source: str, name: str) -> bool:
+    """Detect a C function call, ignoring block and line comments.
+
+    Raw substring checks can wrongly flag a comment or documentation.
+    This protects the frozen runtime call boundary, not just spelling.
+    """
+    code = re.sub(r"/\\*.*?\\*/|//[^\\n]*", "", source, flags=re.DOTALL)
+    return bool(re.search(rf"\\b{re.escape(name)}\\s*\\(", code))
+
+
+def test_function_call_guard_ignores_comments_but_rejects_actual_calls():
+    comment_only = (
+        "/* p07_a2_run_frame() is the old entrypoint */\\n"
+        "// p07_a2_run_frame() is not called here\\n"
+        "if(p08_a2_2_run_frame(record, bytes)) return -1;\\n"
+    )
+    assert not _calls_c_function(comment_only, "p07_a2_run_frame")
+    assert _calls_c_function(comment_only, "p08_a2_2_run_frame")
+    assert _calls_c_function(
+        comment_only + "if (p07_a2_run_frame(record, bytes)) return -1;",
+        "p07_a2_run_frame",
+    )
+
+
 def test_unchanged_accepted_runtime_and_32bit_reserved_ddr():
     p07=(ROOT/"software/p07/p07_a2_runtime.c").read_text()
     p08=(SRC/"p08_a2_2_runtime.c").read_text()
@@ -173,8 +197,9 @@ def test_unchanged_accepted_runtime_and_32bit_reserved_ddr():
     assert "p07_a1_tick_events" in p07 and "p07_a1_tick_events" in p08
     assert "underlying.dispatch" in p07 and "underlying.dispatch" in p08
     assert "P08_A2_2_PER_TICK_KV260_A53_CANDIDATE_V1" in (SRC/"p08_a2_2_board.c").read_text()
-    assert "p08_a2_2_run_frame" in (SRC/"p08_a2_2_board.c").read_text()
-    assert "p07_a2_run_frame" not in (SRC/"p08_a2_2_board.c").read_text()
+    candidate_board = (SRC/"p08_a2_2_board.c").read_text()
+    assert _calls_c_function(candidate_board, "p08_a2_2_run_frame")
+    assert not _calls_c_function(candidate_board, "p07_a2_run_frame")
     assert HEADER + RECORD*TICKS*1024 <= CAPACITY
     assert 0x43100000+CAPACITY <= 0x43F00000
     builder=(ROOT/"scripts/build_p08_a2_2.sh").read_text()
