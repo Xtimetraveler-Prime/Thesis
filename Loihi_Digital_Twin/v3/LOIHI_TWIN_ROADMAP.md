@@ -1816,24 +1816,23 @@ accuracy and checkpoints.**
 **Status:** PLANNED. **P08-A ACCEPTANCE IS A REQUIRED ENTRY GATE
 TO SCALED P06-B1/B2 AND P07-B.**
 
-## P08-A — Compact physical KV260 baseline
+## P08-A — Compact physical KV260 latency baseline
 
-**P08-A status (2026-10-18): LATENCY FIRST, POWER/ENERGY DEFERRED BY USER.** The [P08-A1 protocol](docs/P08_A1_MEASUREMENT_CONTRACT.md) timing direction was accepted with that scope change. **P08-A2.1 instrumented candidate source is implemented but NOT YET USER NATIVE/VITIS ACCEPTED OR KV260 TESTED**; see [P08_A2_1_LATENCY_SIDECAR.md](docs/P08_A2_1_LATENCY_SIDECAR.md) for the isolated `P08ALAT1` sidecar, strictly host-validated source, build gate and future physical protocol. **P08-A2.2** has now been implemented as a **source candidate / NOT YET USER NATIVE, VITIS OR KV260 VERIFIED**: seven A53 timestamp boundaries per logical tick, a separate 3MiB `P08TCK02` sidecar with 1,024-frame cap, independent C/Python CRC codec, cross-checks and [documented methods/sources](docs/P08_A2_2_TIMING_METHODS.md). User-supplied **A2.1 Vitis-only build PASS** is pinned by SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0` with physical timing NOT RUN. A2.2 candidate must receive native and Vitis verification before any physical gate. **No P08 physical latency, throughput, power or energy value has been measured/accepted.** Frozen P03.2c XSA/bitstream and P07-A4 ELF/ABI/weights/official test evidence remain untouched. Physical latency acceptance will be the Track B entry gate under the current user direction; deferred power will NOT silently resume.
+**Status (2026-10-18): IN PROGRESS — LATENCY FIRST; POWER/ENERGY DEFERRED BY USER.** No P08 KV260 timing results have yet been executed or accepted. P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
 
-For Track A, report measured:
-- HLS per-core dispatch, event-source time, complete image
-  latency (26 timesteps), idle/active throughput;
-- PS/barrier overhead and zero/nonzero DDR paging,
-  A53 control time and memory/packet transfers;
-- K26/SOM or board whole-system idle, configured-idle,
-  dynamic/incremental and total power and energy, sampled
-  with declared equipment/rails, steady-state/thermal
-  controls, raw logs and error bars;
-- the precise endpoint and setup costs included
-  or excluded in software CPU reference timing.
+| Gate | State | Authoritative reference |
+| --- | --- | --- |
+| P08-A1 measurement boundary audit | User approved latency-first direction; deferred power/energy | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
+| P08-A2.1 per-image A53 timing source | User-reported Vitis build PASS, frozen A2.1 candidate ELF SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`; **KV260 NOT RUN** | [Image timing method](docs/P08_A2_1_LATENCY_SIDECAR.md) |
+| P08-A2.2 per-tick seven-boundary timing source | User reports Vitis build PASS after false-positive regression fix; actual new A2.2 ELF SHA256 / full new pytest output not yet supplied; **KV260 NOT RUN** | [Per-tick timing method and sources](docs/P08_A2_2_TIMING_METHODS.md) |
+| **P08-A3.1 physical 16-image validation pilot** | New fail-closed physical runner, original packed-oracle verification and timing correlation **IMPLEMENTED AS CANDIDATE; NATIVE/BOARD NOT YET USER VERIFIED** | [Pilot protocol](docs/P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) |
+| P08-A3.2 full validation baseline | NOT STARTED: actual repeated 1,024-image TRAIN-derived validation runs, separate profiler overhead evaluation and uncertainty | Future user gate |
+| P08-A4 power and energy | **DEFERRED**; no sensor selection or power measurements authorized | Future explicit user decision |
+| CPU software reference and report | Pending physical latency baseline and scope-matched CPU timing | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
 
-Accept the accuracy and physical measured
-baseline *before starting B's hardware implementation*.
+For the active Track A **physical latency** study, collect actual A53 per-frame (26-tick) service intervals, event encoding/bank-write/dispatch/trace/route/barrier intervals, hardware PL dispatch and page counters with **separate clock domains**, and CPU comparison endpoints. Host JTAG polls, HLS clock estimates and simulator cycles are not board latency data. Report benchmark overhead and selected full-trace perturbation explicitly.
+
+**Entry gate to scaled Track B:** accept original P07-A frozen accuracy plus a genuine **physical, independently numerically verified P08-A latency baseline** before implementing B hardware. Power/energy are *not* an active prerequisite during this user-approved deferral; do not silently resume them or claim measured Loihi efficiency.
 
 ## P08-B — Scaled physical resource/traffic/energy study
 
