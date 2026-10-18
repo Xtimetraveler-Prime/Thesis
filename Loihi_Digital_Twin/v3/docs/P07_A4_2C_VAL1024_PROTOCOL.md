@@ -4,11 +4,15 @@
 The user independently accepted the preceding persistent validation128
 cold-reboot gate; that result is documented in
 `P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`.
-**Current 1024 gate: PRIMARY user-physically accepted
-2026-10-17; cold-reboot REPEAT not yet run.**
-The accepted primary is recorded in
-`P07_A4_2C_VAL1024_PRIMARY_ACCEPTANCE.md`, including exact
-hardware terminal and independent oracle/readback markers.
+**Current 1024 gate: PRIMARY AND INDEPENDENT COLD-REBOOT
+REPEAT USER-ACCEPTED 2026-10-17.** Both physical
+runs reported full independent oracle and DDR readback
+pass; 1MiB journals and 64KiB selected traces
+byte-identical. See
+`P07_A4_2C_VAL1024_PRIMARY_ACCEPTANCE.md` and
+`P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
+**Overall A4.2c remains OPEN** pending the separate
+physical fail-closed negative gate. TEST SEALED.
 Canonical independent MNIST t10k TEST remains **SEALED**; no official
 TEST download/IDX opening/prediction/accuracy is authorized here.
 
@@ -260,8 +264,14 @@ P07_A4_2C_1024_RESTART_GATE_PASS=1
 P07_A4_OFFICIAL_TEST=SEALED
 ```
 
-These are **acceptance targets**, not yet observed
-device results. Failure at any phase terminates A4.2c
-pending separately investigated remediation; do not
-change the frozen population or report partial successes
-as full 1024-image benchmark.
+**The above cold-repeat acceptance targets were observed
+by the user on 2026-10-17.** Complete original terminal
+output, 2/2 exact journal/trace repeat markers and
+physical acceptance JSON path are recorded in
+`P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
+Original read-only physical evidence remains on
+the user's PC; it was not uploaded here. This
+completes the sustained 1024 repeated inference gate
+only. The separate one-word synthetic descriptor
+corruption physical gate remains pending before
+overall A4.2c closes. No TEST unseal authorized.
