@@ -20,7 +20,7 @@ We preserve the exact accepted P07-A4 source under `software/p07/`, `P07A4R01` 1
 
 The host `scripts/p08_a2_timing_check.py` reports the raw A53-clock-scoped candidate distributions and **explicitly sets physical numerical acceptance to false**. It does NOT run the independent P07 packed oracle; that separate physical-gate step is mandatory before calling any measured number accepted.
 
-The new `vivado/p08_a2_xsdb_run.tcl` is for **later P08-A3**: reads 1MiB journal + 64KiB selected trace + 1MiB sidecar, checks new firmware marker, refuses file overwrite, and waits for **BOTH** the original P07 terminal status and the P08 sidecar terminal status before stopping A53. This prevents stopping after the P07 journal finishes but before the P08 header closes.
+The new `vivado/p08_a2_xsdb_run.tcl` is for **later P08-A3**: reads 1MiB journal + 64KiB selected trace + 1MiB sidecar, checks new firmware marker, refuses file overwrite, and waits for **BOTH** the original P07 terminal status and the P08 sidecar terminal status before stopping A53. This prevents stopping after the P07 journal finishes but before the P08 header closes. Its invocation additionally refuses hardware access without explicit `P08_A2_CONFIRM_KV260_JTAG_ONLY=YES` and `P08_A2_CONFIRM_VALIDATION_ONLY=YES`; these are **not** requests to execute the runner now.
 
 ## P08-A2.1 entry checks for USER (do NOT launch JTAG yet)
 
