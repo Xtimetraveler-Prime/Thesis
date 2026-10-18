@@ -1660,19 +1660,33 @@ This proves first persistent multiclass execution, **not**
 full 10000-image capacity, cold-reboot reproducibility or
 real-MNIST validation accuracy.
 
-**A4.2c NEXT: 128-image one-launch TRAIN-derived validation
-physical experiment and cross-firmware parity gate.** New
-`p07_a4_2_crosscheck.py` compares original eight accepted
-A3.3 16-frame KV260 mailboxes directly against the new
-persistent one-launch journal over the **same 128 exact
-source image IDs**, all 26×10 spike bits, route/discard
-totals, readout, event counts, input bytes and overlapping
-26×42 first-image full physical trace, binding the original
-A3.3 report's mailbox SHA256. Native synthetic tamper/
-trace/ordering tests pass in CI. Then prespecified
-separate cold-start exact repeat and larger TRAIN-only
-validation stress remain required **before** closing A4.2c.
-See `docs/P07_A4_2C_VALIDATION128_PROTOCOL.md`.
+**A4.2c NEXT: 128-image persistent PRIMARY ACCEPTED;
+COLD-START REPEAT PENDING.** The user’s independent
+`p07_a4_2_crosscheck.py` over the **same 128 original
+TRAIN-derived validation source IDs** reported all
+`8/8` accepted A3.3 physical primary mailboxes verified,
+`128/128` old/new physical image histories EXACT,
+full 26×10 output spikes/routes/counts, overlapping
+26×42 first-image full physical trace byte-identical,
+and old mailbox SHA256 identities PASS. This is a
+**real KV260-vs-KV260 result**, distinct from the
+separately accepted ramp16 pilot. See
+`docs/P07_A4_2C_VAL128_PRIMARY_ACCEPTANCE.md`.
+
+A4.2c **remains OPEN** pending the already precommitted
+second, independently rebooted, same-ELF/same-128-image
+physical launch and full 1MiB journal + full 64KiB
+selected-trace byte-exact repeat. New read-only
+`p07_a4_2_restart_verify.py` CI/native tests verify the
+original per-run software-oracle `verify.log` markers,
+prior eight FPGA mailboxes, all six original XSDB
+DDR readbacks, frozen ELF/XSA/master/staging SHA, exact
+journal/trace equality, missing-data and corruption
+fail-closed. **Physical reboot itself requires user
+procedure confirmation.** Repeat + larger prespecified
+TRAIN-validation stress and fault handling still required
+before official t10k unsealing. See
+`docs/P07_A4_2C_VALIDATION128_PROTOCOL.md`.
 Official TEST still SEALED; no persistent 10000-image
 physical success claimed.
 
