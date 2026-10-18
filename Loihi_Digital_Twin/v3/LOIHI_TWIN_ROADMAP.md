@@ -1818,6 +1818,8 @@ TO SCALED P06-B1/B2 AND P07-B.**
 
 ## P08-A — Compact physical KV260 baseline
 
+**P08-A1: CANDIDATE / NOT YET USER ACCEPTED (2026-10-17), documentation-only** on `agent/v3-p08-a-physical-baseline`. Measurement definitions, current P03/P05/P07 timing/AXI source audit, proposed validation-only repeated populations, physical power-equipment discovery gate, and CPU comparator scoping are in [P08_A1_MEASUREMENT_CONTRACT.md](docs/P08_A1_MEASUREMENT_CONTRACT.md). **No P08 KV260 latency, throughput, rail power or energy measurement has been run or accepted.** Current accepted P03.2c XSA, P07-A4 ELF/ABI, model, bitstream and official TEST evidence remain frozen. P08-A2 instrumentation is **NOT STARTED**, pending user acceptance of A1.
+
 For Track A, report measured:
 - HLS per-core dispatch, event-source time, complete image
   latency (26 timesteps), idle/active throughput;
