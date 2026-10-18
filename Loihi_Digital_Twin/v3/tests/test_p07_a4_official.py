@@ -199,3 +199,85 @@ def test_all_new_official_scripts_syntax_only_and_no_hidden_test_download():
     assert "results=parse_journal(journal,stream)" in verify
     assert "P07_A4_4_FULL10000_KV260_INDEPENDENT_CLOSEOUT_PASS=1" in (
         ROOT/"scripts/p07_a4_official_verify.py").read_text()
+
+
+def test_synthetic_full10000_physical_oracle_before_accuracy(artificial_10k,tmp_path,monkeypatch):
+    """Full 10000 indexed result decoder and first mismatch, synthetic only.
+
+    Monkeypatches ALL actual model/hardware/original-negative admission
+    with explicitly artificial objects; tests output pipeline ordering
+    and no final score until all input and 26x10 result flags exact.
+    NEVER accesses real official TEST or actual neural checkpoint.
+    """
+    from loihi_twin_v2 import p07_a4_official_verify as verify
+    from loihi_twin_v2 import p07_a4_stream as stream
+    from loihi_twin_v2 import (
+        p06_a3_training, p06_a4_snapshot, p07_a1_ingress,
+        p06_packed_replay,p06_input_contract,p07_a2_evidence,
+    )
+    from loihi_twin_v2.p07_a2_batch import COMPILED_FINGERPRINT
+    import struct
+    stage=tmp_path/"artificial_t10k_stage"
+    write_official_stage(stage,artificial_10k,MAPPING)
+    pixels=artificial_10k.pixels
+    journal=bytearray((stage/"p07_a4_journal_initial_1m.bin").read_bytes())
+    struct.pack_into("<I",journal,16,stream.SUCCESS)
+    struct.pack_into("<I",journal,24,10000)
+    struct.pack_into("<I",journal,252,stream.crc(journal[:252]))
+    spikes=tuple(tuple(0 for _ in range(10)) for _ in range(26))
+    for index in range(10000):
+        begin=256+index*96
+        journal[begin:begin+96]=stream.encode_result(
+            index,pixels[index*784:(index+1)*784],spikes,
+        )
+    evidence=tmp_path/"synthetic_not_real_hardware"
+    evidence.mkdir()
+    output=evidence/"p07_a4_journal_1m.bin"
+    output.write_bytes(journal)
+    (evidence/"p07_a4_trace_64k.bin").write_bytes(bytes(65536))
+    monkeypatch.setattr(verify,"verify_physical_fault",
+                        lambda **kw:{"status_word":"0xDEAD0001",
+                                      "failure_journal_sha256":"fake-test-no-hardware"})
+    monkeypatch.setattr(verify,"verify_original_physical_evidence",
+                        lambda *args:{"evidence":"FAKE_SYNTHETIC_CI_NO_BOARD"})
+    monkeypatch.setattr(p06_a3_training,"load_candidate",lambda *_:(object(),{}))
+    monkeypatch.setattr(p06_a3_training,"integer_weights_sha256",lambda *_:"fake")
+    monkeypatch.setattr(p06_a4_snapshot,"require_pinned_training_candidate",lambda *a:None)
+    image=SimpleNamespace(core_id=0,state_words=(0,)*42)
+    compiled=SimpleNamespace(fingerprint=COMPILED_FINGERPRINT)
+    monkeypatch.setattr(p06_a4_snapshot,"compile_and_check_traces",
+                        lambda *a:(image,compiled,()))
+    monkeypatch.setattr(p07_a1_ingress,"mapping_from_compiled",lambda *a:MAPPING)
+    tick=SimpleNamespace(
+        fired_compartments=(),next_packet_axons=(),
+        accumulators=(0,)*42,states_after=(None,)*42,
+    )
+    oracle=SimpleNamespace(
+        ticks=(tick,)*26,
+        output_counts=(0,)*10,predicted_class=0,
+        dropped_boundary_packets=(),
+    )
+    monkeypatch.setattr(p06_packed_replay,"replay_p03_image",lambda *a:oracle)
+    monkeypatch.setattr(p06_input_contract,"image_event_schedule",lambda *a:())
+    monkeypatch.setattr(p07_a2_evidence,"_state_word",lambda *a:0)
+    args={
+        "stage":stage,"evidence":evidence,"official":artificial_10k,
+        "candidate_dir":tmp_path/"fake-candidate",
+        "fault_stage":tmp_path/"fake-stage",
+        "fault_evidence":tmp_path/"fake-evidence",
+    }
+    report=verify.verify_full10000(**args)
+    assert report["test_samples"]==10000
+    assert report["physical_numerical_parity"]=="10000/10000 EXACT 26x10 outputs and routes"
+    assert report["correct"]==1000   # 10 equally frequent artificial classes
+    assert report["accuracy_percent"]==10.0
+    assert report["rows"][-1]["index"]==9999
+    # Valid CRC, full denominator, but altered physical route at row 9001.
+    # Must FAIL before any official accuracy reporting.
+    broken=bytearray(journal)
+    at=256+9001*96
+    struct.pack_into("<I",broken,at+20,1)
+    struct.pack_into("<I",broken,at+92,stream.crc(broken[at:at+92]))
+    output.write_bytes(broken)
+    with pytest.raises(AssertionError,match="image=9001 ingress/route/discard"):
+        verify.verify_full10000(**args)
