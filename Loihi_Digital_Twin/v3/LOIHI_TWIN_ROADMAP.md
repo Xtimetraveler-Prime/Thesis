@@ -1645,20 +1645,36 @@ The candidate Vitis ELF is build-accepted **but never
 yet run on the KV260**. Record:
 `docs/P07_A4_2B_VITIS_ACCEPTANCE.md`.
 
-**A4.2c guarded physical HOST tooling IMPLEMENTED /
-FIRST KV260 RUN PENDING:** new dedicated XSDB binary
-stage/readback and one-launch progress polling;
-separate physical runner and independent full
-dataset P03 packed oracle + selected 26×42 hardware
-trace comparator. Native CI checks shell syntax
-and refuses missing explicit DDR-overwrite consent.
-The first stage is deterministic ramp16, then
-previously accepted TRAIN-derived validation128,
-cold-start rerun and a predeclared larger validation
-test. Physical correctness/reproducibility remain
-**UNVERIFIED** until user's KV260 evidence passes;
-do not claim this is one-shot 10000 inference yet.
-Commands in `docs/P07_A4_2B_2C_PERSISTENT_GATE.md`.
+**A4.2c FIRST PHYSICAL RAMP16 GATE CLOSED / USER-ACCEPTED
+(2026-10-17); OVERALL A4.2c STILL OPEN.** The user independently
+programmed/ran the exact accepted A4.2b persistent ELF on the KV260
+with **one standalone A53 launch for 16 synthetic ramp frames**,
+with physical status `0x600D600D`; every image’s **26×10 output
+spike bits**, readout and routing matched independent frozen
+P03 replay exactly; the selected frame0 **26×42**
+compartment trace also matched. Physical evidence stays on
+the user's PC at
+`/tmp/v3_p07_a4_ramp16_20261017T191755`.
+See `docs/P07_A4_2C_RAMP16_PHYSICAL_ACCEPTANCE.md`.
+This proves first persistent multiclass execution, **not**
+full 10000-image capacity, cold-reboot reproducibility or
+real-MNIST validation accuracy.
+
+**A4.2c NEXT: 128-image one-launch TRAIN-derived validation
+physical experiment and cross-firmware parity gate.** New
+`p07_a4_2_crosscheck.py` compares original eight accepted
+A3.3 16-frame KV260 mailboxes directly against the new
+persistent one-launch journal over the **same 128 exact
+source image IDs**, all 26×10 spike bits, route/discard
+totals, readout, event counts, input bytes and overlapping
+26×42 first-image full physical trace, binding the original
+A3.3 report's mailbox SHA256. Native synthetic tamper/
+trace/ordering tests pass in CI. Then prespecified
+separate cold-start exact repeat and larger TRAIN-only
+validation stress remain required **before** closing A4.2c.
+See `docs/P07_A4_2C_VALIDATION128_PROTOCOL.md`.
+Official TEST still SEALED; no persistent 10000-image
+physical success claimed.
 
 **P07-A4.3 is the separately authorized official TEST unseal
 and canonical archive provenance gate** only after A4.2
