@@ -1,8 +1,8 @@
 # P08-A2.2 isolated latency-only standalone Cortex-A53 candidate.
-# One ELF launch for 16/128/10000 images; A53 fully owns every timestep.
+# One ELF launch for up to 1024 admitted synthetic/validation images; A53 owns ticks.
 # This is NOT a physical passing result unless the independent verifier passes.
 if {$argc < 5 || $argc > 7} {
-    error "usage: p08_a2_xsdb_run.tcl <P08-A2-elf> <journal-1MiB-out> <trace64KiB-out> <timing1MiB-out> <ticks3MiB-out> ?server? ?timeout-seconds?"
+    error "usage: p08_a2_2_xsdb_run.tcl <P08-A2.2-elf> <journal-1MiB-out> <trace64KiB-out> <timing1MiB-out> <ticks3MiB-out> ?server? ?timeout-seconds?"
 }
 # Explicit standalone bare-metal consent; this TCL can reset A53 and access
 # reserved DDR. Never run while Linux owns this memory. A3 will supply a
@@ -23,29 +23,29 @@ if {$argc >= 6} {set server [lindex $argv 5]}
 set timeout 3600
 if {$argc == 7} {set timeout [lindex $argv 6]}
 if {$timeout < 10 || $timeout > 28800} {
-    error "P07-A4.2c timeout must be 10..28800s"
+    error "P08-A2.2 timeout must be 10..28800s"
 }
-if {![file exists $elf]} {error "P08-A2.1 new standalone ELF missing"}
+if {![file exists $elf]} {error "P08-A2.2 new standalone ELF missing"}
 if {[catch {exec grep -aFq "P08_A2_2_PER_TICK_KV260_A53_CANDIDATE_V1" $elf}]} {
-    error "P08-A2.1 refuses wrong/stale A53 ELF"
+    error "P08-A2.2 refuses wrong/stale A53 ELF"
 }
 foreach name [list $output $trace $timing $ticks "$output.partial" "$timing.partial" "$ticks.partial"] {
     if {[file exists $name]} {
-        error "P07-A4.2c refusing overwrite of existing physical evidence"
+        error "P08-A2.2 refusing overwrite of existing physical evidence"
     }
 }
 proc physical_target_a4 {} {
     foreach name {PSU APU} {
         if {![catch {targets -set -filter "name =~ \"$name\""}]} {return}
     }
-    error "P07-A4.2c cannot select physical DDR target"
+    error "P08-A2.2 cannot select physical DDR target"
 }
 connect -url $server
 targets -set -filter {name =~ "Cortex-A53 #0"}
 catch {stop}
 catch {rst -processor}
 dow $elf
-puts "P08-A2.1 latency candidate A53 ELF downloaded; starting ONE dataset run"
+puts "P08-A2.2 latency candidate A53 ELF downloaded; starting ONE dataset run"
 con
 set terminal 0
 set timing_status 0
@@ -112,7 +112,7 @@ if {![file exists $output] || [file size $output] != 1048576 ||
     ![file exists $trace] || [file size $trace] != 65536 ||
     ![file exists $timing] || [file size $timing] != 1048576 ||
     ![file exists $ticks] || [file size $ticks] != 3145728} {
-    error "P07-A4.2c full physical journal/selected trace capture size mismatch"
+    error "P08-A2.2 physical journal/trace/timing size mismatch"
 }
 puts [format "P07_A4_2C_JOURNAL_STATUS=0x%08X" $terminal]
 puts "P07_A4_2C_JOURNAL=$output"
