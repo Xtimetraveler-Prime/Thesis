@@ -6,7 +6,7 @@
 
 ## 2026-10-18 approved scope update
 
-The user approved proceeding to P08-A2 with **latency and throughput characterization only for now**. All power/energy telemetry, rail selection and sensor sampling from sections 5 and 7 are **DEFERRED, NOT PART OF THE CURRENT PHYSICAL ACCEPTANCE GATE**. Those sections are preserved as non-executed future design notes. No sensor search or energy estimate is authorized. P08-A2.1 candidate code and local verification instructions: [P08_A2_1_LATENCY_SIDECAR.md](P08_A2_1_LATENCY_SIDECAR.md). P08-A1's proposed three independent 1,024-image repeat policy remains a **proposal** for P08-A3 and is not considered physically approved or executed.
+The user approved proceeding to P08-A2 with **latency characterization only for now (dataset-wide throughput derivable as a supplemental, non-gating statistic)**. All power/energy telemetry, rail selection and sensor sampling from sections 5 and 7 are **DEFERRED, NOT PART OF THE CURRENT PHYSICAL ACCEPTANCE GATE**. Those sections are preserved as non-executed future design notes. No sensor search or energy estimate is authorized. P08-A2.1 candidate code and local verification instructions: [P08_A2_1_LATENCY_SIDECAR.md](P08_A2_1_LATENCY_SIDECAR.md). P08-A1's proposed three independent 1,024-image repeat policy remains a **proposal** for P08-A3 and is not considered physically approved or executed.
 
 ## 1. Purpose, scope and non-negotiable baseline
 
