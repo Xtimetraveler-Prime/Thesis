@@ -178,6 +178,13 @@ def test_physical_runner_contract_and_static_syntax():
     assert "P08_A2_1_KV260_STATUS=TERMINAL_BOTH_SUCCESS_UNVERIFIED_NUMERICS" in code
     assert "P08_A2_2_KV260_STATUS=TERMINAL_ALL_THREE_SUCCESS_UNVERIFIED_NUMERICS" in code
     assert "p08_a3_2_single_check.py" in code
+    assert "RUN_REAL" in code and "STAGE_REAL" in code
+    assert "BUILD_REAL" in code and "REPORTS_REAL" in code
+    assert code.index("P08_A3_2_2_OFFLINE_PREFLIGHT_PASS=1") < code.index(
+        "xsdb vivado/p03_2c_xsdb_ps_axi_width_diag.tcl"
+    )
+    assert "physical_identity.txt" in code
+    assert "firmware_variant=$MODE" in code
     assert "p08_a3_1" not in code
     syntax=subprocess.run(["bash","-n",str(RUNNER)],
         capture_output=True,text=True)
