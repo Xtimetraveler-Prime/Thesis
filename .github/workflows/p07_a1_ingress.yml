@@ -28,7 +28,7 @@ jobs:
             scripts/p07_a3_3_prepare.py scripts/p07_a3_3_one.py scripts/p07_a3_3_verify.py src/loihi_twin_v2/p07_a3_3_protocol.py \
             scripts/p07_a4_prepare.py src/loihi_twin_v2/p07_a4_protocol.py \
             src/loihi_twin_v2/p07_a4_stream.py scripts/p07_a4_2_prepare.py scripts/p07_a4_2_check.py \
-            software/p07/build_p07_a4.py scripts/p07_a4_2_verify.py
+            software/p07/build_p07_a4.py scripts/p07_a4_2_verify.py scripts/p07_a4_2_crosscheck.py src/loihi_twin_v2/p07_a4_crosscheck.py
       - name: P07-A1 Python and independent native C regression
         working-directory: Loihi_Digital_Twin/v3
         run: |
@@ -45,5 +45,6 @@ jobs:
             tests/test_p07_a4_stream.py \
             tests/test_p07_a4_persistent_board.py \
             tests/test_p07_a4_physical_gate.py \
+            tests/test_p07_a4_crosscheck.py \
             tests/test_p06_a2_input_contract.py \
             tests/test_p05_1_deployment.py
