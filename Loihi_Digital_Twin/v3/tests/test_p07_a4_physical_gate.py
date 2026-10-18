@@ -57,6 +57,8 @@ def test_physical_one_shot_scripts_pin_new_identity_and_full_evidence():
     assert "refusing overwrite" in launch
     assert "0x42000000 16" in launch
     assert 'P07_A4_CONFIRM_KV260_DDR_OVERWRITE' in shell
+    assert "dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb" in shell
+    assert "P07_A4_2C_ACCEPTED_PERSISTENT_ELF_SHA256=" in shell
     assert "P07_A4_2C_FULL_PHYSICAL_GATE_PASS=1" in shell
     assert 'P07_A4_2C_PHYSICAL_SEALED_VALIDATION_GATE_PASS=1' in shell
     assert "compare_trace" in checker
