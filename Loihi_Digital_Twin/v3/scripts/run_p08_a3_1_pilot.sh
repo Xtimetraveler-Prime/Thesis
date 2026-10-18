@@ -23,6 +23,8 @@ TIMEOUT="${P08_A3_1_TIMEOUT:-3600}"
 XSA_SHA=52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f
 MASTER_SHA=9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955
 MARKER=P08_A2_2_PER_TICK_KV260_A53_CANDIDATE_V1
+# User-attested local Vitis build and separate sha256sum on 2026-10-18.
+PINNED_P08_A2_2_ELF_SHA=87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361
 cd "$V3"
 
 # PRE-HARDWARE GATES (do not launch even an XSDB width probe without these).
@@ -49,6 +51,9 @@ REPO_CANONICAL="$(realpath -m -- "$REPO_ROOT")"
 }
 [[ "$EXPECTED_ELF" =~ ^[a-fA-F0-9]{64}$ ]] || {
     echo "ERROR: explicit expected ELF SHA256 must be exactly 64 hex digits" >&2;exit 2;
+}
+[[ "${EXPECTED_ELF,,}" == "$PINNED_P08_A2_2_ELF_SHA" ]] || {
+    echo "ERROR: A3.1 requires the user-attested frozen P08-A2.2 ELF digest" >&2;exit 2;
 }
 [[ "$TIMEOUT" =~ ^[0-9]+$ ]] && (( TIMEOUT >= 10 && TIMEOUT <= 28800 )) || {
     echo "ERROR: timeout outside 10..28800 seconds" >&2;exit 2;
