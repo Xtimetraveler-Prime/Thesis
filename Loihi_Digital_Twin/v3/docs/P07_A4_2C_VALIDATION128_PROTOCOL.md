@@ -2,8 +2,10 @@
 
 **Prespecified on 2026-10-17 after user acceptance of persistent
 ramp16, BEFORE any A4.2c physical 128-image launch.**
-**STATUS: NATIVE HOST CODE IMPLEMENTED / CI PASS.**
-**128-image persistent physical primary / cold-repeat NOT YET RUN.**
+**STATUS: PRIMARY one-launch 128-image physical-to-physical crosscheck
+USER-ACCEPTED (2026-10-17); independent cold-reboot REPEAT NOT RUN.**
+The new strict restart verifier is CI-green/native; hardware repeat
+and full A4.2c closure remain pending.
 **Official canonical t10k MNIST TEST remains SEALED.**
 
 ## Provenance and frozen scope
@@ -197,3 +199,81 @@ Physical runtime/end-to-end timing and power remain P08
 topics. The full canonical original-order 10000 official
 test evaluation remains the fixed goal of A4.3/A4.4,
 **not yet opened**.
+
+## Update after observed primary and additional independent restart gate
+
+The user reported exactly:
+```text
+P07_A4_2C_CROSSCHECK_OLD_PHYSICAL_BATCHES=8/8
+P07_A4_2C_CROSSCHECK_PRIMARY_FRAMES=128/128
+P07_A4_2C_CROSSCHECK_FIRST_TRACE_BYTE_EXACT=1
+P07_A4_2C_CROSSCHECK_ALL_FRAME_SPIKES_ROUTES_EXACT=1
+P07_A4_2C_CROSSCHECK_OLD_REPORT_MAILBOX_SHA_PASS=1
+P07_A4_2C_PRIOR_AND_PERSISTENT_PHYSICAL_MATCH=1
+P07_A4_OFFICIAL_TEST=SEALED
+```
+Preserve the original primary evidence directory in
+`$P07_A4_PRIMARY_EVIDENCE` (actual path was not pasted by
+the user). The user’s pasted output includes the hardware-to-hardware
+crosscheck, **not** a separately pasted `p07_a4_2_verify.py`
+software-oracle pass log. The new checker requires that original
+`verify.log`, the original XSDB provision/program/run logs,
+all six preserved DDR staging readback binaries and accepted
+XSA/ELF/master hashes before calling the first run fully admitted.
+Do not alter any prior physical evidence.
+
+**Before the next physical launch** (safe offline):
+
+```bash
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_a4_restart.py \
+  tests/test_p07_a4_crosscheck.py \
+  tests/test_p07_a4_physical_gate.py
+
+PYTHONPATH="$PWD/src" python scripts/p07_a4_2_restart_verify.py \
+  --stage-dir "$P07_A4_STAGE_DIR" \
+  --primary-dir "$P07_A4_PRIMARY_EVIDENCE" \
+  --a3-protocol-dir "$P07_A4_A3_PROTOCOL" \
+  --a3-evidence-dir "$P07_A4_A3_EVIDENCE"
+```
+
+The no-repeat output must include
+`P07_A4_2C_128_PRIMARY_PREFLIGHT_PASS=1`,
+`P07_A4_2C_128_PRIMARY_ORACLE_LOGS_EXACT=1`,
+`P07_A4_2C_128_PRIMARY_PREVIOUS_PHYSICAL_EXACT=128/128`,
+`P07_A4_2C_128_COLD_REPEAT=NOT_RUN`, and
+`P07_A4_OFFICIAL_TEST=SEALED`.
+**Stop if this preflight does not pass.**
+
+Proceed with the **original precommitted second independent reboot**
+and **one 128-image physical repeat run** using the earlier
+hardware command and a fresh immutable repeat evidence directory.
+After the repeat's own full physical oracle gate passes,
+**reboot KV260 again** and run the new aggregate, read-only check:
+
+```bash
+PYTHONPATH="$PWD/src" python scripts/p07_a4_2_restart_verify.py \
+  --stage-dir "$P07_A4_STAGE_DIR" \
+  --primary-dir "$P07_A4_PRIMARY_EVIDENCE" \
+  --repeat-dir "$P07_A4_REPEAT_EVIDENCE" \
+  --a3-protocol-dir "$P07_A4_A3_PROTOCOL" \
+  --a3-evidence-dir "$P07_A4_A3_EVIDENCE" \
+  --report "$P07_A4_REPEAT_EVIDENCE/p07_a4_2c_128_cold_repeat_acceptance.json" \
+  | tee "$P07_A4_REPEAT_EVIDENCE/restart_verify.log"
+```
+
+Required results: `P07_A4_2C_128_PHYSICAL_LAUNCHES=2/2`,
+`P07_A4_2C_128_PRIMARY_PREVIOUS_PHYSICAL_EXACT=128/128`,
+`P07_A4_2C_128_REPEAT_PREVIOUS_PHYSICAL_EXACT=128/128`,
+`P07_A4_2C_128_JOURNAL_1M_BYTE_EXACT=1`,
+`P07_A4_2C_128_TRACE_64K_BYTE_EXACT=1`,
+`P07_A4_2C_128_COLD_REPEAT_ALL_BYTES_EXACT=1`,
+`P07_A4_2C_128_PHYSICAL_RESTART_GATE_PASS=1` and
+`P07_A4_OFFICIAL_TEST=SEALED`.
+The checker verifies actual complete 1MiB and 64KiB bytes, not
+just class predictions or hashes copied from user-visible logs.
+Evidence of physically rebooting is **user attestation of procedure**,
+not something the offline checker can cryptographically prove.
+Only 128 **unique** TRAIN-derived diagnostic images are counted.
+Original canonical TEST remains sealed. Overall A4.2c still
+requires a separately precommitted larger validation and error-policy gate.
