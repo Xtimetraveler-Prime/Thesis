@@ -28,8 +28,8 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     source = p.add_mutually_exclusive_group(required=True)
     source.add_argument("--synthetic", choices=("black", "white", "ramp"))
-    source.add_argument("--validation-first", type=int, choices=(16,128),
-                        help="first 16 or 128 canonical TRAIN-derived validation images")
+    source.add_argument("--validation-first", type=int, choices=(16,128,1024),
+                        help="frozen first 16/128/1024 canonical TRAIN-derived validation images")
     p.add_argument("--count", type=int, default=16,
                    help="SYNTHETIC repeat count 1..10000; forbidden with validation")
     p.add_argument("--trace-index", type=int, default=0)
@@ -72,11 +72,11 @@ def main() -> None:
         scope = "SYNTHETIC_"+args.synthetic.upper()
     else:
         from loihi_twin_v2.p06_a3_data import load_train_validation
-        from loihi_twin_v2.p07_a3_3_protocol import select_frames
+        from loihi_twin_v2.p07_a4_validation import select_validation_prefix, indices_le32_sha256
         split = load_train_validation(args.data_dir)
         if split.manifest != candidate.get("source_dataset"):
             raise ValueError("P07-A4.2a frozen training split differs from checkpoint")
-        frames = select_frames(split)[:args.validation_first]
+        frames = select_validation_prefix(split,args.validation_first)
         images = b"".join(f.pixels for f in frames)
         scope = "TRAIN_DERIVED_VALIDATION_FIRST_"+str(args.validation_first)
         ledger = {
@@ -89,8 +89,12 @@ def main() -> None:
             ],
             "source_dataset_sha256":sha256(json.dumps(
                 split.manifest,sort_keys=True,separators=(",",":")).encode()),
+            "selected_indices_le32_sha256":indices_le32_sha256(
+                tuple(f.source_index for f in frames)),
             "official_mnist_test": "SEALED",
         }
+    if args.validation_first == 1024 and args.trace_index != 1023:
+        p.error("precommitted 1024 TRAIN validation gate requires --trace-index 1023")
     stream = make_stream(images,mapping,trace_index=args.trace_index)
     assert parse_stream(stream.header,stream.mapping_bytes,stream.images)==stream
     journal = initial_journal(stream)
