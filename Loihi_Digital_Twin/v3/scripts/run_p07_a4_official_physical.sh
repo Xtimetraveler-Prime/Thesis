@@ -124,8 +124,9 @@ for line in loads:
         "P07-A4.2c ELF overlaps reserved 64MiB DDR",hex(lo),hex(hi))
 print("P07_A4_2C_ELF_DDR_ISOLATION_PASS=1")
 '
-# Board physical validation is explicitly sealed to synthetic and
-# TRAIN-derived validation only: independent stage checker rejects TEST.
+# This separate runner deliberately admits OFFICIAL TEST only after
+# physical fault acceptance + explicit unseal + one-trace policy consent.
+# Unlike run_p07_a4_physical.sh, it never accepts TRAIN-only stages.
 mkdir -p "$RUN/readback"
 python - "$RUN/trace_zero_64k.bin" <<'PY'
 from pathlib import Path
