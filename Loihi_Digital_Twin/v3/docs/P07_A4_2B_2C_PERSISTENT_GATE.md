@@ -2,11 +2,21 @@
 
 **Branch:** `agent/v3-p07-a-784-axon-streaming`. **A4.2a
 CLOSED / USER-ACCEPTED 2026-10-17**. A4.2b C11 firmware
-and isolated Vitis builder: **IMPLEMENTED / CI NATIVE PASS**,
-**USER VITIS/A53 ELF BUILD PENDING**. A4.2c guarded
+and isolated Vitis builder: **CLOSED / USER VITIS-NATIVE BUILD
+ACCEPTED 2026-10-17**. A4.2c guarded
 physical XSDB and independent journal oracle scripts:
 **IMPLEMENTED / CI HOST-ONLY PASS, PHYSICAL KV260 NOT RUN**.
 **OFFICIAL CANONICAL MNIST TEST REMAINS SEALED.**
+
+**User-attested accepted persistent ELF**:
+`/tmp/v3_p07_a4_persistent_20261017T190943/vitis_workspace/p07_a4_board.elf`,
+SHA256 `dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`.
+Vitis reported `P07_A4_A53_VITIS_BUILD_PASS=1` and
+`P07_A4_VITIS_NATIVE_GATE_PASS=1`, with ELF LOAD-section
+DDR isolation accepted. See `P07_A4_2B_VITIS_ACCEPTANCE.md`.
+The physical wrapper now pins that accepted ELF SHA256 for
+the first A4.2c ramp16 experiment; no source change or new
+firmware build is needed to run that pilot.
 
 ## Why there are TWO new gates
 
@@ -106,9 +116,11 @@ checks new firmware marker within ELF and LOAD sections
 against 0x40000000–0x43FFFFFF reserved DDR, and
 retains staged source+ELF fingerprints.
 
-**Do not launch on hardware until the above native gate
-passes on the user's Vitis toolchain.** The absence of a
-user-built ELF is not a hardware failure.
+**Native Vitis gate has already PASSED** on 2026-10-17
+with accepted ELF SHA256 above. Preserve the recorded build.
+The next independent acceptance step is the first guarded
+KV260 ramp16 physical result; do not claim board success
+before its physical journal and selected trace are verified.
 
 ## A4.2c independent HOST-ONLY admission and hardware entry
 
@@ -140,6 +152,7 @@ A4.2b acceptance and complete A4.2c host preflight:
 export P07_A4_STAGE_DIR="$PWD/artifacts/p07_a4_2a_ramp16_v1"
 # Use the same accepted A2/A3 routed P03_DIAG_REPORTS and XSA gate.
 export P03_2C_EXPECTED_XSA_SHA=52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f
+export P07_A4_BUILD_DIR=/tmp/v3_p07_a4_persistent_20261017T190943
 export P07_A4_RUN_DIR="/tmp/v3_p07_a4_ramp16_$(date +%Y%m%dT%H%M%S)"
 
 # SAFE; no board use:
