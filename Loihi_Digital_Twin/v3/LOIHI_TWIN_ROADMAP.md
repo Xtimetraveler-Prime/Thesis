@@ -1715,18 +1715,39 @@ are independently checked.
 
 **A4.2c NEXT: separately reboot and repeat the EXACT
 val1024 stage and SAME accepted unmodified ELF/FPGA.**
-The fixed precommitted acceptance criterion is complete
+The precommitted acceptance criterion is complete
 **1MiB physical journal and 64KiB last-frame compartment
 trace byte-identical across two physically separate
-cold-start launches**; strict original physical logs and
-6 input DDR readbacks must pass for both. User-native
-`p07_a4_2_val1024_verify.py` enforces this. **Overall
-A4.2c stays OPEN** even after this repeat until the
-precommitted separate physical fail-closed input
-corruption/fault-telemetry test is accepted.
-See `docs/P07_A4_2C_VAL1024_PROTOCOL.md`.
+cold-start launches**, including strict original logs and
+six original input DDR readbacks. User-native
+`p07_a4_2_val1024_verify.py` enforces this.
+**This PHYSICAL repeat is NOT YET RUN.**
+
+**A4.2c REMAINING PHYSICAL FAILURE TEST NOW
+PRECOMMITTED / HOST TOOLING + NATIVE CI IMPLEMENTED,
+BOARD FAULT EXPERIMENT NOT RUN:** independent JTAG-only
+**synthetic ramp16** staging and preserved exact six
+original DDR readbacks, **one** separate deliberate
+reserved header word `0x43FE0090` injection AFTER
+provision/readback, before unchanged A53 starts. Expect
+exact `0xDEAD0001` **input rejection**, zero completed
+frames, CRC-valid fail journal with ZERO per-frame
+results/trace, NEVER a valid inference success.
+New `run_p07_a4_fault_physical.sh` requires distinct
+DDR overwrite and synthetic fault-injection approvals;
+new `p07_a4_2_fault_verify.py` and synthetic corruption
+CI verify exact original/modified descriptor bytes,
+original logs/provenance and rejection semantics.
+The experiment must be run only **after** the accepted
+val1024 independent reboot repeat, using its own new
+evidence directory; do not modify existing accepted
+positive evidence, master, weights, bitstream or ELF.
+See `docs/P07_A4_2C_FAIL_CLOSED_PROTOCOL.md`.
+**Overall A4.2c STAYS OPEN** until the distinct negative
+physical gate is user-verified. Then we can mark persistent
+A4.2c complete and separately authorize A4.3.
 Original official 10000 MNIST TEST remains SEALED;
-no full 10000-image physical pass or timing/power claim.
+no physical full 10000-image test, timing or power claim.
 
 **P07-A4.3 is the separately authorized official TEST unseal
 and canonical archive provenance gate** only after A4.2
