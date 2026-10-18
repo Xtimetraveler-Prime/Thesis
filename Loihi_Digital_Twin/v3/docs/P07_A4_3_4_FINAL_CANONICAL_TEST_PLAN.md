@@ -1,10 +1,16 @@
 # P07-A4.3/A4.4 — Full canonical original-order 10,000 MNIST TEST closeout
 
-**Precommitted on 2026-10-17, while official MNIST TEST remains SEALED.**
-**A4.2c synthetic physical fail-closed acceptance PENDING.**
-**A4.3 TEST unseal NOT YET AUTHORIZED BY SUCCESSFUL FAULT TEST;
-official archives NOT OPENED by this implementation.**
-**A4.4 10000-image official physical result NOT YET RUN OR SCORED.**
+**Original precommit: 2026-10-17 BEFORE official MNIST TEST unseal.
+FINAL STATUS 2026-10-17: A4.2c physical fault gate ACCEPTED;
+A4.3 canonical official TEST unsealed after explicit consent;
+A4.4 actual KV260 original-order 10000/10000 physical
+and independent numerical reference PASS; official
+9456/10000 = 94.56% accuracy, 544 incorrect,
+2 all-silent / 10000. P07-A COMPLETE.**
+The sections below preserve the *precommitted future-tense
+procedure at the time of freezing*, followed by a new
+observed physical acceptance record at the end.
+See `P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
 No changed Track A weights, neural arithmetic, FPGA bitstream, Vitis ELF,
 input encoder, dataset source, prediction rule or FPGA execution ABI.
 
@@ -242,11 +248,17 @@ P07_A4_4_FULL10000_KV260_INDEPENDENT_CLOSEOUT_PASS=1
 P07_A4_4_FULL_CANONICAL_TEST_PASS=1
 ```
 
-These are future expected markers, **not observed
-results**. Do not invent accuracy, percentages,
-raw SHA artifacts or claim A4.3/A4.4 closure
-until the user independently reports actual full
-FPGA verification and explicitly authorizes merge.
+**The above markers were later observed on
+actual KV260 hardware in the user-verified
+2026-10-17 A4.4 original 10000-image launch.**
+Official full-population classification accuracy
+was `9456/10000=94.56%`, with `2/10000` all-silent.
+The raw journal, selected full last-image trace,
+all original XSDB readbacks, raw report and full
+per-class statistics remain only in the user's
+physical evidence directory (not available here).
+See the appended acceptance and
+`P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
 
 ## Explicit limitations
 
@@ -258,3 +270,38 @@ latency/throughput measurement, rail-specific
 energy/power, scaled Track B, a physical Loihi
 silicon implementation or better generalization
 than independently frozen training procedure.
+
+## Observed final physical acceptance — October 17, 2026
+
+The predeclared synthetic failure gate passed with actual Cortex-A53
+terminal status `0xDEAD0001`, exact one-word reserved-descriptor
+corruption and no inferred image or nonzero neural output. User-original
+failure evidence:
+`/tmp/v3_p07_a4_fail_closed_20261017T204554`.
+Afterwards, original complete canonical MNIST TEST images `0..9999`
+were admitted and independently confirmed in the one-launch persistent
+A53 application. The original host-only, 10000-frame verification
+reported `P07_A4_4_CANONICAL_FULL_ORIGINAL_ORDER=10000/10000`,
+`P07_A4_4_PHYSICAL_INDEPENDENT_OUTPUT_SPIKES_ROUTES_EXACT=10000/10000`,
+`P07_A4_4_FINAL_IMAGE9999_FULL_COMPARTMENT_TRACE_EXACT=1`,
+`P07_A4_4_ALL_SIX_ORIGINAL_DDR_READBACKS_EXACT=1`,
+`P07_A4_4_FULL10000_KV260_INDEPENDENT_CLOSEOUT_PASS=1` and
+`P07_A4_4_FULL_CANONICAL_TEST_PASS=1`.
+
+**Measured official classification result:** **9456 correct / 10000**
+(**94.56%**), **544 incorrect**, **2 all-silent /10000**.
+The denominator includes all images. Original physical evidence:
+`/tmp/v3_p07_a4_official_full10000_20261017T204944`;
+original accepted full report:
+`p07_a4_4_official_full10000_report.json` in that folder.
+The user's printed pass markers are present in the final acceptance
+record; the raw report has not been provided for direct inspection,
+so no unseen per-class numbers, archive SHA256s or physical power
+measurements are asserted. This is 10000 per-image 26×10
+*output* trace histories and **one full internal 26×42
+compartment trace at IDX 9999**, not full neuron-state traces
+for every test image. Physical 10000-image cold-repeat was not
+part of the A4.4 acceptance and has not been claimed.
+
+**P07-A is now CLOSED / user explicitly requested merge to main.
+P08-A hardware latency, throughput, power and energy study remains pending.**
