@@ -4,6 +4,15 @@
 if {$argc < 4 || $argc > 6} {
     error "usage: p08_a2_xsdb_run.tcl <P08-A2-elf> <journal-1MiB-out> <trace64KiB-out> <timing1MiB-out> ?server? ?timeout-seconds?"
 }
+# Explicit standalone bare-metal consent; this TCL can reset A53 and access
+# reserved DDR. Never run while Linux owns this memory. A3 will supply a
+# separate shell-level gate with provenance/readback checks.
+if {![info exists ::env(P08_A2_CONFIRM_KV260_JTAG_ONLY)] ||
+    $::env(P08_A2_CONFIRM_KV260_JTAG_ONLY) ne "YES" ||
+    ![info exists ::env(P08_A2_CONFIRM_VALIDATION_ONLY)] ||
+    $::env(P08_A2_CONFIRM_VALIDATION_ONLY) ne "YES"} {
+    error "P08-A2 refuses hardware access without JTAG-only and validation-only consent"
+}
 set elf [file normalize [lindex $argv 0]]
 set output [file normalize [lindex $argv 1]]
 set trace [file normalize [lindex $argv 2]]
