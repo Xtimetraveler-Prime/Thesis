@@ -189,8 +189,8 @@ official TEST remains SEALED:**
   passed LOAD-section DDR isolation. This is a build
   acceptance only; no persistent physical image has
   been run yet. See `P07_A4_2B_VITIS_ACCEPTANCE.md`.
-- **A4.2c HOST IMPLEMENTED / KV260 PHYSICAL ACCEPTANCE
-  PENDING:** guarded independent readback/provision and
+- **A4.2c RAMP16 FIRST PHYSICAL PILOT USER-ACCEPTED;
+  FULL VALIDATION/REPEATABILITY PENDING:** guarded independent readback/provision and
   single persistent A53 launch on the accepted FPGA,
   1MiB result journal plus 64KiB trace capture and
   host independent P03 packed oracle first divergence
@@ -238,3 +238,28 @@ as part of a separately frozen measurement policy
 or plan supplemental traces without changing
 the official 10000-image population. No validated
 full official TEST accuracy has been produced.
+
+### A4.2c persistent physical pilot update (2026-10-17)
+
+The user independently ran the new persistent ELF and accepted
+its first **one-launch 16-image synthetic ramp** physical gate.
+The A53 journal completed with `0x600D600D`, and all
+16 output spike sequences and selected 26×42 complete
+compartment trace exactly matched independent P03 oracle.
+The original evidence is on user's PC at
+`/tmp/v3_p07_a4_ramp16_20261017T191755`, and the
+attested console markers are preserved in
+`P07_A4_2C_RAMP16_PHYSICAL_ACCEPTANCE.md`.
+
+A4.2c remains **open**, with a new original-order **128-image
+TRAIN-derived validation persistent** primary and cold-start
+repeat protocol frozen *before the experiments*. New read-only
+`p07_a4_2_crosscheck.py` directly validates this new one-launch
+physical evidence against **eight previously accepted actual
+P07-A3.3 primary JTAG mailboxes**, every 26×10 output bit,
+readout, input event/route and selected full trace; it also
+pins the original A3.3 mailbox hashes recorded at acceptance.
+See `P07_A4_2C_VALIDATION128_PROTOCOL.md`. A larger
+TRAIN-derived validation-only stress gate and physical fault
+handling are still required before official unseal. Nothing
+from the canonical MNIST TEST has been opened or scored.
