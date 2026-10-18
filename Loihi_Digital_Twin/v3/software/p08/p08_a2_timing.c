@@ -34,7 +34,7 @@ int p08_a2_pack_header(uint8_t *out,size_t size,uint32_t count,
        count>P08_A2_MAX_FRAMES || trace>=count || done>count || !freq ||
        (status!=0u && status!=P08_A2_OK_STATUS &&
                          status!=P08_A2_FAIL_STATUS) ||
-       (status==P08_A2_OK_STATUS && (done!=count || stop<begin)) ||
+       (status==P08_A2_OK_STATUS && (done!=count || stop<=begin)) ||
        (status==0u && stop!=0u) || (stop && stop<begin))
         return -1;
     memset(out,0,size);
