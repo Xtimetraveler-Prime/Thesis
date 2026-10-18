@@ -1,11 +1,18 @@
 # P07-A4 — Precommitted official canonical MNIST TEST evaluation
 
-**Precommitted:** 2026-10-17 **BEFORE** opening, downloading, staging,
-scoring or physically running any `t10k` test sample for this
-project. **A4.1 user-native accepted. Official TEST remains SEALED**
-through the A4.2 persistent engineering extension. No measured TEST result
-is present. Development branch
-`agent/v3-p07-a-784-axon-streaming`; do not merge without approval.
+**Protocol PRECOMMITTED: 2026-10-17 BEFORE official TEST unseal.
+Final acceptance UPDATE: 2026-10-17 after authorized unseal
+and physical benchmark. P07-A4.1/A4.2/A4.3/A4.4 CLOSED,
+official MNIST TEST 9456/10000 = 94.56% on KV260 FPGA,
+2 all-silent / 10000, exact independent 10000/10000 numerical
+parity. User explicitly approved merging the completed
+feature branch to `main`.** This document preserves the
+original time-ordered precommit and sealed-phase record:
+sentences in past precommit sections describing the TEST as
+“sealed”, “not yet run” or “pending” describe the state at
+that earlier stage, NOT the final accepted state.
+See `P07_A_FINAL_PHYSICAL_ACCEPTANCE.md` for original
+user-supplied complete last-experiment terminal evidence.
 
 ## A4.1: primary population and go/no-go
 
@@ -317,4 +324,44 @@ fault evidence is accepted, and user explicitly supplies unseal AND
 one-trace measurement policy opt-ins. The final original-order
 population is exactly 10000, full trace image 9999 and all 10000
 per-image 26x10 output spike histories and routing summaries.
-There is NO actual official physical result or accuracy at this phase.
+This was the status when the A4.3/4 implementation was frozen,
+BEFORE the later accepted physical result.
+
+### FINAL canonical full10000 actual FPGA acceptance (2026-10-17)
+
+**Timeline:** synthetic-only physical descriptor fault was independently
+user-verified first (`0xDEAD0001`, zero inferred images/output
+body/full trace; accepted `P07_A4_2C_NEGATIVE_TEST_PASS=1`).
+This closed A4.2c while official TEST remained SEALED. The user then
+explicitly consented to the required canonical source unseal and the
+one selected full-compartment trace per 10000-image persistent-run
+observability compromise. A4.3 canonical IDX original-order source
+provenance was admitted by the same A4.4 independent verifier.
+
+**User-submitted final A4.4 hardware acceptance:**
+`P07_A4_2C_JOURNAL_STATUS=0x600D600D`,
+`P07_A4_4_CANONICAL_FULL_ORIGINAL_ORDER=10000/10000`,
+`P07_A4_4_PHYSICAL_INDEPENDENT_OUTPUT_SPIKES_ROUTES_EXACT=10000/10000`,
+`P07_A4_4_FINAL_IMAGE9999_FULL_COMPARTMENT_TRACE_EXACT=1`,
+`P07_A4_4_ALL_SIX_ORIGINAL_DDR_READBACKS_EXACT=1`,
+`P07_A4_4_PREVIOUS_PHYSICAL_FAULT_ACCEPTANCE_PASS=1`,
+`P07_A4_4_COMPLETE_PHYSICAL_DENOMINATOR=10000`,
+`P07_A4_4_FULL10000_KV260_INDEPENDENT_CLOSEOUT_PASS=1`,
+`P07_A4_4_FULL_CANONICAL_TEST_PASS=1`.
+**Actual measured result: 9456 correct / 10000 = 94.56%; 544
+incorrect; all-silent 2/10000.** No denominator reduction or sample
+exclusion. Exactly 26×10 output flags per image and one full 26×42
+neural compartment trace for original IDX image 9999 are independently
+matched, not 10000 full internal state traces. Accuracy reflects
+comparison with host-only canonical official TEST truth labels.
+
+Accepted user-local evidence:
+`/tmp/v3_p07_a4_fail_closed_20261017T204554`
+(physical pre-dispatch rejection), and
+`/tmp/v3_p07_a4_official_full10000_20261017T204944`
+(full FPGA evaluation and host-only JSON score report).
+The assistant did **not** directly read or copy the raw JTAG binaries,
+canonical test archives or full JSON report; measured SHA256s and per-class
+statistics not shown in the user's terminal are not restated here.
+No timings, energy, power, physical 10000-repeat or Track B result is claimed.
+See `P07_A_FINAL_PHYSICAL_ACCEPTANCE.md` for full terminal transcript.
