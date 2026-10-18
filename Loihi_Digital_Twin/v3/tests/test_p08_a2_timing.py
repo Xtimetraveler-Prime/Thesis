@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 def fixture_binary(tmp_path: Path) -> bytes:
     compiler = shutil.which("cc")
     if compiler is None:
-        pytest.skip("portable native C compiler unavailable")
+        pytest.fail("cc compiler required for P08-A2 native C/Python parity gate")
     harness = tmp_path / "codec.c"
     binary = tmp_path / "codec"
     raw = tmp_path / "timing.bin"
