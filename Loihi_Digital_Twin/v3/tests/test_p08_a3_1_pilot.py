@@ -66,6 +66,33 @@ def test_physical_runner_rejects_git_worktree_evidence_without_hardware(tmp_path
     assert not inside.exists()
 
 
+
+def test_offline_preflight_rejects_unattested_elf_before_hardware(tmp_path):
+    """No consent, JTAG, or hardware needed for offline SHA gate."""
+    stage=tmp_path/"stage"
+    stage.mkdir()
+    evidence=tmp_path/"physical-output-not-created"
+    env={
+        **os.environ,
+        "P08_A3_1_PREFLIGHT_ONLY":"YES",
+        "P08_A3_1_RUN_DIR":str(evidence),
+        "P08_A2_2_BUILD_DIR":str(tmp_path/"build-not-created"),
+        "P03_DIAG_REPORTS":str(tmp_path/"report-not-created"),
+        "P08_A3_1_STAGE_DIR":str(stage),
+        "P08_A3_1_EXPECTED_ELF_SHA256":"0"*64,
+    }
+    for name in ("P08_A3_1_CONFIRM_JTAG_ONLY",
+                 "P08_A3_1_CONFIRM_DDR_OVERWRITE",
+                 "P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY"):
+        env.pop(name,None)
+    got=subprocess.run(["bash",str(ROOT/"scripts/run_p08_a3_1_pilot.sh")],
+                       cwd=ROOT,env=env,text=True,capture_output=True)
+    assert got.returncode!=0
+    assert "user-attested frozen P08-A2.2 ELF digest" in got.stderr
+    assert not evidence.exists()
+
+
+
 def test_a3_1_invalid_population_refused_before_oracle(monkeypatch,tmp_path):
     called=[]
     stream=SimpleNamespace(image_count=128)
@@ -160,6 +187,9 @@ def test_a3_1_contract_keeps_power_deferred_and_never_runs_official_test():
     assert "P08_A3_1_CONFIRM_DDR_OVERWRITE" in shell
     assert "P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY" in shell
     assert "P08_A3_1_EXPECTED_ELF_SHA256" in shell
+    assert "PINNED_P08_A2_2_ELF_SHA=87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361" in shell
+    assert "P08_A3_1_PREFLIGHT_ONLY" in shell
+    assert "P08_A3_1_OFFLINE_PREFLIGHT_PASS=1" in shell
     assert "P08_A3_1_ORIGINAL_TRAIN_FIRST16_PHYSICAL_PREFLIGHT_PASS=1" in shell
     assert "RUN_CANONICAL" in shell and "REPO_CANONICAL" in shell
     assert "P08_A2_2_ELF_SHA256=" in shell
