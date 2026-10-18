@@ -84,6 +84,10 @@ bash -n scripts/run_p07_a4_fault_physical.sh
 
 export P07_A4_BUILD_DIR=/tmp/v3_p07_a4_persistent_20261017T190943
 export P07_A4_FAULT_STAGE_DIR="$PWD/artifacts/p07_a4_2a_ramp16_v1"
+export P07_A4_VAL1024_STAGE_DIR="$PWD/artifacts/p07_a4_2c_val1024_first_v1"
+export P07_A4_VAL1024_PRIMARY_EVIDENCE=/tmp/v3_p07_a4_val1024_primary_20261017T200134
+# Must be set to the ACTUAL independently verified 1024 cold-repeat directory:
+export P07_A4_VAL1024_REPEAT_EVIDENCE=/tmp/REPLACE_WITH_ACCEPTED_val1024_repeat_DIR
 export P03_2C_EXPECTED_XSA_SHA=52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f
 
 PYTHONPATH="$PWD/src" python scripts/p07_a4_2_check.py \
@@ -111,7 +115,16 @@ export P07_A4_CONFIRM_DESTRUCTIVE_FAULT_INJECTION=YES
 bash scripts/run_p07_a4_fault_physical.sh
 ```
 
-The physical script performs all accepted ELF/XSA/source
+The physical script first reruns the entire accepted
+**1024-image PRIMARY + independently rebooted REPEAT**
+original XSDB-evidence verifier and requires
+`P07_A4_2C_1024_RESTART_GATE_PASS=1` BEFORE any board
+access. Set the actual `P07_A4_VAL1024_REPEAT_EVIDENCE`
+directory from the accepted user repeat; the illustrative
+`/tmp/REPLACE_WITH_ACCEPTED_...` above is a placeholder
+and must not be used literally. This cannot be bypassed
+simply by writing a success marker to a log.
+It then performs all accepted ELF/XSA/source
 checks and original XSDB staging/provision readbacks,
 programs the original FPGA, **then** makes exactly the
 single descriptor-word modification and captures
