@@ -40,6 +40,28 @@ cd "$V3"
   echo "ERROR: explicit NEGATIVE physical fault-injection consent is required" >&2
   exit 2
 }
+# Independently verify the ORIGINAL accepted complete 1024 cold-reboot
+# result again before ANY tool is allowed to access the board.
+VAL1024_STAGE="${P07_A4_VAL1024_STAGE_DIR:?Set original first1024 TRAIN validation stage}"
+VAL1024_PRIMARY="${P07_A4_VAL1024_PRIMARY_EVIDENCE:?Set accepted first1024 primary physical directory}"
+VAL1024_REPEAT="${P07_A4_VAL1024_REPEAT_EVIDENCE:?Set accepted first1024 separate reboot repeat directory}"
+[[ "$VAL1024_STAGE" == /* && -d "$VAL1024_STAGE" &&
+   "$VAL1024_PRIMARY" == /* && -d "$VAL1024_PRIMARY" &&
+   "$VAL1024_REPEAT" == /* && -d "$VAL1024_REPEAT" ]] || {
+  echo "ERROR: original valid 1024 stage, primary and cold-repeat folders required" >&2
+  exit 2
+}
+VAL1024_ADMISSION="$(PYTHONPATH="$V3/src" python scripts/p07_a4_2_val1024_verify.py \
+  --stage-dir "$VAL1024_STAGE" --primary-dir "$VAL1024_PRIMARY" \
+  --repeat-dir "$VAL1024_REPEAT")" || {
+    echo "ERROR: full first1024 independent reboot evidence gate failed" >&2
+    exit 2
+  }
+grep -Fxq 'P07_A4_2C_1024_RESTART_GATE_PASS=1' <<< "$VAL1024_ADMISSION" || {
+  echo "ERROR: first1024 physical cold-reboot acceptance marker absent" >&2
+  exit 2
+}
+echo "P07_A4_2C_FAULT_1024_PREVIOUS_PHYSICAL_RESTART_GATE_PASS=1"
 for tool in python xsdb vivado sha256sum grep cmp strings readelf git; do
   command -v "$tool" >/dev/null || {
     echo "ERROR: missing $tool (load Vitis/Vivado environment)" >&2; exit 2;
@@ -119,6 +141,7 @@ print("P07_A4_2C_ELF_DDR_ISOLATION_PASS=1")
 # Board physical validation is explicitly sealed to synthetic and
 # TRAIN-derived validation only: independent stage checker rejects TEST.
 mkdir -p "$RUN/readback"
+printf '%s\n' "$VAL1024_ADMISSION" > "$RUN/previous_1024_restart_acceptance.log"
 python - "$RUN/trace_zero_64k.bin" <<'PY'
 from pathlib import Path
 import sys
