@@ -125,6 +125,10 @@ def test_negative_runner_needs_two_explicit_confirmations(fake_inputs,tmp_path):
     src=script.read_text()
     assert "P07_A4_CONFIRM_DESTRUCTIVE_FAULT_INJECTION" in src
     assert "P07_A4_CONFIRM_KV260_DDR_OVERWRITE" in src
+    assert "P07_A4_2C_1024_RESTART_GATE_PASS=1" in src
+    assert "P07_A4_VAL1024_PRIMARY_EVIDENCE" in src
+    assert "P07_A4_VAL1024_REPEAT_EVIDENCE" in src
+    assert "P07_A4_VAL1024_STAGE_DIR" in src
     assert "p07_a4_xsdb_inject_descriptor_fault.tcl" in src
     assert "P07_A4_2C_JOURNAL_STATUS=0xDEAD0001" in src
     assert "P07_A4_2C_PHYSICAL_FAULT" in src
