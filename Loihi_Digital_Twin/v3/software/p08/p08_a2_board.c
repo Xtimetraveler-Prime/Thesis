@@ -466,12 +466,13 @@ int main(void)
     master_verified=0u;dataset_verified=0u;current_frame=0u;fault_detail=0u;
     memset(&dataset,0,sizeof(dataset));
     clear_output();
+    /* Scrub candidate evidence even if descriptor/immutable master rejects. */
+    p08_clear_sidecar();
     if(load_dataset()!=0){record_failed(1u);halt_forever();}
     if(verify_immutable_master()!=0){record_failed(2u);halt_forever();}
     if(p03_hw_xilinx_fpd128_ready()!=0){record_failed(3u);halt_forever();}
     p08_counter_hz=p08_clock_rate();
     if(!p08_counter_hz){record_failed(4u);halt_forever();}
-    p08_clear_sidecar();
     p08_run_start=read_ticks(NULL);
     if(p08_header(0u,0u,0u)!=0){record_failed(5u);halt_forever();}
     driver.prepare=prepare;driver.append_current=append_current;
