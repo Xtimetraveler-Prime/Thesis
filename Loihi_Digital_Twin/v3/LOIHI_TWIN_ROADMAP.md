@@ -1673,22 +1673,47 @@ and old mailbox SHA256 identities PASS. This is a
 separately accepted ramp16 pilot. See
 `docs/P07_A4_2C_VAL128_PRIMARY_ACCEPTANCE.md`.
 
-A4.2c **remains OPEN** pending the already precommitted
-second, independently rebooted, same-ELF/same-128-image
-physical launch and full 1MiB journal + full 64KiB
-selected-trace byte-exact repeat. New read-only
-`p07_a4_2_restart_verify.py` CI/native tests verify the
-original per-run software-oracle `verify.log` markers,
-prior eight FPGA mailboxes, all six original XSDB
-DDR readbacks, frozen ELF/XSA/master/staging SHA, exact
-journal/trace equality, missing-data and corruption
-fail-closed. **Physical reboot itself requires user
-procedure confirmation.** Repeat + larger prespecified
-TRAIN-validation stress and fault handling still required
-before official t10k unsealing. See
-`docs/P07_A4_2C_VALIDATION128_PROTOCOL.md`.
-Official TEST still SEALED; no persistent 10000-image
-physical success claimed.
+**A4.2c PERSISTENT-128 COLD REPEAT COMPLETE /
+USER PHYSICAL ACCEPTED 2026-10-17.** Original
+`p07_a4_2_restart_verify.py` read both fully independent
+A53 physical launches and all six preserved DDR binary
+readbacks, same frozen accepted ELF/XSA/staged 128 TRAIN
+validation images, and independently verified both
+full 1MiB journals and 64KiB first-image full neural
+traces were **byte-identical**. Both 128-image launches
+also exactly matched eight previously accepted A3.3
+KV260 physical mailboxes and original independent
+software-oracle logs. The user reported
+`P07_A4_2C_128_PHYSICAL_RESTART_GATE_PASS=1`,
+`P07_A4_2C_128_PHYSICAL_LAUNCHES=2/2`,
+**256 physical frame executions**, **128 distinct
+TRAIN validation images**, journal/trace exact flags
+=1. Raw original second-run evidence:
+`/tmp/v3_p07_a4_val128_repeat_20261017T194315`.
+See `docs/P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`.
+Hardware reboot remains an operator-attested procedure.
+
+**A4.2c NEXT: first1024 distinct TRAIN-derived validation
+sustained physical run.** Prespecified pre-device-run
+population is the exact first **1024** entries of
+the accepted seeded P06-A3 10k TRAIN-derived
+validation index sequence, **first128 prefix unchanged**,
+one preselected full 26×42 selected trace at image
+**1023 (last)**, all **26×10 output bits per frame**
+and no skipped images. Python staging/oracle, exact
+source ID and SHA-bound host-ledger validation,
+native regression tests, guarded existing physical
+runner and strict complete 1MiB journal/64KiB
+cold-repeat checker implemented. **No new FPGA RTL,
+weights or A53 ELF required.** One primary physical
+KV260 launch is the next verification gate, followed
+only upon accepted primary by a separate physical reboot
+and byte-identical repeat; **A4.2c OVERALL STILL OPEN**
+pending this sustained coverage and separate predeclared
+physical fault-handling test before any official t10k
+unsealing. See `docs/P07_A4_2C_VAL1024_PROTOCOL.md`.
+Official TEST still SEALED; no physical 10000-image
+official TEST accuracy or power/latency claim.
 
 **P07-A4.3 is the separately authorized official TEST unseal
 and canonical archive provenance gate** only after A4.2
