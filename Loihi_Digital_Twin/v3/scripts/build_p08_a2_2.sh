@@ -42,7 +42,7 @@ vitis -s "$V3/software/p08/build_p08_a2_2.py" \
   --source-dir "$BUILD/source" 2>&1 | tee "$BUILD/vitis_build.log"
 ELF="$BUILD/vitis_workspace/p08_a2_2_board.elf"
 [[ -s "$ELF" ]] || { echo "ERROR: instrumented ELF missing" >&2; exit 3; }
-grep -aFq "P08_A2_2_LATENCY_ONLY_KV260_A53_CANDIDATE_V1" "$ELF" || {
+grep -aFq "P08_A2_2_PER_TICK_KV260_A53_CANDIDATE_V1" "$ELF" || {
   echo "ERROR: incorrect experimental ELF identity" >&2; exit 3;
 }
 if grep -aFq "P07_A4_2B_PERSISTENT_KV260_A53_FROZEN_TRACK_A_V1" "$ELF"; then
