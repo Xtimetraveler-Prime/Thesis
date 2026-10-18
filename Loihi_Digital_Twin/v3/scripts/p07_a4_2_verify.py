@@ -58,7 +58,8 @@ def validate_staging(stage: Path):
             meta.get("scope") not in {
                 "SYNTHETIC_BLACK","SYNTHETIC_WHITE","SYNTHETIC_RAMP",
                 "TRAIN_DERIVED_VALIDATION_FIRST_16",
-                "TRAIN_DERIVED_VALIDATION_FIRST_128"}):
+                "TRAIN_DERIVED_VALIDATION_FIRST_128",
+                "TRAIN_DERIVED_VALIDATION_FIRST_1024"}):
         raise ValueError("A4.2c stage is not sealed synthetic or TRAIN-derived validation")
     spec={
         "descriptor":"p07_a4_descriptor_256.bin",
@@ -99,21 +100,19 @@ def main() -> None:
 
     if meta["scope"].startswith("TRAIN_DERIVED_VALIDATION_"):
         from loihi_twin_v2.p06_a3_data import load_train_validation
-        from loihi_twin_v2.p07_a3_3_protocol import select_frames
+        from loihi_twin_v2.p07_a4_validation import (
+            select_validation_prefix, validate_ledger, SCOPE, TRACE_FRAME,
+        )
         split=load_train_validation(args.data_dir)
         if candidate["source_dataset"]!=split.manifest:
             raise ValueError("A4.2c wrong frozen validation dataset")
-        selected=select_frames(split)[:stream.image_count]
-        if b"".join(f.pixels for f in selected)!=stream.images:
-            raise ValueError("A4.2c staged pixels differ from canonical original TRAIN IDX")
+        selected=select_validation_prefix(split,stream.image_count)
+        if meta["scope"]!=f"TRAIN_DERIVED_VALIDATION_FIRST_{stream.image_count}":
+            raise ValueError("A4.2c staged sample count/scope mismatch")
+        if meta["scope"]==SCOPE and stream.trace_index!=TRACE_FRAME:
+            raise ValueError("A4.2c precommitted 1024 last-image trace selection changed")
         ledger=json.loads((args.stage_dir/"p07_a4_2a_validation_labels_HOST_ONLY.json").read_text())
-        if len(ledger.get("rows",[]))!=stream.image_count:
-            raise ValueError("A4.2c validation label ledger count")
-        for i,f in enumerate(selected):
-            row=ledger["rows"][i]
-            if (row.get("position")!=i or row.get("source_index")!=f.source_index or
-                    row.get("label")!=f.label or row.get("pixels_sha256")!=sha256(f.pixels)):
-                raise ValueError(f"A4.2c wrong canonical validation ledger index={i}")
+        validate_ledger(ledger,selected,stream.images)
     else:
         kind=meta["scope"].removeprefix("SYNTHETIC_")
         expected={
