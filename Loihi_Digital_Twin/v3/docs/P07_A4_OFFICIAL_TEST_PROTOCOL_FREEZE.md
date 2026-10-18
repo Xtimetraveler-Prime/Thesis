@@ -216,8 +216,16 @@ terminal status, failures and 10000 exact original-order
 labels. Release full score only after the complete
 population is independently verified; no retuning.
 
-**There is no accepted P07-A4 physical persistent result or
-official TEST score. The canonical TEST remains SEALED/NOT READ.**
+**P07-A4.2c physical persistent 16, 128 and 1024-image
+TRAIN-derived validation runs have now been accepted;
+the independent 1024-image COLD REPEAT was accepted
+2026-10-17 with 1MiB journal and 64KiB last-image
+trace byte-identical across the two actual KV260 launches.
+These are NOT official TEST results or classification
+scores. The canonical official t10k TEST remains
+SEALED/NOT READ. Physical fail-closed fault telemetry
+remains the last A4.2c gate before separate A4.3
+authorization.**
 
 ### Frozen full-TEST observability clarification before unseal
 
@@ -263,3 +271,31 @@ See `P07_A4_2C_VALIDATION128_PROTOCOL.md`. A larger
 TRAIN-derived validation-only stress gate and physical fault
 handling are still required before official unseal. Nothing
 from the canonical MNIST TEST has been opened or scored.
+
+### A4.2c sustained-repeat acceptance (2026-10-17)
+
+The user reported `P07_A4_2C_1024_PHYSICAL_LAUNCHES=2/2`,
+`P07_A4_2C_1024_HARDWARE_IMAGE_EXECUTIONS=2048`,
+`P07_A4_2C_1024_UNIQUE_TRAIN_VALIDATION=1024`,
+`P07_A4_2C_1024_JOURNAL_1M_BYTE_EXACT=1`,
+`P07_A4_2C_1024_TRACE_64K_BYTE_EXACT=1` and
+`P07_A4_2C_1024_RESTART_GATE_PASS=1` on actual KV260
+hardware, with original XSDB and independent P03 oracle logs
+verified. The original acceptance JSON is on the user's PC at
+`/tmp/v3_p07_a4_val1024_repeat_20261017T201021/p07_a4_2c_1024_physical_restart.json`.
+See `P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
+
+Before A4.2c may close, the separately precommitted
+**synthetic only** one-word physical descriptor fault must
+produce `0xDEAD0001`, zero completed frames and zero neural
+results/trace under unchanged A53 ELF, with full original
+physical readback and negative-result CRC/provenance checks.
+See `P07_A4_2C_FAIL_CLOSED_PROTOCOL.md`.
+
+Before unsealing any official t10k data in A4.3, the project
+must also explicitly accept/freeze the different full-compartment
+trace sampling coverage of the new persistent implementation,
+which physically stores **one selected full 26×42 trace per
+entire dataset launch** while recording 26×10 spike flags and
+routing for **every image**. The full official 10,000 original
+IDX-order population and scoring denominator remain frozen.
