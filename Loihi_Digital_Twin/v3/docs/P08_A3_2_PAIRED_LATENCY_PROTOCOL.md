@@ -1,6 +1,6 @@
 # P08-A3.2 — Paired 1,024-image physical latency baseline
 
-**State (2026-10-18): A3.2.1 HOST ANALYSIS IMPLEMENTED; USER NATIVE VERIFICATION PENDING. A3.2.2 PHYSICAL 1,024-FRAME RUNNERS NOT IMPLEMENTED. NO A3.2 KV260 EXECUTION OR ACCEPTED STATISTICAL BASELINE.**
+**State (2026-10-18): A3.2.1 HOST ANALYSIS USER-VERIFIED NATIVE PASS. A3.2.2 DUAL-VARIANT 1,024-FRAME PHYSICAL CAPTURE CANDIDATE IMPLEMENTED; NEW NATIVE GATES PENDING; NO A3.2 KV260 RUN OR STATISTICAL BASELINE YET.**
 
 ## Motivation: measured A3.1 pilot is dominated by PS-side service
 
@@ -36,13 +36,13 @@ After these two passes, parse:
 
 **No trial may assert `P08_A3_2_REPEATED_BASELINE_ACCEPTED=1` based on one pair.** Run-repeated variance and possible order effects require later A3.2.3 aggregation. The original 16-image measurements are a distinct feasibility pilot, not an extra paired 1024 measurement.
 
-## A3.2.2 — Next pending code, not yet approved for real board
+## A3.2.2 — Dual-mode JTAG capture implemented, native and physical verification pending
 
-Implement and native-test a new hardware runner that can take exactly one mode (`A2_1` or `A2_2`), never mixes build identities and never changes original P07/P03 C/HLS/bitstream. The original P07-A4.2a first1024 TRAIN stage (including selected trace=1023) is shared across all runs. The runner must prove all stage bytes/source hashes before any hardware call, enforce **post-reboot** dedicated JTAG-only consent, reject Linux DDR ownership, keep evidence outside Git and use a new no-overwrite directory for each run. It must perform physical XSDB byte-exact provisioning and pin original routed bit/ltx/XSA before launching one autonomous A53 dataset inference session.
+The [new, source-level A3.2.2 runner and full operator protocol](P08_A3_2_2_PHYSICAL_CAPTURE_PROTOCOL.md) have been implemented on the feature branch. The code still requires the user's native tests and first offline preflights before any approved board execution. The dedicated runner is `scripts/run_p08_a3_2_1024.sh` and per-run original oracle/timing gate is `scripts/p08_a3_2_single_check.py`. Its new native tests are `tests/test_p08_a3_2_capture.py`. The runner can take exactly one mode (`A2_1` or `A2_2`), never mixes build identities and never changes original P07/P03 C/HLS/bitstream. The original P07-A4.2a first1024 TRAIN stage (including selected trace=1023) is shared across all runs. The runner must prove all stage bytes/source hashes before any hardware call, enforce **post-reboot** dedicated JTAG-only consent, reject Linux DDR ownership, keep evidence outside Git and use a new no-overwrite directory for each run. It must perform physical XSDB byte-exact provisioning and pin original routed bit/ltx/XSA before launching one autonomous A53 dataset inference session.
 
 Collect original P07 1MiB neural journal, selected 64KiB trace, 1MiB A2.1 timing sidecar and, only for A2.2, 3MiB per-tick sidecar. Exit as a **physical terminal but unverified numerical** until the original packed-oracle check succeeds. Raw failure logs and partial evidence are preserved. The A3.2.1 paired CLI is then run only when **both** individual hardware trials independently pass. Do not reuse an A3.1 `first16` evidence directory as `first1024`.
 
-## Native A3.2.1 verification (user-local, no board)
+## Native A3.2.1 verification (USER REPORTED PASS), A3.2.2 tests PENDING
 
 ```bash
 cd ~/Git/Thesis
@@ -56,10 +56,11 @@ PYTHONPATH="$PWD/src" python -m pytest -q \
   tests/test_p08_a3_1_pilot.py tests/test_p08_a2_2_ticks.py \
   tests/test_p08_a2_timing.py tests/test_p07_a4_official.py tests/test_p07_a4_fault.py
 python -m py_compile \
-  src/loihi_twin_v2/p08_a3_2_analysis.py scripts/p08_a3_2_pair_check.py
+  src/loihi_twin_v2/p08_a3_2_analysis.py scripts/p08_a3_2_pair_check.py \\\n  scripts/p08_a3_2_single_check.py
+bash -n scripts/run_p08_a3_2_1024.sh
 ```
 
-No native pass, single-pair hardware pass or 3-pair physical baseline is asserted until observed.
+The user already confirmed A3.2.1 host-native tests passed. The new A3.2.2 native capture tests and 1,024-image board trials have not been observed. No single-pair hardware pass or 3-pair physical baseline is asserted until actual independent board evidence exists.
 
 ## Sources and interpretation provenance
 
