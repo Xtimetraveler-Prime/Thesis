@@ -37,7 +37,7 @@ bash -n scripts/build_p08_a2.sh
 python -m py_compile software/p08/build_p08_a2.py src/loihi_twin_v2/p08_a2_timing.py scripts/p08_a2_timing_check.py
 ```
 
-Expected gate: **zero failures** in selected pytest suites, valid shell syntax, Python compilation success. Portable native test compiles `p08_a2_timing.c` with strict `-std=c11 -Wall -Wextra -Werror`, constructs an example two-frame 1MiB sidecar, checks C→Python parity and tests many corrupted binary scenarios. If `cc` is missing, pytest skips that fixture; such a skip **does not satisfy the full native C parity gate**. Review the full test summary.
+Expected gate: **zero failures** in selected pytest suites, valid shell syntax, Python compilation success. Portable native test compiles `p08_a2_timing.c` with strict `-std=c11 -Wall -Wextra -Werror`, constructs an example two-frame 1MiB sidecar, checks C→Python parity and tests many corrupted binary scenarios. If `cc` is missing, the native C parity gate **fails**; install a standard C compiler before accepting A2.1. Review the full test summary.
 
 ### Separate Vitis build gate (USER machine only)
 
