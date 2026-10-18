@@ -1818,14 +1818,14 @@ TO SCALED P06-B1/B2 AND P07-B.**
 
 ## P08-A — Compact physical KV260 latency baseline
 
-**Status (2026-10-18): IN PROGRESS — LATENCY FIRST; POWER/ENERGY DEFERRED BY USER.** No P08 KV260 timing results have yet been executed or accepted. P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
+**Status (2026-10-18): IN PROGRESS — A3.1 USER-ATTESTED PHYSICAL 16-FRAME NUMERICAL AND TIMING-CAPTURE PASS; STATISTICAL LATENCY BASELINE NOT YET MEASURED/ACCEPTED. LATENCY FIRST; POWER/ENERGY DEFERRED BY USER.** P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
 
 | Gate | State | Authoritative reference |
 | --- | --- | --- |
 | P08-A1 measurement boundary audit | User approved latency-first direction; deferred power/energy | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
 | P08-A2.1 per-image A53 timing source | User-reported Vitis build PASS, frozen A2.1 candidate ELF SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`; **KV260 NOT RUN** | [Image timing method](docs/P08_A2_1_LATENCY_SIDECAR.md) |
-| P08-A2.2 per-tick seven-boundary timing source | User reports regressions and Vitis build PASS after false-positive regression fix; **ELF SHA256 attested** `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`; **KV260 NOT RUN** | [Per-tick timing method and sources](docs/P08_A2_2_TIMING_METHODS.md) |
-| **P08-A3.1 physical 16-image validation pilot** | New fail-closed physical runner, original packed-oracle verification and timing correlation **IMPLEMENTED AS CANDIDATE; NEW A3.1 OFFLINE NATIVE PREFLIGHT/BOARD NOT YET USER VERIFIED**; independent `P08_A3_1_PREFLIGHT_ONLY=YES` exit added and A2.2 accepted ELF hard pinned | [Pilot protocol](docs/P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) |
+| P08-A2.2 per-tick seven-boundary timing source | User reports regressions and Vitis build PASS after false-positive regression fix; **ELF SHA256 attested** `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`; **KV260 EXECUTED as accepted A3.1 16-image pilot** | [Per-tick timing method and sources](docs/P08_A2_2_TIMING_METHODS.md) |
+| **P08-A3.1 physical 16-image validation pilot** | **PHYSICAL FUNCTIONAL GATE PASS (USER-ATTESTED 2026-10-18)**: first 16 distinct TRAIN-derived validation images, 26×10 output flags per image and selected 26×42 full trace exact to independent oracle; A2.1 image and A2.2 per-tick timing sidecar terminal/CRC/clock/route consistency PASS. **Numeric latency JSON not yet reviewed; 1,024-frame repeated baseline NOT RUN.** [Acceptance record](docs/P08_A3_1_PHYSICAL_ACCEPTANCE.md) | [Pilot protocol](docs/P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) |
 | P08-A3.2 full validation baseline | NOT STARTED: actual repeated 1,024-image TRAIN-derived validation runs, separate profiler overhead evaluation and uncertainty | Future user gate |
 | P08-A4 power and energy | **DEFERRED**; no sensor selection or power measurements authorized | Future explicit user decision |
 | CPU software reference and report | Pending physical latency baseline and scope-matched CPU timing | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
