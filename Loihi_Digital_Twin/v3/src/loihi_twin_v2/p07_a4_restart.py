@@ -102,7 +102,7 @@ def _physical_identity(evidence: Path, stage: Path) -> dict[str, str]:
     return rows
 
 
-def _read_run(stage: Path, evidence: Path, stream) -> RunEvidence:
+def _read_run(stage: Path, evidence: Path, stream, *, expected_frames: int = FRAMES) -> RunEvidence:
     if not evidence.is_dir():
         raise ValueError("A4.2c missing original physical evidence directory: "+str(evidence))
     logs={}
@@ -111,6 +111,8 @@ def _read_run(stage: Path, evidence: Path, stream) -> RunEvidence:
         raw=path.read_bytes()
         lines=raw.decode("utf-8",errors="strict").splitlines()
         for marker in required:
+            if filename=="verify.log" and marker=="P07_A4_2C_PHYSICAL_FRAMES=128":
+                marker=f"P07_A4_2C_PHYSICAL_FRAMES={expected_frames}"
             if marker not in lines:
                 raise ValueError(
                     f"A4.2c {evidence.name}/{filename} missing physical gate marker {marker}"
@@ -143,8 +145,8 @@ def _read_run(stage: Path, evidence: Path, stream) -> RunEvidence:
     journal=(evidence/"p07_a4_journal_1m.bin").read_bytes()
     trace=(evidence/"p07_a4_trace_64k.bin").read_bytes()
     results=parse_journal(journal,stream)
-    if len(results)!=FRAMES:
-        raise ValueError("A4.2c incomplete 128-image original physical journal")
+    if len(results)!=expected_frames:
+        raise ValueError(f"A4.2c incomplete {expected_frames}-image original physical journal")
     if len(trace)!=65536:
         raise ValueError("A4.2c physical selected trace truncated")
     return RunEvidence(
