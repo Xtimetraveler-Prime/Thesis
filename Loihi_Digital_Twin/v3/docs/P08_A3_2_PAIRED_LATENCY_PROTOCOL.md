@@ -52,11 +52,12 @@ git pull --ff-only origin agent/v3-p08-a-physical-baseline
 source ~/Git/Thesis/.venv-p08/bin/activate
 cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 PYTHONPATH="$PWD/src" python -m pytest -q \
-  tests/test_p08_a3_2_analysis.py \
+  tests/test_p08_a3_2_capture.py tests/test_p08_a3_2_analysis.py \
   tests/test_p08_a3_1_pilot.py tests/test_p08_a2_2_ticks.py \
   tests/test_p08_a2_timing.py tests/test_p07_a4_official.py tests/test_p07_a4_fault.py
 python -m py_compile \
-  src/loihi_twin_v2/p08_a3_2_analysis.py scripts/p08_a3_2_pair_check.py \\\n  scripts/p08_a3_2_single_check.py
+  src/loihi_twin_v2/p08_a3_2_analysis.py \
+  scripts/p08_a3_2_pair_check.py scripts/p08_a3_2_single_check.py
 bash -n scripts/run_p08_a3_2_1024.sh
 ```
 
