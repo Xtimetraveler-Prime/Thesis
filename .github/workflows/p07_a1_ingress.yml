@@ -1,0 +1,62 @@
+name: P07-A ingress and A53 policy native regression
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-a-784-axon-streaming
+  workflow_dispatch:
+
+jobs:
+  ingress-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python test dependencies
+        run: python -m pip install pytest
+      - name: P07-A2 build script syntax checks
+        working-directory: Loihi_Digital_Twin/v3
+        run: |
+          bash -n scripts/build_p07_a2.sh
+          bash -n scripts/build_p07_a4.sh
+          bash -n scripts/run_p07_a4_physical.sh
+          bash -n scripts/run_p07_a4_fault_physical.sh
+          bash -n scripts/run_p07_a4_official_physical.sh
+          bash -n scripts/run_p07_a2_physical.sh
+          python -m py_compile software/p07/build_p07_a2.py scripts/p07_a2_batch.py scripts/p07_a2_verify.py scripts/p07_a3_prepare.py scripts/p07_a3_verify.py src/loihi_twin_v2/p07_a3_validation.py \
+            scripts/p07_a3_3_prepare.py scripts/p07_a3_3_one.py scripts/p07_a3_3_verify.py src/loihi_twin_v2/p07_a3_3_protocol.py \
+            scripts/p07_a4_prepare.py src/loihi_twin_v2/p07_a4_protocol.py \
+            src/loihi_twin_v2/p07_a4_stream.py scripts/p07_a4_2_prepare.py scripts/p07_a4_2_check.py \
+            software/p07/build_p07_a4.py scripts/p07_a4_2_verify.py scripts/p07_a4_2_crosscheck.py src/loihi_twin_v2/p07_a4_crosscheck.py \
+            scripts/p07_a4_2_restart_verify.py src/loihi_twin_v2/p07_a4_restart.py \
+            src/loihi_twin_v2/p07_a4_validation.py src/loihi_twin_v2/p07_a4_val1024_gate.py scripts/p07_a4_2_val1024_verify.py \
+            src/loihi_twin_v2/p07_a4_fault.py scripts/p07_a4_2_fault_verify.py \
+            src/loihi_twin_v2/p07_a4_official.py src/loihi_twin_v2/p07_a4_official_verify.py \
+            scripts/p07_a4_official_prepare.py scripts/p07_a4_official_check.py scripts/p07_a4_official_verify.py
+      - name: P07-A1 Python and independent native C regression
+        working-directory: Loihi_Digital_Twin/v3
+        run: |
+          PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+            tests/test_p07_a1_ingress.py \
+            tests/test_p07_a2_runtime.py \
+            tests/test_p07_a2_batch.py \
+            tests/test_p07_a2_sha256.py \
+            tests/test_p07_a2_board_build.py \
+            tests/test_p07_a2_evidence.py \
+            tests/test_p07_a3_validation.py \
+            tests/test_p07_a3_3_protocol.py \
+            tests/test_p07_a4_protocol.py \
+            tests/test_p07_a4_stream.py \
+            tests/test_p07_a4_persistent_board.py \
+            tests/test_p07_a4_physical_gate.py \
+            tests/test_p07_a4_crosscheck.py \
+            tests/test_p07_a4_restart.py \
+            tests/test_p07_a4_val1024.py \
+            tests/test_p07_a4_val1024_gate.py \
+            tests/test_p07_a4_fault.py \
+            tests/test_p07_a4_official.py \
+            tests/test_p06_a2_input_contract.py \
+            tests/test_p05_1_deployment.py

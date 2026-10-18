@@ -475,20 +475,32 @@ measured/constrained bottleneck
 without weakening Track A's
 reproducible result.
 
-## Immediate next step / P06 status
+## Immediate next step / P07-A4 pre-unseal status (updated 2026-10-17)
 
-**P06 is NOT complete.** Only the
-*Track A structural/native feasibility*
-subgate is user-accepted. The active
-engineering deliverable is **P06-A2**
-(exact integer LIF reference and
-training-forward contract, including
-hidden→readout one-step delay and
-regression). This must precede
-real model training, trained export,
-data/evaluation freeze and P07-A.
-P06-B1/B2 are deliberately
-deferred until P08-A establishes
-a sound physical baseline.
-Do not resurrect the Rao AHP
-adaptation as a prerequisite.
+**P07-A1 through P07-A3.3 accepted**, with the final A3.3
+KV260 physical ten-launch validation diagnostic confirmed by the user:
+**116/128** correct, **0/128** silent, exactly matched software
+oracle for all primary/repeat runs, **2/2** byte-identical
+cold-start repeat result mailboxes, and
+`P07_A3_3_PHYSICAL_GATE_PASS=1`.
+The 90.625% figure is TRAIN-derived held-out validation
+accuracy, **NOT** canonical official TEST accuracy. See
+`P07_A3_3_PHYSICAL_ACCEPTANCE.md`.
+
+**Next: P07-A4.1 protocol freeze and native unseal safety.**
+The prespecified primary population is the **full 10,000-image
+original-order canonical t10k TEST**. Existing 16-frame
+autonomous A53 batch limitations imply **625 separately
+launched/rebooted FPGA batches** if firmware stays unchanged.
+This is a major physical feasibility cost, not already
+completed work. Exact source archive MD5s, provenance,
+selection, failure denominator, no retuning, independent
+hardware parity checks and scoring policies are committed in
+`P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`. All new native
+unit gates use synthetic IDX data and leave official TEST
+**SEALED / NOT READ**. Do not download/open t10k until
+independent A4.1 user acceptance and an explicit executable
+physical run-budget decision. A future separately versioned
+board-local streaming facility may reduce this overhead
+without altering the frozen study unit, but is not assumed.
+P08-A and Track B remain independently gated.
