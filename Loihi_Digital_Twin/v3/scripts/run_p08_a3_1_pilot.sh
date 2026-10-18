@@ -42,13 +42,18 @@ REPO_CANONICAL="$(realpath -m -- "$REPO_ROOT")"
 [[ "$STAGE" == /* && -d "$STAGE" ]] || {
     echo "ERROR: first16 validation stage must exist at absolute path" >&2; exit 2;
 }
-[[ "${P08_A3_1_CONFIRM_JTAG_ONLY:-}" == YES &&
-   "${P08_A3_1_CONFIRM_DDR_OVERWRITE:-}" == YES &&
-   "${P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY:-}" == YES ]] || {
-    echo "ERROR: physically reboot KV260 into bare-metal JTAG-only state" >&2
-    echo "Then explicitly set all THREE P08_A3_1_CONFIRM_* variables to YES." >&2
-    exit 2
-}
+# Preflight runs every byte-level/canonical TRAIN check below with no XSDB
+# or Vivado execution, no DDR writes, and no required JTAG consent flags.
+# Normal physical mode still requires the three explicit post-reboot consents.
+if [[ "${P08_A3_1_PREFLIGHT_ONLY:-}" != YES ]];then
+  [[ "${P08_A3_1_CONFIRM_JTAG_ONLY:-}" == YES &&
+     "${P08_A3_1_CONFIRM_DDR_OVERWRITE:-}" == YES &&
+     "${P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY:-}" == YES ]] || {
+      echo "ERROR: physically reboot KV260 into bare-metal JTAG-only state" >&2
+      echo "Then explicitly set all THREE P08_A3_1_CONFIRM_* variables to YES." >&2
+      exit 2
+  }
+fi
 [[ "$EXPECTED_ELF" =~ ^[a-fA-F0-9]{64}$ ]] || {
     echo "ERROR: explicit expected ELF SHA256 must be exactly 64 hex digits" >&2;exit 2;
 }
@@ -179,6 +184,12 @@ for f in loads:
         raise SystemExit("P08-A3.1 candidate ELF overlaps reserved 64MiB DDR")
 print("P08_A3_1_ELF_DDR_ISOLATION_PASS=1")
 '
+
+if [[ "${P08_A3_1_PREFLIGHT_ONLY:-}" == YES ]];then
+  echo "P08_A3_1_OFFLINE_PREFLIGHT_PASS=1"
+  echo "P08_A3_1_KV260_LATENCY=NOT_RUN"
+  exit 0
+fi
 
 mkdir -p "$RUN/readback"
 # Preserve artifact hashes and the exit status even when provisioning,
