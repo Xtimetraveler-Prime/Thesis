@@ -1693,27 +1693,40 @@ TRAIN validation images**, journal/trace exact flags
 See `docs/P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`.
 Hardware reboot remains an operator-attested procedure.
 
-**A4.2c NEXT: first1024 distinct TRAIN-derived validation
-sustained physical run.** Prespecified pre-device-run
-population is the exact first **1024** entries of
-the accepted seeded P06-A3 10k TRAIN-derived
-validation index sequence, **first128 prefix unchanged**,
-one preselected full 26×42 selected trace at image
-**1023 (last)**, all **26×10 output bits per frame**
-and no skipped images. Python staging/oracle, exact
-source ID and SHA-bound host-ledger validation,
-native regression tests, guarded existing physical
-runner and strict complete 1MiB journal/64KiB
-cold-repeat checker implemented. **No new FPGA RTL,
-weights or A53 ELF required.** One primary physical
-KV260 launch is the next verification gate, followed
-only upon accepted primary by a separate physical reboot
-and byte-identical repeat; **A4.2c OVERALL STILL OPEN**
-pending this sustained coverage and separate predeclared
-physical fault-handling test before any official t10k
-unsealing. See `docs/P07_A4_2C_VAL1024_PROTOCOL.md`.
-Official TEST still SEALED; no physical 10000-image
-official TEST accuracy or power/latency claim.
+**A4.2c LONG-RUN VAL1024 PRIMARY COMPLETE /
+USER-INDEPENDENT PHYSICAL ACCEPTED 2026-10-17.**
+The first1024 distinct canonical TRAIN-derived seeded
+validation indices were executed in ONE persistent
+A53 launch, original first128 prefix unchanged,
+full 26×10 physical spike outputs, counts, routing,
+all 1024 per-frame CRC records match independent frozen
+P03 packed oracle, with EXACT selected *last* frame
+1023 full 26×42 compartment trace. The separate
+original XSDB readback/ELF/XSA/staging physical gate
+also passed. Raw evidence preserved by user at
+`/tmp/v3_p07_a4_val1024_primary_20261017T200134`.
+`P07_A4_2C_1024_PRIMARY_PHYSICAL_GATE_PASS=1` and
+`P07_A4_2C_FULL_PHYSICAL_GATE_PASS=1` recorded;
+see `docs/P07_A4_2C_VAL1024_PRIMARY_ACCEPTANCE.md`.
+This is TRAIN validation, NOT official test accuracy.
+There is still only one selected full compartment trace
+per launch; the 1024 output spike histories and routes
+are independently checked.
+
+**A4.2c NEXT: separately reboot and repeat the EXACT
+val1024 stage and SAME accepted unmodified ELF/FPGA.**
+The fixed precommitted acceptance criterion is complete
+**1MiB physical journal and 64KiB last-frame compartment
+trace byte-identical across two physically separate
+cold-start launches**; strict original physical logs and
+6 input DDR readbacks must pass for both. User-native
+`p07_a4_2_val1024_verify.py` enforces this. **Overall
+A4.2c stays OPEN** even after this repeat until the
+precommitted separate physical fail-closed input
+corruption/fault-telemetry test is accepted.
+See `docs/P07_A4_2C_VAL1024_PROTOCOL.md`.
+Original official 10000 MNIST TEST remains SEALED;
+no full 10000-image physical pass or timing/power claim.
 
 **P07-A4.3 is the separately authorized official TEST unseal
 and canonical archive provenance gate** only after A4.2
