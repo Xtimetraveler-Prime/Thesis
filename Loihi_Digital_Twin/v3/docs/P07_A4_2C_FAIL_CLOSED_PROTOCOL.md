@@ -1,7 +1,10 @@
 # P07-A4.2c — Precommitted PHYSICAL fail-closed negative gate
 
-**Prepared 2026-10-17 BEFORE any deliberate physical fault injection.
-HOST IMPLEMENTATION / CI TESTS, BOARD NEGATIVE RUN PENDING.**
+**Precommitted 2026-10-17 BEFORE any deliberate physical fault injection.
+PHYSICAL KV260 NEGATIVE RUN COMPLETE / USER-INDEPENDENT ACCEPTED
+2026-10-17, `0xDEAD0001`, ZERO completed frames/output/trace.**
+Exact original terminal results and limits are preserved in
+`P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
 This experiment is separate from the **accepted** persistent 16,
 128 and 1024 TRAIN-validation inference experiments. Complete the
 user-prespecified 1024 **cold-reboot repeat** and strict
@@ -162,13 +165,24 @@ P07_A4_2C_NEGATIVE_TEST_PASS=1
 P07_A4_OFFICIAL_TEST=SEALED
 ```
 
-**These are acceptance TARGETS; no physical negative
-run has yet been made.** Physical user acceptance of
-this fail-closed gate, alongside earlier accepted
-persistent ramp16, 128 cold repeat, and 1024 cold
-repeat gates, is sufficient for the declared P07-A4.2
-persistency and reliability phase. After the final
-negative result, update the roadmap and independently
-decide whether to authorize **A4.3** official full
-10,000 MNIST TEST unseal. The official TEST remains
-sealed throughout A4.2c.
+**The preceding physical NEGATIVE targets were all
+observed by the user on 2026-10-17.** A53
+`0xDEAD0001`, one physically mutated reserved
+descriptor 32-bit word verified exactly, the
+original source provisioning unchanged, all zero
+output/journal body/trace and **zero completed
+images** were verified in the independent
+read-only physical negative gate.
+
+Original full failure evidence on user's PC:
+`/tmp/v3_p07_a4_fail_closed_20261017T204554`.
+User-attested `P07_A4_2C_PHYSICAL_FAIL_CLOSED_GATE_PASS=1`
+and `P07_A4_2C_NEGATIVE_TEST_PASS=1`.
+This event **CLOSED A4.2c**; the official TEST
+was still SEALED at the time this synthetic-only
+fault experiment completed. After the subsequently
+explicitly authorized A4.3 unseal, A4.4's full
+physical 10000-image original-order benchmark
+also passed. See `P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
+The 64KiB trace was all zero here because there
+was no admitted valid image for inference.
