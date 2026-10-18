@@ -4,7 +4,11 @@
 The user independently accepted the preceding persistent validation128
 cold-reboot gate; that result is documented in
 `P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`.
-**Current 1024 gate: IMPLEMENTED / NATIVE CI; KV260 NOT YET RUN.**
+**Current 1024 gate: PRIMARY user-physically accepted
+2026-10-17; cold-reboot REPEAT not yet run.**
+The accepted primary is recorded in
+`P07_A4_2C_VAL1024_PRIMARY_ACCEPTANCE.md`, including exact
+hardware terminal and independent oracle/readback markers.
 Canonical independent MNIST t10k TEST remains **SEALED**; no official
 TEST download/IDX opening/prediction/accuracy is authorized here.
 
@@ -189,6 +193,33 @@ The strict primary evidence gate must return
 `P07_A4_2C_1024_PRIMARY_PHYSICAL_GATE_PASS=1`,
 `P07_A4_2C_1024_SELECTED_FINAL_TRACE_INDEX=1023` and
 `P07_A4_OFFICIAL_TEST=SEALED` before a second run.
+
+## Primary physically accepted — 2026-10-17
+
+The user has reported this exact original primary physical evidence:
+
+```text
+P07_A4_2C_JOURNAL_STATUS=0x600D600D
+P07_A4_2C_PHYSICAL_FRAMES=1024
+P07_A4_2C_PHYSICAL_ALL_OUTPUTS_EXACT=1
+P07_A4_2C_PHYSICAL_SELECTED_TRACE_26X42_EXACT=1
+P07_A4_2C_PHYSICAL_SEALED_VALIDATION_GATE_PASS=1
+P07_A4_2C_FULL_PHYSICAL_GATE_PASS=1
+P07_A4_2C_1024_PRIMARY_ORACLE_LOGS_EXACT=1
+P07_A4_2C_1024_PRIMARY_DDR_PROVENANCE_EXACT=1
+P07_A4_2C_1024_PRIMARY_PHYSICAL_GATE_PASS=1
+P07_A4_OFFICIAL_TEST=SEALED
+```
+
+Original immutable user-local source:
+`/tmp/v3_p07_a4_val1024_primary_20261017T200134`.
+Preserve the directory; do not rerun or replace the
+accepted primary. Only the independently rebooted REPEAT
+is pending for this exact 1024-image workload. Once
+the repeat passes, this **sustained/restart sub-gate**
+can be marked complete; the independent pre-dispatch
+physical negative-test `0xDEADxxxx` and fault provenance
+remain to close **overall A4.2c**.
 
 ## Independent COLD-REBOOT REPEAT — only after accepted primary
 
