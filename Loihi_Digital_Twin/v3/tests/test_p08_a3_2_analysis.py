@@ -69,7 +69,7 @@ def test_1024_paired_nominal_reports_ordinary_vs_trace_and_clock(synthetic_pair)
     assert out["normal_1023_a22_service_ms"]["median"]==1.1
     assert out["paired_ordinary_1023_a22_minus_a21_service_ms"]["median"] == pytest.approx(0.1)
     assert out["per_tick_ordinary_1023_a22_stage_microseconds"]["event_encode"]["median"]==0.01
-    assert out["full_replicated_latency_baseline"] if "full_replicated_latency_baseline" in out else True
+    assert out["measurement_scope"].startswith("A53 instrumented")
     assert len(out["all_1024_a21_service_ms_raw"])==1024
     assert out["pl_cycles_equal_between_runs_per_image"] is True
     assert out["single_pair_is_statistical_repetition"] is False
