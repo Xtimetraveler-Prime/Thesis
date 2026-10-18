@@ -96,7 +96,7 @@ def test_first1024_ledger_independent_original_idx_provenance(monkeypatch):
     }
     v.validate_ledger(ledger,frames,obj.images)
     ledger["rows"][512]["label"]^=1
-    with pytest.raises(ValueError,match="ledger"):
+    with pytest.raises(ValueError,match="source index/label/image hash mismatch"):
         v.validate_ledger(ledger,frames,obj.images)
     ledger["rows"][512]["label"]^=1
     ledger["indices"][10],ledger["indices"][11]=ledger["indices"][11],ledger["indices"][10]
