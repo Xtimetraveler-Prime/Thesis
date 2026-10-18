@@ -2,7 +2,7 @@
 # One ELF launch for 16/128/10000 images; A53 fully owns every timestep.
 # This is NOT a physical passing result unless the independent verifier passes.
 if {$argc < 4 || $argc > 6} {
-    error "usage: p07_a4_xsdb_run.tcl <new-A4-elf> <journal-1MiB-out> <trace64KiB-out> <timing1MiB-out> ?server? ?timeout-seconds?"
+    error "usage: p08_a2_xsdb_run.tcl <P08-A2-elf> <journal-1MiB-out> <trace64KiB-out> <timing1MiB-out> ?server? ?timeout-seconds?"
 }
 set elf [file normalize [lindex $argv 0]]
 set output [file normalize [lindex $argv 1]]
@@ -15,9 +15,9 @@ if {$argc == 6} {set timeout [lindex $argv 5]}
 if {$timeout < 10 || $timeout > 28800} {
     error "P07-A4.2c timeout must be 10..28800s"
 }
-if {![file exists $elf]} {error "P07-A4.2c new standalone ELF missing"}
+if {![file exists $elf]} {error "P08-A2.1 new standalone ELF missing"}
 if {[catch {exec grep -aFq "P08_A2_1_LATENCY_ONLY_KV260_A53_CANDIDATE_V1" $elf}]} {
-    error "P07-A4.2c refuse wrong/stale A53 ELF (A2 ELF is NOT persistent)"
+    error "P08-A2.1 refuses wrong/stale A53 ELF"
 }
 foreach name [list $output $trace $timing "$output.partial" "$timing.partial"] {
     if {[file exists $name]} {
@@ -35,7 +35,7 @@ targets -set -filter {name =~ "Cortex-A53 #0"}
 catch {stop}
 catch {rst -processor}
 dow $elf
-puts "P07-A4.2c standalone persistent A53 ELF downloaded; starting ONE dataset run"
+puts "P08-A2.1 latency candidate A53 ELF downloaded; starting ONE dataset run"
 con
 set terminal 0
 set timing_status 0
