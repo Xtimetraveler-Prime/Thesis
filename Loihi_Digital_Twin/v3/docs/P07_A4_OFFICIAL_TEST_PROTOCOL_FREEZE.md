@@ -172,8 +172,8 @@ official TEST remains SEALED:**
   Python/C11 CRC/overflow/digest/record parity and 1/16/128/10000
   synthetic capacity tests, plus a validation-only native stage
   CLI and inspector. See `P07_A4_2_PERSISTENT_DDR_DESIGN.md`.
-- **A4.2b IMPLEMENTED / CI NATIVE PASS / USER VITIS
-  A53 CROSS-BUILD PENDING:** separate candidate persistent
+- **A4.2b COMPLETE / USER VITIS A53 BUILD ACCEPTED
+  2026-10-17:** separate candidate persistent
   Cortex-A53 application in `p07_a4_board.c` uses the
   unchanged accepted P07-A2 per-image neural runtime
   and accepted P03 FPGA, new `p07_a4_supervisor.c`
@@ -183,6 +183,12 @@ official TEST remains SEALED:**
   `build_p07_a4.py` create a separate SHA-bound
   Vitis standalone ELF, with no edits to the accepted
   A2 application, P03 arithmetic or Track A checkpoint.
+  User-recorded persistent ELF SHA256:
+  `dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`;
+  routed XSA matches accepted SHA256 and compiled ELF
+  passed LOAD-section DDR isolation. This is a build
+  acceptance only; no persistent physical image has
+  been run yet. See `P07_A4_2B_VITIS_ACCEPTANCE.md`.
 - **A4.2c HOST IMPLEMENTED / KV260 PHYSICAL ACCEPTANCE
   PENDING:** guarded independent readback/provision and
   single persistent A53 launch on the accepted FPGA,
