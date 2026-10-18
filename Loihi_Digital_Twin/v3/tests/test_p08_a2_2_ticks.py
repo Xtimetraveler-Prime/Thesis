@@ -5,6 +5,7 @@ Nothing here executes A53/KV260; passing != physical timing acceptance.
 from __future__ import annotations
 from pathlib import Path
 import shutil
+import re
 import struct
 import subprocess
 import zlib
