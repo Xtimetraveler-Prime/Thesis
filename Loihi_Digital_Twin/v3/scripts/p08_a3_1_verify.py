@@ -22,7 +22,13 @@ from loihi_twin_v2.p08_a2_2_ticks import parse_ticks
 
 # P07 verifier's validation-stage routine is accepted and does not touch
 # the board. Full P07 numerical/oracle comparison is invoked as a subprocess.
-from p07_a4_2_verify import validate_staging
+try:
+    from scripts.p07_a4_2_verify import validate_staging
+except ModuleNotFoundError as exc:
+    if exc.name != "scripts":
+        raise
+    # Running directly as "python scripts/p08_a3_1_verify.py"
+    from p07_a4_2_verify import validate_staging
 
 
 def sha256(path: Path) -> str:
