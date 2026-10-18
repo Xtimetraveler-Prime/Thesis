@@ -121,7 +121,10 @@ def verify_physical_fault(*, stage: Path, evidence: Path) -> dict:
         if any("FULL_PHYSICAL_GATE_PASS=1" in line for line in lines):
             raise ValueError("A4.2c negative must not appear as successful inference")
 
-    hashes=_physical_identity(evidence,stage)
+    hashes=_physical_identity(
+        evidence,stage,
+        phase="phase=P07-A4.2c SYNTHETIC ramp16 reserved-descriptor-negative gate",
+    )
     if not hashes.get("p03_2_ps_mmio.bit") or not hashes.get("p03_2_ps_mmio.ltx"):
         raise ValueError("A4.2c negative hardware provenance missing")
     staging={
