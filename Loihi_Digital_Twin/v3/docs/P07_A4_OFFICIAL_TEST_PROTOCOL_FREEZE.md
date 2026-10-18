@@ -155,7 +155,9 @@ direction on 2026-10-17, still before opening any official TEST file.
 The original primary 10000-image order, checkpoint, pixel encoder,
 timestep/oracle semantics and failure denominator remain unchanged.
 The original 625-reboot path is the **validated A2 implementation
-baseline**. No one-launch persistent FPGA result is yet claimed.
+baseline**. As of 2026-10-17, persistent KV260 16, 128 and 1024
+TRAIN-derived validation physical gates HAVE been accepted;
+official TEST was still SEALED at this update.
 
 **A4.1 — COMPLETE / USER NATIVE ACCEPTED (2026-10-17):**
 Full original-order 10000 TEST protocol committed, exact official
@@ -186,11 +188,14 @@ official TEST remains SEALED:**
   User-recorded persistent ELF SHA256:
   `dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`;
   routed XSA matches accepted SHA256 and compiled ELF
-  passed LOAD-section DDR isolation. This is a build
-  acceptance only; no persistent physical image has
-  been run yet. See `P07_A4_2B_VITIS_ACCEPTANCE.md`.
-- **A4.2c RAMP16 FIRST PHYSICAL PILOT USER-ACCEPTED;
-  FULL VALIDATION/REPEATABILITY PENDING:** guarded independent readback/provision and
+  passed LOAD-section DDR isolation. The later persistent
+  16, 128 and 1024 physical TRAIN-derived experiments
+  also passed independently. See
+  `P07_A4_2B_VITIS_ACCEPTANCE.md`,
+  `P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`, and
+  `P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
+- **A4.2c PERSISTENT VALIDATION 16/128/1024 AND COLD REPEAT
+  USER PHYSICAL ACCEPTED; FAIL-CLOSED NEGATIVE PENDING:** guarded independent readback/provision and
   single persistent A53 launch on the accepted FPGA,
   1MiB result journal plus 64KiB trace capture and
   host independent P03 packed oracle first divergence
@@ -299,3 +304,17 @@ which physically stores **one selected full 26×42 trace per
 entire dataset launch** while recording 26×10 spike flags and
 routing for **every image**. The full official 10,000 original
 IDX-order population and scoring denominator remain frozen.
+
+### Final pre-unseal original-10000 persistent protocol precommit
+
+A4.3 and A4.4 now have distinct **host-only synthetic CI-tested**
+implementation in `p07_a4_official_prepare.py`, `p07_a4_official_check.py`,
+`run_p07_a4_official_physical.sh` and `p07_a4_official_verify.py`.
+Full specification and operator consent/physical stop gates:
+`P07_A4_3_4_FINAL_CANONICAL_TEST_PLAN.md`.
+Official source remains sealed until **actual** synthetic physical
+fault evidence is accepted, and user explicitly supplies unseal AND
+one-trace measurement policy opt-ins. The final original-order
+population is exactly 10000, full trace image 9999 and all 10000
+per-image 26x10 output spike histories and routing summaries.
+There is NO actual official physical result or accuracy at this phase.
