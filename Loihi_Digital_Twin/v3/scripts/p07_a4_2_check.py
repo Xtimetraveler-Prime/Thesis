@@ -37,7 +37,8 @@ def main() -> None:
             manifest.get("scope") not in (
                 "SYNTHETIC_BLACK","SYNTHETIC_WHITE","SYNTHETIC_RAMP",
                 "TRAIN_DERIVED_VALIDATION_FIRST_16",
-                "TRAIN_DERIVED_VALIDATION_FIRST_128")):
+                "TRAIN_DERIVED_VALIDATION_FIRST_128",
+                "TRAIN_DERIVED_VALIDATION_FIRST_1024")):
         raise ValueError("A4.2a stage origin/phase/TEST seal invalid")
     for key, data in raw.items():
         if sha256(data) != manifest.get("sha256",{}).get(key):
@@ -49,6 +50,9 @@ def main() -> None:
         raise ValueError("A4.2a initial mailbox/descriptors inconsistent")
     sample_indices = sorted(set((0,stream.image_count//2,stream.image_count-1,
                                  stream.trace_index)))
+    if manifest["scope"] == "TRAIN_DERIVED_VALIDATION_FIRST_1024":
+        if stream.image_count!=1024 or stream.trace_index!=1023:
+            raise ValueError("A4.2c precommitted 1024 corpus/last-image trace changed")
     for index in sample_indices:
         decoded = decode_ingress(stream.ingress(index))
         if decoded.pixels != stream.image(index) or decoded.pixel_to_axon != stream.mapping:
@@ -56,6 +60,15 @@ def main() -> None:
     if manifest["scope"].startswith("TRAIN_DERIVED_VALIDATION"):
         ledger = json.loads(
             (directory/"p07_a4_2a_validation_labels_HOST_ONLY.json").read_text())
+        if ledger.get("scope") != manifest["scope"]:
+            raise ValueError("A4.2c TRAIN-derived scope/label ledger mismatch")
+        if manifest["scope"] == "TRAIN_DERIVED_VALIDATION_FIRST_1024":
+            from loihi_twin_v2.p07_a4_validation import indices_le32_sha256
+            ids=tuple(row.get("source_index") for row in ledger.get("rows",[]))
+            if (len(ids)!=1024 or len(set(ids))!=1024 or
+                ledger.get("indices")!=list(ids) or
+                ledger.get("selected_indices_le32_sha256")!=indices_le32_sha256(ids)):
+                raise ValueError("A4.2c validation1024 index sequence/hash invalid")
         if (ledger.get("official_mnist_test") != "SEALED" or
                 len(ledger.get("indices", [])) != stream.image_count or
                 len(ledger.get("rows", [])) != stream.image_count):
