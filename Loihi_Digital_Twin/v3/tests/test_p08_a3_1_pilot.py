@@ -12,9 +12,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts import p08_a3_1_verify as verifier
-
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/"scripts"))
+import p08_a3_1_verify as verifier  # actual in-tree script under test
 
 
 @pytest.mark.parametrize("approval", [None,"NO",""])
