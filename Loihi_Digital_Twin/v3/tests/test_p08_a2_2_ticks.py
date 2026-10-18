@@ -70,8 +70,9 @@ int main(int argc,char**argv)
 """
 
 
-@pytest.fixture
-def synthetic(tmp_path: Path) -> tuple[bytes, bytes]:
+@pytest.fixture(scope="module")
+def synthetic(tmp_path_factory) -> tuple[bytes, bytes]:
+    tmp_path = tmp_path_factory.mktemp("p08_a2_2_native")
     cc = shutil.which("cc")
     assert cc, "A2.2 native C test requires cc; installing C compiler is a gate"
     c = tmp_path / "test.c"
