@@ -211,12 +211,19 @@ def test_synthetic_full10000_physical_oracle_before_accuracy(artificial_10k,tmp_
     """
     from loihi_twin_v2 import p07_a4_official_verify as verify
     from loihi_twin_v2 import p07_a4_stream as stream
-    from loihi_twin_v2 import (
-        p06_a3_training, p06_a4_snapshot, p07_a1_ingress,
-        p06_packed_replay,p06_input_contract,p07_a2_evidence,
-    )
+    # Mock the imported heavy neural/training modules at the Python module
+    # boundary, BEFORE verify_full10000 imports them. CI has no torch and
+    # must remain completely synthetic with no training/dataset access.
+    import sys
+    from types import ModuleType
     from loihi_twin_v2.p07_a2_batch import COMPILED_FINGERPRINT
     import struct
+    def artificial_module(name, **attrs):
+        mod=ModuleType("loihi_twin_v2."+name)
+        for k,v in attrs.items():
+            setattr(mod,k,v)
+        monkeypatch.setitem(sys.modules,mod.__name__,mod)
+        return mod
     stage=tmp_path/"artificial_t10k_stage"
     write_official_stage(stage,artificial_10k,MAPPING)
     pixels=artificial_10k.pixels
@@ -240,14 +247,8 @@ def test_synthetic_full10000_physical_oracle_before_accuracy(artificial_10k,tmp_
                                       "failure_journal_sha256":"fake-test-no-hardware"})
     monkeypatch.setattr(verify,"verify_original_physical_evidence",
                         lambda *args:{"evidence":"FAKE_SYNTHETIC_CI_NO_BOARD"})
-    monkeypatch.setattr(p06_a3_training,"load_candidate",lambda *_:(object(),{}))
-    monkeypatch.setattr(p06_a3_training,"integer_weights_sha256",lambda *_:"fake")
-    monkeypatch.setattr(p06_a4_snapshot,"require_pinned_training_candidate",lambda *a:None)
     image=SimpleNamespace(core_id=0,state_words=(0,)*42)
     compiled=SimpleNamespace(fingerprint=COMPILED_FINGERPRINT)
-    monkeypatch.setattr(p06_a4_snapshot,"compile_and_check_traces",
-                        lambda *a:(image,compiled,()))
-    monkeypatch.setattr(p07_a1_ingress,"mapping_from_compiled",lambda *a:MAPPING)
     tick=SimpleNamespace(
         fired_compartments=(),next_packet_axons=(),
         accumulators=(0,)*42,states_after=(None,)*42,
@@ -257,9 +258,20 @@ def test_synthetic_full10000_physical_oracle_before_accuracy(artificial_10k,tmp_
         output_counts=(0,)*10,predicted_class=0,
         dropped_boundary_packets=(),
     )
-    monkeypatch.setattr(p06_packed_replay,"replay_p03_image",lambda *a:oracle)
-    monkeypatch.setattr(p06_input_contract,"image_event_schedule",lambda *a:())
-    monkeypatch.setattr(p07_a2_evidence,"_state_word",lambda *a:0)
+    artificial_module("p06_a3_training",
+        load_candidate=lambda *_:(object(),{}),
+        integer_weights_sha256=lambda *_:"fake-no-real-model")
+    artificial_module("p06_a4_snapshot",
+        require_pinned_training_candidate=lambda *a:None,
+        compile_and_check_traces=lambda *a:(image,compiled,()))
+    artificial_module("p07_a1_ingress",
+        mapping_from_compiled=lambda *a:MAPPING)
+    artificial_module("p06_packed_replay",
+        replay_p03_image=lambda *a:oracle)
+    artificial_module("p06_input_contract",
+        image_event_schedule=lambda *a:())
+    artificial_module("p07_a2_evidence",
+        _state_word=lambda *a:0)
     args={
         "stage":stage,"evidence":evidence,"official":artificial_10k,
         "candidate_dir":tmp_path/"fake-candidate",
