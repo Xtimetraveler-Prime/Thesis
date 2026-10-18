@@ -1765,17 +1765,57 @@ A4.2c complete and separately authorize A4.3.
 Original official 10000 MNIST TEST remains SEALED;
 no physical full 10000-image test, timing or power claim.
 
-**P07-A4.3 is the separately authorized official TEST unseal
-and canonical archive provenance gate** only after A4.2
-persistent execution and validation pass. **P07-A4.4**
-physically evaluates all 10000 original-order TEST images,
-preserves complete per-image numerical evidence and separately
-scores the full population. No changed weights, no silent sample
-exclusions, no early peeking. See
-`docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md` and
-`docs/P07_A4_2_PERSISTENT_DDR_DESIGN.md`.
-**Official TEST SEALED / NOT READ**; no official accuracy,
-P08-A power/performance or Track B result is claimed.
+**P07-A4.3 / A4.4 OFFICIAL FULL10000 HOST TOOLING
+IMPLEMENTED / NATIVE CI PASS — TEST SEALED, PHYSICAL
+RUN NOT YET MADE.** P07-A4.3 dedicated explicit
+`p07_a4_official_prepare.py` refuses to access official
+TEST without accepted ORIGINAL physical `0xDEAD0001`
+fault evidence, `--i-accept-unseal` and
+`--i-accept-one-trace-policy`. It retrieves only
+pinned canonical t10k archives (original compressed
+MD5, IDX headers, observed SHA256), stages exactly
+**10000 original-ordered 784B images** and
+retains exact 10000 HOST-ONLY truth labels,
+with frozen selected image **9999** as the one
+complete 26×42 compartment trace for the
+entire single persistent dataset launch.
+All images retain complete 26×10 output spike
+histories, per-image route/packet/count and
+CRC integrity evidence. This differs from 625
+original A2 batch-selected full neural traces;
+it is an explicitly separate pre-unseal
+observability policy, not full neuron-state
+readback for every image.
+
+The P07-A4.4 distinct `run_p07_a4_official_physical.sh`
+checks both physical fault acceptance and canonical
+archive/IDX/source identity plus explicit official
+physical and reserved-DDR overwrite approval
+**before touching hardware**, then reuses accepted
+same XSA, bitstream and immutable persistent ELF,
+one A53 launch over all 10000 frames. Read-only
+`p07_a4_official_verify.py` requires all original
+six full staged JTAG DDR readbacks and SHA-bound
+hardware logs, **10000/10000 terminal journal
+CRC/result images in exact order**, frozen
+independent P03 numerical parity of **every one
+of 260000 output spike bits + routing/counts**,
+and selected last-image full 26×42 physical
+compartment trace BEFORE creating or printing
+official accuracy, confusion matrix, per-class
+support/recall or any score. Native CI exercises
+the complete-capacity synthetic-only staging
+and fail-closed guards; **official TEST has
+NOT yet been opened or scored**. Both device
+A4.2c physical fault and separately authorized
+A4.3 TEST unseal remain pending. See
+`docs/P07_A4_3_4_FINAL_CANONICAL_TEST_PLAN.md`
+and `docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`.
+After independent full10000 user physical
+acceptance, P07-A may be closed; merge into
+main only on explicit separate user approval.
+No changed weights, no exclusions or P08-A
+power/performance or Track B claim.
 
 ## P07-A — One-core proof of useful physical MNIST inference
 
