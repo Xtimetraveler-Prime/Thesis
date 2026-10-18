@@ -1,6 +1,6 @@
 # P08-A3.1 — Initial physical KV260 latency pilot (16 TRAIN validation images)
 
-**Status (2026-10-18): A3.1 SOURCE + PHYSICAL PROTOCOL IMPLEMENTED; USER REPORTS NATIVE REGRESSIONS PASSED AND A2.2 VITIS BUILD PASS. OFFLINE PREFLIGHT / KV260 PILOT NOT YET RUN.**  
+**Status (2026-10-18): PHYSICALLY PASSED — USER-ATTESTED 16-FRAME P07 NUMERICAL PARITY + BOTH P08 TIMING-CAPTURE CHECKS. 1,024-FRAME BASELINE NOT RUN; NUMERIC TIMING VALUES NOT YET POSTED.**  
 **Scope:** user-approved latency characterization only; **power/energy deferred**. This is the first engineering hardware pilot, **not** the full 1,024-image repeated latency baseline and not a new official MNIST TEST accuracy study.
 
 ## 1. Prior accepted evidence and candidate build state
@@ -116,7 +116,7 @@ export P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY=YES
 bash scripts/run_p08_a3_1_pilot.sh
 ```
 
-The script takes no hardware action before the explicit consents and all provenance preflight. **No P08-A3.1 physical execution is reported yet.** Retain the complete evidence directory; reboot after any attempt. The user should paste full terminal pass/fail markers and the A2.2 build identity, not discard failures.
+The script takes no hardware action before the explicit consents and all provenance preflight. **The pilot was successfully run by the user on 2026-10-18**, and all terminal, original neural oracle and per-tick timing-integrity gates passed. The recorded physical evidence directory is `/home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z`. See the [user-attested acceptance and exact PASS markers](P08_A3_1_PHYSICAL_ACCEPTANCE.md). Retain the complete evidence directory; reboot after any attempt. The user should paste full terminal pass/fail markers and the A2.2 build identity, not discard failures.
 
 ## 6. Sources and scope of methodological derivation
 
@@ -128,4 +128,4 @@ Our **primary implementation-level sources** are the already accepted project fi
 - `software/p08/p08_a2_2_runtime.c`, `src/loihi_twin_v2/p08_a2_2_ticks.py`: actual new instrumented boundaries and consistency checks.
 - [P08-A2.2 Timing Methods](P08_A2_2_TIMING_METHODS.md): Arm Generic Timer/CNTFRQ documentation references, AMD Vitis HLS UG1399 clock-target-vs-counter caveats. **No additional external metrology method was invented for A3.1.**
 
-A3.1 closes only the **correctness and readback feasibility of a 16-image instrumented real-board pilot** once physically run. Next A3.2, subject to user acceptance, would compare the same first 1,024 images in separate A2.1/A2.2 cold-boot runs and quantify profiler perturbation and run-to-run uncertainty. **No power characterization will be resumed without explicit permission.**
+A3.1 **has now closed** the **correctness and readback feasibility of a 16-image instrumented real-board pilot** from the user's supplied physical pass log; numerical latency distributions still need inspection of the preserved JSON. Next A3.2, subject to user acceptance, would compare the same first 1,024 images in separate A2.1/A2.2 cold-boot runs and quantify profiler perturbation and run-to-run uncertainty. **No power characterization will be resumed without explicit permission.**
