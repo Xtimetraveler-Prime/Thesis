@@ -59,11 +59,14 @@ class RunEvidence:
     complete_frames: int
 
 
-def _physical_identity(evidence: Path, stage: Path) -> dict[str, str]:
+def _physical_identity(
+    evidence: Path, stage: Path, *,
+    phase: str = "phase=P07-A4.2c persistent A53 TRAIN-derived validation physical gate",
+) -> dict[str, str]:
     path = evidence / "physical_identity.txt"
     text = path.read_text(encoding="utf-8")
-    if ("phase=P07-A4.2c persistent A53 TRAIN-derived validation physical gate" not in
-            text or "status=BOARD_NOT_YET_RUN" not in text):
+    if (phase not in text.splitlines() or
+            "status=BOARD_NOT_YET_RUN" not in text.splitlines()):
         raise ValueError("A4.2c unrecognized prelaunch original physical identity")
     rows={}
     for line in text.splitlines():
