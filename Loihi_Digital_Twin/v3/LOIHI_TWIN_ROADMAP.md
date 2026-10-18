@@ -1818,7 +1818,7 @@ TO SCALED P06-B1/B2 AND P07-B.**
 
 ## P08-A — Compact physical KV260 latency baseline
 
-**Status (2026-10-18): IN PROGRESS — A3.1 KV260 16-FRAME NUMERICAL + TIMING-CAPTURE PASS; USER-SUPPLIED PILOT MEDIAN 35.4432 ms (A53 instrumented service), A3.2.1 1,024-IMAGE PAIRED ANALYZER SOURCE IMPLEMENTED/NATIVE PENDING; NO REPEATED BASELINE YET. LATENCY FIRST; POWER/ENERGY DEFERRED BY USER.** P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
+**Status (2026-10-18): IN PROGRESS — A3.1 KV260 16-FRAME NUMERICAL + TIMING-CAPTURE PASS; USER-SUPPLIED PILOT MEDIAN 35.4432 ms (A53 instrumented service), A3.2.1 1,024-IMAGE PAIRED ANALYZER USER NATIVE PASS; A3.2.2 1,024-IMAGE VARIANT-AWARE RUNNER SOURCE COMMITTED/NATIVE PENDING; NO REPEATED BASELINE YET. LATENCY FIRST; POWER/ENERGY DEFERRED BY USER.** P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
 
 | Gate | State | Authoritative reference |
 | --- | --- | --- |
@@ -1826,7 +1826,7 @@ TO SCALED P06-B1/B2 AND P07-B.**
 | P08-A2.1 per-image A53 timing source | User-reported Vitis build PASS, frozen A2.1 candidate ELF SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`; **KV260 NOT RUN** | [Image timing method](docs/P08_A2_1_LATENCY_SIDECAR.md) |
 | P08-A2.2 per-tick seven-boundary timing source | User reports regressions and Vitis build PASS after false-positive regression fix; **ELF SHA256 attested** `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`; **KV260 EXECUTED as accepted A3.1 16-image pilot** | [Per-tick timing method and sources](docs/P08_A2_2_TIMING_METHODS.md) |
 | **P08-A3.1 physical 16-image validation pilot** | **PHYSICAL FUNCTIONAL GATE PASS (USER-ATTESTED 2026-10-18)**: first 16 distinct TRAIN-derived validation images, 26×10 output flags per image and selected 26×42 full trace exact to independent oracle; A2.1 image and A2.2 per-tick timing sidecar terminal/CRC/clock/route consistency PASS. **User-supplied numerical pilot: median 35.4432 ms (31.2682–41.2175 ms), CNTFRQ_EL0 99,999,001 Hz; 1,024-frame repeated baseline NOT RUN.** [Exact pilot numbers](docs/P08_A3_1_PHYSICAL_LATENCY_RESULTS.md) and [physical acceptance](docs/P08_A3_1_PHYSICAL_ACCEPTANCE.md) | [Pilot protocol](docs/P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) |
-| P08-A3.2 full validation baseline | **A3.2.1 host paired 1,024-image analyzer and fail-closed both-ELF original packed-oracle gate IMPLEMENTED; native tests NOT YET RUN.** A3.2.2 dedicated KV260 1,024 hardware capture and A3.2.3 repetitions not yet implemented/executed. | [Paired baseline protocol](docs/P08_A3_2_PAIRED_LATENCY_PROTOCOL.md) |
+| P08-A3.2 full validation baseline | **A3.2.1 paired analyzer USER NATIVE VERIFIED. A3.2.2 two-variant original-ELF-pinned single-1,024 KV260 capture and independent P07 oracle timing gate IMPLEMENTED AS CANDIDATE / NEW NATIVE TESTS PENDING.** No A3.2 1,024-image physical execution; no replicated A3.2.3 baseline. | [Paired baseline protocol](docs/P08_A3_2_PAIRED_LATENCY_PROTOCOL.md), [A3.2.2 physical capture procedure](docs/P08_A3_2_2_PHYSICAL_CAPTURE_PROTOCOL.md) |
 | P08-A4 power and energy | **DEFERRED**; no sensor selection or power measurements authorized | Future explicit user decision |
 | CPU software reference and report | Pending physical latency baseline and scope-matched CPU timing | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
 
