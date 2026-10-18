@@ -40,7 +40,7 @@ def main() -> None:
             timing.dataset_stop - timing.dataset_start,
         "a53_dataset_window_seconds":
             seconds(timing.dataset_stop - timing.dataset_start),
-        "throughput_frame_per_s_including_profiler_overhead":
+        "exploratory_throughput_frame_per_s_not_acceptance_metric":
             timing.throughput_frames_per_second,
         "image_service_seconds_median": statistics.median(services),
         "image_service_seconds_min": min(services),
