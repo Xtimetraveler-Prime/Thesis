@@ -1799,7 +1799,7 @@ six full staged JTAG DDR readbacks and SHA-bound
 hardware logs, **10000/10000 terminal journal
 CRC/result images in exact order**, frozen
 independent P03 numerical parity of **every one
-of 260000 output spike bits + routing/counts**,
+of 2600000 output spike bits + routing/counts**,
 and selected last-image full 26×42 physical
 compartment trace BEFORE creating or printing
 official accuracy, confusion matrix, per-class
