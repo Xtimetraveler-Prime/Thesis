@@ -1584,240 +1584,190 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17):** P07-A1, P07-A2, P07-A3.1, P07-A3.2,
-and **P07-A3.3 CLOSED / USER-ACCEPTED**, most recently on actual
-KV260 with the precommitted 128-image TRAIN-derived validation
-diagnostic and **ten** independent A53 launches (eight primary,
-two repeats). The independent physical verifier reported
-`P07_A3_3_VALIDATION_CORRECT=116/128` (**90.625%** diagnostic
-validation accuracy), 0/128 silent, ten/ten numerical and
-physical run-log PASS, and **2/2 byte-identical cold-start
-repeat mailboxes**. The earlier A3.2 first sixteen images gave
-15/16 correct; they are included in the 128, so not an
-independent 144-image validation corpus. See
-`docs/P07_A3_3_PHYSICAL_ACCEPTANCE.md`.
+**Status (2026-10-17): P07-A COMPLETE / USER PHYSICAL
+ACCEPTED AND VERIFIED. P07-B PLANNED (P08-A gated).**
+P07-A establishes the frozen compact Track A
+784→32→10, 816 registered input axons, 42 compartments,
+25 input + 1 drain timesteps, A53-orchestrated physical
+FPGA inference and exact independent packed P03 numerical
+verification. **Official canonical MNIST TEST accuracy:
+9456/10000 = 94.56%; 544 incorrect; 2 all-silent
+included in the denominator.** These are original-order
+canonical TEST results from the **actual KV260 FPGA**,
+not TRAIN validation, simulation-only parity, a competing
+Intel Loihi chip or a power/throughput measurement.
+Complete immutable user-submitted terminal marker
+transcripts, paths, hardware identifiers and scope:
+`docs/P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
 
-**P07-A4.1 COMPLETE / USER NATIVE PRE-UNSEAL ACCEPTED**
-(2026-10-17). Official **full canonical 10,000-image TEST**
-population, original IDX order, pinned identities, no retuning,
-strict 10000-image denominator and provenance remain unchanged.
-The existing 16-frame A53 batch protocol would require
-**625 board reboots, reprovisioning and ELF launches**. The
-user authorized a **pre-unsealing engineering extension** to
-replace that operational constraint with **persistent, DDR-backed,
-A53-owned inference**, while keeping the already-accepted P03
-FPGA arithmetic, frozen Track A model, encoder, readout and
-reference oracle unchanged.
+## P07-A engineering and physical acceptance milestones
 
-**New P07-A4.2: PERSISTENT INFERENCE INFRASTRUCTURE — ACTIVE**.
-**A4.2a COMPLETE / USER NATIVE ACCEPTED (2026-10-17).**
-A distinct versioned `P07A4P01` dataset descriptor and
-`P07A4R01` progress/result DDR ABI reserve 8 MiB for
-10000×784 raw pixels, a 1 MiB compact 96B/frame output
-journal, one frozen 784-axon mapping and immutable P02
-master, leaving accepted A2/P05 wire files unchanged.
-The Python/C11 native tests already verify exact
-byte-for-byte reconstruction into accepted P07-A1 ingress,
-CRC/overflow/footprint/identity/tamper rejection and
-1/16/128/10000 synthetic corpus capacities plus
-independently checked staged synthetic/validation
-native files. User-native commands and current test
-markers are in `docs/P07_A4_2A_NATIVE_GATE.md`.
-**A4.2b CLOSED / USER VITIS-NATIVE ACCEPTED (2026-10-17):** separate `p07_a4_board.c`, accepted
-`p07_a2_run_frame` reused unchanged with new
-`P07A4P01` input/1MiB `P07A4R01` result journal,
-immutable master and mapping admission, whole dataset
-preflight, selected full trace and fail-first progress
-supervisor. Native tests inject image and journal-write
-faults, reject skipped images and premature terminal
-success; candidate A53 board compiles with C11 vendor
-signature shims. `build_p07_a4.sh` stages an isolated
-new Vitis 2025.2 workspace, exact accepted FPD128 XSA,
-different persistent firmware identity and ELF DDR
-isolation. **The user independently built this ELF** in
-`/tmp/v3_p07_a4_persistent_20261017T190943`,
-confirmed `P07_A4_A53_VITIS_BUILD_PASS=1`,
-`P07_A4_VITIS_NATIVE_GATE_PASS=1`, the routed XSA
-SHA256 `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`,
-and ELF SHA256
-`dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`.
-The candidate Vitis ELF is build-accepted **but never
-yet run on the KV260**. Record:
-`docs/P07_A4_2B_VITIS_ACCEPTANCE.md`.
+**A1 — COMPLETE:** accepted pixel-to-axon ingress
+wire contract, original 784 distinct pixel axons,
+26-tick event-input reconstruction and independently
+checked Python/C neural transaction representation.
+No change to the frozen P06 Track A checkpoint.
 
-**A4.2c FIRST PHYSICAL RAMP16 GATE CLOSED / USER-ACCEPTED
-(2026-10-17); OVERALL A4.2c STILL OPEN.** The user independently
-programmed/ran the exact accepted A4.2b persistent ELF on the KV260
-with **one standalone A53 launch for 16 synthetic ramp frames**,
-with physical status `0x600D600D`; every image’s **26×10 output
-spike bits**, readout and routing matched independent frozen
-P03 replay exactly; the selected frame0 **26×42**
-compartment trace also matched. Physical evidence stays on
-the user's PC at
-`/tmp/v3_p07_a4_ramp16_20261017T191755`.
-See `docs/P07_A4_2C_RAMP16_PHYSICAL_ACCEPTANCE.md`.
-This proves first persistent multiclass execution, **not**
-full 10000-image capacity, cold-reboot reproducibility or
-real-MNIST validation accuracy.
+**A2 — COMPLETE:** accepted C11 standalone A53
+FPGA inference runtime, verified against independent
+packed P03 reference and physically accepted
+FPD128 routed KV260 fabric. The historical
+16-image JTAG-batch implementation required 625
+separate launches for the originally precommitted
+canonical full 10,000 TEST population.
 
-**A4.2c NEXT: 128-image persistent PRIMARY ACCEPTED;
-COLD-START REPEAT PENDING.** The user’s independent
-`p07_a4_2_crosscheck.py` over the **same 128 original
-TRAIN-derived validation source IDs** reported all
-`8/8` accepted A3.3 physical primary mailboxes verified,
-`128/128` old/new physical image histories EXACT,
-full 26×10 output spikes/routes/counts, overlapping
-26×42 first-image full physical trace byte-identical,
-and old mailbox SHA256 identities PASS. This is a
-**real KV260-vs-KV260 result**, distinct from the
-separately accepted ramp16 pilot. See
-`docs/P07_A4_2C_VAL128_PRIMARY_ACCEPTANCE.md`.
+**A3.1/A3.2/A3.3 — COMPLETE:** TRAIN-derived
+validation and physical equivalence, accepted
+original eight 16-image PRIMARY A53 runs and two
+independent old-format repeats; **116/128 correct
+(90.625%) diagnostic TRAIN-derived validation**,
+zero silent. The 16-image A3.2 overlap is part of
+the same 128, not additional unique validation
+images. Frozen original A3.3 hardware records
+were retained for the later A4 physical-to-
+physical equivalence check.
 
-**A4.2c PERSISTENT-128 COLD REPEAT COMPLETE /
-USER PHYSICAL ACCEPTED 2026-10-17.** Original
-`p07_a4_2_restart_verify.py` read both fully independent
-A53 physical launches and all six preserved DDR binary
-readbacks, same frozen accepted ELF/XSA/staged 128 TRAIN
-validation images, and independently verified both
-full 1MiB journals and 64KiB first-image full neural
-traces were **byte-identical**. Both 128-image launches
-also exactly matched eight previously accepted A3.3
-KV260 physical mailboxes and original independent
-software-oracle logs. The user reported
-`P07_A4_2C_128_PHYSICAL_RESTART_GATE_PASS=1`,
-`P07_A4_2C_128_PHYSICAL_LAUNCHES=2/2`,
-**256 physical frame executions**, **128 distinct
-TRAIN validation images**, journal/trace exact flags
-=1. Raw original second-run evidence:
-`/tmp/v3_p07_a4_val128_repeat_20261017T194315`.
-See `docs/P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`.
-Hardware reboot remains an operator-attested procedure.
+**A4.1 — COMPLETE / PRECOMMITTED BEFORE UNSEAL:**
+exact **10,000 canonical official TEST images**
+in original IDX order, frozen compressed official
+archive MD5/IDX identity, all-image 10000
+denominator, trained checkpoint/encoder, numerical
+policy, tie/silence rule, source validation and
+whole-population scoring. No retuning, post hoc
+selection or reduced denominator permitted.
+See `docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`.
 
-**A4.2c LONG-RUN VAL1024 PRIMARY COMPLETE /
-USER-INDEPENDENT PHYSICAL ACCEPTED 2026-10-17.**
-The first1024 distinct canonical TRAIN-derived seeded
-validation indices were executed in ONE persistent
-A53 launch, original first128 prefix unchanged,
-full 26×10 physical spike outputs, counts, routing,
-all 1024 per-frame CRC records match independent frozen
-P03 packed oracle, with EXACT selected *last* frame
-1023 full 26×42 compartment trace. The separate
-original XSDB readback/ELF/XSA/staging physical gate
-also passed. Raw evidence preserved by user at
-`/tmp/v3_p07_a4_val1024_primary_20261017T200134`.
-`P07_A4_2C_1024_PRIMARY_PHYSICAL_GATE_PASS=1` and
-`P07_A4_2C_FULL_PHYSICAL_GATE_PASS=1` recorded;
-see `docs/P07_A4_2C_VAL1024_PRIMARY_ACCEPTANCE.md`.
-This is TRAIN validation, NOT official test accuracy.
-There is still only one selected full compartment trace
-per launch; the 1024 output spike histories and routes
-are independently checked.
+**A4.2a/b — COMPLETE:** user-accepted persistent
+DDR transport (`P07A4P01` descriptor,
+up to 10000 ×784B raw images,
+`P07A4R01` 1MiB CRC journal, one selected
+64KiB trace), Python+C native parity,
+standalone Cortex-A53 Vitis build, exact
+accepted ELF SHA256
+`dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`,
+XSA SHA256
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`,
+and frozen immutable master DDR SHA256
+`9617a822f74faa8723869bb576cf57b38af1a1a91ac81c47c246a9425d0dd955`.
+The original accepted A53 A2 application, P03 neural
+arithmetic and trained checkpoint were not rebuilt
+or modified for this persistent execution.
 
-**A4.2c LONG-RUN FIRST1024 INDEPENDENT REBOOT
-REPEAT CLOSED / USER PHYSICAL ACCEPTED 2026-10-17.**
-Original `p07_a4_2_val1024_verify.py` verified **2/2**
-physically separate persistent A53 launches on the
-**same** 1024 distinct, frozen TRAIN-derived validation
-images with final-image 1023 26×42 selected trace,
-plus exact original KV260 readback/oracle logs and
-input artifact identities. All **1024** results were
-present and oracle-checked in each run; two complete
-**1MiB** result journals and two complete **64KiB**
-selected traces were **byte-for-byte IDENTICAL**.
-Original physical repeat evidence and immutable
-acceptance JSON on user's PC:
-`/tmp/v3_p07_a4_val1024_repeat_20261017T201021`.
-Attested markers include
-`P07_A4_2C_1024_PHYSICAL_LAUNCHES=2/2`,
-`P07_A4_2C_1024_HARDWARE_IMAGE_EXECUTIONS=2048`,
-`P07_A4_2C_1024_JOURNAL_1M_BYTE_EXACT=1`,
-`P07_A4_2C_1024_TRACE_64K_BYTE_EXACT=1`, and
-`P07_A4_2C_1024_RESTART_GATE_PASS=1`.
-These are **2048 physical executions of 1024 unique
-TRAIN-validation images**, not 2048 unique examples.
-See `docs/P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
-The independent reboot is an operator-attested
-procedure, not cryptographic proof.
+**A4.2c — COMPLETE / PHYSICAL KV260:** accepted one
+synthetic 16-image ramp pilot with exact physical
+26×10 output and selected full trace; accepted
+persistent TRAIN-derived 128-image PRIMARY
+with byte-exact comparison to eight original A3.3
+physical primary mailboxes; accepted independent
+cold reboot 128-image repeat with byte-identical
+full 1MiB journal and 64KiB selected frame0
+26×42 trace; accepted one-launch **1024 distinct
+TRAIN-derived validation images** with a full
+last-image (frame1023) compartment trace,
+then independent reboot repeat: **2/2 launches,
+2048 physical frame executions across 1024 unique
+validation images**, full journal 1MiB and
+selected trace 64KiB byte-identical.
+See `docs/P07_A4_2C_VAL128_RESTART_ACCEPTANCE.md`,
+`docs/P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
 
-**A4.2c REMAINING PHYSICAL FAILURE TEST NOW
-PRECOMMITTED / HOST TOOLING + NATIVE CI IMPLEMENTED,
-BOARD FAULT EXPERIMENT NOT RUN:** independent JTAG-only
-**synthetic ramp16** staging and preserved exact six
-original DDR readbacks, **one** separate deliberate
-reserved header word `0x43FE0090` injection AFTER
-provision/readback, before unchanged A53 starts. Expect
-exact `0xDEAD0001` **input rejection**, zero completed
-frames, CRC-valid fail journal with ZERO per-frame
-results/trace, NEVER a valid inference success.
-New `run_p07_a4_fault_physical.sh` requires distinct
-DDR overwrite and synthetic fault-injection approvals;
-new `p07_a4_2_fault_verify.py` and synthetic corruption
-CI verify exact original/modified descriptor bytes,
-original logs/provenance and rejection semantics.
-The experiment must be run only **after** the accepted
-val1024 independent reboot repeat, using its own new
-evidence directory; do not modify existing accepted
-positive evidence, master, weights, bitstream or ELF.
+**A4.2c FINAL FAIL-CLOSED PHYSICAL GATE — ACCEPTED
+2026-10-17:** original six DDR staging readbacks
+exact on **synthetic ramp16 only**, then deliberately
+change exactly one reserved descriptor 32-bit word at
+`0x43FE0090` after provision and BEFORE A53
+dispatch. The unchanged accepted ELF returned
+`0xDEAD0001`, **zero completed image frames**,
+**zero result body bytes and zero selected trace**;
+independent original mutation/provision, journal CRC
+and terminal failure evidence verifier passed.
+`P07_A4_2C_PHYSICAL_FAIL_CLOSED_GATE_PASS=1`,
+`P07_A4_2C_NEGATIVE_TEST_PASS=1`.
+Original physical evidence:
+`/tmp/v3_p07_a4_fail_closed_20261017T204554`
+on user's PC. This is expected intentional rejection,
+**not an inference success**.
 See `docs/P07_A4_2C_FAIL_CLOSED_PROTOCOL.md`.
-**Overall A4.2c STAYS OPEN** until the distinct negative
-physical gate is user-verified. Then we can mark persistent
-A4.2c complete and separately authorize A4.3.
-Original official 10000 MNIST TEST remains SEALED;
-no physical full 10000-image test, timing or power claim.
 
-**P07-A4.3 / A4.4 OFFICIAL FULL10000 HOST TOOLING
-IMPLEMENTED / NATIVE CI PASS — TEST SEALED, PHYSICAL
-RUN NOT YET MADE.** P07-A4.3 dedicated explicit
-`p07_a4_official_prepare.py` refuses to access official
-TEST without accepted ORIGINAL physical `0xDEAD0001`
-fault evidence, `--i-accept-unseal` and
-`--i-accept-one-trace-policy`. It retrieves only
-pinned canonical t10k archives (original compressed
-MD5, IDX headers, observed SHA256), stages exactly
-**10000 original-ordered 784B images** and
-retains exact 10000 HOST-ONLY truth labels,
-with frozen selected image **9999** as the one
-complete 26×42 compartment trace for the
-entire single persistent dataset launch.
-All images retain complete 26×10 output spike
-histories, per-image route/packet/count and
-CRC integrity evidence. This differs from 625
-original A2 batch-selected full neural traces;
-it is an explicitly separate pre-unseal
-observability policy, not full neuron-state
-readback for every image.
+**A4.3 — COMPLETE / CANONICAL OFFICIAL TEST UNSEALED
+AFTER A4.2c FAULT ACCEPTANCE:** the independently
+accepted physical fault record and explicit
+`--i-accept-unseal` +
+`--i-accept-one-trace-policy` gates preceded
+official t10k source staging. Canonical MNIST
+TEST original full index range **0..9999**
+was checked against MD5/IDX archive provenance
+and host-only label ledger; data were not filtered,
+sorted, sampled or retrained after test unseal.
+No official TEST results were viewed during
+pre-unseal native synthetic development.
 
-The P07-A4.4 distinct `run_p07_a4_official_physical.sh`
-checks both physical fault acceptance and canonical
-archive/IDX/source identity plus explicit official
-physical and reserved-DDR overwrite approval
-**before touching hardware**, then reuses accepted
-same XSA, bitstream and immutable persistent ELF,
-one A53 launch over all 10000 frames. Read-only
-`p07_a4_official_verify.py` requires all original
-six full staged JTAG DDR readbacks and SHA-bound
-hardware logs, **10000/10000 terminal journal
-CRC/result images in exact order**, frozen
-independent P03 numerical parity of **every one
-of 2600000 output spike bits + routing/counts**,
-and selected last-image full 26×42 physical
-compartment trace BEFORE creating or printing
-official accuracy, confusion matrix, per-class
-support/recall or any score. Native CI exercises
-the complete-capacity synthetic-only staging
-and fail-closed guards; **official TEST has
-NOT yet been opened or scored**. Both device
-A4.2c physical fault and separately authorized
-A4.3 TEST unseal remain pending. See
+**A4.4 — COMPLETE / FINAL OFFICIAL CANONICAL
+KV260 FPGA FULL 10K PHYSICAL RUN ACCEPTED 2026-10-17:**
+one autonomous persistent A53 ELF launch processed all
+**10000/10000** raw test images in original IDX order.
+The accepted independent closeout gate verified all
+10000 CRC-protected physical result records, every
+image's full **26×10 output spike-bit history**
+(**2,600,000 output bits**), class counts,
+silence, next-routing/discarded and external
+input events against frozen packed P03 software
+oracle, all original six DDR staging readbacks
+and exactly one full last-image (IDX 9999)
+**26×42 compartment** trace; all exact.
+Success marker:
+`P07_A4_4_FULL10000_KV260_INDEPENDENT_CLOSEOUT_PASS=1`
+and physical terminal `0x600D600D`.
+**9456 correct / 10000 = 94.56% accuracy;
+544 incorrect; 2 silent / 10000.**
+Original physical journal, selected trace
+and complete host-only per-image score/provenance
+JSON on user's PC:
+`/tmp/v3_p07_a4_official_full10000_20261017T204944`;
+report:
+`p07_a4_4_official_full10000_report.json`.
+Only the printed console PASS markers, not actual
+raw binary/report per-class contents, were provided
+to the assistant. See the separately frozen
 `docs/P07_A4_3_4_FINAL_CANONICAL_TEST_PLAN.md`
-and `docs/P07_A4_OFFICIAL_TEST_PROTOCOL_FREEZE.md`.
-After independent full10000 user physical
-acceptance, P07-A may be closed; merge into
-main only on explicit separate user approval.
-No changed weights, no exclusions or P08-A
-power/performance or Track B claim.
+and final physical acceptance
+`docs/P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
+
+**P07-A PUBLISHED-CLAIM BOUNDARY:** there is only
+**one** selected full 26×42 compartment trace
+for original official image 9999, unlike the
+historical 625 A2 batch-selected traces;
+all 10000 complete 26×10 *output* spike histories
+and route/count summaries were preserved and
+checked. Actual KV260 end-to-end timing,
+PS overhead, throughput, rail/board power and
+energy remain **P08-A**, and scaled multi-logical
+core FPGA physical inference remains **P07-B**
+after the P08-A gate. This is a single-core
+Loihi-1-*inspired* digital twin, not physical
+asynchronous circuitry or Intel Loihi silicon.
+No claim of official 10000-image cold reboot
+repeatability is made; only TRAIN-derived
+128/1024 independent reboot repeatability
+is established. Preserve all source/physical
+evidence and stable artifact identifiers.
+
+**Next:** P08-A compact physical baseline (required
+before Track B scaling), followed by P07-B if
+accepted. P07-A feature branch is to be merged
+into `main` only with explicit user authorization,
+which has been provided after the final hardware
+experiments. Merging does not retroactively
+validate P08/P07-B results.
 
 ## P07-A — One-core proof of useful physical MNIST inference
+
+**STATUS: CLOSED / USER PHYSICALLY ACCEPTED
+2026-10-17.** All A1/A2/A3/A4.1–A4.4 entry and
+hardware numerical acceptance gates passed; final
+full original-order canonical TEST classification
+result **9456/10000 (94.56%)**, 2 all-silent.
+See `docs/P07_A_FINAL_PHYSICAL_ACCEPTANCE.md`.
 
 Using frozen Track A 784→32→10 weights and event input,
 extend (not replace) the accepted A53 P05 diagnostic path
