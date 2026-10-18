@@ -5,7 +5,8 @@ CLOSED / USER-ACCEPTED 2026-10-17**. A4.2b C11 firmware
 and isolated Vitis builder: **CLOSED / USER VITIS-NATIVE BUILD
 ACCEPTED 2026-10-17**. A4.2c guarded
 physical XSDB and independent journal oracle scripts:
-**IMPLEMENTED / CI HOST-ONLY PASS, PHYSICAL KV260 NOT RUN**.
+**FIRST PERSISTENT RAMP16 PHYSICAL PILOT CLOSED / USER-ACCEPTED
+2026-10-17; FULL A4.2c VALIDATION OPEN**.
 **OFFICIAL CANONICAL MNIST TEST REMAINS SEALED.**
 
 **User-attested accepted persistent ELF**:
@@ -118,9 +119,16 @@ retains staged source+ELF fingerprints.
 
 **Native Vitis gate has already PASSED** on 2026-10-17
 with accepted ELF SHA256 above. Preserve the recorded build.
-The next independent acceptance step is the first guarded
-KV260 ramp16 physical result; do not claim board success
-before its physical journal and selected trace are verified.
+The user independently completed the first guarded
+KV260 persistent ramp16 run on 2026-10-17. Its terminal
+status was `0x600D600D` and independent P03 replay
+accepted all 16 frames and selected 26×42 physical trace.
+See `P07_A4_2C_RAMP16_PHYSICAL_ACCEPTANCE.md`.
+The NEXT separate acceptance is **128 distinct TRAIN-derived
+validation images in ONE A53 launch**, then cold-start
+repeat, with direct original A3.3 physical-mailbox parity.
+Follow `P07_A4_2C_VALIDATION128_PROTOCOL.md`;
+do NOT rerun the ramp16 pilot merely to advance milestones.
 
 ## A4.2c independent HOST-ONLY admission and hardware entry
 
@@ -186,12 +194,15 @@ P07_A4_2C_PHYSICAL_SEALED_VALIDATION_GATE_PASS=1
 P07_A4_2C_FULL_PHYSICAL_GATE_PASS=1
 ```
 
-**None of these physical markers has yet been observed.**
-Preserve the whole evidence directory; reboot KV260
-AFTER the run even on error. User must independently
-accept ramp16 before the real 128 validation frames,
-then independent cold-run repeats and larger-population
-reliability tests before concluding A4.2c.
+**All of the above physical markers WERE OBSERVED in
+the user-accepted ramp16 pilot.** Original binary evidence
+is preserved at `/tmp/v3_p07_a4_ramp16_20261017T191755`.
+The native-host test scripts and physical commands above
+remain as reproduction history. Do not confuse this
+historical procedure with the NEXT 128-image experiment;
+use `P07_A4_2C_VALIDATION128_PROTOCOL.md` instead.
+A4.2c overall remains open pending distinct validation
+and reproducibility evidence.
 
 ## Stop / scope
 
