@@ -1713,15 +1713,31 @@ There is still only one selected full compartment trace
 per launch; the 1024 output spike histories and routes
 are independently checked.
 
-**A4.2c NEXT: separately reboot and repeat the EXACT
-val1024 stage and SAME accepted unmodified ELF/FPGA.**
-The precommitted acceptance criterion is complete
-**1MiB physical journal and 64KiB last-frame compartment
-trace byte-identical across two physically separate
-cold-start launches**, including strict original logs and
-six original input DDR readbacks. User-native
-`p07_a4_2_val1024_verify.py` enforces this.
-**This PHYSICAL repeat is NOT YET RUN.**
+**A4.2c LONG-RUN FIRST1024 INDEPENDENT REBOOT
+REPEAT CLOSED / USER PHYSICAL ACCEPTED 2026-10-17.**
+Original `p07_a4_2_val1024_verify.py` verified **2/2**
+physically separate persistent A53 launches on the
+**same** 1024 distinct, frozen TRAIN-derived validation
+images with final-image 1023 26×42 selected trace,
+plus exact original KV260 readback/oracle logs and
+input artifact identities. All **1024** results were
+present and oracle-checked in each run; two complete
+**1MiB** result journals and two complete **64KiB**
+selected traces were **byte-for-byte IDENTICAL**.
+Original physical repeat evidence and immutable
+acceptance JSON on user's PC:
+`/tmp/v3_p07_a4_val1024_repeat_20261017T201021`.
+Attested markers include
+`P07_A4_2C_1024_PHYSICAL_LAUNCHES=2/2`,
+`P07_A4_2C_1024_HARDWARE_IMAGE_EXECUTIONS=2048`,
+`P07_A4_2C_1024_JOURNAL_1M_BYTE_EXACT=1`,
+`P07_A4_2C_1024_TRACE_64K_BYTE_EXACT=1`, and
+`P07_A4_2C_1024_RESTART_GATE_PASS=1`.
+These are **2048 physical executions of 1024 unique
+TRAIN-validation images**, not 2048 unique examples.
+See `docs/P07_A4_2C_VAL1024_RESTART_ACCEPTANCE.md`.
+The independent reboot is an operator-attested
+procedure, not cryptographic proof.
 
 **A4.2c REMAINING PHYSICAL FAILURE TEST NOW
 PRECOMMITTED / HOST TOOLING + NATIVE CI IMPLEMENTED,
