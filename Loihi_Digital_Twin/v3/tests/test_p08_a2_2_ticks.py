@@ -171,15 +171,15 @@ def _calls_c_function(source: str, name: str) -> bool:
     Raw substring checks can wrongly flag a comment or documentation.
     This protects the frozen runtime call boundary, not just spelling.
     """
-    code = re.sub(r"/\\*.*?\\*/|//[^\\n]*", "", source, flags=re.DOTALL)
-    return bool(re.search(rf"\\b{re.escape(name)}\\s*\\(", code))
+    code = re.sub(r"/\*.*?\*/|//[^\n]*", "", source, flags=re.DOTALL)
+    return bool(re.search(rf"\b{re.escape(name)}\s*\(", code))
 
 
 def test_function_call_guard_ignores_comments_but_rejects_actual_calls():
     comment_only = (
-        "/* p07_a2_run_frame() is the old entrypoint */\\n"
-        "// p07_a2_run_frame() is not called here\\n"
-        "if(p08_a2_2_run_frame(record, bytes)) return -1;\\n"
+        "/* p07_a2_run_frame() is the old entrypoint */\n"
+        "// p07_a2_run_frame() is not called here\n"
+        "if(p08_a2_2_run_frame(record, bytes)) return -1;\n"
     )
     assert not _calls_c_function(comment_only, "p07_a2_run_frame")
     assert _calls_c_function(comment_only, "p08_a2_2_run_frame")
