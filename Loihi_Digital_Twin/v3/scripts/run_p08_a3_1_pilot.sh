@@ -29,6 +29,14 @@ cd "$V3"
 [[ "$RUN" == /* && ! -e "$RUN" && ! -L "$RUN" ]] || {
     echo "ERROR: new absolute no-overwrite physical evidence directory required" >&2; exit 2;
 }
+# Raw physical evidence must never be placed in tracked Git worktrees.
+REPO_ROOT="$(git -C "$V3" rev-parse --show-toplevel)"
+RUN_CANONICAL="$(realpath -m -- "$RUN")"
+REPO_CANONICAL="$(realpath -m -- "$REPO_ROOT")"
+[[ "$RUN_CANONICAL" != "$REPO_CANONICAL" &&
+   "$RUN_CANONICAL" != "$REPO_CANONICAL/"* ]] || {
+    echo "ERROR: physical raw evidence must be outside the Git checkout" >&2;exit 2;
+}
 [[ "$STAGE" == /* && -d "$STAGE" ]] || {
     echo "ERROR: first16 validation stage must exist at absolute path" >&2; exit 2;
 }
@@ -45,7 +53,7 @@ cd "$V3"
 [[ "$TIMEOUT" =~ ^[0-9]+$ ]] && (( TIMEOUT >= 10 && TIMEOUT <= 28800 )) || {
     echo "ERROR: timeout outside 10..28800 seconds" >&2;exit 2;
 }
-for tool in python xsdb vivado sha256sum grep cmp readelf git;do
+for tool in python xsdb vivado sha256sum grep cmp readelf git realpath;do
     command -v "$tool" >/dev/null || {
         echo "ERROR: missing $tool (source Vivado/Vitis tool environment)" >&2;exit 2;
     }
