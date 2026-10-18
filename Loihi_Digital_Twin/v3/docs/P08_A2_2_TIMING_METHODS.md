@@ -1,6 +1,6 @@
 # P08-A2.2 — How the timing system works, limitations and sources
 
-**State (2026-10-18): A2.2 HOST REGRESSIONS PASSED (USER REPORTED), VITIS BUILD PASSED WITH PINNED SHA; NO P08 KV260 RUN OR PHYSICAL LATENCY YET.**  
+**State (2026-10-18): A2.2 HOST REGRESSIONS PASSED, VITIS BUILD PASSED WITH PINNED SHA AND A3.1 KV260 FIRST16 PHYSICAL NUMERICAL/TIMING CAPTURE PASS (ALL USER ATTESTED). NUMERIC LATENCY REPORT NOT YET INSPECTED; 1,024-FRAME BASELINE NOT RUN.**  
 **User direction:** latency first. Physical power and energy **DEFERRED**. Any derived throughput remains secondary, **not** the A2 latency acceptance gate.
 
 ## 0. Fixed results, A2.1 build provenance and intended distinction
@@ -15,6 +15,8 @@ User supplied **A2.1 Vitis-build-only PASS**:
 - This records a **user-performed Vitis build**, not a P08 physical inference measurement. Local A2.1 native test markers were not pasted, so independent pytest acceptance cannot be claimed on that evidence alone.
 
 **User-attested A2.2 verification completed:** A2.2 native regressions and Vitis build passed after correcting the comment-only assertion. The A2.2 ELF was built at `/tmp/v3_p08_a2_2_build_20261018T200133Z/vitis_workspace/p08_a2_2_board.elf`; its `build_identity.txt` and user's separate `sha256sum` matched SHA256 `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361` with routed XSA SHA256 `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`. `P08_A2_2_KV260_LATENCY=NOT_RUN` is still the true physical status. This candidate is hard-pinned by the [A3.1 physical runner](P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) and can be checked offline before JTAG.
+
+**Physical measurement update:** User-reported 2026-10-18 A3.1 16-frame KV260 pilot passed all original P07 packed-oracle and both P08 timing sidecar checks. See [acceptance record and physical evidence provenance](P08_A3_1_PHYSICAL_ACCEPTANCE.md). Raw numerical latency values have not yet been supplied in chat; no inferred clock or statistical benchmark is claimed.
 
 **A2.2 is a separate new experimental firmware**, not a mutation of the accepted A2.1 ELF. It reuses the A2.1 `P08ALAT1` image timing sidecar and adds a second, `P08TCK02` sidecar with precise per-logical-tick service endpoints. A2.2 contains an instrumented copy of the accepted P07-A2 portable per-tick wrapper under `software/p08/p08_a2_2_runtime.c`; the **actual** original `software/p07/p07_a2_runtime.c` and `software/p03/` are not edited. It invokes the same original spike encoder, PL dispatcher, trace reader, route and barrier callbacks in the same order.
 
