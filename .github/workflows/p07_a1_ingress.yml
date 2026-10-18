@@ -23,6 +23,7 @@ jobs:
           bash -n scripts/build_p07_a2.sh
           bash -n scripts/build_p07_a4.sh
           bash -n scripts/run_p07_a4_physical.sh
+          bash -n scripts/run_p07_a4_fault_physical.sh
           bash -n scripts/run_p07_a2_physical.sh
           python -m py_compile software/p07/build_p07_a2.py scripts/p07_a2_batch.py scripts/p07_a2_verify.py scripts/p07_a3_prepare.py scripts/p07_a3_verify.py src/loihi_twin_v2/p07_a3_validation.py \
             scripts/p07_a3_3_prepare.py scripts/p07_a3_3_one.py scripts/p07_a3_3_verify.py src/loihi_twin_v2/p07_a3_3_protocol.py \
@@ -30,7 +31,8 @@ jobs:
             src/loihi_twin_v2/p07_a4_stream.py scripts/p07_a4_2_prepare.py scripts/p07_a4_2_check.py \
             software/p07/build_p07_a4.py scripts/p07_a4_2_verify.py scripts/p07_a4_2_crosscheck.py src/loihi_twin_v2/p07_a4_crosscheck.py \
             scripts/p07_a4_2_restart_verify.py src/loihi_twin_v2/p07_a4_restart.py \
-            src/loihi_twin_v2/p07_a4_validation.py src/loihi_twin_v2/p07_a4_val1024_gate.py scripts/p07_a4_2_val1024_verify.py
+            src/loihi_twin_v2/p07_a4_validation.py src/loihi_twin_v2/p07_a4_val1024_gate.py scripts/p07_a4_2_val1024_verify.py \
+            src/loihi_twin_v2/p07_a4_fault.py scripts/p07_a4_2_fault_verify.py
       - name: P07-A1 Python and independent native C regression
         working-directory: Loihi_Digital_Twin/v3
         run: |
@@ -51,5 +53,6 @@ jobs:
             tests/test_p07_a4_restart.py \
             tests/test_p07_a4_val1024.py \
             tests/test_p07_a4_val1024_gate.py \
+            tests/test_p07_a4_fault.py \
             tests/test_p06_a2_input_contract.py \
             tests/test_p05_1_deployment.py
