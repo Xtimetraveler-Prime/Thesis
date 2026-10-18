@@ -1,9 +1,11 @@
 # P07-A4.2 — Persistent DDR-backed A53 inference implementation
 
 **2026-10-17 — approved engineering direction after user accepted A4.1.**
-**Current phase:** A4.2a **USER-ACCEPTED**; A4.2b **candidate A53
-firmware, Vitis-native build pending**; A4.2c **physical entry tooling
-implemented, KV260 numerical gate NOT RUN**. Native host CI green.
+**Current phase:** A4.2a **USER-ACCEPTED**; A4.2b **USER
+VITIS-NATIVE ACCEPTED** (persistent ELF SHA256
+`dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`);
+A4.2c **physical entry tooling implemented, KV260 numerical
+gate NOT RUN**. Native host CI green.
 **Official canonical t10k TEST remains SEALED / NOT READ.**
 
 ## Why this is a distinct version, not an A2 modification
@@ -145,7 +147,7 @@ explicitly report this measurement boundary.
   accepted P07-A1 record builder; strict boundaries,
   1/16/128/10000 stress fixtures, negative tamper/CRC,
   no-load/no-download of actual MNIST TEST.
-- **A4.2b CODE IMPLEMENTED / USER VITIS BUILD PENDING:** new *separate* standalone A53 board firmware,
+- **A4.2b COMPLETE / USER VITIS BUILD ACCEPTED:** new *separate* standalone A53 board firmware,
   extending accepted per-frame `p07_a2_run_frame`
   with a persistent dataset loop, full per-image context
   reset, progress commits and fatal-first-error telemetry;
