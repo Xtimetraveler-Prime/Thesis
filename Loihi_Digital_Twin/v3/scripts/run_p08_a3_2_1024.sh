@@ -58,10 +58,17 @@ ROOT_REAL="$(realpath -m -- "$REPO_ROOT")"
 [[ "$STAGE" == /* && -d "$STAGE" ]] || {
   echo "ERROR: source stage must be an existing absolute path" >&2;exit 2;
 }
-[[ "$RUN_REAL" != "$(realpath -m -- "$STAGE")" &&
-   "$RUN_REAL" != "$(realpath -m -- "$BUILD")" ]] || {
-  echo "ERROR: evidence path aliases stage/build directory" >&2;exit 2;
-}
+# Neither the stage, the compiled ELF, nor accepted Vivado route outputs
+# may be parents of an evidence run. This protects earlier immutable artifacts.
+STAGE_REAL="$(realpath -m -- "$STAGE")"
+BUILD_REAL="$(realpath -m -- "$BUILD")"
+REPORTS_REAL="$(realpath -m -- "$REPORTS")"
+for source_path in "$STAGE_REAL" "$BUILD_REAL" "$REPORTS_REAL";do
+  [[ "$RUN_REAL" != "$source_path" && "$RUN_REAL" != "$source_path/"* ]] || {
+    echo "ERROR: evidence must not overlap or live inside stage/build/route artifacts" >&2
+    exit 2
+  }
+done
 if [[ "${P08_A3_2_PREFLIGHT_ONLY:-}" != YES ]];then
   [[ "${P08_A3_2_CONFIRM_JTAG_ONLY:-}" == YES &&
      "${P08_A3_2_CONFIRM_DDR_OVERWRITE:-}" == YES &&
