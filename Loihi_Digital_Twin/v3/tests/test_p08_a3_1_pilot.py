@@ -161,7 +161,7 @@ def test_a3_1_contract_keeps_power_deferred_and_never_runs_official_test():
     assert "P08_A3_1_CONFIRM_TRAIN_VALIDATION_ONLY" in shell
     assert "P08_A3_1_EXPECTED_ELF_SHA256" in shell
     assert "P08_A3_1_ORIGINAL_TRAIN_FIRST16_PHYSICAL_PREFLIGHT_PASS=1" in shell
-    assert "RUN_CANONICAL" in shell && "REPO_CANONICAL" in shell
+    assert "RUN_CANONICAL" in shell and "REPO_CANONICAL" in shell
     assert "P08_A2_2_ELF_SHA256=" in shell
     assert "p08_a3_1_verify.py" in shell
     assert "p07_a4_xsdb_prepare.tcl" in shell
