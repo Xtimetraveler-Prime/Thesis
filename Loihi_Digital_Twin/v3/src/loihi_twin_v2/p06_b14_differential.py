@@ -85,6 +85,7 @@ class _Layout:
     by_id: dict[tuple[int, int], _Neuron]
     by_neuron: dict[_Neuron, tuple[int, int]]
     input_pairs: set[tuple[str, int, int]]
+    external_cores_by_source: dict[_External, tuple[int, ...]]
     input_axon_owner: dict[tuple[int, int], _External]
     expected_outputs: dict[tuple[int, int], set[int]]
     known_external: dict[str, set[int]]
@@ -123,6 +124,12 @@ def _independent_layout(network: NetworkSpec, result: B12Result) -> _Layout:
             target_core, _ = by_neuron[(projection.destination_population, edge.destination_index)]
             expected_outputs[source_addr].add(target_core)
 
+    external_groups: dict[_External, set[int]] = defaultdict(set)
+    for pop, source_index, destination_core in input_pairs:
+        external_groups[(pop, source_index)].add(destination_core)
+    external_cores_by_source = {
+        source: tuple(sorted(cores)) for source, cores in external_groups.items()
+    }
     input_owner = {}
     observed_input_pairs = set()
     known_external: dict[str, set[int]] = defaultdict(set)
@@ -150,8 +157,8 @@ def _independent_layout(network: NetworkSpec, result: B12Result) -> _Layout:
     _require_equal(-1, "neural_source_core_fanout",
                    {k: frozenset(v) for k, v in expected_outputs.items()},
                    {k: frozenset(v) for k, v in observed_outputs.items()})
-    return _Layout(by_id, by_neuron, input_pairs, input_owner,
-                   dict(expected_outputs), dict(known_external))
+    return _Layout(by_id, by_neuron, input_pairs, external_cores_by_source,
+                   input_owner, dict(expected_outputs), dict(known_external))
 
 
 def _incoming_oracle(
@@ -161,9 +168,9 @@ def _incoming_oracle(
     expected = Counter()
     for population, rows in schedule.items():
         for source in rows[tick]:
-            for key_population, key_index, destination_core in layout.input_pairs:
-                if (key_population, key_index) == (population, source):
-                    expected[("external", population, source, destination_core)] += 1
+            for destination_core in layout.external_cores_by_source.get(
+                    (population, source), ()):
+                expected[("external", population, source, destination_core)] += 1
     for origin in previous_spikes:
         core, compartment = layout.by_neuron[origin]
         for destination_core in layout.expected_outputs.get((core, compartment), ()):
