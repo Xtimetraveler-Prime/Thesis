@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [IN PROGRESS — B1.1 + B1.2 USER-ATTESTED NATIVE PASS; B1.3 MULTICORE STREAMING ABI SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
+  route semantics [IN PROGRESS — B1.1–B1.3 USER-ATTESTED NATIVE PASS; B1.4 INDEPENDENT MONOLITHIC NUMERICAL SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1529,7 +1529,7 @@ in the present `compile_network` will
     trained checkpoint, scaled physical hardware paging or firmware.
     See `docs/P06_B1_2_SYNAPSE_AWARE_PARTITION.md`.
   - **B1.3 — Versioned 784-channel multi-core ingress / NEXT packet ABI
-    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    [USER-ATTESTED NATIVE REGRESSION PASS, INCLUDING FOLLOW-UP ORDERING FIX]:**
     Distinct `P06B13I1` binary image + per-destination `<HHH`
     map and `P06B13R1` routed packet frames. Each uses 128-byte
     SHA256-bound deployment/DDR-audit header and independent CRC32.
@@ -1543,7 +1543,32 @@ in the present `compile_network` will
     documentation: `docs/P06_B1_3_MULTICORE_STREAMING_ABI.md`.
     Old P05 single-axon diagnostic firmware is NOT compatible.
     This does **not** implement the new A53/PL packet streaming
-    firmware or claim a physical multi-core run.
+    firmware or claim a physical multi-core run. Native B1.3 tests
+    initially exposed two error-reporting assertions; the packet
+    decoder was corrected to check NEXT/route/fanout before canonical
+    ordering, an independent reordered-frame test was added and the
+    user subsequently verified all B1.3 tests/regressions PASS.
+  - **B1.4 — Independent 26-tick monolithic integer oracle
+    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    `src/loihi_twin_v2/p06_b14_monolithic.py` builds a flat
+    original `NetworkSpec` event/connection graph and uses the
+    independently accepted P06-A scalar signed-24-bit LIF oracle,
+    NEVER `LogicalChip`/`step_compartment`/packed templates, to
+    compute 26 full compartment-state/synaptic-input/spike epochs,
+    readout counts/class and SHA-bound traces.
+    `p06_b14_differential.py` checks every named original neuron
+    across production B1.2 core placements, independent original
+    graph external/NEXT routing groups and earliest divergence,
+    under different valid core scheduling/drain orders. New tests
+    cover independently encoded image events, manual signed LIF,
+    fractional decay/refractory, fixed-seed randomized signed
+    weights, saturation, silence/tie, malformed schedules, dropped
+    final-drain packets, and deliberately corrupted state/synapse/
+    packet witnesses. Host-only synthetic probes cover dense
+    784→6→10, optional dense 784→40→10, and optional **SPARSE**
+    784→1000→10 / 27-core 26-tick numerical networks. The
+    last is NOT a dense 794,000-synapse numerical or physical result.
+    See `docs/P06_B1_4_INDEPENDENT_NUMERICAL_ORACLE.md`.
 - **P06-B2 — Train, quantize and freeze
   independent larger checkpoint [PENDING
   INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
