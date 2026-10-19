@@ -1,6 +1,8 @@
 # P08-A3.2.3 — Repeated paired physical latency characterization
 
-**Status (2026-10-18 project timeline): PAIRS 1 AND 2 USER-ATTESTED PHYSICAL PASS (1024 TRAIN-VALIDATION FRAMES PER SESSION; BOTH ORIGINAL NEURAL ORACLES AND PAIRED TELEMETRY PASS). PAIR 2 REVERSED ORDER A2.2 → A2.1, PAIRED MEDIAN +25.4 µs; PAIR 1 +16.8 µs. PAIR 3 NOT RUN; THREE-PAIR AGGREGATION NOT RUN.** Do not merge or claim a statistical reference without user approval. Power/energy deferred.
+**Status (2026-10-18 project timeline): ALL THREE ORIGINAL KV260 PAIRED PHYSICAL RUNS COMPLETED AND FINAL DESCRIPTIVE THREE-PAIR RESULTS USER-REPORTED. Matched ordinary-image A2.2−A2.1 median differences +16.840, +25.400 and +29.710 µs; mean +23.984 µs, between-pair SD 6.551 µs. Original final three-pair file/explicit aggregate PASS marker not independently provided in chat; no CI or raw evidence re-inspection. P08-A3.2.3 USER-ATTESTED LATENCY REPEATS COMPLETE; OVERALL P08-A REQUIRES A5 CPU COMPARATOR AND REPORT.** Do not merge or claim a statistical reference without user approval. Power/energy deferred.
+
+**Final result update:** The last A2.1→A2.2 Pair 3 also passed the original dual-oracle paired timing checker as reported by the user. Final 3-pair host report excerpt: A2.1 medians **35.7023, 35.6946, 35.6696 ms**, A2.2 medians **35.7234, 35.7163, 35.7220 ms**, paired median differences **+16.840, +25.400, +29.710 µs**, between-pair mean **+23.984 µs** (sample SD **6.551 µs**), fixed-image delta-range median **24.730 µs** and p95 **73.541 µs**. Read the [full source-qualified final measurement report](P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RESULTS.md). Original result/runner code unchanged; all commands below are **historical reproduction instructions, NOT remaining physical tasks**. No extra FPGA runs are required for repeat study; P08-A5 CPU comparator remains open.
 
 ## 1. Previously accepted first pair (locked data)
 
@@ -28,7 +30,7 @@ For three independently rebooted pairs (six physical sessions, including the alr
 | --- | --- | --- | --- |
 | 1 | A2.1 | A2.2 | **USER PHYSICAL PASS**, 1,024-image per-version |
 | 2 | **A2.2** | **A2.1** | **USER-ATTESTED PHYSICAL PASS**; 1023 ordinary-image matched median delta **+25.4 µs**, p95 **+82.7 µs** |
-| 3 | **A2.1** | **A2.2** | Pending |
+| 3 | **A2.1** | **A2.2** | **USER-ATTESTED PHYSICAL PASS**; final paired median **+29.710 µs** |
 
 This AB/BA/AB ordering is **partially counterbalanced**, not a randomized or blinded design. Preserve chronological time, device reboot and environment notes in each untracked physical evidence folder; do not infer a controlled thermal/clock relationship without actual evidence. Do not describe the 3 × 1,023 ordinary observations per mode as 3,069 independent samples—the same **1,023 ordinary images** are measured repeatedly. The **one** full trace image per 1,024-image run is excluded from ordinary service distributions.
 
@@ -70,7 +72,7 @@ bash -n scripts/run_p08_a3_2_1024.sh
 
 ## 5. Repeat-pair capture commands (operator-controlled separate boots)
 
-**Progress note:** the following Pair 2 commands are retained as a historical reproduction procedure; **Pair 2 is already physically complete**. Do **not** rerun or overwrite Pair 2. Only the Pair 3 A2.1 → A2.2 sequence remains. For each Pair 3 session use a fresh output directory and independently reboot into JTAG-only bare-metal with no Linux ownership of the reserved DDR range.
+**Historical reproduction note:** all three physical pairs, including the final A2.1 → A2.2 Pair 3, have been user-completed. The JTAG sections below record how the accepted measurements were obtained; **do not rerun or overwrite** any original session. The only optional remaining A3 action is independent file-level sealing of the existing summary and raw evidence; **A5 CPU software baseline is the next research stage.** For each Pair 3 session use a fresh output directory and independently reboot into JTAG-only bare-metal with no Linux ownership of the reserved DDR range.
 
 
 Set original accepted paths (the user previously posted the stage/build locations, but **not** the first paired report filename):
@@ -158,4 +160,4 @@ PYTHONPATH="$PWD/src" python scripts/p08_a3_2_repeat_check.py \
 
 Expected markers: `P08_A3_2_3_DISTINCT_PHYSICAL_SESSIONS=6`, `P08_A3_2_3_SAME_ORIGINAL_TRAIN_FIRST1024_PASS=1`, `P08_A3_2_3_THREE_PAIRED_LATENCY_AGGREGATION_PASS=1`, `P08_A3_2_3_RESULT_SCOPE=DESCRIPTIVE_REPEATED_PILOT`. The report's three physical delta medians and fixed-image spread are the quantities to inspect. If run-order effects are notable or between-pair variability overwhelms delta, do not overclaim overhead calibration.
 
-**Stop and show user-local native test results before any board execution.** When native tests pass, execute and verify one JTAG-only session at a time. This runbook is experimental operator guidance, not authorization to operate an unattended device.
+**Completed experiment:** no new physical A3.2 runs or firmware rebuilds are necessary. Any future repetition requires a new user-controlled study plan and distinct JTAG-only consent; do not run these historical operator commands merely to claim closure. Only P08-A5 CPU comparator / final report and user approval remain for full P08-A milestone closure (power/energy deferred).
