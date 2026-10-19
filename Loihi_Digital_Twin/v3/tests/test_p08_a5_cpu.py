@@ -72,7 +72,8 @@ def test_rejects_wrong_encoder_frame_and_timestep_schedule():
     prepared=prepare_cpu(synthetic_p03_image(),tuple(range(784)))
     with pytest.raises(ValueError,match="784"):
         image_to_class(prepared,bytes(782))
-    with pytest.raises(ValueError,match="26"):
+    # The production error correctly specifies the 25 input ticks + drain contract.
+    with pytest.raises(ValueError,match="25 input ticks plus empty drain tick"):
         preloaded_compute(prepared,((),)*25)
     schedule=list(image_event_schedule(bytes(784)))
     schedule[25]=(0,)
