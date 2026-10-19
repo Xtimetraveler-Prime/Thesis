@@ -126,12 +126,12 @@ def test_packet_frame_independent_le_decode_and_packet_origin_next_fanout():
     ing = decode_ingress_frame(encode_ingress_frame(result, bytes([255] * 784)), result)
     trace = chip.step(ing.events(0))
     emitted = _packets_from_trace(trace)
-    assert len(emitted) == 6
+    assert len(emitted) == 3
     raw = encode_packet_frame(result, emitted, emitted_timestep=0)
     magic, *values = struct.unpack_from("<8s14I", raw)
     assert magic == B13_PACKETS_MAGIC
-    assert values[:8] == [1, 128, 6 * 12, 0, 6, 3, 12, 4096]
-    assert len(raw) == 128 + 72
+    assert values[:8] == [1, 128, 3 * 12, 0, 3, 3, 12, 4096]
+    assert len(raw) == 128 + 36
     decoded = decode_packet_frame(raw, result, emitted_timestep=0)
     assert decoded == tuple(sorted(emitted, key=lambda p: p.logical_key))
     assert all(p.target_timestep == 1 and p.source_timestep == 0 for p in decoded)
@@ -147,7 +147,7 @@ def test_26_tick_all_255_two_hidden_cores_to_readout_numeric_schedule_parity():
     for order, reversed_drain in (((0, 1, 2), False), ((2, 1, 0), True)):
         guard = StreamingEpochGuard(result, raw)
         chip = result.compiled.build_chip()
-        assert guard.static_worst_case()["current_worst_per_core"] == [784, 784, 6]
+        assert guard.static_worst_case()["current_worst_per_core"] == [784, 784, 3]
         assert guard.static_worst_case()["all_255_over_25_ticks_external_events"] == 39200
         trace_snapshots = []
         for tick in range(TOTAL_TICKS):
@@ -164,11 +164,11 @@ def test_26_tick_all_255_two_hidden_cores_to_readout_numeric_schedule_parity():
             assert receipt.tick == tick
             assert receipt.current_bank == tick % 2
             assert receipt.current_events_by_core == (
-                (784, 784, 0 if tick == 0 else 6) if tick < 25 else (0, 0, 6)
+                (784, 784, 0 if tick == 0 else 3) if tick < 25 else (0, 0, 3)
             )
-            assert receipt.new_routed_next_packets == (6 if tick < 25 else 0)
+            assert receipt.new_routed_next_packets == (3 if tick < 25 else 0)
             assert receipt.external_packets == (1568 if tick < 25 else 0)
-            assert receipt.routed_current_packets == (0 if tick == 0 else 6)
+            assert receipt.routed_current_packets == (0 if tick == 0 else 3)
             assert [len(core.spikes_out) for core in trace.cores] == [
                 2 if tick < 25 else 0, 1 if tick < 25 else 0, 0 if tick == 0 else 2]
             assert tuple(sorted(outgoing, key=lambda p: p.logical_key)) == receipt.emitted_next_packets
@@ -191,7 +191,7 @@ def test_packet_partial_fanout_duplicate_wrong_route_and_wrong_epoch_rejected():
         decode_ingress_frame(encode_ingress_frame(result, bytes([255] * 784)),
                              result).events(0))
     full = _packets_from_trace(first)
-    assert len(full) == 6
+    assert len(full) == 3
     for invalid, pattern in (
         (full[:-1], "fanout"),
         (full + (full[0],), "fanout"),
@@ -311,7 +311,7 @@ def test_full_27_core_1000_hidden_multicast_abi_exact_counts():
     assert summary["external_per_core"] == [784] * 26 + [0]
     assert summary["prior_routed_per_core"] == [0] * 26 + [1000]
     assert summary["max_core_current_bank_events"] == 1000
-    assert summary["max_core_emitted_packets"] == 390
+    assert summary["max_core_emitted_packets"] == 39
     assert summary["p05_diagnostic_stream_compatible"] is False
     assert summary["physical_execution"] == "NOT_TESTED"
     # Verify all 26 fanout destinations receive each active pixel one time.
