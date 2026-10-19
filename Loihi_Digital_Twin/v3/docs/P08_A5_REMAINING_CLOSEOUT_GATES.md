@@ -1,6 +1,6 @@
 # P08-A5 — Remaining latency-only closeout criteria after completed A3 physical study
 
-**State (2026-10-18):** P08-A3.2.3 physical six-session repeated A53 system-service baseline user-attested complete; **P08-A5 SOURCE CANDIDATE IMPLEMENTED (exact packed 26-tick CPU replay, two CPU endpoints, original physical-journal oracle parity, three CPU measurement passes and cross-scope draft closeout). NEW A5 NATIVE REGRESSIONS AND ACTUAL HOST CPU BENCHMARK NOT YET USER-RUN; whole P08-A OPEN.** Physical power/energy P08-A4 expressly deferred.
+**State (2026-10-18):** **P08-A3 USER-ATTESTED PHYSICAL REPEATED RUNS COMPLETE; P08-A5 USER-ATTESTED CPU TWO-ENDPOINT ACTUAL HOST BENCHMARK AND FINAL REPORT GENERATION COMPLETE** (1024 original TRAIN-derived validation images, 3 CPU passes, six prior physical sessions, original P07 oracle and matched-stage SHA256 gates PASS). **P08-A IS READY FOR EXPLICIT FINAL LATENCY-ONLY ACCEPTANCE REVIEW / PR MERGE APPROVAL; NOT YET ACCEPTED OR MERGED.** The corrected A5 selected pytest rerun result was not explicitly pasted. Physical power/energy P08-A4 remains deferred and unmeasured; PL-only seconds remain uncalibrated and are not claimed.
 
 ## Evidence already available (no new JTAG requirement)
 
@@ -12,9 +12,21 @@ The accepted [A3.2.3 final physical report](P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RES
 | 2 | 35.6946 | 35.7163 | 25.400 |
 | 3 | 35.6696 | 35.7220 | 29.710 |
 
-Across the 3 pair-level medians: mean 23.984 µs, sample SD 6.551 µs; fixed-image three-repetition delta-range median 24.730 µs and p95 73.541 µs. There is no FPGA PL-only calibrated compute-time-in-seconds measurement and **no CPU performance result** yet.
+Across the 3 pair-level medians: mean 23.984 µs, sample SD 6.551 µs; fixed-image three-repetition delta-range median 24.730 µs and p95 73.541 µs. There is no calibrated PL-only compute-time-in-seconds measurement. **A5 CPU data are now measured and verified at the user-terminal gate level:** CPU preloaded scalar replay per-run medians **25.6147 / 25.6001 / 25.5735 ms**, full raw image-to-class CPython per-run medians **30.3930 / 30.3147 / 30.2579 ms**. CPU original-P07-journal parity and 1024 output ticks PASS. The CPU and physical service endpoints remain non-equivalent; do not claim an isolated FPGA speedup. See [full A5 results and SHAs](P08_A5_CPU_PHYSICAL_LATENCY_RESULTS.md).
 
-**Implementation reference:** [Full A5 CPU benchmark and local test protocol](P08_A5_CPU_REFERENCE_PROTOCOL.md). Nothing measured on the user's CPU yet; the two new native suites `tests/test_p08_a5_cpu.py` and `tests/test_p08_a5_closeout.py` require local execution. No independent physical PL frequency calibration has been created or claimed. The new draft report explicitly WITHHOLDS a causal FPGA speedup ratio because the CPU and KV260 service boundaries are not fully identical.
+**Measurement and review references:** [Complete recorded A5 host measurements](P08_A5_CPU_PHYSICAL_LATENCY_RESULTS.md) and [reproduction protocol](P08_A5_CPU_REFERENCE_PROTOCOL.md). Original host CPU JSON SHA256 `790072259dab211b57bf40f60bba2b7cb293d7a544ab3aae2660fc8d8c63127d`; original six-session aggregate SHA256 `afd4e91f0106266179072c7242d7e361c033d9d78720d79a3a807e3ed400bf7b`; generated closeout Markdown SHA256 `17e88feb9330ffca5ecbbfb8735bc08b7fe68f76e74392c0c5c4a538e40233b1`. Their user-reported terminal gates all PASS, but new native regression final pytest output was not shared and source evidence bytes were not uploaded to this assistant. The report WITHHOLDS a causal FPGA speedup ratio because the CPU and A53/PL system service endpoints are not fully identical. No PL achieved clock calibration is claimed.
+
+**Closeout gate status at review:**
+
+| Original gate | Evidence | Status |
+|---|---|---|
+| Six physical A2.1/A2.2 paired sessions and original 1024-image packed P07 oracle | Original A3 reports and freshly regenerated three-pair SHA-bound aggregate | **USER-ATTESTED PASS** |
+| Preloaded 26-tick CPU endpoint | Three sequential CPU runs and 1024-image full spike parity | **USER-ATTESTED PASS** |
+| Raw 784B CPU image-to-class endpoint | Three sequential CPU runs, canonical pixel encoder and physical output parity | **USER-ATTESTED PASS** |
+| Original source integrity / trace selection | Same TRAIN stage SHA256, original physical A2.1 selected 26×42 trace, source-bound accepted ELF/checkpoint | **USER-ATTESTED PASS** |
+| Distribution/clock limitations and deferred power | Full draft report, CPU + A53 p95/SD, three-pair small-n descriptors, no PL Hz calibration claims, explicit unmeasured power | **DOCUMENTED** |
+| New A5 pytest rerun after initial two assertion fixes | No final pytest summary pasted | **RECOMMENDED FINAL MERGE GATE: UNCONFIRMED** |
+| Explicit user approval for closing latency-only P08-A and merging draft PR #45 | Not yet given | **PENDING — DO NOT MERGE** |
 
 ## Required before full P08-A acceptance (original P08-A1 contract §§6–7)
 
