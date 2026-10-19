@@ -1,6 +1,8 @@
 # P08-A3.2 — Paired 1,024-image physical latency baseline
 
-**State (2026-10-18): A3.2.1 HOST ANALYSIS USER-VERIFIED NATIVE PASS. A3.2.2 DUAL-VARIANT 1,024-FRAME PHYSICAL CAPTURE CANDIDATE IMPLEMENTED; NEW NATIVE GATES PENDING; NO A3.2 KV260 RUN OR STATISTICAL BASELINE YET.**
+**State (2026-10-18 project timeline): A3.2.1 HOST NATIVE VERIFIED. A3.2.2 USER REPORTS FIRST PAIRED 1,024-FRAME KV260 RUNS AND BOTH ORIGINAL ORACLES/TIMING INTEGRITY PASS; MEDIAN PAIRED A53 FULL-SERVICE DELTA +0.0168 ms. A3.2.3 THREE-PAIR AGGREGATOR IMPLEMENTED, NATIVE PENDING. NO REPLICATED LATENCY BASELINE YET.**
+
+**First paired physical result:** A2.1 ordinary 1023-image median **35.7023 ms** (p95 **41.9667 ms**), A2.2 median **35.7234 ms** (p95 **41.9800 ms**), matched-image median delta **+0.0168 ms / 16.8 µs** (matched p95 **+0.0744 ms**), both reported A53 clock frequencies **99,999,001 Hz**, original neural verification **PASS**, timing integrity **PASS_SINGLE_PAIR**. Preserve exact readings and provenance in [A3.2.2 first paired physical report](P08_A3_2_2_PHYSICAL_RESULTS.md). A3.2.3 extends with [two further cold-boot physical pairs](P08_A3_2_3_REPEATED_LATENCY_PROTOCOL.md); it must not pool repeated image IDs as independent data.
 
 ## Motivation: measured A3.1 pilot is dominated by PS-side service
 
