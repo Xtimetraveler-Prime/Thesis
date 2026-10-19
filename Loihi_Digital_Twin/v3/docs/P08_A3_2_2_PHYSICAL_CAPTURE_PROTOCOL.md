@@ -19,6 +19,14 @@ Capture **one** independent original-order, first-1,024 **TRAIN-derived validati
 - `tests/test_p08_a3_2_capture.py`: negative tests for missing consent, wrong mode, existing evidence directory, absent pinned source, forbidden sample populations, neural-oracle failure and variant-specific 1,024-image telemetry. Tests have **not yet** been user-run for these new files; nothing here touches the FPGA.
 - Existing `scripts/p08_a3_2_pair_check.py`: previously accepted A3.2.1 postprocess tool; **not** a physical launcher. Requires independently verified A2.1 and A2.2 captures from distinct fresh directories.
 
+## A3.2.2 initial local test fixture correction (2026-10-18)
+
+The user ran the new A3.2.2 native tests and reported four failures: both firmware variants of the missing-consent test and both firmware variants of the offline-missing-artifacts test. These are **negative test fixture failures**, **not a physical KV260 runtime failure**. The initial `env_for(tmp_path)` fixture pointed `P08_A3_2_STAGE_DIR` at `tmp_path` and `P08_A3_2_RUN_DIR` at `tmp_path/not-created`. Therefore the evidence target was **inside the protected immutable stage**, and the unchanged runner correctly rejected it before the tests reached their intended consent/artifact guards.
+
+Corrected `tests/test_p08_a3_2_capture.py` now creates a distinct sibling `tmp_path/stage`, leaving `tmp_path/not-created` as a valid non-overlapping evidence path. Six additional negative tests explicitly ensure **both firmware modes** still reject evidence nested inside stage, build, or route-report locations, even when physical consent variables are present. **No change** was made to the production `scripts/run_p08_a3_2_1024.sh` or to frozen P03/P07/P08 C sources, original bitstreams or prior physical evidence.
+
+The complete native suite **must be rerun** after this correction; no renewed PASS or physical launch is claimed.
+
 ## 3. Native gates (NO physical board / NEVER substitute for JTAG evidence)
 
 ```bash
