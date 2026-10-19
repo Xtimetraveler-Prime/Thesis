@@ -278,6 +278,20 @@ def test_independent_reference_detects_wrong_input_weight_spike_and_next_packet(
     assert caught.value.tick == 0
     assert caught.value.field == "NEXT_packet_target"
 
+    # Destination CORE remains correct but the AXON points somewhere else:
+    # graph-level packet fanout alone cannot detect this. The source-derived
+    # graph plus actual B1.2 route-axon mapping must both be respected.
+    wrong_axon = replace(hidden_trace.packets_out[0], destination_axon=127)
+    altered_source = replace(hidden_trace, packets_out=(
+        wrong_axon,) + hidden_trace.packets_out[1:])
+    swapped = (replace(original[0],
+                       cores=(altered_source, original[0].cores[1])),) + original[1:]
+    with pytest.raises(B14Divergence) as caught:
+        compare_monolithic_to_traces(
+            source, mapped, schedule, swapped, readout_population="z")
+    assert caught.value.tick == 0
+    assert caught.value.field == "packet_destination_axon"
+
 
 def test_input_contract_unknown_malformed_and_final_epoch_loss_fail_closed():
     source = two_layer_reference()
