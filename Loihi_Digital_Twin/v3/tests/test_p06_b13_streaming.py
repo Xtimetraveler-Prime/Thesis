@@ -27,7 +27,7 @@ from loihi_twin_v2.p06_b13_streaming import (
 from loihi_twin_v2.p06_input_contract import pixel_spikes, INPUT_TICKS, TOTAL_TICKS
 
 
-def fixture_result(*, hidden=3):
+def fixture_result(*, hidden=3, compartments_per_core=2):
     hi = CompartmentConfig(current_decay=4096, voltage_decay=4096, threshold=2)
     out = CompartmentConfig(current_decay=4096, voltage_decay=4096, threshold=5)
     network = NetworkSpec(
@@ -46,7 +46,7 @@ def fixture_result(*, hidden=3):
         ),),
     )
     return compile_synapse_aware(network, B12Options(
-        readout_population="z", compartments_per_core=2,
+        readout_population="z", compartments_per_core=compartments_per_core,
     ))
 
 
@@ -192,8 +192,11 @@ def test_packet_partial_fanout_duplicate_wrong_route_and_wrong_epoch_rejected():
                              result).events(0))
     full = _packets_from_trace(first)
     assert len(full) == 3
+    # The default fixture has exactly ONE packet per emitting hidden neuron:
+    # a single destination axon expands into both readout compartments.
+    # Dropping a whole one-packet origin is detectable ONLY with source-spike
+    # provenance (tested separately), not with packet payload alone.
     for invalid, pattern in (
-        (full[:-1], "fanout"),
         (full + (full[0],), "fanout"),
         ((replace(full[0], destination_axon=25), *full[1:]), "route table"),
         ((replace(full[0], source_timestep=1), *full[1:]), "NEXT"),
@@ -202,6 +205,17 @@ def test_packet_partial_fanout_duplicate_wrong_route_and_wrong_epoch_rejected():
     ):
         with pytest.raises(B13StreamError, match=pattern):
             encode_packet_frame(result, tuple(invalid), emitted_timestep=0)
+    # A different topology really has 2 destination COREs per hidden source.
+    # Dropping ONE of the two packet routes must now fail even without a trace.
+    split = fixture_result(compartments_per_core=1)
+    split_ingress = decode_ingress_frame(
+        encode_ingress_frame(split, bytes([255] * 784)), split)
+    split_trace = split.compiled.build_chip().step(split_ingress.events(0))
+    split_emitted = _packets_from_trace(split_trace)
+    assert len(split_emitted) == 6
+    with pytest.raises(B13StreamError, match="fanout"):
+        encode_packet_frame(split, split_emitted[:-1], emitted_timestep=0)
+
     original = encode_packet_frame(result, full, emitted_timestep=0)
     modified_tick = bytearray(original)
     struct.pack_into("<I", modified_tick, 128, 2)
