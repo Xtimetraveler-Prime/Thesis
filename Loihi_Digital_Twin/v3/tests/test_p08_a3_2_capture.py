@@ -20,11 +20,18 @@ RUNNER=ROOT/"scripts/run_p08_a3_2_1024.sh"
 
 
 def env_for(tmp_path,mode="A2_1"):
+    """Use sibling stage/build/route/evidence paths, like a valid real run.
+
+    The physical runner intentionally rejects an evidence directory inside
+    its immutable stage. Never weaken that protection to satisfy a fixture.
+    """
+    stage=tmp_path/"stage"
+    stage.mkdir(exist_ok=True)
     return {
         **os.environ,
         "P08_A3_2_VARIANT":mode,
         "P08_A3_2_RUN_DIR":str(tmp_path/"not-created"),
-        "P08_A3_2_STAGE_DIR":str(tmp_path),
+        "P08_A3_2_STAGE_DIR":str(stage),
         "P08_A2_BUILD_DIR":str(tmp_path/"no-a21-build"),
         "P08_A2_2_BUILD_DIR":str(tmp_path/"no-a22-build"),
         "P03_DIAG_REPORTS":str(tmp_path/"no-p03-reports"),
@@ -67,6 +74,31 @@ def test_offline_preflight_can_only_fail_closed_with_missing_artifacts(tmp_path,
     out=call_runner(env)
     assert out.returncode!=0 and "physical dependency missing" in out.stderr
     assert not (tmp_path/"not-created").exists()
+
+
+@pytest.mark.parametrize("mode",["A2_1","A2_2"])
+@pytest.mark.parametrize("source",["stage","build","route"])
+def test_rejects_evidence_inside_immutable_source_before_hardware(tmp_path,mode,source):
+    """Isolation is a real safety property, not a fixture false positive."""
+    env=env_for(tmp_path,mode)
+    parent={
+        "stage":Path(env["P08_A3_2_STAGE_DIR"]),
+        "build":Path(env["P08_A2_BUILD_DIR"] if mode=="A2_1" else env["P08_A2_2_BUILD_DIR"]),
+        "route":Path(env["P03_DIAG_REPORTS"]),
+    }[source]
+    forbidden=parent/"nested-physical-run"
+    env["P08_A3_2_RUN_DIR"]=str(forbidden)
+    # Real physical consent flags must not override source/evidence isolation.
+    env.pop("P08_A3_2_PREFLIGHT_ONLY",None)
+    env.update({
+        "P08_A3_2_CONFIRM_JTAG_ONLY":"YES",
+        "P08_A3_2_CONFIRM_DDR_OVERWRITE":"YES",
+        "P08_A3_2_CONFIRM_TRAIN_VALIDATION_ONLY":"YES",
+    })
+    result=call_runner(env)
+    assert result.returncode!=0
+    assert "must not overlap or live inside stage/build/route artifacts" in result.stderr
+    assert not forbidden.exists()
 
 
 def test_refuses_preexisting_output_before_jtag(tmp_path):
