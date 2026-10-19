@@ -137,9 +137,13 @@ def test_zero_input_silence_tie_and_no_spurious_packets():
 def test_independent_encoder_and_multi_core_all_255_dense_784_to_6_to_10():
     from test_p06_b12_partition import synthetic_dense
     source = synthetic_dense(hidden=6, inputs=784, outputs=10)
+    # Force 3+3 hidden solely by exact synapse pressure while leaving
+    # all ten readout neurons on ONE core. A compartment limit of three
+    # would incorrectly split the readout into four additional cores.
     mapped = compile_synapse_aware(source, B12Options(
-        readout_population="z", compartments_per_core=3))
+        readout_population="z", synapse_bytes_per_core=18000))
     assert mapped.capacity_audit["logical_core_count"] == 3
+    assert [row["compartments"] for row in mapped.capacity_audit["cores"]] == [3, 3, 10]
     schedule = {"pixels": pixel_schedule_independent(bytes([255] * 784))}
     a = run_and_compare(source, mapped, schedule, readout_population="z")
     b = run_and_compare(source, mapped, schedule, readout_population="z",
