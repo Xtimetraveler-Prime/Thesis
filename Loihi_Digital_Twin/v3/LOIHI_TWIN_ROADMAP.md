@@ -1647,7 +1647,7 @@ in the present `compile_network` will
     a trained checkpoint, official TEST, or a physical run.
     See `docs/P06_B2_1_TRAINING_FOUNDATION.md`.
   - **B2.2 — Canonical TRAIN-only fitting
-    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE REVIEW PENDING]:**
+    [USER-ATTESTED REAL TRAIN/VALIDATION CANDIDATE INTEGRITY PASS]:**
     `src/loihi_twin_v2/p06_b22_training.py` and
     `scripts/p06_b22_train.py` implement the **separate B2**
     exact signed24 25+1-tick integer-forward optimizer/trainer
@@ -1667,7 +1667,27 @@ in the present `compile_network` will
     This does NOT mean a real MNIST fit happened, or that
     B2.3 signed/P03/DDR parity, B2.4 freezing, KV260 scaled
     inference or official TEST has been accepted.
-  - **B2.3 — Trained weight/packing/numerical audit [NOT STARTED].**
+  - **B2.3 — Trained weight/packing/numerical audit
+    [NEW READ-ONLY SOURCE/TEST CANDIDATE; USER PC REVIEW PENDING]:**
+    User-attested B2.2 candidate best epoch 6, **97.08% TRAIN-derived
+    validation** (n=10,000), zero silent, candidate file SHA256
+    `93e43915b38cf3c815a125bbab2788e45209f0ccd024d098b25b82a0a8cd0957`
+    and effective signed integer SHA256
+    `4a20357fc5e77465380c1600e7e82cda515bbafc233fb9e3a1205bca9d00d8b0`.
+    `p06_b23_trained_audit.py` requires these exact trained
+    checkpoint identities and exports all 794,000 *trained* integer
+    connections to B1.2. It checks 27 packed logical cores,
+    full P02 backing and event/synapse budgets. Optional
+    `--validation-ordinals` executes full 26-tick trained-dense
+    monolithic vs actual partitioned B1.4 numerical traces and
+    PyTorch signed-integer output equality for selected
+    canonical TRAIN-derived validation images ONLY. Default
+    is structural-only; neither path claims sealed official
+    TEST or scaled KV260 physical execution. Read-only output
+    and negative provenance/ordinal tests in
+    `tests/test_p06_b23_trained_audit.py`. See
+    `docs/P06_B2_3_TRAINED_PACKED_NUMERICAL_AUDIT.md`.
+    All B2.3 native tests and packed/numerical proof are PENDING.
   - **B2.4 — New checkpoint+validation+official protocol freeze
     [NOT STARTED].**
   - **B2.5 — B2 software acceptance / P07-B handoff [NOT STARTED].**
