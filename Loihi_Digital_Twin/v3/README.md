@@ -39,7 +39,32 @@ KV260 within the documented scope; see
 [Phase 5 consolidated acceptance](docs/P05_FINAL_ACCEPTANCE.md)
 and [final direct AXI measurement acceptance](docs/P05_2I_ACCEPTANCE.md).
 
-**P06 — Two-track LIF MNIST research: IN PROGRESS.**
+**P06 — Two-track LIF MNIST research: COMPLETE AT HOST-SOFTWARE
+LEVEL (Track A accepted separately; Track B B1/B2 user-accepted 2026-10-19).**
+
+The active next milestone is **P07-B**, the *new* autonomous
+27-logical-core deployment on the actual KV260 with one P03-compatible
+physical HLS engine and three resident contexts. P06-B1/B2 source and
+documentation were merged onto `main` in PR #46 and PR #47
+(2026-10-19). The new trained Track B network is 784→1000→10,
+794,000 dense source connections, 27 packed cores and 14,155,776 bytes
+of **initial** P02 context backing. Its checkpoint achieved **97.08%
+on 10,000 TRAIN-derived validation images**, not official TEST.
+Three predeclared original TRAIN-derived validation frames passed full
+26-tick host source/PyTorch/partitioned numerical parity. The user's
+original local B2.4 freeze passed both regular and deep SHA verification
+of 33 assets and all 27 initial DDR records; B2.5 host readiness
+was user-attested PASS.
+
+**Physical scaled execution remains NOT TESTED; official Track B MNIST
+TEST remains SEALED.** B1.3's multiple-input streaming ABI and B1.5's
+three-slot cache are host contracts/models, NOT a firmware implementation
+of 27-core PS/PL scheduling. P07-B will require a separate real board
+deployment and physical numerical acceptance. See
+[`P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md`](docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md)
+and the [new-chat P07-B seed](docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md).
+
+**Historical P06 research direction (retained below for provenance):**
 Published foundation: Eshraghian et al. (2023)
 and the author's snnTorch MNIST LIF tutorial
 (methodology, **not** a proven pretrained
@@ -86,13 +111,14 @@ to be recorded in the P07 loading manifest. See
 [frozen Track A manifest](docs/P06_TRACK_A_SOFTWARE_BENCHMARK_FREEZE.json),
 and [sealed official-test protocol](docs/P06_TRACK_A_OFFICIAL_TEST_PROTOCOL.md).
 
-**P07 is next:** the accepted P05 diagnostic A53 ABI accepts only
-one external input axon per logical core. It does **not** perform
-the 784-axon, 25+1-timestep, fresh-state-per-image inference needed
-for autonomous FPGA MNIST. P07 must implement and independently
-validate that separate versioned A53 streaming interface before
-unsealing the official test. No P07 FPGA MNIST, P08 power, or
-original Loihi silicon performance is claimed.
+**Historical P07-A plan (already completed):** This was written
+before P07-A/P08-A native physical acceptance. The accepted compact
+Track A single-core FPGA MNIST result reached **94.56% on official
+TEST** on the KV260, with separately accepted physical P08-A baseline.
+**Do not re-open Track A's official TEST or confuse that result with
+the new Track B validation 97.08%.** The outstanding P07-B challenge is
+instead the **27-core** A53 multi-ingress/multi-context runtime, which
+the old P05 single-external-axon diagnostic ABI cannot implement.
 
 **Official sequential development plan:**
 
@@ -112,35 +138,23 @@ predictions and accuracy; P08-A:
 full-system latency/throughput/
 board energy baseline.
 
-**Track B — Larger virtualized
-classifier SECOND, only after P08-A.**
-Target **784→1000→10**, roughly **27
-logical DDR-backed contexts**
-(26 hidden shards + 1 output,
-a **hypothesis** not an accepted
-resource-aware map), using the
-same 3 resident contexts and one
-physical engine. P06-B1: new
-**synapse-aware destination partitioner**
-and full-core resource/route/paging
-feasibility; P06-B2: separately trained
-and frozen scaled checkpoint; P07-B:
-actual multi-context autonomous
-FPGA classification; P08-B:
-measure real routing/page-in/out
-overhead, latency, energy and
-classification tradeoffs. Do not
-assume increasing the
-`max_logical_cores` option alone
-will partition the network; the
-present compiler partitions
-compartments first and fails
-on synapse-memory oversubscription.
-Current A53 P05 event manifest
-also permits only one registered
-external input axon/core and
-must be extended before either
-full classifier physically runs.
+**Track B — Larger virtualized classifier HOST SOFTWARE COMPLETE.**
+P06-B1.1–B1.6 delivered independently tested 27-core synapse-aware
+packing, fail-closed capacities, source-preserving multi-core ingress
+and NEXT routing contracts, independent numerical oracles and a
+three-resident-slot **modeled** paging policy. B2.1–B2.5 delivered
+the real project-trained 784→1000→10 signed24 checkpoint,
+full 794,000-connection packed mapping, trained-dense host
+numerical checks, byte-frozen 27 initial P02 contexts,
+sealed official TEST protocol and a host-only P07-B handoff.
+See [roadmap](LOIHI_TWIN_ROADMAP.md).
+
+**P07-B / P08-B NEXT:** Implement the real scaled 27-core
+A53/PL ingress, barrier, routing and dirty-page runtime on
+KV260, independently compare actual board neuron states
+and spikes to the accepted software oracle; then measure
+physical page traffic, latency, throughput and energy.
+Do not equate B1.5 host byte estimates with physical measurements.
 
 **Experimental claim boundary:**
 Both checkpoints are **our trained
@@ -158,8 +172,9 @@ excluded. Archived Rao/AHP
 source research is retained
 but is **not** a prerequisite
 for the chosen LIF paths.
-No official MNIST test-set
-evaluation has happened.
+Track A's separately frozen official MNIST TEST evaluation was
+accepted physically at **94.56%**. No official MNIST TEST
+evaluation for the **Track B 1000-hidden model** has occurred.
 
 [**Complete compact-first, scaled-second plan**](docs/P06_TWO_TRACK_LIF_PLAN.md)
 |
@@ -171,7 +186,10 @@ evaluation has happened.
 |
 [Original Rao source research (unselected)](docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md).
 
-**P07–P09 — Pending; staged A then B as specified above.**
+**P07-A/P08-A accepted; P07-B next (NOT physically implemented);
+P08-B/P09 pending.** The old Track A paragraphs above include
+historical forward-looking statements. Current authoritative phase
+status is the [v3 roadmap](LOIHI_TWIN_ROADMAP.md).
 
 The implementation code is intentionally copied from v2 before architectural changes begin. Therefore some inherited package names, scripts, comments, and documentation still contain `v2` identifiers. Those names are compatibility artifacts of the baseline copy and should only be renamed deliberately with regression coverage.
 
