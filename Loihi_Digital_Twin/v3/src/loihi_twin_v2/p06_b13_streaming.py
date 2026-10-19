@@ -297,9 +297,16 @@ def decode_packet_frame(raw: bytes, result: B12Result,
                                 source_timestep=tick)
                     for target_tick, source_core, source_comp, dest_core, dest_axon
                     in struct.iter_unpack(_PACKET, payload))
-    if tuple(sorted(decoded, key=lambda p: p.logical_key)) != decoded:
+    # Validate the decoded packet's NEXT epoch, registered route and full
+    # source fanout *before* checking canonical transport order. Mutating a
+    # target epoch or destination may also alter its logical sort position;
+    # report the actual semantic violation instead of hiding it behind a
+    # secondary ordering error. Reordering otherwise-valid packets still
+    # fails closed below.
+    normalized = _validate_packet_set(decoded, tick, compiled)
+    if normalized != decoded:
         raise B13StreamError("noncanonical B1.3 packet frame order")
-    return _validate_packet_set(decoded, tick, compiled)
+    return normalized
 
 
 @dataclass(frozen=True, slots=True)
