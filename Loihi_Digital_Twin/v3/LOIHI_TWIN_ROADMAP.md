@@ -1465,13 +1465,13 @@ physical acceptance.
 
 ### Track B — Larger DDR-virtualized 784→1000→10
 
-**Research target, not frozen or mapped:**
+**B1 user-verified synthetic feasibility; B2 trained checkpoint not yet frozen:**
 **794,000** possible dense synapses;
 approximately **26 destination-partitioned
 hidden logical cores plus 1 readout core** is
-only a **~27-core planning hypothesis**,
-not compiler acceptance or a guaranteed
-optimal partition. At 27 full 512 KiB DDR
+**now demonstrated structurally by the B1.2 user-verified
+host-only synthetic dense mapper (27 cores)**,
+not a guaranteed globally optimal partition or physical board run. At 27 full 512 KiB DDR
 records, backing usage is **13.5 MiB**;
 up to 126 logical core IDs are addressable
 by the accepted P05 A53 diagnostic deployment
@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [NEXT — P08-A LATENCY-ONLY GATE SATISFIED; NOT YET IMPLEMENTED].**
+  route semantics [COMPLETE — B1.1–B1.5 USER-ATTESTED NATIVE PASS; B1.6 HOST-SOFTWARE ACCEPTANCE SIGNED OFF 2026-10-19; NO SCALED PHYSICAL RUN].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1505,9 +1505,121 @@ in the present `compile_network` will
   and estimated throughput. Model
   a worst-case all-255 timestep
   without overflowing per-core banks.
+  - **B1.1 — Packed capacity audit [USER-ATTESTED NATIVE PASS]:**
+    Accepted on user report before beginning B1.2. See
+    `docs/P06_B1_1_PACKED_CAPACITY_CONTRACT.md`; this did
+    not imply scaled partition or physical KV260 deployment.
+  - **B1.2 — Deterministic synapse-aware destination mapper
+    [USER-ATTESTED NATIVE PASS, INCLUDING FULL 784→1000→10
+    SYNTHETIC 27-CORE STRUCTURAL PROBE]:** New opt-in
+    `src/loihi_twin_v2/p06_b12_partition.py` and
+    `tests/test_p06_b12_partition.py` plus reproducible synthetic
+    `scripts/p06_b12_synthetic_probe.py` reuse accepted P06
+    source/deployment contracts, P03 packing, P02 512 KiB images,
+    and B1.1 limit/CRC audit. They do NOT modify the accepted
+    P06-A `compile_network` or change Track A checkpoints.
+    Require user native acceptance of default synthetic numerical,
+    source-edge decoding, deterministic placement, fail-closed capacity
+    tests and the opt-in 784→1000→10 structural probe. The user
+    reported PASS for the regressions, opt-in full test and both
+    synthetic resource probes: 27 logical cores, 26 hidden partitions,
+    794,000 connections, 14,155,776 source-derived backing bytes,
+    maximum 128,576 logical synapse bytes and 1,000 CURRENT event
+    pressure/core. This is *synthetic feasibility*, NOT an accepted
+    trained checkpoint, scaled physical hardware paging or firmware.
+    See `docs/P06_B1_2_SYNAPSE_AWARE_PARTITION.md`.
+  - **B1.3 — Versioned 784-channel multi-core ingress / NEXT packet ABI
+    [USER-ATTESTED NATIVE REGRESSION PASS, INCLUDING FOLLOW-UP ORDERING FIX]:**
+    Distinct `P06B13I1` binary image + per-destination `<HHH`
+    map and `P06B13R1` routed packet frames. Each uses 128-byte
+    SHA256-bound deployment/DDR-audit header and independent CRC32.
+    Enforces real mapped core/axon pairs, 25+1 tick input schedule,
+    per-core CURRENT/NEXT event ≤4096 and emitted packet ≤4096,
+    complete source fanout, transactional rejection, source-spike
+    provenance (when available) and zero outgoing packets at the
+    final drain tick. Independent all-255 26-tick, corruption,
+    overflow and opt-in full 27-core fanout structural tests added.
+    Source: `src/loihi_twin_v2/p06_b13_streaming.py`;
+    documentation: `docs/P06_B1_3_MULTICORE_STREAMING_ABI.md`.
+    Old P05 single-axon diagnostic firmware is NOT compatible.
+    This does **not** implement the new A53/PL packet streaming
+    firmware or claim a physical multi-core run. Native B1.3 tests
+    initially exposed two error-reporting assertions; the packet
+    decoder was corrected to check NEXT/route/fanout before canonical
+    ordering, an independent reordered-frame test was added and the
+    user subsequently verified all B1.3 tests/regressions PASS.
+  - **B1.4 — Independent 26-tick monolithic integer oracle
+    [USER-ATTESTED NATIVE PASS, INCLUDING LARGER OPTIONAL NUMERICAL PROBES]:**
+    `src/loihi_twin_v2/p06_b14_monolithic.py` builds a flat
+    original `NetworkSpec` event/connection graph and uses the
+    independently accepted P06-A scalar signed-24-bit LIF oracle,
+    NEVER `LogicalChip`/`step_compartment`/packed templates, to
+    compute 26 full compartment-state/synaptic-input/spike epochs,
+    readout counts/class and SHA-bound traces.
+    `p06_b14_differential.py` checks every named original neuron
+    across production B1.2 core placements, independent original
+    graph external/NEXT routing groups and earliest divergence,
+    under different valid core scheduling/drain orders. New tests
+    cover independently encoded image events, manual signed LIF,
+    fractional decay/refractory, fixed-seed randomized signed
+    weights, saturation, silence/tie, malformed schedules, dropped
+    final-drain packets, and deliberately corrupted state/synapse/
+    packet witnesses. Host-only synthetic probes cover dense
+    784→6→10, optional dense 784→40→10, and optional **SPARSE**
+    784→1000→10 / 27-core 26-tick numerical networks. The
+    last is NOT a dense 794,000-synapse numerical or physical result.
+    See `docs/P06_B1_4_INDEPENDENT_NUMERICAL_ORACLE.md`.
+  - **B1.5 — Three-resident-slot / one-engine host paging model
+    [USER-ATTESTED NATIVE PASS, INCLUDING DENSE27 STRUCTURAL + SPARSE27 NUMERICAL]:**
+    `src/loihi_twin_v2/p06_b15_paging.py` reuses original
+    P08 `PagedHardwareImage.resident_page` and B1.1's
+    exact P03/P02 512 KiB initial SHA ledger to verify
+    logical-core/physical-slot identity at every dispatch.
+    It models deterministic LRU hits/dirty evictions, 26
+    barriers, all CURRENT inputs plus prior routed NEXT packets,
+    per-core 4096 event/packet budget, resident/nonresident-at-emission
+    packet classification and mandatory final dirty-slot flush.
+    Its numerical path checks every simulated page-ordered core trace
+    against the independent B1.4 full 26-tick oracle; an independent
+    `project_schedule_only` estimates 27-core **DENSE**
+    traffic without falsely claiming dense 794k-edge numerical
+    execution. P05.2i's **physically measured** page sizes
+    (438,272 full-in / 106,496 mutable-out; 256-byte AXI bursts)
+    are applied to **unmeasured scaled scheduling hypotheses**:
+    27-core 26-tick ascending policy = 702 dispatches,
+    702 page-ins/outs and **382,427,136 ESTIMATED** page-engine
+    bytes; alternating service order predicts 627 page-ins/outs
+    and **341,569,536 ESTIMATED** bytes. The user separately
+    verified both structural orders and the sparse 27-core
+    numerical parity; the dense 794k-edge network still has
+    **no full 26-tick numerical acceptance**.
+    No actual scaled cache/DDR images, A53 firmware, PL timing,
+    physical total bytes, speedup or energy asserted.
+    New `tests/test_p06_b15_paging.py` includes an
+    independent re-computation of actual P05.2i five-core
+    measured 43,581,440-byte accounting, LRU edge cases,
+    numerical scheduling-order parity, and opt-in dense-27
+    structural plus sparse-27 numerical stress.
+    Full details: `docs/P06_B1_5_THREE_SLOT_PAGING_ESTIMATE.md`.
+  - **B1.6 — B1 host-software acceptance [CLOSED 2026-10-19]:**
+    User-attested B1.1–B1.5 source, independent numeric,
+    dense 27-core exact packing and sparse 27-core real-numeric
+    evidence pinned in
+    `docs/P06_B1_6_USER_ACCEPTANCE_LEDGER.json` and
+    `docs/P06_B1_6_FINAL_HOST_SOFTWARE_ACCEPTANCE.md`.
+    The posted dense alternating report recorded 702
+    dispatches, 75 page hits, 627 full ins, 627 dirty outs,
+    **341,569,536 estimated** bytes and zero physical scaled
+    measurements. Sparse27 separately reported
+    `algorithmic_neural_parity=true` for 26 ticks and
+    25,000 routed packets; old P05 original physical page
+    transfer *sizes* remain the only real page traffic
+    measurements. **GO B2 training/validation candidate; NO-GO
+    scaled physical KV260 / official TEST** until separate P07-B.
+    The user has NOT authorized merging draft PR #46.
 - **P06-B2 — Train, quantize and freeze
-  independent larger checkpoint [PENDING
-  INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
+  independent larger checkpoint [B1 SOFTWARE GATE COMPLETE;
+  B2 IN DEVELOPMENT ON A SEPARATE STACKED BRANCH].** Keep the same
   deterministic 25+1-step event/input,
   neuron/readout and dataset split;
   train a new project large-model
@@ -1521,13 +1633,13 @@ in the present `compile_network` will
   model *before* accessing test results;
   do not silently relabel the model.
 
-**Track B P06 exit:** a separately
+**Track B P06 exit (NOT YET SATISFIED BY B1 ALONE):** a separately
 audited, real trained *project*
 checkpoint mapped with real 128 KiB/
 32,768-entry bounds and independently
 verified event/packet/state semantics.
 No scaled KV260 claims until P07-B.
-**Track A P07/P08-A latency-only acceptance gate is now satisfied.** Proceed with P06-B1 on a **new branch**, independently validating a deterministic synapse-aware partitioner before P06-B2 training. Leave all accepted Track A source/artifacts frozen.
+**Track A P07/P08-A latency-only gate and B1 host-software acceptance are satisfied.** Proceed with independent P06-B2 train/validation-only checkpoint development; leave all accepted Track A source, weights and evidence frozen and do not merge B1 draft PR #46 without explicit permission.
 
 ### Archived alternate source audit
 

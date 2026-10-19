@@ -1,0 +1,53 @@
+{
+  "schema": "p06-b1.6-user-attested-acceptance-v1",
+  "status": "B1_HOST_SOFTWARE_ACCEPTED_NO_SCALED_FPGA_RUN",
+  "decision_date": "2026-10-19",
+  "verification_source": "user-native-PC-terminal-reports-in-project-chat; not GitHub CI or agent-run tests",
+  "source_branch": "agent/v3-p06-b1-scalable-packing",
+  "merge_authorized": false,
+  "subgates": {
+    "B1.1": "USER_ATTESTED_PASS",
+    "B1.2": "USER_ATTESTED_PASS_FULL_DENSE_SYNTHETIC_STRUCTURE",
+    "B1.3": "USER_ATTESTED_PASS_AFTER_PACKET_DECODER_FIX",
+    "B1.4": "USER_ATTESTED_PASS_INDEPENDENT_NUMERICAL_ORACLE",
+    "B1.5": "USER_ATTESTED_PASS_DENSE_PAGING_ESTIMATE_AND_SPARSE27_NUMERICS"
+  },
+  "dense_synthetic_plan": {
+    "shape": [784,1000,10],
+    "dense_connections": 794000,
+    "logical_cores": 27,
+    "hidden_partition_sizes": [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,25],
+    "readout_core_id": 26,
+    "full_ddr_backing_bytes": 14155776,
+    "max_logical_synapse_bytes_per_core": 128576,
+    "max_current_events_per_core": 1000,
+    "max_emitted_packets_per_core": 39,
+    "source_fingerprint": "d51d0f2b2e6e20b48fed26275770d089bbc53b704477f644c189e16adf3db411",
+    "deployment_sha256": "8374278ca10c7e1a0e1b8a681ae4ecadadc43eab145697316becca75f2cef3cd",
+    "b1_capacity_audit_sha256": "4bc14954d43c67b0ce5bc92961b20c302674630e6c5a8c33e61d16373007406f"
+  },
+  "dense27_paging_estimates_not_physical": {
+    "per_page_in_bytes_p05_measured_reference": 438272,
+    "per_mutable_page_out_bytes_p05_measured_reference": 106496,
+    "ascending": {"dispatches":702,"page_ins":702,"mutable_page_outs":702,"estimated_page_engine_bytes":382427136},
+    "alternating": {"dispatches":702,"page_ins":627,"page_hits":75,"mutable_page_outs":627,"estimated_page_engine_bytes":341569536,"schedule_sha256":"87299577b72aa9e97ce67de2f2bde847c0cf6b5bd935b43915b5dd55f1f41ffb"}
+  },
+  "sparse27_numerical_user_report": {
+    "source_fingerprint": "58ca4c24ebea36b146093d563fce6e3fd3204585ccc1598a5c34d31943813e43",
+    "deployment_sha256": "f7fc0cc85fa83e00c71f605eb384026dd39ed59da71beab3cc1a518a36d5ed7d",
+    "capacity_audit_sha256": "4c374b48d035ce98040bea45b7f284ca9564b80ccd9fa8c69a5f9b97483c1bff",
+    "independent_monolithic_trace_sha256": "fb09cf827c730516355062bd51bfdcbf11127b9e7963244105c46ea3fd3a3c86",
+    "partitioned_trace_sha256": "48d719b3a8de9170ac558d3228ceca0421bb5e014f16f925a4e0d96221d1fda5",
+    "algorithmic_neural_parity": true,
+    "logical_ticks": 26,
+    "routed_packet_events": 25000,
+    "estimated_page_engine_bytes": 382427136,
+    "physical_kv260_execution": "NOT_TESTED"
+  },
+  "sealed_official_test": "NOT_ACCESSED_BY_B1",
+  "trained_large_checkpoint": "NOT_YET_TRAINED_B2",
+  "full_dense_794k_26_tick_numerical_execution": "NOT_CLAIMED",
+  "scaled_p07_b_a53_firmware": "NOT_IMPLEMENTED",
+  "scaled_physical_page_traffic_and_latency": "NOT_MEASURED",
+  "mutable_ddr_runtime_bytes_materialized": false
+}
