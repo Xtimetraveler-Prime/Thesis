@@ -137,7 +137,7 @@ Replace **the placeholder file** with the exact filename obtained from `find` be
 ## 7. Boundaries for final P08-A closeout
 
 - **A3 complete at physical descriptive level** (six real sessions on the same first1024 validation images), subject to user-local raw SHA256 sealing and explicit acknowledgment.
-- **A5 source candidate implemented but not physically CPU measured**. User-local host parity/timing gates and human-readable final report must be completed and inspected.
+- **A5 physical-backed host CPU benchmark and human-readable closeout candidate generated (user-attested PASS)**. Two CPU endpoints and six physical sessions were bound to the original TRAIN stage, with reported CPU/physical report SHA256s, numerical-oracle PASS and source parity PASS. **Final human approval and corrected native pytest suite result still pending documentation; no PR merge until explicit authorization.**
 - The final report must not confuse **Python scalar host performance** with optimized native CPU performance or the **A53-controlled FPGA full service** with bare PL neural compute. Any comparative latency figures need clear scope qualifiers. Pure PL seconds/speedup require accepted PL achieved Hz first; this A5 candidate does not claim them.
 - **Power/energy P08-A4 remain deferred** by user. Original P07 official 10k TEST accuracy is historical and not rerun in this experiment.
 - Only upon explicit user review/acceptance of the 2 CPU endpoints, numeric parity, source hashes and limitations may we mark latency-only P08-A closed and merge PR #45. Never merge automatically.
