@@ -101,10 +101,12 @@ def _fixtures():
 
 
 def _review(*source):
+    manifest, protocol, b23, packed, verified = source
     return review_freeze_documents(
-        *source,
+        manifest, protocol, b23, packed,
         canonical_hash=PINNED_B24_CANONICAL_MANIFEST_SHA256,
         file_hash=PINNED_B24_MANIFEST_FILE_SHA256,
+        verified=verified,
     )
 
 
