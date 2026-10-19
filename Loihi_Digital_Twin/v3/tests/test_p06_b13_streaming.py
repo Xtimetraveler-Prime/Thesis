@@ -250,6 +250,30 @@ def test_declared_firing_source_prevents_total_packet_group_omission():
     assert guard.current_tick == 0
 
 
+def test_packet_decoder_rejects_reordered_but_otherwise_valid_frame():
+    """Keep the wire's canonical order check after semantic validation.
+
+    Both packets are unchanged valid routes at the correct NEXT epoch;
+    only their record order changes, with CRC32s recomputed. This
+    distinguishes ordering enforcement from the semantic rejection in
+    the mutated NEXT-tick and destination-axon regressions.
+    """
+    result = fixture_result()
+    envelope = decode_ingress_frame(
+        encode_ingress_frame(result, bytes([255] * 784)), result)
+    trace = result.compiled.build_chip().step(envelope.events(0))
+    canonical = encode_packet_frame(
+        result, _packets_from_trace(trace), emitted_timestep=0)
+    assert len(canonical) == B13_HEADER_BYTES + 3 * 12
+    unsorted = bytearray(canonical)
+    first = canonical[B13_HEADER_BYTES:B13_HEADER_BYTES + 12]
+    second = canonical[B13_HEADER_BYTES + 12:B13_HEADER_BYTES + 24]
+    unsorted[B13_HEADER_BYTES:B13_HEADER_BYTES + 12] = second
+    unsorted[B13_HEADER_BYTES + 12:B13_HEADER_BYTES + 24] = first
+    with pytest.raises(B13StreamError, match="noncanonical B1.3 packet frame order"):
+        decode_packet_frame(rechecksum(bytes(unsorted)), result, emitted_timestep=0)
+
+
 def test_packet_header_crc_payload_crc_and_unknown_destination_are_rejected():
     result = fixture_result()
     full = _packets_from_trace(result.compiled.build_chip().step(
