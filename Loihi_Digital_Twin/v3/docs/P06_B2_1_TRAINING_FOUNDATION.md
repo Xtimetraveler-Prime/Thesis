@@ -1,6 +1,6 @@
 # P06-B2.1 — Independent scaled training foundation (NOT TRAINED)
 
-Status: B1 host-software gates B1.1–B1.6 **CLOSED, user-attested on 2026-10-19**. B2.1 **code and synthetic numerical tests committed; native user verification PENDING**. Source branch: agent/v3-p06-b2-training-foundation, stacked on B1 closeout (draft PR #46 still unmerged).
+Status: B1 host-software gates B1.1–B1.6 **CLOSED, user-attested on 2026-10-19**. B2.1 **USER-ATTESTED NATIVE PASS**, including default regressions and the opt-in full 1000-neuron dense packed structure. Source branch: agent/v3-p06-b2-training-foundation, stacked on B1 closeout (draft PR #46 still unmerged).
 
 ## B2 research identity, experiment boundaries
 
@@ -20,6 +20,34 @@ The frozen Track A IntegerForwardSNN and compact_to_compiler_spec hard-code hidd
 Independent tests in tests/test_p06_b21_training_foundation.py check new width/seed identity without Track A mutation; strict unsigned-byte inputs and negative/signed24/nonfinite guards; finite surrogate gradients; independent 26-tick source graph monolithic LIF readout counts equal PyTorch integer-forward for signed seeded samples; B1.2 exact packed resource fit, source/packet parity; rejection of synthetic/noncanonical splits. Optional full 1000-hidden graph export/packing is a resource-intensive UNTRAINED synthetic structure gate.
 
 scripts/p06_b21_foundation_probe.py runs small integer-forward and independent oracle parity, optional full B1.2 packing, and always prints B2 training NOT_STARTED / official TEST SEALED.
+
+## B2.1 user-native acceptance evidence (2026-10-19)
+
+The user supplied the full `--hidden 40 --pack` probe report with
+`P06_B21_TRAINING_FOUNDATION_PASS=1`, independent single-frame
+`numerical_parity=PASS_SYNTHETIC_SINGLE_FRAME`, 3 logical cores,
+31,760 connections, B1.2 capacity audit SHA256
+`c146e7237638b5f0fce6af79c81d01ce0c03918e7db1c9c247782d8f56ee6dbd`,
+and no training/TEST/physical run.
+
+The user separately ran the opt-in full **784→1000→10** source export/
+packed structural test with pytest PASS and the H=1000 seeded (UNTRAINED)
+probe, reporting **794,000 connections, 27 logical cores,
+14,155,776 DDR backing bytes**, distinct new B2 seeded source fingerprint
+`4c6dd1290835330f7c5f498c4544810d83c1f571106ced45a220798685bc09ca`,
+packed deployment SHA256
+`cea3666ef9d3c7600d6fa07ff27a16fe92ebe8e5941e23b39328e78e783c4c2a`,
+capacity audit SHA256
+`f8b511e6f6cb6d3596331ac4b479670708d1f1c2a8374543fb65186481c87722`,
+and seeded integer tensor SHA256
+`319383aa79dbebf1089449bece3524f5c80c4370be191623b995281bdf3f27e7`.
+These are user-reported values; the agent has not recomputed locally
+generated raw output files. **H=1000 training, B2.2 validation scores
+and B2.3 trained P03 parity remain pending.**
+
+The B2.2 separate training workflow source/tests are now implemented as
+a new **pending native acceptance** gate:
+`docs/P06_B2_2_CANONICAL_TRAIN_ONLY_CANDIDATE.md`.
 
 ## Future B2 user-gated stages
 
