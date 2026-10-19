@@ -13,7 +13,7 @@ input/neural sources by destination core. It then de-duplicates destination
 synapse templates and checks logical capacities. A core with 40 destination
 hidden neurons and 784 distinct input sources would have 31,360 stored
 synapse words *plus* 784 headers and 784 input-axon bindings: under the
-32,768-word bank, but **137,728 > 131,072 logical synapse bytes**.
+32,768-word bank, but **131,712 > 131,072 logical synapse bytes**.
 Increasing `max_logical_cores` does not fix that placement decision.
 
 P06-B1.1 adds an **opt-in post-compiler capacity and real packed-image audit**,
@@ -71,7 +71,7 @@ outstanding packet-buffer scheduling belong to B1.3.
 784-input hidden partitions using 784 separate source template headers and
 784 bindings per destination core, 39 hidden neurons require
 `4 * (784*39 + 784 + 784) = 128,576` logical bytes, whereas 40 require
-`137,728`. Thus 1,000 hidden neurons would require **at least 26
+`131,712`. Thus 1,000 hidden neurons would require **at least 26
 destination partitions** under that explicit representation. This alone does
 **not** prove 26 hidden cores + 1 readout fits all route/event/paging/buffering
 limits. A future algorithm and complete source/weight graph check are needed.
