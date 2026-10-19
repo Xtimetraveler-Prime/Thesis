@@ -285,6 +285,8 @@ def decode_packet_frame(raw: bytes, result: B12Result,
         audit_sha=result.capacity_audit["audit_sha256"])
     (_v, _h, byte_count, tick, count, core_count, entry_bytes,
      per_core_limit, reserved_a, reserved_b, *_rest) = fields
+    if count > core_count * MAX_PACKETS_PER_BANK:
+        raise B13StreamError("B1.3 frame exceeds aggregate physical packet-bank envelope")
     if (tick != emitted_timestep or core_count != len(compiled.logical_deployment.core_configs)
             or entry_bytes != B13_PACKET_ENTRY_BYTES or per_core_limit != MAX_PACKETS_PER_BANK
             or reserved_a or reserved_b or byte_count != count * B13_PACKET_ENTRY_BYTES):
@@ -333,11 +335,35 @@ class StreamingEpochGuard:
         self._pending: tuple[SpikePacket, ...] = ()
         self._core_count = len(self._compiled.logical_deployment.core_configs)
 
-    def step(self, packet_frame: bytes) -> EpochReceipt:
+    def step(
+        self, packet_frame: bytes, *,
+        source_spikes: tuple[tuple[int, int], ...] | None = None,
+    ) -> EpochReceipt:
+        """Commit one epoch only after all packet, bank and optional spike checks.
+
+        source_spikes is the genuine trace-level set of emitting compartments
+        per core, when available. Without it an entirely missing source group
+        cannot be distinguished from a silent neuron using packets alone.
+        """
         tick = self.current_tick
         if tick >= TOTAL_TICKS:
             raise B13StreamError("26-tick inference already completed; reset for new image")
         emitted = decode_packet_frame(packet_frame, self._result, emitted_timestep=tick)
+        if source_spikes is not None:
+            routes, _ = _output_routes(self._compiled)
+            available = {(core.core_id, neuron)
+                         for core in self._compiled.logical_deployment.core_configs
+                         for neuron in range(len(core.compartments))}
+            if (not isinstance(source_spikes, tuple)
+                    or any(type(c) is not int or type(n) is not int
+                           for c, n in source_spikes)
+                    or len(set(source_spikes)) != len(source_spikes)
+                    or not set(source_spikes) <= available):
+                raise B13StreamError("invalid or duplicate source spike provenance")
+            expected_origins = {origin for origin in source_spikes if routes.get(origin)}
+            received_origins = {(p.source_core, p.source_compartment) for p in emitted}
+            if expected_origins != received_origins:
+                raise B13StreamError("source spike provenance detects missing or spurious packet fanout")
         incoming = self.ingress.events(tick)
         current = tuple(sorted((*incoming, *self._pending), key=lambda p: p.logical_key))
         current_counts = Counter(p.destination_core for p in current)
