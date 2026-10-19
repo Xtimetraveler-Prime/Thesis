@@ -1,7 +1,7 @@
 {
   "schema": "p06-b2.5-user-attested-host-software-evidence-ledger-v1",
   "source": "PC native command output supplied in project chat on 2026-10-19; original raw checkpoint/DDR data are local and gitignored",
-  "status": "B2_4_USER_ATTESTED_NATIVE_VERIFICATION_PASS_B2_5_HOST_GATE_PENDING",
+  "status": "B2_1_THROUGH_B2_5_USER_ATTESTED_HOST_SOFTWARE_PASS_MERGE_AUTHORIZED",
   "B2_4_original_freeze_status_field": "HOST_FROZEN_CANDIDATE_PENDING_NATIVE_ACCEPTANCE",
   "B2_4_user_reported_host_acceptance": true,
   "B2_4_frozen_manifest_internal_canonical_sha256": "d01ccd2d5a85b22f81580cd7800933642e19d1a43e8a2f38eac1f6c4d83cab90",
@@ -22,10 +22,18 @@
     "all_27_initial_p02_contexts_rebuilt": true
   },
   "trained_identity": {
-    "architecture": [784, 1000, 10],
+    "architecture": [
+      784,
+      1000,
+      10
+    ],
     "full_dense_original_source_connections": 794000,
     "best_epoch": 6,
-    "train_derived_validation": {"images": 10000, "accuracy": 0.9708, "all_silent": 0},
+    "train_derived_validation": {
+      "images": 10000,
+      "accuracy": 0.9708,
+      "all_silent": 0
+    },
     "state_dict_file_sha256": "93e43915b38cf3c815a125bbab2788e45209f0ccd024d098b25b82a0a8cd0957",
     "effective_integer_weights_sha256": "4a20357fc5e77465380c1600e7e82cda515bbafc233fb9e3a1205bca9d00d8b0",
     "trained_source_network_sha256": "0a3ec838a9f95a73de118e37f31d596bf38e63cd8cf82e6f5c9d0dd48b22797a",
@@ -33,8 +41,16 @@
     "packed_capacity_audit_sha256": "82e9e6c11264c6092dbe94f17496332fae303ac9ef7dfaa01d0ec441869a9498"
   },
   "B2_3_trained_dense_numerical_user_verified": {
-    "canonical_train_derived_validation_ordinals": [0, 1, 2],
-    "original_train_indices": [37384, 27347, 20178],
+    "canonical_train_derived_validation_ordinals": [
+      0,
+      1,
+      2
+    ],
+    "original_train_indices": [
+      37384,
+      27347,
+      20178
+    ],
     "logical_ticks_each": 26,
     "full_monolithic_partitioned_neuron_state_and_routing_parity": true,
     "PyTorch_integer_forward_readout_parity": true
@@ -43,7 +59,9 @@
   "physical_scaled_27core_KV260": "NOT_TESTED",
   "scaled_KV260_physical_page_traffic_latency_energy": "NOT_MEASURED",
   "runtime_mutable_DDR_image_dump": "NOT_CAPTURED",
-  "B2_5_PC_native_gate": "PENDING_USER_VERIFICATION",
-  "source_integration": "B1_PR_46_DRAFT_UNMERGED_AND_B2_PR_47_STACKED_DRAFT_UNMERGED",
-  "merge_authorized": false
+  "B2_5_PC_native_gate": "USER_REPORTED_ALL_TESTS_AND_HANDOFF_COMMANDS_PASSED_2026_10_19_NO_RAW_B25_STDOUT_PROVIDED",
+  "source_integration": "B1_PR_46_AND_B2_PR_47_MERGE_AUTHORIZED_VERIFY_ACTUAL_MERGE_RECORD_SEPARATELY",
+  "merge_authorized": true,
+  "B2_5_native_results_source": "User says 'everything passed' on 2026-10-19; B2.5 exact output is not pasted, so do not invent test count or B2.5 report-file SHA.",
+  "merge_authorization_source": "2026-10-19 user explicitly said 'lets merge' after B2.5 passed"
 }
