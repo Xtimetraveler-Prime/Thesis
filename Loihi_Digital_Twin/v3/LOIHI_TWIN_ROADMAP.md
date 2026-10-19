@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [IN PROGRESS — B1.1 USER-ATTESTED NATIVE PASS; B1.2 SYNAPSE-AWARE SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
+  route semantics [IN PROGRESS — B1.1 + B1.2 USER-ATTESTED NATIVE PASS; B1.3 MULTICORE STREAMING ABI SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1510,8 +1510,8 @@ in the present `compile_network` will
     `docs/P06_B1_1_PACKED_CAPACITY_CONTRACT.md`; this did
     not imply scaled partition or physical KV260 deployment.
   - **B1.2 — Deterministic synapse-aware destination mapper
-    [DEVELOPMENT SOURCE + SYNTHETIC TESTS COMMITTED; NATIVE USER
-    VERIFICATION PENDING]:** New opt-in
+    [USER-ATTESTED NATIVE PASS, INCLUDING FULL 784→1000→10
+    SYNTHETIC 27-CORE STRUCTURAL PROBE]:** New opt-in
     `src/loihi_twin_v2/p06_b12_partition.py` and
     `tests/test_p06_b12_partition.py` plus reproducible synthetic
     `scripts/p06_b12_synthetic_probe.py` reuse accepted P06
@@ -1520,10 +1520,30 @@ in the present `compile_network` will
     P06-A `compile_network` or change Track A checkpoints.
     Require user native acceptance of default synthetic numerical,
     source-edge decoding, deterministic placement, fail-closed capacity
-    tests and the opt-in 784→1000→10 structural probe. This remains
-    *synthetic feasibility*, not trained checkpoint, P07-B physical
-    paging, or a B1.3-compatible multi-core ingress ABI.
+    tests and the opt-in 784→1000→10 structural probe. The user
+    reported PASS for the regressions, opt-in full test and both
+    synthetic resource probes: 27 logical cores, 26 hidden partitions,
+    794,000 connections, 14,155,776 source-derived backing bytes,
+    maximum 128,576 logical synapse bytes and 1,000 CURRENT event
+    pressure/core. This is *synthetic feasibility*, NOT an accepted
+    trained checkpoint, scaled physical hardware paging or firmware.
     See `docs/P06_B1_2_SYNAPSE_AWARE_PARTITION.md`.
+  - **B1.3 — Versioned 784-channel multi-core ingress / NEXT packet ABI
+    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    Distinct `P06B13I1` binary image + per-destination `<HHH`
+    map and `P06B13R1` routed packet frames. Each uses 128-byte
+    SHA256-bound deployment/DDR-audit header and independent CRC32.
+    Enforces real mapped core/axon pairs, 25+1 tick input schedule,
+    per-core CURRENT/NEXT event ≤4096 and emitted packet ≤4096,
+    complete source fanout, transactional rejection, source-spike
+    provenance (when available) and zero outgoing packets at the
+    final drain tick. Independent all-255 26-tick, corruption,
+    overflow and opt-in full 27-core fanout structural tests added.
+    Source: `src/loihi_twin_v2/p06_b13_streaming.py`;
+    documentation: `docs/P06_B1_3_MULTICORE_STREAMING_ABI.md`.
+    Old P05 single-axon diagnostic firmware is NOT compatible.
+    This does **not** implement the new A53/PL packet streaming
+    firmware or claim a physical multi-core run.
 - **P06-B2 — Train, quantize and freeze
   independent larger checkpoint [PENDING
   INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
