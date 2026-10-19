@@ -304,6 +304,9 @@ def test_input_contract_unknown_malformed_and_final_epoch_loss_fail_closed():
     ):
         with pytest.raises(B14OracleError, match="schedule"):
             simulate_monolithic(source, broken, readout_population="z")
+    with pytest.raises(B14OracleError, match="drain-only"):
+        simulate_monolithic(source, {"pixels": ((),) * 25 + ((0,),)},
+                            readout_population="z")
     with pytest.raises(B14OracleError, match="784"):
         pixel_schedule_independent(bytes(783))
     # Recurrent self-spike on tick25 must be rejected: there is no serviced tick26.
