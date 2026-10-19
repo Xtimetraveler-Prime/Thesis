@@ -60,8 +60,23 @@
   "scaled_KV260_physical_page_traffic_latency_energy": "NOT_MEASURED",
   "runtime_mutable_DDR_image_dump": "NOT_CAPTURED",
   "B2_5_PC_native_gate": "USER_REPORTED_ALL_TESTS_AND_HANDOFF_COMMANDS_PASSED_2026_10_19_NO_RAW_B25_STDOUT_PROVIDED",
-  "source_integration": "B1_PR_46_AND_B2_PR_47_MERGE_AUTHORIZED_VERIFY_ACTUAL_MERGE_RECORD_SEPARATELY",
+  "source_integration": "MERGED_MAIN_2026_10_19_B1_PR46_THEN_B2_PR47",
   "merge_authorized": true,
   "B2_5_native_results_source": "User says 'everything passed' on 2026-10-19; B2.5 exact output is not pasted, so do not invent test count or B2.5 report-file SHA.",
-  "merge_authorization_source": "2026-10-19 user explicitly said 'lets merge' after B2.5 passed"
+  "merge_authorization_source": "2026-10-19 user explicitly said 'lets merge' after B2.5 passed",
+  "merges": {
+    "B1": {
+      "pull_request": 46,
+      "merge_commit": "35ea181360ebf15627c2943090fbdc3c6bf3949e",
+      "result": "GITHUB_MERGED_SUCCESS"
+    },
+    "B2": {
+      "pull_request": 47,
+      "merge_commit": "42f84de3bbbe62302599818c39e7e54747ce8aa2",
+      "result": "GITHUB_MERGED_SUCCESS",
+      "retargeted_base": "main"
+    }
+  },
+  "integration_main_verified_by_connector": true,
+  "native_test_outcome_attested_by_user_not_replayed_after_merge": true
 }
