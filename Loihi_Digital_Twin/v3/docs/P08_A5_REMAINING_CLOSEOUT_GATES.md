@@ -1,6 +1,6 @@
 # P08-A5 — Remaining latency-only closeout criteria after completed A3 physical study
 
-**State (2026-10-18):** **P08-A3 USER-ATTESTED PHYSICAL REPEATED RUNS COMPLETE; P08-A5 USER-ATTESTED CPU TWO-ENDPOINT ACTUAL HOST BENCHMARK AND FINAL REPORT GENERATION COMPLETE** (1024 original TRAIN-derived validation images, 3 CPU passes, six prior physical sessions, original P07 oracle and matched-stage SHA256 gates PASS). **P08-A IS READY FOR EXPLICIT FINAL LATENCY-ONLY ACCEPTANCE REVIEW / PR MERGE APPROVAL; NOT YET ACCEPTED OR MERGED.** The corrected A5 selected pytest rerun result was not explicitly pasted. Physical power/energy P08-A4 remains deferred and unmeasured; PL-only seconds remain uncalibrated and are not claimed.
+**State (2026-10-18):** **P08-A3 USER-ATTESTED PHYSICAL REPEATED RUNS COMPLETE; P08-A5 USER-ATTESTED CPU TWO-ENDPOINT ACTUAL HOST BENCHMARK AND FINAL REPORT GENERATION COMPLETE** (1024 original TRAIN-derived validation images, 3 CPU passes, six prior physical sessions, original P07 oracle and matched-stage SHA256 gates PASS). **P08-A HAS RECEIVED EXPLICIT USER LATENCY-ONLY ACCEPTANCE AND PR #45 MERGE AUTHORIZATION. Actual merge status is checked separately.** The corrected A5 selected pytest rerun result was not explicitly pasted. Physical power/energy P08-A4 remains deferred and unmeasured; PL-only seconds remain uncalibrated and are not claimed.
 
 ## Evidence already available (no new JTAG requirement)
 
@@ -26,7 +26,7 @@ Across the 3 pair-level medians: mean 23.984 µs, sample SD 6.551 µs; fixed-ima
 | Original source integrity / trace selection | Same TRAIN stage SHA256, original physical A2.1 selected 26×42 trace, source-bound accepted ELF/checkpoint | **USER-ATTESTED PASS** |
 | Distribution/clock limitations and deferred power | Full draft report, CPU + A53 p95/SD, three-pair small-n descriptors, no PL Hz calibration claims, explicit unmeasured power | **DOCUMENTED** |
 | New A5 pytest rerun after initial two assertion fixes | No final pytest summary pasted | **RECOMMENDED FINAL MERGE GATE: UNCONFIRMED** |
-| Explicit user approval for closing latency-only P08-A and merging draft PR #45 | Not yet given | **PENDING — DO NOT MERGE** |
+| Explicit user approval for closing latency-only P08-A and merging PR #45 | User explicitly requested closeout and merge after reviewing final measurements | **AUTHORIZED; CHECK GITHUB MERGE RESULT SEPARATELY** |
 
 ## Required before full P08-A acceptance (original P08-A1 contract §§6–7)
 
