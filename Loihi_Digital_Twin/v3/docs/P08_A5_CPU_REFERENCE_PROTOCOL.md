@@ -1,6 +1,12 @@
 # P08-A5 — CPU-reference benchmark and latency-only closeout protocol
 
-**Status (2026-10-18 project timeline): A5 HOST SOURCE IMPLEMENTED; NEW REGRESSIONS AND THE FIRST REAL HOST CPU MEASUREMENT NOT YET USER-EXECUTED.** Whole P08-A remains OPEN. The six-session repeated KV260 A3.2 physical latency study is user-attested complete. P08-A4 power/energy remains deferred. No firmware, physical runner, original packed oracle, checkpoint or bitstream was modified during A5 development.
+**Status (2026-10-18 project timeline): A5 REAL HOST CPU MEASUREMENT AND CPU/FPGA REPORT USER-ATTESTED PASS. Original physical 1,024-image P07 packed numerical oracle and same-TRAIN-stage hash gates passed. Two CPU reference endpoints, three sequential host passes each; SHA256-bound final Markdown was generated. LAST NATIVE PYTEST RERUN AFTER TWO ASSERTION FIXES NOT EXPLICITLY POSTED; USER SIGNOFF/MERGE PENDING.** Whole P08-A remains OPEN. The six-session repeated KV260 A3.2 physical latency study is user-attested complete. P08-A4 power/energy remains deferred. No firmware, physical runner, original packed oracle, checkpoint or bitstream was modified during A5 development.
+
+**Measured user-host results:** `P08_A5_CPU_PRELOADED_MEDIAN_MS=25.552718`, `P08_A5_CPU_FULL_MEDIAN_MS=30.200338` (median across the **1,023 per-image medians** of three sequential CPU measurements). Individually, CPU preloaded per-run medians were **25.6147 / 25.6001 / 25.5735 ms**, full image-to-class CPU per-run medians **30.3930 / 30.3147 / 30.2579 ms**. These are two different descriptive estimators, so they need not be identical. FPGA-backed A53+PL original per-run service medians were **35.7023 / 35.6946 / 35.6696 ms** (A2.1), with **35.7234 / 35.7163 / 35.7220 ms** under A2.2. These endpoints are **not fully scope matched**; no pure PL speedup claimed.
+
+**Accepted user-local report provenance:** CPU report `/home/dna/Thesis_Evidence/p08_a5_cpu_ref_20261019T023137Z.json` SHA256 `790072259dab211b57bf40f60bba2b7cb293d7a544ab3aae2660fc8d8c63127d`; original three-pair physical revalidation `/home/dna/Thesis_Evidence/p08_a5_physical_revalidation_20261019T023728Z.json` SHA256 `afd4e91f0106266179072c7242d7e361c033d9d78720d79a3a807e3ed400bf7b`; combined review draft `/home/dna/Thesis_Evidence/p08_a5_closeout_20261019T023733Z.md` SHA256 `17e88feb9330ffca5ecbbfb8735bc08b7fe68f76e74392c0c5c4a538e40233b1`. User reports `P08_A5_CPU_SOURCE_PHYSICAL_P07_1024_PACKED_ORACLE_PASS=1`, both `P08_A5_CPU_{PRELOADED,FULL}_1024_PHYSICAL_SPIKES_EXACT=1`, `P08_A5_CPU_TWO_ENDPOINT_THREE_REPEAT_BENCHMARK_PASS=1`, `P08_A3_2_3_THREE_PAIRED_LATENCY_AGGREGATION_PASS=1`, and `P08_A5_CPU_AND_PHYSICAL_SAME_TRAIN_STAGE_SHA256_PASS=1`. The raw JSON binaries remained user-local; no independent byte-level inspection claimed by assistant.
+
+**Authoritative findings and final acceptance review:** [Measured CPU+FPGA A5 results](P08_A5_CPU_PHYSICAL_LATENCY_RESULTS.md). The commands below are historical reproduction instructions and **do not imply the benchmark is still pending**. No further KV260 work is needed. User's explicit final signoff and last native test output remain for merge readiness.
 
 ## 1. What A5 tests, and what it cannot claim
 
@@ -62,7 +68,7 @@ python -m py_compile \
   scripts/p08_a5_closeout_report.py
 ```
 
-**No A5 native PASS or CPU hardware measurement is asserted until the user runs these tests.** No Vitis rebuild or FPGA interaction is necessary. Source-level package imports may require the original repository's `.venv-p08` torch dependency.
+**Current acceptance nuance:** The user subsequently posted *actual* original-P07-oracle-gated CPU performance and successful generated closeout markers, so the CPU hardware benchmark is **no longer pending**. They have **not explicitly pasted the final native pytest pass total after the two earlier assertion corrections**; request one targeted rerun before merging if that record is required. No Vitis rebuild or FPGA interaction is necessary. Source-level package imports may require the original repository's `.venv-p08` torch dependency.
 
 ## 4. Original A3 evidence sealing (offline, optional but recommended)
 
@@ -125,6 +131,8 @@ PYTHONPATH="$PWD/src" python scripts/p08_a5_closeout_report.py \
 ```
 
 Replace **the placeholder file** with the exact filename obtained from `find` before executing; never copy `REPLACE_WITH` literally. The CLI rejects report overwrite, stage SHA mismatches, wrong physical source run and mismatched CPU report boundaries. It records both source JSON SHA256s in its draft Markdown and displays **`P08_A5_FINAL_USER_ACCEPTANCE=PENDING`**, not `PASS`.
+
+**Result update:** Both offline A5 CPU benchmark and original 3-pair A53 numerical replay/report generation are user-verified PASS. Sections 5–6 are retained for reproducibility, not additional compulsory measurements. Their `REPLACE_WITH_...` example remains a historical placeholder; **actual exact filenames are listed above** and should be used in any revalidation.
 
 ## 7. Boundaries for final P08-A closeout
 
