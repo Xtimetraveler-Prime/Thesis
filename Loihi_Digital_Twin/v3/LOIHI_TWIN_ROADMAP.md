@@ -1632,8 +1632,8 @@ in the present `compile_network` will
   and evaluate a transparent intermediate
   model *before* accessing test results;
   do not silently relabel the model.
-  - **B2.1 — Scaled training contract [IMPLEMENTED; NATIVE
-    USER VERIFICATION PENDING]:** New isolated
+  - **B2.1 — Scaled training contract [USER-ATTESTED NATIVE PASS,
+    INCLUDING FULL 1000-HIDDEN DENSE PACKED SHAPE]:** New isolated
     `src/loihi_twin_v2/p06_b21_training_foundation.py`
     introduces 784→H→10 H≤1000 integer-valued forward
     using the **unchanged frozen Track A** P06-A2.5 strict
@@ -1646,9 +1646,27 @@ in the present `compile_network` will
     dense 1000-neuron graph stress. This is NOT actual training,
     a trained checkpoint, official TEST, or a physical run.
     See `docs/P06_B2_1_TRAINING_FOUNDATION.md`.
-  - **B2.2 — Canonical TRAIN-only fitting [NOT STARTED]:**
-    Native user preflight/approval of training settings,
-    deterministic 50k/10k split and separate candidate model.
+  - **B2.2 — Canonical TRAIN-only fitting
+    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE REVIEW PENDING]:**
+    `src/loihi_twin_v2/p06_b22_training.py` and
+    `scripts/p06_b22_train.py` implement the **separate B2**
+    exact signed24 25+1-tick integer-forward optimizer/trainer
+    with original canonical 60k TRAIN-only gzip IDX/MD5 reader
+    and independently pinned Track A 50k TRAIN/10k train-derived
+    validation index SHA256. CLI defaults to shape-only
+    memory preflight, WITHOUT loading data or training;
+    actual full-data fitting requires explicit `--train`.
+    A full trial uses deterministic per-epoch shuffling, Adam,
+    full-population accuracy/class/spike/silent validation,
+    earliest-best epoch, nonfinite/gradient guards, candidate
+    GO floor, no output overwrite, checkpoint file SHA256 and
+    separate B2 integer-weight SHA256. Synthetic-only source,
+    optimizer, serialization/tamper tests introduced in
+    `tests/test_p06_b22_training.py`, documented in
+    `docs/P06_B2_2_CANONICAL_TRAIN_ONLY_CANDIDATE.md`.
+    This does NOT mean a real MNIST fit happened, or that
+    B2.3 signed/P03/DDR parity, B2.4 freezing, KV260 scaled
+    inference or official TEST has been accepted.
   - **B2.3 — Trained weight/packing/numerical audit [NOT STARTED].**
   - **B2.4 — New checkpoint+validation+official protocol freeze
     [NOT STARTED].**
