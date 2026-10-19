@@ -108,7 +108,7 @@ def test_a5_closeout_candidate_same_stage_and_caveats(accepted_mock_reports):
     assert "Same-frame-population p95" in out
     assert "41.9700 / 3.3900" in out
     assert "16.8400, 25.4000, 29.7100" in out
-    assert "DEFERRED" in out
+    assert "**Physical power/energy status: DEFERRED BY USER; NOT MEASURED.**" in out
 
 
 def test_rejects_cpu_from_different_train_stage(accepted_mock_reports):
