@@ -27,6 +27,15 @@ Scripts/implementation:
 
 Physical A2.1 ELF identity SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`. Original reference packed checkpoint state_dict SHA256 `0b0e8a2a9be3ceb19f206f8f55bfd8e73b52e7c2e39f271d7696c39fc9b6fd88`; effective signed integer weights SHA256 `1396f93d21f03b7cff6580ed9cc3176ce40a7afaf53254643120174572b9fe0b`, pinned by original `p06_a4_snapshot.require_pinned_training_candidate`. Source P07 journal and selected full trace independently rereplayed by original oracle before CPU reports are accepted. A5 timing is performed **on the user's PC**, not on the KV260 or A53.
 
+## A5 first native regression corrections (user's initial run)
+
+The first user-executed A5 native regressions returned **two assertion failures** (not CPU performance measurements; no physical hardware use):
+
+- `test_rejects_wrong_encoder_frame_and_timestep_schedule`: the production reference correctly rejected a 25-entry schedule with `A5 requires canonical 25 input ticks plus empty drain tick`. The test incorrectly searched for the literal token `26`. **Fixed only the test assertion** to match the accepted 25-input + 1-drain rule.
+- `test_a5_closeout_candidate_same_stage_and_caveats`: the draft report used the lowercase prose `Physical power/energy deferred`, but the regression required an explicit `DEFERRED` status. **Fixed the report** to contain `Physical power/energy status: DEFERRED BY USER; NOT MEASURED.` and strengthened the test to require that exact wording.
+
+The frozen neural arithmetic, encoder, 26-tick computation, source identity pins, physical P07 oracle and both CPU timing endpoints are **unchanged**. Both fixes are committed, but the corrected suite still requires a fresh user-local rerun. **No A5 numerical/CPU benchmark PASS is asserted from the initial failed native tests.** If a later test fails, stop before CPU timing and preserve the exact traceback.
+
 ## 3. New host native regression gate (no board)
 
 ```bash
