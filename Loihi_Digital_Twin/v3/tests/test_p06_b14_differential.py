@@ -99,7 +99,7 @@ def test_hand_calculated_signed24_two_timestep_26_tick_oracle_and_first_class():
         assert a.reference.trace_sha256 == oracle.trace_sha256
         assert a.report()["readout_spike_counts"] == [1] + [0] * 9
         assert a.output_trace_sha256 == b.output_trace_sha256
-        assert a.observed_routed_packets == 4 if limit == 1 else 2
+        assert a.observed_routed_packets == (4 if limit == 1 else 2)
         assert a.observed_external_packets == (4 if limit == 1 else 2)
 
 
@@ -318,3 +318,25 @@ def test_dense_784_to_40_to_10_full_numerical_26_ticks():
     assert result.observed_external_packets == 784 * 2 * 25
     assert result.observed_routed_packets == 40 * 25
     assert result.readout_spike_counts == (25,) * 10
+
+
+@pytest.mark.skipif(
+    __import__("os").environ.get("P06_B14_SPARSE27") != "1",
+    reason="optional 27-core 784-channel fully numerical sparse-weight differential",
+)
+def test_27_core_sparse_1000_hidden_26_tick_numerical_reference():
+    from loihi_twin_v2.p06_b14_synthetic_fixtures import sparse_27_core_network
+    source = sparse_27_core_network()
+    result = compile_synapse_aware(
+        source, B12Options(readout_population="z", compartments_per_core=39))
+    assert result.capacity_audit["logical_core_count"] == 27
+    schedule = {"pixels": pixel_schedule_independent(bytes([255] * 784))}
+    normal = run_and_compare(source, result, schedule, readout_population="z")
+    backward = run_and_compare(
+        source, result, schedule, readout_population="z",
+        service_order=tuple(range(26, -1, -1)), reverse_packet_drain=True)
+    assert normal.output_trace_sha256 == backward.output_trace_sha256
+    assert normal.observed_external_packets == 20384 * 25
+    assert normal.observed_routed_packets == 1000 * 25
+    assert normal.readout_spike_counts == (25,) * 10
+    assert normal.reference.spike_count == (1000 + 10) * 25
