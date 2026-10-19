@@ -146,7 +146,7 @@ def test_zero_spike_counts_tie_readout_and_train_selection_earliest_best():
         earliest_best_epoch(samples)
 
 
-def test_official_train_source_gate_never_accepts_short_or_synthetic_dataset():
+def test_official_train_source_gate_never_accepts_short_or_synthetic_dataset(tmp_path):
     split = TrainingSplit(
         images=bytes(784), labels=bytes([1]),
         train_indices=(0,), validation_indices=(),
@@ -156,7 +156,7 @@ def test_official_train_source_gate_never_accepts_short_or_synthetic_dataset():
         require_pinned_train_validation(split)
     with pytest.raises(B22TrainingError, match="canonical"):
         fit_canonical_mnist(
-            split, "/tmp/should_never_write_b22_synthetic_candidate",
+            split, tmp_path / "should_never_write_synthetic_candidate",
             B21Settings(hidden_neurons=2), device="cpu")
     assert len(_sha_indices((0, 1))) == 64
     assert _sha_indices((1, 0)) != _sha_indices((0, 1))
