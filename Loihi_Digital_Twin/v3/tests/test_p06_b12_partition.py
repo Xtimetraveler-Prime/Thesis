@@ -5,7 +5,6 @@ official MNIST TEST archives, physical FPGA or new hardware ABI are involved.
 """
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import os
@@ -205,6 +204,54 @@ def test_dense_784_to_40_requires_synapse_split_and_packs_exact_ddr():
     assert result.capacity_audit["cores"][0]["worst_current_bank_events"] == 784
     assert result.capacity_audit["cores"][2]["worst_current_bank_events"] == 40
     assert _reconstruct_edges(result.compiled) == _expected_edges(network)
+
+
+
+def test_all_255_synthetic_25_input_plus_1_drain_tick_order_invariance():
+    """Actual 784-channel fanout into TWO packed hidden cores each event tick.
+
+    Integer expectation is independent of the compiler: all effective weights
+    are positive and >2 in total, thus every hidden compartment spikes on all
+    25 input ticks. Each readout receives those spikes one tick LATER, thus
+    all ten readouts spike exactly on ticks 1..25 and never on tick 0.
+    This is software-only, not a B1.3 ingress protocol or KV260 execution.
+    """
+    result = compile_synapse_aware(
+        synthetic_dense(hidden=40), B12Options(readout_population="z"))
+    compiled = result.compiled
+    assert [row["worst_external_events"] for row in result.capacity_audit["cores"]] == [784, 784, 0]
+    assert [row["worst_routed_events"] for row in result.capacity_audit["cores"]] == [0, 0, 40]
+    expected_per_tick = []
+    for tick in range(26):
+        sample = compiled.external_packets(
+            "pixels", range(784) if tick < 25 else (), target_timestep=tick)
+        assert len(sample) == (1568 if tick < 25 else 0)
+        assert all(p.target_timestep == tick for p in sample)
+        expected_per_tick.append(sample)
+    snapshots = []
+    for order, reverse in (((0, 1, 2), False), ((2, 1, 0), True)):
+        chip = compiled.build_chip()
+        one_run = []
+        readout_counts = [0] * 10
+        for tick, events in enumerate(expected_per_tick):
+            traced = chip.step(
+                events, service_order=order, reverse_packet_drain=reverse)
+            hidden_spikes = sum(len(c.spikes_out) for c in traced.cores[:2])
+            assert hidden_spikes == (40 if tick < 25 else 0)
+            assert len(traced.cores[2].packet_in) == (0 if tick == 0 else 40)
+            assert len(traced.cores[2].spikes_out) == (0 if tick == 0 else 10)
+            for neuron in traced.cores[2].spikes_out:
+                readout_counts[neuron] += 1
+            one_run.append(tuple((
+                c.logical_core_id,
+                c.spikes_out,
+                tuple((s.state.current, s.state.voltage, s.state.refractory_remaining)
+                      for s in c.compartment_state_after),
+                tuple(p.logical_key for p in c.packets_out),
+            ) for c in traced.cores))
+        assert readout_counts == [25] * 10
+        snapshots.append(one_run)
+    assert snapshots[0] == snapshots[1]
 
 
 @pytest.mark.parametrize("overrides,error_code", [
