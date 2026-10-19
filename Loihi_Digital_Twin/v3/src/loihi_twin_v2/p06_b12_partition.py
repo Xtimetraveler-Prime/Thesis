@@ -352,6 +352,7 @@ class B12Result:
             "placement": [asdict(item) for item in self.compiled.placement],
             "ingress_routes": [asdict(item) for item in self.compiled.ingress_routes],
             "capacity_audit": self.capacity_audit,
+            "capacity_audit_basis": "B1.1 packed/DDR verifier reused by distinct B1.2 compiler",
             "physical_execution": "NOT_TESTED",
             "scaled_streaming_abi": "NOT_IMPLEMENTED_B1_2",
             "official_mnist_test_access": "NONE",
