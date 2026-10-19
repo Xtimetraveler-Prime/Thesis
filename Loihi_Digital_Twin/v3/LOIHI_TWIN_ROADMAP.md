@@ -1465,13 +1465,13 @@ physical acceptance.
 
 ### Track B — Larger DDR-virtualized 784→1000→10
 
-**Research target, not frozen or mapped:**
+**B1 user-verified synthetic feasibility; B2 trained checkpoint not yet frozen:**
 **794,000** possible dense synapses;
 approximately **26 destination-partitioned
 hidden logical cores plus 1 readout core** is
-only a **~27-core planning hypothesis**,
-not compiler acceptance or a guaranteed
-optimal partition. At 27 full 512 KiB DDR
+**now demonstrated structurally by the B1.2 user-verified
+host-only synthetic dense mapper (27 cores)**,
+not a guaranteed globally optimal partition or physical board run. At 27 full 512 KiB DDR
 records, backing usage is **13.5 MiB**;
 up to 126 logical core IDs are addressable
 by the accepted P05 A53 diagnostic deployment
@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [IN PROGRESS — B1.1–B1.4 USER-ATTESTED NATIVE PASS; B1.5 THREE-SLOT PAGING SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
+  route semantics [COMPLETE — B1.1–B1.5 USER-ATTESTED NATIVE PASS; B1.6 HOST-SOFTWARE ACCEPTANCE SIGNED OFF 2026-10-19; NO SCALED PHYSICAL RUN].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1570,7 +1570,7 @@ in the present `compile_network` will
     last is NOT a dense 794,000-synapse numerical or physical result.
     See `docs/P06_B1_4_INDEPENDENT_NUMERICAL_ORACLE.md`.
   - **B1.5 — Three-resident-slot / one-engine host paging model
-    [NEW SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    [USER-ATTESTED NATIVE PASS, INCLUDING DENSE27 STRUCTURAL + SPARSE27 NUMERICAL]:**
     `src/loihi_twin_v2/p06_b15_paging.py` reuses original
     P08 `PagedHardwareImage.resident_page` and B1.1's
     exact P03/P02 512 KiB initial SHA ledger to verify
@@ -1589,8 +1589,10 @@ in the present `compile_network` will
     27-core 26-tick ascending policy = 702 dispatches,
     702 page-ins/outs and **382,427,136 ESTIMATED** page-engine
     bytes; alternating service order predicts 627 page-ins/outs
-    and **341,569,536 ESTIMATED** bytes with equivalent neural
-    results *when the separate numerical test runs successfully*.
+    and **341,569,536 ESTIMATED** bytes. The user separately
+    verified both structural orders and the sparse 27-core
+    numerical parity; the dense 794k-edge network still has
+    **no full 26-tick numerical acceptance**.
     No actual scaled cache/DDR images, A53 firmware, PL timing,
     physical total bytes, speedup or energy asserted.
     New `tests/test_p06_b15_paging.py` includes an
@@ -1599,9 +1601,25 @@ in the present `compile_network` will
     numerical scheduling-order parity, and opt-in dense-27
     structural plus sparse-27 numerical stress.
     Full details: `docs/P06_B1_5_THREE_SLOT_PAGING_ESTIMATE.md`.
+  - **B1.6 — B1 host-software acceptance [CLOSED 2026-10-19]:**
+    User-attested B1.1–B1.5 source, independent numeric,
+    dense 27-core exact packing and sparse 27-core real-numeric
+    evidence pinned in
+    `docs/P06_B1_6_USER_ACCEPTANCE_LEDGER.json` and
+    `docs/P06_B1_6_FINAL_HOST_SOFTWARE_ACCEPTANCE.md`.
+    The posted dense alternating report recorded 702
+    dispatches, 75 page hits, 627 full ins, 627 dirty outs,
+    **341,569,536 estimated** bytes and zero physical scaled
+    measurements. Sparse27 separately reported
+    `algorithmic_neural_parity=true` for 26 ticks and
+    25,000 routed packets; old P05 original physical page
+    transfer *sizes* remain the only real page traffic
+    measurements. **GO B2 training/validation candidate; NO-GO
+    scaled physical KV260 / official TEST** until separate P07-B.
+    The user has NOT authorized merging draft PR #46.
 - **P06-B2 — Train, quantize and freeze
-  independent larger checkpoint [PENDING
-  INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
+  independent larger checkpoint [B1 SOFTWARE GATE COMPLETE;
+  B2 IN DEVELOPMENT ON A SEPARATE STACKED BRANCH].** Keep the same
   deterministic 25+1-step event/input,
   neuron/readout and dataset split;
   train a new project large-model
@@ -1615,13 +1633,13 @@ in the present `compile_network` will
   model *before* accessing test results;
   do not silently relabel the model.
 
-**Track B P06 exit:** a separately
+**Track B P06 exit (NOT YET SATISFIED BY B1 ALONE):** a separately
 audited, real trained *project*
 checkpoint mapped with real 128 KiB/
 32,768-entry bounds and independently
 verified event/packet/state semantics.
 No scaled KV260 claims until P07-B.
-**Track A P07/P08-A latency-only acceptance gate is now satisfied.** Proceed with P06-B1 on a **new branch**, independently validating a deterministic synapse-aware partitioner before P06-B2 training. Leave all accepted Track A source/artifacts frozen.
+**Track A P07/P08-A latency-only gate and B1 host-software acceptance are satisfied.** Proceed with independent P06-B2 train/validation-only checkpoint development; leave all accepted Track A source, weights and evidence frozen and do not merge B1 draft PR #46 without explicit permission.
 
 ### Archived alternate source audit
 
