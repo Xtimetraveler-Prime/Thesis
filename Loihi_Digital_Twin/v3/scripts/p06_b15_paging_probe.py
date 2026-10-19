@@ -47,10 +47,10 @@ def run(shape: str, mode: str, assumed_gib_s: float | None) -> dict:
     # Both modes use all 26 algorithmic ticks; the new static path is
     # explicitly source-derived and doesn't falsely claim neuron parity.
     structural = project_schedule_only(result, service_orders=orders)
-    if shape == "dense1000" or mode in ("forward", "alternate"):
-        report = structural
-    else:
-        raise ValueError("unsupported mode")
+    # The structural path intentionally never invokes the integer neuron
+    # engine, even for the densely connected 794k-edge 27-core topology.
+    report = structural
+    report["profile_shape"] = shape
     if assumed_gib_s is not None:
         report = {
             **report,
