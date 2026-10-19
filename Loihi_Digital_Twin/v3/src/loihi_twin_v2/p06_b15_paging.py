@@ -114,6 +114,21 @@ class ResidentLRU:
             raise B15ScheduleError("invalid global epoch / serial dispatch ordinal")
         if core_id not in self.ids:
             raise B15ScheduleError("unknown logical core")
+        if ordinal != len(self.operations):
+            raise B15ScheduleError("single engine requires contiguous serial dispatch ordinals")
+        if self.operations:
+            previous = self.operations[-1].tick
+            if tick not in (previous, previous + 1):
+                raise B15ScheduleError("cannot skip or rewind a global epoch")
+            served_in_previous = {
+                op.core_id for op in self.operations if op.tick == previous
+            }
+            if tick == previous and core_id in served_in_previous:
+                raise B15ScheduleError("logical core cannot dispatch twice within one epoch")
+            if tick == previous + 1 and served_in_previous != set(self.ids):
+                raise B15ScheduleError("cannot advance barrier before all logical cores dispatch")
+        elif tick != 0:
+            raise B15ScheduleError("first resident dispatch must begin at epoch zero")
         if core_id in self.slots:
             slot = self.slots.index(core_id)
             hit, evicted, flushed = True, None, 0
@@ -145,6 +160,10 @@ class ResidentLRU:
     def flush(self) -> tuple[FinalFlush, ...]:
         if self._finalized:
             raise B15ScheduleError("final flush already completed")
+        if not self.operations or {
+            op.core_id for op in self.operations if op.tick == self.operations[-1].tick
+        } != set(self.ids):
+            raise B15ScheduleError("cannot flush before last epoch barrier completes")
         self._finalized = True
         for slot, core in enumerate(self.slots):
             if core is not None and self.dirty[slot]:
