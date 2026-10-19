@@ -105,6 +105,12 @@ a model checkpoint, MNIST train/validation images, or sealed TEST data.
 - A normal native structural test synthesizes a distinct-weight dense
   **784→40→10** graph, for which **39+1 hidden / 10 readout** is the
   expected resource-constrained partition.
+- A separate **26-tick all-255 synthetic fanout** numerical regression
+  drives all 784 input channels for exactly 25 ticks, then a drain tick,
+  through both hidden partitions. Its independent expected spike counts,
+  NEXT arrival epoch and state traces must match under normal and reverse
+  legal service/packet ordering. This validates Python architecture
+  behavior, **not** physical scaled ingress firmware.
 - An **opt-in RAM/CPU-intensive** full synthetic **784→1000→10**
   test checks the 794,000-entry network's *structural* core partition,
   occupancy, route/event budget, full initial 512 KiB per-core records
@@ -133,15 +139,19 @@ PYTHONPATH="$PWD/src" python -m pytest -q -rs \
 PYTHONPATH="$PWD/src" python -m compileall -q \
   src/loihi_twin_v2/p06_b12_partition.py \
   tests/test_p06_b12_partition.py
+PYTHONPATH="$PWD/src" python scripts/p06_b12_synthetic_probe.py --hidden 40
 
+# Separate optional high-memory/high-CPU 794,000-edge source/image probe:
+PYTHONPATH="$PWD/src" python scripts/p06_b12_synthetic_probe.py --hidden 1000
 # Separate optional high-memory/high-CPU full 794,000-edge structural test:
 P06_B12_FULL_SYNTHETIC=1 PYTHONPATH="$PWD/src" \
   python -m pytest -q -rs tests/test_p06_b12_partition.py \
   -k full_784_1000_10_synthetic_structural_feasibility_only
 ```
 
-The first three commands are the normal fast native gate. The opt-in full
-network probe is **also a B1.2 target acceptance gate**, but may be long
+The standard commands run the B1.2/B1.1 regressions, Track A structural
+regressions, syntax checks and the smaller structural probe. The opt-in full
+network probe/test is **also a B1.2 target acceptance gate**, but may be long
 and memory-intensive and must be reported separately; it is safe to run
 off-board because it uses **synthetic integer weights only**. Avoid running
 multiple copies concurrently on a low-memory host.
