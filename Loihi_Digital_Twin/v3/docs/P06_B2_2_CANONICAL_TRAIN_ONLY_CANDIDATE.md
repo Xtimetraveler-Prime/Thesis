@@ -119,3 +119,25 @@ Expected *after actual successful fitting*: `P06_B22_TRAIN_ONLY_CANDIDATE_PASS=1
 ## Future B2 acceptance
 
 B2.3: signed-integer dense state/source oracle, B1.2 exact full 27-core P02 images and per-core occupancy on **actual trained** weights, P06-B1.4 independent 26-tick validation-image trace identity, fail-closed malformed checkpoint/source/packet. B2.4: versioned immutable new model and per-core DDR SHA freeze + official TEST protocol declared before P07-B. Do not merge PR #46 or #47 without separate explicit approval.
+
+## Post-merge integration addendum (2026-10-19)
+
+The branch/PR status in earlier sections of this phase document is
+**historical provenance from when this submilestone was under review**,
+not the current integration status. After the user accepted B2.5 and
+explicitly authorized sequential integration, GitHub confirmed:
+**P06-B1 PR #46 merged to `main`** as
+`35ea181360ebf15627c2943090fbdc3c6bf3949e`;
+**P06-B2 PR #47 retargeted and merged to `main`** as
+`42f84de3bbbe62302599818c39e7e54747ce8aa2`.
+The B2.1–B2.5 host gates are user-accepted, and B2.4's original
+33-asset/27-P02-context freeze is locally SHA-verifiable. Next work
+starts from merged `main` at **P07-B**; see
+`docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md`.
+
+All original experimental distinctions persist: B2's **97.08%**
+comes from canonical **TRAIN-derived validation**, not the sealed
+official B2 MNIST TEST; three complete B2.3 dense trained
+26-tick validation frames do NOT imply a physical 27-core run.
+P07-B KV260 multi-core hardware integration, physical paging/
+latency/energy and B2 official TEST are **NOT YET ACCEPTED**.
