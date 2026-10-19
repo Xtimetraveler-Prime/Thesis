@@ -68,8 +68,18 @@ def accepted_mock_reports(monkeypatch,tmp_path):
             "original_train_stage_manifest":_digest("manifest"),
         },
         "source_evidence":[
-            {"a21_run_dir":str(tmp_path/f"pair{i}_a21"),
-             "a22_run_dir":str(tmp_path/f"pair{i}_a22")} for i in range(1,4)
+            {
+                "a21_run_dir":str(tmp_path/f"pair{i}_a21"),
+                "a22_run_dir":str(tmp_path/f"pair{i}_a22"),
+                "a21_service_ordinary_ms":{
+                    "n":1023,"median":35.70,"p95_nearest_rank":41.97,
+                    "sample_stdev":3.39,
+                },
+                "a22_service_ordinary_ms":{
+                    "n":1023,"median":35.72,"p95_nearest_rank":41.98,
+                    "sample_stdev":3.39,
+                },
+            } for i in range(1,4)
         ],
         "a21_ordinary_median_service_ms_by_run":[35.7023,35.6946,35.6696],
         "a22_ordinary_median_service_ms_by_run":[35.7234,35.7163,35.7220],
@@ -95,6 +105,8 @@ def test_a5_closeout_candidate_same_stage_and_caveats(accepted_mock_reports):
     assert "DO NOT LABEL THIS TABLE 'FPGA SPEEDUP'" in out
     assert "NOT scope-matched" not in out or "do not share identical" in out
     assert "35.7023" in out and "35.7234" in out
+    assert "Same-frame-population p95" in out
+    assert "41.9700 / 3.3900" in out
     assert "16.8400, 25.4000, 29.7100" in out
     assert "DEFERRED" in out
 
