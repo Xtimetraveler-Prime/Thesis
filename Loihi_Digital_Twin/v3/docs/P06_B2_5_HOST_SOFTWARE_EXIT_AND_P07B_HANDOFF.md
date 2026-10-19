@@ -89,3 +89,29 @@ PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
 Expected flags on success: `P06_B25_HOST_SOFTWARE_HANDOFF_PASS=1`, `P06_B25_SCALED_FPGA_EXECUTION_GO=0`, `P06_B25_OFFICIAL_TEST_UNSEAL_GO=0`, `P06_B25_FREEZE_UNMODIFIED=1`. `B2_5_native_user_accepted=false` stays *historical code/manifest-time status* and is superseded by user's external reported run when provided; never edit the B2.4 frozen source just to flip a boolean.
 
 **Subsequent user acceptance (2026-10-19):** the user reports that all B2.5 tests and handoff commands passed and explicitly authorized the ordered merges. Only this general user attestation was provided; exact B2.5 stdout, test count and optional report-file SHA were not supplied, so none are fabricated. The source-authoring assistant has not independently run native pytest or the user's SHA-indexed local freeze. Merge B1 PR #46 to `main` first, retarget B2 PR #47 to `main` after the B1 merge, check the resulting diff/integrity, and merge B2. Actual integration status is recorded separately after GitHub confirms it. The local freeze's historical status field must remain unchanged.
+
+## Confirmed ordered integration on `main` (2026-10-19)
+
+After the user attested B2.5 native tests/acceptance passed and
+explicitly authorized merging, GitHub confirmed the following
+**actual merges**, not merely draft approvals:
+
+- P06-B1 draft PR [#46](https://github.com/Xtimetraveler-Prime/Thesis/pull/46),
+  reviewed/merged **first** to `main`: merge commit
+  `35ea181360ebf15627c2943090fbdc3c6bf3949e`.
+- P06-B2 stacked draft PR [#47](https://github.com/Xtimetraveler-Prime/Thesis/pull/47),
+  retargeted onto the newly merged `main`, accepted as
+  mergeable, and merged **second**: merge commit
+  `42f84de3bbbe62302599818c39e7e54747ce8aa2`.
+
+Both PRs are now **MERGED**, not pending. Authoritative development
+is `main` under `Loihi_Digital_Twin/v3`. See the
+[`P07_B_NEXT_CHAT_HANDOFF_SEED.md`](P07_B_NEXT_CHAT_HANDOFF_SEED.md)
+for the new-chat starting context and the P07-B phase boundaries.
+Post-merge documentation cleanup is also committed on `main`.
+The original B2.4 local freeze directory and the originally accepted
+Track A artifacts are not modified or uploaded to Git.
+
+**Merge authorization never authorized physical 27-core execution
+or official B2 MNIST TEST unsealing.** P07-B real A53/PL runtime
+and physically accepted numerical parity remain separately required.
