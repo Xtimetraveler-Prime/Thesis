@@ -98,6 +98,37 @@ def test_b21_production_packer_and_independent_oracle_align_and_do_not_lose_zero
     assert report.report()["all_spikes_and_NEXT_routes_equal"] is True
 
 
+def test_manually_calculated_25_inputs_and_one_drain_next_epoch_spikes():
+    model = B21IntegerSNN(hidden_neurons=3)
+    with torch.no_grad():
+        model.w_input_hidden[0, 0] = 40.0
+        model.w_hidden_output[0, 0] = 12.0
+    image = bytes([255] + [0] * 783)
+    with torch.no_grad():
+        counts = model(torch.tensor([list(image)], dtype=torch.uint8))[0]
+    assert tuple(int(v) for v in counts) == (25,) + (0,) * 9
+    source = model.to_network_spec()
+    oracle = simulate_monolithic(
+        source, {"pixels": pixel_schedule_independent(image)},
+        readout_population="readout")
+    assert oracle.ticks[0].spikes == (("hidden", 0),)
+    assert oracle.ticks[0].readout_counts == (0,) * 10
+    assert oracle.ticks[1].readout_counts == (1,) + (0,) * 9
+    assert oracle.ticks[25].spikes == (("readout", 0),)
+    assert oracle.readout_spike_counts == (25,) + (0,) * 9
+
+
+def test_width_32_agrees_exactly_with_frozen_track_a_integer_forward():
+    settings = B21Settings(hidden_neurons=32, seed=83)
+    scaled = B21IntegerSNN.initialized(settings)
+    old = accepted_initialize(TrackASettings(seed=83))
+    with torch.no_grad():
+        old.w_input_hidden.copy_(scaled.w_input_hidden)
+        old.w_hidden_output.copy_(scaled.w_hidden_output)
+        image = torch.tensor([list(pixels(14))], dtype=torch.uint8)
+        assert torch.equal(scaled(image), old(image))
+
+
 def test_training_gradient_is_finite_through_reused_unchanged_ste_kernel():
     model = B21IntegerSNN.initialized(B21Settings(hidden_neurons=4, seed=93))
     model.train()
@@ -136,8 +167,10 @@ def test_train_split_gate_refuses_synthetic_or_unverified_canonical_claim():
                           manifest={"schema": "synthetic-idx-test-not-benchmark"})
     with pytest.raises(ValueError, match="canonical"):
         require_train_only_split(empty)
+    # No need to allocate ~47 MiB of fake pixels: manifest's UNSEALED
+    # official-test claim must be rejected before data-size admission.
     forged = TrainingSplit(
-        images=bytes(60000 * 784), labels=bytes(60000),
+        images=b"", labels=b"",
         train_indices=tuple(range(50000)),
         validation_indices=tuple(range(50000, 60000)),
         manifest={
