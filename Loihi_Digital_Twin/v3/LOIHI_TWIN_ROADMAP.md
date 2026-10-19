@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [NEXT — P08-A LATENCY-ONLY GATE SATISFIED; NOT YET IMPLEMENTED].**
+  route semantics [IN PROGRESS — B1.1 USER-ATTESTED NATIVE PASS; B1.2 SYNAPSE-AWARE SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1505,6 +1505,25 @@ in the present `compile_network` will
   and estimated throughput. Model
   a worst-case all-255 timestep
   without overflowing per-core banks.
+  - **B1.1 — Packed capacity audit [USER-ATTESTED NATIVE PASS]:**
+    Accepted on user report before beginning B1.2. See
+    `docs/P06_B1_1_PACKED_CAPACITY_CONTRACT.md`; this did
+    not imply scaled partition or physical KV260 deployment.
+  - **B1.2 — Deterministic synapse-aware destination mapper
+    [DEVELOPMENT SOURCE + SYNTHETIC TESTS COMMITTED; NATIVE USER
+    VERIFICATION PENDING]:** New opt-in
+    `src/loihi_twin_v2/p06_b12_partition.py` and
+    `tests/test_p06_b12_partition.py` plus reproducible synthetic
+    `scripts/p06_b12_synthetic_probe.py` reuse accepted P06
+    source/deployment contracts, P03 packing, P02 512 KiB images,
+    and B1.1 limit/CRC audit. They do NOT modify the accepted
+    P06-A `compile_network` or change Track A checkpoints.
+    Require user native acceptance of default synthetic numerical,
+    source-edge decoding, deterministic placement, fail-closed capacity
+    tests and the opt-in 784→1000→10 structural probe. This remains
+    *synthetic feasibility*, not trained checkpoint, P07-B physical
+    paging, or a B1.3-compatible multi-core ingress ABI.
+    See `docs/P06_B1_2_SYNAPSE_AWARE_PARTITION.md`.
 - **P06-B2 — Train, quantize and freeze
   independent larger checkpoint [PENDING
   INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
