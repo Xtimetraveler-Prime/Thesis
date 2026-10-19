@@ -21,6 +21,7 @@ from loihi_twin_v2.p06_b14_differential import run_and_compare
 from loihi_twin_v2.p06_b14_monolithic import pixel_schedule_independent
 from loihi_twin_v2.p06_b15_paging import (
     B15ScheduleError, ResidentLRU, run_paged_model,
+    project_schedule_only, hypothetical_transport_seconds,
 )
 
 
@@ -190,6 +191,35 @@ def test_alternating_service_order_reduces_page_faults_but_not_numerics():
             c.normalized() for c in old.cores)
 
 
+def test_static_page_planner_preserves_ddr_provenance_and_matches_dynamic_traffic():
+    source, mapped, schedule = small_four_core()
+    dynamic = run_paged_model(source, mapped, schedule, readout_population="z")
+    structural = project_schedule_only(mapped)
+    assert structural["mode"] == "STRUCTURAL_SCHEDULE_ONLY_NO_NEURAL_EXECUTION"
+    assert structural["neural_equivalence_evaluated"] is False
+    assert structural["schedule_sha256"] == dynamic.operations_sha256
+    assert structural["paging"] == dynamic.traffic
+    assert structural["full_ddr_backing_bytes_total"] == 4 * 524288
+    assert len(structural["initial_backing_manifest"]) == 4
+    assert [c["initial_ddr_sha256"] for c in structural["initial_backing_manifest"]] == [
+        c["initial_ddr_sha256"] for c in dynamic.initial_ddr_backing]
+    assert structural["worst_current_events_any_core"] <= 4096
+    assert structural["physical_scaled_page_traffic_measured"] is False
+    assert structural["actual_mutable_ddr_images_materialized"] is False
+    assert structural["latency_seconds"] is None
+
+
+def test_scenario_only_bandwidth_arithmetic_requires_explicit_valid_assumption():
+    assert hypothetical_transport_seconds(1 << 30, 1.0) == 1.0
+    assert hypothetical_transport_seconds(0, 1) == 0.0
+    with pytest.raises(B15ScheduleError, match="GiB/s"):
+        hypothetical_transport_seconds(544768, 0)
+    with pytest.raises(B15ScheduleError, match="GiB/s"):
+        hypothetical_transport_seconds(544768, float("nan"))
+    with pytest.raises(B15ScheduleError, match="nonnegative"):
+        hypothetical_transport_seconds(-1, 1.0)
+
+
 def test_rejects_invalid_order_unknown_source_or_missing_final_flush():
     source, mapped, schedule = small_four_core()
     orders = tuple((0, 1, 2, 3) for _ in range(26))
@@ -250,3 +280,34 @@ def test_full_27_core_26_tick_sparse_numerical_traffic_estimate():
     assert alternating.traffic["dirty_evictions"] == 624
     assert alternating.traffic["final_mutable_page_outs"] == 3
     assert alternating.traffic["estimated_page_engine_total_bytes"] == 627 * 544768
+
+
+@pytest.mark.skipif(
+    os.environ.get("P06_B15_DENSE27") != "1",
+    reason="opt-in 794k-edge DENSE 27-core structural paging estimate only",
+)
+def test_full_27_core_dense_structural_schedule_only_vs_alternating_lru():
+    from test_p06_b12_partition import synthetic_dense
+    network = synthetic_dense(1000)
+    mapped = compile_synapse_aware(network, B12Options(readout_population="z"))
+    assert mapped.capacity_audit["logical_core_count"] == 27
+    forward = project_schedule_only(mapped)
+    alternating = project_schedule_only(mapped, service_orders=_alternate(tuple(range(27))))
+    assert forward["mode"] == "STRUCTURAL_SCHEDULE_ONLY_NO_NEURAL_EXECUTION"
+    assert forward["full_ddr_backing_bytes_total"] == 14155776
+    assert forward["worst_current_events_any_core"] == 1000
+    assert forward["worst_emitted_packets_any_core"] == 39
+    assert forward["paging"]["dispatches"] == 702
+    assert forward["paging"]["full_page_ins"] == 702
+    assert forward["paging"]["dirty_evictions"] == 699
+    assert forward["paging"]["final_mutable_page_outs"] == 3
+    assert forward["paging"]["estimated_page_engine_read_bytes"] == 307666944
+    assert forward["paging"]["estimated_page_engine_write_bytes"] == 74760192
+    assert forward["paging"]["estimated_page_engine_total_bytes"] == 382427136
+    assert alternating["paging"]["full_page_ins"] == 627
+    assert alternating["paging"]["page_hits"] == 75
+    assert alternating["paging"]["dirty_evictions"] == 624
+    assert alternating["paging"]["estimated_page_engine_total_bytes"] == 627 * 544768
+    assert forward["schedule_sha256"] != alternating["schedule_sha256"]
+    assert forward["neural_equivalence_evaluated"] is False
+    assert alternating["physical_scaled_page_traffic_measured"] is False
