@@ -5,9 +5,8 @@ contract auditor. Original P06 compiler/P03/P02/LogicalChip are test subjects.
 """
 from __future__ import annotations
 
-import copy
 import hashlib
-import struct
+from dataclasses import replace
 
 import pytest
 
@@ -193,7 +192,7 @@ def test_synapse_budget_exact_edge_and_event_bank_exact_edge():
     assert ok.current_event_bank_events == 4096
     ok.validate()
     with pytest.raises(B1CapacityError, match="synapse_bytes"):
-        CorePressure(**{**ok.__dict__, "synapse_words": 32767}).validate()
+        replace(ok, synapse_words=32767).validate()
 
 
 def test_initial_ddr_record_corruption_rejected_by_real_crc_parser():
