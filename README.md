@@ -8,28 +8,42 @@ The validated FPGA-v1 implementation is preserved under
 history is recorded in
 [`Loihi_Digital_Twin/v1/MILESTONES.md`](Loihi_Digital_Twin/v1/MILESTONES.md).
 
-Active development now targets the separate FPGA-v2 / Loihi-1 architectural twin
-under [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/). The authoritative current
-development objectives, sequencing, and research gates are maintained in
-[`Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md`](Loihi_Digital_Twin/v2/LOIHI_TWIN_ROADMAP.md).
-Future agents should treat that roadmap as the primary planning document for v2,
-and [`Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md`](Loihi_Digital_Twin/v2/docs/LOIHI1_TARGET_SPEC.md)
-as the normative architecture contract.
+**Active research is FPGA-v3** under
+[`Loihi_Digital_Twin/v3/`](Loihi_Digital_Twin/v3/). Its authoritative
+current roadmap is
+[`v3/LOIHI_TWIN_ROADMAP.md`](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md);
+the accepted FPGA-v2 version remains preserved under `v2/`.
+Read [the P06-B2.5 final host-software closeout](Loihi_Digital_Twin/v3/docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md)
+and [the P07-B new-chat handoff seed](Loihi_Digital_Twin/v3/docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md)
+before starting new development.
 
-The culminating application target is a deeper MNIST implementation that can be
-compared on a defensible architectural/workload basis with Bodo Rueckauer et al.,
-*NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi*
-(ACM JETC, 2022, DOI `10.1145/3501770`). The counterfactual studies in
-[`EXPERIMENTS.md`](EXPERIMENTS.md) remain useful follow-on work, but they are
-deferred while this architecture/application path is pursued.
+**Current integration (2026-10-19):** P06-B1 and B2 were merged to `main`
+through [PR #46](https://github.com/Xtimetraveler-Prime/Thesis/pull/46)
+and [PR #47](https://github.com/Xtimetraveler-Prime/Thesis/pull/47).
+The independent 784→1000→10 trained signed24 LIF model passed its
+host-only B2 acceptance: **97.08% on 10,000 TRAIN-derived validation images**,
+27 precise initial P02 DDR contexts and three separately verified
+26-tick trained dense numerical frames. **P07-B board-resident 27-core
+execution is the next phase, not a completed physical result; B2 official
+MNIST TEST remains sealed.** Track A retains its separately accepted physical
+one-core baseline. The original Loihi-1 architecture specification remains
+available at [v3/docs/LOIHI1_TARGET_SPEC.md](Loihi_Digital_Twin/v3/docs/LOIHI1_TARGET_SPEC.md).
+
+The current application is a **project-trained, Loihi-inspired LIF MNIST
+digital twin**, not a bitwise clone of original Loihi silicon or the
+published snnTorch tutorial checkpoint. NxTF and alternative Rao/AHP
+model research are historical, unselected comparison directions. The
+counterfactual studies in [`EXPERIMENTS.md`](EXPERIMENTS.md)
+remain deferred while hardware validation is pursued.
 
 ## Repository structure
 
 - [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) contains the versioned architecture work.
   - [`v1/`](Loihi_Digital_Twin/v1/) is the preserved validated baseline, including
     Python model, verification, HLS, RTL, documentation, and M1-M13 history.
-  - [`v2/`](Loihi_Digital_Twin/v2/) is the active Loihi-1 manycore architecture work,
-    including the current roadmap and target specification.
+  - [`v2/`](Loihi_Digital_Twin/v2/) is the preserved accepted Loihi-1 manycore architecture baseline.
+  - [`v3/`](Loihi_Digital_Twin/v3/) is the active KV260 board-local architecture,
+    accepted P06 Track A/Track B software work and upcoming P07-B scaled physical integration.
 - [`applications/`](applications/) contains application workloads. The completed first
   application is preserved at
   [`applications/mnist_baseline/`](applications/mnist_baseline/).
