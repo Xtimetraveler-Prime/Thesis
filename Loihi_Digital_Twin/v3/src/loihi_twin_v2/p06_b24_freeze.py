@@ -90,6 +90,9 @@ def _safe_asset_path(root: Path, relative: str) -> Path:
             or any(part in (".", "..") for part in PurePosixPath(relative).parts)):
         raise B24FreezeError("invalid relative frozen asset path")
     target = root / relative
+    for ancestor in (root, *(root / part for part in ()), *target.parents):
+        if ancestor.is_symlink():
+            raise B24FreezeError("symlinked frozen assets are prohibited")
     if target.is_symlink():
         raise B24FreezeError("symlinked frozen assets are prohibited")
     return target
@@ -212,6 +215,10 @@ def verify_frozen_directory(
     } | {f"{B24_RECORDS_DIR}/core_{i:03d}_initial_p02_512k.bin" for i in range(27)}
     if paths != expected_paths:
         raise B24FreezeError("B2.4 frozen path set incomplete or unexpected")
+    actual_paths = {f.relative_to(root).as_posix()
+                    for f in root.rglob("*") if f.is_file()}
+    if actual_paths != expected_paths | {B24_MANIFEST_NAME}:
+        raise B24FreezeError("B2.4 frozen directory contains unexpected/unindexed files")
     by_path = {a["path"]: a for a in assets}
     if by_path["checkpoint/weights_state_dict.pt"]["sha256"] != PINNED_B22_WEIGHTS_SHA256:
         raise B24FreezeError("frozen checkpoint bytes differ from B2.2 user acceptance")
