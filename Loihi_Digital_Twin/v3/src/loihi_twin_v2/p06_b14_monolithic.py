@@ -61,6 +61,9 @@ def _check_schedule(network: NetworkSpec, schedule: EventSchedule, ticks: int) -
         rows = schedule[population]
         if not isinstance(rows, tuple) or len(rows) != ticks:
             raise B14OracleError("input schedule must contain exactly 26 immutable tick tuples")
+        if rows[-1] != ():
+            raise B14OracleError(
+                f"input schedule {population} final tick 25 is drain-only, not external input")
         for tick, indices in enumerate(rows):
             if (not isinstance(indices, tuple)
                     or any(type(index) is not int or not 0 <= index < size
