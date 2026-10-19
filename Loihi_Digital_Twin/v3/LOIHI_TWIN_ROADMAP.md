@@ -1616,10 +1616,12 @@ in the present `compile_network` will
     transfer *sizes* remain the only real page traffic
     measurements. **GO B2 training/validation candidate; NO-GO
     scaled physical KV260 / official TEST** until separate P07-B.
-    The user has NOT authorized merging draft PR #46.
+    Historical B1.6 status when originally authored: PR #46 was unmerged.
+    **Integration update 2026-10-19:** PR #46 merged into `main` as
+    `35ea181360ebf15627c2943090fbdc3c6bf3949e`.
 - **P06-B2 — Train, quantize and freeze
   independent larger checkpoint [B2.1–B2.5 USER-ATTESTED HOST SOFTWARE PASS;
-  MERGE AUTHORIZED, P07-B PHYSICAL PHASE STILL NOT STARTED].** Keep the same
+  MERGED MAIN 2026-10-19; P07-B PHYSICAL PHASE NOT STARTED].** Keep the same
   deterministic 25+1-step event/input,
   neuron/readout and dataset split;
   train a new project large-model
@@ -1664,9 +1666,11 @@ in the present `compile_network` will
     optimizer, serialization/tamper tests introduced in
     `tests/test_p06_b22_training.py`, documented in
     `docs/P06_B2_2_CANONICAL_TRAIN_ONLY_CANDIDATE.md`.
-    This does NOT mean a real MNIST fit happened, or that
-    B2.3 signed/P03/DDR parity, B2.4 freezing, KV260 scaled
-    inference or official TEST has been accepted.
+    The prior development note was written before the actual
+    B2.2 train run; the subsequent user-verified real checkpoint
+    reached 0.9708 10k TRAIN-derived validation accuracy and
+    B2.3/B2.4/B2.5 later passed HOST gates. This is not
+    scaled KV260 execution or B2 official TEST acceptance.
   - **B2.3 — Trained weight/packing/numerical audit
     [USER-ATTESTED NATIVE PASS FOR DENSE 27-CORE PACKING + THREE COMPLETE NUMERICAL FRAMES]:**
     User-attested B2.2 candidate best epoch 6, **97.08% TRAIN-derived
@@ -1755,12 +1759,12 @@ in the present `compile_network` will
     Script `scripts/p06_b25_acceptance.py`, unit tests
     `tests/test_p06_b25_acceptance.py`, full closeout in
     `docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md`.
-    After B2.5 native acceptance, user explicitly authorized
-    B1 PR #46 and stacked B2 PR #47 to merge in order.
-    Check final GitHub merge records before claiming the
-    merged main contains all accepted B1/B2 changes.
-  The B2 branch is explicitly stacked on accepted, unmerged
-  B1.6 closeout, not `main`; neither PR is authorized for merge.
+    **Integration confirmed 2026-10-19:** B1 PR #46 merged to
+    `main` as `35ea181360ebf15627c2943090fbdc3c6bf3949e`,
+    then B2 PR #47 was retargeted to `main` and merged as
+    `42f84de3bbbe62302599818c39e7e54747ce8aa2`.
+    The prior stacked development branches remain historical;
+    all new P07-B work must branch from merged `main`.
 
 **Track B P06 host-software exit (B2.1–B2.4 USER-ATTESTED;
 B2.5 FINAL READ-ONLY ACCEPTANCE USER-ATTESTED PASS):** Independent
@@ -1770,10 +1774,10 @@ P02 static DDR contexts and three full 26-tick trained
 dense host numerical frames, with 33-asset native B2.4
 normal/deep SHA freeze verified. NOT an actual physical
 scaled FPGA implementation, official MNIST TEST score
-or measured paging/latency/energy. B2.5 will make the
-separate P07-B physical readiness NO-GO and TEST NO-GO
-explicit before any merge.
-**Track A P07/P08-A latency-only gate and B1 host-software acceptance are satisfied.** Proceed with independent P06-B2 train/validation-only checkpoint development; leave all accepted Track A source, weights and evidence frozen and do not merge B1 draft PR #46 without explicit permission.
+or measured paging/latency/energy. B2.5 explicitly recorded
+P07-B physical execution NO-GO and official TEST UNSEAL NO-GO;
+this is not blocked from **starting P07-B development**.
+**P06-B1/B2 host-software acceptance is complete and both PRs have merged. Track A P07-A official 94.56% FPGA MNIST TEST and P08-A physical baseline remain frozen and separately accepted. Next: start isolated P07-B development from `main`; do not unseal B2 official TEST until after physical board parity and protocol/run-ID gates.**
 
 ### Archived alternate source audit
 
@@ -1812,11 +1816,12 @@ tracks. NxTF remains excluded.
 - Proceed in the A→B order stated above.
   **P06 Track A (A1–A4) is CLOSED / USER-ACCEPTED 2026-10-17.**
   A4.2 completed the static P02.1 512KiB DDR record native audit.
-  Exact DDR full-file SHA256 still needs provenance capture from
-  the user's existing local binary; this does not reopen the
-  accepted numerical/byte-layout gate. Official test remains
-  sealed. P07 physical MNIST inference and P08 physical metrics
-  have not been demonstrated.
+  Exact P06-A4 DDR full-file SHA256 still needs provenance
+  capture in that historical phase manifest; this does not reopen
+  the accepted numerical/byte-layout gate. **Track A P07-A
+  official TEST 94.56% FPGA inference and P08-A physical baseline
+  subsequently passed**. B2 official TEST remains SEALED;
+  27-core P07-B and P08-B remain untested physically.
 
 **Detailed execution/resource contract:**
 `docs/P06_TWO_TRACK_LIF_PLAN.md`.
@@ -1828,8 +1833,10 @@ See also `docs/P06_LIF_FEASIBILITY.md`,
 
 # P07 — Board-local classifier evaluation: compact first, scaled second
 
-**Status (2026-10-17): P07-A COMPLETE / USER PHYSICAL
-ACCEPTED AND VERIFIED. P07-B PLANNED (P08-A gated).**
+**Status (2026-10-19): P07-A and P08-A separately physically ACCEPTED;
+P06-B1/B2 host software MERGED and accepted; P07-B is the NEXT
+ACTIVE DEVELOPMENT PHASE, with scaled KV260 physical execution still
+NOT TESTED. Branch new P07-B implementation from merged `main`.**
 P07-A establishes the frozen compact Track A
 784→32→10, 816 registered input axons, 42 compartments,
 25 input + 1 drain timesteps, A53-orchestrated physical
