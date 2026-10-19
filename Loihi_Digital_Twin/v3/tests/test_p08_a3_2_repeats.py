@@ -161,7 +161,7 @@ def test_no_hardware_usage_and_cli_syntax():
     assert 'args.report.open("x"' in cli
     assert "P08_A3_2_3_THREE_PAIRED_LATENCY_AGGREGATION_PASS=1" in cli
     assert "frame_repeats_are_new_independent_images" in agg
-    assert "actual" not in agg.lower().split("no hardware")[0] if "no hardware" in agg.lower() else True
+    assert "No physical calls" not in cli or "OFFLINE only" in cli
     assert "subprocess" not in cli
     compiled=subprocess.run(["python","-m","py_compile",
         str(ROOT/"scripts/p08_a3_2_repeat_check.py"),
