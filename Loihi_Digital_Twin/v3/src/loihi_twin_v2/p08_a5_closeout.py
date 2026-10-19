@@ -105,6 +105,15 @@ def validate_cross_provenance(cpu: dict,physical: dict) -> None:
                 isinstance(item,dict) and item.get("a21_run_dir")==session
                 for item in original)):
         raise ValueError("A5 CPU numerical proof is not tied to one accepted physical A2.1 run")
+    for item in original:
+        for field in ("a21_service_ordinary_ms","a22_service_ordinary_ms"):
+            summary=item.get(field) if isinstance(item,dict) else None
+            if not isinstance(summary,dict) or any(
+                key not in summary or type(summary[key]) not in (int,float) or
+                not math.isfinite(summary[key])
+                for key in ("median","p95_nearest_rank","sample_stdev")
+            ) or summary.get("n")!=TRACE_FRAME:
+                raise ValueError("A5 A53 physical ordinary-frame source distributions missing")
     for field in ("a21_ordinary_median_service_ms_by_run",
                   "a22_ordinary_median_service_ms_by_run",
                   "paired_ordinary_median_delta_ms_by_pair"):
@@ -169,6 +178,24 @@ def make_draft(cpu: dict,physical: dict,
         f"| Host CPU full 784-byte raw image to class | {_fmt(full)} | Original encoder + packed 26 ticks + spike readout; model decoded once |",
         f"| KV260 A53 with A2.1 | {_fmt(a)} | Instrumented complete physical A53 image service, MMIO, PS+PL and result commit |",
         f"| KV260 A53 with A2.2 | {_fmt(b)} | Same plus seven-timestamp per-tick instrumentation |",
+        "",
+        "### Same-frame-population p95 and sample standard deviation (ms)",
+        "",
+        "| Paired trial | Host CPU preloaded p95 / SD | Host CPU image-to-class p95 / SD | KV260 A2.1 p95 / SD | KV260 A2.2 p95 / SD |",
+        "|---:|---:|---:|---:|---:|",
+        *[
+            "| "+str(i+1)+" | "+
+            f"{cpu_core['ordinary_1023_distributions_ms'][i]['p95_nearest_rank']:.4f} / {cpu_core['ordinary_1023_distributions_ms'][i]['sample_stdev']:.4f} | "+
+            f"{cpu_full['ordinary_1023_distributions_ms'][i]['p95_nearest_rank']:.4f} / {cpu_full['ordinary_1023_distributions_ms'][i]['sample_stdev']:.4f} | "+
+            f"{physical['source_evidence'][i]['a21_service_ordinary_ms']['p95_nearest_rank']:.4f} / {physical['source_evidence'][i]['a21_service_ordinary_ms']['sample_stdev']:.4f} | "+
+            f"{physical['source_evidence'][i]['a22_service_ordinary_ms']['p95_nearest_rank']:.4f} / {physical['source_evidence'][i]['a22_service_ordinary_ms']['sample_stdev']:.4f} |"
+            for i in range(3)
+        ],
+        "",
+        "These 1023-image p95/SD values describe within-session heterogeneity.",
+        "Host CPU repeats are sequential in one process; 3 FPGA pairs were",
+        "separately booted. They do NOT share a common physical clock, OS or",
+        "exactly corresponding service endpoints.",
         "",
         "### Within-three-physical-pair profiler perturbation (not calibrated timer cost)",
         "",
