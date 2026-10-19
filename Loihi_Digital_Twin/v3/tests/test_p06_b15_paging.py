@@ -111,6 +111,26 @@ def test_direct_cache_exact_lru_slots_victim_hits_and_final_flush():
         paging.visit(2, 8, 0)
 
 
+def test_lru_rejects_early_barrier_double_dispatch_and_dirty_flush():
+    schedule = ResidentLRU((0, 1))
+    schedule.visit(0, 0, 0)
+    with pytest.raises(B15ScheduleError, match="before all"):
+        schedule.visit(1, 1, 1)
+    with pytest.raises(B15ScheduleError, match="before last epoch"):
+        schedule.flush()
+    with pytest.raises(B15ScheduleError, match="twice"):
+        schedule.visit(0, 1, 0)
+    with pytest.raises(B15ScheduleError, match="serial dispatch ordinals"):
+        schedule.visit(0, 2, 1)
+    schedule.visit(0, 1, 1)
+    with pytest.raises(B15ScheduleError, match="skip or rewind"):
+        schedule.visit(2, 2, 0)
+    schedule.visit(1, 2, 1)
+    schedule.visit(1, 3, 0)
+    assert len(schedule.flush()) == 2
+    assert schedule.report()["dispatches"] == 4
+
+
 def test_resident_1_to_3_core_regime_only_initial_load_and_final_flush():
     for count in (1, 2, 3):
         page = ResidentLRU(tuple(range(count)))
