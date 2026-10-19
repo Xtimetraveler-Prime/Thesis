@@ -1632,6 +1632,29 @@ in the present `compile_network` will
   and evaluate a transparent intermediate
   model *before* accessing test results;
   do not silently relabel the model.
+  - **B2.1 — Scaled training contract [IMPLEMENTED; NATIVE
+    USER VERIFICATION PENDING]:** New isolated
+    `src/loihi_twin_v2/p06_b21_training_foundation.py`
+    introduces 784→H→10 H≤1000 integer-valued forward
+    using the **unchanged frozen Track A** P06-A2.5 strict
+    surrogate-gradient/saturating signed24 kernel; explicitly
+    shape-dependent source graph export to the B1.2 mapper,
+    dimension-bound signed integer tensor SHA256, canonical
+    TRAIN-only split admission and untrained-only manifest.
+    New host synthetic 26-tick independent scalar-LIF
+    forward/parity/STE-gradient/source packing tests and optional
+    dense 1000-neuron graph stress. This is NOT actual training,
+    a trained checkpoint, official TEST, or a physical run.
+    See `docs/P06_B2_1_TRAINING_FOUNDATION.md`.
+  - **B2.2 — Canonical TRAIN-only fitting [NOT STARTED]:**
+    Native user preflight/approval of training settings,
+    deterministic 50k/10k split and separate candidate model.
+  - **B2.3 — Trained weight/packing/numerical audit [NOT STARTED].**
+  - **B2.4 — New checkpoint+validation+official protocol freeze
+    [NOT STARTED].**
+  - **B2.5 — B2 software acceptance / P07-B handoff [NOT STARTED].**
+  The B2 branch is explicitly stacked on accepted, unmerged
+  B1.6 closeout, not `main`; neither PR is authorized for merge.
 
 **Track B P06 exit (NOT YET SATISFIED BY B1 ALONE):** a separately
 audited, real trained *project*
