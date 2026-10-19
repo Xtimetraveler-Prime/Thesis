@@ -1,6 +1,6 @@
 # P06-B1.5 — Three-resident-slot scheduling, NEXT routing and DDR traffic model
 
-**Status:** B1.5 host-only source/test/diagnostic candidate **committed, PC-native acceptance PENDING**. No GitHub CI PASS or new KV260 measurements claimed.  
+**Status:** B1.5 host-only source/tests/diagnostics **USER-ATTESTED NATIVE PASS (2026-10-19)**; final B1 software acceptance is recorded in `docs/P06_B1_6_FINAL_HOST_SOFTWARE_ACCEPTANCE.md`. No GitHub CI PASS or new KV260 measurements claimed.  
 **Branch:** `agent/v3-p06-b1-scalable-packing`, draft PR #46 **unmerged**.  
 **Prerequisites (user-attested):** B1.1, B1.2, B1.3 (including corrected decoder-order regressions), and B1.4 independent 26-tick monolithic-versus-partitioned oracles all reported native PASS. B1.2 previously demonstrated a structurally packed, **synthetic dense** 784→1000→10, 27-core, 794,000-connection topology with 27 full 512 KiB DDR records (13.5 MiB). No separately trained scaled checkpoint, sealed official MNIST TEST, or physical scaled acceptance exists.
 
@@ -111,7 +111,7 @@ PYTHONPATH="$PWD/src" python scripts/p06_b15_paging_probe.py \
   --shape dense1000 --assume-gib-s 1
 ```
 
-Expected probe marker: `P06_B15_HOST_ONLY_PAGING_ESTIMATE_PASS=1`. Always distinguish structural-only vs independently numerically executed. A skipped optional test is NOT an accepted PASS for that opt-in gate. Source changes must be rerun natively; **no CI/native results are independently claimed by this authoring agent**.
+The user subsequently reported **all B1.5 tests and optional host probes passed** and supplied full dense27 alternating structural and sparse27 numerical terminal reports (see B1.6 acceptance ledger). The reported probe marker was `P06_B15_HOST_ONLY_PAGING_ESTIMATE_PASS=1`. Distinguish structural-only from independently numerically executed; a skipped optional test is NOT an accepted PASS. **Native PASS is user-attested; the authoring agent did not independently execute CI/native or any physical KV260 runs.**
 
 ## Next milestones (not yet started)
 
