@@ -1,6 +1,6 @@
-# P08-A — Compact KV260 latency-only Track A final acceptance candidate
+# P08-A — Compact KV260 Track A latency-only ACCEPTANCE
 
-**Review state:** **READY FOR EXPLICIT USER SIGNOFF (NOT YET ACCEPTED OR MERGED)**, recorded after the user's local 2026-10-18 physical and CPU benchmark reports. No physical re-execution, firmware rebuild, or official MNIST TEST rerun is necessary for the already completed latency-only scope. The PR remains **DRAFT** until the user explicitly approves closure/merge.
+**Acceptance decision:** **USER AUTHORIZED P08-A LATENCY-ONLY PHASE CLOSURE AND MERGE OF PR #45 TO `main` (2026-10-18 local project timeline).** Evidence has been user-attested, original source identity/paired-physical replay and CPU source-parity gates PASS. **P08-A4 POWER/ENERGY DEFERRED/UNMEASURED.** Do not claim independently calibrated PL-only time, matched CPU/FPGA acceleration or optimized native-CPU superiority. The latest corrected native pytest summary has not been pasted into chat; this is a recorded *evidence provenance limitation*, not an invented PASS. Merge outcome must be established separately from GitHub's actual merge response. No FPGA rerun, firmware rebuild, or official MNIST TEST rerun was required for this acceptance.
 
 ## 1. Original contract and agreed scope
 
@@ -25,7 +25,7 @@ This acceptance refers to [P08-A1 Measurement Contract](P08_A1_MEASUREMENT_CONTR
 | **A5 reference computation** | Original 26-tick packed Python CPU, preloaded and raw784 image-to-class endpoints, all1024 physical P07 journal output-spike parity + original independent packed oracle | **USER-ATTESTED PASS** |
 | **A5 timing and reporting** | 3 sequential CPU host passes per endpoint, CPU model/Python/timer/governor, 3-pair physical uncertainty, p95/SD, source hashes and generated draft | **USER-ATTESTED PASS** |
 | **A5 corrected native pytest suite** | Two initial assertion failures corrected on branch; no final post-correction pytest output pasted | **NOT INDEPENDENTLY CONFIRMED — RECOMMEND FINAL NATIVE RUN** |
-| **Final user decision** | Explicit latency-only acceptance / PR #45 merge authorization | **PENDING — DO NOT MERGE** |
+| **Final user decision** | User explicitly requested closeout and merge of PR #45 on 2026-10-18, with original P08-A4 deferral and no pure PL/CPU acceleration claim | **USER AUTHORIZED — MERGE OPERATION SEPARATELY VERIFIED** |
 
 **Interpretation:** All *measured latency-only technical evidence deliverables* are satisfied at the level of user-posted terminal PASS markers and immutable file SHA attestations. Missing external calibration/energy/optimized CPU comparison are stated **limitations or deferred scope**, not quietly invented successes. Final acceptance remains subject to user review and any desired regression confirmation.
 
@@ -75,12 +75,12 @@ Generated full A5 CPU/FPGA Markdown review report:
 
 ## 5. Final transition / merge stop gate
 
-**Prepared but not authorized:**
+**Authorized decision and follow-through:**
 
 1. User checks [A5 final measured report](P08_A5_CPU_PHYSICAL_LATENCY_RESULTS.md), [final A3 physical results](P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RESULTS.md), and original [P08-A1 scope contract](P08_A1_MEASUREMENT_CONTRACT.md).
 2. User optionally confirms the corrected selected A5 native tests and clean working tree, using the commands below; verify any unexpected failures before closing.
-3. User **explicitly** states that they accept **P08-A under the latency-only scope with P08-A4 power/energy deferred and with no PL-only speedup claim** and authorizes **merging draft PR #45 to main**. Until that instruction, maintain branch as-is, PR DRAFT/UNMERGED and A5 closeout in **CANDIDATE** state.
-4. Following explicit authorization, update acceptance status from CANDIDATE to ACCEPTED, update roadmap and PR, then merge using the allowed repo workflow. Provide the post-merge VS Code checkout/pull/native verification commands. **No automatic merge from this documentation update.**
+3. **USER AUTHORIZATION RECEIVED:** The user explicitly said **“great lets merge this”** after reviewing the full results, the deferred-power/latency-only acceptance recommendation and final report. No inference of accepted PL-only compute time or power measurement is made. PR #45 may be merged under the user-approved scope.
+4. Following this recorded authorization, merge PR #45 through GitHub and **verify the returned merged SHA/main state**; afterward create a versioned handoff seed for the next chat. Provide post-merge VS Code checkout/pull/native regression commands. This acceptance decision alone is not proof the merge succeeded.
 
 ### Native final verification on the user's PC (no FPGA)
 
