@@ -1703,7 +1703,7 @@ in the present `compile_network` will
     but earlier relevant B1/B2.1 optional cases were verified
     in separate user runs. No FPGA scaled parity was shown.
   - **B2.4 — New checkpoint+validation+official protocol freeze
-    [HOST SOURCE/TEST CANDIDATE COMMITTED; NATIVE FREEZE PENDING]:**
+    [USER-ATTESTED REGULAR AND DEEP NATIVE CHECKPOINT/27-DDR FREEZE PASS]:**
     `p06_b24_freeze.py` requires exactly the user-accepted
     trained B2.2 checkpoint/integer SHAs, B2.3 source/compiler/
     capacity hashes and unchanged original three TRAIN-derived
@@ -1718,21 +1718,59 @@ in the present `compile_network` will
     source+compiler+27-DDR deep byte regeneration verifier.
     `tests/test_p06_b24_freeze.py` checks source/trace
     tamper rejection, no overwrite, path-symlink protection,
-    manifest tamper and sealed TEST protocol. No native
-    acceptance, full freeze artifacts or user-local generated
-    manifest digest observed yet; no TEST unseal, FPGA physical
-    run or scaled performance measurement asserted. See
-    `docs/P06_B2_4_FROZEN_TRAINED_CHECKPOINT_AND_DDR.md`.
-  - **B2.5 — B2 software acceptance / P07-B handoff [NOT STARTED].**
+    manifest tamper and sealed TEST protocol. The user
+    supplied native `P06_B24_FROZEN_INTEGRITY_PASS=1` with
+    33 frozen assets / 27 actual P02 512 KiB static contexts,
+    `deep_regeneration=true` rebuilding original source,
+    mapping and all 27 DDR images with matching hashes.
+    Native canonical unsigned-manifest SHA256
+    `d01ccd2d5a85b22f81580cd7800933642e19d1a43e8a2f38eac1f6c4d83cab90`;
+    separate actual `frozen_manifest.json` on-disk file SHA256
+    `d71e2827a81ab1f00ef1e89446540ac04b7d7b34d89b30d46cd6e4ff013c7a63`.
+    Both are separately pinned WITHOUT modifying the original
+    still-historical `user_native_B2_4_accepted=false`
+    field inside the frozen snapshot. No official TEST unseal,
+    actual 27-core FPGA physical run, dynamic DDR dump or
+    measured scaled performance asserted. See
+    `docs/P06_B2_4_FROZEN_TRAINED_CHECKPOINT_AND_DDR.md`
+    and `docs/P06_B2_5_USER_EVIDENCE_LEDGER.json`.
+  - **B2.5 — B2 host-software exit / P07-B handoff
+    [CODE/NEGATIVE TESTS/DOCS COMMITTED; USER PC NATIVE GATE PENDING]:**
+    `p06_b25_acceptance.py` performs read-only checks of
+    the original 33 SHA-indexed frozen assets, 27 per-core
+    P02 identity/axon/synapse/event/packet pressure bounds,
+    both distinct frozen B2.4 manifest digests, B2.2
+    trained checkpoint SHA/quantized weight SHA, B2.3
+    source/mapping/capacity digests and three exact full
+    26-tick TRAIN-derived validation trace witnesses.
+    It preserves the original sealed official MNIST TEST
+    predeclared protocol and lists the separate real P07-B
+    A53/PL firmware, paging/DDR owner, physical timing,
+    all-tick board parity and measured latency/energy gates.
+    Host software is READY FOR USER B2.5 ACCEPTANCE and then
+    P07-B **DESIGN/PLANNING**; scaled FPGA programming,
+    new measured performance, official MNIST TEST unseal
+    and B2.5 native acceptance are still **NO-GO/PENDING**.
+    Script `scripts/p06_b25_acceptance.py`, unit tests
+    `tests/test_p06_b25_acceptance.py`, full closeout in
+    `docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md`.
+    The user requested independent B2.5 verification BEFORE
+    granting future merge permission for B1 PR #46 and
+    stacked B2 PR #47; no merge has occurred.
   The B2 branch is explicitly stacked on accepted, unmerged
   B1.6 closeout, not `main`; neither PR is authorized for merge.
 
-**Track B P06 exit (NOT YET SATISFIED BY B1 ALONE):** a separately
-audited, real trained *project*
-checkpoint mapped with real 128 KiB/
-32,768-entry bounds and independently
-verified event/packet/state semantics.
-No scaled KV260 claims until P07-B.
+**Track B P06 host-software exit (B2.1–B2.4 USER-ATTESTED;
+B2.5 FINAL READ-ONLY ACCEPTANCE PENDING):** Independent
+actual 784→1000→10 TRAIN-only checkpoint trained to
+0.9708 TRAIN-derived validation accuracy, 27 precise
+P02 static DDR contexts and three full 26-tick trained
+dense host numerical frames, with 33-asset native B2.4
+normal/deep SHA freeze verified. NOT an actual physical
+scaled FPGA implementation, official MNIST TEST score
+or measured paging/latency/energy. B2.5 will make the
+separate P07-B physical readiness NO-GO and TEST NO-GO
+explicit before any merge.
 **Track A P07/P08-A latency-only gate and B1 host-software acceptance are satisfied.** Proceed with independent P06-B2 train/validation-only checkpoint development; leave all accepted Track A source, weights and evidence frozen and do not merge B1 draft PR #46 without explicit permission.
 
 ### Archived alternate source audit
