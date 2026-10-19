@@ -163,7 +163,7 @@ class ResidentLRU:
             raise B15ScheduleError("page-transfer sizes violate P05 observed burst alignment")
         return {
             "dispatches": len(self.operations),
-            "global_barriers": B14_TICKS,
+            "global_barriers": max((op.tick for op in self.operations), default=-1) + 1,
             "one_engine_max_in_flight_dispatches": 1,
             "resident_context_slots": len(self.slots),
             "page_hits": hits,
@@ -216,6 +216,8 @@ class B15Run:
     page_operations: tuple[PagingOperation, ...]
     final_flushes: tuple[FinalFlush, ...]
     epochs: tuple[EpochPaging, ...]
+    logical_traces: tuple[ChipTrace, ...]
+    initial_ddr_backing: tuple[dict, ...]
     traffic: dict
     operations_sha256: str
 
@@ -238,6 +240,7 @@ class B15Run:
             "nonresident_when_emitted_packets": sum(e.nonresident_at_emission_packets
                                                     for e in self.epochs),
             "paging": self.traffic,
+            "initial_ddr_backing": list(self.initial_ddr_backing),
             "latency_seconds": None,
             "physical_latency_measured": False,
             "physical_kv260_execution": "NOT_TESTED",
@@ -306,6 +309,11 @@ def run_paged_model(
         raise B15ScheduleError("source graph does not match B1.2 compiled deployment")
     if result.capacity_audit.get("original_compiled_sha256") != compiled.fingerprint:
         raise B15ScheduleError("B1.1 packed audit mismatch")
+    # Source-bound B1.1 record manifests must be genuine, not a substituted
+    # source-compiled fingerprint with an unrelated packed DDR occupancy.
+    from .p06_b1_contract import audit_compiled_candidate
+    if result.capacity_audit != audit_compiled_candidate(compiled):
+        raise B15ScheduleError("B1.1 packed/DDR SHA manifest recomputation mismatch")
     ordered = tuple(sorted(c.core_id for c in compiled.logical_deployment.core_configs))
     hardware = export_paged_hardware_image(compiled.logical_deployment.core_configs)
     if (hardware.logical_core_ids != ordered or hardware.resident_context_count != min(3, len(ordered))
@@ -416,6 +424,14 @@ def run_paged_model(
             ):
         raise B15ScheduleError("total serial-dispatch/packet event accounting drift")
     ops = tuple(paging.operations)
+    recorded = {row["core_id"]: row for row in result.capacity_audit["cores"]}
+    initial_records = tuple({
+        "core_id": core,
+        "ddr_offset_bytes": ddr_context_offset(core),
+        "full_ddr_record_bytes": P02_DDR_CONTEXT_STRIDE_BYTES,
+        "initial_ddr_sha256": recorded[core]["initial_ddr_sha256"],
+        "initial_payload_sha256": recorded[core]["initial_ddr_payload_sha256"],
+    } for core in ordered)
     return B15Run(
         network_source_sha256=network.fingerprint,
         deployment_sha256=compiled.fingerprint,
@@ -424,6 +440,8 @@ def run_paged_model(
         page_operations=ops,
         final_flushes=flushes,
         epochs=tuple(epoch_rows),
+        logical_traces=tuple(traces),
+        initial_ddr_backing=initial_records,
         traffic=traffic,
         operations_sha256=_page_digest(ops, flushes),
     )
