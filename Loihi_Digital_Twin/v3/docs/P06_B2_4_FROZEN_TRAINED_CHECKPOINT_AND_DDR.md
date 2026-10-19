@@ -1,6 +1,6 @@
 # P06-B2.4 — Frozen trained checkpoint, packed 27-core P02 images and TEST protocol
 
-**Implementation status:** B2.4 host-only freeze source/tests/CLI **COMMITTED; native workstation validation PENDING**. B2.3 **USER-ATTESTED PASS** for trained dense 784→1000→10, 27 cores, 14,155,776 P02 backing bytes and full 26-tick numerical parity on *three* fixed TRAIN-derived validation images. **No scaled FPGA run, official MNIST TEST unseal, measured performance, or B2.4 user acceptance is claimed.**
+**Implementation and user acceptance:** B2.4 freeze materialization followed by **USER-ATTESTED REGULAR AND DEEP NATIVE PASS** for all 33 assets, all 27 P02 contexts and unchanged sealed TEST protocol. B2.3 **USER-ATTESTED PASS** for trained dense 784→1000→10, 27 cores, 14,155,776 P02 backing bytes and full 26-tick numerical parity on *three* fixed TRAIN-derived validation images. **No scaled FPGA run, official MNIST TEST unseal, measured performance, or B2.4 user acceptance is claimed.**
 
 Development branch `agent/v3-p06-b2-training-foundation`, stacked draft PR #47, dependent on still-unmerged B1 PR #46. Neither PR may be merged without explicit user authorization. Accepted Track A checkpoint and source stay read-only.
 
@@ -27,6 +27,36 @@ Previously user-attested, frozen **TRAIN-derived VALIDATION**, not official TEST
 | 2 | 20178 | `ecba50a2...` | 1 / 1 | monolithic `9cce27d0...`, partitioned `9c5766a6...` |
 
 Their monolithic and partitioned SHA strings are *not supposed to be identical*: their trace schemas differ. **Neuron-state/input/spike/NEXT-route equality** across all 26 ticks is the actual verified parity test. User-reported exact full trace fingerprints are anchored in B2.4 source, and full numerical checks are rerun locally before snapshot output is created.
+
+## Subsequent B2.4 native acceptance ledger (2026-10-19)
+
+The user subsequently ran independent read-only `--verify` and
+`--verify --deep` against
+`artifacts/p06_b24_frozen_1000`. BOTH produced
+`P06_B24_FROZEN_INTEGRITY_PASS=1`, `files_checked=33`,
+`cores_checked=27`, `total_initial_ddr_bytes=14155776`,
+`official_mnist_test_status=SEALED_NOT_ACCESSED`,
+`physical_kv260_execution=NOT_TESTED`. Deep
+`deep_regeneration=true` rehydrated original signed source/
+B1.2 serialized deployment and independently rebuilt all
+27 initial P02 DDR context images.
+
+**Canonical unsigned-manifest content SHA256** (native JSON field):
+`d01ccd2d5a85b22f81580cd7800933642e19d1a43e8a2f38eac1f6c4d83cab90`.
+
+**Whole pretty-printed frozen_manifest.json file bytes SHA256**
+(native `sha256sum`):
+`d71e2827a81ab1f00ef1e89446540ac04b7d7b34d89b30d46cd6e4ff013c7a63`.
+
+The originally written frozen manifest **intentionally still records
+`user_native_B2_4_accepted=false`**, reflecting the state when the
+package was first generated. We must NOT alter it after user acceptance:
+that would destroy the two cryptographic identities. The later
+user-attested PASS and hashes are recorded externally in
+`docs/P06_B2_5_USER_EVIDENCE_LEDGER.json`. The original checkpoint
+and source bytes remain on the user's PC, not in the Git repo.
+B2.5 adds a separate read-only policy/physical-readiness gate;
+the B2.4 report alone does NOT authorize scaled KV260 or official TEST.
 
 ## Freeze layout, safety and provenance
 
