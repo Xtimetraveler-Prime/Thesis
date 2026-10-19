@@ -1,6 +1,6 @@
 # P08-A3.2.3 — Repeated paired physical latency characterization
 
-**Status (2026-10-18 project timeline): FIRST A3.2.2 PHYSICAL 1,024-IMAGE A2.1/A2.2 PAIR USER-ATTESTED PASS; A3.2.3 THREE-PAIR OFFLINE AGGREGATOR IMPLEMENTED, NATIVE TESTS PENDING; REPEAT PAIRS 2 AND 3 NOT YET EXECUTED.** Do not merge or claim a statistical reference without user approval. Power/energy deferred.
+**Status (2026-10-18 project timeline): PAIRS 1 AND 2 USER-ATTESTED PHYSICAL PASS (1024 TRAIN-VALIDATION FRAMES PER SESSION; BOTH ORIGINAL NEURAL ORACLES AND PAIRED TELEMETRY PASS). PAIR 2 REVERSED ORDER A2.2 → A2.1, PAIRED MEDIAN +25.4 µs; PAIR 1 +16.8 µs. PAIR 3 NOT RUN; THREE-PAIR AGGREGATION NOT RUN.** Do not merge or claim a statistical reference without user approval. Power/energy deferred.
 
 ## 1. Previously accepted first pair (locked data)
 
@@ -16,6 +16,8 @@ The user reported **1,024 original-order TRAIN-derived validation images**, A2.1
 
 Both separate A53 CNTFRQ readings were **99,999,001 Hz**. This small first-pair median delta is a **measured A53 frame-service difference** affected by run/order effects, not a calibrated isolated cost of each additional timer sample. The exact user-reported results, firmware pins and source paths are preserved in [A3.2.2 first-pair report](P08_A3_2_2_PHYSICAL_RESULTS.md). Original first16 pilot is recorded separately.
 
+**New Pair 2 acceptance:** The user executed the reversed order A2.2 → A2.1, accepted both independent 1,024-image original P07 packed-oracle/timing gates, and reported A2.1 median **35.6946 ms**, A2.2 median **35.7163 ms**, and same-frame paired median **+0.0254 ms / +25.4 µs** (paired nearest-rank p95 **+0.0827 ms**, range **−0.0428 to +0.0909 ms**, stdev **0.0255 ms**). Both A53 CNTFRQ values: **99,999,001 Hz**. Details: [Pair 2 exact observations](P08_A3_2_3_PAIR2_RESULTS.md). Its A2.1 evidence folder and paired report filename were not posted. Do not guess either path. Both Pair 1 and Pair 2 JSON reports are immutable inputs for the final aggregate.
+
 The first pair is **one hardware session per firmware**, NOT repeated sampling. Do not re-run or overwrite its directories, logs or JSON. The original accepted **first1024 TRAIN-only stage**, last selected 26×42 full trace at 1023, and existing frozen built firmware binaries remain unchanged throughout P08-A3.2.3.
 
 ## 2. Predeclared second/third pair order and study scope
@@ -25,7 +27,7 @@ For three independently rebooted pairs (six physical sessions, including the alr
 | Pair | First physically run | Second physically run | State |
 | --- | --- | --- | --- |
 | 1 | A2.1 | A2.2 | **USER PHYSICAL PASS**, 1,024-image per-version |
-| 2 | **A2.2** | **A2.1** | Pending |
+| 2 | **A2.2** | **A2.1** | **USER-ATTESTED PHYSICAL PASS**; 1023 ordinary-image matched median delta **+25.4 µs**, p95 **+82.7 µs** |
 | 3 | **A2.1** | **A2.2** | Pending |
 
 This AB/BA/AB ordering is **partially counterbalanced**, not a randomized or blinded design. Preserve chronological time, device reboot and environment notes in each untracked physical evidence folder; do not infer a controlled thermal/clock relationship without actual evidence. Do not describe the 3 × 1,023 ordinary observations per mode as 3,069 independent samples—the same **1,023 ordinary images** are measured repeatedly. The **one** full trace image per 1,024-image run is excluded from ordinary service distributions.
@@ -67,6 +69,9 @@ bash -n scripts/run_p08_a3_2_1024.sh
 **Stop if any test fails; no source CI/native pass for A3.2.3 is asserted yet.** No Vitis build required: physical binaries are immutable and SHA-pinned.
 
 ## 5. Repeat-pair capture commands (operator-controlled separate boots)
+
+**Progress note:** the following Pair 2 commands are retained as a historical reproduction procedure; **Pair 2 is already physically complete**. Do **not** rerun or overwrite Pair 2. Only the Pair 3 A2.1 → A2.2 sequence remains. For each Pair 3 session use a fresh output directory and independently reboot into JTAG-only bare-metal with no Linux ownership of the reserved DDR range.
+
 
 Set original accepted paths (the user previously posted the stage/build locations, but **not** the first paired report filename):
 
