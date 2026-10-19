@@ -1,8 +1,10 @@
 # P08-A3.2 — Paired 1,024-image physical latency baseline
 
-**State (2026-10-18 project timeline): A3.2.1 HOST NATIVE VERIFIED. A3.2.2 USER REPORTS FIRST PAIRED 1,024-FRAME KV260 RUNS AND BOTH ORIGINAL ORACLES/TIMING INTEGRITY PASS; MEDIAN PAIRED A53 FULL-SERVICE DELTA +0.0168 ms. A3.2.3 THREE-PAIR AGGREGATOR IMPLEMENTED, NATIVE PENDING. NO REPLICATED LATENCY BASELINE YET.**
+**State (2026-10-18 project timeline): A3.2.1 HOST NATIVE VERIFIED; A3.2.2 AND A3.2.3 PHYSICAL KV260 THREE-PAIR REPEATED LATENCY RESULTS USER-ATTESTED COMPLETE. THREE RUN-PAIR MEDIAN A2.2−A2.1 SERVICE DIFFERENCES +16.840, +25.400, +29.710 µs (MEAN +23.984 µs; PAIR-LEVEL SD 6.551 µs). FINAL AGGREGATE RAW FILE/BINARY EVIDENCE STILL USER-LOCAL, NOT INDEPENDENTLY INSPECTED HERE; A5 CPU COMPARATOR REMAINS OPEN.**
 
 **First paired physical result:** A2.1 ordinary 1023-image median **35.7023 ms** (p95 **41.9667 ms**), A2.2 median **35.7234 ms** (p95 **41.9800 ms**), matched-image median delta **+0.0168 ms / 16.8 µs** (matched p95 **+0.0744 ms**), both reported A53 clock frequencies **99,999,001 Hz**, original neural verification **PASS**, timing integrity **PASS_SINGLE_PAIR**. Preserve exact readings and provenance in [A3.2.2 first paired physical report](P08_A3_2_2_PHYSICAL_RESULTS.md). A3.2.3 extends with [two further cold-boot physical pairs](P08_A3_2_3_REPEATED_LATENCY_PROTOCOL.md); it must not pool repeated image IDs as independent data.
+
+**Final experiment update:** All three physical pairs completed (A2.1→A2.2, A2.2→A2.1, A2.1→A2.2) on the frozen first1024 TRAIN-derived validation stage. This document's earlier proposal language is retained as research history, not a statement that further A3 physical experiments remain pending. [Final three-pair results and A5 closure requirements](P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RESULTS.md). No new physical KV260 run is needed for the completed repeated latency study; power remains deferred.
 
 ## Motivation: measured A3.1 pilot is dominated by PS-side service
 
