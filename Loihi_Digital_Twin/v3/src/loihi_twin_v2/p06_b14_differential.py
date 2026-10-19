@@ -88,6 +88,7 @@ class _Layout:
     external_cores_by_source: dict[_External, tuple[int, ...]]
     input_axon_owner: dict[tuple[int, int], _External]
     expected_outputs: dict[tuple[int, int], set[int]]
+    output_axon_by_source_and_core: dict[tuple[int, int, int], int]
     known_external: dict[str, set[int]]
 
 
@@ -145,6 +146,7 @@ def _independent_layout(network: NetworkSpec, result: B12Result) -> _Layout:
     _require_equal(-1, "ingress_uniqueness", len(input_pairs), len(input_owner))
 
     observed_outputs: dict[tuple[int, int], set[int]] = defaultdict(set)
+    output_axon_by_source_and_core: dict[tuple[int, int, int], int] = {}
     for core in compiled.logical_deployment.core_configs:
         for entry in core.output_routes:
             origin = (core.core_id, entry.source_compartment)
@@ -154,11 +156,15 @@ def _independent_layout(network: NetworkSpec, result: B12Result) -> _Layout:
                     raise B14Divergence(-1, "output_route_uniqueness",
                                         "one route per source/destination-core pair", origin)
                 observed_outputs[origin].add(destination_core)
+                output_axon_by_source_and_core[(
+                    core.core_id, entry.source_compartment, destination_core,
+                )] = route.destination_axon
     _require_equal(-1, "neural_source_core_fanout",
                    {k: frozenset(v) for k, v in expected_outputs.items()},
                    {k: frozenset(v) for k, v in observed_outputs.items()})
     return _Layout(by_id, by_neuron, input_pairs, external_cores_by_source,
-                   input_owner, dict(expected_outputs), dict(known_external))
+                   input_owner, dict(expected_outputs),
+                   output_axon_by_source_and_core, dict(known_external))
 
 
 def _incoming_oracle(
@@ -200,6 +206,10 @@ def _observed_packets_in(tick: int, trace: ChipTrace, layout: _Layout) -> Counte
                     raise B14Divergence(tick, "routed_packet_source", "placed source neuron", addr)
                 _require_equal(tick, "routed_packet_source_epoch", tick - 1,
                                packet.source_timestep, layout.by_id[addr])
+                mapped_axon = layout.output_axon_by_source_and_core.get((
+                    packet.source_core, packet.source_compartment, packet.destination_core))
+                _require_equal(tick, "routed_packet_destination_axon",
+                               mapped_axon, packet.destination_axon, layout.by_id[addr])
                 neuron = layout.by_id[addr]
                 observed[("neural", neuron[0], neuron[1], packet.destination_core)] += 1
     return observed
@@ -226,6 +236,10 @@ def _actual_outgoing(tick: int, trace: ChipTrace, layout: _Layout) -> Counter:
             _require_equal(tick, "packet_source_tick", tick, packet.source_timestep, neuron)
             _require_equal(tick, "packet_source_core", core.logical_core_id,
                            packet.source_core, neuron)
+            expected_axon = layout.output_axon_by_source_and_core.get((
+                packet.source_core, packet.source_compartment, packet.destination_core))
+            _require_equal(tick, "packet_destination_axon",
+                           expected_axon, packet.destination_axon, neuron)
             counts[(packet.target_timestep, neuron, packet.destination_core)] += 1
     return counts
 
