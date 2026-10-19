@@ -74,8 +74,15 @@ def _fixtures():
     }
     cores = [
         {"core_id": i, "record_bytes": 524288,
-         "logical_synapse_bytes": 128576 if i < 26 else 0,
+         "compartments": 39 if i < 25 else (25 if i == 25 else 10),
+         "input_axons": 784 if i < 26 else 1000,
+         "route_words": 39 if i < 26 else 0,
+         "synapse_words": 30576 if i < 26 else 10000,
+         "logical_synapse_bytes": 128576 if i < 26 else 44000,
+         "worst_external_events": 784 if i < 26 else 0,
+         "worst_routed_events": 0 if i < 26 else 1000,
          "worst_current_bank_events": 784 if i < 26 else 1000,
+         "worst_emitted_packets": 39 if i < 26 else 0,
          "initial_ddr_sha256": shas[i]}
         for i in range(27)
     ]
