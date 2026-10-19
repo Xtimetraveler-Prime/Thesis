@@ -154,7 +154,7 @@ def test_theoretical_all_255_hidden_geometry_distinguishes_39_from_40():
         )
     assert dense_core(39).validate().synapse_bytes == 128576
     assert dense_core(39).current_event_bank_events == 784
-    with pytest.raises(B1CapacityError, match="synapse_bytes: used=137728, limit=131072"):
+    with pytest.raises(B1CapacityError, match="synapse_bytes: used=131712, limit=131072"):
         dense_core(40).validate()
     # At most 39 destination neurons per hidden core in THIS worst-case
     # unique-source-template profile => at least ceil(1000/39)=26 hidden.
