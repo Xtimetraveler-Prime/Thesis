@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [PLANNED AFTER P08-A].**
+  route semantics [NEXT — P08-A LATENCY-ONLY GATE SATISFIED; NOT YET IMPLEMENTED].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1506,8 +1506,8 @@ in the present `compile_network` will
   a worst-case all-255 timestep
   without overflowing per-core banks.
 - **P06-B2 — Train, quantize and freeze
-  independent larger checkpoint [PLANNED
-  AFTER P06-B1].** Keep the same
+  independent larger checkpoint [PENDING
+  INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
   deterministic 25+1-step event/input,
   neuron/readout and dataset split;
   train a new project large-model
@@ -1527,9 +1527,7 @@ checkpoint mapped with real 128 KiB/
 32,768-entry bounds and independently
 verified event/packet/state semantics.
 No scaled KV260 claims until P07-B.
-**Do not initiate this work until
-Track A P07/P08 acceptance**, except
-non-mutating resource planning.
+**Track A P07/P08-A latency-only acceptance gate is now satisfied.** Proceed with P06-B1 on a **new branch**, independently validating a deterministic synapse-aware partitioner before P06-B2 training. Leave all accepted Track A source/artifacts frozen.
 
 ### Archived alternate source audit
 
@@ -1813,25 +1811,25 @@ accuracy and checkpoints.**
 
 # P08 — Independent physical baseline and scaling measurements
 
-**Status:** PLANNED. **P08-A ACCEPTANCE IS A REQUIRED ENTRY GATE
-TO SCALED P06-B1/B2 AND P07-B.**
+**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED).** This satisfies the user-approved entry gate to **P06-B1 SCALED PACKING FIRST**, then P06-B2 separate checkpoint, P07-B physical virtualization and P08-B scaled measurements. **P08-B NOT YET STARTED.**
 
-## P08-A — Compact physical KV260 baseline
+## P08-A — Compact physical KV260 latency baseline
 
-For Track A, report measured:
-- HLS per-core dispatch, event-source time, complete image
-  latency (26 timesteps), idle/active throughput;
-- PS/barrier overhead and zero/nonzero DDR paging,
-  A53 control time and memory/packet transfers;
-- K26/SOM or board whole-system idle, configured-idle,
-  dynamic/incremental and total power and energy, sampled
-  with declared equipment/rails, steady-state/thermal
-  controls, raw logs and error bars;
-- the precise endpoint and setup costs included
-  or excluded in software CPU reference timing.
+**Status (2026-10-18 project timeline): P08-A LATENCY-ONLY COMPLETION EXPLICITLY ACCEPTED BY USER; MERGE OF PR #45 TO `main` AUTHORIZED. A3 SIX ORIGINAL KV260 PHYSICAL SESSIONS NUMERICALLY VERIFIED BY USER (A2.1 MEDIANS 35.7023 / 35.6946 / 35.6696 ms; A2.2 35.7234 / 35.7163 / 35.7220 ms; PAIR MEDIAN DELTAS +16.840 / +25.400 / +29.710 µs; MEAN +23.984 µs / SD 6.551 µs). A5 P07-PARITY-GATED CPU PRELOADED RUN MEDIANS 25.6147 / 25.6001 / 25.5735 ms, RAW784→CLASS MEDIANS 30.3930 / 30.3147 / 30.2579 ms, CPU/PHYSICAL REPORT SOURCE HASH MATCH USER VERIFIED. P08-A4 POWER/ENERGY DEFERRED/UNMEASURED. CPU/FPGA ENDPOINTS NON-EQUIVALENT; NO PURE PL SPEEDUP OR VERIFIED PL HZ. CORRECTED A5 FINAL PYTEST SUMMARY NOT POSTED; MERGE OUTCOME VERIFIED SEPARATELY FROM GITHUB.** P07-A accepted accuracy and physical numerical parity remain frozen; **do not rerun official MNIST TEST** for this experiment.
 
-Accept the accuracy and physical measured
-baseline *before starting B's hardware implementation*.
+| Gate | State | Authoritative reference |
+| --- | --- | --- |
+| P08-A1 measurement boundary audit | User approved latency-first direction; deferred power/energy | [Measurement contract](docs/P08_A1_MEASUREMENT_CONTRACT.md) |
+| P08-A2.1 per-image A53 timing source | Original frozen A2.1 ELF SHA256 `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`; **KV260 FIRST1024 PAIRED PHYSICAL RUN SUCCESS (USER ATTESTED)** | [Image timing method](docs/P08_A2_1_LATENCY_SIDECAR.md) |
+| P08-A2.2 per-tick seven-boundary timing source | User reports regressions and Vitis build PASS after false-positive regression fix; **ELF SHA256 attested** `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`; **KV260 EXECUTED as A3.1 16-image pilot AND A3.2.2 first1024 paired session (USER ATTESTED)** | [Per-tick timing method and sources](docs/P08_A2_2_TIMING_METHODS.md) |
+| **P08-A3.1 physical 16-image validation pilot** | **PHYSICAL FUNCTIONAL GATE PASS (USER-ATTESTED 2026-10-18)**: first 16 distinct TRAIN-derived validation images, 26×10 output flags per image and selected 26×42 full trace exact to independent oracle; A2.1 image and A2.2 per-tick timing sidecar terminal/CRC/clock/route consistency PASS. **User-supplied numerical pilot: median 35.4432 ms (31.2682–41.2175 ms), CNTFRQ_EL0 99,999,001 Hz; 1,024-frame repeated baseline NOT RUN.** [Exact pilot numbers](docs/P08_A3_1_PHYSICAL_LATENCY_RESULTS.md) and [physical acceptance](docs/P08_A3_1_PHYSICAL_ACCEPTANCE.md) | [Pilot protocol](docs/P08_A3_1_PHYSICAL_PILOT_PROTOCOL.md) |
+| **P08-A3.2 repeated latency characterization** | **USER-ATTESTED PHYSICAL THREE-PAIR COMPLETE:** paired median A2.2−A2.1 full A53 image service +16.840, +25.400, +29.710 µs (mean +23.984 µs, n=3 run pairs); within-image median delta range 24.730 µs, p95 range 73.541 µs. P07 original packed neural oracle + tick/image timing integrity PASS on each accepted pair; original 1,024 TRAIN-derived validation sample identities unchanged; 1,023 ordinary frames analyzed each run. **Aggregate source JSON/report hash not independently file-sealed here; PL achieved Hz not independently calibrated; no pure PL speed or CI claim.** | [Complete six-run results](docs/P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RESULTS.md), [repeated protocol](docs/P08_A3_2_3_REPEATED_LATENCY_PROTOCOL.md) |
+| P08-A4 power and energy | **DEFERRED**; no sensor selection or power measurements authorized | Future explicit user decision |
+| **P08-A5 CPU software reference and final closeout** | **HOST BENCHMARK/DUAL NUMERICAL PROOF/FINAL REVIEW REPORT USER-ATTESTED PASS; LATENCY-ONLY FINAL APPROVAL PENDING.** Original frozen packed 26-tick preloaded CPU scalar per-run medians **25.6147 / 25.6001 / 25.5735 ms**; original raw784 encoder→class medians **30.3930 / 30.3147 / 30.2579 ms**; three sequential PC passes across the same 1024 canonical TRAIN validation images; original full 1024 P07 physical-neural/original-oracle and full-26-tick parity PASS. Stage descriptor/pixel/manifest SHA256 and accepted A2.1 physical run bound to six-session KV260 results PASS. Generated report, source hashes, p95/stdev and CPU environment posted and reviewed. **Not an isolated PL acceleration claim, not optimized native C, CPU/board scopes differ; achieved PL frequency uncalibrated.** Corrected A5 final native pytest summary not pasted (not falsely claimed PASS); user **EXPLICITLY ACCEPTED LATENCY-ONLY P08-A AND AUTHORIZED PR #45 MERGE**. Actual GitHub merge outcome tracked separately. | [Measured A5 CPU/FPGA results and SHA256s](docs/P08_A5_CPU_PHYSICAL_LATENCY_RESULTS.md), [P08-A FINAL ACCEPTANCE CANDIDATE — signature/merge stop gate](docs/P08_A_LATENCY_ONLY_FINAL_ACCEPTANCE_CANDIDATE.md), [A5 protocol](docs/P08_A5_CPU_REFERENCE_PROTOCOL.md) |
+
+For the active Track A **physical latency** study, collect actual A53 per-frame (26-tick) service intervals, event encoding/bank-write/dispatch/trace/route/barrier intervals, hardware PL dispatch and page counters with **separate clock domains**, and CPU comparison endpoints. Host JTAG polls, HLS clock estimates and simulator cycles are not board latency data. Report benchmark overhead and selected full-trace perturbation explicitly.
+
+**Entry gate to scaled Track B:** accept original P07-A frozen accuracy plus a genuine **physical, independently numerically verified P08-A latency baseline** before implementing B hardware. Power/energy are *not* an active prerequisite during this user-approved deferral; do not silently resume them or claim measured Loihi efficiency.
 
 ## P08-B — Scaled physical resource/traffic/energy study
 
