@@ -445,3 +445,94 @@ def run_paged_model(
         traffic=traffic,
         operations_sha256=_page_digest(ops, flushes),
     )
+
+
+
+def project_schedule_only(
+    result: B12Result,
+    *, service_orders: tuple[tuple[int, ...], ...] | None = None,
+) -> dict:
+    """26-epoch *structural* LRU estimate for any B1.2 packed network.
+
+    This path intentionally never evaluates neuron states or claims an
+    independently verified 26-tick neural run. Intended for the 794k-edge
+    DENSE 784→1000→10 planning topology previously proven to fit B1.2.
+    """
+    if not isinstance(result, B12Result):
+        raise B15ScheduleError("schedule projection requires B1.2 deployment")
+    compiled = result.compiled
+    from .p06_b1_contract import audit_compiled_candidate
+    if audit_compiled_candidate(compiled) != result.capacity_audit:
+        raise B15ScheduleError("B1.1 packed-DDR provenance mismatch")
+    ordered = tuple(sorted(c.core_id for c in compiled.logical_deployment.core_configs))
+    images = export_paged_hardware_image(compiled.logical_deployment.core_configs)
+    if (images.logical_core_ids != ordered or images.resident_context_count != min(3, len(ordered))
+            or images.physical_engine_count != 1):
+        raise B15ScheduleError("P08 packed resident-slot mapping differs from P05")
+    if service_orders is not None:
+        if not isinstance(service_orders, tuple) or len(service_orders) != B14_TICKS:
+            raise B15ScheduleError("service_orders must contain exactly 26 complete permutations")
+        orders = tuple(_valid_order(order, ordered) for order in service_orders)
+    else:
+        orders = (ordered,) * B14_TICKS
+    pager = ResidentLRU(ordered)
+    for tick, order in enumerate(orders):
+        for core_id in order:
+            pager.visit(tick, len(pager.operations), core_id)
+    flushes = pager.flush()
+    occupancy = tuple({
+        "core_id": row["core_id"],
+        "ddr_offset_bytes": ddr_context_offset(row["core_id"]),
+        "initial_ddr_sha256": row["initial_ddr_sha256"],
+        "initial_payload_sha256": row["initial_ddr_payload_sha256"],
+        "full_backing_record_bytes": P02_DDR_CONTEXT_STRIDE_BYTES,
+        "static_external_event_upper_bound": row["worst_external_events"],
+        "static_prior_routed_event_upper_bound": row["worst_routed_events"],
+        "static_current_event_bank_upper_bound": row["worst_current_bank_events"],
+        "static_emitted_packet_upper_bound": row["worst_emitted_packets"],
+    } for row in result.capacity_audit["cores"])
+    if any(row["static_current_event_bank_upper_bound"] > MAX_EVENTS_PER_BANK
+           or row["static_emitted_packet_upper_bound"] > MAX_PACKETS_PER_BANK
+           for row in occupancy):
+        raise B15ScheduleError("static per-core event or packet bank overflow")
+    return {
+        "schema": B15_SCHEMA,
+        "mode": "STRUCTURAL_SCHEDULE_ONLY_NO_NEURAL_EXECUTION",
+        "logical_cores": len(ordered),
+        "source_fingerprint": compiled.source_fingerprint,
+        "deployment_sha256": compiled.fingerprint,
+        "capacity_audit_sha256": result.capacity_audit["audit_sha256"],
+        "schedule_sha256": _page_digest(tuple(pager.operations), flushes),
+        "algorithmic_epochs_planned": B14_TICKS,
+        "full_ddr_backing_bytes_total": result.capacity_audit["backing_bytes"],
+        "initial_backing_manifest": list(occupancy),
+        "worst_current_events_any_core": max(r["static_current_event_bank_upper_bound"]
+                                             for r in occupancy),
+        "worst_emitted_packets_any_core": max(r["static_emitted_packet_upper_bound"]
+                                              for r in occupancy),
+        "paging": pager.report(),
+        "neural_equivalence_evaluated": False,
+        "physical_scaled_page_traffic_measured": False,
+        "actual_mutable_ddr_images_materialized": False,
+        "latency_seconds": None,
+        "official_mnist_test_access": "NONE",
+    }
+
+
+def hypothetical_transport_seconds(estimated_page_engine_bytes: int,
+                                   assumed_sustained_aggregate_gib_per_second: float) -> float:
+    """Explicit *hypothetical* bytes/bandwidth, never a measured FPGA latency.
+
+    Excludes all PL compute, PS page setup/cache work, routing, packet
+    traffic, barriers, and AXI contention. No attained KV260 bandwidth is
+    implied by caller's scenario parameter.
+    """
+    import math
+    if type(estimated_page_engine_bytes) is not int or estimated_page_engine_bytes < 0:
+        raise B15ScheduleError("estimated_page_engine_bytes must be nonnegative integer")
+    if (type(assumed_sustained_aggregate_gib_per_second) not in (float, int)
+            or not math.isfinite(assumed_sustained_aggregate_gib_per_second)
+            or assumed_sustained_aggregate_gib_per_second <= 0):
+        raise B15ScheduleError("assumed sustained aggregate GiB/s must be positive and finite")
+    return (estimated_page_engine_bytes /
+            (assumed_sustained_aggregate_gib_per_second * (1 << 30)))
