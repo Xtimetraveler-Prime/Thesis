@@ -355,8 +355,9 @@ class StreamingEpochGuard:
                          for core in self._compiled.logical_deployment.core_configs
                          for neuron in range(len(core.compartments))}
             if (not isinstance(source_spikes, tuple)
-                    or any(type(c) is not int or type(n) is not int
-                           for c, n in source_spikes)
+                    or any(not isinstance(origin, tuple) or len(origin) != 2
+                           or type(origin[0]) is not int or type(origin[1]) is not int
+                           for origin in source_spikes)
                     or len(set(source_spikes)) != len(source_spikes)
                     or not set(source_spikes) <= available):
                 raise B13StreamError("invalid or duplicate source spike provenance")
