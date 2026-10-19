@@ -418,6 +418,8 @@ def fit_canonical_mnist(
     previous_deterministic = torch.are_deterministic_algorithms_enabled()
     previous_benchmark = torch.backends.cudnn.benchmark
     cpu_rng = torch.random.get_rng_state()
+    python_rng = random.getstate()
+    cuda_rng = torch.cuda.get_rng_state_all() if runtime_device.type == "cuda" else None
     torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.benchmark = False
     try:
@@ -463,3 +465,6 @@ def fit_canonical_mnist(
         torch.use_deterministic_algorithms(previous_deterministic)
         torch.backends.cudnn.benchmark = previous_benchmark
         torch.random.set_rng_state(cpu_rng)
+        random.setstate(python_rng)
+        if cuda_rng is not None:
+            torch.cuda.set_rng_state_all(cuda_rng)
