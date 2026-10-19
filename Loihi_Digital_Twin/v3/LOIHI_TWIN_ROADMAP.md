@@ -2043,22 +2043,51 @@ test that only checks packed memory.
 
 ## P07-B — Scaled multi-logical-core physical inference
 
-After P08-A, independently validate the scaled
-frozen P06-B checkpoint across P05's same
-one physical engine and three resident slots,
-the additional DDR logical contexts, routed
-input fanout, NEXT-event-bank packets and
-barrier scheduling. Accept a bounded
-physical multi-core trace corpus first,
-then sealed official-test inference
-if hardware time/storage permits.
-Do not claim a 27-core demonstration
-until physical independent evidence
-confirms **all** cores, per-core full
-DDR images, page swaps and predictions.
+**CURRENT ACTIVE NEXT PHASE, NOT PHYSICALLY IMPLEMENTED (2026-10-19).**
+Prerequisites P06-B1/P06-B2 **merged to `main`** and user-attested
+host-software verification PASS. Track A P07-A and P08-A latency
+baseline accepted separately. Proceed in a NEW branch from merged
+`main`; see [P07-B new-chat source/hardware handoff
+seed](docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md) and
+[B2.5 software exit/NO-GO checklist](docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md).
 
-**Always distinguish Track A and Track B
-accuracy and checkpoints.**
+**P07-B entry is a GO for DESIGN and implementation work, not an
+authorization to label scaled physical results as accepted or to
+unseal the Track B official MNIST TEST.** After P08-A, independently
+validate the **real frozen 784→1000→10 signed24 trained P06-B
+checkpoint**, **27 logical P02 contexts**, 26 hidden core shards
+plus one readout, all within the same **three resident slots and
+one physical HLS engine** from P05.
+
+First formalize physical PS/PL DDR ownership, K26 address range,
+P02 512KiB stride and a versioned complete-frame A53 ingress
+protocol; P06-B1.3's `P06B13I1/P06B13R1` is currently a HOST
+protocol, whereas the original P05 physical firmware accepts only
+one external axon/core and cannot stream the B2 application as-is.
+Independently native-test the A53 parser/serializer and fail-closed
+CRC/ownership/capacity paths, then implement deterministic 27-core
+paging, dirty writeback, NEXT event-bank routed fanout, barrier
+scheduling and per-image reset with no stale packets.
+
+Verify a bounded **TRAIN-derived validation** first-mismatch
+corpus on the actual KV260, initially small physical cases,
+eventually all 27 cores, all P02 initial contexts and full
+26-tick trained dense integer state/spike/readout parity versus
+the independent source oracle. Only after separate user
+acceptance of the physical board implementation, frozen
+bitstream/ELF/runtime/run IDs and the previously predeclared
+TEST protocol may B2 official MNIST TEST be considered. Do NOT
+evaluate B2 TEST during P07-B development.
+
+**Do not claim a 27-core physical demonstration until
+independent evidence confirms every core, correct paging
+and routing, per-core DDR contents, packet ordering,
+per-image reset and board predictions.** B1.5's modeled
+341–382 MB page-engine transfer totals are not physical
+scaled measurements; P08-B will measure actual traffic,
+latency, throughput and energy separately. Distinguish
+Track A's 94.56% *official TEST* from Track B's 97.08%
+*train-derived validation* and their distinct checkpoints.
 
 ---
 
