@@ -161,8 +161,9 @@ def test_26_tick_all_255_two_hidden_cores_to_readout_numeric_schedule_parity():
             receipt = guard.step(wire)
             assert receipt.tick == tick
             assert receipt.current_bank == tick % 2
-            assert receipt.current_events_by_core == (784, 784, 0 if tick == 0 else 6) if tick < 25 else (
-                0, 0, 6)
+            assert receipt.current_events_by_core == (
+                (784, 784, 0 if tick == 0 else 6) if tick < 25 else (0, 0, 6)
+            )
             assert receipt.new_routed_next_packets == (6 if tick < 25 else 0)
             assert receipt.external_packets == (1568 if tick < 25 else 0)
             assert receipt.routed_current_packets == (0 if tick == 0 else 6)
@@ -208,6 +209,25 @@ def test_packet_partial_fanout_duplicate_wrong_route_and_wrong_epoch_rejected():
         decode_packet_frame(original, result, emitted_timestep=1)
 
 
+def test_packet_header_crc_payload_crc_and_unknown_destination_are_rejected():
+    result = fixture_result()
+    full = _packets_from_trace(result.compiled.build_chip().step(
+        decode_ingress_frame(encode_ingress_frame(result, bytes([255] * 784)),
+                             result).events(0)))
+    raw = encode_packet_frame(result, full, emitted_timestep=0)
+    with pytest.raises(B13StreamError, match="payload CRC"):
+        decode_packet_frame(raw[:-1] + bytes([raw[-1] ^ 0x01]),
+                            result, emitted_timestep=0)
+    corrupt = bytearray(raw)
+    corrupt[8] ^= 0x04
+    with pytest.raises(B13StreamError, match="version"):
+        decode_packet_frame(bytes(corrupt), result, emitted_timestep=0)
+    forged = bytearray(raw)
+    struct.pack_into("<H", forged, 128 + 10, 100)
+    with pytest.raises(B13StreamError, match="route table"):
+        decode_packet_frame(rechecksum(forged), result, emitted_timestep=0)
+
+
 def test_epoch_guard_rejects_overflow_without_advancing_or_dropping_queued_packets():
     result = fixture_result()
     guard = StreamingEpochGuard(result, encode_ingress_frame(result, bytes([255] * 784)))
@@ -235,7 +255,11 @@ def test_final_drain_epoch_rejects_lossy_next_packet_and_stays_transactional():
         guard.step(encode_packet_frame(result, (), emitted_timestep=tick))
     assert guard.current_tick == 25
     legal_outbound = result.compiled.build_chip().step(guard.ingress.events(0))
-    frame = encode_packet_frame(result, _packets_from_trace(legal_outbound), emitted_timestep=25)
+    # Move a known VALID route fanout to a hypothetical tick-25 source spike.
+    # The wire record must encode, but the final drain guard must reject it.
+    source_packets = tuple(replace(p, source_timestep=25, target_timestep=26)
+                           for p in _packets_from_trace(legal_outbound))
+    frame = encode_packet_frame(result, source_packets, emitted_timestep=25)
     with pytest.raises(B13StreamError, match="final drain"):
         guard.step(frame)
     assert guard.current_tick == 25
