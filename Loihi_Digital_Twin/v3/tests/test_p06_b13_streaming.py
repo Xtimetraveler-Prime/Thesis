@@ -158,7 +158,9 @@ def test_26_tick_all_255_two_hidden_cores_to_readout_numeric_schedule_parity():
                 reverse_packet_drain=reversed_drain)
             outgoing = _packets_from_trace(trace)
             wire = encode_packet_frame(result, outgoing, emitted_timestep=tick)
-            receipt = guard.step(wire)
+            source_spikes = tuple((c.logical_core_id, neuron)
+                                  for c in trace.cores for neuron in c.spikes_out)
+            receipt = guard.step(wire, source_spikes=source_spikes)
             assert receipt.tick == tick
             assert receipt.current_bank == tick % 2
             assert receipt.current_events_by_core == (
@@ -207,6 +209,31 @@ def test_packet_partial_fanout_duplicate_wrong_route_and_wrong_epoch_rejected():
         decode_packet_frame(rechecksum(modified_tick), result, emitted_timestep=0)
     with pytest.raises(B13StreamError, match="epoch"):
         decode_packet_frame(original, result, emitted_timestep=1)
+
+
+def test_declared_firing_source_prevents_total_packet_group_omission():
+    result = fixture_result()
+    initial = result.compiled.build_chip().step(
+        decode_ingress_frame(encode_ingress_frame(result, bytes([255] * 784)),
+                             result).events(0))
+    full = _packets_from_trace(initial)
+    first_origin = (full[0].source_core, full[0].source_compartment)
+    omitted = tuple(p for p in full
+                    if (p.source_core, p.source_compartment) != first_origin)
+    # Omission of a *complete* origin is indistinguishable from silence unless
+    # the source trace accompanies the packet frame.
+    frame = encode_packet_frame(result, omitted, emitted_timestep=0)
+    guard = StreamingEpochGuard(result, encode_ingress_frame(result, bytes([255] * 784)))
+    with pytest.raises(B13StreamError, match="source spike provenance"):
+        guard.step(frame, source_spikes=tuple(
+            (core.logical_core_id, neuron)
+            for core in initial.cores for neuron in core.spikes_out))
+    assert guard.current_tick == 0
+    assert guard._pending == ()
+    with pytest.raises(B13StreamError, match="spurious"):
+        guard.step(encode_packet_frame(result, full, emitted_timestep=0),
+                   source_spikes=(first_origin,))
+    assert guard.current_tick == 0
 
 
 def test_packet_header_crc_payload_crc_and_unknown_destination_are_rejected():
