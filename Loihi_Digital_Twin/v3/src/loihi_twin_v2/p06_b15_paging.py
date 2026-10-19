@@ -91,6 +91,14 @@ class ResidentLRU:
             raise B15ScheduleError("frozen three-slot one-HLS-engine contract changed")
         if P02_DDR_CONTEXT_STRIDE_BYTES != 0x80000:
             raise B15ScheduleError("frozen 512KiB backing record stride changed")
+        if (P05_FULL_PAGE_IN_BYTES != 438272
+                or P05_MUTABLE_PAGE_OUT_BYTES != 106496
+                or P05_FULL_PAGE_IN_BYTES % P05_AXI_BURST_BYTES
+                or P05_MUTABLE_PAGE_OUT_BYTES % P05_AXI_BURST_BYTES
+                or P05_OBSERVED_REFERENCE_DISPATCHES * (
+                    P05_FULL_PAGE_IN_BYTES + P05_MUTABLE_PAGE_OUT_BYTES
+                ) != P05_OBSERVED_REFERENCE_BYTES):
+            raise B15ScheduleError("accepted P05.2i physical byte/burst contract drift")
         self.ids = core_ids
         self.slots: list[int | None] = [None] * min(3, len(core_ids))
         self.last_used: list[int] = [-1] * len(self.slots)
@@ -356,6 +364,15 @@ def run_paged_model(
             op = paging.visit(tick, ordinal, core_id)
             ordinal += 1
             epoch_ops.append(op)
+            # Exercise P08's original resident page mapping rather than
+            # replacing its slot/physical-context semantics with a private
+            # mapping unrelated to the accepted three-slot exporter.
+            page = hardware.resident_page(tuple(
+                resident for resident in paging.slots if resident is not None))
+            expected_slots = {resident: slot for slot, resident in enumerate(paging.slots)
+                              if resident is not None}
+            if page.logical_to_context_slot != expected_slots:
+                raise B15ScheduleError("P08 physical resident slot mapping disagrees with LRU")
             trace = chip.cores[core_id].evaluate(tick)
             trace_by_core[core_id] = trace
             for packet in trace.packets_out:
@@ -479,6 +496,12 @@ def project_schedule_only(
     for tick, order in enumerate(orders):
         for core_id in order:
             pager.visit(tick, len(pager.operations), core_id)
+            page = images.resident_page(tuple(
+                resident for resident in pager.slots if resident is not None))
+            expected = {resident: slot for slot, resident in enumerate(pager.slots)
+                        if resident is not None}
+            if page.logical_to_context_slot != expected:
+                raise B15ScheduleError("P08 structural resident slot mapping mismatch")
     flushes = pager.flush()
     occupancy = tuple({
         "core_id": row["core_id"],
