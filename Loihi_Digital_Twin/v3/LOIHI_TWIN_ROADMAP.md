@@ -1618,8 +1618,8 @@ in the present `compile_network` will
     scaled physical KV260 / official TEST** until separate P07-B.
     The user has NOT authorized merging draft PR #46.
 - **P06-B2 — Train, quantize and freeze
-  independent larger checkpoint [B1 SOFTWARE GATE COMPLETE;
-  B2 IN DEVELOPMENT ON A SEPARATE STACKED BRANCH].** Keep the same
+  independent larger checkpoint [B2.1–B2.5 USER-ATTESTED HOST SOFTWARE PASS;
+  MERGE AUTHORIZED, P07-B PHYSICAL PHASE STILL NOT STARTED].** Keep the same
   deterministic 25+1-step event/input,
   neuron/readout and dataset split;
   train a new project large-model
@@ -1735,7 +1735,7 @@ in the present `compile_network` will
     `docs/P06_B2_4_FROZEN_TRAINED_CHECKPOINT_AND_DDR.md`
     and `docs/P06_B2_5_USER_EVIDENCE_LEDGER.json`.
   - **B2.5 — B2 host-software exit / P07-B handoff
-    [CODE/NEGATIVE TESTS/DOCS COMMITTED; USER PC NATIVE GATE PENDING]:**
+    [USER-ATTESTED NATIVE PASS; P07-B DESIGN GO / SCALED PHYSICAL NO-GO]:**
     `p06_b25_acceptance.py` performs read-only checks of
     the original 33 SHA-indexed frozen assets, 27 per-core
     P02 identity/axon/synapse/event/packet pressure bounds,
@@ -1747,21 +1747,23 @@ in the present `compile_network` will
     predeclared protocol and lists the separate real P07-B
     A53/PL firmware, paging/DDR owner, physical timing,
     all-tick board parity and measured latency/energy gates.
-    Host software is READY FOR USER B2.5 ACCEPTANCE and then
-    P07-B **DESIGN/PLANNING**; scaled FPGA programming,
-    new measured performance, official MNIST TEST unseal
-    and B2.5 native acceptance are still **NO-GO/PENDING**.
+    User explicitly reported B2.5 native acceptance PASS;
+    no exact B2.5 stdout/test count was supplied, so none
+    is invented. P07-B **DESIGN/PLANNING GO ONLY**;
+    scaled FPGA programming, measured scaled performance
+    and official MNIST TEST unseal remain **NO-GO**.
     Script `scripts/p06_b25_acceptance.py`, unit tests
     `tests/test_p06_b25_acceptance.py`, full closeout in
     `docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md`.
-    The user requested independent B2.5 verification BEFORE
-    granting future merge permission for B1 PR #46 and
-    stacked B2 PR #47; no merge has occurred.
+    After B2.5 native acceptance, user explicitly authorized
+    B1 PR #46 and stacked B2 PR #47 to merge in order.
+    Check final GitHub merge records before claiming the
+    merged main contains all accepted B1/B2 changes.
   The B2 branch is explicitly stacked on accepted, unmerged
   B1.6 closeout, not `main`; neither PR is authorized for merge.
 
 **Track B P06 host-software exit (B2.1–B2.4 USER-ATTESTED;
-B2.5 FINAL READ-ONLY ACCEPTANCE PENDING):** Independent
+B2.5 FINAL READ-ONLY ACCEPTANCE USER-ATTESTED PASS):** Independent
 actual 784→1000→10 TRAIN-only checkpoint trained to
 0.9708 TRAIN-derived validation accuracy, 27 precise
 P02 static DDR contexts and three full 26-tick trained
