@@ -41,6 +41,17 @@ Fields: `[version,header_bytes,payload_bytes,emitted_timestep,packet_count,logic
 Each route packet is a 12-byte record `<IHHHH`:
 **target logical timestep** (uint32), **source core** (uint16), **source compartment** (uint16), **destination core** (uint16), **destination axon** (uint16). Emitted `t` always targets **`t+1`**, exactly matching P03 `SpikePacket`. The source timestep is reconstructed from frame `emitted_timestep` after validation. All records sorted by existing `SpikePacket.logical_key`, and checked against actual compiled source output-route tables. The frame must contain **all distinct routes** for every emitting source neuron it includes (reject missing/duplicate/spurious destination fanout). A frame may contain zero packets.
 
+**Source-grouping nuance:** the accepted B1.2 compiler emits one route/packet
+per unique (spiking source compartment, destination CORE/axon), not one
+packet per individual synaptic connection. A single readout-core axon can
+expand an event into multiple synapses. Thus the 784→1000→10 synthetic
+mapping's readout core sees **1,000 routed packets/tick worst case**, not
+10,000: the latter is the number of individual hidden→output synapse
+contributions, which are expanded locally. A 39-neuron hidden logical
+core produces at most **39** routed output packets/tick in this topology,
+not 390. The separate cross-core fanout negative test uses two readout
+COREs to prove incomplete multi-route fanout detection.
+
 Packets emitted by one source core must never exceed 4,096 in its packet bank; pending packets targeted to one destination core must never exceed 4,096 in its NEXT event bank. **There is no invented per-chip global 4,096 packet ceiling**; capacity is per source / destination core. A tick's CURRENT bank must accommodate **all external events for that tick PLUS all prior-epoch routed packets**; fail before committing if this exceeds 4,096 in any one core.
 
 ### Transactional 26-epoch guard
@@ -63,9 +74,9 @@ File: `tests/test_p06_b13_streaming.py`. Expected gates:
 
 1. An independent little-endian unpacker checks raw offset/length/CRC/SHA fields and 784-channel replication across two hidden partitions; identical event tuples to preexisting P06 compiler.
 2. Malformed magic, version, frame lengths, SHA bindings, CRC, reserved flags, map substitution, wrong packet target/core/axon/epoch, missing fanout, duplicate fanout and spurious provenance are **fail-closed**.
-3. Numerical **all-255 25+1 tick** logical chip exercise with **two hidden logical cores and one readout**. Under different valid servicing and reversed packet draining, manually expected hidden spikes (3 per input tick), readout spikes (2 per tick 1..25), per-core 784+784 external fanout, 6 routed output packets/tick and exact epoch bank occupancy must agree.
+3. Numerical **all-255 25+1 tick** logical chip exercise with **two hidden logical cores and one readout**. Under different valid servicing and reversed packet draining, manually expected hidden spikes (3 per input tick), readout spikes (2 per tick 1..25), per-core 784+784 external fanout, **3 routed output packets/tick** (one per emitting hidden neuron, each readout axon expands to both readout compartments) and exact epoch bank occupancy must agree.
 4. Explicit CURRENT bank **4096 exact limit vs 4097 rejection**, and transactional preservation on rejection. The adversarial queued-packet test directly injects a hypothetical transport buffer state and is **not** a reachable sample from its small accepted graph.
-5. Optional **full synthetic 784→1000→10 27-core** ABI test: encoded route frame is 123,216 bytes, all 20,384 replicated ingress events on every all-255 input tick, readout max 1,000 prior routed packets, 390 maximum emitted packets per hidden core, and no per-core event/packet overflow. **No 794,000-synapse 26-tick numerical result is claimed for B1.3**.
+5. Optional **full synthetic 784→1000→10 27-core** ABI test: encoded route frame is 123,216 bytes, all 20,384 replicated ingress events on every all-255 input tick, readout max 1,000 prior routed packets, 39 maximum emitted packets per hidden core (one routed packet per hidden source, expanding to all 10 readout compartments), and no per-core event/packet overflow. **No 794,000-synapse 26-tick numerical result is claimed for B1.3**.
 
 ## Native acceptance commands (Linux/VS Code, host only)
 
