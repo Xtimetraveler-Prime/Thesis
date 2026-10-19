@@ -9,7 +9,6 @@ does not imply user-native B2.4 acceptance or actual physical deployment.
 """
 from __future__ import annotations
 
-from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -22,7 +21,6 @@ from .ddr_abi import (
     ddr_context_offset, parse_ddr_context_header,
 )
 from .hardware_p08 import export_paged_hardware_image
-from .p06_a3_data import TRAIN_FILES
 from .p06_b12_partition import B12Options, B12Result, compile_synapse_aware
 from .p06_b22_training import load_candidate
 from .p06_b23_trained_audit import audit_candidate, PINNED_B22_WEIGHTS_SHA256, PINNED_B22_INTEGER_SHA256
@@ -90,7 +88,7 @@ def _safe_asset_path(root: Path, relative: str) -> Path:
             or any(part in (".", "..") for part in PurePosixPath(relative).parts)):
         raise B24FreezeError("invalid relative frozen asset path")
     target = root / relative
-    for ancestor in (root, *(root / part for part in ()), *target.parents):
+    for ancestor in (target, *target.parents):
         if ancestor.is_symlink():
             raise B24FreezeError("symlinked frozen assets are prohibited")
     if target.is_symlink():
