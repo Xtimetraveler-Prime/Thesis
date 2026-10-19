@@ -92,6 +92,7 @@ def ensure_cpu_inputs(
         "prepared_cpu_vs_original_independent_packed_probe_indices":list(ORIGINAL_PROBE_INDICES),
         "canonical_train_archive_manifest":split.manifest,
         "physical_capture_original_variant":"A2_1",
+        "physical_capture_run_directory":str(physical_run_dir.resolve()),
         "source_sha256":{
             "stage_descriptor":sha256(stage_dir/"p07_a4_descriptor_256.bin"),
             "stage_mapping":sha256(stage_dir/"p07_a4_mapping_1568.bin"),
@@ -122,7 +123,7 @@ def main() -> None:
         parser.error("A5 benchmark evidence report must be absolute")
     if not args.report.parent.is_dir():
         parser.error("A5 output parent directory missing")
-    repo=Path(__file__).resolve().parents[2].resolve()
+    repo=Path(__file__).resolve().parents[3].resolve()
     target=args.report.resolve()
     if target==repo or repo in target.parents:
         parser.error("A5 CPU report must be outside tracked repository")
