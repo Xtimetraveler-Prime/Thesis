@@ -1,6 +1,6 @@
 # P08-A5 — Remaining latency-only closeout criteria after completed A3 physical study
 
-**State:** P08-A3.2.3 physical six-session repeated A53 system-service baseline user-attested complete; **P08-A5 NOT YET EXECUTED and whole P08-A NOT CLOSED**. Physical power/energy P08-A4 expressly deferred by user.
+**State (2026-10-18):** P08-A3.2.3 physical six-session repeated A53 system-service baseline user-attested complete; **P08-A5 SOURCE CANDIDATE IMPLEMENTED (exact packed 26-tick CPU replay, two CPU endpoints, original physical-journal oracle parity, three CPU measurement passes and cross-scope draft closeout). NEW A5 NATIVE REGRESSIONS AND ACTUAL HOST CPU BENCHMARK NOT YET USER-RUN; whole P08-A OPEN.** Physical power/energy P08-A4 expressly deferred.
 
 ## Evidence already available (no new JTAG requirement)
 
@@ -13,6 +13,8 @@ The accepted [A3.2.3 final physical report](P08_A3_2_3_FINAL_PHYSICAL_REPEAT_RES
 | 3 | 35.6696 | 35.7220 | 29.710 |
 
 Across the 3 pair-level medians: mean 23.984 µs, sample SD 6.551 µs; fixed-image three-repetition delta-range median 24.730 µs and p95 73.541 µs. There is no FPGA PL-only calibrated compute-time-in-seconds measurement and **no CPU performance result** yet.
+
+**Implementation reference:** [Full A5 CPU benchmark and local test protocol](P08_A5_CPU_REFERENCE_PROTOCOL.md). Nothing measured on the user's CPU yet; the two new native suites `tests/test_p08_a5_cpu.py` and `tests/test_p08_a5_closeout.py` require local execution. No independent physical PL frequency calibration has been created or claimed. The new draft report explicitly WITHHOLDS a causal FPGA speedup ratio because the CPU and KV260 service boundaries are not fully identical.
 
 ## Required before full P08-A acceptance (original P08-A1 contract §§6–7)
 
