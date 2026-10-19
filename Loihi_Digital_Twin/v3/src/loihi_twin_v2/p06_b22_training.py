@@ -27,7 +27,7 @@ import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Subset, TensorDataset
 
-from .p06_a3_data import SPLIT_SCHEMA, TrainingSplit
+from .p06_a3_data import SPLIT_SCHEMA, TRAIN_FILES, TrainingSplit
 from .p06_a4_snapshot import (
     PINNED_TRAIN_INDICES_SHA256,
     PINNED_VALIDATION_INDICES_SHA256,
@@ -88,6 +88,42 @@ def require_pinned_train_validation(split: TrainingSplit) -> dict:
     if any(not 0 <= int(label) <= 9 for label in split.labels):
         raise B22TrainingError("canonical TRAIN source label outside ten classes")
     return manifest
+
+
+def _validate_source_manifest(manifest: dict) -> None:
+    """Check internal source identities even on checkpoint reload.
+
+    Compressed IDX bytes must still be read using original strict=True loader
+    for a real fitting session; no manifest alone proves those bytes.
+    """
+    if (not isinstance(manifest, dict) or manifest.get("schema") != SPLIT_SCHEMA
+            or manifest.get("train_count") != 50000
+            or manifest.get("validation_count") != 10000
+            or manifest.get("image_count") != 60000
+            or manifest.get("split_seed") != 20261013
+            or manifest.get("official_test_set") != "sealed: no t10k archives opened"
+            or manifest.get("train_indices_le32_sha256") != PINNED_TRAIN_INDICES_SHA256
+            or manifest.get("validation_indices_le32_sha256") != PINNED_VALIDATION_INDICES_SHA256):
+        raise B22TrainingError("candidate canonical TRAIN source/split manifest mismatch")
+    for kind, (filename, checksum) in TRAIN_FILES.items():
+        archive = manifest.get("archives", {}).get(kind, {})
+        if archive.get("filename") != filename or archive.get("source_md5") != checksum:
+            raise B22TrainingError("candidate canonical TRAIN archive manifest mismatch")
+
+
+def earliest_best_epoch(history: list[dict]) -> int:
+    """Maximum held-out TRAIN-derived validation accuracy, earliest tie."""
+    if not history:
+        raise B22TrainingError("empty validation history")
+    score, winner = -1.0, 0
+    for index, row in enumerate(history, start=1):
+        accuracy = row.get("validation", {}).get("accuracy")
+        if (type(accuracy) not in (int, float)
+                or not math.isfinite(accuracy) or not 0 <= accuracy <= 1):
+            raise B22TrainingError("missing or nonfinite validation accuracy")
+        if accuracy > score:
+            score, winner = accuracy, index
+    return winner
 
 
 def build_loaders(
@@ -252,8 +288,9 @@ def _serialize_candidate(
     if (not history or len(history) != settings.epochs
             or not 1 <= best_epoch <= len(history)):
         raise B22TrainingError("candidate requires complete declared validation history")
-    if dataset_manifest.get("schema") != SPLIT_SCHEMA:
-        raise B22TrainingError("candidate source must be canonical TRAIN-only")
+    _validate_source_manifest(dataset_manifest)
+    if best_epoch != earliest_best_epoch(history):
+        raise B22TrainingError("candidate epoch is not earliest best validation epoch")
     out = Path(output_directory)
     if out.exists():
         raise FileExistsError(f"refusing to overwrite existing B2 candidate directory: {out}")
@@ -319,10 +356,28 @@ def load_candidate(directory: str | Path) -> tuple[B21IntegerSNN, dict]:
         raise B22TrainingError("not a B2.2 trained checkpoint candidate")
     if manifest.get("official_mnist_test_status") != B22_TEST_STATUS:
         raise B22TrainingError("candidate TEST seal violated")
+    if manifest.get("official_mnist_test_images_evaluated") != 0:
+        raise B22TrainingError("candidate official TEST access/score forbidden")
+    _validate_source_manifest(manifest.get("source_dataset"))
+    history = manifest.get("history")
+    settings_payload = manifest.get("settings")
+    if not isinstance(settings_payload, dict):
+        raise B22TrainingError("missing complete B2.2 settings")
+    if (not isinstance(history, list) or not history
+            or manifest.get("best_epoch") != earliest_best_epoch(history)):
+        raise B22TrainingError("B2.2 best-validation selection provenance mismatch")
     if (manifest.get("checkpoint_frozen") is not False
             or manifest.get("B2_3_quantized_parity_accepted") is not False):
         raise B22TrainingError("B2.2 cannot impersonate later checkpoint freeze/parity")
-    settings = B21Settings(**manifest["settings"])
+    settings = B21Settings(**settings_payload)
+    if (len(history) != settings.epochs
+            or manifest.get("best_validation") != history[manifest["best_epoch"] - 1]["validation"]
+            or manifest.get("candidate_go") is not (
+                manifest["best_validation"]["accuracy"] >= settings.validation_go_floor)
+            or any(row.get("train", {}).get("count") != 50000
+                   or row.get("validation", {}).get("count") != 10000
+                   for row in history)):
+        raise B22TrainingError("B2.2 validation population/GO-floor/history mismatch")
     if (manifest.get("architecture") != [784, settings.hidden_neurons, 10]
             or manifest.get("dense_connections") != 794 * settings.hidden_neurons
             or manifest.get("input_encoder") != ENCODER_PROFILE
