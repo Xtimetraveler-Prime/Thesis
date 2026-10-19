@@ -1,6 +1,8 @@
 # P08-A3.2.2 — Dual-variant 1,024-image KV260 capture protocol
 
-**Status (2026-10-18): IMPLEMENTED ON THE FEATURE BRANCH / NATIVE GATES PENDING / NEW 1,024-IMAGE PHYSICAL KV260 RUNS NOT EXECUTED.** Previous **A3.1** pilot completed physical parity and timing telemetry; the fixed 16-image pilot remains immutable. **A3.2.1** offline 1,024-image paired analyzer passed user-local native tests. No power characterization.
+**Status (2026-10-18 project timeline): USER ATTESTED A3.2.2 PHYSICAL FIRST A2.1/A2.2 1,024-IMAGE PAIR AND A3.2.1 INDEPENDENT ORACLE/TIMING INTEGRITY PASS. Paired median A53 full-service difference +0.0168 ms; further repeated trials remain A3.2.3.** Previous **A3.1** pilot completed physical parity and timing telemetry; the fixed 16-image pilot remains immutable. **A3.2.1** offline 1,024-image paired analyzer passed user-local native tests. No power characterization.
+
+**Result update:** The user reports all A3.2.2 native tests passed after the guarded test fixture correction, both true-original first1024 offline preflights passed, and the separate KV260 physical A2.1/A2.2 captures plus original independent packed-oracle paired report PASS. See [numerical paired physical measurements](P08_A3_2_2_PHYSICAL_RESULTS.md). The procedure below remains the authoritative reproduction/safety protocol, not an instruction to overwrite the accepted first pair.
 
 ## 1. Goal and unchanged research foundations
 
