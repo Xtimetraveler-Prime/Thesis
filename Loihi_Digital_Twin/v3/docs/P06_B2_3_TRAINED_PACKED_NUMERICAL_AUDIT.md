@@ -110,3 +110,25 @@ Expected *after user runs*:
 **No assistant-run native pytest result, user-local checkpoint run, new
 board result or official TEST accuracy claimed.** B2.4 immutable freeze is
 not yet started, and B1/B2 stacked PRs remain unmerged.
+
+## Post-merge integration addendum (2026-10-19)
+
+The branch/PR status in earlier sections of this phase document is
+**historical provenance from when this submilestone was under review**,
+not the current integration status. After the user accepted B2.5 and
+explicitly authorized sequential integration, GitHub confirmed:
+**P06-B1 PR #46 merged to `main`** as
+`35ea181360ebf15627c2943090fbdc3c6bf3949e`;
+**P06-B2 PR #47 retargeted and merged to `main`** as
+`42f84de3bbbe62302599818c39e7e54747ce8aa2`.
+The B2.1–B2.5 host gates are user-accepted, and B2.4's original
+33-asset/27-P02-context freeze is locally SHA-verifiable. Next work
+starts from merged `main` at **P07-B**; see
+`docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md`.
+
+All original experimental distinctions persist: B2's **97.08%**
+comes from canonical **TRAIN-derived validation**, not the sealed
+official B2 MNIST TEST; three complete B2.3 dense trained
+26-tick validation frames do NOT imply a physical 27-core run.
+P07-B KV260 multi-core hardware integration, physical paging/
+latency/energy and B2 official TEST are **NOT YET ACCEPTED**.
