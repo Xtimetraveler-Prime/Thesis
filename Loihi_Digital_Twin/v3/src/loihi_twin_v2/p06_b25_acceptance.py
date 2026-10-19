@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
 
 from .p06_b24_freeze import (
     B24_MANIFEST_NAME, B24_SCHEMA, B24_PROTOCOL_NAME,
@@ -153,12 +152,25 @@ def review_freeze_documents(
     if (not isinstance(cores, list) or len(cores) != EXPECTED_DDR_CORES
             or {r["core_id"] for r in cores} != set(range(EXPECTED_DDR_CORES))):
         raise B25AcceptanceError("B1.1 per-core occupancy list incomplete")
-    if any(c.get("logical_synapse_bytes", 131073) > 131072
-           or c.get("worst_current_bank_events", 4097) > 4096
-           or c.get("record_bytes") != EXPECTED_DDR_RECORD_BYTES
-           or c.get("initial_ddr_sha256") != records[c["core_id"]]
-           for c in cores):
-        raise B25AcceptanceError("B1.1 trained packed core bounds or record identity changed")
+    limits = {
+        "compartments": 1024, "input_axons": 4096,
+        "route_words": 4096, "synapse_words": 32768,
+        "logical_synapse_bytes": 131072,
+        "worst_external_events": 4096, "worst_routed_events": 4096,
+        "worst_current_bank_events": 4096, "worst_emitted_packets": 4096,
+    }
+    for core in cores:
+        cid = core["core_id"]
+        for name, limit in limits.items():
+            used = core.get(name)
+            if type(used) is not int or not 0 <= used <= limit:
+                raise B25AcceptanceError(
+                    f"core {cid}: B1.1 {name} outside accepted physical packing budget")
+        if (core.get("record_bytes") != EXPECTED_DDR_RECORD_BYTES
+                or core.get("initial_ddr_sha256") != records[cid]
+                or core["worst_current_bank_events"]
+                   != core["worst_external_events"] + core["worst_routed_events"]):
+            raise B25AcceptanceError(f"core {cid}: P02 record SHA/event-budget identity changed")
     return {
         "architecture": [784, 1000, 10],
         "connections_full_dense": EXPECTED_FULL_DENSE_CONNECTIONS,
