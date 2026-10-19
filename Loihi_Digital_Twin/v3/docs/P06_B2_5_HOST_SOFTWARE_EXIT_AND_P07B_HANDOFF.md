@@ -1,6 +1,6 @@
 # P06-B2.5 — Host-software acceptance and explicit P07-B hardware-readiness handoff
 
-**Status on 2026-10-19: B2.1–B2.4 USER-ATTESTED HOST PASS; B2.5 SOURCE/TEST CANDIDATE COMMITTED, AWAITING USER PC NATIVE GATE.** No scaled KV260 inference, new A53 firmware, physical paging/latency/energy measurement, official MNIST TEST unseal or B2.5 acceptance has occurred.
+**Status on 2026-10-19: B2.1–B2.5 USER-ATTESTED HOST-SOFTWARE PASS; AUTHORISED TO MERGE PR #46 THEN #47.** No scaled KV260 inference, new A53 firmware, physical paging/latency/energy measurement, official MNIST TEST unseal or B2.5 acceptance has occurred.
 
 Development remains on `agent/v3-p06-b2-training-foundation`. Draft PR #47 is **stacked onto the accepted-but-unmerged B1 draft PR #46**. User specifically requested verification **before** merge; neither PR may be merged until the user later explicitly authorizes that action. Preserved Track A baseline/checkpoints/evidence are not modified.
 
@@ -31,14 +31,14 @@ The original freeze manifest retains `user_native_B2_4_accepted=false` as a **hi
 
 ## Formal B2 software exit decision
 
-**Host-software GO / pending B2.5 native PC acceptance:**
+**Host-software GO / B2.5 user-attested PC acceptance:**
 - Candidate is independent of Track A; physical P07/P08-A 784→32→10 artifact remains unchanged.
 - Real trained checkpoint passed user-supplied SHA+validation integrity and original B1.2 exact packed capacity.
 - Full per-neuron 26-tick equivalence was established for 3 predeclared TRAIN-derived validation frames.
 - 33 materialized B2.4 files including all 27 initial DDR images passed user-supplied normal and deep byte regeneration verification.
 - Sealed, prespecified official TEST protocol was already included before any TEST access.
 
-**P07-B DESIGN / PLANNING GO (only after B2.5 user verification):**
+**P07-B DESIGN / PLANNING GO (B2.5 user verification attested):**
 The separate engineering phase should deliver, in order, a frozen PS/PL memory and DDR owner map with validated reset, real HLS engine and 3 resident contexts, deployed 27-core A53 streaming ingress and NEXT route ABI, dirty context writeback, fail-closed packet limits/epoch barriers, physical host-vs-board integer trace equality, and physically measured PL page bytes, throughput/latency and power/energy. This is **not** plug-and-play hardware because B1.3/B1.5 were host protocol and paging models, not physical scaled firmware. Plan a separately user-verified P07-B branch and versioned acceptance criteria before programming hardware.
 
 **P07-B EXECUTION NO-GO today.** No flashed/accepted scaled 27-core A53/PL implementation, live paging telemetry, physical correctness or DDR owner/isolation/atomic reset assurance has been produced. The accepted P05 diagnostic only supports a distinct single-axon ingress ABI; never represent it as scaled network runtime.
@@ -88,4 +88,4 @@ PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
 
 Expected flags on success: `P06_B25_HOST_SOFTWARE_HANDOFF_PASS=1`, `P06_B25_SCALED_FPGA_EXECUTION_GO=0`, `P06_B25_OFFICIAL_TEST_UNSEAL_GO=0`, `P06_B25_FREEZE_UNMODIFIED=1`. `B2_5_native_user_accepted=false` stays *historical code/manifest-time status* and is superseded by user's external reported run when provided; never edit the B2.4 frozen source just to flip a boolean.
 
-These native runs are not independently performed by the source-authoring agent. **User will verify B2.5 and then separately authorize ordered merges**. The correct ordering is PR #46 B1 into main first, then update/retarget stacked PR #47 B2 to main after its base commits land, checking for conflicts/CI and preserving B2 doc/evidence before merging. Until the user actually grants that permission, leave both PRs draft and unmerged.
+**Subsequent user acceptance (2026-10-19):** the user reports that all B2.5 tests and handoff commands passed and explicitly authorized the ordered merges. Only this general user attestation was provided; exact B2.5 stdout, test count and optional report-file SHA were not supplied, so none are fabricated. The source-authoring assistant has not independently run native pytest or the user's SHA-indexed local freeze. Merge B1 PR #46 to `main` first, retarget B2 PR #47 to `main` after the B1 merge, check the resulting diff/integrity, and merge B2. Actual integration status is recorded separately after GitHub confirms it. The local freeze's historical status field must remain unchanged.
