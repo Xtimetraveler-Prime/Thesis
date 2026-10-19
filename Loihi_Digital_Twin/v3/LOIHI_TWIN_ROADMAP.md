@@ -1668,7 +1668,7 @@ in the present `compile_network` will
     B2.3 signed/P03/DDR parity, B2.4 freezing, KV260 scaled
     inference or official TEST has been accepted.
   - **B2.3 — Trained weight/packing/numerical audit
-    [NEW READ-ONLY SOURCE/TEST CANDIDATE; USER PC REVIEW PENDING]:**
+    [USER-ATTESTED NATIVE PASS FOR DENSE 27-CORE PACKING + THREE COMPLETE NUMERICAL FRAMES]:**
     User-attested B2.2 candidate best epoch 6, **97.08% TRAIN-derived
     validation** (n=10,000), zero silent, candidate file SHA256
     `93e43915b38cf3c815a125bbab2788e45209f0ccd024d098b25b82a0a8cd0957`
@@ -1687,9 +1687,42 @@ in the present `compile_network` will
     and negative provenance/ordinal tests in
     `tests/test_p06_b23_trained_audit.py`. See
     `docs/P06_B2_3_TRAINED_PACKED_NUMERICAL_AUDIT.md`.
-    All B2.3 native tests and packed/numerical proof are PENDING.
+    User-reported B2.3 frozen TRAIN-derived validation ordinals
+    0,1,2 (original canonical TRAIN IDs 37384,27347,20178),
+    all 26-tick full state/spike/NEXT neural parity `true`,
+    27 actual trained packed contexts / 14,155,776 initial
+    P02 backing bytes, maximum current events 1000 and
+    source/deployment/B1.1 audit SHA256 respectively
+    `0a3ec838a9f95a73de118e37f31d596bf38e63cd8cf82e6f5c9d0dd48b22797a`,
+    `02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a`,
+    `82e9e6c11264c6092dbe94f17496332fae303ac9ef7dfaa01d0ec441869a9498`.
+    The user's repeated B2.3 CLI marker PASS and previous
+    B2.1/B2.2/B1 regression suite PASS establish the
+    host numerical gate; seven separate optional stress
+    tests skipped in that particular regression invocation
+    but earlier relevant B1/B2.1 optional cases were verified
+    in separate user runs. No FPGA scaled parity was shown.
   - **B2.4 — New checkpoint+validation+official protocol freeze
-    [NOT STARTED].**
+    [HOST SOURCE/TEST CANDIDATE COMMITTED; NATIVE FREEZE PENDING]:**
+    `p06_b24_freeze.py` requires exactly the user-accepted
+    trained B2.2 checkpoint/integer SHAs, B2.3 source/compiler/
+    capacity hashes and unchanged original three TRAIN-derived
+    full 26-tick trace witnesses before materializing anything.
+    It exports original checkpoint bytes/metadata, signed24
+    794k-edge source NetworkSpec, B1.2 mapping and all 27
+    initial P02 512 KiB DDR context records in one new,
+    non-overwritten staged local content-hashed snapshot.
+    Built-in separate sealed official MNIST 10k TEST
+    prespecified protocol, file digest registry, 27 full
+    initial DDR/P02 header/payload checks and optional
+    source+compiler+27-DDR deep byte regeneration verifier.
+    `tests/test_p06_b24_freeze.py` checks source/trace
+    tamper rejection, no overwrite, path-symlink protection,
+    manifest tamper and sealed TEST protocol. No native
+    acceptance, full freeze artifacts or user-local generated
+    manifest digest observed yet; no TEST unseal, FPGA physical
+    run or scaled performance measurement asserted. See
+    `docs/P06_B2_4_FROZEN_TRAINED_CHECKPOINT_AND_DDR.md`.
   - **B2.5 — B2 software acceptance / P07-B handoff [NOT STARTED].**
   The B2 branch is explicitly stacked on accepted, unmerged
   B1.6 closeout, not `main`; neither PR is authorized for merge.
