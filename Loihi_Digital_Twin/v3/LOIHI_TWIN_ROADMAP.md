@@ -1492,7 +1492,7 @@ in the present `compile_network` will
 **NOT** partition by synapse pressure.
 
 - **P06-B1 — Prove scalable packing and
-  route semantics [IN PROGRESS — B1.1–B1.3 USER-ATTESTED NATIVE PASS; B1.4 INDEPENDENT MONOLITHIC NUMERICAL SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
+  route semantics [IN PROGRESS — B1.1–B1.4 USER-ATTESTED NATIVE PASS; B1.5 THREE-SLOT PAGING SOURCE/TEST CANDIDATE COMMITTED, USER NATIVE REVIEW PENDING].**
   Deterministic synapse-aware partitioner;
   fail-closed axon/synapse/route/event
   budgets per logical core and exact
@@ -1549,7 +1549,7 @@ in the present `compile_network` will
     ordering, an independent reordered-frame test was added and the
     user subsequently verified all B1.3 tests/regressions PASS.
   - **B1.4 — Independent 26-tick monolithic integer oracle
-    [NEW HOST-ONLY SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    [USER-ATTESTED NATIVE PASS, INCLUDING LARGER OPTIONAL NUMERICAL PROBES]:**
     `src/loihi_twin_v2/p06_b14_monolithic.py` builds a flat
     original `NetworkSpec` event/connection graph and uses the
     independently accepted P06-A scalar signed-24-bit LIF oracle,
@@ -1569,6 +1569,36 @@ in the present `compile_network` will
     784→1000→10 / 27-core 26-tick numerical networks. The
     last is NOT a dense 794,000-synapse numerical or physical result.
     See `docs/P06_B1_4_INDEPENDENT_NUMERICAL_ORACLE.md`.
+  - **B1.5 — Three-resident-slot / one-engine host paging model
+    [NEW SOURCE/TEST CANDIDATE; NATIVE USER REVIEW PENDING]:**
+    `src/loihi_twin_v2/p06_b15_paging.py` reuses original
+    P08 `PagedHardwareImage.resident_page` and B1.1's
+    exact P03/P02 512 KiB initial SHA ledger to verify
+    logical-core/physical-slot identity at every dispatch.
+    It models deterministic LRU hits/dirty evictions, 26
+    barriers, all CURRENT inputs plus prior routed NEXT packets,
+    per-core 4096 event/packet budget, resident/nonresident-at-emission
+    packet classification and mandatory final dirty-slot flush.
+    Its numerical path checks every simulated page-ordered core trace
+    against the independent B1.4 full 26-tick oracle; an independent
+    `project_schedule_only` estimates 27-core **DENSE**
+    traffic without falsely claiming dense 794k-edge numerical
+    execution. P05.2i's **physically measured** page sizes
+    (438,272 full-in / 106,496 mutable-out; 256-byte AXI bursts)
+    are applied to **unmeasured scaled scheduling hypotheses**:
+    27-core 26-tick ascending policy = 702 dispatches,
+    702 page-ins/outs and **382,427,136 ESTIMATED** page-engine
+    bytes; alternating service order predicts 627 page-ins/outs
+    and **341,569,536 ESTIMATED** bytes with equivalent neural
+    results *when the separate numerical test runs successfully*.
+    No actual scaled cache/DDR images, A53 firmware, PL timing,
+    physical total bytes, speedup or energy asserted.
+    New `tests/test_p06_b15_paging.py` includes an
+    independent re-computation of actual P05.2i five-core
+    measured 43,581,440-byte accounting, LRU edge cases,
+    numerical scheduling-order parity, and opt-in dense-27
+    structural plus sparse-27 numerical stress.
+    Full details: `docs/P06_B1_5_THREE_SLOT_PAGING_ESTIMATE.md`.
 - **P06-B2 — Train, quantize and freeze
   independent larger checkpoint [PENDING
   INDEPENDENT ACCEPTANCE OF P06-B1].** Keep the same
