@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "p07_b2_packet.h"
+#include "p07_b3_pager.h"
 #include "p03_hw_adapter.h"
 #define P07_B3C_MAX_CORES P07_B3_CORES
 #define P07_B3C_MAX_RAW_WORDS P07_B2_MAX_ROUTE_BINDINGS
