@@ -58,9 +58,6 @@ def check_stage(source: Path) -> None:
 
 
 def build(xsa: Path, workspace: Path, source: Path) -> tuple[Path, Path]:
-    # Import only after admission; regular pytest does NOT need Vitis.
-    import vitis
-
     xsa=xsa.resolve(strict=True)
     source=source.resolve(strict=True)
     if not xsa.is_file():
@@ -68,6 +65,9 @@ def build(xsa: Path, workspace: Path, source: Path) -> tuple[Path, Path]:
     check_stage(source)
     if workspace.exists():
         raise ValueError("refusing an already existing Vitis workspace")
+    # Import only after all filesystem admission checks. This also allows
+    # negative host tests without requiring the actual Vitis installation.
+    import vitis
     workspace.mkdir(parents=True, exist_ok=False)
     client=vitis.create_client()
     client.set_workspace(path=str(workspace))
