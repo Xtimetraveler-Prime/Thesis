@@ -44,20 +44,24 @@ int p07_b3c_p03_reader(void *ctx,uint8_t slot,uint16_t index,uint64_t *word){
         P07_B3C_OK : P07_B3C_READ_ERROR;
 }
 int p07_b3c_capture_core(p07_b3c_capture *cap,uint32_t source_core,
-    uint8_t slot,uint32_t emitted,p07_b3c_packet_reader reader,void *ctx){
-    uint32_t i;uint64_t local[P03_RT_MAX_PACKETS];
-    if(!cap||!reader||!ctx||source_core>=P07_B3C_MAX_CORES||
+    uint8_t slot,uint32_t emitted,uint64_t *workspace,
+    size_t workspace_words,p07_b3c_packet_reader reader,void *ctx){
+    uint32_t i;
+    if(!cap||!reader||!ctx||!workspace||
+       source_core>=P07_B3C_MAX_CORES||
        slot>=P03_RT_MAX_SLOTS||cap->core_count>P07_B3C_MAX_CORES||
-       cap->word_count>P07_B3C_MAX_RAW_WORDS)return P07_B3C_BAD_ARGUMENT;
+       cap->word_count>P07_B3C_MAX_RAW_WORDS ||
+       overlap(workspace,workspace_words*sizeof(*workspace),
+               cap->words,sizeof(cap->words)))return P07_B3C_BAD_ARGUMENT;
     if(source_core!=cap->core_count)return P07_B3C_BAD_ARGUMENT;
-    if(emitted>P03_RT_MAX_PACKETS ||
+    if(emitted>P03_RT_MAX_PACKETS || emitted>workspace_words ||
        emitted>P07_B3C_MAX_RAW_WORDS-cap->word_count)return P07_B3C_CAPACITY;
-    /* Note: callback error may latch the physical P03 adapter error, but no
-     * committed capture bytes or counts are modified on failure. */
+    /* A failed actual PL read may latch the P03 adapter error, but neither
+     * the accepted raw words nor the committed capture count is modified. */
     for(i=0u;i<emitted;i++)
-        if(reader(ctx,slot,(uint16_t)i,&local[i])!=0)
+        if(reader(ctx,slot,(uint16_t)i,&workspace[i])!=0)
             return P07_B3C_READ_ERROR;
-    memcpy(&cap->words[cap->word_count],local,(size_t)emitted*sizeof(*local));
+    memcpy(&cap->words[cap->word_count],workspace,(size_t)emitted*sizeof(*workspace));
     cap->count[source_core]=emitted;
     cap->word_count+=emitted;
     ++cap->core_count;
