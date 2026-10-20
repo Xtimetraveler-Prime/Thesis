@@ -4,6 +4,7 @@ No B2 frozen artifact is opened and no official MNIST TEST or board is touched.
 The 27-core case is a SYNTHETIC topology stress frame, not trained B2 mapping.
 """
 from __future__ import annotations
+import hashlib
 import struct
 import subprocess
 import zlib
@@ -17,8 +18,10 @@ from loihi_twin_v2.p06_b13_streaming import encode_ingress_frame, decode_ingress
 from loihi_twin_v2.p06_input_contract import pixel_spikes
 
 ROOT = Path(__file__).resolve().parents[1]
-B2_COMP_SHA = "02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a"
-B2_AUDIT_SHA = "82e9e6c11264c6092dbe94f17496332fae303ac9ef7dfaa01d0ec441869a9498"
+def synthetic_hashes(mapping):
+    """Deliberately NOT the frozen trained B2 identities."""
+    return (hashlib.sha256(b"P07B2A synthetic mapping:" + mapping).hexdigest(),
+            hashlib.sha256(b"P07B2A synthetic audit:" + mapping).hexdigest())
 
 
 @pytest.fixture(scope="module")
@@ -68,10 +71,11 @@ def recalc(raw):
 def pack_synthetic_27(routes, pixels):
     assert len(pixels) == 784
     payload = routes + pixels
+    compiled, audit = synthetic_hashes(routes)
     words = (1, 128, len(payload), len(routes)//6, 27, 784, 25, 26, 6, 784,
              zlib.crc32(payload), 0, 0, 0)
     header = bytearray(struct.pack("<8s14I", b"P06B13I1", *words)
-                       + bytes.fromhex(B2_COMP_SHA) + bytes.fromhex(B2_AUDIT_SHA))
+                       + bytes.fromhex(compiled) + bytes.fromhex(audit))
     struct.pack_into("<I", header, 52, zlib.crc32(header))
     return bytes(header) + payload
 
@@ -125,7 +129,8 @@ def test_synthetic_27_full_fanout_all_ticks(native, tmp_path, pixels):
     mapping = b"".join(struct.pack("<HHH", *item) for item in routes)
     frame = pack_synthetic_27(mapping, pixels)
     assert len(frame) == 123216
-    actual = run(native, tmp_path, frame, mapping, B2_COMP_SHA, B2_AUDIT_SHA, 27)
+    comp, audit = synthetic_hashes(mapping)
+    actual = run(native, tmp_path, frame, mapping, comp, audit, 27)
     verify_26_ticks(actual, None, routes, pixels)
 
 
@@ -177,6 +182,7 @@ def test_self_consistent_but_illegal_map_order_and_axon(native, tmp_path):
             malformed[1], malformed[2] = malformed[2], malformed[1]
         mapbytes = b"".join(struct.pack("<HHH", *r) for r in malformed)
         frame = pack_synthetic_27(mapbytes, bytes([255]) * 784)
-        actual = run(native, tmp_path, frame, mapbytes, B2_COMP_SHA, B2_AUDIT_SHA, 27)
+        comp, audit = synthetic_hashes(mapbytes)
+        actual = run(native, tmp_path, frame, mapbytes, comp, audit, 27)
         assert actual.returncode == 10
         assert actual.stdout.strip() == "P07_B2A_REJECT=-6"
