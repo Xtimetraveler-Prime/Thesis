@@ -166,7 +166,8 @@ def test_genuine_compiled_b12_b13_packet_wire_byte_identical(native, partition):
     batches, owners = _vectors(binding.core_count, emitted)
     expected = encode_packet_frame(result, emitted, emitted_timestep=0)
     assert _call(native, binding, batches, 0, spikes) == expected
-    assert _call(native, binding, _vectors(binding.core_count, ())[0],
+    empty_batches, empty_owners = _vectors(binding.core_count, ())
+    assert _call(native, binding, empty_batches,
                  25, ()) == encode_packet_frame(
                      result, (), emitted_timestep=25)
 
@@ -187,9 +188,9 @@ def test_rejected_p03_semantic_bitfields_and_partial_fanout(native):
         (lambda w: w | (1 << 62), -2),              # reserved
         (lambda w: w + (1 << 29), -2),              # incorrect NEXT tick
         (lambda w: (w & ~0x7F) | 127, -2),          # invalid destination
-        (lambda w: w ^ (1 << 7), -5),               # CRC-valid but wrong route axon
+        (lambda w: (w & ~(0xFFF << 7)) | (4095 << 7), -5),  # valid bitfield, illegal route
     ):
-        modified = _vectors(binding.core_count, packets)[0]
+        modified, held_words = _vectors(binding.core_count, packets)
         target = next(x for x in modified if x.packet_count)
         target.words[0] = mutant(target.words[0])
         _call(native, binding, modified, 0, spikes, expected=code)
@@ -241,3 +242,66 @@ def test_capture_callbacks_do_not_publish_partial_readback(native):
     assert native.p07_b3c_capture_core(
         C.byref(capture), 1, 1, 1, workspace, 4096, good, cookie) == 0
     assert capture.core_count == 2 and capture.word_count == 3
+
+
+@pytest.mark.parametrize("tick", [0, 1, 12, 24, 25])
+def test_full_27_core_synthetic_p03_multisource_matches_independent_wire(native, tick):
+    """26 hidden sources -> readout 26; synthetic topology, not frozen B2."""
+    import zlib
+    class Packet:
+        def __init__(self, core, t):
+            self.source_core, self.source_compartment = core, 0
+            self.destination_core, self.destination_axon = 26, 100 + core
+            self.target_timestep = t + 1
+
+    enabled = tick != 25
+    p = tuple(Packet(i, tick) for i in range(26)) if enabled else ()
+    n = 27
+    routes = (Route * 26)(*[
+        Route(i, 0, 26, 100 + i) for i in range(26)
+    ])
+    counts = (U16 * n)(*[1] * n)
+    sha1 = hashlib.sha256(b"synthetic 27-core p07b3c compiled").digest()
+    sha2 = hashlib.sha256(b"synthetic 27-core p07b3c audit").digest()
+    b = PacketBinding(
+        n, 26, routes, counts,
+        (U8 * 32).from_buffer_copy(sha1),
+        (U8 * 32).from_buffer_copy(sha2),
+    )
+    batches, keepalive = _vectors(n, p)
+    spikes = tuple((i, 0) for i in range(26)) if enabled else ()
+    got = _call(native, b, batches, tick, spikes)
+    payload = b"".join(struct.pack("<IHHHH", tick + 1, i, 0, 26, 100 + i)
+                       for i in range(26)) if enabled else b""
+    fields = (
+        1, 128, len(payload), tick, len(p), n, 12, 4096,
+        0, 0, zlib.crc32(payload), 0, 0, 0,
+    )
+    header = bytearray(struct.pack("<8s14I", b"P06B13R1", *fields)
+                       + sha1 + sha2)
+    struct.pack_into("<I", header, 52, zlib.crc32(header))
+    assert got == bytes(header) + payload
+    # C byte layout MUST agree with the unchanged accepted B1.3 codec.
+
+
+def test_real_p03_adapter_quiescence_and_debug_read_with_fake_bus(native, tmp_path):
+    """Link real P03 adapter; simulate register callbacks only, no hardware."""
+    cc = shutil.which("cc") or shutil.which("gcc")
+    assert cc
+    output = tmp_path / "p07_b3c_p03_readback"
+    subprocess.run([
+        cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-pedantic",
+        "-I", str(ROOT / "software/p07/include"),
+        "-I", str(ROOT / "software/p03/include"),
+        "-I", str(ROOT / "software/p05/include"),
+        str(ROOT / "software/p07/p07_b3c_packet_bridge.c"),
+        str(ROOT / "software/p07/p07_b2_packet.c"),
+        str(ROOT / "software/p03/p03_hw_adapter.c"),
+        str(ROOT / "tests/native/p07_b3c_p03_readback_harness.c"),
+        "-o", str(output)
+    ], check=True, capture_output=True, text=True)
+    run = subprocess.run([str(output)], check=True, capture_output=True,
+                         text=True, timeout=30)
+    assert run.stdout.strip() == (
+        "P07_B3C1_REAL_P03_FAKE_BUS_READBACK_PASS=1"
+    )
