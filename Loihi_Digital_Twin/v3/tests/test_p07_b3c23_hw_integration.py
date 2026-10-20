@@ -14,7 +14,7 @@ def test_p03_original_adapter_27_core_lru_and_next_bank_insertion(tmp_path):
     cc = shutil.which("cc") or shutil.which("gcc")
     assert cc, "A native C11 compiler is required"
     out = tmp_path / "p07_b3c23"
-    subprocess.run(
+    compile_result = subprocess.run(
         [cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-pedantic",
          "-O1",
          "-I", str(ROOT / "software/p07/include"),
@@ -33,9 +33,11 @@ def test_p03_original_adapter_27_core_lru_and_next_bank_insertion(tmp_path):
              )
          ],
          "-o", str(out)],
-        check=True, capture_output=True, text=True,
+        check=False, capture_output=True, text=True,
     )
+    assert compile_result.returncode == 0, (\n        "P07-B.3c2/3 strict C11 compiler failed\\n"\n        f"EXIT: {compile_result.returncode}\\n"\n        f"STDOUT:\\n{compile_result.stdout}\\n"\n        f"GCC/CLANG STDERR:\\n{compile_result.stderr}"\n    )
     run = subprocess.run(
-        [str(out)], check=True, capture_output=True, text=True, timeout=120
+        [str(out)], check=False, capture_output=True, text=True, timeout=120
     )
+    assert run.returncode == 0, (\n        "P07-B.3c2/3 compiled but native harness failed\\n"\n        f"EXIT: {run.returncode}\\n"\n        f"STDOUT:\\n{run.stdout}\\nSTDERR:\\n{run.stderr}"\n    )
     assert run.stdout.strip() == "P07_B3C23_REAL_P03_NATIVE_FAKE_BUS_PASS=1"
