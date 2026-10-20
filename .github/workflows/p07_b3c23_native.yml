@@ -34,7 +34,8 @@ jobs:
         run: cc --version
       - name: Strict C11 real P03 adapter and fake-bus compile
         run: |
-          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 \
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
             -I software/p07/include \
             -I software/p03/include \
             -I software/p05/include \
@@ -46,5 +47,8 @@ jobs:
             software/p07/p07_b3c3_next_commit.c \
             tests/native/p07_b3c23_hw_scheduler_harness.c \
             -o /tmp/p07_b3c23_native
-      - name: Run all B3c2/c3 fake-bus scenarios
+      - name: Run all B3c2/c3 fake-bus scenarios with ASan and UBSan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
         run: /tmp/p07_b3c23_native
