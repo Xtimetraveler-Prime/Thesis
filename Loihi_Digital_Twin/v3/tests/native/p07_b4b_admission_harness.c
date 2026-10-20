@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include "p07_b4b_board_admission.h"
 #include "p07_b4b_xilinx_platform.h"
+#include "p07_b4b_mutable_audit.h"
 #include "p03_mmio.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"P07_B4B_NATIVE_FAIL_LINE=%u\n",(unsigned)__LINE__);return 1;}}while(0)
 typedef struct {
     uint32_t width,id,version,caps,global,pending;
     uint32_t reads,writes,cache_calls,backing_reads,fpd_reads;
     int fail_bus,fail_word;
+    uint64_t corrupt_address;
 } test_bus;
 static test_bus bus;
 static p03_hw_adapter adapter;
@@ -27,8 +29,12 @@ uint32_t p07_b4b_fake_xil_read(uintptr_t physical){
         return bus.width;
     }
     ++bus.backing_reads;
-    return ((core_for((uint64_t)physical)+1u)<<20u) |
+    {
+        uint32_t result=((core_for((uint64_t)physical)+1u)<<20u) |
            (uint32_t)(((uint64_t)physical-P03_HW_BACKING_BASE)%P03_HW_RECORD_BYTES);
+        if(bus.corrupt_address==(uint64_t)physical)result^=1u;
+        return result;
+    }
 }
 static int read_bus(void *context,uint32_t addr,uint32_t *out){
     test_bus *b=(test_bus *)context;
@@ -159,9 +165,77 @@ static int rejects(void){
     CHECK(bus.writes==0u&&bus.cache_calls==0u);
     return 0;
 }
+
+static uint32_t audit_reference_crc(uint32_t core,uint32_t offset,uint32_t bytes){
+    uint32_t crc=UINT32_C(0xffffffff),k,j,bit;
+    for(k=0u;k<bytes;k+=4u){
+        uint32_t word=((core+1u)<<20u)|(offset+k);
+        for(j=0u;j<4u;j++){
+            crc^=(uint8_t)(word>>(8u*j));
+            for(bit=0u;bit<8u;bit++)
+                crc=(crc>>1u)^((crc&1u)?UINT32_C(0xedb88320):0u);
+        }
+    }
+    return ~crc;
+}
+static int audit_read(void *context,uint64_t physical,uint32_t *out){
+    if(((test_bus *)context)->fail_word)return -1;
+    return p07_b4b_xilinx_read_mutable(context,physical,out);
+}
+static int mutable_audit(void){
+    static const uint32_t offsets[5]={0x5000u,0x54000u,0x58000u,0x5c000u,0x64000u};
+    static const uint32_t sizes[5]={0x2000u,0x4000u,0x4000u,0x8000u,0x8000u};
+    p07_b4b_expected_mutable expected={0};
+    p07_b4b_mutable_receipt checked={0},unchanged;
+    p07_b3_pager pager;
+    uint64_t bad=UINT64_MAX;
+    uint32_t core,section;
+    reset();
+    CHECK(p07_b4b_probe(&adapter,p07_b4b_xilinx_read_phys,
+                        &context_cookie,&receipt)==P07_B4B_OK);
+    CHECK(p07_b3_init(&pager,P07_B3_ORDER_ASCENDING)==P07_B3_OK);
+    for(core=0u;core<P07_B3_CORES;core++){
+        CHECK(p03_hw_register_core(&adapter,(uint8_t)core,
+              ((uint64_t)1u<<7u)|core,0u,0u)==P03_HW_OK);
+        for(section=0u;section<5u;section++)
+            expected.expected_crc[core][section]=
+                audit_reference_crc(core,offsets[section],sizes[section]);
+    }
+    CHECK(p07_b4b_audit_mutable(&expected,&adapter,&pager,
+          audit_read,&bus,&checked,&bad)==P07_B4B_AUDIT_OK);
+    CHECK(checked.checked_cores==27u&&checked.checked_regions==135u);
+    CHECK(checked.inspected_bytes==27u*P03_HW_MUTABLE_BYTES);
+    CHECK(bus.writes==0u&&bus.cache_calls==135u&&bad==0u);
+    unchanged=checked;
+    bus.corrupt_address=P03_HW_BACKING_BASE+
+        26u*P03_HW_RECORD_BYTES+0x64000u+0x7FFCu;
+    bad=0u;
+    CHECK(p07_b4b_audit_mutable(&expected,&adapter,&pager,
+          audit_read,&bus,&checked,&bad)==P07_B4B_AUDIT_MISMATCH);
+    CHECK(bad==P03_HW_BACKING_BASE+26u*P03_HW_RECORD_BYTES+0x64000u);
+    CHECK(memcmp(&checked,&unchanged,sizeof(checked))==0);
+    bus.corrupt_address=0u;
+    adapter.event_counts[0][1]=1u;
+    CHECK(p07_b4b_audit_mutable(&expected,&adapter,&pager,
+          audit_read,&bus,&checked,&bad)==P07_B4B_AUDIT_NOT_IDLE);
+    adapter.event_counts[0][1]=0u;
+    pager.resident[0]=0;
+    CHECK(p07_b4b_audit_mutable(&expected,&adapter,&pager,
+          audit_read,&bus,&checked,&bad)==P07_B4B_AUDIT_NOT_IDLE);
+    pager.resident[0]=-1;
+    bus.fail_word=1;
+    CHECK(p07_b4b_audit_mutable(&expected,&adapter,&pager,
+          audit_read,&bus,&checked,&bad)==P07_B4B_AUDIT_IO);
+    CHECK(bad==P03_HW_BACKING_BASE+0x5000u);
+    CHECK(memcmp(&checked,&unchanged,sizeof(checked))==0);
+    CHECK(bus.writes==0u);
+    return 0;
+}
+
 int main(void){
     CHECK(positives()==0);
     CHECK(rejects()==0);
+    CHECK(mutable_audit()==0);
     puts("P07_B4B_READONLY_A53_ADMISSION_NATIVE_PASS=1");
     return 0;
 }
