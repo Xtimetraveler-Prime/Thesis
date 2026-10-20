@@ -6,10 +6,6 @@ _Static_assert(P07_B3C_MAX_FRAME_BYTES==98432u,"bounded frame size drift");
 static uint16_t r16(const uint8_t *p) {
     return (uint16_t)((uint16_t)p[0]|((uint16_t)p[1]<<8));
 }
-static uint32_t r32(const uint8_t *p) {
-    return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
-        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
-}
 static void put16(uint8_t *p,uint32_t v) {
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
 }
