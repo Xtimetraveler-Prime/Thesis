@@ -20,6 +20,8 @@ def test_read_only_shell_admission_and_event_only_ddr_reader(tmp_path):
         "-I",str(ROOT/"software/p07/include"),
         "-I",str(ROOT/"software/p05/include"),
         str(ROOT/"software/p03/p03_hw_adapter.c"),
+        str(ROOT/"software/p07/p07_b3_pager.c"),
+        str(ROOT/"software/p07/p07_b4b_mutable_audit.c"),
         str(ROOT/"software/p07/p07_b4b_board_admission.c"),
         str(ROOT/"software/p07/p07_b4b_xilinx_platform.c"),
         str(ROOT/"tests/native/p07_b4b_admission_harness.c"),
