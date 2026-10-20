@@ -9,8 +9,14 @@ BUILD="${P07_B4C_BUILD_DIR:?Set unique absolute out-of-repo build directory}"
 XSA="${P07_B4C_XSA:?Set accepted P03 128-bit FPD routed XSA}"
 EXPECTED="${P07_B4C_XSA_SHA256:?Set independently pinned XSA SHA256}"
 METRICS="${P07_B4C_ROUTE_METRICS:?Set accepted P03 routed metrics text path}"
-STACK="${P07_B4C_STACK:?Set verified actual ELF/BSP physical stack START:END}"
-HEAP="${P07_B4C_HEAP:?Set verified actual ELF/BSP physical heap START:END}"
+# The build can complete before stack/heap have been measured from the real
+# BSP/map. Their absence MUST prevent ELF admission, not artifact creation.
+STACK="${P07_B4C_STACK:-}"
+HEAP="${P07_B4C_HEAP:-}"
+if [[ -n "$STACK" || -n "$HEAP" ]]; then
+  [[ -n "$STACK" && -n "$HEAP" ]] ||
+    { echo "P07_B4C_BUILD_NO_GO: supply BOTH actual stack and heap extents" >&2; exit 2; }
+fi
 
 die(){ echo "P07_B4C_BUILD_NO_GO: $*" >&2; exit 2; }
 [[ "$BUILD" == /* ]] || die "build directory must be absolute"
@@ -96,18 +102,25 @@ MAP="$BUILD/vitis_workspace/p07_b4c_readonly_probe.map"
 [[ -s "$ELF" && -s "$MAP" ]] || die "actual ELF and matching linker map not both produced"
 grep -aFq "P07_B4C_A53_READONLY_FPD128_SHELL_PROBE_V1" "$ELF" ||
   die "ELF lacks expected new B.4c board probe build identity"
-# The v3 ELF auditor runs on actual Vitis bytes, not synthetic fixtures.
-(
-  cd "$V3"
-  python3 scripts/p07_b4c_verify_elf.py \
-    --elf "$ELF" --linker-map "$MAP" \
-    --stack "$STACK" --heap "$HEAP" \
-    --readelf "$(command -v aarch64-none-elf-readelf)" \
-    --nm "$(command -v aarch64-none-elf-nm)"
-) | tee "$BUILD/elf_admission.json"
 sha256sum "$XSA" "$ELF" "$MAP" > "$BUILD/artifact_sha256.txt"
 printf 'P07_B4C_XSA_SHA256=%s\n' "$ACTUAL"
 printf 'P07_B4C_PROBE_ELF=%s\nP07_B4C_LINKER_MAP=%s\n' "$ELF" "$MAP"
-echo "P07_B4C_A53_READONLY_ELF_ADMISSION_PASS=1"
+echo "P07_B4C_A53_ELF_BUILT=1"
+if [[ -n "$STACK" && -n "$HEAP" ]]; then
+  # The gate reads real Vitis bytes and cross-binutils; it may FAIL after a
+  # successful build if the linker map/stack/heap lacks sufficient evidence.
+  (
+    cd "$V3"
+    python3 scripts/p07_b4c_verify_elf.py \
+      --elf "$ELF" --linker-map "$MAP" \
+      --stack "$STACK" --heap "$HEAP" \
+      --readelf "$(command -v aarch64-none-elf-readelf)" \
+      --nm "$(command -v aarch64-none-elf-nm)"
+  ) | tee "$BUILD/elf_admission.json"
+  echo "P07_B4C_A53_READONLY_ELF_ADMISSION_PASS=1"
+else
+  echo "P07_B4C_A53_ELF_ADMISSION=PENDING_ACTUAL_STACK_HEAP"
+  echo "P07_B4C_BUILD_ONLY_NO_BOARD_GO=1"
+fi
 echo "P07_B4C_KV260_BOARD_STATUS=NOT_RUN"
 echo "P07_B4C_INFERENCE_AUTHORIZED=0"
