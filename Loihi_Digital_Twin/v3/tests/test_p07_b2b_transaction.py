@@ -169,10 +169,12 @@ class Context:
             C.byref(self.tx), wire, len(frame),
             origins if source_spikes else None, len(source_spikes),
             C.byref(self.receipt))
-        if expected:
-            assert status == expected
-        else:
-            assert status == 0
+        # The expected native status is explicit for BOTH successful and
+        # rejected transactions. In particular, negative tests must not
+        # accidentally be subjected to the default success-only assertion.
+        assert status == expected, (
+            f"native transaction status {status}, expected {expected}"
+        )
         if status != 0:
             assert before == (state_bytes(self.tx), state_bytes(self.receipt),
                               state_bytes(self.pending)), "rejection mutated bank/state/receipt"
@@ -238,28 +240,38 @@ def test_corrupt_crc_sha_header_route_fanout_order_and_retry(native):
     sources = tuple(sorted((core.logical_core_id, n)
                   for core in trace.cores for n in core.spikes_out))
     good = encode_packet_frame(result, full, emitted_timestep=0)
+    # (malformed wire, exact expected C status). Checking exact error
+    # families prevents a checksum/length failure from masquerading as
+    # semantic source-fanout validation.
     variants = [
-        b"P05G0000" + good[8:], good[:-1] + bytes([good[-1] ^ 1]),
-        good[:64] + bytes([good[64] ^ 1]) + good[65:],
+        (b"P05G0000" + good[8:], -2),  # P07_B2_HEADER
+        (good[:-1] + bytes([good[-1] ^ 1]), -4),  # P07_B2_CRC
+        (good[:64] + bytes([good[64] ^ 1]) + good[65:], -3),  # DIGEST
     ]
     invalid = bytearray(good)
     struct.pack_into("<I", invalid, 128, 2)  # wrong target epoch
-    variants.append(rechecksum(bytes(invalid)))
+    variants.append((rechecksum(bytes(invalid)), -9))
     invalid = bytearray(good)
     invalid[128 + 8] = 100  # invalid destination core
-    variants.append(rechecksum(bytes(invalid)))
+    variants.append((rechecksum(bytes(invalid)), -9))
     invalid = bytearray(good)
     invalid[128:140], invalid[140:152] = invalid[140:152], invalid[128:140]
-    variants.append(rechecksum(bytes(invalid)))
+    variants.append((rechecksum(bytes(invalid)), -9))
     # Drop one of two fanout destination cores for one origin, retaining CRC.
-    variants.append(rechecksum(good[:128] + good[140:]))
-    # Remove entire origin group, detectable ONLY with authoritative spikes.
-    variants.append(encode_packet_frame(result, (), emitted_timestep=0))
-    for bad in variants:
-        assert ctx.step(bad, sources) != 0
+    dropped = bytearray(good[:128] + good[140:])
+    # Repair the *dimensions* as well as CRCs, so this is a structurally
+    # valid packet frame whose single missing route fails FANOUT validation.
+    struct.pack_into("<I", dropped, 16, len(dropped) - 128)
+    struct.pack_into("<I", dropped, 24, (len(dropped) - 128) // 12)
+    variants.append((rechecksum(bytes(dropped)), -9))
+    # Remove entire origin group; only independent PL spike provenance can
+    # detect this omission. The empty frame itself is a valid wire frame.
+    variants.append((encode_packet_frame(result, (), emitted_timestep=0), -9))
+    for bad, expected_code in variants:
+        assert ctx.step(bad, sources, expected=expected_code) == expected_code
         assert ctx.tx.tick == 0
     # Also reject duplicated declared emitting origin without any state change.
-    assert ctx.step(good, sources + sources[:1]) != 0
+    assert ctx.step(good, sources + sources[:1], expected=-9) == -9
     # Correct packet for the same epoch succeeds after every failed attempt.
     assert ctx.step(good, sources) == 0
     assert ctx.tx.tick == 1
@@ -275,7 +287,7 @@ def test_current_4096_pass_4097_fail_and_retry(native):
     ctx.tx.pending_by_core[0] = 3313
     for i in range(3313):
         ctx.pending[i] = Event(0, 0)
-    assert ctx.step(empty, ()) != 0
+    assert ctx.step(empty, (), expected=-7) == -7
     ctx.tx.pending_count = 3312
     ctx.tx.pending_by_core[0] = 3312
     assert ctx.step(empty, ()) == 0
@@ -302,7 +314,7 @@ def test_final_tick_rejection_does_not_discard_next(native):
     last = encode_packet_frame(result, shifted, emitted_timestep=25)
     sources = tuple(sorted((c.logical_core_id, n)
                   for c in trace.cores for n in c.spikes_out))
-    assert ctx.step(last, sources) != 0
+    assert ctx.step(last, sources, expected=-10) == -10
     assert ctx.tx.tick == 25
     assert ctx.step(empty_frames[25], ()) == 0
     assert ctx.tx.tick == 26
