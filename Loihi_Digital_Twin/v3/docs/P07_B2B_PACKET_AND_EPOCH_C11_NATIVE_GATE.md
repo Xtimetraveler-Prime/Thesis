@@ -62,3 +62,8 @@ PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
 **Evidence categories:** local standalone C module compile and a manually staged synthetic C smoke are not equivalent to the above tests against the full repository Python oracle; exact full-repository results remain **user-native PENDING**. No GitHub Actions PASS, Vitis ELF, bitstream, DDR dump, live paging performance or physical correctness is claimed. Record skips explicitly; do not infer native PASS from committed test source.
 
 **Gate:** after the user posts P07-B.2b test results, log them as an *external evidence ledger* while preserving original B1/B2 frozen artifacts. Then begin **P07-B.3**, not a speculative new PL engine. Draft PR #49 stays unmerged until explicit user authorization.
+
+
+### Additional exact packet-bank boundary gate
+
+`tests/native/p07_b2b_capacity_harness.c` directly constructs an independently checksummed 4,096-packet `P06B13R1` frame with one source and one NEXT destination, verifies **exact acceptance** and both decoded counters, then checks that a 4,097th route fails when added to the same emitting source and when spread over distinct emitting sources into the same destination. Both malformed bindings are independently rejected **before decoding** and cannot modify a previously published frame view. `test_independent_large_source_and_next_4096_vs_4097_boundary` builds and executes this C harness in the main B.2b pytest. This is structural packet-bank admission, not a real FPGA packet burst or SRAM measurement.
