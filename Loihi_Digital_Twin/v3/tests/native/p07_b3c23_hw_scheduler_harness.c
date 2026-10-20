@@ -179,20 +179,25 @@ static int barrier(uint32_t tick,int bad_packet,int fail_write){
     p07_b3c3_plan plan={0};p07_b3c3_receipt receipt={0};
     p07_b3_op op;size_t bytes=0u;uint32_t src;
     uint16_t emitted[26][2];
+    /* ISO C11: implicit uint16_t (*)[2] -> const uint16_t (*)[2] is
+     * not permitted for nested array qualifiers before C23.
+     * Keep mutable fixture initialization, then cast explicitly at the
+     * read-only API boundary. No data are changed through this view. */
+    const uint16_t (*readonly_emitted)[2]=(const uint16_t (*)[2])emitted;
     for(src=0u;src<26u;src++){emitted[src][0]=(uint16_t)src;emitted[src][1]=0u;}
     CHECK(p07_b3_next(&pager,&op)==P07_B3_OK&&op.kind==P07_B3_BARRIER);
     CHECK(p07_b3c_encode_frame(runner.cores,N,tick,&binding,
-             emitted,tick<25u?26u:0u,
+             readonly_emitted,tick<25u?26u:0u,
              scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
     if(bad_packet)frame[128u]^=1u;
     if(bad_packet){
         CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
-              emitted,tick<25u?26u:0u)==P07_B3C3_PRECHECK);
+              readonly_emitted,tick<25u?26u:0u)==P07_B3C3_PRECHECK);
         CHECK(!pager.failed&&pager.tick==tick);
         return 0;
     }
     CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
-          emitted,tick<25u?26u:0u)==P07_B3C3_OK);
+          readonly_emitted,tick<25u?26u:0u)==P07_B3C3_OK);
     if(fail_write){
         if(resident_memory)sim.fail_debug=1u;
         if(p07_b3c3_commit(&plan,&receipt)!=P07_B3C3_FAULTED)return 1;
@@ -240,6 +245,7 @@ static int failure_guards(void){
     int state;p07_b3_op op;uint32_t tick;
     p07_b3c3_plan plan={0};p07_b3c3_receipt receipt={0};
     uint16_t spikes[26][2];uint32_t i;size_t bytes=0u;
+    const uint16_t (*readonly_spikes)[2]=(const uint16_t (*)[2])spikes;
     CHECK(setup(0u)==0);
     /* First incomplete page write acknowledgment must poison scheduler. */
     while(pager.counters.dispatches<3u){
@@ -270,17 +276,17 @@ static int failure_guards(void){
         CHECK(state==P07_B3C2_OK);
     }
     CHECK(p07_b3c_encode_frame(runner.cores,N,0u,&binding,
-             spikes,26u,scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
+             readonly_spikes,26u,scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
     /* CRC-valid but unregistered destination axon must be rejected
      * before any physical/debug NEXT bank write. */
     hw.valid_axons[26u][100u>>3u] &=
          (uint8_t)~(1u<<(100u&7u));
     CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
-                           spikes,26u)==P07_B3C3_PRECHECK);
+                           readonly_spikes,26u)==P07_B3C3_PRECHECK);
     CHECK(hw.event_counts[26][1]==0u&&sim.debug_writes==0u);
     hw.valid_axons[26u][100u>>3u] |= (uint8_t)(1u<<(100u&7u));
     CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
-                           spikes,26u)==P07_B3C3_OK);
+                           readonly_spikes,26u)==P07_B3C3_OK);
     /* Actual P03 debug failure: no success receipt, no barrier advancement. */
     sim.fail_debug=1u;
     CHECK(p07_b3c3_commit(&plan,&receipt)==P07_B3C3_FAULTED);
@@ -298,9 +304,9 @@ static int failure_guards(void){
     }
     CHECK(pager.resident[0]!=26&&pager.resident[1]!=26&&pager.resident[2]!=26);
     CHECK(p07_b3c_encode_frame(runner.cores,N,1u,&binding,
-             spikes,26u,scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
+             readonly_spikes,26u,scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
     CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
-                           spikes,26u)==P07_B3C3_OK);
+                           readonly_spikes,26u)==P07_B3C3_OK);
     sim.fail_store=1u;
     CHECK(p07_b3c3_commit(&plan,&receipt)==P07_B3C3_FAULTED);
     CHECK(pager.failed&&plan.poisoned&&receipt.magic==0u);
