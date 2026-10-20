@@ -27,8 +27,8 @@ int p07_b3c2_init(p07_b3c2_hw_scheduler *s,p07_b3_pager *pager,
        pager->failed||pager->tick!=0u||pager->ordinal!=0u||
        pager->has_pending||hw->last_error!=P03_HW_OK||
        hw->backing_base!=P03_HW_BACKING_BASE||
-       word_capacity<P07_B3C_MAX_RAW_WORDS||
-       scratch_capacity<P03_RT_MAX_PACKETS||
+       word_capacity!=P07_B3C_MAX_RAW_WORDS||
+       scratch_capacity!=P03_RT_MAX_PACKETS||
        !no_overlap(words,word_capacity*sizeof(*words),
                    scratch,scratch_capacity*sizeof(*scratch))||
        !no_overlap(s,sizeof(*s),words,word_capacity*sizeof(*words))||
