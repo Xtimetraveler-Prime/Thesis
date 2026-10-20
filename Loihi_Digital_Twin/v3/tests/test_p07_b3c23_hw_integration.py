@@ -35,9 +35,18 @@ def test_p03_original_adapter_27_core_lru_and_next_bank_insertion(tmp_path):
          "-o", str(out)],
         check=False, capture_output=True, text=True,
     )
-    assert compile_result.returncode == 0, (\n        "P07-B.3c2/3 strict C11 compiler failed\\n"\n        f"EXIT: {compile_result.returncode}\\n"\n        f"STDOUT:\\n{compile_result.stdout}\\n"\n        f"GCC/CLANG STDERR:\\n{compile_result.stderr}"\n    )
+    assert compile_result.returncode == 0, (
+        "P07-B.3c2/3 strict C11 compiler failed\n"
+        f"EXIT: {compile_result.returncode}\n"
+        f"STDOUT:\n{compile_result.stdout}\n"
+        f"GCC/CLANG STDERR:\n{compile_result.stderr}"
+    )
     run = subprocess.run(
         [str(out)], check=False, capture_output=True, text=True, timeout=120
     )
-    assert run.returncode == 0, (\n        "P07-B.3c2/3 compiled but native harness failed\\n"\n        f"EXIT: {run.returncode}\\n"\n        f"STDOUT:\\n{run.stdout}\\nSTDERR:\\n{run.stderr}"\n    )
+    assert run.returncode == 0, (
+        "P07-B.3c2/3 compiled but native harness failed\n"
+        f"EXIT: {run.returncode}\n"
+        f"STDOUT:\n{run.stdout}\nSTDERR:\n{run.stderr}"
+    )
     assert run.stdout.strip() == "P07_B3C23_REAL_P03_NATIVE_FAKE_BUS_PASS=1"
