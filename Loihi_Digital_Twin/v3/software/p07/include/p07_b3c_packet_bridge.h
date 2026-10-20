@@ -32,10 +32,13 @@ enum { P07_B3C_OK=0, P07_B3C_BAD_ARGUMENT=-1, P07_B3C_BAD_FRAME=-2,
 /*
  * Capture one completed source PL packet bank. A failure leaves capture's
  * committed counts/words untouched; do not retry a broken physical run.
+ * Caller owns a disjoint temporary workspace of up to 4096 64-bit words;
+ * no large A53 stack array is allocated by this routine.
  * The external caller owns quiescence and complete source-spike evidence.
  */
 int p07_b3c_capture_core(p07_b3c_capture *cap, uint32_t source_core,
-    uint8_t slot, uint32_t emitted, p07_b3c_packet_reader reader,void *ctx);
+    uint8_t slot, uint32_t emitted, uint64_t *workspace,
+    size_t workspace_words, p07_b3c_packet_reader reader,void *ctx);
 /* Bind to the ACTUAL accepted P03 hardware debug packet adapter. Do not
  * pass an uninitialized board adapter or assume this is a physical test. */
 int p07_b3c_p03_reader(void *ctx,uint8_t slot,uint16_t index,uint64_t *word);
