@@ -323,3 +323,20 @@ def test_synthetic_27_core_26tick_transport_fanout(native, tmp_path):
         assert int(row[4]) == (0 if tick == 0 else 26)
         assert int(row[5]) == (26 if tick < 25 else 0)
     assert actual[-1] == "P07_B2B_NATIVE_PACKET_PASS=1 steps=26 rejected=0 records=26"
+
+
+def test_independent_large_source_and_next_4096_vs_4097_boundary(tmp_path):
+    """Direct native envelope cap: 4096 legal, 4097 source/NEXT rejected."""
+    import shutil
+    cc = shutil.which("cc") or shutil.which("gcc")
+    assert cc, "host C11 compiler required"
+    binary = tmp_path / "packet_capacity"
+    subprocess.run([
+        cc, "-std=c11", "-Wall", "-Wextra", "-Werror", "-pedantic",
+        "-I", str(ROOT / "software/p07/include"),
+        str(ROOT / "software/p07/p07_b2_packet.c"),
+        str(ROOT / "tests/native/p07_b2b_capacity_harness.c"),
+        "-o", str(binary),
+    ], check=True, capture_output=True, text=True)
+    result = subprocess.run([str(binary)], capture_output=True, text=True, check=True)
+    assert result.stdout.strip() == "P07_B2B_NATIVE_PACKET_CAPACITY_PASS=1"
