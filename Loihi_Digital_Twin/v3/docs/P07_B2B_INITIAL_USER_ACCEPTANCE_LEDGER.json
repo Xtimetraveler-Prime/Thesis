@@ -1,0 +1,22 @@
+{
+  "schema": "p07-b2b-initial-count-prototype-user-attested-native-v1",
+  "stage": "P07-B.2b initial count-only parser and epoch prototype",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "user_statement": "great, these tests passed. proceed with development",
+  "attested_user_host_native_pass": true,
+  "scope": [
+    "tests/test_p07_b2b_packets.py",
+    "tests/test_p07_b2a_ingress.py",
+    "tests/test_p07_b1_owner_map.py",
+    "tests/test_p06_b13_streaming.py"
+  ],
+  "date_statement": "2026-10-19 (project conversation; exact terminal timestamp not supplied)",
+  "native_stdout_supplied": false,
+  "test_counts_supplied": false,
+  "full_ordered_NEXT_b2b_development_gate": "PENDING_NEW_NATIVE_VERIFICATION",
+  "physical_KV260_scaled_27_core": "NOT_TESTED",
+  "B2_official_MNIST_TEST": "SEALED",
+  "go_for_B3_physical_paging": false,
+  "go_for_official_TEST_unseal": false,
+  "frozen_A_B_artifacts_modified": false
+}
