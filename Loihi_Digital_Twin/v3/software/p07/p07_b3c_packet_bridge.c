@@ -94,6 +94,7 @@ int p07_b3c_encode_frame(const p07_b3c_core_words *cores,
        !binding->routes||!binding->compartments_per_core||
        core_count==0u||core_count>P07_B3C_MAX_CORES||
        core_count!=binding->core_count||tick>=P07_B2_TOTAL_TICKS||
+       spike_count>P07_B3C_MAX_CORES*1024u||
        (spike_count&&!spikes))return P07_B3C_BAD_ARGUMENT;
     if(overlap(frame,capacity,scratch,scratch_capacity) ||
        overlap(frame,capacity,binding->routes,
