@@ -1,0 +1,49 @@
+name: P07-B.4a native CURRENT ingress
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4a_current_ingress.c"
+      - "Loihi_Digital_Twin/v3/software/p07/include/p07_b4a_current_ingress.h"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b4a_current_ingress_harness.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4a_current_ingress.py"
+      - ".github/workflows/p07_b4a_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4a_current_ingress.c"
+      - "Loihi_Digital_Twin/v3/software/p07/include/p07_b4a_current_ingress.h"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b4a_current_ingress_harness.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4a_current_ingress.py"
+      - ".github/workflows/p07_b4a_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-c11-current:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile with address and undefined behavior sanitizers
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -I software/p07/include -I software/p03/include \
+            -I software/p05/include \
+            software/p03/p03_hw_adapter.c \
+            software/p07/p07_b3_pager.c \
+            software/p07/p07_b2_ingress.c \
+            software/p07/p07_b4a_current_ingress.c \
+            tests/native/p07_b4a_current_ingress_harness.c \
+            -o /tmp/p07_b4a_current
+      - name: Verify host-only ingress owner and failures
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: /tmp/p07_b4a_current
