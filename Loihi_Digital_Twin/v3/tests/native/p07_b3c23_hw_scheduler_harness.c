@@ -10,7 +10,10 @@
 #include "p07_b3c3_next_commit.h"
 #include "p03_mmio.h"
 #define N 27u
-#define RECORD 0x6B000u
+/* P02 on-DDR stride is 512KiB. P03 0x6B000 full PAGE_IN is payload
+ * bytes [0x1000, 0x6C000), not an allocated record stride. */
+#define RECORD P03_HW_RECORD_BYTES
+#define PAGE_PAYLOAD_START 0x1000u
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"B3C23_FAIL_LINE=%u\n",(unsigned)__LINE__);return 1;}}while(0)
 static uint8_t *backing,*resident_memory;
 static p03_hw_adapter hw;
@@ -87,7 +90,9 @@ static int bus_write(void *ctx,uint32_t addr,uint32_t value){
             b->page_bytes=P03_HW_MUTABLE_BYTES;
             ++b->dirty_pageouts;
         }else{
-            memcpy(slotp(slot),record(core),RECORD);
+            memcpy(slotp(slot)+PAGE_PAYLOAD_START,
+                   record(core)+PAGE_PAYLOAD_START,
+                   P03_HW_FULL_PAGE_BYTES);
             b->page_bytes=P03_HW_FULL_PAGE_BYTES;
             b->slot_owner[slot]=(uint8_t)core;
             ++b->finished_pageins;
