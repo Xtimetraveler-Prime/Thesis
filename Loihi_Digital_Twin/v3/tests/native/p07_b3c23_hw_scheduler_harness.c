@@ -22,7 +22,7 @@ static uint16_t compartments[N];
 static p07_b2_packet_binding binding;
 static uint8_t scratch[P07_B3C_MAX_FRAME_BYTES],frame[P07_B3C_MAX_FRAME_BYTES];
 typedef struct {
-    uint32_t reg[0x140u/4u],page_bytes,reads,dispatches,debug_writes;
+    uint32_t reg[P03_MMIO_RANGE_BYTES/4u],page_bytes,reads,dispatches,debug_writes;
     uint32_t nonresident_stores,dirty_pageouts,finished_pageins,readout_checks;
     uint32_t fail_debug,fail_store,fail_page;
     uint8_t slot_owner[3];
@@ -38,7 +38,7 @@ static int bus_read(void *ctx,uint32_t addr,uint32_t *out){
     uint32_t tick=b->reg[P03_REG_DISPATCH_TIMESTEP/4u];
     uint64_t word=UINT64_C(1)<<61u | ((uint64_t)(tick+1u)<<29u) |
                   ((uint64_t)(source+100u)<<7u) | 26u;
-    if(!out||addr>=0x140u||addr%4u)return -1;
+    if(!out||addr>=P03_MMIO_RANGE_BYTES||addr%4u)return -1;
     switch(addr){
       case P03_REG_ID:*out=P03_MMIO_ID_VALUE;break;
       case P03_REG_VERSION:*out=P03_MMIO_VERSION_VALUE;break;
@@ -73,7 +73,7 @@ static void mutable_save(uint8_t *dst,const uint8_t *src){
 }
 static int bus_write(void *ctx,uint32_t addr,uint32_t value){
     bus *b=(bus *)ctx;uint32_t cfg,slot,core,kind,bank,index,tick;
-    if(addr>=0x140u||addr%4u)return -1;
+    if(addr>=P03_MMIO_RANGE_BYTES||addr%4u)return -1;
     b->reg[addr/4u]=value;
     if(addr==P03_REG_PAGE_COMMAND && value==P03_CMD_START){
         cfg=b->reg[P03_REG_PAGE_CONFIG/4u];
