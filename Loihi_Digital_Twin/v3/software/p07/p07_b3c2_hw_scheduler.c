@@ -96,10 +96,13 @@ int p07_b3c2_step(p07_b3c2_hw_scheduler *s,p07_b3_op *op){
     return P07_B3C2_OK;
 }
 int p07_b3c2_barrier_ack(p07_b3c2_hw_scheduler *s,
-    const p07_b3_op *op,uint32_t committed){
+    const p07_b3_op *op,const p07_b3c3_receipt *receipt){
     p07_b3_op pending;uint32_t core,total=0u;
-    if(!s||!op||!s->pager||!s->hw)return P07_B3C2_INVALID;
+    if(!s||!op||!receipt||!s->pager||!s->hw)return P07_B3C2_INVALID;
     if(s->poisoned||s->pager->failed)return P07_B3C2_FAULTED;
+    if(receipt->magic!=P07_B3C3_RECEIPT_MAGIC||
+       receipt->tick!=op->tick ||
+       receipt->bank!=op->next_bank)return fail(s,16u);
     if(p07_b3_next(s->pager,&pending)!=P07_B3_OK||
        pending.kind!=P07_B3_BARRIER ||
        pending.tick!=op->tick||pending.ordinal!=op->ordinal||
@@ -109,7 +112,9 @@ int p07_b3c2_barrier_ack(p07_b3c2_hw_scheduler *s,
         if(s->hw->event_counts[core][op->current_bank]!=0u)
             return fail(s,13u);
     }
-    if(committed!=total || p03_hw_quiescent(s->hw)!=P03_HW_OK)
+    if(receipt->inserted_count!=total ||
+       receipt->source_packet_count!=total ||
+       p03_hw_quiescent(s->hw)!=P03_HW_OK)
         return fail(s,14u);
     /* Barrier ACK requires a separate verified and COMPLETED B3c3 hardware
      * insertion, not just validation. Caller must independently enforce it. */
