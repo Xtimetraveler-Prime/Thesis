@@ -5,4 +5,7 @@
  * Call exclusively via P07-B.4b allowlisted B4a DDR reader. */
 int p07_b4b_xilinx_read_phys(void *unused,uint64_t physical,
                             uint32_t *out);
+/* Distinct allowlist: read-only full P02 mutable-region audit only. */
+int p07_b4b_xilinx_read_mutable(void *unused,uint64_t physical,
+                                uint32_t *out);
 #endif
