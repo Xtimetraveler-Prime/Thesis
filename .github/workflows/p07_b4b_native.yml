@@ -60,22 +60,22 @@ jobs:
           sys.path.insert(0,str(Path("scripts").resolve()))
           from p07_b3c3_elf_admission import Span
           from p07_b4b_elf_probe_admission import validate_elf_evidence
-          header="  Data: 2's complement, little endian\\n  Type: EXEC\\n  Machine: AArch64\\n"
-          loads="LOAD 0x0 0x100000 0x100000 0x100 0x100000 RWE 0x1000\\n"
-          symbols="".join(f"{0x100000+j*32:016x} 00000020 T {name}\\n" for j,name in enumerate((
+          header="  Data: 2's complement, little endian\n  Type: EXEC\n  Machine: AArch64\n"
+          loads="LOAD 0x0 0x100000 0x100000 0x100 0x100000 RWE 0x1000\n"
+          symbols="".join(f"{0x100000+j*32:016x} 00000020 T {name}\n" for j,name in enumerate((
               "main","p07_b4b_probe","p07_b4b_xilinx_read_phys",
               "p03_hw_init","p03_hw_identify","p03_hw_quiescent",
-              "p03_hw_xilinx_io"))) + "0000000000110000 00011000 b hw\\n"
+              "p03_hw_xilinx_io"))) + "0000000000110000 00011000 b hw\n"
           try:
               validate_elf_evidence(header,loads,symbols,
-                                    ".text main\\n.bss hw\\n",
+                                    ".text main\n.bss hw\n",
                                     Span("stack",0x300000,0x310000),
                                     Span("heap",0x320000,0x330000))
           except ValueError as err:
               raise SystemExit(f"fake ELF parser regression failed: {err}")
           try:
               validate_elf_evidence(header.replace("AArch64","x86-64"),loads,symbols,
-                                    ".text main\\n.bss hw\\n",
+                                    ".text main\n.bss hw\n",
                                     Span("stack",0x300000,0x310000),
                                     Span("heap",0x320000,0x330000))
           except ValueError:
