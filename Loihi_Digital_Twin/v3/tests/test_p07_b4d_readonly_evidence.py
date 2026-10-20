@@ -121,7 +121,8 @@ def test_incorrect_or_modified_build_inputs_refuse_manifest(
 ):
     args=fixture(tmp_path,monkeypatch)
     if damage=="staged":
-        (args.build_dir/"source"/SOURCES[0]).write_text("untrusted mutation")
+        main=args.build_dir/"source"/SOURCES[0]
+        main.write_text(main.read_text()+"\n/* untrusted source mutation */\n")
     elif damage=="elf":
         (args.build_dir/"vitis_workspace/p07_b4c_readonly_probe.elf").unlink()
     elif damage=="route_metrics":
