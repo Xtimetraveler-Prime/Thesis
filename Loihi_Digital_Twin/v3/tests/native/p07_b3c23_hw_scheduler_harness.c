@@ -232,7 +232,7 @@ static int end_to_end(uint32_t mode){
     for(core=0u;core<N;core++){
         CHECK(get32(record(core)+0x5000u)==26u);
         CHECK(get32(record(core)+0x1000u)==core+1u);
-        CHECK(get32(record(core)+0x5C000u+25u*4u)==(25u<<8u)|core);
+        CHECK(get32(record(core)+0x5C000u+25u*4u)==((25u<<8u)|core));
     }
     return 0;
 }
