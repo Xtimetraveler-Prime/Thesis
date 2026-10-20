@@ -217,6 +217,16 @@ static int end_to_end(uint32_t mode){
     for(tick=0u;tick<26u;tick++){
         do{
             done=p07_b3c2_step(&runner,&op);
+            if(done!=P07_B3C2_OK&&done!=P07_B3C2_BARRIER)
+                fprintf(stderr,"B3C23_STEP_DETAIL mode=%u tick=%u kind=%u "
+                    "core=%u slot=%u rc=%d hw_error=%d hw_status=%u "
+                    "pager_failed=%u pager_fault=%u runner_fault=%u "
+                    "dispatches=%u page_ins=%u page_outs=%u\n",
+                    mode,tick,op.kind,op.core,op.slot,done,
+                    hw.last_error,hw.last_status,pager.failed,
+                    pager.first_failure_kind,runner.first_fault,
+                    pager.counters.dispatches,pager.counters.page_ins,
+                    pager.counters.runtime_outs);
             CHECK(done==P07_B3C2_OK||done==P07_B3C2_BARRIER);
         }while(done==P07_B3C2_OK);
         CHECK(op.kind==P07_B3_BARRIER&&op.tick==tick);
