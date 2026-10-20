@@ -124,3 +124,21 @@ PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
 ```
 
 **Acceptance gate:** user-native PASS for the newly added differential tests is still required before the B.2b software transport can be considered accepted. Do not advance to B.3 or merge PR #49 without authorization. The official B2 MNIST TEST remains sealed.
+
+
+### B.2b differential negative-test correction (2026-10-19 user report)
+
+The first user-native execution of `tests/test_p07_b2b_transaction.py` reported **three failures**, all in cases intentionally expecting native rejection. The initial Python `Context.step(..., expected=0)` helper incorrectly asserted `status == 0` before the caller could check `status != 0`. The observed C errors were **-2** (bad packet magic/header), **-7** (CURRENT 4,097 overflow), and **-10** (nonempty final drain NEXT); these are the correct fail-closed families according to the new C11 API.
+
+Corrective commit `099ec5c55d189562b883b5ff2e674f5dfb8249e7` changes the tests only: every rejected transaction now specifies the *exact* expected C status, while the helper still checks whole pending storage, state and receipt remain byte-exactly unchanged. The incomplete-fanout adversarial frame now repairs its payload length, packet count, header CRC and payload CRC before submission, so expected `-9` means genuine semantic fanout failure instead of a mere length failure. The previously passing positive tests are unchanged, and the new C code is not modified.
+
+**Correction status:** committed, **user-native rerun pending**. Do not record P07-B.2b complete or start B.3 until the corrected tests actually pass. There has been no scaled board run, no B2 TEST access and no Track A/B frozen-file modification.
+
+Rerun from `Loihi_Digital_Twin/v3`:
+
+```bash
+PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b2b_transaction.py
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b2b_packets.py tests/test_p07_b2a_ingress.py \
+  tests/test_p07_b1_owner_map.py tests/test_p06_b13_streaming.py
+```
