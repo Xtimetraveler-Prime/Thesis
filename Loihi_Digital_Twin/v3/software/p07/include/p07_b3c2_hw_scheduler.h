@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "p07_b3_pager.h"
 #include "p07_b3c_packet_bridge.h"
+#include "p07_b3c3_next_commit.h"
 #include "p03_hw_adapter.h"
 enum { P07_B3C2_OK=0, P07_B3C2_BARRIER=1, P07_B3C2_DONE=2,
        P07_B3C2_INVALID=-1, P07_B3C2_FAULTED=-2 };
@@ -39,5 +40,5 @@ int p07_b3c2_step(p07_b3c2_hw_scheduler *s,p07_b3_op *operation);
  * committed the NEXT physical packet plan; receipt must match totals and
  * current/next parity. Never call for a mere START write or host mock. */
 int p07_b3c2_barrier_ack(p07_b3c2_hw_scheduler *s,
-    const p07_b3_op *operation,uint32_t committed_next_packets);
+    const p07_b3_op *operation,const p07_b3c3_receipt *receipt);
 #endif
