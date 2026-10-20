@@ -34,9 +34,11 @@ typedef struct {
     uint32_t resident_next, nonresident_next;
     uint32_t barriers_committed;
 } p07_b3b_owner;
-/* Initializes a HOST mock of event-bank slices from all-zero backing.
- * Caller must supply separately validated P02 initial bank zeros and a
- * verified physical ownership map before any real deployment. */
+/* Binds a HOST mock to caller-owned slices; does not initialize or zero
+ * backing/slot event bytes. Caller must provide zero-initialized mock banks
+ * for a new image, and must separately verify real P02 initial bank zeros,
+ * context reset and physical DDR ownership before any real deployment.
+ * begin_epoch rejects stale nonzero event-bank counts at the first tick. */
 int p07_b3b_init(p07_b3b_owner *o,p07_b3_pager *pager,
     p07_b2b_transaction *transport,p07_b3b_event_slice *backing,
     p07_b3b_event_slice *slots,p07_b2_input_event *scratch,
