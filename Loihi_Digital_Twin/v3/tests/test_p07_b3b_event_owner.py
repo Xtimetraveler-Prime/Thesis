@@ -98,8 +98,11 @@ def ingress(pixels):
 def emitted_frame(tick, hidden_sources):
     packets = b"".join(struct.pack("<IHHHH", tick + 1, core, 0, 26, core + 100)
                        for core in hidden_sources)
-    return frame(b"P06B13R1", (1, 128, len(packets), len(hidden_sources), N,
-                              12, 4096, 0, 0, 0, 0, 0, 0), packets)
+    # Packet header differs from ingress: word3=tick, word4=count,
+    # word5=core count, word6=record width, word7=per-core packet cap.
+    return frame(b"P06B13R1", (1, 128, len(packets), tick,
+                              len(hidden_sources), N, 12, 4096,
+                              0, 0, 0, 0, 0, 0), packets)
 
 
 @pytest.fixture(scope="module")
@@ -206,15 +209,18 @@ class Fixture:
             packed if emitters else None, len(emitters), C.byref(self.receipt))
 
     def bank_words(self, core, which):
-        out = []
-        for i in range(4096):
-            value = U32()
-            status = self.lib.p07_b3b_read(
-                C.byref(self.owner), core, which, i, C.byref(value))
-            if status != 0:
-                break
-            out.append(value.value)
-        return tuple(out)
+        """Inspect live slot or backing slice without 4096 Python/C calls."""
+        owners = self.owners()
+        bank = self.slots[owners.index(core)] if core in owners else self.backing[core]
+        count = int(bank.count[which])
+        assert 0 <= count <= DEPTH
+        words = tuple(bank.axon[which][:count])
+        if words:  # independently spot-check public read API
+            val = U32()
+            assert self.lib.p07_b3b_read(
+                C.byref(self.owner), core, which, 0, C.byref(val)) == 0
+            assert val.value == words[0]
+        return words
 
     def owners(self):
         return tuple(int(x) for x in self.pager.resident)
