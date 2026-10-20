@@ -88,7 +88,7 @@ static int positives(void){
     CHECK(receipt.fpd_register==UINT32_C(0xA00));
     CHECK(p07_b4b_reader_init(&reader,&receipt,reader_fault,&bus)==P07_B4B_OK);
     CHECK(p07_b4b_current_event_read(&reader,addr,&output)==P07_B4B_OK);
-    actual=(27u<<20u)|P03_HW_EVENT1_OFFSET+4095u*4u;
+    actual=(27u<<20u)|(P03_HW_EVENT1_OFFSET+4095u*4u);
     CHECK(output==actual);
     CHECK(reader.accepted_reads==1u && bus.backing_reads==1u);
     /* All original P02 event0+event1 bank edges, no access to other banks. */
