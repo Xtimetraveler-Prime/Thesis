@@ -64,8 +64,9 @@ int p07_b3c_capture_core(p07_b3c_capture *cap,uint32_t source_core,
        source_core>=P07_B3C_MAX_CORES||
        slot>=P03_RT_MAX_SLOTS||cap->core_count>P07_B3C_MAX_CORES||
        cap->word_count>P07_B3C_MAX_RAW_WORDS ||
+       workspace_words>P03_RT_MAX_PACKETS ||
        overlap(workspace,workspace_words*sizeof(*workspace),
-               cap->words,sizeof(cap->words)))return P07_B3C_BAD_ARGUMENT;
+               cap,sizeof(*cap)))return P07_B3C_BAD_ARGUMENT;
     if(source_core!=cap->core_count)return P07_B3C_BAD_ARGUMENT;
     if(emitted>P03_RT_MAX_PACKETS || emitted>workspace_words ||
        emitted>P07_B3C_MAX_RAW_WORDS-cap->word_count)return P07_B3C_CAPACITY;
@@ -113,6 +114,22 @@ int p07_b3c_encode_frame(const p07_b3c_core_words *cores,
     bytes=128u+(size_t)n*12u;
     if(bytes>scratch_capacity || bytes>capacity)
         return P07_B3C_CAPACITY;
+    /* Packet words, trusted geometry, source provenance and output must
+     * remain independent and immutable for the complete preflight/commit.
+     * Reject aliasing instead of silently destroying the evidence. */
+    if(overlap(scratch,bytes,cores,core_count*sizeof(*cores)) ||
+       overlap(frame,bytes,cores,core_count*sizeof(*cores)) ||
+       overlap(scratch,bytes,binding,sizeof(*binding)) ||
+       overlap(frame,bytes,binding,sizeof(*binding)) ||
+       (spikes && (overlap(scratch,bytes,spikes,spike_count*4u) ||
+                   overlap(frame,bytes,spikes,spike_count*4u))))
+        return P07_B3C_BAD_ARGUMENT;
+    for(core=0u;core<core_count;core++){
+        size_t nbytes=(size_t)cores[core].packet_count*sizeof(uint64_t);
+        if(overlap(scratch,bytes,cores[core].words,nbytes) ||
+           overlap(frame,bytes,cores[core].words,nbytes))
+            return P07_B3C_BAD_ARGUMENT;
+    }
     memset(scratch,0,128u);
     memcpy(scratch,magic,8u);
     put32(scratch+8u,1u);put32(scratch+12u,128u);
