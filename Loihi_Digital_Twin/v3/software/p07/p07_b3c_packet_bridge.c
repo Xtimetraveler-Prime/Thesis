@@ -43,6 +43,19 @@ int p07_b3c_p03_reader(void *ctx,uint8_t slot,uint16_t index,uint64_t *word){
     return p03_hw_read_packet((p03_hw_adapter *)ctx,slot,index,word)==P03_HW_OK ?
         P07_B3C_OK : P07_B3C_READ_ERROR;
 }
+int p07_b3c_capture_p03_core(p03_hw_adapter *hw,p07_b3c_capture *capture,
+    uint8_t source_core,uint8_t slot,uint32_t emitted,
+    uint64_t *workspace,size_t workspace_words){
+    if(!hw||!capture||!workspace||source_core>=P07_B3C_MAX_CORES||
+       slot>=P03_RT_MAX_SLOTS||!hw->configured[source_core]||
+       hw->last_error!=P03_HW_OK)return P07_B3C_BAD_ARGUMENT;
+    /* Unlike the raw packet reader, the captured batch entry requires
+     * a real idle/pending-free PL snapshot before the first debug read. */
+    if(p03_hw_quiescent(hw)!=P03_HW_OK)return P07_B3C_READ_ERROR;
+    return p07_b3c_capture_core(capture,source_core,slot,emitted,
+                                 workspace,workspace_words,
+                                 p07_b3c_p03_reader,hw);
+}
 int p07_b3c_capture_core(p07_b3c_capture *cap,uint32_t source_core,
     uint8_t slot,uint32_t emitted,uint64_t *workspace,
     size_t workspace_words,p07_b3c_packet_reader reader,void *ctx){
