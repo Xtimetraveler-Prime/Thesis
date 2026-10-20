@@ -16,11 +16,16 @@ die(){ echo "P07_B4C_BUILD_NO_GO: $*" >&2; exit 2; }
 [[ "$BUILD" == /* ]] || die "build directory must be absolute"
 [[ "$XSA" == /* && "$METRICS" == /* ]] || die "XSA/metrics require absolute paths"
 [[ ! -e "$BUILD" && ! -L "$BUILD" ]] || die "refusing existing or symlinked build"
-case "$BUILD/" in "$V3/"* ) die "build must be outside v3 repository" ;; esac
-case "$BUILD/" in "$V3/.."* ) die "do not place build inside project tree" ;; esac
+BUILD_CANON="$(realpath -m -- "$BUILD")"
+PROJECT_ROOT="$(cd "$V3/../.." && pwd)"
+case "$BUILD_CANON/" in "$PROJECT_ROOT/"* )
+  die "build must be outside entire Thesis repository" ;;
+esac
+[[ "$BUILD_CANON" == "$BUILD" ]] ||
+  die "use a normalized, absolute build path without dot components"
 [[ -f "$XSA" && -s "$XSA" && -f "$METRICS" ]] || die "pinned XSA or route metrics missing"
 [[ "$EXPECTED" =~ ^[a-fA-F0-9]{64}$ ]] || die "expected sha must be 64 hex bytes"
-for tool in sha256sum python3 grep readelf; do
+for tool in sha256sum python3 grep realpath cut tee; do
   command -v "$tool" >/dev/null 2>&1 || die "required executable not on PATH: $tool"
 done
 ACTUAL="$(sha256sum "$XSA" | cut -d' ' -f1)"
@@ -94,7 +99,7 @@ grep -aFq "P07_B4C_A53_READONLY_FPD128_SHELL_PROBE_V1" "$ELF" ||
 # The v3 ELF auditor runs on actual Vitis bytes, not synthetic fixtures.
 (
   cd "$V3"
-  python3 scripts/p07_b4b_elf_probe_admission.py \
+  python3 scripts/p07_b4c_verify_elf.py \
     --elf "$ELF" --linker-map "$MAP" \
     --stack "$STACK" --heap "$HEAP" \
     --readelf "$(command -v aarch64-none-elf-readelf)" \
