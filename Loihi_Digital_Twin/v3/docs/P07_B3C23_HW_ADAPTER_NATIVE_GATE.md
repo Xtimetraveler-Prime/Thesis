@@ -85,3 +85,38 @@ PYTHONPATH="$PWD/src" python -m pytest -q -rs \
 ```
 
 **Acceptance gate:** B.3c2 and B.3c3 sources are committed **native verification candidates**. Do not call B.3c fully physical-accepted, merge PR #49, program the KV260, unseal B2 official MNIST TEST, or proceed to P07-B.4 without separate user review, native verification and physical preconditions.
+
+## 2026-10-20 — Native compile/harness correction and independent CI evidence
+
+The user's first B.3c2/3 pytest invocation had **11 passing tests and one failed test**. The failed test terminated at the C compile subprocess, whose stderr was hidden by \`capture_output=True\`. The Python test was corrected to show the full strict-C11 compiler stderr and the native executable stderr on failure; \`-Wall -Wextra -Werror -pedantic\` remains mandatory.
+
+The added isolated native GitHub workflow \`.github/workflows/p07_b3c23_native.yml\` exposed the exact initial failure on GCC 13.3: **C11 -pedantic does not permit implicit conversion from \`uint16_t (*)[2]\` to \`const uint16_t (*)[2]\` before C23**. The synthetic harness now supplies an explicit read-only array-pointer view without modifying source-spike fixture data or relaxing the compiler flags.
+
+Once compilation passed, CI found \`B3C23_FAIL_LINE=220\` during tick-0/source-0 readback. The fake P03 register bus incorrectly stopped at \`0x13F\`; the original P03 debug read-data registers extend through \`0x14C\`. The fake bus now admits the complete original **0x1000-byte P03 MMIO window** without modifying original P03 adapter code. A subsequent runtime signal identified another mock-layout fault: the harness had used **0x6B000** (the PAGE_IN payload length) as the physical DDR record stride. The accepted P02 stride is **0x80000**. The mock now allocates separate 0x80000 records and copies only the original payload **[0x1000, 0x6C000)** for each accepted 0x6B000 full page-in; 0x1A000 mutable-region page-outs are unchanged.
+
+**Independent verified CI evidence:** commit \`056477bfbeae83b5e2552d2e571c3531a5a01355\` GitHub Actions run [#39446734817](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/39446734817) returned **success**. The exact real P03 C adapter + new scheduler/commit + native 27-core fake-bus harness compiled using \`cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer\` and ran with leak and undefined-behavior sanitizers enabled. Terminal proof:
+
+\`\`\`text
+P07_B3C23_REAL_P03_NATIVE_FAKE_BUS_PASS=1
+\`\`\`
+
+The workflow is branch-/PR-scoped and additive, with \`contents: read\` permissions. It is **host fake-bus CI**, not a physical KV260 test, genuine trained-model inference or A53 executable build. The newly corrected user-local pytest suite has **not yet received an independent user rerun attestation**. Original accepted Track A/B files remain unchanged and B2 official MNIST TEST remains SEALED.
+
+To verify on the development PC:
+
+\`\`\`bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+git rev-parse HEAD
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b3c23_hw_integration.py \
+  tests/test_p07_b3c3_elf_admission.py
+\`\`\`
+
+**Acceptance state:** CI PASS, user-native B.3c2/3 PASS still pending. PR #49 stays draft and unmerged.
