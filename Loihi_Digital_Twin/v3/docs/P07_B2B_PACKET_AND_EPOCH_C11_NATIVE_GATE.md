@@ -10,22 +10,34 @@ Every packet frame is a fixed **128-byte** header with magic `P06B13R1`, LE 14×
 
 The two 32-byte digest fields must match a **separate trusted binding** of the original frozen B2.4 mapping. CRC is error detection, not authentication; SHA equality without independent checkpoint custody is not secure attestation. The accepted original trained B2 identities remain **compiled** `02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a`, **capacity-audit** `82e9e6c11264c6092dbe94f17496332fae303ac9ef7dfaa01d0ec441869a9498`; synthetic tests deliberately use unrelated SHA values. B2's 97.08% is TRAIN-derived validation, NOT official TEST.
 
-## 2. New portable C module
+## 2. Committed portable C module (implementation candidate)
 
-- `software/p07/include/p07_b2_packet.h`: versioned tuple views, source-ordered trusted output-route map `(source_core, source_compartment, destination_core, destination_axon)`, core compartment bounds, two trusted SHA fields, optional decoded wire view and epoch receipt structures. No heap allocation, BSP, MMIO or DDR writes.
-- `software/p07/p07_b2_packet.c`: independent byte-wise LE/CRC decoder, strict magic/version/dimensions/digest/reserved/order checks; source-compartment and destination-axon bounds, source and destination core bounds, exact route existence against the **separately supplied** trusted output route set. Each emitted source must have its **complete** fanout; duplicates and missing routes fail closed. The mapping is checked sorted/unique before any use; each source and destination has ≤4,096 statically reachable packet routes. Packet frame bytes are bounded by the B.1 *proposed* `0xE0000` staging region: at most `(0xE0000-128)/12 = 76,448` route packets in a single frame. This is a **firmware planning admission bound** and does not imply the board has independently allocated matching A53 RAM.
-- **Source provenance REQUIRED at epoch admission:** caller provides the real emitting compartment list (core,neuron) from an independent authoritative trace of the HLS dispatch. There is no valid way to reconstruct a completely missing source group from only the packet frame. Source list order is not constrained, but duplicate and out-of-bounds provenance fail. Silent sources emit no packet; readout-source spikes with no outgoing routes are legal.
-- `p07_b2b_epoch_init` binds the previously verified `P06B13I1` B.2a input view, trusted graph and caller-owned pending-event storage; resets the model epoch to zero. It does NOT reset actual PL compartment memory, P02 DDR records, per-image raw outputs or a physical run journal.
-- `p07_b2b_step` validates the *entire* frame and source list, authenticates existing pending counts against caller storage, then sums **per-core CURRENT = current external events + prior routed events**, rejects any >4,096, checks new output **per-source packet count** and **per-destination NEXT count** ≤4,096, checks output storage capacity and final tick-25 nonempty NEXT rejection. On any error `state`, pending-buffer bytes and receipt stay unchanged. On success (and only then) packet destinations/axons are staged as NEXT events, counts and bank index committed, and epoch advances once. There is no physical current/next bank write or rollback performed in this phase.
-- Epoch receipts are read-only planning evidence, including tick, bank parity `t % 2`, external/routed-current/routed-next totals, per-core CURRENT/NEXT/emitted counts and bytewise CRC of the B1.3 12-byte packet payload. This is **not** PL AXI telemetry or an ELF mailbox ABI.
+- `software/p07/include/p07_b2_packet.h`: trusted source-ordered route bindings, compartment counts, 32-byte compiled/audit identity checks, an immutable borrowed decoded frame view, and a transactional **per-core count-only** epoch state/receipt API.
+- `software/p07/p07_b2_packet.c`: strict independent LE wire header/payload CRC32 and digest decoder, canonical packet ordering by destination then source, checked route membership, exact complete fanout from an independently supplied **sorted, unique, authoritative source-spike list**, and 4,096 per-source/per-destination capacity. Reject nonempty tick-25 frame. `p07_b2_packet_commit` checks combined external plus prior pending CURRENT pressure, then prepares NEXT counts, and only publishes its state and receipt when all validation succeeds. Maximum **8,192 trusted route entries** for this initial bounded prototype; this restriction is not a claim that every future graph fits.
+- `tests/native/p07_b2b_packet_harness.c`: standalone host C fixture checks one authenticated source-to-destination route, complete 26-epoch progression, identity/header CRC rejection, missing spike provenance, full 4,096 event capacity accepted and 4,097 rejected with state/receipt preservation, and final drain rejection.
+- `tests/test_p07_b2b_packets.py`: compiles the native harness and decoder against C11 `-Wall -Wextra -Werror -pedantic` and checks the native PASS marker.
 
-## 3. New native regression and evidence limitations
+**Important implementation scope:** This initial B.2b prototype is **not** yet a complete A53-ready transactional routed-event system. It retains *NEXT event counts*, not the actual per-destination ordered packet vectors, and does not perform event-bank insertion. It takes trusted routes and authoritative source spikes from its caller but does not itself derive either from the original B2.4 frozen package or a real HLS trace. A complete independent end-to-end Python-B1.3 `StreamingEpochGuard`/C randomized differential suite and immutable tuple-buffer transaction implementation are **outstanding**. The C harness is a focused smoke/negative acceptance candidate, not evidence of the full 27-core runtime or full B.2b closeout.
 
-`tests/native/p07_b2b_packet_harness.c` is a **host-only fixture loader**, never built into production firmware. It verifies the original B.2a ingress independently, binds predeclared byte-exact input and output maps, processes all 26 epochs, prints normalized receipt and NEXT vectors as CRC digests, and asserts that a rejected frame cannot mutate pending storage, epoch bookkeeping or the prior receipt. Its staged `--inject` adversarial case is an **unreachable hypothetical bank state** used only for precise 4,096 CURRENT acceptance/4,097 rejection.
+## 3. Native gate (B.2b initial candidate; full B.2b acceptance still pending)
 
-`tests/test_p07_b2b_packets.py` compares C receipts against original B1.3 `StreamingEpochGuard` for six 26-tick runs (genuine small compiled B1.2 synthetic graph, two readout placement modes, zero/all-255/mixed input), using the original Python `encode_packet_frame`, source-spike traces and full original 25+1 epoch semantics. Negative tests include CRC-valid forged semantics, wrong version, magic, SHA bindings, invalid epoch/target/route, noncanonical order, duplicates, incomplete/missing entire emitting source, missing/duplicated provenance, final tick-25 packet rejection and retry after a rejected transaction. A separate **synthetic 27-core, 26-hidden+one-readout routing-only** stress case proves 26 physical-logical core identifiers can be included in a B1.3 stream, 20,384 external fanout events per input tick, and exactly 26 routed NEXT packets per emitting epoch. This is **not** a trained physical dense result or even a full B1.2 neural numerical 27-core result. No full B2 candidate or original TEST image is opened by the new tests.
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 
-**Capacity domain warning:** per-source packet and per-destination CURRENT/NEXT ceilings are not a made-up aggregate chip-wide 4,096 limit. B1.2 may legitimately compress 10 hidden-to-readout synapses into one axon route event. The original B2 graph has 1,000 distinct hidden-to-readout source events/tick *maximum*, not 10,000 synapse contributions. Source-level zero weights remain part of the untouched P02 packing and source graph.
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b2b_packets.py \
+  tests/test_p07_b2a_ingress.py \
+  tests/test_p07_b1_owner_map.py \
+  tests/test_p06_b13_streaming.py
+```
+
+The user has attested B.1 and B.2a native PASS, but these newly committed B.2b bytes have **not yet been independently tested on the user's PC**. This result is a checkpoint within B.2b, not permission to proceed directly to B.3 or to flash the board.
 
 ## 4. Remaining mandatory physical blockers
 
