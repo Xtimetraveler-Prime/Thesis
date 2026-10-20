@@ -79,3 +79,48 @@ PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
 ### Additional exact packet-bank boundary gate
 
 `tests/native/p07_b2b_capacity_harness.c` directly constructs an independently checksummed 4,096-packet `P06B13R1` frame with one source and one NEXT destination, verifies **exact acceptance** and both decoded counters, then checks that a 4,097th route fails when added to the same emitting source and when spread over distinct emitting sources into the same destination. Both malformed bindings are independently rejected **before decoding** and cannot modify a previously published frame view. `test_independent_large_source_and_next_4096_vs_4097_boundary` builds and executes this C harness in the main B.2b pytest. This is structural packet-bank admission, not a real FPGA packet burst or SRAM measurement.
+
+
+## 5. B.2b follow-on: complete ordered NEXT vectors and original Python/C differential (new)
+
+**Status: additional code committed, awaiting independent native execution.** The user separately attested that the first B.2b count-only parser native tests passed. This is recorded in `P07_B2B_INITIAL_USER_ACCEPTANCE_LEDGER.json` without fabricating stdout, count, or board results.
+
+**New additive API (legacy B.2b parser/count API is retained unchanged):**
+
+- `software/p07/include/p07_b2b_transaction.h` and `software/p07/p07_b2b_transaction.c` introduce `p07_b2b_transaction_init` and `p07_b2b_transaction_step`. The actual accepted B.2a `P06B13I1` ingress view and B.2b `P06B13R1` decoded packet must be supplied, as must separately verified compiled routes and emitting-source provenance.
+- Caller supplies a **preallocated ordered NEXT tuple buffer** (max accepted prototype capacity 8,192 tuples; no dynamic allocation), with a per-core occupancy mirror. All existing staged tuples are checked against occupancy before current-tick addition. External CURRENT is independently recomputed using the frozen quota/phase17 25+1 schedule. Every destination CURRENT total is `prior routed + current external`; 4,096 passes and 4,097 rejects.
+- Full source-route membership, complete fanout, canonical ordering, input digests and CRC are inherited from the **original B.2b frame validator** `p07_b2_packet_decode`, and verified again at preflight where required. A valid frame emits a deterministic ordered sequence of `<HH>` NEXT tuples; pending count, per-core counts, logical tick and receipt all publish at one commit point. Failures leave **the entire caller-owned NEXT array, state struct and prior receipt bitwise unchanged**; even the uninitialized/stale tail is not touched on rejection.
+- A newly declared native verification module `tests/test_p07_b2b_transaction.py` compiles the *real three repository C modules* into a host shared library with `-std=c11 -Wall -Wextra -Werror -pedantic`. It uses Python ctypes to read exact C packet tuples and receipts over **six 26-tick** synthetic, genuine B1.2/B1.3-compiled cases (2 readout partition placements × raw input: all-zero, all-255, nontrivial phase pattern), comparing every epoch with the **existing, unchanged** `StreamingEpochGuard` and its real `encode_packet_frame`. Bytewise untouched state/receipt/NEXT buffer after failure, corrupted CRC/digest/order/target/fanout, omitted source group, duplicate provenance, retry, 4,096/4,097 CURRENT and nonempty drain NEXT are covered. No official TEST or trained B2.4 data is accessed.
+
+**Important limitations:** This is still *host-only*, and the firmware source has not been linked to an A53 ELF. New code stores actual tuple vectors in portable caller memory; it **does not physically insert, cache-clean or rollback resident or DDR NEXT banks**, nor derive authoritative spike lists from HLS physical trace. The transient frame and trusted map must remain immutable while decoded; the caller must reserve and prove nonoverlapping firmware RAM and perform physical reset/ownership admission. B.3 must integrate runtime page-residency and next epoch bank ownership before hardware tests. Do not misrepresent native packets/CRCs as board trace or measured FPGA AXI traffic.
+
+### New verification commands
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+git rev-parse HEAD
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+# New complete ordered NEXT-vector and independent Python/C gate:
+PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b2b_transaction.py
+
+# Original B.2b and previous stage regressions:
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b2b_packets.py \
+  tests/test_p07_b2a_ingress.py \
+  tests/test_p07_b1_owner_map.py \
+  tests/test_p06_b13_streaming.py \
+  tests/test_p06_b12_partition.py \
+  tests/test_p06_b1_contract.py
+
+# Original B2.4 frozen checkpoint verification (read-only, no B2 TEST):
+PYTHONPATH="$PWD/src" python scripts/p06_b25_acceptance.py \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" --deep
+```
+
+**Acceptance gate:** user-native PASS for the newly added differential tests is still required before the B.2b software transport can be considered accepted. Do not advance to B.3 or merge PR #49 without authorization. The official B2 MNIST TEST remains sealed.
