@@ -259,8 +259,26 @@ static int failure_guards(void){
     CHECK(barrier(0u,1,0)==0);
     CHECK(hw.event_counts[26][1]==0u&&sim.debug_writes==0u);
     for(i=0u;i<26u;i++){spikes[i][0]=(uint16_t)i;spikes[i][1]=0u;}
+    /* A caller cannot advance the scheduler using a missing/fake
+     * B3c3 insertion receipt after a failed preflight. */
+    CHECK(p07_b3c2_barrier_ack(&runner,&op,&receipt)==P07_B3C2_FAULTED);
+    CHECK(pager.failed&&pager.counters.barriers==0u);
+    CHECK(setup(0u)==0);
+    for(;;){
+        state=p07_b3c2_step(&runner,&op);
+        if(state==P07_B3C2_BARRIER)break;
+        CHECK(state==P07_B3C2_OK);
+    }
     CHECK(p07_b3c_encode_frame(runner.cores,N,0u,&binding,
              spikes,26u,scratch,sizeof(scratch),frame,sizeof(frame),&bytes)==P07_B3C_OK);
+    /* CRC-valid but unregistered destination axon must be rejected
+     * before any physical/debug NEXT bank write. */
+    hw.valid_axons[26u][100u>>3u] &=
+         (uint8_t)~(1u<<(100u&7u));
+    CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
+                           spikes,26u)==P07_B3C3_PRECHECK);
+    CHECK(hw.event_counts[26][1]==0u&&sim.debug_writes==0u);
+    hw.valid_axons[26u][100u>>3u] |= (uint8_t)(1u<<(100u&7u));
     CHECK(p07_b3c3_prepare(&plan,&pager,&hw,&binding,frame,bytes,
                            spikes,26u)==P07_B3C3_OK);
     /* Actual P03 debug failure: no success receipt, no barrier advancement. */
