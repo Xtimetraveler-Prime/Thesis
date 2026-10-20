@@ -51,6 +51,13 @@ jobs:
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
         run: /tmp/p07_b4b_readonly
 
+      - name: Syntax-check standalone A53 probe source (host fake BSP only)
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -fsyntax-only \
+            -DP07_B4B_TEST_HOST_BSP=1 \
+            -I tests/native/p07_b4b_stub -I software/p03/include \
+            -I software/p07/include \
+            software/p07/p07_b4b_readonly_probe.c
       - name: Parse simulated ELF/linker evidence (NOT a real A53 ELF)
         run: |
           python3 -m compileall -q scripts/p07_b4b_elf_probe_admission.py
