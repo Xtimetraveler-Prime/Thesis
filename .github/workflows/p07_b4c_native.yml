@@ -32,6 +32,11 @@ jobs:
         working-directory: Loihi_Digital_Twin/v3
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test-only pytest
+        run: python3 -m pip install --disable-pip-version-check -q pytest
       - name: Shell and Python syntax only
         run: |
           bash -n scripts/build_p07_b4c.sh
