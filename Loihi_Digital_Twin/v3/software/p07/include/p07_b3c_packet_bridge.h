@@ -42,6 +42,13 @@ int p07_b3c_capture_core(p07_b3c_capture *cap, uint32_t source_core,
 /* Bind to the ACTUAL accepted P03 hardware debug packet adapter. Do not
  * pass an uninitialized board adapter or assume this is a physical test. */
 int p07_b3c_p03_reader(void *ctx,uint8_t slot,uint16_t index,uint64_t *word);
+/* Real P03 adapter read-only entry: check live PL quiescence and admitted
+ * logical core BEFORE reading hardware packet bank; never route or write.
+ * Caller must already have validated slot residency and emitted count.
+ * Nonzero P03 errors poison the board's hw->last_error as usual. */
+int p07_b3c_capture_p03_core(p03_hw_adapter *hw,p07_b3c_capture *capture,
+    uint8_t source_core,uint8_t slot,uint32_t emitted,
+    uint64_t *workspace,size_t workspace_words);
 /*
  * Construct canonical P06B13R1 packet bytes using caller-owned scratch;
  * full strict B.2b decoder verifies canonical B1.2 routes, independent
