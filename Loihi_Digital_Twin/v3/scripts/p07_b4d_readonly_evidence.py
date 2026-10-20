@@ -125,8 +125,9 @@ def prepare(args: argparse.Namespace) -> dict:
     base=args.out.resolve(strict=False)
     if args.out.exists() or args.out.is_symlink():
         raise ValueError("evidence directory already exists")
-    if base == HERE or HERE in base.parents:
-        raise ValueError("evidence directory must be outside v3")
+    project=HERE.parent.parent
+    if base == project or project in base.parents:
+        raise ValueError("evidence directory must be outside Thesis repository")
     proof=admission_inputs(
         args.build_dir,args.xsa,args.bit,args.ltx,args.route_metrics,
         args.xsa_sha256,args.bit_sha256,args.stack,args.heap,
