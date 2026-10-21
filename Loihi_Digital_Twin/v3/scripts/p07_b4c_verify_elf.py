@@ -14,7 +14,9 @@ from pathlib import Path
 import subprocess
 
 from p07_b3c3_elf_admission import parse_named_span
-from p07_b4b_elf_probe_admission import validate_elf_evidence
+from p07_b4b_elf_probe_admission import (
+    validate_elf_evidence, actual_allocated_elf_span,
+)
 
 IDENTITY=b"P07_B4C_A53_READONLY_FPD128_SHELL_PROBE_V1"
 
@@ -39,14 +41,18 @@ def verify(elf: Path, linker_map: Path, stack: str, heap: str,
     def call(tool: str, *args: str) -> str:
         return subprocess.run([tool,*args,str(elf)],check=True,text=True,
                               capture_output=True).stdout
+    sections=call(readelf,"-W","-S")
+    if (stack=="auto") != (heap=="auto"):
+        raise ValueError("stack/heap must BOTH be 'auto' or BOTH explicit")
+    stack_span=(actual_allocated_elf_span(sections,".stack")
+                if stack=="auto" else parse_named_span(stack,label="physical stack"))
+    heap_span=(actual_allocated_elf_span(sections,".heap")
+               if heap=="auto" else parse_named_span(heap,label="physical heap"))
     evidence=validate_elf_evidence(
         call(readelf,"-W","-h"),
         call(readelf,"-W","-l"),
         call(nm,"-S","--defined-only"),
-        map_text,
-        parse_named_span(stack,label="physical stack"),
-        parse_named_span(heap,label="physical heap"),
-        call(readelf,"-W","-S"),
+        map_text,stack_span,heap_span,sections,
     )
     return {
         **evidence,
@@ -60,6 +66,9 @@ def verify(elf: Path, linker_map: Path, stack: str, heap: str,
         "MMU_cache_attributes_verified": False,
         "standalone_BSP_stack_heap_ranges_verified_from_linker": False,
         "heap_stack_crosschecked_with_actual_allocated_ELF_sections": True,
+        "ELF_heap_section": f"0x{heap_span.first:x}:0x{heap_span.end:x}",
+        "ELF_stack_section": f"0x{stack_span.first:x}:0x{stack_span.end:x}",
+        "BSP_physical_address_owner_verified": False,
         "physical_PL_bitstream_SHA_verified": False,
     }
 
@@ -68,8 +77,8 @@ def main() -> None:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--elf",type=Path,required=True)
     p.add_argument("--linker-map",type=Path,required=True)
-    p.add_argument("--stack",required=True)
-    p.add_argument("--heap",required=True)
+    p.add_argument("--stack",required=True,help="START:END or auto (derive actual ELF .stack)")
+    p.add_argument("--heap",required=True,help="START:END or auto (derive actual ELF .heap)")
     p.add_argument("--readelf",default="readelf")
     p.add_argument("--nm",default="nm")
     args=p.parse_args()
