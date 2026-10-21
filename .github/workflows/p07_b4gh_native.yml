@@ -8,12 +8,16 @@ on:
       - "Loihi_Digital_Twin/v3/vivado/p07_b4g_readonly_shell.tcl"
       - "Loihi_Digital_Twin/v3/scripts/p07_b4h_review_shell_capture.py"
       - "Loihi_Digital_Twin/v3/tests/test_p07_b4gh_readonly_pilot.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4g_width_timeout_regression.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_ps_width_only.tcl"
       - ".github/workflows/p07_b4gh_native.yml"
   pull_request:
     paths:
       - "Loihi_Digital_Twin/v3/vivado/p07_b4g_readonly_shell.tcl"
       - "Loihi_Digital_Twin/v3/scripts/p07_b4h_review_shell_capture.py"
       - "Loihi_Digital_Twin/v3/tests/test_p07_b4gh_readonly_pilot.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4g_width_timeout_regression.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_ps_width_only.tcl"
       - ".github/workflows/p07_b4gh_native.yml"
 
 permissions:
@@ -40,8 +44,11 @@ jobs:
       - name: Tcl-only fake XSDB read and offline log tamper regressions
         run: |
           python3 -m compileall -q scripts/p07_b4h_review_shell_capture.py \
-            tests/test_p07_b4gh_readonly_pilot.py
-          python3 -m pytest -q -rs tests/test_p07_b4gh_readonly_pilot.py
+            tests/test_p07_b4gh_readonly_pilot.py \
+            tests/test_p07_b4g_width_timeout_regression.py
+          python3 -m pytest -q -rs \
+            tests/test_p07_b4gh_readonly_pilot.py \
+            tests/test_p07_b4g_width_timeout_regression.py
       - name: Evidence classification
         run: |
           echo "P07_B4G_FAKE_XSDB_TCL_NATIVE_PASS=1"
