@@ -29,6 +29,25 @@ _SECTION = re.compile(
     re.MULTILINE,
 )
 
+def actual_allocated_elf_span(raw: str, name: str) -> Span:
+    """Read an actual allocated ELF section extent; fail on absent/duplicates.
+
+    Can derive .heap and .stack from a real linker output, rather than letting
+    an operator guess their addresses. This is ELF evidence, not PS ownership.
+    """
+    found=[]
+    for match in _SECTION.finditer(raw):
+        sec, _kind, address, _off, size, _es, flags=match.groups()
+        if sec == name and "A" in flags:
+            first=int(address,16)
+            n=int(size,16)
+            if n:
+                found.append(Span("ELF section "+sec,first,first+n))
+    if len(found)!=1:
+        raise ValueError("expected one allocated ELF "+name+" section")
+    return found[0]
+
+
 def inspect_embedded_sections(
     loads: tuple[Span, ...], stack: Span, heap: Span, raw: str
 ) -> dict:
