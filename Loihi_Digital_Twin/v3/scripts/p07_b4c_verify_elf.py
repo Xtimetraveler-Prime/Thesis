@@ -46,6 +46,7 @@ def verify(elf: Path, linker_map: Path, stack: str, heap: str,
         map_text,
         parse_named_span(stack,label="physical stack"),
         parse_named_span(heap,label="physical heap"),
+        call(readelf,"-W","-S"),
     )
     return {
         **evidence,
@@ -58,6 +59,7 @@ def verify(elf: Path, linker_map: Path, stack: str, heap: str,
         "DDR_exclusivity_verified": False,
         "MMU_cache_attributes_verified": False,
         "standalone_BSP_stack_heap_ranges_verified_from_linker": False,
+        "heap_stack_crosschecked_with_actual_allocated_ELF_sections": True,
         "physical_PL_bitstream_SHA_verified": False,
     }
 
