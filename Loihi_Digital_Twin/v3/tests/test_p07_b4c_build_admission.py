@@ -236,6 +236,19 @@ def test_mock_binutils_accepts_only_complete_fake_evidence_and_never_approves_bo
                      nm="/mock/aarch64-none-elf-nm")
     assert proof["heap_stack_crosschecked_with_actual_allocated_ELF_sections"]
     assert proof["read_only_firmware_identity_present"]
+    assert proof["ELF_heap_section"]==REAL_HEAP
+    assert proof["ELF_stack_section"]==REAL_STACK
+    with mock.patch("p07_b4c_verify_elf.subprocess.run",side_effect=binutils):
+        automatic=verify(elf,linker,"auto","auto",
+                         readelf="/mock/aarch64-none-elf-readelf",
+                         nm="/mock/aarch64-none-elf-nm")
+    assert automatic["ELF_heap_section"]==REAL_HEAP
+    assert automatic["ELF_stack_section"]==REAL_STACK
+    with mock.patch("p07_b4c_verify_elf.subprocess.run",side_effect=binutils):
+        with pytest.raises(ValueError,match="BOTH"):
+            verify(elf,linker,"auto",REAL_HEAP,
+                   readelf="/mock/aarch64-none-elf-readelf",
+                   nm="/mock/aarch64-none-elf-nm")
     assert proof["board_probe_executed"] is False
     assert proof["inference_authorized"] is False
     assert proof["DDR_exclusivity_verified"] is False
