@@ -201,6 +201,15 @@ NAMES=("main","p07_b4b_probe","p07_b4b_xilinx_read_phys",
 NM="".join(f"{0x100000+i*0x20:016x} 00000010 T {s}\n"
            for i,s in enumerate(NAMES))+"0000000000110000 00011000 b hw\n"
 MAP=".text main\n.bss hw\n"
+SECTIONS=(
+    "Section Headers:\n"
+    "  [ 1] .text PROGBITS 0000000000100000 000100 001000 00 AX 0 0 16\n"
+    "  [ 2] .bss NOBITS 0000000000110000 000200 018000 00 WA 0 0 8\n"
+    "  [ 3] .heap NOBITS 0000000000130000 000200 002000 00 WA 0 0 1\n"
+    "  [ 4] .stack NOBITS 0000000000132000 000200 003000 00 WA 0 0 1\n"
+)
+REAL_STACK="0x132000:0x135000"
+REAL_HEAP="0x130000:0x132000"
 
 
 def pseudo_elf(tmp):
@@ -214,6 +223,7 @@ def pseudo_elf(tmp):
 def binutils(command,**kwargs):
     if "-h" in command:return subprocess.CompletedProcess(command,0,HEADER,"")
     if "-l" in command:return subprocess.CompletedProcess(command,0,LOAD,"")
+    if "-S" in command:return subprocess.CompletedProcess(command,0,SECTIONS,"")
     if "--defined-only" in command:return subprocess.CompletedProcess(command,0,NM,"")
     raise AssertionError(f"unexpected cross binutils: {command}")
 
@@ -221,9 +231,10 @@ def binutils(command,**kwargs):
 def test_mock_binutils_accepts_only_complete_fake_evidence_and_never_approves_board(tmp_path):
     elf,linker=pseudo_elf(tmp_path)
     with mock.patch("p07_b4c_verify_elf.subprocess.run",side_effect=binutils):
-        proof=verify(elf,linker,"0x300000:0x310000","0x320000:0x330000",
+        proof=verify(elf,linker,REAL_STACK,REAL_HEAP,
                      readelf="/mock/aarch64-none-elf-readelf",
                      nm="/mock/aarch64-none-elf-nm")
+    assert proof["heap_stack_crosschecked_with_actual_allocated_ELF_sections"]
     assert proof["read_only_firmware_identity_present"]
     assert proof["board_probe_executed"] is False
     assert proof["inference_authorized"] is False
@@ -246,7 +257,7 @@ def test_bad_elf_identity_or_map_rejected_before_binutils(tmp_path,defect,why):
         actual=tmp_path/"real.elf"
         elf.rename(actual);elf.symlink_to(actual)
     with pytest.raises(ValueError,match=why):
-        verify(elf,linker,"0x300000:0x310000","0x320000:0x330000")
+        verify(elf,linker,REAL_STACK,REAL_HEAP)
 
 
 def test_xsa_wrong_hash_or_missing_route_refused_before_vitis(tmp_path):
