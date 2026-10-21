@@ -89,6 +89,16 @@ def build(xsa: Path, workspace: Path, source: Path) -> tuple[Path, Path]:
             template="empty_application",
         )
         app=client.get_component(name=APP)
+        # AMD Vitis Unified 2025.2: set_app_config updates the app's
+        # UserConfig.cmake. Do this BEFORE the first link, so the genuine
+        # GNU linker (not readelf/nm/postprocessing) generates the map.
+        # A path directly under the existing workspace is writable at link
+        # time even before Vitis creates the application build/ directory.
+        link_map=workspace/(APP+".map")
+        app.set_app_config(
+            key="USER_LINK_OTHER_FLAGS",
+            values=[f"-Wl,-Map={link_map}"],
+        )
         app.import_files(
             from_loc=str(source),files=list(SOURCES+HEADERS),
             dest_dir_in_cmp="src",
@@ -108,17 +118,23 @@ def build(xsa: Path, workspace: Path, source: Path) -> tuple[Path, Path]:
             raise RuntimeError("expected exactly one genuine Vitis A53 ELF")
         elf=workspace/(APP+".elf")
         shutil.copy2(binaries[0],elf)
-        # A linker map is mandatory. A default Vitis BSP can be configured
-        # to emit no map: that is a NO-GO, never an excuse to invent one.
-        maps=sorted(p for p in (workspace/APP).rglob("*.map")
-                    if p.is_file() and p.stat().st_size>0)
-        if len(maps)!=1:
+        # This MUST be the genuine map emitted DURING the ELF link. Never
+        # reconstruct a fake map from readelf, nm, source or a stale .ld.
+        if not link_map.is_file() or link_map.stat().st_size==0:
             raise RuntimeError(
-                "expected one generated linker .map (configure Vitis -Wl,-Map; "
-                "do not fabricate a map): "+repr([str(p) for p in maps])
+                "Vitis emitted an ELF without the requested GNU linker map "
+                f"({link_map}); inspect USER_LINK_OTHER_FLAGS and the exact "
+                "Linker Flags line in the Vitis application build log"
             )
-        final_map=workspace/(APP+".map")
-        shutil.copy2(maps[0],final_map)
+        body=link_map.read_text(encoding="utf-8",errors="replace")
+        if ("Linker script and memory map" not in body or
+            ".text" not in body or ".bss" not in body or
+            "main" not in body):
+            raise RuntimeError(
+                "map exists but lacks original GNU linker memory-map "
+                "provenance, text/BSS and the application entry symbol"
+            )
+        final_map=link_map
         print(f"P07_B4C_XPFM={xpfm}")
         print(f"P07_B4C_CANDIDATE_ELF={elf}")
         print(f"P07_B4C_CANDIDATE_MAP={final_map}")
