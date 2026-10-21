@@ -133,7 +133,7 @@ def test_b4g_tcl_ast_allowlist_hard_stop():
 
 def fixture(tmp_path):
     folder=tmp_path/"artifact"
-    folder.mkdir()
+    folder.mkdir(parents=True)
     artifacts={}
     for name in ("elf","linker_map","xsa","bit"):
         path=folder/name
