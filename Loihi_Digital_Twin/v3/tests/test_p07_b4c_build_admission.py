@@ -223,8 +223,8 @@ def pseudo_elf(tmp):
 def binutils(command,**kwargs):
     if "-h" in command:return subprocess.CompletedProcess(command,0,HEADER,"")
     if "-l" in command:return subprocess.CompletedProcess(command,0,LOAD,"")
-    if "-S" in command:return subprocess.CompletedProcess(command,0,SECTIONS,"")
     if "--defined-only" in command:return subprocess.CompletedProcess(command,0,NM,"")
+    if "-S" in command:return subprocess.CompletedProcess(command,0,SECTIONS,"")
     raise AssertionError(f"unexpected cross binutils: {command}")
 
 
