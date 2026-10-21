@@ -119,8 +119,19 @@ if [[ -n "$STACK" && -n "$HEAP" ]]; then
   ) | tee "$BUILD/elf_admission.json"
   echo "P07_B4C_A53_READONLY_ELF_ADMISSION_PASS=1"
 else
-  echo "P07_B4C_A53_ELF_ADMISSION=PENDING_ACTUAL_STACK_HEAP"
-  echo "P07_B4C_BUILD_ONLY_NO_BOARD_GO=1"
+  # No guessed BSP stack/heap offsets. Derive from genuine ELF .heap/.stack
+  # allocated section headers, then validate LOAD/DDR/non-overlap against
+  # the actual linker-generated map and original P03 BSS.
+  (
+    cd "$V3"
+    python3 scripts/p07_b4c_verify_elf.py \
+      --elf "$ELF" --linker-map "$MAP" \
+      --stack auto --heap auto \
+      --readelf "$(command -v aarch64-none-elf-readelf)" \
+      --nm "$(command -v aarch64-none-elf-nm)"
+  ) | tee "$BUILD/elf_admission.json"
+  echo "P07_B4C_A53_READONLY_ELF_SECTION_LAYOUT_PASS=1"
+  echo "P07_B4C_PHYSICAL_STACK_HEAP_OWNERSHIP=PENDING"
 fi
 echo "P07_B4C_KV260_BOARD_STATUS=NOT_RUN"
 echo "P07_B4C_INFERENCE_AUTHORIZED=0"
