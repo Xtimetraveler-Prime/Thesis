@@ -58,14 +58,26 @@ set rc [catch {
     }
     puts "P07_B4G_PHYSICAL_TARGET=$physical"
     set fpd     [p07_b4g_read32 FPD_RAW 0xFD615000]
+    # FPD 9:8 must be 2 (128-bit) BEFORE any PS->PL MMIO attempt.
+    # A live 64-bit selection (e.g. raw 0x00002560, selector 1) is a
+    # first-class NO-GO: do not issue an AXI read to 0xA4000000.
+    set fpd_sel [expr {($fpd >> 8) & 3}]
+    switch -- $fpd_sel {
+        0 {set width_bits 32}
+        1 {set width_bits 64}
+        2 {set width_bits 128}
+        default {set width_bits RESERVED}
+    }
+    puts "P07_B4G_FPD_HPM0_WIDTH_BITS=$width_bits"
+    if {$fpd_sel != 2} {
+        puts "P07_B4G_PS_WIDTH_MISMATCH_FPD=1"
+        error "FPD width selector $fpd_sel ($width_bits-bit) differs from accepted FPD128; SKIPPED ALL P03 MMIO READS"
+    }
     set ident   [p07_b4g_read32 P03_ID 0xA4000000]
     set version [p07_b4g_read32 P03_VERSION 0xA4000004]
     set caps    [p07_b4g_read32 P03_CAPABILITIES 0xA4000008]
     set status  [p07_b4g_read32 P03_GLOBAL_STATUS 0xA400000C]
     set pending [p07_b4g_read32 P03_PAGE_PENDING 0xA4000054]
-    if {(($fpd >> 8) & 3) != 2} {
-        error "FPD width selector differs from accepted FPD128"
-    }
     if {$ident != 0x4C543302 || $version != 0x00010000 ||
         $caps != 0x0001031F} {
         error "live P03 shell ID/version/capabilities differ"
@@ -82,6 +94,7 @@ if {$connected} {
 if {$rc} {
     puts "P07_B4G_READONLY_PS_PL_SNAPSHOT_FAIL=1"
     puts "P07_B4G_INFERENCE_AUTHORIZED=0"
+    puts "P07_B4G_A53_ELF_DOWNLOAD_AUTHORIZED=0"
     error "P07-B.4g no physical acceptance: $why"
 }
 puts "P07_B4G_INFERENCE_AUTHORIZED=0"
