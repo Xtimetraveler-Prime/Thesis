@@ -77,3 +77,24 @@ bash scripts/run_p07_b4e_real_vitis_build.sh
 At that point the user may share the resulting `P07_B4E_PREFLIGHT_DIR/preflight.log`, `P07_B4E_PREFLIGHT_DIR/real_vitis_build.log`, the created ELF/linker map paths and Vitis platform errors (if any). **Do not run board commands automatically.**
 
 The next physical gate, once a **real** candidate ELF is independently audited and the user separately approves it, is read-only KV260 PS/PL shell evidence collection per B.4d (without DDR writes or algorithmic dispatch). B.4e itself does not authorize that operation.
+
+## Workstation compiler discovery — user-verified path (2026-10-21)
+
+The user's Vitis 2025.2 installation provides the **standalone AArch64 cross-compiler** here:
+
+```text
+/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin/aarch64-none-elf-gcc
+```
+
+This is under `/home/dna/Vivado/2025.2/gnu/`, **not** under `/home/dna/Vivado/2025.2/Vitis/gnu/`. The Vitis launcher is at `/home/dna/Vivado/2025.2/Vitis/bin/vitis`. For an interactive VS Code terminal, make the A53 binutils and compiler visible in the **same shell** before running the B.4e preflight:
+
+```bash
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+command -v vitis
+command -v aarch64-none-elf-gcc
+command -v aarch64-none-elf-readelf
+command -v aarch64-none-elf-nm
+```
+
+Only the `gcc` path has been confirmed by the user so far; `readelf` and `nm` must still be checked before running the real-build launcher. This path is a **local workstation/toolchain discovery note**, not an artifact digest or evidence of a linked A53 ELF. It does not change frozen Track A/B, authorize programming the board or unseal B2 official MNIST TEST.
