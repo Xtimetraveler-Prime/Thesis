@@ -79,6 +79,13 @@ class MockVitis:
 class MockComponent:
     def __init__(self,client,name):
         self.client=client;self.name=name
+    def set_app_config(self,*,key,values):
+        assert self.name=="p07_b4c_readonly_probe"
+        assert key=="USER_LINK_OTHER_FLAGS"
+        assert values==[
+            f"-Wl,-Map={self.client.workspace}/p07_b4c_readonly_probe.map"
+        ]
+        self.client.events.append("configure:linker_map")
     def import_files(self,*,from_loc,files,dest_dir_in_cmp):
         assert dest_dir_in_cmp=="src"
         self.client.events.append("import")
@@ -92,7 +99,12 @@ class MockComponent:
             folder.mkdir(parents=True)
             (folder/"probe.elf").write_bytes(b"SIMULATED_ONLY_NOT_AN_ELF")
             if not self.client.omit_map:
-                (folder/"probe.map").write_text("SIMULATED linker map\n")
+                (self.client.workspace/"p07_b4c_readonly_probe.map").write_text(
+                    "Linker script and memory map\n"
+                    ".text 0x00000000 0x00005000\n"
+                    "main\n.bss 0x0000e080 0x000109c0\n",
+                    encoding="utf8",
+                )
 
 
 def test_real_project_readonly_manifest_is_exact():
@@ -131,7 +143,7 @@ def test_fake_vitis_contract_imports_only_readonly_sources_and_needs_linker_map(
     assert elf.is_file() and mapp.is_file()
     assert fake.events==[
         "workspace","platform","build:p07_b4c_readonly_platform",
-        "app","import","build:p07_b4c_readonly_probe"]
+        "app","configure:linker_map","import","build:p07_b4c_readonly_probe"]
     # A fake ELF must NEVER pass the real executable checker.
     with pytest.raises(ValueError,match="not a genuine ELF"):
         verify(elf,mapp,"0x300000:0x310000","0x320000:0x330000")
@@ -144,6 +156,28 @@ def test_fake_vitis_contract_imports_only_readonly_sources_and_needs_linker_map(
     )}):
         with pytest.raises(RuntimeError,match="linker"):
             mod.build(xsa,tmp_path/"workspace_missing_map",staged)
+
+
+def test_fake_vitis_rejects_non_linker_generated_map(tmp_path):
+    mod=load_builder()
+    staged=stage(tmp_path,mod)
+    xsa=tmp_path/"pinned.xsa"
+    xsa.write_bytes(b"FAKE_NO_PHYSICAL_XSA")
+    fake=MockVitis()
+    fake.xsa=xsa.resolve()
+    old=MockComponent.build
+    def forged_map(self):
+        old(self)
+        if self.name=="p07_b4c_readonly_probe":
+            (fake.workspace/"p07_b4c_readonly_probe.map").write_text(
+                "STUB .text main .bss",encoding="utf8"
+            )
+    with mock.patch.object(MockComponent,"build",forged_map):
+        with mock.patch.dict(sys.modules,{"vitis":types.SimpleNamespace(
+            create_client=lambda:fake
+        )}):
+            with pytest.raises(RuntimeError,match="GNU linker memory-map"):
+                mod.build(xsa,tmp_path/"workspace_forged",staged)
 
 
 def test_stage_rejects_missing_injected_or_symlinked_source(tmp_path):
