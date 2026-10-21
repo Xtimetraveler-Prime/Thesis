@@ -53,7 +53,9 @@ jobs:
             software/p07/p07_b4c_readonly_board.c
       - name: Run fake Vitis API and ELF rejection tests (NOT a real Vitis build)
         run: |
-          python3 -m pytest -q -rs tests/test_p07_b4c_build_admission.py
+          python3 -m pytest -q -rs \
+            tests/test_p07_b4c_build_admission.py \
+            tests/test_p07_b4b_elf_probe_admission.py
       - name: Gate classification
         run: |
           echo "P07_B4C_NATIVE_BUILD_CONTRACT_PASS=1"
