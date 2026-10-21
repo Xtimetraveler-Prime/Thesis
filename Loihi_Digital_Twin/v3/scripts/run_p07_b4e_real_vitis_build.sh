@@ -15,6 +15,13 @@ fail(){ printf 'P07_B4E_BUILD_BLOCKED: %s\n' "$*" >&2; exit 3; }
 [[ "$REPORTS" = /* && "$OUT" = /* && "$BUILD" = /* ]] ||
   fail "absolute report/preflight/build paths required"
 [[ "$OUT" != "$BUILD" ]] || fail "preflight evidence and Vitis build must differ"
+REPO="$(cd "$V3/../.." && pwd)"
+OUT_CANON="$(realpath -m -- "$OUT")"
+[[ "$OUT_CANON" == "$OUT" ]] ||
+  fail "preflight path must be normalized and absolute"
+case "$OUT_CANON/" in "$REPO/"*)
+  fail "preflight evidence must be outside the entire Thesis repository" ;;
+esac
 [[ ! -e "$OUT" && ! -L "$OUT" ]] || fail "preflight directory must be new"
 [[ ! -e "$BUILD" && ! -L "$BUILD" ]] || fail "Vitis build directory must be new"
 command -v python3 >/dev/null || fail "Python 3 missing"
