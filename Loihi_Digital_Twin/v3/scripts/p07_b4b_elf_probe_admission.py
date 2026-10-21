@@ -10,10 +10,82 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 import subprocess
 
-from p07_b3c3_elf_admission import Span, inspect, parse_load_segments, parse_named_span
+from p07_b3c3_elf_admission import (
+    Span, inspect, parse_load_segments, parse_named_span,
+    P02_RESERVED, P03_MMIO,
+)
+
+# In genuine standalone Vitis ELF files, allocated .heap/.stack sections
+# are intentionally INSIDE PT_LOAD alongside .bss (not separate DMA buffers).
+# B3c's generic external-allocation guard must remain unchanged.
+_SECTION = re.compile(
+    r"^\s*\[\s*\d+\]\s+(\S+)\s+(\S+)\s+"
+    r"([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+"
+    r"([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+(\S+)",
+    re.MULTILINE,
+)
+
+def inspect_embedded_sections(
+    loads: tuple[Span, ...], stack: Span, heap: Span, raw: str
+) -> dict:
+    sections: dict[str, Span] = {}
+    for entry in _SECTION.finditer(raw):
+        name, _kind, address, _offset, size, _es, flags = entry.groups()
+        if "A" not in flags:
+            continue
+        start, length = int(address, 16), int(size, 16)
+        if length == 0:
+            continue
+        if name in sections:
+            raise ValueError("duplicate allocated ELF section: " + name)
+        sections[name] = Span("ELF section " + name, start, start + length)
+
+    for name, declared in ((".heap", heap), (".stack", stack), (".bss", None)):
+        if name not in sections:
+            raise ValueError("real ELF allocated section missing: " + name)
+        actual = sections[name]
+        if declared is not None and (actual.first, actual.end) != (
+            declared.first, declared.end
+        ):
+            raise ValueError(name + " differs from actual ELF section extent")
+        if not any(segment.first <= actual.first and actual.end <= segment.end
+                   for segment in loads):
+            raise ValueError(name + " not contained in ELF LOAD segment")
+
+    for item in (*loads, heap, stack):
+        for protected, (lower, upper) in (
+            ("P02 64MiB backing/staging/descriptor/result", P02_RESERVED),
+            ("P03 4KiB AXI-Lite register window", P03_MMIO),
+        ):
+            if item.first < upper and lower < item.end:
+                raise ValueError(item.label + " overlaps " + protected)
+
+    if heap.first < stack.end and stack.first < heap.end:
+        raise ValueError("ELF heap overlaps stack")
+    for name, section in sections.items():
+        if name in (".heap", ".stack"):
+            continue
+        for region in (heap, stack):
+            if region.first < section.end and section.first < region.end:
+                raise ValueError(region.label + " overlaps allocated " + name)
+    return {
+        "schema": "p07-b4b-real-vitis-embedded-stack-heap-v1",
+        "load_segments": len(loads),
+        "actual_allocated_sections_checked": len(sections),
+        "heap_section_verified": True,
+        "stack_section_verified": True,
+        "embedded_stack_heap_within_elf_load": True,
+        "protected_P02_start": f"0x{P02_RESERVED[0]:08x}",
+        "protected_P02_end_exclusive": f"0x{P02_RESERVED[1]:08x}",
+        "physical_ddr_exclusivity": "UNVERIFIED",
+        "fpd128_live_shell": "UNVERIFIED",
+        "real_ELF_bytes_parsed": True,
+    }
+
 
 REQUIRED = frozenset({
     "main", "p07_b4b_probe", "p07_b4b_xilinx_read_phys",
@@ -24,7 +96,7 @@ REQUIRED = frozenset({
 
 def validate_elf_evidence(
     header: str, program_headers: str, symbols: str, linker_map: str,
-    stack: Span, heap: Span,
+    stack: Span, heap: Span, section_headers: str | None = None,
 ) -> dict:
     if "Machine:" not in header or "AArch64" not in header:
         raise ValueError("not an AArch64 ELF")
@@ -33,7 +105,10 @@ def validate_elf_evidence(
     if "Type:" not in header or "EXEC" not in header:
         raise ValueError("standalone probe must be linked as an EXEC ELF")
     loads = parse_load_segments(program_headers)
-    layout = inspect(loads, stack, heap)
+    layout = (
+        inspect_embedded_sections(loads, stack, heap, section_headers)
+        if section_headers is not None else inspect(loads, stack, heap)
+    )
     names: set[str] = set()
     hw_bss: list[tuple[int, int]] = []
     for line in symbols.splitlines():
@@ -97,6 +172,7 @@ def main() -> None:
             args.linker_map.read_text(encoding="utf8"),
             parse_named_span(args.stack, label="physical stack"),
             parse_named_span(args.heap, label="physical heap"),
+            _read(["readelf", "-W", "-S", str(args.elf)]),
         )
     except (ValueError, OSError, subprocess.CalledProcessError) as exc:
         arg.error(str(exc))
