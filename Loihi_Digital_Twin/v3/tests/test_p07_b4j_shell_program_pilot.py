@@ -34,17 +34,13 @@ def log_ok():
     ])+"\n"
 
 def args(tmp_path):
-    note=tmp_path/"owner_recovery.txt"
-    note.write_text("Dedicated JTAG-only physical experiment; no other board users. "
-                    "Discard Linux, do not resume stopped kernels, power-cycle after. "
-                    "No ELF/DDR access approved for this shell-only checkpoint.")
     reports=tmp_path/"reports"
     reports.mkdir(exist_ok=True)
     return SimpleNamespace(
         build=tmp_path/"build",reports=reports,
         dedicated_jtag_owner="YES",cpu_takeover_approved="YES",
         pl_program_approved="YES",reboot_recovery_approved="YES",
-        recovery_note=note,evidence=tmp_path/"evidence"
+        evidence=tmp_path/"evidence"
     )
 
 def test_result_requires_exact_program_marker():
@@ -67,12 +63,13 @@ def test_physical_approvals_required_before_evidence_or_hw(tmp_path):
                 j.execute(a,manifest())
         assert not a.evidence.exists()
 
-def test_owner_note_required_before_hardware(tmp_path):
+def test_operator_note_is_not_an_input_or_requirement(tmp_path):
     a=args(tmp_path)
-    a.recovery_note=None
-    with patch.object(j.b4i,"log_call",side_effect=AssertionError("hardware called")):
-        with pytest.raises(ValueError,match="note"):
-            j.execute(a,manifest())
+    assert not hasattr(a,"recovery_note")
+    j.validate_evidence_inputs(a)
+    script=(ROOT/"scripts/p07_b4j_shell_program_pilot.py").read_text()
+    assert "--recovery-note" not in script
+    assert "operator_note" not in script
     assert not a.evidence.exists()
 
 def test_out_of_repo_fresh_evidence_refusal(tmp_path):
