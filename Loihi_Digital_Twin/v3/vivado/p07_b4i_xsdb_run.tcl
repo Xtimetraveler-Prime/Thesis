@@ -42,7 +42,7 @@ set result [catch {
     rst -processor
     b4i_ps_target
     dow -data $zeros 0x43FF0000
-    set before "\${output}.zero_readback"
+    set before "${output}.zero_readback"
     if {[file exists $before]} {error "zero readback already exists"}
     mrd -bin -file $before 0x43FF0000 16
     set f [open $before rb]
@@ -54,7 +54,7 @@ set result [catch {
     dow $elf
     puts "P07_B4I_A53_DOWNLOADED=1"
     con
-    set scratch "\${output}.poll"
+    set scratch "${output}.poll"
     set complete 0
     for {set i 0} {$i < 30} {incr i} {
         after 1000
