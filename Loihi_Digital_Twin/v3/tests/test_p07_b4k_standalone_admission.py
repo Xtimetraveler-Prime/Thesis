@@ -202,3 +202,100 @@ def test_no_operator_note_and_no_inference_in_runner():
     assert "B2 inference" in text
     assert 'default="preflight"' in text
     assert "firmware_coexistence_risk_acknowledged" in k.APPROVALS
+
+
+# Native tclsh execution of the actual, unchanged-board XSDB runner with
+# fully mocked debug commands. No JTAG server, KV260, or Vivado interaction.
+# Crucially, run the script itself, not just grep the source for a catch.
+def run_mock_b4i_xsdb(tmp_path, first_error, last_error=""):
+    import subprocess
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    elf=tmp_path/"synthetic_marker.elf"
+    elf.write_text("P07_B4I_A53_MAILBOX_FPD128_PROBE_V1\n")
+    blank=tmp_path/"zeros64.bin"
+    blank.write_bytes(bytes(64))
+    mailbox_out=tmp_path/"physical_mailbox_mock.bin"
+    xsdb=V3/"vivado/p07_b4i_xsdb_run.tcl"
+    script=tmp_path/"mock_xsdb.tcl"
+    script.write_text(
+        "set ::first_error "+("{"+first_error+"}" if first_error else "{__NONE__}")+"\n"
+        "set ::last_error "+("{"+last_error+"}" if last_error else "{__NONE__}")+"\n"
+        "set ::stop_count 0\n"
+        "set ::running 0\n"
+        "proc connect {args} {return ok}\n"
+        "proc disconnect {} {return ok}\n"
+        "proc targets {args} {return ok}\n"
+        "proc stop {} {\n"
+        "  incr ::stop_count\n"
+        '  if {$::stop_count == 1 && $::first_error ne "__NONE__"} {error $::first_error}\n'
+        '  if {$::stop_count == 2 && $::last_error ne "__NONE__"} {error $::last_error}\n'
+        "  return ok\n"
+        "}\n"
+        'proc rst {args} {puts "MOCK_RESET_REACHED=1"; return ok}\n'
+        'proc dow {args} {puts "MOCK_DOWNLOAD_REACHED=1"; return ok}\n'
+        'proc con {} {set ::running 1; return ok}\n'
+        'proc after {args} {return ok}\n'
+        "proc mrd {args} {\n"
+        "  set idx [lsearch -exact $args -file]\n"
+        '  if {$idx < 0} {error "mock requires -file"}\n'
+        "  set dest [lindex $args [expr {$idx + 1}]]\n"
+        "  set bytes [string repeat \"\\x00\" 64]\n"
+        '  if {$::running} {set bytes "[string repeat \\x00 60][binary format H* 0df0dec0]"}\n'
+        "  set fh [open $dest wb]\n"
+        "  fconfigure $fh -translation binary -encoding binary\n"
+        "  puts -nonewline $fh $bytes\n"
+        "  close $fh\n"
+        "  return ok\n"
+        "}\n"
+        "set argc 5\n"
+        f"set argv [list DEDICATED_A53_DDR_OWNER_VERIFIED "
+        f"{{{elf}}} {{{blank}}} {{{mailbox_out}}} tcp:127.0.0.1:3121]\n"
+        f"source {{{xsdb}}}\n"
+    )
+    result=subprocess.run(
+        ["tclsh",str(script)],text=True,capture_output=True
+    )
+    return result,mailbox_out
+
+@pytest.mark.parametrize(("initial","final","expected_first","expected_final"),[
+    ("Already stopped","Already stopped",True,True),
+    ("Already stopped","",True,False),
+    ("","Already stopped",False,True),
+    ("","",False,False)
+])
+def test_real_b4i_tcl_idempotent_stop_then_reset_and_mailbox(
+        tmp_path,initial,final,expected_first,expected_final):
+    result,output=run_mock_b4i_xsdb(tmp_path,initial,final)
+    assert result.returncode==0,result.stderr
+    assert output.is_file() and output.stat().st_size==64
+    assert "MOCK_RESET_REACHED=1" in result.stdout
+    assert "MOCK_DOWNLOAD_REACHED=1" in result.stdout
+    assert "P07_B4I_A53_DOWNLOADED=1" in result.stdout
+    assert "P07_B4I_MAILBOX_CAPTURED_64_BYTES=1" in result.stdout
+    assert ("P07_B4I_A53_0_PRE_RESET_ALREADY_STOPPED_CONFIRMED=1" in result.stdout)==expected_first
+    assert ("P07_B4I_A53_0_POST_CAPTURE_ALREADY_STOPPED_CONFIRMED=1" in result.stdout)==expected_final
+
+@pytest.mark.parametrize("error",[
+    "The core is powered down",
+    "JTAG timeout",
+    "Already stopped; JTAG lost",
+    "Already stopped but a different core",
+    "Already stopped\nHardware transport failed",
+])
+def test_real_b4i_tcl_refuses_nonexact_stop_error_before_reset(tmp_path,error):
+    result,output=run_mock_b4i_xsdb(tmp_path,error)
+    assert result.returncode!=0
+    assert "B4i A53 #0 stop failed (PRE_RESET)" in result.stderr
+    assert "MOCK_RESET_REACHED=1" not in result.stdout
+    assert "MOCK_DOWNLOAD_REACHED=1" not in result.stdout
+    assert not output.exists()
+    assert "P07_B4I_BOARD_ATTEMPT_FAIL_REBOOT_REQUIRED=1" in result.stdout
+
+def test_real_b4i_tcl_postcapture_stop_error_never_marks_success(tmp_path):
+    result,output=run_mock_b4i_xsdb(tmp_path,"Already stopped","JTAG timeout")
+    assert result.returncode!=0
+    assert output.is_file() and output.stat().st_size==64
+    assert "B4i A53 #0 stop failed (POST_CAPTURE)" in result.stderr
+    assert "P07_B4I_BOARD_CAPTURE_READY_FOR_INDEPENDENT_VERIFIER=1" not in result.stdout
+    assert "P07_B4I_BOARD_ATTEMPT_FAIL_REBOOT_REQUIRED=1" in result.stdout
