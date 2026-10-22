@@ -94,18 +94,19 @@ The `--mode execute` phase is implemented but must be separately authorized
 by the board operator for **a new dedicated JTAG session**. It refuses absent
 `--dedicated-jtag-owner YES`, `--cpu-takeover-approved YES`,
 `--pl-program-approved YES`, `--reboot-recovery-approved YES`,
-an absolute recovery/ownership note with meaningful human-authored contents,
 or a fresh absolute evidence directory outside the repository.
 
-The note must state actual intended CPU takeover and recovery, recognize
-that the Linux instance will be discarded, and acknowledge that the B4j
-runner never downloads an ELF or accesses DDR. No one should state low-DDR
-exclusivity is proven merely because this shell-only test works.
+**No handwritten operator note, recovery-note file, or `--recovery-note`
+argument is required.** The four explicit approval flags express the
+operator's decision to allow this disruptive session. They do not by
+themselves prove low-DDR exclusivity; B4j explicitly does not touch DDR
+or launch the A53 executable. Plan to reboot afterwards and never
+resume the halted Linux instance.
 
 A future successful run will produce:
 - `ps_width.log` with all-core state admission and original raw PS width;
 - `program.log` with the original Vivado P03 VIO reset-release PASS;
-- `provenance.json` with accepted artifact hashes and operator note;
+- `provenance.json` with accepted artifact hashes and session intent (no operator note);
 - `result.txt` with
   `P07_B4J_PHYSICAL_SHELL_PROGRAM_VIO_RESET_PASS=1`,
   `P07_B4J_A53_ELF_DOWNLOADED=0` and
@@ -115,3 +116,33 @@ The next *different* milestone after B4j is the read-only standalone A53
 `dow`/DDR-mailbox admission, which needs an independently accepted
 low-DDR/firmware ownership and recovery plan. B4j success does **not**
 authorize that step.
+
+### Operator workflow simplification (2026-10-22)
+
+The B4j and B4i scripts have been updated at operator request to **remove
+handwritten operator/recovery-note requirements permanently from this
+project's physical test workflow**. They retain concise explicit approval
+flags, immutable artifact preflights, fresh evidence directories, actual
+hardware checks, and the reboot-after-takeover requirement. A console
+PASS or approval flag is not evidence of firmware/low-DDR exclusivity.
+
+After the offline preflight and a fresh KV260 reboot/`xmutil unloadapp`,
+the physical B4j runner accepts:
+
+```bash
+export P07_B4J_EVIDENCE="$HOME/Thesis_Evidence/p07_b4j_physical_$(date -u +%Y%m%dT%H%M%SZ)"
+python scripts/p07_b4j_shell_program_pilot.py \
+  --mode execute \
+  --build "$P07_B4I_BUILD_DIR" \
+  --reports "$P07_B4I_REPORTS" \
+  --evidence "$P07_B4J_EVIDENCE" \
+  --dedicated-jtag-owner YES \
+  --cpu-takeover-approved YES \
+  --pl-program-approved YES \
+  --reboot-recovery-approved YES
+```
+
+Only run if the four approvals are true for that session. This intentionally
+halts A53/Linux and programs PL, but never issues `dow` or accesses the
+DDR mailbox. Preserve `ps_width.log`, `program.log`, `result.txt` and
+`provenance.json`. Reboot on success or failure.
