@@ -154,3 +154,30 @@ host-vs-board 26-tick numeric parity on predeclared TRAIN-derived validation
 witnesses. No official TEST unseal before separately accepted physical
 numeric parity. No changed trained weights, Loihi claims, or speed/power
 benchmarks can be inferred from these host staging receipts.
+
+## User verified original frozen 27-core package (2026-10-22)
+
+The operator independently ran `p07_b4l1_stage_frozen_27core.py --mode
+verify` on the actual frozen B2.4 package and reported:
+
+```text
+bundle_sha256=3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e
+bytes=14155776
+core_count=27
+physical_start=0x40000000
+physical_end_exclusive=0x40D80000
+freeze_untouched=true
+board_visited=false
+P07_B4L1_ALL_27_ORIGINAL_P02_RECORDS_BYTE_EXACT_PASS=1
+P07_B4L1_FROZEN_B2_4_SOURCE_UNMODIFIED=1
+P07_B4L1_PHYSICAL_DDR_STAGED=0
+P07_B4L1_TRAINED_INFERENCE_EXECUTED=0
+P07_B4L1_OFFICIAL_MNIST_TEST=SEALED
+```
+
+**B4l.1 real host/frozen-byte staging is now USER-ATTESTED PASS.** This is
+not a KV260 stage or neural inference. The exact bundle SHA is now pinned
+into `scripts/p07_b4l_physical_model_deploy.py`. At the operator's request,
+the following development is **consolidated into P07-B.4l — model deployment
+and hardware paging**, not split into a series of new individually named
+subphases. See `P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md`.
