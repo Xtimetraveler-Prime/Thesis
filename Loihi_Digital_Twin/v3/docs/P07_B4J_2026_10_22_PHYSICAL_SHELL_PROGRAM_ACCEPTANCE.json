@@ -1,0 +1,23 @@
+{
+  "schema": "p07-b4j-user-reported-real-pl-program-vio-pass-v1",
+  "date": "2026-10-22",
+  "board": "KV260 K26 Zynq UltraScale+",
+  "evidence_source": "Operator-posted tail of local Vivado and Python B4j physical run; original logs and binary firmware remain on operator PC",
+  "reported_vivado_finish_local": "Thu Oct 22 14:05:10 2026",
+  "observed_lines": [
+    "PASS: P03.2c accepted PS-MMIO bitstream programmed and PL reset released",
+    "INFO: [Common 17-206] Exiting Vivado at Thu Oct 22 14:05:10 2026...",
+    "P07_B4J_PHYSICAL_SHELL_PROGRAM_VIO_RESET_PASS=1",
+    "P07_B4J_A53_ELF_DOWNLOADED=0",
+    "P07_B4J_DDR_MAILBOX_TOUCHED=0",
+    "P07_B4J_TRAINED_INFERENCE_RUN=0",
+    "P07_B4J_REBOOT_REQUIRED=1"
+  ],
+  "decision": "ACCEPT_P07_B4J_PHYSICAL_SHELL_PROGRAM_AND_VIO_RESET_RELEASE",
+  "constraints": "This result does not establish A53 firmware launch, early DDR ownership, mailbox parity, or neural inference. Runner also requires previous successful PS takeover+width in its own session, but only tail shown here.",
+  "accepted_p03_xsa_sha": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+  "B4I_candidate_elf_sha": "5fcdb0586564f3abef477804a54e0a87163c74654f9d15d1f9600ab2cb85e807",
+  "new_stage": "P07-B.4k standalone A53 read-only MMIO + DDR mailbox (not trained inference)",
+  "boot_recovery": "Reboot/power cycle KV260; do not resume halted Linux context",
+  "PR49": "DRAFT, not merged"
+}
