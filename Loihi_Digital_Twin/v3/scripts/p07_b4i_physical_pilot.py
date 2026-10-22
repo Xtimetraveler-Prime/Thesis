@@ -161,13 +161,16 @@ def run_physical(args:argparse.Namespace,manifest:dict)->None:
         args.recovery_note.read_text()
     )
     # FPD/LPD live gate FIRST, mirroring accepted Track A sequence.
-    log_call(["xsdb","vivado/p03_2c_xsdb_ps_axi_width_diag.tcl",
+    log_call(["xsdb","vivado/p07_b4i_stop_and_width_gate.tcl",
+              "DEDICATED_DISCARD_LINUX_APPROVED",
               "tcp:127.0.0.1:3121"],evidence/"ps_width.log")
     width=(evidence/"ps_width.log").read_text()
     for required in ("P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
                      "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
                      "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
-                     "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128"):
+                     "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128",
+                     "P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1",
+                     *[f"P07_B4I_A53_{i}_STOP_COMMAND_PASS=1" for i in range(4)]):
         if required not in width:
             raise RuntimeError("NO-GO: historical raw PS width missing; reboot required")
     reports=args.reports
