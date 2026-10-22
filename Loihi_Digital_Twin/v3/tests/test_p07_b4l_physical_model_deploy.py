@@ -237,3 +237,73 @@ def test_source_runner_has_no_operator_note_or_trained_dispatch():
     assert "p07_b4l_stage_27_ddr.tcl" in script
     assert "p07_b4i_xsdb_run.tcl" not in script
     assert "P07_B4L_PHYSICAL_PL_PAGE_IN_EXECUTED=0" in script
+
+
+def test_real_ddr_stage_tcl_with_simulated_xsdb_and_all_27_records(tmp_path,monkeypatch):
+    """Run the actual XSDB Tcl program using tclsh fake DAP/mrd/dow only."""
+    import subprocess
+    if not shutil.which("tclsh"):
+        pytest.skip("tclsh unavailable")
+    staged,index=fake_record_stage(tmp_path,monkeypatch)
+    input_dir=tmp_path/"inputs"
+    m.prep_transfer_files(staged,input_dir,{"records":index})
+    output_dir=tmp_path/"readback"
+    output_dir.mkdir()
+    script=tmp_path/"mock_xsdb.tcl"
+    real_tcl=ROOT/"vivado/p07_b4l_stage_27_ddr.tcl"
+    script.write_text(
+        "set ::physical_target \"\"\n"
+        "array set ::physical_memory {}\n"
+        "proc connect {args} {puts MOCK_XSDB_CONNECTED; return ok}\n"
+        "proc disconnect {} {puts MOCK_XSDB_DISCONNECTED; return ok}\n"
+        'proc targets {args} {set ::physical_target [lindex $args end]; return ok}\n'
+        "proc dow {args} {\n"
+        '  if {[string first "PSU" $::physical_target] < 0} {error "CPU target forbidden"}\n'
+        '  set ::physical_memory([lindex $args 2]) [lindex $args 1]\n'
+        "  return ok\n"
+        "}\n"
+        "proc mrd {args} {\n"
+        '  set dest [lindex $args 2]\n'
+        '  set addr [lindex $args 3]\n'
+        '  if {[lindex $args 4] != 131072} {error "bad word count"}\n'
+        '  if {![info exists ::physical_memory($addr)]} {error "no DDR at address"}\n'
+        "  file copy $::physical_memory($addr) $dest\n"
+        "  return ok\n"
+        "}\n"
+        "set argc 4\n"
+        f"set argv [list DEDICATED_27_DDR_OVERWRITE_APPROVED "
+        f"{{{input_dir}}} {{{output_dir}}} tcp:127.0.0.1:3121]\n"
+        f"source {{{real_tcl}}}\n"
+    )
+    proc=subprocess.run(["tclsh",str(script)],capture_output=True,text=True)
+    assert proc.returncode==0,proc.stderr
+    assert "P07_B4L_ALL_27_DDR_CORE_READBACK_TCL_PASS=1" in proc.stdout
+    assert proc.stdout.count("_512K_PHYSICAL_READBACK_PASS=1")==27
+    assert "P07_B4L_PHYSICAL_DDR_TARGET=PSU" in proc.stdout
+    result=m.verify_physical_readback(staged,output_dir,{"records":index})
+    assert result["physical_readback_sha256"]==m.ACCEPTED_BUNDLE_SHA
+
+
+def test_real_tcl_fails_closed_without_connect_on_malformed_core(tmp_path):
+    import subprocess
+    if not shutil.which("tclsh"):
+        pytest.skip("tclsh unavailable")
+    input_dir=tmp_path/"in"
+    input_dir.mkdir()
+    output=tmp_path/"out"
+    output.mkdir()
+    for core in range(27):
+        (input_dir/m.CORE_INPUT.format(core)).write_bytes(bytes(512) if core==26 else bytes(b1.STRIDE))
+    script=tmp_path/"reject.tcl"
+    real_tcl=ROOT/"vivado/p07_b4l_stage_27_ddr.tcl"
+    script.write_text(
+        "proc connect {args} {puts MOCK_CONNECTED_UNEXPECTED}\n"
+        "set argc 4\n"
+        f"set argv [list DEDICATED_27_DDR_OVERWRITE_APPROVED "
+        f"{{{input_dir}}} {{{output}}} tcp:127.0.0.1:3121]\n"
+        f"source {{{real_tcl}}}\n"
+    )
+    proc=subprocess.run(["tclsh",str(script)],capture_output=True,text=True)
+    assert proc.returncode!=0
+    assert "core 26" in proc.stderr
+    assert "MOCK_CONNECTED_UNEXPECTED" not in proc.stdout
