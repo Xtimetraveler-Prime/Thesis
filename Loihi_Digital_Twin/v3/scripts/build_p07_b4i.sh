@@ -2,9 +2,9 @@
 # P07-B.4i: genuinely link a new isolated read-only mailbox A53 ELF.
 # No XSDB, Vivado hardware-manager, PS/PL writes, resets, or inference.
 set -euo pipefail
-V3="$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD="\${P07_B4I_BUILD_DIR:?set NEW absolute out-of-repository build dir}"
-REPORTS="\${P07_B4I_REPORTS:?set accepted P03.2c reports directory}"
+V3="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD="${P07_B4I_BUILD_DIR:?set NEW absolute out-of-repository build dir}"
+REPORTS="${P07_B4I_REPORTS:?set accepted P03.2c reports directory}"
 XSA="$REPORTS/p03_2_ps_mmio.xsa"
 METRICS="$REPORTS/p03_2_post_route_metrics.txt"
 fail(){ echo "P07_B4I_BUILD_NO_GO: $*" >&2; exit 2; }
