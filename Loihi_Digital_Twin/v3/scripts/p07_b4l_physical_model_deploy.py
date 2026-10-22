@@ -140,7 +140,7 @@ def run_physical(args:argparse.Namespace,index:dict)->dict:
     },sort_keys=True,indent=2)+"\n")
     try:
         # Stage and check all source bytes BEFORE any hardware is contacted.
-        prep_transfer_files(args.staged,out/"transfer_inputs",index)
+        prep_transfer_files(args.staged_dir,out/"transfer_inputs",index)
         (out/"physical_readback").mkdir(mode=0o700)
         (out/"stage.txt").write_text("PREPARED_ALL_27_INPUTS_BOARD_GATE_PENDING_REBOOT_REQUIRED\n")
         b4i.log_call([
@@ -172,7 +172,7 @@ def run_physical(args:argparse.Namespace,index:dict)->dict:
                        for c in range(27))):
             raise DeployError("NO-GO: complete 27-core Tcl DDR verification receipt missing")
         (out/"stage.txt").write_text("PHYSICAL_DDR_TCL_PASS_INDEPENDENT_HASH_PENDING_REBOOT_REQUIRED\n")
-        independent=verify_physical_readback(args.staged,out/"physical_readback",index)
+        independent=verify_physical_readback(args.staged_dir,out/"physical_readback",index)
         (out/"independent_receipt.json").write_text(json.dumps(
             independent,sort_keys=True,indent=2)+"\n")
         (out/"stage.txt").write_text("ALL_27_ORIGINAL_FROZEN_P02_PHYSICAL_DDR_BYTE_EXACT_PASS_REBOOT_REQUIRED\n")
