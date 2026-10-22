@@ -161,3 +161,52 @@ def test_b4i_c_builds_with_standalone_bsp_interface_stubs(tmp_path):
     ]
     result=subprocess.run(command,capture_output=True,text=True)
     assert result.returncode==0,result.stderr
+
+
+def test_b4i_takeover_gate_success_with_fake_xsdb(tmp_path):
+    import subprocess
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
+    wrapper=tmp_path/"good.tcl"
+    wrapper.write_text(
+        "proc connect {args} {return ok}\n"
+        "proc disconnect {} {return ok}\n"
+        "proc targets {args} {return ok}\n"
+        "proc stop {} {return ok}\n"
+        'proc mrd {args} {if {[lsearch $args 0xFD615000] >= 0} {return "FD615000: 00000A00"}; return "FF419000: 00000200"}\n'
+        "set argc 2\nset argv {DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121}\n"
+        f"source {{{gate}}}\n"
+    )
+    proc=subprocess.run(["tclsh",str(wrapper)],text=True,capture_output=True)
+    assert proc.returncode==0,proc.stderr
+    for i in range(4):
+        assert f"P07_B4I_A53_{i}_STOP_COMMAND_PASS=1" in proc.stdout
+    assert "P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1" in proc.stdout
+
+def test_b4i_takeover_gate_refuses_failed_core_stop(tmp_path):
+    import subprocess
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
+    wrapper=tmp_path/"bad_stop.tcl"
+    wrapper.write_text(
+        "proc connect {args} {return ok}\n"
+        "proc disconnect {} {return ok}\n"
+        "proc targets {args} {return ok}\n"
+        'proc stop {} {error "CPU halt refused"}\n'
+        'proc mrd {args} {error "MUST NOT READ WHEN CPU STOP FAILED"}\n'
+        "set argc 2\nset argv {DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121}\n"
+        f"source {{{gate}}}\n"
+    )
+    proc=subprocess.run(["tclsh",str(wrapper)],text=True,capture_output=True)
+    assert proc.returncode!=0
+    assert "stop failed" in proc.stderr
+    assert "P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1" not in proc.stdout
+
+def test_b4i_takeover_script_is_used_before_bitstream_programming():
+    physical=(ROOT/"scripts/p07_b4i_physical_pilot.py").read_text()
+    assert "vivado/p07_b4i_stop_and_width_gate.tcl" in physical
+    assert "vivado/p03_2c_xsdb_ps_axi_width_diag.tcl" not in physical
+    assert physical.index("vivado/p07_b4i_stop_and_width_gate.tcl") < (
+        physical.index("vivado/p03_2c_program_bitstream.tcl"))
