@@ -176,17 +176,24 @@ def test_bad_mailbox_never_causes_success_receipt(tmp_path,bad_receipt):
         elif len(calls)==3:
             (a.evidence/"p07_b4k_mailbox_64.bin").write_bytes(bad_receipt)
             dest.write_text("capture completed\n")
-        else:raise AssertionError("should not verify malformed readback")
+        elif len(calls)==4:
+            # Simulate the original strict independent verifier returning
+            # nonzero: this must abort B4k before the success marker.
+            import p07_b4i_verify_mailbox as verifier
+            with pytest.raises(ValueError):
+                verifier.verify(bad_receipt)
+            raise RuntimeError("real independent verifier exit 3")
+        else:raise AssertionError("unexpected extra action")
     with patch.object(k.shutil,"which",return_value="/fake/tool"),(
             patch.object(k.b4i,"log_call",side_effect=fake_hw)):
         if len(bad_receipt)!=64:
             with pytest.raises(ValueError,match="64-byte mailbox"):
                 k.run_physical(a,candidate())
         else:
-            # The real external verifier performs strict 16-word validation.
-            import p07_b4i_verify_mailbox as verifier
-            with pytest.raises(ValueError):
-                verifier.verify(bad_receipt)
+            with pytest.raises(RuntimeError,match="independent verifier"):
+                k.run_physical(a,candidate())
+    assert "P07_B4K_STANDALONE_ADMISSION_VERIFIED" not in (
+        a.evidence/"stage.txt").read_text()
 
 def test_no_operator_note_and_no_inference_in_runner():
     text=(V3/"scripts/p07_b4k_standalone_admission.py").read_text()
