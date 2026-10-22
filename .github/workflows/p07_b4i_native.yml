@@ -1,4 +1,4 @@
-name: P07-B.4i/B.4j/B.4k/B.4l1 standalone and staged 27-core native gates
+name: P07-B standalone and consolidated 27-core DDR deployment native gates
 on:
   push:
     paths:
@@ -16,6 +16,9 @@ on:
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4k_standalone_admission.py'
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4l1_stage_frozen_27core.py'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l1_stage_frozen_27core.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_physical_model_deploy.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_physical_model_deploy.py'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4l_stage_27_ddr.tcl'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
     paths:
@@ -33,6 +36,9 @@ on:
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4k_standalone_admission.py'
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4l1_stage_frozen_27core.py'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l1_stage_frozen_27core.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_physical_model_deploy.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_physical_model_deploy.py'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4l_stage_27_ddr.tcl'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
 permissions:
@@ -48,4 +54,4 @@ jobs:
       - run: python -m pip install pytest
       - name: Synthetic-only no-board safety gates
         working-directory: Loihi_Digital_Twin/v3
-        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py tests/test_p07_b4j_shell_program_pilot.py tests/test_p07_b4k_standalone_admission.py tests/test_p07_b4l1_stage_frozen_27core.py
+        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py tests/test_p07_b4j_shell_program_pilot.py tests/test_p07_b4k_standalone_admission.py tests/test_p07_b4l1_stage_frozen_27core.py tests/test_p07_b4l_physical_model_deploy.py
