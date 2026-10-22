@@ -99,13 +99,18 @@ unresolved. B4i physical inference is still not accepted.
 B4i now uses new `vivado/p07_b4i_stop_and_width_gate.tcl` for the **first
 destructive takeover step**, instead of calling the older P03 width
 diagnostic directly. The old script catches and ignores `stop` errors; the
-new B4i-only script demands four A53 target selections and successful
-`stop` commands, disconnects on failure and refuses proceeding to P03
-programming unless both original historical raw widths are read: FPD
-`0x00000A00`, LPD `0x00000200`. It does not claim that a successful
-`stop` return itself establishes boot-firmware/DDR ownership; this remains
-a separately operator-assessed dedicated-session contract. It prints
-`P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1`.
+new B4i-only script demands four A53 target selections, a **successful
+`stop` on A53 #0**, and a strict one-of-two result for secondary A53
+#1/#2/#3: either `stop` succeeds, or XSDB gives the **exact** error string
+`The core is powered down`. It neither powers on a sleeping core nor masks
+other debugger errors. It disconnects on failure and refuses proceeding to
+P03 programming unless both historical raw widths are read: FPD
+`0x00000A00`, LPD `0x00000200`. No stop or powered-down report alone proves
+boot-firmware/DDR ownership; this remains a separately operator-assessed
+dedicated-session contract. It prints
+`P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1` only after
+all four cores are accounted and both widths match. The Python driver
+independently validates every exact transcript marker before programming.
 
 A physical run deliberately discards the Linux instance, unlike a safe
 in-place Linux accelerator operation. No original Track A/P03 sources or
@@ -117,3 +122,33 @@ tests verify that the stop gate fails closed on a failed stop command.
 or set `--low-ddr-exclusive YES` merely because ELF LOAD spans match.**
 Establish independent consent, backup, boot-firmware and exclusive CPU/DDR
 ownership, and recovery policy before operator-triggered physical mode.
+
+## First physical attempt: secondary A53 #1 powered down (2026-10-22)
+
+After the operator rebooted KV260 and ran `sudo xmutil unloadapp`, the
+first genuine B4i hardware stop/width diagnostic produced:
+
+```text
+P07_B4I_A53_0_STOP_COMMAND_PASS=1
+P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+P07-B.4i stop failed for Cortex-A53 #1: The core is powered down
+```
+
+**Observed scope:** core #0 stop acknowledged; #1 reported powered down;
+#2/#3 not checked; FPD/LPD XSDB registers not read; no PL bitstream
+programming, ELF download, DDR mailbox overwrite or inference occurred.
+This is a conservative gate rejection, not a B4i application failure.
+Linux's previously reported `psci_idle` driver makes powered-down secondary
+cores plausible, but the exact cause wasn't measured. The historical P03
+width script used `catch {stop}` and skipped failures, explaining why
+Track A could proceed; the amended B4i gate is narrower and fail-closed.
+
+**Recovery and retest:** do not resume a halted Linux instance; reboot the
+KV260 and repeat normal user preparation before any new JTAG attempt.
+First run the new native Tcl/Python gate tests and the unchanged offline
+ELF preflight. Only then re-run this **stop+PS-width diagnostic** under
+separate operator authorization, saving a new log. Do not immediately run
+the full physical `--mode execute` pipeline: low-DDR, mailbox and PM/firmware
+ownership remain separate gates, not resolved by a successful CPU stop.
+The 2026-10-22 attempt has a versioned evidence ledger file next to this
+document; preserve the original physical log outside the repo.
