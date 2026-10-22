@@ -74,8 +74,12 @@ readback.** On a new, dedicated disposable JTAG session, the new
    `physical_readback/`, and `independent_receipt.json`
    if successful. **Reboot KV260 after any physical attempt.**
 
-**No B4l DDR physical PASS exists yet.** The Python and Tcl implementations
-are host/CI-verified only until operator repeats them on the actual board.
+**B4l DDR physical PASS is now user-attested (2026-10-22).** The operator
+reported the original B4l full XSDB staging and independent Python full
+readback markers. The evidence ledger is
+`P07_B4L_2026_10_22_REAL_27CORE_DDR_STAGE_PASS.json`. Physical **page-in,
+page-out and inference remain unverified**; this acceptance covers DDR
+provisioning and physical byte equality only.
 
 **Part C: actual 3-slot resident page-in, dirty writeback, and
 B3 acknowledgement-driven paging.** To implement after Part B is proven on
@@ -194,3 +198,90 @@ readback and missing/duplicate pass receipts. None accesses the KV260.
 Document independent physical PASS only from actual user-provided board
 logs and `independent_receipt.json` after running this new code locally.
 PR #49 remains draft/unmerged pending operator acceptance.
+
+## Physical DDR admission accepted; next same-milestone paging controller (2026-10-22)
+
+The operator physically ran the B4l 27-core DDR provisioning workflow and
+supplied:
+
+```text
+P07_B4L_ALL_27_DDR_CORE_READBACK_TCL_PASS=1
+P07_B4L_DDR_STAGE_TCL_DONE_REBOOT_REQUIRED=1
+P07_B4L_PHYSICAL_27_CORE_DDR_FULL_BYTE_EXACT_PASS=1
+P07_B4L_PHYSICAL_PL_PAGE_IN_EXECUTED=0
+P07_B4L_TRAINED_INFERENCE_EXECUTED=0
+P07_B4L_REBOOT_REQUIRED=1
+```
+
+**Physical DDR provisioning and independent 27-record full-readback is a
+user-attested PASS.** The original full readback files remain on the user's
+PC. This does not prove physical slot residency, page-out persistence, or
+trained inference. Do not retroactively count the staged page bytes as page
+engine transfers.
+
+**Continuation inside B4l, not another subphase:** Implemented new
+`software/p07/p07_b4l_page_probe.c` and
+`software/p07/p07_b4l_paging_probe_board.c`, using the *actual accepted*
+`p03_hw_page`, `p03_hw_debug_word`, `p03_hw_xilinx_io` and P03
+FPD128/shell identity controls. The new C11 controller performs **27
+hardware full page-ins plus one re-page-in** across 3 slots, checks the
+low resident CONFIG word against the corresponding original 512KiB DDR
+record after each page-in, modifies a low STATE word in slot 0,
+acknowledges **one genuine mutable-only dirty page-out** before evicting
+core 0 for core 3, compares the saved DDR word, then reloads core 0
+and verifies persistent state. Counters: **28 full page-ins; 1 mutable
+page-out; all 27 logical cores checked; 0 neural dispatch**. This is a
+bounded diagnostic mutation of the standalone DDR copy only; the frozen
+B2.4 host snapshot and accepted host bundle remain immutable.
+
+The board-side standalone C source publishes a separate **256-byte** mailbox
+with physical page-completion counts, page cycles, dirty-state DDR and
+resident readbacks and no-inference status. The independent Python verifier
+`scripts/p07_b4l_verify_page_probe.py` checks every field including
+reserved-zero words and prohibits a physical PASS based on synthetic
+host-native tests. The new isolated Vitis build sources are
+`software/p07/build_p07_b4l_page_probe.py` and
+`scripts/build_p07_b4l_page_probe.sh`.
+
+**This is NOT a physically tested A53 page probe or a user-built Vitis ELF
+at the time of this commit.** It requires a real Vitis 2025.2 build,
+independent ELF load/placement and XSA checks, an integrated same-session
+DDR stage **plus** ELF download/capture runner, and actual KV260 results
+before any hardware page-in/page-out success is declared. Any reboot
+between DDR stage and A53 launch would invalidate the prepared DDR
+contents. Retain the current physical ownership warnings and reboot
+recovery rules. The official MNIST TEST remains sealed.
+
+### Next PC development verification (no board access)
+
+```bash
+cd ~/Git/Thesis
+ git status --short
+ git fetch origin
+ git switch agent/v3-p07-b-scaled-physical-inference
+ git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4l_page_probe.py \
+  tests/test_p07_b4l_physical_model_deploy.py
+```
+
+For a real **offline-only** Vitis build using the original accepted P03
+FPD128 XSA, independently confirm the native gates first, then run:
+
+```bash
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L_BUILD_DIR="$HOME/p07_b4l_page_probe_build_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p07_b4l_page_probe.sh
+```
+
+Expected only after the user's actual Vitis build:
+`P07_B4L_REAL_VITIS_ELF_AND_MAP_BUILT=1` and
+`P07_B4L_PHYSICAL_BOARD_RUN_AUTHORIZED=0`. Verify real ELF symbol and
+LOAD sections before any destructive `dow` attempt. No board execution
+command is provided at this stage; the future physical pilot must re-stage
+all 27 original records and start the new ELF in the **same disposable
+JTAG session**.
