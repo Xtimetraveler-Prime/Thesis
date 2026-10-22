@@ -175,3 +175,62 @@ Only after operator verifies real A53 admission/mailbox should the team
 build B4l's 27-core context staging, paging, autonomous dispatch, and
 frozen B2 reference parity. A successful shell-only read proves
 transport/CPU startup, not trained inference.
+
+## First B4k physical run — XSDB `Already stopped` (2026-10-22)
+
+The operator executed the B4k physical runner and supplied its local
+`stage.txt` and final `a53_run.log` excerpts from evidence directory
+`/home/dna/Thesis_Evidence/p07_b4k_a53_20261022T201543Z`:
+
+```text
+PL_PROGRAM_PASS_A53_ELF_PENDING_REBOOT_REQUIRED
+P07_B4I_BOARD_ATTEMPT_FAIL_REBOOT_REQUIRED=1
+P07-B.4i: Already stopped
+```
+
+The `verify.log` file was absent. **This attempt is a failed A53 launch
+checkpoint, not a successful physical admission.** The stage proves that
+B4k passed the real PS takeover and physically programmed the accepted P03
+PL shell and verified VIO reset release. No A53 ELF download marker,
+DDR mailbox completion, or independent verifier PASS was supplied. The
+explicit physical A53 launch script failed instead.
+
+### Root cause and narrow remedy
+
+Prior B4i/B4j/B4k hardware stages successfully halt A53 #0, but
+`vivado/p07_b4i_xsdb_run.tcl` unconditionally issued a **second** `stop`
+when selecting A53 #0 immediately before `rst -processor`. AMD's XSDB
+`stop` command explicitly raises an error for an already-stopped target
+(UG1725). This is consistent with the observed `Already stopped` message.
+The user posted the last lines of the log rather than full XSDB command
+tracing, so the error's precise instruction location is inferred from the
+known original script. No change in DDR ownership or FPGA behavior is
+inferred.
+
+A B4k-targeted, backwards-compatible correction to the reusable
+`p07_b4i_xsdb_run.tcl` replaces the two A53 #0 `stop` sites
+(before reset and after capture) with a `b4i_require_a53_halted`
+helper. It accepts **only** the exact `Already stopped` XSDB response,
+logging `P07_B4I_A53_0_PRE_RESET_ALREADY_STOPPED_CONFIRMED=1` when
+observed. A successful fresh stop logs a different PASS marker. Any other
+error, including `The core is powered down`, a JTAG timeout, or a broader
+message that merely contains `Already stopped`, remains fatal **before
+reset, mailbox write, or ELF download**. Its post-capture stop is
+similarly fail-closed. No `dow`, `mrd`, `con`, address, ELF source,
+bitstream or previously accepted P03/Track A implementation was changed.
+
+The next host-native tests now execute this exact XSDB Tcl in a fake `tclsh`
+with isolated fake `targets`, `stop`, `rst`, `dow`, `mrd` and `con`
+commands. The positive paths require all markers, the mailbox output,
+and successful continuation; negative paths require that an unexpected
+halt error never reaches reset or ELF transfer. GitHub CI tests run with
+**no board access** and do not count as new physical acceptance.
+
+**Recovery:** the first failed session halted Linux/A53. Reboot or power
+cycle the KV260; never resume that OS instance. Keep the old evidence folder
+unchanged. Following the new native and preflight verifications, a separately
+operator-approved destructive B4k rerun must use a fresh evidence directory.
+All seven explicit approval flags are retained; **no operator note** is
+required. The same low-DDR/firmware ownership risks remain unresolved and
+must not be presented as proven safe by either the physical PL PASS or
+these simulated Tcl tests.
