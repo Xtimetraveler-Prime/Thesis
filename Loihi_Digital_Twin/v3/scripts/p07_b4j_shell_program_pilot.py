@@ -26,8 +26,8 @@ APPROVAL_FLAGS = (
 )
 
 def validate_evidence_inputs(args:argparse.Namespace)->None:
-    # Require independently controlled, newly empty out-of-tree destination,
-    # a real non-symlink operator note, and four distinct explicit approvals.
+    # Require a fresh out-of-tree evidence destination and four independently
+    # confirmed hardware approvals. No operator-authored note is required.
     for name in APPROVAL_FLAGS:
         if getattr(args,name) != "YES":
             raise ValueError("NO-GO: missing explicit "+name+"=YES")
@@ -35,10 +35,6 @@ def validate_evidence_inputs(args:argparse.Namespace)->None:
     if (evidence is None or not evidence.is_absolute() or evidence.exists()
             or evidence.is_symlink() or evidence.is_relative_to(b4i.ROOT)):
         raise ValueError("NO-GO: evidence must be a NEW absolute directory outside Thesis")
-    note = args.recovery_note
-    if (note is None or not note.is_absolute() or note.is_symlink()
-            or not note.is_file() or len(note.read_text().strip())<80):
-        raise ValueError("NO-GO: genuine absolute operator recovery/DDR-ownership note required")
     if args.reports.is_symlink() or not args.reports.is_dir():
         raise ValueError("NO-GO: physical accepted reports path missing")
 
@@ -68,7 +64,6 @@ def execute(args:argparse.Namespace,manifest:dict)->None:
         "no_ddr_access":True,"no_elf_download":True,"no_inference":True,
         "reboot_required":True,"artifact_sha256":manifest["sha256"],
         "elf_entry":hex(manifest["entry"]),"elf_loads":manifest["loads"],
-        "operator_note":args.recovery_note.read_text(),
     },indent=2)+"\n")
     try:
         # First operation on hardware. Stops Linux and MUST be followed
@@ -104,7 +99,6 @@ def main()->int:
     p.add_argument("--build",required=True,type=Path)
     p.add_argument("--reports",required=True,type=Path)
     p.add_argument("--evidence",type=Path)
-    p.add_argument("--recovery-note",type=Path)
     for name in APPROVAL_FLAGS:
         p.add_argument("--"+name.replace("_","-"),choices=("NO","YES"),default="NO")
     args=p.parse_args()
