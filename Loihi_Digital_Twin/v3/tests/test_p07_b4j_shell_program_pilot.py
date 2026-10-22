@@ -39,7 +39,7 @@ def args(tmp_path):
                     "Discard Linux, do not resume stopped kernels, power-cycle after. "
                     "No ELF/DDR access approved for this shell-only checkpoint.")
     reports=tmp_path/"reports"
-    reports.mkdir()
+    reports.mkdir(exist_ok=True)
     return SimpleNamespace(
         build=tmp_path/"build",reports=reports,
         dedicated_jtag_owner="YES",cpu_takeover_approved="YES",
