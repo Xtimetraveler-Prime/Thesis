@@ -41,7 +41,7 @@ static int board_debug(void *ctx,uint32_t slot,uint32_t bank,
                        int write,uint32_t *value) {
     uint32_t words[8]={0};
     (void)ctx;
-    if (!value||slot>=B4L_PROBE_SLOTS||bank>1u) return -1;
+    if (!value||slot>=B4L_PROBE_SLOTS||bank>5u||(write&&bank!=1u)) return -1;
     /* On a write retain the rest of the accepted resident word, especially
      * upper 32 state bits; write only low 32 as diagnostic mutation.
      */
