@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# P07-B.4i: genuinely link a new isolated read-only mailbox A53 ELF.
-# No XSDB, Vivado hardware-manager, PS/PL writes, resets, or inference.
+# P07-B.4l: genuinely link an isolated 27-core/3-slot A53 PL paging probe.
+# Build only; no XSDB, Vivado hardware manager, PS/PL writes, resets or inference.
 set -euo pipefail
 V3="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="${P07_B4L_BUILD_DIR:?set NEW absolute out-of-repository build dir}"
@@ -37,7 +37,7 @@ for name in p03_hw_adapter.h p03_hw_xilinx_io.h p03_runtime.h p03_mmio.h; do
 done
 (
   cd "$V3"
-  vitis -s software/p07/build_p07_b4l.py --xsa "$XSA" \
+  vitis -s software/p07/build_p07_b4l_page_probe.py --xsa "$XSA" \
     --workspace "$BUILD/vitis_workspace" --source-dir "$BUILD/source"
 ) 2>&1 | tee "$BUILD/vitis_build.log"
 ELF="$BUILD/vitis_workspace/p07_b4l_paging_probe.elf"
