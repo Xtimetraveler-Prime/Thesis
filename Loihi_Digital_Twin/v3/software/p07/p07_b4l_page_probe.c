@@ -19,7 +19,7 @@ static int page(const b4l_probe_ops *ops,void *ctx,b4l_probe_receipt *r,
     return B4L_PROBE_OK;
 }
 int b4l_probe_run(const b4l_probe_ops *ops, void *ctx,b4l_probe_receipt *r) {
-    uint32_t core,slot,expected,actual,changed,saved;
+    uint32_t core,slot,expected,actual,changed,saved,sample;
     if (!ops||!r||!ops->page||!ops->debug||!ops->ddr_read)
         return B4L_PROBE_FAIL;
     memset(r,0,sizeof(*r));
@@ -39,12 +39,23 @@ int b4l_probe_run(const b4l_probe_ops *ops, void *ctx,b4l_probe_receipt *r) {
         }
         if (page(ops,ctx,r,core,slot,0,0,110u+core))
             return B4L_PROBE_FAIL;
-        expected=0;
-        actual=0;
-        if (ops->ddr_read(ctx,base(core)+B4L_PROBE_CONFIG_OFFSET,&expected)
-                || ops->debug(ctx,slot,0,0,&actual))
-            return fail(r,140u+core);
-        if (actual!=expected) return fail(r,170u+core);
+        /* Independently sample the five immutable resident-bank images
+         * accepted by original P02/P05, not just potentially-zero config.
+         * Debug bank IDs differ from record-bank order (see P03 adapter).
+         */
+        static const uint32_t offsets[5]={
+            B4L_PROBE_CONFIG_OFFSET,B4L_PROBE_AXON_OFFSET,
+            B4L_PROBE_SYNAPSE_OFFSET,B4L_PROBE_ROUTE_DESCRIPTOR_OFFSET,
+            B4L_PROBE_ROUTE_OFFSET
+        };
+        static const uint32_t banks[5]={0u,2u,3u,4u,5u};
+        for (sample=0u;sample<5u;sample++) {
+            expected=0;actual=0;
+            if (ops->ddr_read(ctx,base(core)+offsets[sample],&expected)
+                    || ops->debug(ctx,slot,banks[sample],0,&actual))
+                return fail(r,140u+core);
+            if (actual!=expected) return fail(r,170u+core);
+        }
         r->last_core=core;r->last_slot=slot;
         ++r->unique_cores;
         if (core==0u) {
