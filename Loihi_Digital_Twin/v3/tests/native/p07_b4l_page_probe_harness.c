@@ -40,10 +40,12 @@ static int mock_page(void *ctx,uint32_t core,uint32_t slot,int out,int mutable,
 static int mock_debug(void *ctx,uint32_t slot,uint32_t bank,int write,
                       uint32_t *value) {
     mock *m=(mock *)ctx;
-    if (!value||slot>=3u||m->resident[slot]<0||bank>1u||
+    if (!value||slot>=3u||m->resident[slot]<0||bank>5u||
         (write&&bank!=1u))return -1;
     if(write)m->slot_state[slot]=*value;
-    else *value=(bank==0u)?m->slot_cfg[slot]:m->slot_state[slot];
+    else if(bank==0u)*value=m->slot_cfg[slot];
+    else if(bank==1u)*value=m->slot_state[slot];
+    else *value=0x22220000u+(uint32_t)m->resident[slot]*31u+bank;
     return 0;
 }
 static int mock_read(void *ctx,uint64_t physical,uint32_t *value) {
@@ -57,6 +59,10 @@ static int mock_read(void *ctx,uint64_t physical,uint32_t *value) {
     off%=B4L_PROBE_RECORD_BYTES;
     if(off==B4L_PROBE_CONFIG_OFFSET)*value=m->cfg[core];
     else if(off==B4L_PROBE_STATE_OFFSET)*value=m->state[core];
+    else if(off==B4L_PROBE_AXON_OFFSET)*value=0x22220000u+core*31u+2u;
+    else if(off==B4L_PROBE_SYNAPSE_OFFSET)*value=0x22220000u+core*31u+3u;
+    else if(off==B4L_PROBE_ROUTE_DESCRIPTOR_OFFSET)*value=0x22220000u+core*31u+4u;
+    else if(off==B4L_PROBE_ROUTE_OFFSET)*value=0x22220000u+core*31u+5u;
     else return -1;
     return 0;
 }
