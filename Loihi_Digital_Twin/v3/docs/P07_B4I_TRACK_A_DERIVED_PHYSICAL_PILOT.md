@@ -70,3 +70,50 @@ The driver contains separately gated `--mode execute` and six independent explic
 - JTAG server ownership, recovery power/reboot plan, saved evidence, and no sealed B2 TEST exposure.
 
 Even after a physical pilot **PASS**, this is **read-only shell admission**, NOT P07-B 27-core numerical inference. Full B2 27-context physical parity remains separately blocked pending reset/provenance/scaling work. Preserve draft PR #49; no merge without user approval.
+
+
+## 2026-10-22 historical Track A real ELF physical layout reconciliation
+
+The operator recovered the precise P07-A4 physically accepted file at
+`/tmp/v3_p07_a4_persistent_20261017T190943/vitis_workspace/p07_a4_board.elf`.
+A fresh independent `sha256sum` matched the recorded P07-A4 acceptance SHA
+`dcba738e0d9e78a6bf9fb61fba5ff23dcd1da68f8903fb1dbd33952b3dca38fb`.
+
+Independent *actual user-local* `aarch64-none-elf-readelf -W -h -l` comparison:
+
+| ELF | ELF entry | Physical PT_LOAD span, exclusive end | MemSiz | FileSiz |
+|---|---|---|---:|---:|
+| Accepted P07-A4 | 0x0 | [0x0,0x29D80) | 171392 | 0x13054 |
+| Current P07-B.4i | 0x0 | [0x0,0x23A40) | 145984 | 0xE054 |
+
+Both AArch64 ELF64 little-endian EXEC with one RWE LOAD starting at 0, and
+their identical mapped section types include `.mmu_tbl*`, `.bss`,
+`.heap`, and `.stack`. The B4i LOAD is a **strict subset** of the former
+P07-A4 physical LOAD span, 25,408 bytes smaller. This **resolves the
+layout-convention discrepancy**, not exclusivity of today's Linux/firmware
+low-DDR owners. The source of the 64-bit *live Linux XSDB* readback remains
+unresolved. B4i physical inference is still not accepted.
+
+## Tightened physical gate following the real ELF comparison
+
+B4i now uses new `vivado/p07_b4i_stop_and_width_gate.tcl` for the **first
+destructive takeover step**, instead of calling the older P03 width
+diagnostic directly. The old script catches and ignores `stop` errors; the
+new B4i-only script demands four A53 target selections and successful
+`stop` commands, disconnects on failure and refuses proceeding to P03
+programming unless both original historical raw widths are read: FPD
+`0x00000A00`, LPD `0x00000200`. It does not claim that a successful
+`stop` return itself establishes boot-firmware/DDR ownership; this remains
+a separately operator-assessed dedicated-session contract. It prints
+`P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1`.
+
+A physical run deliberately discards the Linux instance, unlike a safe
+in-place Linux accelerator operation. No original Track A/P03 sources or
+user-built B4i ELF were changed by this enhancement; the user can reuse
+the preflight-passing B4i ELF and exact SHA. The revised native synthetic
+tests verify that the stop gate fails closed on a failed stop command.
+
+**Do not equate an existing `xmutil unloadapp` with dedicated A53 ownership,
+or set `--low-ddr-exclusive YES` merely because ELF LOAD spans match.**
+Establish independent consent, backup, boot-firmware and exclusive CPU/DDR
+ownership, and recovery policy before operator-triggered physical mode.
