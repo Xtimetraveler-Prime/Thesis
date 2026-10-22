@@ -9,6 +9,7 @@
 #include "xil_io.h"
 #include "xil_printf.h"
 #include "p03_hw_adapter.h"
+#include "p03_mmio.h"
 #include "p03_hw_xilinx_io.h"
 #include "p07_b4l_page_probe.h"
 
