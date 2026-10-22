@@ -1,7 +1,7 @@
-# P07-B.4i hardware takeover prerequisite: HALT A53 #0..#3, then
+# P07-B.4i takeover: halt #0, halt or observe powered-down #1..#3, then
 # measure static FPD/LPD selectors. Dedicated disposable Linux session ONLY.
 # No PS/PL writes, no DDR or PL MMIO, no resume. Reboot after use.
-# Unlike historic P03 diagnostic, stop errors must NOT be swallowed.
+# Unexpected stop failures must NOT be swallowed; no core wakeup is attempted.
 if {$argc != 2 || [lindex $argv 0] ne "DEDICATED_DISCARD_LINUX_APPROVED"} {
     error "usage: <DEDICATED_DISCARD_LINUX_APPROVED> <local_xsdb_url>"
 }
@@ -33,6 +33,14 @@ set status [catch {
             error "P07-B.4i could not select $name: $target_error"
         }
         if {[catch {stop} stop_error]} {
+            # Linux PSCI may have left secondary A53 cores powered down.
+            # Only accept the exact XSDB response on #1/#2/#3. Never
+            # normalize other debugger errors to a presumed power state,
+            # and NEVER accept it for A53 #0 (the application CPU).
+            if {$i > 0 && [string trim $stop_error] eq "The core is powered down"} {
+                puts "P07_B4I_A53_${i}_POWERED_DOWN_OBSERVED=1"
+                continue
+            }
             error "P07-B.4i stop failed for $name: $stop_error"
         }
         puts "P07_B4I_A53_${i}_STOP_COMMAND_PASS=1"
@@ -48,7 +56,7 @@ set status [catch {
     puts "P07_B4I_PS_WIDTH_TARGET=$physical"
     b4i_width_read FPD 0xFD615000 0x00000A00
     b4i_width_read LPD 0xFF419000 0x00000200
-    puts "P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1"
+    puts "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1"
 } reason]
 if {$connected} {catch {disconnect}}
 if {$status} {
