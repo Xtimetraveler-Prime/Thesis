@@ -101,5 +101,5 @@ def test_board_firmware_uses_accepted_p03_live_page_debug():
     assert "B4L_PROBE_PAGE_OUTS 1u" in h
     assert "if (page(ops,ctx,r,0u,0u,1,1,101u))" in worker
     assert "if (saved!=r->state_dirty)" in worker
-    assert "27" in worker
+    assert "B4L_PROBE_CORES" in worker
     assert "p07_b4i_xsdb_run" not in shell
