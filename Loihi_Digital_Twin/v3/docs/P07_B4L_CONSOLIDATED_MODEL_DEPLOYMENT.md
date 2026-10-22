@@ -225,8 +225,9 @@ engine transfers.
 `p03_hw_page`, `p03_hw_debug_word`, `p03_hw_xilinx_io` and P03
 FPD128/shell identity controls. The new C11 controller performs **27
 hardware full page-ins plus one re-page-in** across 3 slots, checks the
-low resident CONFIG word against the corresponding original 512KiB DDR
-record after each page-in, modifies a low STATE word in slot 0,
+five independent resident static samples (CONFIG, AXON, SYNAPSE,
+ROUTE DESCRIPTOR and ROUTE) against their original P02 DDR words after
+each page-in, modifies a low STATE word in slot 0,
 acknowledges **one genuine mutable-only dirty page-out** before evicting
 core 0 for core 3, compares the saved DDR word, then reloads core 0
 and verifies persistent state. Counters: **28 full page-ins; 1 mutable
