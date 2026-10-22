@@ -33,12 +33,27 @@ proc b4i_ps_target {} {
     }
     error "P07-B.4i no physical DDR target"
 }
+# The preceding B4k/B4i pre-launch gate already halts A53 #0. XSDB
+# 'stop' raises 'Already stopped' for a successfully halted core.
+# Accept ONLY that exact state, never a powered-down primary or JTAG error.
+# No core resets, DDR writes or ELF loads are attempted on other failures.
+proc b4i_require_a53_halted {phase} {
+    if {[catch {stop} stop_error]} {
+        if {[string trim $stop_error] ne "Already stopped"} {
+            error "B4i A53 #0 stop failed ($phase): $stop_error"
+        }
+        puts "P07_B4I_A53_0_${phase}_ALREADY_STOPPED_CONFIRMED=1"
+    } else {
+        puts "P07_B4I_A53_0_${phase}_STOP_COMMAND_PASS=1"
+    }
+}
+
 set connected 0
 set result [catch {
     connect -url $server
     set connected 1
     targets -set -filter {name =~ "Cortex-A53 #0"}
-    stop
+    b4i_require_a53_halted PRE_RESET
     rst -processor
     b4i_ps_target
     dow -data $zeros 0x43FF0000
@@ -79,7 +94,7 @@ set result [catch {
     }
     file rename $scratch $output
     targets -set -filter {name =~ "Cortex-A53 #0"}
-    stop
+    b4i_require_a53_halted POST_CAPTURE
     if {!$complete} {error "P07-B.4i completion timeout; inspect mailbox"}
     puts "P07_B4I_MAILBOX_CAPTURED_64_BYTES=1"
     puts "P07_B4I_A53_INFERENCE_DISPATCHED=0"
