@@ -1,0 +1,62 @@
+{
+  "schema": "p07-b4i-2026-10-22-user-reported-real-vitis-and-preflight-v1",
+  "date": "2026-10-22",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "source": "user-pasted genuine local Vitis console, preflight output, readelf -W -h -l, artifact_sha256.txt; assistant did NOT read user's ELF bytes or access KV260",
+  "build_dir": "/home/dna/p07_b4i_build_20261022T161058Z",
+  "elf": "vitis_workspace/p07_b4i_mailbox_probe.elf",
+  "map": "vitis_workspace/p07_b4i_mailbox_probe.map",
+  "xsa_sha256": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+  "elf_sha256_user_local": "5fcdb0586564f3abef477804a54e0a87163c74654f9d15d1f9600ab2cb85e807",
+  "map_sha256_user_local": "4deb41d9f47bd397ced6a15027b83b74f1d689f25220088bce62e5d2363551ad",
+  "vitis_build_finished_successfully": true,
+  "local_actual_elf_and_map": true,
+  "offline_preflight_user_reported_pass": true,
+  "preflight_marker": "P07_B4I_REAL_ARTIFACT_OFFLINE_PREFLIGHT_PASS=1",
+  "elf_type": "ELF64 AArch64 EXEC little endian",
+  "entry_point": "0x0",
+  "pt_load_physical": [
+    {
+      "start": "0x0",
+      "end_exclusive": "0x23a40",
+      "memsz": 145984,
+      "filesz": 57428,
+      "includes": [
+        ".text",
+        ".rodata",
+        ".data",
+        ".bss",
+        ".heap",
+        ".stack",
+        ".mmu_tbl0",
+        ".mmu_tbl1",
+        ".mmu_tbl2"
+      ]
+    }
+  ],
+  "protected_p02_ddr_overlap": false,
+  "low_ddr_ownership_verified": false,
+  "kv260_linux_or_bootloader_low_ddr_owner_verified": false,
+  "mailbox_ddr_exclusive_owner_verified": false,
+  "a53_dedicated_takeover_authorized": false,
+  "accepted_P03_FPD128_bitstream_programming_authorized": false,
+  "physical_A53_ELF_download_authorized": false,
+  "physical_inference_authorized": false,
+  "linux_busybox_fpd_lpd_raw_same_boot": [
+    "0x00000A00",
+    "0x00000200"
+  ],
+  "xsdb_psu_fpd_lpd_raw_same_boot": [
+    "0x00002560",
+    "0x00000512"
+  ],
+  "xsdb_linux_discrepancy_unresolved": true,
+  "track_A_JTAG_standalone_takeover_successful_historical": true,
+  "notes": [
+    "User states intent to normal-reboot KV260 and run sudo xmutil unloadapp; this does NOT relinquish A53/Linux or low-DDR ownership.",
+    "GNU readelf exposes actual PT_LOAD but not the Linux, TF-A, bootloader, and reserved-memory ownership.",
+    "Dedicated Track A JTAG takeover is precedent, not physical-memory exclusivity proof; obtain separate operator-controlled destructive-session approval and verify owners first.",
+    "B4i admission mailbox is read-only P03 shell observation; it is not trained B2 inference.",
+    "Preserve accepted P03/P05/Track A and frozen P06-B2/official TEST; leave PR49 draft and unmerged."
+  ]
+}
