@@ -1,4 +1,4 @@
-name: P07-B.4i isolated A53 physical pilot native safety
+name: P07-B.4i/B.4j isolated JTAG physical gates native safety
 on:
   push:
     paths:
@@ -10,6 +10,8 @@ on:
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_xsdb_run.tcl'
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_stop_and_width_gate.tcl'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4i_physical_pilot.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4j_shell_program_pilot.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4j_shell_program_pilot.py'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
     paths:
@@ -21,6 +23,8 @@ on:
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_xsdb_run.tcl'
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_stop_and_width_gate.tcl'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4i_physical_pilot.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4j_shell_program_pilot.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4j_shell_program_pilot.py'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
 permissions:
@@ -36,4 +40,4 @@ jobs:
       - run: python -m pip install pytest
       - name: Synthetic-only no-board safety gates
         working-directory: Loihi_Digital_Twin/v3
-        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py
+        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py tests/test_p07_b4j_shell_program_pilot.py
