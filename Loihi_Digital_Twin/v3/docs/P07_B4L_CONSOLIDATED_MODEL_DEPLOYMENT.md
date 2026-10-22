@@ -286,3 +286,117 @@ LOAD sections before any destructive `dow` attempt. No board execution
 command is provided at this stage; the future physical pilot must re-stage
 all 27 original records and start the new ELF in the **same disposable
 JTAG session**.
+
+## Integrated same-session paging probe and launch implementation (2026-10-22)
+
+**Implemented, host-native CI PASSED, real Vitis build and new KV260
+physical run NOT YET PERFORMED.** The assembled paging deliverable is still
+part of the single **P07-B.4l** milestone, not an additional numbered phase.
+
+New files:
+- `vivado/p07_b4l_xsdb_page_probe_run.tcl` — idempotent already-stopped
+  primary A53 handling, processor reset, exactly 256 zero mailbox bytes,
+  distinct B4l ELF `dow`/continue, bounded physical PSU/APU mailbox
+  polling and 256-byte capture. Never dispatches inference itself.
+- `scripts/p07_b4l_physical_paging.py` — default offline, verifies original
+  33-asset B2.4 freeze and accepted B4l.1 27×512KiB bundle, accepted
+  P03 XSA/BIT/LTX and real Vitis ELF+map/physical PT_LOAD. Its optional
+  destructive execute mode does the whole DDR stage **and** A53 launch in
+  **one uninterrupted JTAG session**. It requires independent full
+  physical 14MiB DDR readback before any A53 ELF download.
+- `scripts/p07_b4l_verify_page_probe.py` — independently validates
+  exactly 64 little-endian uint32 mailbox words (256 bytes): B4l unique
+  identity; accepted FPD128; 27 distinct cores; 28 page-ins; exactly
+  one mutable-only dirty page-out; the changed low STATE word in real
+  DDR and reloaded URAM; nonzero PL page-cycle count; >=29 PL page
+  completions; no inference; distinct completion cookie.
+- `software/p07/build_p07_b4l_page_probe.py`,
+  `scripts/build_p07_b4l_page_probe.sh` — separate Vitis 2025.2
+  A53 ELF, only when invoked on user's AMD-tools PC. Reuses genuine
+  accepted P03 routed XSA. Never modifies the physically accepted
+  B4i ELF, B2.4 model, or original P03 RTL.
+- `tests/test_p07_b4l_page_probe.py`,
+  `tests/native/p07_b4l_page_probe_harness.c`, and
+  `tests/test_p07_b4l_physical_paging.py` — strict native C11
+  controller/dirty-save/failure tests, real Tcl simulated with tclsh,
+  real ELF parser validation against mocked readelf, integrated
+  stage/launch precondition and failure tests. These synthetic tests
+  are explicitly **not** new physical PL paging evidence.
+
+The paging controller checks five original static DDR banks per core:
+CONFIG at 0x1000, AXON at 0x7000, SYNAPSE at 0xF000,
+ROUTE DESCRIPTOR at 0x4F000, ROUTE at 0x50000. The original
+DDR data is unchanged on the PC. The one deliberate test-only
+STATE mutation is the low 32 bits of core0 STATE bank word0
+(offset 0x5000, XOR 0x100), and it is persisted to the board's
+working DDR copy through the actual P03 mutable-only page engine.
+Do not use that mutated board DDR copy for numerical inference;
+the frozen images must be restaged again for future experiments.
+
+A standalone ELF PT_LOAD at physical address 0 is still an
+intentional destructive JTAG experiment. The offline checker
+requires entry 0, a single LOAD and a span contained within the
+independently accepted historical Track A [0x0,0x29D80)
+envelope; it rejects arbitrary memory placement. The ELF SHA
+must be explicitly supplied from the user-local actual build.
+The word `exclusive` in the Tcl approval label is a *human
+authorization*, **not independent proof of low-DDR ownership**.
+It is not appropriate for live-Linux JTAG injection.
+
+### User PC check before the next board run
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+git rev-parse HEAD
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4l_page_probe.py \
+  tests/test_p07_b4l_physical_paging.py \
+  tests/test_p07_b4l_physical_model_deploy.py
+
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L_BUILD_DIR="$HOME/p07_b4l_page_probe_build_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p07_b4l_page_probe.sh
+```
+
+A successful genuine Vitis build should produce ELF and linker map under
+`$P07_B4L_BUILD_DIR/vitis_workspace/p07_b4l_paging_probe.{elf,map}`.
+The output `P07_B4L_REAL_VITIS_ELF_AND_MAP_BUILT=1` is a **build**
+acceptance only. It is not yet physically executable until the
+offline inspector and the operator's real physical-session conditions
+are satisfied. After the real build, run **PC-only** preflight:
+
+```bash
+export P07_B4L_ELF="$P07_B4L_BUILD_DIR/vitis_workspace/p07_b4l_paging_probe.elf"
+export P07_B4L_ELF_SHA="$(sha256sum "$P07_B4L_ELF" | awk '{print $1}')"
+export P07_B4I_BUILD_DIR="/home/dna/p07_b4i_build_20261022T161058Z"
+export P07_B4L1_FREEZE="$PWD/artifacts/p06_b24_frozen_1000"
+python scripts/p07_b4l_physical_paging.py \
+  --mode preflight \
+  --frozen-dir "$P07_B4L1_FREEZE" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --reports "$P07_B4L_REPORTS" \
+  --b4i-build "$P07_B4I_BUILD_DIR" \
+  --elf "$P07_B4L_ELF" \
+  --expected-elf-sha "$P07_B4L_ELF_SHA"
+```
+
+Expected **only on real identity-valid host artifacts**:
+`P07_B4L_REAL_PAGING_ELF_SOURCE_DDR_P03_OFFLINE_PREFLIGHT_PASS=1`,
+`P07_B4L_PAGE_PROBE_OFFLINE_ONLY_NO_BOARD_ACCESS=1`,
+`P07_B4L_PHYSICAL_PAGING_EXECUTED=0`.
+
+The future physical B4l paging run must stage original contexts again
+**inside the same dedicated disposable JTAG session**. **Do not run
+`--mode execute` until the actual new ELF/map and complete offline
+safety preflight have passed on the operator's PC.** On success, the
+independent verifier should prove actual P03 page-engine transfers,
+not mere XSDB DDR copy. As before, the board must be rebooted after any
+physical attempt. No handwritten operator note is required.
