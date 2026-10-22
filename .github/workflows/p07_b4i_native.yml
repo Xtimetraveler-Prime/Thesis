@@ -27,6 +27,9 @@ on:
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_verify_page_probe.py'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_page_probe.py'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4l_page_probe_harness.c'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_physical_paging.py'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4l_xsdb_page_probe_run.tcl'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_physical_paging.py'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
     paths:
@@ -55,6 +58,9 @@ on:
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_verify_page_probe.py'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_page_probe.py'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4l_page_probe_harness.c'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4l_physical_paging.py'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4l_xsdb_page_probe_run.tcl'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4l_physical_paging.py'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
 permissions:
@@ -70,4 +76,4 @@ jobs:
       - run: python -m pip install pytest
       - name: Synthetic-only no-board safety gates
         working-directory: Loihi_Digital_Twin/v3
-        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py tests/test_p07_b4j_shell_program_pilot.py tests/test_p07_b4k_standalone_admission.py tests/test_p07_b4l1_stage_frozen_27core.py tests/test_p07_b4l_physical_model_deploy.py tests/test_p07_b4l_page_probe.py
+        run: PYTHONPATH="$PWD/src" python -m pytest -q -rs tests/test_p07_b4i_physical_pilot.py tests/test_p07_b4j_shell_program_pilot.py tests/test_p07_b4k_standalone_admission.py tests/test_p07_b4l1_stage_frozen_27core.py tests/test_p07_b4l_physical_model_deploy.py tests/test_p07_b4l_page_probe.py tests/test_p07_b4l_physical_paging.py
