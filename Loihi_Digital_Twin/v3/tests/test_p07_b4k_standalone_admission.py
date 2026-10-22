@@ -109,7 +109,7 @@ def test_standalone_physical_stages_and_independent_mailbox(tmp_path,capsys):
             (a.evidence/"p07_b4k_mailbox_64.bin").write_bytes(mailbox())
             destination.write_text("P07_B4I_MAILBOX_CAPTURED_64_BYTES=1\n")
         elif len(calls)==4:
-            assert "p07_b4i_verify_mailbox.py" in argv
+            assert "scripts/p07_b4i_verify_mailbox.py" in argv
             assert "--mailbox" in argv
             destination.write_text(
                 "P07_B4I_PHYSICAL_READONLY_ADMISSION_PASS=1\n"
