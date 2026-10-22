@@ -152,3 +152,45 @@ the full physical `--mode execute` pipeline: low-DDR, mailbox and PM/firmware
 ownership remain separate gates, not resolved by a successful CPU stop.
 The 2026-10-22 attempt has a versioned evidence ledger file next to this
 document; preserve the original physical log outside the repo.
+
+## 2026-10-22 B4i second real board attempt: STOP + FPD128/LPD128 PASS
+
+The operator **rebooted the KV260, ran `sudo xmutil unloadapp`, and
+independently executed the revised B4i stop/width gate** using physical
+XSDB/JTAG. The real PC terminal reported:
+
+```text
+P07_B4I_A53_0_STOP_COMMAND_PASS=1
+P07_B4I_A53_1_STOP_COMMAND_PASS=1
+P07_B4I_A53_2_POWERED_DOWN_OBSERVED=1
+P07_B4I_A53_3_POWERED_DOWN_OBSERVED=1
+P07_B4I_PS_WIDTH_TARGET=PSU
+P03_2C_PS_FPD_AXIFS_RAW=0x00000A00
+P03_2C_PS_FPD_HPM0_WIDTH_BITS=128
+P03_2C_PS_LPD_AXIFS_RAW=0x00000200
+P03_2C_PS_LPD_HPM0_WIDTH_BITS=128
+P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1
+P07_B4I_DISCARD_PREVIOUS_LINUX_AND_REBOOT_AFTER_TEST=1
+```
+
+**Accepted scope:** the new gate handled naturally powered-down secondary
+cores without masking unrelated halt errors; all four A53 states accounted,
+PSU selected, and both historical FPD/LPD raw width readings 128-bit.
+This is a **real KV260 CPU/PS width checkpoint PASS**, not a synthetic
+receipt. Full raw log is local to user; the repository stores an explicitly
+user-reported transcript evidence ledger at
+`P07_B4I_2026_10_22_PHYSICAL_TAKEOVER_WIDTH_PASS_LEDGER.json`.
+
+**Not established:** no A53 ELF download/execute, PL bitstream programming,
+DDR mailbox read/write, neural inference, or proof of exclusive early
+boot-firmware/low DDR ownership. The earlier contradictory XSDB
+`0x00002560`/`0x00000512` observations remain distinct historical
+evidence; this successful dedicated-run read shows the accepted raw values
+**for this session**, not the cause of the earlier discrepancy.
+
+**Next sub-milestone P07-B.4j:** a separately operator-approved,
+rebooted, disposable Linux/JTAG session that re-runs these checks and
+programs the SHA-pinned accepted P03.2c BIT/LTX with the original VIO
+reset-release verification. This shell-only next step explicitly does
+**not** launch ELF or touch DDR. See `P07_B4J_SHELL_PROGRAM_MILESTONE.md`.
+Reboot after all A53 takeover attempts; never resume halted Linux.
