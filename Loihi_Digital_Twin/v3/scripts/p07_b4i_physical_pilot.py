@@ -116,6 +116,40 @@ def preflight(build:Path,reports:Path,readelf:str="aarch64-none-elf-readelf",
     return {"sha256":hashes,"entry":entry,"loads":spans,
             "low_ddr_risk":any(lo<0x100000 and hi>0 for lo,hi in spans)}
 
+def verify_takeover_log(log:str)->dict[int,str]:
+    """Fail-closed, exact-line B4i hardware takeover transcript admission.
+
+    Core #0 MUST be halted. Secondary cores must each be halted OR be
+    reported powered down, never both, never a guessed state. No other
+    debugger halt failure qualifies. The external XSDB process must also
+    have returned exit code 0 (enforced by log_call).
+    """
+    lines=log.splitlines()
+    required=(
+        "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+        "P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
+        "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
+        "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
+        "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128",
+        "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1",
+    )
+    for marker in required:
+        if lines.count(marker)!=1:
+            raise ValueError("NO-GO: missing or duplicate takeover marker: "+marker)
+    if "P07_B4I_A53_0_POWERED_DOWN_OBSERVED=1" in lines:
+        raise ValueError("NO-GO: A53 #0 cannot be powered down")
+    if "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in lines:
+        raise ValueError("NO-GO: width/stop script reported failure")
+    observed={0:"halted"}
+    for i in range(1,4):
+        halted=lines.count(f"P07_B4I_A53_{i}_STOP_COMMAND_PASS=1")
+        down=lines.count(f"P07_B4I_A53_{i}_POWERED_DOWN_OBSERVED=1")
+        if (halted,down) not in ((1,0),(0,1)):
+            raise ValueError(f"NO-GO: ambiguous or missing A53 #{i} state")
+        observed[i]="halted" if halted else "powered_down"
+    return observed
+
+
 def log_call(args:list[str],dest:Path)->None:
     with dest.open("x",encoding="utf-8") as fh:
         proc=subprocess.Popen(args,cwd=V3,stdout=subprocess.PIPE,
@@ -164,15 +198,9 @@ def run_physical(args:argparse.Namespace,manifest:dict)->None:
     log_call(["xsdb","vivado/p07_b4i_stop_and_width_gate.tcl",
               "DEDICATED_DISCARD_LINUX_APPROVED",
               "tcp:127.0.0.1:3121"],evidence/"ps_width.log")
-    width=(evidence/"ps_width.log").read_text()
-    for required in ("P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
-                     "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
-                     "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
-                     "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128",
-                     "P07_B4I_A53_CORES_STOPPED_AND_PSWIDTH128_GATE_PASS=1",
-                     *[f"P07_B4I_A53_{i}_STOP_COMMAND_PASS=1" for i in range(4)]):
-        if required not in width:
-            raise RuntimeError("NO-GO: historical raw PS width missing; reboot required")
+    cores=verify_takeover_log((evidence/"ps_width.log").read_text())
+    print("P07_B4I_TAKEOVER_CORE_STATES="+repr(cores))
+    print("P07_B4I_TAKEOVER_WIDTH_GATE_ADMITTED=1")
     reports=args.reports
     log_call(["vivado","-mode","batch","-source",
               "vivado/p03_2c_program_bitstream.tcl","-tclargs",
