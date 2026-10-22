@@ -123,3 +123,41 @@ def test_run_mode_defaults_to_preflight():
     assert 'default="preflight"' in text
     assert "P07_B4I_OFFLINE_ONLY_NO_BOARD_ACCESS=1" in text
     assert "P07_B4I_PHYSICAL_A53_LAUNCH_AUTHORIZED=0" in text
+
+
+def test_build_shell_parses_without_vitis_or_board():
+    import subprocess
+    run=subprocess.run(["bash","-n",str(ROOT/"scripts/build_p07_b4i.sh")],
+                       capture_output=True,text=True)
+    assert run.returncode==0,run.stderr
+
+def test_xsdb_tcl_without_dedicated_owner_never_connects():
+    import subprocess
+    import shutil
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    tcl=ROOT/"vivado/p07_b4i_xsdb_run.tcl"
+    run=subprocess.run(["tclsh",str(tcl)],capture_output=True,text=True)
+    assert run.returncode!=0
+    assert "DEDICATED_A53_DDR_OWNER_VERIFIED" in run.stderr
+
+def test_b4i_c_builds_with_standalone_bsp_interface_stubs(tmp_path):
+    import subprocess
+    import shutil
+    if shutil.which("gcc") is None:
+        pytest.skip("GCC unavailable")
+    (tmp_path/"xil_cache.h").write_text(
+        "typedef unsigned long INTPTR;\n"
+        "void Xil_DCacheFlushRange(INTPTR, unsigned);\n"
+    )
+    (tmp_path/"xil_printf.h").write_text(
+        "int xil_printf(const char*, ...);\n"
+    )
+    command=[
+        "gcc","-std=c11","-fsyntax-only","-Wall","-Wextra","-Werror",
+        "-I",str(tmp_path),"-I",str(ROOT/"software/p07/include"),
+        "-I",str(ROOT/"software/p03/include"),
+        str(ROOT/"software/p07/p07_b4i_readonly_mailbox_board.c")
+    ]
+    result=subprocess.run(command,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
