@@ -234,3 +234,41 @@ All seven explicit approval flags are retained; **no operator note** is
 required. The same low-DDR/firmware ownership risks remain unresolved and
 must not be presented as proven safe by either the physical PL PASS or
 these simulated Tcl tests.
+
+## Accepted B4k physical success, second real attempt (2026-10-22)
+
+Following the exact-string `Already stopped` Tcl correction and native
+regression acceptance, the operator performed a dedicated real KV260 B4k
+standalone run and supplied this complete success-marker tail:
+
+```text
+P07_B4I_A53_DOWNLOADED=1
+P07_B4I_A53_0_POST_CAPTURE_STOP_COMMAND_PASS=1
+P07_B4I_MAILBOX_CAPTURED_64_BYTES=1
+P07_B4I_A53_INFERENCE_DISPATCHED=0
+P07_B4I_BOARD_CAPTURE_READY_FOR_INDEPENDENT_VERIFIER=1
+P07_B4I_REBOOT_REQUIRED=1
+P07_B4I_PHYSICAL_READONLY_ADMISSION_PASS=1
+P07_B4I_TRAINED_B2_INFERENCE_VERIFIED=0
+P07_B4I_PHYSICAL_INFERENCE_AUTHORIZED=0
+P07_B4K_REAL_STANDALONE_A53_ADMISSION_PASS=1
+P07_B4K_TRAINED_27_CORE_INFERENCE_EXECUTED=0
+P07_B4K_REBOOT_REQUIRED=1
+```
+
+**P07-B.4k physical read-only standalone A53 admission is now
+USER-ATTESTED PASS**, distinct from the earlier failed attempt. The actual
+ELF was downloaded, the board emitted a completion mailbox, 64 bytes were
+captured and the independent strict verifier returned PASS. Preserve the
+user's original B4k physical logs; the assistant did not access their bytes.
+This verifies standalone execution and MMIO shell admission **only**, not
+27-core trained B2 dispatch or neuron-state numeric parity. Firmware/
+Linux physical low-DDR exclusivity remains unproven outside the experimental
+destructive session, and no ordinary live-Linux injection is approved.
+
+The separate receipt is
+`docs/P07_B4K_2026_10_22_PHYSICAL_STANDALONE_ACCEPTANCE_LEDGER.json`.
+**Next:** P07-B.4l1, byte-exact host-only staging of the original frozen
+27×512KiB B2.4 P02 contexts, using the unchanged frozen original 33-file
+SHA verifier. This is not a new physical test; see
+`docs/P07_B4L1_FROZEN_27CORE_HOST_STAGING.md`.
