@@ -79,15 +79,22 @@ def test_execution_missing_consent_performs_no_hardware(tmp_path):
             pilot.run_physical(args,{"sha256":{},"entry":0,"loads":[(0,0x200)],"low_ddr_risk":True})
     assert not args.evidence.exists()
 
-def test_all_consents_still_require_board_note(tmp_path):
+def test_no_operator_note_required_while_six_flags_remain_mandatory(tmp_path):
+    evidence=tmp_path/"new_evidence"
     args=SimpleNamespace(
         dedicated_jtag_owner="YES",cpu_takeover_approved="YES",
         low_ddr_exclusive="YES",mailbox_overwrite_approved="YES",
         pl_program_approved="YES",reboot_recovery_approved="YES",
-        recovery_note=None,evidence=tmp_path/"NEVER_CREATE")
-    with patch.object(pilot,"log_call",side_effect=AssertionError("hardware called")):
-        with pytest.raises(ValueError,match="provenance note"):
-            pilot.run_physical(args,{"sha256":{},"entry":0,"loads":[(0,0x200)],"low_ddr_risk":True})
+        evidence=evidence)
+    manifest={"sha256":{"elf":"host-only-test"},
+              "entry":0,"loads":[(0,145984)],"low_ddr_risk":True}
+    with patch.object(pilot.subprocess,"run",return_value=SimpleNamespace(returncode=0)):
+        with patch.object(pilot,"log_call",side_effect=RuntimeError("mock stop; no hardware called")):
+            with pytest.raises(RuntimeError,match="mock stop"):
+                pilot.run_physical(args,manifest)
+    assert evidence.is_dir()
+    assert "host-only-test" in (evidence/"manifest.txt").read_text()
+    assert "--recovery-note" not in (ROOT/"scripts/p07_b4i_physical_pilot.py").read_text()
 
 def test_distinct_stage_identity_negative(tmp_path):
     for name in build.SOURCES+build.HEADERS:
