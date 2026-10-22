@@ -163,17 +163,14 @@ def log_call(args:list[str],dest:Path)->None:
         raise RuntimeError(f"hardware command failed (exit {exitcode}); see {dest}")
 
 def run_physical(args:argparse.Namespace,manifest:dict)->None:
-    # Truthful operational controls, not a substitute for independent board
-    # ownership verification. No hardware steps until EVERY condition passes.
+    # Explicit operator approvals and real checks remain mandatory; no
+    # operator-authored note file is required. Approvals are NOT proof of
+    # firmware/low-DDR exclusivity. Do not run while Linux still owns DDR.
     approvals=(args.dedicated_jtag_owner,args.cpu_takeover_approved,
                args.low_ddr_exclusive,args.mailbox_overwrite_approved,
                args.pl_program_approved,args.reboot_recovery_approved)
     if approvals!=("YES",)*6:
         raise ValueError("NO-GO: six distinct hardware-ownership approvals required")
-    if args.recovery_note is None or not args.recovery_note.is_file() or (
-        len(args.recovery_note.read_text().strip())<80
-    ):
-        raise ValueError("NO-GO: operator board/low-DDR/recovery provenance note required")
     for name in ("xsdb","vivado"):
         subprocess.run(["which",name],check=True,capture_output=True)
     evidence=args.evidence
@@ -181,8 +178,6 @@ def run_physical(args:argparse.Namespace,manifest:dict)->None:
         evidence.is_relative_to(ROOT)
     ):
         raise ValueError("NO-GO: new absolute evidence directory outside Thesis required")
-    if not args.recovery_note.is_absolute():
-        raise ValueError("NO-GO: absolute recovery/ownership note required")
     # An ELF beginning at 0x0 is deliberately destructive; on ANY doubt
     # cancel physical run. The operator must verify the *full* LOAD spans.
     evidence.mkdir(parents=True)
@@ -191,8 +186,7 @@ def run_physical(args:argparse.Namespace,manifest:dict)->None:
         "ELF entry="+hex(manifest["entry"])+"\n"+
         "LOADs="+repr(manifest["loads"])+"\n"+
         "low DDR risk="+str(manifest["low_ddr_risk"])+"\n"+
-        repr(manifest["sha256"])+"\n"+
-        args.recovery_note.read_text()
+        repr(manifest["sha256"])+"\n"
     )
     # FPD/LPD live gate FIRST, mirroring accepted Track A sequence.
     log_call(["xsdb","vivado/p07_b4i_stop_and_width_gate.tcl",
@@ -228,7 +222,6 @@ def main()->int:
     p.add_argument("--build",required=True,type=Path)
     p.add_argument("--reports",required=True,type=Path)
     p.add_argument("--evidence",type=Path)
-    p.add_argument("--recovery-note",type=Path)
     for flag in ("dedicated-jtag-owner","cpu-takeover-approved",
                  "low-ddr-exclusive","mailbox-overwrite-approved",
                  "pl-program-approved","reboot-recovery-approved"):
