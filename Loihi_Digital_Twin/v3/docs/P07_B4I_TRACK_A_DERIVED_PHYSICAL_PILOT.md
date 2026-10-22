@@ -60,7 +60,7 @@ Expected marker after a genuinely successful local build: `P07_B4I_REAL_VITIS_EL
 
 ## Physical pilot — designed, NOT authorized by these offline steps
 
-The driver contains separately gated `--mode execute` and six independent explicit approvals for dedicated JTAG ownership, A53 takeover, *entire PT_LOAD low DDR exclusive ownership*, mailbox overwrite, accepted PL programming, and reboot/recovery. It also requires a meaningful user-owned absolute-path recovery/board-state note and a new evidence directory outside the repository. Missing information or nonmatching PS width **fails before programming**.
+The driver contains separately gated `--mode execute` and six independent explicit approvals for dedicated JTAG ownership, A53 takeover, *entire PT_LOAD low DDR exclusive ownership*, mailbox overwrite, accepted PL programming, and reboot/recovery. It requires a new evidence directory outside the repository, but **no handwritten operator/recovery note file**. Explicit flags do not themselves establish memory exclusivity. Missing information or nonmatching PS width **fails before programming**.
 
 **Do not execute it yet.** A new, operator-approved physical session must first establish:
 - The OS/Linux instance will be discarded; no CPU/Linux owner resumes afterward.
@@ -194,3 +194,16 @@ programs the SHA-pinned accepted P03.2c BIT/LTX with the original VIO
 reset-release verification. This shell-only next step explicitly does
 **not** launch ELF or touch DDR. See `P07_B4J_SHELL_PROGRAM_MILESTONE.md`.
 Reboot after all A53 takeover attempts; never resume halted Linux.
+
+## Note-free hardware approval workflow (2026-10-22)
+
+At the operator's request, the B4i driver no longer accepts or requires
+`--recovery-note`, and no operator-authored note file is necessary for
+future B4i/B4j sessions. The operator still explicitly approves the
+relevant destructive operations using flags, and the tools enforce artifact
+preflight, A53 state/PS width gate, unique out-of-repo evidence directory,
+bitstream/VIO result, and standalone mailbox acceptance. A declared
+`--low-ddr-exclusive YES` is an assertion by the operator, **not** a
+measurement of firmware/Linux DDR ownership. The B4i ELF download is
+still blocked operationally until that ownership has genuinely been
+established. The B4j shell-only run is the next physical checkpoint.
