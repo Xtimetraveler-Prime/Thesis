@@ -8,6 +8,7 @@ on:
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4i_physical_pilot.py'
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4i_verify_mailbox.py'
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_xsdb_run.tcl'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_stop_and_width_gate.tcl'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4i_physical_pilot.py'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
@@ -18,6 +19,7 @@ on:
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4i_physical_pilot.py'
       - 'Loihi_Digital_Twin/v3/scripts/p07_b4i_verify_mailbox.py'
       - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_xsdb_run.tcl'
+      - 'Loihi_Digital_Twin/v3/vivado/p07_b4i_stop_and_width_gate.tcl'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4i_physical_pilot.py'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
