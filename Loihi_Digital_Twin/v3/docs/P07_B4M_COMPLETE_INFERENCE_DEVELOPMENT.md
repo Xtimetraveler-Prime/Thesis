@@ -1,89 +1,109 @@
-# P07-B.4m — complete physical inference development
+# P07-B.4m — consolidated full 26-tick inference implementation
 
-**Status:** B4m.1 implemented in portable C11 / synthetic original-P03
-native harness; real trained FPGA inference NOT yet attempted or accepted.
-**Branch:** `agent/v3-p07-b-scaled-physical-inference`; draft PR #49 stays
-unmerged. Frozen original B2.4, accepted P03 BIT/XSA, B4l ELF, and all
-real B4l acceptance evidence remain immutable. Official MNIST TEST SEALED.
+**Current status:** All primary software components for the new full
+26-tick physical inference **candidate** have been implemented in the same
+P07-B.4m milestone. They require native regression acceptance, a genuine
+operator-local Vitis 2025.2 ELF build, immutable frozen TRAIN-derived image
+packaging, explicit low-DDR ownership review, and real KV260 physical
+acceptance. **No real B4m complete 26-tick physical inference has been run
+or numerically accepted.** P07-B and P07-B.5/B.6 remain open. No additional
+micro-milestones will be opened for these implementation workstreams.
 
-## Accepted entry boundary
+## Frozen physical baseline entering this milestone
 
-P07-B.4l's original, separately accepted KV260 experiment successfully
-programmed the original P03 shell, physically staged/read back 27 frozen
-512KiB contexts and genuine 16KiB registered-axon descriptor, and
-ran **27 actual P03 dispatches / 27 page-ins / 24 dirty page-outs**.
-Its first B3 barrier intentionally remained **PENDING** and its
-256-byte independently decoded mailbox reported **zero captured P03
-packet words**, no external ingress, no NEXT commits, no barrier
-acknowledgments, and no trained 26-tick parity.
+Accepted real KV260 P07-B.4l first epoch:
+- immutable original 27×512 KiB trained P02 contexts physically staged
+  and byte-exact readback, plus original 16 KiB binding descriptor;
+- original P03 FPD/LPD128 BIT/VIO and standalone A53 first epoch;
+- **27 physical P03 dispatches, 27 page-ins, 24 dirty page-outs**;
+- **first global barrier pending and deliberately UNACKNOWLEDGED**;
+- empty CURRENT banks, **0 physically captured spike packets**,
+  no user image, no routed NEXT commit, no later tick, no numerical parity.
 
-## B4m.1 — physical packet-to-NEXT-to-global barrier coordinator
+This evidence and the physically accepted B4l ELF remain unchanged.
 
-**Implemented**:
-- `software/p07/include/p07_b4m_epoch_bridge.h`
-- `software/p07/p07_b4m_epoch_bridge.c`
-- `tests/native/p07_b4m_epoch_bridge_harness.c`
-- `tests/test_p07_b4m_epoch_bridge.py`
-- Expanded `.github/workflows/p07_b4i_native.yml` to run new native tests.
+## New full-inference implementation in the same milestone
 
-The reusable C11 function `p07_b4m_commit_pending_barrier` is called
-only with an already pending and fully completed original B3c2
-27-source P03 epoch. It accepts the actual source-indexed packet
-buffers captured by original B3c2, separately supplied canonical
-source-spike evidence and immutable B1.2 route binding, creates
-the original independently verified P06B13R1 wire using B3c1/B2b,
-prepares and commits physical NEXT writes using original B3c3,
-and **only after successful completed writes and quiescence** calls
-original B3c2/B3a barrier ACK. On any rejection or partial physical
-failure it poisons the scheduler/pager, never returning a positive
-barrier receipt. The user-facing return receipt distinguishes
-captured packet count, originating spike count, inserted NEXT
-records and newly acknowledged barrier.
+| Component | New code | Scope |
+| --- | --- | --- |
+| Epoch routing and global barrier | `p07_b4m_epoch_bridge.c/.h` | Original B3c1/B2b canonical P06B13R1 packet decode, original B3c3 physical NEXT commit and original B3c2 real-barrier ACK, always ordered and fail-closed. |
+| Independent HLS source-spike readback | `p07_b4m_spike_trace.c/.h`; optional dispatch-time hook in original B3c2 | Original HLS `trace_words` contains spike bit 192 (debug bank 7); read **every processed neuron before physical slot eviction**, cross-check 64-bit post-state against P03 state debug bank 1, sort source spike pairs canonically. A defective trace poisons B3a/B3c2 before ACK. |
+| Complete A53-ready control loop | `p07_b4m_full_inference.c/.h` | Immutable signed B2.4 compiled/audit digest admission, B4a external CURRENT injection combined with prior NEXT, 27 real P03 dispatches/tick, trace proof, packet route, 26 acknowledged global barriers, 3 final dirty slots, readout neuron spike-count argmax and measured original P03 page bytes. Code path does not pretend synthetic results are physical. |
+| Original B2.4 frozen route/table image | `scripts/p07_b4m_frozen_inputs.py`, `p07_b4m_frozen_routes.c/.h` | Host verifies original 33 asset frozen B2.4 snapshot; constructs immutable output+input route stage images and three fixed TRAIN-derived validation frames, with original image SHA and accepted training split. C mounts only verified SHA payload/registered P03 axon routes. **Official TEST never opened**. |
+| Distinct standalone A53 candidate | `p07_b4m_full_board.c`, `build_p07_b4m_full.py`, `scripts/build_p07_b4m_full.sh` | Brand-new `P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1` firmware. Accepted P03 XSA kept pinned; separate fresh Vitis workspace, source imports, ELF and GNU map. Existing B4l ELF and source are never rebuilt or overwritten. |
+| Independent result schema | `scripts/p07_b4m_verify_full_receipt.py` | Strict 256 B A53 mailbox schema, 702 dispatches/26 barriers/702 page-ins/699 runtime dirty page-outs/3 final outs under ascending schedule; P03 page byte accounting, source spike/packet/NEXT counts, readout argmax and preserved OFFICIAL TEST seal. The structural receipt explicitly reports `independent_full_neuron_numerical_parity=false`. |
+| Native fake-MMIO regression | `tests/test_p07_b4m_*py` and `tests/native/p07_b4m_*c` | C11 original P03 model: full external nonzero 784px input, 1010-compartment topology, 702 dispatches, 26 verified barriers, routing, readout, trace and final flush; bad CRC/spike provenance/stale barrier/route SHA/debug fault all fail closed. **Synthetic, not a KV260 run.** |
 
-**Native positive test** invokes the *actual original* P03 adapter,
-B3a, B3c1, B3c2, B3c3 sources with its existing fake MMIO and fake
-physical DDR callbacks: complete 26×27=702 dispatches and 26 real
-software barrier commits under both ascending and alternating
-paging orders, followed by the three final dirty slot flushes.
-Tests additionally fail closed when the provenance approval is
-missing, an independently supplied spike is missing, the observed
-barrier is modified, or physical packet insertion faults.
-**These are not physical KV260 measurements and not frozen-trained
-neuron numerical parity.** All simulated packet/trace evidence
-is synthetic and deliberately labeled.
+## Fixed DDR allocations proposed for future approved standalone sessions
 
-## Critical remaining physical bridge gates
+The old original 27×P02 records occupy `[0x40000000,0x40D80000)`;
+the physically accepted B4l descriptor occupies
+`[0x43FC0000,0x43FC4000)`. New proposal (NOT staged on the KV260 yet):
 
-1. **Original frozen B2.4 route/ingress deployment admission:** build and
-   pin actual B2.4 route bindings, genuine canonical B1.3 external
-   current input frame(s), SHA/checksum, coherent DDR addresses,
-   no collision with original B4l descriptor/model/mailbox or
-   expanded low-DDR ELF. Check original `P07_B2_MAX_ROUTE_BINDINGS`
-   (8192) against the *actual distinct emitted route* count rather
-   than equating it with 21,384 registered input-axon entries.
-2. **Independent emitting-neuron PL source evidence:** implement an actual
-   P03 physical source-state/spike readback and source provenance
-   verifier. The new `source_evidence_verified` argument is a caller
-   obligation, **not** a proof of any PL observation; no physical
-   firmware caller may set it to 1 without separate verification.
-   Do not reconstruct source spikes from decoded packet words.
-3. **CURRENT ingress physically committed:** connect original B4a
-   external+NEXT preflight and physical debug/DDR commit before
-   dispatch; verify all per-core current-bank counts and no
-   stale cross-image bank data.
-4. **26-tick A53 firmware and bounded physical runner:** apply B4m.1
-   bridge with strict source proof and admitted real inputs.
-   Pin new genuine Vitis ELF/map, distinguish its low-DDR ownership,
-   route/packet buffers and I/O caches, preserve original B4l ELF.
-   Require new physical approvals/evidence path, PS128, shell,
-   staged/readback frozen data and fail-closed independent receipt.
-5. **TRAIN-derived reference parity:** predeclared three frozen B2.3
-   TRAIN validation frame witnesses (no TEST); require true all-26-tick
-   neuron state, spike packet, NEXT bank and final readout/prediction
-   parity including cold start and final writeback. Then proceed to
-   P07-B.5 reproducible validation corpus and B.6 closeout.
+| Purpose | Exclusive allocation |
+| --- | --- |
+| Original B2.4 output route descriptor, fixed SHA-bound 80 KiB | `[0x43FC4000,0x43FD8000)` |
+| Original B2.4 input route descriptor, SHA-bound fixed 896 KiB | `[0x41000000,0x410E0000)` |
+| Exactly one original TRAIN-derived P06B13I1 ingress image, up to 896 KiB | `[0x41100000,0x411E0000)` |
+| Existing fixed result mailbox, 256 B | `[0x43FF0000,0x43FF0100)` |
 
-**No KV260 execution authorized by this B4m.1 change.**
-No A53 ELF has been rebuilt. Do not run the previously accepted
-B4l `--mode execute` pipeline expecting it to produce full inference:
-the original physical firmware is intentionally first-epoch only.
+All addresses are disjoint from the original 27×P02 contexts,
+original 16 KiB descriptor, and each other; this is **not independent
+proof of low-DDR firmware ownership**. The enlarged Vitis .bss buffers
+include a 442,368 B full CURRENT staging array, two 98,432 B B1.3
+frame buffers, a 65,536 B immutable source route array and HLS
+packet buffers. Consequently the new genuine ELF's physical PT_LOAD
+end may be MUCH larger than the accepted B4l `0x42D40`: **never reuse
+the old low-DDR exemption/ELF SHA or call the physical execute runner
+without separately reviewing the actual new ELF/map and ownership.**
+
+## Required verification and remaining physical proof
+
+1. **Native tests**: compile all original B3/P03 modules plus the
+   new trace, full control, B4a CURRENT, and route-loader implementations.
+   All native fake buses and synthetic witness receipts must pass without
+   contacting any real board. CI is not physical evidence.
+2. **Real host freeze**: run `scripts/p07_b4m_frozen_inputs.py` on the
+   **existing original** B2.4 snapshot and authenticated original
+   TRAIN-only IDX directory (never TEST). This must recover
+   the accepted B2.3 validation ordinals 0, 1, 2, original raw TRAIN
+   indices 37384, 27347, 20178, and original raw image SHA values.
+   Its original route cardinalities must be measured and shown
+   to satisfy 8192 raw packet/route bounds and physical bank limits.
+3. **Vitis ELF/map**: operator builds separate genuine
+   `p07_b4m_full_26tick.elf` from the accepted routed XSA, checks
+   its real ELF SHA, load/bss/heap/stack extent and physical PS/DDR
+   ownership. A linked executable is NOT physical acceptance.
+4. **Physical staging and independently verified signed route bytes**:
+   a fresh dedicated session must require CPU takeover/FPD128/LPD128,
+   original accepted P03 BIT/VIO, original frozen model full 27 DDR
+   readbacks, exact old B4l 16 KiB binding readback, NEW route and
+   selected TRAIN ingress image readbacks, and a fresh 256 B
+   result mailbox. **No full B4m destructive physical execute
+   runner is admitted by the present branch.**
+5. **True numeric parity**: capture independently verifiable full
+   26-tick neuron state/current/voltage/spike/NEXT traces,
+   terminal class/predictions, barriers and first-divergence against
+   the original frozen 3-frame B2.3 source oracle. The currently
+   emitted full-run receipt is a structural/traffic/classification
+   witness, **not** full-neuron parity. No P07-B.5 corpus or
+   official TEST gate may be opened from receipt alone.
+
+**Offline user commands**: `git pull` the existing P07-B draft branch,
+activate the current `.venv-p08`, then:
+
+```bash
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4m_epoch_bridge.py \
+  tests/test_p07_b4m_spike_trace.py \
+  tests/test_p07_b4m_full_inference.py \
+  tests/test_p07_b4m_frozen_inputs.py \
+  tests/test_p07_b4m_frozen_routes.py \
+  tests/test_p07_b4m_board_candidate.py
+```
+
+**Operator safeguards:** no modifications to accepted P03/P05/Track A,
+original frozen B2.4 assets, B4l real first-epoch ELF, or the official
+TEST protocol. No PuTTY commands beyond existing routine. No physical
+KV260 action or new full-ELF download is implied/authorized by native
+tests. Draft PR #49 remains UNMERGED.
