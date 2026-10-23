@@ -88,7 +88,7 @@ def diagnose(data:bytes)->dict:
     fault=w[45] or w[3]
     return {
         "schema":"p07-b4m-failed-or-partial-original-physical-mailbox-diagnostic-v1",
-        "source":"RAW_CAPTIVE_256B_MAILBOX_NOT_INDEPENDENT_BOARD_PROOF",
+        "source":"UNTRUSTED_SUPPLIED_256B_MAILBOX_NOT_INDEPENDENT_BOARD_PROOF",
         "sha256":hashlib.sha256(data).hexdigest(),
         "bytes":len(data),
         "firmware_identity_magic_valid":w[0]==accepted.MAGIC,
@@ -120,7 +120,6 @@ def diagnose(data:bytes)->dict:
             }
             for i,value in enumerate(w)
         ],
-        "original_model_unchanged":True,
         "original_official_MNIST_TEST":"SEALED_NOT_ACCESSED",
         "not_a_physical_inference_acceptance_receipt":True,
         "independent_full_neuron_numerical_parity_verified":False,
@@ -143,8 +142,7 @@ def main()->int:
                 f.write("\n")
         print(json.dumps({k:v for k,v in record.items() if k!="mailbox_words"},sort_keys=True,indent=2))
         print("P07_B4M_PHYSICAL_MAILBOX_DIAGNOSTIC_ONLY_NO_BOARD_CONTACT=1")
-        print("P07_B4M_FULL_26TICK_PHYSICAL_INFERENCE_VERIFIED="+
-              ("1" if record["all_structural_inference_receipt_checks_pass"] else "0"))
+        print("P07_B4M_DIAGNOSTIC_NOT_AN_ACCEPTANCE_RECEIPT=1")
         return 0
     except (OSError,ValueError,struct.error) as exc:
         print("P07_B4M_MAILBOX_DIAGNOSTIC_NO_GO="+str(exc),file=sys.stderr)
