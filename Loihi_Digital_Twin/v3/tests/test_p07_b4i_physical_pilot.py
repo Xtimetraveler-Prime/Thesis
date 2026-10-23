@@ -307,3 +307,62 @@ def test_takeover_receipt_validates_mixed_states():
 def test_takeover_receipt_rejects_missing_contradictory_or_wrong_states(mutation):
     with pytest.raises(ValueError):
         pilot.verify_takeover_log("\n".join(mutation(valid_b4i_takeover_log().splitlines())))
+
+
+def test_primary_transient_power_down_must_recover_to_actual_halt(tmp_path):
+    """Host Tcl fake: CPU0 down twice then really stops; not a down-state waiver."""
+    import subprocess
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
+    wrapper=tmp_path/"cpu0_transient_down.tcl"
+    wrapper.write_text(
+        'set ::selected ""\n'
+        'set ::cpu0_attempts 0\n'
+        'proc connect {args} {return ok}\n'
+        'proc disconnect {} {return ok}\n'
+        'proc targets {args} {set ::selected [lindex $args end]; return ok}\n'
+        'proc stop {} {\n'
+        '  if {[string first "Cortex-A53 #0" $::selected] >= 0} {\n'
+        '    incr ::cpu0_attempts\n'
+        '    if {$::cpu0_attempts < 3} {error "The core is powered down"}\n'
+        '  }\n'
+        '  return ok\n'
+        '}\n'
+        'proc mrd {args} {if {[lsearch $args 0xFD615000] >= 0} {return "FD615000: 00000A00"}; return "FF419000: 00000200"}\n'
+        'set argc 2\n'
+        'set argv {DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121}\n'
+        f'source {{{gate}}}\n'
+    )
+    proc=subprocess.run(["tclsh",str(wrapper)],capture_output=True,text=True)
+    assert proc.returncode==0,proc.stderr
+    assert proc.stdout.splitlines().count("P07_B4I_A53_0_STOP_COMMAND_PASS=1")==1
+    assert proc.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1")==1
+    assert proc.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2")==1
+    assert "P07_B4I_A53_0_POWERED_DOWN_OBSERVED=1" not in proc.stdout
+    assert pilot.verify_takeover_log(proc.stdout)=={
+        0:"halted",1:"halted",2:"halted",3:"halted"
+    }
+
+
+def test_primary_persistent_power_down_fails_closed_before_width_read(tmp_path):
+    run=b4i_fake_tcl_stop(tmp_path,"primary_stays_down",0,"The core is powered down")
+    assert run.returncode!=0
+    assert "after 3 attempts" in run.stderr
+    assert run.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1")==1
+    assert run.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2")==1
+    assert "P07_B4I_A53_0_STOP_COMMAND_PASS=1" not in run.stdout
+    assert "P03_2C_PS_FPD_AXIFS_RAW=" not in run.stdout
+    assert "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in run.stdout
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(run.stdout)
+
+
+def test_primary_nonexact_powerdown_diagnostic_remains_fatal(tmp_path):
+    run=b4i_fake_tcl_stop(
+        tmp_path,"primary_ambiguous",0,"The core is powered down; debugger timeout"
+    )
+    assert run.returncode!=0
+    assert "stop failed for Cortex-A53 #0" in run.stderr
+    assert "P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY" not in run.stdout
+    assert "P03_2C_PS_FPD_AXIFS_RAW=" not in run.stdout
