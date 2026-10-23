@@ -25,6 +25,7 @@ import sys
 
 import p07_b4m_physical_staging as physical
 import p07_b4m_verify_full_receipt as full_verify
+import p07_b4m_diagnose_physical_mailbox as mailbox_diagnosis
 
 LAUNCH_TCL="vivado/p07_b4m_xsdb_full_26tick_run.tcl"
 LAUNCH_TOKEN="B4M_FULL_26TICK_AFTER_SAME_SESSION_SIGNED_READBACK_APPROVED"
@@ -132,7 +133,22 @@ def physically_execute_after_verified(args:argparse.Namespace,out:Path,
     if (not mailbox.is_file() or mailbox.is_symlink() or
         mailbox.stat().st_size!=256):
         raise InferenceNoGo("NO-GO: A53 did not deliver exact physical 256B completion mailbox")
-    receipt=full_verify.verify(mailbox.read_bytes())
+    raw=mailbox.read_bytes()
+    try:
+        receipt=full_verify.verify(raw)
+    except full_verify.FullReceiptError:
+        # A real terminal DONE is not a valid inference success receipt:
+        # capture FIRST-FAULT and startup/runtime status without changing
+        # the strict accepted mailbox verifier or claiming numerical parity.
+        diagnostics=mailbox_diagnosis.diagnose(raw)
+        (out/"failed_full_26tick_physical_mailbox_diagnostic.json").write_text(
+            json.dumps(diagnostics,sort_keys=True,indent=2)+"\n"
+        )
+        (out/"stage.txt").write_text(
+            "P07_B4M_TERMINAL_MAILBOX_CAPTURED_BUT_SUCCESS_REJECTED_REBOOT_REQUIRED\n"
+        )
+        print("P07_B4M_REJECTED_MAILBOX_DIAGNOSTIC_PRESERVED=1",flush=True)
+        raise
     if (receipt["physical_dispatches"]!=702 or
         receipt["physical_barriers_acked"]!=26 or
         receipt["original_registered_axons"]!=21384 or
