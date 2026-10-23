@@ -51,6 +51,13 @@ for n in p03_hw_adapter.h p03_hw_xilinx_io.h p03_runtime.h p03_mmio.h; do
     cp -- "$V3/software/p03/include/$n" "$BUILD/source/"
 done
 cp -- "$V3/software/p05/include/p05_deployment.h" "$BUILD/source/"
+# Explicit B4m-only 10,000-edge route capacity. The accepted B4l
+# and original P07-B.2 native header remain default 8192 bytes unchanged.
+# Only the FRESH standalone Vitis source copy receives this opt-in macro.
+[[ "$(grep -Fc '#define P07_B2_MAX_ROUTE_BINDINGS 8192u' "$BUILD/source/p07_b2_packet.h")" == 1 ]] || die "original route cap declaration changed"
+sed -i 's@#define P07_B2_MAX_ROUTE_BINDINGS 8192u@#define P07_B2_MAX_ROUTE_BINDINGS 10000u@' "$BUILD/source/p07_b2_packet.h"
+grep -Fq '#define P07_B2_MAX_ROUTE_BINDINGS 10000u' "$BUILD/source/p07_b2_packet.h" || die "B4m route ceiling opt-in failed"
+
 (
     cd "$V3"
     vitis -s software/p07/build_p07_b4m_full.py --xsa "$XSA" \
