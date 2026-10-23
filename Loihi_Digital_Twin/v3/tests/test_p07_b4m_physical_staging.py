@@ -237,7 +237,8 @@ def test_integrated_stage_no_elf_download_and_fail_closed(tmp_path,monkeypatch):
         })),(
         patch.object(stage.old.b4i,"verify_takeover_log",return_value={})
     ):
-        stage.execute_staging(args,expected_index,{"binary_sha256":desc_sha},{}, {
+        stage.execute_staging(args,expected_index,{"binary_sha256":desc_sha},
+                              {"staged_files_sha256":stage.EXPECTED_STAGE_SHA}, {
             "new_elf_sha256":stage.EXPECTED_ELF_SHA,
             "pt_load_end_exclusive":"0x00106B00",
         })
