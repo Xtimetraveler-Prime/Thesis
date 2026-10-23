@@ -400,3 +400,51 @@ safety preflight have passed on the operator's PC.** On success, the
 independent verifier should prove actual P03 page-engine transfers,
 not mere XSDB DDR copy. As before, the board must be rebooted after any
 physical attempt. No handwritten operator note is required.
+
+## Preflight import-path regression repaired (2026-10-22)
+
+The operator built the genuine B4l paging-probe ELF successfully but the
+subsequent PC-only preflight failed **before frozen-asset verification** with:
+
+```text
+ModuleNotFoundError: No module named 'loihi_twin_v2.p06_b24_freeze'
+  at scripts/p07_b4l1_stage_frozen_27core.py, admit_freeze
+```
+
+**Root cause:** Running `python scripts/p07_b4l_physical_paging.py`
+from the `v3` directory automatically places `v3/scripts` on
+Python's module search path, not sibling `v3/src`. The earlier B4l.1
+real verifier command included `PYTHONPATH="$PWD/src"`, but the
+paging-preflight instructions omitted it. No evidence suggests Vitis
+ELF invalidity; the runner stopped before reaching the ELF admission
+check. Do not count this interrupted host preflight as a physical failure.
+
+**Permanent fix:** `p07_b4l1_stage_frozen_27core.py` now installs
+the canonical sibling `v3/src` directory at the *original genuine
+B2.4 verifier import site*. It refuses an absent/symlink source tree,
+does not stub, bypass, substitute or relax the original 33-asset
+frozen verification, and benefits all callers (standalone stage,
+model deploy, and integrated paging). A native regression subprocess
+runs under isolated Python `-I` with `PYTHONPATH` unset and checks
+that import resolution reaches the original canonical module location.
+
+The user can either pull this commit then repeat the **exact same
+documented** preflight, or run the previous revision with an explicit
+single-command prefix:
+
+```bash
+PYTHONPATH="$PWD/src" python scripts/p07_b4l_physical_paging.py \
+  --mode preflight \
+  --frozen-dir "$P07_B4L1_FREEZE" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --reports "$P07_B4L_REPORTS" \
+  --b4i-build "$P07_B4I_BUILD_DIR" \
+  --elf "$P07_B4L_ELF" \
+  --expected-elf-sha "$P07_B4L_ELF_SHA"
+```
+
+This does not modify the genuine accepted B2.4 original frozen assets,
+the compiled A53 paging ELF or its SHA, Track A, P03, or official MNIST
+TEST. **No KV260 board access until every remaining actual preflight
+gate independently passes.** A later ELF-memory-layout failure (if
+any) must be diagnosed separately from this import resolution fix.
