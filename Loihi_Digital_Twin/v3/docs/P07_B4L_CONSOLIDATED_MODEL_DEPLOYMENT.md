@@ -722,3 +722,129 @@ launch the freshly reviewed ELF in the same session, capture the
 previous DDR content survived reboot, or that Linux/firmware
 physical memory exclusivity was proven. Never resume halted Linux.
 No handwritten operator note is required.
+
+## Operator-built B3 first-epoch ELF and 16KiB same-session admission (2026-10-23)
+
+The operator completed the **real** isolated Vitis B4l B3 A53 ELF build
+and supplied the following AArch64 `readelf -W -h -l` and checksum evidence:
+
+```text
+ELF64 AArch64 little-endian EXEC; Entry point address: 0x0
+LOAD  Offset 0x010000  VirtAddr 0x0  PhysAddr 0x0
+      FileSiz 0x015054  MemSiz 0x042d40  RWE  Align 0x10000
+NOTE  Offset 0x01cc2c  PhysAddr 0xCC2C  FileSiz 0x24  MemSiz 0x24
+SHA256 3e462e3b12c525820d91b0af06f73f36afc960e39d834424fc507c4fd89a747d
+ELF path:
+  /home/dna/p07_b4l_b3_first_epoch_build_20261023T012020Z/
+    vitis_workspace/p07_b4l_b3_first_epoch.elf
+```
+
+**Critical physical footprint distinction:** the actual low-DDR
+`PT_LOAD` requires the half-open physical address interval
+**`[0x00000000,0x00042D40)`**, or **273,728 bytes** (not just
+its 0x15054 bytes from ELF file). This is larger than the historical
+physically accepted Track-A B4i `[0x0,0x29D80)` region; it does not
+overlap original P02 trained contexts `[0x40000000,0x40D80000)`,
+new B4l binding descriptor `[0x43FC0000,0x43FC4000)` or mailbox
+`[0x43FF0000,0x43FF0100)`. Address-range disjointness **does not
+prove exclusive memory ownership** by A53 over FSBL, PMU, other
+processors, Linux, DMA or firmware. Do not equate acceptance of a
+new ELF header with permission to overwrite a live Linux session.
+
+**Current development deliverable, still NOT physically tested:**
+
+- `scripts/p07_b4l_b3_physical_epoch.py` default **`--mode
+  preflight`**, no JTAG or board contact: pins exact operator ELF SHA
+  and first-epoch identity; explicitly checks real ELF64 AArch64
+  little-endian EXEC, entry 0, one `PT_LOAD` from 0 with
+  `p_filesz=0x15054` and `p_memsz=0x42D40` plus genuine same-build
+  GNU linker map and .stack/.heap/.bss sections. Also runs unchanged
+  original B4i accepted P03 hardware artifact gate, original B2.4
+  full 33-file frozen verification and *real original 27-core context
+  full binary* SHA, plus the immutable 16KiB authentic B1.2/P02
+  axon/compartment descriptor `--mode verify`. No operator note.
+  Synthetic tests mock readelf and source data and cannot authorize
+  a real physical run.
+- `vivado/p07_b4l_b3_stage_frozen_bindings.tcl`: XSDB-only
+  dedicated-disposable-session PSU/APU non-MMU target writes the
+  **precisely authenticated original B2.4 16KiB** descriptor to
+  `0x43FC0000` and reads **all 16KiB** back from `0x43FC0000`;
+  fails on byte mismatch, bad input, untrusted target or existing
+  evidence output. The independent Python runner additionally
+  compares all original bytes and SHA256. No inference permitted
+  on descriptor stage alone.
+- `vivado/p07_b4l_b3_xsdb_first_epoch_run.tcl`: distinct exact
+  identity-checked A53 `dow` + `con`, bounded 256-byte mailbox
+  polling and physical capture (reusing physically accepted B4l
+  paging launcher semantics) without claiming B2b NEXT routing or
+  numerics.
+- Destructive physical `--mode execute` is implemented behind fresh
+  out-of-tree evidence, exact pinned operator ELF, source integrity,
+  ten named `YES` approvals and the strict **SAME SESSION** sequence:
+  A53 gate → accepted bitstream/VIO reset release →
+  all **27×512KiB** P02 DDR physical full-readback + independent
+  aggregate SHA → 16KiB original B1.2 descriptor physical full
+  readback + independent SHA → genuinely distinct A53 first-epoch
+  ELF `dow`/256-byte mailbox → independent
+  `scripts/p07_b4l_verify_b3_epoch.py` (27 P03 dispatches, 27 full
+  page-ins, 24 dirty evictions, one **pending** unACKed B3 barrier,
+  zero independent B2b NEXT event commits and zero 26-tick parity).
+  Reboot after *any* real attempt. The method is explicitly
+  a destructive takeover of previously Linux-owned DDR and does
+  **not** establish independent firmware low-DDR exclusivity.
+
+### Verify next B4l native gate and real ELF on PC (no board operations)
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4l_b3_physical_epoch.py \
+  tests/test_p07_b4l_b3_board_candidate.py \
+  tests/test_p07_b4l_frozen_bindings.py \
+  tests/test_p07_b4l_b3_epoch.py
+
+export P07_B4L_B3_ELF="/home/dna/p07_b4l_b3_first_epoch_build_20261023T012020Z/vitis_workspace/p07_b4l_b3_first_epoch.elf"
+export P07_B4I_BUILD_DIR="/home/dna/p07_b4i_build_20261022T161058Z"
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L1_FREEZE="$PWD/artifacts/p06_b24_frozen_1000"
+: "${P07_B4L1_STAGE:?Set original accepted frozen 27-core host stage}"
+: "${P07_B4L_BINDINGS:?Set original frozen 16KiB bindings evidence path}"
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+
+python scripts/p07_b4l_b3_physical_epoch.py \
+  --mode preflight \
+  --frozen-dir "$P07_B4L1_FREEZE" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --bindings-dir "$P07_B4L_BINDINGS" \
+  --reports "$P07_B4L_REPORTS" \
+  --b4i-build "$P07_B4I_BUILD_DIR" \
+  --elf "$P07_B4L_B3_ELF"
+```
+
+Expected on **the actual operator ELF and original frozen user-local
+model/binding files**, not merely native mocked tests:
+
+```text
+P07_B4L_B3_EXACT_ORIGINAL_MODEL_BINDINGS_NEW_ELF_PC_PREFLIGHT_PASS=1
+P07_B4L_B3_PINNED_ELF_PHYSICAL_MEMSZ=0x42d40
+P07_B4L_B3_GENUINE_BINDINGS_SHA256=<actual 16KiB descriptor digest>
+P07_B4L_B3_OFFLINE_ONLY_NO_BOARD_ACCESS=1
+P07_B4L_B3_PHYSICAL_DISPATCH_AUTHORIZED=0
+```
+
+**Next gate:** User verifies this native suite and exact original
+model/descriptor/new ELF `--mode preflight` outputs. **Do not
+perform `--mode execute` before this PC gate is accepted and a fresh
+disposable JTAG session with approved reboot/recovery can be arranged.**
+If the candidate exceeds actual ELF/stack safety or hits firmware DDR
+ownership uncertainties, NO-GO; do not bypass by changing SHA pins or
+broadening memory envelope. Never overwrite approved original B2.4
+files or access official MNIST TEST.
