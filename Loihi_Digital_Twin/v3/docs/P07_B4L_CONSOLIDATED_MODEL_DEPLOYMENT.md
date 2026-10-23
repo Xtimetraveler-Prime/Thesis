@@ -448,3 +448,30 @@ the compiled A53 paging ELF or its SHA, Track A, P03, or official MNIST
 TEST. **No KV260 board access until every remaining actual preflight
 gate independently passes.** A later ELF-memory-layout failure (if
 any) must be diagnosed separately from this import resolution fix.
+
+## B4l paging ELF: user-reported real build and preflight PASS (2026-10-22)
+
+The operator confirmed that the genuine Vitis paging ELF **was built
+successfully** and the integrated PC-only
+`scripts/p07_b4l_physical_paging.py --mode preflight` **passed** after
+fixing the project's direct-script frozen-verifier import path. This
+independently checks the same frozen 27-core B2.4 context bundle,
+accepted P03 artifacts and the user-local new ELF entry/LOAD placement.
+The actual ELF bytes, newly generated SHA256 and full preflight output
+remain on the operator's PC; do not invent or pin values unavailable
+in the conversation. No physical B4l PL paging was performed by this
+report. The previous physical full 27-core DDR readback PASS remains
+separate from upcoming page-in, mutable page-out and dirty restore.
+
+The **next operational checkpoint** is the single existing
+`scripts/p07_b4l_physical_paging.py --mode execute` workflow: freshly
+rebooted, disposable KV260/Linux JTAG session; explicit operator flags;
+real PS/FPD128 stop gate; original P03 accepted bitstream and VIO
+reset release; complete 27×512KiB frozen DDR restaging and independent
+readback; **same-session** standalone A53 ELF launch; bounded 256-byte
+mailbox capture and strict independent paging verifier. The old DDR
+contents must not be assumed to survive a reboot. This script is a
+**destructive** low-DDR and P02 model-DDR experiment, not a live Linux
+service. Low-DDR/firmware exclusivity has not been independently proven
+by the takeover tests or approval flags. Do not bypass the gate. Reboot
+after any attempt and preserve partial evidence. No handwritten note.
