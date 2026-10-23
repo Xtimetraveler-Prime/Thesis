@@ -51,7 +51,7 @@ on:
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_epoch_bridge.h'
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_epoch_bridge.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_epoch_bridge_harness.c'
-      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_epoch_bridge.py tests/test_p07_b4m_spike_trace.py tests/test_p07_b4m_full_inference.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_epoch_bridge.py tests/test_p07_b4m_spike_trace.py tests/test_p07_b4m_full_inference.py tests/test_p07_b4m_frozen_inputs.py'
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_spike_trace.h'
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_spike_trace.c'
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b3c2_hw_scheduler.h'
@@ -62,6 +62,8 @@ on:
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_full_inference.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_full_inference_harness.c'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_full_inference.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4m_frozen_inputs.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_frozen_inputs.py'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
     paths:
@@ -125,6 +127,8 @@ on:
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_full_inference.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_full_inference_harness.c'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_full_inference.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p07_b4m_frozen_inputs.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_frozen_inputs.py'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
 permissions:
