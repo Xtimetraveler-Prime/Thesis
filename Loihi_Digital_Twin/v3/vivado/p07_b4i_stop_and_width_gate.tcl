@@ -27,16 +27,18 @@ set connected 0
 set status [catch {
     connect -url $server
     set connected 1
+    set primary_reset_pending 0
     for {set i 0} {$i < 4} {incr i} {
         set name [format "Cortex-A53 #%d" $i]
         if {[catch {targets -set -filter "name =~ \"$name\""} target_error]} {
             error "P07-B.4i could not select $name: $target_error"
         }
-        # CPU0 can briefly enter a Linux/PSCI deep-idle power state.
-        # Retry ONLY the exact powered-down response for CPU0, up to
-        # three stop attempts. A powered-down CPU0 is NEVER accepted
-        # as halted; the firmware must not be launched without STOP_PASS.
-        # No wake, reset, register writes, or bypasses are permitted here.
+        # Track A's accepted scripts tolerate a failed stop before an
+        # explicitly authorized processor reset. Unlike Track A, we never
+        # silently accept a powered-down primary: first observe the exact
+        # message on up to three attempts, then defer a bounded A53 #0
+        # processor-reset recovery until AFTER both PS widths pass.
+        # No Linux cpuidle settings, PSU init or PS width writes.
         set stopped 0
         set secondary_down 0
         for {set attempt 1} {$attempt <= 3} {incr attempt} {
@@ -54,14 +56,26 @@ set status [catch {
                     after 200
                     continue
                 }
-                error "P07-B.4i stop failed for $name: The core is powered down after 3 attempts; NO-GO. Reboot KV260; verify CPU0 is online and disable CPU0 deep cpuidle before the next dedicated JTAG session"
+                set primary_reset_pending 1
+                puts "P07_B4I_A53_0_EXACT_POWER_DOWN_RESET_PENDING=1"
+                break
+            }
+            if {$i == 0 && [string trim $stop_error] eq "Already stopped"} {
+                puts "P07_B4I_A53_0_ALREADY_STOPPED_CONFIRMED=1"
+                set stopped 2
+                break
             }
             error "P07-B.4i stop failed for $name: $stop_error"
         }
         if {$secondary_down} {
             puts "P07_B4I_A53_${i}_POWERED_DOWN_OBSERVED=1"
-        } elseif {$stopped} {
+        } elseif {$stopped == 2 && $i == 0} {
+            # Exact "Already stopped" was emitted above. No duplicate marker.
+        } elseif {$stopped == 1} {
             puts "P07_B4I_A53_${i}_STOP_COMMAND_PASS=1"
+        } elseif {$i == 0 && $primary_reset_pending} {
+            # The primary is NOT yet admitted. PS width must pass before
+            # the approved Track-A-derived processor reset is even attempted.
         } else {
             error "P07-B.4i no positively observed stopped or powered-down state for $name"
         }
@@ -77,6 +91,22 @@ set status [catch {
     puts "P07_B4I_PS_WIDTH_TARGET=$physical"
     b4i_width_read FPD 0xFD615000 0x00000A00
     b4i_width_read LPD 0xFF419000 0x00000200
+    if {$primary_reset_pending} {
+        # Accepted Track A launches used 'rst -processor' on the selected
+        # A53 #0 before 'dow'. Use that SAME processor-local reset, but
+        # demand a confirmed stopped primary BEFORE PL/DDR/ELF work.
+        # Reset success alone is not evidence that CPU0 can be debugged.
+        targets -set -filter {name =~ "Cortex-A53 #0"}
+        if {[catch {rst -processor} reset_error]} {
+            error "P07-B.4i stop failed for Cortex-A53 #0: Track A processor reset failed: $reset_error"
+        }
+        if {[catch {stop} check_error]} {
+            if {[string trim $check_error] ne "Already stopped"} {
+                error "P07-B.4i stop failed for Cortex-A53 #0: post-reset halt verification failed: $check_error"
+            }
+        }
+        puts "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1"
+    }
     puts "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1"
 } reason]
 if {$connected} {catch {disconnect}}
