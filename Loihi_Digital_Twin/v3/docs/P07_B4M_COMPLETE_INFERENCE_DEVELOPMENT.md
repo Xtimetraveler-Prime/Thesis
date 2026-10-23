@@ -356,3 +356,54 @@ Official MNIST TEST is never opened by any B4m staging/run tool.
 PR #49 is still draft/unmerged. Stage and full-inference receipts are
 different experiments; preserve both. Every real A53/DDR run must
 be followed by a **KV260 reboot** before using PuTTY/Linux.
+
+## 2026-10-23 first original B4m full-ELF physical attempt: terminal DONE, success NO-GO
+
+Operator-reported full first attempt from
+`/home/dna/Thesis_Evidence/p07_b4m_full_inference_20261023T053446Z`:
+
+- Original signed 27-core model, 16KiB descriptor, 80KiB output routing,
+  896KiB input routing, 123,216-byte original TRAIN frame: **same-session
+  physical readback PASS**.
+- A53 primary observed already stopped, processor-local reset emitted
+  a standard warning about reset vector bootloop / clear registers.
+  This warning is not independently established as the inference failure.
+- New pinned 26-tick ELF: **downloaded to A53**.
+- A53 mailbox: 256 actual bytes **captured**, terminal
+  `P07_B4M_A53_26TICK_TERMINAL_DONE_PHYSICALLY_OBSERVED=1`.
+  **DONE means terminal, not PASS.** The independent verifier rejected the
+  saved mailbox with
+  `NO-GO: genuine B4m terminal magic/schema/success/done mismatch`.
+  No full-26tick independent acceptance receipt was created, and
+  `stage.txt` remains launch pending.
+- Final inference execution **NOT accepted**; independent trained-neuron
+  numerical parity **NOT verified**; official MNIST TEST still sealed.
+
+The genuine raw physical bytes were not supplied, therefore we cannot
+identify the exact failing C stage from the terminal log alone.
+The original C firmware uses `mailbox[2]=0x600D600D` for success and
+`mailbox[2]=0xDEAD0000` for a completed failed attempt; terminal DONE
+(`mailbox[63]=0xC0DEF00D`) is emitted in either case. The saved first
+attempt is **diagnosable without touching the KV260 again**:
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python scripts/p07_b4m_diagnose_physical_mailbox.py \
+  --mailbox /home/dna/Thesis_Evidence/p07_b4m_full_inference_20261023T053446Z/full_26tick_physical_mailbox_256.bin \
+  --out /home/dna/Thesis_Evidence/p07_b4m_full_inference_20261023T053446Z/failed_full_26tick_physical_mailbox_diagnostic.json
+```
+
+The report contains all 64 original word values, signed B4m stage statuses,
+the exact first-fault code/interpretation from
+`software/p07/p07_b4m_full_inference.c`, and a parallel call to the
+unchanged strict success verifier. It is explicitly **diagnostics only**,
+not an inference acceptance or parity receipt. Subsequent physical runs
+now automatically save this report on a terminal-success-rejected event
+while retaining the original failure and reboot requirement.
+
+**Operator action:** REBOOT KV260 after first failed full hardware attempt.
+**Developer action:** inspect the first-attempt saved mailbox JSON, locate
+the earliest failing C stage, fix only the demonstrated bug with native
+regressions and a newly operator-built/re-SHA-pinned genuine Vitis artifact
+if C source changes. Do not repeat the destructive run blindly or infer
+full inference from the terminal DONE marker.
