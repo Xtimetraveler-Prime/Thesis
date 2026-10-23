@@ -49,17 +49,46 @@ static int fake_read_ddr(void *cookie,uint64_t address,uint32_t *value){
     return 0;
 }
 static int full_trace_write(void *ctx,uint32_t addr,uint32_t value){
-    int rc=trace_write(ctx,addr,value);
-    if(rc==0&&addr==P03_REG_DEBUG_COMMAND&&value==P03_CMD_START){
-        bus *b=(bus *)ctx;
+    bus *b=(bus *)ctx;
+    uint32_t bank=UINT32_MAX;
+    if(addr==P03_REG_DEBUG_COMMAND&&value==P03_CMD_START) {
         uint32_t cfg=b->reg[P03_REG_DEBUG_CONFIG/4u];
-        uint32_t bank=(cfg>>P03_DEBUG_CONFIG_BANK_SHIFT)&15u;
-        if(bank==7u){
+        bank=(cfg>>P03_DEBUG_CONFIG_BANK_SHIFT)&15u;
+        if((bank==6u||bank==9u)&&
+           !(cfg&P03_DEBUG_CONFIG_WRITE)) {
+            /* The original B3c23 fake bus only modeled packet reads.
+             * B4a CURRENT additionally reads live resident event banks.
+             */
+            b->reg[addr/4u]=value;
+            return 0;
+        }
+    }
+    {
+        int rc=trace_write(ctx,addr,value);
+        if(rc==0&&addr==P03_REG_DEBUG_COMMAND&&
+           value==P03_CMD_START&&bank==7u){
             uint32_t idx=b->reg[P03_REG_DEBUG_ADDR/4u];
             if(idx>0u)trace_debug_data[6]=0u;
         }
+        return rc;
     }
-    return rc;
+}
+static int full_trace_read(void *ctx,uint32_t addr,uint32_t *out){
+    bus *b=(bus *)ctx;
+    if(addr>=P03_REG_DEBUG_RDATA0&&
+       addr<P03_REG_DEBUG_RDATA0+32u&&addr%4u==0u){
+        uint32_t cfg=b->reg[P03_REG_DEBUG_CONFIG/4u];
+        uint32_t bank=(cfg>>P03_DEBUG_CONFIG_BANK_SHIFT)&15u;
+        if(bank==6u||bank==9u){
+            uint32_t slot=(cfg>>P03_DEBUG_CONFIG_SLOT_SHIFT)&3u;
+            uint32_t idx=b->reg[P03_REG_DEBUG_ADDR/4u];
+            if(slot>=3u||idx>=4096u)return -1;
+            *out=(addr==P03_REG_DEBUG_RDATA0)?
+                get32(slotp(slot)+(bank==9u?0x58000u:0x54000u)+idx*4u):0u;
+            return 0;
+        }
+    }
+    return trace_read(ctx,addr,out);
 }
 static int prepare(void){
     uint32_t core,i,n;
@@ -117,7 +146,7 @@ static int prepare(void){
     ws.packet_frame=route_frame;
     ws.frame_capacity=sizeof(route_frame);
     trace_corrupt=0u;read_traces=0u;
-    hw.io.write32=full_trace_write;hw.io.read32=trace_read;
+    hw.io.write32=full_trace_write;hw.io.read32=full_trace_read;
     return 0;
 }
 static int success(void){
