@@ -63,8 +63,8 @@ def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
         p=stage/name
         if p.is_symlink() or not p.is_file() or file_sha(p)!=m["files"][name]:
             raise AdmissionError("NO-GO: source-to-stage original SHA mismatch: "+name)
-    if (stage/frozen.OUT_FILENAME).stat().st_size!=frozen.OUT_BYTES or (
-        stage/frozen.IN_FILENAME).stat().st_size!=frozen.IN_BYTES):
+    if ((stage/frozen.OUT_FILENAME).stat().st_size!=frozen.OUT_BYTES or
+        (stage/frozen.IN_FILENAME).stat().st_size!=frozen.IN_BYTES):
         raise AdmissionError("NO-GO: physical table input/output lengths differ")
     out=(stage/frozen.OUT_FILENAME).read_bytes()
     inp=(stage/frozen.IN_FILENAME).read_bytes()
