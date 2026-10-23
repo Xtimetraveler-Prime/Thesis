@@ -278,3 +278,81 @@ absolute `--evidence` destination outside the repository, and
 eight distinct explicit `--... YES` flags. These are not defaults.
 The accepted B4l first-epoch physical experiment is NOT a reusable
 runner for full B4m 26-tick inference.
+
+## 2026-10-23 REAL B4m staging physically accepted; full inference launch candidate
+
+The operator ran the dedicated signed TRAIN ordinal 0 stage-only runner
+on the actual KV260, **reaching all independently checked physical
+DDR acceptance markers**, then opened the resulting original PC-side
+`stage.txt` and `independent_staging_receipt.json`. The evidence is
+operator-reported, but the stage runner independently re-read physical
+DDR bytes and compared them to frozen host source bytes.
+
+```text
+P07_B4L_ALL_27_DDR_CORE_READBACK_TCL_PASS=1
+P07_B4L_B3_FROZEN_DESCRIPTOR_16K_PHYSICAL_READBACK_TCL_PASS=1
+P07_B4M_DDR_STAGE_0_ADDR=0x43FC4000_BYTES=81920
+P07_B4M_DDR_STAGE_0_BYTE_EXACT_PASS=1
+P07_B4M_DDR_STAGE_1_ADDR=0x41000000_BYTES=917504
+P07_B4M_DDR_STAGE_1_BYTE_EXACT_PASS=1
+P07_B4M_DDR_STAGE_2_ADDR=0x41100000_BYTES=123216
+P07_B4M_DDR_STAGE_2_BYTE_EXACT_PASS=1
+P07_B4M_ORIGINAL_ROUTES_AND_TRAIN_3_DDR_READBACK_PASS=1
+P07_B4M_ORIGINAL_27CORE_BINDINGS_ROUTES_TRAIN_STAGING_PHYSICAL_PASS_REBOOT_REQUIRED
+P07_B4M_26TICK_A53_INFERENCE_EXECUTED=0
+```
+
+27-core original SHA:
+`3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e`.
+16KiB descriptor SHA:
+`2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb`.
+The same three original route/TRAIN frame SHA are independently
+recorded in the operator's signed offline staging report (input:
+`380268c5...`, output `24052691...`, TRAIN frame `2aa772ef...`).
+B4m physical data placement is accepted; **this does not mean that
+the A53 was launched or that 26-tick trained numerical parity passed**.
+
+The operator was explicitly told **REBOOT KV260** after this stage run.
+A later inference run cannot use post-reboot DDR as evidence of
+same-session staging; therefore the next dedicated all-in-one runner
+**re-stages and physically verifies all original frozen artifacts in
+the fresh dedicated JTAG session**, then launches the precise
+operator-built B4m ELF only after all signed source/physical readback
+checks pass.
+
+New dedicated experimental runner:
+`scripts/p07_b4m_physical_full_inference.py` with separate bounded
+XSDB launcher `vivado/p07_b4m_xsdb_full_26tick_run.tcl`.
+Default `--mode preflight` is PC-only and never contacts the FPGA.
+`--mode execute` requires all eight original stage-consent flags and
+FOUR **additional** distinct affirmative approvals:
+`--expanded-low-ddr-1075968-footprint-approved YES`,
+`--unproven-boot-firmware-exclusivity-risk-accepted YES`,
+`--mailbox-256b-overwrite-approved YES`, and
+`--a53-26tick-full-inference-approved YES`.
+Approvals knowingly accept a potentially destructive experiment:
+**the 1,075,968 bytes of low DDR [0,0x00106B00) are not
+independently proven exclusive of FSBL/PMU/boot firmware**. The
+user-approved ELF SHA stays
+`ccbd8c531e5571f929e81613cfee71f54abf341c36412ebcfa7d98e2313e6b70`.
+NEVER infer proof of boot-firmware exclusivity from approval flags.
+
+The full launcher requires exact full ELF SHA, original unique
+firmware marker, exact zeroed 256B mailbox physical readback at
+0x43FF0000, and uses bounded 1-second polling of the actual PS DDR
+mailbox for up to 1,800 iterations. A timeout, missing DONE,
+unsuccessful C payload, wrong paging counts, or malformed mailbox
+is a strict NO-GO with reboot required. Successful capture is
+independently verified by existing
+`scripts/p07_b4m_verify_full_receipt.py`, requiring 26 B3 barriers,
+702 P03 dispatches, source spikes from physical debug trace bank 7,
+real NEXT packet insertions, 21,384 original axons and classification.
+The output `independent_full_26tick_physical_receipt.json` has
+`independent_full_neuron_numerical_parity_verified=false`:
+**a structurally valid hardware inference receipt is not independent
+bit-exact frozen numerical parity**.
+
+Official MNIST TEST is never opened by any B4m staging/run tool.
+PR #49 is still draft/unmerged. Stage and full-inference receipts are
+different experiments; preserve both. Every real A53/DDR run must
+be followed by a **KV260 reboot** before using PuTTY/Linux.
