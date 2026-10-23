@@ -4,6 +4,10 @@ All artifacts here are synthetic fixtures: never equate a fake ELF header or
 a self-consistent route manifest with independently validated real board data.
 """
 from pathlib import Path
+import hashlib
+import json
+import struct
+import zlib
 import importlib
 import sys
 from types import SimpleNamespace
@@ -89,3 +93,119 @@ def test_preflight_requires_actual_original_signed_B24_reconstruction():
     assert "hashlib.sha256(data[-784:]).hexdigest()" in source
     assert "destructive_launch_authorized" in source
     assert "LOW_DDR_MAX_END" in source
+
+
+def _make_original_shape_stage(tmp_path,monkeypatch):
+    """Use SOURCE-SHAPED but synthetic 20384+1000 topology. Not B2.4."""
+    original=importlib.import_module("p07_b4m_frozen_inputs")
+    rows=[]
+    for core in range(27):
+        n=39 if core<24 else 32 if core<26 else 10
+        bitmap=bytearray(512)
+        for axon in range(784 if core<26 else 1000):
+            bitmap[axon//8]|=1<<(axon%8)
+        rows.append({
+            "core_id":core, "compartments":n,
+            "axon_count":784 if core<26 else 1000,
+            "bitmap_hex":bitmap.hex()
+        })
+    ins=[(pixel,core,pixel) for pixel in range(784) for core in range(26)]
+    outs=[]
+    destination_axon=0
+    for core in range(26):
+        for neuron in range(rows[core]["compartments"]):
+            outs.append((core,neuron,26,destination_axon))
+            destination_axon+=1
+    assert len(ins)==20384 and len(outs)==1000
+    output_bin,input_bin=original.pack_tables(rows,ins,outs)
+    dirname=tmp_path/"synthetic_B2_shape_ONLY_NOT_FROZEN"
+    dirname.mkdir()
+    files={
+        original.OUT_FILENAME:output_bin,
+        original.IN_FILENAME:input_bin,
+    }
+    fake_images={}
+    frame_rows={}
+    for ordinal,index in gate.FRAME_IDX.items():
+        img=bytes(((i+ordinal*17)%256 for i in range(784)))
+        img_sha=hashlib.sha256(img).hexdigest()
+        fake_images[ordinal]=img_sha
+        payload=input_bin[128:128+len(ins)*6]+img
+        wire=bytearray(128)
+        struct.pack_into("<8s",wire,0,b"P06B13I1")
+        for off,val in (
+            (8,1),(12,128),(16,len(payload)),(20,len(ins)),
+            (24,27),(28,784),(32,25),(36,26),(40,6),(44,784),
+            (48,zlib.crc32(payload)),
+        ):
+            struct.pack_into("<I",wire,off,val)
+        wire[64:96]=bytes.fromhex(original.PINNED_SHA)
+        wire[96:128]=bytes.fromhex(original.CAP_SHA)
+        struct.pack_into("<I",wire,52,zlib.crc32(wire))
+        name=f"p07_b4m_original_TRAIN_validation_{ordinal}_ingress.bin"
+        files[name]=bytes(wire)+payload
+        frame_rows[str(ordinal)]={
+            "original_TRAIN_idx":index,
+            "raw_image_sha256":img_sha,
+            "ingress_sha256":hashlib.sha256(files[name]).hexdigest(),
+            "bytes":len(files[name]),
+        }
+    monkeypatch.setattr(original,"FRAME_SHA",fake_images)
+    for name,data in files.items():
+        (dirname/name).write_bytes(data)
+    manifest={
+        "schema":gate.SCHEMA,
+        "official_MNIST_TEST":"SEALED",
+        "hardware_executed":False,
+        "frozen_snapshot_modified":False,
+        "original_compiled_sha256":original.PINNED_SHA,
+        "original_capacity_sha256":original.CAP_SHA,
+        "compartment_count":1010,
+        "output_route_count":1000,
+        "input_route_count":20384,
+        "spans":original_spans(),
+        "files":{name:hashlib.sha256(data).hexdigest()
+                 for name,data in files.items()},
+        "frames":frame_rows,
+    }
+    (dirname/"p07_b4m_frozen_inputs_manifest.json").write_text(
+        json.dumps(manifest,sort_keys=True,indent=2)+"\\n"
+    )
+    return dirname,manifest
+
+
+def original_spans():
+    return {
+        "output_routes":["0x43fc4000","0x43fd8000"],
+        "input_routes":["0x41000000","0x410e0000"],
+        "per_image_ingress":["0x41100000","0x411e0000"],
+    }
+
+
+def test_actual_B24_source_shaped_route_counts_pass_offline_without_test_access(
+    tmp_path,monkeypatch
+):
+    stage,_=_make_original_shape_stage(tmp_path,monkeypatch)
+    record=gate.require_routes(stage)
+    assert record["input_routes"]==20384
+    assert record["output_routes"]==1000
+    assert record["registered_axons"]==21384
+
+
+@pytest.mark.parametrize("field,value",[
+    ("output_route_count",10000),
+    ("output_route_count",999),
+    ("input_route_count",20383),
+    ("input_route_count",20385),
+    ("compartment_count",1000),
+])
+def test_output_count_still_strictly_matches_real_frozen_topology(
+    tmp_path,monkeypatch,field,value
+):
+    stage,manifest=_make_original_shape_stage(tmp_path,monkeypatch)
+    manifest[field]=value
+    (stage/"p07_b4m_frozen_inputs_manifest.json").write_text(
+        json.dumps(manifest,sort_keys=True,indent=2)+"\\n"
+    )
+    with pytest.raises(gate.AdmissionError,match="topology/count/identity"):
+        gate.require_routes(stage)
