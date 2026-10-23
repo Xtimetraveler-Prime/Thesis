@@ -52,7 +52,7 @@ def descriptor_and_index(tmp_path,monkeypatch):
     binary.write_bytes(data)
     receipt=bindings.verify_payload(data,rows)
     (binddir/bindings.INDEXNAME).write_text(json.dumps(receipt))
-    return original,binddir,index,receipt
+    return original,binddir,{"records":index},receipt
 
 
 def fixture(tmp_path,monkeypatch):
