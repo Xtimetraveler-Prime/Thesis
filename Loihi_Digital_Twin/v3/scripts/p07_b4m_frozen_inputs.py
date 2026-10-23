@@ -51,7 +51,7 @@ def pack_tables(rows:list[dict],ingress_routes:list[tuple[int,int,int]],
     if not 784<=len(ingress_routes)<=MAX_INGRESS_ROUTES:
         raise FrozenRouteError("NO-GO: original full 784 pixel ingress is absent")
     if len(output_routes)>OUT_LIMIT:
-        raise FrozenRouteError("NO-GO: actual frozen output route count exceeds existing 8192 buffer")
+        raise FrozenRouteError("NO-GO: original output route count exceeds B4m candidate 10000-entry buffer")
     bitmap=[]
     for i,row in enumerate(rows):
         if row["core_id"]!=i or row["compartments"]<=0 or row["compartments"]>1024:
