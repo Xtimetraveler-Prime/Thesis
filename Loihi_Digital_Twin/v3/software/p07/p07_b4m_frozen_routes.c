@@ -60,7 +60,7 @@ static int checked_image(const uint8_t *p,size_t bytes,const char magic[8],
        memcmp(p+64u,cap_sha,32u))
         return P07_B4M_ROUTE_INVALID;
     *count=le32(p+20u);
-    if((*count>8192u && entry==8u)||
+    if((*count>P07_B2_MAX_ROUTE_BINDINGS && entry==8u)||
        (*count>P07_B2_MAX_ROUTES && entry==6u)||
        (uint64_t)P07_B4M_ROUTE_HEAD+
            (uint64_t)(*count)*entry+
