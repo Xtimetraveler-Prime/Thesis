@@ -107,3 +107,88 @@ original frozen B2.4 assets, B4l real first-epoch ELF, or the official
 TEST protocol. No PuTTY commands beyond existing routine. No physical
 KV260 action or new full-ELF download is implied/authorized by native
 tests. Draft PR #49 remains UNMERGED.
+
+
+## B4m original dense 10,000-route physical-build correction and operator gate
+
+The *actual* B1.2 trained 784→1000→10 dense mapping has up to
+**1,000 hidden source compartments × 10 outgoing readout fanouts =
+10,000 compiled inter-core output routes**, exceeding the accepted
+B2b/B3c default 8,192 aggregate route buffer. The original 8,192
+default remains unchanged for all already accepted B4l/Track A and
+old C tests; the **separate fresh B4m Vitis source import** opt-in
+replaces the *STAGED COPY ONLY* of the `p07_b2_packet.h` upper bound
+with 10,000, expanding packet capture/frame and route buffer geometry.
+The 80 KiB DDR output-route image accommodates 10,000 × 8-byte
+rows plus 192-byte header/compartment table. The original
+per-core 4,096 P03 routing and NEXT event limits still apply and
+must fail closed if exceeded by an input pattern. Tests compile both
+original and separate dense limits against the unchanged P03 fake bus.
+
+An explicit **PC-only** `scripts/p07_b4m_offline_admission.py` command
+now requires:
+- the immutable 33-file B2.4 hash-pinned source;
+- exactly 10,000 canonical original B1.2 output route rows and
+  complete original registered destination axons;
+- bit-exact reconstruction of both staged 80 KiB and 896 KiB route
+  images from the frozen signed compiler, rather than trusting a
+  potentially self-consistent staging manifest;
+- all three original TRAIN validation input frames including exact
+  raw 784-pixel SHA and identical authenticated external ingress
+  routing; official TEST remains sealed;
+- a **genuine separately built ELF64 AArch64 low-DDR executable**,
+  distinct B4m identity and executable entry, real linker map,
+  physical `PT_LOAD` and `.text/.bss/.heap/.stack` boundaries.
+  The offline gate hard-rejects `PT_LOAD` memory above 16 MiB,
+  a changed entry address, missing sections, or non-zero physical
+  LOAD start. **A 16 MiB cap is NOT proof that even 1 MiB of low DDR
+  is exclusive of boot firmware/other owners**.
+
+Build in a NEW directory outside the repository, after installing
+the user's already verified Vitis 2025.2 environment:
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+source ~/Git/Thesis/.venv-p08/bin/activate
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4M_BUILD_DIR="$HOME/p07_b4m_full_build_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p07_b4m_full.sh
+```
+
+Next, use the original TRAIN IDX dataset directory from the
+accepted B2.3 validation (NOT the official TEST folder) and a
+NEW staging directory, for example:
+
+```bash
+export P07_B4M_TRAIN_DIR="<your-existing-original-TRAIN-only-IDX-directory>"
+export P07_B4M_STAGE="$HOME/p07_b4m_frozen_inputs_$(date -u +%Y%m%dT%H%M%SZ)"
+python scripts/p07_b4m_frozen_inputs.py \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --train-data-dir "$P07_B4M_TRAIN_DIR" \
+  --out "$P07_B4M_STAGE"
+```
+
+Once **both** genuine artifacts exist:
+
+```bash
+export P07_B4M_ELF="$P07_B4M_BUILD_DIR/vitis_workspace/p07_b4m_full_26tick.elf"
+export P07_B4M_OFFLINE_REPORT="$HOME/p07_b4m_admission_$(date -u +%Y%m%dT%H%M%SZ).json"
+python scripts/p07_b4m_offline_admission.py \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --elf "$P07_B4M_ELF" \
+  --out "$P07_B4M_OFFLINE_REPORT"
+cat "$P07_B4M_OFFLINE_REPORT"
+```
+
+Expected acceptance includes
+`P07_B4M_FULL_ORIGINAL_FROZEN_ROUTE_AND_GENUINE_ELF_OFFLINE_PREFLIGHT_PASS=1`
+and **`P07_B4M_PHYSICAL_LAUNCH_AUTHORIZED=0`**. This stage
+intentionally does not perform JTAG, PL programming, destructive DDR
+staging or trained numerical comparison. An operator-reviewed
+next-stage physical plan needs brand-new source/ELF SHAs, expanded
+low DDR ownership acknowledgment, physical byte-exact route/input
+JTAG stage/readbacks, 26-tick capture and **full frozen oracle**
+numerical parity. Neither a passing Vitis build nor native fake
+P03 tests closes P07-B.4m physical acceptance.
