@@ -150,7 +150,7 @@ def compare_readback(readback_dir:Path,source:dict[str,Path])->dict:
         }
     return report
 
-def execute_staging(args:argparse.Namespace,index:dict,desc:dict,staged:dict,elf:dict)->None:
+def execute_staging(args:argparse.Namespace,index:dict,desc:dict,staged:dict,elf:dict,\n                    *,on_verified=None)->None:
     stage_requirements(args)
     output=args.evidence
     output.mkdir(mode=0o700,exist_ok=False)
@@ -255,7 +255,14 @@ def execute_staging(args:argparse.Namespace,index:dict,desc:dict,staged:dict,elf
             },indent=2,sort_keys=True)+"\n")
         (output/"stage.txt").write_text(STAGING_SUCCESS+"\n")
         print(STAGING_SUCCESS,flush=True)
-        print("P07_B4M_26TICK_A53_INFERENCE_EXECUTED=0",flush=True)
+        if on_verified is None:
+            print("P07_B4M_26TICK_A53_INFERENCE_EXECUTED=0",flush=True)
+        else:
+            # EXACTLY one continuation while original staged bytes and
+            # checked host SHA + physical readbacks are still valid in
+            # this single destructive JTAG ownership session.
+            # No callback is ever used by --mode stage.
+            on_verified(output,verified)
     finally:
         print("P07_B4M_STAGE_REBOOT_REQUIRED_AFTER_ACTUAL_JTAG_ATTEMPT=1",flush=True)
         print("REBOOT KV260 before ANY Linux interaction; never resume halted Linux.",flush=True)
