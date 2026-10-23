@@ -2056,7 +2056,21 @@ board/reference numerical parity was attempted. See
 and [consolidated B4l deployment/next gate](docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md).
 P07-B.4m end-to-end physical spike routing, 702 dispatches / 26
 barriers and numerical parity, P07-B.5 validation corpus, and P07-B.6
-final acceptance/P08-B handoff remain OPEN. **Official B2 TEST SEALED.**
+final acceptance/P08-B handoff remain OPEN. **P07-B.4m.1 host-native
+integration implemented (not physically run):** new C11
+`p07_b4m_commit_pending_barrier` connects existing real P03
+packet buffers, strict canonical B1.3/B2b packet/provenance validation,
+existing B3c3 NEXT physical commit, and B3c2 barrier ACK only after
+verified completion. On the existing **synthetic original-P03 fake bus**,
+both deterministic ordering policies completed 702 dispatches, 26
+barrier acknowledgments, and three final dirty flushes; corrupt
+provenance, changed barrier, and failed debug writes poisoned the run.
+The physical A53 firmware has NOT changed; the real board still only
+completed the accepted B4l first epoch. Actual PL emitting-neuron
+source-spike readback, frozen B2 binding/ingress admission, complete
+26-tick Vitis firmware and independent TRAIN validation are required.
+See [B4m implementation/gates](docs/P07_B4M_COMPLETE_INFERENCE_DEVELOPMENT.md).
+**Official B2 TEST SEALED.**
 P06-B1/P06-B2 are merged, while draft P07-B PR #49 is unmerged.
 Track A P07-A and P08-A latency baseline remain separately accepted.
 
