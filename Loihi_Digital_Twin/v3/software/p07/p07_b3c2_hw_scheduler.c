@@ -48,6 +48,16 @@ int p07_b3c2_init(p07_b3c2_hw_scheduler *s,p07_b3_pager *pager,
     }
     return P07_B3C2_OK;
 }
+int p07_b3c2_set_trace_hook(p07_b3c2_hw_scheduler *s,
+    p07_b3c2_trace_hook hook,void *context){
+    if(!s||!hook||!context||!s->pager||!s->hw||
+       s->poisoned||s->pager->failed||s->pager->tick!=0u||
+       s->pager->cursor!=0u||s->pager->has_pending||
+       s->pager->counters.dispatches||s->trace_hook)
+        return P07_B3C2_INVALID;
+    s->trace_hook=hook;s->trace_context=context;
+    return P07_B3C2_OK;
+}
 int p07_b3c2_step(p07_b3c2_hw_scheduler *s,p07_b3_op *op){
     int rc;uint32_t emitted=0u,i;
     uint64_t cycles=0u;
@@ -88,6 +98,14 @@ int p07_b3c2_step(p07_b3c2_hw_scheduler *s,p07_b3_op *op){
             s->cores[op->core].slot=(uint8_t)op->slot;
             s->cores[op->core].packet_count=(uint16_t)emitted;
             s->word_count+=emitted;
+            /* The genuine HLS trace is resident in this physical slot only
+             * until a later PAGE_IN. Capture/verify it NOW, never at the
+             * global barrier when 24 of 27 source slots were overwritten.
+             */
+            if(s->trace_hook &&
+               s->trace_hook(s->trace_context,s->hw,(uint8_t)op->core,
+                             (uint8_t)op->slot,op->tick,emitted)!=0)
+                return fail(s,17u);
         }
     }else return fail(s,9u);
     if(rc!=P03_HW_OK || p03_hw_quiescent(s->hw)!=P03_HW_OK)
