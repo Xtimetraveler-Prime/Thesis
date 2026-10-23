@@ -2043,13 +2043,22 @@ test that only checks packed memory.
 
 ## P07-B — Scaled multi-logical-core physical inference
 
-**CURRENT ACTIVE NEXT PHASE, NOT PHYSICALLY IMPLEMENTED (2026-10-19).**
-Prerequisites P06-B1/P06-B2 **merged to `main`** and user-attested
-host-software verification PASS. Track A P07-A and P08-A latency
-baseline accepted separately. Proceed in a NEW branch from merged
-`main`; see [P07-B new-chat source/hardware handoff
-seed](docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md) and
-[B2.5 software exit/NO-GO checklist](docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md).
+**ACTIVE / PARTIAL REAL KV260 HARDWARE PASS (2026-10-23 UTC); NOT CLOSED.**
+P07-B.4l's first frozen 27-core **physical scheduler epoch** is now
+user-attested PASS: original 27 context full DDR readbacks, genuine
+16KiB binding descriptor, accepted P03 PL, standalone A53,
+**27 physical dispatches, 27 page-ins, 24 dirty page-outs** and
+strict independently verified 256B physical mailbox. The **first
+global barrier remained pending/unacknowledged**, **0 P03 spike words**
+were captured (empty CURRENT input), and no 26-tick inference or
+board/reference numerical parity was attempted. See
+[physical B4l first-epoch evidence ledger](docs/P07_B4L_2026_10_23_FIRST_REAL_B3_EPOCH_ACCEPTANCE.json)
+and [consolidated B4l deployment/next gate](docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md).
+P07-B.4m end-to-end physical spike routing, 702 dispatches / 26
+barriers and numerical parity, P07-B.5 validation corpus, and P07-B.6
+final acceptance/P08-B handoff remain OPEN. **Official B2 TEST SEALED.**
+P06-B1/P06-B2 are merged, while draft P07-B PR #49 is unmerged.
+Track A P07-A and P08-A latency baseline remain separately accepted.
 
 **P07-B entry is a GO for DESIGN and implementation work, not an
 authorization to label scaled physical results as accepted or to
