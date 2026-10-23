@@ -177,3 +177,104 @@ low DDR ownership acknowledgment, physical byte-exact route/input
 JTAG stage/readbacks, 26-tick capture and **full frozen oracle**
 numerical parity. Neither a passing Vitis build nor native fake
 P03 tests closes P07-B.4m physical acceptance.
+
+## 2026-10-23 operator-accepted genuine B4m offline gate and next dedicated physical staging
+
+The operator ran the original offline B4m admission against genuine original
+B2.4 source, TRAIN-only input packages, and a new genuine A53 26-tick ELF:
+
+```text
+P07_B4M_FULL_ORIGINAL_FROZEN_ROUTE_AND_GENUINE_ELF_OFFLINE_PREFLIGHT_PASS=1
+P07_B4M_LOW_DDR_BOOT_FIRMWARE_EXCLUSIVITY_INDEPENDENTLY_PROVEN=0
+P07_B4M_PHYSICAL_LAUNCH_AUTHORIZED=0
+```
+
+Operator evidence report (existing on their PC):
+`/home/dna/p07_b4m_admission_20261023T044340Z.json`.
+It records *exactly* 20,384 original B2.4 input routes and 1,000 output
+routes = 21,384 registered axons; signed original B2.4 raw TRAIN
+input validation ordinals 0/1/2; A53 ELF
+SHA `ccbd8c531e5571f929e81613cfee71f54abf341c36412ebcfa7d98e2313e6b70`,
+GNU map SHA
+`b6d34c354e34075be2e650335a34ea103b72c7927a36c526841006df59a8e8c3`;
+true A53 physical PT_LOAD `[0,0x00106B00)`, filesz 106,580,
+memsz 1,075,968 bytes. Accepted P03 XSA SHA remains
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+This is an operator-pasted text attestation, **not** an assistant-side
+download of their original raw bytes.
+
+The next physical experiment is intentionally divided into two
+**execution gates within the existing P07-B.4m milestone**, rather
+than additional sub-milestones:
+
+1. **NOW: stage/read back original frozen physical data, NO new ELF launch.**
+   `scripts/p07_b4m_physical_staging.py` defaults to read-only
+   `--mode preflight` and requires the original B4l accepted 27-record
+   stage, 16KiB signed binding descriptor, accepted P03 BIT/PS128,
+   exact original B4m ELF/map and operator offline acceptance report.
+   For explicitly approved `--mode stage`, the runner HALTS/DISCARDS
+   Linux, programs accepted P03 PL, physically stages/readbacks
+   original 27×512KiB immutable contexts at `0x40000000`,
+   original 16KiB descriptor at `0x43FC0000`, and exactly three
+   signed new DDR files via the new
+   `vivado/p07_b4m_stage_original_routes_and_train.tcl`:
+
+   | Source | Physical address | SHA256 (ordinal 0) |
+   | --- | --- | --- |
+   | Original 80KiB B2.4 output routing | `0x43FC4000` | `2405269110585a3921dfc64ed1b2adbf0622c520cfdce8bb6b1ac6d825f23103` |
+   | Original 896KiB B2.4 input routing | `0x41000000` | `380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8` |
+   | Original B2.3 TRAIN-validation ordinal 0, actual length from original source | `0x41100000` | `2aa772efd381805bab24fea145186d22f3550b156f155a9ab51dcef10e6d8126` |
+
+   Both TCL and the independent host verifier require byte-exact
+   physical readback before producing
+   `independent_staging_receipt.json` and
+   `P07_B4M_ORIGINAL_27CORE_BINDINGS_ROUTES_TRAIN_STAGING_PHYSICAL_PASS_REBOOT_REQUIRED`.
+   Host-native GitHub tests include mock actual XSDB/TCL PSU writes,
+   negative readbacks, and each separate explicit hardware approval.
+   There is **no ELF download, CPU resume, mailbox inference, or low
+   DDR write** in this runner. After any physical JTAG takeover/staging
+   attempt, **REBOOT the KV260** before PuTTY/Linux interaction.
+
+2. **LATER: full 26-tick standalone A53 launch.** The separate
+   original A53 candidate is compiled, but a new full-execution
+   JTAG/mailbox runner is not yet accepted. Expanded physical low DDR
+   `[0,0x00106B00)` and all original boot-firmware/coexistence ownership
+   must be evaluated and knowingly approved separately. A passing
+   physical staging receipt does not authorize an A53 ELF download,
+   full inference, numerical parity, official MNIST TEST unsealing,
+   or P07-B closeout.
+
+### Operator commands (PC)
+
+Use **existing** verified previous stage directories, never guessed or
+substituted paths. The following PC-only preflight does not contact
+the board:
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+source ~/Git/Thesis/.venv-p08/bin/activate
+python scripts/p07_b4m_physical_staging.py \
+  --mode preflight \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --bindings-dir "$P07_B4L_BINDINGS" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --offline-report "$P07_B4M_OFFLINE_REPORT" \
+  --reports "$P07_B4L_REPORTS" \
+  --b4i-build "$P07_B4I_BUILD_DIR" \
+  --elf "$P07_B4M_ELF" \
+  --validation-ordinal 0
+```
+
+Required:
+`P07_B4M_PREPARED_FOR_DEDICATED_PHYSICAL_STAGING_ONLY=1`,
+`P07_B4M_BOARD_TOUCHED=0`,
+`P07_B4M_A53_FULL_26TICK_LAUNCH_AUTHORIZED=0`.
+
+For subsequent **user-explicitly-approved destructive staging**,
+reuse the same validated arguments with `--mode stage`, a **NEW**
+absolute `--evidence` destination outside the repository, and
+eight distinct explicit `--... YES` flags. These are not defaults.
+The accepted B4l first-epoch physical experiment is NOT a reusable
+runner for full B4m 26-tick inference.
