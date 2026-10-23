@@ -1,0 +1,29 @@
+{
+  "schema": "p07-b4i-first-physical-takeover-attempt-user-reported-v1",
+  "date": "2026-10-22",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "source": "user-pasted genuine PC XSDB console; physical machine/log files were not accessed by assistant",
+  "operator_preparation": "KV260 reboot and sudo xmutil unloadapp, operator-reported",
+  "command": "xsdb vivado/p07_b4i_stop_and_width_gate.tcl DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121",
+  "physical_observed_lines": [
+    "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+    "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1",
+    "P07-B.4i stop failed for Cortex-A53 #1: The core is powered down"
+  ],
+  "status": "PHYSICAL_TAKEOVER_GATE_STOPPED_AS_DESIGNED_ON_POWERED_DOWN_SECONDARY",
+  "observed_primary_stop_success": true,
+  "reported_secondary1_powered_down": true,
+  "secondary2_and_3_state_unobserved": true,
+  "ps_width_read_attempted": false,
+  "fpga_programmed_by_this_attempt": false,
+  "elf_downloaded_by_this_attempt": false,
+  "mailbox_overwritten_by_this_attempt": false,
+  "physical_inference_executed": false,
+  "physical_readonly_probe_executed": false,
+  "root_cause_hypothesis": "Strict B4i gate required successful stop for all four A53; Linux/PSCI may legitimately power down secondary core. This is not a demonstrated fault of FPGA or candidate ELF.",
+  "not_proven": "PSCI-specific underlying CPU1 cause, future secondary power state stability, physical standalone low DDR ownership, XSDB/OS behavior beyond the reported console",
+  "action": "Reboot after halted A53 #0, retain evidence. New B4i gate conditionally accepts ONLY exact 'The core is powered down' for A53 #1/#2/#3; core #0 must stop; all other errors fatal; no core power-up.",
+  "physical_A53_download_authorized": false,
+  "physical_inference_authorized": false,
+  "PR49_merge_authorized": false
+}

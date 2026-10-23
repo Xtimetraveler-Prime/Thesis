@@ -1,0 +1,93 @@
+name: P07-B.4b read-only admission native
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4b_*"
+      - "Loihi_Digital_Twin/v3/software/p07/include/p07_b4b_*"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b4b*"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4b_board_admission.py"
+      - ".github/workflows/p07_b4b_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4b_*"
+      - "Loihi_Digital_Twin/v3/software/p07/include/p07_b4b_*"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b4b*"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4b_board_admission.py"
+      - ".github/workflows/p07_b4b_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-c11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile original P03 with fake Xilinx BSP and sanitizers
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -DP07_B4B_TEST_HOST_BSP=1 \
+            -I tests/native/p07_b4b_stub \
+            -I software/p07/include -I software/p03/include \
+            -I software/p05/include \
+            software/p03/p03_hw_adapter.c \
+            software/p07/p07_b3_pager.c \
+            software/p07/p07_b4b_mutable_audit.c \
+            software/p07/p07_b4b_board_admission.c \
+            software/p07/p07_b4b_xilinx_platform.c \
+            tests/native/p07_b4b_admission_harness.c \
+            -o /tmp/p07_b4b_readonly
+      - name: Prove only read operations and fail-closed bounds
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: /tmp/p07_b4b_readonly
+
+      - name: Syntax-check standalone A53 probe source (host fake BSP only)
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -fsyntax-only \
+            -DP07_B4B_TEST_HOST_BSP=1 \
+            -I tests/native/p07_b4b_stub -I software/p03/include \
+            -I software/p07/include \
+            software/p07/p07_b4b_readonly_probe.c
+      - name: Parse simulated ELF/linker evidence (NOT a real A53 ELF)
+        run: |
+          python3 -m compileall -q scripts/p07_b4b_elf_probe_admission.py
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,str(Path("scripts").resolve()))
+          from p07_b3c3_elf_admission import Span
+          from p07_b4b_elf_probe_admission import validate_elf_evidence
+          header="  Data: 2's complement, little endian\n  Type: EXEC\n  Machine: AArch64\n"
+          loads="LOAD 0x0 0x100000 0x100000 0x100 0x100000 RWE 0x1000\n"
+          symbols="".join(f"{0x100000+j*32:016x} 00000020 T {name}\n" for j,name in enumerate((
+              "main","p07_b4b_probe","p07_b4b_xilinx_read_phys",
+              "p03_hw_init","p03_hw_identify","p03_hw_quiescent",
+              "p03_hw_xilinx_io"))) + "0000000000110000 00011000 b hw\n"
+          try:
+              validate_elf_evidence(header,loads,symbols,
+                                    ".text main\n.bss hw\n",
+                                    Span("stack",0x300000,0x310000),
+                                    Span("heap",0x320000,0x330000))
+          except ValueError as err:
+              raise SystemExit(f"fake ELF parser regression failed: {err}")
+          try:
+              validate_elf_evidence(header.replace("AArch64","x86-64"),loads,symbols,
+                                    ".text main\n.bss hw\n",
+                                    Span("stack",0x300000,0x310000),
+                                    Span("heap",0x320000,0x330000))
+          except ValueError:
+              pass
+          else:
+              raise SystemExit("wrong-arch fake ELF unexpectedly accepted")
+          print("P07_B4B_FAKE_ELF_PARSER_PASS=1")
+          PY

@@ -2043,13 +2043,44 @@ test that only checks packed memory.
 
 ## P07-B — Scaled multi-logical-core physical inference
 
-**CURRENT ACTIVE NEXT PHASE, NOT PHYSICALLY IMPLEMENTED (2026-10-19).**
-Prerequisites P06-B1/P06-B2 **merged to `main`** and user-attested
-host-software verification PASS. Track A P07-A and P08-A latency
-baseline accepted separately. Proceed in a NEW branch from merged
-`main`; see [P07-B new-chat source/hardware handoff
-seed](docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md) and
-[B2.5 software exit/NO-GO checklist](docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md).
+**ACTIVE / PARTIAL REAL KV260 HARDWARE PASS (2026-10-23 UTC); NOT CLOSED.**
+P07-B.4l's first frozen 27-core **physical scheduler epoch** is now
+user-attested PASS: original 27 context full DDR readbacks, genuine
+16KiB binding descriptor, accepted P03 PL, standalone A53,
+**27 physical dispatches, 27 page-ins, 24 dirty page-outs** and
+strict independently verified 256B physical mailbox. The **first
+global barrier remained pending/unacknowledged**, **0 P03 spike words**
+were captured (empty CURRENT input), and no 26-tick inference or
+board/reference numerical parity was attempted. See
+[physical B4l first-epoch evidence ledger](docs/P07_B4L_2026_10_23_FIRST_REAL_B3_EPOCH_ACCEPTANCE.json)
+and [consolidated B4l deployment/next gate](docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md).
+**P07-B.4m consolidated full-inference SOFTWARE CANDIDATE now implemented,
+but NOT physically accepted.** The new C11 path uses real P03 adapter
+B4a CURRENT from frozen B1.3 ingress, **dispatch-time independent HLS
+trace bank 7 / state bank 1 per-compartment spike verification**, B3c1
+canonical B2b packet validation, B3c3 physical NEXT insertion and
+B3c2 global barrier ACK. The separate 26-tick runner includes **702
+dispatches, 26 barriers, final 3 dirty slot flushes, and readout
+spike-tally classification**, all regression-tested against the
+**original native fake P03 MMIO/DDR harness**, not the KV260.
+
+Separate frozen B2.4 host-only route/input/three TRAIN validation
+witness packer, strict C SHA/route table parser, standalone NEW
+`p07_b4m_full_26tick` A53 source, offline Vitis build script and
+independent 256-byte full-run mailbox verifier are added. The original
+physically accepted B4l first epoch/ELF remains unchanged; the new
+firmware is **not built or physically run yet**. Must first verify
+original frozen stage/route counts on user PC, obtain and inspect
+genuine new ELF PT_LOAD/low-DDR ownership, implement independently
+verified physical input/route staging with new approvals and evidence,
+run complete physical TRAIN validation, and independently cross-check
+all signed24 per-neuron/packet/readout traces with source oracle.
+**P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
+closeout/P08-B handoff remain OPEN.**
+See [consolidated B4m development and exact gates](docs/P07_B4M_COMPLETE_INFERENCE_DEVELOPMENT.md).
+**Official B2 TEST SEALED.**
+P06-B1/P06-B2 are merged, while draft P07-B PR #49 is unmerged.
+Track A P07-A and P08-A latency baseline remain separately accepted.
 
 **P07-B entry is a GO for DESIGN and implementation work, not an
 authorization to label scaled physical results as accepted or to

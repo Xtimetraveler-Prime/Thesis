@@ -1,0 +1,70 @@
+{
+  "schema": "p07-b4g-p08-seven-historical-width-log-reconciliation-v1",
+  "date": "2026-10-21",
+  "source": "user-pasted stdout of find/grep on local Thesis_Evidence; raw log bytes not uploaded to assistant",
+  "scope": "P08-A3.1 pilot and six P08-A3.2 A2.1/A2.2 paired original physical runs",
+  "observed_log_count": 7,
+  "all_seven_fpd_lpd_width_bits": 128,
+  "raw_values": {
+    "FPD_SLCR_afi_fs": "0x00000A00",
+    "LPD_SLCR_afi_fs": "0x00000200"
+  },
+  "paths": [
+    {
+      "tag": "A3.1 pilot",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 1 A2.1",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_A2_1_1024_20261019T003224Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 1 A2.2",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_A2_2_1024_20261019T003249Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 2 A2.2",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_pair2_A2_2_20261019T010354Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 2 A2.1",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_pair2_A2_1_20261019T011226Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 3 A2.1",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_pair3_A2_1_20261019T012641Z/ps_width.log"
+    },
+    {
+      "tag": "A3.2 pair 3 A2.2",
+      "path": "/home/dna/Thesis_Evidence/p08_a3_2_pair3_A2_2_20261019T013054Z/ps_width.log"
+    }
+  ],
+  "Track_A_previously_user_reported_128_bit_logs": 19,
+  "Track_B_2026_10_21_before_xmutil": {
+    "FPD": "0x00002560",
+    "LPD": "0x00000512",
+    "FPD_bits": 64,
+    "LPD_bits": 64
+  },
+  "Track_B_2026_10_21_after_xmutil": {
+    "FPD": "0x00002560",
+    "LPD": "0x00000512",
+    "FPD_bits": 64,
+    "LPD_bits": 64
+  },
+  "last_preserved_128bit_measurement_file": "/home/dna/Thesis_Evidence/p08_a3_2_pair3_A2_2_20261019T013054Z/ps_width.log",
+  "conclusions": [
+    "Prior accepted 128-bit PS HPM0 initialization remained present through last preserved P08 run (named 2026-10-19T013054Z).",
+    "Current 64-bit condition is observed 2026-10-21; actual transition time and root cause unknown.",
+    "No evidence found in inspected original P08 physical runners or A53 software of PS SLCR width writes, boot firmware update or persistent static-width reconfiguration.",
+    "xmutil unloadapp returned success but physical width fields remained unchanged; unloaded FPGA application is not restoration of 128-bit PS initialization.",
+    "Accepted XSA/BIT/LTX identity historical Track A provenance does not prove currently loaded PL image.",
+    "Initial P07-B PL read timeout at 0xA4000000 occurred before custom P03 bitstream had been programmed in that boot; missing PL slave plausible independent cause of timeout."
+  ],
+  "root_cause_verified": false,
+  "FPD128_PL_programming_authorized": false,
+  "A53_ELF_download_authorized": false,
+  "PS_register_writes_authorized": false,
+  "official_B2_MNIST_TEST": "SEALED",
+  "PR_49_merge_authorized": false
+}

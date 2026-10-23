@@ -1,0 +1,20 @@
+{
+  "schema": "p07-b3c1-user-native-acceptance-v1",
+  "recorded": "2026-10-20",
+  "user_statement": "these tests passed. proceed with developing B.3c2 and B.3c3",
+  "milestone": "P07-B.3c1 P03 64-bit packet → B1.3 independent C decoder",
+  "candidate_branch": "agent/v3-p07-b-scaled-physical-inference",
+  "accepted_source_commit": "a25d6666ce38fd8cfe7ec506736f15ec6f8482f0",
+  "user_attested_native_pass": true,
+  "stdout_provided": false,
+  "count_of_native_tests": null,
+  "scope": "B3c1 64-bit packet readback and host fake P03 bus, not real board",
+  "go_to_B3c2_B3c3_development": true,
+  "scaled_physical_KV260_27_core": "NOT_TESTED",
+  "real_A53_ELF": "NOT_BUILT",
+  "actual_PL_emitting_source_trace": "NOT_AVAILABLE",
+  "frozen_Track_A_B_artifacts_changed": false,
+  "B2_official_MNIST_TEST": "SEALED",
+  "merge_authorized": false,
+  "physical_execution_go": false
+}

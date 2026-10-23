@@ -1,0 +1,17 @@
+{
+  "schema": "p07-b3a-user-native-acceptance-v1",
+  "stage": "P07-B.3a 27-core 3-slot LRU ACK pager",
+  "candidate_commit_sha": "abf2622b9066b69d7e50eea788ff580026897e34",
+  "user_statement": "ok the B.3a tests passed. go ahead and proceed with B.3b",
+  "recorded_date": "2026-10-20",
+  "user_attested_native_pass": true,
+  "raw_stdout_provided": false,
+  "test_count": null,
+  "scope": "native 702 dispatch / 26-barrier LRU/ACK and injected faults only",
+  "go_for_B3b_native_development": true,
+  "physical_27_core_KV260": "NOT_TESTED",
+  "A53_standalone_ELF": "NOT_BUILT",
+  "B2_official_MNIST_TEST": "SEALED",
+  "original_Track_A_B_frozen_artifacts_modified": false,
+  "PR49_merge_authorized": false
+}

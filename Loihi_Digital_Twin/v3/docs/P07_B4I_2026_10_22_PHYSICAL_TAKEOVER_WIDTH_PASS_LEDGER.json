@@ -1,0 +1,47 @@
+{
+  "schema": "p07-b4i-physical-stop-width-user-reported-pass-v1",
+  "date": "2026-10-22",
+  "source": "Operator-supplied PC terminal transcript of actual KV260 XSDB stop/width gate; assistant did not access board or original log bytes.",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "hardware": "AMD KV260 / K26 / Cortex-A53 / accepted P03.2c FPD128 shell",
+  "operator_action": "KV260 reboot and sudo xmutil unloadapp before new JTAG session, followed by xsdb vivado/p07_b4i_stop_and_width_gate.tcl DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121",
+  "observed_lines": [
+    "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+    "P07_B4I_A53_1_STOP_COMMAND_PASS=1",
+    "P07_B4I_A53_2_POWERED_DOWN_OBSERVED=1",
+    "P07_B4I_A53_3_POWERED_DOWN_OBSERVED=1",
+    "P07_B4I_PS_WIDTH_TARGET=PSU",
+    "P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
+    "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
+    "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
+    "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128",
+    "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1",
+    "P07_B4I_DISCARD_PREVIOUS_LINUX_AND_REBOOT_AFTER_TEST=1"
+  ],
+  "physical_stop_width_gate": "USER_REPORTED_PASS",
+  "core_states": {
+    "Cortex-A53 #0": "XSDB stop command PASS",
+    "Cortex-A53 #1": "XSDB stop command PASS",
+    "Cortex-A53 #2": "XSDB reports core powered down; no halt required",
+    "Cortex-A53 #3": "XSDB reports core powered down; no halt required"
+  },
+  "ps_register_reads": {
+    "target": "PSU",
+    "FPD_raw": "0x00000A00",
+    "LPD_raw": "0x00000200",
+    "FPD_width_bits": 128,
+    "LPD_width_bits": 128
+  },
+  "new_gate_accepts_exact_powered_down_string_only_for_secondary": true,
+  "PL_programmed_in_this_session": false,
+  "A53_ELF_downloaded_in_this_session": false,
+  "DDR_mailbox_accessed_in_this_session": false,
+  "neuron_inference_ran_in_this_session": false,
+  "DDR_0_to_0x23A40_exclusive_ownership_verified": false,
+  "DDR_0x43FF0000_mailbox_ownership_verified": false,
+  "status": "B4I_CPU_TAKEOVER_WIDTH_PASS_NOT_P03_PL_PROGRAM_OR_A53_ELF_ACCEPTANCE",
+  "recovery": "Operator must reboot after halting Linux-owned A53 processors; do not resume stale Linux instance.",
+  "next_step": "P07-B4j separately approved standalone JTAG session: reproduce complete CPU/PS width admission and program accepted P03 BIT/LTX + check VIO reset; strictly no ELF dow, DDR mailbox operations, or 27-core inference.",
+  "not_a_claim_of": "board boot-firmware low-DDR ownership, P03 bitstream programming success on Oct22, real P07-B4i firmware execution, scaled physical trained B2 parity",
+  "pull_request": "#49 draft/unmerged; accepted P03/Track A/P06 B2 frozen"
+}

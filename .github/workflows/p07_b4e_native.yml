@@ -1,0 +1,47 @@
+name: P07-B.4e real XSA/bit pre-build gate
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4e_vitis_inputs.py"
+      - "Loihi_Digital_Twin/v3/scripts/run_p07_b4e_real_vitis_build.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4e_vitis_inputs.py"
+      - ".github/workflows/p07_b4e_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4e_vitis_inputs.py"
+      - "Loihi_Digital_Twin/v3/scripts/run_p07_b4e_real_vitis_build.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4e_vitis_inputs.py"
+      - ".github/workflows/p07_b4e_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-real-vitis-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test-only pytest
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Offline pre-build fixture and negative gate (NO real XSA/Vitis)
+        run: |
+          python3 -m compileall -q scripts/p07_b4e_vitis_inputs.py \
+            tests/test_p07_b4e_vitis_inputs.py
+          bash -n scripts/run_p07_b4e_real_vitis_build.sh
+          python3 -m pytest -q -rs tests/test_p07_b4e_vitis_inputs.py
+      - name: Result classification
+        run: |
+          echo "P07_B4E_OFFLINE_INPUTS_NATIVE_PASS=1"
+          echo "P07_B4E_ACTUAL_VITIS_ELF=NOT_BUILT"
+          echo "P07_B4E_BOARD_CONNECTED=0"
+          echo "P07_B4E_INFERENCE_AUTHORIZED=0"

@@ -1,0 +1,21 @@
+{
+  "schema": "p07-b3b-user-attested-native-acceptance-v1",
+  "stage": "P07-B.3b host 27-core CURRENT/NEXT event owner bridge",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "user_statement": "nice, all tests passed for B.3b as well. proceed to implementing B.3c",
+  "acceptance_candidate_sha": "75e899d02a31141cd345311a115674f69a7d5cf2",
+  "acceptance_date": "2026-10-20",
+  "native_B3b_pass_attested_by_user": true,
+  "native_predecessor_regressions_pass_attested_by_user": true,
+  "exact_test_count": null,
+  "native_stdout": "NOT_PROVIDED",
+  "scope": "Host C11 mock resident/nonresident P03 event slices; 27-core 26-tick synthetic routes and negative tests. Not trained-B2 physical or A53",
+  "B3c_native_verify": "PENDING",
+  "real_PL_packet_readback": "NOT_TESTED_ON_HARDWARE",
+  "real_A53_ELF": "NOT_BUILT",
+  "full_P02_mutable_page_transfer": "NOT_TESTED_ON_HARDWARE",
+  "B2_official_MNIST_TEST": "SEALED",
+  "merge_authorized": false,
+  "physical_execution_authorized": false,
+  "frozen_A_B_assets_modified": false
+}

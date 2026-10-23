@@ -1,0 +1,18 @@
+{
+  "schema": "p07-b4d-user-native-acceptance-v1",
+  "recorded_date": "2026-10-21",
+  "user_statement": "ok nice these tests passed as well. proceed with the next development steps",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "accepted_stage": "P07-B.4d offline hardware evidence/hashes and optional read-only XSDB log parser",
+  "user_attested_native_pass": true,
+  "terminal_stdout_supplied": false,
+  "independent_ci_run": 39460535524,
+  "native_tests_count": 11,
+  "scope": "host-only synthetic artifacts; not a Vitis build, physical XSDB, or KV260 board execution",
+  "authorizes": "P07-B.4e real hardware archive and toolchain preflight implementation",
+  "real_A53_ELF": "NOT_BUILT",
+  "real_A53_probe": "NOT_RUN",
+  "sealed_B2_MNIST_TEST": "SEALED",
+  "accepted_Track_A_B_modified": false,
+  "merge_authorized": false
+}

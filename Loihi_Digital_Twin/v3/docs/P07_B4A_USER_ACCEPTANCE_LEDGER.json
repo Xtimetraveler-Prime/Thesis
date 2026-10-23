@@ -1,0 +1,25 @@
+{
+  "schema": "p07-b4a-user-native-acceptance-v1",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "recorded_date": "2026-10-20",
+  "user_statement": "yep, nice work once again. all tests passed. proceed with implementing B.4b",
+  "accepted_stage": "P07-B.4a bounded host-native CURRENT external-input+prior NEXT P03 event-bank merge",
+  "native_tests_user_attested_pass": true,
+  "stdout_supplied": false,
+  "test_count_supplied": null,
+  "ci": {
+    "native_sha": "1c718514602bec49516150592beb42685a572c51",
+    "run_id": 39452217288,
+    "conclusion": "success",
+    "scope": "original P03 C adapter fake DDR/MMIO + sanitizers"
+  },
+  "next_stage_authorization": "B.4b development only",
+  "physical_P02_27_core_inference": "NOT_DONE",
+  "bare_metal_A53_inference_ELF": "NOT_LINKED",
+  "A53_probe_elf": "NOT_LINKED",
+  "standalone_DDR_reservation": "NOT_VERIFIED",
+  "actual_independent_PL_source_spikes": "NOT_AVAILABLE",
+  "Track_A_B_frozen_artifacts_modified": false,
+  "B2_official_MNIST_TEST": "SEALED",
+  "PR49_merge_authorized": false
+}
