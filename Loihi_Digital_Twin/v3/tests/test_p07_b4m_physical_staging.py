@@ -47,6 +47,98 @@ def make_args(tmp_path):
     )
 
 
+def test_host_gnu_binutils_fallback_is_selected_without_target_named_tools(monkeypatch):
+    seen=[]
+    available={"readelf":"/usr/bin/readelf","nm":"/usr/bin/nm"}
+    monkeypatch.setattr(stage.shutil,"which",lambda name:
+                        seen.append(name) or available.get(name))
+    assert stage.resolve_elf_inspection_tools()==(
+        "/usr/bin/readelf","/usr/bin/nm",
+    )
+    assert seen==[
+        "aarch64-none-elf-readelf",
+        "aarch64-linux-gnu-readelf",
+        "readelf",
+        "aarch64-none-elf-nm",
+        "aarch64-linux-gnu-nm",
+        "nm",
+    ]
+
+
+def test_target_binutils_preferred_over_host_if_installed(monkeypatch):
+    available={
+        "aarch64-none-elf-readelf":"/amd/gnu/aarch64-none-elf-readelf",
+        "aarch64-none-elf-nm":"/amd/gnu/aarch64-none-elf-nm",
+        "readelf":"/usr/bin/readelf",
+        "nm":"/usr/bin/nm",
+    }
+    monkeypatch.setattr(stage.shutil,"which",lambda name: available.get(name))
+    assert stage.resolve_elf_inspection_tools()==(
+        "/amd/gnu/aarch64-none-elf-readelf",
+        "/amd/gnu/aarch64-none-elf-nm",
+    )
+
+
+@pytest.mark.parametrize("available,missing",[
+    ({"nm":"/usr/bin/nm"},"readelf"),
+    ({"readelf":"/usr/bin/readelf"},"nm"),
+])
+def test_missing_all_compatible_inspectors_fails_without_board(
+    monkeypatch,available,missing
+):
+    monkeypatch.setattr(stage.shutil,"which",lambda name: available.get(name))
+    with pytest.raises(stage.StageNoGo,match="missing GNU "+missing):
+        stage.resolve_elf_inspection_tools()
+
+
+def test_gnu_host_inspectors_are_passed_to_original_b4i_gate(
+    tmp_path,monkeypatch
+):
+    a=make_args(tmp_path)
+    staging={
+        "input_routes":20384,
+        "output_routes":1000,
+        "registered_axons":21384,
+        "staged_files_sha256":dict(stage.EXPECTED_STAGE_SHA),
+    }
+    elf={
+        "new_elf_sha256":stage.EXPECTED_ELF_SHA,
+        "new_linker_map_sha256":stage.EXPECTED_MAP_SHA,
+        "pt_load_end_exclusive":"0x00106B00",
+        "pt_load_filesz":106580,
+        "pt_load_memsz":1075968,
+    }
+    a.offline_report.write_text(json.dumps({
+        "schema":"p07-b4m-full-26tick-offline-elf-and-stage-gate-v1",
+        "staging":staging,"elf":elf,
+        "destructive_launch_authorized":False,
+        "real_KV260_inference_executed":False,
+        "full_numerical_parity_verified":False,
+        "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
+    }))
+    monkeypatch.setattr(stage.shutil,"which",lambda name:{
+        "readelf":"/usr/bin/readelf",
+        "nm":"/usr/bin/nm",
+    }.get(name))
+    called=[]
+    def old_b4i_gate(build,reports,*,readelf,nm):
+        called.append((build,reports,readelf,nm))
+        return {}
+    with patch.object(stage.model,"prepare_verified_contexts",
+                      return_value={"records":[]}),(
+         patch.object(stage.old,"require_real_bindings",
+                      return_value={"binary_sha256":"mock"})),(
+         patch.object(stage.old.b4i,"preflight",side_effect=old_b4i_gate)),(
+         patch.object(stage.admission,"require_routes",return_value=staging)),(
+         patch.object(stage.admission,"require_elf",return_value=elf)),(
+         patch.object(stage.old.b4i,"log_call",
+                      side_effect=AssertionError("board unexpectedly touched"))):
+        index,desc,got_staging,got_elf=stage.require_original(a)
+    assert called==[(a.b4i_build,a.reports,"/usr/bin/readelf","/usr/bin/nm")]
+    assert got_staging==staging and got_elf==elf
+    assert not a.evidence.exists()
+
+
 @pytest.mark.parametrize("flag",stage.APPROVALS)
 def test_each_operator_approval_independently_blocks_board(tmp_path,flag):
     args=make_args(tmp_path)
