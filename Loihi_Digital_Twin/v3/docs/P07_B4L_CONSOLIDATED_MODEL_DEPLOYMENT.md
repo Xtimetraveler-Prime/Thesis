@@ -1019,3 +1019,75 @@ before a new separately approved physical run. Preserve prior failed
 `p07_b4l_b3_epoch_20261023T014832Z` evidence, use a fresh evidence leaf
 for any eventual retry, and reboot after **any** JTAG takeover attempt.
 Do not merge PR #49 or unseal frozen B2 official MNIST TEST.
+
+
+## Actual first P07-B.4l B3 physical scheduler epoch — user-reported PASS (2026-10-23 UTC)
+
+Following host-native acceptance of the Track-A-derived CPU0 takeover fix, the operator
+completed a **fresh dedicated real KV260** `--mode execute` for
+`scripts/p07_b4l_b3_physical_epoch.py`, and pasted original
+`stage.txt`, independent verifier JSON, and excerpts of
+`ps_width.log`, `program.log`, `ddr_stage.log`,
+`binding_stage.log`, and `a53_b3_epoch.log`.
+
+The actual stage was:
+
+```text
+REAL_B3_FIRST_EPOCH_27_DISPATCH_BARRIER_PENDING_PASS_REBOOT_REQUIRED
+```
+
+The independently accepted 256-byte physical mailbox receipt reported:
+
+```json
+{
+  "barrier_acknowledged": false,
+  "captured_P03_packet_words": 0,
+  "claimed_26_tick_inference": false,
+  "first_epoch_pending_barrier": true,
+  "genuine_frozen_axon_bindings": 21384,
+  "genuine_frozen_compartments": 1010,
+  "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+  "packet_capture_FNV64": "0x6B111D86DF7422FE",
+  "physical_dirty_page_outs": 24,
+  "physical_page_ins": 27,
+  "physical_scheduler_dispatches": 27
+}
+```
+
+The provided hardware transcripts also show **real FPD/LPD 128-bit gate PASS**,
+accepted P03 BIT/VIO programming and reset release, all 27 original
+512KiB contexts physically staged with per-core/full readback PASS, exact
+16KiB genuine frozen binding descriptor physical readback PASS, A53 first-epoch
+ELF download, and independent result-mailbox capture PASS. A53 #0 reported
+`PRE_RESET_ALREADY_STOPPED_CONFIRMED` in the launch script. This
+standalone session had an ordinary `P07_B4I_A53_0_STOP_COMMAND_PASS=1`
+on the initial gate, rather than needing the new CPU0 power-down recovery.
+A standard `rst -processor` reset-vector advisory appeared in the XSDB
+launch log; no additional reset-vector or cleared-register correctness
+proof is claimed from that warning.
+
+**Physical acceptance scope: P07-B.4l FIRST B3 SCHEDULER EPOCH / PAGE-DISPATCH
+CHECKPOINT PASS.** This is a physical FPGA neural-engine dispatch **receipt**;
+it does not prove the original fully trained SNN has produced meaningful
+spikes or numerically correct predictions, since the design intentionally
+ran with **empty CURRENT banks**, no external ingress, no NEXT routing and
+**zero captured spike packet words**. The first global barrier is
+**PENDING and NOT ACKNOWLEDGED**, and no later tick was run. It does not close
+P07-B or independently prove firmware-exclusive ownership of expanded
+low-DDR physical ELF memory.
+
+**Next implementation checkpoint:** Original frozen TRAIN-derived
+`CURRENT` ingress and real P03 per-dispatch spike provenance; independent
+B2b source-to-target NEXT packet routing; globally synchronized barrier
+acknowledgement; all **26 ticks × 27 cores = 702 dispatches** per inference;
+B3 state persistence/dirty writeback; and full signed24 frozen-neuron
+state/spike/packet/readout parity for precommitted TRAIN-derived
+validation frames. P07-B.5 validated physical corpus, P07-B.6 independent
+acceptance and P08-B handoff remain ahead. Official MNIST TEST is sealed.
+Reboot after this and every destructive JTAG attempt; never resume halted
+Linux. Preserve the user-local full physical evidence unchanged.
+
+Evidence ledger:
+`docs/P07_B4L_2026_10_23_FIRST_REAL_B3_EPOCH_ACCEPTANCE.json`.
+The assistant was supplied terminal excerpts and verifier JSON, not the
+original full evidence bytes. Draft PR #49 remains unmerged.
