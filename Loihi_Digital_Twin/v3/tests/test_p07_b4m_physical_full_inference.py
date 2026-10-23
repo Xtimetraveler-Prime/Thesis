@@ -166,7 +166,7 @@ def test_terminal_counter_failure_never_claims_receipt(tmp_path,monkeypatch):
         with pytest.raises(run.full_verify.FullReceiptError,match="paging"):
             run.physically_execute_after_verified(a,out,readbacks)
     assert not (out/"independent_full_26tick_physical_receipt.json").exists()
-    assert not (out/"failed_full_26tick_physical_mailbox_diagnostic.json").exists()
+    assert (out/"failed_full_26tick_physical_mailbox_diagnostic.json").exists()
 
 
 def test_real_terminal_done_but_firmware_fail_preserves_diagnostics(
@@ -186,7 +186,7 @@ def test_real_terminal_done_but_firmware_fail_preserves_diagnostics(
     def fake_xsdb(command,log):
         (out/"full_26tick_physical_mailbox_256.bin").write_bytes(
             struct.pack("<64I",*words))
-        log.write_text("\\n".join(run.LAUNCH_MARKERS)+"\\n")
+        log.write_text("\n".join(run.LAUNCH_MARKERS)+"\n")
     with patch.object(run.physical.old.b4i,"log_call",side_effect=fake_xsdb):
         with pytest.raises(run.full_verify.FullReceiptError,match="terminal magic"):
             run.physically_execute_after_verified(a,out,readbacks)
