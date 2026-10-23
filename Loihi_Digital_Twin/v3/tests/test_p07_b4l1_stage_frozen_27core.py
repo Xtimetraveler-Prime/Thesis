@@ -163,3 +163,59 @@ def test_stage_never_has_jtag_firmware_or_dataset_actions():
     assert "xsdb" not in source.lower()
     assert "vivado" not in source.lower()
     assert "torch." not in source
+
+
+def test_direct_stage_import_no_pythonpath_subprocess(tmp_path):
+    """Reproduce the user's direct scripts invocation with -I isolation.
+
+    The real B2.4 freeze dependencies aren't installed by lightweight CI.
+    Intercept only the final import to prove the canonical v3/src root is
+    resolved *at the call site*; do not fake frozen data verification.
+    """
+    import subprocess
+    import textwrap
+
+    script=ROOT/"scripts/p07_b4l1_stage_frozen_27core.py"
+    code=textwrap.dedent("""
+        import builtins, importlib.util, pathlib, sys, types
+        source=pathlib.Path(sys.argv[1])
+        spec=importlib.util.spec_from_file_location("b4l_direct", source)
+        stage=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(stage)
+        real_import=builtins.__import__
+        calls=[]
+        def checked_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name=="loihi_twin_v2.p06_b24_freeze":
+                root=stage.V3/"src"
+                assert str(root) in sys.path, "canonical verifier root not added"
+                assert (root/"loihi_twin_v2"/"p06_b24_freeze.py").is_file()
+                calls.append(name)
+                return types.SimpleNamespace(verify_frozen_directory=lambda *args, **kw: None)
+            return real_import(name, globals, locals, fromlist, level)
+        builtins.__import__=checked_import
+        try:
+            stage.admit_freeze(pathlib.Path(sys.argv[2]))
+        except stage.StageError as exc:
+            assert "frozen original manifest absent/symlinked" in str(exc), str(exc)
+        else:
+            raise AssertionError("must fail closed on absent frozen manifest")
+        assert calls==["loihi_twin_v2.p06_b24_freeze"]
+        print("P07_B4L_DIRECT_PYTHON_NO_PYTHONPATH_VERIFIER_IMPORT_RESOLVED=1")
+    """)
+    env={**__import__("os").environ}
+    env.pop("PYTHONPATH",None)
+    result=subprocess.run(
+        [sys.executable,"-I","-c",code,str(script),str(tmp_path)],
+        cwd=tmp_path,env=env,capture_output=True,text=True,timeout=30,
+    )
+    assert result.returncode==0,result.stdout+result.stderr
+    assert "P07_B4L_DIRECT_PYTHON_NO_PYTHONPATH_VERIFIER_IMPORT_RESOLVED=1" in result.stdout
+
+
+def test_stage_source_root_is_canonical_and_never_substitutes_verifier():
+    text=(ROOT/"scripts/p07_b4l1_stage_frozen_27core.py").read_text()
+    assert 'source_root=V3/"src"' in text
+    assert 'source_root.is_symlink()' in text
+    assert 'sys.path.insert(0,str(source_root))' in text
+    assert 'from loihi_twin_v2.p06_b24_freeze import verify_frozen_directory' in text
+    assert 'verified=verify_frozen_directory(frozen,deep=False)' in text
