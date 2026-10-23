@@ -122,6 +122,11 @@ static int bad_trace_rejects_before_barrier(void){
     CHECK(sim.debug_writes==0u&&sim.nonresident_stores==0u);
     return 0;
 }
+/* Permit the later 26-tick harness to import this original fake-MMIO
+ * fixture without colliding with its independent process entry point. */
+#ifdef P07_B4M_FULL_INCLUDE
+#define main p07_b4m_trace_fixture_main
+#endif
 int main(void){
     backing=(uint8_t *)malloc((size_t)N*RECORD);
     resident_memory=(uint8_t *)malloc((size_t)3u*RECORD);
@@ -134,3 +139,6 @@ int main(void){
     puts("P07_B4M_TRACE_REAL_BOARD_TESTED=0");
     return 0;
 }
+#ifdef P07_B4M_FULL_INCLUDE
+#undef main
+#endif
