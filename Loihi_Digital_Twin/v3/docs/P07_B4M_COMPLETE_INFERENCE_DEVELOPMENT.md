@@ -407,3 +407,79 @@ the earliest failing C stage, fix only the demonstrated bug with native
 regressions and a newly operator-built/re-SHA-pinned genuine Vitis artifact
 if C source changes. Do not repeat the destructive run blindly or infer
 full inference from the terminal DONE marker.
+
+## 2026-10-23 genuine stage-9 / P03 protocol -5 / only ONE PL dispatch diagnosed
+
+The user executed the offline postmortem of their first genuine full B4m
+KV260 256-byte physical mailbox. The immutable raw mailbox has SHA
+`4ff427fca04f75b89712c7ea81d7065710ce46de586f6eb07ec8bd1ea1105baf`.
+
+Actual observed fields:
+
+```text
+firmware_identity_magic_valid=true
+firmware_schema_valid=true
+firmware_terminal_DONE_marker_seen=true
+firmware_terminal_status=B4M_FIRMWARE_FAIL
+source_reported_first_fault_stage=9
+source_reported_first_fault_interpretation=B3c2 per-core PL paging/dispatch before barrier
+ps_fpd128_ready=0
+p03_hw_init=0
+p03_hw_identify=0
+original_B24_binding_status=0
+frozen_route_mount_status=0
+pager_init_status=0
+scheduler_init_status=0
+full_inference_return_status=-2
+p03_hardware_last_error=-5
+physical_dispatch_counter_snapshot=1
+all_structural_inference_receipt_checks_pass=false
+```
+
+The original hardware adapter defines **P03_HW_PROTOCOL = -5** and
+**P03_HW_TIMEOUT = -4**. Therefore this is **NOT** a timer-budget timeout.
+A live PS-to-PL program path successfully passed width, MMIO hardware
+identity, frozen core binding, and both frozen route mounts before
+B4m's first-tick B3c2 scheduling. The PL completed counter reached **one**,
+not 702. No barrier ACK, accepted inference classification, or numerical
+parity is established. There is no reason to edit frozen network weights,
+unseal TEST, increase the hardware poll timeout, or rerun the board blind.
+
+The C source does not capture the failing PL dispatch/debug status register,
+the specific B3c2 scheduler subfault, or the adapter's `last_status` in this
+first-release 64-word mailbox. Possible -5 sources include an HLS-reported
+dispatch error flag, dispatch core/active-register mismatch, a stale/invalid
+global status, or a debug bank protocol error while capturing packets or
+real neuron trace. The first counter value does not uniquely distinguish
+these. **Do not assert a root cause solely from the broad stage-9 code.**
+
+PC-only diagnostic:
+`scripts/p07_b4m_first_dispatch_host_audit.py` reconstructs the original
+TRAIN validation frame ordinal 0 and exact original B2.4 route set, takes
+all pixels which spike at tick 0 into **logical core 0**, then checks the
+actual frozen source's P03 packed axon and synapse tables against
+`hls/core_v2/src/loihi_core_v2.cpp` constraints (registered axons,
+reserved bits, row lengths, target indices, and unsupported delays).
+Output includes event count and first 12 sample source-pixel/axon IDs.
+This audit cannot establish the real PL register error or inference parity.
+Run before modifying accepted C/RTL or scheduling another destructive JTAG
+session:
+
+```bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+source ~/Git/Thesis/.venv-p08/bin/activate
+PYTHONPATH="$PWD/src" python scripts/p07_b4m_first_dispatch_host_audit.py \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --routes-dir "/home/dna/p07_b4m_frozen_inputs_20261023T034626Z" \
+  --out "/home/dna/Thesis_Evidence/p07_b4m_first_dispatch_pc_audit.json"
+```
+
+If this source audit passes, the next appropriate code work is **bounded
+failure-only hardware telemetry** in a newly versioned standalone A53
+candidate: capture P03 dispatch status, core status, active core/slot/bank,
+debug status, global status, B3c2 `first_fault`, and adapter
+`last_status` in reserved mailbox fields **only on failure**, with
+distinct genuine Vitis ELF/map SHA, new memory geometry admission,
+separate risk approval, and native negative regressions. Never modify the
+existing accepted original frozen source or claim first-epoch fake MMIO
+tests establish physical correctness.
