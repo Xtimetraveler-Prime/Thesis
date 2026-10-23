@@ -345,14 +345,16 @@ def test_primary_transient_power_down_must_recover_to_actual_halt(tmp_path):
     }
 
 
-def test_primary_persistent_power_down_fails_closed_before_width_read(tmp_path):
+def test_primary_persistent_power_down_without_reset_support_fails_closed(tmp_path):
+    # Fake XSDB has NO rst procedure. After read-only PS128 verification,
+    # fallback must fail, not fabricate an A53 #0 halt.
     run=b4i_fake_tcl_stop(tmp_path,"primary_stays_down",0,"The core is powered down")
     assert run.returncode!=0
-    assert "after 3 attempts" in run.stderr
     assert run.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1")==1
     assert run.stdout.splitlines().count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2")==1
     assert "P07_B4I_A53_0_STOP_COMMAND_PASS=1" not in run.stdout
-    assert "P03_2C_PS_FPD_AXIFS_RAW=" not in run.stdout
+    assert "P03_2C_PS_FPD_AXIFS_RAW=0x00000A00" in run.stdout
+    assert "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1" not in run.stdout
     assert "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in run.stdout
     with pytest.raises(ValueError):
         pilot.verify_takeover_log(run.stdout)
@@ -366,3 +368,116 @@ def test_primary_nonexact_powerdown_diagnostic_remains_fatal(tmp_path):
     assert "stop failed for Cortex-A53 #0" in run.stderr
     assert "P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY" not in run.stdout
     assert "P03_2C_PS_FPD_AXIFS_RAW=" not in run.stdout
+
+
+def b4i_primary_reset_simulation(tmp_path,name,fpd="00000A00",
+                                  reset_error=False,post_reset_halt=True):
+    """Fake XSDB Tcl only. Real board is not touched."""
+    import subprocess
+    gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
+    script=tmp_path/(name+".tcl")
+    script.write_text(
+        'set ::selected ""\n'
+        'set ::did_reset 0\n'
+        'proc connect {args} {return ok}\n'
+        'proc disconnect {} {return ok}\n'
+        'proc targets {args} {set ::selected [lindex $args end]; return ok}\n'
+        'proc stop {} {\n'
+        '  if {[string first "Cortex-A53 #0" $::selected] >= 0} {\n'
+        '    if {!$::did_reset} {error "The core is powered down"}\n'
+        f'    if {{{1 if post_reset_halt else 0}}} {{error "Already stopped"}}\n'
+        '    error "The core is powered down"\n'
+        '  }\n'
+        '  return ok\n'
+        '}\n'
+        'proc rst {args} {\n'
+        '  if {$args ne "-processor"} {error "wrong reset option"}\n'
+        '  puts "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1"\n'
+        f'  if {{{1 if reset_error else 0}}} {{error "reset unavailable"}}\n'
+        '  set ::did_reset 1\n'
+        '}\n'
+        f'proc mrd {{args}} {{if {{[lsearch $args 0xFD615000] >= 0}} {{return "FD615000: {fpd}"}}; return "FF419000: 00000200"}}\n'
+        'set argc 2\n'
+        'set argv {DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121}\n'
+        f'source {{{gate}}}\n'
+    )
+    return subprocess.run(["tclsh",str(script)],capture_output=True,text=True)
+
+
+def test_track_a_reset_fallback_only_after_real_ps128_and_reconfirmed_halt(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_primary_reset_simulation(tmp_path,"track_a_reset")
+    assert run.returncode==0,run.stderr
+    lines=run.stdout.splitlines()
+    assert lines.count("P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1")==1
+    assert lines.count("SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1")==1
+    assert lines.count("P07_B4I_A53_0_EXACT_POWER_DOWN_RESET_PENDING=1")==1
+    assert lines.index("P03_2C_PS_LPD_HPM0_WIDTH_BITS=128") < lines.index(
+        "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1")
+    assert lines.index("SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1") < lines.index(
+        "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1")
+    assert pilot.verify_takeover_log(run.stdout)=={
+        0:"halted",1:"halted",2:"halted",3:"halted"
+    }
+
+
+@pytest.mark.parametrize("reset_error,post_reset_halt",[(True,True),(False,False)])
+def test_track_a_reset_fallback_never_accepts_unconfirmed_cpu0(
+    tmp_path,reset_error,post_reset_halt
+):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_primary_reset_simulation(
+        tmp_path,"failed_reset",reset_error=reset_error,
+        post_reset_halt=post_reset_halt)
+    assert run.returncode!=0
+    assert "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1" not in run.stdout
+    assert "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1" not in run.stdout
+    assert "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in run.stdout
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(run.stdout)
+
+
+def test_track_a_reset_fallback_never_resets_with_wrong_fpd_width(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_primary_reset_simulation(tmp_path,"wrong_width",fpd="00002560")
+    assert run.returncode!=0
+    assert "P03_2C_PS_FPD_HPM0_WIDTH_BITS=64" in run.stdout
+    assert "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1" not in run.stdout
+    assert "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1" not in run.stdout
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(run.stdout)
+
+
+def test_primary_already_stopped_is_an_exact_positive_halt_state(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
+    wrapper=tmp_path/"already_stopped.tcl"
+    wrapper.write_text(
+        'set ::selected ""\n'
+        'proc connect {args} {return ok}\n'
+        'proc disconnect {} {return ok}\n'
+        'proc targets {args} {set ::selected [lindex $args end]; return ok}\n'
+        'proc stop {} {if {[string first "Cortex-A53 #0" $::selected] >= 0} {error "Already stopped"}; return ok}\n'
+        'proc mrd {args} {if {[lsearch $args 0xFD615000] >= 0} {return "FD615000: 00000A00"}; return "FF419000: 00000200"}\n'
+        'set argc 2\n'
+        'set argv {DEDICATED_DISCARD_LINUX_APPROVED tcp:127.0.0.1:3121}\n'
+        f'source {{{gate}}}\n'
+    )
+    run=__import__("subprocess").run(
+        ["tclsh",str(wrapper)],capture_output=True,text=True)
+    assert run.returncode==0,run.stderr
+    assert "P07_B4I_A53_0_ALREADY_STOPPED_CONFIRMED=1" in run.stdout
+    assert pilot.verify_takeover_log(run.stdout)[0]=="halted"
+
+
+def test_primary_reset_marker_cannot_be_forged_without_pending_state():
+    log=valid_b4i_takeover_log().replace(
+        "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+        "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1"
+    )
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(log)
