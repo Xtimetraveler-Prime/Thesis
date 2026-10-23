@@ -26,6 +26,7 @@ import p07_b4l_frozen_bindings as bind
 import p07_b4l_verify_b3_epoch as verify_epoch
 
 ELF_SHA="3e462e3b12c525820d91b0af06f73f36afc960e39d834424fc507c4fd89a747d"
+ACCEPTED_DESCRIPTOR_SHA="2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb"
 ELF_NAME="p07_b4l_b3_first_epoch.elf"
 ELF_ID=b"P07_B4L_A53_B3_ONE_EPOCH_V1"
 LOAD_PHYSICAL_START=0
@@ -163,6 +164,7 @@ def require_real_bindings(frozen:Path,staged:Path,bindings_dir:Path)->dict:
             verified["physical_staging_end_exclusive"]!="0x43FC4000" or
             verified["core_count"]!=27 or
             verified["accepted_27core_bundle_sha256"]!=deploy.ACCEPTED_BUNDLE_SHA or
+            verified["binary_sha256"]!=ACCEPTED_DESCRIPTOR_SHA or
             verified["binary_sha256"]!=file_sha(descriptor)):
         raise EpochNoGo("NO-GO: immutable frozen 16KiB 27-core descriptor SHA/DDR geometry mismatch")
     return verified
@@ -221,7 +223,9 @@ def run_hardware(args:argparse.Namespace,index:dict,descriptor:dict,elf:dict)->N
         deploy.prep_transfer_files(args.staged_dir,out/"transfer_inputs",index)
         (out/"physical_readback").mkdir(mode=0o700)
         data=(args.bindings_dir/bind.FILENAME).read_bytes()
-        if len(data)!=bind.SIZE or hashlib.sha256(data).hexdigest()!=descriptor["binary_sha256"]:
+        if (len(data)!=bind.SIZE or
+                hashlib.sha256(data).hexdigest()!=ACCEPTED_DESCRIPTOR_SHA or
+                hashlib.sha256(data).hexdigest()!=descriptor["binary_sha256"]):
             raise EpochNoGo("NO-GO: frozen B2.4 metadata descriptor mutated since preflight")
         (out/"binding_input_16k.bin").write_bytes(data)
         (out/"stage.txt").write_text("27_ORIGINAL_CORES_AND_SHA_BOUND_DESCRIPTOR_PREPARED\n")
