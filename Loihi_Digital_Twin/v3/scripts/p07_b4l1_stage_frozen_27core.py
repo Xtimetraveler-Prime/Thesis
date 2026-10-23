@@ -78,7 +78,18 @@ def record_filename(core:int)->str:
 
 
 def admit_freeze(frozen:Path)->dict:
-    """Real source-of-truth full 33-asset verifier, never stubbed on user PC."""
+    """Real source-of-truth full 33-asset verifier, never stubbed on user PC.
+
+    The user-facing staging/deployment commands run directly from scripts/,
+    so Python does not automatically search the sibling v3/src/ directory.
+    Add the trusted repository source root before importing the ORIGINAL
+    frozen verifier. Do not require callers to export PYTHONPATH.
+    """
+    source_root=V3/"src"
+    if not source_root.is_dir() or source_root.is_symlink():
+        raise StageError("NO-GO: canonical v3/src original verifier root missing")
+    if str(source_root) not in sys.path:
+        sys.path.insert(0,str(source_root))
     from loihi_twin_v2.p06_b24_freeze import verify_frozen_directory
     frozen_manifest=frozen/FREEZE_REL
     if not frozen_manifest.is_file() or frozen_manifest.is_symlink():
