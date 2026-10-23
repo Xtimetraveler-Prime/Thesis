@@ -95,6 +95,7 @@ def test_gnu_host_inspectors_are_passed_to_original_b4i_gate(
     tmp_path,monkeypatch
 ):
     a=make_args(tmp_path)
+    a.offline_report=tmp_path/"p07_b4m_admission_synthetic_offline_only.json"
     staging={
         "input_routes":20384,
         "output_routes":1000,
