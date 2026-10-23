@@ -848,3 +848,23 @@ If the candidate exceeds actual ELF/stack safety or hits firmware DDR
 ownership uncertainties, NO-GO; do not bypass by changing SHA pins or
 broadening memory envelope. Never overwrite approved original B2.4
 files or access official MNIST TEST.
+
+### ELF physical section-range gate strengthening
+
+The PC-only standalone admission checker additionally runs the *actual
+user-local* `aarch64-none-elf-readelf -W -S` against the pinned
+`p07_b4l_b3_first_epoch.elf`. It parses and requires unique nonempty
+`.text`, `.bss`, `.heap` and `.stack` section ranges within the exact
+pinned `[0,0x42D40)` `PT_LOAD` (not just the mention of the names
+inside a map). The exact original segment's executable/data flag
+`RWE` is pinned as well. A section with zero size, missing bounds, a
+relocated .stack beyond 0x42D40 or changed LOAD geometry fails before
+board access. Native tests emulate the ELF with mock output only and
+include out-of-bounds stack and nonmatching ELF negative cases.
+
+This checks the executable's *static* segment/stack/heap address
+geometry. It cannot independently establish runtime stack usage bounds,
+DMAs or secure firmware memory ownership. There is **no board dispatch
+admission claimed** until a real operator-local `--mode preflight`
+result, new separate dedicated-JTAG approval, and subsequent real
+mailbox independent readback.
