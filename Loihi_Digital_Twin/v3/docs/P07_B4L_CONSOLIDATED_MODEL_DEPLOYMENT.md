@@ -905,3 +905,88 @@ operator acceptance, not proof of firmware low-DDR exclusive ownership.
 This is a potentially destructive test against previously Linux-owned
 RAM; do not preserve/resume the halted Linux state, and reboot KV260
 following every physical attempt. There is no operator-note requirement.
+
+
+## First real B3 epoch attempt — CPU0 power-down NO-GO (operator log, 2026-10-23 UTC)
+
+The operator attempted the **first actual physical B3 epoch** using the unchanged
+SHA-pinned A53 ELF and original frozen B2.4 artifacts. Offline preflight
+passed, including exact ELF memsz `0x42d40`, and descriptor SHA
+`2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb`.
+The hardware command **failed at the very first A53 stop/PS-width gate**:
+
+```text
+P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+P07-B.4i stop failed for Cortex-A53 #0: The core is powered down
+P07_B4L_B3_REBOOT_REQUIRED=1
+P07_B4L_B3_NO_GO=hardware command failed (exit 1)
+```
+
+Preserve the real original evidence **unchanged**, particularly
+`/home/dna/Thesis_Evidence/p07_b4l_b3_epoch_20261023T014832Z/ps_width.log`
+and `stage.txt`. This failure occurred before the accepted P03 PL bitstream
+program, frozen-context DDR stage, 16KiB descriptor stage, ELF download,
+P03 dispatch or physical mailbox receipt. **No physical B3 dispatch PASS.**
+The log identifies the debugger's observed CPU0 power state, but does not
+prove the cause (Linux deep cpuidle is one plausible cause, not established).
+
+### Fail-closed CPU0 takeover improvement (PC-only candidate)
+
+The shared `vivado/p07_b4i_stop_and_width_gate.tcl` now retries `stop`
+on **CPU0 only**, at most **three attempts total** with a 200ms delay between
+attempts, and **only** for the exact XSDB error `The core is powered down`.
+No powered-down primary is ever admitted. A successfully executed `stop`
+is still mandatory for the `P07_B4I_A53_0_STOP_COMMAND_PASS=1` receipt.
+Persistent powered-down CPU0, any other stop failure, target-select failures,
+and wrong FPD/LPD 128-bit readbacks remain NO-GO; no JTAG reset/power-on,
+PS static-width changes, DDR writes, ELF changes or evidence overwrite were
+added to this gate. Existing secondary-CPU observations remain unchanged.
+Host Tcl tests check transient recovery, permanent failure and nonexact errors.
+This change has **not** been demonstrated on KV260 hardware yet.
+
+### Next reboot preparation on **KV260 Linux / PuTTY**, not on the PC
+
+After rebooting the previously halted board into a disposable Linux boot
+and before running **any** destructive JTAG takeover, inspect CPU0's
+online/cpuidle status. The following only changes temporary Linux cpuidle
+settings; it does not reset/debug CPU0 or touch the frozen model:
+
+```sh
+cat /sys/devices/system/cpu/online
+for s in /sys/devices/system/cpu/cpu0/cpuidle/state*; do
+    [ -r "$s/name" ] || continue
+    printf '%s: %s (disabled=%s)\n' "$s" "$(cat "$s/name")" "$(cat "$s/disable")"
+done
+```
+
+If CPU0 is online and deep cpuidle states 1+ are exposed, temporarily
+disable those states for this **one dedicated board session**:
+
+```sh
+found=0
+for s in /sys/devices/system/cpu/cpu0/cpuidle/state[1-9]*; do
+    [ -f "$s/disable" ] || continue
+    found=1
+    echo 1 | sudo tee "$s/disable" >/dev/null || exit 1
+    test "$(cat "$s/disable")" = "1" || exit 1
+done
+if [ "$found" -ne 1 ]; then
+    echo "NO-GO: CPU0 has no exposed deep cpuidle disable controls; inspect boot state"
+else
+    echo "CPU0 deep cpuidle disabled for this boot; do not mistake this for DDR ownership proof"
+fi
+```
+
+Run from the operator PC only after this board preparation and the usual
+independent recovery/ownership approvals. Use a **new** unique evidence
+directory and the existing immutable B3 A53 ELF, existing 27-core staging
+and 16KiB bindings; do not reuse the failed evidence leaf or regenerate
+accepted binaries. If the A53 #0 stop still fails, do not bypass the gate:
+preserve `ps_width.log`, reboot KV260 again, and investigate original
+JTAG/PSCI/boot power-state evidence before a further attempt. CPU0 cpuidle
+may not be the cause; only actual XSDB logs can establish the outcome.
+
+Even if the A53 gate succeeds, the expanded low-DDR firmware-ownership
+risk is still independently unresolved. First physical B3 acceptance continues
+to require same-session full model/binding DDR readbacks and the independent
+256B first-epoch mailbox verifier. Official MNIST TEST remains sealed.
