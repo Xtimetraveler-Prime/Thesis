@@ -150,7 +150,8 @@ def compare_readback(readback_dir:Path,source:dict[str,Path])->dict:
         }
     return report
 
-def execute_staging(args:argparse.Namespace,index:dict,desc:dict,staged:dict,elf:dict,\n                    *,on_verified=None)->None:
+def execute_staging(args:argparse.Namespace,index:dict,desc:dict,staged:dict,elf:dict,
+                    *,on_verified=None)->None:
     stage_requirements(args)
     output=args.evidence
     output.mkdir(mode=0o700,exist_ok=False)
