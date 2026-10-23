@@ -32,18 +32,39 @@ set status [catch {
         if {[catch {targets -set -filter "name =~ \"$name\""} target_error]} {
             error "P07-B.4i could not select $name: $target_error"
         }
-        if {[catch {stop} stop_error]} {
-            # Linux PSCI may have left secondary A53 cores powered down.
-            # Only accept the exact XSDB response on #1/#2/#3. Never
-            # normalize other debugger errors to a presumed power state,
-            # and NEVER accept it for A53 #0 (the application CPU).
-            if {$i > 0 && [string trim $stop_error] eq "The core is powered down"} {
-                puts "P07_B4I_A53_${i}_POWERED_DOWN_OBSERVED=1"
-                continue
+        # CPU0 can briefly enter a Linux/PSCI deep-idle power state.
+        # Retry ONLY the exact powered-down response for CPU0, up to
+        # three stop attempts. A powered-down CPU0 is NEVER accepted
+        # as halted; the firmware must not be launched without STOP_PASS.
+        # No wake, reset, register writes, or bypasses are permitted here.
+        set stopped 0
+        set secondary_down 0
+        for {set attempt 1} {$attempt <= 3} {incr attempt} {
+            if {![catch {stop} stop_error]} {
+                set stopped 1
+                break
+            }
+            if {[string trim $stop_error] eq "The core is powered down"} {
+                if {$i > 0} {
+                    set secondary_down 1
+                    break
+                }
+                if {$attempt < 3} {
+                    puts "P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=$attempt"
+                    after 200
+                    continue
+                }
+                error "P07-B.4i stop failed for $name: The core is powered down after 3 attempts; NO-GO. Reboot KV260; verify CPU0 is online and disable CPU0 deep cpuidle before the next dedicated JTAG session"
             }
             error "P07-B.4i stop failed for $name: $stop_error"
         }
-        puts "P07_B4I_A53_${i}_STOP_COMMAND_PASS=1"
+        if {$secondary_down} {
+            puts "P07_B4I_A53_${i}_POWERED_DOWN_OBSERVED=1"
+        } elseif {$stopped} {
+            puts "P07_B4I_A53_${i}_STOP_COMMAND_PASS=1"
+        } else {
+            error "P07-B.4i no positively observed stopped or powered-down state for $name"
+        }
     }
     set physical ""
     foreach target_name {PSU APU} {
