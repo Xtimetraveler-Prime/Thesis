@@ -107,6 +107,30 @@ def require_real_b3_elf(elf:Path)->dict:
         raise EpochNoGo("NO-GO: new real A53 first epoch LOAD/filesz/memsz shape not admitted")
     if not all(x in text for x in (".heap",".stack",".bss",".text","Segment Sections")):
         raise EpochNoGo("NO-GO: B3 ELF section/memory map incomplete")
+    # Genuine ELF section header addresses and sizes (hex) must be entirely
+    # covered by the exact *in-memory* LOAD. Merely mentioning ".stack"
+    # in a linker map does NOT mean the stack is owned by that segment.
+    required_sections={".text",".bss",".heap",".stack"}
+    section_ranges={}
+    section_pattern=re.compile(
+        r"^\\s*\\[\\s*\\d+\\]\\s+(\\.[-A-Za-z0-9_.]+)\\s+\\S+"
+        r"\\s+([0-9a-fA-F]+)\\s+([0-9a-fA-F]+)\\s+([0-9a-fA-F]+)"
+    )
+    for section_line in text.splitlines():
+        match=section_pattern.match(section_line)
+        if match and match.group(1) in required_sections:
+            name=match.group(1)
+            if name in section_ranges:
+                raise EpochNoGo("NO-GO: duplicated ELF allocatable section "+name)
+            start=int(match.group(2),16)
+            size=int(match.group(4),16)
+            if size<=0 or start<LOAD_PHYSICAL_START or start+size>LOAD_MEMORY_END:
+                raise EpochNoGo("NO-GO: original A53 "+name+" section falls outside pinned 0x42D40 memory LOAD")
+            section_ranges[name]={"start":start,"end_exclusive":start+size,"bytes":size}
+    if set(section_ranges)!=required_sections:
+        raise EpochNoGo("NO-GO: ELF sections lack inspectable actual .text/.bss/.heap/.stack ranges")
+    if loads[0]["flags"]!="RWE":
+        raise EpochNoGo("NO-GO: original operator LOAD executable/data flags drift")
     mapfile=elf.with_suffix(".map")
     if mapfile.is_symlink() or not mapfile.is_file():
         raise EpochNoGo("NO-GO: genuine same-build B3 linker map missing")
@@ -123,6 +147,7 @@ def require_real_b3_elf(elf:Path)->dict:
         "physical_load_end_exclusive":f"0x{LOAD_MEMORY_END:08X}",
         "elf_initial_file_bytes":LOAD_FILESZ,
         "elf_runtime_mem_bytes":EXPECTED_LOW_DDR_MEMORY_BYTES,
+        "checked_genuine_elf_section_bounds":section_ranges,
         "historical_accepted_A53_envelope_end":"0x00029D80",
         "expanded_memory_proven_exclusive":False,
         "physical_execution_authorized_by_preflight":False,
