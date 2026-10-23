@@ -62,7 +62,7 @@ def test_original_full_27_core_fixed_routing_bin_geometry():
     lambda r,i,o:(r,i,o+[(0,0,26,100)]),
     lambda r,i,o:(r,i,[(0,0,26,126)]),
     lambda r,i,o:(r,i,[(0,999,26,100)]),
-    lambda r,i,o:(r,i,o*316),
+    lambda r,i,o:(r,i,o*386),
 ])
 def test_invalid_frozen_original_topology_fails_closed(mutate):
     r,i,o=fixture()
