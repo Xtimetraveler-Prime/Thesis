@@ -53,6 +53,36 @@ APPROVALS=(
 class StageNoGo(ValueError):
     pass
 
+def resolve_elf_inspection_tools()->tuple[str,str]:
+    """Use a compatible host GNU inspector for read-only AArch64 analysis.
+
+    The accepted historical B4i preflight has fixed cross-binutils command
+    defaults, although GNU host readelf (and GNU nm with AArch64 BFD support)
+    can inspect an AArch64 ELF without running target code. Pass resolved
+    paths *only for this new B4m caller*; do not mutate the older B4i
+    acceptance script or relax any original B4i signature/source checks.
+    """
+    def first(names:tuple[str,...],label:str)->str:
+        for name in names:
+            candidate=shutil.which(name)
+            if candidate:
+                return candidate
+        raise StageNoGo("NO-GO: missing GNU "+label+
+                        "; install binutils or place AMD AArch64 binutils "
+                        "on PATH; NO BOARD ACCESS")
+    readelf=first((
+        "aarch64-none-elf-readelf",
+        "aarch64-linux-gnu-readelf",
+        "readelf",
+    ),"readelf")
+    nm=first((
+        "aarch64-none-elf-nm",
+        "aarch64-linux-gnu-nm",
+        "nm",
+    ),"nm")
+    return readelf,nm
+
+
 def require_original(args:argparse.Namespace)->tuple[dict,dict,dict,dict]:
     """PC-only: independently validate frozen B2.4 model and exact pinned
     artifacts; require previous successful offline admission report rather
@@ -60,7 +90,8 @@ def require_original(args:argparse.Namespace)->tuple[dict,dict,dict,dict]:
     """
     index=model.prepare_verified_contexts(args.frozen_dir,args.staged_dir)
     desc=old.require_real_bindings(args.frozen_dir,args.staged_dir,args.bindings_dir)
-    old.b4i.preflight(args.b4i_build,args.reports)
+    readelf,nm=resolve_elf_inspection_tools()
+    old.b4i.preflight(args.b4i_build,args.reports,readelf=readelf,nm=nm)
     staged=admission.require_routes(args.routes_dir,args.frozen_dir)
     elf=admission.require_elf(args.elf)
     if (elf["new_elf_sha256"]!=EXPECTED_ELF_SHA or
