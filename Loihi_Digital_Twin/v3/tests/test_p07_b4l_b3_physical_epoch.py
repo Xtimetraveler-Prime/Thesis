@@ -82,7 +82,11 @@ def test_elf_candidate_exact_user_memory_beyond_previous_envelope(monkeypatch,tm
         "  Type:                              EXEC (Executable file)\n"
         "  Machine:                           AArch64\n"
         "  Entry point address:               0x0\n"
-        "Section Headers:\n  [ 2] .text\n  [ 4] .bss\n  [ 5] .heap\n  [ 6] .stack\n"
+        "Section Headers:\n"
+        "  [ 2] .text PROGBITS 0000000000000000 010000 010000 00 AX 0 0 4\n"
+        "  [ 4] .bss NOBITS 0000000000020000 000000 000200 00 WA 0 0 8\n"
+        "  [ 5] .heap NOBITS 0000000000021000 000000 002000 00 WA 0 0 8\n"
+        "  [ 6] .stack NOBITS 000000000002F000 000000 010000 00 WA 0 0 8\n"
         "Program Headers:\n"
         "  LOAD  0x010000 0x0000000000000000 0x0000000000000000 "
         "0x015054 0x042d40 RWE 0x10000\n"
@@ -96,6 +100,7 @@ def test_elf_candidate_exact_user_memory_beyond_previous_envelope(monkeypatch,tm
         assert result["elf_initial_file_bytes"]==0x15054
         assert result["elf_runtime_mem_bytes"]==0x42D40
         assert result["expanded_memory_proven_exclusive"] is False
+        assert result["checked_genuine_elf_section_bounds"][".stack"]["end_exclusive"]==0x3F000
         assert result["physical_execution_authorized_by_preflight"] is False
 
         for raw in (
@@ -105,6 +110,12 @@ def test_elf_candidate_exact_user_memory_beyond_previous_envelope(monkeypatch,tm
                                 "0x0000000040000000 0x015054"),
             realreadelf.replace("Entry point address:               0x0",
                                 "Entry point address:               0x1000"),
+            realreadelf.replace(
+                "[ 6] .stack NOBITS 000000000002F000 000000 010000",
+                "[ 6] .stack NOBITS 0000000000042000 000000 010000"),
+            realreadelf.replace(
+                "[ 6] .stack NOBITS 000000000002F000 000000 010000",
+                "[ 6] .stack NOBITS 000000000002F000 000000 000000"),
         ):
             with patch.object(runtime.subprocess,"run",return_value=SimpleNamespace(
                 returncode=0,stdout=raw,stderr="")):
