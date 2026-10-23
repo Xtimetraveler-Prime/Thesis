@@ -868,3 +868,40 @@ DMAs or secure firmware memory ownership. There is **no board dispatch
 admission claimed** until a real operator-local `--mode preflight`
 result, new separate dedicated-JTAG approval, and subsequent real
 mailbox independent readback.
+
+## Operator-accepted full B3 first-epoch offline preflight (2026-10-23 UTC)
+
+The operator reports a **successful real PC-only** `--mode preflight` for
+`scripts/p07_b4l_b3_physical_epoch.py` with the real separately built
+A53 ELF, accepted 27 original B2.4 frozen model contexts, 16KiB original
+frozen P02/B1.2 binding descriptor and exact accepted P03 routing artifacts.
+Actual observed markers:
+
+```text
+P07_B4L_B3_EXACT_ORIGINAL_MODEL_BINDINGS_NEW_ELF_PC_PREFLIGHT_PASS=1
+P07_B4L_B3_PINNED_ELF_PHYSICAL_MEMSZ=0x42d40
+P07_B4L_B3_GENUINE_BINDINGS_SHA256=2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb
+P07_B4L_B3_OFFLINE_ONLY_NO_BOARD_ACCESS=1
+P07_B4L_B3_PHYSICAL_DISPATCH_AUTHORIZED=0
+```
+
+Descriptor SHA `2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb`
+is now **pinned** in the B4l real first-epoch physical runner in addition
+to the accepted genuine user-built ELF SHA
+`3e462e3b12c525820d91b0af06f73f36afc960e39d834424fc507c4fd89a747d`.
+A changed descriptor is NO-GO even if structurally valid, and the 16KiB
+physical readback is independently matched against this exact original.
+
+**Physical first B3/P03 scheduler dispatch is still NOT run at this
+checkpoint.** The first physical epoch, when separately approved in a
+fresh disposable JTAG session, must restage and verify all 27 contexts,
+then stage and read back the original SHA-pinned descriptor, then launch
+the unchanged already-compiled A53 ELF (no Vitis rebuild), capture
+and independently verify the 256B mailbox. The expected result is
+27 page-ins, 24 dirty page-outs, 27 physical dispatches and a pending
+unacknowledged barrier; never 26-tick numerical parity. Explicit
+`--mode execute` per-operation YES flags are required and express
+operator acceptance, not proof of firmware low-DDR exclusive ownership.
+This is a potentially destructive test against previously Linux-owned
+RAM; do not preserve/resume the halted Linux state, and reboot KV260
+following every physical attempt. There is no operator-note requirement.
