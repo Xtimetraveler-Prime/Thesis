@@ -67,13 +67,21 @@ def test_complete_physical_mailbox_synthetic_shape_without_claiming_parity():
     (0,0),(1,2),(2,0),(3,42),
     (11,1),(12,0),(13,25),(14,701),(15,701),
     (16,700),(17,2),(18,0),(19,0),(20,801),
-    (22,11),(23,0),(24,1009),(25,0),(26,0),
+    (22,11),(23,0),(24,1009),
     (31,0),(32,99),(42,1),(43,1),(44,1),(45,1),
     (46,0),(47,1),(63,0),
 ])
 def test_false_physical_acceptance_markers_rejected(index,new):
     w=mailbox()
     w[index]=new
+    with pytest.raises(verify.FullReceiptError):
+        verify.verify(struct.pack("<64I",*w),expected_class=3)
+
+
+def test_missing_full_trace_hash_rejected():
+    w=mailbox()
+    w[25]=0
+    w[26]=0
     with pytest.raises(verify.FullReceiptError):
         verify.verify(struct.pack("<64I",*w),expected_class=3)
 
