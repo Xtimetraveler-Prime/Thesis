@@ -35,7 +35,7 @@ class AdmissionError(ValueError): pass
 def file_sha(path:Path)->str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
-def require_routes(stage:Path)->dict:
+def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
     if not stage.is_absolute() or stage.is_symlink() or not stage.is_dir():
         raise AdmissionError("NO-GO: staging must be a real absolute directory")
     manifest=stage/"p07_b4m_frozen_inputs_manifest.json"
@@ -78,6 +78,31 @@ def require_routes(stage:Path)->dict:
             raise AdmissionError("NO-GO: frozen B4m route header/internal SHA failure")
     header(out,b"B4MROUT1",DENSE_ROUTES,8)
     header(inp,b"B4MING01",m["input_route_count"],6)
+    if source_frozen is not None:
+        # Independently reconstruct original sorted B1.2 graph and both
+        # B4m packed route images. A self-consistent forged manifest/route
+        # payload cannot pass without the frozen trained source agreeing.
+        from loihi_twin_v2.p06_b12_partition import B12Result
+        from loihi_twin_v2.p06_b13_streaming import _ingress_routes
+        import p07_b4l_frozen_bindings as bindings
+        raw=(source_frozen/"packed_deployment.json")
+        if raw.is_symlink() or not raw.is_file():
+            raise AdmissionError("NO-GO: missing original signed B2.4 packed deployment")
+        original=B12Result.from_json(raw.read_text())
+        if (original.compiled.fingerprint!=frozen.PINNED_SHA or
+            original.capacity_audit.get("audit_sha256")!=frozen.CAP_SHA):
+            raise AdmissionError("NO-GO: source compiled signed deployment differs")
+        ordered=bindings.original_core_bindings(source_frozen)
+        ins=list(_ingress_routes(original))
+        outs=sorted(
+            (cfg.core_id,desc.source_compartment,
+             row.destination_core,row.destination_axon)
+            for cfg in original.compiled.logical_deployment.core_configs
+            for desc in cfg.output_routes for row in desc.routes
+        )
+        rebuilt_out,rebuilt_in=frozen.pack_tables(ordered,ins,outs)
+        if out!=rebuilt_out or inp!=rebuilt_in:
+            raise AdmissionError("NO-GO: staged route tables differ from original B2.4 signed source")
     for n,idx in FRAME_IDX.items():
         name=f"p07_b4m_original_TRAIN_validation_{n}_ingress.bin"
         row=m["frames"][str(n)]
@@ -90,7 +115,8 @@ def require_routes(stage:Path)->dict:
             data[64:96]!=bytes.fromhex(frozen.PINNED_SHA) or
             data[96:128]!=bytes.fromhex(frozen.CAP_SHA) or
             int.from_bytes(data[20:24],"little")!=m["input_route_count"] or
-            data[128:128+m["input_route_count"]*6]!=inp[128:128+m["input_route_count"]*6]):
+            data[128:128+m["input_route_count"]*6]!=inp[128:128+m["input_route_count"]*6] or
+            hashlib.sha256(data[-784:]).hexdigest()!=frozen.FRAME_SHA[n]):
             raise AdmissionError("NO-GO: pinned TRAIN frame SHA/row/route mismatch")
     return {"input_routes":m["input_route_count"],
             "output_routes":DENSE_ROUTES,
@@ -168,7 +194,7 @@ def main()->int:
         b4l1.admit_freeze(args.frozen_dir)
         record={
             "schema":"p07-b4m-full-26tick-offline-elf-and-stage-gate-v1",
-            "staging":require_routes(args.routes_dir),
+            "staging":require_routes(args.routes_dir,args.frozen_dir),
             "elf":require_elf(args.elf),
             "real_KV260_inference_executed":False,
             "destructive_launch_authorized":False,
