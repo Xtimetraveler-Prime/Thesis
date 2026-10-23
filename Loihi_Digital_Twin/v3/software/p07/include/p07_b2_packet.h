@@ -8,7 +8,16 @@
 #include <stdint.h>
 #include "p07_b2_ingress.h"
 #define P07_B2_PACKET_ENTRY_BYTES 12u
+/* B4m genuine full 1000x10 model can require 10,000 immutable routes.
+ * Default 8192 ABI remains accepted for all earlier milestones. A standalone
+ * B4m build may explicitly opt in to a 10,000-edge bounded MAX ONLY.
+ */
+#ifndef P07_B2_MAX_ROUTE_BINDINGS
 #define P07_B2_MAX_ROUTE_BINDINGS 8192u
+#endif
+_Static_assert(P07_B2_MAX_ROUTE_BINDINGS>=8192u &&
+               P07_B2_MAX_ROUTE_BINDINGS<=10000u,
+               "bounded P07 packet-route admission contract drift");
 #define P07_B2_PACKET_MAX_BYTES (P07_B2_HEADER_BYTES + P07_B2_MAX_ROUTE_BINDINGS * P07_B2_PACKET_ENTRY_BYTES)
 typedef struct {
     uint16_t source_core, source_compartment, destination_core, destination_axon;
