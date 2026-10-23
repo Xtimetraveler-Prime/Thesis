@@ -145,9 +145,21 @@ def require_elf(elf:Path)->dict:
     m=source.read_text(errors="replace")
     if not all(x in m for x in ("Linker script and memory map",".text",".bss",".heap",".stack","main")):
         raise AdmissionError("NO-GO: source map lacks real A53 memory/entry evidence")
-    tool=shutil.which("aarch64-none-elf-readelf")
+    # ELF inspection is architecture-independent: host GNU readelf can
+    # inspect AArch64 ELF64 just as the target-prefixed binutils can.
+    # Still require the actual ELF's AArch64 identity, physical LOAD,
+    # executable entry, and bounded .text/.bss/.heap/.stack; never
+    # accept a missing tool, a textual layout stub, or a guessed range.
+    tool=next((candidate for name in (
+        "aarch64-none-elf-readelf",
+        "aarch64-linux-gnu-readelf",
+        "readelf",
+    ) if (candidate:=shutil.which(name))),None)
     if not tool:
-        raise AdmissionError("NO-GO: source AMD AArch64 readelf environment before preflight")
+        raise AdmissionError(
+            "NO-GO: GNU readelf unavailable; add AMD AArch64 binutils "
+            "to PATH or install a host GNU readelf; no physical launch"
+        )
     p=subprocess.run([tool,"-W","-h","-l","-S",str(elf)],capture_output=True,text=True,timeout=60)
     if p.returncode:
         raise AdmissionError("NO-GO: cannot inspect actual new A53 ELF")
