@@ -475,3 +475,96 @@ contents must not be assumed to survive a reboot. This script is a
 service. Low-DDR/firmware exclusivity has not been independently proven
 by the takeover tests or approval flags. Do not bypass the gate. Reboot
 after any attempt and preserve partial evidence. No handwritten note.
+
+## Physically accepted 27-core three-slot paging (2026-10-23)
+
+The operator provided actual KV260 paging-ELF and independent verifier
+results from
+`/home/dna/Thesis_Evidence/p07_b4l_paging_20261023T004701Z`:
+
+```text
+P07_B4L_A53_PAGING_ELF_DOWNLOADED=1
+P07_B4L_PAGE_PROBE_MAILBOX_CAPTURED_256_BYTES=1
+P07_B4L_PHYSICAL_27_CORE_3_SLOT_PAGE_DIRTY_SAVE_VERIFIED=1
+P07_B4L_REAL_A53_27_CORE_3_SLOT_PAGE_DIRTY_SAVE_PASS=1
+P07_B4L_TRAINED_NEURAL_INFERENCE_EXECUTED=0
+```
+
+Exact readback values: **27** original logical-core IDs visited, **28**
+physical page-ins, **1** mutable-only dirty page-out, **29** real page
+completions, **15,136,542** aggregate reported page cycles, and
+core-0 diagnostic STATE low-word **0x00000000 → 0x00000100** saved in
+DDR and restored through subsequent PL reload. The stage file was
+`REAL_A53_27_CORE_THREE_SLOT_PAGE_DIRTY_SAVE_PASS_REBOOT_REQUIRED`.
+The real A53 reset emitted a reset-vector warning but the paging ELF
+completed and the independent verifier passed; preserve that warning
+rather than claiming general reset safety. **This physical paging
+checkpoint is ACCEPTED**, distinct from B4l DDR staging and distinct
+from **any trained HLS neural dispatch**. See
+`P07_B4L_2026_10_23_REAL_3SLOT_PAGING_ACCEPTANCE.json`.
+
+### Continuation within B4l — first scheduler-driven hardware epoch
+
+New host-native integration files:
+
+- `software/p07/include/p07_b4l_b3_epoch.h`
+- `software/p07/p07_b4l_b3_epoch.c`
+- `tests/native/p07_b4l_b3_epoch_harness.c`
+- `tests/test_p07_b4l_b3_epoch.py`
+
+The new C11 controller binds to the **unchanged accepted** `p07_b3c2_step`
+B3a LRU / B3c2 physical P03 adapter, not the separate historical P03
+round-robin scheduler. It runs exactly one tick-0 epoch using 27 logical
+cores and 3 PL slots and requires real P03 page, dispatch, quiescence
+and packet-bank readback ACKs before B3 acknowledgments. It captures
+original 64-bit FPGA packet words into original B3c2 source-indexed
+buffer views, checks all 27 source identities and counts, and calculates
+a deterministic diagnostics-only FNV64 capture hash. **It stops with
+one pending global B3 barrier; does NOT ACK the barrier, commit NEXT
+packets, run tick 1, perform a full 26-tick inference or claim trained
+numerical parity.** The output explicitly includes
+`pending_barrier=1`, `barrier_acked=0` and zero independent B2b
+NEXT acceptance. No original B2.4 frozen model, accepted P03/P05,
+B3a/c2/c3 or official MNIST TEST files are modified.
+
+A native C11 test reuses the full **unchanged original B3c23 test bus**
+with source-indexed packet simulation and physically structured P03
+page, 27 dispatch and packet-read ACKs. It asserts B3 LRU produces
+27 page-ins, 24 dirty evictions, 27 completed dispatches and a pending
+barrier with *zero barrier acknowledgments*; a failed dirty page-out
+must sticky-fault the entire run and prohibit any later page-in or
+barrier success. **This is host-native fake-bus acceptance only**. It
+is not a new KV260 dispatch run, genuine board state/packet capture,
+or physical numerical parity.
+
+Remaining within B4l before any new destructive test: implement the
+**separate standalone A53 scheduler integration ELF and genuine
+metadata/axon graph registration from original frozen P02/B1.2**, capture
+real emitted-neuron provenance, retain the original B2b/B3c3 hardware
+NEXT event validation and commit as a separate barrier gate, and run
+an independent ELF/linker/capacity/DDR admission. A complete zero-input
+or one-tick hardware run still does not establish full trained B2
+inference; numerical oracle comparison follows in consolidated B4m.
+Reboot/power-cycle after all physical JTAG experiments. No handwritten
+operator note is required.
+
+User-native commands for the new B4l scheduler integration:
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4l_b3_epoch.py \
+  tests/test_p07_b3c23_hw_integration.py \
+  tests/test_p07_b4l_page_probe.py
+```
+
+There is **no new paging/scheduler ELF to build or KV260 physical
+execute command** for this host-native integration gate. The physically
+accepted paging ELF remains separate and unchanged. First review the
+new test results and keep the B2 TEST sealed.
