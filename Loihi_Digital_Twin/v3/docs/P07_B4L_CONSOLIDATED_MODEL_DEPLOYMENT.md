@@ -932,6 +932,8 @@ prove the cause (Linux deep cpuidle is one plausible cause, not established).
 
 ### Fail-closed CPU0 takeover improvement (PC-only candidate)
 
+Historical initial bounded-retry revision, now **superseded** by the Track A-derived reset fallback below. The underlying no-bypass guard remains.
+
 The shared `vivado/p07_b4i_stop_and_width_gate.tcl` now retries `stop`
 on **CPU0 only**, at most **three attempts total** with a 200ms delay between
 attempts, and **only** for the exact XSDB error `The core is powered down`.
@@ -944,49 +946,76 @@ added to this gate. Existing secondary-CPU observations remain unchanged.
 Host Tcl tests check transient recovery, permanent failure and nonexact errors.
 This change has **not** been demonstrated on KV260 hardware yet.
 
-### Next reboot preparation on **KV260 Linux / PuTTY**, not on the PC
+### Withdrawn cpuidle preparation proposal — no board Linux settings required
 
-After rebooting the previously halted board into a disposable Linux boot
-and before running **any** destructive JTAG takeover, inspect CPU0's
-online/cpuidle status. The following only changes temporary Linux cpuidle
-settings; it does not reset/debug CPU0 or touch the frozen model:
-
-```sh
-cat /sys/devices/system/cpu/online
-for s in /sys/devices/system/cpu/cpu0/cpuidle/state*; do
-    [ -r "$s/name" ] || continue
-    printf '%s: %s (disabled=%s)\n' "$s" "$(cat "$s/name")" "$(cat "$s/disable")"
-done
-```
-
-If CPU0 is online and deep cpuidle states 1+ are exposed, temporarily
-disable those states for this **one dedicated board session**:
-
-```sh
-found=0
-for s in /sys/devices/system/cpu/cpu0/cpuidle/state[1-9]*; do
-    [ -f "$s/disable" ] || continue
-    found=1
-    echo 1 | sudo tee "$s/disable" >/dev/null || exit 1
-    test "$(cat "$s/disable")" = "1" || exit 1
-done
-if [ "$found" -ne 1 ]; then
-    echo "NO-GO: CPU0 has no exposed deep cpuidle disable controls; inspect boot state"
-else
-    echo "CPU0 deep cpuidle disabled for this boot; do not mistake this for DDR ownership proof"
-fi
-```
-
-Run from the operator PC only after this board preparation and the usual
-independent recovery/ownership approvals. Use a **new** unique evidence
-directory and the existing immutable B3 A53 ELF, existing 27-core staging
-and 16KiB bindings; do not reuse the failed evidence leaf or regenerate
-accepted binaries. If the A53 #0 stop still fails, do not bypass the gate:
-preserve `ps_width.log`, reboot KV260 again, and investigate original
-JTAG/PSCI/boot power-state evidence before a further attempt. CPU0 cpuidle
-may not be the cause; only actual XSDB logs can establish the outcome.
+The earlier idea to manually inspect/disable CPU0 Linux cpuidle through PuTTY
+is **withdrawn** at the operator's request. Do not make kernel/sysfs, cpuidle,
+boot, PS-width or hardware-configuration changes to support this experiment.
+Normal dedicated, disposable reboot + `sudo xmutil unloadapp` remains the
+operator's established board preparation; this is NOT proof of exclusive
+DDR/firmware ownership. Keep the prior failed log/evidence immutable.
 
 Even if the A53 gate succeeds, the expanded low-DDR firmware-ownership
 risk is still independently unresolved. First physical B3 acceptance continues
 to require same-session full model/binding DDR readbacks and the independent
 256B first-epoch mailbox verifier. Official MNIST TEST remains sealed.
+
+
+## Operator-requested Track A XSDB takeover reconciliation — PC-only implementation
+
+**Comparison of verified source code (not conjectured physical measurements):**
+the accepted P07-A2, P07-A4.2c and P08-A2 XSDB launchers use
+`catch {stop}`, then `catch {rst -processor}`, followed by `dow`.
+Original `vivado/p03_2c_xsdb_ps_axi_width_diag.tcl` also ignores per-core
+stop errors while measuring PS widths. The stricter B4i/B4l takeover script
+introduced later rejects a *powered-down CPU0* before it can verify PS
+widths. Track A successful real runs and their exact accepted FPD/LPD
+raw selector readbacks are preserved in
+`docs/P07_A_FINAL_PHYSICAL_ACCEPTANCE.md` and
+`docs/P07_B4G_TRACK_A_19_RUN_WIDTHS_AND_OVERLAY_EVIDENCE.md`.
+These sources **do not establish** why the CPU0 power state changed.
+
+**New additive B4l remediation, not yet physically accepted:**
+
+1. Reuse the exact `The core is powered down` observation for CPU0,
+   with at most three stop attempts (200ms spacing), and positively
+   account for secondaries as before. Exact `Already stopped` for
+   CPU0 is accepted as an independently observed halted state.
+2. On persistent CPU0 power-down, **do not** silently accept it.
+   First read and strictly require both historical PS raw FPD/LPD128
+   selectors through PSU/APU. Width mismatch aborts **before reset,
+   PL programming, DDR access or ELF download**.
+3. Only when both widths passed and the exact primary powered-down
+   path was observed, attempt Track A's `rst -processor` on **selected
+   A53 #0 only**. Require successful processor reset AND subsequently
+   either successful `stop` or exact `Already stopped` from that same
+   primary core. Fail closed on any other error.
+4. The Python consumer admits **exactly one** positive CPU0 receipt:
+   `STOP_COMMAND_PASS`, `ALREADY_STOPPED_CONFIRMED`, or
+   `TRACK_A_RESET_HALT_CONFIRMED`. The last requires the original
+   two retry markers and exact pending-reset marker. The existing
+   three secondary stop/power-down observations, unique PS raw values
+   and final all-cores/PS128 gate remain mandatory. The entire existing
+   same-session artifact, staged-DDR readback, strict mailbox receipt,
+   and destructive YES/reboot requirements remain unchanged.
+
+The attempted processor reset is a **destructive CPU-local debug action**
+consistent with the original Track A standalone runner. It is not a
+Linux cpuidle/sysfs tweak, a board firmware change or static PS width
+modification. AMD's XSDB guide documents that `rst -processor` resets the
+active processor and normally leaves it suspended; whether it can
+recover this particular physical CPU0 power-off state must be decided
+by a future **real** board transcript, not synthetic tests.
+
+Native Tcl fake XSDB tests prove the bounded positive path, processor
+reset after width authentication, failure on reset or post-reset halt,
+failure with FPD64 before reset, exact already-stopped path and strict
+Python marker verification. Neither the historical failed physical
+experiment nor earlier successful Track A evidence is modified.
+
+**Operator workflow:** no PuTTY commands beyond the existing routine
+`sudo xmutil unloadapp` are requested. Stop at local test acceptance
+before a new separately approved physical run. Preserve prior failed
+`p07_b4l_b3_epoch_20261023T014832Z` evidence, use a fresh evidence leaf
+for any eventual retry, and reboot after **any** JTAG takeover attempt.
+Do not merge PR #49 or unseal frozen B2 official MNIST TEST.
