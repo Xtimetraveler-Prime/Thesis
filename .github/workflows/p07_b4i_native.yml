@@ -51,13 +51,17 @@ on:
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_epoch_bridge.h'
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_epoch_bridge.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_epoch_bridge_harness.c'
-      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_epoch_bridge.py tests/test_p07_b4m_spike_trace.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_epoch_bridge.py tests/test_p07_b4m_spike_trace.py tests/test_p07_b4m_full_inference.py'
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_spike_trace.h'
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_spike_trace.c'
       - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b3c2_hw_scheduler.h'
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b3c2_hw_scheduler.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_real_trace_integration_harness.c'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_spike_trace.py'
+      - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_full_inference.h'
+      - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_full_inference.c'
+      - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_full_inference_harness.c'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_full_inference.py'
       - '.github/workflows/p07_b4i_native.yml'
   pull_request:
     paths:
@@ -117,6 +121,10 @@ on:
       - 'Loihi_Digital_Twin/v3/software/p07/p07_b3c2_hw_scheduler.c'
       - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_real_trace_integration_harness.c'
       - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_spike_trace.py'
+      - 'Loihi_Digital_Twin/v3/software/p07/include/p07_b4m_full_inference.h'
+      - 'Loihi_Digital_Twin/v3/software/p07/p07_b4m_full_inference.c'
+      - 'Loihi_Digital_Twin/v3/tests/native/p07_b4m_full_inference_harness.c'
+      - 'Loihi_Digital_Twin/v3/tests/test_p07_b4m_full_inference.py'
       - '.github/workflows/p07_b4i_native.yml'
   workflow_dispatch:
 permissions:
