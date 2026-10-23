@@ -7,13 +7,16 @@ from pathlib import Path
 import shutil
 import subprocess
 
+import pytest
+
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def test_original_frozen_c_route_parser_and_strict_sha(tmp_path):
+@pytest.mark.parametrize("dense",[False,True])
+def test_original_frozen_c_route_parser_and_strict_sha(tmp_path,dense):
     cc=shutil.which("cc") or shutil.which("gcc")
     assert cc
-    exe=tmp_path/"route_loader"
+    exe=tmp_path/("route_loader_dense" if dense else "route_loader")
     sources=[
         "software/p03/p03_hw_adapter.c",
         "software/p07/p07_b3_pager.c",
@@ -28,6 +31,7 @@ def test_original_frozen_c_route_parser_and_strict_sha(tmp_path):
     built=subprocess.run([
         cc,"-std=c11","-Wall","-Wextra","-Werror","-pedantic",
         "-O1",
+        *(["-DP07_B2_MAX_ROUTE_BINDINGS=10000u", "-DP07_B4M_DENSE_ROUTES=1"] if dense else []),
         "-I",str(ROOT/"software/p07/include"),
         "-I",str(ROOT/"software/p03/include"),
         "-I",str(ROOT/"software/p05/include"),
@@ -37,7 +41,8 @@ def test_original_frozen_c_route_parser_and_strict_sha(tmp_path):
     ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=120)
     assert ran.returncode==0,ran.stdout+ran.stderr
     assert ran.stdout.splitlines()==[
-        "P07_B4M_FROZEN_ROUTES_C11_NATIVE_MOUNT_PASS=1",
+        ("P07_B4M_FROZEN_10000_DENSE_ROUTES_C11_NATIVE_PASS=1"
+         if dense else "P07_B4M_FROZEN_ROUTES_C11_NATIVE_MOUNT_PASS=1"),
         "P07_B4M_FROZEN_ROUTES_SHA_AND_TOPOLOGY_FAIL_CLOSED=1",
         "P07_B4M_FROZEN_ROUTES_REAL_BOARD_STAGED=0",
     ]
