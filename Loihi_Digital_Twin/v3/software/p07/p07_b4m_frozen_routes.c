@@ -3,7 +3,9 @@
 #include <string.h>
 
 _Static_assert(sizeof(p07_b2_route)==8u,"original P06B13R1 route ABI");
-_Static_assert(P07_B2_MAX_ROUTE_BINDINGS==8192u,"original routing ceiling");
+_Static_assert(P07_B2_MAX_ROUTE_BINDINGS==8192u ||
+               P07_B2_MAX_ROUTE_BINDINGS==10000u,
+               "original native gate or separate full B4m dense routing ceiling");
 _Static_assert(P07_B4M_ROUTE_HEAD+P07_B4M_ROUTE_COMP_BYTES+
     8u*P07_B2_MAX_ROUTE_BINDINGS<=P07_B4M_ROUTE_OUT_BYTES,
     "output route bin overlaps P05 header or mailbox");
