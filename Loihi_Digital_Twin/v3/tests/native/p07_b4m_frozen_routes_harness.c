@@ -40,18 +40,46 @@ static void seal(uint8_t *img,uint32_t bytes){
 static int fixture(void){
     uint32_t c,i,n;
     CHECK(setup(P07_B3_ORDER_ASCENDING)==0);
+    #ifdef P07_B4M_DENSE_ROUTES
+    write_header(route_out,sizeof(route_out),10000u,8u,"B4MROUT1");
+#else
     write_header(route_out,sizeof(route_out),26u,8u,"B4MROUT1");
+#endif
     write_header(route_in,sizeof(route_in),784u,6u,"B4MING01");
     for(c=0u;c<27u;c++){
         if(c<24u)n=39u;else if(c<26u)n=32u;else n=10u;
         hw.metadata[c]=((uint64_t)n<<7u)|c;
         put16(route_out+128u+c*2u,(uint16_t)n);
     }
+#ifdef P07_B4M_DENSE_ROUTES
+    /* Exactly 1000 hidden compartments × 10 genuine dense fanout:
+     * source core/neuron pairs sorted; 10000 distinct source+target keys.
+     */
+    {
+        uint32_t row=0u;
+        for(c=0u;c<26u;c++){
+            uint32_t compartment,total=(c<24u)?39u:32u;
+            for(compartment=0u;compartment<total;compartment++){
+                uint32_t out_axon;
+                for(out_axon=0u;out_axon<10u;out_axon++){
+                    uint8_t *at=route_out+128u+64u+row*8u;
+                    put16(at,(uint16_t)c);
+                    put16(at+2u,(uint16_t)compartment);
+                    put16(at+4u,26u);
+                    put16(at+6u,(uint16_t)(100u+out_axon));
+                    ++row;
+                }
+            }
+        }
+        CHECK(row==10000u);
+    }
+#else
     for(c=0u;c<26u;c++){
         uint8_t *at=route_out+128u+64u+c*8u;
         put16(at,(uint16_t)c);put16(at+2u,0u);
         put16(at+4u,26u);put16(at+6u,(uint16_t)(100u+c));
     }
+#endif
     for(i=0u;i<784u;i++){
         uint8_t *at=route_in+128u+i*6u;
         put16(at,(uint16_t)i);put16(at+2u,26u);put16(at+4u,125u);
@@ -65,14 +93,27 @@ static int positive(void){
         &loaded,route_out,sizeof(route_out),
         route_in,sizeof(route_in),&hw,copied_routes,
         P07_B2_MAX_ROUTE_BINDINGS,copied_comps,27u)==P07_B4M_ROUTE_OK);
+#ifdef P07_B4M_DENSE_ROUTES
+    CHECK(loaded.packets.core_count==27u&&loaded.packets.route_count==10000u);
+#else
     CHECK(loaded.packets.core_count==27u&&loaded.packets.route_count==26u);
+#endif
     CHECK(loaded.inputs.route_count==784u);
+#ifdef P07_B4M_DENSE_ROUTES
+    CHECK(loaded.emitted_route_count==10000u);
+#else
     CHECK(loaded.emitted_route_count==26u);
+#endif
     CHECK(loaded.packets.routes==copied_routes);
     CHECK(loaded.packets.compartments_per_core==copied_comps);
     CHECK(copied_comps[26]==10u);
     CHECK(copied_routes[0].source_core==0u);
+#ifdef P07_B4M_DENSE_ROUTES
+    CHECK(copied_routes[9999].source_core==25u);
+    CHECK(copied_routes[9999].destination_axon==109u);
+#else
     CHECK(copied_routes[25].destination_axon==125u);
+#endif
     return 0;
 }
 static int rejects_sha_and_topology(void){
@@ -108,7 +149,11 @@ int main(void){
     CHECK(positive()==0);
     CHECK(rejects_sha_and_topology()==0);
     free(backing);free(resident_memory);
+    #ifdef P07_B4M_DENSE_ROUTES
+    puts("P07_B4M_FROZEN_10000_DENSE_ROUTES_C11_NATIVE_PASS=1");
+#else
     puts("P07_B4M_FROZEN_ROUTES_C11_NATIVE_MOUNT_PASS=1");
+#endif
     puts("P07_B4M_FROZEN_ROUTES_SHA_AND_TOPOLOGY_FAIL_CLOSED=1");
     puts("P07_B4M_FROZEN_ROUTES_REAL_BOARD_STAGED=0");
     return 0;
