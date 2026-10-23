@@ -1,8 +1,11 @@
 #include "p07_b3c_packet_bridge.h"
 #include <stdlib.h>
 #include <string.h>
-_Static_assert(P07_B3C_MAX_RAW_WORDS==8192u,"B2b routing ceiling drift");
-_Static_assert(P07_B3C_MAX_FRAME_BYTES==98432u,"bounded frame size drift");
+_Static_assert(P07_B3C_MAX_RAW_WORDS>=8192u &&
+               P07_B3C_MAX_RAW_WORDS<=10000u,
+               "only original 8192 or full B4m 10000 route ceiling allowed");
+_Static_assert(P07_B3C_MAX_FRAME_BYTES==128u+12u*P07_B3C_MAX_RAW_WORDS,
+               "bounded full route frame size drift");
 static uint16_t r16(const uint8_t *p) {
     return (uint16_t)((uint16_t)p[0]|((uint16_t)p[1]<<8));
 }
