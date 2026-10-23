@@ -2,9 +2,9 @@
  * Reuse unchanged accepted P03 MMIO fake simulator in the trace harness.
  * Synthetic routes/pixels; never a physical trained FPGA parity claim.
  */
-#define main p07_b4m_trace_fixture_main
+#define P07_B4M_FULL_INCLUDE 1
 #include "p07_b4m_real_trace_integration_harness.c"
-#undef main
+#undef P07_B4M_FULL_INCLUDE
 #include "p07_b4m_full_inference.h"
 
 #define INPUT_ROUTES 784u
