@@ -51,6 +51,7 @@ def descriptor_and_index(tmp_path,monkeypatch):
     binary=binddir/bindings.FILENAME
     binary.write_bytes(data)
     receipt=bindings.verify_payload(data,rows)
+    monkeypatch.setattr(runtime,"ACCEPTED_DESCRIPTOR_SHA",receipt["binary_sha256"])
     (binddir/bindings.INDEXNAME).write_text(json.dumps(receipt))
     return original,binddir,{"records":index},receipt
 
@@ -303,3 +304,10 @@ def test_launcher_is_not_old_paging_candidate():
     assert '--recovery-note' not in script
     assert 'default="preflight"' in script
     assert "official" in script.lower()
+
+
+def test_real_user_descriptor_sha_pinned_literal_and_readback_bound():
+    source=(ROOT/"scripts/p07_b4l_b3_physical_epoch.py").read_text()
+    assert 'ACCEPTED_DESCRIPTOR_SHA="2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb"' in source
+    assert 'verified["binary_sha256"]!=ACCEPTED_DESCRIPTOR_SHA' in source
+    assert 'hashlib.sha256(data).hexdigest()!=ACCEPTED_DESCRIPTOR_SHA' in source
