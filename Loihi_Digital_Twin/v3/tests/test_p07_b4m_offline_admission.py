@@ -169,7 +169,7 @@ def _make_original_shape_stage(tmp_path,monkeypatch):
         "frames":frame_rows,
     }
     (dirname/"p07_b4m_frozen_inputs_manifest.json").write_text(
-        json.dumps(manifest,sort_keys=True,indent=2)+"\\n"
+        json.dumps(manifest,sort_keys=True,indent=2)+"\n"
     )
     return dirname,manifest
 
@@ -205,7 +205,7 @@ def test_output_count_still_strictly_matches_real_frozen_topology(
     stage,manifest=_make_original_shape_stage(tmp_path,monkeypatch)
     manifest[field]=value
     (stage/"p07_b4m_frozen_inputs_manifest.json").write_text(
-        json.dumps(manifest,sort_keys=True,indent=2)+"\\n"
+        json.dumps(manifest,sort_keys=True,indent=2)+"\n"
     )
     with pytest.raises(gate.AdmissionError,match="topology/count/identity"):
         gate.require_routes(stage)
