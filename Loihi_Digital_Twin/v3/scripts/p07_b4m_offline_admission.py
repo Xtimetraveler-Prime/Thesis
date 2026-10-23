@@ -22,7 +22,15 @@ import p07_b4l1_stage_frozen_27core as b4l1
 ELF_ID=b"P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1"
 ELF_NAME="p07_b4m_full_26tick.elf"
 SCHEMA="p07-b4m-original-B24-physical-route-and-TRAIN-witness-v1"
-DENSE_ROUTES=10000
+# These are the counts emitted by the ORIGINAL verified B2.4 compiler.
+# 1000 hidden->readout packet routes each address a readout axon whose
+# synapse template can fan out to ten destination compartments. The
+# model's 10000 trained hidden->readout weights are NOT 10000 packets.
+# The separate Vitis binary may reserve capacity for 10000 packets:
+# spare capacity is not a requirement to populate all of it.
+ORIGINAL_OUTPUT_ROUTES=1000
+ORIGINAL_INPUT_ROUTES=20384
+ORIGINAL_REGISTERED_AXONS=21384
 LOW_DDR_MAX_END=0x01000000
 SPAN={"output_routes":["0x43fc4000","0x43fd8000"],
       "input_routes":["0x41000000","0x410e0000"],
@@ -48,8 +56,9 @@ def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
         m.get("original_compiled_sha256")!=frozen.PINNED_SHA or
         m.get("original_capacity_sha256")!=frozen.CAP_SHA or
         m.get("compartment_count")!=1010 or
-        m.get("output_route_count")!=DENSE_ROUTES or
-        not 784<=m.get("input_route_count",0)<=frozen.MAX_INGRESS_ROUTES):
+        m.get("output_route_count")!=ORIGINAL_OUTPUT_ROUTES or
+        m.get("input_route_count")!=ORIGINAL_INPUT_ROUTES or
+        m.get("output_route_count",0)+m.get("input_route_count",0)!=ORIGINAL_REGISTERED_AXONS):
         raise AdmissionError("NO-GO: original signed trained topology/count/identity mismatch")
     if {k:[v.lower() for v in values] for k,values in m.get("spans",{}).items()}!=SPAN:
         raise AdmissionError("NO-GO: physical DDR span allocations not accepted")
@@ -76,8 +85,8 @@ def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
             buf[64:96]!=bytes.fromhex(frozen.CAP_SHA) or
             hashlib.sha256(buf[128:]).digest()!=buf[96:128]):
             raise AdmissionError("NO-GO: frozen B4m route header/internal SHA failure")
-    header(out,b"B4MROUT1",DENSE_ROUTES,8)
-    header(inp,b"B4MING01",m["input_route_count"],6)
+    header(out,b"B4MROUT1",ORIGINAL_OUTPUT_ROUTES,8)
+    header(inp,b"B4MING01",ORIGINAL_INPUT_ROUTES,6)
     if source_frozen is not None:
         # Independently reconstruct original sorted B1.2 graph and both
         # B4m packed route images. A self-consistent forged manifest/route
@@ -119,7 +128,8 @@ def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
             hashlib.sha256(data[-784:]).hexdigest()!=frozen.FRAME_SHA[n]):
             raise AdmissionError("NO-GO: pinned TRAIN frame SHA/row/route mismatch")
     return {"input_routes":m["input_route_count"],
-            "output_routes":DENSE_ROUTES,
+            "output_routes":ORIGINAL_OUTPUT_ROUTES,
+            "registered_axons":ORIGINAL_REGISTERED_AXONS,
             "staged_files_sha256":m["files"],
             "original_B24_snapshot_untouched":True,
             "official_TEST":"SEALED"}
