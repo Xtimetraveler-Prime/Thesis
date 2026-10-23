@@ -166,6 +166,41 @@ def test_terminal_counter_failure_never_claims_receipt(tmp_path,monkeypatch):
         with pytest.raises(run.full_verify.FullReceiptError,match="paging"):
             run.physically_execute_after_verified(a,out,readbacks)
     assert not (out/"independent_full_26tick_physical_receipt.json").exists()
+    assert not (out/"failed_full_26tick_physical_mailbox_diagnostic.json").exists()
+
+
+def test_real_terminal_done_but_firmware_fail_preserves_diagnostics(
+    tmp_path,monkeypatch
+):
+    a,out,readbacks,source_shas=source_receipt(tmp_path)
+    monkeypatch.setattr(run.physical,"EXPECTED_STAGE_SHA",source_shas)
+    monkeypatch.setattr(run.physical,"EXPECTED_ELF_SHA",
+                        run.physical.old.file_sha(a.elf))
+    monkeypatch.setattr(run.physical,"EXPECTED_MAP_SHA",
+                        run.physical.old.file_sha(a.elf.with_suffix(".map")))
+    words=list(struct.unpack("<64I",fixture_mailbox()))
+    words[2]=0xDEAD0000
+    words[3]=13
+    words[11]=0xFFFFFFFE
+    words[45]=13
+    def fake_xsdb(command,log):
+        (out/"full_26tick_physical_mailbox_256.bin").write_bytes(
+            struct.pack("<64I",*words))
+        log.write_text("\\n".join(run.LAUNCH_MARKERS)+"\\n")
+    with patch.object(run.physical.old.b4i,"log_call",side_effect=fake_xsdb):
+        with pytest.raises(run.full_verify.FullReceiptError,match="terminal magic"):
+            run.physically_execute_after_verified(a,out,readbacks)
+    diagnostic=json.loads(
+        (out/"failed_full_26tick_physical_mailbox_diagnostic.json").read_text()
+    )
+    assert diagnostic["firmware_terminal_DONE_marker_seen"] is True
+    assert diagnostic["firmware_terminal_status"]=="B4M_FIRMWARE_FAIL"
+    assert diagnostic["source_reported_first_fault_stage"]==13
+    assert diagnostic["signed_return_codes"]["full_inference_return_status"]==-2
+    assert not (out/"independent_full_26tick_physical_receipt.json").exists()
+    assert (out/"stage.txt").read_text().strip()==(
+        "P07_B4M_TERMINAL_MAILBOX_CAPTURED_BUT_SUCCESS_REJECTED_REBOOT_REQUIRED"
+    )
 
 
 @pytest.mark.skipif(shutil.which("tclsh") is None,reason="tclsh unavailable")
