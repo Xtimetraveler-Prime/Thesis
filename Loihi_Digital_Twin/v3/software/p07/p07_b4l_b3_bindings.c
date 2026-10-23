@@ -53,7 +53,7 @@ int b4l_bind_frozen(p03_hw_adapter *hw,const uint8_t *bytes,size_t n,
         uint32_t ncomp=(uint32_t)e[8]|((uint32_t)e[9]<<8);
         uint32_t nax=(uint32_t)e[10]|((uint32_t)e[11]<<8);
         if(count!=core||ncomp==0u||ncomp>1024u||
-           metadata!=((uint64_t)ncomp<<7u)|((uint64_t)core))
+           metadata!=(((uint64_t)ncomp<<7u)|((uint64_t)core)))
             return B4L_BIND_INVALID;
         for(axon=0u;axon<B4L_BIND_BITMAP;axon++){
             uint32_t b=e[16+axon];
