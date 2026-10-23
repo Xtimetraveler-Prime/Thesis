@@ -161,9 +161,12 @@ def main()->int:
                 raise DispatchAuditNoGo("NEW absolute PC-only report path required")
             a.out.write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
         print(json.dumps(result,indent=2,sort_keys=True))
-        print("P07_B4M_FIRST_DISPATCH_SOURCE_HLS_AUDIT_PC_ONLY_PASS=1")
+        print("P07_B4M_FIRST_DISPATCH_SOURCE_HLS_AUDIT_PC_ONLY_COMPLETED=1")
+        legal=result["frozen_PC_source_audit"]["HLS_first_dispatch_input_semantics_ok"]
+        print("P07_B4M_FIRST_DISPATCH_HLS_SOURCE_SEMANTICS_PASS="+
+              ("1" if legal else "0"))
         print("P07_B4M_PHYSICAL_STAGE9_ERROR_ROOT_CAUSE_PROVEN=0")
-        return 0
+        return 0 if legal else 3
     except (OSError,ValueError,TypeError,KeyError,AssertionError) as exc:
         print("P07_B4M_FIRST_DISPATCH_PC_NO_GO="+str(exc),file=sys.stderr)
         return 3
