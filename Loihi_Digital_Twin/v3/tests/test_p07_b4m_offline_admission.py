@@ -71,6 +71,40 @@ def test_unowned_or_corrupt_elf_refused(tmp_path,monkeypatch,edit):
         gate.require_elf(elf)
 
 
+def test_generic_gnu_readelf_is_valid_for_aarch64_elf(tmp_path,monkeypatch):
+    elf=fake_elf(tmp_path,monkeypatch)
+    looked_up=[]
+    monkeypatch.setattr(
+        gate.shutil,"which",
+        lambda name: looked_up.append(name) or
+            ("/usr/bin/readelf" if name=="readelf" else None),
+    )
+    captured=[]
+    monkeypatch.setattr(
+        gate.subprocess,"run",
+        lambda cmd,**kwargs: (
+            captured.append(cmd) or
+            SimpleNamespace(returncode=0,stdout=READ_ELF)
+        ),
+    )
+    report=gate.require_elf(elf)
+    assert looked_up==[
+        "aarch64-none-elf-readelf",
+        "aarch64-linux-gnu-readelf",
+        "readelf",
+    ]
+    assert captured[0][0]=="/usr/bin/readelf"
+    assert report["pt_load_memsz"]==0x200000
+    assert report["expanded_low_DDR_boot_firmware_exclusivity_independently_proven"] is False
+
+
+def test_no_supported_elf_inspector_is_still_no_go(tmp_path,monkeypatch):
+    elf=fake_elf(tmp_path,monkeypatch)
+    monkeypatch.setattr(gate.shutil,"which",lambda name: None)
+    with pytest.raises(gate.AdmissionError,match="GNU readelf unavailable"):
+        gate.require_elf(elf)
+
+
 def test_wrong_name_unbuilt_elf_refused_before_tool_run(tmp_path):
     other=tmp_path/"p07_b4l_b3_first_epoch.elf"
     other.write_bytes(gate.ELF_ID)
