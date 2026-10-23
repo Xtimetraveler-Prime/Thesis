@@ -568,3 +568,157 @@ There is **no new paging/scheduler ELF to build or KV260 physical
 execute command** for this host-native integration gate. The physically
 accepted paging ELF remains separate and unchanged. First review the
 new test results and keep the B2 TEST sealed.
+
+## Original frozen core bindings and first-epoch A53 dispatch candidate (2026-10-23)
+
+**Same consolidated B4l milestone, not a new numbered subphase.** Following
+the operator's native acceptance of the 27-dispatch B3c2/P03 fake-bus gate,
+implemented the next combined PC/offline deliverable:
+
+**Immutable actual B2.4 binding descriptor**:
+`scripts/p07_b4l_frozen_bindings.py` is a direct-command, no-board tool.
+It first re-verifies the complete 33-file original frozen B2.4 package,
+the exact operator-accepted 27×512KiB B4l DDR bundle
+`3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e`,
+and then **reconstructs the accepted B1.2 compiled graph directly
+from the original SHA-indexed `packed_deployment.json`**. For each of
+the 27 original core configs it determines the exact compartment count
+and legal input-axon IDs, uses the original `export_one_core_image`
+packer to cross-check the P03 axon words against the corresponding
+immutable source P02 initial DDR record, and emits a 16KiB/27-entry
+binary descriptor and a self-hashed JSON index. Every entry holds the
+original P03 metadata `core_id | (compartment_count<<7)` plus a
+4096-bit exact registered input-axon bitmap. SHA binds the descriptor
+table, original trained source mapping, original accepted model DDR
+bundle, zero padding and fixed core ordering. Source/output overwrite
+and symlinks are refused. Original frozen weight bytes and official
+MNIST TEST remain unchanged.
+
+**Future descriptor physical placement**: `[0x43FC0000,0x43FC4000)`
+inside the established P05 staging region, outside the 27 P02
+DDR records and the existing `0x43FE0000` P05 header and
+`0x43FF0000` result mailbox. This allocation is for the
+standalone first-epoch probe **only**; ingress/bank buffers must
+not overlap it when subsequent physical inference is developed.
+The descriptor has not yet been staged to KV260.
+
+**Original P03 C-level consumer**:
+`software/p07/p07_b4l_b3_bindings.c` validates the complete binary
+header, original hard-pinned B2.4 model/deployment SHAs, all 27
+metadata/bitmap entries and zero padding. It uses the already accepted
+`p07_a2_sha256.c` algorithm (unchanged in the repository) to hash the
+table and calls the **original `p03_hw_register_core` and
+`p03_hw_register_axon`**; there are no dummy/neatly numbered synthetic
+registration bindings. Any malformed table fails *before* P03
+registration; I/O registration errors are fatal and must not be
+treated as partial success.
+
+**New standalone A53 candidate**:
+`software/p07/p07_b4l_b3_epoch_board.c` is distinct from the accepted
+paging-only ELF. It verifies PS FPD128, original P03 identity,
+authenticates the physically staged descriptor, registers all 27
+original P02/B1.2 cores, initializes the accepted B3a LRU +
+B3c2 P03 adapter, and calls `p07_b4l_b3_one_epoch` for
+27 real page-ins, 24 dirty evictions and **27 genuine HLS dispatches**.
+Crucially the implementation deliberately stops at the FIRST
+PENDING B3 global barrier with zero NEXT-route commit and
+**zero barrier acknowledgments**. The test starts from
+empty initial CURRENT banks with **no external ingress**.
+It captures the physical P03 64-bit packet words, but it
+does **not** claim independently verified source-spike provenance,
+valid B2b routed packet fanout, any later tick, or numerical parity.
+The independent `scripts/p07_b4l_verify_b3_epoch.py` validates
+all 256 mailbox bytes and enforces these zero/non-progress fields.
+Native synthetic receipts and native fake-bus tests never authorize
+real KV260 inference.
+
+**Actual Vitis 2025.2 offline build implementation**:
+`software/p07/build_p07_b4l_b3_epoch.py` and
+`scripts/build_p07_b4l_b3_epoch.sh` compose the accepted original
+P03 adapter, B3a, B3c2, B2b packet library and B3c3 code with the
+new descriptor, epoch coordinator and standalone A53 firmware.
+The SHA256 source is copied from the accepted P07 implementation;
+the Vitis import requires a temporary flattened *include directive
+only in the fresh staging copy*, never editing accepted original files.
+This is a **new** A53 ELF, new SHA and linker map; the previous
+successful paging-only ELF remains preserved and is not reusable
+for this first-epoch dispatch. All host-native CI tests are separate
+from Vitis output. The ELF may be larger than the previously
+accepted physical `[0,0x29D80)` Track A envelope, so the actual
+Vitis ELF LOAD/stack/heap ownership must be reviewed after building;
+**do not assume that a successful link authorizes a `dow`.**
+
+### PC-only next acceptance checkpoint
+
+Run from the existing B4l branch in VS Code:
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/v3-p07-b-scaled-physical-inference
+git pull --ff-only origin agent/v3-p07-b-scaled-physical-inference
+git rev-parse HEAD
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b4l_b3_epoch.py \
+  tests/test_p07_b4l_frozen_bindings.py \
+  tests/test_p07_b4l_b3_board_candidate.py \
+  tests/test_p07_b3c23_hw_integration.py
+```
+
+Use the existing original frozen model and previously physically accepted
+host DDR stage. Output must be NEW, absolute, outside the repository:
+
+```bash
+export P07_B4L1_FREEZE="$PWD/artifacts/p06_b24_frozen_1000"
+: "${P07_B4L1_STAGE:?Set existing real accepted B4l1 stage directory}"
+mkdir -p "$HOME/Thesis_Evidence"
+export P07_B4L_BINDINGS="$HOME/Thesis_Evidence/p07_b4l_b3_bindings_$(date -u +%Y%m%dT%H%M%SZ)"
+python scripts/p07_b4l_frozen_bindings.py --mode prepare \
+  --frozen-dir "$P07_B4L1_FREEZE" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --output-dir "$P07_B4L_BINDINGS"
+python scripts/p07_b4l_frozen_bindings.py --mode verify \
+  --frozen-dir "$P07_B4L1_FREEZE" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --output-dir "$P07_B4L_BINDINGS"
+```
+
+Expected **only if the true original signed B2.4 deployment, original
+packed P03 axons, all 27 P02 records and bundle match**:
+`P07_B4L_REAL_B24_27CORE_METADATA_AND_AXONS_VERIFIED=1`,
+`P07_B4L_FROZEN_MODEL_UNMODIFIED=1`,
+`P07_B4L_PHYSICAL_SCHEDULER_DISPATCH_EXECUTED=0`.
+
+Optionally build the new genuine A53 first-epoch candidate, also PC-only:
+
+```bash
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L_B3_BUILD_DIR="$HOME/p07_b4l_b3_first_epoch_build_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p07_b4l_b3_epoch.sh
+
+export P07_B4L_B3_ELF="$P07_B4L_B3_BUILD_DIR/vitis_workspace/p07_b4l_b3_first_epoch.elf"
+aarch64-none-elf-readelf -W -h -l "$P07_B4L_B3_ELF"
+sha256sum "$P07_B4L_B3_ELF"
+```
+
+Expected only after a genuine successful local build:
+`P07_B4L_REAL_B3_ONE_EPOCH_VITIS_ELF_AND_MAP_BUILT=1` and
+`P07_B4L_B3_ONE_EPOCH_PHYSICAL_BOARD_RUN_AUTHORIZED=0`.
+
+**STOP after this PC-only checkpoint and inspect the real descriptor
+identity, actual ELF LOAD ranges, link map, stack, and heap.**
+There is intentionally **no physical --execute command** for this
+new A53 one-epoch ELF yet. Before any separate destructive JTAG
+session the future runner must re-stage all original 27 P02 records
+**AND** 16KiB descriptor, independently read both back, then
+launch the freshly reviewed ELF in the same session, capture the
+256B mailbox and independently verify it. Do not assume that
+previous DDR content survived reboot, or that Linux/firmware
+physical memory exclusivity was proven. Never resume halted Linux.
+No handwritten operator note is required.
