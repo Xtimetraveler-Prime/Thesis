@@ -1,0 +1,40 @@
+{
+  "schema": "p07-b4l-real-27-core-hardware-page-in-dirty-out-physical-acceptance-v1",
+  "date": "2026-10-23",
+  "source": "User-provided physical KV260 terminal output and physical evidence-folder log excerpts; assistant did not access full logs or board",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "pr": "49 (draft and unmerged)",
+  "evidence_folder": "/home/dna/Thesis_Evidence/p07_b4l_paging_20261023T004701Z",
+  "checkpoint": "P07-B.4l physical paging mechanism ACCEPTED",
+  "observed_markers": [
+    "P07_B4L_A53_PAGING_ELF_DOWNLOADED=1",
+    "P07_B4L_A53_0_POST_CAPTURE_STOP_COMMAND_PASS=1",
+    "P07_B4L_PAGE_PROBE_MAILBOX_CAPTURED_256_BYTES=1",
+    "P07_B4L_A53_PAGING_CAPTURE_READY_FOR_INDEPENDENT_VERIFIER=1",
+    "P07_B4L_PHYSICAL_27_CORE_3_SLOT_PAGE_DIRTY_SAVE_VERIFIED=1",
+    "P07_B4L_REAL_A53_27_CORE_3_SLOT_PAGE_DIRTY_SAVE_PASS=1",
+    "P07_B4L_TRAINED_NEURAL_INFERENCE_EXECUTED=0",
+    "P07_B4L_REBOOT_REQUIRED=1"
+  ],
+  "readback": {
+    "cores_visited": 27,
+    "resident_slots": 3,
+    "page_ins": 28,
+    "page_outs": 1,
+    "physical_page_completions": 29,
+    "original_state_word": "0x00000000",
+    "saved_dirty_word": "0x00000100",
+    "page_cycles_total": 15136542,
+    "physical_inference_executed": false
+  },
+  "runtime_stage": "REAL_A53_27_CORE_THREE_SLOT_PAGE_DIRTY_SAVE_PASS_REBOOT_REQUIRED",
+  "observed_xsdb_reset_warning": "A53 reset warning about reset vector/clear-registers was emitted, but the board ran the distinct ELF and independent mailbox PASS. Preserve warning, do not reclassify as a verified safe reset for other hardware states.",
+  "limits": [
+    "Only one deliberately modified state word was dirty-saved and reloaded",
+    "No trained HLS dispatch or packet routing",
+    "No 26-tick timing or numerical parity",
+    "Linux/firmware DDR exclusivity independently unproven",
+    "Official MNIST TEST sealed"
+  ],
+  "next": "Stay within B4l: integrate accepted B3c2 27-core LRU scheduler with original P03 page/dispatch operations, bounded single-epoch barrier-pending bring-up; preserve independent NEXT/provenance gates before full 26-tick inference."
+}
