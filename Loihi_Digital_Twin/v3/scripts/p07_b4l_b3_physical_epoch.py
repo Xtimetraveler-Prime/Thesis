@@ -113,8 +113,8 @@ def require_real_b3_elf(elf:Path)->dict:
     required_sections={".text",".bss",".heap",".stack"}
     section_ranges={}
     section_pattern=re.compile(
-        r"^\\s*\\[\\s*\\d+\\]\\s+(\\.[-A-Za-z0-9_.]+)\\s+\\S+"
-        r"\\s+([0-9a-fA-F]+)\\s+([0-9a-fA-F]+)\\s+([0-9a-fA-F]+)"
+        r"^\s*\[\s*\d+\]\s+(\.[-A-Za-z0-9_.]+)\s+\S+"
+        r"\s+([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+([0-9a-fA-F]+)"
     )
     for section_line in text.splitlines():
         match=section_pattern.match(section_line)
