@@ -119,14 +119,16 @@ def preflight(build:Path,reports:Path,readelf:str="aarch64-none-elf-readelf",
 def verify_takeover_log(log:str)->dict[int,str]:
     """Fail-closed, exact-line B4i hardware takeover transcript admission.
 
-    Core #0 MUST be halted. Secondary cores must each be halted OR be
-    reported powered down, never both, never a guessed state. No other
-    debugger halt failure qualifies. The external XSDB process must also
-    have returned exit code 0 (enforced by log_call).
+    Core #0 MUST be positively halted, either by a successful stop,
+    exact Already-stopped state, or by a Track-A-style processor-local
+    reset followed by successful/exact-already-stopped halt verification.
+    The reset fallback is ONLY allowed after both authentic PS128 reads
+    and explicit original power-down observations. Secondary cores must
+    each be halted OR reported powered down, never both. External XSDB
+    exit code 0 is separately enforced by log_call.
     """
     lines=log.splitlines()
     required=(
-        "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
         "P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
         "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
         "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
@@ -136,9 +138,25 @@ def verify_takeover_log(log:str)->dict[int,str]:
     for marker in required:
         if lines.count(marker)!=1:
             raise ValueError("NO-GO: missing or duplicate takeover marker: "+marker)
+    primary_markers=(
+        "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+        "P07_B4I_A53_0_ALREADY_STOPPED_CONFIRMED=1",
+        "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1",
+    )
+    if sum(lines.count(item) for item in primary_markers)!=1:
+        raise ValueError("NO-GO: A53 #0 must have exactly one positively verified halt state")
     if "P07_B4I_A53_0_POWERED_DOWN_OBSERVED=1" in lines:
         raise ValueError("NO-GO: A53 #0 cannot be powered down")
-    if "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in lines:
+    pending=lines.count("P07_B4I_A53_0_EXACT_POWER_DOWN_RESET_PENDING=1")
+    recovered=lines.count(primary_markers[2])
+    if pending!=recovered or pending>1:
+        raise ValueError("NO-GO: CPU0 reset requires exact power-down observation and verified post-reset halt")
+    for attempt in (1,2):
+        marker=f"P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY={attempt}"
+        count=lines.count(marker)
+        if count>1 or (recovered and count!=1):
+            raise ValueError("NO-GO: CPU0 power-down retry transcript inconsistent")
+    if lines.count("P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1"):
         raise ValueError("NO-GO: width/stop script reported failure")
     observed={0:"halted"}
     for i in range(1,4):
