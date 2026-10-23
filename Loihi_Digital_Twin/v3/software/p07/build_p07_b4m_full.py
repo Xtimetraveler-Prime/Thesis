@@ -114,9 +114,9 @@ def build(xsa:Path,workspace:Path,source:Path)->None:
             raise RuntimeError("not a real/complete B4m GNU map")
         if IDENTITY.encode() not in elf.read_bytes():
             raise RuntimeError("B4m ELF missing unique entry identity")
-        print(f"P07_B4L_ELF={elf}")
-        print(f"P07_B4L_REAL_MAP={link_map}")
-        print("P07_B4L_LINKED_NOT_BOARD_RUN=1")
+        print(f"P07_B4M_FULL_ELF={elf}")
+        print(f"P07_B4M_FULL_REAL_MAP={link_map}")
+        print("P07_B4M_FULL_LINKED_NOT_BOARD_RUN=1")
     finally:
         client.close() if hasattr(client,"close") else None
 
