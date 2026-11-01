@@ -232,7 +232,7 @@ int main(void){
     }
     mailbox[63]=B5_MAILBOX_DONE;
     publish();
-    xil_printf("P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 status=0x%08lx\r\n",
+    xil_printf("P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1 status=0x%08lx\r\n",
         (unsigned long)mailbox[2]);
     halt();
     return 0;
