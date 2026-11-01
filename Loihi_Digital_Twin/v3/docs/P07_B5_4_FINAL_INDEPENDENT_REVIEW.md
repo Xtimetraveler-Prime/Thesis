@@ -1,11 +1,69 @@
 # P07-B.5.4 — Final original trained 27-core FPGA evidence and operator closeout
 
-**Status (2026-11-01): IN PROGRESS. All required original B5.1/B5.2
-fingerprint-parity and B5.3 selected complete physical RAW NEURON
-bytewise numerical results reported independently PASS. Formal B5.4
-operator cold reboot and recovery attestation / independent final signoff
-NOT YET RECEIVED, so P07-B.5 and P07-B are NOT closed.**
+**Status (2026-11-01): FIVE-SESSION INDEPENDENT NUMERICAL REVIEW PASS.
+Four genuine original 0/1/2/0 V3 runs and a separate full 840,320B
+physical RAW0 run reverified; all seven scalar comparisons passed.
+B5.4 FINAL OPERATOR ACCEPTANCE remains OPEN pending actual operator
+cold-power-cycle/recovery attestations, explicit signoff and residual
+DDR-ownership disclosure. P07-B.5 and P07-B remain OPEN.**
 No `main` merge. PR #49 and #50 stay draft. P07-B.6/P08-B gated.
+
+## 2026-11-01: Genuine operator B5.4 five-session review PASS (NUMERICAL ONLY)
+
+The operator ran the real
+`scripts/p07_b5_final_acceptance.py --mode review` against all five
+original source-backed physical evidence directories. The resulting
+**write-once operator PC report** is:
+
+`/home/dna/Thesis_Evidence/p07_b5_4_final_numerical_review_20261101T220745Z.json`
+
+The reported terminal markers were:
+
+```text
+P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1
+P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1
+P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0
+P07_B5_4_OFFICIAL_MNIST_TEST_SEALED=1
+P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=0
+```
+
+The report independently confirmed 4 V3 0/1/2/0 sessions with complete
+26-tick scalar fingerprint and counter equality, a fifth original B5 RAW0
+physical session with all **26,260 neuron words**, **840,320 bytes**
+byte-for-byte identical to frozen scalar, and exact physical SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+The earlier accepted original original-TRAIN0 repeat still matched, the
+original frozen P03 PL/V3 ELF remained unchanged and official TEST SEALED.
+
+The write-once report's self-contained SHA pin fields were:
+original four-run report SHA256
+`f1dc383f4f4e316fca4cb5c6175e129347dfeb3fa4f9982de2c4ada412cc1ada`;
+genuine raw0 verification report SHA256
+`0c37aee136c218216eb01926b8a50ad67fb81833d4aa2c6feb096be6aa68106c`.
+[Bounded B5.4 five-physical-session numerical review ledger](P07_B5_4_2026_11_01_FIVE_SESSION_NUMERICAL_REVIEW_PASS_NOT_FINAL_ACCEPTANCE.json).
+
+**Final approval is NOT established by this report.** It explicitly says
+`P07_B5_final_acceptance=false`,
+`operator_attested_cold_boot_and_recovery_all_five_sessions=false`,
+`operator_explicit_final_B5_acceptance=false`,
+`boot_firmware_and_other_DDR_owner_independently_proven=false`,
+`independent_board_powercycle_instrumentation_proof=false`,
+`P07_B6_started=false`, and `main_merged=false`.
+No independent physical cycle record or actual operator-per-session
+attestation has been received. User's conditional request to close B5
+and merge is **not** a substitute for inventing those attestations.
+No tests or hardware runs need to be repeated solely to document the
+remaining facts.
+
+**Main branch safety:** GitHub confirms a main-only commit adds
+`LitReview.md`, blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+The P07-B development line does not include that commit. Do **not**
+force-push, reset, overwrite `main`, or use a snapshot replacement.
+When full P07-B and the operator's requested signoff are satisfied,
+integrate the draft PRs in dependency order **#49 → #50** using normal
+Git merges; verify `LitReview.md` remains byte-identical on the resulting
+`main`. No direct main edit or merge was performed at this checkpoint.
 
 ## Genuine physical B5.3 result
 
