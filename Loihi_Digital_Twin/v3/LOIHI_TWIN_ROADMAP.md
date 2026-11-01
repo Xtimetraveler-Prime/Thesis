@@ -2078,6 +2078,33 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5 FORMALLY CLOSED / USER-ATTESTED B5.4 REAL FIVE-SESSION FINAL ACCEPTANCE PASS:**
+User executed `scripts/p07_b5_final_acceptance.py --mode accept` on original
+5 genuine signed physical sessions (4 original V3 TRAIN 0/1/2/0 plus
+1 separate B5 RAW0), supplying exact external personal cold-boot,
+cold-recovery and dedicated JTAG operator attestation. The actual
+write-once report
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`
+contains `P07_B5_final_acceptance=true`,
+`operator_attested_cold_boot_and_recovery_all_five_sessions=true`,
+`operator_explicit_final_B5_acceptance=true`,
+`all_required_B5_numerical_gates_pass=true`, and official TEST SEALED.
+All 840320B/26260 original TRAIN0 physical raw neuron records
+matched independently regenerated scalar bytes, both SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+User attestation SHA256
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+[Accepted B5.4 final evidence ledger](docs/P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json)
+preserves source claims, session identities and evidence limitations.
+**P07-B.5 CLOSED, but P07-B.6 production hardware freeze/handoff and
+full P07-B remain OPEN.** Accepted scope does NOT prove exclusive Linux/
+boot/DDR ownership, independently instrumented board power cycling, nor
+per-packet-word physical trace equivalence. No new FPGA execution is
+required for B6 preparation; original TEST SEALED and frozen B2.4, V3
+ELF and P03 bitstream untouched. No merge into main; independent
+`main:LitReview.md` remains protected until the whole P07-B has been
+accepted and operator explicitly authorizes merges.
+
 **2026-11-01 P07-B.5.4 OPERATOR INDEPENDENT FIVE-PHYSICAL-SESSION NUMERICAL REVIEW PASS, BUT FORMAL FINAL ACCEPTANCE NOT YET RECORDED — MAIN MERGE DEFERRED:**
 Operator ran the REAL PC-only `scripts/p07_b5_final_acceptance.py --mode review`
 and supplied complete report
