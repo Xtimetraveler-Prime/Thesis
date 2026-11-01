@@ -34,8 +34,8 @@ def make_mailbox(*,v2:bool):
         w[52]=0x2
         w[53]=0x0
         w[54]=0x0
-        w[55]=0x6
-        w[56]=0x0
+        w[55]=0x0 # packet count
+        w[56]=0x6 # debug done/valid status
         w[57]=0x2
         w[58]=0
         w[59]=0
