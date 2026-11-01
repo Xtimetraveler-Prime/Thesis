@@ -102,7 +102,7 @@ def test_physically_authentic_trace_needs_original_stage_and_cannot_use_random_r
     fake=tmp_path/"fake_run"
     fake.mkdir()
     (fake/"b5_raw_physical_trace_840320.bin").write_bytes(bytes(840320))
-    with pytest.raises(ValueError,match="incomplete or unsuccessful"):
+    with pytest.raises(ValueError,match="missing genuine regular evidence file"):
         verifier.verify_session(
             evidence=fake,ordinal=0,frozen=tmp_path/"frozen",
             staged=tmp_path/"stage",routes=tmp_path/"routes",
