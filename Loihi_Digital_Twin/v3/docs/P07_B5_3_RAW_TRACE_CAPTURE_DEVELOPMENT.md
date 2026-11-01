@@ -4,10 +4,13 @@
 C recorder, B5.3.2 isolated raw-bank7 integration, separate A53 main,
 Vitis source/build path, strict PC-only ELF/XSA/source admission,
 standalone hook and firmware syntax tests IMPLEMENTED / native CI PASS.
-A genuine operator-built new Vitis B5 ELF/map has NOT been admitted yet.
-Real sidecar+mailbox DDR ownership, distinct B5 physical JTAG launcher,
-board readback, and raw physical byte-for-byte parity are NOT VERIFIED
-OR AUTHORIZED.** P07-B.5 final
+The operator's genuine corrected distinct B5 Vitis ELF/map have now
+passed independent PC-only source/ELF/XSA/route admission. A separate
+new B5 physical XSDB launcher, genuine same-session source stager and
+strong raw neuron-trace verifier have been implemented, with native CI
+safety tests. **Real sidecar+mailbox DDR ownership is still UNPROVEN;
+no physical B5 run or 840320B board readback has occurred and strict
+physical neuron bytewise parity is NOT VERIFIED OR AUTHORIZED.**** P07-B.5 final
 milestone remains OPEN, P07-B.6 and P08-B remain gated, and original
 official MNIST TEST remains sealed.
 
