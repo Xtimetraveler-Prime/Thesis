@@ -2078,6 +2078,33 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.3 genuine corrected B5 RAW A53 ELF/map PC-ADMITTED; dedicated B5 capture and physical-raw parity infrastructure IMPLEMENTED / NATIVE-ONLY:**
+Operator separately rebuilt the corrected new B5 raw-trace A53 application
+and independently passed exact frozen original 27core/source SHA, original
+accepted PS/PL routed P03 XSA, TRAIN input and **real linked ELF/map**
+PC-only admission: `P07_B5_GENUINE_RAW_CAPTURE_VITIS_SOURCE_ELF_OFFLINE_PREFLIGHT_PASS=1`.
+Genuine new ELF SHA `0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`;
+map SHA `1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`;
+A53 low-DDR footprint `[0x00000000,0x00107BC0)` (1,080,256 bytes),
+raw sidecar candidate `[0x42000000,0x420CD280)` (840,320 bytes),
+new B5 mailbox `[0x43FF0100,0x43FF0200)` (256 bytes).
+[Operator genuine admission ledger](docs/P07_B5_3_2026_11_01_REAL_VITIS_RAW_ELF_PC_ADMISSION.json)
+retains all exact identity proofs and explicitly proves **no** physical
+board/raw neuron execution, no DDR physical owner exclusivity and no
+permission inferred from the successful build.
+Dedicated B5 physical `vivado/p07_b5_raw_trace_xsdb_run.tcl`,
+`scripts/p07_b5_raw_physical_capture.py` (PC-only default preflight,
+13 distinct operator approvals before destructive execution) and
+`scripts/p07_b5_raw_physical_verify.py` (independent original 27core
+readback provenance + 256B B5 mailbox + original signed scalar **840320B
+per-neuron exact bytewise parity**) are now source-controlled with
+host-only negative safety tests. No KV260 run attempted via these.
+Physical raw capture, DDR owner risk acceptance and real reboot witness
+**still OPEN**. Original V3 ELF and route/input sources untouched,
+original official MNIST TEST sealed; B5.4/B6/P08-B remain gated.
+Nothing merged into `main`, PR #49/#50 remain drafts.
+See [B5.3 hardware capture/readback and PC-only runbook](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+
 **2026-11-01 P07-B.5.3 genuine first Vitis build succeeded; offline admission correctly rejected stale V3 runtime ID (FIXED IN NEW SOURCE, REBUILD REQUIRED):**
 Actual Vitis 2025.2 source/ELF/map build emitted
 `P07_B5_RAW_A53_ELF_AND_MAP_BUILT=1` in
