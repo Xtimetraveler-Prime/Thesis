@@ -1,9 +1,11 @@
 # P07-B.5 — Scaled 27-core trained physical validation
 
 **Status: IN PROGRESS.** B5.1 original three frozen TRAIN scalar source
-references **OPERATOR-VERIFIED PASS (2026-11-01)**. B5.2 host verifier of
-original physical ordinal0 **OPERATOR-VERIFIED PASS**; new physical ordinal1,
-ordinal2 and independent ordinal0 restart **NOT YET COLLECTED**. The complete
+references **OPERATOR-VERIFIED PASS (2026-11-01)**. B5.2 independently
+verified original ordinal0 **PASS** and new real KV260 ordinal1 **PASS**;
+ordinal2 and independent ordinal0 repeat **NOT YET COLLECTED**.
+Original TRAIN1 physical receipt and independent scalar report are recorded
+in [the signed-source P07-B5.2 ordinal1 ledger](P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json). The complete
 B4 bring-up problem/resolution timeline is separately documented in
 [P07-B.4 engineering challenges and resolutions](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
 P07-B.4m has an actual one-frame physical structural PASS (702 HLS
