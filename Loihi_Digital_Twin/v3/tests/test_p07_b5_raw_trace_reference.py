@@ -54,15 +54,15 @@ def test_840320_byte_hls_trace_exact_signed_state_and_spike_bit():
              if item[0]==1 and item[3]==("readout",1))
     chunk=data[loc*32:(loc+1)*32]
     assert chunk==struct.pack("<QQQII",
-       0,(1<<64)-1,b5.baseline.state_word(st(-7,5,2)),1,0)
+       0,(1<<64)-1,raw.baseline.state_word(st(-7,5,2)),1,0)
     whole=[]
     for t in range(26):
         span=data[t*1010*32:(t+1)*1010*32]
-        whole.append(b5.baseline.fnv_bytes(b5.baseline.FNV_SEED,span))
-    cumulative=b5.baseline.FNV_SEED
+        whole.append(raw.baseline.fnv_bytes(raw.baseline.FNV_SEED,span))
+    cumulative=raw.baseline.FNV_SEED
     for h in whole:
-        cumulative=b5.baseline.fnv_bytes(cumulative,h.to_bytes(8,"little"))
-    independently=b5.baseline.trace_fingerprint(run,compiled.placement)[0]
+        cumulative=raw.baseline.fnv_bytes(cumulative,h.to_bytes(8,"little"))
+    independently=raw.baseline.trace_fingerprint(run,compiled.placement)[0]
     assert independently==f"0x{cumulative:016X}"
 
 @pytest.mark.parametrize("field_start,field_name",[
