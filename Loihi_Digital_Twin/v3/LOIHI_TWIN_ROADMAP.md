@@ -2078,6 +2078,37 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.3.2 separate RAW trace A53 integration — PC NATIVE COMPLETE, VITIS/BOARD NOT YET VERIFIED:**
+User independently generated original frozen TRAIN0 **840,320-byte** host
+scalar trace, SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`,
+FNV64 `0xB59CA8594D6E64AD`, original monolithic trace SHA
+`4bef8f76965d4080a7c4ec2f3feab7c805e636d6397afb80a4a09f07733aea35`.
+This is a strong original signed scalar reference, **NOT physical trace**.
+Original user evidence:
+`/home/dna/Thesis_Evidence/p07_b5_train0_expected_raw_20261101T200800Z.bin`
+and [scalar reference ledger](docs/P07_B5_3_TRAIN0_SCALAR_RAW_ORACLE_USER_ACCEPTANCE.json).
+Separate, new B5-only A53 diagnostic source
+`P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1` now integrates
+an actual P03 bank7/bank1-verified raw trace capture at each
+original dispatch hook *before* HLS slot eviction, with 26x1010
+strict-order raw records and final 840320-byte flush. Unique B5
+candidate mailbox `[0x43FF0100,0x43FF0200)`; trace sidecar
+candidate `[0x42000000,0x420CD280)`. Both physically **UNAUTHORIZED**
+until independent DDR owner admission and new per-run approvals.
+New isolated Vitis build sources and PC-only exact original source/ELF/map/
+XSA/route admission exist; **operator has NOT built the distinct
+B5 ELF/map with real Vitis**, and no new B5 physical launcher/board
+capture/physical SHA has been produced. The accepted original V3 ELF,
+P03 PL/RTL, B2.4 freeze, TEST seal and four-run B5.2 physical
+receipts remain unmodified. New native GCC C hook+capture integration
+exercises 26,260 simulated trace records, actual bounded serializer,
+and fail-closed corrupt/mismatched P03 metadata cases. CI-native
+result must not be reported as genuine FPGA readback.
+See [B5.3 new firmware/offline build handoff](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+P07-B.5.3 remains **IN PROGRESS**; B5.4/P07-B.6/P08-B remain gated.
+Draft PR #49 and #50 UNMERGED; no `main` changes until complete
+P07-B and explicit operator approval.
+
 **2026-11-01 P07-B.5.2 FOUR GENUINE ORIGINAL 27CORE PHYSICAL SESSIONS / INDEPENDENT SCALAR FNV64 ACCEPTED:**
 User supplied the complete original TRAIN0 repeat verification and full
 four-session scalar-vs-physical report, confirming original TRAIN ordinals
