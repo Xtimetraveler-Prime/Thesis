@@ -83,6 +83,21 @@ def test_no_fabricated_build_or_elf_admission(tmp_path):
         gate.admit(frozen=tmp_path/"none",routes=tmp_path/"none",
                    build=tmp_path/"missing",reports=tmp_path/"none")
 
+def test_new_B5_source_print_identity_does_not_include_previous_V3():
+    source=(ROOT/"software/p07/p07_b5_full_board_raw_trace_v1.c").read_bytes()
+    assert source.count(gate.IDENTITY)==2
+    for legacy in gate.LEGACY_FIRMWARE_IDENTITIES:
+        assert legacy not in source
+
+
+def test_offline_legacy_firmware_identifier_guard_rejects_stale_printf():
+    good=gate.IDENTITY+b"\x00synthetic_native_test_only"
+    gate.reject_legacy_firmware_identity(good)
+    for legacy in gate.LEGACY_FIRMWARE_IDENTITIES:
+        with pytest.raises(gate.AdmissionNoGo,match="original firmware identity"):
+            gate.reject_legacy_firmware_identity(good+b"\x00"+legacy)
+
+
 def test_new_shell_build_does_not_use_old_V3_programming_or_elf():
     shell=(ROOT/"scripts/build_p07_b5_raw_trace.sh").read_text()
     code=(ROOT/"software/p07/build_p07_b5_raw_trace.py").read_text()
