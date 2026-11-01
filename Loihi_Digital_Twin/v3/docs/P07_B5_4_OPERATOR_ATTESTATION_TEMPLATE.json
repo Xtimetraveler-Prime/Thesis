@@ -1,0 +1,52 @@
+{
+  "schema": "p07-b5-4-operator-physical-powercycle-and-final-acceptance-v1",
+  "note": "TEMPLATE ONLY; do not assume or automatically set true. Copy OUTSIDE repo, inspect actual physical actions for all FIVE board sessions, replace each null with true only if personally verified. If any session was NOT cold-powered before/after or halted Linux resumed, leave false/null and DO NOT run acceptance.",
+  "sessions": [
+    {
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z",
+      "ordinal": 0,
+      "fresh_cold_power_cycle_before": null,
+      "cold_power_cycle_after": null,
+      "dedicated_JTAG_ownership": null,
+      "no_resume_of_halted_Linux": null
+    },
+    {
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z",
+      "ordinal": 1,
+      "fresh_cold_power_cycle_before": null,
+      "cold_power_cycle_after": null,
+      "dedicated_JTAG_ownership": null,
+      "no_resume_of_halted_Linux": null
+    },
+    {
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z",
+      "ordinal": 2,
+      "fresh_cold_power_cycle_before": null,
+      "cold_power_cycle_after": null,
+      "dedicated_JTAG_ownership": null,
+      "no_resume_of_halted_Linux": null
+    },
+    {
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_20261101T193922Z",
+      "ordinal": 0,
+      "fresh_cold_power_cycle_before": null,
+      "cold_power_cycle_after": null,
+      "dedicated_JTAG_ownership": null,
+      "no_resume_of_halted_Linux": null
+    },
+    {
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_raw_train0_real_20261101T213638Z",
+      "ordinal": 0,
+      "fresh_cold_power_cycle_before": null,
+      "cold_power_cycle_after": null,
+      "dedicated_JTAG_ownership": null,
+      "no_resume_of_halted_Linux": null
+    }
+  ],
+  "understands_original_boot_firmware_DDR_exclusivity_UNPROVEN": null,
+  "understands_B5_raw_sidecar_mailbox_DDR_ownership_UNPROVEN": null,
+  "accepts_documented_residual_destructive_DDR_risks": null,
+  "operator_independently_rechecked_B5_2_and_B5_3_evidence": null,
+  "explicitly_accepts_P07_B5_bounded_numerical_completion": null,
+  "official_MNIST_TEST": "SEALED_NOT_ACCESSED"
+}
