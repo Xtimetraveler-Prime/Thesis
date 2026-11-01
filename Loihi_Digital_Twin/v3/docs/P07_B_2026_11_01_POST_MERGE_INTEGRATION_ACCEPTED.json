@@ -1,0 +1,55 @@
+{
+  "schema": "p07-b-original-27core-final-post-operator-acceptance-github-main-integration-v1",
+  "date_utc": "2026-11-01",
+  "scope": "GitHub post-merge source identity and independent main-only literature preservation attestation. Operator physical source files remain local; the original B6.3 report's github_main_merged=false correctly described pre-merge state.",
+  "operator_final_P07_B_accepted_original_report": "/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json",
+  "source_controlled_operator_evidence_ledger": "docs/P07_B6_3_2026_11_01_FORMAL_OPERATOR_ACCEPTED_P07_B_CLOSEOUT.json",
+  "P07_B_complete": true,
+  "merges_in_normal_dependency_order": [
+    {
+      "pr": 49,
+      "source": "agent/v3-p07-b-scaled-physical-inference",
+      "target": "main",
+      "merge_method": "merge",
+      "merged": true,
+      "merge_commit_sha": "48b5db1f6430e594b2fce03aefa9136935249546"
+    },
+    {
+      "pr": 50,
+      "source": "agent/v3-p07-b5-scaled-multiframe-validation",
+      "target": "main",
+      "merge_method": "merge",
+      "merged": true,
+      "merge_commit_sha": "1328e2cd04ae43f7dde1aa3e898f81be2c1ac6ea"
+    },
+    {
+      "pr": 51,
+      "source": "agent/v3-p07-b6-final-freeze-handoff",
+      "target": "main",
+      "merge_method": "merge",
+      "merged": true,
+      "merge_commit_sha": "a59fa21eb5ffff8586c33c65b291a6ea2bfca6e4"
+    }
+  ],
+  "independent_main_literature_preservation": {
+    "path": "LitReview.md",
+    "original_and_after_each_merge_identical_git_blob_sha": "3c45d0a0d0b55378d3564d8f82282803a8eb1a3e",
+    "verified_by_GitHub_after_PR49": true,
+    "verified_by_GitHub_after_PR50": true,
+    "verified_by_GitHub_after_PR51": true,
+    "main_only_file_reset_or_overwritten": false
+  },
+  "verified_on_main": {
+    "P07_B_6_final_operator_acceptance_ledger_present": true,
+    "P07_B_original_roadmap_present": true,
+    "P07_B_6_handoff_documentation_present": true
+  },
+  "P08_B_started": false,
+  "original_MNIST_TEST": "SEALED_NOT_ACCESSED",
+  "original_27core_frozen_model_modified": false,
+  "physical_DDR_exclusivity_independently_proven": false,
+  "original_26x1010_full_raw_physical_numerical_parity_scope": "Original TRAIN0 only, 840320B exact scalar match; original V3 TRAIN0/1/2/0 counters and FNV64 parity, five genuine sessions",
+  "historical_operator_final_report_github_main_merged_field_was_false": true,
+  "post_operator_acceptance_actual_GitHub_main_integration_complete": true,
+  "note": "GitHub integration occurred AFTER original immutable operator B6.3 acceptance. Original physical archive, operator B6.3 accepted report, and original final frozen model remain untouched; this JSON documents the separate normal ordered GitHub merges and exact LitReview.md preservation."
+}
