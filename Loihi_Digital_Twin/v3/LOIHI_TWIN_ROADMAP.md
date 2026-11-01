@@ -2078,6 +2078,28 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5 MULTIFRAME TRAIN VALIDATION STARTED — NOT PHYSICALLY ACCEPTED:**
+The operator's genuine original B4m TRAIN validation0 physical evidence
+was independently replayed using the frozen source scalar integer oracle,
+full 26-tick per-compartment bank7 FNV64 and all packet/input/readout
+counters. User confirmed
+`P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1` with external signed
+report `/home/dna/Thesis_Evidence/p07_b4m_v3_scalar_parity_20261101T043214Z.json`.
+This **completes a bounded single-frame reference fingerprint comparison**;
+no raw neuron trace equality or additional physical validation is claimed.
+P07-B.5 work has begun on separate draft PR #50
+(`agent/v3-p07-b5-scaled-multiframe-validation`), based on still-draft
+P07-B PR #49. B5.1 PC-only strict original frozen TRAIN ordinals 0,1,2
+scalar replay/checks and B5.2 multi-real-run 0/1/2+independent 0-repeat
+host verifier are implemented; they have **not** been run on the operator's
+original frozen files or new board evidence. B5.3 signed separate RAW
+26×1010 neuron physical trace (840,320 bytes) and B5.4 independent
+cold-reboot/user acceptance remain OPEN. See
+`docs/P07_B5_SCALED_TRAIN_MULTIFRAME_VALIDATION.md`.
+P07-B.6 final freeze and P08-B scaling measurements must not start
+until B5 physically validated and user accepted. Official MNIST TEST
+remains SEALED; original P03 RTL, B2.4 checkpoint and V3 ELF unchanged.
+
 **2026-11-01 P07-B.4m real V3 trained 26-tick STRUCTURAL PASS:**
 Operator reran genuine 27-core TRAIN0 V3 on the physical KV260 after
 A53 takeover success. Same-session original frozen model/bindings/route/
