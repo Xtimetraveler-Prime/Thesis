@@ -52,8 +52,8 @@ int main(void){
     ASSERT(((hw.metadata[0]>>18)&0xffffu)==0);
     ASSERT(12u+51u>((hw.metadata[0]>>18)&0xffffu));
     ASSERT(p07_b4m_apply_p02_counts(&hw,ptrs)==P07_B4M_METADATA_OK);
-    ASSERT(hw.metadata[0] == ((uint64_t)39u<<7)|
-           ((uint64_t)30576u<<18)|((uint64_t)100u<<34));
+    ASSERT(hw.metadata[0] == (((uint64_t)39u<<7)|
+           ((uint64_t)30576u<<18)|((uint64_t)100u<<34)));
     ASSERT(hw.metadata[26] == (((uint64_t)26u)|((uint64_t)10u<<7)|
            ((uint64_t)10000u<<18)));
     ASSERT((hw.metadata[0]>>47)==0u);
