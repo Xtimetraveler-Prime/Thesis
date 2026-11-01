@@ -151,7 +151,10 @@ def bundle(args)->dict:
             "new external output directory required; original data and Git tree never overwritten")
     sealed,liter=validate_sealed_inputs(args)
     items=source_items(args,sealed)
-    roots=[args.frozen_dir,args.routes_dir,args.reports,args.build_dir,args.seal.parent,
+    # A NEW output may be a sibling of B5 acceptance JSON in the same
+    # external Thesis_Evidence folder. Disallow nested writes inside
+    # original source/firmware/physical-session trees, not the parent.
+    roots=[args.frozen_dir,args.routes_dir,args.reports,args.build_dir,
            *(Path(p) for p in sealed["operator_original_physical_V3_evidence_dirs"]),
            Path(sealed["operator_original_physical_RAW_evidence_dir"])]
     require(all(not args.out_dir.resolve().is_relative_to(p.resolve()) for p in roots),
