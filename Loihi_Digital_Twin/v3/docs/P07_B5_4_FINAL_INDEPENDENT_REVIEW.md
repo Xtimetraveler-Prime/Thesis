@@ -221,6 +221,71 @@ Expected review markers:
 `P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=0`,
 `P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0`.
 
+## 2026-11-01 operator attestation prepared — PC acceptance result still required
+
+After receiving the independently passing five-session numerical review,
+the operator reported: **"I also created the template copy and set every
+null value to true"** and explicitly requested completion of B5 and the
+start of B6, while reconfirming that no P07 source should merge to `main`
+until the whole P07 track is finished.
+
+This is an **operator statement that the local external attestation JSON
+was filled out**; it is not the actual signed JSON artifact, a physical
+cold-reboot instrumentation record, or an executed
+`p07_b5_final_acceptance.py --mode accept` PASS. The acceptance script
+must itself open the exact local file, validate all five physical session
+paths and every boolean, recheck all original source-backed evidence,
+and emit a new **write-once accepted** JSON before the automation
+may mark B5.4 formally closed. Do not infer the path or report SHA.
+
+**Operator PC-only B5.4 final acceptance command** — after verifying
+all five `true` fields are truthful and the original external attestation
+file is still present:
+
+```bash
+# Run in Loihi_Digital_Twin/v3 after sourcing .venv-p08 and setting
+# variables in the preceding "Operator PC command" block.
+find "$HOME/Thesis_Evidence" -maxdepth 1 -type f \
+  -name 'p07_b5_4_operator_attestation_*.json' -print
+# Select the EXACT operator-created file displayed by find:
+export P07_B5_ATTEST="/home/dna/Thesis_Evidence/<ACTUAL_ATTESTATION_FILENAME>.json"
+test -s "$P07_B5_ATTEST" || { echo "Missing operator attestation" >&2; exit 1; }
+export P07_B5_4_ACCEPT="$HOME/Thesis_Evidence/p07_b5_4_final_accepted_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P07_B5_4_ACCEPT" || { echo "Destination already exists" >&2; exit 1; }
+
+PYTHONPATH="$PWD/src" python scripts/p07_b5_final_acceptance.py \
+  --mode accept \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --offline-report "$P07_B5_RAW_OFFLINE" \
+  --fourrun-report "$P07_B5_FOURRUN_REPORT" \
+  --run "0:$P07_B5_RUN0" \
+  --run "1:$P07_B5_RUN1" \
+  --run "2:$P07_B5_RUN2" \
+  --run "0:$P07_B5_RUN0_REPEAT" \
+  --raw-evidence "$P07_B5_RAW_RUN0" \
+  --raw-report "$P07_B5_RAW_VERIFY0" \
+  --attestation "$P07_B5_ATTEST" \
+  --confirm-final-acceptance \
+     ACCEPT_P07_B5_WITH_ATTESTED_COLD_BOOTS_AND_UNPROVEN_DDR_OWNERSHIP \
+  --out "$P07_B5_4_ACCEPT"
+cat "$P07_B5_4_ACCEPT"
+```
+
+Expected terminal status:
+`P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1` with
+`P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1`.
+The accepted file must record both
+`operator_attested_cold_boot_and_recovery_all_five_sessions=true`
+and `P07_B5_final_acceptance=true`, while correctly retaining
+`boot_firmware_and_other_DDR_owner_independently_proven=false`
+and `independent_board_powercycle_instrumentation_proof=false`.
+Do not invent or manually edit that report; preserve it for P07-B.6.
+The script is **PC-only** and never programs the FPGA.
+
 ## B5.4 actual cold reboot/DDR residual risk / user final signoff gate
 
 The physical verification reports explicitly retain **false** for
