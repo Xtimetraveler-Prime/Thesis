@@ -222,3 +222,69 @@ failures; never resume the interrupted Linux. These source additions
 and native CI success do not establish a genuine V2 board result.
 **P07-B.4m full trained 26-tick physical inference and numerical parity
 remain OPEN until independently demonstrated.**
+
+## P07-B.4m original TRAIN physical V2 result and root-cause candidate
+
+User executed the complete genuine V2 JTAG session on KV260 with accepted
+original 27×512KiB model context readback, 16KiB binding descriptor
+readback, 80KiB output routes, 896KiB input routes, and 123216-byte
+TRAIN ordinal 0 ingress readback. V2 A53 ELF physically downloaded,
+executed and wrote a terminal 256-byte B4D2 failure mailbox.
+The full original-trained inference **FAILED** at stage 9 before the
+first logical dispatch was accepted; P03 completed-dispatch register=1.
+The failure is real hardware evidence, NOT a completed inference receipt.
+
+- Preserved external evidence: `/home/dna/Thesis_Evidence/p07_b4m_diag_v2_real_20261101T032559Z`
+- Real V2 failure mailbox SHA256:
+  `79c20f53664afabd3d349b3dccc0f3fc0f1824706863cb5d1409cb9ce493077d`
+- Firmware status FAIL `0xDEAD0000`, first_fault=9, adapter=-5.
+- B4D2 marker `0x42344432`; scheduler.first_fault=10;
+  pager.first_failure_kind=3 (dispatch); trace.first_fault=0.
+- `P03_DISPATCH_STATUS=0x22` (DONE + error_core_status),
+  `P03_DISPATCH_CORE_STATUS=0x4` (HLS STATUS_SYNAPSE_ROW_BOUNDS),
+  `P03_DISPATCH_COMPLETED=1`, packet_count=0.
+- Current-read source audit of original TRAIN frame/first core had
+  51 events, 39 compartments, 30576 valid source synapses, with no
+  source-level HLS synapse-bounds violation.
+- User confirmed locally that accepted B4l source-bound descriptor
+  metadata has **zero upper count fields**. The accepted descriptor
+  `p07_b4l_frozen_bindings.py` constructs metadata solely as
+  `core_id | (compartment_count << 7)`.
+- **Source-verified exact hardware cause candidate:** the accepted
+  `rtl/p08_paged_dispatch_controller.v` maps bits [33:18] directly
+  into HLS `synapse_count`, [46:34] into HLS `route_count`, while
+  the unchanged P03 adapter appends CURRENT events in [59:47].
+  Thus the old registered metadata delivers `synapse_count=0` and
+  `route_count=0`, consistent with the observed HLS `0x4`.
+  Real physical confirmation that fixing these fields makes HLS
+  dispatch succeed is still PENDING.
+
+## Diagnostic V3: isolated firmware-only metadata repair (PC candidate)
+
+New `software/p07/p07_b4m_dispatch_metadata.c/.h` reads the signed
+P02 v1 per-core header at offsets +0x20/+0x24/+0x28 to extract
+compartments/synapses/output routes. It checks all **27** cores
+against the accepted B4l sparse-registration metadata, 512KiB
+record ABI, zero initial event banks, and P08 capacity limits
+**before any adapter metadata mutation**. Then it adds synapse/route
+counts to the existing runtime `hw.metadata[]`. It does NOT change
+original B2.4 model context bytes, the 16KiB descriptor, original
+P03 adapter code, P08 RTL, or the accepted PL shell.
+
+The distinct `p07_b4m_full_board_diag_v3.c` calls this helper
+after accepted B4l descriptor binding and before route mount/paging.
+Any mapping discrepancy is a fail-closed stop. On V3 failure-only
+B4D3 mailbox `0x42344433`, word 62 carries metadata-repair status
+instead of the V2 debug address. The PC mailbox diagnostic can
+decode both V2 and V3 without treating a failure as success.
+
+New `scripts/build_p07_b4m_diag_v3.sh` and
+`software/p07/build_p07_b4m_diag_v3.py` provide a fresh
+independent Vitis 2025.2 A53 ELF build; V3 offline strict source,
+XSA, route/ELF/map preflight is
+`scripts/p07_b4m_diag_v3_offline_admission.py`.
+V3 remains **host-only until user builds genuine Vitis ELF/map and
+their hashes plus physical PT_LOAD are independently reviewed and
+pinned**. There is NO V3 board launch permission or numerical parity
+claim. Continue the SAME P07-B.4m milestone, draft PR #49.
+
