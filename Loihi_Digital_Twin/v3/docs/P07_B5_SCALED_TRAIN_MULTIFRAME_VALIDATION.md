@@ -1,7 +1,11 @@
 # P07-B.5 — Scaled 27-core trained physical validation
 
-**Status: IN PROGRESS.** B5.1 PC-side reference, safety verifier and native
-tests implemented; **new physical B5.2 evidence NOT YET COLLECTED**.
+**Status: IN PROGRESS.** B5.1 original three frozen TRAIN scalar source
+references **OPERATOR-VERIFIED PASS (2026-11-01)**. B5.2 host verifier of
+original physical ordinal0 **OPERATOR-VERIFIED PASS**; new physical ordinal1,
+ordinal2 and independent ordinal0 restart **NOT YET COLLECTED**. The complete
+B4 bring-up problem/resolution timeline is separately documented in
+[P07-B.4 engineering challenges and resolutions](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
 P07-B.4m has an actual one-frame physical structural PASS (702 HLS
 dispatches, 26 barriers), and the user independently reported
 `P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1` for original
