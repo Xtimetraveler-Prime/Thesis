@@ -11,6 +11,49 @@ OR AUTHORIZED.** P07-B.5 final
 milestone remains OPEN, P07-B.6 and P08-B remain gated, and original
 official MNIST TEST remains sealed.
 
+## B5.3.2 operator Vitis build / first offline admission NO-GO (2026-11-01)
+
+The operator's first independent Vitis 2025.2 build of
+`P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1` **compiled and linked
+successfully**, generating an actual ELF and GNU linker map in
+`/home/dna/p07_b5_raw_trace_build_20261101T202750Z`.
+The build deliberately printed
+`P07_B5_RAW_REAL_BOARD_RUN_AUTHORIZED=0`,
+`P07_B5_RAW_SIDECAR_DDR_OWNERSHIP_INDEPENDENTLY_PROVEN=0`, and
+`P07_B5_RAW_LOW_DDR_EXCLUSIVITY_INDEPENDENTLY_PROVEN=0`.
+
+The strict PC-only offline check **correctly rejected** that first
+genuine ELF with:
+`P07_B5_NEW_RAW_OFFLINE_NO_GO=NO-GO: experimental B5 ELF polluted by original firmware identity`.
+
+**Root cause CONFIRMED IN SOURCE:** The newly forked B5 A53 main
+contained the correct distinct `elf_identity[]`, but its terminal
+`xil_printf()` string still emitted
+`P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3`. Consequently the old V3
+runtime identity was *really present in the new ELF*. The offline
+identity gate was behaving properly; the source was wrong.
+
+**Fix:** Changed only `software/p07/p07_b5_full_board_raw_trace_v1.c`
+diagnostic status format to
+`P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1`.
+Retained the strict binary scan in
+`scripts/p07_b5_raw_trace_offline_admission.py` and improved its
+diagnostic to name an offending old firmware token. Hardened
+`scripts/build_p07_b5_raw_trace.sh` with *pre-build new C main
+source* and *post-link ELF* legacy-identity NO-GO checks and native
+negative regression tests in `tests/test_p07_b5_raw_trace_offline_admission.py`
+and `tests/test_p07_b5_trace_integration.py`.
+
+**Disposition:** Preserve the operator's old build directory, ELF/map
+hash and failure result as historical diagnosis, **NOT accepted B5
+physical firmware**. The operator must perform a NEW independent Vitis
+build at a NEW external absolute directory using the corrected
+committed source; the old artifact must not be patched, overwritten,
+reused or programmed. Only run the separate PC-only offline source/ELF
+admission after new real Vitis build succeeds. Source fixes, native
+tests and genuine compiler success do not prove new B5 DDR ownership,
+physical trace parity, or final P07-B.5 completion.
+
 ## B5.2 entry evidence / safe scope
 
 The operator completed and independently reverified all four
