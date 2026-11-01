@@ -95,6 +95,17 @@ def test_complete_new_external_copy_and_exact_SHA256_rehash(tmp_path,monkeypatch
         assert copied.stat().st_size==rec["bytes"]
     assert len(receipt["files"])==4+2+3+5
 
+def test_realistic_new_external_package_sibling_of_original_operator_seal_is_allowed(tmp_path,monkeypatch):
+    a,_,_=create_synthetic(tmp_path,monkeypatch)
+    # Operator instructions place new immutable report/package siblings in
+    # ~/Thesis_Evidence, not inside an original five-session evidence tree.
+    a.out_dir=a.seal.parent/"brand_new_B6_package"
+    assert a.seal.parent==a.accept.parent
+    receipt=pkg.bundle(a)
+    assert (a.out_dir/"handoff_manifest.json").exists()
+    assert receipt["P07_B_complete"] is False
+
+
 def test_existing_output_never_overwritten(tmp_path,monkeypatch):
     a,_,_=create_synthetic(tmp_path,monkeypatch)
     a.out_dir.mkdir()
