@@ -101,6 +101,22 @@ environment; they do **not** reserve the addresses above for B5.
    trace. A successful comparison does not by itself establish DDR
    exclusive ownership or formal P07-B.5.4 completion.
 
+### Independent PC-only Tcl safety smoke (no JTAG)
+
+The separate `tests/test_p07_b5_raw_xsdb_tcl_static.py`
+executes a local Tcl interpreter with wrong/missing launch tokens
+to confirm fail-closed behavior *before any XSDB command*, and
+checks bounded 210,080-word segment arithmetic and atomic
+non-overwriting trace output. Passing a Tcl syntax/argument test
+does **not** prove hardware target selection or DDR ownership.
+
+```bash
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b5_raw_physical_safety.py \
+  tests/test_p07_b5_raw_ddr_risk_review.py \
+  tests/test_p07_b5_raw_xsdb_tcl_static.py
+```
+
 ## PC-only memory risk report — safe to run now
 
 From the repository V3 directory with the **same environment as the
