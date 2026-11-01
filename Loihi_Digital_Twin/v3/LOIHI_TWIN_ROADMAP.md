@@ -2078,6 +2078,19 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5 operator B5.1/B5.2 read-only acceptance (not new physical runs):**
+Original frozen TRAIN validation ordinals 0/1/2 independent scalar replay
+**PASS**, marker `P07_B5_THREE_FROZEN_TRAIN_SCALAR_REFERENCE_PASS=1`,
+external report `/home/dna/Thesis_Evidence/p07_b5_three_train_reference_20261101T044416Z.json`.
+Independent B5 verifier of **existing original genuine ordinal0 physical**
+run **PASS**, marker `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
+external report `/home/dna/Thesis_Evidence/p07_b5_verify_train0_20261101T044755Z.json`.
+This B5 verifier marker applies only to the evidence run explicitly given,
+**not yet** original ordinal1/2 physical or ordinal0 independent restart.
+B5.2 new physical runs and B5.3 full raw physical trace acceptance remain
+OPEN. Detailed P07-B.4 cross-cutting challenges and exact remedies:
+`docs/P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md`.
+
 **2026-11-01 P07-B.5 MULTIFRAME TRAIN VALIDATION STARTED — NOT PHYSICALLY ACCEPTED:**
 The operator's genuine original B4m TRAIN validation0 physical evidence
 was independently replayed using the frozen source scalar integer oracle,
