@@ -20,6 +20,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
 
@@ -50,6 +51,38 @@ V3_ID="P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3"
 
 class InferenceNoGo(ValueError):
     pass
+
+
+def preflight_original_p02_metadata(args:argparse.Namespace)->None:
+    """Check all 27 immutable source headers against original bindings.
+
+    The V3 firmware rejects a zero synapse count, so a host-only scan
+    catches this (and identity mismatches) before destructive board access.
+    Authenticity is provided by the preceding original B4l SHA gate.
+    """
+    descriptor=(args.bindings_dir/physical.binds.FILENAME).read_bytes()
+    if len(descriptor)!=physical.binds.SIZE or descriptor[:8]!=b"B4BIND01":
+        raise InferenceNoGo("NO-GO: original B4l metadata descriptor unavailable")
+    for core in range(27):
+        f=args.frozen_dir/physical.model.b4l1.record_filename(core)
+        with f.open("rb") as stream:
+            header=stream.read(56)
+        if len(header)!=56:
+            raise InferenceNoGo("NO-GO: short frozen P02 context header")
+        magic,ver,hbytes,rbytes,cid,flags,bank,n,ns,nr,e0,e1,pack=struct.unpack(
+            "<8s12I",header)
+        meta,desc_n,_,desc_id=struct.unpack_from("<QHHI",descriptor,
+                                                   128+core*528)
+        if (magic!=b"LTV3CTX1" or ver!=1 or hbytes!=0x1000 or
+            rbytes!=0x80000 or cid!=core or desc_id!=core or flags!=0 or
+            bank!=0 or e0!=0 or e1!=0 or pack!=0 or not 0<n<=1024 or
+            not 0<ns<=32768 or not 0<=nr<=4096 or
+            desc_n!=n or meta!=((n<<7)|core)):
+            raise InferenceNoGo(
+                f"NO-GO: V3 original P02/descriptor metadata for core {core} "
+                "cannot satisfy the physical metadata repair")
+    print("P07_B4M_DIAG_V3_ALL_27_ORIGINAL_P02_METADATA_COUNTS_HOST_VERIFIED=1",
+          flush=True)
 
 
 def require_v3_original(args:argparse.Namespace)->tuple[dict,dict,dict,dict]:
@@ -89,6 +122,7 @@ def require_v3_original(args:argparse.Namespace)->tuple[dict,dict,dict,dict]:
             raise InferenceNoGo("NO-GO: original signed route/TRAIN payload changed: "+name)
     index=physical.model.prepare_verified_contexts(args.frozen_dir,args.staged_dir)
     desc=physical.old.require_real_bindings(args.frozen_dir,args.staged_dir,args.bindings_dir)
+    preflight_original_p02_metadata(args)
     readelf,nm=physical.resolve_elf_inspection_tools()
     physical.old.b4i.preflight(args.b4i_build,args.reports,readelf=readelf,nm=nm)
     return index,desc,staged,elf
