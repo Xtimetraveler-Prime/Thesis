@@ -2078,6 +2078,41 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.2 FOUR GENUINE ORIGINAL 27CORE PHYSICAL SESSIONS / INDEPENDENT SCALAR FNV64 ACCEPTED:**
+User supplied the complete original TRAIN0 repeat verification and full
+four-session scalar-vs-physical report, confirming original TRAIN ordinals
+`[0,1,2,0]`, each independently checked against original signed 27-core
+DDR, routes, exact original frozen 26-tick integer oracle and actual 256B
+physical mailbox. Genuine 702 HLS dispatches/26 barriers **per image**;
+all seven original scalar/physical numerical checks **TRUE** for all four.
+Consolidation `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
+`genuine_independently_verified_sessions=4`,
+`distinct_train_validation_frames=3`,
+`all_three_distinct_frames_scalar_vs_physical_equal=true`,
+`train0_repeat_physical_metrics_and_FNV64_equal=true`.
+Original TRAIN0 repeat predicted class 1, 1,514 original source spikes,
+1,489 P03 packets/NEXT inserts, 31,512 external CURRENT events and
+physical trace `0xB59CA8594D6E64AD`. Its entire physical 256B mailbox
+SHA256 `5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`
+was **identical** to the earlier genuine TRAIN0 physical run.
+Reports remain on operator PC:
+`$HOME/Thesis_Evidence/p07_b5_verify_train0_repeat_20261101T194457Z.json`,
+`$HOME/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json`.
+[Bounded B5.2 four-session ledger](docs/P07_B5_2_2026_11_01_REAL_FOUR_SESSION_FINGERPRINT_ACCEPTANCE.json).
+**B5.1 and B5.2 are ACCEPTED WITH EXPLICIT BOUNDS**; B5.3 direct
+840320B *physical* HLS neuron trace readback/bytewise scalar comparison
+and separate authentic operator reboot evidence remain OPEN; the existing
+B5.2 PC verifier itself states both `false`. Original official TEST
+still SEALED and previous V3 ELF/RTL/frozen model unchanged. P07-B.5
+final acceptance NOT complete. Distinct B5.3 **native-only C raw trace
+recorder** development has started on the same draft PR #50, with a
+candidate separate trace sidecar `[0x42000000,0x420CD280)` that has
+only been checked for non-overlap against *known original software
+DDR ranges*. Actual physical DDR ownership, new Vitis ELF/map hashes,
+new dedicated physical launcher, on-board capture/readback, and final
+source/trace parity are NOT yet proven or authorized. See
+`docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md`.
+
 **2026-11-01 P07-B.5.2 real TRAIN2 physical plus scalar numerical PASS:**
 The operator's original TRAIN-derived ordinal2 KV260 execution passed
 702/702 dispatches, 26/26 barriers, 702 page-ins, 699 dirty plus three
