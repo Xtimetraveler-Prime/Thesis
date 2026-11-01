@@ -9,6 +9,20 @@ The final user's accepted report includes `github_main_merged=false`
 at its historical time of execution; subsequent dependency-order
 PR integration must be verified separately.
 
+**POST-ACCEPTANCE GITHUB INTEGRATION (2026-11-01):** Following genuine
+B6.3 `P07_B_complete=true` acceptance, normal Git merges
+PR #49 `48b5db1f6430e594b2fce03aefa9136935249546`,
+PR #50 `1328e2cd04ae43f7dde1aa3e898f81be2c1ac6ea`,
+and PR #51 `a59fa21eb5ffff8586c33c65b291a6ea2bfca6e4`
+were completed into `main`. Independent `main:LitReview.md`
+retains its exact original blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+[Post-merge source provenance](P07_B_2026_11_01_POST_MERGE_INTEGRATION_ACCEPTED.json).
+The accepted historical operator report's
+`github_main_merged=false` is correct *at the time the operator
+ran it*, not the later GitHub integration status. Original
+MNIST TEST remains SEALED; P08-B not started.
+
 ## Final real operator-accepted original 27-core evidence
 
 On 2026-11-01 the operator ran the original signed B6.2 full
