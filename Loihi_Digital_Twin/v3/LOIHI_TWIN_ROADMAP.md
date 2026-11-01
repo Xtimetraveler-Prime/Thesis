@@ -2078,6 +2078,25 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.2 real TRAIN2 physical plus scalar numerical PASS:**
+The operator's original TRAIN-derived ordinal2 KV260 execution passed
+702/702 dispatches, 26/26 barriers, 702 page-ins, 699 dirty plus three
+final page-outs. Readout class **1** matched original TRAIN label **1**,
+counts `[0,25,0,2,0,0,0,0,1,0]`. Independent frozen scalar comparison
+passed all seven checks: 41,990 external input events, 1,484 source spikes,
+1,456 P03 packets/1,456 NEXT insertions, and full 26-tick physical
+FNV64 `0x9C12E0386A7E41CB` all exact. Raw actual physical mailbox
+SHA256 `cdf26c256cd0fbf1c4c901d53cd2caaf3b1a2e3e945a82c64aa354eed7d6e5d6`.
+The physically captured original ordinal2 evidence is at
+`/home/dna/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z`;
+verified scalar report
+`/home/dna/Thesis_Evidence/p07_b5_verify_train2_20261101T192721Z.json`;
+provenance [ledger](docs/P07_B5_2_REAL_TRAIN2_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
+**All three original distinct TRAIN ordinals 0,1,2 now have physical+scalar
+fingerprint acceptance**, but B5.2 ordinal0 repeat, four-run consolidation,
+B5.3 raw 840320B physical neuron trace, and B5.4 acceptance are OPEN.
+Original TEST remains sealed; P07-B.6/P08-B remain gated.
+
 **2026-11-01 P07-B.5.2 genuine original TRAIN1 26-tick physical/independent scalar PASS:**
 The operator physically staged all 27 original 512KiB P02 cores, original
 16KiB descriptor, 80KiB output/896KiB input route tables and pinned
