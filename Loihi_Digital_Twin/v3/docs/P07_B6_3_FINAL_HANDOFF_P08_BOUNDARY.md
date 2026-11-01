@@ -1,13 +1,62 @@
 # P07-B.6.3 — Final original 27-core physical FPGA handoff and P08-B boundary
 
-**Status: IMPLEMENTED; final independent source-backed operator acceptance
-not yet run. P07-B.5 accepted; B6.1 actual user-sealed source and
-five-physical-session evidence PASS; B6.2 genuine archive copy and
-independent verification not yet received. The user cannot declare
-`P07_B_complete=true` from a static B6.1 seal or from mock tests.**
-Official MNIST TEST remains SEALED. No merge to `main` until P07-B.6.3
-has the genuine independent acceptance report and the operator authorizes
-the dependency-order merge separately.
+**STATUS (2026-11-01): B6.3 GENUINE FINAL PHYSICAL REPRODUCIBILITY
+HANDOFF USER ACCEPTED. `P07_B6_final_hardware_freeze_accepted=true`,
+`P07_B_complete=true`, B6.2 portable archive created and fully
+independently reverified, main-only `LitReview.md` original Git blob
+verified. P08-B has NOT begun. MNIST official TEST remains SEALED.**
+The final user's accepted report includes `github_main_merged=false`
+at its historical time of execution; subsequent dependency-order
+PR integration must be verified separately.
+
+## Final real operator-accepted original 27-core evidence
+
+On 2026-11-01 the operator ran the original signed B6.2 full
+reproducibility copy, a **separate independent auditor of all copied
+files** (SHA256 and size), B6.3 PC-only `--mode review` and B6.3
+`--mode accept`. All four commands succeeded. Final report:
+
+`/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json`
+
+Exact final markers:
+
+```text
+P07_B6_3_ORIGINAL_27CORE_SIGNED_PHYSICAL_ARCHIVE_FINAL_RECHECK_PASS=1
+P07_B6_3_MAIN_ONLY_LITREVIEW_ORIGINAL_GIT_BLOB_PASS=1
+P07_B6_3_ORIGINAL_MNIST_TEST_SEALED=1
+P07_B6_3_NEW_BOARD_CONTACT=0
+P07_B6_3_FINAL_OPERATOR_ACCEPTANCE=1
+P07_B6_3_GITHUB_MAIN_MERGED=0
+```
+
+The copied archive
+`/home/dna/Thesis_Evidence/p07_b6_full_reproducibility_20261101T233311Z`
+had immutable `handoff_manifest.json` SHA256
+`73491c0e4f1708ba726cb15e2fd64312d55b002c7d507f6ef0a0d868424fe431`;
+independent audit report
+`/home/dna/Thesis_Evidence/p07_b6_bundle_audit_20261101T233347Z.json`
+had SHA256
+`10399bc72bef7ce14db04e85685f2099ae2ab6f5461f6d0712fd7b4918111907`.
+Original frozen 33 assets, all five real source-backed physical
+sessions, original V3 and B5 ELF/map, original P03 XSA and B5 RAW
+840320B full neuron parity were independently verified with
+unchanged accepted hashes. B6.3 final recorded
+`operator_final_P07_B_acceptance=true`,
+`P07_B6_final_hardware_freeze_accepted=true`,
+`P07_B_complete=true`. Full source-controlled exact results:
+[Bounded final operator acceptance ledger](P07_B6_3_2026_11_01_FORMAL_OPERATOR_ACCEPTED_P07_B_CLOSEOUT.json).
+
+**No extra neural behavior is being claimed**: selected original
+TRAIN 0/1/2/0 only, original TRAIN0 entire 26×1010-neuron
+physical raw-byte equality, no full packet-word trace equality,
+no independently proven boot/Linux/DDR exclusive ownership, power
+cycles operator-attested but not instrumentation-proven, no
+asynchronous real-Loihi claim or official TEST accuracy.
+Future P08 requires separately accepted measurement/test protocol.
+
+The remainder of this page is the historically drafted B6.3 procedure.
+Its earlier directions to run review/accept have already been carried
+out and remain for reproducibility.
 
 ## Frozen hardware/software implementation
 
