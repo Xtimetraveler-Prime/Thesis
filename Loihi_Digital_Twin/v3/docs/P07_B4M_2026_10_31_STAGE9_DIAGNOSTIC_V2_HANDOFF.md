@@ -332,3 +332,47 @@ Failures cannot be accepted as valid trained physical inference.
 On a verified structural success, do NOT claim independent full-neuron
 numerical parity from the structural receipt alone. Reboot KV260 after
 ANY actual destructive board takeover/attempt, even on failure.
+
+## Diagnostic V3: 2026-11-01 first KV260 takeover failure (pre-PL)
+
+Operator ran V3 `scripts/p07_b4m_diag_v3_physical_run.py --mode execute`
+with exact registered model, TRAIN 0, genuine hash-pinned ELF/map, and
+destructive approvals. Read-only PC host gates completed:
+
+- `P07_B4M_DIAG_V3_ALL_27_ORIGINAL_P02_METADATA_COUNTS_HOST_VERIFIED=1`
+- `P07_B4M_SIGNED_MODEL_TRAIN_GENUINE_ELF_HOST_GATE_PASS=1`
+
+The very FIRST physical action, the historical P07-B.4i CPU stop/FPD width
+gate, failed before PL programming, before all DDR staging, and before
+ELF download or inference:
+
+```text
+P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+P07-B.4i stop failed for Cortex-A53 #0: Cannot halt processor core: power down
+```
+
+- Original external evidence: `/home/dna/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T040103Z/ps_width.log`
+- No B4D3 failure mailbox was produced. No physical V3 HLS count fix
+  verification, no dispatch, no numerical parity.
+- Precise software mismatch discovered: historical
+  `vivado/p07_b4i_stop_and_width_gate.tcl` handled exact XSDB string
+  `The core is powered down`, but operator XSDB actually returned
+  `Cannot halt processor core: power down`. It rejected this before
+  the existing bounded retries, PS-width checks, or guarded processor reset.
+- The gate now treats ONLY those two complete error strings as the same
+  observed power-down state. It still checks both FPD and LPD PS-width
+  raw registers before trying a guarded Track-A processor reset; it still
+  **requires a subsequently confirmed A53 #0 stop**, does not waive a
+  processor halt and does not program PL or transfer DDR if this fails.
+  Secondary down-state remains only an observation, never a CPU0 pass.
+- Additional native Tcl simulations exercise the operator's exact XSDB
+  wording, successful guarded recovery, unavailable reset, wrong PS width,
+  ambiguous multi-line errors, and secondary-core handling.
+- After ANY actual XSDB takeover failure, reboot/power-cycle KV260;
+  never resume the potentially disrupted Linux process. Use a NEW external
+  evidence directory on retry, preserve this one unchanged.
+
+This is a takeover-controller defect / environmental CPU state problem,
+NOT evidence that the original trained HLS fault is resolved or that the
+metadata fix failed. P07-B.4m remains OPEN, PR #49 draft.
+
