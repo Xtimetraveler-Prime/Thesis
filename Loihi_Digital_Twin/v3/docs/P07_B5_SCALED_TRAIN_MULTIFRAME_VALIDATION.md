@@ -3,8 +3,10 @@
 **STATUS AS OF 2026-11-01: B5.1/B5.2 PASS (four original frozen TRAIN
 27-core V3 physical fingerprint-parity runs), B5.3 SELECTED ORIGINAL
 TRAIN0 PHYSICAL RAW NEURON BYTEWISE PARITY PASS (840,320B / 26,260 records).
-B5.4 independent closeout and operator reboot/final acceptance PENDING.
-P07-B.6/P08-B gated; PRs #49/#50 unmerged.**
+B5.4 five real physical evidence sessions independently RE-VERIFIED
+NUMERICAL PASS (2026-11-01), but operator cold boot/recovery attestations
+and formal final acceptance NOT YET PROVIDED. P07-B.6/P08-B gated;
+PRs #49/#50 unmerged and main-only LitReview.md protected.**
 
 The user independently verified four genuine distinct physical sessions
 in the order original frozen TRAIN ordinals **0,1,2,0**, each with
@@ -42,6 +44,19 @@ were true; original same-session 27-core DDR sources/routes/readbacks
 verified. [Signed bounded physical B5.3 raw PASS ledger](P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json).
 Underlying board binaries remain on the operator PC; the repository
 contains provenance ledgers, not falsely manufactured physical bytes.
+
+**B5.4 numerical evidence review PASS on operator PC.** Five actual
+physical evidence directories were independently reopened using
+`scripts/p07_b5_final_acceptance.py --mode review`, with
+`P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1`
+and `P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1`.
+Saved operator write-once report:
+`/home/dna/Thesis_Evidence/p07_b5_4_final_numerical_review_20261101T220745Z.json`.
+[Source-controlled B5.4 numerical-only acceptance ledger](P07_B5_4_2026_11_01_FIVE_SESSION_NUMERICAL_REVIEW_PASS_NOT_FINAL_ACCEPTANCE.json).
+The same actual report deliberately retained
+`operator_attested_cold_boot_and_recovery_all_five_sessions=false`,
+`operator_explicit_final_B5_acceptance=false`, and
+`P07_B5_final_acceptance=false`: it is NOT a B5.4 FINAL PASS.
 
 **Do not claim P07-B.5 fully closed.** Existing B5.2 report still states
 `cold_reboot_between_runs_independently_proven=false`; the new B5
