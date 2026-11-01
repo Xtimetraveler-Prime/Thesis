@@ -97,9 +97,14 @@ def trace_fingerprint(oracle,placement)->tuple[str,list[str]]:
 def expected_counters(oracle,schedule,compiled)->dict:
     fanout_in=Counter()
     for route in compiled.ingress_routes:
-        if route.source_input!="pixels":
-            raise ParityNoGo("NO-GO: unexpected external population")
-        fanout_in[route.source_index]+=1
+        # Frozen B1.2 uses IngressRoute(input_population, input_index,
+        # destination_core, destination_axon), not the legacy/mock names
+        # source_input/source_index. Verify the exact original ABI.
+        if route.input_population!="pixels" or not 0<=route.input_index<784:
+            raise ParityNoGo("NO-GO: unexpected original pixel input route")
+        if not 0<=route.destination_core<27 or not 0<=route.destination_axon<4096:
+            raise ParityNoGo("NO-GO: original physical ingress destination invalid")
+        fanout_in[route.input_index]+=1
     external=sum(fanout_in[pixel] for tick in schedule for pixel in tick)
     positions={(p.population,p.neuron_index):(p.core_id,p.compartment_id)
                for p in compiled.placement}
