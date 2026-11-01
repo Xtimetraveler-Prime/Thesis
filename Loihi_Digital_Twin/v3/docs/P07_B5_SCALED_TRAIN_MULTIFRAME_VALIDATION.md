@@ -148,14 +148,24 @@ cat "$P07_B5_EXPECTED"
 
 ## B5.2 physical procedure
 
-The first new physical test is original TRAIN validation **ordinal 1**.
-Follow the exact one-session [dedicated ordinal-1 physical runbook](P07_B5_2_OPERATOR_ORDINAL1_PHYSICAL_RUNBOOK.md), including the real
-V3 ELF/map SHA checks, PC-only preflight, all twelve approvals,
-original 27-core readbacks, mandatory KV260 reboot and post-run
-original independent scalar verification. **Operator B5.1 and old
-ordinal0 read-only replay passed; no new ordinal1 physical result
-has yet been supplied.** Stop after the first new run for
-independent review before undertaking ordinal2 or the repeat.
+The original TRAIN validation **ordinal 1** new physical run has now
+PASSED complete same-session staging, 702 dispatches, 26 barriers,
+all ten output counts, 26-tick HLS trace FNV64 and independent frozen
+scalar comparison. Real readout class **2**, true TRAIN label **2**, 25
+readout spikes, 1,852 source spikes, 1,827 routed NEXT packets,
+71,994 external events, physical trace FNV64 **0x0EAC411F49856BF3**;
+raw 256B physical mailbox SHA
+**4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95**.
+Original genuine TRAIN1 evidence directory:
+`/home/dna/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z`;
+independently verified read-only report:
+`/home/dna/Thesis_Evidence/p07_b5_verify_train1_20261101T050334Z.json`.
+The [original ordinal1 physical runbook](P07_B5_2_OPERATOR_ORDINAL1_PHYSICAL_RUNBOOK.md)
+is retained as the successful reproduction procedure. The next two
+separate, reboot-gated runs are described in the
+[ordinal2 / TRAIN0 independent repeat + consolidation runbook](P07_B5_2_OPERATOR_REMAINING_PHYSICAL_RUNS.md).
+No independent proof of a cold reboot for the previous run is asserted
+from the mailbox. All strict raw-trace/TEST gates remain unchanged.
 
 
 1. Hard-reboot KV260 and verify a dedicated XSDB server. Never resume a
