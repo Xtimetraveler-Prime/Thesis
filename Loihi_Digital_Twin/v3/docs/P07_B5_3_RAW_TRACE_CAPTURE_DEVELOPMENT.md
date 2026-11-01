@@ -54,6 +54,142 @@ admission after new real Vitis build succeeds. Source fixes, native
 tests and genuine compiler success do not prove new B5 DDR ownership,
 physical trace parity, or final P07-B.5 completion.
 
+## B5.3.3 genuine separate Vitis A53 admission ACCEPTED; original-run physical capture tooling implemented PC-only
+
+The operator's genuine separately rebuilt Vitis 2025.2 B5 RAW A53
+ELF and GNU linker map now pass exact source/original B2.4/P03 route
+and frozen 27core/XSA PC admission, after the earlier rejected stale
+V3 diagnostic-print fix.
+
+- Build directory: `/home/dna/p07_b5_raw_trace_build_20261101T204014Z`
+- Source/ELF admission report:
+  `/home/dna/Thesis_Evidence/p07_b5_raw_elf_offline_20261101T204303Z.json`
+- Genuine B5 ELF SHA256:
+  `0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`
+- Genuine GNU map SHA256:
+  `1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`
+- Accepted original P03 XSA SHA256:
+  `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`
+- Actual new A53 LOAD `[0x00000000,0x00107BC0)`,
+  **1,080,256 bytes**, **different from original V3**.
+- New trace candidate `[0x42000000,0x420CD280)`,
+  **840,320 bytes**; new B5 mailbox
+  `[0x43FF0100,0x43FF0200)`, **256 bytes**.
+- The original TRAIN source remains sealed from official MNIST TEST,
+  with 27 immutable records, 20,384 input routes, 1,000 output routes.
+- The accepted new Vitis report explicitly says
+  `P07_B5_GENUINE_RAW_CAPTURE_VITIS_SOURCE_ELF_OFFLINE_PREFLIGHT_PASS=1`,
+  `P07_B5_SIDE_CAR_PHYSICAL_DDR_OWNERSHIP_PROVEN=0`,
+  `P07_B5_REAL_PHYSICAL_LAUNCH_AUTHORIZED=0`,
+  `P07_B5_BOARD_ACCESSED=0`,
+  `P07_B5_B5_3_RAW_FPGA_TRACE_VERIFIED=0`.
+
+The [operator evidence ledger](P07_B5_3_2026_11_01_REAL_VITIS_RAW_ELF_PC_ADMISSION.json)
+preserves this exact new SHA-pinned ELF/map and the explicit
+unproven physical DDR/firmware claims. This PC gate **does not**
+mean physical model or raw capture was executed.
+
+**B5.3.3 dedicated physical infrastructure now under test:**
+
+1. `vivado/p07_b5_raw_trace_xsdb_run.tcl` is **not V3**:
+   requires a different launch token, the operator-admitted
+   exact new B5 ELF SHA, 256B independently readback-zeroed new
+   mailbox, a real B5 terminal success/finished/26,260-record
+   receipt, CPU halt, then segmented actual PSU physical
+   readback of exactly 210,080 uint32 words (840,320 bytes).
+   Every failed/partial attempt preserves a NO-GO and REBOOT warning.
+2. `scripts/p07_b5_raw_physical_capture.py` defaults to
+   `--mode preflight`, **read-only PC and no physical contact**.
+   It reopens the genuine signed original frozen graph and real
+   ELF/map, revalidates the operator offline report, original
+   P02 source metadata, original B4l descriptor and original
+   B4i shell, accepted XSA, all original TRAIN frames/routes.
+   Real board `--mode execute` requires the 8 original session
+   approvals plus **5 distinct new approvals** for B5 raw
+   firmware, revised 1,080,256-byte low DDR span, unproven
+   boot-firmware overlap risk, separately reserved 840,320-byte
+   trace sidecar writes and B5 mailbox writes. It requires a
+   fresh external evidence directory and independently staged
+   and SHA-readback-verified original 27 DDR records / descriptors /
+   both routing tables and original TRAIN input in the SAME
+   dedicated XSDB session BEFORE new A53 download.
+3. `scripts/p07_b5_raw_physical_verify.py` **PC-only**
+   refuses unproven or synthetic evidence, regenerates the
+   frozen TRAIN scalar reference, validates real XSDB log,
+   original model/staging/readback SHA, exact distinct B5
+   terminal 256B mailbox, all 27×26 dispatch counters,
+   26,260 per-neuron 32B trace records, and per-tick / 26-tick
+   FNV64, then determines first original tick/core/comp/neuron
+   mismatch or exact *all-byte physical-vs-scalar equality*.
+   A passing authentic full raw audit can demonstrate real
+   direct per-neuron equality; it still does NOT imply boot
+   firmware DDR ownership was independently proven, reboot
+   attested, or P07-B.5 final acceptance.
+4. `tests/test_p07_b5_raw_physical_safety.py` proves
+   **host-only** B5 mailbox geometry, rejects legacy V3
+   mailbox, missing/duplicate/corrupted raw receipts, 13
+   explicit approvals, missing actual same-session original
+   physical stage and disallows board contact during PC preflight.
+   The full existing B4m/B5 CI suite is retained.
+
+**Operator action NOW (PC ONLY, DO NOT RUN BOARD EXECUTE):**
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p07-b5-scaled-multiframe-validation
+git pull --ff-only origin agent/v3-p07-b5-scaled-multiframe-validation
+source ~/Git/Thesis/.venv-p08/bin/activate
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+cd Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b5_raw_capture_native.py \
+  tests/test_p07_b5_trace_integration.py \
+  tests/test_p07_b5_raw_trace_offline_admission.py \
+  tests/test_p07_b5_raw_firmware_c_syntax.py \
+  tests/test_p07_b5_raw_physical_safety.py
+
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L1_STAGE="$HOME/Thesis_Evidence/p07_b4l1_original27_20261022T204013Z"
+export P07_B4L_BINDINGS="$HOME/Thesis_Evidence/p07_b4l_b3_bindings_20261023T011829Z"
+export P07_B4M_STAGE="$HOME/p07_b4m_frozen_inputs_20261023T034626Z"
+export P07_B4I_BUILD_DIR="$HOME/p07_b4i_build_20261022T161058Z"
+export P07_B5_RAW_BUILD_DIR="$HOME/p07_b5_raw_trace_build_20261101T204014Z"
+export P07_B5_RAW_ELF="$P07_B5_RAW_BUILD_DIR/vitis_workspace/p07_b5_raw_trace_v1.elf"
+export P07_B5_RAW_OFFLINE="$HOME/Thesis_Evidence/p07_b5_raw_elf_offline_20261101T204303Z.json"
+
+PYTHONPATH="$PWD/src" python scripts/p07_b5_raw_physical_capture.py \
+  --mode preflight \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --bindings-dir "$P07_B4L_BINDINGS" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --offline-report "$P07_B5_RAW_OFFLINE" \
+  --reports "$P07_B4L_REPORTS" \
+  --b4i-build "$P07_B4I_BUILD_DIR" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --elf "$P07_B5_RAW_ELF" \
+  --validation-ordinal 0
+```
+
+Expected read-only status:
+`P07_B5_NEW_RAW_GENUINE_A53_ELF_MAP_AND_ORIGINAL_TRAIN_HOST_PASS=1`,
+`P07_B5_NEW_RAW_PC_ONLY_PREFLIGHT_PASS=1`,
+`P07_B5_BOARD_CONTACT=0`,
+`P07_B5_NEW_RAW_LAUNCH_AUTHORIZED_BY_PREFLIGHT=0`,
+`P07_B5_NEW_RAW_840320B_DDR_OWNER_INDEPENDENTLY_PROVEN=0`.
+
+**STOP after PC preflight.** No new physical B5 sidecar
+run should be attempted until independently reviewing the
+new trace mailbox DDR ownership and low-DDR firmware coexistence
+risk, the dedicated XSDB launcher/reader semantics, and the
+operator's distinct explicit approvals. The original previously
+successful V3 physical runs, original accepted P03 shell,
+V3 ELF and all original B2.4 frozen data remain untouched.
+No merge of PRs #49 or #50 into `main` until the entire P07-B
+work is accepted and the operator explicitly authorizes merge.
+
 ## B5.2 entry evidence / safe scope
 
 The operator completed and independently reverified all four
