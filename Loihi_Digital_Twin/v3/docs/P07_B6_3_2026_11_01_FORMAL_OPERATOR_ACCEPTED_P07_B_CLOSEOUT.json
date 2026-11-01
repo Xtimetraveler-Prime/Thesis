@@ -1,0 +1,73 @@
+{
+  "schema": "p07-b6-3-source-reported-physical-original27core-final-bounded-user-acceptance-v1",
+  "date_utc": "2026-11-01",
+  "provenance": "User pasted full final B6.3 --mode accept JSON and real preceding B6.2 package, B6.2 independent audit, B6.3 review stdout. Original physical binary evidence remains in operator PC directory. These source-controlled records reproduce supplied results, not independent assistant access to local evidence bytes.",
+  "formal_acceptance": {
+    "P07_B5_final_operator_acceptance_revalidated": true,
+    "P07_B6_1_original_source_and_five_physical_evidence_seal_revalidated": true,
+    "P07_B6_2_full_portable_archive_independent_bytewise_verifier_pass": true,
+    "P07_B6_final_hardware_freeze_accepted": true,
+    "P07_B_complete": true,
+    "operator_final_P07_B_acceptance": true,
+    "mode": "accept",
+    "P08_B_started": false,
+    "github_main_merged_at_acceptance": false
+  },
+  "actual_original_operator_source_paths": {
+    "B5_final_accepted_json": "/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json",
+    "B6_1_signed_source_freeze_json": "/home/dna/Thesis_Evidence/p07_b6_original_freeze_seal_20261101T230852Z.json",
+    "B6_2_genuine_copied_complete_evidence_directory": "/home/dna/Thesis_Evidence/p07_b6_full_reproducibility_20261101T233311Z",
+    "B6_2_independent_archive_report": "/home/dna/Thesis_Evidence/p07_b6_bundle_audit_20261101T233347Z.json",
+    "B6_3_independent_final_review_report": "/home/dna/Thesis_Evidence/p07_b6_3_independent_final_review_20261101T233401Z.json",
+    "B6_3_explicit_operator_accepted_report": "/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json"
+  },
+  "exact_genuine_original_sha256": {
+    "B5_4_operator_final_accepted_json": "d72abc426a0d7a54d5a70994f75de9fca31862441d6507feb0b57c3e3fbbf7b9",
+    "B5_4_operator_five_session_cold_powercycle_attestation": "4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31",
+    "B6_1_signed_original_33asset_and_5_physical_session_seal": "f77469b909e37e56330efda2f1296b5c896cf52c1ae1406a56a6c08161d6dce6",
+    "B6_2_complete_copied_evidence_handoff_manifest": "73491c0e4f1708ba726cb15e2fd64312d55b002c7d507f6ef0a0d868424fe431",
+    "B6_2_independent_archive_verification_report": "10399bc72bef7ce14db04e85685f2099ae2ab6f5461f6d0712fd7b4918111907",
+    "B5_original_TRAIN0_26tick_1010neuron_840320B_real_FPGA_trace": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "original_P03_XSA": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+    "original_V3_A53_ELF": "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904",
+    "original_V3_A53_linker_map": "148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede",
+    "new_B5_raw_A53_ELF": "0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf",
+    "new_B5_raw_A53_linker_map": "1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8"
+  },
+  "physical_validation": {
+    "original_train_validation_ordinals": [
+      0,
+      1,
+      2,
+      0
+    ],
+    "fifth_original_train0_raw_session": true,
+    "original_27core_model": true,
+    "physical_HLS_execution_slots": 3,
+    "logical_neurons_traced": 1010,
+    "raw_neuron_records": 26260,
+    "raw_trace_bytes": 840320,
+    "all_real_hardware_source_session_evidence_archived": true,
+    "original_b24_signed_assets": 33,
+    "registered_input_routes": 20384,
+    "registered_output_routes": 1000
+  },
+  "original_MAIN_only_LitReview": {
+    "path": "LitReview.md",
+    "git_blob_sha": "3c45d0a0d0b55378d3564d8f82282803a8eb1a3e",
+    "checked_unchanged_at_acceptance": true,
+    "required_unchanged_after_normal_dependency_order_merges": true
+  },
+  "bounded_claims": {
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "operator_attested_cold_powercycles_and_JTAG_not_instrumented": true,
+    "boot_firmware_and_other_DDR_owner_exclusivity_independently_proven": false,
+    "every_individual_packet_word_physically_verified": false,
+    "asynchronous_real_Loihi_equivalence_not_claimed": true,
+    "P08_B_started": false
+  },
+  "merge_state_at_operator_acceptance": {
+    "github_main_merged": false,
+    "authorization_to_merge": "Operator expressly requested merge after final P07-B acceptance; merge PRs #49, #50, #51 in dependency order after updating roadmap, preserving main-only LitReview.md byte-identical."
+  }
+}
