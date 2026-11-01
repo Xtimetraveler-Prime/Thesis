@@ -134,9 +134,13 @@ def require_routes(stage:Path, source_frozen:Path|None=None)->dict:
             "original_B24_snapshot_untouched":True,
             "official_TEST":"SEALED"}
 
-def require_elf(elf:Path)->dict:
+def require_elf(elf:Path,*,expected_name:str=ELF_NAME,
+                expected_id:bytes=ELF_ID)->dict:
+    if (not isinstance(expected_name,str) or not expected_name or
+        not isinstance(expected_id,bytes) or not expected_id):
+        raise AdmissionError("NO-GO: explicit nonempty ELF identity required")
     if (not elf.is_absolute() or elf.is_symlink() or not elf.is_file() or
-        elf.name!=ELF_NAME or ELF_ID not in elf.read_bytes()):
+        elf.name!=expected_name or expected_id not in elf.read_bytes()):
         raise AdmissionError("NO-GO: exact new unmodified B4m candidate ELF required")
     elf_sha=file_sha(elf)
     source=elf.with_suffix(".map")
