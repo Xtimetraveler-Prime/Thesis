@@ -20,6 +20,16 @@ done
 for cmd in vitis aarch64-none-elf-readelf aarch64-none-elf-nm; do
     command -v "$cmd" >/dev/null || die "missing $cmd; source Vitis environment"
 done
+# Fail before Vitis if a new B5 candidate contains even one accepted V3
+# runtime identity; the first physical operator build was correctly rejected
+# at offline admission because its xil_printf() still printed V3.
+for old_identity in P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 \
+                    P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2 \
+                    P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1; do
+    if grep -aFq "$old_identity" "$V3/software/p07/p07_b5_full_board_raw_trace_v1.c"; then
+        die "B5 main still contains legacy firmware ID: $old_identity"
+    fi
+done
 mkdir -p "$BUILD/source"
 for n in p07_b5_full_board_raw_trace_v1.c p07_b4l_b3_bindings.c \
          p07_b4m_dispatch_metadata.c p07_b4m_frozen_routes.c p07_b5_spike_trace.c p07_b5_raw_capture.c \
@@ -66,7 +76,14 @@ grep -Fq '#define P07_B2_MAX_ROUTE_BINDINGS 10000u' "$BUILD/source/p07_b2_packet
 ELF="$BUILD/vitis_workspace/p07_b5_raw_trace_v1.elf"
 MAP="$BUILD/vitis_workspace/p07_b5_raw_trace_v1.map"
 [[ -s "$ELF" && -s "$MAP" ]] || die "new real full 26-tick ELF/map missing"
-grep -aFq P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1 "$ELF" || die "V3 physical firmware identity missing"
+grep -aFq P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1 "$ELF" || die "new B5 firmware ELF identity missing"
+for old_identity in P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 \
+                    P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2 \
+                    P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1; do
+    if grep -aFq "$old_identity" "$ELF"; then
+        die "B5 ELF contains rejected old firmware identity: $old_identity"
+    fi
+done
 aarch64-none-elf-readelf -W -h -l -S "$ELF" > "$BUILD/readelf_layout.txt"
 aarch64-none-elf-nm "$ELF" > "$BUILD/elf_symbols.txt"
 sha256sum "$XSA" "$ELF" "$MAP" > "$BUILD/artifact_sha256.txt"
