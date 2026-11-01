@@ -86,7 +86,7 @@ operator real freeze execution]:**
   reinterpreted as multi-frame success.
 
 **B5.3 — Selected **RAW** 26×1010 original neuron trace and packet
-numerics [NOT YET IMPLEMENTED / NOT CLAIMED]:**
+numerics [PC SCALAR RAW REFERENCE IMPLEMENTED; PHYSICAL SIDECAR NOT IMPLEMENTED / NOT CLAIMED]:**
 
 The existing original V3 mailbox contains FNV64 of all 26×1010
 256-bit HLS trace words; it does **NOT** contain the underlying
@@ -182,5 +182,27 @@ cat "$P07_B5_EXPECTED"
    Success marker is
    `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
    **not** a B5.3 raw numerical parity or milestone closeout.
+
+## B5.3 PC-only raw scalar reference (NEW)
+
+Before designing/running dedicated physical sidecar firmware, the
+independent 32-byte P03 bank7 trace reference can be materialized
+in an external immutable report and exactly 840,320-byte raw file:
+
+```bash
+export P07_B5_RAW_REF="$HOME/Thesis_Evidence/p07_b5_train0_raw_scalar_$(date -u +%Y%m%dT%H%M%SZ).bin"
+export P07_B5_RAW_REF_JSON="$HOME/Thesis_Evidence/p07_b5_train0_raw_scalar_$(date -u +%Y%m%dT%H%M%SZ).json"
+PYTHONPATH="$PWD/src" python scripts/p07_b5_raw_trace_reference.py \
+  --mode reference --ordinal 0 \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --staged-dir "$P07_B4L1_STAGE" --routes-dir "$P07_B4M_STAGE" \
+  --expected-raw "$P07_B5_RAW_REF" --out "$P07_B5_RAW_REF_JSON"
+sha256sum "$P07_B5_RAW_REF"
+```
+
+`scripts/p07_b5_raw_trace_reference.py` implements field-level
+first mismatch diagnosis for unverified raw binary files, but
+**will not authenticate** a byte stream as a real physical capture
+until the separately engineered and JTAG-read-back B5.3 sidecar exists.
 
 No raw B5.3 sidecar has been staged on KV260. No official TEST accessed.
