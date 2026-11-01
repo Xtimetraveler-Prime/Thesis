@@ -1,0 +1,76 @@
+{
+  "schema": "p07-b5-2-fourrun-genuine-physical-evidence-acceptance-v1",
+  "date_utc": "2026-11-01",
+  "scope": "P07-B.5.2 bounded 26-tick original three TRAIN-image 27-core FPGA / independent scalar FNV64, all 4 physical sessions",
+  "source_of_evidence": "operator shared complete read-only original B5 consolidated report and original TRAIN0 repeat verifier report in chat; board-owned original binaries remain on operator PC",
+  "consolidated_report": "/home/dna/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json",
+  "repeat_report": "/home/dna/Thesis_Evidence/p07_b5_verify_train0_repeat_20261101T194457Z.json",
+  "sessions": [
+    {
+      "ordinal": 0,
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z",
+      "predicted_label": 1,
+      "actual_label": 1,
+      "trace_FNV64": "0xB59CA8594D6E64AD",
+      "raw_256B_mailbox_SHA256": "5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda",
+      "physical_dispatches": 702,
+      "barriers_acked": 26
+    },
+    {
+      "ordinal": 1,
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z",
+      "predicted_label": 2,
+      "actual_label": 2,
+      "trace_FNV64": "0x0EAC411F49856BF3",
+      "raw_256B_mailbox_SHA256": "4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95",
+      "physical_dispatches": 702,
+      "barriers_acked": 26
+    },
+    {
+      "ordinal": 2,
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z",
+      "predicted_label": 1,
+      "actual_label": 1,
+      "trace_FNV64": "0x9C12E0386A7E41CB",
+      "raw_256B_mailbox_SHA256": "cdf26c256cd0fbf1c4c901d53cd2caaf3b1a2e3e945a82c64aa354eed7d6e5d6",
+      "physical_dispatches": 702,
+      "barriers_acked": 26
+    },
+    {
+      "ordinal": 0,
+      "evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_20261101T193922Z",
+      "predicted_label": 1,
+      "actual_label": 1,
+      "trace_FNV64": "0xB59CA8594D6E64AD",
+      "raw_256B_mailbox_SHA256": "5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda",
+      "physical_dispatches": 702,
+      "barriers_acked": 26
+    }
+  ],
+  "consolidated_gate": {
+    "P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS": 1,
+    "genuine_independently_verified_sessions": 4,
+    "distinct_train_validation_frames": 3,
+    "required_ordinal_sequence": [
+      0,
+      1,
+      2,
+      0
+    ],
+    "all_three_distinct_frames_scalar_vs_physical_equal": true,
+    "train0_repeat_physical_metrics_and_FNV64_equal": true,
+    "all_independent_fingerprint_gate_conditions_pass": true,
+    "original_signed_27core_model_unchanged": true,
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED"
+  },
+  "pending": {
+    "physical_full_840320B_raw_neuron_trace_comparison": false,
+    "cold_reboot_between_runs_independently_proven": false,
+    "user_direct_cold_reboot_attestation_received": false,
+    "P07_B5_final_full_parity_and_acceptance": false,
+    "P07_B6_started": false,
+    "P08_B_started": false,
+    "low_DDR_boot_firmware_exclusivity_independently_proven": false
+  },
+  "note": "This ledger ACCEPTS bounded four-run B5.2 numerical fingerprint evidence only. B5.3 original P03 physical 26*1010*32 raw capture and bytewise verification remain OPEN; independent power-cycle attestation is pending. Do not relabel this as full raw parity or official TEST accuracy. PR #50 stays draft."
+}
