@@ -1,12 +1,56 @@
 # P07-B.5 — Scaled 27-core trained physical validation
 
-**STATUS AS OF 2026-11-01: B5.1/B5.2 PASS (four original frozen TRAIN
-27-core V3 physical fingerprint-parity runs), B5.3 SELECTED ORIGINAL
-TRAIN0 PHYSICAL RAW NEURON BYTEWISE PARITY PASS (840,320B / 26,260 records).
-B5.4 five real physical evidence sessions independently RE-VERIFIED
-NUMERICAL PASS (2026-11-01), but operator cold boot/recovery attestations
-and formal final acceptance NOT YET PROVIDED. P07-B.6/P08-B gated;
-PRs #49/#50 unmerged and main-only LitReview.md protected.**
+**STATUS AS OF 2026-11-01: P07-B.5 FORMALLY CLOSED / USER ACCEPTED.
+B5.1 independent scalar, B5.2 four original frozen TRAIN0/1/2/0
+27-core physical validation runs, B5.3 genuine 840,320B original
+26×1010 raw-neuron bytewise physical/scalar equality, and B5.4 source
+reverified five-session independent numerical gate plus separate
+operator-attested cold-reboot/recovery and bounded final acceptance
+ALL PASSED. P07-B.6 final freeze/handoff and overall P07-B OPEN.
+PR #49/#50 unmerged; main-only LitReview.md protected.**
+
+## 2026-11-01: B5.4 FORMALLY ACCEPTED — five genuine physical sessions + operator cold-reboot attestation
+
+The operator executed **`scripts/p07_b5_final_acceptance.py --mode accept`**
+against the original four 0/1/2/0 V3 sessions, the fifth B5 RAW0
+physical evidence directory, the unchanged frozen TRAIN sources and the
+external operator five-session cold power-cycle/JTAG/recovery/risk attestation.
+Real terminal markers:
+
+```text
+P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1
+P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1
+P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0
+P07_B5_4_OFFICIAL_MNIST_TEST_SEALED=1
+P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1
+```
+
+**Final accepted report:**
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`;
+**operator-attestation SHA256:**
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+
+Actual accepted report contains
+`P07_B5_final_acceptance=true`,
+`operator_attested_cold_boot_and_recovery_all_five_sessions=true`,
+`operator_explicit_final_B5_acceptance=true`,
+`all_required_B5_numerical_gates_pass=true` and
+`original_P03_PL_and_accepted_original_V3_ELF_modified=false`.
+Physical and independent scalar 840320B neuron trace SHA256 remain
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+Original official TEST is SEALED. This **formally closes P07-B.5
+within the previously defined numerical/physical validation scope**.
+
+**Preserved explicit limits:** DDR/boot ownership exclusive use NOT
+independently proven; cold reboots operator-attested, NOT independently
+instrumented; packet routing **counts** checked, not every individual
+packet-word trace. Acceptance does not establish wider Loihi architectural
+feature coverage, official TEST accuracy, P07-B.6 final freeze/handoff
+or full P07-B completion. [Final operator-attested B5.4 bounded acceptance
+ledger](P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json).
+Neither `main` nor the independent `main:LitReview.md` is modified;
+draft PR #49/#50 must remain unmerged until P07-B.6 and whole P07-B
+are separately accepted.
 
 The user independently verified four genuine distinct physical sessions
 in the order original frozen TRAIN ordinals **0,1,2,0**, each with
