@@ -218,8 +218,13 @@ def build_inventory(args)->dict:
             accepted.get("boot_firmware_and_other_DDR_owner_independently_proven") is False and
             accepted.get("independent_board_powercycle_instrumentation_proof") is False,
             "real B5.4 operator-attested physical acceptance does not match independent recomputation")
-    require([x["evidence_dir"] for x in
-            old.read_json(args.attestation)["sessions"]]==
+    attested=old.read_json(args.attestation)
+    entries=attested.get("sessions")
+    require(isinstance(entries,list) and len(entries)==5 and
+            all(isinstance(x,dict) and
+                isinstance(x.get("evidence_dir"),str) for x in entries),
+            "operator attestation must identify five original source-backed physical sessions")
+    require([x["evidence_dir"] for x in entries]==
             [*result["operator_original_physical_V3_evidence_dirs"],
              result["operator_original_physical_RAW_evidence_dir"]],
             "operator acceptance lists changed physical evidence session")
