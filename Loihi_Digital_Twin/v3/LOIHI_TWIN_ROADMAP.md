@@ -2078,6 +2078,25 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.4m real V3 trained 26-tick STRUCTURAL PASS:**
+Operator reran genuine 27-core TRAIN0 V3 on the physical KV260 after
+A53 takeover success. Same-session original frozen model/bindings/route/
+TRAIN DDR readback succeeded, V3 A53 ELF executed and independent
+256B mailbox structural verification passed. Real 702 dispatches,
+26 barriers, 702 page-ins, 699 dirty + 3 final page-outs, 31512
+CURRENT events, 1514 bank7 source spikes, 1489 captured/inserted
+NEXT packets, 1010 compartments checked per timestep. Physical
+readout class=1, counts=`[0,25,0,0,0,0,0,0,0,0]`; trace
+FNV64=`0xB59CA8594D6E64AD`. Actual 256B physical mailbox SHA
+`5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`.
+This strongly supports corrected P08 synapse/route metadata as the
+V2 first-dispatch failure fix. **Independent neuron numerical parity
+NOT YET VERIFIED**; full raw physical per-neuron transcript not present.
+Original frozen TEST remains SEALED. Read-only numerical reference
+fingerprint checker `scripts/p07_b4m_v3_train0_scalar_vs_physical.py`
+added and awaits operator execution on genuine local V3 evidence.
+Keep P07-B.4m open and PR #49 draft until parity is assessed.
+
 **2026-11-01 P07-B.4m V3 preliminary physical takeover attempt:**
 Operator's authentic V3 execute passed host-only original 27-core P02
 metadata / ELF/route gates, then **failed before FPGA programming, DDR
