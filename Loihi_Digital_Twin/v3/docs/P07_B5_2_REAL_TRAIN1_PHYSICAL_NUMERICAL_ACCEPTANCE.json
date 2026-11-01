@@ -1,0 +1,67 @@
+{
+  "schema": "p07-b5-2-user-attested-original-train1-physical-numerical-acceptance-v1",
+  "date_utc": "2026-11-01",
+  "scope": "original frozen P06-B2.4 TRAIN-derived validation ordinal 1 only",
+  "source_of_claim": "user-pasted authentic physical V3 launcher stdout and separate PC read-only B5 verifier JSON; complete local binary files not uploaded to assistant; verifier independently checked local files on operator PC",
+  "physical_evidence_dir": "/home/dna/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z",
+  "host_numerical_report": "/home/dna/Thesis_Evidence/p07_b5_verify_train1_20261101T050334Z.json",
+  "identities": {
+    "frozen_model_bundle_sha256": "3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e",
+    "train_ordinal": 1,
+    "canonical_train_index": 27347,
+    "original_label": 2,
+    "physical_input_frame_sha256": "814d04908c370d367680952fddc67a839b05698f615972f9d96daafc52c8cb78",
+    "original_image_sha256": "3e3c39ef3319fb9dc08c3661f3a9a9575d131db7946ab90f95f457d9189429c3",
+    "independent_monolithic_trace_sha256": "e62d996996d795f2fefe681e928586b066957c746f9ef9ca60692c11ad5c31ca",
+    "genuine_v3_elf_sha256": "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904",
+    "physical_mailbox_256_sha256": "4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95"
+  },
+  "physical": {
+    "physical_dispatches": 702,
+    "physical_barriers_acked": 26,
+    "physical_page_ins": 702,
+    "physical_dirty_page_outs": 699,
+    "physical_final_page_outs": 3,
+    "external_current_events": 71994,
+    "source_spikes_from_P03_trace_bank7": 1852,
+    "P03_packet_words_captured": 1827,
+    "NEXT_packets_physically_inserted": 1827,
+    "readout_spike_counts": [
+      0,
+      0,
+      25,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "trained_readout_prediction": 2,
+    "all_26_tick_trace_hash": "0x0EAC411F49856BF3"
+  },
+  "independent_software_reference_checks": {
+    "all_seven_keys_pass": true,
+    "all_26_tick_trace_fingerprint": true,
+    "readout_spike_counts": true,
+    "class_prediction_true_label_equal": true,
+    "full_27_core_signed_physical_readbacks_verified_by_operator_script": true,
+    "physical_structural_receipt_pass_marker": "P07_B4M_DIAG_V3_STRUCTURAL_RECEIPT_ACCEPTED=1",
+    "original_b5_physical_vs_scalar_marker": "P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1"
+  },
+  "bounds": {
+    "full_raw_neuron_26x1010_bytewise_parity_verified": false,
+    "cold_reboot_between_sessions_independently_proven": false,
+    "fresh_power_cycle_operator_confirmation_in_this_message": false,
+    "multiple_distinct_train_validation_physical_passes_so_far": 2,
+    "new_train2_and_train0_repeat_executed": false,
+    "performance_latency_power_energy_measured": false,
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "low_ddr_boot_firmware_exclusivity_independently_proven": false,
+    "P07_B5_FINAL_MILESTONE_ACCEPTED": false,
+    "P07_B6_STARTED": false,
+    "P08_B_STARTED": false
+  },
+  "continuation": "Reboot for a fresh original TRAIN ordinal2 real physical run; independently compare; then reboot and repeat original TRAIN0; run four-run consolidation; B5.3 real 840320B trace capture, independent cold reboot attestation, explicit acceptance still open."
+}
