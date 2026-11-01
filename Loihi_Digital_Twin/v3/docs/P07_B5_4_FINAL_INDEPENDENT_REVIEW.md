@@ -163,7 +163,7 @@ Expected review markers:
 `P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=0`,
 `P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0`.
 
-## B5.4 actual cold reboot/DRR residual risk / user final signoff gate
+## B5.4 actual cold reboot/DDR residual risk / user final signoff gate
 
 The physical verification reports explicitly retain **false** for
 independent cold reboot and physical DDR ownership. They cannot
