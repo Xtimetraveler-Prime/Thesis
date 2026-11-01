@@ -1,11 +1,13 @@
 # P07-B.6 — Original 27-core scaled physical inference freeze and P08-B handoff
 
-**Status (2026-11-01): P07-B.5 FORMALLY CLOSED / OPERATOR ACCEPTED
-REAL FIVE-PHYSICAL-SESSION NUMERICAL GATE PASS. B6.1 SOURCE/HARDWARE
-FREEZE INVENTORY SUCCESSFULLY RUN ON OPERATOR PC; B6.1 SEAL GATE
-IMPLEMENTED AND WAITING LOCAL ACCEPTED B5 REPORT RECHECK. B6.2
-REPRODUCIBILITY PACKAGE COPY/INTEGRITY TOOLING IMPLEMENTED. B6.3
-INDEPENDENT FINAL HANDOFF AND OVERALL P07-B ACCEPTANCE NOT YET DONE.**
+**Status (2026-11-01): P07-B.5 FORMALLY CLOSED. B6.1 GENUINE
+OPERATOR FREEZE SEAL PASSED (33 original frozen files, all five source
+physical validation sessions, accepted B5.4 original operator report).
+B6.2 complete external evidence packaging and independent archive
+auditor IMPLEMENTED; operator copy and independent audit PENDING.
+B6.3 bounded final operator handoff checker and P08-B boundary
+IMPLEMENTED; final P07-B acceptance PENDING B6.2 physical source
+copy and separate B6.3 operator signoff.**
 All PRs #49/#50/#51 remain draft and unmerged. Official MNIST TEST SEALED.
 
 ## Why B6 is necessary
@@ -155,14 +157,26 @@ Prepare a reproducible operator handoff with explicit:
 - Robust local reproduction commands and evidence backup manifest
   with source-specific artifact SHA integrity.
 
-### B6.3 — Final independent acceptance and P08-B protocol handoff (OPEN)
+### B6.3 — Final independent acceptance and P08-B protocol handoff (IMPLEMENTED; source-backed operator PASS pending)
 
-B6 final acceptance remains dependent on user verification of the
-B6.2 full hardware freeze and independent validation,
-preserving signed original B2.4 model/TEST seal and accepted V3
-results. P08-B scaling/timing runs cannot begin until a separate
-explicit bounded benchmark protocol is agreed. No official TEST
-unlock based on B5 numerical parity alone.
+New PC-only `scripts/p07_b6_final_handoff.py` independently
+reopens the original five-session B6.2 copied physical evidence archive,
+requires a fresh full B6.2 verifier result identical to the operator's
+original independent archived audit, binds the B6.1 actual signed seal
+and B5.4 accepted user-attestation source SHA256s, and verifies the
+original `origin/main:LitReview.md` Git blob. `--mode review` never
+accepts P07-B or changes main. `--mode accept` requires a **separate
+explicit original trained 27core final operator handoff token**, still
+without hardware contact, official TEST unlock or GitHub merge.
+[Full B6.3 acceptance protocol, actual original V3 paths and
+P08-B timing/benchmark handoff boundary](P07_B6_3_FINAL_HANDOFF_P08_BOUNDARY.md).
+
+B6.3 final acceptance is conditional on the user actually creating
+and independently verifying the full B6.2 physical evidence copy,
+then running both review and explicit acceptance. P08-B scaling/timing
+measurements cannot begin until the full P07-B source freeze is
+accepted and a separate bounded benchmark protocol agreed.
+No official TEST unlock based on B5 TRAIN parity.
 
 ## Operator commands, checkpoint A — independent B5.4 formal acceptance
 
