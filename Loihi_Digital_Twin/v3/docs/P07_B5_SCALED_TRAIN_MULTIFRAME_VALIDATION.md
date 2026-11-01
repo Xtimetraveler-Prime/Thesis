@@ -3,7 +3,7 @@
 **Status: IN PROGRESS.** B5.1 original three frozen TRAIN scalar source
 references **OPERATOR-VERIFIED PASS (2026-11-01)**. B5.2 independently
 verified original ordinal0 **PASS** and new real KV260 ordinal1 **PASS**;
-ordinal2 and independent ordinal0 repeat **NOT YET COLLECTED**.
+ordinal2 has now also been independently verified against real KV260 physical evidence (**PASS**), leaving only the independent cold-reboot ordinal0 repeat and four-run consolidation. Original TRAIN2 evidence: `p07_b5_train2_real_20261101T192124Z`; numerical report: `p07_b5_verify_train2_20261101T192721Z.json`. Physical bytewise 26×1010 raw-neuron trace parity remains pending. See [TRAIN2 evidence ledger](P07_B5_2_REAL_TRAIN2_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
 Original TRAIN1 physical receipt and independent scalar report are recorded
 in [the signed-source P07-B5.2 ordinal1 ledger](P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json). The complete
 B4 bring-up problem/resolution timeline is separately documented in
