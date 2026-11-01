@@ -226,8 +226,8 @@ accepted source report exists and passes its own independent
 
 The new `scripts/p07_b6_literature_merge_guard.py` is a
 separate **read-only Git tree/commit integrity check**. It compares
-the actual fetched `origin/main:LitReview.md` blob SHA256-irrelevant
-Git object ID to the exact original independently committed main
+the actual fetched `origin/main:LitReview.md` Git blob object ID
+(not a file SHA256) against the original independent main
 Git *blob* `3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
 It rejects a missing file, changed contents, renaming or symlink,
 and never changes either branch or executes hardware.
