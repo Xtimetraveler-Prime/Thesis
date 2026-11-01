@@ -2078,6 +2078,62 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.6.1 REAL 33-ORIGINAL-FROZEN-ASSET / FIVE-PHYSICAL-SESSION INDEPENDENT SEAL PASS; B6.2 COMPLETE PORTABLE ARCHIVE VERIFIER AND B6.3 FULL P07-B FINAL ACCEPTANCE GATE IMPLEMENTED (DRAFT PR #51):**
+The operator ran genuine B6.1 `scripts/p07_b6_freeze_manifest.py --mode seal`
+with original signed B2.4 frozen 33-asset tree, original signed
+routing, accepted P03 XSA and distinct B5 ELF/map, all five real
+source-backed 27-core physical sessions, and actual separately
+operator-accepted B5.4 final report and cold-reboot attestation.
+Genuine source report:
+`/home/dna/Thesis_Evidence/p07_b6_original_freeze_seal_20261101T230852Z.json`.
+Markers included
+`P07_B6_ORIGINAL_27CORE_SIGNED_SOURCE_ARTIFACT_FREEZE_INVENTORY_PASS=1`,
+`P07_B6_B5_FORMAL_ACCEPTANCE_INDEPENDENTLY_RECHECKED=1`,
+`P07_B6_KV260_BOARD_CONTACT=0`, original TEST SEALED,
+`P07_B6_FINAL_ACCEPTANCE=0` (intentionally).
+[Reported exact B6.1 acceptance ledger](docs/P07_B6_1_2026_11_01_REAL_33_ASSET_FREEZE_SEAL_PASS.json).
+
+The operator also located physically accepted original V3 A53
+`p07_b4m_diag_v3_26tick.elf` (SHA
+`66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`)
+and original V3 linker map (SHA
+`148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede`)
+in `/home/dna/p07_b4m_diag_v3_build_20261101T034702Z/vitis_workspace/`.
+Distinct original B5 RAW A53 original SHA and P03 XSA remain pinned.
+
+**B6.2 tools implemented but NO real operator package COPY or
+independent full archive PASS evidence has yet been supplied:**
+`scripts/p07_b6_reproducibility_bundle.py` must create a separate
+SHA-recorded copy of all 33 original frozen assets + frozen manifest,
+frozen TRAIN routes + ingress, P03 XSA, original V3/new B5 firmware,
+original B5.4 signed acceptance/attestation, the actual B6.1 seal,
+and all 5 real physical evidence directories. A separate
+`scripts/p07_b6_verify_reproducibility.py` must independently
+rehash ALL archive files, reject extra/missing/symlink entries,
+rerun the original frozen native 33-asset gate and authenticate
+actual 840,320B neuron physical SHA and original firmware.
+
+**B6.3 final bounded original P07-B handoff code IMPLEMENTED:**
+`scripts/p07_b6_final_handoff.py` in `review` mode replays independent
+full B6.2 archive checks, binds original source B6.1 seal +
+accepted B5.4 attestation SHA, and checks exact independent
+`origin/main:LitReview.md` Git blob.
+`accept` mode additionally requires a distinct explicit final
+operator P07-B original 27core physical handoff token.
+No final `P07_B_complete=true` report yet; wait for genuine
+B6.2 original physical source package + review and final operator
+approval, **not** native synthetic/mock tests.
+[Full B6.3 acceptance and P08-B protocol boundary](docs/P07_B6_3_FINAL_HANDOFF_P08_BOUNDARY.md).
+Original 27core FPGA source/XSA/ELF/TEST SEALED; no board run,
+no unsealing, no automatic P08-B benchmarking, and **no main merge**.
+PR #51's B6 development branch now incorporates the accepted
+B5 branch history in a normal two-parent commit; it remains
+draft and unmerged from main. The independently committed
+`main:LitReview.md` original Git blob
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`
+must be byte-preserved by any later user-authorized
+dependency-order PR #49→#50→#51 merge.
+
 **2026-11-01 P07-B.5 FINAL ACCEPTANCE PASSED; B6.1 OPERATOR INVENTORY PASS; B6.2 COMPLETE REPRODUCIBILITY PACKAGE CODE IMPLEMENTED / REAL COPY PENDING (PR #51):**
 Operator ran actual `scripts/p07_b5_final_acceptance.py --mode accept` after
 supplying personal five-run cold-powercycle/JTAG/recovery/residual DDR risk
