@@ -11,6 +11,20 @@ Original TEST remains SEALED. The acceptance JSON records
 `github_main_merged=false` **as of acceptance**; subsequent Git
 integration requires a separate post-merge check.
 
+**POST-ACCEPTANCE GITHUB INTEGRATION (2026-11-01):** Following genuine
+B6.3 `P07_B_complete=true` acceptance, normal Git merges
+PR #49 `48b5db1f6430e594b2fce03aefa9136935249546`,
+PR #50 `1328e2cd04ae43f7dde1aa3e898f81be2c1ac6ea`,
+and PR #51 `a59fa21eb5ffff8586c33c65b291a6ea2bfca6e4`
+were completed into `main`. Independent `main:LitReview.md`
+retains its exact original blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+[Post-merge source provenance](P07_B_2026_11_01_POST_MERGE_INTEGRATION_ACCEPTED.json).
+The accepted historical operator report's
+`github_main_merged=false` is correct *at the time the operator
+ran it*, not the later GitHub integration status. Original
+MNIST TEST remains SEALED; P08-B not started.
+
 ## Genuine B6.2 archive + B6.3 final operator ACCEPTED, November 1, 2026
 
 The operator completed the **real** B6.2 copy, its independent full
