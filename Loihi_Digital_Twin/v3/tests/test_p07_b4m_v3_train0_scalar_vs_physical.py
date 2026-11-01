@@ -94,10 +94,15 @@ def test_all_1010_original_neurons_x_26_ticks_trace_fingerprint():
     assert h!=f"0x{audit.FNV_SEED:016X}"
 
 def test_counters_from_signed_original_layout_not_physical_receipt():
+    # Critical regression: use the ACTUAL frozen P06 B1.2 IngressRoute
+    # dataclass, never synthetic source_input/source_index fields.
+    from loihi_twin_v2.compiler import IngressRoute
     compiled=SimpleNamespace(
-        ingress_routes=[SimpleNamespace(source_input="pixels",source_index=0),
-                        SimpleNamespace(source_input="pixels",source_index=0),
-                        SimpleNamespace(source_input="pixels",source_index=1)],
+        ingress_routes=[
+            IngressRoute("pixels",0,0,0),
+            IngressRoute("pixels",0,1,3),
+            IngressRoute("pixels",1,0,4),
+        ],
         placement=[SimpleNamespace(population="h",neuron_index=0,
                                    core_id=0,compartment_id=0),
                    SimpleNamespace(population="r",neuron_index=1,
@@ -120,6 +125,17 @@ def test_counters_from_signed_original_layout_not_physical_receipt():
         "trained_readout_prediction":1,
         "readout_spike_counts":[0,1],
     }
+
+def test_real_ingress_route_abi_rejects_invalid_external_population():
+    from loihi_twin_v2.compiler import IngressRoute
+    bad=SimpleNamespace(
+        ingress_routes=[IngressRoute("not_pixels",0,0,0)],
+        placement=[],logical_deployment=SimpleNamespace(core_configs=[]))
+    fake=SimpleNamespace(ticks=(),spike_count=0,predicted_class=0,
+                         readout_spike_counts=())
+    with pytest.raises(audit.ParityNoGo,match="pixel input route"):
+        audit.expected_counters(fake,(),bad)
+
 
 def test_mismatch_never_counts_as_independent_parity():
     a={"trained_readout_prediction":1,"readout_spike_counts":[0,25],
