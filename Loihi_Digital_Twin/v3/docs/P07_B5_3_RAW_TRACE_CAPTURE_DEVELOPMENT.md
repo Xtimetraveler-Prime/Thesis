@@ -97,6 +97,147 @@ wrong metadata/capacity/alignment, duplicate/skipped records,
 malformed reserved bits, and incomplete trace poison behavior.
 These tests cannot be substituted for an XSDB physical readback.
 
+## 2026-11-01 B5.3.2 development — separate B5 firmware wired, NO BOARD ACCESS
+
+The operator's original TRAIN0 frozen scalar reference produced **exactly
+840,320B** at
+`/home/dna/Thesis_Evidence/p07_b5_train0_expected_raw_20261101T200800Z.bin`;
+the operator independently confirmed actual file SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`,
+reference FNV64 `0xB59CA8594D6E64AD`, and original frozen
+monolithic trace SHA256
+`4bef8f76965d4080a7c4ec2f3feab7c805e636d6397afb80a4a09f07733aea35`.
+The [operator source-only raw reference ledger](P07_B5_3_TRAIN0_SCALAR_RAW_ORACLE_USER_ACCEPTANCE.json)
+does **not** count this as an FPGA raw trace.
+
+**B5.3.2 additional implementation completed on draft PR #50:**
+
+- `software/p07/p07_b5_spike_trace.c` is a distinct B5-only replacement
+  for the *original V3 compiled trace-hook source*, preserving original
+  trace interface names for the accepted 26-tick scheduler. It reads
+  the **actual P03 debug bank7** and independently checks the
+  committed bank1 after-state exactly once per compartment, then
+  appends those already validated eight raw words to the B5-only
+  sidecar **before** the physical slot can be evicted. Any missing,
+  skipped, extra, malformed or out-of-order record fails the run.
+  The original accepted `p07_b4m_spike_trace.c` remains unchanged.
+- `software/p07/include/p07_b5_trace_hook.h` declares mandatory,
+  validated recorder binding; the replacement hook checks the original
+  P03 registered per-core compartment counts and ascending prefixes
+  against the B5 capture metadata **before** accepting inference.
+- `software/p07/p07_b5_full_board_raw_trace_v1.c` is a new A53
+  entry point with unique identity
+  `P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1`. It preserves the
+  original V3 trained 26-tick control path and requires
+  `p07_b5_capture_begin`, `p07_b5_trace_attach`,
+  `p07_b5_capture_finalize`, all 26,260 records, zero capture
+  faults and an exact 840,320-byte A53 cache flush before reporting
+  its **new** B5-specific 256B mailbox PASS. The **candidate** B5
+  mailbox is at `[0x43FF0100,0x43FF0200)`, distinct from V3's
+  `[0x43FF0000,0x43FF0100)`. That mailbox ownership, too,
+  needs separate physical approval. The original V3 ELF has not
+  been modified, recompiled or replaced.
+- `software/p07/build_p07_b5_raw_trace.py` and
+  `scripts/build_p07_b5_raw_trace.sh` stage a new distinct
+  Vitis 2025.2 A53 application and linker-emitted GNU map in a
+  **NEW external build directory**. They reuse the exact accepted
+  P03 XSA and original source ABIs. The only staging transformations
+  are the previously accepted flat SHA include and B4m-specific
+  10,000 route binding ceiling; no alterations to original
+  `P03` adapter/RTL/frozen training bytes.
+- `scripts/p07_b5_raw_trace_offline_admission.py` is a strict
+  **PC-only** verifier for actual staged new source SHA fingerprints,
+  frozen 27-core and original 20,384/1,000 route identity,
+  original accepted routed P03 XSA/settings, a **genuine** new Vitis
+  ELF + GNU linker map, candidate sidecar geometry and exact
+  new firmware identity. Its report **always** records
+  `actual_B5_physical_launch_authorized=false`,
+  `independent_actual_B5_DDR_owners_verified=false`,
+  `actual_raw_840320B_FPGA_captured=false`, and
+  `board_accessed=false`, regardless of offline success.
+- Native tests
+  `tests/test_p07_b5_trace_integration.py` and
+  `tests/native/p07_b5_raw_trace_hook_harness.c` compile the
+  **actual new C recorder and hook together**. The fake P03
+  fixture simulates all 26 × 1010 separate bank7/1 reads and checks
+  exact 840,320-byte serialized output, valid full-count finish,
+  genuine ordering, live metadata mismatch rejection and
+  corruption abort. These are **host-only synthetic P03 tests**.
+  Additional native tests in
+  `tests/test_p07_b5_raw_trace_offline_admission.py` mutate staged
+  source to ensure strict rejection of missing, extra or altered
+  files, accepted adapter modifications, and future physical
+  DDR assumptions.
+
+**What remains of B5.3:** The *new* Vitis candidate still must be
+built on the operator's actual Vitis 2025.2 toolchain and pass
+the independent offline report before any further engineering
+work. No new dedicated B5 physical JTAG launcher, real sidecar
+DDR-owner admission, 840,320B PSU readback or authenticated
+full-neuron physical comparison exists yet. **Do NOT call the
+original B4m V3 physical runner with this B5 ELF**: its hashes,
+firmware identity and 256B terminal mailbox ABI are different.
+The original physical successes remain accepted, untouched.
+
+### Operator checkpoint 1 — native C and offline gate (PC ONLY)
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p07-b5-scaled-multiframe-validation
+git pull --ff-only origin agent/v3-p07-b5-scaled-multiframe-validation
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p07_b5_raw_capture_native.py \
+  tests/test_p07_b5_trace_integration.py \
+  tests/test_p07_b5_raw_trace_offline_admission.py \
+  tests/test_p07_b5_scaled_validation.py \
+  tests/test_p07_b5_raw_trace_reference.py
+```
+
+### Operator checkpoint 2 — NEW real Vitis build and PC-only admission
+
+ONLY after native tests pass and the accepted
+`vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports`
+still contain the genuine SHA-pinned original XSA:
+
+```bash
+source /home/dna/Vivado/2025.2/Vitis/settings64.sh
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+export PATH="/home/dna/Vivado/2025.2/gnu/aarch64/lin/aarch64-none/bin:$PATH"
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B5_RAW_BUILD_DIR="$HOME/p07_b5_raw_trace_build_$(date -u +%Y%m%dT%H%M%SZ)"
+bash scripts/build_p07_b5_raw_trace.sh
+```
+
+A genuine successful operator build prints
+`P07_B5_RAW_A53_ELF_AND_MAP_BUILT=1` and
+`P07_B5_RAW_REAL_BOARD_RUN_AUTHORIZED=0`.
+A build failure means **no candidate accepted**. On success:
+verify the exact real ELF/map hashes and sections in
+`$P07_B5_RAW_BUILD_DIR/artifact_sha256.txt` and
+`$P07_B5_RAW_BUILD_DIR/readelf_layout.txt`.
+
+```bash
+export P07_B5_RAW_OFFLINE="$HOME/Thesis_Evidence/p07_b5_raw_elf_offline_$(date -u +%Y%m%dT%H%M%SZ).json"
+export P07_B4M_STAGE="$HOME/p07_b4m_frozen_inputs_20261023T034626Z"
+PYTHONPATH="$PWD/src" python scripts/p07_b5_raw_trace_offline_admission.py \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --out "$P07_B5_RAW_OFFLINE"
+cat "$P07_B5_RAW_OFFLINE"
+```
+
+Success: `P07_B5_GENUINE_RAW_CAPTURE_VITIS_SOURCE_ELF_OFFLINE_PREFLIGHT_PASS=1`,
+`P07_B5_REAL_PHYSICAL_LAUNCH_AUTHORIZED=0`,
+`P07_B5_SIDE_CAR_PHYSICAL_DDR_OWNERSHIP_PROVEN=0`,
+and `P07_B5_BOARD_ACCESSED=0`. This explicitly does **not**
+authorize a real KV260 physical run.
+
 ## B5.3.2 work still needed (NEW FIRMWARE AND SHA GATES)
 
 1. **Independent physical DDR and boot ownership review first.**
