@@ -1,0 +1,53 @@
+{
+  "schema": "p07-b4g-ps-only-width-observation-v1",
+  "recorded_on": "2026-10-21",
+  "source": "user pasted raw VS Code terminal output; not independently authenticated instrumentation",
+  "script": "vivado/p07_b4g_ps_width_only.tcl",
+  "tool": "/home/dna/Vivado/2025.2/Vivado/bin/xsdb",
+  "target": "PSU",
+  "fpd": {
+    "address": "0xFD615000",
+    "value": "0x00002560",
+    "selector_9_8": 1,
+    "width_bits": 64
+  },
+  "lpd": {
+    "address": "0xFF419000",
+    "value": "0x00000512",
+    "selector_9_8": 1,
+    "width_bits": 64
+  },
+  "script_status": {
+    "two_registers_read": true,
+    "no_PL_MMIO": true,
+    "raw_marker": "P07_B4G_PS_ONLY_DONE_NO_PL_READ=1"
+  },
+  "previous_P03_accepted": {
+    "FPD_width_bits": 128,
+    "LPD_width_bits": 128,
+    "FPD_raw": "0x00000A00",
+    "LPD_raw": "0x00000200",
+    "source": "docs/P03_2C_PS_HPM_WIDTH_BOOT_REMEDIATION.md"
+  },
+  "FPD128_mismatch": true,
+  "LPD128_mismatch": true,
+  "last_PL_MMIO_attempt": {
+    "address": "0xA4000000",
+    "outcome": "AP transaction timeout; prior run, not retried in PS-only observation"
+  },
+  "controlled_reboot_before_PS_only_run": "NOT_EXPLICITLY_CONFIRMED_IN_USER_OUTPUT",
+  "board_boot_mode": "UNKNOWN",
+  "actual_loaded_PL_bitstream_provenance": "UNKNOWN",
+  "hypotheses": [
+    "Boot-time FSBL/PS initialization differs from previously accepted 128-bit case",
+    "Current PL shell may not be configured/accessible, independently of width"
+  ],
+  "unproven_causal_claim": "64-bit configuration alone caused the earlier AXI timeout",
+  "next_gate": "Read-only UART/Linux boot image and FPGA-manager state inventory; no further PL MMIO until separately approved",
+  "A53_download_authorized": false,
+  "SLCR_runtime_write_authorized": false,
+  "PL_programming_authorized": false,
+  "inference_authorized": false,
+  "B2_official_MNIST_TEST": "SEALED",
+  "PR49_merge_authorized": false
+}

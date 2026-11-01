@@ -1,0 +1,54 @@
+name: P07-B.3c2-3 native adapter gate
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/**"
+      - "Loihi_Digital_Twin/v3/software/p03/**"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b3c23_hw_scheduler_harness.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b3c23_hw_integration.py"
+      - ".github/workflows/p07_b3c23_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p07/**"
+      - "Loihi_Digital_Twin/v3/software/p03/**"
+      - "Loihi_Digital_Twin/v3/tests/native/p07_b3c23_hw_scheduler_harness.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b3c23_hw_integration.py"
+      - ".github/workflows/p07_b3c23_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-c11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print compiler identification
+        run: cc --version
+      - name: Strict C11 real P03 adapter and fake-bus compile
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -I software/p07/include \
+            -I software/p03/include \
+            -I software/p05/include \
+            software/p03/p03_hw_adapter.c \
+            software/p07/p07_b3_pager.c \
+            software/p07/p07_b2_packet.c \
+            software/p07/p07_b3c_packet_bridge.c \
+            software/p07/p07_b3c2_hw_scheduler.c \
+            software/p07/p07_b3c3_next_commit.c \
+            tests/native/p07_b3c23_hw_scheduler_harness.c \
+            -o /tmp/p07_b3c23_native
+      - name: Run all B3c2/c3 fake-bus scenarios with ASan and UBSan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: /tmp/p07_b3c23_native

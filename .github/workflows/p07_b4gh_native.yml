@@ -1,0 +1,58 @@
+name: P07-B.4g/h read-only shell pilot and offline receipt
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_readonly_shell.tcl"
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4h_review_shell_capture.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4gh_readonly_pilot.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4g_width_timeout_regression.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_ps_width_only.tcl"
+      - ".github/workflows/p07_b4gh_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_readonly_shell.tcl"
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4h_review_shell_capture.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4gh_readonly_pilot.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4g_width_timeout_regression.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4g_ps_width_only.tcl"
+      - ".github/workflows/p07_b4gh_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fake-xsdb-and-offline-log-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install host-only test dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check -q pytest
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tcl
+          command -v tclsh
+      - name: Tcl-only fake XSDB read and offline log tamper regressions
+        run: |
+          python3 -m compileall -q scripts/p07_b4h_review_shell_capture.py \
+            tests/test_p07_b4gh_readonly_pilot.py \
+            tests/test_p07_b4g_width_timeout_regression.py
+          python3 -m pytest -q -rs \
+            tests/test_p07_b4gh_readonly_pilot.py \
+            tests/test_p07_b4g_width_timeout_regression.py
+      - name: Evidence classification
+        run: |
+          echo "P07_B4G_FAKE_XSDB_TCL_NATIVE_PASS=1"
+          echo "P07_B4H_OFFLINE_LOG_REVIEW_NATIVE_PASS=1"
+          echo "P07_B4G_ACTUAL_XSDB_RUN=NOT_EXECUTED"
+          echo "P07_B4G_BOARD_ELF_DOWNLOAD_AUTHORIZED=0"
+          echo "P07_B4H_PHYSICAL_INFERENCE_AUTHORIZED=0"

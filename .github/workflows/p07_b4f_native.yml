@@ -1,0 +1,44 @@
+name: P07-B.4f genuine ELF launch-safety audit (offline)
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4f_physical_launch_safety.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4f_physical_launch_safety.py"
+      - ".github/workflows/p07_b4f_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4f_physical_launch_safety.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4f_physical_launch_safety.py"
+      - ".github/workflows/p07_b4f_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-ddr-owner-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q --disable-pip-version-check pytest
+      - name: Verify Python syntax and fail-closed host simulations
+        run: |
+          python3 -m compileall -q scripts/p07_b4f_physical_launch_safety.py tests/test_p07_b4f_physical_launch_safety.py
+          python3 -m pytest -q -rs tests/test_p07_b4f_physical_launch_safety.py
+      - name: Truthful native evidence classification
+        run: |
+          echo "P07_B4F_NATIVE_OFFLINE_LAUNCH_SAFETY_PASS=1"
+          echo "P07_B4F_REAL_OPERATOR_ELF=NOT_PRESENT_IN_CI"
+          echo "P07_B4F_XSDB_BOARD_ACCESS=NOT_RUN"
+          echo "P07_B4F_A53_ELF_LAUNCH_AUTHORIZED=0"
+          echo "P07_B4F_INFERENCE_AUTHORIZED=0"

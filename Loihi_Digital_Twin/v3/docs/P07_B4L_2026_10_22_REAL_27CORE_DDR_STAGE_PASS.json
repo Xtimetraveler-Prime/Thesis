@@ -1,0 +1,30 @@
+{
+  "schema": "p07-b4l-original-trained-27core-physical-ddr-stage-attestation-v1",
+  "date": "2026-10-22",
+  "source": "User-posted KV260 run terminal success markers; original user-local physical evidence folder and individual per-core hashes were not fetched",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "milestone": "P07-B.4l consolidated model deployment and hardware paging",
+  "physical_status": "27_CORE_FROZEN_INITIAL_P02_DDR_STAGING_AND_FULL_READBACK_USER_ATTESTED_PASS",
+  "observed_lines": [
+    "P07_B4L_ALL_27_DDR_CORE_READBACK_TCL_PASS=1",
+    "P07_B4L_DDR_STAGE_TCL_DONE_REBOOT_REQUIRED=1",
+    "P07_B4L_PHYSICAL_27_CORE_DDR_FULL_BYTE_EXACT_PASS=1",
+    "P07_B4L_PHYSICAL_PL_PAGE_IN_EXECUTED=0",
+    "P07_B4L_TRAINED_INFERENCE_EXECUTED=0",
+    "P07_B4L_REBOOT_REQUIRED=1"
+  ],
+  "original_host_accepted_bundle_sha256": "3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e",
+  "DDR_physical_base": "0x40000000",
+  "DDR_physical_end_exclusive": "0x40D80000",
+  "logical_cores": 27,
+  "record_stride_bytes": 524288,
+  "total_bytes": 14155776,
+  "sha_binding": "B4l runner requires exact host bundle SHA and all 27 readback hashes before terminal physical PASS. Exact original receipt bytes remain local to user.",
+  "physically_paged_into_uram": false,
+  "dirty_pageout_proven": false,
+  "neural_inference_executed": false,
+  "reboot_requirement": "Reboot/power-cycle following standalone JTAG takeover; the prior DDR model contents must NOT be assumed to survive reboot",
+  "next_dev_scope": "Within same B4l milestone, build A53 paging probe using original P03 MMIO page-in/dirty page-out and 3 URAM slots, then integrate model restaging and executable launch in a SINGLE dedicated physical session",
+  "test_population": "Original sealed official MNIST TEST not accessed",
+  "status": "PHYSICAL_DDR_STAGE_PASS_ONLY; B4l HARDWARE PAGING NOT ACCEPTED"
+}

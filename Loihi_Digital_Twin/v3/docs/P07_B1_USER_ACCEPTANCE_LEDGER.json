@@ -1,0 +1,20 @@
+{
+  "schema": "p07-b1-user-attested-native-contract-acceptance-v1",
+  "phase": "P07-B.1",
+  "acceptance_date": "2026-10-19",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "source_main_base_sha": "a540b68eeab0f2c4ef37d9f1680e1619deb7c98d",
+  "acceptance_candidate_sha": "f852dfdfa396ade8f5974a6d236b47d3520bf667",
+  "user_statement": "everything passed. lets begin P07-B.2",
+  "user_attested_p07_b1_host_native_pass": true,
+  "user_attested_predecessor_regressions_pass": true,
+  "exact_terminal_stdout_supplied": false,
+  "exact_test_count": null,
+  "actual_KV260_new_scaled_inference": "NOT_EXECUTED",
+  "compiled_P07B_ELF_linker_and_DDR_isolation": "NOT_VERIFIED",
+  "B2_official_mnist_test": "SEALED",
+  "go_for_p07_b2_design_native_tests": true,
+  "go_for_scaled_KV260_execution": false,
+  "go_for_B2_official_test_unseal": false,
+  "notes": "User attestation applies to the earlier B.1 read-only C11 owner-map and predecessor tests; does not attest B.2a changes added subsequently. Accepted Track A/B original artifacts are not rewritten."
+}

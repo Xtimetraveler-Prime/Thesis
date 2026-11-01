@@ -1,0 +1,32 @@
+{
+  "schema": "p07-b4k-first-standalone-a53-board-pass-user-attested-v1",
+  "date": "2026-10-22",
+  "origin": "user-posted physical B4k A53 runner and independent mailbox verification terminal excerpt. Original board logs remain on user PC; no direct board access by assistant.",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "pr": "#49 draft, not merged",
+  "observed_lines": [
+    "P07_B4I_A53_DOWNLOADED=1",
+    "P07_B4I_A53_0_POST_CAPTURE_STOP_COMMAND_PASS=1",
+    "P07_B4I_MAILBOX_CAPTURED_64_BYTES=1",
+    "P07_B4I_A53_INFERENCE_DISPATCHED=0",
+    "P07_B4I_BOARD_CAPTURE_READY_FOR_INDEPENDENT_VERIFIER=1",
+    "P07_B4I_REBOOT_REQUIRED=1",
+    "P07_B4I_PHYSICAL_READONLY_ADMISSION_PASS=1",
+    "P07_B4I_TRAINED_B2_INFERENCE_VERIFIED=0",
+    "P07_B4I_PHYSICAL_INFERENCE_AUTHORIZED=0",
+    "P07_B4K_REAL_STANDALONE_A53_ADMISSION_PASS=1",
+    "P07_B4K_TRAINED_27_CORE_INFERENCE_EXECUTED=0",
+    "P07_B4K_REBOOT_REQUIRED=1"
+  ],
+  "scope": "Physical successful standalone A53 B4i read-only P03 shell admission and 64-byte DDR mailbox captured and independently validated.",
+  "real_a53_elf_downloaded": true,
+  "real_ddr_mailbox_captured": true,
+  "independent_mailbox_verifier_pass": true,
+  "trained_inference_executed": false,
+  "neuron_numeric_parity_physically_demonstrated": false,
+  "live_firmware_low_ddr_ownership_proven": false,
+  "trained_B2_official_test_status": "SEALED_NOT_ACCESSED",
+  "candidate_sha256": "5fcdb0586564f3abef477804a54e0a87163c74654f9d15d1f9600ab2cb85e807",
+  "boot_recovery": "Board reboot required after standalone execution; never resume halted Linux instance.",
+  "next": "P07-B.4l1 offline staged 27-core frozen B2.4 P02 DDR record packaging; not yet physical inference."
+}

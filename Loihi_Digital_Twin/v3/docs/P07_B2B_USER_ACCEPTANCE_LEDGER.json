@@ -1,0 +1,26 @@
+{
+  "schema": "p07-b2b-complete-host-native-user-attestation-v1",
+  "stage": "P07-B.2b routed packet and ordered NEXT event vector transport",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "candidate_correction_sha": "2e8e047bf581fac34b14cd211e0913714da40ab8",
+  "user_statement": "ok nice you fixed it. everything passed. proceed with P07-B.3",
+  "acceptance_date": "2026-10-19",
+  "user_attested_regression_pass": true,
+  "tested_command_targets": [
+    "tests/test_p07_b2b_transaction.py",
+    "tests/test_p07_b2b_packets.py",
+    "tests/test_p07_b2a_ingress.py",
+    "tests/test_p07_b1_owner_map.py",
+    "tests/test_p06_b13_streaming.py"
+  ],
+  "raw_stdout_not_provided": true,
+  "test_count": null,
+  "scope": "native C11 B1.3 exact ordered NEXT-vector, committed state and SHA/CRC/capacity/epoch regressions only",
+  "go_for_p07_b3_native_scheduler_development": true,
+  "physical_page_in_out_KV260_27cores": "NOT_EXECUTED",
+  "standalone_A53_elf": "NOT_BUILT",
+  "P06_B2_official_MNIST_TEST": "SEALED",
+  "go_for_official_test_unseal": false,
+  "merge_authorized": false,
+  "original_frozen_artifacts_modified": false
+}

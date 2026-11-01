@@ -1,0 +1,27 @@
+{
+  "schema": "p07-b4k-first-physical-a53-launch-attempt-user-reported-v1",
+  "date": "2026-10-22",
+  "source": "User-pasted local stage.txt, a53_run.log last 60 lines and absent verify.log. Assistant did not access KV260 or unposted full physical logs.",
+  "evidence_directory_user_reported": "/home/dna/Thesis_Evidence/p07_b4k_a53_20261022T201543Z",
+  "candidate_branch": "agent/v3-p07-b-scaled-physical-inference",
+  "observed_stage": "PL_PROGRAM_PASS_A53_ELF_PENDING_REBOOT_REQUIRED",
+  "observed_xsdb_lines": [
+    "P07_B4I_BOARD_ATTEMPT_FAIL_REBOOT_REQUIRED=1",
+    "P07-B.4i: Already stopped"
+  ],
+  "verifier_log_state": "verify.log absent because driver stopped before independent verification",
+  "supported_conclusions": [
+    "User's B4k driver reached post-FPGA-programming/PL reset-release stage.",
+    "A53 XSDB run script returned error 'Already stopped' rather than producing a verifiable mailbox receipt.",
+    "Standalone A53 execution was not verified; B4k physical acceptance remains FAIL/NOT ACCEPTED.",
+    "No independent result mailbox verification was performed."
+  ],
+  "root_cause_high_confidence_inference": "The B4k takeover stage has already stopped core #0, but original p07_b4i_xsdb_run.tcl called 'stop' again unconditionally. UG1725 documents 'stop' errors when already stopped. Exact failing XSDB line not included in copied excerpt, but no ELF download marker was presented.",
+  "physical_elf_download_confirmed": false,
+  "physical_mailbox_success_confirmed": false,
+  "physical_inference_confirmed": false,
+  "fix": "Added b4i_require_a53_halted for PRE_RESET and POST_CAPTURE accepting ONLY exact 'Already stopped' from core #0; fatal for unexpected errors. Native simulated XSDB Tcl end-to-end regression tests require reset+download+mailbox path on accepted state and NO reset on unexpected stop errors.",
+  "operator_procedure": "Reboot before future attempt. Preserve original evidence directory; use new evidence path. No handwritten operator note required.",
+  "low_ddr_exclusive_ownership_verified": false,
+  "PR49": "DRAFT; unmerged"
+}

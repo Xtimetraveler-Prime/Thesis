@@ -2043,13 +2043,112 @@ test that only checks packed memory.
 
 ## P07-B — Scaled multi-logical-core physical inference
 
-**CURRENT ACTIVE NEXT PHASE, NOT PHYSICALLY IMPLEMENTED (2026-10-19).**
-Prerequisites P06-B1/P06-B2 **merged to `main`** and user-attested
-host-software verification PASS. Track A P07-A and P08-A latency
-baseline accepted separately. Proceed in a NEW branch from merged
-`main`; see [P07-B new-chat source/hardware handoff
-seed](docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md) and
-[B2.5 software exit/NO-GO checklist](docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md).
+**ACTIVE / PARTIAL REAL KV260 HARDWARE PASS (2026-10-23 UTC); NOT CLOSED.**
+P07-B.4l's first frozen 27-core **physical scheduler epoch** is now
+user-attested PASS: original 27 context full DDR readbacks, genuine
+16KiB binding descriptor, accepted P03 PL, standalone A53,
+**27 physical dispatches, 27 page-ins, 24 dirty page-outs** and
+strict independently verified 256B physical mailbox. The **first
+global barrier remained pending/unacknowledged**, **0 P03 spike words**
+were captured (empty CURRENT input), and no 26-tick inference or
+board/reference numerical parity was attempted. See
+[physical B4l first-epoch evidence ledger](docs/P07_B4L_2026_10_23_FIRST_REAL_B3_EPOCH_ACCEPTANCE.json)
+and [consolidated B4l deployment/next gate](docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md).
+**P07-B.4m consolidated full-inference SOFTWARE CANDIDATE now implemented,
+but NOT physically accepted.** The new C11 path uses real P03 adapter
+B4a CURRENT from frozen B1.3 ingress, **dispatch-time independent HLS
+trace bank 7 / state bank 1 per-compartment spike verification**, B3c1
+canonical B2b packet validation, B3c3 physical NEXT insertion and
+B3c2 global barrier ACK. The separate 26-tick runner includes **702
+dispatches, 26 barriers, final 3 dirty slot flushes, and readout
+spike-tally classification**, all regression-tested against the
+**original native fake P03 MMIO/DDR harness**, not the KV260.
+
+Separate frozen B2.4 host-only route/input/three TRAIN validation
+witness packer, strict C SHA/route table parser, standalone NEW
+`p07_b4m_full_26tick` A53 source, offline Vitis build script and
+independent 256-byte full-run mailbox verifier are added. The original
+physically accepted B4l first epoch/ELF remains unchanged; the new
+firmware is **not built or physically run yet**. Must first verify
+original frozen stage/route counts on user PC, obtain and inspect
+genuine new ELF PT_LOAD/low-DDR ownership, implement independently
+verified physical input/route staging with new approvals and evidence,
+run complete physical TRAIN validation, and independently cross-check
+all signed24 per-neuron/packet/readout traces with source oracle.
+**P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
+closeout/P08-B handoff remain OPEN.**
+
+**2026-11-01 P07-B.4m real V3 trained 26-tick STRUCTURAL PASS:**
+Operator reran genuine 27-core TRAIN0 V3 on the physical KV260 after
+A53 takeover success. Same-session original frozen model/bindings/route/
+TRAIN DDR readback succeeded, V3 A53 ELF executed and independent
+256B mailbox structural verification passed. Real 702 dispatches,
+26 barriers, 702 page-ins, 699 dirty + 3 final page-outs, 31512
+CURRENT events, 1514 bank7 source spikes, 1489 captured/inserted
+NEXT packets, 1010 compartments checked per timestep. Physical
+readout class=1, counts=`[0,25,0,0,0,0,0,0,0,0]`; trace
+FNV64=`0xB59CA8594D6E64AD`. Actual 256B physical mailbox SHA
+`5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`.
+This strongly supports corrected P08 synapse/route metadata as the
+V2 first-dispatch failure fix. **Independent neuron numerical parity
+NOT YET VERIFIED**; full raw physical per-neuron transcript not present.
+Original frozen TEST remains SEALED. Read-only numerical reference
+fingerprint checker `scripts/p07_b4m_v3_train0_scalar_vs_physical.py`
+added and awaits operator execution on genuine local V3 evidence.
+Keep P07-B.4m open and PR #49 draft until parity is assessed.
+
+**2026-11-01 P07-B.4m V3 preliminary physical takeover attempt:**
+Operator's authentic V3 execute passed host-only original 27-core P02
+metadata / ELF/route gates, then **failed before FPGA programming, DDR
+staging or A53 ELF launch** when the B4i stop/PS-width gate saw XSDB
+`Cannot halt processor core: power down`. No physical V3 inference result
+exists for this attempt. The historical Tcl only recognized
+`The core is powered down`; it now accepts exactly both variants and
+runs the original bounded retries + PS FPD/LPD 128-bit checks + guarded
+reset / confirmed A53 #0 halt. Native mock recovery/fail-closed tests
+added. Evidence preserved in external V3 run folder
+`p07_b4m_diag_v3_real_20261101T040103Z`. Board reboot mandatory.
+P07-B.4m remains OPEN; avoid classifying this as an HLS error.
+
+**2026-11-01 P07-B.4m physical V2 first-dispatch diagnosis:**
+A user-run genuine V2 KV260 session with exact original-model and TRAIN
+readbacks failed at stage 9, HLS `P03_DISPATCH_CORE_STATUS=0x4`
+(SYNAPSE_ROW_BOUNDS), while `DISPATCH_STATUS=0x22` and one PL
+completed dispatch were observed. Scheduler.first_fault=10,
+pager.first_failure_kind=3, trace.first_fault=0. The accepted B4l
+registration only encodes core ID and compartments; P08 RTL requires
+synapse count [33:18] and route count [46:34]. This is a direct,
+source-verified software metadata omission consistent with the physical
+failure. An isolated V3 firmware repair and native tests were added
+without modifying the frozen model/accepted shell. The operator
+subsequently built genuine V3 ELF SHA
+`66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`
+and GNU map SHA
+`148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede`,
+with EXACT low-DDR PT_LOAD `[0,0x00106B00)`. Strict original-model
+V3 offline admission passed. A separate V3 SHA-pinned same-session
+hardware launcher and CI mock tests are committed; actual V3 KV260
+run and independent parity remain PENDING. Full 26-tick
+inference and numerical parity gates still OPEN. Preserve real V2
+mailbox SHA `79c20f53664afabd3d349b3dccc0f3fc0f1824706863cb5d1409cb9ce493077d`.
+
+**2026-10-31 P07-B.4m diagnostic V2 continuation (NOT physically accepted):**
+The user built the real DIAGNOSTIC_V2 A53 ELF and passed the independent
+original B2.4 offline source/route/ELF admission. Exact ELF SHA
+`952393251a6910c5ca87b817ffdb2d08c0d5239f0f60b350908a78f375936a45`,
+map SHA `864624c6511aa5eba204a89fc2f1e3b8a3a46a434a18baa88753282ef5b131da`;
+PT_LOAD `[0x00000000,0x00106B00)`, with low-DDR boot-firmware
+exclusivity still unproven. A separately SHA/identity-pinned diagnostic V2
+same-session original-model physical runner, XSDB Tcl, and native synthetic
+safety tests were added on existing draft PR #49. Physical V2 execution,
+complete original 702-dispatch/26-tick inference and numerical parity have
+**not** been reported or accepted. See
+`docs/P07_B4M_2026_10_31_STAGE9_DIAGNOSTIC_V2_HANDOFF.md`.
+
+See [consolidated B4m development and exact gates](docs/P07_B4M_COMPLETE_INFERENCE_DEVELOPMENT.md).
+**Official B2 TEST SEALED.**
+P06-B1/P06-B2 are merged, while draft P07-B PR #49 is unmerged.
+Track A P07-A and P08-A latency baseline remain separately accepted.
 
 **P07-B entry is a GO for DESIGN and implementation work, not an
 authorization to label scaled physical results as accepted or to

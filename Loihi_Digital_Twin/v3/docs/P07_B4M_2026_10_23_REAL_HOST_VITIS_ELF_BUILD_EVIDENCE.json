@@ -1,0 +1,49 @@
+{
+  "schema": "p07-b4m-real-host-built-vitis-2025-2-elf-operator-reported-v1",
+  "session": "operator-pasted PC terminal output; assistant has NOT read local ELF, map, or readelf files",
+  "utc_date": "2026-10-23",
+  "origin": "/home/dna/p07_b4m_full_build_20261023T034046Z",
+  "build_status_marker": "P07_B4M_REAL_A53_26TICK_ELF_AND_MAP_BUILT=1",
+  "local_ELF": "/home/dna/p07_b4m_full_build_20261023T034046Z/vitis_workspace/p07_b4m_full_26tick.elf",
+  "local_map": "/home/dna/p07_b4m_full_build_20261023T034046Z/vitis_workspace/p07_b4m_full_26tick.map",
+  "sha256": {
+    "accepted_p03_2_ps_mmio_xsa": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+    "operator_built_full_26tick_elf": "ccbd8c531e5571f929e81613cfee71f54abf341c36412ebcfa7d98e2313e6b70",
+    "operator_built_full_26tick_gnu_map": "b6d34c354e34075be2e650335a34ea103b72c7927a36c526841006df59a8e8c3"
+  },
+  "elf_paddr_start": "0x00000000",
+  "elf_LOAD_filesz": "0x0001A054",
+  "elf_LOAD_memsz": "0x00106B00",
+  "elf_LOAD_end_exclusive": "0x00106B00",
+  "elf_LOAD_flags": "RWE",
+  "reported_sections": {
+    "text": {
+      "start": "0x00000000",
+      "size": "0x00011A2C"
+    },
+    "bss": {
+      "start": "0x0001A080",
+      "size": "0x000E7A80",
+      "end_exclusive": "0x00101B00"
+    },
+    "heap": {
+      "start": "0x00101B00",
+      "size": "0x00002000",
+      "end_exclusive": "0x00103B00"
+    },
+    "stack": {
+      "start": "0x00103B00",
+      "size": "0x00003000",
+      "end_exclusive": "0x00106B00"
+    }
+  },
+  "checked_from_user_console": "A53 LOAD and ELF end-to-end .bss/.heap/.stack geometry consistent with LOAD; independent structural offline gate is STILL required",
+  "expanded_low_DDR_boot_firmware_exclusivity_independently_proven": false,
+  "physical_model_data_stage_verified": false,
+  "new_output_10000_route_input_and_train_files_prepared": false,
+  "real_KV260_full_inference_executed": false,
+  "independent_trained_numerical_parity_verified": false,
+  "current_next_gate": "Host generate original B2.4 frozen routing images and original canonical TRAIN-derived frames; run p07_b4m_offline_admission.py using exact pinned ELF/map; no KV260 access.",
+  "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+  "pr_49": "DRAFT_UNMERGED"
+}

@@ -1,0 +1,46 @@
+name: P07-B.4d offline read-only operator admission
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4d_readonly_evidence.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4d_readonly_shell.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4d_readonly_evidence.py"
+      - ".github/workflows/p07_b4d_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4d_readonly_evidence.py"
+      - "Loihi_Digital_Twin/v3/vivado/p07_b4d_readonly_shell.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4d_readonly_evidence.py"
+      - ".github/workflows/p07_b4d_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-offline-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test-only pytest
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Python syntax and fake operator-evidence adversarial tests
+        run: |
+          python3 -m compileall -q scripts/p07_b4d_readonly_evidence.py \
+            tests/test_p07_b4d_readonly_evidence.py
+          python3 -m pytest -q -rs tests/test_p07_b4d_readonly_evidence.py
+      - name: CI result classification
+        run: |
+          echo "P07_B4D_OFFLINE_EVIDENCE_NATIVE_PASS=1"
+          echo "P07_B4D_REAL_A53_ELF=NOT_BUILT_IN_CI"
+          echo "P07_B4D_XSDB_OR_UART_BOARD_CAPTURE=NOT_RUN_IN_CI"
+          echo "P07_B4D_INFERENCE_AUTHORIZED=0"

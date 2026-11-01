@@ -1,0 +1,25 @@
+{
+  "schema": "p07-b4l1-user-attested-real-frozen-host-stage-verify-v1",
+  "date": "2026-10-22",
+  "source": "Operator terminal output from real --mode verify against original B2.4 freeze and previously prepared host-only 27-core staged image. No physical KV260 data obtained.",
+  "status": "HOST_STAGING_VERIFIED_NOT_PHYSICAL",
+  "bundle_sha256": "3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e",
+  "bytes": 14155776,
+  "core_count": 27,
+  "physical_start": "0x40000000",
+  "physical_end_exclusive": "0x40D80000",
+  "freeze_untouched": true,
+  "board_visited": false,
+  "model_trained_inference_executed": false,
+  "official_mnist_test": "SEALED",
+  "real_observed_lines": [
+    "P07_B4L1_ALL_27_ORIGINAL_P02_RECORDS_BYTE_EXACT_PASS=1",
+    "P07_B4L1_FROZEN_B2_4_SOURCE_UNMODIFIED=1",
+    "P07_B4L1_PHYSICAL_DDR_STAGED=0",
+    "P07_B4L1_TRAINED_INFERENCE_EXECUTED=0",
+    "P07_B4L1_OFFICIAL_MNIST_TEST=SEALED"
+  ],
+  "next": "Consolidated B4l model deployment checkpoint: same original 27 P02 records physically staged with full independent DDR readback, before paging/inference.",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "PR49": "DRAFT, UNMERGED"
+}

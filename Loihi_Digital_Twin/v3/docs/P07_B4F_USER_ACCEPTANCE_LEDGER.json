@@ -1,0 +1,27 @@
+{
+  "schema": "p07-b4f-user-acceptance-v1",
+  "date": "2026-10-21",
+  "user_statement": "ok B.4f has been verified. proceed with the next few steps",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "accepted": "P07-B.4f offline A53 ELF/map pinned artifact and low-DDR launch NO-GO checker",
+  "native_user_attested_pass": true,
+  "raw_stdout_supplied": false,
+  "real_file_audit_stdout_supplied": false,
+  "previous_real_vitis_elf_and_map_user_sha_match": true,
+  "CI": {
+    "run_id": 39652698874,
+    "conclusion": "success",
+    "synthetic_native_cases": 11
+  },
+  "physics": {
+    "nonhalting_xsdb_read_only_probe_run": false,
+    "A53_elf_download_authorized": false,
+    "live_P03_shell_verified": false,
+    "low_DDR_owner": "NOT_ESTABLISHED",
+    "protected_P02_DDR_owner": "NOT_ESTABLISHED"
+  },
+  "next": "P07-B.4g read-only nonhalting XSDB pilot with operator acknowledgment; P07-B.4h offline shell transcript / artifact correlation",
+  "Track_A_B_frozen_untouched": true,
+  "B2_official_MNIST_TEST": "SEALED",
+  "PR49_merge_authorized": false
+}

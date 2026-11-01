@@ -1,0 +1,23 @@
+{
+  "schema": "p07-b2a-user-attested-native-ingress-acceptance-v1",
+  "phase": "P07-B.2a",
+  "acceptance_date": "2026-10-19",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "base_main_sha": "a540b68eeab0f2c4ef37d9f1680e1619deb7c98d",
+  "acceptance_candidate_sha": "f350ff654f26e8311cab30a85c2db31f0122fbaf",
+  "subsequent_B2a_test_fix_sha": null,
+  "user_statement": "yep yep excellent work with everything here. the tests passed. proceed to P07-B.2b",
+  "user_attested_B2a_native_pass": true,
+  "user_attested_B2a_predecessor_regressions_pass": true,
+  "exact_stdout": "NOT_SUPPLIED",
+  "test_count": null,
+  "scope": "Host-native B1.3 P06B13I1 C11 ingress decoder and original Python oracle parity/negative tests only",
+  "P07_B2b_status": "USER_NATIVE_VERIFICATION_PENDING",
+  "real_P07_B_A53_standalone_ELF": "NOT_BUILT",
+  "real_27_core_KV260_execution": "NOT_TESTED",
+  "scaled_physical_page_traffic": "NOT_MEASURED",
+  "B2_official_MNIST_TEST": "SEALED",
+  "go_for_B2b_host_native_development": true,
+  "go_for_scaled_physical_execution": false,
+  "go_for_official_TEST_unseal": false
+}

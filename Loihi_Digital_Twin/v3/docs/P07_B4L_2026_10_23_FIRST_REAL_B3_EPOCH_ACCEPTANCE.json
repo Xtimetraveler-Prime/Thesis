@@ -1,0 +1,69 @@
+{
+  "schema": "p07-b4l-first-real-27-dispatch-physical-epoch-operator-reported-v1",
+  "date": "2026-10-23 UTC (local operator terminal dated 2026-10-22)",
+  "source": "User-pasted stage.txt, independent_b3_epoch_receipt.json, and excerpts of actual PC XSDB/Vivado logs; assistant has not accessed raw user-local evidence files.",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "evidence_directory": "User-local $P07_B4L_B3_EVIDENCE; absolute timestamped path not included in supplied output",
+  "result_stage": "REAL_B3_FIRST_EPOCH_27_DISPATCH_BARRIER_PENDING_PASS_REBOOT_REQUIRED",
+  "independent_receipt": {
+    "barrier_acknowledged": false,
+    "captured_P03_packet_words": 0,
+    "claimed_26_tick_inference": false,
+    "first_epoch_pending_barrier": true,
+    "genuine_frozen_axon_bindings": 21384,
+    "genuine_frozen_compartments": 1010,
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "packet_capture_FNV64": "0x6B111D86DF7422FE",
+    "physical_dirty_page_outs": 24,
+    "physical_page_ins": 27,
+    "physical_scheduler_dispatches": 27
+  },
+  "physical_log_markers": {
+    "ps_width": [
+      "P07_B4I_A53_0_STOP_COMMAND_PASS=1",
+      "P07_B4I_A53_1_STOP_COMMAND_PASS=1",
+      "P07_B4I_A53_2_POWERED_DOWN_OBSERVED=1",
+      "P07_B4I_A53_3_STOP_COMMAND_PASS=1",
+      "P07_B4I_PS_WIDTH_TARGET=PSU",
+      "P03_2C_PS_FPD_AXIFS_RAW=0x00000A00",
+      "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128",
+      "P03_2C_PS_LPD_AXIFS_RAW=0x00000200",
+      "P03_2C_PS_LPD_HPM0_WIDTH_BITS=128",
+      "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1"
+    ],
+    "program": [
+      "PASS: P03.2c accepted PS-MMIO bitstream programmed and PL reset released"
+    ],
+    "ddr_stage": [
+      "P07_B4L_ALL_27_DDR_CORE_READBACK_TCL_PASS=1"
+    ],
+    "binding_stage": [
+      "P07_B4L_B3_FROZEN_DESCRIPTOR_16K_PHYSICAL_READBACK_TCL_PASS=1"
+    ],
+    "a53_b3_epoch": [
+      "P07_B4L_A53_0_PRE_RESET_ALREADY_STOPPED_CONFIRMED=1",
+      "P07_B4L_B3_A53_EPOCH_ELF_DOWNLOADED=1",
+      "P07_B4L_A53_0_POST_CAPTURE_STOP_COMMAND_PASS=1",
+      "P07_B4L_B3_A53_EPOCH_MAILBOX_CAPTURED_256_BYTES=1",
+      "P07_B4L_B3_A53_EPOCH_CAPTURE_READY_FOR_INDEPENDENT_VERIFIER=1",
+      "P07_B4L_B3_REBOOT_REQUIRED=1"
+    ]
+  },
+  "verified_scope": "Original 27 frozen P02 contexts staged and physically read back in same session; pinned 16 KiB original compiled binding descriptor physically read back; one A53 first epoch with 27 P03 scheduler dispatches, 27 page-ins and 24 dirty page-outs; barrier pending and intentionally unacknowledged; exact 256 B physical mailbox independently validated by repository runner.",
+  "not_demonstrated": [
+    "External TRAIN-derived CURRENT ingress into real neural cores",
+    "P03 outgoing spike packet provenance or any captured packet words (actual capture count zero)",
+    "B2b fanout and NEXT event delivery",
+    "Global timestep barrier acknowledgement and later tick advancement",
+    "Full 26-tick 702-dispatch/26-barrier inference with final writeback and per-image reset",
+    "Independent trained frozen reference state/spike/packet/readout classification parity",
+    "P07-B.5 physical TRAIN validation corpus and B.6 closure metrics",
+    "Official MNIST TEST unseal",
+    "Independent proof of boot firmware ownership of expanded low DDR ELF footprint"
+  ],
+  "judgement": "PHYSICAL_FIRST_EPOCH_B3_SCHEDULER_AND_PAGING_CHECKPOINT_ACCEPTED_NOT_P07_B_COMPLETION",
+  "cpu_reset_warning": "XSDB emitted standard advisory on rst -processor; no independent register-clear or reset-vector correction proof from these logs.",
+  "reboot_required": true,
+  "keep_original_artifacts": true,
+  "pr_49_merged": false
+}

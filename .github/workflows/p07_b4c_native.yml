@@ -1,0 +1,64 @@
+name: P07-B.4c A53 candidate build contract
+
+on:
+  push:
+    branches:
+      - agent/v3-p07-b-scaled-physical-inference
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/build_p07_b4c.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4c_verify_elf.py"
+      - "Loihi_Digital_Twin/v3/software/p07/build_p07_b4c.py"
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4c_readonly_board.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4c_build_admission.py"
+      - ".github/workflows/p07_b4c_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/build_p07_b4c.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p07_b4c_verify_elf.py"
+      - "Loihi_Digital_Twin/v3/software/p07/build_p07_b4c.py"
+      - "Loihi_Digital_Twin/v3/software/p07/p07_b4c_readonly_board.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p07_b4c_build_admission.py"
+      - ".github/workflows/p07_b4c_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fake-vitis-build-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test-only pytest
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Shell and Python syntax only
+        run: |
+          bash -n scripts/build_p07_b4c.sh
+          python3 -m compileall -q \
+            software/p07/build_p07_b4c.py \
+            scripts/p07_b4c_verify_elf.py \
+            tests/test_p07_b4c_build_admission.py
+      - name: Read-only A53 app source syntax with fake Xilinx BSP
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -fsyntax-only \
+            -DP07_B4B_TEST_HOST_BSP=1 \
+            -I tests/native/p07_b4b_stub \
+            -I software/p07/include -I software/p03/include \
+            software/p07/p07_b4c_readonly_board.c
+      - name: Run fake Vitis API and ELF rejection tests (NOT a real Vitis build)
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p07_b4c_build_admission.py \
+            tests/test_p07_b4b_elf_probe_admission.py
+      - name: Gate classification
+        run: |
+          echo "P07_B4C_NATIVE_BUILD_CONTRACT_PASS=1"
+          echo "P07_B4C_ACTUAL_A53_ELF=NOT_BUILT"
+          echo "P07_B4C_BOARD_PROBE=NOT_RUN"
+          echo "P07_B4C_INFERENCE_AUTHORIZED=0"

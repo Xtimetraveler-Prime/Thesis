@@ -1,0 +1,25 @@
+{
+  "schema": "p07-b4b-user-native-acceptance-v1",
+  "date": "2026-10-20",
+  "branch": "agent/v3-p07-b-scaled-physical-inference",
+  "user_statement": "perfect. all tests have passed again. proceed to implementing B.4c",
+  "accepted_stage": "B.4b host-native read-only FPD/P03 shell, event DDR allowlist, 27x5 mutable audit, fake ELF map tests",
+  "user_attested_native_pass": true,
+  "native_stdout_supplied": false,
+  "native_test_count": null,
+  "independent_ci": {
+    "run_id": 39455844312,
+    "status": "success",
+    "scope": "strict C11, ASan/UBSan, synthetic fake Xilinx bus / parser, not linked standalone ELF"
+  },
+  "authorizes": "P07-B.4c isolated A53 ELF build path development",
+  "real_a53_elf_built": false,
+  "board_admission_executed": false,
+  "actual_boot_ownership_proven": false,
+  "pl_source_spike_trace_accepted": false,
+  "physical_27_core_inference": false,
+  "real_trained_B2_snapshot_loaded": false,
+  "Track_A_B_frozen_untouched": true,
+  "B2_official_MNIST_TEST": "SEALED",
+  "PR49_merge_authorized": false
+}
