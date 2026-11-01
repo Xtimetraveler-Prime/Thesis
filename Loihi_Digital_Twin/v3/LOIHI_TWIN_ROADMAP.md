@@ -1,5 +1,42 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P07-B final acceptance and GitHub integration — 2026-11-01
+
+**P07-B COMPLETED, FORMALLY OPERATOR ACCEPTED AND MERGED INTO MAIN.**
+P07-B.4's original trained 27-core/3-slot KV260 board-local inference,
+P07-B.5's independently accepted 5 genuine physical sessions and
+840,320-byte original TRAIN0 full raw-neuron physical/scalar exact parity,
+and P07-B.6's accepted immutable source/five-session archive freeze,
+independent portable archive audit, and B6.3 final operator handoff
+are **closed**. The original explicit acceptance report
+`/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json`
+reported `P07_B_complete=true`, `P08_B_started=false` and
+`official_MNIST_TEST=SEALED_NOT_ACCESSED`.
+[Bounded real P07-B operator closeout ledger](docs/P07_B6_3_2026_11_01_FORMAL_OPERATOR_ACCEPTED_P07_B_CLOSEOUT.json).
+
+**Final main integration occurred afterward, with three normal Git
+merge commits, in correct dependency order:**
+PR #49 `48b5db1f6430e594b2fce03aefa9136935249546` →
+PR #50 `1328e2cd04ae43f7dde1aa3e898f81be2c1ac6ea` →
+PR #51 `a59fa21eb5ffff8586c33c65b291a6ea2bfca6e4`.
+The independent original main-only `LitReview.md` **was not
+overwritten**: its exact Git blob SHA remained
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e` after **each**
+merge. [Verified post-merge integration provenance](docs/P07_B_2026_11_01_POST_MERGE_INTEGRATION_ACCEPTED.json).
+
+**Acceptance bounds remain unchanged:** official MNIST TEST still
+SEALED, external board power cycles only operator-attested,
+firmware/Linux/DDR exclusive ownership unproven, every individual
+routed packet word not numerically traced, and no claim of fully
+asynchronous hardware equivalence. The physical raw complete equality
+was proven for the original selected TRAIN0 26×1010 neurons;
+original four physical V3 runs (TRAIN 0/1/2/0) proved full 26-tick
+fingerprints and counters. **P08-B is NOT started**; a separate
+benchmark/test protocol must be explicitly accepted before any
+new measurements or official TEST use. Earlier roadmap entries below
+are a preserved chronological history and may describe work that
+was pending at their time.
+
 ## Purpose
 
 FPGA-v3 is the next research/development line for the Loihi-1 architectural digital twin.
