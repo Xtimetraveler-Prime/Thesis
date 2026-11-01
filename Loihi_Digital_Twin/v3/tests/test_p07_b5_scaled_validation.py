@@ -15,7 +15,7 @@ sys.path.insert(0,str(ROOT/"scripts"))
 import p07_b5_scaled_validation as b5
 
 def test_b5_frozen_reference_requires_exact_real_signed_three_frames(tmp_path):
-    with pytest.raises(b5.ValidationNoGo,match="original three"):
+    with pytest.raises(b5.ValidationNoGo,match="ORDINAL"):
         b5.parse_run_spec("9:"+str(tmp_path))
     with pytest.raises(b5.ValidationNoGo,match="absolute"):
         b5.parse_run_spec("0:relative")
