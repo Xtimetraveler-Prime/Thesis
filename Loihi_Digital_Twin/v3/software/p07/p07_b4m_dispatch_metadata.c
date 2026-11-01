@@ -49,7 +49,7 @@ int p07_b4m_apply_p02_counts(
             ns==0u || ns>32768u || nr>4096u ||
             le32(p+0x2cu)!=0u || le32(p+0x30u)!=0u ||
             le32(p+0x34u)!=0u ||
-            prior!=((uint64_t)n<<7u)|(uint64_t)c)
+            prior!=(((uint64_t)n<<7u)|(uint64_t)c))
             return P07_B4M_METADATA_REJECT;
         candidate[c] = prior | ((uint64_t)ns << 18u) |
                         ((uint64_t)nr << 34u);
