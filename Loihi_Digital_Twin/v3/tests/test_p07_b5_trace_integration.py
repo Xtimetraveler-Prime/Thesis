@@ -43,6 +43,14 @@ def test_b5_separate_firmware_source_original_V3_unchanged_and_no_direct_board_p
     orig_hook=(ROOT/"software/p07/p07_b4m_spike_trace.c").read_text()
     assert "P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3" in original
     assert "P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1" in b5
+    # Check the real firmware status print as well as its declared identity.
+    # The first B5 Vitis ELF failed admission because this print still
+    # contained the old V3 identity even after the B5 identity was changed.
+    assert 'xil_printf("P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1 status=' in b5
+    assert "P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3" not in b5
+    assert "P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2" not in b5
+    assert "P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1" not in b5
+    assert 'xil_printf("P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 status=' in original
     assert "B5_MAILBOX UINT32_C(0x43FF0100)" in b5
     assert "B4M_MAILBOX UINT32_C(0x43FF0000)" in original
     assert "P07_B5_CAPTURE_DDR_CANDIDATE_BASE" in b5
