@@ -1,9 +1,13 @@
 # P07-B.5.3 — Exact physical neuron-trace capture: new firmware candidate
 
-**Status (2026-11-01): IN DEVELOPMENT. B5.3.1 native-only C trace sidecar
-writer + regression tests IMPLEMENTED / CI PASS; actual signed Vitis ELF,
-sidecar physical DDR ownership, real JTAG readback, and full physical
-byte-for-byte parity NOT YET VERIFIED OR APPROVED.** P07-B.5 final
+**Status (2026-11-01): IN DEVELOPMENT. B5.3.1 native bounded 840320B
+C recorder, B5.3.2 isolated raw-bank7 integration, separate A53 main,
+Vitis source/build path, strict PC-only ELF/XSA/source admission,
+standalone hook and firmware syntax tests IMPLEMENTED / native CI PASS.
+A genuine operator-built new Vitis B5 ELF/map has NOT been admitted yet.
+Real sidecar+mailbox DDR ownership, distinct B5 physical JTAG launcher,
+board readback, and raw physical byte-for-byte parity are NOT VERIFIED
+OR AUTHORIZED.** P07-B.5 final
 milestone remains OPEN, P07-B.6 and P08-B remain gated, and original
 official MNIST TEST remains sealed.
 
