@@ -11,7 +11,7 @@ On each execute attempt, re-stage & verify the original 27x512 KiB contexts,
 frame, in the SAME JTAG-ownership session BEFORE downloading pinned new ELF.
 Capture physical mailbox; independently check 702 dispatches, 26 global
 barriers, real trace evidence. Structural receipt is not neural parity.
-All hardware attempts require KV360 REBOOT (do NOT resume halted Linux).
+All hardware attempts require KV260 REBOOT (do NOT resume halted Linux).
 """
 from __future__ import annotations
 
@@ -248,7 +248,7 @@ def main()->int:
         print("P07_B4M_LOW_DDR_0_TO_0x106B00_EXCLUSIVITY_INDEPENDENTLY_PROVEN=0",flush=True)
         if args.mode=="preflight":
             print("P07_B4M_DIAG_V3_READ_ONLY_PREFLIGHT_PASS=1",flush=True)
-            print("P07_B4M_KV360_ACCESSED=0",flush=True)
+            print("P07_B4M_KV260_ACCESSED=0",flush=True)
             print("P07_B4M_DIAG_V3_LAUNCH_APPROVED_BY_PREFLIGHT=0",flush=True)
             return 0
         independent_launch_consent(args)
