@@ -181,3 +181,44 @@ original 784→1000→10 result must remain clearly NOT physically verified.
 No official TEST evaluation or hardware benchmarking is authorized
 until the relevant model has completed a real accepted inference and
 the applicable parity protocol.
+
+## 2026-10-31 continuation — genuine V2 build + isolated physical diagnostic launcher
+
+Operator-reported **GENUINE local Vitis DIAGNOSTIC_V2 build PASS**, followed by
+strict offline original source/ELF/route admission PASS. This is **not** a
+KV260 run. Accepted local build and admission sources are:
+
+- Build: `/home/dna/p07_b4m_diag_v2_build_20261101T031054Z`
+- Offline report: `/home/dna/Thesis_Evidence/p07_b4m_diag_v2_offline_20261101T031054Z.json`
+- ELF identity: `P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2`
+- V2 ELF SHA256: `952393251a6910c5ca87b817ffdb2d08c0d5239f0f60b350908a78f375936a45`
+- V2 .map SHA256: `864624c6511aa5eba204a89fc2f1e3b8a3a46a434a18baa88753282ef5b131da`
+- Original accepted XSA SHA256: `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`
+- Exact V2 ELF physical PT_LOAD: `[0x00000000,0x00106B00)`,
+  filesz 106580, memsz 1075968, same bounds as genuine V1 but different
+  ELF bytes. Verified .text `[0,0x11BAC)`, .bss
+  `[0x1A080,0x101B00)`, .heap `[0x101B00,0x103B00)`,
+  .stack `[0x103B00,0x106B00)`.
+- Original route cardinality remains 20,384 + 1,000 = 21,384.
+  Original trained model and TRAIN frames unchanged; official TEST sealed.
+
+New isolated `scripts/p07_b4m_diag_v2_physical_run.py` and
+`vivado/p07_b4m_diag_v2_xsdb_run.tcl` now pin the exact **V2** ELF SHA,
+linker map, firmware identity, source/route offline report, original
+accepted shell and identical low-DDR layout. They reuse the historical
+independent SAME-SESSION 27-core/descriptor/route/TRAIN staging and
+physical readbacks. The V1 runner remains unchanged and refuses the
+diagnostic V2 ELF. Distinct V2 mailbox names and B4D2 failure decoding
+preserve all failures without creating false full-inference receipts.
+The V2 native synthetic launcher tests live in
+`tests/test_p07_b4m_diag_v2_physical_run.py`.
+
+The operator explicitly authorized destructive diagnostic KV260 runs
+during the continuation chat, including the known unproven low-DDR
+boot-firmware coexistence risk. Per-run CLI risk flags remain necessary
+to record this accepted risk, NOT to claim firmware ownership proved.
+The board must be rebooted after ANY actual takeover/attempt, including
+failures; never resume the interrupted Linux. These source additions
+and native CI success do not establish a genuine V2 board result.
+**P07-B.4m full trained 26-tick physical inference and numerical parity
+remain OPEN until independently demonstrated.**
