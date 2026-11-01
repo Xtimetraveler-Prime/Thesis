@@ -4,9 +4,9 @@
 tests implemented; **new physical B5.2 evidence NOT YET COLLECTED**.
 P07-B.4m has an actual one-frame physical structural PASS (702 HLS
 dispatches, 26 barriers), and the user independently reported
-\`P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1\` for original
+`P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1` for original
 TRAIN-derived validation ordinal 0. The original scalar report is external:
-\`/home/dna/Thesis_Evidence/p07_b4m_v3_scalar_parity_20261101T043214Z.json\`.
+`/home/dna/Thesis_Evidence/p07_b4m_v3_scalar_parity_20261101T043214Z.json`.
 This demonstrates agreement of 26-tick FNV64 and all checked aggregates
 for one **original TRAIN** witness; it does not imply raw per-compartment
 physical trace parity, 10K official TEST accuracy or a reboot reproducibility
@@ -18,21 +18,21 @@ study. Original official MNIST TEST is still sealed.
   27×512KiB frozen snapshot, original P03 XSA/bitstream, P07 B4l
   page/bind/DDR/route images, original V3 A53 ELF and GNU map.
 - Original genuine V3 ELF SHA256
-  \`66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904\`.
+  `66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`.
   V3 GNU map SHA256
-  \`148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede\`.
+  `148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede`.
 - Original registered TRAIN frame ordinals **0, 1, 2**, fixed prior to
   these experiments, raw 784-image SHA256 from
-  \`scripts/p07_b4m_frozen_inputs.py\`; originals are in the
+  `scripts/p07_b4m_frozen_inputs.py`; originals are in the
   immutable TRAIN-derived B2.3 26-tick validation report.
 - Actual boot-firmware exclusivity for low DDR ELF span
-  \`[0x00000000,0x00106B00)\` remains **independently UNPROVEN**.
+  `[0x00000000,0x00106B00)` remains **independently UNPROVEN**.
   Operator approval of destructive takeover/DDR overwrite is **not**
   evidence that the address range is safely owned by standalone firmware.
   The B5 verifier does not authorize hardware actions.
 - Do not call this benchmark official MNIST TEST or measure official TEST
   accuracy before the separately precommitted B2.4 unseal protocol.
-- Separate branch \`agent/v3-p07-b5-scaled-multiframe-validation\`
+- Separate branch `agent/v3-p07-b5-scaled-multiframe-validation`
   branches FROM the preceding draft B4m branch, not merged main. Do not
   merge either draft branch without explicit user review/approval.
 
@@ -45,7 +45,7 @@ operator real freeze execution]:**
   20,384 input / 1,000 output routes.
 - Independently regenerate original 26-tick **scalar integer** LIF states,
   synaptic accumulators, spikes, and SHA256 trace from
-  \`network_source.json\` for TRAIN ordinals 0/1/2.
+  `network_source.json` for TRAIN ordinals 0/1/2.
 - Compare the independent SHA against exact frozen B2.3 original
   monolithic report; generate exact FNV64 used by the real P03 bank7
   trace/committed-state pipeline in original core/compartment order.
@@ -75,11 +75,11 @@ operator real freeze execution]:**
   votes, spikes, packet fanout and trace FNV64. Distinct evidence
   directories alone do not prove a cold reboot; this needs separate
   actual operator reboot attestation. The verifier explicitly preserves
-  \`cold_reboot_between_runs_independently_proven=false\`.
-- Implemented: \`scripts/p07_b5_scaled_validation.py\` supports
-  \`--mode preview\`, \`--mode verify\` (one run) and
-  \`--mode consolidate\` (precisely 0/1/2/0, in any order), with
-  new write-once external JSON reports. \`--mode consolidate\` reopens
+  `cold_reboot_between_runs_independently_proven=false`.
+- Implemented: `scripts/p07_b5_scaled_validation.py` supports
+  `--mode preview`, `--mode verify` (one run) and
+  `--mode consolidate` (precisely 0/1/2/0, in any order), with
+  new write-once external JSON reports. `--mode consolidate` reopens
   all four genuine physical evidence directories and reruns provenance
   and numerical checks rather than trusting saved summary JSON.
   An independent V3 board pass for ordinal 0 is NOT automatically
@@ -105,7 +105,7 @@ physically. Compare the signed-24 bit current/voltage, refractory,
 **byte for byte** to independently encoded scalar oracle on PC.
 Selected input/source and routed NEXT packet trace must be verified
 or explicitly excluded from claims. First mismatch must identify
-\`tick/core/compartment/field\` with raw offsets. Do not modify
+`tick/core/compartment/field` with raw offsets. Do not modify
 the previously accepted V3 ELF, bitstream, frozen checkpoint or
 official TEST to instrument this; a separate B5 binary is mandatory.
 
@@ -126,10 +126,10 @@ official TEST to instrument this; a separate B5 binary is mandatory.
 
 ## PC-only B5.1 reference regeneration
 
-From \`~/Git/Thesis/Loihi_Digital_Twin/v3\`, with existing
-\`.venv-p08\` activated and local original frozen staging intact:
+From `~/Git/Thesis/Loihi_Digital_Twin/v3`, with existing
+`.venv-p08` activated and local original frozen staging intact:
 
-\`\`\`bash
+```bash
 export P07_B4M_STAGE="$HOME/p07_b4m_frozen_inputs_20261023T034626Z"
 export P07_B4L1_STAGE="$HOME/Thesis_Evidence/p07_b4l1_original27_20261022T204013Z"
 export P07_B5_EXPECTED="$HOME/Thesis_Evidence/p07_b5_three_train_reference_$(date -u +%Y%m%dT%H%M%SZ).json"
@@ -138,17 +138,17 @@ PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --staged-dir "$P07_B4L1_STAGE" --routes-dir "$P07_B4M_STAGE" \
   --out "$P07_B5_EXPECTED"
 cat "$P07_B5_EXPECTED"
-\`\`\`
+```
 
 ## B5.2 physical procedure
 
 1. Hard-reboot KV260 and verify a dedicated XSDB server. Never resume a
    Linux session after JTAG takeover. Make a **NEW** evidence dir for
    each run. Physical V3 runner is still
-   \`scripts/p07_b4m_diag_v3_physical_run.py --mode execute\` with the
+   `scripts/p07_b4m_diag_v3_physical_run.py --mode execute` with the
    **same flags/authorizations** from successful B4m run.
-   Set \`--validation-ordinal 1\` for the second original witness,
-   and \`--validation-ordinal 2\` for the third. Keep the same accepted
+   Set `--validation-ordinal 1` for the second original witness,
+   and `--validation-ordinal 2` for the third. Keep the same accepted
    V3 offline report/ELF/map, which cover all three frozen TRAIN frames.
    Never overwrite existing physical evidence.
 2. Each physical run is destructive to A53 Linux/JTAG ownership.
@@ -156,18 +156,18 @@ cat "$P07_B5_EXPECTED"
    separately; they **do not prove** low-DDR coexistence or trace
    sidecar ownership. No new B5 trace-sidecar risk is accepted here.
 3. Verify each session with:
-   \`\`\`bash
+   ```bash
    export P07_B5_ONE_REPORT="$HOME/Thesis_Evidence/p07_b5_one_$(date -u +%Y%m%dT%H%M%SZ).json"
    PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
      --mode verify --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
      --staged-dir "$P07_B4L1_STAGE" --routes-dir "$P07_B4M_STAGE" \
      --run "1:/absolute/path/to/new/ordinal1/evidence" \
      --out "$P07_B5_ONE_REPORT"
-   \`\`\`
-   Use \`--run 2:/...\` for ordinal 2. A genuine original ordinal0
-   session can be supplied as \`--run 0:/...\`.
+   ```
+   Use `--run 2:/...` for ordinal 2. A genuine original ordinal0
+   session can be supplied as `--run 0:/...`.
 4. After all four **real**, distinct original TRAIN evidence folders:
-   \`\`\`bash
+   ```bash
    export P07_B5_SUMMARY="$HOME/Thesis_Evidence/p07_b5_multiframe_$(date -u +%Y%m%dT%H%M%SZ).json"
    PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
      --mode consolidate --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
@@ -178,9 +178,9 @@ cat "$P07_B5_EXPECTED"
      --run "0:/absolute/path/to/new/repeat_ordinal0/evidence" \
      --out "$P07_B5_SUMMARY"
    cat "$P07_B5_SUMMARY"
-   \`\`\`
+   ```
    Success marker is
-   \`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1\`,
+   `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
    **not** a B5.3 raw numerical parity or milestone closeout.
 
 No raw B5.3 sidecar has been staged on KV260. No official TEST accessed.
