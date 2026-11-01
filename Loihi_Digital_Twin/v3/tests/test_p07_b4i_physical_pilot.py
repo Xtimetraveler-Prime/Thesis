@@ -371,7 +371,8 @@ def test_primary_nonexact_powerdown_diagnostic_remains_fatal(tmp_path):
 
 
 def b4i_primary_reset_simulation(tmp_path,name,fpd="00000A00",
-                                  reset_error=False,post_reset_halt=True):
+                                  reset_error=False,post_reset_halt=True,
+                                  powerdown_message="The core is powered down"):
     """Fake XSDB Tcl only. Real board is not touched."""
     import subprocess
     gate=ROOT/"vivado/p07_b4i_stop_and_width_gate.tcl"
@@ -384,9 +385,9 @@ def b4i_primary_reset_simulation(tmp_path,name,fpd="00000A00",
         'proc targets {args} {set ::selected [lindex $args end]; return ok}\n'
         'proc stop {} {\n'
         '  if {[string first "Cortex-A53 #0" $::selected] >= 0} {\n'
-        '    if {!$::did_reset} {error "The core is powered down"}\n'
+        f'    if {{!$::did_reset}} {{error {{{powerdown_message}}}}}\n'
         f'    if {{{1 if post_reset_halt else 0}}} {{error "Already stopped"}}\n'
-        '    error "The core is powered down"\n'
+        f'    error {{{powerdown_message}}}\n'
         '  }\n'
         '  return ok\n'
         '}\n'
@@ -481,3 +482,87 @@ def test_primary_reset_marker_cannot_be_forged_without_pending_state():
     )
     with pytest.raises(ValueError):
         pilot.verify_takeover_log(log)
+
+@pytest.mark.parametrize("message",[
+    "The core is powered down",
+    "Cannot halt processor core: power down",
+])
+def test_p07_b4m_v3_actual_xsdb_cpu0_powerdown_recovers_only_after_ps128_and_reset(
+    tmp_path,message
+):
+    """Exactly observed physical error string must follow existing guarded fallback."""
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_primary_reset_simulation(
+        tmp_path,"v3_actual_powerdown",powerdown_message=message)
+    assert run.returncode==0,run.stderr
+    lines=run.stdout.splitlines()
+    assert lines.count("P07_B4I_A53_0_EXACT_POWER_DOWN_RESET_PENDING=1")==1
+    assert lines.count("P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1")==1
+    assert lines.count("SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1")==1
+    assert lines.count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1")==1
+    assert lines.count("P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2")==1
+    assert lines.index("P03_2C_PS_LPD_HPM0_WIDTH_BITS=128") < lines.index(
+        "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1")
+    assert pilot.verify_takeover_log(run.stdout)=={
+        0:"halted",1:"halted",2:"halted",3:"halted",
+    }
+
+
+def test_p07_b4m_v3_actual_xsdb_cpu0_powerdown_no_reset_fails_closed(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_fake_tcl_stop(
+        tmp_path,"v3_real_no_reset",0,
+        "Cannot halt processor core: power down")
+    assert run.returncode!=0
+    assert "P07_B4I_A53_0_EXACT_POWER_DOWN_RESET_PENDING=1" in run.stdout
+    assert "P03_2C_PS_FPD_HPM0_WIDTH_BITS=128" in run.stdout
+    assert "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1" not in run.stdout
+    assert "P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1" not in run.stdout
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(run.stdout)
+
+
+@pytest.mark.parametrize("suffix",[
+    " (timeout)", "\nadditional JTAG error", " / unexpected processor state",
+])
+def test_p07_b4m_v3_unrecognized_cpu0_halt_message_rejected(tmp_path,suffix):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_fake_tcl_stop(
+        tmp_path,"v3_ambiguous",0,
+        "Cannot halt processor core: power down"+suffix)
+    assert run.returncode!=0
+    assert "P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY" not in run.stdout
+    assert "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1" not in run.stdout
+    assert "P03_2C_PS_FPD_AXIFS_RAW=" not in run.stdout
+    assert "P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1" in run.stdout
+
+
+def test_p07_b4m_v3_actual_xsdb_powerdown_ps_width_mismatch_blocks_reset(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_primary_reset_simulation(
+        tmp_path,"v3_wrong_pswidth",fpd="00002560",
+        powerdown_message="Cannot halt processor core: power down")
+    assert run.returncode!=0
+    assert "P03_2C_PS_FPD_HPM0_WIDTH_BITS=64" in run.stdout
+    assert "SIMULATED_A53_0_PROCESSOR_RESET_INVOKED=1" not in run.stdout
+    assert "P07_B4I_A53_0_TRACK_A_RESET_HALT_CONFIRMED=1" not in run.stdout
+    with pytest.raises(ValueError):
+        pilot.verify_takeover_log(run.stdout)
+
+
+def test_p07_b4m_v3_secondary_exact_xsdb_powerdown_not_cpu0_halt(tmp_path):
+    if shutil.which("tclsh") is None:
+        pytest.skip("tclsh unavailable")
+    run=b4i_fake_tcl_stop(
+        tmp_path,"v3_secondary_down",1,
+        "Cannot halt processor core: power down")
+    assert run.returncode==0,run.stderr
+    assert "P07_B4I_A53_1_POWERED_DOWN_OBSERVED=1" in run.stdout
+    assert "P07_B4I_A53_1_STOP_COMMAND_PASS=1" not in run.stdout
+    assert pilot.verify_takeover_log(run.stdout)=={
+        0:"halted",1:"powered_down",2:"halted",3:"halted",
+    }
