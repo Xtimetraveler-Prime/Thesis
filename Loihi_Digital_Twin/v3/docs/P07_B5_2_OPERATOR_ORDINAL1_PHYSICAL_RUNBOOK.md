@@ -73,19 +73,6 @@ export P07_B4M_DIAG_V3_OFFLINE_REPORT="$HOME/Thesis_Evidence/p07_b4m_diag_v3_off
 export P07_B4M_DIAG_V3_ELF="$P07_B4M_DIAG_V3_BUILD_DIR/vitis_workspace/p07_b4m_diag_v3_26tick.elf"
 export P07_B5_ORDINAL=1
 
-sha256sum "$P07_B4M_DIAG_V3_ELF" "$P07_B4M_DIAG_V3_ELF".map
-test "$(sha256sum "$P07_B4M_DIAG_V3_ELF" | cut -d' ' -f1)" = "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
-test "$(sha256sum "$P07_B4M_DIAG_V3_ELF.map" | cut -d' ' -f1)" = "148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede"
-```
-
-Note: The actual `.map` is the sibling of the ELF, with
-`p07_b4m_diag_v3_26tick.map` suffix. The shell
-`"$P07_B4M_DIAG_V3_ELF".map` used above produces
-`...26tick.elf.map`, **not** the real accepted map, so
-**use the corrected shell snippet below** rather than the exploratory
-`sha256sum ... .map` lines above:
-
-```bash
 export P07_B4M_DIAG_V3_MAP="${P07_B4M_DIAG_V3_ELF%.elf}.map"
 sha256sum "$P07_B4M_DIAG_V3_ELF" "$P07_B4M_DIAG_V3_MAP"
 test "$(sha256sum "$P07_B4M_DIAG_V3_ELF" | cut -d' ' -f1)" = "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
