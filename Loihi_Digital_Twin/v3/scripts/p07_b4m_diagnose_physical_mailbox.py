@@ -46,6 +46,7 @@ for _i in range(10):
 # words [47..62]. The successful V1/V2 256B schema remains unchanged.
 # No status value or diagnostic marker grants inference acceptance.
 DIAG_V2_MAGIC=0x42344432
+DIAG_V3_MAGIC=0x42344433
 DIAG_V2_FIELDS={
     47:"diagnostic_v2_failure_magic",
     48:"adapter_last_polled_status",
@@ -64,6 +65,9 @@ DIAG_V2_FIELDS={
     61:"p03_debug_config_raw",
     62:"p03_debug_addr_raw",
 }
+DIAG_V3_FIELDS=dict(DIAG_V2_FIELDS)
+DIAG_V3_FIELDS[47]="diagnostic_v3_failure_magic"
+DIAG_V3_FIELDS[62]="v3_dispatch_metadata_fix_status"
 
 # First-fault numeric values in software/p07/p07_b4m_full_inference.c.
 FIRST_FAULT={
@@ -110,14 +114,17 @@ def diagnose(data:bytes)->dict:
         verified=True
     fault=w[45] or w[3]
     is_v2=w[47]==DIAG_V2_MAGIC
+    is_v3=w[47]==DIAG_V3_MAGIC
+    fields=DIAG_V3_FIELDS if is_v3 else DIAG_V2_FIELDS
     v2={
         "diagnostic_v2_failure_payload_present":is_v2,
+        "diagnostic_v3_failure_payload_present":is_v3,
         "failure_telemetry":{
-            DIAG_V2_FIELDS[i]:{
+            fields[i]:{
                 "uint32":w[i],"hex":f"0x{w[i]:08X}",
             }
-            for i in DIAG_V2_FIELDS
-        } if is_v2 else None,
+            for i in fields
+        } if is_v2 or is_v3 else None,
     }
     return {**v2,
         "schema":"p07-b4m-failed-or-partial-original-physical-mailbox-diagnostic-v1",
@@ -147,7 +154,7 @@ def diagnose(data:bytes)->dict:
         "physical_dispatch_counter_snapshot":w[46],
         "mailbox_words":[
             {
-                "index":i,"field":DIAG_V2_FIELDS[i] if is_v2 and i in DIAG_V2_FIELDS else WORD_NAMES.get(i,f"reserved_{i}"),
+                "index":i,"field":fields[i] if (is_v2 or is_v3) and i in fields else WORD_NAMES.get(i,f"reserved_{i}"),
                 "hex":f"0x{value:08X}","uint32":value,
                 **({"signed_int32":signed32(value)} if i in (4,5,6,7,8,9,10,11,44) else {}),
             }
