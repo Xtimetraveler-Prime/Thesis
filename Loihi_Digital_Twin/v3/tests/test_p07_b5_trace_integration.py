@@ -66,7 +66,9 @@ def test_b5_separate_firmware_source_original_V3_unchanged_and_no_direct_board_p
     assert hook.index("p07_b5_capture_record") < hook.index("t->fnv64=fnv_u32")
     assert "p07_b5_capture_record" not in orig_hook
     assert "P07_B5_CAPTURE_DDR_CANDIDATE_BASE" not in original
-    assert not (ROOT/"vivado/p07_b5_raw_trace_xsdb_run.tcl").exists()
+    # A dedicated guarded XSDB launcher is now source-controlled; no
+    # physical board execution or sidecar ownership is asserted by it.
+    assert (ROOT/"vivado/p07_b5_raw_trace_xsdb_run.tcl").is_file()
     assert not (ROOT/"scripts/p07_b5_raw_trace_physical_run.py").exists()
 
 def test_b5_isolated_vitis_source_contract_disallows_original_v3_trace_and_main():
