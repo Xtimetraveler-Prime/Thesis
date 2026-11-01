@@ -2078,6 +2078,47 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.4 OPERATOR ATTESTATION FILLED ON PC; FORMAL GATE PENDING. P07-B.6.1 IMMUTABLE SOURCE/HARDWARE EVIDENCE FREEZE CANDIDATE DEVELOPMENT STARTED (DRAFT PR #51):**
+User reported they created a local external copy of the five-real-session B5.4
+attestation template and changed every `null` to `true`, and approved
+moving on to P07-B.6; they explicitly reaffirmed no merge until the
+entire P07 track is finished. This is a genuine operator statement,
+**not** the verified bytes of the actual external attestation file or a
+`p07_b5_final_acceptance.py --mode accept` terminal PASS. B5.4 source
+gate MUST independently re-open all five real physical sessions, inspect
+the exact operator attestation's five paths and booleans, acknowledge
+unproven DDR/boot exclusive ownership, and write its own signed
+write-once `P07_B5_final_acceptance=true` report before formal
+B5 closure. No false hardware cold-boot instrumentation claim is allowed.
+See [B5.4 operator final acceptance command and evidence requirement](docs/P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+
+**P07-B.6.1 preparation** now proceeds separately in draft
+`agent/v3-p07-b6-final-freeze-handoff` / PR #51, based on draft
+PR #50 (itself based on #49). New
+`scripts/p07_b6_freeze_manifest.py`:
+`--mode inventory` (safe immediately) rechecks the entire original
+**33-file signed B2.4 freeze**, 27 logical P02 cores, 20,384
+input/1,000 output routes and all three original TRAIN images,
+real routed P03 XSA, accepted distinct B5 ELF/map, genuine original
+five-session numerical review source, and computes a whitelisted
+SHA256 manifest for reproducibility. It explicitly labels B5 final
+acceptance, B6 production freeze, full P07 completion and merge as
+**NOT YET VERIFIED**. Later `--mode seal` requires both the actual
+operator-approved B5.4 final report and actual five-run operator
+attestation and **re-executes the real B5.4 five-source physical evidence
+re-verification**, then compares the operator-signed report exactly.
+Neither path touches KV260, changes official TEST or merges Git.
+
+B6.2 reproducible hardware/ELF/XSA/DDR/trained protocol packaging and
+B6.3 final independent operator freeze/P08-B handoff are **OPEN**.
+See [P07-B.6 hardware freeze and handoff engineering plan](docs/P07_B6_FINAL_HARDWARE_FREEZE_AND_HANDOFF.md).
+All PRs #49, #50 and #51 remain draft and unmerged; `main` retains
+its independent `LitReview.md` Git blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`. Merge must preserve
+that exact blob, via normal ordered PR merges, **only after complete
+P07-B acceptance and explicit operator merge authorization**.
+Official MNIST TEST remains SEALED.
+
 **2026-11-01 P07-B.5.4 OPERATOR INDEPENDENT FIVE-PHYSICAL-SESSION NUMERICAL REVIEW PASS, BUT FORMAL FINAL ACCEPTANCE NOT YET RECORDED — MAIN MERGE DEFERRED:**
 Operator ran the REAL PC-only `scripts/p07_b5_final_acceptance.py --mode review`
 and supplied complete report
