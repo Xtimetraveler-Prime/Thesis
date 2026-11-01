@@ -19,6 +19,18 @@ static int fault(p07_b3c2_hw_scheduler *s,p07_b4l_b3_receipt *r,uint32_t stage){
     }
     return P07_B4L_B3_FAULT;
 }
+/* Compare semantically, not C struct padding (9 u32 fields plus u64
+ * backing address). Re-reading a pending barrier can populate unused
+ * padding differently under GCC even when all 10 fields agree.
+ * Match the accepted p07_b3_pager.c op_equal contract exactly.
+ */
+static int b4l_op_equal(const p07_b3_op *a,const p07_b3_op *b){
+    return a->kind==b->kind && a->tick==b->tick &&
+        a->ordinal==b->ordinal && a->core==b->core &&
+        a->slot==b->slot && a->victim==b->victim &&
+        a->current_bank==b->current_bank && a->next_bank==b->next_bank &&
+        a->bytes==b->bytes && a->backing_address==b->backing_address;
+}
 static uint64_t fnv_word(uint64_t hash,uint64_t word){
     uint32_t i;
     for(i=0u;i<8u;i++){
@@ -60,7 +72,7 @@ int p07_b4l_b3_one_epoch(p07_b3c2_hw_scheduler *s,
                s->pager->counters.runtime_outs!=P07_B3_CORES-P07_B3_SLOTS||
                s->pager->counters.barriers!=0u||
                p07_b3_next(s->pager,&next)!=P07_B3_OK||
-               memcmp(&op,&next,sizeof(op))!=0||
+               !b4l_op_equal(&op,&next)||
                p03_hw_quiescent(s->hw)!=P03_HW_OK)
                 return fault(s,r,200u);
             for(i=0u;i<P07_B3_CORES;i++){
