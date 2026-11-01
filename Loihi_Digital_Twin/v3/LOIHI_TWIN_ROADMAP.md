@@ -2077,6 +2077,20 @@ run complete physical TRAIN validation, and independently cross-check
 all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
+
+**2026-10-31 P07-B.4m diagnostic V2 continuation (NOT physically accepted):**
+The user built the real DIAGNOSTIC_V2 A53 ELF and passed the independent
+original B2.4 offline source/route/ELF admission. Exact ELF SHA
+`952393251a6910c5ca87b817ffdb2d08c0d5239f0f60b350908a78f375936a45`,
+map SHA `864624c6511aa5eba204a89fc2f1e3b8a3a46a434a18baa88753282ef5b131da`;
+PT_LOAD `[0x00000000,0x00106B00)`, with low-DDR boot-firmware
+exclusivity still unproven. A separately SHA/identity-pinned diagnostic V2
+same-session original-model physical runner, XSDB Tcl, and native synthetic
+safety tests were added on existing draft PR #49. Physical V2 execution,
+complete original 702-dispatch/26-tick inference and numerical parity have
+**not** been reported or accepted. See
+`docs/P07_B4M_2026_10_31_STAGE9_DIAGNOSTIC_V2_HANDOFF.md`.
+
 See [consolidated B4m development and exact gates](docs/P07_B4M_COMPLETE_INFERENCE_DEVELOPMENT.md).
 **Official B2 TEST SEALED.**
 P06-B1/P06-B2 are merged, while draft P07-B PR #49 is unmerged.
