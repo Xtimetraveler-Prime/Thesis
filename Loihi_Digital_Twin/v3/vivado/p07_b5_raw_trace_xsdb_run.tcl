@@ -124,14 +124,14 @@ set failed [catch {
     puts "P07_B5_RAW_NEW_COMPLETE_CAPTURE_RECEIPT_PHYSICAL_PASS=1"
     # Memory readback is via real PSU/APU physical debug access ONLY.
     # Chunk to bound XSDB binary-read payload sizes and check every chunk.
-    set destination [open $trace wx]
+    set destination [open $trace {WRONLY CREAT EXCL}]
     fconfigure $destination -translation binary -encoding binary
     set ok 0
     set rc [catch {
         set total 210080
         for {set offset 0} {$offset<$total} {incr offset 4096} {
             set words [expr {min(4096,$total-$offset)}]
-            set address [expr {0x42000000+4*$offset}]
+            set address [format {0x%08X} [expr {0x42000000+4*$offset}]]
             set chunk "${trace}.chunk"
             if {[file exists $chunk]} {file delete $chunk}
             b5_ps_only
