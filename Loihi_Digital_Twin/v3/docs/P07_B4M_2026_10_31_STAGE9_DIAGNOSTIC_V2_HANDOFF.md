@@ -113,3 +113,71 @@ A single narrowly scoped future board run with new telemetry may be
 justified if it decisively identifies the P03 dispatch/debug subfault.
 If time budget is exhausted, retain the unresolved failure as a precisely
 measured research limitation and proceed to independent next milestones.
+
+## Continuation decision: diagnose until true physical acceptance, then fallback if needed
+
+The previous bounded handoff does **not** represent an acceptable final
+result for Track B as a working inference engine. The operator explicitly
+requires continued debugging to physically validate subsequent Track B.
+No complete 26-tick inference acceptance is claimed.
+
+V2 diagnostic has its own PC-only original-source/real-ELF admission:
+`scripts/p07_b4m_diag_v2_offline_admission.py`. It requires a V2
+source tree byte-identical to the committed C/header inputs (apart from
+the two already-accepted Vitis include/route-cap transformations),
+original frozen B2.4 source and TRAIN route data, accepted P03 XSA,
+real AArch64 ELF + linker-map PT_LOAD section boundaries, and the
+DIAGNOSTIC_V2 identity. It **never contacts hardware** and explicitly
+outputs `diagnostic_v2_physical_launch_authorized=false`.
+
+The next operator step is the already documented local V2 Vitis build,
+then:
+
+```bash
+export P07_B4M_DIAG_OFFLINE_REPORT="$HOME/Thesis_Evidence/p07_b4m_diag_v2_offline_$(date -u +%Y%m%dT%H%M%SZ).json"
+PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v2_offline_admission.py \
+    --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+    --routes-dir "$P07_B4M_STAGE" \
+    --build-dir "$P07_B4M_DIAG_BUILD_DIR" \
+    --reports "$P07_B4L_REPORTS" \
+    --out "$P07_B4M_DIAG_OFFLINE_REPORT"
+```
+
+**After PC admission:** record the new V2 real ELF/map SHA and exact low
+DDR LOAD end, then implement an independently source/SHA-pinned V2
+same-session stage/run wrapper with separate firmware-owner approval.
+Never swap diagnostic V2 into V1 launcher, and NEVER assume past staging
+remains in DDR after a reboot.
+
+First live V2 failure interpretation:
+- `scheduler.first_fault==17`: per-compartment trace hook failed.
+  Its `trace.first_fault==3` means physical debug read protocol;
+  `==4` means trace-vs-state discrepancy. Check actual debug status,
+  config, address and dispatch-status MMIO in the V2 mailbox.
+- `scheduler.first_fault==10`: hardware dispatch/paging operation or
+  post-operation quiescence failed; correlate raw P03 dispatch status,
+  core status and active core/bank with the first adapter status.
+- `scheduler.first_fault==8`: packet debug read failed.
+  Confirm packet count and P03 debug bank status.
+- Other subfault codes must be investigated directly from the frozen
+  `p07_b3c2_hw_scheduler.c` source, not guessed.
+
+**Contingency if V2 shows the real full frozen model remains blocked:**
+develop a SEPARATELY IDENTIFIED tiny on-FPGA differential workload
+under the *same accepted P03 engine and MMIO shell*. Start with a
+single logical LIF compartment and no events, then one registered axon
+and one event, then gradually add its synapse row, trace bank7 readback,
+packet output and next-bank event; finally increase to the actual
+source core0's first-tick 51 events (39 compartments, 30,576 unique
+synapse entries). Preserve synthetic model and receipts in new
+out-of-freeze artifacts, and validate exact software-versus-physical
+trace/digest at every step. **Do not train a smaller network to hide
+an MMIO protocol fault.** Only when the physical interface is proved
+reliable should a smaller *trained* 784→small-hidden→10 network be
+considered as an explicitly documented reduced-scope Track B
+evaluation, with new capacity/resource and parity baselines. The
+original 784→1000→10 result must remain clearly NOT physically verified.
+
+No official TEST evaluation or hardware benchmarking is authorized
+until the relevant model has completed a real accepted inference and
+the applicable parity protocol.
