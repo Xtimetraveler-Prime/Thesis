@@ -2078,6 +2078,21 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.4m physical V2 first-dispatch diagnosis:**
+A user-run genuine V2 KV260 session with exact original-model and TRAIN
+readbacks failed at stage 9, HLS `P03_DISPATCH_CORE_STATUS=0x4`
+(SYNAPSE_ROW_BOUNDS), while `DISPATCH_STATUS=0x22` and one PL
+completed dispatch were observed. Scheduler.first_fault=10,
+pager.first_failure_kind=3, trace.first_fault=0. The accepted B4l
+registration only encodes core ID and compartments; P08 RTL requires
+synapse count [33:18] and route count [46:34]. This is a direct,
+source-verified software metadata omission consistent with the physical
+failure. An isolated V3 firmware repair and native tests were added
+without modifying the frozen model/accepted shell, but V3 genuine
+Vitis ELF build and physical acceptance remain PENDING. Full 26-tick
+inference and numerical parity gates still OPEN. Preserve real V2
+mailbox SHA `79c20f53664afabd3d349b3dccc0f3fc0f1824706863cb5d1409cb9ce493077d`.
+
 **2026-10-31 P07-B.4m diagnostic V2 continuation (NOT physically accepted):**
 The user built the real DIAGNOSTIC_V2 A53 ELF and passed the independent
 original B2.4 offline source/route/ELF admission. Exact ELF SHA
