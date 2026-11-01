@@ -1,14 +1,12 @@
 # P07-B.6 — Original 27-core scaled physical inference freeze and P08-B handoff
 
-**Status (2026-11-01): PREPARATION STARTED ONLY, NOT FINALLY ACCEPTED.**
-New B6.1 read-only signed source/evidence freeze manifest implemented.
-B5.4 has passed **five independently verified physical numerical sessions**,
-including exact 840,320-byte 26×1010-neuron original signed scalar
-parity, but the operator has *not yet supplied a genuine local*
-`--mode accept` PASS JSON. User reports all fields in a separate
-attestation file have been personally set to true. Do not substitute
-that statement for a completed input-file verification.
-B5 formal acceptance, B6 final freeze, P08-B, and PR merges remain gated.
+**Status (2026-11-01): P07-B.5 FORMALLY CLOSED / OPERATOR ACCEPTED
+REAL FIVE-PHYSICAL-SESSION NUMERICAL GATE PASS. B6.1 SOURCE/HARDWARE
+FREEZE INVENTORY SUCCESSFULLY RUN ON OPERATOR PC; B6.1 SEAL GATE
+IMPLEMENTED AND WAITING LOCAL ACCEPTED B5 REPORT RECHECK. B6.2
+REPRODUCIBILITY PACKAGE COPY/INTEGRITY TOOLING IMPLEMENTED. B6.3
+INDEPENDENT FINAL HANDOFF AND OVERALL P07-B ACCEPTANCE NOT YET DONE.**
+All PRs #49/#50/#51 remain draft and unmerged. Official MNIST TEST SEALED.
 
 ## Why B6 is necessary
 
@@ -81,7 +79,65 @@ merge side effects.
   `main_merged=false`, and the actual ownership/reboot
   limitations. Merely running `seal` does not freeze final B6.
 
-### B6.2 — Final production freeze / reproducibility package (OPEN)
+### B6.2 — Full original source, firmware and real physical evidence reproducibility package (IMPLEMENTED / OPERATOR COPY PENDING)
+
+New `scripts/p07_b6_reproducibility_bundle.py` requires genuine,
+independently sealed B6.1 original signed source/hardware and B5.4
+final operator evidence, the original physically accepted V3 ELF/map
+(actual bytes, rehashed against the two independently accepted
+historical SHA256s), the original B5 Vitis A53 ELF/map, P03 XSA,
+all 34 B2.4 frozen manifest and asset files, original TRAIN routes,
+all **five real physical session evidence trees**, and a fresh
+read-only `origin/main:LitReview.md` original Git blob check.
+
+The source list is rehashed BEFORE copying and all output bytes
+are independently SHA-verified AFTER writing into a NEW external
+directory. No mutable source, symlink, unexpected directory placement
+or physical TEST file is implicitly trusted. Output includes
+`handoff_manifest.json` with a SHA256 + byte count for every
+copied source/physical file. B6.2 package remains
+**PENDING OPERATOR-INDEPENDENT COPY AND VALIDATION** until this is
+run successfully; no acceptance can be asserted from the code alone.
+
+Operator must locate original physically accepted V3 ELF and GNU
+map files from its original genuine Vitis workspace; the current
+B5 artifacts are separate. From the B6 branch after a passing B6.1 seal:
+
+```bash
+# Locate original V3 assets without guessing their directories:
+find "$HOME" -type f \
+  \( -name 'p07_b4m_diag_v3_26tick.elf' -o \
+     -name 'p07_b4m_diag_v3_26tick.map' \) -print
+# Export exact genuine original V3 ELF/map paths after inspecting find:
+# export P07_B4M_V3_ELF="/home/dna/.../p07_b4m_diag_v3_26tick.elf"
+# export P07_B4M_V3_MAP="/home/dna/.../p07_b4m_diag_v3_26tick.map"
+# Confirm the SHA256 pins before the copy:
+# V3 ELF 66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904
+# V3 MAP 148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede
+
+git -C "$HOME/Git/Thesis" fetch origin main
+export P07_B6_PACKAGE="$HOME/Thesis_Evidence/p07_b6_full_reproducibility_$(date -u +%Y%m%dT%H%M%SZ)"
+test ! -e "$P07_B6_PACKAGE"
+PYTHONPATH="$PWD/src" python scripts/p07_b6_reproducibility_bundle.py \
+  --seal "$P07_B6_SEAL" \
+  --accept "$P07_B5_4_ACCEPT" \
+  --attest "$P07_B5_ATTEST" \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --reports "$P07_B4L_REPORTS" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --v3-elf "$P07_B4M_V3_ELF" \
+  --v3-map "$P07_B4M_V3_MAP" \
+  --out-dir "$P07_B6_PACKAGE"
+cat "$P07_B6_PACKAGE/handoff_manifest.json"
+```
+
+Expected flags `P07_B6_2_COMPLETE_ORIGINAL_SOURCE_AND_5_PHYSICAL_SESSION_COPY_SHA_PASS=1`,
+`P07_B6_2_ACCEPTED_ORIGINAL_V3_AND_B5_A53_FIRMWARE_COPY_PASS=1`,
+`P07_B6_2_MAIN_LITREVIEW_ORIGINAL_GIT_BLOB_PASS=1`, and
+`P07_B6_2_FINAL_ACCEPTANCE=0`.
+No Vitis rebuild, PL programming, filesystem replacement, hardware
+power-cycle or official TEST access is authorized by B6.2.
 
 Prepare a reproducible operator handoff with explicit:
 - Freezed source and original signed DDR/route/current-spike/fanout ABI,
@@ -177,6 +233,86 @@ Expected `P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1` and exact
 independently measured cold-boot proof and does not establish
 DDR exclusivity. If the script fails, B5 acceptance and B6
 sealing remain OPEN.
+
+## 2026-11-01 actual B5.4 operator ACCEPTED, and B6.1 inventory PASS
+
+The operator supplied the real separate local `--mode accept`
+report after accepting the exact five-session cold-powercycle/JTAG
+operator-attestation file. Real stdout ended with
+`P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1`, with all five signed physical
+and 840,320B raw neuron-scalar numerical checks PASS.
+Accepted operator report:
+
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`
+
+Attestation SHA256:
+
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+
+[Signed B5.4 final bounded operator acceptance ledger](P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json)
+preserves the accepted numerical/physical findings, disclosure of
+UNPROVEN DDR boot/user ownership, operator-attested rather than
+instrumented power cycles, original official TEST SEALED.
+
+The user also ran `scripts/p07_b6_freeze_manifest.py --mode inventory`
+with successfully admitted frozen source and ELF evidence and obtained
+`P07_B6_ORIGINAL_27CORE_SIGNED_SOURCE_ARTIFACT_FREEZE_INVENTORY_PASS=1`,
+`P07_B6_B5_FORMAL_ACCEPTANCE_INDEPENDENTLY_RECHECKED=0`, and
+`P07_B6_FINAL_ACCEPTANCE=0`.
+That `0` was CORRECT for `--mode inventory`: this mode is not
+allowed to use signed B5 approval as a substitute for independently
+verifying the operator's actual acceptance report.
+
+**B6.1 accuracy improvement after the initial operator run:**
+`--mode inventory` now includes SHA256 for **ALL 33 original
+manifest-signed B2.4 artifacts**, including every original
+27×512KiB P02 context, the original frozen network, original
+checkpoint weights, original compiler deployment, and other
+original freeze files, plus the manifest itself, all three
+TRAIN images, route tables, XSA, and B5 ELF/map. The user must
+pull latest B6 branch and re-run a **NEW** inventory to get
+this extended source coverage. Historical candidate manifest is
+preserved without modification.
+
+### B6.1 sealing against REAL user-approved B5.4 accepted report — PC ONLY
+
+After source/evidence variables from B5.4 and B6.1 setup,
+run the B6.1 seal *without* repeating any KV260 board experiment.
+A separate output directory/file is mandatory:
+
+```bash
+export P07_B5_4_ACCEPT="$HOME/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json"
+export P07_B5_ATTEST="$HOME/Thesis_Evidence/p07_b5_4_operator_attestation_20261101T222117Z.json"
+export P07_B5_RAW_VERIFY0="$HOME/Thesis_Evidence/p07_b5_raw_verify_train0_20261101T215124Z.json"
+export P07_B6_SEAL="$HOME/Thesis_Evidence/p07_b6_original_freeze_seal_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P07_B6_SEAL"
+PYTHONPATH="$PWD/src" python scripts/p07_b6_freeze_manifest.py \
+  --mode seal \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --offline-report "$P07_B5_RAW_OFFLINE" \
+  --b5-review "$P07_B5_4_REVIEW" \
+  --b5-acceptance "$P07_B5_4_ACCEPT" \
+  --attestation "$P07_B5_ATTEST" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --fourrun-report "$P07_B5_FOURRUN_REPORT" \
+  --run "0:$P07_B5_RUN0" \
+  --run "1:$P07_B5_RUN1" \
+  --run "2:$P07_B5_RUN2" \
+  --run "0:$P07_B5_RUN0_REPEAT" \
+  --raw-evidence "$P07_B5_RAW_RUN0" \
+  --raw-report "$P07_B5_RAW_VERIFY0" \
+  --out "$P07_B6_SEAL"
+cat "$P07_B6_SEAL"
+```
+
+Expected real PC-only `P07_B6_B5_FORMAL_ACCEPTANCE_INDEPENDENTLY_RECHECKED=1`;
+`P07_B6_FINAL_ACCEPTANCE=0` is still REQUIRED.
+The seal re-opens all five source-backed physical sessions rather than
+trusting a manually edited PASS boolean. This independent seal is
+B6.1's acceptance checkpoint, **not B6.3 final P07-B acceptance**.
 
 ## Operator commands, checkpoint B — new B6.1 candidate inventory
 
