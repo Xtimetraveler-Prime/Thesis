@@ -52,3 +52,18 @@ def test_first_epoch_has_no_fabricated_barrier_ack_or_inference_claim():
     assert "p07_b3c3_commit(" not in source
     assert "P07_B3_CORES==27u" in source
     assert "no neural" not in header.lower() or "trained parity" in header.lower()
+
+def test_first_epoch_pending_op_identity_compares_fields_not_struct_padding():
+    source=(ROOT/"software/p07/p07_b4l_b3_epoch.c").read_text()
+    assert "!b4l_op_equal(&op,&next)" in source
+    assert "memcmp(&op,&next,sizeof(op))" not in source
+    # Must match pager's existing semantic comparison of all ten fields.
+    all_fields=(
+        "kind","tick","ordinal","core","slot","victim",
+        "current_bank","next_bank","bytes","backing_address",
+    )
+    fragment=source.split("static int b4l_op_equal",1)[1].split(
+        "static uint64_t fnv_word",1
+    )[0]
+    for field in all_fields:
+        assert f"a->{field}==b->{field}" in fragment
