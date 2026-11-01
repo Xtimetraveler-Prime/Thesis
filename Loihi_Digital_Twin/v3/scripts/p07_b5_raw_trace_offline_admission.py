@@ -31,6 +31,22 @@ B5_MAILBOX_END=0x43FF0200
 class AdmissionNoGo(ValueError):
     pass
 
+LEGACY_FIRMWARE_IDENTITIES=(
+    b"P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3",
+    b"P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2",
+    b"P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1",
+)
+
+def reject_legacy_firmware_identity(data:bytes)->None:
+    """Reject old V3/V2/V1 runtime strings, even if new B5 ID is present."""
+    for identifier in LEGACY_FIRMWARE_IDENTITIES:
+        if identifier in data:
+            raise AdmissionNoGo(
+                "NO-GO: new B5 ELF contains original firmware identity: "+
+                identifier.decode()
+            )
+
+
 def sha(path:Path)->str:
     if path.is_symlink() or not path.is_file():
         raise AdmissionNoGo("NO-GO: missing real regular source/ELF/XSA "+str(path))
@@ -133,10 +149,9 @@ def admit(*,frozen:Path,routes:Path,build:Path,reports:Path)->dict:
     elf=build/"vitis_workspace"/(APP+".elf")
     linked_map=build/"vitis_workspace"/(APP+".map")
     identity=prior.require_elf(elf,expected_name=APP+".elf",expected_id=IDENTITY)
-    if (b"P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3" in elf.read_bytes() or
-        b"P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2" in elf.read_bytes() or
-        b"P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1" in elf.read_bytes()):
-        raise AdmissionNoGo("NO-GO: experimental B5 ELF polluted by original firmware identity")
+    # Deliberate strict rejection, retained after the first B5 build
+    # exposed a stale V3 xil_printf() in the *new* C main.
+    reject_legacy_firmware_identity(elf.read_bytes())
     linker=linked_map.read_text()
     if (not linked_map.is_file() or linked_map.is_symlink() or
         "Linker script and memory map" not in linker or
