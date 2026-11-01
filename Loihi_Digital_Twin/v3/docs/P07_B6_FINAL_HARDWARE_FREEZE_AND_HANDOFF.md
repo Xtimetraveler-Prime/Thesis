@@ -1,14 +1,74 @@
 # P07-B.6 — Original 27-core scaled physical inference freeze and P08-B handoff
 
-**Status (2026-11-01): P07-B.5 FORMALLY CLOSED. B6.1 GENUINE
-OPERATOR FREEZE SEAL PASSED (33 original frozen files, all five source
-physical validation sessions, accepted B5.4 original operator report).
-B6.2 complete external evidence packaging and independent archive
-auditor IMPLEMENTED; operator copy and independent audit PENDING.
-B6.3 bounded final operator handoff checker and P08-B boundary
-IMPLEMENTED; final P07-B acceptance PENDING B6.2 physical source
-copy and separate B6.3 operator signoff.**
-All PRs #49/#50/#51 remain draft and unmerged. Official MNIST TEST SEALED.
+**STATUS (2026-11-01): P07-B.6.1, B6.2 AND B6.3 ALL FORMALLY
+OPERATOR-ACCEPTED; ENTIRE P07-B COMPLETE WITH BOUNDED PHYSICAL
+VALIDATION CLAIMS.** Original 33 signed B2.4 assets and 5 real source-
+backed KV260 physical sessions were sealed, the full original portable
+evidence package was copied and independently SHA256-audited, and a
+separate B6.3 real final operator acceptance returned
+`P07_B_complete=true`, `P07_B6_final_hardware_freeze_accepted=true`.
+Original TEST remains SEALED. The acceptance JSON records
+`github_main_merged=false` **as of acceptance**; subsequent Git
+integration requires a separate post-merge check.
+
+## Genuine B6.2 archive + B6.3 final operator ACCEPTED, November 1, 2026
+
+The operator completed the **real** B6.2 copy, its independent full
+portable archive verifier, the B6.3 independent final review, and
+separate `--mode accept` final operator approval, all PC-only:
+
+```text
+P07_B6_2_COMPLETE_ORIGINAL_SOURCE_AND_5_PHYSICAL_SESSION_COPY_SHA_PASS=1
+P07_B6_2_ACCEPTED_ORIGINAL_V3_AND_B5_A53_FIRMWARE_COPY_PASS=1
+P07_B6_2_MAIN_LITREVIEW_ORIGINAL_GIT_BLOB_PASS=1
+P07_B6_2_ARCHIVED_EVERY_ORIGINAL_SOURCE_AND_PHYSICAL_FILE_INDEPENDENT_SHA256_PASS=1
+P07_B6_2_ORIGINAL_33_FILE_B24_FREEZE_AND_5_REAL_BOARD_SESSIONS_PASS=1
+P07_B6_3_ORIGINAL_27CORE_SIGNED_PHYSICAL_ARCHIVE_FINAL_RECHECK_PASS=1
+P07_B6_3_MAIN_ONLY_LITREVIEW_ORIGINAL_GIT_BLOB_PASS=1
+P07_B6_3_ORIGINAL_MNIST_TEST_SEALED=1
+P07_B6_3_FINAL_OPERATOR_ACCEPTANCE=1
+```
+
+**Accepted real local source paths and pinned hashes:**
+
+| Artifact | Operator PC location | SHA256 |
+| --- | --- | --- |
+| B6.1 source/physical 33-asset seal | `/home/dna/Thesis_Evidence/p07_b6_original_freeze_seal_20261101T230852Z.json` | `f77469b909e37e56330efda2f1296b5c896cf52c1ae1406a56a6c08161d6dce6` |
+| B6.2 copied original 5-session portable package | `/home/dna/Thesis_Evidence/p07_b6_full_reproducibility_20261101T233311Z` | Archive manifest `73491c0e4f1708ba726cb15e2fd64312d55b002c7d507f6ef0a0d868424fe431` |
+| B6.2 independent portable archive audit | `/home/dna/Thesis_Evidence/p07_b6_bundle_audit_20261101T233347Z.json` | `10399bc72bef7ce14db04e85685f2099ae2ab6f5461f6d0712fd7b4918111907` |
+| B6.3 independent final review | `/home/dna/Thesis_Evidence/p07_b6_3_independent_final_review_20261101T233401Z.json` | Independent review passed, report SHA not supplied |
+| **B6.3 FINAL explicitly accepted** | `/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json` | Source file SHA not supplied |
+
+The final `--mode accept` JSON independently reconfirmed exact
+source B5.4 final acceptance SHA
+`d72abc426a0d7a54d5a70994f75de9fca31862441d6507feb0b57c3e3fbbf7b9`,
+the real 33 frozen source/P03 XSA/V3 ELF/B5 A53 identity, and
+the 840,320-byte original TRAIN0 26-tick 1,010-neuron hardware
+trace SHA `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+The B6.2 copied archive contains all five actual authenticated
+physical-session source trees; it was re-opened independently for
+every included file SHA256 and file length.
+
+**Formal final acceptance:** `P07_B6_final_hardware_freeze_accepted=true`,
+`operator_final_P07_B_acceptance=true`, `P07_B_complete=true`,
+`P08_B_started=false`, and `official_MNIST_TEST=SEALED_NOT_ACCESSED`.
+[Source-controlled original genuine final P07-B operator report ledger](P07_B6_3_2026_11_01_FORMAL_OPERATOR_ACCEPTED_P07_B_CLOSEOUT.json).
+
+**Limits preserved:** Original sessions used selected signed TRAIN ordinals
+0/1/2/0, raw per-neuron complete parity proved original TRAIN0 only;
+individual routed packet words not all numerically checked. Hardware
+DDRAM/boot-owner exclusivity not independently proven, actual cold
+power cycles were operator-attested rather than independently
+instrumented, and fully asynchronous silicon-Loihi equivalence is not
+claimed. No official TEST unsealing or P08-B timing/accuracy benchmark
+occurred. The exact original independently committed
+`main:LitReview.md` Git blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e` is a strict
+pre/post-merge preservation requirement.
+
+**The remainder of this page preserves the historical B6 bring-up
+instructions**. Historical "pending" statuses refer to the time of
+writing, and are superseded by the accepted real B6.3 report above.
 
 ## Why B6 is necessary
 
