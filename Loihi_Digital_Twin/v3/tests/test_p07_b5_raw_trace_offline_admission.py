@@ -106,6 +106,8 @@ def test_new_shell_build_does_not_use_old_V3_programming_or_elf():
     assert "P07_B5_RAW_REAL_BOARD_RUN_AUTHORIZED=0" in shell
     assert "P07_B5_RAW_SIDECAR_DDR_OWNERSHIP_INDEPENDENTLY_PROVEN=0" in shell
     assert "p07_b4m_diag_v3_26tick.elf" not in shell
+    assert "B5 main still contains legacy firmware ID" in shell
+    assert "B5 ELF contains rejected old firmware identity" in shell
     assert "xsdb" not in shell and "program_hw_devices" not in shell
     assert "USER_LINK_OTHER_FLAGS" in code
     assert "p07_b5_raw_trace_v1" in code
