@@ -1,0 +1,49 @@
+{
+  "schema": "p07-b5-4-user-verified-five-session-formal-acceptance-evidence-v1",
+  "source_and_scope": "Operator pasted complete --mode accept JSON from local real PC-side B5.4 checker. Underlying physical binaries and signed attestation remain on operator PC; this repository ledger records what the supplied report proves, not fabricated independent board access.",
+  "accepted_utc_date": "2026-11-01",
+  "operator_accepted_report": "/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json",
+  "operator_attestation_file": "/home/dna/Thesis_Evidence/p07_b5_4_operator_attestation_20261101T222117Z.json",
+  "attestation_sha256": "4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31",
+  "four_original_v3_report_sha256": "f1dc383f4f4e316fca4cb5c6175e129347dfeb3fa4f9982de2c4ada412cc1ada",
+  "genuine_raw_neuron_recheck_report_sha256": "0c37aee136c218216eb01926b8a50ad67fb81833d4aa2c6feb096be6aa68106c",
+  "real_original_V3_sessions": 4,
+  "train_ordinals": [
+    0,
+    1,
+    2,
+    0
+  ],
+  "distinct_train_frames": 3,
+  "independent_original_multiframe_fingerprint_and_counters_pass": true,
+  "separate_genuine_B5_RAW_sessions": 1,
+  "original_train0_raw_trace": {
+    "ticks": 26,
+    "neuron_compartments": 1010,
+    "neuron_records": 26260,
+    "bytes": 840320,
+    "physical_SHA256": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "scalar_sha256": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "FNV64": "0xB59CA8594D6E64AD",
+    "all_seven_independent_numerical_checks_pass": true,
+    "original_27core_and_routes_physically_readback_verified": true
+  },
+  "accepted_operator_report_fields": {
+    "P07_B5_final_acceptance": true,
+    "operator_attested_cold_boot_and_recovery_all_five_sessions": true,
+    "operator_explicit_final_B5_acceptance": true,
+    "all_required_B5_numerical_gates_pass": true,
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "signed_original_model_frozen": true,
+    "original_P03_PL_and_accepted_original_V3_ELF_modified": false
+  },
+  "still_not_claimed": {
+    "boot_firmware_and_other_DDR_owner_independently_proven": false,
+    "independent_board_powercycle_instrumentation_proof": false,
+    "packet_level_every_word_numerical_parity_independently_proven": false,
+    "P07_B6_final_freeze_accepted": false,
+    "P07_B_complete": false,
+    "main_merged": false
+  },
+  "operator_comment": "User confirmed B5.4 independent numerical validation followed by separate user-signed five-run reboot/risk attestation and actual --mode accept PASS. P07-B.5 is formally closed within that explicit numerical and physical evidence scope. B6 and overall P07 remain open. No main merge."
+}
