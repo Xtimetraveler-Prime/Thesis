@@ -107,6 +107,7 @@ def test_exact_report_verified_before_hardware(tmp_path, monkeypatch):
     monkeypatch.setattr(run.diag_gate, "admit", lambda **kwargs:diag)
     monkeypatch.setattr(run.physical.model, "prepare_verified_contexts", lambda *args:{"original":True})
     monkeypatch.setattr(run.physical.old, "require_real_bindings", lambda *args:{"binding":True})
+    monkeypatch.setattr(run, "preflight_original_p02_metadata", lambda *args:None)
     monkeypatch.setattr(run.physical, "resolve_elf_inspection_tools", lambda:("readelf","nm"))
     monkeypatch.setattr(run.physical.old.b4i, "preflight", lambda *args, **kwargs:None)
     idx, desc, stage, elf = run.require_v3_original(a)
@@ -127,7 +128,7 @@ def test_same_session_bad_readback_stops_v3_download(tmp_path,monkeypatch):
             run.physically_execute_after_verified(a,out,readbacks)
 
 
-def test_v3_failed_mailbox_preserves_b4d2_and_no_acceptance(tmp_path,monkeypatch):
+def test_v3_failed_mailbox_preserves_b4d3_and_no_acceptance(tmp_path,monkeypatch):
     a = args(tmp_path)
     out, readbacks, signed = staged_receipt(a)
     monkeypatch.setattr(run.physical, "EXPECTED_STAGE_SHA", signed)
@@ -232,3 +233,41 @@ def test_v3_rejects_stale_historical_v2_artifact_and_launch_script(tmp_path):
     assert run.V3_ELF_SHA=="66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
     assert run.V3_MAP_SHA=="148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede"
     assert run.V3_ID=="P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3"
+
+def test_v3_all_original_p02_count_headers_readonly(tmp_path, monkeypatch):
+    a=args(tmp_path)
+    a.frozen_dir.mkdir()
+    a.bindings_dir.mkdir()
+    payload=bytearray(0x4000)
+    payload[:8]=b"B4BIND01"
+    originals=[]
+    for core in range(27):
+        n=39 if core==0 else (10 if core==26 else 40)
+        ns=30576 if core==0 else 1000
+        nr=0 if core==26 else 100
+        metadata=(n<<7)|core
+        struct.pack_into("<QHHI",payload,128+528*core,metadata,n,1,core)
+        path=a.frozen_dir/f"core_{core:03d}_initial_p02_512k.bin"
+        with path.open("wb") as f:
+            f.write(struct.pack("<8s12I",b"LTV3CTX1",1,0x1000,0x80000,
+                                core,0,0,n,ns,nr,0,0,0))
+        originals.append(path)
+    (a.bindings_dir/run.physical.binds.FILENAME).write_bytes(payload)
+    monkeypatch.setattr(run.physical.model.b4l1,"record_filename",
+                        lambda c:f"core_{c:03d}_initial_p02_512k.bin")
+    run.preflight_original_p02_metadata(a)
+    # Any core in the original TRAIN deployment with 0 synapses
+    # would fail the real V3 fix. Reject it on the host, not on the board.
+    with originals[26].open("r+b") as f:
+        f.seek(0x24)
+        f.write(struct.pack("<I",0))
+    with pytest.raises(run.InferenceNoGo,match="core 26"):
+        run.preflight_original_p02_metadata(a)
+    # Malicious mismatch in an otherwise valid 16KiB descriptor must fail.
+    with originals[26].open("r+b") as f:
+        f.seek(0x24)
+        f.write(struct.pack("<I",1000))
+    payload[128+528*10]=255
+    (a.bindings_dir/run.physical.binds.FILENAME).write_bytes(payload)
+    with pytest.raises(run.InferenceNoGo,match="core 10"):
+        run.preflight_original_p02_metadata(a)
