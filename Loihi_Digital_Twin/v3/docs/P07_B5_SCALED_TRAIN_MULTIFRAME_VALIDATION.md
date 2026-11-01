@@ -146,6 +146,16 @@ cat "$P07_B5_EXPECTED"
 
 ## B5.2 physical procedure
 
+The first new physical test is original TRAIN validation **ordinal 1**.
+Follow the exact one-session [dedicated ordinal-1 physical runbook](P07_B5_2_OPERATOR_ORDINAL1_PHYSICAL_RUNBOOK.md), including the real
+V3 ELF/map SHA checks, PC-only preflight, all twelve approvals,
+original 27-core readbacks, mandatory KV260 reboot and post-run
+original independent scalar verification. **Operator B5.1 and old
+ordinal0 read-only replay passed; no new ordinal1 physical result
+has yet been supplied.** Stop after the first new run for
+independent review before undertaking ordinal2 or the repeat.
+
+
 1. Hard-reboot KV260 and verify a dedicated XSDB server. Never resume a
    Linux session after JTAG takeover. Make a **NEW** evidence dir for
    each run. Physical V3 runner is still
