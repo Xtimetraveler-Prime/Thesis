@@ -108,7 +108,7 @@ def test_B6_seal_rechecks_real_B5_receipt_again_and_rejects_forged_boolean(tmp_p
         assert real.confirm_final_acceptance==b5.FINAL_CONFIRM
         return fake_accept
     monkeypatch.setattr(b6.b54,"closeout",replay)
-    with pytest.raises(ValueError,match="operator acceptance lists"):
+    with pytest.raises(ValueError,match="operator attestation must identify five"):
         b6.build_inventory(a)
     assert len(replay_calls)==1
     a.attestation.write_text(json.dumps({
