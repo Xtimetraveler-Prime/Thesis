@@ -1,18 +1,31 @@
-# P07-B.5.3 — Exact physical neuron-trace capture: new firmware candidate
+# P07-B.5.3 — Exact original trained 27-core physical neuron trace
 
-**Status (2026-11-01): IN DEVELOPMENT. B5.3.1 native bounded 840320B
-C recorder, B5.3.2 isolated raw-bank7 integration, separate A53 main,
-Vitis source/build path, strict PC-only ELF/XSA/source admission,
-standalone hook and firmware syntax tests IMPLEMENTED / native CI PASS.
-The operator's genuine corrected distinct B5 Vitis ELF/map have now
-passed independent PC-only source/ELF/XSA/route admission. A separate
-new B5 physical XSDB launcher, genuine same-session source stager and
-strong raw neuron-trace verifier have been implemented, with native CI
-safety tests. **Real sidecar+mailbox DDR ownership is still UNPROVEN;
-no physical B5 run or 840320B board readback has occurred and strict
-physical neuron bytewise parity is NOT VERIFIED OR AUTHORIZED.**** P07-B.5 final
-milestone remains OPEN, P07-B.6 and P08-B remain gated, and original
-official MNIST TEST remains sealed.
+**Status (2026-11-01): SELECTED ORIGINAL TRAIN0 STRICT RAW PHYSICAL
+NEURON BYTEWISE EQUALITY ACCEPTED (26 ticks × 1,010 neurons × 32 bytes,
+840,320 bytes total).** Original 27 physical contexts/routes/TRAIN0
+staged and read back in the same JTAG execution; unique B5 ELF/map and
+terminal 256B mailbox authenticated; all physical neuron trace bytes
+equal independently regenerated original scalar reference,
+SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+One 26-tick FNV64 `0xB59CA8594D6E64AD`; all seven original
+neural/input/spike/packet-COUNT/readout checks pass. The operator
+provided genuine source-derived JSON, not raw binary bytes directly to
+the assistant. Full per-packet-byte trace equality is NOT claimed.
+
+[Bounded authenticated actual physical B5.3 RAW PASS evidence ledger](P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json).
+
+**Next B5.4 numerical evidence re-review and actual cold power-cycle/
+recovery operator attestation are OPEN**, as are genuine DDR ownership
+exclusivity and formal P07-B.5 final acceptance. B5.3 acceptance does
+NOT prove firmware/low-DDR ownership, independent power-cycle
+instrumentation, full packet-by-packet trace, or official MNIST TEST
+accuracy. [B5.4 independent acceptance review](P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+PRs #49/#50 remain draft; nothing merged to `main`.
+
+The rest of this document preserves the **earlier chronological
+development and pre-execution plans**, and must be read as historical:
+statements that B5.3 had not physically executed were true when written,
+but are superseded by the real 2026-11-01 B5.3 physical raw PASS above.
 
 ## B5.3.2 operator Vitis build / first offline admission NO-GO (2026-11-01)
 
