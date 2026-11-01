@@ -376,3 +376,57 @@ This is a takeover-controller defect / environmental CPU state problem,
 NOT evidence that the original trained HLS fault is resolved or that the
 metadata fix failed. P07-B.4m remains OPEN, PR #49 draft.
 
+## 2026-11-01 — genuine original TRAIN0 26-tick V3 physical STRUCTURAL PASS
+
+Operator reran the exact admitted V3 experiment on KV260 after successful
+standalone A53 stop / PS FPD+LPD 128-bit verification. **Real V3 hardware
+success is supported by same-session complete byte-exact DDR staging,
+A53 firmware downloaded/executed, 256-byte terminal DONE mailbox captured,
+and strict independent structural receipt acceptance.** This supersedes
+the *V3 first-takeover-attempt* failure as the latest observed board result;
+that earlier failure remains preserved separately.
+
+- Physical evidence directory: `/home/dna/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z`.
+- Original 27 frozen × 512KiB P02 model physically staged/read back;
+  original 16KiB binding SHA `2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb`;
+  SHA-verified 80KiB output routes, 896KiB input routes and 123216-byte
+  original TRAIN validation 0 ingress.
+- V3 actual A53 ELF `66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`
+  downloaded and observed terminal. Original accepted XSA preserved.
+- Raw 256-byte **actual V3** physical mailbox SHA256:
+  `5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`.
+- Strict P07-B.4m structural receipt: **702/702 real HLS dispatches,
+  26/26 barriers, 702 page-ins, 699 runtime dirty page-outs, 3 final
+  page-outs, 307666944 page-read bytes, 74760192 page-write bytes**.
+- Registered axons=21384, original external current=31512,
+  physical bank7 source spikes=1514, real P03 packet words captured=1489,
+  NEXT packets inserted=1489.
+- All 1010 compartments traced per tick; physical cumulative trace
+  `FNV64=0xB59CA8594D6E64AD`.
+- Physical TRAIN0 readout predicted class **1** with 10-class spike
+  counts `[0,25,0,0,0,0,0,0,0,0]`. The original independent B2.3 TRAIN0
+  expected class/readout counts must still be compared before any
+  inference-correctness claim. Label is NOT implied by this receipt.
+- Firmware confirmed no P03 errors or scheduler/pager trace faults and
+  structural PASS `P07_B4M_DIAG_V3_STRUCTURAL_RECEIPT_ACCEPTED=1`;
+  `independent_full_neuron_numerical_parity_verified=false` remains TRUE.
+- These observations strongly support the metadata omission as root cause
+  of V2's immediate `STATUS_SYNAPSE_ROW_BOUNDS` failure. They do NOT
+  establish bit-exact neuron-by-neuron parity against an independent host.
+- Official MNIST TEST is still `SEALED_NOT_ACCESSED`.
+  Boot firmware low-DDR exclusivity independently UNPROVEN, as before.
+
+The next action is **PC-only numerical investigation of this real capture**:
+new `scripts/p07_b4m_v3_train0_scalar_vs_physical.py` re-verifies
+original B2.4 frozen assets and JTAG physical readback bytes, and computes
+26-tick reference scalar LIF state trace from original
+`network_source.json` + TRAIN0 raw pixels. It independently reconstructs
+the actual P07 HLS trace/after-state FNV byte encoding, compares all six
+available aggregates plus 26-tick FNV against the existing real V3 mailbox,
+and verifies the scalar SHA against original frozen B2.3 monolithic
+numerical witness. No new board contact or HLS changes are needed for
+this check. **Only a matching aggregate/FNV can be called numerical
+fingerprint agreement, not raw per-neuron bytewise numerical parity.**
+No fake/synthetic mailbox is accepted as real evidence.
+P07-B.4m remains open pending this parity audit and interpretation.
+
