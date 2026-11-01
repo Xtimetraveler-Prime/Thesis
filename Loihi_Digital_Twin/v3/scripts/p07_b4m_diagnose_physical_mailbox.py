@@ -42,6 +42,29 @@ WORD_NAMES={
 for _i in range(10):
     WORD_NAMES[32+_i]=f"readout_neuron_{_i}_spike_count"
 
+# DIAGNOSTIC_V2 failed firmware uses explicit non-acceptance reserved
+# words [47..62]. The successful V1/V2 256B schema remains unchanged.
+# No status value or diagnostic marker grants inference acceptance.
+DIAG_V2_MAGIC=0x42344432
+DIAG_V2_FIELDS={
+    47:"diagnostic_v2_failure_magic",
+    48:"adapter_last_polled_status",
+    49:"b3c2_scheduler_first_fault",
+    50:"pager_first_failure_kind",
+    51:"real_trace_first_fault",
+    52:"p03_dispatch_status_raw",
+    53:"p03_dispatch_core_status_raw",
+    54:"p03_dispatch_active_raw",
+    55:"p03_dispatch_packet_count_raw",
+    56:"p03_debug_status_raw",
+    57:"p03_global_status_raw",
+    58:"p03_page_status_raw",
+    59:"p03_page_pending_bytes_raw",
+    60:"p03_dispatch_config_raw",
+    61:"p03_debug_config_raw",
+    62:"p03_debug_addr_raw",
+}
+
 # First-fault numeric values in software/p07/p07_b4m_full_inference.c.
 FIRST_FAULT={
     1:"initial source/ingress/pager/MMIO argument and frozen binding precheck",
@@ -86,7 +109,17 @@ def diagnose(data:bytes)->dict:
         rejection=None
         verified=True
     fault=w[45] or w[3]
-    return {
+    is_v2=w[47]==DIAG_V2_MAGIC
+    v2={
+        "diagnostic_v2_failure_payload_present":is_v2,
+        "failure_telemetry":{
+            DIAG_V2_FIELDS[i]:{
+                "uint32":w[i],"hex":f"0x{w[i]:08X}",
+            }
+            for i in DIAG_V2_FIELDS
+        } if is_v2 else None,
+    }
+    return {**v2,
         "schema":"p07-b4m-failed-or-partial-original-physical-mailbox-diagnostic-v1",
         "source":"UNTRUSTED_SUPPLIED_256B_MAILBOX_NOT_INDEPENDENT_BOARD_PROOF",
         "sha256":hashlib.sha256(data).hexdigest(),
@@ -114,7 +147,7 @@ def diagnose(data:bytes)->dict:
         "physical_dispatch_counter_snapshot":w[46],
         "mailbox_words":[
             {
-                "index":i,"field":WORD_NAMES.get(i,f"reserved_{i}"),
+                "index":i,"field":DIAG_V2_FIELDS[i] if is_v2 and i in DIAG_V2_FIELDS else WORD_NAMES.get(i,f"reserved_{i}"),
                 "hex":f"0x{value:08X}","uint32":value,
                 **({"signed_int32":signed32(value)} if i in (4,5,6,7,8,9,10,11,44) else {}),
             }
