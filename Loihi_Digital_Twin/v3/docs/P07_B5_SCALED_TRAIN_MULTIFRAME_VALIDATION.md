@@ -1,22 +1,43 @@
 # P07-B.5 — Scaled 27-core trained physical validation
 
-**Status: IN PROGRESS.** B5.1 original three frozen TRAIN scalar source
-references **OPERATOR-VERIFIED PASS (2026-11-01)**. B5.2 independently
-verified original ordinal0 **PASS** and new real KV260 ordinal1 **PASS**;
-ordinal2 has now also been independently verified against real KV260 physical evidence (**PASS**), leaving only the independent cold-reboot ordinal0 repeat and four-run consolidation. Original TRAIN2 evidence: `p07_b5_train2_real_20261101T192124Z`; numerical report: `p07_b5_verify_train2_20261101T192721Z.json`. Physical bytewise 26×1010 raw-neuron trace parity remains pending. See [TRAIN2 evidence ledger](P07_B5_2_REAL_TRAIN2_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
-Original TRAIN1 physical receipt and independent scalar report are recorded
-in [the signed-source P07-B5.2 ordinal1 ledger](P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json). The complete
-B4 bring-up problem/resolution timeline is separately documented in
-[P07-B.4 engineering challenges and resolutions](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
-P07-B.4m has an actual one-frame physical structural PASS (702 HLS
-dispatches, 26 barriers), and the user independently reported
-`P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1` for original
-TRAIN-derived validation ordinal 0. The original scalar report is external:
-`/home/dna/Thesis_Evidence/p07_b4m_v3_scalar_parity_20261101T043214Z.json`.
-This demonstrates agreement of 26-tick FNV64 and all checked aggregates
-for one **original TRAIN** witness; it does not imply raw per-compartment
-physical trace parity, 10K official TEST accuracy or a reboot reproducibility
-study. Original official MNIST TEST is still sealed.
+**STATUS AS OF 2026-11-01: B5.1 + B5.2 ACCEPTED (bounded four-run
+physical fingerprint parity). B5.3 strict RAW trace NOT YET physically
+accepted; B5.4 milestone closeout PENDING.**
+
+The user independently verified four genuine distinct physical sessions
+in the order original frozen TRAIN ordinals **0,1,2,0**, each with
+**702 real HLS dispatches, 26 barriers and independent exact
+26-tick software-scalar FNV64/input/spike/packet/readout agreement**.
+All three pre-registered TRAIN images were correctly classified, and the
+independent TRAIN0 repeat exactly reproduced the original 256B physical
+mailbox SHA256, all counters and FNV64. The original model and accepted V3
+ELF were unchanged; the official MNIST TEST was not accessed.
+
+- Original independent TRAIN0 / TRAIN1 / TRAIN2 reference and full
+  physical verification PASS.
+- Genuine TRAIN0 repeat physical evidence:
+  `/home/dna/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_20261101T193922Z`;
+  PC audit:
+  `/home/dna/Thesis_Evidence/p07_b5_verify_train0_repeat_20261101T194457Z.json`.
+- Genuine four-run consolidation report:
+  `/home/dna/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json`.
+- The [bounded four-run acceptance ledger](P07_B5_2_2026_11_01_REAL_FOUR_SESSION_FINGERPRINT_ACCEPTANCE.json)
+  preserves each raw 256B mailbox SHA256, source evidence paths and
+  the explicit remaining validation requirements.
+
+**Do not claim P07-B.5 fully closed.** The operator's report states
+`P07_B5_final_full_parity_and_acceptance=false`,
+`full_raw_per_neuron_hardware_trace_directly_compared=false`, and
+`cold_reboot_between_runs_independently_proven=false`. Evidence folder
+names and deterministic repeat outputs cannot prove an actual power-cycle.
+The operator may separately attest to the reboot. B5.3 is now
+implementing a **new, separately named, not-yet-board-authorized**
+840,320B raw P03 bank7 trace sidecar; the accepted V3 ELF and original
+trained graph remain frozen. See [B5.3 source/DDR capture engineering handoff](P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+Earlier dated ordinal-specific physical runbooks below remain as historical
+reproduction instructions, not current milestone status. For the earlier
+hardware challenges, see
+[P07-B.4 problems and fixes](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
 
 ## Freeze and risk boundaries
 
