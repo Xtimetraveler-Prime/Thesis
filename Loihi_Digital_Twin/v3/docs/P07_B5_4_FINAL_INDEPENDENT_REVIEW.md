@@ -1,12 +1,52 @@
 # P07-B.5.4 — Final original trained 27-core FPGA evidence and operator closeout
 
-**Status (2026-11-01): FIVE-SESSION INDEPENDENT NUMERICAL REVIEW PASS.
-Four genuine original 0/1/2/0 V3 runs and a separate full 840,320B
-physical RAW0 run reverified; all seven scalar comparisons passed.
-B5.4 FINAL OPERATOR ACCEPTANCE remains OPEN pending actual operator
-cold-power-cycle/recovery attestations, explicit signoff and residual
-DDR-ownership disclosure. P07-B.5 and P07-B remain OPEN.**
+**Status (2026-11-01): P07-B.5.4 FORMALLY ACCEPTED; ALL B5 NUMERICAL/PHYSICAL
+GATES PASSED AND OPERATOR COLD-REBOOT/JTAG ATTESTATION ACCEPTED.
+P07-B.5 CLOSED WITH BOUNDED CLAIMS; P07-B.6 AND OVERALL P07-B REMAIN OPEN.**
 No `main` merge. PR #49 and #50 stay draft. P07-B.6/P08-B gated.
+
+## 2026-11-01: B5.4 FORMALLY ACCEPTED — five genuine physical sessions + operator cold-reboot attestation
+
+The operator executed **`scripts/p07_b5_final_acceptance.py --mode accept`**
+against the original four 0/1/2/0 V3 sessions, the fifth B5 RAW0
+physical evidence directory, the unchanged frozen TRAIN sources and the
+external operator five-session cold power-cycle/JTAG/recovery/risk attestation.
+Real terminal markers:
+
+```text
+P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1
+P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1
+P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0
+P07_B5_4_OFFICIAL_MNIST_TEST_SEALED=1
+P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1
+```
+
+**Final accepted report:**
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`;
+**operator-attestation SHA256:**
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+
+Actual accepted report contains
+`P07_B5_final_acceptance=true`,
+`operator_attested_cold_boot_and_recovery_all_five_sessions=true`,
+`operator_explicit_final_B5_acceptance=true`,
+`all_required_B5_numerical_gates_pass=true` and
+`original_P03_PL_and_accepted_original_V3_ELF_modified=false`.
+Physical and independent scalar 840320B neuron trace SHA256 remain
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+Original official TEST is SEALED. This **formally closes P07-B.5
+within the previously defined numerical/physical validation scope**.
+
+**Preserved explicit limits:** DDR/boot ownership exclusive use NOT
+independently proven; cold reboots operator-attested, NOT independently
+instrumented; packet routing **counts** checked, not every individual
+packet-word trace. Acceptance does not establish wider Loihi architectural
+feature coverage, official TEST accuracy, P07-B.6 final freeze/handoff
+or full P07-B completion. [Final operator-attested B5.4 bounded acceptance
+ledger](P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json).
+Neither `main` nor the independent `main:LitReview.md` is modified;
+draft PR #49/#50 must remain unmerged until P07-B.6 and whole P07-B
+are separately accepted.
 
 ## 2026-11-01: Genuine operator B5.4 five-session review PASS (NUMERICAL ONLY)
 
