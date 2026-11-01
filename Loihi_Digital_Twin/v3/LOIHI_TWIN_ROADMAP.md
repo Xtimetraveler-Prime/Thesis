@@ -2078,6 +2078,52 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 ENTIRE P07-B — FORMALLY COMPLETE / FINAL USER ACCEPTED ORIGINAL TRAINED 27-CORE BOARD-LOCAL PHYSICAL INFERENCE + REPRODUCIBILITY HANDOFF:**
+B6.1 real operator-sealed SHA manifest (33 original frozen B2.4
+assets, 27 original P02 contexts and all five accepted real KV260
+sessions) PASS. B6.2 genuine copied 5-session portable source/firmware/
+XSA/evidence package PASS: the original full physical evidence
+`/home/dna/Thesis_Evidence/p07_b6_full_reproducibility_20261101T233311Z`
+was created and independently rehashed every file + length, including
+original accepted V3 and distinct B5 A53 ELF/map, P03 shell and
+original signed TRAIN routes; archive manifest SHA256
+`73491c0e4f1708ba726cb15e2fd64312d55b002c7d507f6ef0a0d868424fe431`;
+independent archive audit SHA256
+`10399bc72bef7ce14db04e85685f2099ae2ab6f5461f6d0712fd7b4918111907`.
+B6.3 separate **REAL** operator `--mode review` and then
+`--mode accept` source-backed final gate PASS. Accepted original
+operator report:
+`/home/dna/Thesis_Evidence/p07_b6_3_final_operator_accepted_20261101T233410Z.json`.
+`P07_B5_final_operator_acceptance_revalidated=true`,
+`P07_B6_1_original_source_and_five_physical_evidence_seal_revalidated=true`,
+`P07_B6_2_full_portable_archive_independent_bytewise_verifier_pass=true`,
+`P07_B6_final_hardware_freeze_accepted=true`,
+`operator_final_P07_B_acceptance=true`,
+**`P07_B_complete=true`** and **`P08_B_started=false`**.
+Original 26-tick/1,010-neuron entire TRAIN0 real physical 840320B
+SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`
+remains identical to original independent scalar. Original trained
+model, 27 original 512KiB contexts, P03 XSA and both historical
+A53 firmware SHA identities frozen; four original V3 sessions 0/1/2/0
+plus one genuine separate original TRAIN0 B5 RAW0 physical session.
+**Preserved bounded original claims:** packet counts not full every-
+packet-word parity, DDR/Linux/boot exclusive ownership unproven,
+board power cycles operator-attested (not hardware instrumented),
+Loihi fully asynchronous equivalent not claimed, original official
+MNIST TEST **SEALED_NOT_ACCESSED** and P08-B benchmarks not started.
+[Final user-accepted exact B6.3 P07-B completion ledger](docs/P07_B6_3_2026_11_01_FORMAL_OPERATOR_ACCEPTED_P07_B_CLOSEOUT.json).
+[Accepted B6.3 reproducibility / P08 sealed handoff](docs/P07_B6_3_FINAL_HANDOFF_P08_BOUNDARY.md).
+The user's final `github_main_merged=false` marker documents the
+state **at B6.3 acceptance**, not whether a subsequent GitHub merge
+has occurred. **Final P07-B approval includes explicit operator
+request for ordered normal PR merges #49→#50→#51 into `main`**, with
+independent main-only `LitReview.md` Git blob
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e` remaining exactly
+unchanged before and after each merge. Never reset, force push or
+replace `main` with a stale development branch. Do not unseal TEST.
+Historical earlier P07-B-in-progress entries below are retained in
+chronological development history and superseded by this final result.
+
 **2026-11-01 P07-B.6.1 REAL 33-ORIGINAL-FROZEN-ASSET / FIVE-PHYSICAL-SESSION INDEPENDENT SEAL PASS; B6.2 COMPLETE PORTABLE ARCHIVE VERIFIER AND B6.3 FULL P07-B FINAL ACCEPTANCE GATE IMPLEMENTED (DRAFT PR #51):**
 The operator ran genuine B6.1 `scripts/p07_b6_freeze_manifest.py --mode seal`
 with original signed B2.4 frozen 33-asset tree, original signed
