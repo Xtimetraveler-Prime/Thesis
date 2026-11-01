@@ -141,8 +141,10 @@ def test_v3_failed_mailbox_preserves_b4d2_and_no_acceptance(tmp_path,monkeypatch
     words[44] = (1<<32)-5
     words[46] = 1
     words[47] = run.mailbox_diagnosis.DIAG_V3_MAGIC
-    words[49] = 17  # scheduler TRACE callback fault
-    words[51] = 3   # physical debug read failure
+    words[49] = 10  # dispatch failed after HLS completed
+    words[50] = 3   # physical pager dispatch fault
+    words[53] = 4   # HLS synapse row bound flag must not be accepted
+    words[62] = 0   # V3 metadata fix ran successfully (not inferred hardware pass)
     words[56] = 0x18
     words[63] = run.full_verify.DONE
     def fake_xsdb(command, log):
@@ -155,12 +157,16 @@ def test_v3_failed_mailbox_preserves_b4d2_and_no_acceptance(tmp_path,monkeypatch
             run.physically_execute_after_verified(a,out,readbacks)
     diagnostic=json.loads((out/"diag_v3_failed_mailbox_diagnostic.json").read_text())
     assert diagnostic["diagnostic_v3_failure_payload_present"] is True
-    assert diagnostic["failure_telemetry"]["b3c2_scheduler_first_fault"]["uint32"] == 17
-    assert diagnostic["failure_telemetry"]["real_trace_first_fault"]["uint32"] == 3
+    assert diagnostic["failure_telemetry"]["b3c2_scheduler_first_fault"]["uint32"] == 10
+    assert diagnostic["failure_telemetry"]["pager_first_failure_kind"]["uint32"] == 3
+    assert diagnostic["failure_telemetry"]["p03_dispatch_core_status_raw"]["uint32"] == 4
+    assert diagnostic["failure_telemetry"]["v3_dispatch_metadata_fix_status"]["uint32"] == 0
     assert diagnostic["firmware_terminal_status"] == "B4M_FIRMWARE_FAIL"
     assert diagnostic["all_structural_inference_receipt_checks_pass"] is False
     assert not (out/"diag_v3_structural_receipt.json").exists()
     assert "REBOOT_REQUIRED" in (out/"stage.txt").read_text()
+    assert diagnostic["diagnostic_v2_failure_payload_present"] is False
+    assert diagnostic["diagnostic_v3_failure_payload_present"] is True
 
 
 @pytest.mark.skipif(shutil.which("tclsh") is None,reason="tclsh unavailable")
@@ -214,3 +220,15 @@ def test_v3_xsdb_mock_terminal_capture(tmp_path):
     for item in run.LAUNCH_MARKERS:
         assert item in result.stdout
     assert mail.read_bytes()==captured.read_bytes()
+
+def test_v3_rejects_stale_historical_v2_artifact_and_launch_script(tmp_path):
+    a=args(tmp_path)
+    v2=a.diag_build/"vitis_workspace"/"p07_b4m_diag_v2_26tick.elf"
+    v2.write_bytes(b"DO_NOT_SWAP_HISTORICAL_V2_ELF")
+    a.elf=v2
+    with pytest.raises(run.InferenceNoGo,match="exact V3 build workspace"):
+        run.require_v3_original(a)
+    assert run.LAUNCH_TCL=="vivado/p07_b4m_diag_v3_xsdb_run.tcl"
+    assert run.V3_ELF_SHA=="66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
+    assert run.V3_MAP_SHA=="148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede"
+    assert run.V3_ID=="P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3"
