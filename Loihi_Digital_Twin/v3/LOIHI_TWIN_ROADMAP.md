@@ -2114,9 +2114,11 @@ single physical ordinal1 session**. Physical 256B mailbox SHA256
 external evidence `p07_b5_train1_real_20261101T045754Z` and
 `p07_b5_verify_train1_20261101T050334Z.json`. Detailed
 [ordinal1 provenance ledger](docs/P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
-**Only ordinal0 and ordinal1 are physically verified**; ordinal2, a
-separate original ordinal0 reboot repeat, four-run consolidation and
-strict 840320B physical raw-neuron trace parity remain OPEN. No
+**Historical ordinal1 status (superseded by the later ordinal2 PASS above):**
+At this point ordinal0 and ordinal1 were physically verified; the subsequent
+ordinal2 result is recorded above. Original ordinal0 reboot repeat,
+four-run consolidation and strict 840320B physical raw-neuron trace parity
+remain OPEN. No
 user-attested cold reboot proof supplied for this run. B5.4/P07-B.6/P08-B
 still gated. B2 official TEST SEALED.
 
