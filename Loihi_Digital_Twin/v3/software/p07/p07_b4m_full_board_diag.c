@@ -170,22 +170,22 @@ int main(void){
      * rather than trying more timeout polls.
      */
     if(mailbox[2]!=B4M_MAILBOX_PASS){
-        mailbox[47]=hw.last_status;
-        mailbox[48]=scheduler.first_fault;
-        mailbox[49]=pager.first_failure_kind;
-        mailbox[50]=buffers.trace.first_fault;
-        mailbox[51]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_STATUS);
-        mailbox[52]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_CORE_STATUS);
-        mailbox[53]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_ACTIVE);
-        mailbox[54]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_PACKET_CNT);
-        mailbox[55]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_STATUS);
-        mailbox[56]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_GLOBAL_STATUS);
-        mailbox[57]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_PAGE_STATUS);
-        mailbox[58]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_PAGE_PENDING_BYTES);
-        mailbox[59]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_CONFIG);
-        mailbox[60]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_CONFIG);
-        mailbox[61]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_ADDR);
-        mailbox[62]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_PAGE_COMPLETED);
+        mailbox[47]=UINT32_C(0x42344432); /* B4D2 unique failure payload */
+        mailbox[48]=hw.last_status;
+        mailbox[49]=scheduler.first_fault;
+        mailbox[50]=pager.first_failure_kind;
+        mailbox[51]=buffers.trace.first_fault;
+        mailbox[52]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_STATUS);
+        mailbox[53]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_CORE_STATUS);
+        mailbox[54]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_ACTIVE);
+        mailbox[55]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_PACKET_CNT);
+        mailbox[56]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_STATUS);
+        mailbox[57]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_GLOBAL_STATUS);
+        mailbox[58]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_PAGE_STATUS);
+        mailbox[59]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_PAGE_PENDING_BYTES);
+        mailbox[60]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DISPATCH_CONFIG);
+        mailbox[61]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_CONFIG);
+        mailbox[62]=Xil_In32((UINTPTR)P03_MMIO_BASE+P03_REG_DEBUG_ADDR);
     }
     mailbox[63]=B4M_MAILBOX_DONE;
     publish();
