@@ -2078,6 +2078,46 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.3 AUTHENTICATED REAL PHYSICAL 840320B ORIGINAL TRAIN0 NEURON-BYTEWISE PARITY PASS; B5.4 FINAL ACCEPTANCE REVIEW IMPLEMENTED, REBOOT OPERATOR SIGNOFF OPEN:**
+Operator ran distinct new B5 RAW A53 27core original TRAIN ordinal0
+(index **37384**) and independently verified real same-session signed
+27×512KiB physical context + 16KiB binding + original output/input
+routes and ingress TRAIN0 readbacks. Genuine new ELF/map SHA
+`0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`/
+`1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`;
+original B5 terminal 256B physical mailbox SHA256
+`435b1c903f3323b3bfd156eb271202d82c8738ebe2a7a8c489e6aab7fcdd4d6b`.
+**Actual physical 26×1010×32B = 840320B = 26260 neuron words**
+byte-for-byte matched independently regenerated signed original scalar
+trace; physical/scalar SHA256 both
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+Original FNV64 `0xB59CA8594D6E64AD`, **all 26 tick fingerprints**,
+**all seven independently checked metrics** exact; 702 real physical
+HLS dispatches, 26 barriers, 702 page-ins, 699 dirty + 3 final outs,
+source spikes 1514, external CURRENT events 31512, packet/NEXT **counts**
+1489 each, votes 25 for class1. **B5.3 selected FULL RAW NEURON
+numerical parity ACCEPTED**, not just prior noncryptographic FNV64.
+No claim of *every individual routed packet word* trace parity.
+[Operator original physical B5.3 signed source/terminal/raw acceptance ledger](docs/P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json).
+Original V3 ELF, accepted P03 FPGA PL, frozen B2.4 model and
+OFFICIAL MNIST TEST unchanged/SEALED.
+**B5.4 NEXT:** source-controlled
+`scripts/p07_b5_final_acceptance.py` PC-only reviewer freshly
+reopens all FOUR previous original V3 0/1/2/0 genuine signed physical
+sessions AND the FIFTH authenticated physical B5 RAW0 session, requires
+exact original report consistency, and refuses milestone closeout
+without explicit operator attestation of fresh cold power cycles before
+and after all five sessions, dedicated JTAG, no resumed halted Linux,
+independent numerical signoff and explicit residual DDR/boot ownership
+risk acknowledgment. The source-controlled operator attestation template
+has no pre-approved `true` facts. No physical DDR exclusivity or independent
+hardware clock proof fabricated. [B5.4 final review/runbook](docs/P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+**Do NOT mark P07-B.5 or full P07-B closed yet; B5.4 formal user
+acceptance and P07-B.6 freeze/handoff remain open. No main merge; draft
+PRs #49/#50 preserved.** Prior earlier PC-only preflight and engineering
+records below are historical, superseded in status by the actual real
+B5.3 physical neural trace parity PASS above.
+
 **2026-11-01 P07-B.5.3 ORIGINAL TRAIN0 B5 RAW A53 PC PREFLIGHT PASS; PHYSICAL DDR OWNERSHIP REVIEW REQUIRED BEFORE BOARD EXECUTION:**
 Operator ran the separate B5.3 RAW runner with `--mode preflight`
 and reported `P07_B5_NEW_RAW_GENUINE_A53_ELF_MAP_AND_ORIGINAL_TRAIN_HOST_PASS=1`,
