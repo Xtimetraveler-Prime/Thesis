@@ -2078,6 +2078,24 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.3 genuine first Vitis build succeeded; offline admission correctly rejected stale V3 runtime ID (FIXED IN NEW SOURCE, REBUILD REQUIRED):**
+Actual Vitis 2025.2 source/ELF/map build emitted
+`P07_B5_RAW_A53_ELF_AND_MAP_BUILT=1` in
+`/home/dna/p07_b5_raw_trace_build_20261101T202750Z`, with no
+board execution. Offline preflight returned
+`P07_B5_NEW_RAW_OFFLINE_NO_GO=NO-GO: experimental B5 ELF polluted by original firmware identity`.
+Source review found an old `P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3`
+**runtime xil_printf** in otherwise correctly named new B5 firmware;
+the existing strict checker was CORRECT to fail. Changed B5-only status
+print to `P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1`, retained binary
+identity scan, added source-stage / post-link preflight checks and
+native negative regression. Old genuine Vitis ELF/map are preserved but
+**not admitted**, must not be executed, and cannot be patched; operator
+must build a new isolated B5 ELF/map, then re-run PC-only admission.
+No acceptance of physical DDR ownership or B5 raw neuron parity.
+[Detailed diagnosis and fix](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+All P07-B work remains on draft PRs #49/#50, no merge to `main`.
+
 **2026-11-01 P07-B.5.3.2 separate RAW trace A53 integration — PC NATIVE COMPLETE, VITIS/BOARD NOT YET VERIFIED:**
 User independently generated original frozen TRAIN0 **840,320-byte** host
 scalar trace, SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`,
