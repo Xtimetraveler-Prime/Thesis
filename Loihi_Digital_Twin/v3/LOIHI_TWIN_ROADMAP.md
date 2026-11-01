@@ -2078,6 +2078,19 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.4m V3 preliminary physical takeover attempt:**
+Operator's authentic V3 execute passed host-only original 27-core P02
+metadata / ELF/route gates, then **failed before FPGA programming, DDR
+staging or A53 ELF launch** when the B4i stop/PS-width gate saw XSDB
+`Cannot halt processor core: power down`. No physical V3 inference result
+exists for this attempt. The historical Tcl only recognized
+`The core is powered down`; it now accepts exactly both variants and
+runs the original bounded retries + PS FPD/LPD 128-bit checks + guarded
+reset / confirmed A53 #0 halt. Native mock recovery/fail-closed tests
+added. Evidence preserved in external V3 run folder
+`p07_b4m_diag_v3_real_20261101T040103Z`. Board reboot mandatory.
+P07-B.4m remains OPEN; avoid classifying this as an HLS error.
+
 **2026-11-01 P07-B.4m physical V2 first-dispatch diagnosis:**
 A user-run genuine V2 KV260 session with exact original-model and TRAIN
 readbacks failed at stage 9, HLS `P03_DISPATCH_CORE_STATUS=0x4`
