@@ -65,7 +65,10 @@ def independent_review(args)->tuple[dict,list[tuple[int,Path]]]:
         frozen_dir=args.frozen_dir,staged_dir=args.staged_dir,
         routes_dir=args.routes_dir,run=args.run)
     original,code=b5.run(original_args)
-    require(code==0 and original["genuine_independently_verified_sessions"]==4 and
+    require(code==0 and
+            original.get("official_MNIST_TEST")=="SEALED_NOT_ACCESSED" and
+            original.get("P07_B5_final_full_parity_and_acceptance") is False and
+            original["genuine_independently_verified_sessions"]==4 and
             original["distinct_train_validation_frames"]==3 and
             original["required_ordinal_sequence"]==[0,1,2,0] and
             original["train0_repeat_physical_metrics_and_FNV64_equal"] is True and
@@ -77,7 +80,11 @@ def independent_review(args)->tuple[dict,list[tuple[int,Path]]]:
         frozen=args.frozen_dir,staged=args.staged_dir,
         routes=args.routes_dir,build=args.build_dir,
         reports=args.reports,offline_report=args.offline_report)
-    require(direct["schema"]==
+    require(direct.get("original_official_MNIST_TEST")=="SEALED_NOT_ACCESSED" and
+            direct.get("original_signed_model_modified") is False and
+            direct.get("original_V3_ELF_modified") is False and
+            direct.get("P07_B5_final_acceptance") is False and
+            direct["schema"]==
             "p07-b5-original-raw-physical-by-neuron-authenticated-scalar-gate-v1" and
             direct["raw_neuron_original_26x1010_bytes_exactly_equal"] is True and
             direct["same_session_original_27core_and_route_stage_verified"] is True and
