@@ -2078,6 +2078,56 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5 FINAL ACCEPTANCE PASSED; B6.1 OPERATOR INVENTORY PASS; B6.2 COMPLETE REPRODUCIBILITY PACKAGE CODE IMPLEMENTED / REAL COPY PENDING (PR #51):**
+Operator ran actual `scripts/p07_b5_final_acceptance.py --mode accept` after
+supplying personal five-run cold-powercycle/JTAG/recovery/residual DDR risk
+attestation. Report
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`
+returned `P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=1` and
+`P07_B5_final_acceptance=true`, including all 5 signed physical
+sessions, four original V3 0/1/2/0 and fifth new B5 physical RAW0.
+26×1010×32=840320 original TRAIN0 physical neuron trace/scalar SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`;
+original TEST SEALED; frozen original B2.4 27core and P03 PL/V3 unchanged.
+Attestation SHA256
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+**P07-B.5 formally CLOSED** within its numerical/physical acceptance
+scope; unproven DDR exclusive ownership, operator-attested (NOT
+independent hardware-instrumented) cold power cycles, and incomplete
+per-packet-word physical trace comparison remain explicit limitations.
+[Final B5 acceptance ledger](docs/P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json).
+
+Operator ran B6.1 `--mode inventory` and achieved
+`P07_B6_ORIGINAL_27CORE_SIGNED_SOURCE_ARTIFACT_FREEZE_INVENTORY_PASS=1`
+with `P07_B6_FINAL_ACCEPTANCE=0`. This initial report predates
+B6.1 full 33-file signed freeze inventory tightening. Latest
+`scripts/p07_b6_freeze_manifest.py` now rehashes all 33 signed frozen
+original B2.4 assets + original manifest, signed TRAIN routes/frames,
+P03 XSA, new B5 ELF/map; `--mode seal` REQUIRES real original B5.4
+accepted report and attestation and freshly independently reopens
+all five actual physical sessions before issuing a SHA-pinned, bounded
+external B6.1 seal. **Operator B6.1 sealed file not yet received.**
+
+**B6.2 IMPLEMENTED / PHYSICAL FILE COPY PENDING:**
+`scripts/p07_b6_reproducibility_bundle.py` strictly requires B6.1
+actual operator seal, genuine B5 acceptance, original historical V3
+ELF/map byte SHA identities (distinct from new B5), verified original
+full 33-file signed freeze, exact 3 TRAIN ingress/route pack, P03 XSA,
+all five original physical evidence source trees, and real
+`origin/main:LitReview.md` original independent Git blob.
+Copies EVERY unchanged selected source/evidence file to a NEW
+external output folder, stores exact SHA256/byte lengths for each, then
+independently SHA-rechecks copied bytes. Does not run FPGA, modify
+signed original model, unlock official TEST or merge anything.
+[Detailed B6.1 seal and B6.2 exact copy/runbook](docs/P07_B6_FINAL_HARDWARE_FREEZE_AND_HANDOFF.md).
+
+**P07-B.6.3 final independent handoff and overall P07-B COMPLETE are
+still OPEN.** Draft PR #49→#50→#51 remain unmerged; main-only
+`LitReview.md` Git blob
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`
+must persist unchanged after any eventual authorized normal PR merges.
+No merge to main before complete P07-B operator acceptance.
+
 **2026-11-01 P07-B.5.4 OPERATOR ATTESTATION FILLED ON PC; FORMAL GATE PENDING. P07-B.6.1 IMMUTABLE SOURCE/HARDWARE EVIDENCE FREEZE CANDIDATE DEVELOPMENT STARTED (DRAFT PR #51):**
 User reported they created a local external copy of the five-real-session B5.4
 attestation template and changed every `null` to `true`, and approved
