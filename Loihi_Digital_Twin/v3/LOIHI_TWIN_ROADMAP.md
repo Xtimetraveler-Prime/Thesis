@@ -2078,6 +2078,37 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.3 ORIGINAL TRAIN0 B5 RAW A53 PC PREFLIGHT PASS; PHYSICAL DDR OWNERSHIP REVIEW REQUIRED BEFORE BOARD EXECUTION:**
+Operator ran the separate B5.3 RAW runner with `--mode preflight`
+and reported `P07_B5_NEW_RAW_GENUINE_A53_ELF_MAP_AND_ORIGINAL_TRAIN_HOST_PASS=1`,
+`P07_B4M_DIAG_V3_ALL_27_ORIGINAL_P02_METADATA_COUNTS_HOST_VERIFIED=1`,
+`P07_B5_NEW_RAW_PC_ONLY_PREFLIGHT_PASS=1` and
+`P07_B5_BOARD_CONTACT=0`. The same report intentionally retained
+`P07_B5_NEW_RAW_840320B_DDR_OWNER_INDEPENDENTLY_PROVEN=0`,
+`P07_B5_NEW_LOW_DDR_0_TO_0x107BC0_EXCLUSIVITY_PROVEN=0`,
+and `P07_B5_NEW_RAW_LAUNCH_AUTHORIZED_BY_PREFLIGHT=0`.
+**Risk review finding:** Original `p03_hw_adapter.h` defines a broad
+64MiB P03 DDR backing aperture `[0x40000000,0x44000000)`, within
+which the new B5 840320B raw capture candidate
+`[0x42000000,0x420CD280)` AND B5 256B mailbox
+`[0x43FF0100,0x43FF0200)` lie. They are disjoint from the
+27×512KiB original P02 context records, but that narrow geometry
+is NOT physical exclusive ownership relative to Linux, boot firmware,
+other APU/RPU or DMA users. Corrected B5 ELF changes original V3
+low-DDR footprint `[0,0x00106B00)` to `[0,0x00107BC0)`, plus
+4,288 bytes, also with independently UNPROVEN boot-firmware exclusivity.
+New host-only SHA-pinned `scripts/p07_b5_raw_ddr_risk_review.py`,
+`tests/test_p07_b5_raw_ddr_risk_review.py` and
+[dedicated operator hardware ownership review](docs/P07_B5_3_OPERATOR_PRE_EXECUTION_MEMORY_REVIEW.md)
+identify and preserve each unproven ownership condition. This
+review does NOT contact KV260 or grant a physical launch; 8 old
+and 5 new explicit approvals are still required after operator
+risk assessment and recovery planning. **No B5.3 raw board run has
+occurred**; strict 26,260-record physical/scalar byte equality,
+B5.4 final acceptance and P07-B closure remain OPEN. Do not merge
+PR #49 or #50 with `main` until whole P07-B is completed and
+operator explicitly signs off.
+
 **2026-11-01 P07-B.5.3 genuine corrected B5 RAW A53 ELF/map PC-ADMITTED; dedicated B5 capture and physical-raw parity infrastructure IMPLEMENTED / NATIVE-ONLY:**
 Operator separately rebuilt the corrected new B5 raw-trace A53 application
 and independently passed exact frozen original 27core/source SHA, original
