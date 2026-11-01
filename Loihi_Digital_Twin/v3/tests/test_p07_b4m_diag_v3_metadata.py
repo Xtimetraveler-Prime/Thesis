@@ -9,6 +9,9 @@ import sys
 
 import pytest
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+import p07_b4m_diagnose_physical_mailbox as decoder
+
 ROOT=Path(__file__).resolve().parents[1]
 C_SOURCE=ROOT/"software/p07/p07_b4m_dispatch_metadata.c"
 HEADER=ROOT/"software/p07/include/p07_b4m_dispatch_metadata.h"
@@ -125,3 +128,23 @@ def test_historical_v2_and_original_descriptor_remain_untouched():
     original=(ROOT/"software/p07/p07_b4l_b3_bindings.c").read_text()
     assert "metadata!=(((uint64_t)ncomp<<7u)|((uint64_t)core))" in original
     assert "p07_b4m_apply_p02_counts" not in original
+
+def test_v3_failure_mailbox_metadata_fix_status_is_not_v2_debug_address():
+    import struct
+    words=[0]*64
+    words[2]=0xDEAD0000
+    words[3]=9
+    words[47]=decoder.DIAG_V3_MAGIC
+    words[49]=10
+    words[53]=0x4
+    words[62]=0
+    words[63]=decoder.accepted.DONE
+    decoded=decoder.diagnose(struct.pack("<64I",*words))
+    assert decoded["diagnostic_v2_failure_payload_present"] is False
+    assert decoded["diagnostic_v3_failure_payload_present"] is True
+    assert decoded["failure_telemetry"]["v3_dispatch_metadata_fix_status"]["uint32"]==0
+    assert decoded["failure_telemetry"]["p03_dispatch_core_status_raw"]["uint32"]==4
+    words[62]=0xFFFFFFFF
+    failure=decoder.diagnose(struct.pack("<64I",*words))
+    assert failure["failure_telemetry"]["v3_dispatch_metadata_fix_status"]["uint32"]==0xFFFFFFFF
+    assert failure["all_structural_inference_receipt_checks_pass"] is False
