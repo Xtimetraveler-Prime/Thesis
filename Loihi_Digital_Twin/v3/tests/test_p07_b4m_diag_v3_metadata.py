@@ -148,3 +148,48 @@ def test_v3_failure_mailbox_metadata_fix_status_is_not_v2_debug_address():
     failure=decoder.diagnose(struct.pack("<64I",*words))
     assert failure["failure_telemetry"]["v3_dispatch_metadata_fix_status"]["uint32"]==0xFFFFFFFF
     assert failure["all_structural_inference_receipt_checks_pass"] is False
+
+def test_v3_build_source_contract_and_fail_closed_reproduction(tmp_path):
+    import p07_b4m_diag_v3_offline_admission as gate
+    contract=gate.import_build_contract()
+    assert contract.IDENTITY.encode()==gate.IDENTITY
+    assert contract.APP=="p07_b4m_diag_v3_26tick"
+    assert contract.SOURCES[:2]==("p07_b4m_full_board_diag_v3.c",
+                                 "p07_b4m_dispatch_metadata.c")
+    assert "p07_b4m_dispatch_metadata.h" in contract.HEADERS
+    shell=(ROOT/"scripts/build_p07_b4m_diag_v3.sh").read_text()
+    assert "vitis -s software/p07/build_p07_b4m_diag_v3.py" in shell
+    assert "p07_b4m_dispatch_metadata.c" in shell
+    assert "p07_b4m_dispatch_metadata.h" in shell
+    assert "P07_B4M_DIAG_V3_BUILD_DIR" in shell
+    stage=tmp_path/"source"
+    stage.mkdir()
+    for name in (*contract.SOURCES,*contract.HEADERS):
+        if name.endswith(".c"):
+            origin=ROOT/("software/p03" if name.startswith("p03_hw_") else "software/p07")/name
+        elif name.startswith("p03_"):
+            origin=ROOT/"software/p03/include"/name
+        elif name=="p05_deployment.h":
+            origin=ROOT/"software/p05/include"/name
+        else:
+            origin=ROOT/"software/p07/include"/name
+        data=origin.read_bytes()
+        if name=="p07_a2_sha256.c":
+            data=data.replace(b'#include "include/p07_a2_sha256.h"',
+                              b'#include "p07_a2_sha256.h"')
+        if name=="p07_b2_packet.h":
+            data=data.replace(b"#define P07_B2_MAX_ROUTE_BINDINGS 8192u",
+                              b"#define P07_B2_MAX_ROUTE_BINDINGS 10000u")
+        (stage/name).write_bytes(data)
+    digests=gate.verify_staged_source(stage)
+    assert len(digests)==len(contract.SOURCES)+len(contract.HEADERS)
+    assert "p07_b4m_dispatch_metadata.c" in digests
+    (stage/"p07_b4m_dispatch_metadata.c").write_bytes(b"TAMPERED")
+    with pytest.raises(gate.DiagnosticAdmissionError, match="differs"):
+        gate.verify_staged_source(stage)
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash unavailable")
+def test_v3_build_shell_syntax():
+    s=ROOT/"scripts/build_p07_b4m_diag_v3.sh"
+    p=subprocess.run(["bash","-n",str(s)],capture_output=True,text=True)
+    assert p.returncode==0,p.stderr
