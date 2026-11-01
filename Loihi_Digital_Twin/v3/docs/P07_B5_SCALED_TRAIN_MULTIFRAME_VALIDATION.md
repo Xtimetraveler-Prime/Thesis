@@ -65,8 +65,7 @@ hardware challenges, see
 
 ## Deliverables / required physical acceptance
 
-**B5.1 — PC-only frozen 3-frame independent oracle [IMPLEMENTED, pending
-operator real freeze execution]:**
+**B5.1 — PC-only frozen 3-frame independent oracle [USER-VERIFIED PASS; original reference files rechecked]:**
 
 - Verify entire original B2.4 freeze and 27 original logical contexts and
   20,384 input / 1,000 output routes.
@@ -80,7 +79,7 @@ operator real freeze execution]:**
   packet fanout and all ten readout votes/class. No FPGA or TEST access.
 
 **B5.2 — MULTIPLE *real* physical V3 TRAIN frames + distinct repeat
-[RUNS REQUIRED ON KV260]:**
+[USER-VERIFIED BOUNDED 4-RUN PASS; cold reboot proof separate]:**
 
 - Three separate, freshly rebooted, destructive, JTAG-owned V3 executions
   of original ordinal **0, 1, 2**, plus at least **one further ordinal 0**
@@ -113,7 +112,7 @@ operator real freeze execution]:**
   reinterpreted as multi-frame success.
 
 **B5.3 — Selected **RAW** 26×1010 original neuron trace and packet
-numerics [PC SCALAR RAW REFERENCE IMPLEMENTED; PHYSICAL SIDECAR NOT IMPLEMENTED / NOT CLAIMED]:**
+numerics [PC RAW ORACLE AND NEW NATIVE C RECORDER IMPLEMENTED; physical firmware/readback NOT IMPLEMENTED / NOT CLAIMED]:**
 
 The existing original V3 mailbox contains FNV64 of all 26×1010
 256-bit HLS trace words; it does **NOT** contain the underlying
@@ -136,7 +135,7 @@ or explicitly excluded from claims. First mismatch must identify
 the previously accepted V3 ELF, bitstream, frozen checkpoint or
 official TEST to instrument this; a separate B5 binary is mandatory.
 
-**B5.4 — Final B5 acceptance [PENDING]:**
+**B5.4 — Final B5 acceptance [OPEN; do not mark P07-B.5 closed]:**
 
 - All three TRAIN-derived physical frames have passed the complete
   original independent scalar comparison.
@@ -167,7 +166,14 @@ PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
 cat "$P07_B5_EXPECTED"
 ```
 
-## B5.2 physical procedure
+## B5.2 physical procedure (HISTORICAL REPRODUCTION INSTRUCTIONS; four runs passed)
+
+All four original physical runs have now been independently checked. The
+following run instructions are kept for audit/reproduction, **not** a
+request to repeat destructive hardware actions. Only B5.3 new, separately
+reviewed firmware remains physically outstanding.
+
+
 
 The original TRAIN validation **ordinal 1** new physical run has now
 PASSED complete same-session staging, 702 dispatches, 26 barriers,
