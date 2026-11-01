@@ -36,10 +36,10 @@ V3_ELF_SHA="66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
 V3_MAP_SHA="148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede"
 P03_XSA_SHA="52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f"
 MAIN_LITERATURE_BLOB_SHA="3c45d0a0d0b55378d3564d8f82282803a8eb1a3e"
-ORIGINAL_FROZEN_FILES=(
-    "frozen_manifest.json","network_source.json",
-    "packed_deployment.json","b23_validation_parity.json",
-)
+# Frozen B2.4 manifest tracks exactly 33 signed source files (2 checkpoint,
+# source graph, compiled deployment, B2.3 evidence, protocol and 27 P02
+# contexts). B6 must inventory ALL of them, not a handpicked subset.
+ORIGINAL_B24_ASSET_COUNT=33
 TRAIN_FILES=(
     "p07_b4m_frozen_inputs_manifest.json",
     "p07_b4m_original_output_routes_80k.bin",
@@ -127,15 +127,36 @@ def validate_source_freeze(args)->dict:
     require(routes["input_routes"]==20384 and
             routes["output_routes"]==1000,
             "pinned original source routing changed")
-    paths={}
-    for name in ORIGINAL_FROZEN_FILES:
-        paths["original_b24/"+name]=args.frozen_dir/name
+    manifest_path=args.frozen_dir/"frozen_manifest.json"
+    signed=old.read_json(manifest_path)
+    assets=signed.get("assets")
+    require(isinstance(assets,list) and len(assets)==ORIGINAL_B24_ASSET_COUNT,
+            "original B2.4 source manifest must enumerate all 33 files")
+    paths={"original_b24/frozen_manifest.json":manifest_path}
+    for entry in assets:
+        require(isinstance(entry,dict),"malformed B2.4 asset entry")
+        name=entry.get("path")
+        require(isinstance(name,str) and name and
+                not Path(name).is_absolute() and
+                ".." not in Path(name).parts and
+                name.replace("\\\\","/")==name,
+                "unsafe original frozen relative path in signed manifest")
+        key="original_b24/"+name
+        require(key not in paths,"duplicate original frozen source asset")
+        paths[key]=args.frozen_dir/name
     for name in TRAIN_FILES:
         paths["original_TRAIN_routes/"+name]=args.routes_dir/name
     paths["original_P03_XSA/p03_2_ps_mmio.xsa"]=args.reports/"p03_2_ps_mmio.xsa"
     paths["new_B5_A53/p07_b5_raw_trace_v1.elf"]=args.build_dir/"vitis_workspace"/"p07_b5_raw_trace_v1.elf"
     paths["new_B5_A53/p07_b5_raw_trace_v1.map"]=args.build_dir/"vitis_workspace"/"p07_b5_raw_trace_v1.map"
     manifest={key:sha_regular(path) for key,path in sorted(paths.items())}
+    require(len([k for k in manifest if k.startswith("original_b24/")])==
+            ORIGINAL_B24_ASSET_COUNT+1,
+            "complete 33-file original freeze inventory not included")
+    signed_sha={e["path"]:e.get("sha256") for e in assets}
+    for name,expected in signed_sha.items():
+        require(manifest["original_b24/"+name]==expected,
+                "signed B2.4 artifact differs from original manifest: "+name)
     require(manifest["original_b24/frozen_manifest.json"]==
             b4l1.FROZEN_SHA and
             manifest["new_B5_A53/p07_b5_raw_trace_v1.elf"]==ELF_SHA and
@@ -144,6 +165,7 @@ def validate_source_freeze(args)->dict:
             "original B2.4 frozen source or new A53/XSA source SHA drift")
     return {
         "source_sha256_manifest":manifest,
+        "original_B24_manifest_entries_individually_SHA256_revalidated":33,
         "immutable_original_B24_33_file_freeze_verified":True,
         "original_compiled_784_1000_10_source_sha256":
             admitted["original_B24_compiled_fingerprint"],
