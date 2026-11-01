@@ -5,9 +5,9 @@ Read this before running destructive JTAG tests. Original TRAIN0 and
 TRAIN1 26-tick real KV260 physical/independent scalar FNV64 numerical
 fingerprint checks have already PASSED. TRAIN1 has label2/class2,
 702 dispatches, 26 barriers, actual mailbox
-SHA256 \`4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95\`.
-Original frozen TRAIN3? **No:** only pre-registered ordinal0/1/2
-TRAIN-derived validation images are permitted. MNIST official TEST
+SHA256 `4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95`.
+Only the three pre-registered ordinal0/1/2 TRAIN-derived validation
+images are permitted. MNIST official TEST
 remains sealed.
 
 ## Mandatory physical-session boundaries
@@ -15,7 +15,7 @@ remains sealed.
 Each of the TWO new runs is **separate and destructive** to
 the current KV260 standalone/Linux execution state. The accepted
 V3 original A53 diagnostic ELF lives in physical low DDR
-\`[0,0x00106B00)\`; independent boot-firmware ownership of that range
+`[0,0x00106B00)`; independent boot-firmware ownership of that range
 is **UNPROVEN**. The original V3 CLI requires all **12**
 explicit operator approvals to acknowledge that risk and separate
 overwrite approvals. Do not infer Linux or boot firmware coexistence
@@ -32,7 +32,7 @@ automatically running the next test. P07-B.5 has NOT been closed.
 
 ## Prepare Linux VS Code shell and verify pinned original build (PC-only)
 
-\`\`\`bash
+```bash
 cd ~/Git/Thesis
 git fetch origin
 git switch agent/v3-p07-b5-scaled-multiframe-validation
@@ -63,7 +63,7 @@ export P07_B4M_DIAG_V3_MAP="\${P07_B4M_DIAG_V3_ELF%.elf}.map"
 
 test "$(sha256sum "$P07_B4M_DIAG_V3_ELF" | cut -d' ' -f1)" = "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904"
 test "$(sha256sum "$P07_B4M_DIAG_V3_MAP" | cut -d' ' -f1)" = "148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede"
-\`\`\`
+```
 
 If any command fails, STOP and inspect, do not replace the original
 signed model, accepted XSA/bitstream, V3 ELF or GNU map.
@@ -73,7 +73,7 @@ No Vitis rebuild is required for these two original TRAIN runs.
 
 First run PC-only preflight for **ordinal 2**:
 
-\`\`\`bash
+```bash
 PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --mode preflight \
   --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
@@ -86,14 +86,14 @@ PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --diag-build "$P07_B4M_DIAG_V3_BUILD_DIR" \
   --elf "$P07_B4M_DIAG_V3_ELF" \
   --validation-ordinal 2
-\`\`\`
+```
 
-Require \`P07_B4M_DIAG_V3_READ_ONLY_PREFLIGHT_PASS=1\`.
+Require `P07_B4M_DIAG_V3_READ_ONLY_PREFLIGHT_PASS=1`.
 **Now power-cycle KV260**, confirm fresh dedicated XSDB and
 actual board recovery, and deliberately invoke this **one** destructive
 session:
 
-\`\`\`bash
+```bash
 export P07_B5_RUN2="$HOME/Thesis_Evidence/p07_b5_train2_real_$(date -u +%Y%m%dT%H%M%SZ)"
 echo "$P07_B5_RUN2"
 test ! -e "$P07_B5_RUN2" || { echo "evidence directory already exists"; false; }
@@ -123,14 +123,14 @@ PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --unproven-boot-firmware-exclusivity-risk-accepted YES \
   --mailbox-256b-overwrite-approved YES \
   --a53-26tick-diagnostic-v3-approved YES
-\`\`\`
+```
 
 **Now REBOOT KV260** regardless of outcome. Do not resume the halted
 Linux session. On success, the host receives
-\`P07_B4M_DIAG_V3_STRUCTURAL_RECEIPT_ACCEPTED=1\`.
+`P07_B4M_DIAG_V3_STRUCTURAL_RECEIPT_ACCEPTED=1`.
 Then run the read-only independent original TRAIN2 scalar check:
 
-\`\`\`bash
+```bash
 export P07_B5_VERIFY2="$HOME/Thesis_Evidence/p07_b5_verify_train2_$(date -u +%Y%m%dT%H%M%SZ).json"
 PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --mode verify \
@@ -140,12 +140,12 @@ PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --run "2:$P07_B5_RUN2" \
   --out "$P07_B5_VERIFY2"
 cat "$P07_B5_VERIFY2"
-\`\`\`
+```
 
-Require \`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1\`;
+Require `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`;
 confirm all seven individual numerical comparisons are TRUE and
 all real 702 dispatches/26 barriers are in the report. Keep
-\`P07_B5_FULL_RAW_NEURON_PARITY_VERIFIED=0\` as the honest
+`P07_B5_FULL_RAW_NEURON_PARITY_VERIFIED=0` as the honest
 raw-trace status. Save the exact new evidence-dir and report paths.
 
 **STOP after TEST A** for independent numerical evidence review
@@ -163,7 +163,7 @@ V3 verifier does not independently sense or prove the reboot.
 Run the same exact hash check and a **new PC-only preflight for
 ordinal 0**, then a fresh path and destructive run:
 
-\`\`\`bash
+```bash
 PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --mode preflight \
   --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
@@ -176,12 +176,12 @@ PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --diag-build "$P07_B4M_DIAG_V3_BUILD_DIR" \
   --elf "$P07_B4M_DIAG_V3_ELF" \
   --validation-ordinal 0
-\`\`\`
+```
 
-Require \`P07_B4M_DIAG_V3_READ_ONLY_PREFLIGHT_PASS=1\`.
+Require `P07_B4M_DIAG_V3_READ_ONLY_PREFLIGHT_PASS=1`.
 **Now POWER-CYCLE KV260 again immediately before this experiment.**
 
-\`\`\`bash
+```bash
 export P07_B5_RUN0_REPEAT="$HOME/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_$(date -u +%Y%m%dT%H%M%SZ)"
 echo "$P07_B5_RUN0_REPEAT"
 test ! -e "$P07_B5_RUN0_REPEAT" || { echo "evidence directory already exists"; false; }
@@ -211,12 +211,12 @@ PYTHONPATH="$PWD/src" python scripts/p07_b4m_diag_v3_physical_run.py \
   --unproven-boot-firmware-exclusivity-risk-accepted YES \
   --mailbox-256b-overwrite-approved YES \
   --a53-26tick-diagnostic-v3-approved YES
-\`\`\`
+```
 
 **REBOOT KV260 AFTER the second JTAG attempt**, success or
 failure. Then run this PC-only independent check:
 
-\`\`\`bash
+```bash
 export P07_B5_VERIFY0_REPEAT="$HOME/Thesis_Evidence/p07_b5_verify_train0_repeat_$(date -u +%Y%m%dT%H%M%SZ).json"
 PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --mode verify \
@@ -226,15 +226,15 @@ PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --run "0:$P07_B5_RUN0_REPEAT" \
   --out "$P07_B5_VERIFY0_REPEAT"
 cat "$P07_B5_VERIFY0_REPEAT"
-\`\`\`
+```
 
-Require marker \`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1\`.
+Require marker `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`.
 Since this is original TRAIN0, the physical class, full ten counts,
 spike and packet totals and combined trace hash must match the
 original accepted ordinal0 evidence: class **1**, readout counts
-\`[0,25,0,0,0,0,0,0,0,0]\`, 31,512 CURRENT events,
+`[0,25,0,0,0,0,0,0,0,0]`, 31,512 CURRENT events,
 1,514 spikes, 1,489 routed packets, cumulative
-FNV64 \`0xB59CA8594D6E64AD\`.
+FNV64 `0xB59CA8594D6E64AD`.
 
 ## C — independent 4-session original TRAIN consolidation (PC ONLY)
 
@@ -246,7 +246,7 @@ readback/binding/route/selected TRAIN frame, and replays the scalar
 integer LIF oracle; it does not trust prior JSON "PASS" as a
 substitute for the real bytes:
 
-\`\`\`bash
+```bash
 export P07_B5_RUN0="$HOME/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z"
 export P07_B5_RUN1="$HOME/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z"
 export P07_B5_SUMMARY="$HOME/Thesis_Evidence/p07_b5_fourrun_original_train_$(date -u +%Y%m%dT%H%M%SZ).json"
@@ -262,21 +262,21 @@ PYTHONPATH="$PWD/src" python scripts/p07_b5_scaled_validation.py \
   --run "0:$P07_B5_RUN0_REPEAT" \
   --out "$P07_B5_SUMMARY"
 cat "$P07_B5_SUMMARY"
-\`\`\`
+```
 
 Success marker, iff all original physical sessions verified and
 numerically identical to their independent scalar references:
-\`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1\`.
+`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`.
 Required report fields:
-\`genuine_independently_verified_sessions=4\`,
-\`distinct_train_validation_frames=3\`,
-\`train0_repeat_physical_metrics_and_FNV64_equal=true\`,
-\`all_independent_fingerprint_gate_conditions_pass=true\`.
-\`cold_reboot_between_runs_independently_proven=false\` remains
+`genuine_independently_verified_sessions=4`,
+`distinct_train_validation_frames=3`,
+`train0_repeat_physical_metrics_and_FNV64_equal=true`,
+`all_independent_fingerprint_gate_conditions_pass=true`.
+`cold_reboot_between_runs_independently_proven=false` remains
 intentionally honest in the read-only software-only checker;
 the operator must separately attest to the cold power cycle.
 No 840,320B RAW FPGA trace was captured by the original V3
-mailbox; \`full_raw_per_neuron_hardware_trace_directly_compared=false\`.
+mailbox; `full_raw_per_neuron_hardware_trace_directly_compared=false`.
 This remains an explicit P07-B.5.3 acceptance item, **not**
 a reason to call an authentic B5.2 PASS a numerical failure.
 
@@ -290,7 +290,7 @@ separately built, hash-pinned, explicitly DDR-owned B5 sidecar
 firmware, a physical JTAG readback, a genuine-source verifier, and
 additional explicit operator approval. The independent scalar
 raw-trace generator and first mismatch decoder exist at
-\`scripts/p07_b5_raw_trace_reference.py\`.
+`scripts/p07_b5_raw_trace_reference.py`.
 
 Do not introduce a new ELF or sidecar DDR range into these two
 V3-only multi-frame experiments. After B5.2 consolidation,
