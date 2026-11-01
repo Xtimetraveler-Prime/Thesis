@@ -283,8 +283,52 @@ New `scripts/build_p07_b4m_diag_v3.sh` and
 independent Vitis 2025.2 A53 ELF build; V3 offline strict source,
 XSA, route/ELF/map preflight is
 `scripts/p07_b4m_diag_v3_offline_admission.py`.
-V3 remains **host-only until user builds genuine Vitis ELF/map and
-their hashes plus physical PT_LOAD are independently reviewed and
-pinned**. There is NO V3 board launch permission or numerical parity
-claim. Continue the SAME P07-B.4m milestone, draft PR #49.
+The operator subsequently built the genuine V3 A53 ELF/map and passed
+strict current-source offline admission. The ELF is now SHA-pinned in a
+**separate** V3 same-session physical diagnostic launcher. No KV260 V3
+execution or numerical parity is yet accepted. Continue SAME P07-B.4m
+milestone, draft PR #49.
 
+
+## V3 operator build accepted for distinct SHA-pinned physical diagnostic experiment
+
+Observed on operator PC (genuine Vitis 2025.2 build / original frozen B2.4
+strict offline report; the experiment has NOT yet run on KV260):
+
+- Build: `/home/dna/p07_b4m_diag_v3_build_20261101T034702Z`
+- Strict offline report: `/home/dna/Thesis_Evidence/p07_b4m_diag_v3_offline_20261101T034702Z.json`
+- V3 app identity: `P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3`
+- V3 ELF SHA256: `66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`
+- V3 real linker map SHA256: `148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede`
+- P03 XSA: `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`
+- V3 PT_LOAD `[0x00000000,0x00106B00)`, filesz=106580,
+  memsz=1075968. This is the SAME low-DDR physical range as V2
+  but with DIFFERENT executable bytes. .text `[0,0x11F2C)`,
+  .bss `[0x1A080,0x101B00)`, .heap `[0x101B00,0x103B00)`,
+  .stack `[0x103B00,0x106B00)`.
+- V3 offline source SHA for metadata helper
+  `f73e4d7c0c23b8ceec1e2bc5912a7495241408a548d7fef9e6d7f2feceb89b76`.
+  V3 board entry `9349d21f10ea4c09e6491610e365bd13c607a784065eb392f59a8a96a7dcc928`.
+- Original registered axons=21384, source routes=20384, output routes=1000,
+  model untouched, original MNIST TEST SEALED.
+- Firmware low-DDR boot-firmware exclusivity remains independently
+  UNPROVEN, regardless of matching previous V1/V2 bounds.
+
+New `scripts/p07_b4m_diag_v3_physical_run.py` pins EXACT V3 ELF/map,
+re-derives original source/route/offline report/ELF memory admission,
+retains stage-only eight per-run flags plus four V3 A53/low-DDR risk
+flags. It uses the unchanged accepted SAME-SESSION 27x512KiB contexts +
+original 16KiB descriptor + 80KiB/896KiB routes + signed TRAIN 0
+physical staging/readback, *then* calls separate
+`vivado/p07_b4m_diag_v3_xsdb_run.tcl` to download V3 and capture 256B
+mailbox. The V1/V2 launchers and previous evidence remain untouched.
+The native simulated physical launcher tests are in
+`tests/test_p07_b4m_diag_v3_physical_run.py`; no physical claim
+follows from these mocks.
+
+On V3 failed terminal mailbox, B4D3 failure-only word47 and metadata
+fix code at word62 are decoded by the independent diagnostic parser.
+Failures cannot be accepted as valid trained physical inference.
+On a verified structural success, do NOT claim independent full-neuron
+numerical parity from the structural receipt alone. Reboot KV260 after
+ANY actual destructive board takeover/attempt, even on failure.
