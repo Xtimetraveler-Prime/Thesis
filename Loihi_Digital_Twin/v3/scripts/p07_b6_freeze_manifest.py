@@ -139,7 +139,7 @@ def validate_source_freeze(args)->dict:
         require(isinstance(name,str) and name and
                 not Path(name).is_absolute() and
                 ".." not in Path(name).parts and
-                name.replace("\\\\","/")==name,
+                chr(92) not in name,
                 "unsafe original frozen relative path in signed manifest")
         key="original_b24/"+name
         require(key not in paths,"duplicate original frozen source asset")
