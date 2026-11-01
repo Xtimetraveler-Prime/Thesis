@@ -135,7 +135,8 @@ def independent_review(args)->tuple[dict,list[tuple[int,Path]]]:
     return record,runs
 
 def validate_operator_attestation(path:Path,review:dict,runs:list[tuple[int,Path]])->dict:
-    require(path.is_absolute() and path.is_file() and not path.is_symlink() and
+    require(isinstance(path,Path) and path.is_absolute() and
+            path.is_file() and not path.is_symlink() and
             not path.resolve().is_relative_to(ROOT),
             "new externally stored operator-signed attestation JSON required")
     record=b5.read_json(path)
