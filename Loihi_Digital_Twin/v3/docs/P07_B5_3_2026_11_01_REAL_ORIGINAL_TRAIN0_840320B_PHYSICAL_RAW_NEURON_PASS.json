@@ -1,0 +1,84 @@
+{
+  "schema": "p07-b5-3-user-supplied-genuine-original-27core-physical-840320B-raw-bytewise-acceptance-v1",
+  "reported_date_utc": "2026-11-01",
+  "scope": "Original frozen P06-B2.4 TRAIN ordinal0: one signed 27core KV260 physical 26tick B5 new A53 diagnostic run; independent PC recheck of raw neuron trace",
+  "source_evidence": "operator pasted full p07_b5_raw_physical_verify.py generated JSON; underlying board data remain exclusively in operator evidence directory and have NOT been independently opened in this conversation",
+  "evidence_directory": "/home/dna/Thesis_Evidence/p07_b5_raw_train0_real_20261101T213638Z",
+  "original_TRAIN": {
+    "ordinal": 0,
+    "canonical_train_index": 37384,
+    "physical_signed_frame_sha256": "2aa772efd381805bab24fea145186d22f3550b156f155a9ab51dcef10e6d8126",
+    "predicted_class": 1,
+    "readout_spike_counts": [
+      0,
+      25,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "signed_new_B5_artifacts": {
+    "ELF_sha256": "0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf",
+    "map_sha256": "1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8",
+    "physical_terminal_256B_mailbox_sha256": "435b1c903f3323b3bfd156eb271202d82c8738ebe2a7a8c489e6aab7fcdd4d6b"
+  },
+  "captured_full_trace": {
+    "records": 26260,
+    "words": 210080,
+    "physical_bytes": 840320,
+    "physical_sha256": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "independent_original_frozen_scalar_sha256": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "physical_FNV64": "0xB59CA8594D6E64AD",
+    "per_tick_fingerprint_count": 26,
+    "all_26tick_neuron_record_bytes_equal_original_scalar": true
+  },
+  "real_paging": {
+    "dispatches": 702,
+    "barriers": 26,
+    "page_ins": 702,
+    "dirty_page_outs": 699,
+    "final_page_outs": 3,
+    "physical_page_read_bytes": 307666944,
+    "physical_page_write_bytes": 74760192
+  },
+  "real_network_activity": {
+    "external_current_events": 31512,
+    "source_spikes_from_P03_trace_bank7": 1514,
+    "P03_packet_words_captured": 1489,
+    "NEXT_packets_physically_inserted": 1489,
+    "original_registered_axons": 21384
+  },
+  "independent_scalar_checks": {
+    "NEXT_packets_physically_inserted": true,
+    "P03_packet_words_captured": true,
+    "all_26_tick_trace_fingerprint": true,
+    "external_current_events": true,
+    "readout_spike_counts": true,
+    "source_spikes_from_P03_trace_bank7": true,
+    "trained_readout_prediction": true
+  },
+  "source_provenance": {
+    "same_session_all_27core_and_routes_readback_verified": true,
+    "original_signed_model_modified": false,
+    "original_original_V3_ELF_modified": false,
+    "original_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "board_contact_this_PC_verifier": false
+  },
+  "claims_and_remaining_boundaries": {
+    "P07_B5_3_direct_raw_neuron_numerical_equality": "USER-REPORTED PASS",
+    "full_per_packet_byte_trace_not_claimed": true,
+    "physical_DDR_ownership_independently_proven": false,
+    "user_power_cycle_independently_attested": false,
+    "actual_hardware_evidence_files_in_git": false,
+    "P07_B5_4_final_operator_acceptance": false,
+    "P07_B5_final_acceptance": false,
+    "P07_B6_freeze_started": false,
+    "main_merged": false
+  },
+  "note": "Nested original B4m structural mailbox 'independent_full_neuron_numerical_parity:false' is intentionally inherited from structural B4m verifier; it does not negate separately verified raw_neuron_original_26x1010_bytes_exactly_equal:true in authenticated B5 physical trace verifier. B5.3 raw neural parity is a bounded numerical gate, not proof of every packet word or DDR ownership."
+}
