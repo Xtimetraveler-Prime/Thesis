@@ -2078,6 +2078,29 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.2 genuine original TRAIN1 26-tick physical/independent scalar PASS:**
+The operator physically staged all 27 original 512KiB P02 cores, original
+16KiB descriptor, 80KiB output/896KiB input route tables and pinned
+TRAIN validation **ordinal1** ingress, and independently reread them.
+The genuine accepted V3 A53 ELF completed **702 dispatches, 26 barriers,
+702 page-ins, 699 dirty and 3 final page-outs**. Readout prediction=**2**
+(equal to original TRAIN label2), ten readout counts
+`[0,0,25,0,0,0,0,0,0,0]`, 71,994 CURRENT events, 1,852 neuron spikes
+and 1,827 P03 packets / 1,827 NEXT insertions. Full trace FNV64
+`0x0EAC411F49856BF3` physically equaled independent frozen scalar.
+The user's actual independent B5 verifier reported
+`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1` for **this
+single physical ordinal1 session**. Physical 256B mailbox SHA256
+`4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95`;
+external evidence `p07_b5_train1_real_20261101T045754Z` and
+`p07_b5_verify_train1_20261101T050334Z.json`. Detailed
+[ordinal1 provenance ledger](docs/P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
+**Only ordinal0 and ordinal1 are physically verified**; ordinal2, a
+separate original ordinal0 reboot repeat, four-run consolidation and
+strict 840320B physical raw-neuron trace parity remain OPEN. No
+user-attested cold reboot proof supplied for this run. B5.4/P07-B.6/P08-B
+still gated. B2 official TEST SEALED.
+
 **2026-11-01 P07-B.5 operator B5.1/B5.2 read-only acceptance (not new physical runs):**
 Original frozen TRAIN validation ordinals 0/1/2 independent scalar replay
 **PASS**, marker `P07_B5_THREE_FROZEN_TRAIN_SCALAR_REFERENCE_PASS=1`,
