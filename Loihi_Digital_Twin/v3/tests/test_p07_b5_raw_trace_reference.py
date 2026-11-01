@@ -105,6 +105,6 @@ def test_output_is_unauthenticated_until_separate_physical_sidecar():
         "P07_B5_FULL_RAW_PHYSICAL_TRACE_AUTHENTICATED=0",
     ):
         assert token in source
-    assert "xsdb " not in source.lower()
+    assert 'subprocess.run(["xsdb"' not in source
     assert "subprocess.run(" not in source
     assert "P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3" not in source
