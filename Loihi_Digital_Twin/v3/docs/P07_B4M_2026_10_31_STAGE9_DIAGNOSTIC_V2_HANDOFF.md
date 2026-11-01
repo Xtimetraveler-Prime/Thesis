@@ -430,3 +430,34 @@ fingerprint agreement, not raw per-neuron bytewise numerical parity.**
 No fake/synthetic mailbox is accepted as real evidence.
 P07-B.4m remains open pending this parity audit and interpretation.
 
+## 2026-11-01 read-only independent scalar checker: real frozen ABI bug
+
+Operator's *real original V3 physical evidence* passed all source/DDR/readback
+gates and B2.3 frozen scalar replay before crashing inside
+`expected_counters()` on an incorrect Python API assumption:
+
+```text
+AttributeError: 'IngressRoute' object has no attribute 'source_input'
+```
+
+Frozen P06 B1.2 defines
+`IngressRoute(input_population, input_index, destination_core, destination_axon)`.
+The checker (and its former synthetic fixtures) mistakenly used
+`source_input` and `source_index`. Both corrected and regression tests now
+construct the genuine frozen compiler `IngressRoute` class to prevent
+future mock-only false positives. No original model/compiled mapping,
+accepted A53 ELF/map, P03 HLS, DDR physical evidence or bitstream changed.
+No hardware rerun needed. **Numerical checker has NOT yet passed on real
+evidence**; next action is the operator's host-only rerun and evidence
+review, not an inference acceptance claim.
+
+Milestone sequence per roadmap: if complete original TRAIN0 physical vs
+independent scalar counters/FNV64 all pass, accept bounded P07-B.4m
+witness conditionally, then undertake **P07-B.5 scaled TRAIN-derived
+multi-frame validation / physical per-neuron parity** and **P07-B.6
+acceptance/closeout**, before **P08-B scaled physical timing/traffic**
+measurements. A matching FNV64 is strong fingerprint evidence, not
+literal bytewise capture of all `26 * 1010` neuron updates; preserve that
+evidence boundary. PR #49 remains draft, unmerged; no official TEST
+unseal is authorized.
+
