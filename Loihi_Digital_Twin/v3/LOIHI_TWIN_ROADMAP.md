@@ -2088,8 +2088,15 @@ registration only encodes core ID and compartments; P08 RTL requires
 synapse count [33:18] and route count [46:34]. This is a direct,
 source-verified software metadata omission consistent with the physical
 failure. An isolated V3 firmware repair and native tests were added
-without modifying the frozen model/accepted shell, but V3 genuine
-Vitis ELF build and physical acceptance remain PENDING. Full 26-tick
+without modifying the frozen model/accepted shell. The operator
+subsequently built genuine V3 ELF SHA
+`66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904`
+and GNU map SHA
+`148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede`,
+with EXACT low-DDR PT_LOAD `[0,0x00106B00)`. Strict original-model
+V3 offline admission passed. A separate V3 SHA-pinned same-session
+hardware launcher and CI mock tests are committed; actual V3 KV260
+run and independent parity remain PENDING. Full 26-tick
 inference and numerical parity gates still OPEN. Preserve real V2
 mailbox SHA `79c20f53664afabd3d349b3dccc0f3fc0f1824706863cb5d1409cb9ce493077d`.
 
