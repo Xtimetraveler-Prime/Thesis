@@ -1,0 +1,61 @@
+{
+  "schema": "p07-b6-1-original-frozen-33asset-5session-source-operator-seal-pass-record-v1",
+  "source": "Operator-uploaded terminal execution and complete local 2026-11-01 external B6.1 --mode seal JSON. Underlying original signed files reside on operator PC and were not independently opened by assistant.",
+  "operator_report": "/home/dna/Thesis_Evidence/p07_b6_original_freeze_seal_20261101T230852Z.json",
+  "mode": "seal",
+  "operator_verified_terminal_stdout": {
+    "P07_B6_ORIGINAL_27CORE_SIGNED_SOURCE_ARTIFACT_FREEZE_INVENTORY_PASS": 1,
+    "P07_B6_B5_FORMAL_ACCEPTANCE_INDEPENDENTLY_RECHECKED": 1,
+    "P07_B6_KV260_BOARD_CONTACT": 0,
+    "P07_B6_MAIN_MERGE_PERFORMED": 0,
+    "P07_B6_OFFICIAL_MNIST_TEST_SEALED": 1,
+    "P07_B6_FINAL_ACCEPTANCE": 0
+  },
+  "genuine_source_contract": {
+    "signed_B24_immutable_assets_individually_SHA256_rechecked": 33,
+    "signed_27_logical_P02_cores": true,
+    "signed_original_input_routes": 20384,
+    "signed_original_output_routes": 1000,
+    "signed_compiled_784_1000_10_network_SHA256": "02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a",
+    "original_B24_manifest_SHA256": "d71e2827a81ab1f00ef1e89446540ac04b7d7b34d89b30d46cd6e4ff013c7a63",
+    "accepted_P03_XSA_SHA256": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+    "original_V3_ELF_SHA256": "66d628bebed753ae9a5c61b993936b558f00dc31e63bf5748a8d9858ac15f904",
+    "original_V3_map_SHA256": "148b8720bc41253c5d06cece22ffaf59f8f70be7af3976726f5e504f2c379ede",
+    "B5_raw_A53_ELF_SHA256": "0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf",
+    "B5_raw_A53_map_SHA256": "1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8"
+  },
+  "real_physical_evidence": {
+    "original_4_V3_TRAIN_ordinals": [
+      0,
+      1,
+      2,
+      0
+    ],
+    "fifth_B5_original_TRAIN0_raw_neurons": 26260,
+    "fifth_B5_raw_trace_bytes": 840320,
+    "fifth_B5_raw_physical_trace_SHA256": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+    "B5_operator_final_accepted": true,
+    "B5_4_final_operator_report_SHA256": "d72abc426a0d7a54d5a70994f75de9fca31862441d6507feb0b57c3e3fbbf7b9",
+    "B5_4_actual_operator_attestation_SHA256": "4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31",
+    "B5_4_fourrun_original_SHA256": "f1dc383f4f4e316fca4cb5c6175e129347dfeb3fa4f9982de2c4ada412cc1ada",
+    "B5_4_five_session_numerical_review_SHA256": "aacc1a466e323f82d8c5eafda268c4f808cf878d6352b685f704473fab6fa0eb",
+    "B5_4_raw0_independent_review_SHA256": "0c37aee136c218216eb01926b8a50ad67fb81833d4aa2c6feb096be6aa68106c"
+  },
+  "genuine_original_V3_located_operator_paths": [
+    "/home/dna/p07_b4m_diag_v3_build_20261101T034702Z/vitis_workspace/p07_b4m_diag_v3_26tick/build/p07_b4m_diag_v3_26tick.elf",
+    "/home/dna/p07_b4m_diag_v3_build_20261101T034702Z/vitis_workspace/p07_b4m_diag_v3_26tick.elf",
+    "/home/dna/p07_b4m_diag_v3_build_20261101T034702Z/vitis_workspace/p07_b4m_diag_v3_26tick.map"
+  ],
+  "original_MAIN_only_LitReview_Git_blob_expected": "3c45d0a0d0b55378d3564d8f82282803a8eb1a3e",
+  "scope_bounds": {
+    "B6_1_signed_frozen_original_freeze_seal_complete": true,
+    "B6_2_complete_reproducible_physical_archive_independently_verified": false,
+    "B6_3_final_handoff_accepted": false,
+    "P07_B_complete": false,
+    "main_merged": false,
+    "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+    "exclusive_DDR_boot_ownership_independently_proven": false,
+    "independent_instrumented_powercycle_proven": false,
+    "every_packet_word_physically_verified": false
+  }
+}
