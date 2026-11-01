@@ -2078,6 +2078,45 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5.4 OPERATOR INDEPENDENT FIVE-PHYSICAL-SESSION NUMERICAL REVIEW PASS, BUT FORMAL FINAL ACCEPTANCE NOT YET RECORDED — MAIN MERGE DEFERRED:**
+Operator ran the REAL PC-only `scripts/p07_b5_final_acceptance.py --mode review`
+and supplied complete report
+`/home/dna/Thesis_Evidence/p07_b5_4_final_numerical_review_20261101T220745Z.json`.
+Five real source-signed board sessions reverified: original V3 TRAIN
+ordinals `0/1/2/0` with exact 26-tick FNV64, counts and original
+TRAIN0 deterministic repeat; fifth independent B5 RAW0 26×1010×32B
+**840,320-byte exact physical neuron/scalar parity**, SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`;
+7/7 independent counters/trace/readout checks PASS, same-session original
+signed 27-core DDR / route / TRAIN0 physical readback verified. Report
+independently pins the original four-run summary SHA256
+`f1dc383f4f4e316fca4cb5c6175e129347dfeb3fa4f9982de2c4ada412cc1ada`
+and physical RAW0 verifier report SHA256
+`0c37aee136c218216eb01926b8a50ad67fb81833d4aa2c6feb096be6aa68106c`.
+`P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1`,
+`P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1` and original TEST
+still SEALED. [User-supplied five-run B5.4 numerical-only ledger](docs/P07_B5_4_2026_11_01_FIVE_SESSION_NUMERICAL_REVIEW_PASS_NOT_FINAL_ACCEPTANCE.json).
+**Do NOT mark B5.4 or P07-B.5 accepted yet.** Actual report retained
+`operator_attested_cold_boot_and_recovery_all_five_sessions=false`,
+`operator_explicit_final_B5_acceptance=false`,
+`independent_board_powercycle_instrumentation_proof=false`,
+`boot_firmware_and_other_DDR_owner_independently_proven=false`,
+and `P07_B5_final_acceptance=false`.
+Actual operator-reported session-by-session cold-powercycle/recovery and
+residual DDR owner risk disclosures plus explicit final B5 approval are
+required by the source-controlled B5.4 gate; conditional conversational
+merge request must not silently fabricate them. P07-B.6 final scaled
+hardware freeze/handoff is separately OPEN, so the overall P07-B branch
+is NOT complete. [B5.4 formal approval process](docs/P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+**Main branch literature protection:** `main` is diverged by one
+main-only commit containing 403-line `LitReview.md` with blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+No merge or rewrite of `main` was performed; PR #49 has base `main`,
+PR #50 has base PR #49 branch. After final P07-B.5 and P07-B.6 approval,
+merge in order **#49 then #50** via normal GitHub merge and prove the
+literal `LitReview.md` blob SHA remains unchanged. No force/reset,
+branch replacement or source overwrite, and no unsealing official TEST.
+
 **2026-11-01 P07-B.5.3 AUTHENTICATED REAL PHYSICAL 840320B ORIGINAL TRAIN0 NEURON-BYTEWISE PARITY PASS; B5.4 FINAL ACCEPTANCE REVIEW IMPLEMENTED, REBOOT OPERATOR SIGNOFF OPEN:**
 Operator ran distinct new B5 RAW A53 27core original TRAIN ordinal0
 (index **37384**) and independently verified real same-session signed
