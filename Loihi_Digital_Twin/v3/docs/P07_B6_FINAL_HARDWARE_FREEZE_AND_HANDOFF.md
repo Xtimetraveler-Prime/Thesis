@@ -222,6 +222,39 @@ Expected PC-only candidate:
 accepted source report exists and passes its own independent
 `--mode accept` command. No B6 acceptance or merge is automatic.**
 
+## Operator commands, checkpoint C — main-only literature-review preservation
+
+The new `scripts/p07_b6_literature_merge_guard.py` is a
+separate **read-only Git tree/commit integrity check**. It compares
+the actual fetched `origin/main:LitReview.md` blob SHA256-irrelevant
+Git object ID to the exact original independently committed main
+Git *blob* `3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+It rejects a missing file, changed contents, renaming or symlink,
+and never changes either branch or executes hardware.
+
+```bash
+cd ~/Git/Thesis
+git fetch origin main
+git rev-parse 'origin/main:LitReview.md'
+# Must print 3c45d0a0d0b55378d3564d8f82282803a8eb1a3e
+
+cd Loihi_Digital_Twin/v3
+export P07_B6_LITREVIEW_AUDIT="$HOME/Thesis_Evidence/p07_b6_main_litreview_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P07_B6_LITREVIEW_AUDIT"
+PYTHONPATH="$PWD/src" python scripts/p07_b6_literature_merge_guard.py \
+  --repo "$HOME/Git/Thesis" \
+  --ref origin/main \
+  --out "$P07_B6_LITREVIEW_AUDIT"
+cat "$P07_B6_LITREVIEW_AUDIT"
+```
+
+Expected `P07_B6_MAIN_LITREVIEW_ORIGINAL_BLOB_IDENTICAL_PASS=1`.
+After all P07-B milestones are accepted and the operator explicitly
+authorizes merging, **re-run against `--ref main` after GitHub
+merge and after updating local main**, using a NEW output report.
+The same exact blob SHA must persist. Never use a force push,
+reset or snapshot overwrite as a substitute for a merge.
+
 ## Git branches and literature-review preservation
 
 Draft dependency chain (leave all unmerged):
