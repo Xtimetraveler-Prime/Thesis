@@ -51,7 +51,9 @@ int p07_b4m_trace_init(p07_b4m_spike_trace *t,
     for(c=0u;c<P07_B3_CORES;c++){
         if(!s->hw->configured[c])return P07_B4M_TRACE_INVALID;
         comp=(uint32_t)((s->hw->metadata[c]>>7u)&UINT64_C(0x7ff));
-        if(!comp||comp>1024u||total>capacity-comp)
+        if(!comp||comp>1024u||total>capacity-comp||
+           comp!=b5_raw_capture_active->core_compartments[c]||
+           total!=b5_raw_capture_active->core_prefix[c])
             return P07_B4M_TRACE_INVALID;
         total+=comp;
     }
