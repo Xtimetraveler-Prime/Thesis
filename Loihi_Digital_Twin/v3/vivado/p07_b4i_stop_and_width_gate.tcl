@@ -46,7 +46,13 @@ set status [catch {
                 set stopped 1
                 break
             }
-            if {[string trim $stop_error] eq "The core is powered down"} {
+            # XSDB has produced BOTH exact forms on the operator's
+            # Vitis/XSDB installations. Interpret ONLY these two complete
+            # strings as a power-down observation. Never accept arbitrary
+            # halt errors, and never count a powered-down CPU0 as stopped.
+            set observed_error [string trim $stop_error]
+            if {$observed_error eq "The core is powered down" ||
+                $observed_error eq "Cannot halt processor core: power down"} {
                 if {$i > 0} {
                     set secondary_down 1
                     break
