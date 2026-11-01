@@ -1,0 +1,205 @@
+# P07-B.5.4 — Final original trained 27-core FPGA evidence and operator closeout
+
+**Status (2026-11-01): IN PROGRESS. All required original B5.1/B5.2
+fingerprint-parity and B5.3 selected complete physical RAW NEURON
+bytewise numerical results reported independently PASS. Formal B5.4
+operator cold reboot and recovery attestation / independent final signoff
+NOT YET RECEIVED, so P07-B.5 and P07-B are NOT closed.**
+No `main` merge. PR #49 and #50 stay draft. P07-B.6/P08-B gated.
+
+## Genuine physical B5.3 result
+
+The operator supplied the **complete independently audited B5.3 RAW0
+physical verification JSON** produced by
+`scripts/p07_b5_raw_physical_verify.py`.
+Actual source evidence resides on the operator PC:
+
+`/home/dna/Thesis_Evidence/p07_b5_raw_train0_real_20261101T213638Z`
+
+- Signed original TRAIN ordinal 0; canonical TRAIN index **37384**;
+  classified **1**, 25 readout spikes to class 1.
+- Original 27 physically staged contexts/routes/TRAIN0 bytewise readbacks:
+  `same_session_original_27core_and_route_stage_verified=true`.
+- **702 HLS dispatches**, **26 global barriers**, 702 page-ins,
+  699 dirty + 3 final page-outs.
+- Full original physical HLS debug-bank7 trace:
+  **26 × 1,010 × 32 bytes = 840,320 bytes / 26,260 neuron records**.
+- Independently regenerated scalar original signed B2.4 reference
+  and genuine physical PSU readback both SHA256
+  `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+- Exact 26-tick FNV64 `0xB59CA8594D6E64AD` and all 26 independently
+  checked tick FNV64 values.
+- All seven independent original neural/input/spike/packet COUNT/readout
+  numerical checks `true`.
+- Original B5-specific 256B genuine physical terminal mailbox SHA256
+  `435b1c903f3323b3bfd156eb271202d82c8738ebe2a7a8c489e6aab7fcdd4d6b`.
+- Distinct genuine new B5 ELF SHA256
+  `0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`;
+  GNU map SHA256
+  `1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`.
+- `raw_neuron_original_26x1010_bytes_exactly_equal=true`,
+  `original_signed_model_modified=false`,
+  `original_V3_ELF_modified=false`,
+  `original_official_MNIST_TEST=SEALED_NOT_ACCESSED`.
+
+[Source-controlled bounded physical raw parity ledger](P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json)
+quotes operator-provided evidence; the assistant has NOT physically
+read the operator's source binaries or contacted the board.
+
+**Important scope:** The embedded reused older structural mailbox
+field `independent_full_neuron_numerical_parity=false` does not
+invalidate B5.3's stronger independently checked
+`raw_neuron_original_26x1010_bytes_exactly_equal=true`. One proves
+*structural mailbox* metadata; the other proves actual raw physical
+neuron content equality to independent integer scalar oracle.
+This is **not** full per-packet-byte route trace parity; original
+P03/NEXT packet COUNTS were checked exactly.
+
+## Historical B5.2 physical runs (independently verified in operator logs)
+
+Four signed original V3 sessions, original TRAIN ordinals 0/1/2/0,
+all 702 dispatches and 26 barriers, full scalar FNV and count parity:
+
+1. `/home/dna/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z`
+2. `/home/dna/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z`
+3. `/home/dna/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z`
+4. `/home/dna/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_20261101T193922Z`
+
+Four-run report:
+`/home/dna/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json`.
+Original TRAIN0 repeat fully reproduced original 256B physical mailbox
+SHA256 `5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`.
+The report itself explicitly retained
+`cold_reboot_between_runs_independently_proven=false`.
+
+## New B5.4 independent PC-only numerical closeout
+
+`scripts/p07_b5_final_acceptance.py --mode review` reopens and
+**re-verifies directly from physical source files**, not merely
+compares the two previously saved JSON summaries:
+
+1. All **four** accepted original V3 full signed 27-core
+   DDR/route/TRAIN physical staging and 256B terminal mailboxes,
+   independently regenerated original scalar counters/FNV and
+   exact TRAIN0 repeat equality. Requires 0/1/2/0 ordered
+   *distinct* physical directories.
+2. The distinct **fifth B5 RAW0 physical session**, with its exact
+   signed new ELF/map, accepted original source and same-session
+   physical readbacks, terminal B5 256B mailbox, 840,320 physical
+   raw neuron bytes, all 26 tick fingerprints and bytewise original
+   integer scalar trace comparison.
+3. Both existing user-produced report JSONs must match
+   freshly recomputed independent result structures exactly.
+4. The output explicitly retains `P07_B5_final_acceptance=false`,
+   `operator_attested_cold_boot_and_recovery_all_five_sessions=false`,
+   `boot_firmware_and_other_DDR_owner_independently_proven=false`,
+   `P07_B6_started=false` and `main_merged=false`.
+
+**PC-only native tests**:
+`tests/test_p07_b5_final_acceptance.py` prove that malformed,
+reused, omitted or out-of-order session evidence, fake raw SHA,
+changed historic reports, missing operator statement, omitted
+actual per-session cold power cycles/recovery or a wrong explicit
+acceptance token are *NO-GO*. Synthetic mock tests do not
+represent physical evidence.
+
+### Operator PC command — NEW final numerical review, no board contact
+
+```bash
+cd ~/Git/Thesis
+git switch agent/v3-p07-b5-scaled-multiframe-validation
+git pull --ff-only origin agent/v3-p07-b5-scaled-multiframe-validation
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+    tests/test_p07_b5_scaled_validation.py \
+    tests/test_p07_b5_raw_physical_safety.py \
+    tests/test_p07_b5_final_acceptance.py
+
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+export P07_B4L1_STAGE="$HOME/Thesis_Evidence/p07_b4l1_original27_20261022T204013Z"
+export P07_B4M_STAGE="$HOME/p07_b4m_frozen_inputs_20261023T034626Z"
+export P07_B5_RAW_BUILD_DIR="$HOME/p07_b5_raw_trace_build_20261101T204014Z"
+export P07_B5_RAW_OFFLINE="$HOME/Thesis_Evidence/p07_b5_raw_elf_offline_20261101T204303Z.json"
+
+export P07_B5_RUN0="$HOME/Thesis_Evidence/p07_b4m_diag_v3_real_20261101T041302Z"
+export P07_B5_RUN1="$HOME/Thesis_Evidence/p07_b5_train1_real_20261101T045754Z"
+export P07_B5_RUN2="$HOME/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z"
+export P07_B5_RUN0_REPEAT="$HOME/Thesis_Evidence/p07_b5_train0_reboot_repeat_real_20261101T193922Z"
+export P07_B5_RAW_RUN0="$HOME/Thesis_Evidence/p07_b5_raw_train0_real_20261101T213638Z"
+
+export P07_B5_FOURRUN_REPORT="$HOME/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json"
+# Restore this to the ACTUAL previously generated raw verify JSON shown
+# with cat "$P07_B5_RAW_VERIFY0" in the earlier operator session.
+# If the shell variable was cleared, locate it using:
+find "$HOME/Thesis_Evidence" -maxdepth 1 -name 'p07_b5_raw_verify_train0_*.json' -type f -print
+: "${P07_B5_RAW_VERIFY0:?Set to your EXISTING B5 raw verify report; do not synthesize it}"
+
+export P07_B5_4_REVIEW="$HOME/Thesis_Evidence/p07_b5_4_final_numerical_review_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P07_B5_4_REVIEW"
+PYTHONPATH="$PWD/src" python scripts/p07_b5_final_acceptance.py \
+  --mode review \
+  --frozen-dir "$PWD/artifacts/p06_b24_frozen_1000" \
+  --staged-dir "$P07_B4L1_STAGE" \
+  --routes-dir "$P07_B4M_STAGE" \
+  --build-dir "$P07_B5_RAW_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --offline-report "$P07_B5_RAW_OFFLINE" \
+  --fourrun-report "$P07_B5_FOURRUN_REPORT" \
+  --run "0:$P07_B5_RUN0" \
+  --run "1:$P07_B5_RUN1" \
+  --run "2:$P07_B5_RUN2" \
+  --run "0:$P07_B5_RUN0_REPEAT" \
+  --raw-evidence "$P07_B5_RAW_RUN0" \
+  --raw-report "$P07_B5_RAW_VERIFY0" \
+  --out "$P07_B5_4_REVIEW"
+cat "$P07_B5_4_REVIEW"
+```
+
+Expected review markers:
+`P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1`,
+`P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1`,
+`P07_B5_4_FINAL_OPERATOR_ACCEPTANCE=0`,
+`P07_B5_4_BOARD_CONTACT_THIS_AUDIT=0`.
+
+## B5.4 actual cold reboot/DRR residual risk / user final signoff gate
+
+The physical verification reports explicitly retain **false** for
+independent cold reboot and physical DDR ownership. They cannot
+prove how the operator actually power-cycled between experiments.
+Further hardware destruction is **not** required merely to review
+these five good sessions.
+
+Review and copy the deliberately **unattested/null**
+[operator attestation template](P07_B5_4_OPERATOR_ATTESTATION_TEMPLATE.json)
+to a **new external** path on the operator's PC, but ONLY fill out
+an entry as `true` when it describes what really occurred for that
+specific original physical session. There are five distinct entries:
+four original V3 TRAIN runs plus separate B5 RAW0. Verify personally:
+
+- A **fresh board cold power cycle BEFORE** every physical attempt.
+- A physical **cold power cycle AFTER** every physical attempt
+  including failure, and **no resumed halted Linux**.
+- Dedicated JTAG control for each run.
+- Explicit acknowledgment of STILL UNPROVEN boot-firmware/low
+  DDR and new B5 trace/mailbox exclusive ownership.
+- Independent inspection of numerical evidence, followed by
+  explicit operator acceptance of the **bounded P07-B.5 numerical
+  milestone**, not unclaimed full packet-by-packet trace parity.
+
+The B5.4 `--mode accept` path is implemented but **DO NOT run until
+you have independently reviewed the actual physical run history and
+explicitly authorized final acceptance**. It strictly requires
+the user-created external attestation JSON, separately passed
+numerical source recheck, plus an explicit final acceptance token.
+No automatic fake signing or fill-in of the `null` fields.
+Even real operator attestation is not hardware instrumentation
+proof of power-cycling; this limitation remains a visible field
+in the final report.
+
+**Passing B5.4 accepts only P07-B.5 within documented numerical
+scope**. P07-B.6 freeze/handoff will then need its own final
+verification and explicit operator signoff. Neither acceptance nor
+any PR merge happens automatically. Do not unseal official TEST
+or modify the frozen original model.
