@@ -1,8 +1,10 @@
 # P07-B.5 — Scaled 27-core trained physical validation
 
-**STATUS AS OF 2026-11-01: B5.1 + B5.2 ACCEPTED (bounded four-run
-physical fingerprint parity). B5.3 strict RAW trace NOT YET physically
-accepted; B5.4 milestone closeout PENDING.**
+**STATUS AS OF 2026-11-01: B5.1/B5.2 PASS (four original frozen TRAIN
+27-core V3 physical fingerprint-parity runs), B5.3 SELECTED ORIGINAL
+TRAIN0 PHYSICAL RAW NEURON BYTEWISE PARITY PASS (840,320B / 26,260 records).
+B5.4 independent closeout and operator reboot/final acceptance PENDING.
+P07-B.6/P08-B gated; PRs #49/#50 unmerged.**
 
 The user independently verified four genuine distinct physical sessions
 in the order original frozen TRAIN ordinals **0,1,2,0**, each with
@@ -25,19 +27,44 @@ ELF were unchanged; the official MNIST TEST was not accessed.
   preserves each raw 256B mailbox SHA256, source evidence paths and
   the explicit remaining validation requirements.
 
-**Do not claim P07-B.5 fully closed.** The operator's report states
-`P07_B5_final_full_parity_and_acceptance=false`,
-`full_raw_per_neuron_hardware_trace_directly_compared=false`, and
-`cold_reboot_between_runs_independently_proven=false`. Evidence folder
-names and deterministic repeat outputs cannot prove an actual power-cycle.
-The operator may separately attest to the reboot. B5.3 is now
-implementing a **new, separately named, not-yet-board-authorized**
-840,320B raw P03 bank7 trace sidecar; the accepted V3 ELF and original
-trained graph remain frozen. See [B5.3 source/DDR capture engineering handoff](P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
-Earlier dated ordinal-specific physical runbooks below remain as historical
-reproduction instructions, not current milestone status. For the earlier
-hardware challenges, see
-[P07-B.4 problems and fixes](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
+**B5.3 real physical direct raw neuron gate: OPERATOR-VERIFIED PASS.**
+New original TRAIN0 evidence:
+`/home/dna/Thesis_Evidence/p07_b5_raw_train0_real_20261101T213638Z`.
+The signed new B5 ELF/map, physical 256B terminal mailbox and exact
+840,320B raw PS/PL debug-bank-7 neuron-state readback were independently
+checked using `scripts/p07_b5_raw_physical_verify.py`.
+Every one of **26,260** raw neuron records (26 ticks × 1,010
+compartments × 32B) was equal to the original frozen scalar reference:
+both SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+Original 26-tick FNV64 `0xB59CA8594D6E64AD`; 702 dispatches,
+26 barriers; all seven independent scalar/physical numerical checks
+were true; original same-session 27-core DDR sources/routes/readbacks
+verified. [Signed bounded physical B5.3 raw PASS ledger](P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json).
+Underlying board binaries remain on the operator PC; the repository
+contains provenance ledgers, not falsely manufactured physical bytes.
+
+**Do not claim P07-B.5 fully closed.** Existing B5.2 report still states
+`cold_reboot_between_runs_independently_proven=false`; the new B5
+raw physical report still states
+`user_power_cycle_independently_attested=false` and
+`physical_DDR_ownership_independently_proven=false`.
+Operator signoff/actual fresh cold reboot and recovery attestations
+must be separately obtained and reviewed in **B5.4**. Board-specific
+firmware/Linux/other DMA exclusive ownership remains unproven.
+Every routed *packet word* is not individually checked by the new
+raw neuron recorder; original packet/NEXT **counts** are exact.
+The original B4m structural field
+`independent_full_neuron_numerical_parity=false` embedded within
+B5's reused mailbox decoder only characterizes the older structural
+receipt; B5's separately authenticated
+`raw_neuron_original_26x1010_bytes_exactly_equal=true`
+is the direct bytewise comparison.
+
+New PC-only [B5.4 final independent evidence/reboot acceptance gate](P07_B5_4_FINAL_INDEPENDENT_REVIEW.md)
+must recheck all five real physical sessions and the saved reports
+before the operator may explicitly close B5.4. No new board
+run is required for the review; no automatic acceptance or
+merge into `main`.
 
 ## Freeze and risk boundaries
 
@@ -112,7 +139,7 @@ hardware challenges, see
   reinterpreted as multi-frame success.
 
 **B5.3 — Selected **RAW** 26×1010 original neuron trace and packet
-numerics [PC RAW ORACLE AND NEW NATIVE C RECORDER IMPLEMENTED; physical firmware/readback NOT IMPLEMENTED / NOT CLAIMED]:**
+numerics [REAL PHYSICAL RAW 26×1010 NEURON BYTEWISE PASS; same-session readbacks authenticated; 2026-11-01]:**
 
 The existing original V3 mailbox contains FNV64 of all 26×1010
 256-bit HLS trace words; it does **NOT** contain the underlying
