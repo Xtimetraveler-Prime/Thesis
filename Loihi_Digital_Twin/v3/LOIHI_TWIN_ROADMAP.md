@@ -2078,6 +2078,333 @@ all signed24 per-neuron/packet/readout traces with source oracle.
 **P07-B.4m physical inference/parity, P07-B.5 validation, P07-B.6
 closeout/P08-B handoff remain OPEN.**
 
+**2026-11-01 P07-B.5 FORMALLY CLOSED / USER-ATTESTED B5.4 REAL FIVE-SESSION FINAL ACCEPTANCE PASS:**
+User executed `scripts/p07_b5_final_acceptance.py --mode accept` on original
+5 genuine signed physical sessions (4 original V3 TRAIN 0/1/2/0 plus
+1 separate B5 RAW0), supplying exact external personal cold-boot,
+cold-recovery and dedicated JTAG operator attestation. The actual
+write-once report
+`/home/dna/Thesis_Evidence/p07_b5_4_accepted_20261101T224134Z.json`
+contains `P07_B5_final_acceptance=true`,
+`operator_attested_cold_boot_and_recovery_all_five_sessions=true`,
+`operator_explicit_final_B5_acceptance=true`,
+`all_required_B5_numerical_gates_pass=true`, and official TEST SEALED.
+All 840320B/26260 original TRAIN0 physical raw neuron records
+matched independently regenerated scalar bytes, both SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+User attestation SHA256
+`4dd6cf0d02c477a2992b55b8bc2454ee9800c94ccce78f6cee25a32f2dc7fa31`.
+[Accepted B5.4 final evidence ledger](docs/P07_B5_4_2026_11_01_FINAL_OPERATOR_ATTESTED_ACCEPTANCE.json)
+preserves source claims, session identities and evidence limitations.
+**P07-B.5 CLOSED, but P07-B.6 production hardware freeze/handoff and
+full P07-B remain OPEN.** Accepted scope does NOT prove exclusive Linux/
+boot/DDR ownership, independently instrumented board power cycling, nor
+per-packet-word physical trace equivalence. No new FPGA execution is
+required for B6 preparation; original TEST SEALED and frozen B2.4, V3
+ELF and P03 bitstream untouched. No merge into main; independent
+`main:LitReview.md` remains protected until the whole P07-B has been
+accepted and operator explicitly authorizes merges.
+
+**2026-11-01 P07-B.5.4 OPERATOR INDEPENDENT FIVE-PHYSICAL-SESSION NUMERICAL REVIEW PASS, BUT FORMAL FINAL ACCEPTANCE NOT YET RECORDED — MAIN MERGE DEFERRED:**
+Operator ran the REAL PC-only `scripts/p07_b5_final_acceptance.py --mode review`
+and supplied complete report
+`/home/dna/Thesis_Evidence/p07_b5_4_final_numerical_review_20261101T220745Z.json`.
+Five real source-signed board sessions reverified: original V3 TRAIN
+ordinals `0/1/2/0` with exact 26-tick FNV64, counts and original
+TRAIN0 deterministic repeat; fifth independent B5 RAW0 26×1010×32B
+**840,320-byte exact physical neuron/scalar parity**, SHA256
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`;
+7/7 independent counters/trace/readout checks PASS, same-session original
+signed 27-core DDR / route / TRAIN0 physical readback verified. Report
+independently pins the original four-run summary SHA256
+`f1dc383f4f4e316fca4cb5c6175e129347dfeb3fa4f9982de2c4ada412cc1ada`
+and physical RAW0 verifier report SHA256
+`0c37aee136c218216eb01926b8a50ad67fb81833d4aa2c6feb096be6aa68106c`.
+`P07_B5_4_FIVE_PHYSICAL_SESSIONS_ORIGINAL_SIGNED_NUMERICAL_GATE_PASS=1`,
+`P07_B5_4_840320B_REAL_RAW_NEURON_PARITY_PASS=1` and original TEST
+still SEALED. [User-supplied five-run B5.4 numerical-only ledger](docs/P07_B5_4_2026_11_01_FIVE_SESSION_NUMERICAL_REVIEW_PASS_NOT_FINAL_ACCEPTANCE.json).
+**Do NOT mark B5.4 or P07-B.5 accepted yet.** Actual report retained
+`operator_attested_cold_boot_and_recovery_all_five_sessions=false`,
+`operator_explicit_final_B5_acceptance=false`,
+`independent_board_powercycle_instrumentation_proof=false`,
+`boot_firmware_and_other_DDR_owner_independently_proven=false`,
+and `P07_B5_final_acceptance=false`.
+Actual operator-reported session-by-session cold-powercycle/recovery and
+residual DDR owner risk disclosures plus explicit final B5 approval are
+required by the source-controlled B5.4 gate; conditional conversational
+merge request must not silently fabricate them. P07-B.6 final scaled
+hardware freeze/handoff is separately OPEN, so the overall P07-B branch
+is NOT complete. [B5.4 formal approval process](docs/P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+**Main branch literature protection:** `main` is diverged by one
+main-only commit containing 403-line `LitReview.md` with blob SHA
+`3c45d0a0d0b55378d3564d8f82282803a8eb1a3e`.
+No merge or rewrite of `main` was performed; PR #49 has base `main`,
+PR #50 has base PR #49 branch. After final P07-B.5 and P07-B.6 approval,
+merge in order **#49 then #50** via normal GitHub merge and prove the
+literal `LitReview.md` blob SHA remains unchanged. No force/reset,
+branch replacement or source overwrite, and no unsealing official TEST.
+
+**2026-11-01 P07-B.5.3 AUTHENTICATED REAL PHYSICAL 840320B ORIGINAL TRAIN0 NEURON-BYTEWISE PARITY PASS; B5.4 FINAL ACCEPTANCE REVIEW IMPLEMENTED, REBOOT OPERATOR SIGNOFF OPEN:**
+Operator ran distinct new B5 RAW A53 27core original TRAIN ordinal0
+(index **37384**) and independently verified real same-session signed
+27×512KiB physical context + 16KiB binding + original output/input
+routes and ingress TRAIN0 readbacks. Genuine new ELF/map SHA
+`0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`/
+`1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`;
+original B5 terminal 256B physical mailbox SHA256
+`435b1c903f3323b3bfd156eb271202d82c8738ebe2a7a8c489e6aab7fcdd4d6b`.
+**Actual physical 26×1010×32B = 840320B = 26260 neuron words**
+byte-for-byte matched independently regenerated signed original scalar
+trace; physical/scalar SHA256 both
+`7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`.
+Original FNV64 `0xB59CA8594D6E64AD`, **all 26 tick fingerprints**,
+**all seven independently checked metrics** exact; 702 real physical
+HLS dispatches, 26 barriers, 702 page-ins, 699 dirty + 3 final outs,
+source spikes 1514, external CURRENT events 31512, packet/NEXT **counts**
+1489 each, votes 25 for class1. **B5.3 selected FULL RAW NEURON
+numerical parity ACCEPTED**, not just prior noncryptographic FNV64.
+No claim of *every individual routed packet word* trace parity.
+[Operator original physical B5.3 signed source/terminal/raw acceptance ledger](docs/P07_B5_3_2026_11_01_REAL_ORIGINAL_TRAIN0_840320B_PHYSICAL_RAW_NEURON_PASS.json).
+Original V3 ELF, accepted P03 FPGA PL, frozen B2.4 model and
+OFFICIAL MNIST TEST unchanged/SEALED.
+**B5.4 NEXT:** source-controlled
+`scripts/p07_b5_final_acceptance.py` PC-only reviewer freshly
+reopens all FOUR previous original V3 0/1/2/0 genuine signed physical
+sessions AND the FIFTH authenticated physical B5 RAW0 session, requires
+exact original report consistency, and refuses milestone closeout
+without explicit operator attestation of fresh cold power cycles before
+and after all five sessions, dedicated JTAG, no resumed halted Linux,
+independent numerical signoff and explicit residual DDR/boot ownership
+risk acknowledgment. The source-controlled operator attestation template
+has no pre-approved `true` facts. No physical DDR exclusivity or independent
+hardware clock proof fabricated. [B5.4 final review/runbook](docs/P07_B5_4_FINAL_INDEPENDENT_REVIEW.md).
+**Do NOT mark P07-B.5 or full P07-B closed yet; B5.4 formal user
+acceptance and P07-B.6 freeze/handoff remain open. No main merge; draft
+PRs #49/#50 preserved.** Prior earlier PC-only preflight and engineering
+records below are historical, superseded in status by the actual real
+B5.3 physical neural trace parity PASS above.
+
+**2026-11-01 P07-B.5.3 ORIGINAL TRAIN0 B5 RAW A53 PC PREFLIGHT PASS; PHYSICAL DDR OWNERSHIP REVIEW REQUIRED BEFORE BOARD EXECUTION:**
+Operator ran the separate B5.3 RAW runner with `--mode preflight`
+and reported `P07_B5_NEW_RAW_GENUINE_A53_ELF_MAP_AND_ORIGINAL_TRAIN_HOST_PASS=1`,
+`P07_B4M_DIAG_V3_ALL_27_ORIGINAL_P02_METADATA_COUNTS_HOST_VERIFIED=1`,
+`P07_B5_NEW_RAW_PC_ONLY_PREFLIGHT_PASS=1` and
+`P07_B5_BOARD_CONTACT=0`. The same report intentionally retained
+`P07_B5_NEW_RAW_840320B_DDR_OWNER_INDEPENDENTLY_PROVEN=0`,
+`P07_B5_NEW_LOW_DDR_0_TO_0x107BC0_EXCLUSIVITY_PROVEN=0`,
+and `P07_B5_NEW_RAW_LAUNCH_AUTHORIZED_BY_PREFLIGHT=0`.
+**Risk review finding:** Original `p03_hw_adapter.h` defines a broad
+64MiB P03 DDR backing aperture `[0x40000000,0x44000000)`, within
+which the new B5 840320B raw capture candidate
+`[0x42000000,0x420CD280)` AND B5 256B mailbox
+`[0x43FF0100,0x43FF0200)` lie. They are disjoint from the
+27×512KiB original P02 context records, but that narrow geometry
+is NOT physical exclusive ownership relative to Linux, boot firmware,
+other APU/RPU or DMA users. Corrected B5 ELF changes original V3
+low-DDR footprint `[0,0x00106B00)` to `[0,0x00107BC0)`, plus
+4,288 bytes, also with independently UNPROVEN boot-firmware exclusivity.
+New host-only SHA-pinned `scripts/p07_b5_raw_ddr_risk_review.py`,
+`tests/test_p07_b5_raw_ddr_risk_review.py` and
+[dedicated operator hardware ownership review](docs/P07_B5_3_OPERATOR_PRE_EXECUTION_MEMORY_REVIEW.md)
+identify and preserve each unproven ownership condition. This
+review does NOT contact KV260 or grant a physical launch; 8 old
+and 5 new explicit approvals are still required after operator
+risk assessment and recovery planning. **No B5.3 raw board run has
+occurred**; strict 26,260-record physical/scalar byte equality,
+B5.4 final acceptance and P07-B closure remain OPEN. Do not merge
+PR #49 or #50 with `main` until whole P07-B is completed and
+operator explicitly signs off.
+
+**2026-11-01 P07-B.5.3 genuine corrected B5 RAW A53 ELF/map PC-ADMITTED; dedicated B5 capture and physical-raw parity infrastructure IMPLEMENTED / NATIVE-ONLY:**
+Operator separately rebuilt the corrected new B5 raw-trace A53 application
+and independently passed exact frozen original 27core/source SHA, original
+accepted PS/PL routed P03 XSA, TRAIN input and **real linked ELF/map**
+PC-only admission: `P07_B5_GENUINE_RAW_CAPTURE_VITIS_SOURCE_ELF_OFFLINE_PREFLIGHT_PASS=1`.
+Genuine new ELF SHA `0e018a9cabf45b7e65a366b9e21df0cc90cb5b072053cac8c19d2f601be1d2cf`;
+map SHA `1e6cf5d0a9744378fb0aebe2e6271da661b8739a2fb930e983342477fd0e78c8`;
+A53 low-DDR footprint `[0x00000000,0x00107BC0)` (1,080,256 bytes),
+raw sidecar candidate `[0x42000000,0x420CD280)` (840,320 bytes),
+new B5 mailbox `[0x43FF0100,0x43FF0200)` (256 bytes).
+[Operator genuine admission ledger](docs/P07_B5_3_2026_11_01_REAL_VITIS_RAW_ELF_PC_ADMISSION.json)
+retains all exact identity proofs and explicitly proves **no** physical
+board/raw neuron execution, no DDR physical owner exclusivity and no
+permission inferred from the successful build.
+Dedicated B5 physical `vivado/p07_b5_raw_trace_xsdb_run.tcl`,
+`scripts/p07_b5_raw_physical_capture.py` (PC-only default preflight,
+13 distinct operator approvals before destructive execution) and
+`scripts/p07_b5_raw_physical_verify.py` (independent original 27core
+readback provenance + 256B B5 mailbox + original signed scalar **840320B
+per-neuron exact bytewise parity**) are now source-controlled with
+host-only negative safety tests. No KV260 run attempted via these.
+Physical raw capture, DDR owner risk acceptance and real reboot witness
+**still OPEN**. Original V3 ELF and route/input sources untouched,
+original official MNIST TEST sealed; B5.4/B6/P08-B remain gated.
+Nothing merged into `main`, PR #49/#50 remain drafts.
+See [B5.3 hardware capture/readback and PC-only runbook](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+
+**2026-11-01 P07-B.5.3 genuine first Vitis build succeeded; offline admission correctly rejected stale V3 runtime ID (FIXED IN NEW SOURCE, REBUILD REQUIRED):**
+Actual Vitis 2025.2 source/ELF/map build emitted
+`P07_B5_RAW_A53_ELF_AND_MAP_BUILT=1` in
+`/home/dna/p07_b5_raw_trace_build_20261101T202750Z`, with no
+board execution. Offline preflight returned
+`P07_B5_NEW_RAW_OFFLINE_NO_GO=NO-GO: experimental B5 ELF polluted by original firmware identity`.
+Source review found an old `P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3`
+**runtime xil_printf** in otherwise correctly named new B5 firmware;
+the existing strict checker was CORRECT to fail. Changed B5-only status
+print to `P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1`, retained binary
+identity scan, added source-stage / post-link preflight checks and
+native negative regression. Old genuine Vitis ELF/map are preserved but
+**not admitted**, must not be executed, and cannot be patched; operator
+must build a new isolated B5 ELF/map, then re-run PC-only admission.
+No acceptance of physical DDR ownership or B5 raw neuron parity.
+[Detailed diagnosis and fix](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+All P07-B work remains on draft PRs #49/#50, no merge to `main`.
+
+**2026-11-01 P07-B.5.3.2 separate RAW trace A53 integration — PC NATIVE COMPLETE, VITIS/BOARD NOT YET VERIFIED:**
+User independently generated original frozen TRAIN0 **840,320-byte** host
+scalar trace, SHA256 `7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d`,
+FNV64 `0xB59CA8594D6E64AD`, original monolithic trace SHA
+`4bef8f76965d4080a7c4ec2f3feab7c805e636d6397afb80a4a09f07733aea35`.
+This is a strong original signed scalar reference, **NOT physical trace**.
+Original user evidence:
+`/home/dna/Thesis_Evidence/p07_b5_train0_expected_raw_20261101T200800Z.bin`
+and [scalar reference ledger](docs/P07_B5_3_TRAIN0_SCALAR_RAW_ORACLE_USER_ACCEPTANCE.json).
+Separate, new B5-only A53 diagnostic source
+`P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1` now integrates
+an actual P03 bank7/bank1-verified raw trace capture at each
+original dispatch hook *before* HLS slot eviction, with 26x1010
+strict-order raw records and final 840320-byte flush. Unique B5
+candidate mailbox `[0x43FF0100,0x43FF0200)`; trace sidecar
+candidate `[0x42000000,0x420CD280)`. Both physically **UNAUTHORIZED**
+until independent DDR owner admission and new per-run approvals.
+New isolated Vitis build sources and PC-only exact original source/ELF/map/
+XSA/route admission exist; **operator has NOT built the distinct
+B5 ELF/map with real Vitis**, and no new B5 physical launcher/board
+capture/physical SHA has been produced. The accepted original V3 ELF,
+P03 PL/RTL, B2.4 freeze, TEST seal and four-run B5.2 physical
+receipts remain unmodified. New native GCC C hook+capture integration
+exercises 26,260 simulated trace records, actual bounded serializer,
+and fail-closed corrupt/mismatched P03 metadata cases. CI-native
+result must not be reported as genuine FPGA readback.
+See [B5.3 new firmware/offline build handoff](docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md).
+P07-B.5.3 remains **IN PROGRESS**; B5.4/P07-B.6/P08-B remain gated.
+Draft PR #49 and #50 UNMERGED; no `main` changes until complete
+P07-B and explicit operator approval.
+
+**2026-11-01 P07-B.5.2 FOUR GENUINE ORIGINAL 27CORE PHYSICAL SESSIONS / INDEPENDENT SCALAR FNV64 ACCEPTED:**
+User supplied the complete original TRAIN0 repeat verification and full
+four-session scalar-vs-physical report, confirming original TRAIN ordinals
+`[0,1,2,0]`, each independently checked against original signed 27-core
+DDR, routes, exact original frozen 26-tick integer oracle and actual 256B
+physical mailbox. Genuine 702 HLS dispatches/26 barriers **per image**;
+all seven original scalar/physical numerical checks **TRUE** for all four.
+Consolidation `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
+`genuine_independently_verified_sessions=4`,
+`distinct_train_validation_frames=3`,
+`all_three_distinct_frames_scalar_vs_physical_equal=true`,
+`train0_repeat_physical_metrics_and_FNV64_equal=true`.
+Original TRAIN0 repeat predicted class 1, 1,514 original source spikes,
+1,489 P03 packets/NEXT inserts, 31,512 external CURRENT events and
+physical trace `0xB59CA8594D6E64AD`. Its entire physical 256B mailbox
+SHA256 `5a2d9c9645b79144ef20f5ed7f26e5ed1ad3745aaf929713cf89fcb7f8718eda`
+was **identical** to the earlier genuine TRAIN0 physical run.
+Reports remain on operator PC:
+`$HOME/Thesis_Evidence/p07_b5_verify_train0_repeat_20261101T194457Z.json`,
+`$HOME/Thesis_Evidence/p07_b5_fourrun_original_train_20261101T194900Z.json`.
+[Bounded B5.2 four-session ledger](docs/P07_B5_2_2026_11_01_REAL_FOUR_SESSION_FINGERPRINT_ACCEPTANCE.json).
+**B5.1 and B5.2 are ACCEPTED WITH EXPLICIT BOUNDS**; B5.3 direct
+840320B *physical* HLS neuron trace readback/bytewise scalar comparison
+and separate authentic operator reboot evidence remain OPEN; the existing
+B5.2 PC verifier itself states both `false`. Original official TEST
+still SEALED and previous V3 ELF/RTL/frozen model unchanged. P07-B.5
+final acceptance NOT complete. Distinct B5.3 **native-only C raw trace
+recorder** development has started on the same draft PR #50, with a
+candidate separate trace sidecar `[0x42000000,0x420CD280)` that has
+only been checked for non-overlap against *known original software
+DDR ranges*. Actual physical DDR ownership, new Vitis ELF/map hashes,
+new dedicated physical launcher, on-board capture/readback, and final
+source/trace parity are NOT yet proven or authorized. See
+`docs/P07_B5_3_RAW_TRACE_CAPTURE_DEVELOPMENT.md`.
+
+**2026-11-01 P07-B.5.2 real TRAIN2 physical plus scalar numerical PASS:**
+The operator's original TRAIN-derived ordinal2 KV260 execution passed
+702/702 dispatches, 26/26 barriers, 702 page-ins, 699 dirty plus three
+final page-outs. Readout class **1** matched original TRAIN label **1**,
+counts `[0,25,0,2,0,0,0,0,1,0]`. Independent frozen scalar comparison
+passed all seven checks: 41,990 external input events, 1,484 source spikes,
+1,456 P03 packets/1,456 NEXT insertions, and full 26-tick physical
+FNV64 `0x9C12E0386A7E41CB` all exact. Raw actual physical mailbox
+SHA256 `cdf26c256cd0fbf1c4c901d53cd2caaf3b1a2e3e945a82c64aa354eed7d6e5d6`.
+The physically captured original ordinal2 evidence is at
+`/home/dna/Thesis_Evidence/p07_b5_train2_real_20261101T192124Z`;
+verified scalar report
+`/home/dna/Thesis_Evidence/p07_b5_verify_train2_20261101T192721Z.json`;
+provenance [ledger](docs/P07_B5_2_REAL_TRAIN2_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
+**All three original distinct TRAIN ordinals 0,1,2 now have physical+scalar
+fingerprint acceptance**, but B5.2 ordinal0 repeat, four-run consolidation,
+B5.3 raw 840320B physical neuron trace, and B5.4 acceptance are OPEN.
+Original TEST remains sealed; P07-B.6/P08-B remain gated.
+
+**2026-11-01 P07-B.5.2 genuine original TRAIN1 26-tick physical/independent scalar PASS:**
+The operator physically staged all 27 original 512KiB P02 cores, original
+16KiB descriptor, 80KiB output/896KiB input route tables and pinned
+TRAIN validation **ordinal1** ingress, and independently reread them.
+The genuine accepted V3 A53 ELF completed **702 dispatches, 26 barriers,
+702 page-ins, 699 dirty and 3 final page-outs**. Readout prediction=**2**
+(equal to original TRAIN label2), ten readout counts
+`[0,0,25,0,0,0,0,0,0,0]`, 71,994 CURRENT events, 1,852 neuron spikes
+and 1,827 P03 packets / 1,827 NEXT insertions. Full trace FNV64
+`0x0EAC411F49856BF3` physically equaled independent frozen scalar.
+The user's actual independent B5 verifier reported
+`P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1` for **this
+single physical ordinal1 session**. Physical 256B mailbox SHA256
+`4410de8c57df98250b0184d352e8edccaeb74bd23a91610579142a44cabf0d95`;
+external evidence `p07_b5_train1_real_20261101T045754Z` and
+`p07_b5_verify_train1_20261101T050334Z.json`. Detailed
+[ordinal1 provenance ledger](docs/P07_B5_2_REAL_TRAIN1_PHYSICAL_NUMERICAL_ACCEPTANCE.json).
+**Historical ordinal1 status (superseded by the later ordinal2 PASS above):**
+At this point ordinal0 and ordinal1 were physically verified; the subsequent
+ordinal2 result is recorded above. Original ordinal0 reboot repeat,
+four-run consolidation and strict 840320B physical raw-neuron trace parity
+remain OPEN. No
+user-attested cold reboot proof supplied for this run. B5.4/P07-B.6/P08-B
+still gated. B2 official TEST SEALED.
+
+**2026-11-01 P07-B.5 operator B5.1/B5.2 read-only acceptance (not new physical runs):**
+Original frozen TRAIN validation ordinals 0/1/2 independent scalar replay
+**PASS**, marker `P07_B5_THREE_FROZEN_TRAIN_SCALAR_REFERENCE_PASS=1`,
+external report `/home/dna/Thesis_Evidence/p07_b5_three_train_reference_20261101T044416Z.json`.
+Independent B5 verifier of **existing original genuine ordinal0 physical**
+run **PASS**, marker `P07_B5_INDEPENDENT_MULTI_FRAME_FP_AND_COUNTS_PASS=1`,
+external report `/home/dna/Thesis_Evidence/p07_b5_verify_train0_20261101T044755Z.json`.
+This B5 verifier marker applies only to the evidence run explicitly given,
+**not yet** original ordinal1/2 physical or ordinal0 independent restart.
+B5.2 new physical runs and B5.3 full raw physical trace acceptance remain
+OPEN. Detailed P07-B.4 cross-cutting challenges and exact remedies:
+`docs/P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md`.
+
+**2026-11-01 P07-B.5 MULTIFRAME TRAIN VALIDATION STARTED — NOT PHYSICALLY ACCEPTED:**
+The operator's genuine original B4m TRAIN validation0 physical evidence
+was independently replayed using the frozen source scalar integer oracle,
+full 26-tick per-compartment bank7 FNV64 and all packet/input/readout
+counters. User confirmed
+`P07_B4M_V3_ORACLE_VS_PHYSICAL_ALL_CHECKS_MATCH=1` with external signed
+report `/home/dna/Thesis_Evidence/p07_b4m_v3_scalar_parity_20261101T043214Z.json`.
+This **completes a bounded single-frame reference fingerprint comparison**;
+no raw neuron trace equality or additional physical validation is claimed.
+P07-B.5 work has begun on separate draft PR #50
+(`agent/v3-p07-b5-scaled-multiframe-validation`), based on still-draft
+P07-B PR #49. B5.1 PC-only strict original frozen TRAIN ordinals 0,1,2
+scalar replay/checks and B5.2 multi-real-run 0/1/2+independent 0-repeat
+host verifier are implemented; they have **not** been run on the operator's
+original frozen files or new board evidence. B5.3 signed separate RAW
+26×1010 neuron physical trace (840,320 bytes) and B5.4 independent
+cold-reboot/user acceptance remain OPEN. See
+`docs/P07_B5_SCALED_TRAIN_MULTIFRAME_VALIDATION.md`.
+P07-B.6 final freeze and P08-B scaling measurements must not start
+until B5 physically validated and user accepted. Official MNIST TEST
+remains SEALED; original P03 RTL, B2.4 checkpoint and V3 ELF unchanged.
+
 **2026-11-01 P07-B.4m real V3 trained 26-tick STRUCTURAL PASS:**
 Operator reran genuine 27-core TRAIN0 V3 on the physical KV260 after
 A53 takeover success. Same-session original frozen model/bindings/route/

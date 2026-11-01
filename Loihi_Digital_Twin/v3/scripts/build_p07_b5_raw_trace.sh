@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# New B5.3 RAW trace candidate standalone A53 Vitis build. PC ONLY; no XSDB.
+# The result's ELF low-DDR footprint is NEW and NOT board-authorized.
+set -euo pipefail
+V3="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD="${P07_B5_RAW_BUILD_DIR:?set a NEW absolute out-of-repository build directory}"
+REPORTS="${P07_B4L_REPORTS:?set accepted P03 routed reports path}"
+XSA="$REPORTS/p03_2_ps_mmio.xsa"
+METRICS="$REPORTS/p03_2_post_route_metrics.txt"
+die(){ echo "P07_B5_RAW_BUILD_NO_GO=$*" >&2; exit 2; }
+[[ "$BUILD" == /* && ! -e "$BUILD" && ! -L "$BUILD" ]] || die "NEW absolute build path required"
+[[ "$(realpath -m "$BUILD")" == "$BUILD" ]] || die "canonical build path required"
+case "$BUILD/" in "$(cd "$V3/../.." && pwd)/"*) die "out-of-repo only";; esac
+[[ -s "$XSA" && -f "$METRICS" ]] || die "missing exact accepted P03 XSA/metrics"
+[[ "$(sha256sum "$XSA" | cut -d' ' -f1)" == 52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f ]] || die "XSA SHA differs from original accepted Track A/B4l"
+for field in p03_hpm0_data_width_bits=128 p03_hpm0_transport=smartconnect_width_protocol \
+             p03_mmio_slave_data_width_bits=32 p03_ps_mmio_master=FPD p03_mmio_base=0xA4000000; do
+    grep -Fxq "$field" "$METRICS" || die "changed accepted routed PS/PL setting: $field"
+done
+for cmd in vitis aarch64-none-elf-readelf aarch64-none-elf-nm; do
+    command -v "$cmd" >/dev/null || die "missing $cmd; source Vitis environment"
+done
+# Fail before Vitis if a new B5 candidate contains even one accepted V3
+# runtime identity; the first physical operator build was correctly rejected
+# at offline admission because its xil_printf() still printed V3.
+for old_identity in P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 \
+                    P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2 \
+                    P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1; do
+    if grep -aFq "$old_identity" "$V3/software/p07/p07_b5_full_board_raw_trace_v1.c"; then
+        die "B5 main still contains legacy firmware ID: $old_identity"
+    fi
+done
+mkdir -p "$BUILD/source"
+for n in p07_b5_full_board_raw_trace_v1.c p07_b4l_b3_bindings.c \
+         p07_b4m_dispatch_metadata.c p07_b4m_frozen_routes.c p07_b5_spike_trace.c p07_b5_raw_capture.c \
+         p07_b4m_epoch_bridge.c p07_b4m_full_inference.c \
+         p07_b4a_current_ingress.c p07_b2_ingress.c \
+         p07_b3c2_hw_scheduler.c p07_b3_pager.c \
+         p07_b2_packet.c p07_b3c_packet_bridge.c \
+         p07_b3c3_next_commit.c; do
+    cp -- "$V3/software/p07/$n" "$BUILD/source/"
+done
+for n in p03_hw_adapter.c p03_hw_xilinx_io.c; do
+    cp -- "$V3/software/p03/$n" "$BUILD/source/"
+done
+cp -- "$V3/software/p07/p07_a2_sha256.c" "$BUILD/source/"
+# Accepted native source stays IMMUTABLE. Only the fresh Vitis copy
+# receives the import-flattened accepted SHA header include path.
+sed -i 's@#include "include/p07_a2_sha256.h"@#include "p07_a2_sha256.h"@' "$BUILD/source/p07_a2_sha256.c"
+grep -Fq '#include "p07_a2_sha256.h"' "$BUILD/source/p07_a2_sha256.c" || die "SHA header flattening failed"
+for n in p07_b4l_b3_bindings.h p07_b4m_dispatch_metadata.h p07_b4m_frozen_routes.h \
+         p07_b4m_spike_trace.h p07_b5_raw_capture.h p07_b5_trace_hook.h p07_b4m_epoch_bridge.h \
+         p07_b4m_full_inference.h p07_b4a_current_ingress.h \
+         p07_b2_ingress.h p07_b3c2_hw_scheduler.h \
+         p07_b3_pager.h p07_b2_packet.h \
+         p07_b3c_packet_bridge.h p07_b3c3_next_commit.h \
+         p07_a2_sha256.h; do
+    cp -- "$V3/software/p07/include/$n" "$BUILD/source/"
+done
+for n in p03_hw_adapter.h p03_hw_xilinx_io.h p03_runtime.h p03_mmio.h; do
+    cp -- "$V3/software/p03/include/$n" "$BUILD/source/"
+done
+cp -- "$V3/software/p05/include/p05_deployment.h" "$BUILD/source/"
+# Explicit B4m-only 10,000-edge route capacity. The accepted B4l
+# and original P07-B.2 native header remain default 8192 bytes unchanged.
+# Only the FRESH standalone Vitis source copy receives this opt-in macro.
+[[ "$(grep -Fc '#define P07_B2_MAX_ROUTE_BINDINGS 8192u' "$BUILD/source/p07_b2_packet.h")" == 1 ]] || die "original route cap declaration changed"
+sed -i 's@#define P07_B2_MAX_ROUTE_BINDINGS 8192u@#define P07_B2_MAX_ROUTE_BINDINGS 10000u@' "$BUILD/source/p07_b2_packet.h"
+grep -Fq '#define P07_B2_MAX_ROUTE_BINDINGS 10000u' "$BUILD/source/p07_b2_packet.h" || die "B4m route ceiling opt-in failed"
+
+(
+    cd "$V3"
+    vitis -s software/p07/build_p07_b5_raw_trace.py --xsa "$XSA" \
+        --workspace "$BUILD/vitis_workspace" --source-dir "$BUILD/source"
+) 2>&1 | tee "$BUILD/vitis_build.log"
+ELF="$BUILD/vitis_workspace/p07_b5_raw_trace_v1.elf"
+MAP="$BUILD/vitis_workspace/p07_b5_raw_trace_v1.map"
+[[ -s "$ELF" && -s "$MAP" ]] || die "new real full 26-tick ELF/map missing"
+grep -aFq P07_B5_A53_TRAIN_RAW_TRACE_DIAGNOSTIC_V1 "$ELF" || die "new B5 firmware ELF identity missing"
+for old_identity in P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V3 \
+                    P07_B4M_A53_TRAIN_26_TICK_DIAGNOSTIC_V2 \
+                    P07_B4M_A53_TRAIN_26_TICK_CANDIDATE_V1; do
+    if grep -aFq "$old_identity" "$ELF"; then
+        die "B5 ELF contains rejected old firmware identity: $old_identity"
+    fi
+done
+aarch64-none-elf-readelf -W -h -l -S "$ELF" > "$BUILD/readelf_layout.txt"
+aarch64-none-elf-nm "$ELF" > "$BUILD/elf_symbols.txt"
+sha256sum "$XSA" "$ELF" "$MAP" > "$BUILD/artifact_sha256.txt"
+echo "P07_B5_RAW_A53_ELF_AND_MAP_BUILT=1"
+echo "P07_B5_RAW_REAL_BOARD_RUN_AUTHORIZED=0"
+echo "P07_B5_RAW_SIDECAR_DDR_OWNERSHIP_INDEPENDENTLY_PROVEN=0"
+echo "P07_B5_RAW_LOW_DDR_EXCLUSIVITY_INDEPENDENTLY_PROVEN=0"

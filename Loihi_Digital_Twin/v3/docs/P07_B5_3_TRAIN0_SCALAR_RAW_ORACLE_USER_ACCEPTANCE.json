@@ -1,0 +1,19 @@
+{
+  "schema": "p07-b5-3-original-train0-840320B-scalar-oracle-user-verified-v1",
+  "date_utc": "2026-11-01",
+  "evidence": "operator-provided stdout, real local stat/sha256 and generated JSON of independent original TRAIN0 scalar trace; not physically captured on KV260",
+  "source_original_frozen_validation_ordinal": 0,
+  "original_frozen_TRAIN0_frame_sha256": "2aa772efd381805bab24fea145186d22f3550b156f155a9ab51dcef10e6d8126",
+  "original_monolithic_scalar_trace_sha256": "4bef8f76965d4080a7c4ec2f3feab7c805e636d6397afb80a4a09f07733aea35",
+  "raw_reference_path": "/home/dna/Thesis_Evidence/p07_b5_train0_expected_raw_20261101T200800Z.bin",
+  "reference_json": "/home/dna/Thesis_Evidence/p07_b5_train0_expected_raw_20261101T200800Z.json",
+  "raw_bytes": 840320,
+  "actual_file_sha256_and_reference_json_both": "7fd6d5cbfa44cc1f69745b492c7b60649a49ec5b69c42821ba6619e503554f7d",
+  "raw_reference_FNV64": "0xB59CA8594D6E64AD",
+  "source_hardware": "NONE",
+  "raw_physical_FPGA_authenticated": false,
+  "physical_raw_by_neuron_parity_proven": false,
+  "original_FNV64_V3_physical_consistent": true,
+  "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
+  "acceptance": "B5.3 host reference prepared and user-hash confirmed, NOT B5.3 physical proof"
+}

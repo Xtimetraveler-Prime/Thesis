@@ -1,5 +1,7 @@
 # P07-B.4m physical inference handoff — bounded closeout (2026-10-31)
 
+> **Current update (2026-11-01):** The original TRAIN0 V3 physical 702/702 dispatches and 26/26 barriers subsequently **PASSED**, and the operator independently confirmed complete scalar-versus-physical aggregate/FNV64 fingerprint agreement. The historical opening "ACCEPTANCE BLOCKED" status below was the accurate situation on **2026-10-31**, not the present result. Direct raw 26×1010 hardware neuron bytewise parity, multiple TRAIN frames and the official TEST remain out of scope/pending P07-B.5. See [P07-B.4 engineering challenges and resolutions](P07_B4_HARDWARE_BRINGUP_CHALLENGES_AND_RESOLUTIONS.md).
+
 **Status: engineering implementation complete, physical full-inference
 ACCEPTANCE BLOCKED (NOT PASSED).** Keep PR #49 draft and unmerged pending
 an explicit decision to merge or separately freeze the unresolved work.
