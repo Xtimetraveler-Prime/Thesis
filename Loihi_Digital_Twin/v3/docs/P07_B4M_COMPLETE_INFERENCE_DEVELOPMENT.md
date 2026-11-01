@@ -1,13 +1,17 @@
 # P07-B.4m — consolidated full 26-tick inference implementation
 
-**Current status:** All primary software components for the new full
-26-tick physical inference **candidate** have been implemented in the same
-P07-B.4m milestone. They require native regression acceptance, a genuine
-operator-local Vitis 2025.2 ELF build, immutable frozen TRAIN-derived image
-packaging, explicit low-DDR ownership review, and real KV260 physical
-acceptance. **No real B4m complete 26-tick physical inference has been run
-or numerically accepted.** P07-B and P07-B.5/B.6 remain open. No additional
-micro-milestones will be opened for these implementation workstreams.
+**Current status:** Physical original B2.4 27-core/descriptor/route/TRAIN
+DDR staging and byte-exact readback **PASSED on the real KV260**. The
+separately genuine standalone A53 26-tick ELF was physically downloaded
+and ran to terminal **FAIL** at stage 9, `P03_HW_PROTOCOL=-5`, with one
+completed PL dispatch. Thus **complete 26-tick inference has NOT been
+physically or numerically accepted**. A PC-only frozen first-dispatch audit
+passed with 51 events and zero HLS input violations. A distinct
+failure-only `DIAGNOSTIC_V2` candidate is build-only, NOT yet admitted or
+launched. Handoff/stop rules:
+`docs/P07_B4M_2026_10_31_STAGE9_DIAGNOSTIC_V2_HANDOFF.md`.
+P07-B and P07-B.5/B.6 remain open; no new B4m micro-milestones.
+PR #49 stays draft/unmerged without explicit operator approval.
 
 ## Frozen physical baseline entering this milestone
 
