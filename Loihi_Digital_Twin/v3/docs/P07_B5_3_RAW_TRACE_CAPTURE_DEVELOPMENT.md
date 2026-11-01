@@ -57,6 +57,41 @@ admission after new real Vitis build succeeds. Source fixes, native
 tests and genuine compiler success do not prove new B5 DDR ownership,
 physical trace parity, or final P07-B.5 completion.
 
+## 2026-11-01 operator REAL B5 RAW PC preflight PASS; no physical authorization
+
+The operator's `scripts/p07_b5_raw_physical_capture.py --mode preflight`
+returned all expected host-only markers including accepted original
+27-core P02 metadata, independently admitted new genuine B5 A53 ELF/map,
+`P07_B5_NEW_RAW_PC_ONLY_PREFLIGHT_PASS=1` and
+`P07_B5_BOARD_CONTACT=0`. The same report correctly retained
+`P07_B5_NEW_RAW_840320B_DDR_OWNER_INDEPENDENTLY_PROVEN=0`,
+`P07_B5_NEW_LOW_DDR_0_TO_0x107BC0_EXCLUSIVITY_PROVEN=0` and
+`P07_B5_NEW_RAW_LAUNCH_AUTHORIZED_BY_PREFLIGHT=0`.
+
+A further repository source review identified the potential misconception
+that the candidate trace is *outside* the known original P03 DDR region:
+`p03_hw_adapter.h` declares a **broad 64MiB DDR aperture
+`[0x40000000,0x44000000)`**, and both new B5 candidate allocations
+(trace `[0x42000000,0x420CD280)`, mailbox
+`[0x43FF0100,0x43FF0200)`) are INSIDE it. They do not overlap the
+narrower original 27×512KiB P02 records or original route/ingress
+objects, but a broad aperture is **not a reservation for the B5
+instrumentation**. Linux/boot firmware/other A53/RPU/DMA owners have
+not been independently excluded. Low DDR also extends the accepted
+original V3 1,075,968-byte memory footprint by 4,288 bytes to
+1,080,256 bytes. No physical launch risk was accepted by this PC
+preflight and no actual raw-trace capture has occurred.
+
+New PC-only `scripts/p07_b5_raw_ddr_risk_review.py` and native
+regression `tests/test_p07_b5_raw_ddr_risk_review.py` repeat the
+original SHA-pinned Vitis admission, compare these source-derived
+address envelopes, and label all ownership/recovery conditions
+as **NOT PROVEN** rather than inventing a safe DDR allocation.
+See [operator DDR/firmware pre-execution ownership review](P07_B5_3_OPERATOR_PRE_EXECUTION_MEMORY_REVIEW.md)
+for exact addresses, risk decision and a safe read-only operator
+checkpoint. **Do not run `--mode execute` solely because the existing
+preflight passed.**
+
 ## B5.3.3 genuine separate Vitis A53 admission ACCEPTED; original-run physical capture tooling implemented PC-only
 
 The operator's genuine separately rebuilt Vitis 2025.2 B5 RAW A53
