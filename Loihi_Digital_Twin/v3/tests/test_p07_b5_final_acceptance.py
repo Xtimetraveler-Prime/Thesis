@@ -49,11 +49,16 @@ def fake_four(args):
         "train0_repeat_physical_metrics_and_FNV64_equal":True,
         "all_independent_fingerprint_gate_conditions_pass":True,
         "P07_B5_final_full_parity_and_acceptance":False,
+        "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
     },0
 
 def fake_raw(**kwargs):
     return {
         "schema":"p07-b5-original-raw-physical-by-neuron-authenticated-scalar-gate-v1",
+        "original_official_MNIST_TEST":"SEALED_NOT_ACCESSED",
+        "original_signed_model_modified":False,
+        "original_V3_ELF_modified":False,
+        "P07_B5_final_acceptance":False,
         "raw_neuron_original_26x1010_bytes_exactly_equal":True,
         "same_session_original_27core_and_route_stage_verified":True,
         "actual_physical_trace_size":840320,
@@ -198,6 +203,27 @@ def test_accept_does_not_silently_treat_user_reboot_attestation_as_instrumentati
     assert report["boot_firmware_and_other_DDR_owner_independently_proven"] is False
     assert report["P07_B6_started"] is False
     assert report["main_merged"] is False
+
+def test_operator_attestation_template_does_not_invent_cold_powercycles():
+    template=json.loads(
+        (ROOT/"docs/P07_B5_4_OPERATOR_ATTESTATION_TEMPLATE.json").read_text()
+    )
+    assert template["schema"]==final.ATTEST_SCHEMA
+    assert [x["ordinal"] for x in template["sessions"]]==[0,1,2,0,0]
+    for session in template["sessions"]:
+        for key in ("fresh_cold_power_cycle_before",
+                    "cold_power_cycle_after","dedicated_JTAG_ownership",
+                    "no_resume_of_halted_Linux"):
+            assert session[key] is None
+    for key in (
+        "understands_original_boot_firmware_DDR_exclusivity_UNPROVEN",
+        "understands_B5_raw_sidecar_mailbox_DDR_ownership_UNPROVEN",
+        "accepts_documented_residual_destructive_DDR_risks",
+        "operator_independently_rechecked_B5_2_and_B5_3_evidence",
+        "explicitly_accepts_P07_B5_bounded_numerical_completion",
+    ):
+        assert template[key] is None
+
 
 def test_code_never_contacts_KV260_writes_source_or_changes_TEST():
     source=(ROOT/"scripts/p07_b5_final_acceptance.py").read_text()
