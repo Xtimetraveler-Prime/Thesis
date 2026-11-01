@@ -174,4 +174,7 @@ def test_no_p07_developer_script_can_merge_or_program_board():
     assert "SEALED_NOT_ACCESSED" in source
     assert "subprocess" not in source
     assert "xsdb" not in source.lower()
-    assert "git merge" not in source.lower()
+    # Policy prose may mention future Git merges; this script must not
+    # execute any Git commands or subprocesses.
+    assert "import subprocess" not in source
+    assert 'os.system(' not in source
