@@ -317,3 +317,86 @@ source $script
     assert bad.returncode!=0,"old Tcl interpolation must be rejected"
     assert 'name_BYTE_EXACT_PASS' in bad.stderr
     assert "P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1" in bad.stdout
+
+
+def test_real_post_jtag_python_readback_all_original_sources_and_negative_corruption(
+        tmp_path,monkeypatch):
+    """Exercise exact host function that raised PosixPath(...) post staging.
+
+    All 54 physical P02 readbacks + four complete original payload captures
+    are reproduced with SYNTHETIC bytes. Use mock signed hashes exclusively
+    within the test and reject changed independent backup or route contents.
+    Neither JTAG, accepted original frozen assets nor Vitis are accessed.
+    """
+    import hashlib
+    stage=tmp_path/"source_stage"
+    stage.mkdir()
+    captures=tmp_path/"physical_readbacks"
+    captures.mkdir()
+    file_bytes={}
+    for i,(name,start,end) in enumerate(runner.source.FILES):
+        count=int(end,16)-int(start,16)
+        if i==0:
+            # Different data per core ensures order and backup matter;
+            # retain actual fixed payload length 27*512 KiB.
+            payload=b"".join(bytes([j])*524288 for j in range(27))
+            assert len(payload)==count
+        else:
+            payload=(bytes([20+i,30+i,40+i,50+i])*(count//4))
+            assert len(payload)==count
+        file_bytes[name]=payload
+        (stage/name).write_bytes(payload)
+        monkeypatch.setitem(runner.source.EXPECTED_SHA,name,
+                            hashlib.sha256(payload).hexdigest())
+    expected_dirnames=("mutable_original_p02_readback",
+                       "backup_original_p02_readback")
+    for label in ("mutable","backup"):
+        folder=captures/(label+"_original_p02_readback")
+        folder.mkdir()
+        payload=file_bytes[runner.source.FILES[0][0]]
+        for i in range(27):
+            (folder/f"core_{i:02d}_physical.bin").write_bytes(
+                payload[i*524288:(i+1)*524288])
+    pairings=(
+        ("binding_16k_physical.bin",1),
+        ("input_routes_896k_physical.bin",2),
+        ("output_routes_80k_physical.bin",3),
+        ("raw1024_physical.bin",4),
+    )
+    for phys_name,index in pairings:
+        (captures/phys_name).write_bytes(
+            file_bytes[runner.source.FILES[index][0]])
+    receipt=runner.readback_original(stage,captures)
+    assert set(receipt)=={
+        "mutable_27core_sha256","backup_27core_sha256",
+        *(item[0] for item in pairings)}
+    source_name=runner.source.FILES[0][0]
+    assert receipt["mutable_27core_sha256"]==runner.source.EXPECTED_SHA[source_name]
+    assert receipt["backup_27core_sha256"]==runner.source.EXPECTED_SHA[source_name]
+    for phys_name,index in pairings:
+        assert receipt[phys_name]==runner.source.EXPECTED_SHA[
+            runner.source.FILES[index][0]]
+    # The same source readback checker must FAIL CLOSED on changed backup.
+    bad_backup=captures/"backup_original_p02_readback/core_13_physical.bin"
+    bad_backup.write_bytes(bytes(524288))
+    with pytest.raises(runner.PilotPhysicalNoGo,
+                       match="original backup P02 core 13 physical"):
+        runner.readback_original(stage,captures)
+    # Restored genuine synthetic backup, now tamper a separate route readback.
+    model=file_bytes[source_name]
+    bad_backup.write_bytes(model[13*524288:14*524288])
+    route=captures/"input_routes_896k_physical.bin"
+    route.write_bytes(bytes(route.stat().st_size))
+    with pytest.raises(runner.PilotPhysicalNoGo,
+                       match="source physical readback drift"):
+        runner.readback_original(stage,captures)
+
+
+def test_original_source_sha_pins_are_str_keys_not_path_objs():
+    """Exact original regression: immutable SHA map indexes by filenames."""
+    import inspect
+    text=inspect.getsource(runner.readback_original)
+    assert 'original_name=source.FILES[0][0]' in text
+    assert 'original_path=stage/original_name' in text
+    assert 'source.EXPECTED_SHA[original_name]' in text
+    assert 'source.EXPECTED_SHA[original]' not in text
