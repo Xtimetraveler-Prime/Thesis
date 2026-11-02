@@ -1,5 +1,26 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B2.1 source-only candidate: authenticated original 1024 B ingress — 2026-11-01
+
+The operator reported a genuine local P08-B1 `MATCHED_DATASET_OFFLINE_PASS=1`
+on the original Track A first1024 stage and accepted B2.4 freeze, with
+zero B training index overlap. **B1 source/dataset gate is accepted for
+continued development**, although the assistant has not re-opened the
+operator-local JSON. New separate [P08-B2.1 original scaled ingress and
+DDR design](docs/P08_B2_1_ORIGINAL_MATCHED_INGRESS_AND_DDR_CANDIDATE.md)
+adds a strict, no-overwrite PC-only 1024 raw-pixel 802,816B pool, original
+P06B13I1 27-core frame hash manifest, strict C11 original 896KiB SHA-bound
+route/ingress builder and native 1,024-frame cross-encoder verifier.
+
+**B2.1 operator local validation pending.** The newly proposed
+27×512KiB backup, raw-pixel/journal/timing DDR spans are statically
+non-overlapping only. **B2.2/B2.3 NOT built**: no new A53 firmware,
+per-image neural state reset, neural oracle/sidecar/ELF/map or independently
+proved DDR owner. No authorized destructive B3 physical session or
+P08-B latency has occurred; original TRAIN-derived stage and B2.4 freeze,
+P07-B hardware/ELFs, Track A accepted measurements, root literature,
+and sealed Track B official TEST remain untouched. **P09 deferred.**
+
 ## P08-B1 launched: matched 27-core latency source contract — 2026-11-01
 
 **P08-B STARTED (B1 PC-ONLY SOURCE CANDIDATE; LOCAL OPERATOR VALIDATION PENDING).**
