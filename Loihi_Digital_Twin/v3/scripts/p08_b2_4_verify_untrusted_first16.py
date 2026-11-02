@@ -26,7 +26,7 @@ TIMING_MAGIC=0x54423832
 MAILBOX_MAGIC=0x50384232
 PASS=0x600D0823
 DONE=0xC0DEF00D
-RECEIPT_MAGIC=0x42344D46  # accepted P07 full receipt (verify import below)
+RECEIPT_MAGIC=0x464D3442  # original P07_B4M_FULL_MAGIC
 JOURNAL_NAME="p08_b2_4_first16_journal_unverified.bin"
 TIMING_NAME="p08_b2_4_first16_timing_unverified.bin"
 MAILBOX_NAME="p08_b2_4_first16_mailbox_unverified.bin"
@@ -58,8 +58,8 @@ def unpack_row(raw:bytes,index:int,magic:int)->tuple[int,...]:
 def verify_journal(raw:bytes,index:int,expected:dict)->dict:
     w=unpack_row(raw,index,JOURNAL_MAGIC)
     ensure(w[4]==index+1,"frame reset generation drift")
-    # P07_B4M_FULL_MAGIC sourced from accepted header's literal 0x4D344642.
-    ensure(w[5]==0x4D344642,"original 26-tick engine receipt magic mismatch")
+    # P07_B4M_FULL_MAGIC sourced from accepted header's literal 0x464D3442.
+    ensure(w[5]==RECEIPT_MAGIC,"original 26-tick engine receipt magic mismatch")
     expect={
         6:expected["expected_prediction"],
         7:702,8:26,9:1010,
