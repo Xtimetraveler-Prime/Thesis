@@ -33,7 +33,7 @@ if {[pilot_read $zeros256] ne [string repeat "\x00" 256] ||
     error "P08-B4.2: exact all-zero mailbox/journal/timer sentinels required"
 }
 if {[catch {exec grep -aFq P08_B2_3_ORIGINAL_27CORE_1024_IMAGE_ONLY_A53_V1 $elf}] ||
-    [catch {exec grep -aFq P08_B4_FULL1024_TERMINAL_DONE=1 $elf}]} {
+    [catch {exec grep -aFq P08_B2_3_IMAGE_ONLY_1024_TERMINAL_DONE=1 $elf}]} {
     error "P08-B4.2: wrong A53 image-only ELF identity or 1024 terminal marker"
 }
 set pin 0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1
