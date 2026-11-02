@@ -1,5 +1,43 @@
 # P08-B3.1 — KV260 original B2.4 first16 physical JTAG: preflight and risk review
 
+## 2026-11-02 first actual KV260 attempt — confirmed staging-only abort / corrected
+
+The operator ran the dedicated first P08-B3.1 physical JTAG session at
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_20261102T050721Z`.
+Original accepted P03 shell programming passed, physical PSU target
+reported. **All 27 mutable and all 27 independent backup frozen P02
+512KiB core readbacks individually reported physical byte-exact PASS**
+in the operator's genuine XSDB transcript. Subsequently Tcl emitted
+`P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1` with
+`can't read "name_BYTE_EXACT_PASS": no such variable`, in the
+post-readback logging line for the first of the four other signed
+source transfers. Root cause: Tcl `$name_BYTE_EXACT_PASS` parses
+as an unbound *single* variable. It must be braced: 
+`puts "P08_B3_PILOT_${name}_BYTE_EXACT_PASS=1"`.
+This correction has **no A53 firmware change**; the operator's
+existing signed pilot16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`
+and map SHA
+`9d2106d82347385e936bb27176aa8f50a332beb3f13c3ca8e182890a689c674b`
+remain accepted.
+
+The new native regression test **fully executes the real staging Tcl**
+inside `tclsh` with mock PSU `dow`/`mrd` and synthetic source hashes
+and all six proposed transfers, including both 27core readbacks
+and all four original peripheral payload readbacks/receipt names.
+It also deliberately reinserts the original invalid variable to verify
+the observed abort would reoccur. All native B3.1 and prior P08 CI
+workflows pass. The fake-PSU test itself is **NOT physical evidence**.
+
+**Mandatory:** Power-cycle/reboot the real board before any retry; never
+resume the halted Linux. Do not use the former partial readback evidence
+directory for a new run, do not skip staging, and don't infer all six
+stages or first16 numerical/latency success from the genuine
+54 P02 readback PASS markers. On a fresh run the accepted frozen PC
+source package and accepted new pilot ELF/map may be reused unchanged.
+An independent real six-transfer receipt followed by
+a complete genuine 16/16 terminal is still required.
+
 **Status dated 2026-11-01: NEW host runner + Tcl + independent physical verifier authored; zero board contact from this development environment; operator-local read-only preflight and a NEW, separately approved dedicated cold-boot run required.** No original P07-B3/B4m/B5, original B2.4 frozen P02 files, B2.3 1024-image ELF, P08-A six latency sessions, original P03 bit/XSA or root `LitReview.md` modified.
 
 ## Frozen user-confirmed inputs
