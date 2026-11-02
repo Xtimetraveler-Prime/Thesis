@@ -1,5 +1,73 @@
 # P08-B4.4.2 — NEW original full1024 reset-profile physical run
 
+## FIRST operator REAL JTAG attempt at 2026-11-02T20:17:05Z — FAIL-CLOSED before original P03/DDR/ELF
+
+The user ran the read-only preflight and its output was PASS,
+then personally supplied all nine destructive mode approvals.
+Actual attempt evidence (PRESERVE; DO NOT OVERWRITE):
+
+    /home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z/a53_takeover_and_ps128.log
+
+Failure was at the FIRST inherited P07-B4i A53 dedicated-target
+halt/FPD128 width admission, before new PL/DDR/profile work:
+
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2
+    P07_B4I_A53_0_STOP_COMMAND_PASS=1
+    P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+    P07-B.4i stop failed for Cortex-A53 #1:
+      Context Cortex-A53 #1 state: External debug access is disabled
+
+Original P07-B4i script explicitly admits only a positive
+successful secondary halt or EXACT original XSDB stop responses:
+"The core is powered down" and
+"Cannot halt processor core: power down".
+"External debug access is disabled" is NOT an admissible
+powered-down observation, and should NOT be replaced in the
+accepted P07 safety gate or silently classified as safe. A53
+external-debug access denial is distinct from a confirmed halted
+core and does not independently establish core power state.
+No evidence from this failed attempt of accepted P03 programming,
+six original source readbacks, new ELF download, original full1024
+neural inference, or real reset microprofiling exists.
+No claim that the user mistyped a command, permanently damaged
+hardware or encountered a proven B44 firmware bug is supported.
+Likely contributing categories require separate examination of
+current boot/power management/debug/security state, not guessing.
+This is a hardware-debug/state admission failure with the
+existing code correctly failing closed.
+
+MANDATORY: FULL REBOOT/POWER CYCLE KV260 after this attempt.
+Never resume the partially halted Linux instance. Preserve
+failed evidence; do not delete nor reuse its directory.
+Do not immediately retry JTAG, alter P07 core-stop policy,
+disable debug security or power-cycle repeatedly without a
+separate recovery/target-state assessment.
+
+Safe EXISTING PC-ONLY forensic commands; they do not touch XSDB,
+A53, PL, DDR or the physical device:
+
+    export P08_B44_FAILED="$HOME/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z"
+    test -f "$P08_B44_FAILED/a53_takeover_and_ps128.log"
+    cat "$P08_B44_FAILED/stage.txt"
+    grep -nE 'P07_B4I_A53_|P07_B4I_STOP_WIDTH|Cortex-A53 #1|External debug|P03_2C_PS_' "$P08_B44_FAILED/a53_takeover_and_ps128.log"
+    find "$P08_B44_FAILED" -maxdepth 2 -type f -printf '%P (%s bytes)\n' | sort
+
+After restoring normal power/boot, confirm serial Linux/KV260
+recovery and make sure there are no competing active JTAG
+connections. Check boot firmware/processor power and external
+debug security state with documented NON-DESTRUCTIVE methods
+before requesting another dedicated attempt. The A53 primary
+was stopped so no old Linux session should be resumed.
+
+The accepted original B4.2 1024 same-session proof, first 1023
+ordinary image timing and new genuine Vitis profile ELF/map
+SHA remain unchanged. B4.4 NEW real 1024 reset phase capture is
+still NOT DONE; do not run post-run independent profiler against
+this failed evidence root.
+
+---
+
 STATUS: NEW offline Vitis original B2.4 profile ELF/map/ELF-admission have
 GENUINELY PASSED on operator PC. New JTAG source and independent
 physical verifier native CI have passed ONLY on synthetic input; NO
