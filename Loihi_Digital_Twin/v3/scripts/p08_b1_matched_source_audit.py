@@ -77,6 +77,40 @@ def check_membership_indices(train_indices, validation_indices) -> dict:
     }
 
 
+
+def training_pixel_aliases(source_images: bytes, train_indices, frames) -> dict:
+    """Detect true identical-784-byte images across the otherwise disjoint IDs.
+
+    Training index disjointness alone cannot rule out repeated raw pixels in
+    canonical MNIST TRAIN. These aliases affect only later accuracy discussion,
+    not fixed-image latency validity.
+    """
+    train = tuple(train_indices)
+    if not train or len(source_images) % 784 or max(train) >= len(source_images) // 784:
+        raise P08B1Error("invalid TRAIN source bytes for pixel alias check")
+    by_sha = {}
+    for source_idx in train:
+        raw = source_images[source_idx * 784:(source_idx + 1) * 784]
+        by_sha.setdefault(sha256(raw), []).append(source_idx)
+    aliases = []
+    for ordinal, f in enumerate(frames):
+        matching = [
+            idx for idx in by_sha.get(sha256(f.pixels), ())
+            if source_images[idx * 784:(idx + 1) * 784] == f.pixels
+        ]
+        if matching:
+            aliases.append({
+                "frame": ordinal,
+                "validation_source_index": f.source_index,
+                "identical_pixels_in_B_training_source_indices": matching,
+            })
+    return {
+        "frames_with_byte_identical_B_training_pixels": len(aliases),
+        "cross_partition_pixel_aliases": aliases,
+        "pixel_identity_check": "BYTE_EXACT_784_UINT8",
+    }
+
+
 def read_regular(root: Path, filename: str) -> bytes:
     path = root / filename
     if path.is_symlink() or not path.is_file():
@@ -143,6 +177,7 @@ def generate_report(stage_dir: Path, train_data_dir: Path, frozen_dir: Path) -> 
     membership = check_membership_indices(split.train_indices, split.validation_indices)
     frames = select_validation_prefix(split, COUNT)
     stage = validate_a_stage(stage_dir, split.manifest, frames)
+    pixel_aliases = training_pixel_aliases(split.images, split.train_indices, frames)
     # All 33 original B2.4 assets are checked read-only, not just a copied
     # source-manifest claim. Original freeze has historical status fields.
     frozen = verify_frozen_directory(frozen_dir, deep=False)
@@ -154,6 +189,7 @@ def generate_report(stage_dir: Path, train_data_dir: Path, frozen_dir: Path) -> 
         "original_track_A_frame_count": COUNT,
         "original_frame_order_preserved": True,
         "membership": membership,
+        "training_pixel_aliases": pixel_aliases,
         "source_dataset_sha256": canonical_json_sha256(split.manifest),
         "source_archives": split.manifest["archives"],
         "track_A_stage": stage,
