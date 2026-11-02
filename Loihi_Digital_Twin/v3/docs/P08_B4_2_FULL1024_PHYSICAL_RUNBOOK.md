@@ -1,5 +1,35 @@
 # P08-B4.2 — Original full1024 A53 source admission, physical JTAG & independent validation
 
+## Latest operator results: ALL 1024 original scalar rows and original full1024 ELF/map verified
+
+**B4.1 is now accepted** on genuine operator-local artifacts: 64/64 independent original B2.4 scalar shards, merge PASS, accepted first16 continuity. Full original scalar oracle
+`/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json`;
+SHA256 **`7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8`**. The B4.2 source runner now independently rehashes this exact SHA and re-merges all 64 original signed chunks.
+
+Operator original B2.3 genuinely-built matching ELF:
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf`, with SHA
+`0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`.
+Original matching map:
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.map`,
+SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+
+For a new operator session, **skip the previous "find ELF" and "compute 63 shards" steps**; these are preserved completed original assets. Set:
+
+~~~bash
+export P08_B4_SHARDS="$HOME/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z"
+export P08_B4_INGRESS="$HOME/Thesis_Evidence/p08_b2_1_original1024_20261102T003256Z"
+export P08_B4_FIRST16="$HOME/Thesis_Evidence/p08_b2_4_original_first16_scalar_20261102T042201Z.json"
+export P08_B4_FULL_ORACLE="$HOME/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json"
+export P08_B4_ELF_SOURCE="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf"
+export P08_B4_MAP_SOURCE="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.map"
+export P08_B3_INDEPENDENT_REPORT="$HOME/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json"
+export P08_B3_PILOT_STAGE="$HOME/Thesis_Evidence/p08_b3_pilot16_pc_stage_20261102T043729Z"
+export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
+sha256sum "$P08_B4_FULL_ORACLE" "$P08_B4_ELF_SOURCE" "$P08_B4_MAP_SOURCE" "$P08_B3_INDEPENDENT_REPORT"
+~~~
+
+After confirming the exact SHA pins above, create the **new** original full1024 canonical ELF/map copies as described in the later section (no need to recompile). Then run **read-only B4.2 preflight**; don't contact KV260 until it prints the signed full1024 acceptance marker. The board must be rebooted and dedicated before destructive JTAG.
+
 **Source implementation status: NO BOARD CI ONLY.** Physical B4.2 tests
 were not run by the developer: the user has only calculated **shard 0**
 of 64 required full1024 independent scalar shards. The previously
