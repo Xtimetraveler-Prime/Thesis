@@ -1,5 +1,105 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4.1/B4.4.2 profile source development — original immutable baseline, no new physical JTAG (2026-11-02)
+
+**Scope decision:** user accepted real original B4.2 full1024 physical
+neural/FNV parity and genuine 1023 ordinary-frame A53 six-phase
+timing breakdown, and requested to proceed with finer-grained
+reset + 26tick bottleneck profiling toward P08-B closure.
+Previous real B4.4 signed report:
+`/home/dna/Thesis_Evidence/p08_b4_4_first1024_one_session_descriptive_20261102T191317Z.json`,
+SHA256 **4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81**.
+Original physically observed A53 CNTFRQ 99,999,001Hz,
+1023 ordinary median 13.0341115s; restore original 27
+frozen mutable cores 5.826693s/44.695321% of sum,
+mixed 26tick paging/MMIO/FPGA/trace 6.93507s/53.215729%.
+
+**NEW stacked DRAFT profiling branch** agent/v3-p08-b44-profiling,
+based on accepted source B4 DRAFT PR #53 (itself stacked on
+B3 DRAFT PR #52), in separate DRAFT PR #54.
+Original 33-file B2.4 frozen network, original P03 XSA/bit,
+P07-B, Track A, B3/B4 real physical evidence, original
+SHA-pinned B2.3 A53 ELF/map and root LitReview.md UNCHANGED.
+
+B4.4.1 source assets:
+- software/p08/p08_b4_4_profile_reset.[ch] adds NEW distinct
+  portable C11 reset routine p08_b44_profile_reset_image,
+  preserving original 27x512KiB immutable-before-copy source SHA,
+  destination DDR memcpy/cache/barrier/SHA and original
+  generation/receipt/error poisoning. Five new disjoint
+  microtiming categories: source invalidate, source SHA256,
+  destination memcpy, destination clean/invalidate, destination
+  SHA256; explicit unattributed counter/control remainder.
+  Original p08_b2_context_reset.c/h production source NOT edited.
+- Native real 27x512KiB full record-sized differential
+  tests/native/p08_b44_reset_profile_diff.c +
+  tests/test_p08_b4_4_1_profile_reset_native.py,
+  compare production original and profile reset byte-for-byte
+  over two generations, exact original receipt and first-fault
+  SHA corrupt-before-copy behavior. Portable native tests,
+  no FPGA/TEST.
+
+B4.4.2 SOURCE ONLY:
+- software/p08/p08_b44_profile_full1024_a53.c is separate,
+  distinct identity P08_B44_ORIGINAL_27CORE_RESET_PROFILE_1024_A53_V1;
+  accepted B2.3 ELF/source untouched. Uses original B4.2
+  1024 matched source, 26 ticks, frozen neural/route functions,
+  identical original neural and six-phase timing output
+  destinations. Adds a separate 1024x256B experimental
+  state-reset profile sidecar in [0x42400000,0x42440000)
+  after old image service timestamp, exposing five phases,
+  observed CNTFRQ, 27core immutable/mutable SHA counts,
+  CRC and ordinal. Disjointness asserted relative to
+  original B23 timing/backup/bind/frame map, but boot/
+  firmware/PS/PL DMA OWNER EXCLUSIVITY NOT proven.
+- scripts/p08_b44_reset_profile_sidecar.py +
+  tests/test_p08_b44_reset_profile_sidecar.py
+  strictly check 1024 256B order, SHA counts, CRC,
+  observed clock, additive five spans+residual, selected
+  trace ordinal 1023 exclusion, 11 corruption negatives.
+  It NEVER attests real physical source or neural parity
+  based on a profile sidecar alone.
+- .github/workflows/p08_b44_1_reset_profiling_offline.yml:
+  native no-JTAG original-vs-new profile differential and
+  strict 1024 profile record tests, plus existing source
+  B4.4 genuine first-run descriptive analysis regressions.
+- docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md:
+  operator read-only pull/native tests, mandatory Vitis A53
+  distinct experimental ELF, independent JTAG admission,
+  independent full1024 FNV+spike re-verification and
+  experimental sidecar capture before accepting ANY
+  extra reset phase number.
+
+**No profiling Vitis ELF, no new physical 1024 JTAG and no
+experimental reset bottleneck microbenchmarks have actually
+been produced.** All new C/Python tooling is source-only
+until genuine user-local toolchain, new signed ELF/map,
+independent same-session JTAG session, new strict sidecar
+capture and independent physical provenance/numerical verifier
+exist. Do not use accepted B2.3 original ELF hash as
+new experimental ELF. User must explicitly reapprove any
+destructive B4.4 session and recovery; prior board risk
+acceptance does not authorize silent new run.
+
+**Remaining P08-B closeout gates:**
+(1) genuine Vitis profiling ELF + memory/DDR admission,
+(2) original 1024 neural/FNV parity and signed 27core
+source/readback plus profile sidecar first physical experiment,
+(3) nested 26tick per-operation page/PL dispatch wait/
+trace/route profiling and measurement-intrusion assessment,
+(4) true A vs B (NOT historical A2.1/A2.2 within A)
+six coldboot independent AB/BA/AB sessions on same 1023
+ordinary TRAIN frames, same A53 image-service endpoint
+and actual per-run CNTFRQ, with run-level uncertainty and
+different network complexity explicitly qualified,
+(5) independent P08-B signed closeout report with optional
+profiling data, original sealed MNIST official TEST
+status and separate user acceptance before any merges.
+Power, PL-only speedup and exclusive DDR boot/DMA ownership
+remain UNPROVEN/DEFERRED.
+
+---
+
 ## P08-B4.4 ACCEPTED first full1024 KV260 real 1023 ordinary-image A53 6-phase descriptive timing and optimization targets (2026-11-02)
 
 Operator directly ran the previously CI-passing PC-only
