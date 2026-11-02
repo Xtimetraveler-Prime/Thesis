@@ -1,5 +1,74 @@
 # P08-B3.1 — KV260 original B2.4 first16 physical JTAG: preflight and risk review
 
+## Third real pilot — first 16/16 A53 hardware terminal and scalar precheck PASS (independent acceptance pending)
+
+Operator's **third dedicated cold-boot JTAG run** reports all six
+original frozen model/routing/input physical DDR transfers verified
+byte-for-byte, three result regions zero/readback, actual
+SHA-pinned B3.1 first16 A53 ELF downloaded, exactly 16 images
+terminal PASS physically observed, neural and timing journals and
+mailbox captured, and original 16-frame independent scalar
+**precheck** passed. No physical session artifact directory was
+provided for this third run. Do NOT use the previous
+`p08_b3_pilot16_physical_retry_20261102T052232Z` unless it actually
+contains this NEW terminal result. The third-run genuine evidence
+must separately be identified by its exact `stage.txt` and run log.
+After this destructive JTAG session, reboot/power-cycle KV260 and
+never resume its halted old Linux.
+
+**Next step (PC-only, no XSDB, no board contact):**
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p08-b-scaled-latency
+git pull --ff-only origin agent/v3-p08-b-scaled-latency
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+# DO NOT assume previous second-session readback path is the latest
+find "$HOME/Thesis_Evidence" -maxdepth 1 -type d \
+  -name 'p08_b3_pilot16_physical_retry_*' -printf '%T@ %p\\n' | sort -nr
+
+# Set to the NEW third-run folder with pilot16_a53_physical_run.log
+# and successful final scalar-precheck stage.txt:
+# export P08_B3_EVIDENCE="/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_retry_<THIRD_RUN>"
+
+test -d "$P08_B3_EVIDENCE/source_physical_readback"
+test -f "$P08_B3_EVIDENCE/pilot16_a53_physical_run.log"
+grep -Fx "P08_B3_FIRST16_JTAG_RESULTS_MATCH_SCALAR_PRECHECK_INDEPENDENT_PHYSICAL_ATTESTATION_PENDING_REBOOT_REQUIRED" \
+  "$P08_B3_EVIDENCE/stage.txt"
+
+export P08_B3_PILOT_STAGE="$HOME/Thesis_Evidence/p08_b3_pilot16_pc_stage_20261102T043729Z"
+export P08_B3_PILOT_BUILD_DIR="$HOME/Thesis_Evidence/p08_b3_pilot16_build_20261102T044104Z"
+export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
+export P08_B2_4_SCALAR_REPORT="$HOME/Thesis_Evidence/p08_b2_4_original_first16_scalar_20261102T042201Z.json"
+test -f "$P07_B4L_REPORTS/p03_2_ps_mmio.bit"
+
+export P08_B3_INDEPENDENT_REPORT="$HOME/Thesis_Evidence/p08_b3_pilot16_independent_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P08_B3_INDEPENDENT_REPORT"
+
+PYTHONPATH="$PWD/src" python scripts/p08_b3_pilot16_independent_physical_verify.py \
+  --evidence "$P08_B3_EVIDENCE" \
+  --stage "$P08_B3_PILOT_STAGE" \
+  --oracle "$P08_B2_4_SCALAR_REPORT" \
+  --pilot-build "$P08_B3_PILOT_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --reset-pins "$P08_B2_RESET_PINS" \
+  --out "$P08_B3_INDEPENDENT_REPORT"
+
+sha256sum "$P08_B3_INDEPENDENT_REPORT"
+```
+
+**Accept B3 original first16 physical numerical/trace fingerprint
+parity ONLY if this independent verifier prints original mutable
+and backup physical PASS, original 16 trained scalar/FNV PASS, and
+internal 16 service timing PASS**. Passing does not establish
+measured 1,024-image Track B matched-source latency, energy,
+full raw neuron trace, or PS/firmware/DMA DDR exclusivity. Preserve
+exact operator evidence and independently produced JSON/SHA for
+later Track A/B comparison.
+
 ## Second physical KV260 attempt: six original DDR transfers PASS; Python host-only readback error corrected
 
 The **second operator physical JTAG attempt** reached and passed
