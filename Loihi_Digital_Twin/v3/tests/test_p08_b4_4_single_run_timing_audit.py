@@ -81,7 +81,7 @@ def test_timing_audit_refuses_mutation_and_claims(
         x=bytearray(p.read_bytes());x[8000]^=1;p.write_bytes(x)
     elif scenario=="alter_terminal":
         p=cap/"mailbox_terminal_physical.bin"
-        x=bytearray(p.read_bytes());x[5*4]=0;p.write_bytes(x)
+        x=bytearray(p.read_bytes());x[5*4+1]=0;p.write_bytes(x)
     elif scenario=="bad_report_hash":
         report.write_text(report.read_text()+" ")
     elif scenario in ("forged_physical_acceptance","unsealed_test",
