@@ -205,3 +205,35 @@ def test_all_1024_failclosed_on_corrupt_physical_oracle_and_journal(
     with pytest.raises((numerical.FullRecordNoGo,old_records.RecordNoGo)):
         numerical.verify(oracle,first16,journal,timing,mailbox,output)
     assert not output.exists()
+
+
+def test_separate_full1024_physical_provenance_refuses_fixture_without_logs(
+        tmp_path,monkeypatch):
+    """Independent acceptance must NOT infer physical evidence from journal alone."""
+    import p08_b4_2_independent_physical_verify as attestation
+    evidence=tmp_path/"evidence"
+    evidence.mkdir()
+    output=tmp_path/"not_created.json"
+    def fake_admission(_args):
+        return {"schema":"untrusted_synthetic"}
+    monkeypatch.setattr(attestation.physical,"admission",fake_admission)
+    args=argparse.Namespace(
+        evidence=evidence,out=output,stage=tmp_path,
+        shards=tmp_path,ingress=tmp_path,oracle=tmp_path/"fake_oracle",
+        first16=tmp_path/"fake16",elf=tmp_path/"fake_elf",
+        linker_map=tmp_path/"fake_map",reset_pins=tmp_path,
+        reports=tmp_path)
+    with pytest.raises((attestation.AttestationNoGo,OSError,ValueError)):
+        attestation.verify(args)
+    assert not output.exists()
+
+def test_full1024_physical_evidence_verifier_enforces_original_jtag_markers():
+    import p08_b4_2_independent_physical_verify as attestation
+    assert "full1024_a53_physical_run.log" in attestation.LOGS
+    assert "six_original_ddr_physical_stage.log" in attestation.LOGS
+    assert "a53_takeover_and_ps128.log" in attestation.LOGS
+    assert "accepted_p03_program.log" in attestation.LOGS
+    assert "P08_B4_FULL1024_EXACT_1024_FRAME_HARDWARE_TERMINAL_OBSERVED=1" in (
+        attestation.LOGS["full1024_a53_physical_run.log"])
+    assert attestation.STAGE_OK.endswith(
+        "INDEPENDENT_JTAG_VERIFICATION_PENDING_REBOOT_REQUIRED")
