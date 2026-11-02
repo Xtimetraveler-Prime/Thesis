@@ -1,5 +1,85 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.2 complete full1024 physical runner SOURCE DEVELOPMENT — authentic local preflight and original 64-shard compute REQUIRED
+
+Operator reports genuine **B4.1 shard 0/64** re-simulation from
+original B2.4 frozen 33-asset model PASS:
+`P08_B4_1_ORIGINAL_SCALAR_SHARD_INDEPENDENT_PASS=1`,
+`P08_B4_1_VERIFIED_ORDINAL_RANGE=0:16` from
+`/home/dna/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z/p08_b4_1_scalar_shard_00.json`.
+No user evidence of remaining 63 genuine scalar shards, merged
+1024 oracle SHA, newly signed full1024 Vitis physical-launch
+ELF/map or B4 physical JTAG yet. This is a **source-development
+checkpoint; NO full1024 physical execution claim**.
+
+B4.2 now has SEPARATE fail-closed original 1024 source/CNTVCT/
+physical-evidence tools on `agent/v3-p08-b4-fullscale` (stacked
+DRAFT PR #53, B3 draft PR #52 unchanged):
+- `scripts/p08_b4_2_physical_run.py`: read-only DEFAULT
+  `--mode preflight`, requires original accepted B3 independent
+  physical report SHA
+  `b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11`,
+  exact 64 original scalar shard SHA receipts, strict regeneration
+  of full1024 signed oracle, all six SHA-authenticated original P02/
+  routing/1024 raw sources, original B2.2 SHA header, accepted
+  original P03 XSA/LTX/BIT and genuine **separate** full1024
+  AArch64 ELF SHA `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`
+  and map SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+  Invokes original genuine ELF PT_LOAD admission. Exact 8 YES
+  destructive consent flags mandatory; every real physical operation
+  occurs in dedicated halted-A53 JTAG coldboot session and requires
+  operator reboot afterward. Reuses ORIGINAL B3 full signed-six
+  JTAG DDR stage and independent host 54 original model-core readbacks
+  plus four source blobs before any new ELF download. Never
+  copies B3 pilot16 A53 ELF to full1024 runner.
+- `vivado/p08_b4_2_full1024_run_and_capture.tcl`: actual original
+  B2.3 1024-image firmware ELF identity and 1024 terminal embedded
+  string SHA checked; no new/simulated firmware. Initializes and
+  physically zero-readbacks 256-byte mailbox, **1024×256B**
+  original journal and independent 1024×256B A53 timing sidecar,
+  polls genuine 256B mailbox until EXACT 1024/1024 terminal
+  (DONE sentinel alone is NOT success; intermediate frame 1023
+  progress still not terminal), captures all 524,288B neural/timing
+  receipts + mailbox before final independent verification.
+  A timeout, malformed/tampered terminal or reported A53
+  error **fails closed**, retaining the source evidence and
+  requiring reboot.
+- `scripts/p08_b4_2_verify_full1024.py`: independent
+  original first16 continuity, full1024 source, CRC/26tick
+  1,010-neuron FNV, trained 10-vector spike output and
+  classification, timestamp/6 disjoint service-phase validation.
+  Reports only **UNVERIFIED physical provenance** by design.
+- `scripts/p08_b4_2_independent_physical_verify.py`:
+  separately repeats source/oracle/ELF SHA admission, authentic
+  same-session P03/A53/PSU evidence and all six original DDR
+  readbacks and zero-memory/captured journal checks before
+  accepting first full1024 numerical & timing scope.
+  Reports **single-session** original full1024 numerical parity
+  only, **NOT** six-session Track A/B latency acceptance.
+- `tests/test_p08_b4_2_full1024_physical.py`,
+  `.github/workflows/p08_b4_2_full1024_physical_offline.yml`:
+  actual Tcl mailbox-state replay, synthetic full 1024-row
+  262144B journal+timing positive tests, multiple corrupted
+  numerical/CRC/backtrack/terminal negative tests, source
+  no-board admission and independent provenance fixture refusal.
+  GitHub Actions native source CI **PASS** (no physical board).
+- **Complete exact local operator instructions**:
+  `docs/P08_B4_2_FULL1024_PHYSICAL_RUNBOOK.md`.
+
+**Crucial physical B4 go/no-go:** shard0 PASS alone is NOT B4.1
+complete. Generate and admit 63 remaining genuine original
+B2.4 scalar shards and full1024 oracle first; locate previous
+original B2.3 genuine Vitis ELF/map by their exact SHA and stage
+copies under independent B4 canonical names; then check mandatory
+B4.2 read-only operator preflight before running hardware. NO
+fresh JTAG B4.2 attempted by agent, and no quantitative
+full1024 KV260 latency, PL speedup, energy, 1023 selected full
+raw neural trace or official TEST result yet. Independent boot/
+DMA DDR exclusivity remains unproven, notwithstanding
+operator consent. After one B4.2 physical pass, repeated six
+coldboot AB/BA/AB Track A/B sessions and matched service-scope
+analysis are still separate gated B4.4 work.
+
 ## P08-B4.1 full-scale original 1024-image physical Track B PREPARATION — source/CI pass, genuine local scalar computation PENDING
 
 **Operator-accepted B3.1/B3.2 physical gate:** third actual
