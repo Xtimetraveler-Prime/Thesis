@@ -134,3 +134,74 @@ python -m compileall -q scripts/p08_b44_reset_profile_sidecar.py
 
 No new JTAG commands are supplied because the genuine profiling
 ELF/sidecar physical admission is NOT yet implemented/accepted.
+
+
+## New B4.4.2 local GENUINE experimental A53 ELF/map static admission (source implemented, ELF still absent)
+
+The new PC-only script
+scripts/p08_b44_profile_elf_admission.py compares a separately
+genuinely built experimental Vitis 2025.2 A53 ELF/map to the
+ORIGINAL signed full1024 B2.3 ELF. It requires:
+- Existing original B2.3 ELF SHA
+  0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1,
+  original identity and no experimental identity.
+- Original accepted routed P03 XSA SHA
+  52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f.
+- Original generated 27-core source SHA header SHA
+  5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171.
+- New unique experimental embedded A53 identity and unique terminal
+  marker, not the accepted original B2.3 firmware marker.
+- New genuine Vitis linker map with actual executable main,
+  p08_b44_profile_reset_image, ELF64 AArch64 e_machine=183,
+  valid entrypoint/PT_LOAD all in <0x40000000 (candidate),
+  nonoverlapping memory PT_LOAD ranges.
+- Static proposed 256KiB added DDR sidecar region, exact
+  original sealed boot/test scope, **NO destructive JTAG permission**.
+
+Local OFFLINE negative tests:
+
+~~~bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p08_b44_profile_elf_admission.py
+~~~
+
+After the operator produces a **genuine separately compiled**
+profiled image and Vitis linker map, and ONLY THEN, one new offline
+preflight can be run with actual paths. These are symbolic variables,
+NOT existing accepted physical artifacts:
+
+~~~bash
+export P08_B44_PROFILE_ELF="/absolute/path/to/NEW_b44_profiler.elf"
+export P08_B44_PROFILE_MAP="/absolute/path/to/NEW_b44_profiler.map"
+export P08_B44_ORIGINAL_ELF="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf"
+export P08_B44_ORIGINAL_XSA="$P07_B4L_REPORTS/p03_2_ps_mmio.xsa"
+export P08_B44_ORIGINAL_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z/p08_b2_2_original_context_sha256.h"
+export P08_B44_ELF_AUDIT="$HOME/Thesis_Evidence/p08_b44_elf_readonly_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P08_B44_ELF_AUDIT"
+
+PYTHONPATH="$PWD/src" python scripts/p08_b44_profile_elf_admission.py \
+  --profile-elf "$P08_B44_PROFILE_ELF" \
+  --profile-map "$P08_B44_PROFILE_MAP" \
+  --original-elf "$P08_B44_ORIGINAL_ELF" \
+  --xsa "$P08_B44_ORIGINAL_XSA" \
+  --pins-header "$P08_B44_ORIGINAL_PINS" \
+  --out "$P08_B44_ELF_AUDIT"
+sha256sum "$P08_B44_ELF_AUDIT"
+~~~
+
+The tool must state
+P08_B44_SEPARATE_GENUINE_PROFILE_ELF_STATIC_SOURCE_ADMISSION_PASS=1,
+P08_B44_NEW_PROFILE_REAL_KV260_RUN_EXECUTED=0, and
+P08_B44_NEW_PROFILE_ELF_DESTRUCTIVE_JTAG_AUTHORIZED=0.
+
+If no new genuine Vitis ELF/map exist, **STOP at native source CI**
+and DO NOT run the above command with the accepted B2.3 ELF
+substituted. Do not reuse historical B3/B4.2 destructive runner
+or original B2.3 ELF admission script for this new identity.
+
+A full independent physical source/profiling capture gate remains
+to be implemented after genuine Vitis linker/ELF admission, with
+separate user confirmation and dedicated recovery-ready board.
+The unsigned experimental profiling CLR/CRC sidecar, by itself,
+is never physical proof or genuine neural parity.
