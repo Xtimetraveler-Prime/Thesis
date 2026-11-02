@@ -20,6 +20,12 @@ def test_jtag_inventory_has_no_hardware_mutating_xsdb_ops():
     assert "connect -url $server" in lines
     assert "puts [targets]" in lines
     assert "puts [jtag targets]" in lines
+    assert 'if {[catch {targets -target-properties} props_error]} {' in lines
+    assert 'if {[catch {jtag targets -target-properties -filter {name =~ "arm_dap"}} dap_error]} {' in lines
+    assert "P08_B44_READONLY_PROCESSOR_TARGET_PROPERTIES_BEGIN" in source
+    assert "P08_B44_READONLY_ARM_DAP_JTAG_PROPERTIES_BEGIN" in source
+    assert not re.search(r"(?m)^\s*(?:targets -set|mwr|mrd|mask_write|reset|stop|rst|dow|con|fpga)\b",source)
+
     assert 'if {$connected} {catch {disconnect}}' in lines
     assert "P08_B44_READONLY_TARGET_OBSERVATION_ONLY=1" in source
     assert "P08_B44_NEW_PROFILE_PHYSICAL_JTAG_AUTHORIZED=0" in source
