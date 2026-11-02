@@ -38,7 +38,8 @@ def generate_header(rows:list[dict]) -> str:
     for core,row in enumerate(rows):
         digest=row.get("sha256")
         if (not isinstance(digest,str) or len(digest)!=64 or
-            not all(c in "0123456789abcdef" for c in digest) or\n            digest=="00"*32):
+            not all(c in "0123456789abcdef" for c in digest) or
+            digest=="00"*32):
             raise ResetPinsNoGo(f"invalid original context sha at {core}")
         chunks=",".join(f"0x{int(digest[i:i+2],16):02x}" for i in range(0,64,2))
         lines.append(f"  {{{chunks}}}, /* original logical core {core:02d} */")
