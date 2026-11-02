@@ -30,6 +30,7 @@ import p08_b4_2_verify_full1024 as numerical
 V3=Path(__file__).resolve().parents[1]
 ELF_SHA="0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1"
 MAP_SHA="f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc"
+ORIGINAL_FULL1024_ORACLE_SHA="7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8"
 LAUNCH_TCL="vivado/p08_b4_2_full1024_run_and_capture.tcl"
 STAGE_TCL=prior.STAGE_TCL
 STAGE_TOKEN=prior.STAGE_TOKEN
@@ -79,6 +80,8 @@ def admission(args:argparse.Namespace)->dict:
     require(args.oracle.is_absolute() and
             args.oracle.is_file() and not args.oracle.is_symlink(),
             "new independently generated original full1024 oracle missing")
+    require(sha(args.oracle)==ORIGINAL_FULL1024_ORACLE_SHA,
+            "operator independently completed all 1024 original scalar oracle SHA changed")
     with TemporaryDirectory(prefix="p08_b4_2_oracle_recheck_") as tmp:
         validated=full_ref.merge(
             args.shards,args.ingress,args.first16,
@@ -115,7 +118,7 @@ def admission(args:argparse.Namespace)->dict:
         "schema":"p08-b4-2-original-b24-full1024-read-only-admission-v1",
         "original_B3_signed_first16_scalar_sha256":prior.gate.ORACLE_SHA,
         "genuine_B3_physically_accepted_pilot16_report_sha256":b3_pin,
-        "original_full1024_scalar_oracle_sha256":sha(args.oracle),
+        "original_full1024_scalar_oracle_sha256":ORIGINAL_FULL1024_ORACLE_SHA,
         "original_full1024_scalar_shard_count":64,
         "exact_full1024_original_B23_A53_ELF_SHA256":ELF_SHA,
         "exact_full1024_original_B23_A53_linker_map_SHA256":MAP_SHA,
@@ -241,7 +244,7 @@ def main()->int:
         execute(args,approved)
         return 0
     except (FullPhysicalNoGo,prior.PilotPhysicalNoGo,
-            full_ref.MergeNoGo,numerical.FullRecordNoGo,
+            full_ref.MergeNoGo,numerical.FullRecordNoGo,elfcheck.ElfNoGo,
             ValueError,TypeError,KeyError,OSError,RuntimeError,
             subprocess.TimeoutExpired) as e:
         print("P08_B4_2_PHYSICAL_NO_GO="+str(e),file=sys.stderr,flush=True)
