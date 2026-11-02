@@ -133,7 +133,7 @@ def test_c_expected_route_sha_exactly_equals_pinned_original_b24():
     import re
     source=(ROOT/"software/p08/p08_b2_ingress.c").read_text(encoding="utf-8")
     match=re.search(
-        r"static const uint8_t accepted_route_sha\\[32\\]\\s*=\\s*\\{([^}]+)\\};",
+        r"static const uint8_t accepted_route_sha\[32\]\s*=\s*\{([^}]+)\};",
         source,re.DOTALL)
     assert match is not None
     expected=bytes(int(s,16) for s in
@@ -166,10 +166,10 @@ def test_strict_native_c11_full_1024_positive_encoder_with_synthetic_routes(tmp_
     orig[96:128]=hashlib.sha256(orig[128:]).digest()
     source_sha=hashlib.sha256(orig).digest()
     source=(ROOT/"software/p08/p08_b2_ingress.c").read_text(encoding="utf-8")
-    new_literal="static const uint8_t accepted_route_sha[32]={\\n" + (
-        "    "+",".join(f"0x{v:02x}" for v in source_sha) + "\\n};")
+    new_literal="static const uint8_t accepted_route_sha[32]={\n" + (
+        "    "+",".join(f"0x{v:02x}" for v in source_sha) + "\n};")
     patched,changes=re.subn(
-        r"static const uint8_t accepted_route_sha\\[32\\]\\s*=\\s*\\{[^}]+\\};",
+        r"static const uint8_t accepted_route_sha\[32\]\s*=\s*\{[^}]+\};",
         lambda _: new_literal,source,count=1,flags=re.DOTALL)
     assert changes==1
     assert stage.ROUTE_SHA256!=source_sha.hex(), "synthetic test pin not original"
@@ -195,7 +195,7 @@ def test_strict_native_c11_full_1024_positive_encoder_with_synthetic_routes(tmp_
     expected_file.write_text(
         "".join(
             hashlib.sha256(stage.wire_from_pinned_route_bytes(
-                routes,all_raw[i*784:(i+1)*784])).hexdigest()+"\\n"
+                routes,all_raw[i*784:(i+1)*784])).hexdigest()+"\n"
             for i in range(1024)
         ),encoding="ascii")
     test=subprocess.run([
