@@ -1,5 +1,42 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B2.1 original-route C hash corrected; new B2.3 image-only A53 offline build candidate — 2026-11-01
+
+Operator **P08-B2.2 SHA-pins gate PASSED**: 27 original
+SHA-pinned initial P02 cores, original 14,155,776B aggregate SHA
+`3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e`;
+external original context header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+The operator's B2.1 C all-1024 verification discovered
+`P08_B2_NATIVE_ORIGINAL_896K_ROUTE_SHA_NO_GO`; **P08 new C route
+SHA constant was hand-transcribed incorrectly** (final 16 bytes).
+C source now matches accepted immutable 896KiB original B4M route
+SHA `380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8`.
+The original immutable route table and accepted Python stage passed;
+real C 1024-frame revalidation is **PENDING** after correction.
+CI now checks literal C/Python SHA equivalence and positive
+1,024-frame native C P06B13I1 wire parity using a strictly
+test-only synthetic 896KiB route with separate temporary SHA.
+
+New [P08-B2.3 independent image-only A53 application and offline Vitis
+build contract](docs/P08_B2_3_IMAGE_ONLY_A53_OFFLINE_VITIS.md): separate
+`p08_b2_3_image_only_a53.c` uses genuine P07 B4m 26-tick original
+engine (702 dispatches, 3 slots), per-image original 27-context
+SHA restoration/reinit, original 1,024 raw-pixel pool and bound 27-core
+ingress, CNTVCT/CNTFRQ full-A53 service timestamps, raw+encoded SHA
+and neural-result journal, timing sidecar outside measured interval.
+New separate Vitis 2025.2 offline-only app builder/source stage and
+read-only genuine ELF/low-DDR PT_LOAD admission; **not yet built
+by local Vitis, no new A53 ELF/map accepted**. Native C syntax and
+synthetic ELF gate only, no board contact. Genuine B1.3 C all-1,024
+local parity and **Vitis real ELF/map PT_LOAD acceptance pending**.
+No destructive JTAG, original-backed DDR physical ownership,
+oracle parity on actual hardware, detailed tick ELF, selected full
+raw trace, or P08-B 1,024 physical inference/latency accepted.
+Official Track B TEST SEALED; original Track A six sessions,
+P07-B original V3/B5 ELF, original frozen B2.4 and root
+`LitReview.md` remain unchanged. **P09 deferred.**
+
 ## P08-B2.2 source-only reset/timer development — 2026-11-01
 
 The operator reported **P08-B2.1 host 1,024 original-B ingress staging
