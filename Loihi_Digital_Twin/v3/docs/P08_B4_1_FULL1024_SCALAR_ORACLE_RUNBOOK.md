@@ -9,11 +9,11 @@ MNIST TEST download or training is permitted in B4.1.
 ## Verified earlier physical baseline (do not overwrite)
 
 Original third real pilot capture:
-\`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_retry_20261102T053637Z\`
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_retry_20261102T053637Z`
 and original 16-image independent physical report:
-\`/home/dna/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json\`.
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json`.
 Exact reported JSON SHA256
-\`b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11\`.
+`b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11`.
 Six original frozen DDR sources, original first16 10-vector spike
 classification and 26-tick 1,010-neuron FNV fingerprint all independently
 PASS; 16 complete A53 service timing records structurally valid.
@@ -33,7 +33,7 @@ source and wire-SHA ledger, all 33 signed B2.4 original frozen assets,
 and original frozen routes. Shard 0 must compare its independent 16
 newly computed rows exactly with the accepted original signed
 B2.4 first16 oracle (SHA
-\`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271\`).
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`).
 
 A later no-overwrite merge rejects incomplete, reordered, duplicated
 or different source/frame shards, re-authenticates the original raw pool
@@ -47,7 +47,7 @@ Synthetic CI is not a substitute.
 Update to the new STACKED branch. Do not merge prior B3 PR #52 or
 new B4 PR #53:
 
-\`\`\`bash
+```bash
 cd ~/Git/Thesis
 git fetch origin
 git switch --track origin/agent/v3-p08-b4-fullscale
@@ -62,11 +62,11 @@ PYTHONPATH="$PWD/src" python -m pytest -q -rs \
   tests/test_p08_b4_1_scalar_1024.py \
   tests/test_p08_b2_4_numerical.py \
   tests/test_p08_b3_pilot16_physical.py
-\`\`\`
+```
 
 Set original accepted operators' read-only source directories:
 
-\`\`\`bash
+```bash
 export P08_B4_A_STAGE="$HOME/Thesis_Evidence/p08_a3_2_stage1024_20261019T003150Z"
 export P08_B4_DATA_DIR="$PWD/data/mnist_raw"
 export P08_B4_FROZEN="$PWD/artifacts/p06_b24_frozen_1000"
@@ -81,7 +81,7 @@ test -d "$P08_B4_ROUTES"
 test -d "$P08_B4_INGRESS"
 test -f "$P08_B4_FIRST16"
 sha256sum "$P08_B4_FIRST16"
-\`\`\`
+```
 
 The first16 SHA must equal the pinned digest above; no file may
 be edited. If your original P07 route directory differs, use
@@ -90,7 +90,7 @@ rather than creating or exporting new routes.
 
 Create a NEW external root. Shard names are deliberately exact.
 
-\`\`\`bash
+```bash
 export P08_B4_SHARDS="$HOME/Thesis_Evidence/p08_b4_1_original_scalar_shards_$(date -u +%Y%m%dT%H%M%SZ)"
 test ! -e "$P08_B4_SHARDS"
 mkdir -m 700 "$P08_B4_SHARDS"
@@ -104,11 +104,11 @@ PYTHONPATH="$PWD/src" python scripts/p08_b4_1_scalar_shard.py \
   --ingress-dir "$P08_B4_INGRESS" \
   --first16-oracle "$P08_B4_FIRST16" \
   --out "$P08_B4_SHARDS/p08_b4_1_scalar_shard_00.json"
-\`\`\`
+```
 
 **Stop here and inspect shard0 before proceeding.** It must print
-\`P08_B4_1_ORIGINAL_SCALAR_SHARD_INDEPENDENT_PASS=1\`,
-\`P08_B4_1_SHARD=0\` and \`P08_B4_1_VERIFIED_ORDINAL_RANGE=0:16\`.
+`P08_B4_1_ORIGINAL_SCALAR_SHARD_INDEPENDENT_PASS=1`,
+`P08_B4_1_SHARD=0` and `P08_B4_1_VERIFIED_ORDINAL_RANGE=0:16`.
 This proves the new original scalar generator reproduced the
 original independent first16 reference from scratch; it does
 **NOT** mean 1,024 images have been computed.
@@ -117,7 +117,7 @@ After real shard0 PASS, compute the other 63 sequentially in the
 foreground. A stopped run retains already finished original shard
 files and **never overwrites them**:
 
-\`\`\`bash
+```bash
 for i in $(seq 1 63); do
   output=$(printf '%s/p08_b4_1_scalar_shard_%02d.json' "$P08_B4_SHARDS" "$i")
   test ! -e "$output" || { echo "REFUSE: shard exists: $output"; break; }
@@ -131,11 +131,11 @@ for i in $(seq 1 63); do
     --first16-oracle "$P08_B4_FIRST16" \
     --out "$output" || break
 done
-\`\`\`
+```
 
 Check exactly 64 shards before merge:
 
-\`\`\`bash
+```bash
 find "$P08_B4_SHARDS" -maxdepth 1 -type f -name 'p08_b4_1_scalar_shard_*.json' | wc -l
 
 export P08_B4_FULL_ORACLE="$HOME/Thesis_Evidence/p08_b4_1_original1024_scalar_$(date -u +%Y%m%dT%H%M%SZ).json"
@@ -148,12 +148,12 @@ PYTHONPATH="$PWD/src" python scripts/p08_b4_1_merge_scalar_1024.py \
   --out "$P08_B4_FULL_ORACLE"
 
 sha256sum "$P08_B4_FULL_ORACLE"
-\`\`\`
+```
 
 The full merge PASS requires:
-\`P08_B4_1_ALL_1024_ORIGINAL_SCALAR_ROWS_ADMITTED=1\`,
-\`P08_B4_1_ALL_64_SHARDS_SHA_VERIFIED=1\`,
-\`P08_B4_1_ACCEPTED_FIRST16_SCALAR_REPRODUCED=1\`.
+`P08_B4_1_ALL_1024_ORIGINAL_SCALAR_ROWS_ADMITTED=1`,
+`P08_B4_1_ALL_64_SHARDS_SHA_VERIFIED=1`,
+`P08_B4_1_ACCEPTED_FIRST16_SCALAR_REPRODUCED=1`.
 These flags alone do NOT authorize physical JTAG or establish numerical
 parity between all physical B images and scalar reference.
 
@@ -177,7 +177,7 @@ parity between all physical B images and scalar reference.
 - **B4.4:** original approved six-session cold-boot and
   counterbalanced AB/BA/AB Track A/Track B latency
   measurement protocol. Report image-service window
-  \`CNTVCT_EL0\` ticks divided by observed \`CNTFRQ_EL0\`,
+  `CNTVCT_EL0` ticks divided by observed `CNTFRQ_EL0`,
   reset+ingress+scheduler+702 dispatch+26 barriers+result
   journal commit; exclude setup/JTAG/PL shell and after-service
   timing-sidecar collection, and avoid mixing A53 with PL
