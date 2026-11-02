@@ -1,5 +1,54 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 A53#1 debug failure after full power cycle — only one hw_server process tree observed; READ-ONLY target inventory pending
+
+Operator physically power cycled the KV260 after a failed first
+B4.4 profiling JTAG attempt and confirmed original exact
+failed evidence root
+/home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+has exactly stage.txt, preflight.json and 486B
+a53_takeover_and_ps128.log; early P07-B4i A53 #0
+stop positive, A53 #1 "External debug access is disabled"
+no-go. This confirms NO later P03 PL programming,
+six original DDR source transfers or new profile
+full1024 ELF execution/capture in that attempt.
+Operator process list after power cycle shows one
+running hw_server process tree (shell/loader/main)
+and NO current local xsdb or Vivado process. Other
+remote JTAG server clients are not independently excluded.
+Normal post-powercycle UART firmware/Linux boot has not
+yet been reported. A53#1 EDAD-disabled debug is not
+equivalent to a confirmed A53#1 no-power state; original
+P07-B4i exact secondary halt/powerdown gate remains
+STRICTLY UNCHANGED and must not be bypassed.
+
+New isolated READ-ONLY diagnostic Tcl
+vivado/p08_b44_a53_status_readonly.tcl permits
+ONLY one localhost hw_server connect, queries
+targets and jtag targets, disconnects and prints
+STATUS-ONLY / NOT HARDWARE ACCEPTED markers;
+NO new STOP, rst, mwr, dow, CPU selection,
+DDRx write, PL programming or Linux interruption.
+Distinct from completely PC-only mailbox monitor:
+this does make hardware JTAG READ observations.
+tests/test_p08_b44_readonly_a53_diagnostic.py
+runs native no-board syntax/localhost restrictions,
+forbidden mutating action source audit, and ensures
+original P07 strict stop gate unchanged. Native
+.github/workflows/p08_b44_profile_physical_no_board.yml
+verifies read-only diagnostic with other B44
+new full1024 profile negative tests. Operator read-only
+serial/target next actions in
+docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Do NOT reexecute 9-YES profile runner until
+actual target and expected boot-state diagnosis;
+preserve first failed physical evidence. Original
+signed B4.2 first accepted full1024 physical neural
+parity/timing and new genuine B44 Vitis ELF
+build remain valid/immutable. Real B4.4 profile
+timing still pending, true A-versus-B repeated
+benchmark still pending, official TEST sealed.
+
 ## P08-B4.4 first REAL profiling hardware attempt — NO-GO at existing A53 secondary debug halt, NOT firmware execution (2026-11-02)
 
 Operator completed offline read-only B4.4 admission PASS for
