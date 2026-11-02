@@ -1,5 +1,42 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B2.4 original B2.4 matched first16 scalar oracle and untrusted record gate — 2026-11-01
+
+Operator reports **fixed original 1,024-frame C encoder PASS** plus
+genuine Vitis P08-B2.3 new A53 image-only ELF built, real linker map
+and `PT_LOAD` low-DDR static non-overlap audit PASS.
+ELF SHA `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`,
+map SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+**No DDR ownership proof or physical FPGA deployment.**
+
+[P08-B2.4 original scalar first16 and record contract]
+(docs/P08_B2_4_FIRST16_SCALAR_AND_RECORD_GATES.md) adds independent
+original frozen B2.4 first 16 of the *exact same* 1,024 held-out
+TRAIN-derived source and a new external no-overwrite numerical oracle
+generator. It reauthenticates original B2.4 33 assets, original route
+tables, accepted P08-A source and original P08-B2.1 raw/wire SHA,
+reproduces first three independently signed B2.3 scalar numerical
+witnesses, simulates original frozen scalar 25+1 ticks and derives
+per-image classification, all 10 spike counts, external CURRENT/source
+spikes/captured+NEXT packets, and full 26×1,010 trace FNV.
+**Genuine first16 scalar oracle run on operator workstation PENDING.**
+
+Separate `p08_b2_4_verify_untrusted_first16.py` rejects a mismatched
+original numeric receipt, incorrect timestamp accounting, altered
+per-frame SHA256, wrong journal CRC, malformed terminal mailbox, frame
+order/length and truncated/incomplete 16 evidence. Its result *cannot*
+establish actual physical provenance, because same-session JTAG
+readback/DDR/ELF evidence is NOT YET BUILT. CI synthetic native
+26 negative/positive tests PASSED. This is a **source-only** offline
+checkpoint. Original P08-B2.3 ELF is **1024-image**, not safe to use for a
+16-image physical pilot. A separate 16-image A53 pilot firmware ELF/map,
+verified hardware DDR source ownership including untouched first original
+27 backing contexts and independent backup and signed XSDB readback
+procedure remain to build before explicit operator destructive approval.
+Accepted P07-B/A and frozen original 33-asset B2.4, original 1024
+Track A runs, root `LitReview.md` and official Track B TEST SEALED.
+**No P09 or physical speedup/energy claim.**
+
 ## P08-B2.1 original-route C hash corrected; new B2.3 image-only A53 offline build candidate — 2026-11-01
 
 Operator **P08-B2.2 SHA-pins gate PASSED**: 27 original
