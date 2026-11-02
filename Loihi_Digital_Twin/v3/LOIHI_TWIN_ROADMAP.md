@@ -1,5 +1,92 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.2 ACCEPTED: first genuine original 1024-image KV260 physical numerical/FNV parity and 1024 timing rows (2026-11-02)
+
+Operator completed read-only full1024 original scalar + original genuine
+B2.3 ELF/map/accepted B3 physical evidence preflight; then personally
+ran destructive dedicated original P03/JTAG full1024 original B2.4 A53
+KV260 physical session. ALL 54 original 512KiB P02 **mutable and
+separately backed up** core DDR readbacks PASS; four frozen original
+binding/route/raw1024 source transfers byte exact PASS; result
+mailbox/1024x256B neural and 1024x256B A53 timing regions physically
+zero initialized/read back. Genuine original SHA-pinned original
+full1024 Vitis A53 ELF downloaded. Physical XSDB observed genuine
+A53 exact **1,024/1,024 completed** terminal, not merely DONE/progress,
+captured all 1,024 original neural journal receipts and all 1,024 A53
+timer sidecars; **original independent scalar first-pass numerical
+precheck PASS**.
+
+After reboot protocol, operator executed wholly separate PC-only
+independent same-session provenance verification against exact accepted
+original 64-shard 1024 TRAIN validation scalar/ELF/P03 physical
+sources/earlier B3 accepted evidence. Reported:
+
+~~~text
+P08_B4_2_ALL_1024_ORIGINAL_NEURAL_AND_SPIKE_VECTORS_PHYSICAL_PARITY_PASS=1
+P08_B4_2_ALL_1024_A53_SERVICE_TIMERS_PHYSICAL_CAPTURE_VALID=1
+P08_B4_2_INDEPENDENT_SAME_SESSION_PHYSICAL_PROVENANCE_PASS=1
+P08_B4_2_SIX_SESSION_TRACKB_LATENCY_BENCHMARK_ACCEPTED=0
+~~~
+
+External independent full physical numerical/timing report:
+**/home/dna/Thesis_Evidence/p08_b4_2_independent1024_20261102T184928Z.json**.
+**Operator SHA-256: 297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032**.
+Operator separately accepted frozen scalar oracle:
+**/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json**,
+SHA256 **7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8**.
+The B4 physical evidence root was referenced as the original
+P08_B4_PHYSICAL shell variable but its literal path was NOT pasted.
+Do not guess or fabricate a physical session path. Evidence files
+and all externally SHA-signed originals must remain immutable.
+Root LitReview.md, frozen original 33 model assets, original Track A
+six accepted physical sessions, P07, earlier accepted B3 physical
+report and official MNIST TEST remain unchanged.
+
+**B4.2 acceptance:** first independently verified single-session
+physical **all 1024** numerical classifier/10-output spike vectors,
+26 ticks x 1,010-neuron FNV fingerprint parity, and internal
+A53 whole-service/six-phase CNTVCT timer consistency.
+This is a meaningful new 64x-sample-scale neural functional
+result relative to the earlier 16-image B3 pilot. It does NOT prove
+single-session latency speedup, overall energy, PL-only speed,
+direct physical byte equality for full raw all-neuron traces,
+uncontested PS/boot firmware/PL-DMA DDR ownership, or the required
+repeated original Track A/B matched cold-boot latency experiment.
+The original selected tracing frame ordinal 1023 must be isolated
+from ordinary latency statistics if its instrumentation differs.
+
+**Useful operator process discovery:** during the long physical
+all1024 run, no terminal progress was printed after A53 ELF download,
+because the single owning XSDB Tcl polls and replaces an existing
+PC-side 256B mailbox file. Reading
+<exact_active_evidence>/full1024_capture/mailbox_poll.tmp in a
+SECOND PC terminal (or mailbox_terminal_physical.bin after completion)
+is NON-INTRUSIVE; status word[2], completed word[5] and fault word[4]
+show image progress. Python reads of these PC files require no
+second JTAG session, board interrupts, A53 halt or restart.
+**Saved the exact two-snapshot Python heredoc commands** in
+docs/P08_B4_2_FULL1024_PHYSICAL_RUNBOOK.md, plus reusable
+scripts/p08_b4_2_monitor_mailbox_pc_only.py with synthetic
+tests/test_p08_b4_2_monitor_mailbox_pc_only.py and no-board CI
+coverage. This technique should be reused on future multi-hour
+physical sessions; absent/partial temporary files are normal,
+and DONE sentinel alone cannot establish completion.
+
+**NEXT (do not prematurely merge):** plan P08-B4.4 controlled
+**six repeated counterbalanced AB/BA/AB** cold-boot matched-source
+Track A vs virtualized 27-core Track B sessions. Before any
+new destructive operation, inspect independently verified B4.2
+report's count/time distributions and accepted Track A 1024
+physical latency-scope timing contract; design original
+matched service-window CNTFRQ/CNTVCT normalization, selected
+trace ordinal 1023 exclusion/instrumentation control and
+trial/session variance estimates. Accept final comparative
+latency only with 6 genuine physically verified paired sessions,
+correct original source/mode and explicit uncertainty. No
+energy or speedup claim yet; all new hardware sessions remain
+separately gated. PR #53 on B4 branch DRAFT/UNMERGED,
+stacked on B3 PR #52 DRAFT/UNMERGED.
+
 ## P08-B4.1 genuine original 1024 independent numerical oracle — OPERATOR ACCEPTED (2026-11-02)
 
 Operator ran original independent P06-B2.4 scalar simulation for **64/64 distinct 16-image shards**, including final shard 63 ordinals **1008:1024**, preserving previously individually verified shard0 0:16. Then completed full no-overwrite 64-file merge using original signed B2.1 matched TRAIN-only ingress, frozen original network and SHA-coded routes and exact accepted B3 first16 reference. Genuine operator terminal:
