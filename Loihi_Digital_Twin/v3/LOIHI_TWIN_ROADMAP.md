@@ -1,5 +1,58 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.1 second physical JTAG session — all 6 original DDR readbacks PASS, host Python key error before A53 launch
+
+Operator second dedicated KV260 run **completed physical original frozen staging**:
+accepted P03 PL bitstream/VIO release pass, physically selected PSU,
+all 27 original **mutable** B2.4 P02 core 512KiB physical readbacks
+PASS, all 27 independent **immutable backup** P02 core readbacks PASS,
+and signed 16KiB B4l bindings, original 896KiB B4m input routes,
+80KiB B4m output routes and original matched 802,816B 1,024 raw
+TRAIN-derived images all reported physical byte-for-byte PASS.
+Tcl emitted `P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1`
+and `P08_B3_PILOT_ORIGINAL_FROZEN_SIX_TRANSFERS_STAGED_REBOOT_REQUIRED=1`.
+These are authentic *operator-provided* physical staging logs; the
+separately independent host verification was NOT yet completed.
+
+Despite full Tcl staging success, host Python runner halted with
+`P08_B3_PILOT16_PHYSICAL_NO_GO=PosixPath('.../original_27core_backup_source_14155776.bin')`,
+a `KeyError` because `scripts/p08_b3_pilot16_physical_run.py`'s
+`readback_original(stage,readback)` indexed
+`source.EXPECTED_SHA[original]` where `original` was a full
+`Path`, while SHA keys are filenames (`str`).
+Both occurrences fixed by retaining `original_name=source.FILES[0][0]`,
+`original_path=stage/original_name`, and
+`source.EXPECTED_SHA[original_name]`.
+**No new pilot16 ELF was downloaded, no inference executed,
+no neural parity or latency verified.** JTAG touched DDR, so **reboot
+required and no old-Linux resume**.
+
+New synthetic host-only regression independently exercises exact
+`readback_original` on **54 full 512KiB P02 physical-copy fixture files**
+plus all 4 source staged payload fixtures. It asserts all 6 source
+SHA results and injects backup-core and route corruption to confirm
+fail-closed behavior. Historical full fake-PSU Tcl six-stage regression
+remains intact. **All seven P08 native CI workflows GREEN**.
+No accepted original frozen B2.4 assets, P07-B, P08-A physical
+sessions, original P03 BIT/XSA or root `LitReview.md` touched.
+Exact operator new PILOT16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`
+and original scalar first16 oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`
+remain intact; original TEST sealed.
+
+NEXT: use fixed Python `readback_original` on **the second
+session's preserved external `source_physical_readback/`** files
+as an offline, read-only staging-forensics check before another
+destructive run. A PASS retrospectively validates saved source
+readbacks but **cannot revive the old JTAG session**. After reboot,
+run only a NEW dedicated session with new external evidence root,
+full fresh six-source staging/readback and subsequent separately
+SHA-pinned A53 ELF launch/16 original held-out TRAIN validation
+inferences. Independent 16 journal, timer, terminal and scalar
+FNV verification still pending. Risk of unproven independent
+PS/boot/RPU/PL-DMA/firmware DDR owner remains acknowledged, NOT solved.
+
 ## P08-B3.1 first hardware attempt (2026-11-02 UTC): Tcl receipt interpolation abort, no A53 launch
 
 Operator initiated **first physical KV260 P08-B3 pilot16** dedicated JTAG
