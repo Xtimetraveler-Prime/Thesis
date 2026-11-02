@@ -1,0 +1,40 @@
+name: P08-B4.4 original 1024 single-run timing analysis offline NO JTAG
+on:
+  push:
+    branches:
+      - agent/v3-p08-b4-fullscale
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_4_single_run_timing_audit.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_4_single_run_timing_audit.py"
+      - ".github/workflows/p08_b4_4_single_run_timing_offline.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_4_single_run_timing_audit.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_4_single_run_timing_audit.py"
+      - ".github/workflows/p08_b4_4_single_run_timing_offline.yml"
+permissions:
+  contents: read
+jobs:
+  native-first1024-timing-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest only, no hardware dependencies
+        run: python3 -m pip install -q pytest
+      - name: Syntax strict physical clock analysis, no board
+        run: python3 -m compileall -q scripts/p08_b4_4_single_run_timing_audit.py tests/test_p08_b4_4_single_run_timing_audit.py
+      - name: Signed raw timing SHA and actual A53 counter denominator, 1023 ordinary plus trace exclusion tests
+        run: python3 -m pytest -q -rs tests/test_p08_b4_4_single_run_timing_audit.py tests/test_p08_b4_2_monitor_mailbox_pc_only.py
+      - name: Honest current scope classification
+        run: |
+          echo "P08_B4_4_ONE_SESSION_TIME_SCOPE_SOURCE_CI=PASS"
+          echo "P08_B4_4_GENUINE_USER_REPORT_NOT_COMPUTED_IN_CI=1"
+          echo "P08_B4_4_FULL_SIX_REPEATED_AB_BA_AB_LATENCY_BENCHMARK=NOT_RUN"
+          echo "P08_B4_4_NO_NEW_JTAG_OR_B2_4_FROZEN_ASSETS_TOUCHED=1"
