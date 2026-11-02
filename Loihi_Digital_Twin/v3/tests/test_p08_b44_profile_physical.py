@@ -125,10 +125,10 @@ def synthetic_new_four_captures(synthetic_full1024,tmp_path):
         w[:9]=[subphase.MAGIC,1,i,subphase.PASS,i+1,27,subphase.COPIED,27,27]
         w[9]=99999001
         # Fixture's actual first phase 1000 ticks, so profile is subordinate.
-        w[11]=460
-        for j,phase_ticks in enumerate((10,170,40,90,90)):
+        w[11]=80
+        for j,phase_ticks in enumerate((5,20,10,15,20)):
             w[13+j*2]=phase_ticks
-        w[23]=60
+        w[23]=10
         w[61]=zlib.crc32(struct.pack("<61I",*w[:61]))
         w[63]=subphase.DONE
         rows.append(struct.pack("<64I",*w))
@@ -194,7 +194,7 @@ def test_new_jtag_profile_precheck_rejects_corrupt_1024_data(
                         numerical.FullRecordNoGo)):
         physical.structural_profile_check(
             oracle,first16,cap,tmp_path/"never.json")
-    assert not (tmp_path/"never.json").exists() or dest.name!="reset_profile1024_physical.bin"
+    assert not (tmp_path/"never.json").exists(), "no combined report may be published before all 1024 neural AND profile rows validate"
 
 def test_separate_independent_provenance_requires_authentic_receipts(tmp_path,monkeypatch):
     def fake_admission(_a):return {"schema":"synthetic"}
