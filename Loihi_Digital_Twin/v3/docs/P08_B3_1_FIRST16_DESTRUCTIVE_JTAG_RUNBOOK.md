@@ -1,5 +1,77 @@
 # P08-B3.1 — KV260 original B2.4 first16 physical JTAG: preflight and risk review
 
+## Second physical KV260 attempt: six original DDR transfers PASS; Python host-only readback error corrected
+
+The **second operator physical JTAG attempt** reached and passed
+`P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1`.
+All 54 original 512KiB mutable and independent original immutable
+backup P02 core physical readbacks and the four original B4l/B4m/raw
+source image readbacks passed the genuine XSDB Tcl checks.
+
+The Python orchestration **then stopped before any new A53 ELF
+download** with `P08_B3_PILOT16_PHYSICAL_NO_GO=PosixPath(...original_27core_backup_source_14155776.bin)`.
+Root cause: `readback_original` passed a `pathlib.Path` object
+to `source.EXPECTED_SHA`, a dictionary keyed by `str` filenames.
+The correct implementation uses separate
+`original_name = source.FILES[0][0]`,
+`original_path = stage / original_name` and only
+`source.EXPECTED_SHA[original_name]`. Both incorrect references
+were corrected without modifying accepted original frozen files,
+FPGA P03 bitstream or SHA-pinned pilot16 ELF/map.
+
+A NEW host-native regression exercises **the exact function**
+`readback_original` on mock physical captures of both complete
+27x512KiB original P02 banks and all four ancillary original payloads.
+It checks the returned physical SHA dictionary, and confirms tampered
+backup core 13 and altered original input route file are rejected.
+Combined with the previous full six-transfer actual Tcl mock-PSU test,
+all seven P08 CI workflows pass. This does not prove the historical
+operator source evidence until that saved readback is rechecked locally.
+
+### Read-only analysis of preserved second-session DDR evidence (NO JTAG)
+
+Find the external evidence directory used for the **second**, complete
+Tcl stage; if the original shell is active, `$P08_B3_EVIDENCE` may
+still refer to it. Otherwise use:
+
+```bash
+find "$HOME/Thesis_Evidence" -maxdepth 1 -type d \
+  -name 'p08_b3_pilot16_physical_retry_*' -print
+```
+
+Set `P08_B3_LAST_EVIDENCE` to the directory that contains the six
+authenticated physical sources under `source_physical_readback/`.
+On the latest code, from the `v3` directory:
+
+```bash
+export P08_B3_PILOT_STAGE="/home/dna/Thesis_Evidence/p08_b3_pilot16_pc_stage_20261102T043729Z"
+# SET the next variable to your actual second run's external evidence folder:
+# export P08_B3_LAST_EVIDENCE="$HOME/Thesis_Evidence/p08_b3_pilot16_physical_retry_..."
+test -d "$P08_B3_LAST_EVIDENCE/source_physical_readback"
+PYTHONPATH="$PWD/scripts:$PWD/src" python - <<'PY'
+import json, os
+from pathlib import Path
+from p08_b3_pilot16_physical_run import readback_original
+e=Path(os.environ["P08_B3_LAST_EVIDENCE"])/"source_physical_readback"
+s=Path(os.environ["P08_B3_PILOT_STAGE"])
+proof=readback_original(s,e)
+assert set(proof)=={
+    "mutable_27core_sha256", "backup_27core_sha256",
+    "binding_16k_physical.bin", "input_routes_896k_physical.bin",
+    "output_routes_80k_physical.bin", "raw1024_physical.bin"}
+print(json.dumps(proof,indent=2,sort_keys=True))
+print("P08_B3_SECOND_SESSION_SIX_ORIGINAL_SAVED_DDR_READBACKS_PC_INDEPENDENT_PASS=1")
+print("P08_B3_SECOND_SESSION_A53_ELF_EXECUTED=0")
+PY
+```
+
+This is **pure PC file reading** and makes no attempt to resume/reuse
+a JTAG-ownership session. On next physical run: reboot/power-cycle first,
+ensure a new empty external evidence root; perform all six
+physical sources again and verify in the same session before
+downloading the unmodified 16-image pilot A53 ELF. No results
+from either attempted session count as actual inference.
+
 ## 2026-11-02 first actual KV260 attempt — confirmed staging-only abort / corrected
 
 The operator ran the dedicated first P08-B3.1 physical JTAG session at
