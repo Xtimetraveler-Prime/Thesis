@@ -53,6 +53,10 @@ int p08_b2_reset_bind(p08_b2_reset_state *s,
     uint32_t core;
     p08_b2_reset_state accepted;
     uintptr_t mutable_base,backup_base;
+    /* Rebinding an already bound or poisoned state in a live session
+     * would bypass the irreversible partial-copy fault contract. */
+    if(s && s->magic==P08_B2_CONTEXT_MAGIC)
+        return s->poisoned?P08_B2_RESET_POISONED:P08_B2_RESET_INVALID;
     if(!s||!c||!c->mutable_records||!c->immutable_backup||
        !c->original_sha256||!c->invalidate||!c->clean||
        !c->quiescent||!c->barrier||
