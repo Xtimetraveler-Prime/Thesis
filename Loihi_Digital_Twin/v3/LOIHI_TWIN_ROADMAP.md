@@ -1,5 +1,59 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.1 third physical KV260 run: FIRST actual 16/16 terminal & scalar precheck PASS — independent evidence audit NEXT
+
+Operator reports third **dedicated fresh-session KV260 JTAG** run
+successfully completed physical P03.2c PS-MMIO bitstream programming
+and VIO reset release, identified physical PSU DDR target, staged and
+physically read back **all 27 original mutable P02 core records and all
+27 independently staged immutable backup records (54×512KiB)**,
+original B4l 16KiB descriptor, original B4m 896KiB input routes and
+80KiB output routes and the matched original 1,024-image raw-pixel
+pool. Tcl reported six physical source transfers byte-exact PASS.
+This third run progressed *beyond both earlier aborted sessions*.
+
+Genuine operator console further reports physical zero/readback of
+all three dedicated result regions, exact **SHA-pinned first16 A53
+ELF downloaded to real hardware**, A53 terminal 16/16 physically
+observed, real 256-byte mailbox + 16×256B neural journal +
+16×256B A53 timing journal physically captured, and the *separate
+preliminary untrusted-file scalar verifier* PASS
+(`P08_B3_FIRST16_BOARD_RESULT_NUMERICAL_PRECHECK_PASS=1`).
+This is **new actual physical 16-image inference evidence**, not
+merely PC mock data or original P07 one-frame experiment.
+
+**Acceptance boundary remains explicit:** independent verification of
+same-session physical provenance and all 16 neural/trace-fingerprint
+records is **PENDING**, because the printed terminal ends with
+`P08_B3_PILOT16_INDEPENDENT_PHYSICAL_PROVENANCE_VERIFICATION_PENDING=1`.
+The genuine *third-session* external evidence path was not specified
+by operator (do NOT infer it from previous second-session readback path
+`.../p08_b3_pilot16_physical_retry_20261102T052232Z`).
+User should identify newest `p08_b3_pilot16_physical_retry_*`
+evidence directory whose `stage.txt` equals
+`P08_B3_FIRST16_JTAG_RESULTS_MATCH_SCALAR_PRECHECK_INDEPENDENT_PHYSICAL_ATTESTATION_PENDING_REBOOT_REQUIRED`,
+then execute **PC-only**
+`scripts/p08_b3_pilot16_independent_physical_verify.py` against
+original frozen PC stage, scalar oracle, exact genuine ELF/map,
+accepted P03 hardware reports, and B2.2 reset pins. Require
+`P08_B3_PILOT16_REAL_16_FRAMES_ORIGINAL_SCALAR_NUMERICAL_FNV_PASS=1`
+and the separate independent report before calling accepted physical
+numerical fingerprint parity. Store the report SHA. Reboot/power-cycle
+KV260 after the JTAG attempt; do not resume discarded Linux.
+
+No current physical 1,024-image Track B latency benchmark or
+energy/speedup claims; no direct full raw 26×1,010 neuron-trace
+byte equality obtained. DDR boot/firmware/RPU/DMA ownership remains
+independently **unproven**, although user has accepted the experimental
+risk. No changes to frozen original B2.4 33-asset model, original
+P03 bit/XSA, accepted Track A six sessions, P07-B accepted V3/B5,
+root `LitReview.md` or sealed official MNIST TEST. Next after
+independent 16-frame pass: freeze this first verified physical
+pilot as B3 acceptance evidence, inspect timestamp distributions
+without calling them a 1,024-image latency result, then plan the
+scalable controlled Track B physical matched-source latency
+experiment and A-vs-B comparison.
+
 ## P08-B3.1 second physical JTAG session — all 6 original DDR readbacks PASS, host Python key error before A53 launch
 
 Operator second dedicated KV260 run **completed physical original frozen staging**:
