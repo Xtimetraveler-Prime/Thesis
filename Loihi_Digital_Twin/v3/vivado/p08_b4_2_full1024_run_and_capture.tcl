@@ -121,10 +121,18 @@ set failed [catch {
     set terminal 0
     set terminal_state INCOMPLETE
     set previous_completed 0
+    set last_advance_attempt 0
+    # A hung full1024 run must NEVER poll for the entire global window.
+    # Require at least one new completed image every 3600 mailbox polls
+    # (~one hour), including startup. Fail closed, preserve all evidence,
+    # and power-cycle/reboot; do NOT resume stopped Linux.
     # Original 27-core pager + 26 ticks + 1010 neural trace each image
     # may be slow. Fixed bounded observation, never accept a timeout.
     for {set attempt 0} {$attempt < 172800} {incr attempt} {
         after 1000
+        if {$attempt - $last_advance_attempt > 3600} {
+            error "P08-B4.2: no new completed image for >3600 mailbox checks; preserve evidence, REBOOT"
+        }
         pilot_psu
         if {[file exists $scratch]} {file delete $scratch}
         mrd -bin -file $scratch 0x43FF0200 64
@@ -138,6 +146,9 @@ set failed [catch {
             set completed [expr {[lindex $progress 5] & 0xFFFFFFFF}]
             if {$completed<$previous_completed} {
                 error "P08-B4.2: original image-completed count moved backward"
+            }
+            if {$completed>$previous_completed} {
+                set last_advance_attempt $attempt
             }
             set previous_completed $completed
             continue
