@@ -95,7 +95,8 @@ def admitted_synthetic_1024(tmp_path,monkeypatch):
             "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
             "shard":index,"start_ordinal":index*16,
             "end_ordinal_exclusive":index*16+16,
-            "original_b24_source_sha256":"a"*64,
+            "original_b24_source_sha256":
+                "0a3ec838a9f95a73de118e37f31d596bf38e63cd8cf82e6f5c9d0dd48b22797a",
             "original_b24_compiled_sha256":
                 "02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a",
             "frames":frames[index*16:(index+1)*16],
