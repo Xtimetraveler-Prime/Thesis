@@ -215,3 +215,25 @@ def test_independent_physical_jtag_4th_ddr_requires_all_real_markers():
     assert "P08_B44_PROFILE1024_REAL_1024_RESET_PROFILE_SIDECAR_PHYSICAL_CAPTURED=1" in (
         independent.LOGS["profile1024_a53_physical_run.log"])
     assert independent.STAGE_OK if hasattr(independent,"STAGE_OK") else physical.STAGE_OK
+
+
+def test_new_profile_pc_side_nonintrusive_monitor_works_and_defaults_unchanged(
+        tmp_path,capsys):
+    import p08_b4_2_monitor_mailbox_pc_only as monitor
+    active=tmp_path/"genuine_only_pc_fixture"
+    new=active/"profile1024_capture"
+    new.mkdir(parents=True)
+    words=[0]*64
+    words[:6]=[monitor.MAGIC,1,monitor.PROGRESS,42,0,43]
+    words[63]=monitor.DONE
+    (new/"mailbox_poll.tmp").write_bytes(struct.pack("<64I",*words))
+    assert monitor.snapshot(active)["state"]=="MISSING",(
+        "legacy B4 original default must not silently read B44 folder")
+    assert monitor.snapshot(active,"profile1024_capture")["completed"]==43
+    assert monitor.main(["--evidence",str(active),
+                         "--capture-subdir","profile1024_capture",
+                         "--samples","1","--interval","0"])==0
+    out=capsys.readouterr().out
+    assert "Completed images: 43/1024" in out
+    assert "no JTAG, board or hardware actions" in out
+    assert (new/"mailbox_poll.tmp").is_file()
