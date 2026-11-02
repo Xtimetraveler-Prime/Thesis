@@ -1,6 +1,9 @@
 # P08-B3 original B2.4 — six same-session physical JTAG DDR transfers.
 # DESTRUCTIVE: only after operator approval, A53/Linux halted, accepted P03.
 # No ELF launch, no reset. Reboot after ANY physical board attempt.
+# IMPORTANT: TCL variable followed by literal suffix must be braced: ${name}.
+# An unbraced $name_BYTE_EXACT_PASS triggered original 2026-11-02
+# pilot staging abort after both 27-core source/backup full readbacks.
 if {$argc != 8 ||
     [lindex $argv 0] ne "P08_B3_PILOT16_SIX_DDR_TRANSFERS_RISK_APPROVED"} {
     error "P08-B3: <approval> <P02> <B4lbind> <B4min> <B4mout> <raw1024> <newreadbackdir> <localhostxsdb>"
@@ -115,7 +118,7 @@ set rc [catch {
             [p08_read_binary $readback] ne [p08_read_binary $file]} {
             error "P08-B3: $name real PSU readback differs"
         }
-        puts "P08_B3_PILOT_$name_BYTE_EXACT_PASS=1"
+        puts "P08_B3_PILOT_${name}_BYTE_EXACT_PASS=1"
     }
     puts "P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1"
 } reason]
