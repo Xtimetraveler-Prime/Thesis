@@ -1,5 +1,102 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4.2 EXPERIMENTAL 1024 RESET PROFILE: genuine Vitis ELF accepted, full independent same-session hardware pipeline SOURCE CI PASS (2026-11-02)
+
+Operator genuinely completed NEW experimental Vitis 2025.2
+full1024 profile A53 ELF/map separately from immutable original
+B2.3, with original P03/27core SHA and AArch64 PT_LOAD
+static offline source admission PASS:
+- NEW Vitis profile ELF:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.elf
+  SHA256 **bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3**
+- NEW linker map:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.map
+  SHA256 **d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9**
+- NEW independent offline ELF source admission JSON:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/p08_b44_profile_elf_ptload_preflight.json
+  SHA256 **7a5818dc5469ea288fefcefb87ebc4fd3ab1e5c7bdce0bbfda717a6f2787b129**.
+Actual NEW profile physical JTAG: **NOT RUN**. Original accepted
+B4.2 first real 1024 full neural/FNV+timing report SHA
+297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032
+and original 1023 ordinary descriptive A53 timing report SHA
+4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81
+remain immutable and enforced as source continuity in NEW
+preflight.
+
+Implemented on stacked draft profiling branch and PR #54,
+NO BOARD/NO JTAG CI PASS:
+- scripts/p08_b44_profile_physical_run.py — **read-only default**.
+  Reauthenticates all accepted ORIGINAL B3/B4 numerical/1024
+  scalar 64 shards, original P03 XSA/bit/LTX/P07 DDR staging
+  and NEW exact signed profiling ELF/map/ELF admission (including
+  recomputation). Nine explicit distinct destructive YES
+  approvals required, including the NEW 256KiB profile
+  region [0x42400000,0x42440000). No new DDR boot/RPU/
+  firmware/DMA exclusivity is proven by source check.
+- vivado/p08_b44_profile_full1024_run_and_capture.tcl —
+  NEW ONLY SHA-pinned profile ELF/download and unique identity;
+  same-session independent A53 stop/FPD128+P03 programming,
+  original six DDR source byte-exact physical readbacks,
+  physical zero/readback of ALL four output regions:
+  256B mailbox and three 1024x256B original journal,
+  timer and NEW profile regions. Correct 1024/1024 terminal
+  state, bounded 3600-poll no-image-progress watchdog and
+  global timeout, 1024 original neural+timing and NEW reset
+  profile journals physically captured. Reboot mandatory
+  after any destructive JTAG attempt; original accepted
+  B4.2 Tcl and A53 ELF untouched.
+- scripts/p08_b44_profile_independent_physical_verify.py —
+  second PC-only verifier independently repeats original
+  signed source/ELF SHA/oracle, true JTAG transcript/A53/PSU/P03
+  and six DDR source readbacks, FOUR original signed zeroed DDR
+  capture regions, original complete1024 26tick×1010
+  neural FNV + 10-spike vector and classification parity,
+  all 1024 A53 6-phase timers, NEW original 27core
+  5-phase SHA/cache/memcpy/after SHA CRC/clock/reset-in-A53
+  timestamp nesting. Only separately admits one
+  NEW physical 1024 profile numerical and microtiming
+  record if every gate PASS, not a performance benchmark.
+- tests/test_p08_b44_profile_physical.py,
+  .github/workflows/p08_b44_profile_physical_no_board.yml —
+  real Tcl mailbox classifier replay (intermediate 1024
+  progress does NOT end run), independent synthetically
+  complete1024 original source numerical + new 27core
+  five-component positive, original scalar-neural/FNV,
+  journal CRC, A53 timer CRC, 1024 exact mailbox,
+  reset profile source SHA/CRC/size/timing negatives,
+  no genuine JTAG in CI. Fixed premature preliminary
+  success report: BOTH source+new reset profile must
+  PASS before any combined JSON report created.
+- Original saved **PC-only nonintrusive** long-run monitor
+  scripts/p08_b4_2_monitor_mailbox_pc_only.py now supports
+  explicit --capture-subdir profile1024_capture, default
+  remains original B4.2 full1024_capture. No additional
+  XSDB/hardware/CPU halt/host evidence writes.
+- New docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md with
+  exact read-only setup/pinned SHA preflight, nine-YES
+  dedicated coldboot physical command, safe PC-only
+  mailbox monitoring, mandatory after-any-JTAG reboot,
+  separate PC independent real1024 source/reset profile
+  acceptance. Operator should **NOT** run new JTAG if
+  read-only source preflight NO-GO or hardware ownership/
+  physical recovery risks are unacceptable.
+
+P08-B closeout STILL PENDING after this source work:
+first independently accepted genuine full1024 NEW reset profile
+hardware session and SHA report; nested 26tick scheduler/
+AXI-paging/MMIO/trace/routing profiling; TRUE repeated
+6 paired A-vs-B AB/BA/AB coldboots, same 1023
+ordinary TRAIN validation IDs and full A53 service
+boundaries, observed CNTFRQ and run-level uncertainty;
+signed P08-B final scientific limitations and user
+authorization before merge. Historical 3 pairs of
+A2.1-vs-A2.2 are within Track A, NOT A-vs-B. Networks
+have 42 versus 1010 neurons and different computational
+load; energy, isolated PL-only speedup and original
+PS/DDR/DMA exclusive ownership NOT proved, official
+MNIST TEST SEALED. Preserve all original B2.4 frozen
+artifacts/P03/P07/A/B3/B4/LitReview immutable.
+
 ## P08-B4.4.2 genuine Vitis operator retry gate — FIRST ATTEMPT HOST STAGING ISSUE FIXED, NO PHYSICAL RUN
 
 On 2026-11-02 operator locally executed the real separate
