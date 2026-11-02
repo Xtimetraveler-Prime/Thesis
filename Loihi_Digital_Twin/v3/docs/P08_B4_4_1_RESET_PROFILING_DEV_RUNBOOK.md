@@ -205,3 +205,85 @@ to be implemented after genuine Vitis linker/ELF admission, with
 separate user confirmation and dedicated recovery-ready board.
 The unsigned experimental profiling CLR/CRC sidecar, by itself,
 is never physical proof or genuine neural parity.
+
+
+## NEW genuine Vitis 2025.2 offline profile build now implemented (do not run board)
+
+Two new offline build files:
+
+- software/p08/build_p08_b44_profile_full1024.py — exact
+  new imported C/H source list, original full1024 source
+  except DIFFERENT experimental A53 entrypoint and extra reset
+  profiler, fresh distinct Vitis app/platform and map output;
+  no original B2.3 source or original accepted ELF modification.
+- scripts/build_p08_b44_profile_full1024.sh — requires new
+  outside-repo evidence root, exact original P03 XSA/width
+  metrics, immutable accepted B2.2 27 SHA header + manifest,
+  SHA-pinned original accepted B2.3 full1024 ELF, Vitis tools.
+  Stages ORIGINAL P07 modules into distinct local copied
+  source, applies only the historically accepted B4m 10,000
+  route ceiling within the new source copy. Runs Vitis 2025.2
+  and independently executes the newly separate profile
+  AArch64 ELF+map offline admission. Original signed
+  firmware and original model assets are unchanged.
+
+**User-local PC-only offline build** (one build, no JTAG):
+
+~~~bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p08-b44-profiling
+git pull --ff-only origin agent/v3-p08-b44-profiling
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p08_b4_4_1_profile_reset_native.py \
+  tests/test_p08_b44_reset_profile_sidecar.py \
+  tests/test_p08_b44_profile_elf_admission.py \
+  tests/test_p08_b44_build_offline.py
+
+# Only after native tests PASS, source your genuine Vitis 2025.2
+# environment as in accepted B2.3 build. DO NOT start XSDB.
+export P08_B44_ORIGINAL_ELF="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf"
+export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
+# P07_B4L_REPORTS must remain previously accepted original P03 routed reports.
+test -f "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa"
+test "$(sha256sum "$P08_B44_ORIGINAL_ELF" | cut -d' ' -f1)" = \
+  "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1"
+
+export P08_B44_BUILD_DIR="$HOME/Thesis_Evidence/p08_b44_reset_profile_build_$(date -u +%Y%m%dT%H%M%SZ)"
+test ! -e "$P08_B44_BUILD_DIR"
+
+bash scripts/build_p08_b44_profile_full1024.sh
+~~~
+
+A successful REAL Vitis profile build must report:
+
+~~~text
+P08_B44_SEPARATE_GENUINE_PROFILE_ELF_STATIC_SOURCE_ADMISSION_PASS=1
+P08_B44_SEPARATE_RESET_PROFILE_1024_A53_ELF_AND_MAP_BUILT=1
+P08_B44_NEW_PROFILE_KV260_PHYSICAL_RUN=NOT_RUN
+P08_B44_EXPERIMENTAL_DESTRUCTIVE_JTAG_PERMISSION=NOT_GRANTED
+~~~
+
+Record output and SHA-256s:
+
+~~~bash
+sha256sum \
+  "$P08_B44_BUILD_DIR/vitis_workspace/p08_b44_reset_profile_1024.elf" \
+  "$P08_B44_BUILD_DIR/vitis_workspace/p08_b44_reset_profile_1024.map" \
+  "$P08_B44_BUILD_DIR/p08_b44_profile_elf_ptload_preflight.json"
+
+test -f "$P08_B44_BUILD_DIR/vitis_build.log"
+test -f "$P08_B44_BUILD_DIR/readelf_layout.txt"
+~~~
+
+The build output is a **new experimental ELF candidate**, not a
+successful FPGA experiment. Because profiling changes the
+image-service path and newly owns the proposed extra DDR range,
+the **new physical JTAG runner with same-session readback and
+independent full1024 original scalar/FNV verification is still
+not implemented**. Do NOT substitute this profile ELF into
+the historical B3 pilot or the accepted B4.2 physical runner.
+Stop after the offline build and report exact markers and SHA.
