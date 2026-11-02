@@ -186,3 +186,134 @@ def test_pilot_mailbox_done_marker_only_is_never_terminal(tmp_path):
         assert p.returncode==0,(expected,p.stderr)
         assert p.stdout.strip()==expected,(
             expected,p.stdout.strip(),hex(status),idx,completed,done)
+
+
+def test_six_original_ddr_stage_full_mock_xsdb_byte_roundtrip(tmp_path):
+    """Execute actual original staging Tcl with mock PSU/XSDB in tclsh.
+
+    Use entirely synthetic host bytes and fake hash gate ONLY for this
+    untrusted native fixture. Tests 54 independent staged P02 cores + four
+    signed-input transfer receipts and repro of observed old Tcl abort.
+    No actual hardware tools, JTAG, genuine frozen model or DDR accessed.
+    """
+    tcl=shutil.which("tclsh")
+    if not tcl:
+        pytest.skip("Tcl interpreter required for actual full stage exercise")
+    script=ROOT/runner.STAGE_TCL
+    code=script.read_text()
+    fixed='puts "P08_B3_PILOT_${name}_BYTE_EXACT_PASS=1"'
+    bad_line='puts "P08_B3_PILOT_$name_BYTE_EXACT_PASS=1"'
+    assert fixed in code and bad_line not in code
+    cases=(
+        ("synthetic_p02.bin",14155776,b"LTV3CTX1"),
+        ("synthetic_bind.bin",16384,b"B4BIND01"),
+        ("synthetic_in.bin",917504,b"B4MING01"),
+        ("synthetic_out.bin",81920,b"B4MROUT1"),
+        ("synthetic_raw.bin",802816,b"\x00"*8),
+    )
+    files=[]
+    for name,size,magic in cases:
+        p=tmp_path/name
+        with p.open("wb") as fd:
+            fd.write(magic)
+            fd.truncate(size)
+        files.append(p)
+    harness=tmp_path/"mock_xsdb_no_board.tcl"
+    harness.write_text(r'''
+set script [lindex $argv 0]
+set argv [lrange $argv 1 end]
+set argc [llength $argv]
+proc exec {args} {
+    if {[llength $args]!=2 || [lindex $args 0] ne "sha256sum"} {
+        error "SYNTHETIC: refusing any external command"
+    }
+    set names {synthetic_p02.bin synthetic_bind.bin synthetic_in.bin synthetic_out.bin synthetic_raw.bin}
+    set sums {
+      3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e
+      2f0a5299a3948d7e0d4d48c265d199616fd3709d966343629596464687f611eb
+      380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8
+      2405269110585a3921dfc64ed1b2adbf0622c520cfdce8bb6b1ac6d825f23103
+      739006f03b37c36d7aa11b6b68612338fc5249c7f48b9d854520ee7e3ea9c06e
+    }
+    set found [lsearch -exact $names [file tail [lindex $args 1]]]
+    if {$found<0} {error "SYNTHETIC: unknown fake original source"}
+    return [format "%s  %s" [lindex $sums $found] [lindex $args 1]]
+}
+proc connect {args} {puts "SYNTHETIC_MOCK_NO_BOARD_CONNECT"}
+proc disconnect {args} {}
+proc targets {args} {return "SYNTHETIC_MOCK_PSU"}
+set ::ddr [dict create]
+proc dow {args} {
+    if {[llength $args]!=3 || [lindex $args 0] ne "-data"} {
+        error "SYNTHETIC: rejecting any ELF/unknown download"
+    }
+    dict set ::ddr [lindex $args 2] [p08_read_binary [lindex $args 1]]
+}
+proc mrd {args} {
+    if {[llength $args]!=5 || [lindex $args 0] ne "-bin" ||
+        [lindex $args 1] ne "-file"} {
+        error "SYNTHETIC: bad readback request"
+    }
+    set address [lindex $args 3]
+    if {![dict exists $::ddr $address]} {
+        error "SYNTHETIC: unwritten DDR address"
+    }
+    set payload [dict get $::ddr $address]
+    if {[string length $payload]!=4*[lindex $args 4]} {
+        error "SYNTHETIC: mismatch 32bit word count"
+    }
+    set out [open [lindex $args 2] wb]
+    fconfigure $out -translation binary -encoding binary
+    puts -nonewline $out $payload
+    close $out
+}
+source $script
+''',encoding="utf-8")
+    dest=tmp_path/"mock_psu_readbacks"
+    dest.mkdir()
+    cmd=[tcl,str(harness),str(script),runner.STAGE_TOKEN,
+         *(str(f) for f in files),str(dest),"tcp:127.0.0.1:3121"]
+    done=subprocess.run(cmd,capture_output=True,text=True,
+                        timeout=120,cwd=tmp_path)
+    assert done.returncode==0,done.stderr[-3000:]+done.stdout[-2000:]
+    assert "SYNTHETIC_MOCK_NO_BOARD_CONNECT" in done.stdout
+    assert len([x for x in done.stdout.splitlines()
+                if "_CORE_" in x and "_READBACK_PASS=1" in x])==54
+    for name in (
+        "binding_16k_physical.bin",
+        "input_routes_896k_physical.bin",
+        "output_routes_80k_physical.bin",
+        "raw1024_physical.bin",
+    ):
+        assert done.stdout.splitlines().count(
+            f"P08_B3_PILOT_{name}_BYTE_EXACT_PASS=1")==1
+    assert done.stdout.splitlines().count(
+        "P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1")==1
+    for source_file,rb_name in (
+        (files[1],"binding_16k_physical.bin"),
+        (files[2],"input_routes_896k_physical.bin"),
+        (files[3],"output_routes_80k_physical.bin"),
+        (files[4],"raw1024_physical.bin"),
+    ):
+        assert (dest/rb_name).read_bytes()==source_file.read_bytes()
+    with files[0].open("rb") as fd:
+        source_bytes=fd.read()
+    for label in ("mutable","backup"):
+        subdir=dest/(label+"_original_p02_readback")
+        assert len(list(subdir.glob("core_??_physical.bin")))==27
+        for n in range(27):
+            assert (subdir/f"core_{n:02d}_physical.bin").read_bytes()==(
+                source_bytes[n*524288:(n+1)*524288])
+    # Re-inject exact previously observed bug in a disposable Tcl copy:
+    # a new run MUST fail there, proving this test catches the regression.
+    broken=tmp_path/"old_broken_tcl.tcl"
+    broken.write_text(code.replace(fixed,bad_line),encoding="utf-8")
+    bad_dest=tmp_path/"failed_mock_stage"
+    bad_dest.mkdir()
+    bad=subprocess.run(
+        [tcl,str(harness),str(broken),runner.STAGE_TOKEN,
+         *(str(f) for f in files),str(bad_dest),"tcp:127.0.0.1:3121"],
+        capture_output=True,text=True,timeout=120,cwd=tmp_path)
+    assert bad.returncode!=0,"old Tcl interpolation must be rejected"
+    assert 'name_BYTE_EXACT_PASS' in bad.stderr
+    assert "P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1" in bad.stdout
