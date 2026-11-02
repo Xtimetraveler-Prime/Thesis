@@ -63,11 +63,13 @@ def decode(raw:bytes)->dict:
         return {"state":"FAILURE",**info}
     return {"state":"INVALID","reason":"unknown mailbox status",**info}
 
-def snapshot(evidence:Path)->dict:
+def snapshot(evidence:Path,capture_subdir:str="full1024_capture")->dict:
     """Read existing PC files only; tolerate XSDB temporary-file races."""
-    directory=evidence/"full1024_capture"
+    if capture_subdir not in ("full1024_capture","profile1024_capture"):
+        return {"state":"INVALID","reason":"unsupported PC-only capture directory"}
+    directory=evidence/capture_subdir
     if not evidence.is_dir() or not directory.is_dir():
-        return {"state":"MISSING","reason":"exact evidence/full1024_capture directory absent"}
+        return {"state":"MISSING","reason":"exact evidence/"+capture_subdir+" directory absent"}
     for filename in (TERMINAL,POLL):
         p=directory/filename
         try:
@@ -112,6 +114,10 @@ def main(argv:list[str]|None=None)->int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--evidence",required=True,type=Path,
                    help="exact ACTIVE P08-B4 physical evidence directory")
+    p.add_argument("--capture-subdir",
+                   choices=("full1024_capture","profile1024_capture"),
+                   default="full1024_capture",
+                   help="PC-side saved ORIGINAL B4 or NEW B44 profile capture; no hardware")
     p.add_argument("--samples",type=int,default=2,
                    help="number of snapshots (default: 2)")
     p.add_argument("--interval",type=float,default=20.0,
@@ -122,12 +128,13 @@ def main(argv:list[str]|None=None)->int:
         p.error("absolute exact evidence directory, 1..120 samples and 0..3600s required")
     print("READ ONLY: reads PC-side cached files; no JTAG, board or hardware actions.")
     print("Evidence:",a.evidence)
+    print("PC capture subdirectory:",a.capture_subdir)
     last=None
     for number in range(a.samples):
         if number:
             time.sleep(a.interval)
         print(f"\n--- Local mailbox snapshot {number+1}/{a.samples} ---")
-        value=snapshot(a.evidence)
+        value=snapshot(a.evidence,a.capture_subdir)
         display(value)
         if last and all("completed" in item and item["state"]=="PROGRESS"
                         for item in (last,value)):
