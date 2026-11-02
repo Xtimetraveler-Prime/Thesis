@@ -64,6 +64,10 @@ def test_full1024_tcl_authentic_elf_only_bounded_then_1024(tmp_path):
     assert "3 1023 4 0 5 1024" in src
     assert "P08_B4_FULL1024_EXACT_1024_FRAME_HARDWARE_TERMINAL_OBSERVED=1" in src
     assert "if {$state eq \"PROGRESS\"}" in src
+    assert "set last_advance_attempt 0" in src
+    assert "if {$attempt - $last_advance_attempt > 3600}" in src
+    assert "if {$completed>$previous_completed}" in src
+    assert "set last_advance_attempt $attempt" in src
     assert "set terminal_state $state" in src
     tcl=shutil.which("tclsh")
     if tcl:
