@@ -45,7 +45,7 @@ def check_frame(row:dict,ordinal:int,source:dict,ledger_hash:str)->None:
           row.get("raw_pixels_sha256")==source.get("raw_pixels_sha256") and
           row.get("original_27core_ingress_sha256")==ledger_hash,
           f"frame {ordinal}: original source ID/raw/wire hash drift")
-    check(all(isinstance(row.get(k),int) and
+    check(all(type(row.get(k)) is int and
               0<=row[k]<=0xffffffff for k in (
                   "expected_prediction","expected_external_current",
                   "expected_source_spikes","expected_captured_packets",
@@ -137,7 +137,8 @@ def merge(shards:Path,ingress:Path,first16_oracle:Path,out:Path)->dict:
               and entry.get("end_ordinal_exclusive")==s*16+16 and
               len(entry.get("frames",[]))==16,
               "scalar shard provenance/ordinal drift: "+name)
-        check(entry.get("original_b24_source_sha256") is not None and
+        check(entry.get("original_b24_source_sha256")==
+              "0a3ec838a9f95a73de118e37f31d596bf38e63cd8cf82e6f5c9d0dd48b22797a" and
               entry.get("original_b24_compiled_sha256")==
               "02a6b68a2eda4587bbdf07e3af4aa63bdd7214223e853b08d8f6463896364f5a",
               "original B2.4 model/checkpoint SHA drift")
