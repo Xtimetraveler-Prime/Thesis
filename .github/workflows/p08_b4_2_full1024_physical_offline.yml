@@ -6,6 +6,8 @@ on:
     paths:
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_physical_run.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_verify_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_monitor_mailbox_pc_only.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_monitor_mailbox_pc_only.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b4_2_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_full1024_physical.py"
@@ -14,6 +16,8 @@ on:
     paths:
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_physical_run.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_verify_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_monitor_mailbox_pc_only.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_monitor_mailbox_pc_only.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b4_2_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_full1024_physical.py"
@@ -36,14 +40,15 @@ jobs:
         run: python3 -m pip install -q pytest
       - name: Syntax all new full1024 scripts
         run: |
-          python3 -m compileall -q             scripts/p08_b4_2_physical_run.py             scripts/p08_b4_2_verify_full1024.py             tests/test_p08_b4_2_full1024_physical.py
+          python3 -m compileall -q scripts/p08_b4_2_physical_run.py scripts/p08_b4_2_verify_full1024.py scripts/p08_b4_2_independent_physical_verify.py scripts/p08_b4_2_monitor_mailbox_pc_only.py tests/test_p08_b4_2_full1024_physical.py tests/test_p08_b4_2_monitor_mailbox_pc_only.py
       - name: Full 1024 numerical/clock/CRC/Tcl mailbox and denied physical tests
         run: |
-          python3 -m pytest -q -rs             tests/test_p08_b4_2_full1024_physical.py             tests/test_p08_b4_1_scalar_1024.py             tests/test_p08_b3_pilot16_physical.py
+          python3 -m pytest -q -rs             tests/test_p08_b4_2_full1024_physical.py             tests/test_p08_b4_2_monitor_mailbox_pc_only.py             tests/test_p08_b4_1_scalar_1024.py             tests/test_p08_b3_pilot16_physical.py
       - name: Explicit no board classification
         run: |
           echo "P08_B4_2_FULL1024_OFFLINE_NUMERICAL_AND_JTAG_SOURCE_NEGATIVE_CI=PASS"
-          echo "P08_B4_2_FULL1024_SCALAR_REAL_SHARDS_OPERATOR_ADMISSION=PENDING"
+          echo "P08_B4_2_MONITOR_PC_ONLY_REGRESSION_CI=PASS"
+          echo "P08_B4_2_OPERATOR_ORIGINAL_SCALAR1024=ACCEPTED_OUTSIDE_CI"
           echo "P08_B4_2_FULL1024_KV260_PHYSICAL_JTAG=NOT_RUN"
           echo "P08_B4_2_DESTRUCTIVE_APPROVAL_IN_CI=NO"
           echo "P08_B4_2_OFFICIAL_MNIST_TEST=SEALED"
