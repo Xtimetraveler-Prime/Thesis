@@ -121,13 +121,13 @@ def audit(raw:bytes,hz:int)->dict:
         "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
     }
 
-def main()->int:
+def main(argv:list[str]|None=None)->int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--profile",required=True,type=Path,
                    help="experimental 1024x256B physical profile sidecar")
     p.add_argument("--actual-hz",required=True,type=int)
     p.add_argument("--out",required=True,type=Path)
-    a=p.parse_args()
+    a=p.parse_args(argv)
     try:
         require(a.profile.is_absolute() and a.profile.is_file() and
                 not a.profile.is_symlink(),"external new profile binary required")
