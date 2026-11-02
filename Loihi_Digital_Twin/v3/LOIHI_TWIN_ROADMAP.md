@@ -1,5 +1,59 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.1 real JTAG original 16-image physical pilot pipeline — 2026-11-01
+
+Operator reports **genuine separate original B2.4 first16 Vitis 2025.2
+A53 ELF build and oracle admission PASS**, with ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`,
+map SHA `9d2106d82347385e936bb27176aa8f50a332beb3f13c3ca8e182890a689c674b`,
+selected original first16 scalar oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+These are operator **offline** observations. There has been NO
+P08-B3 physical board attempt or measured inference yet.
+
+New [B3.1 original first16 dedicated cold-boot JTAG runbook]
+(docs/P08_B3_1_FIRST16_DESTRUCTIVE_JTAG_RUNBOOK.md) and source:
+`scripts/p08_b3_pilot16_physical_run.py` defaults to **READ-ONLY HOST
+PREFLIGHT**, authenticates original 27×512KiB and separate backup
+destination, all five frozen source SHA payloads/six proposed transfers,
+separate exact user-built pilot ELF/map SHA and already accepted
+original P03 BIT/XSA/LTX, new 16 scalar oracle. Destructive
+`--mode execute` requires **eight individually explicit operator
+YES flags**, including A53/Linux discard, unproven PS/boot/firmware/DMA
+ownership RISK acceptance, all six DDR transfers, PS/PL programming,
+low DDR ELF and sidecar overwrite and mandatory reboot.
+New `vivado/p08_b3_pilot16_six_ddr_stage.tcl` physically reads
+back and validates **both full 27×512KiB original neuron contexts**
+(mutable and independent immutable backup) and original
+B4l metadata/B4m route tables/full 1,024-source raw pool
+before any ELF download; Python independently authenticates every
+PSU readback byte SHA within same dedicated session.
+New `vivado/p08_b3_pilot16_run_and_capture.tcl` zeroes and reads
+back new 256B terminal mailbox, 4KiB original first16 neural and
+4KiB timer journals; downloads exact pilot16 SHA-pinned A53
+ELF only after physical source readbacks and catches bounded
+first16 PASS versus timeouts/faults; captures exact physical 16 journals
+and mailbox after halting A53. Independent
+`scripts/p08_b3_pilot16_independent_physical_verify.py`
+checks authentic XSDB/Vivado logs, original 6 source readbacks,
+all 16 original scalar spike-count/trace FNV and timing receipt.
+Neither fingerprint comparison nor successful PC-only gate proves
+full RAW physical neuron trace, standalone firmware memory ownership,
+calibrated 1,024 latency, speedup or energy.
+
+**New native negative/default-deny CI PASS; operator PC-only dry-run
+preflight PENDING and destructive physical execution NOT AUTHORIZED by
+preflight.** In particular verified ELF low-DDR PT_LOAD nonoverlap does
+not prove independent PS Linux, FSBL/TF-A, U-Boot, PMUFW, RPU, CMA or
+PL DMA ownership. User must review/acknowledge this risk and agree to
+discard Linux / reboot after every attempted JTAG. The user request
+to progress toward physical test did not itself resolve unproven DDR
+owners. No P08-B3 physical JTAG action executed by agent; original
+P07-B V3/B5 evidence and untouched original 33 B2.4 assets, six
+accepted Track A latency sessions, protected root `LitReview.md`
+and original B official MNIST TEST remain unchanged.
+**P09 and all energy/speedup claims deferred.**
+
 ## P08-B3.0 bounded original B2.4 first16 A53 pilot source and safe offline stage — 2026-11-01
 
 Operator genuine original P08-B2.4 independent scalar **first16 PASS**,
