@@ -134,10 +134,15 @@ def log_has_exact(path:Path,needle:str)->None:
 def readback_original(stage:Path,readback:Path)->dict:
     """Host byte-exact independent SHA from real mrd -bin captures."""
     proof={}
-    original=stage/source.FILES[0][0]
-    accepted=(stage/original).read_bytes()
+    # Keep the immutable source file's NAME (str) distinct from its full
+    # filesystem PATH (Path). EXPECTED_SHA is keyed by filename strings.
+    # The first real 6-transfer pilot reached this post-JTAG host check,
+    # where indexing EXPECTED_SHA with a Path previously raised KeyError.
+    original_name=source.FILES[0][0]
+    original_path=stage/original_name
+    accepted=original_path.read_bytes()
     require(len(accepted)==27*524288 and
-            hashlib.sha256(accepted).hexdigest()==source.EXPECTED_SHA[original],
+            hashlib.sha256(accepted).hexdigest()==source.EXPECTED_SHA[original_name],
             "original 27core P02 source changed after PSU staging")
     for label in ("mutable","backup"):
         directory=readback/(label+"_original_p02_readback")
@@ -153,7 +158,7 @@ def readback_original(stage:Path,readback:Path)->dict:
                     data==accepted[i*524288:(i+1)*524288],
                     f"original {label} P02 core {i} physical mrd differs from immutable")
             fullhash.update(data)
-        require(fullhash.hexdigest()==source.EXPECTED_SHA[original],
+        require(fullhash.hexdigest()==source.EXPECTED_SHA[original_name],
                 label+" independent original 27core aggregate SHA differs")
         proof[label+"_27core_sha256"]=fullhash.hexdigest()
     pairs=(
