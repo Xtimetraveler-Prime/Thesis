@@ -144,7 +144,7 @@ static int meter_tests(void){
        timing.total_service_cycles!=810u ||
        timing.cntfrq_el0_hz!=99999001u ||
        timing.phase_cycles[0]!=100u ||
-       timing.phase_cycles[3]!=655u)
+       timing.phase_cycles[4]!=655u)
         return 23;
     if(p08_b2_meter_mark(&meter,P08_B2_AFTER_JOURNAL_COMMIT,1900u)!=
        P08_B2_METER_INVALID || !meter.poisoned)
