@@ -62,6 +62,18 @@ def admission(args:argparse.Namespace)->dict:
     # Reuse the ORIGINAL signed source plan and first16 oracle as read-only
     # provenance gate; never modify the accepted 16-image physical evidence.
     prior.original_inputs(args.stage,args.first16)
+    b3_pin="b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11"
+    require(sha(args.b3_report)==b3_pin,
+            "previous original 16-image independently accepted physical evidence drift")
+    b3=json.loads(args.b3_report.read_text())
+    require(b3.get("schema")==
+            "p08-b3-original-b24-first16-independent-physical-jtag-oracle-verification-v1"
+            and b3.get("same_session_original_6_DDR_physical_readbacks_byte_exact") is True
+            and b3.get("all_16_original_neural_classifier_and_10_output_spike_vectors_equal_scalar") is True
+            and b3.get("all_16_full_26tick_1010_neuron_FNV_fingerprint_equal_scalar") is True
+            and b3.get("all_16_A53_full_service_timers_structurally_valid") is True
+            and b3.get("original_OFFICIAL_MNIST_TEST")=="SEALED_NOT_ACCESSED",
+            "accepted independent original B3 physical numerical/clock evidence invalid")
     require(args.shards.is_absolute() and args.shards.is_dir(),
             "all 64 original B4.1 scalar shard files required")
     require(args.oracle.is_absolute() and
@@ -102,8 +114,7 @@ def admission(args:argparse.Namespace)->dict:
     return {
         "schema":"p08-b4-2-original-b24-full1024-read-only-admission-v1",
         "original_B3_signed_first16_scalar_sha256":prior.gate.ORACLE_SHA,
-        "genuine_B3_physically_accepted_pilot16_report_sha256":
-            "b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11",
+        "genuine_B3_physically_accepted_pilot16_report_sha256":b3_pin,
         "original_full1024_scalar_oracle_sha256":sha(args.oracle),
         "original_full1024_scalar_shard_count":64,
         "exact_full1024_original_B23_A53_ELF_SHA256":ELF_SHA,
@@ -211,7 +222,7 @@ def main()->int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--mode",choices=("preflight","execute"),default="preflight")
     for name in ("stage","shards","ingress","oracle","first16",
-                 "elf","linker_map","reset_pins","reports"):
+                 "b3_report","elf","linker_map","reset_pins","reports"):
         p.add_argument("--"+name.replace("_","-"),required=True,type=Path)
     p.add_argument("--evidence",type=Path)
     for a in APPROVALS:
