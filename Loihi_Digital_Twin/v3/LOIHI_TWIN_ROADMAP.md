@@ -1,5 +1,39 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.0 bounded original B2.4 first16 A53 pilot source and safe offline stage — 2026-11-01
+
+Operator genuine original P08-B2.4 independent scalar **first16 PASS**,
+including reproduction of the first 3 frozen B2.3 scalar witnesses:
+external `p08_b2_4_original_first16_scalar_20261102T042201Z.json`
+SHA `13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+Physical numerical parity remains **UNTESTED**.
+
+New [bounded original 27core pilot ELF and offline staging contract]
+(docs/P08_B3_PILOT16_OFFLINE_ELF_AND_STAGE.md): **separate**
+`p08_b3_pilot16_a53.c` with original B2.4 27-core/3-slot/26-tick engine
+and 27x512KiB source-SHA reset, but bounded **exactly 16 images**;
+distinct application identity and terminal receipt.
+It still SHA-authenticates **all original 1,024** raw pixels to avoid
+changing matched Track A/B population. A separate Vitis 2025.2
+standalone A53 builder and **PC-only** ELF PT_LOAD / map / accepted
+first16 scalar-report SHA admission are provided.
+PC-only original B2.4 source packaging independently verifies original
+33 frozen model assets, 27 original P02 context SHA, original
+16KiB axon bindings, signed 80/896KiB routes and 802,816-byte raw
+pool, then writes a no-overwrite **five immutable-copy file** transfer
+proposal with two proposed copies of identical original 27core bundle
+in disjoint mutable/backup DDR slots. No JTAG command is issued.
+
+**Genuine new pilot16 ELF+map not built by operator yet.**
+No physical proof of PS Linux/FSBL/TF-A/RPU/PL DMA/stack and reserved DDR
+ownership, no independent same-session physical DDR/model/route/backup
+readbacks, no operator authorization for destructive JTAG takeover and no
+pilot hardware neural/latency measurement. Original **1024-image**
+B2.3 ELF must never substitute for this separately bounded pilot.
+Original accepted P07-B V3/B5, B2.4 33 frozen files, Track A six
+sessions, root `LitReview.md` and original official TEST are
+untouched. **P09 and numerical/speedup/energy claims deferred.**
+
 ## P08-B2.4 original B2.4 matched first16 scalar oracle and untrusted record gate — 2026-11-01
 
 Operator reports **fixed original 1,024-frame C encoder PASS** plus
