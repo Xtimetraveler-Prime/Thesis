@@ -182,7 +182,8 @@ dedicated recovery-ready power-cycle/cold-boot JTAG session,
 working local hw_server at tcp:127.0.0.1:3121 and freshly emptied
 evidence root. If any risk is unacceptable, do not execute.
 This full1024 image run may take substantially longer than B3;
-polling is bounded to 172800 x 1-second checks but a timeout is
+polling has an absolute bound of 172800 x 1-second checks AND
+a fail-closed 3600-poll no-completed-image watchdog; either timeout is
 **NOT** success. Power-cycle KV260 after any JTAG attempt,
 including failure. Do NOT resume halted Linux.
 
