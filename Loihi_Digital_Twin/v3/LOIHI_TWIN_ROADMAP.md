@@ -1,5 +1,85 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 ACCEPTED first full1024 KV260 real 1023 ordinary-image A53 6-phase descriptive timing and optimization targets (2026-11-02)
+
+Operator directly ran the previously CI-passing PC-only
+scripts/p08_b4_4_single_run_timing_audit.py on the genuine signed,
+independently verified 1024-image physical B4.2 evidence, excluding
+selected trace frame ordinal 1023 from the **1023 ordinary-frame
+latency distribution** and preserving original exact CNTFRQ.
+
+- Actual ORIGINAL B4 physical evidence folder (NOW confirmed by operator):
+  /home/dna/Thesis_Evidence/p08_b4_2_original1024_physical_20261102T145943Z
+- Original B4.2 independent genuine 1024 neural/FNV + A53 timing
+  provenance report SHA256:
+  297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032
+- NEW real one-session six-phase B4.4 descriptive report (PC only,
+  no JTAG):
+  /home/dna/Thesis_Evidence/p08_b4_4_first1024_one_session_descriptive_20261102T191317Z.json
+- **Operator SHA256: 4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81**
+- Actual A53 CNTFRQ_EL0 frequency: **99,999,001 Hz**;
+  **1023 ordinary images**, whole image-service
+  **median 13,034.111500774ms = 13.0341115s**,
+  **nearest-rank p95 13,167.109029419ms = 13.167109s**.
+- Original six disjoint measured stage medians and their
+  population *SUM service time shares*:
+  - 27 frozen context restore **5826.693269ms / 44.695321%**;
+  - original B1.3 input encode **18.673677ms / 0.143253%**;
+  - pager/scheduler reset **228.098739ms / 1.749822%**;
+  - all 26 ticks, 702 dispatches, page-in/out, MMIO/poll,
+    routing/nested trace **6935.069581ms / 53.215729%**;
+  - neural receipt validate **0.000430ms / 0.000003512%**;
+  - journal commit **25.534815ms / 0.195872%**.
+  **Restoration + neural tick mixed software/PL phase account
+  for 97.91105% of the observed A53 whole-service population
+  time**. Do NOT add medians to claim exact total median.
+  Preserve selected frame 1023 separately to prevent
+  trace instrumentation scope bias.
+
+**Source-level implication confirmed:** original
+software/p08/p08_b2_context_reset.c
+p08_b2_reset_image verifies EACH original 27x512KiB immutable
+backup record SHA256 before the first destructive mutable copy;
+then memcpy's each 512KiB into mutable DDR and clean/barrier/
+invalidate/readback SHA256 verifies the destination per core.
+This is a 13.5MiB copy EACH image (13.5GiB copies across
+1024 images), plus a minimum of 27MiB SHA source/dest
+full-context scan traffic per image. Thus 44.7% reset
+includes SOFTWARE integrity SHA, cache maintenance, DDR
+copy and verification, not just copying memory or PL neural
+arithmetic. These checks enforce original independent
+physical model fidelity; removing them changes the
+scientific control and is not a valid unacknowledged
+optimization. The 53.2% all-tick phase includes nested P07
+context paging, AXI/MMIO dispatch and polling, spike routing,
+barriers and 27 logical-core PL runs/tick, not pure PL
+computation. Per-operation contributions INSIDE it remain
+unmeasured. No new physical B4 run required merely to
+interpret this first accepted phase result.
+
+**Next gated B4.4 research:** plan separate 27-context
+reset SHA/cache/copy instrumentation and full26tick per-core
+page-in/out, AXI, neural dispatch+wait, trace/routing counters
+under a separately built/new SHA-pinned profiling ELF, not
+silently change accepted original B2.3 full1024 firmware.
+Before any new hardware JTAG, require matching 1024 original
+frozen scalar FNV spike parity and explicit destructive
+admission. Then plan new independent coldboot six-session
+**TRUE A-vs-B** AB/BA/AB 1023 ordinary matched-source A53
+service comparison (original earlier A2.1-vs-A2.2 three
+pairs are NOT true A-vs-B pairs). Different A/B network
+complexities (42 neurons/26 dispatches vs 1010 neurons/
+702 dispatches + paging) limit direct interpretation.
+Track A previous 35.67–35.72ms ordinary service medians
+are source/boundary context, not an accepted measured
+comparable-complexity speedup ratio. Record run-level
+variance and actual CNTFRQ; do NOT infer PL-only seconds,
+energy, speedup, DDR ownership exclusivity, or official
+MNIST TEST from this single B4.2 physical session.
+Original B4 draft PR #53 stacked on B3 PR #52 remains
+DRAFT/UNMERGED; original model, P03, P07, A and B3
+physical evidence and root LitReview.md unchanged.
+
 ## P08-B4.4 single-session first physical 1024 original B2.4 timing descriptive analysis — PENDING actual A53 clock/1023 ordinary phase audit
 
 After accepted genuine full1024 KV260 A53/B2.4 neural and six-phase
