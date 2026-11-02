@@ -6,6 +6,7 @@ on:
     paths:
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_physical_run.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_verify_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b4_2_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_full1024_physical.py"
       - ".github/workflows/p08_b4_2_full1024_physical_offline.yml"
@@ -13,6 +14,7 @@ on:
     paths:
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_physical_run.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_verify_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_2_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b4_2_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b4_2_full1024_physical.py"
       - ".github/workflows/p08_b4_2_full1024_physical_offline.yml"
