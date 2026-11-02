@@ -138,7 +138,7 @@ destructive JTAG attempt; never resume the halted Linux.
 
 ---
 
-## Latest operator results: ALL 1024 original scalar rows and original full1024 ELF/map verified
+## Historical B4.1 source admission: ALL 1024 original scalar rows and original full1024 ELF/map verified
 
 **B4.1 is now accepted** on genuine operator-local artifacts: 64/64 independent original B2.4 scalar shards, merge PASS, accepted first16 continuity. Full original scalar oracle
 `/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json`;
@@ -168,8 +168,8 @@ sha256sum "$P08_B4_FULL_ORACLE" "$P08_B4_ELF_SOURCE" "$P08_B4_MAP_SOURCE" "$P08_
 
 After confirming the exact SHA pins above, create the **new** original full1024 canonical ELF/map copies as described in the later section (no need to recompile). Then run **read-only B4.2 preflight**; don't contact KV260 until it prints the signed full1024 acceptance marker. The board must be rebooted and dedicated before destructive JTAG.
 
-**Source implementation status: NO BOARD CI ONLY.** Physical B4.2
-has NOT yet been attempted, although the operator has now genuinely
+**Historical source admission status (superseded by the accepted result above):** At that point in development, physical B4.2
+had not yet been attempted, although the operator has now genuinely
 generated and SHA-256 authenticated **64/64 original scalar shards** and
 the complete original B2.4 1,024-image scalar oracle and located the
 SHA-verified genuine full1024 B2.3 Vitis ELF/map. A new canonical
