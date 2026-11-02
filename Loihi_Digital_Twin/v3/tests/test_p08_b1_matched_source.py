@@ -177,6 +177,18 @@ def test_b_candidate_source_and_scope_consistency():
             b1.check_b_candidate(bad, source)
 
 
+
+def test_training_byte_identical_images_are_reported_not_silently_ignored():
+    # Different image SOURCE indices can still have exactly identical pixels.
+    raw = [bytes([1]) * 784, bytes([2]) * 784, bytes([1]) * 784]
+    frames = (ValidationFrame(2, raw[2], 7),)
+    result = b1.training_pixel_aliases(b"".join(raw), (0, 1), frames)
+    assert result["frames_with_byte_identical_B_training_pixels"] == 1
+    assert result["cross_partition_pixel_aliases"][0][
+        "identical_pixels_in_B_training_source_indices"] == [0]
+    no_alias = b1.training_pixel_aliases(b"".join(raw), (1,), frames)
+    assert no_alias["frames_with_byte_identical_B_training_pixels"] == 0
+
 def test_symlink_stage_file_rejected(synthetic_stage):
     stage, manifest, frames = synthetic_stage
     p = stage / b1.STAGE_FILES["pixels"]
