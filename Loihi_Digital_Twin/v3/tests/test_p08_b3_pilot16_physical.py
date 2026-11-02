@@ -132,3 +132,57 @@ def test_full_physical_report_is_not_unsupported_energy_or_full_raw_trace():
     assert 'physical.source.EXPECTED_SHA' in c
     assert '"all_16_A53_full_service_timers_structurally_valid":True' in c
     assert "P08_B3_PILOT16_NEW_PHYSICAL_LATENCY_BENCHMARK_ACCEPTED=0" in c
+
+
+def test_pilot_mailbox_done_marker_only_is_never_terminal(tmp_path):
+    """Replay real 256B mailbox ABI into PURE Tcl, without loading XSDB.
+
+    C firmware writes DONE at startup and after all intermediate frames,
+    so the launch script MUST distinguish progress from final 16/16 PASS.
+    """
+    import base64
+    import re
+    import struct
+    tcl=shutil.which("tclsh")
+    if not tcl:
+        pytest.skip("Tcl interpreter required")
+    driver=(ROOT/runner.LAUNCH_TCL).read_text()
+    pattern=r"(?ms)^proc pilot_mailbox_classify \{raw\} \{\n.*?^\}"
+    match=re.search(pattern,driver)
+    assert match is not None,"Tcl must expose independently testable classifier"
+    proc=match.group()
+    assert 'set state [pilot_mailbox_classify $raw]' in driver
+    assert 'if {$state eq "PROGRESS"}' in driver
+    assert 'if {$state eq "SUCCESS" || $state eq "FAILURE"}' in driver
+    assert 'set terminal 1' in driver
+    assert 'set terminal_state $state' in driver
+    cases=(
+        (0xC0DE0000,0xFFFFFFFF,0,0xC0DEF00D,"PROGRESS"),
+        (0xC0DE0000,0,1,0xC0DEF00D,"PROGRESS"),
+        (0xC0DE0000,14,15,0xC0DEF00D,"PROGRESS"),
+        (0xC0DE0000,15,16,0xC0DEF00D,"PROGRESS"),
+        (0x600D0823,15,16,0xC0DEF00D,"SUCCESS"),
+        (0x600D0823,15,15,0xC0DEF00D,"INVALID"),
+        (0x600D0823,14,16,0xC0DEF00D,"INVALID"),
+        (0xDEAD0823,2,2,0xC0DEF00D,"FAILURE"),
+        (0xC0DE0000,0,0,0xC0DEF00D,"INVALID"),
+        (0x600D0823,15,16,0,"INCOMPLETE"),
+    )
+    for status,idx,completed,done,expected in cases:
+        words=[0]*64
+        words[0]=0x50384232
+        words[1]=1
+        words[2]=status
+        words[3]=idx
+        words[4]=0
+        words[5]=completed
+        words[63]=done
+        blob=struct.pack("<64I",*words)
+        encoded=base64.b64encode(blob).decode("ascii")
+        script=(proc+"\nset raw [binary decode base64 {"+encoded+"}]\n"+
+                "puts [pilot_mailbox_classify $raw]\n")
+        p=subprocess.run([tcl],input=script,capture_output=True,text=True,
+                         timeout=15,cwd=tmp_path)
+        assert p.returncode==0,(expected,p.stderr)
+        assert p.stdout.strip()==expected,(
+            expected,p.stdout.strip(),hex(status),idx,completed,done)
