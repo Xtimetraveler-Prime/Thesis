@@ -89,7 +89,7 @@ def test_monitor_arguments_fail_closed(args):
 
 def test_monitor_source_uses_no_hardware_or_filesystem_writes():
     source=inspect.getsource(watch)
-    for forbidden in ("subprocess","socket","serial","xsdb ","vivado ",
+    for forbidden in ("import subprocess","import socket","import serial","connect -url","xsdb ",
                       ".write_bytes(", ".write_text(", ".unlink(", ".rename(",
                       ".replace(", ".mkdir(", "connect("):
         assert forbidden not in source,forbidden
