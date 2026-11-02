@@ -1,5 +1,66 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 first REAL profiling hardware attempt — NO-GO at existing A53 secondary debug halt, NOT firmware execution (2026-11-02)
+
+Operator completed offline read-only B4.4 admission PASS for
+NEW genuine reset profiler ELF SHA
+bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3
+and linker map SHA
+d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9,
+then explicitly invoked separate destructive JTAG with nine YES
+approvals. Actual new physical attempt evidence directory:
+
+    /home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+
+Actual hardware transcript (do not modify or overwrite):
+
+    a53_takeover_and_ps128.log
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2
+    P07_B4I_A53_0_STOP_COMMAND_PASS=1
+    P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+    P07-B.4i stop failed for Cortex-A53 #1:
+    Context Cortex-A53 #1 state: External debug access is disabled
+
+Existing original production P07-B4i takeover explicitly rejects
+all unexpected secondary A53 stop responses: only a genuine confirmed
+halt or TWO exact messages "The core is powered down" and
+"Cannot halt processor core: power down" are admitted.
+"External debug access is disabled" is NOT one of those and
+does NOT prove core #1 is safely halted/powered down. ARM A53
+architecture separately classifies external debug access permissions
+and core-off states, so it is inappropriate to reclassify this
+as a benign exact power-down without other independent evidence.
+Code correctly FAILED CLOSED at early processor takeover.
+NO successful 128bit FPD+LPD width gate, no new original P03
+PL programming, no original six DDR source staging, no new
+profiled ELF download, no 1024 run, no physical profile capture
+or numerical verification is supported by this transcript.
+
+This is **not evidence of erroneous user shell commands**:
+preflight accepted, genuine Vitis artifacts and exact SHA matched.
+Root cause of current external-debug-disabled A53 #1 remains
+undetermined: may depend on core power/debug authorization/boot state
+and requires a separate hardware/serial/secure-boot state assessment.
+Do not assert board damage, firmware bug or successful profile run.
+NO speculative changes to historical accepted P07 B4i takeover;
+do not suppress/auto-accept unexpected debug-disabled errors.
+
+**Operator required:** FULL KV260 power-cycle/reboot after ANY
+destructive JTAG attempt (Linux may no longer be intact).
+Preserve all failed evidence and stopped-CPU transcript;
+perform read-only PC log inspection and ordinary serial/boot
+verification after power-cycle. Prior to any new physical attempt,
+ensure no competing JTAG owner, review exact processor target
+states and any boot/security/low-power changes and require new
+independent operator risk approval, fresh evidence directory
+and same original source+profile ELF preflight; do not reuse
+the failed directory. A follow-up exact external debug
+diagnostic may be conducted separately, without relaxing
+core-stop or PS width admission. Repeated true A-vs-B
+and P08-B closure STILL PENDING. Original accepted B4.2 physical
+neural and 1023 ordinary timing SHA reports unchanged.
+
 ## P08-B4.4.2 EXPERIMENTAL 1024 RESET PROFILE: genuine Vitis ELF accepted, full independent same-session hardware pipeline SOURCE CI PASS (2026-11-02)
 
 Operator genuinely completed NEW experimental Vitis 2025.2
