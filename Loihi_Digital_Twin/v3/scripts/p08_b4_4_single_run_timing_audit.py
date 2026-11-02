@@ -66,8 +66,8 @@ def quantile_summary(ticks:list[int],hz:int)->dict:
 def analyze(report:Path,evidence:Path,out:Path)->dict:
     require(out.is_absolute() and out.parent.is_dir() and
             not out.exists() and not out.is_symlink() and
-            out.resolve().is_relative_to(Path.home()/"Thesis_Evidence"),
-            "new absolute no-overwrite output in external ~/Thesis_Evidence required")
+            not out.resolve().is_relative_to(b42.merge.shard.ROOT),
+            "new external absolute no-overwrite timing report required")
     require(report.is_absolute() and evidence.is_absolute()
             and evidence.is_dir() and not evidence.is_symlink(),
             "exact original independent report and physical evidence required")
