@@ -1,5 +1,76 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 new 27-core profiled C + independent Vitis build source READY — native CI PASS, real Vitis JTAG NOT RUN
+
+New B4.4.1 full 27x512KiB immutable/mutable SHA, cache+memcpy
+reset differential source and B4.4.2 distinct original 1024-image
+A53 profile sidecar source are **native CI PASS** on new
+stacked DRAFT PR #54, branch agent/v3-p08-b44-profiling
+based on B4 draft PR #53.
+
+Genuine native GCC test links original UNMODIFIED production
+reset with the NEW portable five-subphase profiler and
+original P07 real SHA256. It compares all 13.5MiB of mutable
+context bytes across two generations and matches the original
+source-SHA-corrupt-before-first-copy poison fault.
+Standalone NEW A53 full1024 profile firmware source passes
+native C11 syntax using declaration-only Xilinx headers
+(no hardware). Profile output 1024x256B has new distinct
+CRC/observed CNTFRQ/27SHA/5-phase+residual per-frame rows
+at the separately proposed [0x42400000,0x42440000)
+DDR region. 1024-row sidecar parser validates exact
+ordered CRC/source-SHA/count/clock/additive fields
+and rejects 11 malformed synthetic cases. No real
+profiled Vitis ELF, JTAG physical copy, additional
+full1024 numerical parity or new profile timing observed.
+
+NEW actual Vitis 2025.2 PC-only source build:
+scripts/build_p08_b44_profile_full1024.sh, with
+software/p08/build_p08_b44_profile_full1024.py.
+They stage the original accepted full P07 B4m/27core C
+under a new outside-repo work directory with new
+A53 profiling entrypoint only; immutable originals
+source/ELF unaffected. The build requires original
+routed P03 XSA SHA
+52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f,
+original 27SHA header SHA
+5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171,
+original full1024 B2.3 ELF SHA
+0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1.
+New scripts/p08_b44_profile_elf_admission.py checks
+distinct experimental genuine AArch64 PT_LOAD ELF, map,
+new identity and terminal, original original ELF/XSA/
+27SHA pins; explicitly DENIES destructive JTAG
+permission, no PS FSBL DMA boot ownership proof.
+Build scripts, native C main syntax and synthetic ELF
+11 adverse cases pass native CI.
+
+OPERATOR NEXT PC-only action: after pulling PR #54,
+source Vitis 2025.2 environment and run
+scripts/build_p08_b44_profile_full1024.sh under
+fresh P08_B44_BUILD_DIR; instructions in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+Do NOT attempt JTAG with newly generated ELF.
+Independent 1024-source same-session physical profiler
+capture verifier for the EXTRA region and original
+neural/FNV/timer journals plus new DDR ownership/reboot
+consents must be developed and independently verified
+before any new destructive profile experiment.
+
+Still pending for P08-B closure: nested 26-tick page/
+MMIO/PL-poll/trace/router microprofiles; six true
+Track A vs B coldboot AB/BA/AB paired sessions at
+matching original 1023 ordinary TRAIN sample identities
+and A53 service scope; signed final P08-B limitations/
+uncertainty report and explicit user acceptance before
+merging drafts #52/#53/#54. Historical Track A
+three A2.1-vs-A2.2 pairs are NOT true paired A-vs-B.
+Different 42-neuron A and 1010-neuron B workloads
+limit performance equivalence; no isolated PL
+speedup/energy, exclusive DDR owner or official TEST
+claims are made. All accepted original B3/B4 physical
+SHA evidence/model/bitstream and LitReview unchanged.
+
 ## P08-B4.4.1/B4.4.2 profile source development — original immutable baseline, no new physical JTAG (2026-11-02)
 
 **Scope decision:** user accepted real original B4.2 full1024 physical
