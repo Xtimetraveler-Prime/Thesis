@@ -30,15 +30,15 @@ sha256sum "$P08_B4_FULL_ORACLE" "$P08_B4_ELF_SOURCE" "$P08_B4_MAP_SOURCE" "$P08_
 
 After confirming the exact SHA pins above, create the **new** original full1024 canonical ELF/map copies as described in the later section (no need to recompile). Then run **read-only B4.2 preflight**; don't contact KV260 until it prints the signed full1024 acceptance marker. The board must be rebooted and dedicated before destructive JTAG.
 
-**Source implementation status: NO BOARD CI ONLY.** Physical B4.2 tests
-were not run by the developer: the user has only calculated **shard 0**
-of 64 required full1024 independent scalar shards. The previously
-Vitis-built original B2.3 full1024 A53 ELF/map were observed earlier
-as read-only signed artifacts but must be **located, copied and
-re-authenticated** locally. No B4.2 full1024 physical run is permitted
-until all 64 scalar shards, immutable merged oracle, genuine exact
-full1024 Vitis ELF/map, original accepted P03 reports, signed original
-27-core source staging and user local PRE-FLIGHT all PASS.
+**Source implementation status: NO BOARD CI ONLY.** Physical B4.2
+has NOT yet been attempted, although the operator has now genuinely
+generated and SHA-256 authenticated **64/64 original scalar shards** and
+the complete original B2.4 1,024-image scalar oracle and located the
+SHA-verified genuine full1024 B2.3 Vitis ELF/map. A new canonical
+copy of the latter plus authentic *local read-only B4.2 preflight*
+remain mandatory before any B4.2 destructive JTAG. Original P03 reports,
+signed original 27core source staging and separately accepted B3
+independent physical report must pass the source gate.
 
 Previously separately accepted B3 physical evidence:
 - third real 16/16 KV260 full run
@@ -47,7 +47,7 @@ Previously separately accepted B3 physical evidence:
   /home/dna/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json
 - SHA256 b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11
 
-## B4.1 missing required genuine references (PC ONLY)
+## B4.1 original references accepted (historical generation procedure; PC ONLY)
 
 Update the new B4 development branch:
 
@@ -67,7 +67,7 @@ PYTHONPATH="$PWD/src" python -m pytest -q -rs \
   tests/test_p08_b3_pilot16_physical.py
 ~~~
 
-**Reuse exact previously PASSed shard-0 directory; do not recreate/overwrite:**
+**Already completed (64/64): preserve exact original shard directory; do not recreate/overwrite:**
 
 ~~~bash
 export P08_B4_SHARDS="$HOME/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z"
@@ -82,7 +82,7 @@ test "$(sha256sum "$P08_B4_FIRST16" | cut -d' ' -f1)" = \
   "13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271"
 ~~~
 
-Compute ALL remaining 63 shards in order, never overwrite a prior
+**Historical command only; do NOT recompute the 63 already accepted shards.**\n\nCompute ALL remaining 63 shards in order, never overwrite a prior
 signed result. Each calls the real frozen B2.4 independent scalar
 simulator; an interrupted batch retains already completed shards.
 The loop prints exact failing ordinal and stops on any failure.
