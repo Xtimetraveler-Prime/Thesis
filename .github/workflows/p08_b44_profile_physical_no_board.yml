@@ -7,6 +7,8 @@ on:
       - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b44_profile_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_physical.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_a53_status_readonly.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_readonly_a53_diagnostic.py"
       - ".github/workflows/p08_b44_profile_physical_no_board.yml"
   pull_request:
     paths:
@@ -14,6 +16,8 @@ on:
       - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_independent_physical_verify.py"
       - "Loihi_Digital_Twin/v3/vivado/p08_b44_profile_full1024_run_and_capture.tcl"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_physical.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_a53_status_readonly.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_readonly_a53_diagnostic.py"
       - ".github/workflows/p08_b44_profile_physical_no_board.yml"
 permissions:
   contents: read
@@ -41,6 +45,7 @@ jobs:
         run: |
           echo "P08_B44_NEW_PROFILE_PHYSICAL_SOURCE_AND_1024_CRC_TCL_NEGATIVE_TESTS_PASS=1"
           echo "P08_B44_NEW_PROFILE_JTAG_OR_DESTRUCTIVE_DDR=NOT_RUN"
+          echo "P08_B44_POST_POWER_CYCLE_TARGET_STATUS_READONLY_DIAGNOSTIC_CI=PASS"
           echo "P08_B44_FIRST1024_REAL_PROFILE_NUMERICAL_PARITY=NOT_VERIFIED"
           echo "P08_B44_ORIGINAL_FROZEN_B2_3_ELF=UNMODIFIED"
           echo "P08_B44_MNIST_TEST=SEALED"
