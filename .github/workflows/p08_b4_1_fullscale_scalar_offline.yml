@@ -1,0 +1,46 @@
+name: P08-B4.1 original 1024 independent scalar shards offline NO JTAG
+on:
+  push:
+    branches:
+      - agent/v3-p08-b4-fullscale
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_1_scalar_shard.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_1_merge_scalar_1024.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_1_scalar_1024.py"
+      - ".github/workflows/p08_b4_1_fullscale_scalar_offline.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_1_scalar_shard.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4_1_merge_scalar_1024.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_1_scalar_1024.py"
+      - ".github/workflows/p08_b4_1_fullscale_scalar_offline.yml"
+permissions:
+  contents: read
+jobs:
+  native-original-1024-scalar-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lightweight pytest only (NO FPGA/Vitis/downloads)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Compile 1024 scalar shard and strict 64-shard aggregator
+        run: |
+          python3 -m compileall -q             scripts/p08_b4_1_scalar_shard.py             scripts/p08_b4_1_merge_scalar_1024.py             tests/test_p08_b4_1_scalar_1024.py
+      - name: B4.1 full 1024 scalar fixture + malformed shard no-go
+        run: python3 -m pytest -q -rs tests/test_p08_b4_1_scalar_1024.py
+      - name: Preserve B3 first16 scalar/physical verifier regressions
+        run: python3 -m pytest -q -rs tests/test_p08_b2_4_numerical.py tests/test_p08_b3_pilot16_physical.py
+      - name: Explicit acceptance classification
+        run: |
+          echo "P08_B4_1_ORIGINAL_1024_SCALAR_ORACLE_SOURCE_CI=PASS"
+          echo "P08_B4_1_FULL_1024_ORIGINAL_SCALAR_OPERATOR_OUTPUT=NOT_GENERATED_IN_CI"
+          echo "P08_B4_1_FULL_1024_A53_ELF_PHYSICAL_APPROVAL=NOT_GRANTED"
+          echo "P08_B4_1_FULL_1024_KV260_PHYSICAL_EXECUTION=NOT_RUN"
+          echo "P08_B4_1_MNIST_OFFICIAL_TEST=SEALED_NOT_ACCESSED"
