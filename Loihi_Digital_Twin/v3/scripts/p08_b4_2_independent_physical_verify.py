@@ -161,7 +161,7 @@ def verify(args:argparse.Namespace)->dict:
 def main()->int:
     p=argparse.ArgumentParser(description=__doc__)
     for key in ("evidence","stage","shards","ingress","oracle","first16",
-                "elf","linker_map","reset_pins","reports","out"):
+                "b3_report","elf","linker_map","reset_pins","reports","out"):
         p.add_argument("--"+key.replace("_","-"),type=Path,required=True)
     args=p.parse_args()
     try:
