@@ -4,7 +4,7 @@
 set -euo pipefail
 V3="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 THESIS="$(cd -- "$V3/../.." && pwd)"
-BUILD="${P08_B3_PILOT_BUILD_DIR:?set NEW absolute out-of-Thesis pilot build directory}"
+BUILD="${P08_B3_PILOT16_BUILD_DIR:?set NEW absolute out-of-Thesis pilot build directory}"
 REPORTS="${P07_B4L_REPORTS:?set original accepted P03 routed reports directory}"
 PINS="${P08_B2_RESET_PINS:?set genuine P08-B2.2 SHA pin stage directory}"
 XSA="$REPORTS/p03_2_ps_mmio.xsa"
