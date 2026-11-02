@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import hashlib
 import shutil
+import re
 import subprocess
 import sys
 
@@ -110,3 +111,69 @@ def test_new_Vitis_shell_safe_and_requires_signed_original(tmp_path):
     assert "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1" in s
     subprocess.run(["bash","-n",str(path)],capture_output=True,
                    check=True,text=True,timeout=15)
+
+
+def test_actual_shell_cp_lists_exactly_match_python_vitis_inventory():
+    """The bug: shell staged old B2.3 main while builder wanted new B44 C/H.
+
+    Parse the REAL six shell cp loops, not a separately invented
+    test-only stage created from builder.SOURCES/HEADERS. This catches
+    omissions, extras and resurrection of the frozen production main.
+    """
+    script=(ROOT/"scripts/build_p08_b44_profile_full1024.sh").read_text()
+    source_loops=re.findall(
+        r'for n in ([\s\S]*?); do\n\s*'
+        r'cp -- "\$V3/software/(p08|p07|p03)/(include/)?\$n" '
+        r'"\$BUILD/source/"',
+        script,
+    )
+    assert len(source_loops)==6, "expected 3 .c and 3 .h source-stage loops"
+    copies=[]
+    for content,subsystem,include in source_loops:
+        names=re.findall(r"\b[a-zA-Z][a-zA-Z0-9_]*\.[ch]\b",content)
+        assert names, "empty real shell cp loop"
+        assert len(names)==len(set(names)), "duplicate staged C/H"
+        assert all(name.endswith(".h") for name in names) == bool(include)
+        copies.extend(names)
+    assert 'cp -- "$PIN_HEADER" "$BUILD/source/p08_b2_2_original_context_sha256.h"' in script
+    assert 'cp -- "$V3/software/p05/include/p05_deployment.h" "$BUILD/source/"' in script
+    copies.extend(["p08_b2_2_original_context_sha256.h","p05_deployment.h"])
+    assert len(copies)==len(set(copies)), "shell has duplicate C/H copy"
+    assert set(copies)==set(builder.SOURCES+builder.HEADERS), (
+        "shell actually copies wrong Vitis C/H source set: "
+        f"missing={set(builder.SOURCES+builder.HEADERS)-set(copies)}, "
+        f"extra={set(copies)-set(builder.SOURCES+builder.HEADERS)}"
+    )
+    assert "p08_b2_3_image_only_a53.c" not in copies
+    for required in (
+        "p08_b44_profile_full1024_a53.c",
+        "p08_b4_4_profile_reset.c",
+        "p08_b4_4_profile_reset.h",
+    ):
+        assert copies.count(required)==1
+    assert "--check-stage-only" in script
+    assert script.index("--check-stage-only")<script.index("vitis -s")
+
+
+def test_actual_stage_check_cli_accepts_right_sources_and_rejects_old_main(
+        tmp_path,capsys):
+    stage=prepare(tmp_path)
+    assert builder.main(["--check-stage-only",str(stage)])==0
+    result=capsys.readouterr()
+    assert "P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1" in result.out
+    assert "P08_B44_SOURCE_STAGE_CHECK_VITIS_INVOCATIONS=0" in result.out
+
+    (stage/"p08_b44_profile_full1024_a53.c").unlink()
+    (stage/"p08_b4_4_profile_reset.c").unlink()
+    (stage/"p08_b4_4_profile_reset.h").unlink()
+    (stage/"p08_b2_3_image_only_a53.c").write_text(
+        "/* synthetic historical staging bug */\n")
+    assert builder.main(["--check-stage-only",str(stage)])==3
+    out=capsys.readouterr()
+    for wrong in ("p08_b44_profile_full1024_a53.c",
+                  "p08_b4_4_profile_reset.c",
+                  "p08_b4_4_profile_reset.h",
+                  "p08_b2_3_image_only_a53.c"):
+        assert wrong in out.err
+    assert builder.main(["--check-stage-only",str(stage),
+                         "--workspace",str(tmp_path/"w")])==3
