@@ -26,6 +26,24 @@ set status [catch {
     puts "P08_B44_READONLY_JTAG_CHAIN_BEGIN"
     puts [jtag targets]
     puts "P08_B44_READONLY_JTAG_CHAIN_END"
+    # AMD UG1725 XSDB read-only target property listing. This does not
+    # select a processor or perform register/memory transactions.
+    # Use catch to preserve the basic inventory even if property
+    # listing is unsupported on a particular installed XSDB version.
+    puts "P08_B44_READONLY_PROCESSOR_TARGET_PROPERTIES_BEGIN"
+    if {[catch {targets -target-properties} props_error]} {
+        puts "P08_B44_READONLY_PROCESSOR_TARGET_PROPERTIES_UNAVAILABLE=$props_error"
+    } else {
+        puts $props_error
+    }
+    puts "P08_B44_READONLY_PROCESSOR_TARGET_PROPERTIES_END"
+    puts "P08_B44_READONLY_ARM_DAP_JTAG_PROPERTIES_BEGIN"
+    if {[catch {jtag targets -target-properties -filter {name =~ "arm_dap"}} dap_error]} {
+        puts "P08_B44_READONLY_ARM_DAP_JTAG_PROPERTIES_UNAVAILABLE=$dap_error"
+    } else {
+        puts $dap_error
+    }
+    puts "P08_B44_READONLY_ARM_DAP_JTAG_PROPERTIES_END"
 } reason]
 if {$connected} {catch {disconnect}}
 if {$status} {
