@@ -1,0 +1,58 @@
+name: P08-B2.3 new A53 source and ELF offline admission (no Vitis/JTAG)
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_3_image_only_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b2_3_image_only.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_3_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b2_3_image_only.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_3_image_only.py"
+      - ".github/workflows/p08_b2_3_image_only_source.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_3_image_only_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b2_3_image_only.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_3_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b2_3_image_only.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_3_image_only.py"
+      - ".github/workflows/p08_b2_3_image_only_source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  new-a53-source-static-native-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest (not PyTorch, Vitis, XSDB or MNIST)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Python syntax and shell syntax-only
+        run: |
+          python3 -m compileall -q software/p08/build_p08_b2_3_image_only.py scripts/p08_b2_3_elf_admission.py tests/test_p08_b2_3_image_only.py
+          bash -n scripts/build_p08_b2_3_image_only.sh
+      - name: New A53 source native strict syntax and ELF64 negative gates
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b2_3_image_only.py \
+            tests/test_p08_b2_2_reset.py \
+            tests/test_p08_b2_ingress.py \
+            tests/test_p08_b1_matched_source.py
+      - name: Evidence classification (new A53 ELF requires operator Vitis)
+        run: |
+          echo "P08_B2_3_NEW_IMAGE_ONLY_A53_SOURCE_OFFLINE_CI=PASS"
+          echo "P08_B2_3_REAL_VITIS_2025_2_A53_ELF_IN_CI=NOT_BUILT"
+          echo "P08_B2_3_REAL_ELF_LINKER_MAP_PT_LOAD_IN_CI=NOT_CHECKED"
+          echo "P08_B2_3_REAL_KV260_PILOT=NOT_RUN"
+          echo "P08_B2_3_DESTRUCTIVE_JTAG_APPROVAL=NOT_GRANTED"
+          echo "P08_B2_3_OFFICIAL_TEST=SEALED_NOT_ACCESSED"
