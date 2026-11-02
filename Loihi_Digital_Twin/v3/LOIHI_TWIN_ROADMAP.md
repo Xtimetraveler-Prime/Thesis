@@ -1,5 +1,90 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.1 full-scale original 1024-image physical Track B PREPARATION — source/CI pass, genuine local scalar computation PENDING
+
+**Operator-accepted B3.1/B3.2 physical gate:** third actual
+KV260 JTAG first16 session
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_retry_20261102T053637Z`
+reached 16/16 original B2.4 A53 terminal with separately authenticated
+physical source P02 mutable/backup and frozen B4l/B4m/raw pixels,
+physical neural/timing sidecars and original scalar precheck.
+The *separate* independent physical verifier subsequently reported
+`P08_B3_PILOT16_SIGNED_ORIGINAL_27CORE_MUTABLE_BACKUP_PHYSICAL_PASS=1`,
+`P08_B3_PILOT16_REAL_16_FRAMES_ORIGINAL_SCALAR_NUMERICAL_FNV_PASS=1`,
+`P08_B3_PILOT16_FULL_SERVICE_TIMER_INTERNAL_CONSISTENCY_PASS=1`.
+Operator external independently verified report
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json`
+SHA-256 **`b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11`**.
+**B3 first16 physical neural, spike-vector and 26-tick FNV parity
+accepted on operator-supplied separate verifier evidence, with 16
+internally consistent A53 timer rows.** This does NOT prove direct
+full raw 26×1,010 trace bytes, 1,024-image Track B numerical
+equality, a multi-session latency benchmark, exclusive boot/DMA DDR
+ownership, speedup, energy or anything about official TEST.
+
+**New independent B4 development branch:**
+`agent/v3-p08-b4-fullscale`, stacked on the B3 draft branch, PR #53
+**DRAFT/UNMERGED** (B3 PR #52 also unmerged). Do not alter
+original 33 frozen B2.4 assets, original trained checkpoint,
+P03 BIT/XSA/LTX, P07-B V3/B5, 6 accepted P08-A physical sessions,
+operator B3 physical source/evidence, or `LitReview.md`.
+
+**B4.1 target** independent numerical reference for EVERY one
+of the same 1024 original TRAIN-only matched Track A validation
+pixels, including 26 ticks, all 1,010 neurons' deterministic FNV
+fingerprint, 10-vector spike readout and original 27-core 702
+physical-dispatch comparison geometry. This is **not** the official
+MNIST TEST dataset; keep TEST sealed. An original full1024 A53
+B2.3 candidate exists *as a distinct 1024-image firmware binary
+source* but has not been freshly physical-run or approved for full
+B4 latency sessions. Never replace the accepted B3 first16 ELF.
+
+New **PC-only** scripts:
+- `scripts/p08_b4_1_scalar_shard.py` computes one 16-frame original
+  B2.4 independent scalar segment at a time using the **same**
+  original P06-B2.4 monolithic neural simulator and accepted P08-B2.4
+  `pure_reference()` FNV/counter routines as the proven B3
+  16-frame reference. Each invocation reauthenticates original 33
+  frozen assets, original B4m routes, A3.2 first1024 canonical
+  held-out TRAIN identities, all 1,024 raw pixel/ingress metadata
+  and signed wire hash ledger; re-encodes all 16 selected originals.
+  Shard 0 MUST reproduce the accepted signed first16 scalar frame
+  rows byte-exact; 64 nonoverwriting external shards are required.
+- `scripts/p08_b4_1_merge_scalar_1024.py` demands exactly 64
+  consecutive SHA-derived original 16-frame reports, no duplicate,
+  altered, extra or missing shard, all 1,024 immutable original
+  ingress source identities/hashes, independent 16-model-trace FNV
+  fields, original fully signed first16 reference. Produces
+  separate no-overwrite full1024 JSON and full list of independent
+  shard SHA receipts. **Zero physical board contact**.
+- `tests/test_p08_b4_1_scalar_1024.py` and
+  `.github/workflows/p08_b4_1_fullscale_scalar_offline.yml`
+  run synthetic full 1,024 row positive and nine malformed-source
+  negative admission checks. Native CI **PASS**. Synthetic
+  test artifacts MUST NOT be mistaken for real independent oracle.
+
+**B4.1 acceptance boundary:** genuine *operator-local* shard0 must
+match signed first16, then operator must generate all 64 shards
+from original frozen sources and merge a completely authenticated
+1024-ordinal scalar JSON, report SHA256. The code/CI source PASS
+alone does **not** mean original full1024 scalar computed or 1024
+images run on KV260. B4.1 on local execution PENDING.
+
+**Planned remaining B4 phases (gated; NOT yet implemented/accepted):**
+B4.2 distinct **real Vitis** 1024-image A53 ELF/map full
+range/heap/stack/load admission, output allocation, non-overlap
+and launch-poll verification, 1024x256B CRC journals and timing
+sidecars and exact terminal count; strict JTAG physically authenticated
+capture and new destructive authorization. B4.3 physical full1024
+independent scalar FNV + classifier parity and per-image full
+service CNTVCT/CNTFRQ checks before admitting ANY latency result.
+B4.4 repeated controlled **cold-boot, AB/BA/AB** physical comparison
+protocol, original Track A baseline scope and instrumentation parity,
+scope-selected trace image 1023 handled separately to avoid
+instrumentation-induced bias, analysis of medians/tails and
+per-phase timing. No unproven pure-PL speedup or energy claims.
+All actual B4 physical board calls remain **NOT RUN**.
+
 ## P08-B3.1 third physical KV260 run: FIRST actual 16/16 terminal & scalar precheck PASS — independent evidence audit NEXT
 
 Operator reports third **dedicated fresh-session KV260 JTAG** run
