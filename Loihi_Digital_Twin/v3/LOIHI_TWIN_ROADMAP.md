@@ -1,5 +1,53 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.1 first hardware attempt (2026-11-02 UTC): Tcl receipt interpolation abort, no A53 launch
+
+Operator initiated **first physical KV260 P08-B3 pilot16** dedicated JTAG
+execution with genuine user-built first16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`.
+External session evidence
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_20261102T050721Z`.
+User-provided genuine physical console establishes accepted P03 PL
+shell programmed and VIO reset released, PSU physical target selected,
+all **27 original mutable 512KiB P02 context copies** read back
+byte-exact, all **27 original independent 512KiB reset-backup P02
+copies** read back byte-exact. This is useful hardware staging evidence,
+**NOT a complete six-payload readback, NOT an A53 ELF launch, and
+NOT a 16-image inference/latency result**.
+
+**Observed failure after these two full P02 readback sets:**
+`P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1`,
+Tcl `can't read "name_BYTE_EXACT_PASS": no such variable` at
+`vivado/p08_b3_pilot16_six_ddr_stage.tcl` dynamic route/binding/raw
+source status emission. Root cause was Tcl interpreting
+`$name_BYTE_EXACT_PASS` as a single nonexistent variable, rather than
+a base filename variable followed by a literal suffix.
+Corrected to `\${name}_BYTE_EXACT_PASS` using Tcl braced variable
+expansion (only new P08 B3 staging Tcl source modified).
+NO ELF downloaded and NO inference in failed session.
+Even if partial later source write occurred, its session is NOT reusable.
+**Power-cycle/reboot KV260; never resume halted old Linux**.
+
+Added host-only end-to-end `tclsh` fake-PSU DDR simulation regression
+`test_six_original_ddr_stage_full_mock_xsdb_byte_roundtrip`: exercises
+ALL 54 original mutable/backup 512KiB P02 core stages/readbacks and
+4 other original source transfers and exact status markers against
+synthetic host-only stage data. It then deliberately restores the
+incorrect Tcl variable and proves the old failure would be caught.
+CI B3.1 and all other P08 native workflows **PASS**. NO new Vitis
+A53 source/ELF/map, original frozen 33 B2.4 assets, prior accepted
+P07-B/A evidence, root `LitReview.md` or official TEST changed.
+
+**Next:** after local pull and passing B3.1 full fake staging regression,
+take a brand-new dedicated rebooted JTAG session with a NEW external
+evidence directory. Re-run all six original source transfers and
+independent same-session readbacks from scratch. Same exact original
+pilot16 ELF and source stage should be reused; do not manually continue
+from the failed B3.1 partial stage or claim pilot success based on
+P02-only PASS. Independent first16 classifier/spike/FNV results remain
+unmeasured, firmware/boot DDR owner risk remains unproven, and explicit
+per-run consent flags/reboot recovery still apply.
+
 ## P08-B3.1 real JTAG original 16-image physical pilot pipeline — 2026-11-01
 
 Operator reports **genuine separate original B2.4 first16 Vitis 2025.2
