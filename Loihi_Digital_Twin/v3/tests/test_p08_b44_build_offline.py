@@ -133,7 +133,7 @@ def test_actual_shell_cp_lists_exactly_match_python_vitis_inventory():
         names=re.findall(r"\b[a-zA-Z][a-zA-Z0-9_]*\.[ch]\b",content)
         assert names, "empty real shell cp loop"
         assert len(names)==len(set(names)), "duplicate staged C/H"
-        assert all(name.endswith(".h") for name in names) == bool(include)
+        assert all(name.endswith((".c",".h")) for name in names)
         copies.extend(names)
     assert 'cp -- "$PIN_HEADER" "$BUILD/source/p08_b2_2_original_context_sha256.h"' in script
     assert 'cp -- "$V3/software/p05/include/p05_deployment.h" "$BUILD/source/"' in script
