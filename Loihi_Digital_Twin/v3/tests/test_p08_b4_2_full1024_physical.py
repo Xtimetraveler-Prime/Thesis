@@ -103,7 +103,12 @@ def test_actual_1024_tcl_mailbox_classifier_never_stops_on_progress(tmp_path):
         assert call.stdout.strip()==expected,(expected,call.stdout)
 
 def ref(i):
-    r=former.fake_ref(i)
+    # Historical 16-frame fixture uses bytes([i]), which is intentionally
+    # limited to uint8 range. Reuse its verified field construction
+    # with a bounded pixel pattern while preserving unique ordinals.
+    r=former.fake_ref(i%200)
+    r["ordinal"]=i
+    r["TRAIN_source_index"]=37384+i
     return r
 
 @pytest.fixture
