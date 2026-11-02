@@ -1,5 +1,143 @@
 # P08-B4.2 — Original full1024 A53 source admission, physical JTAG & independent validation
 
+## B4.2 ACCEPTED: genuine independently verified first 1024-image physical KV260 inference, 2026-11-02
+
+Operator ran the full ORIGINAL frozen B2.4 1,024-image A53 physical
+experiment, then separately executed the PC-only independent same-session
+physical provenance, scalar neural output and timing verification.
+All mandatory original full1024 markers PASS:
+
+~~~text
+P08_B4_FULL1024_EXACT_1024_FRAME_HARDWARE_TERMINAL_OBSERVED=1
+P08_B4_2_FULL1024_REAL_HARDWARE_NUMERICAL_PRECHECK_PASS=1
+P08_B4_2_ALL_1024_ORIGINAL_NEURAL_AND_SPIKE_VECTORS_PHYSICAL_PARITY_PASS=1
+P08_B4_2_ALL_1024_A53_SERVICE_TIMERS_PHYSICAL_CAPTURE_VALID=1
+P08_B4_2_INDEPENDENT_SAME_SESSION_PHYSICAL_PROVENANCE_PASS=1
+P08_B4_2_SIX_SESSION_TRACKB_LATENCY_BENCHMARK_ACCEPTED=0
+~~~
+
+Immutable operator external receipt (preserve, NEVER overwrite):
+
+- Independent full1024 report:
+  /home/dna/Thesis_Evidence/p08_b4_2_independent1024_20261102T184928Z.json
+- Independent report SHA256:
+  **297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032**
+- Frozen original full1024 scalar JSON:
+  /home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json
+- Frozen full scalar SHA256:
+  **7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8**.
+- Exact original *physical session evidence path* was NOT pasted in
+  the user transcript; use the original already set P08_B4_PHYSICAL variable,
+  not a guessed directory name.
+
+The independently verified genuine same-session JTAG evidence covers
+original 27 mutable P02 512KiB model contexts, 27 separately staged
+immutable backup contexts, bindings/routing and raw1024 matched TRAIN-only
+data; exact 1024/1024 A53 terminal; all 1024 neural journal/spike vector/
+26tick x 1010-neuron FNV fingerprints agreeing with independent frozen
+original scalar simulation; and all 1024 internally consistent A53
+service timing rows.
+
+**Accepted: SINGLE-SESSION genuine physical 1024-image numerical/FNV
+equivalence and timing consistency.** NOT accepted: six-session repeated
+counterbalanced Track A/B physical latency, direct complete raw neural
+trace, energy, PL-only speedup or independently proved boot/firmware/PS/
+PL-DMA DDR ownership. Official MNIST TEST still SEALED.
+
+### KEEP FOREVER: Non-intrusive PC-only live mailbox progress monitor
+
+The original full1024 XSDB Tcl emits no per-image console progress after
+downloading the ELF. It polls A53 mailbox via JTAG from the ORIGINAL
+single JTAG owner, then writes a **PC-side copy** to:
+
+- <exact active session>/full1024_capture/mailbox_poll.tmp
+- Once terminal is observed, it renames that PC copy to
+  mailbox_terminal_physical.bin.
+
+The 256-byte record has 64 little-endian uint32 words:
+word 2 status (0xC0DE0000 progress; 0x600D0823 terminal success;
+0xDEAD0823 terminal failure); word 3 most recently completed ordinal
+(0xFFFFFFFF before the first image); word 4 fault; word 5 images
+completed out of 1024; word 63 DONE sentinel 0xC0DEF00D.
+**DONE alone does NOT mean SUCCESS**; every intermediate progress message
+also contains DONE. A successful terminal requires status SUCCESS,
+ordinal 1023, zero fault, completed 1024.
+
+**Second PC terminal while original session CONTINUES uninterrupted:**
+
+~~~bash
+# Reuse the variable from the running shell, or set explicitly to the
+# actual active session. Never accidentally monitor an older run.
+export P08_B4_MONITOR="$P08_B4_PHYSICAL"
+test -d "$P08_B4_MONITOR/full1024_capture"
+
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+python scripts/p08_b4_2_monitor_mailbox_pc_only.py \
+  --evidence "$P08_B4_MONITOR" --samples 2 --interval 20
+~~~
+
+If the session variable is missing, use read-only FILE discovery,
+identify the matching ACTIVE session, then explicitly set the variable:
+
+~~~bash
+find "$HOME/Thesis_Evidence" -maxdepth 1 -type d \
+  -name 'p08_b4_2_original1024_physical_*' -printf '%T@ %p\n' | sort -nr
+# export P08_B4_MONITOR="/home/dna/Thesis_Evidence/<EXACT CURRENT SESSION>"
+~~~
+
+The original useful *direct Python command* is also saved here for
+cases where the wrapper has not been pulled yet. It reads only files
+the running XSDB already wrote on the PC; it opens NO JTAG connection.
+
+~~~bash
+python - <<'PY'
+import os, struct, time
+from pathlib import Path
+
+directory = Path(os.environ["P08_B4_MONITOR"]) / "full1024_capture"
+for sample in range(2):
+    print(f"\n--- PC-only snapshot {sample+1} ---")
+    for name in ("mailbox_terminal_physical.bin", "mailbox_poll.tmp"):
+        try:
+            raw = (directory / name).read_bytes()
+        except FileNotFoundError:
+            continue
+        if len(raw) != 256:
+            print("Temporary partial write; recheck:", len(raw))
+            break
+        w = struct.unpack("<64I", raw)
+        states = {0xC0DE0000: "PROGRESS",
+                  0x600D0823: "SUCCESS",
+                  0xDEAD0823: "FAILURE"}
+        state = states.get(w[2], f"UNKNOWN 0x{w[2]:08X}")
+        print("File:", name, "Status:", state)
+        print("Completed:", w[5], "/ 1024",
+              "Last frame:", w[3], "Fault:", w[4])
+        print("DONE:", hex(w[63]))
+        if w[0] != 0x50384232 or w[1] != 1 or w[63] != 0xC0DEF00D:
+            print("Incomplete/invalid snapshot; do not infer success")
+        if state == "SUCCESS" and (w[3], w[4], w[5]) != (1023, 0, 1024):
+            print("Invalid terminal fields; do not infer success")
+        break
+    else:
+        print("Snapshot temporarily absent; XSDB may be replacing it")
+    if sample == 0:
+        time.sleep(20)
+PY
+~~~
+
+Both commands are read-only reads of PC-side evidence. Never open
+another XSDB, reset or halt the A53, or cancel the active runner to
+check progress. The XSDB worker deletes/recreates mailbox_poll.tmp
+approximately once per second, so a short-lived missing/partial
+snapshot is normal. An unchanged count over 20 seconds alone is
+NOT proof of a hang. The ORIGINAL full1024 Tcl has a fail-closed
+3600-poll no-completed-image watchdog and an independent absolute
+poll bound. Always preserve evidence and REBOOT KV260 after any
+destructive JTAG attempt; never resume the halted Linux.
+
+---
+
 ## Latest operator results: ALL 1024 original scalar rows and original full1024 ELF/map verified
 
 **B4.1 is now accepted** on genuine operator-local artifacts: 64/64 independent original B2.4 scalar shards, merge PASS, accepted first16 continuity. Full original scalar oracle
