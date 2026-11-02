@@ -23,8 +23,8 @@ Fix: in scripts/build_p08_b44_profile_full1024.sh,
 the real shell copy lists now stage the NEW separate
 A53 main and original-reset profiling C/H and forbid the
 old B2.3 main. The Python builder offers read-only
---check-stage-only to verify the ACTUAL copied 21 C and
-21 header inputs before the script even launches Vitis,
+--check-stage-only to verify the ACTUAL copied C and
+header inventory before the script even launches Vitis,
 and emits
 P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1.
 An independent native regression parses the real shell
