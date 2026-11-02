@@ -1,5 +1,30 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B2.2 source-only reset/timer development — 2026-11-01
+
+The operator reported **P08-B2.1 host 1,024 original-B ingress staging
+PASS** (802,816B raw pool; 123,216B frames; 1,024 SHA rows) in new
+external folder `p08_b2_1_original1024_20261102T003256Z`; full
+independent native-C 1,024 wire parity has not yet been shown. File
+hashes are recorded in
+[reset source contract](docs/P08_B2_2_CONTEXT_RESET_AND_METER.md).
+
+P08-B2.2 adds **new** isolated C11 original 27×512KiB SHA-bound
+context-restoration primitive with all 27 backup hashes checked before
+the first write, cache-coherent destination SHA check, permanent poison
+on any failed reset; a bounded CNTVCT/CNTFRQ seven-boundary six-phase
+full-A53-service meter; a no-overwrite original frozen 33-asset
+SHA-pin header generator and 27×512KiB native fake-DDR two-image
+regression. **New source in CI; operator local source validation pending.**
+No real A53 app/ELF, physical DDR owner, backup readback, original 1024
+scalar oracle, signed timing sidecar, JTAG launch, or B physical latency
+is yet accepted. The 26-tick meter INCLUDES nested P03 trace hooks
+during the dispatch; no artificial isolated dispatch/pretrace claim.
+Separate full P08-B app and genuine Vitis ELF work remain to implement
+before any operator-approved destructive B3 pilot. Original A six
+latency sessions, B2.4 frozen model, B5 acceptance and sealed official
+MNIST TEST unchanged. **P09 deferred.**
+
 ## P08-B2.1 source-only candidate: authenticated original 1024 B ingress — 2026-11-01
 
 The operator reported a genuine local P08-B1 `MATCHED_DATASET_OFFLINE_PASS=1`
