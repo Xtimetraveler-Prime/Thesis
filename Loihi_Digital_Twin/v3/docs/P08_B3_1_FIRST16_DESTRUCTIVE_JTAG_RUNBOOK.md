@@ -19,6 +19,107 @@
   `[0x42300000,0x42301000)` 4,096-byte timing sidecars (16×256).
   Standalone A53 ELF can write its actual loadable low-DDR PT_LOAD region; exact span must be independently read from the genuine ELF program headers, including allocated .stack/.heap and FSBL/TF-A/PS reservations.
 
+## B3.1 pre-launch physical polling safeguard — after local preflight PASS
+
+The original 16-image A53 application writes the 256B mailbox DONE sentinel
+`0xC0DEF00D` for **startup and progress records**, not only terminal
+records. The new independent `pilot_mailbox_classify` Tcl function was
+added to `p08_b3_pilot16_run_and_capture.tcl`: it **never** halts A53
+merely upon a DONE marker. It verifies exact magic/version, completed-image
+count and status; continues through 0/16–16/16 progress, halts and
+preserves evidence on explicit `0xDEAD0823` failure, and treats ONLY
+`status=0x600D0823`, `frame=15`, `completed=16`,
+`fault=0` and DONE as successful terminal. It refuses mismatched
+progress indices and count regression; timeouts cannot be accepted.
+Unit tests replay real 64×32-bit little-endian byte records into the
+**actual Tcl classifier**, including start/progress/finish/failure
+states. **The user-authenticated A53 ELF binary is unchanged**:
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`.
+Never reuse the earlier pre-fix Tcl version for a physical launch.
+
+### Authorized separate operator execution (after successful local preflight)
+
+User explicitly accepted current B3.1 destructive risks, including
+discarding Linux, eight individual approval conditions and reboot.
+Run in a dedicated recovery-ready cold-boot JTAG session with
+`hw_server` locally available at `tcp:127.0.0.1:3121`.
+Commands below are **intentionally destructive**; they are NOT part
+of default preflight and cannot be run by GitHub CI.
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p08-b-scaled-latency
+git pull --ff-only origin agent/v3-p08-b-scaled-latency
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+export P08_B3_PILOT_STAGE="/home/dna/Thesis_Evidence/p08_b3_pilot16_pc_stage_20261102T043729Z"
+export P08_B3_PILOT_BUILD_DIR="/home/dna/Thesis_Evidence/p08_b3_pilot16_build_20261102T044104Z"
+export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
+export P08_B2_4_SCALAR_REPORT="$HOME/Thesis_Evidence/p08_b2_4_original_first16_scalar_20261102T042201Z.json"
+# Keep P07_B4L_REPORTS set to your PREVIOUSLY ACCEPTED original P03
+# routed source directory (unchanged bit/XSA/LTX and metrics).
+test -f "$P07_B4L_REPORTS/p03_2_ps_mmio.bit"
+
+# Exact original source / genuine new ELF / scalar: NO BOARD
+PYTHONPATH="$PWD/src" python scripts/p08_b3_pilot16_physical_run.py \
+  --mode preflight --stage "$P08_B3_PILOT_STAGE" \
+  --pilot-build "$P08_B3_PILOT_BUILD_DIR" \
+  --reset-pins "$P08_B2_RESET_PINS" \
+  --oracle "$P08_B2_4_SCALAR_REPORT" --reports "$P07_B4L_REPORTS"
+
+export P08_B3_EVIDENCE="$HOME/Thesis_Evidence/p08_b3_pilot16_physical_$(date -u +%Y%m%dT%H%M%SZ)"
+test ! -e "$P08_B3_EVIDENCE"
+command -v xsdb
+command -v vivado
+ss -ltn '( sport = :3121 )'
+
+# DESTRUCTIVE HARDWARE: original PS FPD128 Linux discard, P03 PL,
+# all original P02 model/backup and frozen routes/input overwrite,
+# low-DDR pilot A53 ELF and two new journals/mailbox.
+PYTHONPATH="$PWD/src" python scripts/p08_b3_pilot16_physical_run.py \
+  --mode execute \
+  --stage "$P08_B3_PILOT_STAGE" \
+  --pilot-build "$P08_B3_PILOT_BUILD_DIR" \
+  --reset-pins "$P08_B2_RESET_PINS" \
+  --oracle "$P08_B2_4_SCALAR_REPORT" \
+  --reports "$P07_B4L_REPORTS" \
+  --evidence "$P08_B3_EVIDENCE" \
+  --dedicated-jtag-owner YES \
+  --discard-linux-and-halt-all-a53-approved YES \
+  --unproven-boot-ddr-dma-exclusivity-risk-accepted YES \
+  --six-original-ddr-transfers-overwrite-approved YES \
+  --original-p03-pl-programming-approved YES \
+  --low-ddr-new-pilot-elf-overwrite-approved YES \
+  --mailbox-and-two-journals-overwrite-approved YES \
+  --reboot-and-recovery-approved YES
+```
+
+After any JTAG attempt, **reboot/power-cycle KV260; never resume the
+halted Linux instance.** Preserve `$P08_B3_EVIDENCE` and use the
+standalone PC-only independent physical-verifier:
+
+```bash
+export P08_B3_INDEPENDENT_REPORT="$HOME/Thesis_Evidence/p08_b3_pilot16_independent_$(date -u +%Y%m%dT%H%M%SZ).json"
+test ! -e "$P08_B3_INDEPENDENT_REPORT"
+PYTHONPATH="$PWD/src" python scripts/p08_b3_pilot16_independent_physical_verify.py \
+  --evidence "$P08_B3_EVIDENCE" --stage "$P08_B3_PILOT_STAGE" \
+  --oracle "$P08_B2_4_SCALAR_REPORT" \
+  --pilot-build "$P08_B3_PILOT_BUILD_DIR" \
+  --reports "$P07_B4L_REPORTS" \
+  --reset-pins "$P08_B2_RESET_PINS" \
+  --out "$P08_B3_INDEPENDENT_REPORT"
+sha256sum "$P08_B3_INDEPENDENT_REPORT"
+```
+
+No 16-image result may be called accepted physical inference until
+this independent same-session source, JTAG and scalar-reference verifier
+passes. On any failure, **do not retry destructive JTAG without
+diagnosing and rebooting**. Report the `stage.txt`, exact failing
+`*.log` and the binary mailbox/sidecars, *not* just the exit code.
+No accepted quantitative latency claim from the 16-image pilot.
+
 ## Physical risks that MUST be explicitly accepted before any JTAG action
 
 **These are NOT proven safe by SHA256 or PT_LOAD.** The actual DDR controller may still be owned by Linux, U-Boot, TF-A/ATF, PMUFW, other A53 cores, RPU cores, CMA or PL/PS DMA masters. Halting A53 cores is necessary but does not prove these other masters are quiescent or memory spans are reserved. Boot firmware and the standalone ELF's low-DDR exception vectors, stack, heap and page tables may conflict. Programming the FPGA and downloading the ELF can destroy the existing Linux session or interrupt network/serial functions. The 28+MiB original P02 source+backup staging, 4 source route/input transfers, mailboxes and new ELF are **destructive physical writes**. Do NOT test while the board is needed for another workload. Work in a dedicated cold-boot JTAG lab session with serial console and known-good recovery boot media, independent stable power, and a plan to power-cycle/reboot after the run **even on failure**. Never try to resume the halted Linux session.
