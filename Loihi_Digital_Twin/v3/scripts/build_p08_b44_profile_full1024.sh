@@ -31,7 +31,8 @@ PIN_MANIFEST="$PINS/p08_b2_2_original_context_reset_pins.json"
 [[ "$(sha256sum "$PIN_HEADER" | cut -d' ' -f1)" == "5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171" ]] || die "B2.2 original 27xSHA header drift"
 [[ "$(sha256sum "$PIN_MANIFEST" | cut -d' ' -f1)" == "1d915c36eaf42740bac9e62afae58ffe80c94ae51cbf6c6c809d3fd6e626ce34" ]] || die "operator-pinned B2.2 SHA manifest drift"
 mkdir -p "$BUILD/source"
-for n in p08_b2_3_image_only_a53.c p08_b2_ingress.c p08_b2_context_reset.c p08_b2_service_meter.c; do
+for n in p08_b44_profile_full1024_a53.c p08_b4_4_profile_reset.c \
+         p08_b2_ingress.c p08_b2_context_reset.c p08_b2_service_meter.c; do
     cp -- "$V3/software/p08/$n" "$BUILD/source/"
 done
 for n in p07_b4m_dispatch_metadata.c p07_b4l_b3_bindings.c p07_b4m_frozen_routes.c \
@@ -44,7 +45,8 @@ done
 for n in p03_hw_adapter.c p03_hw_xilinx_io.c; do
     cp -- "$V3/software/p03/$n" "$BUILD/source/"
 done
-for n in p08_b2_ingress.h p08_b2_context_reset.h p08_b2_service_meter.h; do
+for n in p08_b2_ingress.h p08_b2_context_reset.h \
+         p08_b4_4_profile_reset.h p08_b2_service_meter.h; do
     cp -- "$V3/software/p08/$n" "$BUILD/source/"
 done
 cp -- "$PIN_HEADER" "$BUILD/source/p08_b2_2_original_context_sha256.h"
@@ -68,6 +70,11 @@ grep -Fq '#include "p07_a2_sha256.h"' "$BUILD/source/p07_a2_sha256.c" || die "ac
 sed -i 's@#define P07_B2_MAX_ROUTE_BINDINGS 8192u@#define P07_B2_MAX_ROUTE_BINDINGS 10000u@' \
     "$BUILD/source/p07_b2_packet.h"
 grep -Fq '#define P07_B2_MAX_ROUTE_BINDINGS 10000u' "$BUILD/source/p07_b2_packet.h" || die "separate B4m original 10K route ceiling absent"
+# Verify actual shell-copied source inventory against the Vitis builder
+# BEFORE launching a toolchain. The original B2.3 main must be absent.
+python3 "$V3/software/p08/build_p08_b44_profile_full1024.py" \
+    --check-stage-only "$BUILD/source" \
+    || die "new B4.4.2 Vitis source stage rejected before Vitis launch"
 (
     cd "$V3"
     vitis -s software/p08/build_p08_b44_profile_full1024.py \
