@@ -98,13 +98,13 @@ def test_new_image_only_xilinx_headers_syntax_compile_native_stubs(tmp_path):
 
 
 def make_elf(*,vaddr=0x1000,paddr=0x1000,memsz=0x1000,ident=True):
-    elf_id=b"\\x7fELF\\x02\\x01\\x01"+bytes(9)
+    elf_id=b"\x7fELF\x02\x01\x01"+bytes(9)
     header=struct.pack(elf_gate.ELF_HDR,elf_id,2,183,1,vaddr,
                        elf_gate.ELF_HDR_SIZE,0,0,elf_gate.ELF_HDR_SIZE,
                        elf_gate.PHDR_SIZE,1,0,0,0)
     ph=struct.pack(elf_gate.PHDR,1,5,0x1000,vaddr,paddr,64,memsz,0x1000)
     payload=(elf_gate.IDENTITY if ident else b"synthetic invalid ELF")
-    return header+ph+bytes(0x1000-len(header)-len(ph))+payload.ljust(64,b"\\x00")
+    return header+ph+bytes(0x1000-len(header)-len(ph))+payload.ljust(64,b"\x00")
 
 
 def test_aarch64_elf64_strict_low_ddr_load_and_entry():
