@@ -1,5 +1,74 @@
 # P08-B4.4.1/B4.4.2 — Independent original 27-context reset profiler (SOURCE ONLY)
 
+## 2026-11-02 real Vitis first attempt staging failure — shell COPY BUG FIXED, local retry PENDING
+
+The operator ran the genuine separate Vitis 2025.2 B4.4
+build with the unchanged original B2.3 ELF, P03 report/XSA,
+and original B2.2 SHA pins. Strict Python source admission
+stopped BEFORE platform build/link:
+
+    ValueError: new Vitis source stage incomplete/extra:
+    missing={'p08_b44_profile_full1024_a53.c',
+             'p08_b4_4_profile_reset.c',
+             'p08_b4_4_profile_reset.h'},
+    extra={'p08_b2_3_image_only_a53.c'}
+
+**Cause:** the first shell COPY loop still staged the old
+B2.3 A53 main and omitted the three new B4.4 profile C/H
+files. The Python builder correctly FAIL-CLOSED. This is
+not evidence of a Vitis compiler, XSA, P03 or FPGA problem;
+the newer A53 profiling ELF was NOT built or deployed.
+
+Fix: in scripts/build_p08_b44_profile_full1024.sh,
+the real shell copy lists now stage the NEW separate
+A53 main and original-reset profiling C/H and forbid the
+old B2.3 main. The Python builder offers read-only
+--check-stage-only to verify the ACTUAL copied 21 C and
+21 header inputs before the script even launches Vitis,
+and emits
+P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1.
+An independent native regression parses the real shell
+copy loops and compares their union to builder.SOURCES
+and builder.HEADERS. It also recreates the EXACT prior
+extra-old-main/missing-three-files error as a negative test.
+
+The existing unsuccessful operator external build dir has
+a partial staged copy. Preserve it; do NOT overwrite or
+remove it, and do NOT run its nonexistent profile ELF.
+After pulling and passing native tests, retry to a new
+unique external directory:
+
+~~~bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/v3-p08-b44-profiling
+git pull --ff-only origin agent/v3-p08-b44-profiling
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd Loihi_Digital_Twin/v3
+
+PYTHONPATH="$PWD/src" python -m pytest -q -rs   tests/test_p08_b44_build_offline.py   tests/test_p08_b44_profile_elf_admission.py   tests/test_p08_b4_4_1_profile_reset_native.py   tests/test_p08_b44_reset_profile_sidecar.py
+
+# Re-source original genuine Vitis 2025.2 toolchain as needed;
+# keep P07_B4L_REPORTS / P08_B44_ORIGINAL_ELF /
+# P08_B2_RESET_PINS pointing to the accepted originals.
+export P08_B44_BUILD_DIR="$HOME/Thesis_Evidence/p08_b44_reset_profile_retry_$(date -u +%Y%m%dT%H%M%SZ)"
+if test ! -e "$P08_B44_BUILD_DIR"; then
+  bash scripts/build_p08_b44_profile_full1024.sh
+else
+  echo "NO-GO: choose a NEW retry directory" >&2
+fi
+~~~
+
+The first new expected marker is
+P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1.
+A genuine Vitis 2025.2 compilation/linker/map and distinct
+profile ELF64 offline admission must then succeed; no
+destructive profiling run is authorized by these source checks.
+Independent hardware 1024 profile sidecar capture + genuine
+original scalar/FNV parity verification is not yet implemented.
+
+---
+
 **No new Vitis ELF, physical KV260 session or profiling benchmark has been
 performed or approved.** Accepted full1024 original B2.4 A53 physical
 numerical/26tick FNV report
