@@ -62,7 +62,7 @@ static int init_source(void){
     return 0;
 }
 static int reset_positive(void){
-    p08_b2_reset_state state={0};
+    p08_b2_reset_state state={0},fresh_clean_fault={0},fresh_busy_fault={0};
     p08_b2_reset_receipt receipt={0};
     fake_bus bus={0};
     p08_b2_reset_config cfg={0};
@@ -108,24 +108,25 @@ static int reset_positive(void){
             return 13;
     }
     source[P08_B2_CONTEXT_TOTAL-1u]=old;
-    if(bus.clean_calls!=54 || bus.invalidations<135)return 14;
+    if(p08_b2_reset_bind(&state,&cfg)!=P08_B2_RESET_POISONED)return 14;
+    if(bus.clean_calls!=54 || bus.invalidations<135)return 19;
 
     /* New session with authenticated source; injected PS clean failure is
      * permanent even though 27-source precheck already succeeded.
      */
-    if(p08_b2_reset_bind(&state,&cfg)!=P08_B2_RESET_OK)return 15;
+    if(p08_b2_reset_bind(&fresh_clean_fault,&cfg)!=P08_B2_RESET_OK)return 15;
     bus.fail_clean=1;
-    if(p08_b2_reset_image(&state,&receipt)!=P08_B2_RESET_IO ||
-       !state.poisoned || state.first_fault!=5u ||
-       p08_b2_reset_image(&state,&receipt)!=P08_B2_RESET_POISONED)
+    if(p08_b2_reset_image(&fresh_clean_fault,&receipt)!=P08_B2_RESET_IO ||
+       !fresh_clean_fault.poisoned || fresh_clean_fault.first_fault!=5u ||
+       p08_b2_reset_image(&fresh_clean_fault,&receipt)!=P08_B2_RESET_POISONED)
         return 16;
     bus.fail_clean=0;
 
     /* Quiescence failure must block restore entirely. */
-    if(p08_b2_reset_bind(&state,&cfg)!=P08_B2_RESET_OK)return 17;
+    if(p08_b2_reset_bind(&fresh_busy_fault,&cfg)!=P08_B2_RESET_OK)return 17;
     bus.quiescent=1;
-    if(p08_b2_reset_image(&state,&receipt)!=P08_B2_RESET_IO ||
-       state.first_fault!=2u || state.generation!=0u)
+    if(p08_b2_reset_image(&fresh_busy_fault,&receipt)!=P08_B2_RESET_IO ||
+       fresh_busy_fault.first_fault!=2u || fresh_busy_fault.generation!=0u)
         return 18;
     return 0;
 }
