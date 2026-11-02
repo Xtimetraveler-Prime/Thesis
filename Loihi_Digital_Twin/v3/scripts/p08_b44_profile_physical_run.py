@@ -117,10 +117,16 @@ def admission(args:argparse.Namespace)->dict:
 
 def structural_profile_check(
         oracle:Path,first16:Path,capture:Path,precheck:Path)->dict:
-    observed=numerical.verify(
-        oracle,first16,capture/"journal1024_physical.bin",
-        capture/"timing1024_physical.bin",capture/"mailbox_terminal_physical.bin",
-        precheck)
+    check(precheck.is_absolute() and precheck.parent.is_dir()
+          and not precheck.exists() and not precheck.is_symlink(),
+          "new untrusted original neural AND reset-profile combined receipt path required")
+    # Do NOT publish successful neural evidence until ALL 1024
+    # experimental reset-profile microphase rows ALSO validate.
+    with TemporaryDirectory(prefix="p08_b44_neural_pending_profile_") as td:
+        observed=numerical.verify(
+            oracle,first16,capture/"journal1024_physical.bin",
+            capture/"timing1024_physical.bin",capture/"mailbox_terminal_physical.bin",
+            Path(td)/"neural_untrusted.json")
     hz=observed["terminal"]["CNTFRQ_EL0_hz"]
     raw=(capture/"reset_profile1024_physical.bin").read_bytes()
     perf=subphase.audit(raw,hz)
@@ -135,7 +141,7 @@ def structural_profile_check(
         # additional counter reads and controls MUST be positive residual.
         check(split["total_reset_ticks"]<=timer["phase_counter_ticks"][0],
               f"profile frame {i}: five reset microphases exceed measured full original A53 restore interval")
-    return {
+    combined={
         "all_original_1024_neural_spike_vectors_and_trace_fnv_match_scalar":True,
         "all_original_1024_A53_timing_records_crc_monotonic":True,
         "new_original_27core_reset_profile_1024_records_structural_pass":True,
@@ -151,6 +157,10 @@ def structural_profile_check(
         "six_paired_A_vs_B_latency_sessions_accepted":False,
         "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
     }
+    with precheck.open("x",encoding="utf-8") as stream:
+        json.dump(combined,stream,indent=2,sort_keys=True)
+        stream.write("\n")
+    return combined
 
 def execute(args:argparse.Namespace,approved:dict)->None:
     for name in APPROVALS:
