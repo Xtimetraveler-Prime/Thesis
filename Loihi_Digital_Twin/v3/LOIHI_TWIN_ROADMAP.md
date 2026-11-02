@@ -1,5 +1,58 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4.2 genuine Vitis operator retry gate — FIRST ATTEMPT HOST STAGING ISSUE FIXED, NO PHYSICAL RUN
+
+On 2026-11-02 operator locally executed the real separate
+B4.4.2 Vitis 2025.2 offline builder, with original accepted
+P03 XSA, 27-core SHA pins and accepted original B2.3 ELF.
+Vitis began but the *Python exact stage admission*
+rightly failed BEFORE new ELF compilation/linking:
+
+    missing={p08_b44_profile_full1024_a53.c,
+             p08_b4_4_profile_reset.c,
+             p08_b4_4_profile_reset.h}
+    extra={p08_b2_3_image_only_a53.c}
+
+Cause is unambiguously in the NEW staging Bash script:
+it retained the original B2.3 A53 main and omitted the
+three new B4.4 main/C/H profiling files. It was NOT
+a compiler, P03 hardware, original model or board problem.
+Original accepted physical B4/B3 data, Vitis B2.3
+ELF and original frozen sources are all unchanged.
+
+Fixed scripts/build_p08_b44_profile_full1024.sh:
+it now COPIES new main/profile_reset.c and .h and does
+NOT copy original production main. It invokes
+Python exact actual-stage inventory
+--check-stage-only with PASS marker
+P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1
+BEFORE first Vitis call. A new native regression
+independently parses the literal Bash cp loops against
+the Python Vitis SOURCES+HEADERS and reproduces
+operator missing/new + unexpected/old case as a
+negative test. Native GitHub Actions PASS
+on new source commit e3ae840744d8a01d101dfff29302f13013b20510.
+The failure directory in external Thesis_Evidence must
+not be overwritten or reused. A NEW genuine Vitis
+2025.2 ELF/map retry on operator machine remains
+PENDING; no profile physical JTAG authorized or run.
+Copyable safe native test/new evidence build commands
+preserved in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+
+P08-B final remaining independent gates unchanged:
+new profile ELF/map SHA and physical DDR memory
+admission, dedicated new source-readback+profile
+capture, independently verified original1024
+26tick x1010 scalar/FNV/spike parity, profiling
+of the mixed 26tick MMIO/paging/trace phase,
+six real coldboot matched-source A-vs-B pairs,
+independent closeout report/user review. Earlier
+A2.1-vs-A2.2 three Track-A pairs are NOT paired
+A-vs-B evidence. Official MNIST TEST sealed;
+power, pure PL speedup and DDR DMA exclusivity
+remain unproven.
+
 ## P08-B4.4 new 27-core profiled C + independent Vitis build source READY — native CI PASS, real Vitis JTAG NOT RUN
 
 New B4.4.1 full 27x512KiB immutable/mutable SHA, cache+memcpy
