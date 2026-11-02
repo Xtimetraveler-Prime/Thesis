@@ -1,5 +1,38 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B1 launched: matched 27-core latency source contract — 2026-11-01
+
+**P08-B STARTED (B1 PC-ONLY SOURCE CANDIDATE; LOCAL OPERATOR VALIDATION PENDING).**
+Development branch `agent/v3-p08-b-scaled-latency` from accepted main
+`2c9767ba6f6e001b52b14ff4285ae60c2d7ab47b` contains
+[the new B1 matched-dataset/latency contract](docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md),
+a strict offline original Track A 1,024-image source/ledger audit with
+read-only 33-asset B2.4 freeze validation, and negative native tests.
+Both Track A P07-A4 and Track B P06-B2.2 training sources pin the SAME
+canonical 50k/10k TRAIN-derived partition; seeded first1024 membership
+has zero overlap with Track B training. Stage pixel and original freeze
+file hashes must still be independently checked on the local workstation.
+
+**B1 gate:** user must run native tests and original source/stage audit,
+report the actual no-overwrite output, and accept the dataset provenance.
+**B2 NOT started:** implement a distinct instrumented scaled A53
+image-service/tick runtime, arbitrary-image frozen scalar oracle, safe
+per-image 27-record restoration, nonoverlapping DDR buffers, external
+Vitis ELF/map and strict read-only preflight. **B3 NOT approved:**
+operator-authorized destructive cold-boot 16-frame KV260 pilot only
+after B2 passes. **B4 future:** matched six independently cold-booted
+A2.1/A2.2-style paired 1,024-frame runs AB/BA/AB, ordinary frames
+0–1022, frame 1023 selected trace, full independent numerical parity
+before latency. **B5 future:** immutable physical results and P09 handoff;
+branch merge only by separate operator permission.
+
+**No new physical measurements, new FPGA bitstream, official MNIST
+TEST access, energy sampling, standalone scaled latency or P09
+comparison are claimed.** Original P07-B and Track A freeze and root
+`LitReview.md` remain untouched. The preserved historical
+"P08-B not started" statement below records P07-B closeout time,
+not the present development branch status.
+
 ## P07-B final acceptance and GitHub integration — 2026-11-01
 
 **P07-B COMPLETED, FORMALLY OPERATOR ACCEPTED AND MERGED INTO MAIN.**
