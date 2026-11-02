@@ -388,7 +388,7 @@ def test_real_post_jtag_python_readback_all_original_sources_and_negative_corrup
     route=captures/"input_routes_896k_physical.bin"
     route.write_bytes(bytes(route.stat().st_size))
     with pytest.raises(runner.PilotPhysicalNoGo,
-                       match="source physical readback drift"):
+                       match="original signed stage physical readback drift"):
         runner.readback_original(stage,captures)
 
 
