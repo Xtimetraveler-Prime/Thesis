@@ -241,3 +241,16 @@ def test_full1024_physical_evidence_verifier_enforces_original_jtag_markers():
         attestation.LOGS["full1024_a53_physical_run.log"])
     assert attestation.STAGE_OK.endswith(
         "INDEPENDENT_JTAG_VERIFICATION_PENDING_REBOOT_REQUIRED")
+
+
+def test_full1024_operator_source_oracle_exact_sha_pin_and_first16_continuity():
+    """User-completed original 64/64 train-only scalar is immutable B4 input."""
+    assert physical.ORIGINAL_FULL1024_ORACLE_SHA==(
+        "7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8")
+    import inspect
+    source=inspect.getsource(physical.admission)
+    assert "sha(args.oracle)==ORIGINAL_FULL1024_ORACLE_SHA" in source
+    assert "full_ref.merge(" in source
+    assert "args.shards,args.ingress,args.first16" in source
+    assert "sha(args.b3_report)==b3_pin" in source
+    assert "elfcheck.audit(" in source
