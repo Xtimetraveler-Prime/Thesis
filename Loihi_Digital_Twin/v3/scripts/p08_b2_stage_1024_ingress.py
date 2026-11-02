@@ -23,7 +23,6 @@ from loihi_twin_v2.p06_b13_streaming import (
     B13_INGRESS_MAGIC, _ingress_routes, encode_ingress_frame,
     decode_ingress_frame,
 )
-from loihi_twin_v2.p06_b24_freeze import verify_frozen_directory
 
 ROUTE_FILENAME = "p07_b4m_original_input_routes_896k.bin"
 ROUTE_SHA256 = "380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8"
@@ -141,6 +140,8 @@ def wire_from_pinned_route_bytes(routes: bytes, pixels: bytes) -> bytes:
 
 def build(stage_dir: Path, raw_data_dir: Path, frozen_dir: Path,
           routes_dir: Path, output_dir: Path) -> dict:
+    # Deep freeze admission requires torch only for real operator-local assets.
+    from loihi_twin_v2.p06_b24_freeze import verify_frozen_directory
     root = Path(__file__).resolve().parents[3]  # Thesis Git root
     if (not output_dir.is_absolute() or output_dir.exists() or
             output_dir.is_symlink() or not output_dir.parent.is_dir() or
