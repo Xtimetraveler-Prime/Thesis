@@ -1,5 +1,52 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 post-power-cycle: normal PuTTY boot, physical ARM DAP visible, actual PSU/APU/A53 target hierarchy NOT enumerated (2026-11-02)
+
+Operator confirms KV260 normal serial boot after power cycle,
+then successfully ran only separate read-only XSDB target
+inventory: 1 PS TAP / 2 PMU / 3 PL. JTAG hardware
+chain physically identified xck26 idcode 04724093 and
+arm_dap idcode 5ba00477. NO PSU, RPU, APU,
+Cortex-A53 #0..3 appeared in XSDB target list;
+in AMD UG1725 Zynq UltraScale+ debug-session examples
+the CPU targets normally appear in same targets listing.
+Original accepted B4 physical sessions previously
+succeeded at PSU selection. Existing failed B4.4
+destructive run reported A53 #1 external debug
+disabled; both observations suggest **current
+processor debug target-access/discovery issue**
+but do NOT prove security gate versus power/boot
+firmware/debugger cause. No accidental user command
+is evident; original B2.3/B4.2 and new genuine profile
+ELF artifacts remain valid.
+
+Accepted immutable read-only target inventory at:
+ /home/dna/Thesis_Evidence/p08_b44_a53_target_readonly_20261102T224514Z.log
+ SHA256 f3d7af4824b43a7b1aa66f4bd8ce92669cedc76a8cee73efb3371d97cc22a769
+
+Improved separate read-only diagnostic XSDB
+vivado/p08_b44_a53_status_readonly.tcl to
+also query processor targets -target-properties
+and arm_dap jtag targets -target-properties,
+without stop, rst, mrd, mwr, target -set,
+security register changes, core reset, PL
+programming or DDR/firmware mutation. Native
+tests/test_p08_b44_readonly_a53_diagnostic.py
+with no-board workflow passed; original P07-B4i
+fail-closed CPU halt safety gate untouched.
+Operator instructions and actual original target
+inventory SHA in docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Next: OPTIONAL normal-boot PuTTY Linux CPU online
+and one read-only XSDB property snapshot. Do not
+retry nine-YES destructive B4.4 profiler nor
+attempt debug security gate writes until new
+observations interpreted and dedicated approval
+is considered. Original 1024 neural/FNV and
+1023 ordinary timing accepted; NEW reset
+hardware microprofiles and true paired A/B
+runs/closeout still PENDING. Official TEST
+remains sealed.
+
 ## P08-B4.4 A53#1 debug failure after full power cycle — only one hw_server process tree observed; READ-ONLY target inventory pending
 
 Operator physically power cycled the KV260 after a failed first
