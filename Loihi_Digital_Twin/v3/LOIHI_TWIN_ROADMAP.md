@@ -1,5 +1,31 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.1 genuine original 1024 independent numerical oracle — OPERATOR ACCEPTED (2026-11-02)
+
+Operator ran original independent P06-B2.4 scalar simulation for **64/64 distinct 16-image shards**, including final shard 63 ordinals **1008:1024**, preserving previously individually verified shard0 0:16. Then completed full no-overwrite 64-file merge using original signed B2.1 matched TRAIN-only ingress, frozen original network and SHA-coded routes and exact accepted B3 first16 reference. Genuine operator terminal:
+
+```
+P08_B4_1_ALL_1024_ORIGINAL_SCALAR_ROWS_ADMITTED=1
+P08_B4_1_ALL_64_SHARDS_SHA_VERIFIED=1
+P08_B4_1_ACCEPTED_FIRST16_SCALAR_REPRODUCED=1
+P08_B4_1_PHYSICAL_1024_KV260_EXECUTED=0
+```
+
+Original external 64 shards:
+`/home/dna/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z`.
+Full original scalar oracle:
+`/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json`;
+**operator SHA-256 `7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8`**.
+The FULL genuine independent 1024 TRAIN-source scalar baseline is now ACCEPTED; no physical B4 inference yet. SHA pinned as mandatory frozen B4.2 offline admission (while keeping all 64 shards authenticated independently).
+
+Operator additionally located genuine original full1024 B2.3 Vitis A53 ELF
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf`
+and matching linker map
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.map`
+with previously authenticated exact SHA pins `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1` and `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`. Neither original ELF/map rebuilt nor modified. B4.2 demands **separate external canonical copies**, independent original ELF AArch64 PT_LOAD/accepted P03 XSA source recheck, all 64 original scalar shards, operator accepted B3 independent report and matched original P03 BIT/LTX before any JTAG.
+
+**Next genuine hardware gate:** User locally stage canonical `p08_b4_original_full1024.elf`/`.map`, verify exact SHA, and run default read-only B4.2 `--mode preflight` with the real full1024 oracle. Only after ORIGINAL signed source/ELF/P03/B3 PASS, attempt new coldboot dedicated destructive 1024 KV260 JTAG session in fresh evidence dir with 8 separate explicit YES; independent after-run PSU 6-source+1024 neuronal FNV/timing verifier still required. Original boot/firmware/DMA DDR exclusive ownership remains UNPROVEN despite operator permission. No 1024 numerical physical result, energy, speedup or six-session A/B latency claimed. Root `LitReview.md`, accepted P07/B3/A, original 33 B2.4 and official MNIST TEST unchanged.
+
 ## P08-B4.2 complete full1024 physical runner SOURCE DEVELOPMENT — authentic local preflight and original 64-shard compute REQUIRED
 
 Operator reports genuine **B4.1 shard 0/64** re-simulation from
