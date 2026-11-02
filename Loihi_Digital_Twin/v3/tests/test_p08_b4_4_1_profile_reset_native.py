@@ -44,10 +44,10 @@ def test_profiler_is_strictly_separate_from_accepted_firmware():
     accepted=(P08/"p08_b2_3_image_only_a53.c").read_text()
     profiler=(P08/"p08_b4_4_profile_reset.c").read_text()
     header=(P08/"p08_b4_4_profile_reset.h").read_text()
-    assert "p08_b4_4_profile_reset_image" not in original
-    assert "p08_b4_4_profile_reset_image" not in accepted
-    assert "p08_b4_4_profile_reset_image" in profiler
-    assert "p08_b4_4_profile_reset_image" in header
+    assert "p08_b44_profile_reset_image" not in original
+    assert "p08_b44_profile_reset_image" not in accepted
+    assert "p08_b44_profile_reset_image" in profiler
+    assert "p08_b44_profile_reset_image" in header
     assert "p08_b2_reset_image" in accepted
     assert "p08_b2_reset_image" in original
     assert "p07_a2_sha256" in profiler
