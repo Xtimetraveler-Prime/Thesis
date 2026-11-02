@@ -109,6 +109,8 @@ def ref(i):
     r=former.fake_ref(i%200)
     r["ordinal"]=i
     r["TRAIN_source_index"]=37384+i
+    # Historical journal fixture stores FNV = 1000+physical ordinal.
+    r["expected_all_26_ticks_1010_neuron_FNV64"]=f"0x{1000+i:016X}"
     return r
 
 @pytest.fixture
