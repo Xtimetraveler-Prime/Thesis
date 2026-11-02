@@ -147,6 +147,8 @@ Reuse original signed six-source stage and accepted reports:
 ~~~bash
 export P08_B3_PILOT_STAGE="$HOME/Thesis_Evidence/p08_b3_pilot16_pc_stage_20261102T043729Z"
 export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
+export P08_B3_INDEPENDENT_REPORT="$HOME/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json"
+test "$(sha256sum "$P08_B3_INDEPENDENT_REPORT" | cut -d' ' -f1)" =   "b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11"
 # Keep P07_B4L_REPORTS pointing to previously accepted genuine P03 shell reports.
 test -f "$P07_B4L_REPORTS/p03_2_ps_mmio.bit"
 
@@ -157,6 +159,7 @@ PYTHONPATH="$PWD/src" python scripts/p08_b4_2_physical_run.py \
   --ingress "$P08_B4_INGRESS" \
   --oracle "$P08_B4_FULL_ORACLE" \
   --first16 "$P08_B4_FIRST16" \
+  --b3-report "$P08_B3_INDEPENDENT_REPORT" \
   --elf "$P08_B4_ELF" \
   --linker-map "$P08_B4_MAP" \
   --reset-pins "$P08_B2_RESET_PINS" \
@@ -197,6 +200,7 @@ PYTHONPATH="$PWD/src" python scripts/p08_b4_2_physical_run.py \
   --ingress "$P08_B4_INGRESS" \
   --oracle "$P08_B4_FULL_ORACLE" \
   --first16 "$P08_B4_FIRST16" \
+  --b3-report "$P08_B3_INDEPENDENT_REPORT" \
   --elf "$P08_B4_ELF" \
   --linker-map "$P08_B4_MAP" \
   --reset-pins "$P08_B2_RESET_PINS" \
@@ -234,6 +238,7 @@ PYTHONPATH="$PWD/src" python scripts/p08_b4_2_independent_physical_verify.py \
   --ingress "$P08_B4_INGRESS" \
   --oracle "$P08_B4_FULL_ORACLE" \
   --first16 "$P08_B4_FIRST16" \
+  --b3-report "$P08_B3_INDEPENDENT_REPORT" \
   --elf "$P08_B4_ELF" \
   --linker-map "$P08_B4_MAP" \
   --reset-pins "$P08_B2_RESET_PINS" \
