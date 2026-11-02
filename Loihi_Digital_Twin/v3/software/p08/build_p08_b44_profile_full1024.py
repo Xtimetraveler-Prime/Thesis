@@ -126,12 +126,23 @@ def build(xsa:Path,workspace:Path,source:Path)->None:
     finally:
         client.close() if hasattr(client,"close") else None
 
-def main()->int:
+def main(argv:list[str]|None=None)->int:
     p=argparse.ArgumentParser(description=__doc__)
     for name in ("xsa","workspace","source-dir"):
-        p.add_argument("--"+name,required=True,type=Path)
-    a=p.parse_args()
+        p.add_argument("--"+name,type=Path)
+    p.add_argument("--check-stage-only",type=Path,
+                   help="verify exact staged C/H inventory without importing Vitis")
+    a=p.parse_args(argv)
     try:
+        if a.check_stage_only is not None:
+            if any(x is not None for x in (a.xsa,a.workspace,a.source_dir)):
+                raise ValueError("stage-only may not be combined with a Vitis build")
+            check_stage(a.check_stage_only)
+            print("P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1")
+            print("P08_B44_SOURCE_STAGE_CHECK_VITIS_INVOCATIONS=0")
+            return 0
+        if any(x is None for x in (a.xsa,a.workspace,a.source_dir)):
+            raise ValueError("--xsa --workspace --source-dir all required for Vitis build")
         build(a.xsa,a.workspace,a.source_dir)
     except Exception:
         traceback.print_exc(file=sys.stderr)
