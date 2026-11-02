@@ -57,6 +57,42 @@ proc pilot_halt_cpu {label} {
     }
     puts "P08_B3_PILOT_A53_STOP_CONFIRMED=1"
 }
+# A53 firmware writes 0xC0DEF00D for EVERY mailbox message, including
+# startup and intermediate image progress. DONE BY ITSELF IS NOT SUCCESS.
+# Strict classifier is pure Tcl and separately unit-tested without JTAG.
+proc pilot_mailbox_classify {raw} {
+    if {[string length $raw]!=256} {return INVALID}
+    if {[binary scan $raw i64 words]!=1 || [llength $words]!=64} {
+        return INVALID
+    }
+    set magic [expr {[lindex $words 0] & 0xFFFFFFFF}]
+    set version [expr {[lindex $words 1] & 0xFFFFFFFF}]
+    set status [expr {[lindex $words 2] & 0xFFFFFFFF}]
+    set index [expr {[lindex $words 3] & 0xFFFFFFFF}]
+    set fault [expr {[lindex $words 4] & 0xFFFFFFFF}]
+    set completed [expr {[lindex $words 5] & 0xFFFFFFFF}]
+    set done [expr {[lindex $words 63] & 0xFFFFFFFF}]
+    if {$done != 0xC0DEF00D} {return INCOMPLETE}
+    if {$magic != 0x50384232 || $version != 1} {return INVALID}
+    if {$status == 0xC0DE0000} {
+        # Startup reports ordinal=-1 and 0 complete; after each image,
+        # ordinal and completed count advance together. NONE is terminal.
+        if {$fault != 0 || $completed>16 ||
+            !($completed==0 && $index==0xFFFFFFFF) &&
+            !($completed>0 && $index==$completed-1)} {
+            return INVALID
+        }
+        return PROGRESS
+    }
+    if {$status == 0x600D0823} {
+        if {$index!=15 || $fault!=0 || $completed!=16} {
+            return INVALID
+        }
+        return SUCCESS
+    }
+    if {$status == 0xDEAD0823} {return FAILURE}
+    return INVALID
+}
 set connected 0
 set failed [catch {
     connect -url $server
@@ -83,6 +119,8 @@ set failed [catch {
     set mailbox [file join $out mailbox_terminal_physical.bin]
     set scratch [file join $out mailbox_poll.tmp]
     set terminal 0
+    set terminal_state INCOMPLETE
+    set previous_completed 0
     # Original 27-core pager + 26 ticks + 1010 neural trace each image
     # may be slow. Fixed bounded observation, never accept a timeout.
     for {set attempt 0} {$attempt < 7200} {incr attempt} {
@@ -94,9 +132,23 @@ set failed [catch {
         if {[string length $raw]!=256} {
             error "P08-B3: partial physical mailbox"
         }
-        binary scan $raw @252i last
-        if {[expr {$last & 0xFFFFFFFF}]==0xC0DEF00D} {
+        set state [pilot_mailbox_classify $raw]
+        if {$state eq "PROGRESS"} {
+            binary scan $raw i64 progress
+            set completed [expr {[lindex $progress 5] & 0xFFFFFFFF}]
+            if {$completed<$previous_completed} {
+                error "P08-B3: original image-completed count moved backward"
+            }
+            set previous_completed $completed
+            continue
+        }
+        if {$state eq "INCOMPLETE"} {continue}
+        if {$state eq "INVALID"} {
+            error "P08-B3: malformed/unknown authentic mailbox state"
+        }
+        if {$state eq "SUCCESS" || $state eq "FAILURE"} {
             set terminal 1
+            set terminal_state $state
             break
         }
     }
@@ -118,6 +170,12 @@ set failed [catch {
     puts "P08_B3_PILOT_REAL_16_JOURNAL_AND_TIMING_SIDECARS_PHYSICAL_CAPTURED=1"
     if {!$terminal} {
         error "P08-B3: timed out. Partial physical evidence preserved. REBOOT."
+    }
+    if {$terminal_state eq "FAILURE"} {
+        error "P08-B3: real A53 reported a TERMINAL FAILURE. Original fault mailbox and partial sidecars preserved; REBOOT."
+    }
+    if {$terminal_state ne "SUCCESS"} {
+        error "P08-B3: not a genuine 16/16 terminal success."
     }
     set data [pilot_read $mailbox]
     binary scan $data i64 words
