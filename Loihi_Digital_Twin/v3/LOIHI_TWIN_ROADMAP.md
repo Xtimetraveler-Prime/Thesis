@@ -1,5 +1,75 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 single-session first physical 1024 original B2.4 timing descriptive analysis — PENDING actual A53 clock/1023 ordinary phase audit
+
+After accepted genuine full1024 KV260 A53/B2.4 neural and six-phase
+timing provenance PASS, operator read the signed independent
+B4.2 JSON's original 1,024-image FULL service distribution:
+**min 1,283,832,503 A53 ticks; median 1,303,433,920 ticks;
+nearest-rank p95 1,316,697,749 ticks; max 1,327,299,037 ticks;
+n=1024**. Median is in raw A53 CNTVCT ticks; B4 physical
+CNTFRQ was NOT pasted, so no definitive seconds accepted yet.
+Within this one physical session P95 is about **1.018% above median**
+and max-min spread is about **3.386% of min**. These statistics
+alone cannot establish run-to-run clock/thermal variation,
+energy, hardware speedup or a paired Track A/B comparison.
+
+If B4 recorded CNTFRQ is 100,000,000Hz *conditionally*,
+median 13.0343392s/image, min 12.83832503s,
+p95 13.16697749s, max 13.27299037s.
+The original Track A physical paired A2.1/A2.2 sessions
+observed 99,999,001Hz but that is NOT proof of actual
+B4 counter frequency. Accepted Track A ordinary 1,023
+medians ~35.67–35.72ms, but the architectures differ
+fundamentally: 42 neurons/one logical core/26 dispatches
+for A vs 1010 neurons/27 virtual cores/702 dispatches
+and 27-context per-image reset/page IO for B.
+Matched first1024 TRAIN-derived source and 26 ticks
+does NOT imply matched computational workload or pure PL speed.
+No naive speedup/slowdown ratio is accepted. Original A
+first three pairs are A2.1-vs-A2.2 instrumentation,
+not true physical paired A-vs-B sessions.
+
+To extract **ACTUAL frequency and correctly scoped 1,023
+ordinary-frame A53 service** (trace frame 1023 isolated)
+and the six disjoint A53 phase distributions, new read-only
+PC-only tools added:
+- scripts/p08_b4_4_single_run_timing_audit.py:
+  independent already verified physical report SHA
+  297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032;
+  original scalar SHA
+  7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8;
+  physical raw 1024×256B sidecar SHA and terminal mailbox SHA
+  exactly matched from independent report; actual per-row
+  CNTFRQ consistency, original CRC/timestamps and disjoint
+  six service intervals. **No board contact/XSDB**.
+  Outputs fresh outside-repo 1023 ordinary service and
+  six per-phase min/median/p95/max in raw counter ticks
+  and actual frequency-normalized milliseconds. Includes
+  per-phase additive full-population SUM shares but does
+  not naively sum medians. Isolates selected trace frame
+  1023 in distinct report.
+- tests/test_p08_b4_4_single_run_timing_audit.py
+  with complete synthetic 1024-row real wire-ABI sidecar,
+  selected-scope checks and corruption negative cases;
+  .github/workflows/p08_b4_4_single_run_timing_offline.yml
+  native **NO BOARD** source CI.
+- docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md with
+  operator's genuine exact observed raw values and
+  read-only local test/report generation procedure.
+
+**Operator-local genuine descriptive output has NOT yet been
+run/verified**, and no subsequent destructive JTAG session has
+been proposed/authorized by this offline audit.
+Next after actual 1023 ordinary first-session descriptive report:
+plan matched, independently coldbooted six paired AB/BA/AB
+original Track A/B session procedure and run-level uncertainty
+with frozen source identities and scope. Never treat current
+A-only three A2.1/A2.2 pairs as A-versus-B repeats.
+B4 PR #53 DRAFT/UNMERGED, prior B3 PR #52 DRAFT/UNMERGED;
+no changes to frozen 33-asset B2.4, accepted physical source,
+root LitReview.md, P07/B3/A outputs, or sealed official TEST.
+
 ## P08-B4.2 ACCEPTED: first genuine original 1024-image KV260 physical numerical/FNV parity and 1024 timing rows (2026-11-02)
 
 Operator completed read-only full1024 original scalar + original genuine
