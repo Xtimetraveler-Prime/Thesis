@@ -7,8 +7,9 @@
 We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
 
 **Current work branch:** `agent/v3-p08-b44-profiling`  
-**Current PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” currently **OPEN** (not merged).  
-**Do not merge PR #54 unless the user explicitly authorizes it.** The user normally verifies the branch locally before authorizing a merge. After PR #54 is reviewed/merged, create a separate B4.5 branch from current `main`; do not silently mix B4.5 implementation into the B4.4 PR.
+**Current PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” currently **OPEN / DRAFT / UNMERGED**. It is stacked on PR #53's branch, not directly on `main`.  
+**Current dependency stack (snapshot 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three were open drafts at the time this seed was written. PR #52 head was `6fbf748a7987c4f173c4070dc27b78fc01329683`, PR #53 head/base for #54 was `235c3eef2672706e6c784b344ae29c1bc6e50f3a`, and PR #54 head was `a9c7e4e2a1f84988b27152c1439e3855535a577e` before any further updates. Recheck live PRs; do not assume these SHAs remain current.  
+**Do not merge any PR unless the user explicitly authorizes it.** The user normally verifies the branch locally before authorizing integration. If the user authorizes merging this stack, preserve dependency order: merge #52 to `main`, then retarget/merge #53 to `main`, then retarget/merge #54 to `main`, verifying each merge. Only after the required parents are integrated should a fresh B4.5 branch be created from updated `main`. If the user wants B4.5 work before the stack is merged, explicitly confirm the intended parent branch and create a stacked branch from the current top; do not silently branch from stale `main`.
 
 The latest docs-only changes on this branch record the operator's genuine B4.4.2 physical acceptance and create this seed. They have **not yet been locally pulled and regression-tested by the user**. Do not claim those tests have run. Give the user exact terminal commands after every substantive code change and wait for their verification before advancing. Distinguish native tests, CI, operator-supplied evidence, and actual physical acceptance.
 
@@ -331,7 +332,7 @@ sha256sum "$HOME/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712
 
 If the branch is not already local, use `git switch --track origin/agent/v3-p08-b44-profiling` instead of the first `git switch`. Do not switch to `main` while reviewing PR #54. The test suite above is PC-only and must not touch the KV260. The operator should report the exact pytest summary and report hash; do not invent a test count or assume it passed.
 
-After PR #54 has been reviewed and the user explicitly authorizes its merge, fetch updated `main`, verify the merge, then create a new branch for B4.5, e.g.:
+After the user explicitly authorizes integration, merge the full dependency stack in order (#52 → #53 → #54), retargeting each child PR to `main` after its parent is merged where required. Verify each merge and fetch updated `main`. Only then create a new branch for B4.5, e.g.:
 
 ```bash
 cd ~/Git/Thesis
@@ -343,6 +344,6 @@ git switch -c agent/v3-p08-b45-paired-benchmark
 git push -u origin agent/v3-p08-b45-paired-benchmark
 ```
 
-Do not execute this branch creation until the PR #54 merge is actually authorized and confirmed. Begin B4.5 with protocol/memory-owner design and PC-only review, not a board run.
+Do not execute this branch creation until PRs #52, #53 and #54 have been explicitly authorized, integrated in dependency order and verified. Begin B4.5 with protocol/memory-owner design and PC-only review, not a board run.
 
 **End of handoff seed. The next concrete task is B4.5 protocol design, following local verification of the B4.4 documentation branch.**
