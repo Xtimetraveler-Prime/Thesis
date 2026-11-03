@@ -2,12 +2,14 @@
 
 ## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
 
-**Status:** Portable-C reset variants and native tests are implemented.
-GitHub Actions run #6 passed the inherited B4.4 regression suite (**70
-tests**) and the new B4.5 native suite (**2 tests**) on commit
-`728613fde6f75a7b0d52ca6ddf6972893d67a510`. Operator-local verification is
-still pending. No Vitis build, JTAG action, DDR write or physical KV260 run
-has been authorized or performed for B4.5.
+**Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
+A53 applications are implemented. Operator posted a clean local PASS of
+the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
+Current expanded GitHub Actions no-board CI passes those 72 tests plus
+**80** dual-application source/strict-GCC-syntax/synthetic-ELF/sidecar
+tests (152 total). The real Vitis 2025.2 **two ELFs/maps are NOT YET BUILT**
+or admitted. No JTAG, DDR write or physical KV260 run has been authorized
+or performed for B4.5.
 
 The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
 1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
@@ -38,11 +40,45 @@ fail-stop poisoning after a partial restore. This is an experimental
 performance lower bound, not a production recommendation. Native tests must
 demonstrate that content corruption is intentionally not detected.
 
-### P08-B4.5.3 — separate Vitis builds and offline admission
+### P08-B4.5.3 — separate A53 source and Vitis offline builds
 
-Build each mode as a distinct A53 ELF with independent source identity,
-Vitis workspace, linker map, ELF/map SHA-256 and PT_LOAD/BSS/heap/stack
-admission. Keep original B2.3 production firmware, accepted P08-B4.4.2
+**SOURCE IMPLEMENTED / NATIVE CI PASS; genuine Vitis build PENDING.**
+
+Two distinct A53 mains now exist:
+`software/p08/p08_b45_auth_once_full1024_a53.c` and
+`software/p08/p08_b45_unchecked_full1024_a53.c`. Both reuse the
+original frozen P07/P03 26-tick/702-dispatch neural path, original
+complete A53 image-service meter and neural result journals. Only reset
+integrity policy differs; the unchecked variant still retains unrelated
+raw-input provenance SHA and original result-journal raw/wire hashes.
+
+`software/p08/build_p08_b45_variant.py`,
+`scripts/build_p08_b45_variant.sh` and
+`scripts/p08_b45_elf_admission.py` now support two separate, source-pinned
+offline Vitis applications and ELF/map identity/low-DDR PT_LOAD admission.
+The B4.5 sidecar uses a new 256B record schema with its own
+`scripts/p08_b45_sidecar.py` PC-only structural verifier and native
+negative tests. These are **not** actual physical measurements.
+
+**CRITICAL deliberate STOP:** the included
+`software/p08/p08_b45_a53_backup_guard.c` refuses backup-region locking
+and lock verification. The resulting offline-buildable ELFs are
+**intentionally incapable of executing inference on the board** until a
+separately audited and accepted real PS/PL DDR backup owner/protection
+provider is implemented. Do not replace it with a no-op. Hardware XMPU
+configuration may be boot-time/secure-master controlled; never perform
+speculative runtime XMPU writes. Source, stage and ELF admission explicitly
+pin this fail-closed adapter and continue to report DDR ownership unproven.
+
+**Next operator gate:** pull the branch, locally run the new expanded
+A53/native tests, then genuinely build **both** separately versioned
+Vitis 2025.2 ELF/map artifacts into fresh out-of-repo evidence dirs.
+Record hashes and independent static admission. No board/JTAG action.
+
+Runbook and commands:
+[docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md).
+
+Keep original B2.3 production firmware, accepted P08-B4.4.2
 profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
 unchanged. No variant may silently replace the accepted baseline.
 
