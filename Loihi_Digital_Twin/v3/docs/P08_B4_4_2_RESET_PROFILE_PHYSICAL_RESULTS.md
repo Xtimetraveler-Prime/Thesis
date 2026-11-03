@@ -96,7 +96,7 @@ below contains **1,023 frames**. The actual A53
 | Median | **5,826.767549 ms** |
 | P95 (nearest rank) | **5,826.881051 ms** |
 | Minimum | 5,826.591948 ms |
-| Maximum | 5,827.041923 ms |
+| Maximum | 5,827.041922 ms |
 | Median raw ticks | 582,670,934 |
 | Sum raw ticks | 596,070,873,266 |
 
