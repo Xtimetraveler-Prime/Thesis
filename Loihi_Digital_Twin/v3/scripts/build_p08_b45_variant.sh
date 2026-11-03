@@ -35,7 +35,7 @@ done
 PIN_HEADER="$PINS/p08_b2_2_original_context_sha256.h"
 PIN_MANIFEST="$PINS/p08_b2_2_original_context_reset_pins.json"
 [[ -f "$PIN_HEADER" && ! -L "$PIN_HEADER" && -f "$PIN_MANIFEST" && ! -L "$PIN_MANIFEST" ]] || die "B2.2 pins missing"
-[[ "$(sha256sum "$PIN_HEADER" | cut -d' ' -f1)" == "5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5c7bdce0bbfda7171" ]] || die "original context SHA header drift"
+[[ "$(sha256sum "$PIN_HEADER" | cut -d' ' -f1)" == "5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171" ]] || die "original context SHA header drift"
 [[ "$(sha256sum "$PIN_MANIFEST" | cut -d' ' -f1)" == "1d915c36eaf42740bac9e62afae58ffe80c94ae51cbf6c6c809d3fd6e626ce34" ]] || die "original SHA manifest drift"
 for tool in vitis aarch64-none-elf-readelf aarch64-none-elf-nm python3; do
     command -v "$tool" >/dev/null || die "missing $tool; source Vitis 2025.2 tools"
