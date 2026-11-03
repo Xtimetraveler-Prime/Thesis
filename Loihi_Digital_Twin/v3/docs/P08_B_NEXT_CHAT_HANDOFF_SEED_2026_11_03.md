@@ -6,18 +6,18 @@
 
 We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
 
-**Current work branch:** `agent/v3-p08-b45-reset-integrity`, created from the live PR #54 head `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Latest code-bearing B4.5 commit after the initial native implementation and CI update is `728613fde6f75a7b0d52ca6ddf6972893d67a510`; later commits in this branch update roadmap and handoff status only. This is intentionally stacked on the current P08-B4.4 profiling branch, not on stale `main`.  
+**Current work branch:** `agent/v3-p08-b45-reset-integrity`, created from the live PR #54 head `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Since the initial reset-kernel source commit, this branch now also includes TWO distinct A53 mains, standalone Vitis builder/wrapper, dedicated ELF and sidecar validators, native/C11 tests and build runbook. Recheck the live head before fetching; it has moved beyond the earlier `728613fde6f75a7b0d52ca6ddf6972893d67a510` CI snapshot. This is intentionally stacked on the current P08-B4.4 profiling branch, not on stale `main`.  
 **Current parent PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” still **OPEN / DRAFT / UNMERGED**.  
 **Dependency stack (rechecked 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three remain open drafts. PR #52 head: `6fbf748a7987c4f173c4070dc27b78fc01329683`; PR #53 head: `235c3eef2672706e6c784b344ae29c1bc6e50f3a`; PR #54 head at B4.5 branch creation: `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Recheck live PRs and branch heads before acting. No B4.5 PR has been opened yet.  
 **Do not merge any PR unless the user explicitly authorizes it.** Keep the dependency chain intact. The new B4.5 branch deliberately includes the #52/#53/#54 ancestry; do not rebase it onto stale `main` or merge the parent stack without user authorization.
 
-The B4.4.2 physical result is accepted, but the user has not yet locally verified the B4.4 regression suite on their workstation. GitHub Actions run #6 on B4.5 commit `728613fde6f75a7b0d52ca6ddf6972893d67a510` passed 70 inherited B4.4 regression tests and 2 new B4.5 native tests. This is CI evidence only; the user must still run the commands in Section 9 locally. The new B4.5 branch adds portable-C experimental variants, native tests, a no-board workflow and the B4.5 protocol. Distinguish native tests, CI, operator-supplied evidence, and physical acceptance.
+The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #? (see live Actions for current branch) passed the inherited 70 + 2 native + 80 expanded source/synthetic tests (152 total) with NO BOARD. The user has NOT yet run these 80 expanded tests locally or built either genuine Vitis A53 ELF/map. Do not claim physical A53 inference or genuine ELF acceptance. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
 
 **First actions in a fresh chat:**
 1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
 2. Check live PR #52/#53/#54 status and branch `agent/v3-p08-b45-reset-integrity` head; do not assume these SHAs remain current.
 3. Give the user the Section 9 pull/test commands and wait for their exact output.
-4. Continue PC-only B4.5 development after the inherited B4.4 regression and new native variant tests pass. Do **not** start a Vitis build or destructive JTAG/DDR run until the full memory-owner/protection audit, ELF admission, recovery plan and fresh explicit operator approval are complete.
+4. The next permitted action is **PC-only local Vitis 2025.2 compilation/linking and independent ELF/map admission** for BOTH variants. No new JTAG/DDR run; the currently included A53 DDR-guard adapter intentionally fails closed. A real physical run requires a separate owner/protection audit, newly admitted guard-enabled ELF, read-only preflight, recovery plan and explicit operator authorization.
 
 GitHub connector tools may be available through `functions.exec` as `tools.mcp__GitHub__*`. Use them for repository reads/writes and verify the actual commit/PR state. A repository commit does not mean local native tests or board tests passed.
 
@@ -226,6 +226,13 @@ new P08-B4.5 milestone compares two separately versioned reset variants.
 
 ### Shared B4.5 execution gates
 
+**Two separately named A53 source applications and the PC-only Vitis
+build/ELF-admission tools now exist.** Follow
+`docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md`.
+The current protection adapter always refuses to lock/verify the backup,
+so any genuine new ELF is **for offline static admission only**. There
+is no B4.5 new board inference evidence.
+
 1. Run inherited B4.4 regression tests and new strict C11 native tests.
 2. Prove that the physical backup region remains exclusively owned and
    immutable for the whole session. A native mock callback or no-op is not
@@ -333,55 +340,48 @@ Do not overwrite/rebuild these original artifacts or replace the accepted P03 sh
 7. Track B official MNIST TEST remains SEALED_NOT_ACCESSED. Do not read it, tune on it, or claim its accuracy.
 8. The FPGA architecture is Loihi-inspired and event-driven but uses synchronous ticks/global barriers and PS orchestration. Do not claim real asynchronous Loihi silicon equivalence.
 
-## 9. First local pull and regression commands
+## 9. First local pull, tests and genuine offline Vitis build
 
-The active development branch is stacked on the current PR #54 head. Pull it
-without changing the parent PR branches:
+The B4.4.2 physical results and 70+2 operator-local native gate are already
+accepted. The next command gate is the NEW expanded source/ELF/sidecar
+test suite, followed by genuine offline Vitis builds. No board or XSDB.
 
 ```bash
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch --track origin/agent/v3-p08-b45-reset-integrity 2>/dev/null || \
-  git switch agent/v3-p08-b45-reset-integrity
+git switch agent/v3-p08-b45-reset-integrity
 git pull --ff-only origin agent/v3-p08-b45-reset-integrity
 git rev-parse HEAD
 
 source ~/Git/Thesis/.venv-p08/bin/activate
 cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 
-# First close the inherited B4.4 local-verification gate.
 PYTHONPATH="$PWD/src" python -m pytest -q -rs \
-  tests/test_p08_b44_profile_physical.py \
-  tests/test_p08_b4_2_full1024_physical.py \
-  tests/test_p08_b44_reset_profile_sidecar.py \
-  tests/test_p08_b44_profile_elf_admission.py \
-  tests/test_p08_b44_build_offline.py
-
-# Then run the new B4.5 strict native reset-variant test.
-PYTHONPATH="$PWD/src" python -m pytest -q -rs \
-  tests/test_p08_b45_reset_variants.py
+  tests/test_p08_b45_reset_variants.py \
+  tests/test_p08_b45_a53_build.py \
+  tests/test_p08_b45_elf_admission.py \
+  tests/test_p08_b45_sidecar.py
 ```
 
-These are PC-only tests. They do not contact the KV260, open XSDB, program
-the PL or write physical DDR. Report the exact pytest summaries and commit
-SHA. Do not claim a local pass until the user supplies the output.
+After the tests pass, follow the TWO separate original-XSA/pinned-original-
+ELF Vitis 2025.2 build procedures in
+`docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md`.
+Run `bash scripts/build_p08_b45_variant.sh` once with
+`P08_B45_MODE=once`, then separately with `P08_B45_MODE=unchecked`,
+each with a NEW `P08_B45_BUILD_DIR` external evidence root. The script
+requires original `P07_B4L_REPORTS`, `P08_B2_RESET_PINS` and
+`P08_B45_ORIGINAL_ELF` and their accepted hashes; it links
+`p08_b45_auth_once_1024.elf` and `p08_b45_unchecked_1024.elf`
+respectively. Record each distinct ELF/map and admission JSON SHA. Do not
+mistake synthetic native ELF tests for the real Vitis build.
 
-The new B4.5 source files are:
-- `software/p08/p08_b45_reset_variants.{h,c}`
-- `tests/native/p08_b45_reset_variants_native.c`
-- `tests/test_p08_b45_reset_variants.py`
-- `.github/workflows/p08_b45_reset_variants_no_board.yml`
-- `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`
+Actual physical execution remains deliberately BLOCKED: the included
+unprovisioned guard returns failure on bind and has never established
+ownership/protection of the backup DDR. No direct XMPU writes without
+separate boot/runtime ownership audit and explicit operator consent.
 
-The portable source prototype is not yet integrated into either A53 main,
-has no genuine Vitis ELF/map, and has not run on hardware. After local tests
-pass, the next subtask is a PC-only review of the source-lock interface and
-integration design. A physical implementation must provide a real platform
-protection/ownership mechanism; a no-op callback is prohibited.
+No PR merge is authorized. PR #52/#53/#54 remain stacked; preserve their
+dependency order. Track B official MNIST TEST remains sealed.
 
-Do not merge PRs #52/#53/#54 or the new B4.5 branch without explicit user
-authorization. Preserve the stack dependency order and verify each merge.
-Official MNIST TEST remains sealed.
-
-**End of handoff seed. The immediate task is local verification of the inherited B4.4 regression suite and new B4.5 native variant test; physical work remains blocked by DDR ownership/protection proof.**
+**End of handoff seed. The next task is NEW 80-test A53/ELF/sidecar local source verification and two genuine OFFLINE Vitis 2025.2 builds, with no board interaction; physical inference remains blocked by DDR ownership/protection proof.**
