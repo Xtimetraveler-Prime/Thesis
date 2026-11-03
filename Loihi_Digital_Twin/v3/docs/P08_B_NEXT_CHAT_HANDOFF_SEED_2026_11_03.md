@@ -26,7 +26,7 @@ requests that EVERY future build/test instruction include all required
 `export` commands, or specific `find` commands plus their assignment.
 Do not assume persistent environment variables across terminals.
 
-The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 80 expanded source/synthetic tests (152 total) with NO BOARD. The user has NOT yet run these 80 expanded tests locally or built either genuine Vitis A53 ELF/map. Do not claim physical A53 inference or genuine ELF acceptance. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
+The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 81 expanded source/synthetic/pinned-SHA tests (153 total) with NO BOARD. The user has NOT yet run these 80 expanded tests locally or built either genuine Vitis A53 ELF/map. Do not claim physical A53 inference or genuine ELF acceptance. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
 
 **First actions in a fresh chat:**
 1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
@@ -399,4 +399,4 @@ separate boot/runtime ownership audit and explicit operator consent.
 No PR merge is authorized. PR #52/#53/#54/#55 remain stacked; preserve their
 dependency order. Track B official MNIST TEST remains sealed.
 
-**End of handoff seed. The next task is NEW 80-test A53/ELF/sidecar local source verification and two genuine OFFLINE Vitis 2025.2 builds, with no board interaction; physical inference remains blocked by DDR ownership/protection proof.**
+**End of handoff seed. The next task is NEW 81-test A53/ELF/sidecar/pinned-SHA local source verification and two genuine OFFLINE Vitis 2025.2 builds, with no board interaction; physical inference remains blocked by DDR ownership/protection proof.**
