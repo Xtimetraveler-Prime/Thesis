@@ -17,6 +17,7 @@ typedef struct {
     unsigned clean_calls, quiescent_calls, barriers;
     int locked, fail_lock, fail_lock_valid;
     int fail_invalidate_at, fail_clean_at, fail_quiescent;
+    int corrupt_dest_header_at_clean;
 } witness;
 
 static int lock_backup(void *cookie, uintptr_t address, size_t bytes) {
@@ -44,6 +45,9 @@ static int clean(void *cookie, uintptr_t address, size_t bytes) {
     w->clean_calls++;
     if (address == 0u || bytes != P08_B2_CONTEXT_STRIDE ||
         (int)w->clean_calls == w->fail_clean_at) return -1;
+    if (w->corrupt_dest_header_at_clean && w->clean_calls == 1u) {
+        ((uint8_t *)address)[20] ^= 0x01u;
+    }
     return 0;
 }
 static int quiescent(void *cookie) {
@@ -173,6 +177,53 @@ static int test_authenticated_once_exposes_lock_dependency(
     backup[128] = original;
     return 0;
 }
+static int test_authenticated_once_detects_source_header_corruption(
+    uint8_t *backup, uint8_t *mutable_bytes, uint8_t hashes[27][32]) {
+    p08_b45_reset_config c;
+    p08_b45_reset_state s = {0};
+    p08_b45_reset_receipt r;
+    witness w = {0};
+    uint8_t original = backup[20];
+    configure(&c, mutable_bytes, backup, (const uint8_t (*)[32])hashes, &w);
+    memset(mutable_bytes, 0xD3, P08_B2_CONTEXT_TOTAL);
+    CHECK(p08_b45_reset_bind(&s, &c, P08_B45_AUTHENTICATED_ONCE) == P08_B45_RESET_OK);
+    backup[20] ^= 0x01u;
+    CHECK(p08_b45_reset_image(&s, &r) == P08_B45_RESET_HEADER);
+    CHECK(s.poisoned == 1u && s.first_fault == 4u);
+    CHECK(mutable_bytes[0] == 0xD3u);
+    backup[20] = original;
+    return 0;
+}
+static int test_authenticated_once_detects_destination_header_corruption(
+    uint8_t *backup, uint8_t *mutable_bytes, uint8_t hashes[27][32]) {
+    p08_b45_reset_config c;
+    p08_b45_reset_state s = {0};
+    p08_b45_reset_receipt r;
+    witness w = {0};
+    configure(&c, mutable_bytes, backup, (const uint8_t (*)[32])hashes, &w);
+    memset(mutable_bytes, 0xD3, P08_B2_CONTEXT_TOTAL);
+    CHECK(p08_b45_reset_bind(&s, &c, P08_B45_AUTHENTICATED_ONCE) == P08_B45_RESET_OK);
+    w.corrupt_dest_header_at_clean = 1;
+    CHECK(p08_b45_reset_image(&s, &r) == P08_B45_RESET_HEADER);
+    CHECK(s.poisoned == 1u && s.first_fault == 7u);
+    return 0;
+}
+static int test_quiescence_failure_blocks_copy(
+    uint8_t *backup, uint8_t *mutable_bytes, uint8_t hashes[27][32]) {
+    p08_b45_reset_config c;
+    p08_b45_reset_state s = {0};
+    p08_b45_reset_receipt r;
+    witness w = {0};
+    configure(&c, mutable_bytes, backup, (const uint8_t (*)[32])hashes, &w);
+    memset(mutable_bytes, 0xE1, P08_B2_CONTEXT_TOTAL);
+    CHECK(p08_b45_reset_bind(&s, &c, P08_B45_UNCHECKED_CONTENT) == P08_B45_RESET_OK);
+    w.fail_quiescent = 1;
+    CHECK(p08_b45_reset_image(&s, &r) == P08_B45_RESET_IO);
+    CHECK(s.poisoned == 1u && s.first_fault == 2u);
+    CHECK(w.clean_calls == 0u);
+    CHECK(mutable_bytes[0] == 0xE1u);
+    return 0;
+}
 static int test_bind_detects_preexisting_corruption(
     uint8_t *backup, uint8_t *mutable_bytes, uint8_t hashes[27][32]) {
     p08_b45_reset_config c;
@@ -235,6 +286,9 @@ int main(void) {
     CHECK(test_authenticated_once(backup, mutable_bytes, hashes) == 0);
     CHECK(test_unchecked_content(backup, mutable_bytes) == 0);
     CHECK(test_authenticated_once_exposes_lock_dependency(backup, mutable_bytes, hashes) == 0);
+    CHECK(test_authenticated_once_detects_source_header_corruption(backup, mutable_bytes, hashes) == 0);
+    CHECK(test_authenticated_once_detects_destination_header_corruption(backup, mutable_bytes, hashes) == 0);
+    CHECK(test_quiescence_failure_blocks_copy(backup, mutable_bytes, hashes) == 0);
     CHECK(test_bind_detects_preexisting_corruption(backup, mutable_bytes, hashes) == 0);
     CHECK(test_lock_failure_blocks_bind(backup, mutable_bytes, hashes) == 0);
     CHECK(test_operational_failure_poisons(backup, mutable_bytes, hashes) == 0);
