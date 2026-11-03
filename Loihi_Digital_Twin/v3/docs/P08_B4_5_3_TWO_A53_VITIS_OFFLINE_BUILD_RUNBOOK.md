@@ -101,36 +101,105 @@ compile with GCC. This is **not** a real AArch64 Vitis BSP build. The ELF
 admission negative tests create unmistakably synthetic ELF64 fixtures;
 they are not hardware artifacts.
 
-## Step 2 — prepare ORIGINAL signed source and real Vitis 2025.2
+## Step 2 — discover and export ALL signed prerequisites
 
-Reuse the environment from the successfully accepted B4.4.2 build
-(Vitis 2025.2 must supply `vitis`, `aarch64-none-elf-readelf` and
-`aarch64-none-elf-nm`). Set exactly these prerequisite paths, verifying
-the accepted inputs before starting a new build:
+**Do not assume dated paths from a previous workstation session.** B4.5
+requires exactly three exported source variables and the Vitis 2025.2
+toolchain (plus mode/build-dir variables in Steps 3 and 4):
+
+| Environment variable | Required contents |
+|---|---|
+| `P08_B45_ORIGINAL_ELF` | Accepted original B2.3 full1024 `.elf` |
+| `P08_B2_RESET_PINS` | Directory holding the accepted B2.2 27-core SHA header **and manifest** |
+| `P07_B4L_REPORTS` | Directory holding the accepted `p03_2_ps_mmio.xsa` **and** `p03_2_post_route_metrics.txt` |
+| `P08_B45_MODE` | `once` or `unchecked` — set freshly for each build |
+| `P08_B45_BUILD_DIR` | A **new**, absolute evidence directory outside Thesis, separately created for each build |
+
+Use these discovery commands when paths have moved or the shell was
+restarted. They are read-only:
 
 ```bash
 cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 source ~/Git/Thesis/.venv-p08/bin/activate
-# Also source your actual installed Vitis 2025.2 settings64.sh environment.
 
+# Find every candidate on this PC (do not blindly select the first match):
+find "$HOME/Thesis_Evidence" -type f -name "p08_b2_3_image_only_1024.elf" -print
+find "$HOME/Thesis_Evidence" -type f -name "p08_b2_2_original_context_sha256.h" -print
+find "$HOME/Thesis_Evidence" -type f -name "p08_b2_2_original_context_reset_pins.json" -print
+find "$HOME/Thesis_Evidence" -type f -name "p03_2_ps_mmio.xsa" -print
+find "$HOME/Thesis_Evidence" -type f -name "p03_2_post_route_metrics.txt" -print
+
+# If Vitis commands are not already in PATH:
+command -v vitis || true
+find /tools /opt "$HOME" -type f -path "*/Vitis/2025.2/settings64.sh" -print 2>/dev/null
+# Source the exact Vitis 2025.2 settings64.sh path discovered above.
+```
+
+The next block is a **complete export example for the original accepted
+artifacts** as recorded in this project's B4.4 runbook. The original ELF
+and pin paths have been used in the operator's current B4.5 session.
+For the reports path, the script below discovers a directory by the
+**actual accepted XSA SHA**, not by arbitrary filename ordering. It also
+checks that the required original metrics file is alongside the XSA.
+
+```bash
 export P08_B45_ORIGINAL_ELF="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf"
 export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
 
-# P07_B4L_REPORTS must still be the original accepted routed P03 report dir.
-test -s "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa"
-test -f "$P07_B4L_REPORTS/p03_2_post_route_metrics.txt"
-test -s "$P08_B45_ORIGINAL_ELF"
-test -f "$P08_B2_RESET_PINS/p08_b2_2_original_context_sha256.h"
+# Reuse the accepted reports path if already exported. Otherwise locate
+# an actual matching P03 routed XSA with its metrics sibling:
+if [[ -z "${P07_B4L_REPORTS:-}" ]]; then
+  for xsa in $(find "$HOME/Thesis_Evidence" -type f -name p03_2_ps_mmio.xsa -print); do
+    if [[ "$(sha256sum "$xsa" | awk '{print $1}')" == "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f" &&
+          -f "$(dirname "$xsa")/p03_2_post_route_metrics.txt" ]]; then
+      export P07_B4L_REPORTS="$(dirname "$xsa")"
+      break
+    fi
+  done
+fi
 
-test "$(sha256sum "$P08_B45_ORIGINAL_ELF" | cut -d' ' -f1)" = \
-  "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1"
-test "$(sha256sum "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa" | cut -d' ' -f1)" = \
-  "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f"
+# Print all active exports before launching an expensive build:
+printf 'ORIGINAL_ELF=%s\nPINS=%s\nROUTED_REPORTS=%s\n' \
+  "${P08_B45_ORIGINAL_ELF:-UNSET}" \
+  "${P08_B2_RESET_PINS:-UNSET}" \
+  "${P07_B4L_REPORTS:-UNSET}"
 
+# Fail closed if a path is absent or is not an accepted original artifact:
+test -s "$P08_B45_ORIGINAL_ELF" || echo 'STOP: original ELF missing'
+test -s "$P08_B2_RESET_PINS/p08_b2_2_original_context_sha256.h" || echo 'STOP: pin header missing'
+test -f "$P08_B2_RESET_PINS/p08_b2_2_original_context_reset_pins.json" || echo 'STOP: pin manifest missing'
+test -s "${P07_B4L_REPORTS:?Must export accepted routed P03 reports}/p03_2_ps_mmio.xsa" || echo 'STOP: P03 XSA missing'
+test -f "$P07_B4L_REPORTS/p03_2_post_route_metrics.txt" || echo 'STOP: routed metrics missing'
+
+sha256sum \
+  "$P08_B45_ORIGINAL_ELF" \
+  "$P08_B2_RESET_PINS/p08_b2_2_original_context_sha256.h" \
+  "$P08_B2_RESET_PINS/p08_b2_2_original_context_reset_pins.json" \
+  "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa"
+```
+
+**Accepted SHA-256 values (compare the printed values exactly):**
+
+| File | Expected digest |
+|---|---|
+| B2.3 production ELF | `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1` |
+| B2.2 context SHA header | `5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171` |
+| B2.2 SHA manifest | `1d915c36eaf42740bac9e62afae58ffe80c94ae51cbf6c6c809d3fd6e626ce34` |
+| Accepted routed P03 XSA | `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f` |
+
+After sourcing your genuine installed Vitis 2025.2 environment, verify:
+
+```bash
 command -v vitis
 command -v aarch64-none-elf-readelf
 command -v aarch64-none-elf-nm
 ```
+
+If the original paths above have changed, use the `find` output to
+replace the corresponding exports. Do **not** bypass a hash mismatch,
+modify the frozen source or edit the hash to match an unverified file.
+The B4.5 wrapper originally contained a **mistyped expected header SHA**;
+that bug was corrected without changing any accepted artifact.
 
 ## Step 3 — separately build B4.5.1 authenticated-once ELF/map (NO BOARD)
 
