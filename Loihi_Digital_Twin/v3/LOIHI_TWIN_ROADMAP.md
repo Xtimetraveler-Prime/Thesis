@@ -1,5 +1,601 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4.2 ACCEPTED — genuine full1024 original 27-context reset microprofiling (2026-11-03)
+
+The operator supplied the output of the separate genuine KV260 profiling
+retry and the subsequent PC-only independent verifier. Successful physical
+evidence root:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_retry_20261103T061707Z`.
+Independent report:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json`,
+operator-supplied SHA256
+`47f25cada89dd9220636fbb9539aba5bf0d7705ea3788fdc3ebd1d85f1145cfa`.
+
+All three genuine independent acceptance checks were reported PASS:
+same-session JTAG provenance; all 1,024 original neural outputs/FNV spike
+fingerprints equal the frozen scalar oracle; and all 1,024 physical reset
+profile rows pass SHA/copy/cache/subspan/counter validation. The selected
+trace ordinal 1023 is excluded from the ordinary distribution, leaving
+1,023 ordinary rows. The paired AB/BA/AB Track A/B benchmark remains
+explicitly NOT accepted.
+
+Actual A53 `CNTFRQ_EL0`: **99,999,001 Hz**. Reset-service distribution:
+median **5,826.767549 ms**, nearest-rank P95 **5,826.881051 ms**,
+minimum **5,826.591948 ms**, maximum **5,827.041922 ms**. Five reset
+subphase medians: mutable 27-core memcpy **7.0247 ms** (0.12% of summed
+reset ticks); mutable cache clean/invalidate **1.6885 ms** (0.03%);
+mutable SHA-256 readback **2,908.5991 ms** (49.92%); original immutable
+cache invalidate **0.8392 ms** (0.01%); original immutable SHA-256
+**2,908.5978 ms** (49.92%). Unattributed counter/control residual median
+**0.0157 ms** (0.00% after rounding). The two SHA scans therefore account
+for approximately **99.84% of measured reset-service ticks**. This is a
+strong measured bottleneck finding: the authenticated reset interval is
+dominated by full-context integrity scans, not by the 27-core memcpy.
+
+Interpretation limits are mandatory: this is an instrumented A53 reset
+profile from one physical session, not PL-only compute time, a speedup,
+energy, or a repeated A/B comparison. Phase percentages are based on
+summed ticks; phase medians must not be added to claim the overall median.
+The extra profile DDR region `[0x42400000,0x42440000)` (262,144 bytes)
+still lacks independent proof of exclusive boot-firmware/PS/RPU/DMA
+ownership. Do not repeat destructive JTAG until a separate memory-owner
+audit, fresh read-only preflight and explicit operator approvals are
+complete. Track B official MNIST TEST remains SEALED.
+
+Full evidence, hashes, limitations and next gate:
+[docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md](docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md).
+Earlier roadmap entries below that describe B4.4 physical capture as pending
+or not yet done are historical snapshots and are superseded by this
+2026-11-03 acceptance entry; their failed-attempt records remain preserved.
+Next proposed work is B4.5 protocol design for six independent physical
+sessions in AB/BA/AB order, with complete matched image-service boundaries
+and run-level reporting. Design/review this protocol before changing
+firmware or touching the board. Track A and B have materially different
+network sizes, so this remains a system/workload comparison, not a
+matched-complexity or pure accelerator speedup.
+
+---
+
+## P08-B4.4 second read-only target-property scan + historical B4i recovery precedent (2026-11-03)
+
+Operator reports normal PuTTY boot and `sudo xmutil unloadapp`
+performed while the PC `hw_server` remained running. New
+read-only XSDB scan still lists ONLY PS TAP / PMU / PL and
+target properties only those 3 nodes. JTAG chain recognizes
+xck26 idcode 04724093 and arm_dap idcode 5ba00477; ARM DAP
+XSDB properties `is_open=1`, `is_active=1`. This confirms
+an active XSDB JTAG DAP node, NOT unlocked Cortex-A53 external
+debug and NOT processor target discovery. No board writes
+were performed. Exact operator log:
+`/home/dna/Thesis_Evidence/p08_b44_a53_properties_readonly_20261103T060320Z.log`
+SHA256 `54739cab92716c665939ffb5038e68a3b68a6907ea76b7c53a36588c6ce2080c`.
+
+**Strong same-project historical precedent:** original
+P07-B4i real KV260 stop/width pass on 2026-10-22 occurred
+after **KV260 reboot, then `sudo xmutil unloadapp`, then
+a new XSDB JTAG session**. Original user-reported signed
+ledger `docs/P07_B4I_2026_10_22_PHYSICAL_TAKEOVER_WIDTH_PASS_LEDGER.json`
+records A53 #0/#1 STOP PASS, #2/#3 exact powered-down
+observations, PSU selection, FPD raw 0x00000A00 / 128-bit,
+LPD raw 0x00000200 / 128-bit, exact
+`P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1`.
+It explicitly did NOT program PL, download ELF, touch DDR,
+or run inference. Historical source commit
+`ca3babc3eb27debe1dc9510595ddea58e8a7529d`.
+AMD UG1089 says `xmutil unloadapp` removes the loaded
+accelerated application; it is a PL/application lifecycle
+operation, not a documented CPU debug unlock. The prior
+ledger doesn't say whether hw_server was restarted, so
+no claim that restart is required. Latest operator didn't
+provide `xmutil listapps` output, so active app removal
+status isn't independently confirmed.
+
+**Bounded next recommendation:** one full B4.4 physical retry
+is reasonable after confirming no active app via PuTTY
+`sudo xmutil listapps` (if active, unload then verify) and
+ensuring no competing XSDB/Vivado client. Do NOT kill
+hw_server merely because it is listening; the prior ledger
+does not say it was restarted. The full B4.4 runner's FIRST
+physical action is the original fail-closed P07-B4i gate,
+which uses filtered `targets -set -filter` selection
+(different from the unfiltered read-only target list).
+If target selection or any A53 stop/accounting fails,
+the runner aborts BEFORE P03 programming, six DDR source
+transfers, new ELF download, experimental DDR overwrite
+or inference. If it passes, the runner proceeds only with
+the nine explicit operator approvals and acknowledged
+unproven DDR-owner risk. Use a NEW evidence directory and
+rerun mandatory read-only B4.4 preflight. If the gate
+fails for missing target, external-debug denial or any
+unexpected response, preserve logs, reboot and STOP;
+no repeated attempts or gate weakening. Any attempt
+requires reboot afterward, successful or not.
+
+See exact details and operator next command in
+`docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md`.
+Original accepted B4.2 physical 1024 numerical parity/
+ordinary timing and new genuine B4.4 ELF/map remain
+immutable; no B4.4 new reset-profile physical evidence
+yet. Official TEST sealed.
+
+## P08-B4.4 post-power-cycle: normal PuTTY boot, physical ARM DAP visible, actual PSU/APU/A53 target hierarchy NOT enumerated (2026-11-02)
+
+Operator confirms KV260 normal serial boot after power cycle,
+then successfully ran only separate read-only XSDB target
+inventory: 1 PS TAP / 2 PMU / 3 PL. JTAG hardware
+chain physically identified xck26 idcode 04724093 and
+arm_dap idcode 5ba00477. NO PSU, RPU, APU,
+Cortex-A53 #0..3 appeared in XSDB target list;
+in AMD UG1725 Zynq UltraScale+ debug-session examples
+the CPU targets normally appear in same targets listing.
+Original accepted B4 physical sessions previously
+succeeded at PSU selection. Existing failed B4.4
+destructive run reported A53 #1 external debug
+disabled; both observations suggest **current
+processor debug target-access/discovery issue**
+but do NOT prove security gate versus power/boot
+firmware/debugger cause. No accidental user command
+is evident; original B2.3/B4.2 and new genuine profile
+ELF artifacts remain valid.
+
+Accepted immutable read-only target inventory at:
+ /home/dna/Thesis_Evidence/p08_b44_a53_target_readonly_20261102T224514Z.log
+ SHA256 f3d7af4824b43a7b1aa66f4bd8ce92669cedc76a8cee73efb3371d97cc22a769
+
+Improved separate read-only diagnostic XSDB
+vivado/p08_b44_a53_status_readonly.tcl to
+also query processor targets -target-properties
+and arm_dap jtag targets -target-properties,
+without stop, rst, mrd, mwr, target -set,
+security register changes, core reset, PL
+programming or DDR/firmware mutation. Native
+tests/test_p08_b44_readonly_a53_diagnostic.py
+with no-board workflow passed; original P07-B4i
+fail-closed CPU halt safety gate untouched.
+Operator instructions and actual original target
+inventory SHA in docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Next: OPTIONAL normal-boot PuTTY Linux CPU online
+and one read-only XSDB property snapshot. Do not
+retry nine-YES destructive B4.4 profiler nor
+attempt debug security gate writes until new
+observations interpreted and dedicated approval
+is considered. Original 1024 neural/FNV and
+1023 ordinary timing accepted; NEW reset
+hardware microprofiles and true paired A/B
+runs/closeout still PENDING. Official TEST
+remains sealed.
+
+## P08-B4.4 A53#1 debug failure after full power cycle — only one hw_server process tree observed; READ-ONLY target inventory pending
+
+Operator physically power cycled the KV260 after a failed first
+B4.4 profiling JTAG attempt and confirmed original exact
+failed evidence root
+/home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+has exactly stage.txt, preflight.json and 486B
+a53_takeover_and_ps128.log; early P07-B4i A53 #0
+stop positive, A53 #1 "External debug access is disabled"
+no-go. This confirms NO later P03 PL programming,
+six original DDR source transfers or new profile
+full1024 ELF execution/capture in that attempt.
+Operator process list after power cycle shows one
+running hw_server process tree (shell/loader/main)
+and NO current local xsdb or Vivado process. Other
+remote JTAG server clients are not independently excluded.
+Normal post-powercycle UART firmware/Linux boot has not
+yet been reported. A53#1 EDAD-disabled debug is not
+equivalent to a confirmed A53#1 no-power state; original
+P07-B4i exact secondary halt/powerdown gate remains
+STRICTLY UNCHANGED and must not be bypassed.
+
+New isolated READ-ONLY diagnostic Tcl
+vivado/p08_b44_a53_status_readonly.tcl permits
+ONLY one localhost hw_server connect, queries
+targets and jtag targets, disconnects and prints
+STATUS-ONLY / NOT HARDWARE ACCEPTED markers;
+NO new STOP, rst, mwr, dow, CPU selection,
+DDRx write, PL programming or Linux interruption.
+Distinct from completely PC-only mailbox monitor:
+this does make hardware JTAG READ observations.
+tests/test_p08_b44_readonly_a53_diagnostic.py
+runs native no-board syntax/localhost restrictions,
+forbidden mutating action source audit, and ensures
+original P07 strict stop gate unchanged. Native
+.github/workflows/p08_b44_profile_physical_no_board.yml
+verifies read-only diagnostic with other B44
+new full1024 profile negative tests. Operator read-only
+serial/target next actions in
+docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Do NOT reexecute 9-YES profile runner until
+actual target and expected boot-state diagnosis;
+preserve first failed physical evidence. Original
+signed B4.2 first accepted full1024 physical neural
+parity/timing and new genuine B44 Vitis ELF
+build remain valid/immutable. Real B4.4 profile
+timing still pending, true A-versus-B repeated
+benchmark still pending, official TEST sealed.
+
+## P08-B4.4 first REAL profiling hardware attempt — NO-GO at existing A53 secondary debug halt, NOT firmware execution (2026-11-02)
+
+Operator completed offline read-only B4.4 admission PASS for
+NEW genuine reset profiler ELF SHA
+bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3
+and linker map SHA
+d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9,
+then explicitly invoked separate destructive JTAG with nine YES
+approvals. Actual new physical attempt evidence directory:
+
+    /home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+
+Actual hardware transcript (do not modify or overwrite):
+
+    a53_takeover_and_ps128.log
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2
+    P07_B4I_A53_0_STOP_COMMAND_PASS=1
+    P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+    P07-B.4i stop failed for Cortex-A53 #1:
+    Context Cortex-A53 #1 state: External debug access is disabled
+
+Existing original production P07-B4i takeover explicitly rejects
+all unexpected secondary A53 stop responses: only a genuine confirmed
+halt or TWO exact messages "The core is powered down" and
+"Cannot halt processor core: power down" are admitted.
+"External debug access is disabled" is NOT one of those and
+does NOT prove core #1 is safely halted/powered down. ARM A53
+architecture separately classifies external debug access permissions
+and core-off states, so it is inappropriate to reclassify this
+as a benign exact power-down without other independent evidence.
+Code correctly FAILED CLOSED at early processor takeover.
+NO successful 128bit FPD+LPD width gate, no new original P03
+PL programming, no original six DDR source staging, no new
+profiled ELF download, no 1024 run, no physical profile capture
+or numerical verification is supported by this transcript.
+
+This is **not evidence of erroneous user shell commands**:
+preflight accepted, genuine Vitis artifacts and exact SHA matched.
+Root cause of current external-debug-disabled A53 #1 remains
+undetermined: may depend on core power/debug authorization/boot state
+and requires a separate hardware/serial/secure-boot state assessment.
+Do not assert board damage, firmware bug or successful profile run.
+NO speculative changes to historical accepted P07 B4i takeover;
+do not suppress/auto-accept unexpected debug-disabled errors.
+
+**Operator required:** FULL KV260 power-cycle/reboot after ANY
+destructive JTAG attempt (Linux may no longer be intact).
+Preserve all failed evidence and stopped-CPU transcript;
+perform read-only PC log inspection and ordinary serial/boot
+verification after power-cycle. Prior to any new physical attempt,
+ensure no competing JTAG owner, review exact processor target
+states and any boot/security/low-power changes and require new
+independent operator risk approval, fresh evidence directory
+and same original source+profile ELF preflight; do not reuse
+the failed directory. A follow-up exact external debug
+diagnostic may be conducted separately, without relaxing
+core-stop or PS width admission. Repeated true A-vs-B
+and P08-B closure STILL PENDING. Original accepted B4.2 physical
+neural and 1023 ordinary timing SHA reports unchanged.
+
+## P08-B4.4.2 EXPERIMENTAL 1024 RESET PROFILE: genuine Vitis ELF accepted, full independent same-session hardware pipeline SOURCE CI PASS (2026-11-02)
+
+Operator genuinely completed NEW experimental Vitis 2025.2
+full1024 profile A53 ELF/map separately from immutable original
+B2.3, with original P03/27core SHA and AArch64 PT_LOAD
+static offline source admission PASS:
+- NEW Vitis profile ELF:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.elf
+  SHA256 **bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3**
+- NEW linker map:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.map
+  SHA256 **d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9**
+- NEW independent offline ELF source admission JSON:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/p08_b44_profile_elf_ptload_preflight.json
+  SHA256 **7a5818dc5469ea288fefcefb87ebc4fd3ab1e5c7bdce0bbfda717a6f2787b129**.
+Actual NEW profile physical JTAG: **NOT RUN**. Original accepted
+B4.2 first real 1024 full neural/FNV+timing report SHA
+297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032
+and original 1023 ordinary descriptive A53 timing report SHA
+4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81
+remain immutable and enforced as source continuity in NEW
+preflight.
+
+Implemented on stacked draft profiling branch and PR #54,
+NO BOARD/NO JTAG CI PASS:
+- scripts/p08_b44_profile_physical_run.py — **read-only default**.
+  Reauthenticates all accepted ORIGINAL B3/B4 numerical/1024
+  scalar 64 shards, original P03 XSA/bit/LTX/P07 DDR staging
+  and NEW exact signed profiling ELF/map/ELF admission (including
+  recomputation). Nine explicit distinct destructive YES
+  approvals required, including the NEW 256KiB profile
+  region [0x42400000,0x42440000). No new DDR boot/RPU/
+  firmware/DMA exclusivity is proven by source check.
+- vivado/p08_b44_profile_full1024_run_and_capture.tcl —
+  NEW ONLY SHA-pinned profile ELF/download and unique identity;
+  same-session independent A53 stop/FPD128+P03 programming,
+  original six DDR source byte-exact physical readbacks,
+  physical zero/readback of ALL four output regions:
+  256B mailbox and three 1024x256B original journal,
+  timer and NEW profile regions. Correct 1024/1024 terminal
+  state, bounded 3600-poll no-image-progress watchdog and
+  global timeout, 1024 original neural+timing and NEW reset
+  profile journals physically captured. Reboot mandatory
+  after any destructive JTAG attempt; original accepted
+  B4.2 Tcl and A53 ELF untouched.
+- scripts/p08_b44_profile_independent_physical_verify.py —
+  second PC-only verifier independently repeats original
+  signed source/ELF SHA/oracle, true JTAG transcript/A53/PSU/P03
+  and six DDR source readbacks, FOUR original signed zeroed DDR
+  capture regions, original complete1024 26tick×1010
+  neural FNV + 10-spike vector and classification parity,
+  all 1024 A53 6-phase timers, NEW original 27core
+  5-phase SHA/cache/memcpy/after SHA CRC/clock/reset-in-A53
+  timestamp nesting. Only separately admits one
+  NEW physical 1024 profile numerical and microtiming
+  record if every gate PASS, not a performance benchmark.
+- tests/test_p08_b44_profile_physical.py,
+  .github/workflows/p08_b44_profile_physical_no_board.yml —
+  real Tcl mailbox classifier replay (intermediate 1024
+  progress does NOT end run), independent synthetically
+  complete1024 original source numerical + new 27core
+  five-component positive, original scalar-neural/FNV,
+  journal CRC, A53 timer CRC, 1024 exact mailbox,
+  reset profile source SHA/CRC/size/timing negatives,
+  no genuine JTAG in CI. Fixed premature preliminary
+  success report: BOTH source+new reset profile must
+  PASS before any combined JSON report created.
+- Original saved **PC-only nonintrusive** long-run monitor
+  scripts/p08_b4_2_monitor_mailbox_pc_only.py now supports
+  explicit --capture-subdir profile1024_capture, default
+  remains original B4.2 full1024_capture. No additional
+  XSDB/hardware/CPU halt/host evidence writes.
+- New docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md with
+  exact read-only setup/pinned SHA preflight, nine-YES
+  dedicated coldboot physical command, safe PC-only
+  mailbox monitoring, mandatory after-any-JTAG reboot,
+  separate PC independent real1024 source/reset profile
+  acceptance. Operator should **NOT** run new JTAG if
+  read-only source preflight NO-GO or hardware ownership/
+  physical recovery risks are unacceptable.
+
+P08-B closeout STILL PENDING after this source work:
+first independently accepted genuine full1024 NEW reset profile
+hardware session and SHA report; nested 26tick scheduler/
+AXI-paging/MMIO/trace/routing profiling; TRUE repeated
+6 paired A-vs-B AB/BA/AB coldboots, same 1023
+ordinary TRAIN validation IDs and full A53 service
+boundaries, observed CNTFRQ and run-level uncertainty;
+signed P08-B final scientific limitations and user
+authorization before merge. Historical 3 pairs of
+A2.1-vs-A2.2 are within Track A, NOT A-vs-B. Networks
+have 42 versus 1010 neurons and different computational
+load; energy, isolated PL-only speedup and original
+PS/DDR/DMA exclusive ownership NOT proved, official
+MNIST TEST SEALED. Preserve all original B2.4 frozen
+artifacts/P03/P07/A/B3/B4/LitReview immutable.
+
+## P08-B4.4.2 genuine Vitis operator retry gate — FIRST ATTEMPT HOST STAGING ISSUE FIXED, NO PHYSICAL RUN
+
+On 2026-11-02 operator locally executed the real separate
+B4.4.2 Vitis 2025.2 offline builder, with original accepted
+P03 XSA, 27-core SHA pins and accepted original B2.3 ELF.
+Vitis began but the *Python exact stage admission*
+rightly failed BEFORE new ELF compilation/linking:
+
+    missing={p08_b44_profile_full1024_a53.c,
+             p08_b4_4_profile_reset.c,
+             p08_b4_4_profile_reset.h}
+    extra={p08_b2_3_image_only_a53.c}
+
+Cause is unambiguously in the NEW staging Bash script:
+it retained the original B2.3 A53 main and omitted the
+three new B4.4 main/C/H profiling files. It was NOT
+a compiler, P03 hardware, original model or board problem.
+Original accepted physical B4/B3 data, Vitis B2.3
+ELF and original frozen sources are all unchanged.
+
+Fixed scripts/build_p08_b44_profile_full1024.sh:
+it now COPIES new main/profile_reset.c and .h and does
+NOT copy original production main. It invokes
+Python exact actual-stage inventory
+--check-stage-only with PASS marker
+P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1
+BEFORE first Vitis call. A new native regression
+independently parses the literal Bash cp loops against
+the Python Vitis SOURCES+HEADERS and reproduces
+operator missing/new + unexpected/old case as a
+negative test. Native GitHub Actions PASS
+on new source commit e3ae840744d8a01d101dfff29302f13013b20510.
+The failure directory in external Thesis_Evidence must
+not be overwritten or reused. A NEW genuine Vitis
+2025.2 ELF/map retry on operator machine remains
+PENDING; no profile physical JTAG authorized or run.
+Copyable safe native test/new evidence build commands
+preserved in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+
+P08-B final remaining independent gates unchanged:
+new profile ELF/map SHA and physical DDR memory
+admission, dedicated new source-readback+profile
+capture, independently verified original1024
+26tick x1010 scalar/FNV/spike parity, profiling
+of the mixed 26tick MMIO/paging/trace phase,
+six real coldboot matched-source A-vs-B pairs,
+independent closeout report/user review. Earlier
+A2.1-vs-A2.2 three Track-A pairs are NOT paired
+A-vs-B evidence. Official MNIST TEST sealed;
+power, pure PL speedup and DDR DMA exclusivity
+remain unproven.
+
+## P08-B4.4 new 27-core profiled C + independent Vitis build source READY — native CI PASS, real Vitis JTAG NOT RUN
+
+New B4.4.1 full 27x512KiB immutable/mutable SHA, cache+memcpy
+reset differential source and B4.4.2 distinct original 1024-image
+A53 profile sidecar source are **native CI PASS** on new
+stacked DRAFT PR #54, branch agent/v3-p08-b44-profiling
+based on B4 draft PR #53.
+
+Genuine native GCC test links original UNMODIFIED production
+reset with the NEW portable five-subphase profiler and
+original P07 real SHA256. It compares all 13.5MiB of mutable
+context bytes across two generations and matches the original
+source-SHA-corrupt-before-first-copy poison fault.
+Standalone NEW A53 full1024 profile firmware source passes
+native C11 syntax using declaration-only Xilinx headers
+(no hardware). Profile output 1024x256B has new distinct
+CRC/observed CNTFRQ/27SHA/5-phase+residual per-frame rows
+at the separately proposed [0x42400000,0x42440000)
+DDR region. 1024-row sidecar parser validates exact
+ordered CRC/source-SHA/count/clock/additive fields
+and rejects 11 malformed synthetic cases. No real
+profiled Vitis ELF, JTAG physical copy, additional
+full1024 numerical parity or new profile timing observed.
+
+NEW actual Vitis 2025.2 PC-only source build:
+scripts/build_p08_b44_profile_full1024.sh, with
+software/p08/build_p08_b44_profile_full1024.py.
+They stage the original accepted full P07 B4m/27core C
+under a new outside-repo work directory with new
+A53 profiling entrypoint only; immutable originals
+source/ELF unaffected. The build requires original
+routed P03 XSA SHA
+52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f,
+original 27SHA header SHA
+5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171,
+original full1024 B2.3 ELF SHA
+0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1.
+New scripts/p08_b44_profile_elf_admission.py checks
+distinct experimental genuine AArch64 PT_LOAD ELF, map,
+new identity and terminal, original original ELF/XSA/
+27SHA pins; explicitly DENIES destructive JTAG
+permission, no PS FSBL DMA boot ownership proof.
+Build scripts, native C main syntax and synthetic ELF
+11 adverse cases pass native CI.
+
+OPERATOR NEXT PC-only action: after pulling PR #54,
+source Vitis 2025.2 environment and run
+scripts/build_p08_b44_profile_full1024.sh under
+fresh P08_B44_BUILD_DIR; instructions in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+Do NOT attempt JTAG with newly generated ELF.
+Independent 1024-source same-session physical profiler
+capture verifier for the EXTRA region and original
+neural/FNV/timer journals plus new DDR ownership/reboot
+consents must be developed and independently verified
+before any new destructive profile experiment.
+
+Still pending for P08-B closure: nested 26-tick page/
+MMIO/PL-poll/trace/router microprofiles; six true
+Track A vs B coldboot AB/BA/AB paired sessions at
+matching original 1023 ordinary TRAIN sample identities
+and A53 service scope; signed final P08-B limitations/
+uncertainty report and explicit user acceptance before
+merging drafts #52/#53/#54. Historical Track A
+three A2.1-vs-A2.2 pairs are NOT true paired A-vs-B.
+Different 42-neuron A and 1010-neuron B workloads
+limit performance equivalence; no isolated PL
+speedup/energy, exclusive DDR owner or official TEST
+claims are made. All accepted original B3/B4 physical
+SHA evidence/model/bitstream and LitReview unchanged.
+
+## P08-B4.4.1/B4.4.2 profile source development — original immutable baseline, no new physical JTAG (2026-11-02)
+
+**Scope decision:** user accepted real original B4.2 full1024 physical
+neural/FNV parity and genuine 1023 ordinary-frame A53 six-phase
+timing breakdown, and requested to proceed with finer-grained
+reset + 26tick bottleneck profiling toward P08-B closure.
+Previous real B4.4 signed report:
+`/home/dna/Thesis_Evidence/p08_b4_4_first1024_one_session_descriptive_20261102T191317Z.json`,
+SHA256 **4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81**.
+Original physically observed A53 CNTFRQ 99,999,001Hz,
+1023 ordinary median 13.0341115s; restore original 27
+frozen mutable cores 5.826693s/44.695321% of sum,
+mixed 26tick paging/MMIO/FPGA/trace 6.93507s/53.215729%.
+
+**NEW stacked DRAFT profiling branch** agent/v3-p08-b44-profiling,
+based on accepted source B4 DRAFT PR #53 (itself stacked on
+B3 DRAFT PR #52), in separate DRAFT PR #54.
+Original 33-file B2.4 frozen network, original P03 XSA/bit,
+P07-B, Track A, B3/B4 real physical evidence, original
+SHA-pinned B2.3 A53 ELF/map and root LitReview.md UNCHANGED.
+
+B4.4.1 source assets:
+- software/p08/p08_b4_4_profile_reset.[ch] adds NEW distinct
+  portable C11 reset routine p08_b44_profile_reset_image,
+  preserving original 27x512KiB immutable-before-copy source SHA,
+  destination DDR memcpy/cache/barrier/SHA and original
+  generation/receipt/error poisoning. Five new disjoint
+  microtiming categories: source invalidate, source SHA256,
+  destination memcpy, destination clean/invalidate, destination
+  SHA256; explicit unattributed counter/control remainder.
+  Original p08_b2_context_reset.c/h production source NOT edited.
+- Native real 27x512KiB full record-sized differential
+  tests/native/p08_b44_reset_profile_diff.c +
+  tests/test_p08_b4_4_1_profile_reset_native.py,
+  compare production original and profile reset byte-for-byte
+  over two generations, exact original receipt and first-fault
+  SHA corrupt-before-copy behavior. Portable native tests,
+  no FPGA/TEST.
+
+B4.4.2 SOURCE ONLY:
+- software/p08/p08_b44_profile_full1024_a53.c is separate,
+  distinct identity P08_B44_ORIGINAL_27CORE_RESET_PROFILE_1024_A53_V1;
+  accepted B2.3 ELF/source untouched. Uses original B4.2
+  1024 matched source, 26 ticks, frozen neural/route functions,
+  identical original neural and six-phase timing output
+  destinations. Adds a separate 1024x256B experimental
+  state-reset profile sidecar in [0x42400000,0x42440000)
+  after old image service timestamp, exposing five phases,
+  observed CNTFRQ, 27core immutable/mutable SHA counts,
+  CRC and ordinal. Disjointness asserted relative to
+  original B23 timing/backup/bind/frame map, but boot/
+  firmware/PS/PL DMA OWNER EXCLUSIVITY NOT proven.
+- scripts/p08_b44_reset_profile_sidecar.py +
+  tests/test_p08_b44_reset_profile_sidecar.py
+  strictly check 1024 256B order, SHA counts, CRC,
+  observed clock, additive five spans+residual, selected
+  trace ordinal 1023 exclusion, 11 corruption negatives.
+  It NEVER attests real physical source or neural parity
+  based on a profile sidecar alone.
+- .github/workflows/p08_b44_1_reset_profiling_offline.yml:
+  native no-JTAG original-vs-new profile differential and
+  strict 1024 profile record tests, plus existing source
+  B4.4 genuine first-run descriptive analysis regressions.
+- docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md:
+  operator read-only pull/native tests, mandatory Vitis A53
+  distinct experimental ELF, independent JTAG admission,
+  independent full1024 FNV+spike re-verification and
+  experimental sidecar capture before accepting ANY
+  extra reset phase number.
+
+**No profiling Vitis ELF, no new physical 1024 JTAG and no
+experimental reset bottleneck microbenchmarks have actually
+been produced.** All new C/Python tooling is source-only
+until genuine user-local toolchain, new signed ELF/map,
+independent same-session JTAG session, new strict sidecar
+capture and independent physical provenance/numerical verifier
+exist. Do not use accepted B2.3 original ELF hash as
+new experimental ELF. User must explicitly reapprove any
+destructive B4.4 session and recovery; prior board risk
+acceptance does not authorize silent new run.
+
+**Remaining P08-B closeout gates:**
+(1) genuine Vitis profiling ELF + memory/DDR admission,
+(2) original 1024 neural/FNV parity and signed 27core
+source/readback plus profile sidecar first physical experiment,
+(3) nested 26tick per-operation page/PL dispatch wait/
+trace/route profiling and measurement-intrusion assessment,
+(4) true A vs B (NOT historical A2.1/A2.2 within A)
+six coldboot independent AB/BA/AB sessions on same 1023
+ordinary TRAIN frames, same A53 image-service endpoint
+and actual per-run CNTFRQ, with run-level uncertainty and
+different network complexity explicitly qualified,
+(5) independent P08-B signed closeout report with optional
+profiling data, original sealed MNIST official TEST
+status and separate user acceptance before any merges.
+Power, PL-only speedup and exclusive DDR boot/DMA ownership
+remain UNPROVEN/DEFERRED.
+
+---
+
 ## P08-B4.4 ACCEPTED first full1024 KV260 real 1023 ordinary-image A53 6-phase descriptive timing and optimization targets (2026-11-02)
 
 Operator directly ran the previously CI-passing PC-only

@@ -1,0 +1,51 @@
+name: P08-B44 new 1024 physical reset profile independent gates NO BOARD
+on:
+  push:
+    branches: [agent/v3-p08-b44-profiling]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_physical_run.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_independent_physical_verify.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_profile_full1024_run_and_capture.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_physical.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_a53_status_readonly.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_readonly_a53_diagnostic.py"
+      - ".github/workflows/p08_b44_profile_physical_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_physical_run.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_independent_physical_verify.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_profile_full1024_run_and_capture.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_physical.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b44_a53_status_readonly.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_readonly_a53_diagnostic.py"
+      - ".github/workflows/p08_b44_profile_physical_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  original-1024-new-profile-physical-native-negative-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install native pytest only
+        run: python3 -m pip install -q pytest
+      - name: Syntax NEW original 1024 profile runner/provenance/negative tests
+        run: |
+          python3 -m compileall -q             scripts/p08_b44_profile_physical_run.py             scripts/p08_b44_profile_independent_physical_verify.py             tests/test_p08_b44_profile_physical.py
+      - name: 1024 source numerical FNV and new 5-phase reset CRC/timing tests, Tcl mailbox replay
+        run: |
+          python3 -m pytest -q -rs             tests/test_p08_b44_profile_physical.py             tests/test_p08_b4_2_full1024_physical.py             tests/test_p08_b44_profile_elf_admission.py             tests/test_p08_b44_reset_profile_sidecar.py
+      - name: NO REAL hardware or test set touched
+        run: |
+          echo "P08_B44_NEW_PROFILE_PHYSICAL_SOURCE_AND_1024_CRC_TCL_NEGATIVE_TESTS_PASS=1"
+          echo "P08_B44_NEW_PROFILE_JTAG_OR_DESTRUCTIVE_DDR=NOT_RUN"
+          echo "P08_B44_POST_POWER_CYCLE_TARGET_STATUS_READONLY_DIAGNOSTIC_CI=PASS"
+          echo "P08_B44_FIRST1024_REAL_PROFILE_NUMERICAL_PARITY=NOT_VERIFIED"
+          echo "P08_B44_ORIGINAL_FROZEN_B2_3_ELF=UNMODIFIED"
+          echo "P08_B44_MNIST_TEST=SEALED"
