@@ -182,3 +182,48 @@ def test_unprovisioned_guard_static_and_both_mains_fail_closed():
         assert "P08_B2_CONTEXT_TOTAL" in main
         assert "p08_b2_reset_image(" not in main
         assert "p08_b44_profile_reset_image(" not in main
+
+
+
+def test_shell_pinned_hashes_match_accepted_b23_and_b44_sources():
+    """Avoid mistaken drift from hand-copied literals in the build wrapper.
+
+    Compare the real shell checksum gates with independent accepted source
+    pins, not only with constants duplicated in B4.5 tests.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import p08_b2_3_elf_admission as accepted
+
+    b45 = (ROOT / "scripts/build_p08_b45_variant.sh").read_text()
+    b44 = (ROOT / "scripts/build_p08_b44_profile_full1024.sh").read_text()
+    for source in (b44, b45):
+        source_lines = source.splitlines()
+        sha_header = [
+            line for line in source_lines
+            if 'sha256sum "$PIN_HEADER"' in line
+        ]
+        xsa = [
+            line for line in source_lines
+            if 'sha256sum "$XSA"' in line
+        ]
+        original_elf = [
+            line for line in source_lines
+            if 'sha256sum "$ORIGINAL_ELF"' in line
+        ]
+        manifest = [
+            line for line in source_lines
+            if 'sha256sum "$PIN_MANIFEST"' in line
+        ]
+        assert len(sha_header) == len(xsa) == len(original_elf) == len(manifest) == 1
+        assert re.findall(r"[a-f0-9]{64}", sha_header[0]) == [
+            accepted.EXPECTED_PINS_SHA
+        ]
+        assert re.findall(r"[a-f0-9]{64}", xsa[0]) == [
+            accepted.EXPECTED_XSA_SHA
+        ]
+        assert re.findall(r"[a-f0-9]{64}", original_elf[0]) == [
+            "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1"
+        ]
+        assert re.findall(r"[a-f0-9]{64}", manifest[0]) == [
+            "1d915c36eaf42740bac9e62afae58ffe80c94ae51cbf6c6c809d3fd6e626ce34"
+        ]
