@@ -175,7 +175,7 @@ The 1,024 original neural results match the scalar oracle; all 1,024 reset-profi
 
 **Measured reset-profile results** (actual A53 `CNTFRQ_EL0=99,999,001 Hz`):
 - Overall reset-service median: **5,826.767549 ms**.
-- P95: **5,826.881051 ms**; min 5,826.591948 ms; max 5,827.041923 ms.
+- P95: **5,826.881051 ms**; min 5,826.591948 ms; max 5,827.041922 ms.
 - Mutable 27-core memcpy: 7.0247 ms median (0.12%).
 - Mutable cache clean/invalidate: 1.6885 ms (0.03%).
 - Mutable SHA-256 readback: 2,908.5991 ms (49.92%).
