@@ -16,6 +16,8 @@ on:
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_a53_build.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_auth_once_full1024_a53.c"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_unchecked_full1024_a53.c"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.c"
@@ -25,6 +27,8 @@ on:
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_a53_build.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
       - ".github/workflows/p08_b45_reset_variants_no_board.yml"
   pull_request:
     paths:
@@ -63,7 +67,8 @@ jobs:
         run: |
           python3 -m pytest -q -rs \
             tests/test_p08_b45_a53_build.py \
-            tests/test_p08_b45_elf_admission.py
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py
       - name: Explicitly no board access
         run: |
           echo "P08_B45_RESET_VARIANTS_NATIVE_PASS=1"
