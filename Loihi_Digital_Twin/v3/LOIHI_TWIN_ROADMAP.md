@@ -6,8 +6,8 @@
 A53 applications are implemented. Operator posted a clean local PASS of
 the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
 Current expanded GitHub Actions no-board CI passes those 72 tests plus
-**80** dual-application source/strict-GCC-syntax/synthetic-ELF/sidecar
-tests (152 total; GitHub Actions run `41688244606`, PASS). Draft PR #55
+**81** dual-application source/strict-GCC-syntax/synthetic-ELF/sidecar
+and pinned-SHA-regression tests (153 total; updated no-board CI PASS). Draft PR #55
 is stacked onto open draft PR #54, with no merge authorization.
 The real Vitis 2025.2 **two ELFs/maps are NOT YET BUILT**
 or admitted. No JTAG, DDR write or physical KV260 run has been authorized
