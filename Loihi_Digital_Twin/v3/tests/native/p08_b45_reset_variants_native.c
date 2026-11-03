@@ -139,13 +139,19 @@ static int test_unchecked_content(uint8_t *backup, uint8_t *mutable_bytes) {
     /* Deliberately violate the mock lock to prove this mode does not inspect
      * content. This is a native negative demonstration, never a board action.
      */
-    backup[128] ^= 0x5Au;
-    backup[20] ^= 0x01u;
-    CHECK(p08_b45_reset_image(&s, &r) == P08_B45_RESET_OK);
-    CHECK(memcmp(backup, mutable_bytes, P08_B2_CONTEXT_TOTAL) == 0);
-    CHECK(r.source_header_checks == 0u && r.destination_header_checks == 0u);
-    CHECK(r.session_source_sha_checks == 0u && r.destination_sha_checks == 0u);
-    CHECK(r.copied_records == 27u);
+    {
+        uint8_t saved_payload = backup[128];
+        uint8_t saved_core_id = backup[20];
+        backup[128] ^= 0x5Au;
+        backup[20] ^= 0x01u;
+        CHECK(p08_b45_reset_image(&s, &r) == P08_B45_RESET_OK);
+        CHECK(memcmp(backup, mutable_bytes, P08_B2_CONTEXT_TOTAL) == 0);
+        CHECK(r.source_header_checks == 0u && r.destination_header_checks == 0u);
+        CHECK(r.session_source_sha_checks == 0u && r.destination_sha_checks == 0u);
+        CHECK(r.copied_records == 27u);
+        backup[128] = saved_payload;
+        backup[20] = saved_core_id;
+    }
     return 0;
 }
 static int test_authenticated_once_exposes_lock_dependency(
