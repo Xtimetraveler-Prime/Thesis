@@ -21,7 +21,7 @@ explicitly NOT accepted.
 
 Actual A53 `CNTFRQ_EL0`: **99,999,001 Hz**. Reset-service distribution:
 median **5,826.767549 ms**, nearest-rank P95 **5,826.881051 ms**,
-minimum **5,826.591948 ms**, maximum **5,827.041923 ms**. Five reset
+minimum **5,826.591948 ms**, maximum **5,827.041922 ms**. Five reset
 subphase medians: mutable 27-core memcpy **7.0247 ms** (0.12% of summed
 reset ticks); mutable cache clean/invalidate **1.6885 ms** (0.03%);
 mutable SHA-256 readback **2,908.5991 ms** (49.92%); original immutable
