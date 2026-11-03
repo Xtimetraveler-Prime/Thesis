@@ -137,7 +137,7 @@ def test_real_shell_stage_inventory_exact_and_no_board():
         "p08_b45_elf_admission.py",
         "P08_B45_EXPERIMENTAL_DESTRUCTIVE_JTAG_PERMISSION=NOT_GRANTED",
         "--check-stage-only",
-        "0c2de1656eff897e71d6d4fffe5575db9969baf7d3a7b82a2ec765447d36ee1",
+        "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1",
         "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
     ):
         assert needle in text
