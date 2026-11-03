@@ -58,23 +58,36 @@ target hierarchy. The historical successful B4i session proves
 that the same original fail-closed gate has passed on this board
 after reboot + unloadapp before a fresh XSDB session.
 
-Recommended decision is ONE bounded rerun of the existing
-P07-B4i stop/width gate as a standalone physical checkpoint,
-not a speculative change to the gate and not a full B4.4 run
-yet. This gate stops the Linux-owned A53s (Linux is discarded)
-and reads the two PS width registers, but does NOT program PL,
-transfer DDR sources, download the new profile ELF, or run
-inference. Run only in a dedicated session after confirming
-normal serial recovery and no competing XSDB/Vivado client.
-Require the complete exact four-core accounting and both
-historical 128-bit raw values. If it fails for target missing,
-external-debug denial, or any other unrecognized response:
-STOP, preserve the log, reboot; do not retry repeatedly or
-weaken the gate. If it passes, reboot as its script requires,
-then perform the normal fresh B4.4 preflight and decide whether
-to spend the nine-approval full physical run. A standalone
-B4i PASS is not a guarantee that a later boot/session will
-pass the gate again.
+Given that the user has now completed a full power cycle,
+normal serial boot and `xmutil unloadapp`, I recommend ONE
+bounded retry of the full B4.4 runner, rather than a separate
+standalone B4i test followed by another reboot and duplicate
+B4i test. The B4.4 runner's FIRST physical operation is the
+original P07-B4i stop/width gate. If target selection or any
+A53 halt/accounting fails, it aborts BEFORE accepted P03
+programming, six DDR source transfers, new profile ELF
+download, experimental DDR region overwrite or inference.
+If that first gate passes, the runner proceeds to the already
+preflighted nine-approval experiment; this is why the user
+must still explicitly accept all nine flags and the residual
+DDR-owner risk.
+
+Before launching, use PuTTY `sudo xmutil listapps` to
+confirm no application remains active; if one is active,
+unload it and verify again. AMD documents unloadapp as
+removing the active accelerated application, not unlocking
+A53 debug. Keep the existing hw_server listening (it is the
+XSDB server), but ensure there is no other active XSDB/Vivado
+client; this will be a fresh XSDB client session.
+
+Use a NEW evidence directory and rerun the mandatory
+read-only B4.4 preflight. If the physical attempt fails at
+the B4i gate for missing target, external-debug denial, or
+any other unrecognized response, preserve the log, reboot,
+and STOP. Do not retry repeatedly, change the original gate,
+or write security registers. Any physical attempt requires
+reboot afterward, successful or not. A gate pass in this
+boot does not guarantee a later boot/session will pass again.
 
 No new profile run has been performed. First failed B4.4
 evidence remains immutable; accepted original B4.2 neural
