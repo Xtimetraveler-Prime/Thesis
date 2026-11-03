@@ -1,5 +1,61 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4.2 ACCEPTED — genuine full1024 original 27-context reset microprofiling (2026-11-03)
+
+The operator supplied the output of the separate genuine KV260 profiling
+retry and the subsequent PC-only independent verifier. Successful physical
+evidence root:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_retry_20261103T061707Z`.
+Independent report:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json`,
+operator-supplied SHA256
+`47f25cada89dd9220636fbb9539aba5bf0d7705ea3788fdc3ebd1d85f1145cfa`.
+
+All three genuine independent acceptance checks were reported PASS:
+same-session JTAG provenance; all 1,024 original neural outputs/FNV spike
+fingerprints equal the frozen scalar oracle; and all 1,024 physical reset
+profile rows pass SHA/copy/cache/subspan/counter validation. The selected
+trace ordinal 1023 is excluded from the ordinary distribution, leaving
+1,023 ordinary rows. The paired AB/BA/AB Track A/B benchmark remains
+explicitly NOT accepted.
+
+Actual A53 `CNTFRQ_EL0`: **99,999,001 Hz**. Reset-service distribution:
+median **5,826.767549 ms**, nearest-rank P95 **5,826.881051 ms**,
+minimum **5,826.591948 ms**, maximum **5,827.041923 ms**. Five reset
+subphase medians: mutable 27-core memcpy **7.0247 ms** (0.12% of summed
+reset ticks); mutable cache clean/invalidate **1.6885 ms** (0.03%);
+mutable SHA-256 readback **2,908.5991 ms** (49.92%); original immutable
+cache invalidate **0.8392 ms** (0.01%); original immutable SHA-256
+**2,908.5978 ms** (49.92%). Unattributed counter/control residual median
+**0.0157 ms** (0.00% after rounding). The two SHA scans therefore account
+for approximately **99.84% of measured reset-service ticks**. This is a
+strong measured bottleneck finding: the authenticated reset interval is
+dominated by full-context integrity scans, not by the 27-core memcpy.
+
+Interpretation limits are mandatory: this is an instrumented A53 reset
+profile from one physical session, not PL-only compute time, a speedup,
+energy, or a repeated A/B comparison. Phase percentages are based on
+summed ticks; phase medians must not be added to claim the overall median.
+The extra profile DDR region `[0x42400000,0x42440000)` (262,144 bytes)
+still lacks independent proof of exclusive boot-firmware/PS/RPU/DMA
+ownership. Do not repeat destructive JTAG until a separate memory-owner
+audit, fresh read-only preflight and explicit operator approvals are
+complete. Track B official MNIST TEST remains SEALED.
+
+Full evidence, hashes, limitations and next gate:
+[docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md](docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md).
+Earlier roadmap entries below that describe B4.4 physical capture as pending
+or not yet done are historical snapshots and are superseded by this
+2026-11-03 acceptance entry; their failed-attempt records remain preserved.
+Next proposed work is B4.5 protocol design for six independent physical
+sessions in AB/BA/AB order, with complete matched image-service boundaries
+and run-level reporting. Design/review this protocol before changing
+firmware or touching the board. Track A and B have materially different
+network sizes, so this remains a system/workload comparison, not a
+matched-complexity or pure accelerator speedup.
+
+---
+
 ## P08-B4.4 second read-only target-property scan + historical B4i recovery precedent (2026-11-03)
 
 Operator reports normal PuTTY boot and `sudo xmutil unloadapp`
