@@ -1,5 +1,89 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
+
+**Status:** PC-only portable-C implementation and native validation are in
+development on `agent/v3-p08-b45-reset-integrity`, stacked on the current
+P08-B4.4 profiling branch. No Vitis build, JTAG action, DDR write or physical
+KV260 run has been authorized or performed for B4.5.
+
+The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
+1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
+SHA-256 median **2,908.5978 ms**; destination SHA-256 median
+**2,908.5991 ms**; mutable 27-context memcpy median **7.0247 ms**.
+The two SHA scans account for approximately **99.84% of summed reset ticks**.
+The separate original B4.4 full image-service median was **13,034.111501 ms**.
+These are distinct sessions and must not be subtracted as if paired.
+
+### P08-B4.5.1 — authenticate once, lightweight per-image checks
+
+Authenticate all 27 immutable backup records once at session bind. Require a
+real platform mechanism that establishes persistent exclusive/read-only
+ownership of the entire backup range. On each image, confirm that protection
+remains active, validate all 27 source P02 headers before the first copy,
+perform the original 27-context memcpy/cache/barrier sequence, and validate
+all 27 destination headers. No per-image SHA-256 is permitted. This mode is
+only integrity-defensible if the platform actually prevents backup mutation;
+a software flag or no-op lock callback is not proof.
+
+### P08-B4.5.2 — unchecked-content performance bound
+
+Remove SHA-256, P02-header, CRC and payload-content checks from the reset
+variant. Retain operational safety controls: pointer/range/size admission,
+persistent backup ownership/protection, positive quiescence, cache
+maintenance, barriers, callback error handling, generation accounting and
+fail-stop poisoning after a partial restore. This is an experimental
+performance lower bound, not a production recommendation. Native tests must
+demonstrate that content corruption is intentionally not detected.
+
+### P08-B4.5.3 — separate Vitis builds and offline admission
+
+Build each mode as a distinct A53 ELF with independent source identity,
+Vitis workspace, linker map, ELF/map SHA-256 and PT_LOAD/BSS/heap/stack
+admission. Keep original B2.3 production firmware, accepted P08-B4.4.2
+profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
+unchanged. No variant may silently replace the accepted baseline.
+
+### P08-B4.5.4 — bounded physical validation and full1024 measurements
+
+Only after independent proof of DDR ownership and persistent backup
+protection, fresh read-only preflight, recovery readiness and new explicit
+operator approval: run a bounded 16-image physical pilot for each variant.
+Require exact independent scalar-oracle neural/spike/FNV parity before
+accepting timing. After each pilot passes, run a separately approved
+1,024-image session. Preserve all 1,024 neural rows, isolate selected trace
+ordinal 1023, and use the 1,023 ordinary frames for latency distributions.
+Measure both reset subspan and complete A53 image service with matched
+boundaries and actual per-session `CNTFRQ_EL0`.
+
+The original immutable backup range
+`[0x43000000,0x43D80000)` and B4.4 profiling sidecar range
+`[0x42400000,0x42440000)` still require a complete runtime ownership audit
+covering boot firmware, TF-A, U-Boot, Linux, RPU, PL DMA and other masters.
+Static non-overlap is insufficient. If ownership/protection cannot be
+established, stop and redesign. No official MNIST TEST access.
+
+### P08-B4.5.5 — differential analysis and closeout
+
+Compare baseline, authenticated-once and unchecked-content variants using
+separately pinned builds and accepted evidence. Report neural parity,
+reset latency, complete image-service latency, instrumentation perturbation,
+integrity guarantees and failure modes. Do not call the unchecked result a
+safe optimization or infer PL-only speedup.
+
+### P08-B4.6 — repeated paired Track A/Track B system comparison
+
+The previously proposed six independent physical sessions in AB/BA/AB
+order move here, after B4.5. Use the same frozen 1,024-image population,
+1,023 ordinary frames per run, selected trace ordinal 1023 isolated,
+complete matched image-service boundaries, actual per-run A53 frequency,
+cold-boot/recovery accounting and run-level uncertainty. Track A (42
+neurons/26 dispatches) and Track B (1,010 neurons/702 dispatches) are
+different workloads; this is a system/workload comparison, not matched
+complexity or pure FPGA speedup.
+
+---
+
 ## P08-B4.4.2 ACCEPTED — genuine full1024 original 27-context reset microprofiling (2026-11-03)
 
 The operator supplied the output of the separate genuine KV260 profiling
@@ -47,12 +131,14 @@ Full evidence, hashes, limitations and next gate:
 Earlier roadmap entries below that describe B4.4 physical capture as pending
 or not yet done are historical snapshots and are superseded by this
 2026-11-03 acceptance entry; their failed-attempt records remain preserved.
-Next proposed work is B4.5 protocol design for six independent physical
-sessions in AB/BA/AB order, with complete matched image-service boundaries
-and run-level reporting. Design/review this protocol before changing
-firmware or touching the board. Track A and B have materially different
-network sizes, so this remains a system/workload comparison, not a
-matched-complexity or pure accelerator speedup.
+Next work is **P08-B4.5 reset-integrity optimization**: compare
+one-time authenticated restoration with lightweight per-image header checks
+against an unchecked-content performance-bound variant. Preserve the accepted
+full-SHA implementation as the reference. The previously proposed six-session
+paired Track A/Track B protocol is renumbered **P08-B4.6** and follows B4.5.
+No new physical run is authorized until the full DDR ownership/protection
+audit and fresh operator approvals are complete. Track A and B remain
+materially different workloads, not a matched-complexity comparison.
 
 ---
 
@@ -4142,7 +4228,7 @@ Track A's 94.56% *official TEST* from Track B's 97.08%
 
 # P08 — Independent physical baseline and scaling measurements
 
-**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED).** This satisfies the user-approved entry gate to **P06-B1 SCALED PACKING FIRST**, then P06-B2 separate checkpoint, P07-B physical virtualization and P08-B scaled measurements. **P08-B NOT YET STARTED.**
+**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED). P08-B SCALED TRACK IS ACTIVE:** P07-B physical acceptance and P08-B4.1/B4.2/B4.4/B4.4.2 results are recorded above; P08-B4.5 reset-integrity optimization is the active next milestone; P08-B4.6 paired Track A/Track B comparison follows. Power/energy remain deferred and official Track B MNIST TEST remains sealed.
 
 ## P08-A — Compact physical KV260 latency baseline
 
@@ -4164,26 +4250,21 @@ For the active Track A **physical latency** study, collect actual A53 per-frame 
 
 ## P08-B — Scaled physical resource/traffic/energy study
 
-Repeat the same measurement method for the
-frozen scaled model. In addition, record
-logical core count, 3 resident slots,
-actual HLS dispatches, per-core paging
-hits/misses/evictions, bytes moved, routed
-packet fanout/barrier time, event-bank
-occupancy and resource mapping across
-all cores; compare these against P08-A.
+Repeat the same measurement method for the frozen scaled model. In addition,
+record logical core count, three resident slots, actual HLS dispatches,
+per-core paging hits/misses/evictions, bytes moved, routed packet
+fanout/barrier time, event-bank occupancy and resource mapping across all
+cores; compare these against P08-A.
 
-Report *two different model sizes and
-checkpoints*: improvements in classification
-accuracy and costs from model scaling
-are not pure FPGA architecture speedups.
-Avoid claiming direct Intel Loihi
-power/latency comparisons where workload
-or scope differs. An extra physical
-engine is a **deferred, optional**
-optimization only after one-engine
-baseline and scaled bottlenecks are measured.
+The active reset-integrity sequence is P08-B4.5. The repeated paired
+Track A/Track B comparison is P08-B4.6 and follows the two reset variants.
 
+Report two different model sizes and checkpoints: improvements in
+classification accuracy and costs from model scaling are not pure FPGA
+architecture speedups. Avoid claiming direct Intel Loihi power/latency
+comparisons where workload or scope differs. An extra physical engine is a
+deferred, optional optimization only after one-engine baseline and scaled
+bottlenecks are measured.
 ---
 
 # P09 — Thesis comparison and closure
