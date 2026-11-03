@@ -1,5 +1,32 @@
 # P08-B4.4.2 — NEW original full1024 reset-profile physical run
 
+## CURRENT STATUS — B4.4.2 physical profile ACCEPTED (2026-11-03)
+
+A later, separate physical retry completed the original 1,024-image profiled
+run and passed the independent PC-only verifier. Preserve the successful
+evidence root:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_retry_20261103T061707Z`.
+The independent report is
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json`,
+operator-supplied SHA256
+`47f25cada89dd9220636fbb9539aba5bf0d7705ea3788fdc3ebd1d85f1145cfa`.
+The accepted markers are same-session JTAG provenance PASS, original
+1,024 neural/FNV scalar parity PASS, and all 1,024 real reset-profile
+SHA/copy/cache/subspan/counter checks PASS. The paired AB/BA/AB benchmark
+remains NOT accepted. See
+`P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md` for exact statistics and
+interpretation.
+
+The first failed attempt documented below is historical and remains
+preserved at its original evidence path. It must not be reused or mistaken
+for the successful retry. The completed B4.4.2 experiment does not prove
+PL-only neural time, speedup, energy, or exclusive PS/firmware/RPU/DMA
+ownership of the extra profile DDR region. The mandatory post-JTAG reboot
+must be complete before any later board work; never resume a halted Linux
+session. Do not repeat B4.4.2 merely to reproduce the accepted report.
+
+---
+
 ## FIRST operator REAL JTAG attempt at 2026-11-02T20:17:05Z — FAIL-CLOSED before original P03/DDR/ELF
 
 The user ran the read-only preflight and its output was PASS,
@@ -60,20 +87,37 @@ debug security state with documented NON-DESTRUCTIVE methods
 before requesting another dedicated attempt. The A53 primary
 was stopped so no old Linux session should be resumed.
 
-The accepted original B4.2 1024 same-session proof, first 1023
-ordinary image timing and new genuine Vitis profile ELF/map
-SHA remain unchanged. B4.4 NEW real 1024 reset phase capture is
-still NOT DONE; do not run post-run independent profiler against
-this failed evidence root.
+At the time of this historical failed first attempt, the new B4.4
+reset-profile capture had not been performed. This failed evidence root
+remains a preserved NO-GO and was never used for independent acceptance.
+The later successful retry is a separate evidence root documented in the
+current status block above.
 
 ---
 
-STATUS: NEW offline Vitis original B2.4 profile ELF/map/ELF-admission have
-GENUINELY PASSED on operator PC. New JTAG source and independent
-physical verifier native CI have passed ONLY on synthetic input; NO
-NEW profile physical run has been performed or accepted. The original
-B2.3 Vitis ELF and accepted B4.2 full1024 physical evidence remain
-IMMUTABLE. Official MNIST TEST remains SEALED.
+## CURRENT ACCEPTANCE STATUS (2026-11-03)
+
+The genuine new profile ELF/map and offline ELF admission passed. A
+separate new physical retry completed all 1,024 images and the operator
+ran the independent PC-only physical verifier after the physical session.
+The operator supplied these markers:
+
+```text
+P08_B44_NEW_RESET_PROFILE1024_INDEPENDENT_SAME_SESSION_JTAG_PROVENANCE_PASS=1
+P08_B44_NEW_RESET_PROFILE1024_ORIGINAL_1024_NEURAL_FNV_SPIKE_PARITY_PASS=1
+P08_B44_NEW_RESET_PROFILE1024_ALL_1024_REAL_SHA_COPY_CACHE_SUBSPAN_COUNTERS_PASS=1
+P08_B44_NEW_RESET_PROFILE1024_NEW_PAIRED_AB_BA_AB_BENCHMARK_ACCEPTED=0
+```
+
+Successful retry root:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_retry_20261103T061707Z`.
+Independent report:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json`,
+SHA256 `47f25cada89dd9220636fbb9539aba5bf0d7705ea3788fdc3ebd1d85f1145cfa`.
+The exact measured reset statistics and caveats are recorded in
+`P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`. Original B2.3 production
+ELF/map, accepted B4.2 baseline, P03 shell and frozen B2.4 source remain
+unchanged. Official MNIST TEST remains SEALED_NOT_ACCESSED.
 
 ## Frozen provenance and new genuine operator build hashes
 
