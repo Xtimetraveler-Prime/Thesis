@@ -34,26 +34,26 @@ no claim that restart is required. Latest operator didn't
 provide `xmutil listapps` output, so active app removal
 status isn't independently confirmed.
 
-**Bounded next recommendation:** One standalone run of the
-existing ORIGINAL P07-B4i stop/width gate as a physical
-checkpoint, not immediate full B4.4 profiler retry and
-not repeated open-ended diagnosis. It uses filtered
-`targets -set -filter` for Cortex-A53 #0..3, unlike the
-unfiltered read-only target listing, so the latter alone
-doesn't prove that direct filtered selection will fail.
-It stops Linux-owned A53 cores (Linux session is discarded)
-and reads only PSU FPD/LPD width registers; NO P03
-programming, six DDR source transfers, new profile ELF
-download, new DDR region or inference. Require exact
-all-four-core accounting and both historical 128-bit
-raw values. If any missing-target/external-debug/other
-unexpected failure, preserve log and STOP; no repeated
-tries, no weakening original fail-closed gate. If it
-passes, follow its mandatory reboot, then run fresh
-B4.4 read-only preflight and decide on the separately
-nine-approved full profile experiment. Standalone B4i
-pass does not guarantee the next boot's B4.4 takeover
-will pass again.
+**Bounded next recommendation:** one full B4.4 physical retry
+is reasonable after confirming no active app via PuTTY
+`sudo xmutil listapps` (if active, unload then verify) and
+ensuring no competing XSDB/Vivado client. Do NOT kill
+hw_server merely because it is listening; the prior ledger
+does not say it was restarted. The full B4.4 runner's FIRST
+physical action is the original fail-closed P07-B4i gate,
+which uses filtered `targets -set -filter` selection
+(different from the unfiltered read-only target list).
+If target selection or any A53 stop/accounting fails,
+the runner aborts BEFORE P03 programming, six DDR source
+transfers, new ELF download, experimental DDR overwrite
+or inference. If it passes, the runner proceeds only with
+the nine explicit operator approvals and acknowledged
+unproven DDR-owner risk. Use a NEW evidence directory and
+rerun mandatory read-only B4.4 preflight. If the gate
+fails for missing target, external-debug denial or any
+unexpected response, preserve logs, reboot and STOP;
+no repeated attempts or gate weakening. Any attempt
+requires reboot afterward, successful or not.
 
 See exact details and operator next command in
 `docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md`.
