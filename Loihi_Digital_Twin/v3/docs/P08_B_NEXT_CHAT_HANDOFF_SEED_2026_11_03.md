@@ -1,23 +1,23 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-03; B4.4.2 physically accepted)
 
-> **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 planning.
+> **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 reset-integrity optimization.
 
 ## 0. Immediate instructions to the next assistant
 
 We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
 
-**Current work branch:** `agent/v3-p08-b44-profiling`  
-**Current PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” currently **OPEN / DRAFT / UNMERGED**. It is stacked on PR #53's branch, not directly on `main`.  
-**Current dependency stack (snapshot 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three were open drafts at the time this seed was written. PR #52 head was `6fbf748a7987c4f173c4070dc27b78fc01329683`, PR #53 head/base for #54 was `235c3eef2672706e6c784b344ae29c1bc6e50f3a`, and PR #54 head was `a9c7e4e2a1f84988b27152c1439e3855535a577e` before any further updates. Recheck live PRs; do not assume these SHAs remain current.  
-**Do not merge any PR unless the user explicitly authorizes it.** The user normally verifies the branch locally before authorizing integration. If the user authorizes merging this stack, preserve dependency order: merge #52 to `main`, then retarget/merge #53 to `main`, then retarget/merge #54 to `main`, verifying each merge. Only after the required parents are integrated should a fresh B4.5 branch be created from updated `main`. If the user wants B4.5 work before the stack is merged, explicitly confirm the intended parent branch and create a stacked branch from the current top; do not silently branch from stale `main`.
+**Current work branch:** `agent/v3-p08-b45-reset-integrity`, created from the live PR #54 head `1669eec7b4b520a32f717d3276b042e3b9ea1929`. This is intentionally stacked on the current P08-B4.4 profiling branch, not on stale `main`.  
+**Current parent PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” still **OPEN / DRAFT / UNMERGED**.  
+**Dependency stack (rechecked 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three remain open drafts. PR #52 head: `6fbf748a7987c4f173c4070dc27b78fc01329683`; PR #53 head: `235c3eef2672706e6c784b344ae29c1bc6e50f3a`; PR #54 head at B4.5 branch creation: `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Recheck live PRs and branch heads before acting. No B4.5 PR has been opened yet.  
+**Do not merge any PR unless the user explicitly authorizes it.** Keep the dependency chain intact. The new B4.5 branch deliberately includes the #52/#53/#54 ancestry; do not rebase it onto stale `main` or merge the parent stack without user authorization.
 
-The latest docs-only changes on this branch record the operator's genuine B4.4.2 physical acceptance and create this seed. They have **not yet been locally pulled and regression-tested by the user**. Do not claim those tests have run. Give the user exact terminal commands after every substantive code change and wait for their verification before advancing. Distinguish native tests, CI, operator-supplied evidence, and actual physical acceptance.
+The B4.4.2 physical result is accepted, but the user has not yet locally verified the B4.4 regression suite on their workstation. The new B4.5 branch adds portable-C experimental variants, native tests, a no-board workflow and the B4.5 protocol. Those new native tests and the inherited B4.4 regression suite must be run locally; do not claim they passed. Distinguish native tests, CI, operator-supplied evidence, and physical acceptance.
 
 **First actions in a fresh chat:**
-1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
-2. Check the live status/head of PR #54 and branch `agent/v3-p08-b44-profiling`; do not assume this seed's branch head is still current.
-3. Give the user the pull/test commands in Section 9 and wait for their output.
-4. Do **not** start another destructive JTAG run. The next task is to design/review B4.5's experiment and memory-ownership proof before any new hardware approval.
+1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
+2. Check live PR #52/#53/#54 status and branch `agent/v3-p08-b45-reset-integrity` head; do not assume these SHAs remain current.
+3. Give the user the Section 9 pull/test commands and wait for their exact output.
+4. Continue PC-only B4.5 development after the inherited B4.4 regression and new native variant tests pass. Do **not** start a Vitis build or destructive JTAG/DDR run until the full memory-owner/protection audit, ELF admission, recovery plan and fresh explicit operator approval are complete.
 
 GitHub connector tools may be available through `functions.exec` as `tools.mcp__GitHub__*`. Use them for repository reads/writes and verify the actual commit/PR state. A repository commit does not mean local native tests or board tests passed.
 
@@ -199,37 +199,65 @@ It failed closed at the inherited A53 #1 stop gate with “External debug access
 
 **Limitations:** one instrumented physical profiling session; no accepted six-session paired A/B benchmark; no PL-only neural time, pure speedup, energy result, or independent boot-firmware/PS/RPU/DMA exclusive-DDR-owner proof. Experimental profile region `[0x42400000,0x42440000)` (262,144 bytes) still has unproven exclusive ownership. Track B official MNIST TEST remains sealed.
 
-## 4. Next work — proposed P08-B4.5 and B4.6
+## 4. Next work — P08-B4.5 reset-integrity optimization, then P08-B4.6 paired A/B
 
-The next working milestone is **P08-B4.5: design and execute a genuine repeated paired Track A/Track B service comparison**. The exact B4.5 numbering should be checked against the roadmap before implementation; it is a working label carried forward from the previous planning discussion.
+P08-B4.4.2 is physically accepted and remains the full-SHA reference. The
+new P08-B4.5 milestone compares two separately versioned reset variants.
 
-### B4.5 first: protocol design and review, PC-only
+### P08-B4.5.1 — authenticate once, lightweight per-image checks
 
-Before code or hardware:
-1. Read `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md` and `docs/P08_A3_2_3_REPEATED_LATENCY_PROTOCOL.md`; reconcile exact A/B boundaries and the six-session plan.
-2. Define **six independent physical sessions** arranged as three counterbalanced pairs: **AB / BA / AB**. Each session needs independently controlled cold boot/recovery and an immutable run ID. Report run-level distributions; do not pool away session variation.
-3. Use the exact frozen matched 1,024 TRAIN-derived source identities and the same ordering. Analyze **1,023 ordinary images** per session; isolate selected trace ordinal 1023 from ordinary latency distributions.
-4. Record each run's actual `CNTFRQ_EL0`, monotone raw `CNTVCT_EL0` timestamps, 1023 ordinary per-image service distribution, P50/P95/min/max, and run-level uncertainty. Preserve CRC/SHA/terminal evidence and original source/ELF/bitstream identities.
-5. Match complete image-service boundaries. A starts before ingress and ends after durable result journal commit. B must include complete 27-context restore, ingress, scheduler/pager re-init, 26 ticks, 702 dispatches, routing, physical trace reads needed for parity, receipt validation and durable journal commit. Do not omit reset, trace or result work to make B look faster.
-6. Keep P03/PL cycle counters in their own clock domain. Do not divide PL cycles by A53 CNTFRQ or call a mixed A53 phase “PL compute”.
-7. State the comparison correctly: A is 42 neurons/26 dispatches; B is 1,010 neurons/702 dispatches plus 27-core virtualization/reset. Even repeated AB/BA/AB results compare two complete system/workload configurations, **not matched-complexity neural execution or a pure FPGA acceleration ratio**.
-8. Include instrumentation perturbation: the original B4.2 production ELF, the new B4.4 profiler ELF and any future image-only/detailed instrumentation candidates are different binaries. Pin each ELF/map SHA and define which one is used in each run. Do not silently substitute the profiling ELF for the original baseline.
+- Establish persistent, exclusive, read-only ownership/protection of the
+  immutable 27×512KiB backup range.
+- Authenticate all 27 original P02 records with SHA-256 once at session bind.
+- For each image, confirm the protection is still active, check all 27 source
+  headers before the first write, restore all 27 records, perform the original
+  cache maintenance/barriers, and check all 27 destination headers.
+- No per-image SHA-256 checks. A post-bind payload mutation is not detectable
+  by header checks; the real protection mechanism is therefore essential.
 
-### Mandatory memory-owner/safety gate before any new board experiment
+### P08-B4.5.2 — unchecked-content performance bound
 
-The B4.4.2 profile used an additional 262,144-byte DDR region at `0x42400000`, but independent exclusive ownership by boot firmware, TF-A, U-Boot, Linux, RPU and DMA masters remains unproven. A static non-overlap map does not establish runtime ownership. Before any new destructive JTAG/DDR run:
-- audit the full PS/PL DDR map, all ELF PT_LOAD/BSS/heap/stack envelopes, and every physical buffer touched;
-- establish or explicitly bound ownership by all relevant boot/runtime/DMA masters;
-- enumerate every region overwritten and all recovery consequences;
-- create a new read-only preflight and new evidence directory;
-- obtain fresh explicit operator approval for each destructive action;
-- reboot/power-cycle after every destructive JTAG attempt; never resume the halted Linux session.
+- No SHA-256, P02-header, CRC or payload-content validation in the reset path.
+- Keep pointer/range/size admission, persistent backup ownership/protection,
+  quiescence, cache maintenance, barriers, callback error handling and
+  fail-stop poisoning. This removes content-integrity checks, not operational
+  safety controls.
+- Treat it only as a diagnostic lower-bound experiment, not production code.
 
-If ownership cannot be proved or safely bounded, stop and redesign. Do not repeat B4.4.2 merely to reproduce the result. Do not weaken P07-B4i A53 halt/power-down admission or alter secure-debug settings speculatively.
+### Shared B4.5 execution gates
 
-### B4.6 — evidence consolidation and P08-B closeout (after B4.5)
+1. Run inherited B4.4 regression tests and new strict C11 native tests.
+2. Prove that the physical backup region remains exclusively owned and
+   immutable for the whole session. A native mock callback or no-op is not
+   hardware evidence.
+3. Build separate genuine Vitis A53 ELF/map artifacts for each variant and
+   independently audit PT_LOAD/BSS/heap/stack and DDR ranges.
+4. Only after fresh read-only preflight, recovery readiness and new explicit
+   approval, run a bounded 16-image physical pilot per variant. Require
+   exact independent scalar output/spike/FNV parity.
+5. After each pilot passes, run a separately approved 1,024-image session.
+   Keep trace ordinal 1023 separate from the 1,023 ordinary timing frames.
+   Record reset subspan and complete A53 image-service time with actual
+   per-session CNTFRQ and unchanged service boundaries.
+6. Keep original B2.3, accepted B4.4.2 profiler, P03 shell, B2.4 assets,
+   model and official TEST immutable.
 
-Consolidate B3/B4.1/B4.2/B4.4/B4.5 evidence, artifact hashes, run-level distributions, reset/paging/traffic counters, limitations, and reproducibility instructions. Separate measured, modeled, operator-attested, and untested items. P08-B closeout should state whether power/energy was measured (currently no), preserve TEST sealed, and produce the P09 thesis-comparison handoff. Do not claim a hardware speedup or energy advantage unless the accepted measurements actually support it.
+The additional profile region `[0x42400000,0x42440000)` and immutable backup
+range `[0x43000000,0x43D80000)` have unresolved runtime ownership. Audit
+FSBL/boot firmware, TF-A, U-Boot, Linux, RPU, PL DMA and all other masters.
+Static non-overlap is not enough. If ownership/protection cannot be proved,
+stop and redesign. No B4.5 physical run is authorized by the earlier B4.4.2
+approval.
+
+### P08-B4.6 — repeated paired Track A/Track B system comparison
+
+After B4.5 closes, conduct the previously proposed six independent physical
+sessions in AB/BA/AB order, with the same frozen 1,024 TRAIN-derived images,
+1,023 ordinary frames, trace ordinal 1023 isolated, complete matched
+image-service boundaries, per-run A53 CNTFRQ, cold-boot/recovery accounting
+and run-level uncertainty. Track A (42 neurons/26 dispatches) and Track B
+(1,010 neurons/702 dispatches) are different workloads; this is a system/
+workload comparison, not matched-complexity or pure FPGA speedup.
 
 ## 5. Immutable evidence and important local paths
 
@@ -307,19 +335,22 @@ Do not overwrite/rebuild these original artifacts or replace the accepted P03 sh
 
 ## 9. First local pull and regression commands
 
-The current B4.4 docs are on the existing PR #54 branch. Run these commands on the operator workstation:
+The active development branch is stacked on the current PR #54 head. Pull it
+without changing the parent PR branches:
 
 ```bash
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch agent/v3-p08-b44-profiling
-git pull --ff-only origin agent/v3-p08-b44-profiling
+git switch --track origin/agent/v3-p08-b45-reset-integrity 2>/dev/null || \
+  git switch agent/v3-p08-b45-reset-integrity
+git pull --ff-only origin agent/v3-p08-b45-reset-integrity
 git rev-parse HEAD
 
 source ~/Git/Thesis/.venv-p08/bin/activate
 cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 
+# First close the inherited B4.4 local-verification gate.
 PYTHONPATH="$PWD/src" python -m pytest -q -rs \
   tests/test_p08_b44_profile_physical.py \
   tests/test_p08_b4_2_full1024_physical.py \
@@ -327,23 +358,30 @@ PYTHONPATH="$PWD/src" python -m pytest -q -rs \
   tests/test_p08_b44_profile_elf_admission.py \
   tests/test_p08_b44_build_offline.py
 
-sha256sum "$HOME/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json"
+# Then run the new B4.5 strict native reset-variant test.
+PYTHONPATH="$PWD/src" python -m pytest -q -rs \
+  tests/test_p08_b45_reset_variants.py
 ```
 
-If the branch is not already local, use `git switch --track origin/agent/v3-p08-b44-profiling` instead of the first `git switch`. Do not switch to `main` while reviewing PR #54. The test suite above is PC-only and must not touch the KV260. The operator should report the exact pytest summary and report hash; do not invent a test count or assume it passed.
+These are PC-only tests. They do not contact the KV260, open XSDB, program
+the PL or write physical DDR. Report the exact pytest summaries and commit
+SHA. Do not claim a local pass until the user supplies the output.
 
-After the user explicitly authorizes integration, merge the full dependency stack in order (#52 → #53 → #54), retargeting each child PR to `main` after its parent is merged where required. Verify each merge and fetch updated `main`. Only then create a new branch for B4.5, e.g.:
+The new B4.5 source files are:
+- `software/p08/p08_b45_reset_variants.{h,c}`
+- `tests/native/p08_b45_reset_variants_native.c`
+- `tests/test_p08_b45_reset_variants.py`
+- `.github/workflows/p08_b45_reset_variants_no_board.yml`
+- `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`
 
-```bash
-cd ~/Git/Thesis
-git fetch origin
-git switch main
-git pull --ff-only origin main
-git rev-parse HEAD
-git switch -c agent/v3-p08-b45-paired-benchmark
-git push -u origin agent/v3-p08-b45-paired-benchmark
-```
+The portable source prototype is not yet integrated into either A53 main,
+has no genuine Vitis ELF/map, and has not run on hardware. After local tests
+pass, the next subtask is a PC-only review of the source-lock interface and
+integration design. A physical implementation must provide a real platform
+protection/ownership mechanism; a no-op callback is prohibited.
 
-Do not execute this branch creation until PRs #52, #53 and #54 have been explicitly authorized, integrated in dependency order and verified. Begin B4.5 with protocol/memory-owner design and PC-only review, not a board run.
+Do not merge PRs #52/#53/#54 or the new B4.5 branch without explicit user
+authorization. Preserve the stack dependency order and verify each merge.
+Official MNIST TEST remains sealed.
 
-**End of handoff seed. The next concrete task is B4.5 protocol design, following local verification of the B4.4 documentation branch.**
+**End of handoff seed. The immediate task is local verification of the inherited B4.4 regression suite and new B4.5 native variant test; physical work remains blocked by DDR ownership/protection proof.**
