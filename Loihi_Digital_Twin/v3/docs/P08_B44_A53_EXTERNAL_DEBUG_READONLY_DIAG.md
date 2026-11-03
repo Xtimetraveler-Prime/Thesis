@@ -1,5 +1,88 @@
 # P08-B44 post-power-cycle external-debug-disabled A53 #1: read-only diagnostics
 
+## 2026-11-03 second read-only snapshot after operator ran xmutil unloadapp
+
+Operator says normal PuTTY boot remains good and ran
+`sudo xmutil unloadapp` while PC `hw_server` process
+was still running. New read-only XSDB snapshot:
+
+- `targets`: ONLY PS TAP, PMU, PL.
+- `targets -target-properties`: exactly those same 3 targets,
+  with no PSU/APU/RPU/A53 processor contexts.
+- `jtag targets`: xck26 idcode 04724093 and arm_dap idcode 5ba00477.
+- ARM DAP target properties: `is_open=1`, `is_active=1`.
+- The two ARM DAP properties mean XSDB has an open/active
+  JTAG DAP node; they do NOT prove the PS debug gates permit
+  processor target discovery or that A53 debug is enabled.
+- No processor, register, DDR or PL writes in this observer.
+
+Exact user read-only log:
+`/home/dna/Thesis_Evidence/p08_b44_a53_properties_readonly_20261103T060320Z.log`
+SHA256:
+`54739cab92716c665939ffb5038e68a3b68a6907ea76b7c53a36588c6ce2080c`.
+
+**Repository historical precedent discovered (important):**
+the October 22 original P07-B4i real KV260 stop/width pass ledger
+`docs/P07_B4I_2026_10_22_PHYSICAL_TAKEOVER_WIDTH_PASS_LEDGER.json`
+records the successful order as **KV260 reboot, then
+`sudo xmutil unloadapp`, then a new XSDB JTAG session**.
+The user-reported real results in that same ledger were:
+A53 #0 STOP PASS; A53 #1 STOP PASS; A53 #2/#3 exact powered-down
+observations; PSU selected; FPD raw 0x00000A00 (128-bit);
+LPD raw 0x00000200 (128-bit); and
+`P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1`.
+It explicitly says this was CPU takeover/width admission only,
+NOT PL programming, ELF download, DDR access or inference.
+The source was committed in historical P07-B4j change
+`ca3babc3eb27debe1dc9510595ddea58e8a7529d`.
+
+AMD UG1089 documents `xmutil unloadapp` as removing the
+currently loaded accelerated application before switching
+applications; it is an application/PL bitstream lifecycle
+operation, not a documented A53 debug unlock. The operator's
+latest report does not include `xmutil listapps` output, so
+whether an active application was present and successfully
+removed is not independently confirmed. Keeping the PC
+`hw_server` listening is not itself evidence of a second
+XSDB/Vivado client; the read-only observer connects and
+disconnects as a separate XSDB client. The historical ledger
+does not record whether `hw_server` was restarted, so do not
+claim a restart is required.
+
+**Bounded next action (not an automatic full-run go):**
+Do not infer failure solely from the unfiltered `targets`
+inventory. The original B4i takeover script uses direct filtered
+selection `targets -set -filter {name =~ "Cortex-A53 #i"}`;
+this is a different operation from listing only the current
+target hierarchy. The historical successful B4i session proves
+that the same original fail-closed gate has passed on this board
+after reboot + unloadapp before a fresh XSDB session.
+
+Recommended decision is ONE bounded rerun of the existing
+P07-B4i stop/width gate as a standalone physical checkpoint,
+not a speculative change to the gate and not a full B4.4 run
+yet. This gate stops the Linux-owned A53s (Linux is discarded)
+and reads the two PS width registers, but does NOT program PL,
+transfer DDR sources, download the new profile ELF, or run
+inference. Run only in a dedicated session after confirming
+normal serial recovery and no competing XSDB/Vivado client.
+Require the complete exact four-core accounting and both
+historical 128-bit raw values. If it fails for target missing,
+external-debug denial, or any other unrecognized response:
+STOP, preserve the log, reboot; do not retry repeatedly or
+weaken the gate. If it passes, reboot as its script requires,
+then perform the normal fresh B4.4 preflight and decide whether
+to spend the nine-approval full physical run. A standalone
+B4i PASS is not a guarantee that a later boot/session will
+pass the gate again.
+
+No new profile run has been performed. First failed B4.4
+evidence remains immutable; accepted original B4.2 neural
+parity and ordinary timing remain accepted; new B4.4 reset
+microprofile physical evidence remains NOT RUN.
+
+---
+
 ## 2026-11-02 RECORDED genuine post-power-cycle PS TAP, PMU, PL-only XSDB target inventory
 
 Operator explicitly confirms **normal PuTTY boot after full KV260 power cycle**.
