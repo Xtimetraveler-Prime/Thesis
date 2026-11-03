@@ -18,6 +18,13 @@ on:
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
+      - ".github/workflows/p08_b45_reset_variants_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.h"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b45_reset_variants_native.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_reset_variants.py"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_auth_once_full1024_a53.c"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_unchecked_full1024_a53.c"
       - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.c"
@@ -29,13 +36,6 @@ on:
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
-      - ".github/workflows/p08_b45_reset_variants_no_board.yml"
-  pull_request:
-    paths:
-      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.c"
-      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.h"
-      - "Loihi_Digital_Twin/v3/tests/native/p08_b45_reset_variants_native.c"
-      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_reset_variants.py"
       - ".github/workflows/p08_b45_reset_variants_no_board.yml"
 permissions:
   contents: read
