@@ -31,6 +31,14 @@ jobs:
           python-version: "3.12"
       - name: Install pytest
         run: python3 -m pip install -q pytest
+      - name: Inherited B4.4 physical-source and timing regressions
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py
       - name: Strict C11 native differential tests
         run: python3 -m pytest -q -rs tests/test_p08_b45_reset_variants.py
       - name: Explicitly no board access
