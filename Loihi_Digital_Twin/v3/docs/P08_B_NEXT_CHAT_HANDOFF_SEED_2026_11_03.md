@@ -11,6 +11,21 @@ We are developing a **Loihi-inspired neuromorphic architectural digital twin** o
 **Dependency stack (rechecked 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three remain open drafts. PR #52 head: `6fbf748a7987c4f173c4070dc27b78fc01329683`; PR #53 head: `235c3eef2672706e6c784b344ae29c1bc6e50f3a`; PR #54 head at B4.5 branch creation: `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Recheck live PRs and branch heads before acting. **Current B4.5 draft PR #55** targets `agent/v3-p08-b44-profiling`, the PR #54 head branch. It remains open/draft/unmerged.  
 **Do not merge any PR unless the user explicitly authorizes it.** Keep the dependency chain intact. The new B4.5 branch deliberately includes the #52/#53/#54 ancestry; do not rebase it onto stale `main` or merge the parent stack without user authorization.
 
+**New B4.5 operator feedback (2026-11-03):** The operator ran the expanded
+82-test B4.5 source/ELF/sidecar suite locally and displayed all passing
+dots. The subsequent B4.5.1 offline Vitis build stopped at a pinned SHA
+gate before Vitis; the B4.5 shell script had mistakenly copied a *wrong*
+expected 27-core B2.2 header SHA. The corrected accepted expected header
+SHA is `5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+The script is corrected and a regression now compares all B4.5 shell
+pinned hashes against accepted B2.3/B4.4 sources. The updated
+`docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md` includes
+complete environment exports, `find` discovery, and SHA checks.
+**No genuine Vitis B4.5 ELF/map has been completed yet.** The operator
+requests that EVERY future build/test instruction include all required
+`export` commands, or specific `find` commands plus their assignment.
+Do not assume persistent environment variables across terminals.
+
 The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 80 expanded source/synthetic tests (152 total) with NO BOARD. The user has NOT yet run these 80 expanded tests locally or built either genuine Vitis A53 ELF/map. Do not claim physical A53 inference or genuine ELF acceptance. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
 
 **First actions in a fresh chat:**
