@@ -1,5 +1,67 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.4 second read-only target-property scan + historical B4i recovery precedent (2026-11-03)
+
+Operator reports normal PuTTY boot and `sudo xmutil unloadapp`
+performed while the PC `hw_server` remained running. New
+read-only XSDB scan still lists ONLY PS TAP / PMU / PL and
+target properties only those 3 nodes. JTAG chain recognizes
+xck26 idcode 04724093 and arm_dap idcode 5ba00477; ARM DAP
+XSDB properties `is_open=1`, `is_active=1`. This confirms
+an active XSDB JTAG DAP node, NOT unlocked Cortex-A53 external
+debug and NOT processor target discovery. No board writes
+were performed. Exact operator log:
+`/home/dna/Thesis_Evidence/p08_b44_a53_properties_readonly_20261103T060320Z.log`
+SHA256 `54739cab92716c665939ffb5038e68a3b68a6907ea76b7c53a36588c6ce2080c`.
+
+**Strong same-project historical precedent:** original
+P07-B4i real KV260 stop/width pass on 2026-10-22 occurred
+after **KV260 reboot, then `sudo xmutil unloadapp`, then
+a new XSDB JTAG session**. Original user-reported signed
+ledger `docs/P07_B4I_2026_10_22_PHYSICAL_TAKEOVER_WIDTH_PASS_LEDGER.json`
+records A53 #0/#1 STOP PASS, #2/#3 exact powered-down
+observations, PSU selection, FPD raw 0x00000A00 / 128-bit,
+LPD raw 0x00000200 / 128-bit, exact
+`P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1`.
+It explicitly did NOT program PL, download ELF, touch DDR,
+or run inference. Historical source commit
+`ca3babc3eb27debe1dc9510595ddea58e8a7529d`.
+AMD UG1089 says `xmutil unloadapp` removes the loaded
+accelerated application; it is a PL/application lifecycle
+operation, not a documented CPU debug unlock. The prior
+ledger doesn't say whether hw_server was restarted, so
+no claim that restart is required. Latest operator didn't
+provide `xmutil listapps` output, so active app removal
+status isn't independently confirmed.
+
+**Bounded next recommendation:** One standalone run of the
+existing ORIGINAL P07-B4i stop/width gate as a physical
+checkpoint, not immediate full B4.4 profiler retry and
+not repeated open-ended diagnosis. It uses filtered
+`targets -set -filter` for Cortex-A53 #0..3, unlike the
+unfiltered read-only target listing, so the latter alone
+doesn't prove that direct filtered selection will fail.
+It stops Linux-owned A53 cores (Linux session is discarded)
+and reads only PSU FPD/LPD width registers; NO P03
+programming, six DDR source transfers, new profile ELF
+download, new DDR region or inference. Require exact
+all-four-core accounting and both historical 128-bit
+raw values. If any missing-target/external-debug/other
+unexpected failure, preserve log and STOP; no repeated
+tries, no weakening original fail-closed gate. If it
+passes, follow its mandatory reboot, then run fresh
+B4.4 read-only preflight and decide on the separately
+nine-approved full profile experiment. Standalone B4i
+pass does not guarantee the next boot's B4.4 takeover
+will pass again.
+
+See exact details and operator next command in
+`docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md`.
+Original accepted B4.2 physical 1024 numerical parity/
+ordinary timing and new genuine B4.4 ELF/map remain
+immutable; no B4.4 new reset-profile physical evidence
+yet. Official TEST sealed.
+
 ## P08-B4.4 post-power-cycle: normal PuTTY boot, physical ARM DAP visible, actual PSU/APU/A53 target hierarchy NOT enumerated (2026-11-02)
 
 Operator confirms KV260 normal serial boot after power cycle,
