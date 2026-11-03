@@ -1,4 +1,6 @@
-# P08-B4.4.1/B4.4.2 — Independent original 27-context reset profiler (SOURCE ONLY)
+# P08-B4.4.1/B4.4.2 — Independent original 27-context reset profiler (DEVELOPMENT LOG)
+
+> **Current status (2026-11-03):** the separate genuine Vitis profiling ELF/map was built, deployed in the successful B4.4.2 retry, and its 1,024-frame physical capture passed the independent PC-only verifier. This file is retained as the historical source/build development log; its earlier `PENDING`, `NOT BUILT` and pre-JTAG gate wording describes the state at the time those entries were written. The current accepted evidence and results are in [P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md](P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md). No further B4.4.2 physical run is needed.
 
 ## 2026-11-02 real Vitis first attempt staging failure — shell COPY BUG FIXED, local retry PENDING
 
