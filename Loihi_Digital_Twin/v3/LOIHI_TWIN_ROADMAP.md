@@ -2,10 +2,12 @@
 
 ## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
 
-**Status:** PC-only portable-C implementation and native validation are in
-development on `agent/v3-p08-b45-reset-integrity`, stacked on the current
-P08-B4.4 profiling branch. No Vitis build, JTAG action, DDR write or physical
-KV260 run has been authorized or performed for B4.5.
+**Status:** Portable-C reset variants and native tests are implemented.
+GitHub Actions run #6 passed the inherited B4.4 regression suite (**70
+tests**) and the new B4.5 native suite (**2 tests**) on commit
+`728613fde6f75a7b0d52ca6ddf6972893d67a510`. Operator-local verification is
+still pending. No Vitis build, JTAG action, DDR write or physical KV260 run
+has been authorized or performed for B4.5.
 
 The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
 1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
