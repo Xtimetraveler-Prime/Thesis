@@ -400,10 +400,6 @@ int main(void){
         }
         bind_ticks=t1-t0;
     }
-    if(0){
-        mailbox(B23_FAIL,B23_FIRST_FAULT_FRAME,105u,0u,cntfrq);
-        halt();
-    }
     /* Prepare a fresh known-zero mailbox/journal/timer destination,
      * distinct from accepted P07 V3/B5 receipt addresses. */
     for(index=0u;index<B23_FRAMES;index++){
@@ -484,12 +480,12 @@ int main(void){
             fault=214u;
         if(fault){
             mailbox(B23_FAIL,index,fault,index,cntfrq);
-            xil_printf("P08_B2_3_IMAGE_ONLY_FAILED frame=%lu fault=%lu\r\n",
+            xil_printf("P08_B45_UNCHECKED_FAILED frame=%lu fault=%lu\r\n",
                        (unsigned long)index,(unsigned long)fault);
             halt();
         }
         commit_timing(index,&timing);
-        /* This extra profiling sidecar is outside the measured original
+        /* This B4.5 reset sidecar is outside the measured original
          * service interval; it still perturbs inter-image A53 state. */
         commit_reset_profile(index,&reset_receipt,cntfrq,
                              reset_ticks,bind_ticks);
