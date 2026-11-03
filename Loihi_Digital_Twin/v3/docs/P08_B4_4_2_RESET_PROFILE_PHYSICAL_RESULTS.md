@@ -150,7 +150,14 @@ distribution for its own median/P95 and the sum-based shares for attribution.
    benchmark as not accepted.
 6. Official Track B MNIST TEST remains **SEALED_NOT_ACCESSED**.
 
-## Next research gate — proposed P08-B4.5
+## Next research gate — proposed P08-B4.6 (after P08-B4.5 reset optimization)
+
+P08-B4.5 has since been inserted as a separate reset-integrity optimization
+milestone with two experimental variants: one-time source authentication
+followed by lightweight per-image header checks, and an unchecked-content
+performance-bound variant. The current B4.5 protocol and safety requirements
+are in `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`. The paired
+Track A/Track B study described below is therefore deferred to P08-B4.6.
 
 Before another destructive hardware session, first design and review a
 separate six-session paired Track A/Track B protocol (AB / BA / AB, three
