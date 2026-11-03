@@ -72,6 +72,17 @@ configuration may be boot-time/secure-master controlled; never perform
 speculative runtime XMPU writes. Source, stage and ELF admission explicitly
 pin this fail-closed adapter and continue to report DDR ownership unproven.
 
+**Operator build-preflight fix (2026-11-03):** the first attempt to build
+B4.5.1 stopped before Vitis at `original context SHA header drift`.
+Investigation found the **new B4.5 shell script contained a mistyped
+expected SHA**, not evidence of a changed original model. Corrected its
+literal to the accepted B2.2 header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+A CI regression now compares B4.5 shell pins against accepted B2.3
+admission constants and B4.4 shell pins. Runbook now includes all five
+exports and read-only `find`/SHA validation commands. Both genuine
+Vitis ELF/map builds are still pending.
+
 **Next operator gate:** pull the branch, locally run the new expanded
 A53/native tests, then genuinely build **both** separately versioned
 Vitis 2025.2 ELF/map artifacts into fresh out-of-repo evidence dirs.
