@@ -204,7 +204,7 @@ def test_shell_pinned_hashes_match_accepted_b23_and_b44_sources():
         ]
         xsa = [
             line for line in source_lines
-            if 'sha256sum "$XSA"' in line
+            if 'sha256sum "$XSA"' in line and line.lstrip().startswith("[[")
         ]
         original_elf = [
             line for line in source_lines
