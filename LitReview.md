@@ -335,7 +335,7 @@ The following sources were **cited or reviewed previously** in repository archit
 ## 7. Loihi programming and compiler infrastructure (Lin et al., 2018)
 
 **Title:** *Programming Spiking Neural Networks on Intel's Loihi*  
-**Authors:** Eric Lin et al.  
+**Authors:** Chit-Kwan Lin, Andreas Wild, Gautham N. Chinya, Yongqiang Cao, Mike Davies, Daniel M. Lavery, Hong Wang  
 **Venue:** *Computer* 51(3), 52–61 (2018)  
 **DOI:** [10.1109/MC.2018.157113521](https://doi.org/10.1109/MC.2018.157113521)  
 **Status:** Primary source on the programming environment, compiler, runtime, and Loihi execution targets.
@@ -462,7 +462,7 @@ The final two links appear in the attached project note `ML on FPGA with Vivado.
 6. Valancius, S., et al. (2020). *FPGA Based Emulation Environment for Neuromorphic Architectures.* Proceedings of 2020 IEEE IPDPS Workshops, 90–97. https://doi.org/10.1109/IPDPSW50202.2020.00022 ; https://arxiv.org/abs/2004.06061
 7. Davies, M., et al. (2018). *Loihi: A Neuromorphic Manycore Processor with On-Chip Learning.* IEEE Micro, 38(1), 82–99. https://doi.org/10.1109/MM.2018.112130359
 
-8. Lin, E., et al. (2018). *Programming Spiking Neural Networks on Intel's Loihi.* Computer, 51(3), 52–61. https://doi.org/10.1109/MC.2018.157113521
+8. Lin, C.-K., Wild, A., Chinya, G. N., Cao, Y., Davies, M., Lavery, D. M., & Wang, H. (2018). *Programming Spiking Neural Networks on Intel's Loihi.* Computer, 51(3), 52–61. https://doi.org/10.1109/MC.2018.157113521
 9. Davies, M., et al. (2021). *Advancing Neuromorphic Computing With Loihi: A Survey of Results and Outlook.* Proceedings of the IEEE, 109(5), 911–934. https://doi.org/10.1109/JPROC.2021.3067593
 10. Rueckauer, B., Bybee, C., Goettsche, R., Singh, Y., Mishra, J., & Wild, A. (2022). *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi.* ACM Journal on Emerging Technologies in Computing Systems, 18(3). https://doi.org/10.1145/3501770
 11. Catalyst N1 (2026). *Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity* (M13 manifest title; upstream versions differ). Zenodo. https://doi.org/10.5281/zenodo.18727094
