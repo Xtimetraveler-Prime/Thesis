@@ -371,12 +371,14 @@ NxTF contributes an especially relevant comparison for deep SNN placement, axon/
 
 ## 10. Catalyst N1 (2026): independent neuromorphic RTL and simulator
 
-**Publication record:** *Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity* (title recorded in the frozen M13 manifest; upstream variants exist).  
+**Author:** Henry Arthur Shulayev Barnes  
+**Publication identity:** *Catalyst N1: A Neuromorphic Processing Architecture* (title in the upstream author's citation; the frozen M13 manifest and an author-hosted PDF use longer, different title variants).  
+**Publication type:** Author-hosted / Zenodo research record; do not label as peer-reviewed without separate evidence.  
 **Stable DOI:** [10.5281/zenodo.18727094](https://doi.org/10.5281/zenodo.18727094)  
 **Source repository:** https://github.com/catalyst-neuromorphic/catalyst-n1  
 **Status:** Independently implemented comparison system; **not** authoritative for undocumented Intel Loihi behavior.
 
-M13 pinned Catalyst's RTL and software simulator, reproduced external regressions, and examined different neuron arithmetic, scheduling, and network-interface conventions. It also documented originality/attribution boundaries. Catalyst is crucial comparative prior art, but cross-model agreement does not establish Loihi silicon identity. Identify the DOI and pinned code revision when describing a particular version.
+M13 pinned Catalyst's RTL and software simulator, reproduced external regressions, and examined different neuron arithmetic, scheduling, and network-interface conventions. It also documented originality/attribution boundaries. Catalyst is crucial comparative prior art, but cross-model agreement does not establish Loihi silicon identity. Identify the DOI and pinned code revision when describing a particular version. The upstream repository's **parameterized design-scale neuron counts** should also not be confused with the number physically implemented on a particular FPGA; compare only target-specific, demonstrated configuration results.
 
 **Project provenance:** [M13.1 reference manifest](Loihi_Digital_Twin/v1/references/m13_1_reference_manifest.json); [M13.2 architectural crosswalk](Loihi_Digital_Twin/v1/docs/M13_2_ARCHITECTURAL_CROSSWALK.md); [source originality audit](AUDIT.md).
 
@@ -446,6 +448,22 @@ These resources were also directly cited/inspected. They are **code or documenta
 | Gymnasium MuJoCo environments | https://gymnasium.farama.org/environments/mujoco/ | Earlier exploratory biped/SNN actor–critic conversation, outside the active Loihi twin. |
 | OpenAI Spinning Up: PPO | https://spinningup.openai.com/en/latest/algorithms/ppo.html | Earlier exploratory PPO/actor–critic discussion, outside FPGA architectural validation. |
 
+## FPGA platform and measurement documentation recovered in the second pass
+
+The references below appear in lower-level **hardware architecture** and **timing-methodology** documents rather than in the research-paper manifests. They are **primary vendor/architecture documentation**, not peer-reviewed neuromorphic studies. Cite their document numbers and revisions when asserting board interfaces, clock assumptions, or measurement methodology.
+
+| Technical source | Source and stable identity | Repository provenance / precise use |
+| --- | --- | --- |
+| AMD, *Kria K26 SOM Data Sheet* | [DS987, rev. 1.6 (2026-03-25)](https://docs.amd.com/r/en-US/ds987-k26-som/Functional-Overview-and-Block-Diagram) | [P01.1 board-local architecture](Loihi_Digital_Twin/v3/docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md): K26 functional blocks and PS/PL capabilities; distinguish SoM limits from measured project implementation. |
+| AMD, *Zynq UltraScale+ MPSoC Processing System* | [PG201, v3.5 (2023-06-16)](https://docs.amd.com/r/en-US/pg201-zynq-ultrascale-plus-processing-system/Slave-Interface) | [P01.1 board-local architecture](Loihi_Digital_Twin/v3/docs/P01_1_BOARD_LOCAL_ARCHITECTURE.md): PS-to-PL interfaces, including AXI connectivity. |
+| AMD, *Vitis HLS User Guide* | [UG1399, 2025.1, Specifying the Clock Frequency](https://docs.amd.com/r/2025.1-English/ug1399-vitis-hls/Specifying-the-Clock-Frequency?contentId=2qxvFsf7Z8jgzoxetgokNw) | [P08-A2.2 timing methods](Loihi_Digital_Twin/v3/docs/P08_A2_2_TIMING_METHODS.md): HLS target clock constraints must not be represented as the achieved post-route clock. The deep-linked guide was recorded in the repository; its current page retrieval was not independently confirmed in this pass. |
+| Arm, *Learn the architecture — Generic Timer* | [Document 102379, version 1.3, issue 01](https://documentation-service.arm.com/static/65fac6957bcc0c1c661b36c0?token=) | [P08-A2.2 timing methods](Loihi_Digital_Twin/v3/docs/P08_A2_2_TIMING_METHODS.md): AArch64 system timer, synchronization requirements, and timing-counter interpretation. |
+| Arm, *Use a system counter* | [Arm Learning Paths: system-counter example](https://learn.arm.com/learning-paths/servers-and-cloud-computing/arm_pmu/assembly/) | [P08-A2.2 timing methods](Loihi_Digital_Twin/v3/docs/P08_A2_2_TIMING_METHODS.md): practical use of `CNTVCT_EL0` and `CNTFRQ_EL0`; tutorial rather than primary silicon characterization. |
+
+**Citation audit, 2026-11-04.** The 15 bibliographic entries below were checked against identifiable publisher, university, research archive, and/or upstream-author publication metadata (title, author identity, year, venue, and DOI/arXiv ID where applicable). A DOI is an identifier, **not** evidence that a source has undergone peer review. YANA is still treated as an arXiv preprint in this review; the Catalyst identifier is treated as a self-archived research record with title variants. No exact-match paper-result claim is made for the Rao, Renner, or Diehl/Cook benchmark alternatives. Original Loihi implementation claims are attributed to published Intel work, not inferred from later open-source simulators.
+
+**Audit boundaries:** This is a targeted review of literature-bearing architecture documents, source manifests, experimental notes, prior git commit searches, and the project-attached discussions available here. It is not a full search of every historical ChatGPT conversation or every line of every repository file. The references list is intended to be traceable and conservative rather than falsely exhaustive.
+
 The final two links appear in the attached project note `ML on FPGA with Vivado.txt`, not the repository's active specification. The attached note `Branch · THESIS DIRECTION SPELLED OUT.txt` discusses Brian2Loihi as an independent software validator of the project's own golden model. Neither note is itself a publication or an independent physical validation record.
 
 **Authority and citation boundary:** Cite original Loihi publications (Davies 2018; Lines 2018; Lin 2018; Davies 2021) for Intel's documented architecture, Michaelis for Brian2Loihi's validated subset, Rueckauer for NxTF, and RANC/Valancius/YANA/NeuroScale/Catalyst for other implementations. Cite Eshraghian for the training methodology. This project's source contracts and captured physical evidence, not external papers, support statements about its own measured functionality.
@@ -465,7 +483,7 @@ The final two links appear in the attached project note `ML on FPGA with Vivado.
 8. Lin, C.-K., Wild, A., Chinya, G. N., Cao, Y., Davies, M., Lavery, D. M., & Wang, H. (2018). *Programming Spiking Neural Networks on Intel's Loihi.* Computer, 51(3), 52–61. https://doi.org/10.1109/MC.2018.157113521
 9. Davies, M., et al. (2021). *Advancing Neuromorphic Computing With Loihi: A Survey of Results and Outlook.* Proceedings of the IEEE, 109(5), 911–934. https://doi.org/10.1109/JPROC.2021.3067593
 10. Rueckauer, B., Bybee, C., Goettsche, R., Singh, Y., Mishra, J., & Wild, A. (2022). *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi.* ACM Journal on Emerging Technologies in Computing Systems, 18(3). https://doi.org/10.1145/3501770
-11. Catalyst N1 (2026). *Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity* (M13 manifest title; upstream versions differ). Zenodo. https://doi.org/10.5281/zenodo.18727094
+11. Shulayev Barnes, H. A. (2026). *Catalyst N1: A Neuromorphic Processing Architecture* (upstream author citation title; an M13-pinned manifest and author-hosted PDF use variant titles). Zenodo research record. https://doi.org/10.5281/zenodo.18727094 ; https://github.com/catalyst-neuromorphic/catalyst-n1
 12. Rao, A., Plank, P., Wild, A., & Maass, W. (2022). *A Long Short-Term Memory for AI Applications in Spike-based Neuromorphic Hardware.* Nature Machine Intelligence, 4, 467–479. https://doi.org/10.1038/s42256-022-00480-w
 13. Renner, A., Sheldon, F., Zlotnik, A., Tao, L., & Sornborger, A. (2024). *The backpropagation algorithm implemented on spiking neuromorphic hardware.* Nature Communications, 15, 9691. https://doi.org/10.1038/s41467-024-53827-9
 14. Diehl, P. U., & Cook, M. (2015). *Unsupervised learning of digit recognition using spike-timing-dependent plasticity.* Frontiers in Computational Neuroscience, 9, 99. https://doi.org/10.3389/fncom.2015.00099
