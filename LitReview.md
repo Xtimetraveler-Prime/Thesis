@@ -3,7 +3,8 @@
 **Project:** FPGA-Based Loihi-Inspired Neuromorphic Architectural Digital Twin  
 **Repository:** `Xtimetraveler-Prime/Thesis`  
 **Prepared:** 2026-10-24  
-**Status:** Working literature-review notes for thesis research and committee presentation; not a systematic review.
+**References consolidated:** 2026-11-04  
+**Status:** Thesis literature-review research notes; not a systematic review.
 
 ## Scope and central distinction
 
@@ -15,7 +16,7 @@ This review surveys research relevant to an **FPGA-based architectural digital t
 
 ---
 
-# A. Primary papers for the committee presentation
+# A. Core literature: software emulation, FPGA architectures, and synchronization
 
 ## 1. Brian2Loihi (Michaelis et al., 2022)
 
@@ -58,17 +59,6 @@ In the earlier project direction, Brian2Loihi was considered a reference for val
 - Measure physical effects of logical-core scheduling, resident-memory capacity, routing, and DDR context movement.
 - Validate FPGA-visible state transitions and spike traces against an independently implemented oracle.
 
-### Suggested slide bullets
-
-**Software Emulation — Brian2Loihi (2022)**
-
-- Developed a Loihi-focused emulator within Brian 2.
-- Reproduced and validated neuron and SNN behavior against Loihi.
-- Demonstrated high-fidelity software modeling of selected integer neural semantics.
-- Explicitly excludes hardware routing and mapping constraints.
-- **Thesis connection:** Carry validated neural behavior into a resource-constrained multicore FPGA execution architecture.
-
-**Suggested spoken transition:** Emulating the computation performed by neurons is different from emulating the processor architecture responsible for executing, storing, and routing those computations.
 
 ---
 
@@ -126,18 +116,6 @@ RANC is the strongest argument for treating the thesis as an **architectural eng
 - Distinguish compute-engine execution, context transfers, routing/barrier processing, and end-to-end sample latency.
 - Test scaling and occupancy effects using reproducible neural workloads on the KV260.
 
-### Suggested slide bullets
-
-**FPGA Architectural Emulation — RANC (2021)**
-
-- Open-source C++ simulator plus FPGA-based neuromorphic architecture emulator.
-- Configurable cores, connectivity, neural behavior, and mapping parameters.
-- Validated TrueNorth-oriented behavior against IBM Compass.
-- Measured hardware resource usage and throughput; demonstrated large emulated neural configurations.
-- **Closest precedent:** FPGA architectural emulation and hardware/software validation are already established.
-- **Thesis connection:** Loihi-inspired semantics plus DDR-backed logical-core virtualization and measured board-local overheads.
-
-**Suggested spoken transition:** Prior work shows that an FPGA can serve as a research platform for neuromorphic processor architectures; the question becomes which *specific* architectural choices and constraints to investigate.
 
 ---
 
@@ -186,17 +164,6 @@ Replacing barriers with independent local-time execution would be a substantial 
 - Investigate scaling with logical-core count, event density, and physical residency constraints.
 - Only if scope allows: compare alternative synchronization policies as a **modified architecture**, keeping such experiments separate from fidelity claims.
 
-### Suggested slide bullets
-
-**Neuromorphic Synchronization — NeuroScale (2025)**
-
-- Developed deterministic local-time synchronization across neuromorphic cores.
-- Removed global timestep barriers from the proposed architecture.
-- Demonstrated matching spike timing across software, simulation, and a four-core FPGA prototype.
-- Used hardware simulation for larger-scale synchronization comparisons.
-- **Thesis connection:** Explore measurable synchronization/routing costs in a Loihi-inspired execution architecture.
-
-**Suggested spoken transition:** An FPGA emulator is useful not just for showing that neurons fire correctly, but for identifying which architecture-level mechanisms control performance and scalability.
 
 ---
 
@@ -224,7 +191,6 @@ Replacing barriers with independent local-time execution would be a substantial 
 
 YANA shows that a useful SNN accelerator can be engineered on essentially the same SoM family and provides nearby implementation/measurement practice. Its principal research claim is **efficient, accessible SNN acceleration**, not an architectural twin of Loihi 1 with Loihi-inspired capacities and explicit virtual-core semantics.
 
-**Suggested optional slide/reference note:** Contemporary K26-based neuromorphic accelerator; a practical hardware comparison, but do not equate its performance numbers with this thesis without matching workloads, clocking, precisions, boundaries, and resource accounting.
 
 ---
 
@@ -251,7 +217,6 @@ YANA shows that a useful SNN accelerator can be engineered on essentially the sa
 - Supports the distinction between **behavioral/architectural fidelity** and **physical timing / circuit fidelity**.
 - Strong companion to Davies et al. (2018), *Loihi: A Neuromorphic Manycore Processor with On-Chip Learning*, DOI [10.1109/MM.2018.112130359](https://doi.org/10.1109/MM.2018.112130359), which is a major source for core resources and functional architecture.
 
-**Suggested optional slide/reference note:** Intel used FPGA emulation for verification of its own design; our research instead develops an independently specified, testable architectural twin with explicit constraints and hardware tradeoff measurements.
 
 ---
 
@@ -275,7 +240,6 @@ YANA shows that a useful SNN accelerator can be engineered on essentially the sa
 
 This is another **direct predecessor**, especially in hardware platform class. It makes generic claims about a configurable, validated, streaming-enabled neuromorphic FPGA architecture particularly weak as novelty statements. The thesis distinction must instead be evidenced through its specific **Loihi-inspired semantic contract; logical-to-physical core virtualization; DDR-backed contexts and board-local scheduling/routing; and rigorous physical, end-to-end cost decomposition**.
 
-**Suggested optional slide/reference note:** Earlier FPGA-emulation environment on a Zynq UltraScale+; cite alongside RANC when discussing closest similar work.
 
 ---
 
@@ -289,6 +253,10 @@ This is another **direct predecessor**, especially in hardware platform class. I
 | **YANA (2026)** | Practical event-driven SNN accelerator | End-to-end software/hardware workflow on KR260 | Configurable SNN accelerator | Same hardware family, different goal from reproducing Loihi architecture |
 | **Lines et al. (2018)** | Original Loihi hardware implementation | Original ASIC design + FPGA verification | Actual Intel Loihi | Original-owner pre-silicon FPGA emulation; not independent public-spec reproduction |
 | **Valancius et al. (2020)** | FPGA-based neuromorphic architecture emulator | FPGA + modeling/verification | TrueNorth-inspired | Already demonstrates FPGA architecture emulation on Zynq UltraScale+ |
+| **Intel Loihi architecture and compiler (2018–2022)** | Original architecture, runtime and resource-aware compilation | Published ASIC/compiler research | Original Loihi and NxTF | Authoritative architecture evidence; exact NxTF paper network not fully recovered from tutorial |
+| **Catalyst N1 (2026)** | Open independent neuromorphic RTL/software architecture | RTL, CPU simulation, FPGA reproduction | Other Loihi-inspired architecture | Comparative prior art, not Loihi silicon ground truth |
+| **Rao / Renner / Diehl & Cook** | Alternative SNN training and benchmark work | Source-backed studies | Loihi and non-Loihi | Reviewed as alternative workloads; not the adopted FPGA benchmark |
+| **Eshraghian et al. (2023)** | SNN/surrogate-gradient training | Tutorial and research synthesis | General SNN | Methodological context, not the project's bit-exact hardware semantics |
 
 ## A credible research gap statement
 
@@ -358,39 +326,133 @@ Both formulations demand a *specific, reproducible evaluation*, not simply an im
 
 ---
 
-# E. Presentation organization / slide notes
 
-## Slide 4 — Brian2Loihi: software emulation
 
-- What? Loihi neuron/state/plasticity emulator based on Brian 2.
-- Established? Selected neural computations can be closely reproduced and validated in software.
-- Leaves open relative to thesis? Mapping, routing, core resources, and physical hardware execution.
-- Bridge: **From neural semantics to an executable multicore architecture.**
+# E. Additional references recovered from the repository and project materials
 
-## Slide 5 — RANC: FPGA architectural emulation
+The following sources were **cited or reviewed previously** in repository architecture contracts, M13 comparison work, P06 benchmark selection, P08 NxTF work, or project-attached notes. These are not newly reproduced thesis results. Each entry gives its **source trail**, including the distinction between adopted methodology, an independent comparison, and a rejected or deferred workload.
 
-- What? Software + FPGA configurable neuromorphic architecture framework.
-- Established? Multicore hardware emulation and measured design tradeoffs already exist.
-- Leaves open relative to thesis? This particular Loihi-inspired logical-core contract and DDR-backed embedded-platform virtualization.
-- Mention Valancius et al. (2020) if asked about related Zynq hardware.
-- Bridge: **From demonstrating emulation to testing distinctive architectural questions.**
+## 7. Loihi programming and compiler infrastructure (Lin et al., 2018)
 
-## Slide 6 — NeuroScale: architectural experimentation
+**Title:** *Programming Spiking Neural Networks on Intel's Loihi*  
+**Authors:** Eric Lin et al.  
+**Venue:** *Computer* 51(3), 52–61 (2018)  
+**DOI:** [10.1109/MC.2018.157113521](https://doi.org/10.1109/MC.2018.157113521)  
+**Status:** Primary source on the programming environment, compiler, runtime, and Loihi execution targets.
 
-- What? Local asynchronous synchronization architecture.
-- Established? Determinism can coexist with alternative synchronization mechanisms; FPGA/reference comparison is feasible.
-- Leaves open relative to thesis? Physical costs of globally synchronized Loihi-inspired execution with virtualization and limited residency.
-- Bridge: **From faithful execution to measurement and tradeoff analysis.**
+The article documents how spiking models are programmed and deployed, helping distinguish a functional software model from actual processor resources. It is a programming/toolchain reference, not evidence for every proprietary internal circuit detail.
 
-## Backup sources
+**Project provenance:** [M13.1 reference manifest](Loihi_Digital_Twin/v1/references/m13_1_reference_manifest.json); [M13.1 methodology](Loihi_Digital_Twin/v1/docs/M13_1_REFERENCE_BASELINE.md); [v3 Loihi-1 target specification](Loihi_Digital_Twin/v3/docs/LOIHI1_TARGET_SPEC.md).
 
-- **YANA (2026):** comparable KR260/K26 deployment; event-driven SNN accelerator rather than Loihi twin.
-- **Lines et al. (2018):** Intel's Loihi implementation; FPGA emulation already used during original chip verification.
-- **Valancius et al. (2020):** very close FPGA neuromorphic architecture research precedent, including Zynq UltraScale+.
+## 8. Loihi survey and architectural context (Davies et al., 2021)
+
+**Title:** *Advancing Neuromorphic Computing With Loihi: A Survey of Results and Outlook*  
+**Authors:** Mike Davies et al.  
+**Venue:** *Proceedings of the IEEE* 109(5), 911–934 (2021)  
+**DOI:** [10.1109/JPROC.2021.3067593](https://doi.org/10.1109/JPROC.2021.3067593)  
+**Status:** Contextual Loihi survey.
+
+Used in the source hierarchy of the Loihi-1 architectural specification to corroborate processor organization and spike/event behavior. The 2018 Davies and Lines original-design papers remain the preferred authorities for detailed original-chip claims.
+
+**Project provenance:** [v3 Loihi-1 target specification](Loihi_Digital_Twin/v3/docs/LOIHI1_TARGET_SPEC.md).
+
+## 9. NxTF compiler and SNN mapping (Rueckauer et al., 2022)
+
+**Title:** *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi*  
+**Authors:** Bodo Rueckauer, Connor Bybee, Ralf Goettsche, Yashwardhan Singh, Joyesh Mishra, Andreas Wild  
+**Venue:** *ACM Journal on Emerging Technologies in Computing Systems* 18(3) (2022)  
+**DOI:** [10.1145/3501770](https://doi.org/10.1145/3501770)  
+**Preprint:** https://arxiv.org/abs/2101.04261  
+**Status:** Key mapping/benchmark reference.
+
+NxTF contributes an especially relevant comparison for deep SNN placement, axon/synapse sharing, compression, and compiler limits. P08 investigated its frame-based MNIST experiment. **Important limitation:** the surviving Intel tutorial graph does not have the same reported parameter count or timestep setting as the particular paper benchmark. It must not be presented as proof that its precise training checkpoint and architecture have been recovered.
+
+**Project provenance:** [v3 target specification](Loihi_Digital_Twin/v3/docs/LOIHI1_TARGET_SPEC.md); [P08 source audit](Loihi_Digital_Twin/v3/docs/P08_NXTF_SOURCE_AUDIT.md); [P08 comparison contract](Loihi_Digital_Twin/v3/docs/P08_MNIST_COMPARISON_CONTRACT.md).
+
+## 10. Catalyst N1 (2026): independent neuromorphic RTL and simulator
+
+**Publication record:** *Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity* (title recorded in the frozen M13 manifest; upstream variants exist).  
+**Stable DOI:** [10.5281/zenodo.18727094](https://doi.org/10.5281/zenodo.18727094)  
+**Source repository:** https://github.com/catalyst-neuromorphic/catalyst-n1  
+**Status:** Independently implemented comparison system; **not** authoritative for undocumented Intel Loihi behavior.
+
+M13 pinned Catalyst's RTL and software simulator, reproduced external regressions, and examined different neuron arithmetic, scheduling, and network-interface conventions. It also documented originality/attribution boundaries. Catalyst is crucial comparative prior art, but cross-model agreement does not establish Loihi silicon identity. Identify the DOI and pinned code revision when describing a particular version.
+
+**Project provenance:** [M13.1 reference manifest](Loihi_Digital_Twin/v1/references/m13_1_reference_manifest.json); [M13.2 architectural crosswalk](Loihi_Digital_Twin/v1/docs/M13_2_ARCHITECTURAL_CROSSWALK.md); [source originality audit](AUDIT.md).
+
+## 11. Spike-based LSTM with after-hyperpolarization (Rao et al., 2022)
+
+**Title:** *A Long Short-Term Memory for AI Applications in Spike-based Neuromorphic Hardware*  
+**Authors:** Arjun Rao, Philipp Plank, Andreas Wild, Wolfgang Maass  
+**Venue:** *Nature Machine Intelligence* 4, 467–479 (2022)  
+**DOI:** [10.1038/s42256-022-00480-w](https://doi.org/10.1038/s42256-022-00480-w)  
+**Preprint:** https://arxiv.org/abs/2107.03992  
+**Status:** Investigated **alternative**, not the adopted LIF MNIST checkpoint.
+
+The paper demonstrates sequential computation using AHP/multicompartment spiking neurons on Loihi. P06 examined the author's released code and published sMNIST measurements, but did **not** establish that the released weight arrays were the exact checkpoint behind the reported silicon accuracy, latency, and energy. Those published metrics must remain contextual, not attributed to this FPGA implementation.
+
+**Project provenance:** [P06 candidate audit](Loihi_Digital_Twin/v3/docs/P06_1_PAPER_CANDIDATE_AUDIT.md); [metric/attribution audit](Loihi_Digital_Twin/v3/docs/P06_1_PAPER_METRIC_AUDIT_AND_DECISION.md); [LSNN source manifest](Loihi_Digital_Twin/v3/docs/P06_1_LSNN_SOURCE_MANIFEST.json).
+
+## 12. Backpropagation on spiking hardware (Renner et al., 2024)
+
+**Title:** *The backpropagation algorithm implemented on spiking neuromorphic hardware*  
+**Authors:** Alpha Renner, Forrest Sheldon, Anatoly Zlotnik, Louis Tao, Andrew Sornborger  
+**Venue:** *Nature Communications* 15, 9691 (2024)  
+**DOI:** [10.1038/s41467-024-53827-9](https://doi.org/10.1038/s41467-024-53827-9)  
+**Author implementation:** https://github.com/lanl/spikingBackprop  
+**Status:** Studied and not selected as the project benchmark.
+
+The paper is relevant to on-chip learning, which is outside the present inference-oriented FPGA validation claim. P06 did not locate a published trained checkpoint corresponding to the paper's headline results in the inspected source tree, so no exact result-reproduction claim is warranted.
+
+**Project provenance:** [P06 candidate audit](Loihi_Digital_Twin/v3/docs/P06_1_PAPER_CANDIDATE_AUDIT.md).
+
+## 13. Unsupervised STDP-MNIST (Diehl & Cook, 2015)
+
+**Title:** *Unsupervised learning of digit recognition using spike-timing-dependent plasticity*  
+**Authors:** Peter U. Diehl, Matthew Cook  
+**Venue:** *Frontiers in Computational Neuroscience* 9:99 (2015)  
+**DOI:** [10.3389/fncom.2015.00099](https://doi.org/10.3389/fncom.2015.00099)  
+**Author code and weights:** https://github.com/peter-u-diehl/stdp-mnist  
+**Status:** Investigated non-Loihi training/benchmark alternative, not the selected workload.
+
+This offered a source-backed SNN and released weights, but P06 flagged a reproducibility caveat: do not confuse a repository demonstration's reported accuracy with the paper's formally evaluated result, or silently transfer source metrics to a different FPGA implementation.
+
+**Project provenance:** [P06 benchmark pivot](Loihi_Digital_Twin/v3/docs/P06_1_NON_LOIHI_BENCHMARK_PIVOT.md).
+
+## 14. Surrogate-gradient SNN training (Eshraghian et al., 2023)
+
+**Title:** *Training Spiking Neural Networks Using Lessons From Deep Learning*  
+**Authors:** Jason K. Eshraghian et al.  
+**Venue:** *Proceedings of the IEEE* 111(9), 1016–1054 (2023)  
+**DOI:** [10.1109/JPROC.2023.3308088](https://doi.org/10.1109/JPROC.2023.3308088)  
+**Companion tutorial:** https://snntorch.readthedocs.io/en/stable/tutorials/tutorial_5.html  
+**Status:** **Adopted methodological background** for the project-trained compact and scaled LIF MNIST networks.
+
+The paper supplies the training and spike-encoding context; the tutorial is an example training recipe. The project's actual input encoder, signed integer state transitions, reset behavior, and next-event-bank routing are separately specified and tested. **Do not** claim numerical equivalence to the tutorial or that the project's weights are the authors' published trained model.
+
+**Project provenance:** [P06 two-track plan](Loihi_Digital_Twin/v3/docs/P06_TWO_TRACK_LIF_PLAN.md); [P06 benchmark pivot](Loihi_Digital_Twin/v3/docs/P06_1_NON_LOIHI_BENCHMARK_PIVOT.md).
+
+## Non-paper resources and earlier exploration
+
+These resources were also directly cited/inspected. They are **code or documentation links**, not additional peer-reviewed papers. Reference exact software revisions where conclusions depend on behavior.
+
+| Resource | Link | Where and why it appeared |
+| --- | --- | --- |
+| Brian2Loihi | https://github.com/sagacitysite/brian2_loihi | Independent software validation for earlier milestones and M13; pinned version in M13.1. |
+| Catalyst N1 code | https://github.com/catalyst-neuromorphic/catalyst-n1 | M13 independent CPU/RTL comparison. |
+| Intel model source tree | https://github.com/intel-nrc-ecosystem/models | P06 LSNN author source and P08 NxTF tutorial; paper benchmark may differ. |
+| SNN Toolbox | https://github.com/NeuromorphicProcessorProject/snn_toolbox | P08 historical ANN-to-SNN conversion evidence. |
+| snnTorch repository and examples | https://github.com/jeshraghian/snntorch ; https://github.com/snntorch/Spiking-Neural-Networks-Tutorials | P06 training-method development, not a matching pretrained checkpoint. |
+| Gymnasium MuJoCo environments | https://gymnasium.farama.org/environments/mujoco/ | Earlier exploratory biped/SNN actor–critic conversation, outside the active Loihi twin. |
+| OpenAI Spinning Up: PPO | https://spinningup.openai.com/en/latest/algorithms/ppo.html | Earlier exploratory PPO/actor–critic discussion, outside FPGA architectural validation. |
+
+The final two links appear in the attached project note `ML on FPGA with Vivado.txt`, not the repository's active specification. The attached note `Branch · THESIS DIRECTION SPELLED OUT.txt` discusses Brian2Loihi as an independent software validator of the project's own golden model. Neither note is itself a publication or an independent physical validation record.
+
+**Authority and citation boundary:** Cite original Loihi publications (Davies 2018; Lines 2018; Lin 2018; Davies 2021) for Intel's documented architecture, Michaelis for Brian2Loihi's validated subset, Rueckauer for NxTF, and RANC/Valancius/YANA/NeuroScale/Catalyst for other implementations. Cite Eshraghian for the training methodology. This project's source contracts and captured physical evidence, not external papers, support statements about its own measured functionality.
 
 ---
 
-# F. References / reading links
+# F. Consolidated bibliography
 
 1. Michaelis, C., Lehr, A. B., Oed, W., & Tetzlaff, C. (2022). *Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian.* Frontiers in Neuroinformatics, 16, 1015624. https://doi.org/10.3389/fninf.2022.1015624
 2. Mack, J., et al. (2021). *RANC: Reconfigurable Architecture for Neuromorphic Computing.* IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 40(11), 2265–2278. https://doi.org/10.1109/TCAD.2020.3038151 ; https://arxiv.org/abs/2011.00624
@@ -399,5 +461,14 @@ Both formulations demand a *specific, reproducible evaluation*, not simply an im
 5. Lines, A., Joshi, P., Liu, R., McCoy, S., Tse, J., Weng, Y.-H., & Davies, M. (2018). *Loihi Asynchronous Neuromorphic Research Chip.* 2018 24th IEEE International Symposium on Asynchronous Circuits and Systems. https://doi.org/10.1109/ASYNC.2018.00018
 6. Valancius, S., et al. (2020). *FPGA Based Emulation Environment for Neuromorphic Architectures.* Proceedings of 2020 IEEE IPDPS Workshops, 90–97. https://doi.org/10.1109/IPDPSW50202.2020.00022 ; https://arxiv.org/abs/2004.06061
 7. Davies, M., et al. (2018). *Loihi: A Neuromorphic Manycore Processor with On-Chip Learning.* IEEE Micro, 38(1), 82–99. https://doi.org/10.1109/MM.2018.112130359
+
+8. Lin, E., et al. (2018). *Programming Spiking Neural Networks on Intel's Loihi.* Computer, 51(3), 52–61. https://doi.org/10.1109/MC.2018.157113521
+9. Davies, M., et al. (2021). *Advancing Neuromorphic Computing With Loihi: A Survey of Results and Outlook.* Proceedings of the IEEE, 109(5), 911–934. https://doi.org/10.1109/JPROC.2021.3067593
+10. Rueckauer, B., Bybee, C., Goettsche, R., Singh, Y., Mishra, J., & Wild, A. (2022). *NxTF: An API and Compiler for Deep Spiking Neural Networks on Intel Loihi.* ACM Journal on Emerging Technologies in Computing Systems, 18(3). https://doi.org/10.1145/3501770
+11. Catalyst N1 (2026). *Catalyst N1: A 131K-Neuron Open Neuromorphic Processor with Programmable Synaptic Plasticity* (M13 manifest title; upstream versions differ). Zenodo. https://doi.org/10.5281/zenodo.18727094
+12. Rao, A., Plank, P., Wild, A., & Maass, W. (2022). *A Long Short-Term Memory for AI Applications in Spike-based Neuromorphic Hardware.* Nature Machine Intelligence, 4, 467–479. https://doi.org/10.1038/s42256-022-00480-w
+13. Renner, A., Sheldon, F., Zlotnik, A., Tao, L., & Sornborger, A. (2024). *The backpropagation algorithm implemented on spiking neuromorphic hardware.* Nature Communications, 15, 9691. https://doi.org/10.1038/s41467-024-53827-9
+14. Diehl, P. U., & Cook, M. (2015). *Unsupervised learning of digit recognition using spike-timing-dependent plasticity.* Frontiers in Computational Neuroscience, 9, 99. https://doi.org/10.3389/fncom.2015.00099
+15. Eshraghian, J. K., et al. (2023). *Training Spiking Neural Networks Using Lessons From Deep Learning.* Proceedings of the IEEE, 111(9), 1016–1054. https://doi.org/10.1109/JPROC.2023.3308088
 
 **Use as research notes:** Primary-source assertions, comparison interpretations, and speculative thesis gaps are deliberately separated above. Before the final thesis literature-review chapter, expand the search for Loihi-specific FPGA emulators, virtualized multicore SNN accelerators, neuromorphic paging architectures, and rigorous power/energy methodologies; revise novelty claims accordingly.
