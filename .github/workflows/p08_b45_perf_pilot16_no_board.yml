@@ -44,13 +44,15 @@ jobs:
       - name: Native GCC and adversarial reduced-integrity pilot source tests
         run: |
           PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
-            tests/test_p08_b45_perf_pilot16.py
+            tests/test_p08_b45_perf_pilot16.py \
+            tests/test_p08_b45_perf_pilot16_independent.py
       - name: Static Python and bash source syntax; no JTAG test
         run: |
           python3 -m py_compile \
             software/p08/build_p08_b45_perf_pilot16.py \
             scripts/p08_b45_perf_pilot16_elf_admission.py \
-            scripts/p08_b45_perf_pilot16_physical_run.py
+            scripts/p08_b45_perf_pilot16_physical_run.py \
+            scripts/p08_b45_perf_pilot16_independent_verify.py
           bash -n scripts/build_p08_b45_perf_pilot16.sh
           echo P08_B45_PERF_PILOT16_HOST_ONLY_NATIVE_PASS=1
           echo P08_B45_PERF_PHYSICAL_BOARD_CONTACT=0
