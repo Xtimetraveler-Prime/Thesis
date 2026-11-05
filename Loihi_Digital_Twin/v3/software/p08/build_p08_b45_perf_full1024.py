@@ -23,8 +23,8 @@ MAINS = {
     "unchecked": "p08_b45_perf_unchecked_full1024_a53.c",
 }
 IDENTITIES = {
-    "once": "P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V1",
-    "unchecked": "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V1",
+    "once": "P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V2",
+    "unchecked": "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V2",
 }
 DONE = {
     "once": "P08_B45_PERF_AUTH_ONCE_1024_TERMINAL_DONE=1",
@@ -36,6 +36,7 @@ APPS = {
 }
 SHARED_SOURCES = (
     "p08_b45_perf_reset.c",
+    "p08_b45_perf_startup.c",
     "p08_b2_ingress.c",
     "p08_b2_service_meter.c",
     "p07_b4m_dispatch_metadata.c",
@@ -58,6 +59,7 @@ SHARED_SOURCES = (
 HEADERS = (
     "p08_b2_ingress.h", "p08_b2_context_reset.h",
     "p08_b45_reset_variants.h", "p08_b45_perf_reset.h",
+    "p08_b45_perf_startup.h",
     "p08_b2_service_meter.h", "p08_b2_2_original_context_sha256.h",
     "p07_b4l_b3_bindings.h", "p07_b4m_dispatch_metadata.h",
     "p07_b4m_frozen_routes.h", "p07_b4m_spike_trace.h",
@@ -98,7 +100,8 @@ def check_stage(source: Path, mode: str) -> None:
             "reset_config.lock_backup=" in chosen or
             "p08_b45_a53_backup_lock" in chosen):
         raise ValueError("full1024 experiment must run exactly 1024 original raw frames and never fake backup protection")
-    for n in (MAINS[mode], "p08_b45_perf_reset.c", "p08_b45_perf_reset.h"):
+    for n in (MAINS[mode], "p08_b45_perf_reset.c", "p08_b45_perf_reset.h",
+              "p08_b45_perf_startup.c", "p08_b45_perf_startup.h"):
         original = V3 / "software" / "p08" / n
         if hashlib.sha256((source / n).read_bytes()).digest() != hashlib.sha256(
             original.read_bytes()
@@ -111,6 +114,13 @@ def check_stage(source: Path, mode: str) -> None:
         "config->backup_lock_valid(" in clone or
         "Xil_Out32" in clone):
         raise ValueError("performance kernel contains false security callback or MMIO writes")
+    startup=(source / "p08_b45_perf_startup.c").read_text()
+    if ("p08_b45_perf_prepare_new_session(" not in startup or
+        "memset(state, 0, sizeof(*state))" not in startup or
+        "Xil_Out32(" in startup or "p08_b45_a53_backup_lock" in startup):
+        raise ValueError("startup must validate ranges before isolated fresh-state zero")
+    if "prepare_first_entry_workspaces();" not in chosen or "explain_preloop_bind_failure(" not in chosen:
+        raise ValueError("full1024 V2 requires explicit BSS reset and failure reason evidence")
     if any("p08_b45_a53_backup_guard" in p.name for p in source.iterdir()):
         raise ValueError("protected/guarded source may not enter performance experiment")
 
@@ -181,7 +191,8 @@ def build(xsa: Path, workspace: Path, source: Path, mode: str) -> None:
         linker = link_map.read_text(errors="replace")
         if any(marker not in linker for marker in (
             "Linker script and memory map", ".text", ".bss",
-            "main", "p08_b45_perf_reset_bind", "p08_b45_perf_reset_image",
+            "main", "p08_b45_perf_prepare_new_session",
+            "p08_b45_perf_reset_bind", "p08_b45_perf_reset_image",
             "p07_b4m_full_run", "p08_b2_meter_start",
         )):
             raise RuntimeError("new B4.5 linker map missing required symbols")

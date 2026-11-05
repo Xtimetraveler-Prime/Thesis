@@ -17,8 +17,8 @@ import p08_b2_3_elf_admission as orig
 
 MODES = ("once", "unchecked")
 IDENTITIES = {
-    "once": b"P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V1",
-    "unchecked": b"P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V1",
+    "once": b"P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V2",
+    "unchecked": b"P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V2",
 }
 TERMINAL = {
     "once": b"P08_B45_PERF_AUTH_ONCE_1024_TERMINAL_DONE=1",
@@ -29,7 +29,7 @@ ORIGINAL_ELF_SHA = (
 )
 XSA_SHA = orig.EXPECTED_XSA_SHA
 PINS_SHA = orig.EXPECTED_PINS_SHA
-SCHEMA = "p08-b45-unprotected-performance-full1024-offline-elf-admission-v1"
+SCHEMA = "p08-b45-unprotected-performance-full1024-offline-elf-admission-v2"
 PROFILE_BASE = 0x42400000
 PROFILE_BYTES = 1024 * 256
 
@@ -74,6 +74,7 @@ def audit(mode: str, elf: Path, linker_map: Path, original_elf: Path,
     require(all(x in map_raw for x in (
             b"Linker script and memory map", b".text", b".bss", b"main",
             b"p08_b45_perf_reset_bind", b"p08_b45_perf_reset_image",
+            b"p08_b45_perf_prepare_new_session",
             b"p07_b4m_full_run", b"p08_b2_meter_start")),
             "A53 linker map missing reset, guard, neural or timing symbols")
     try:
@@ -109,6 +110,8 @@ def audit(mode: str, elf: Path, linker_map: Path, original_elf: Path,
         "proposed_reset_profile_bytes": PROFILE_BYTES,
         "source_build_mode_specific": True,
         "frames": 1024,
+        "startup_reset_state_guarded_zero_after_geometry_check": True,
+        "new_failure_only_bind_reason_mailbox_v2": True,
         "raw_source_population_sha_1024_images_checked_in_new_app": True,
         "unprotected_performance_only": True,
         "ELF64_AArch64_PT_LOAD_low_DDR_static_admission": True,

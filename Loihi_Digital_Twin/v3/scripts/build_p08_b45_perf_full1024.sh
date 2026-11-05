@@ -15,10 +15,10 @@ die(){ echo "P08_B45_BUILD_NO_GO=$*" >&2; exit 2; }
 case "$MODE" in
     once) MAIN="p08_b45_perf_once_full1024_a53.c"
           APP="p08_b45_perf_once_full1024"
-          ID="P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V1";;
+          ID="P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V2";;
     unchecked) MAIN="p08_b45_perf_unchecked_full1024_a53.c"
           APP="p08_b45_perf_unchecked_full1024"
-          ID="P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V1";;
+          ID="P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V2";;
     *) die "mode must be exactly once or unchecked";;
 esac
 [[ "$BUILD" == /* && ! -e "$BUILD" && ! -L "$BUILD" ]] || die "NEW absolute build path required"
@@ -41,7 +41,7 @@ for tool in vitis aarch64-none-elf-readelf aarch64-none-elf-nm python3; do
     command -v "$tool" >/dev/null || die "missing $tool; source Vitis 2025.2 tools"
 done
 mkdir -p "$BUILD/source"
-for n in "$MAIN" p08_b45_perf_reset.c \
+for n in "$MAIN" p08_b45_perf_reset.c p08_b45_perf_startup.c \
          p08_b2_ingress.c p08_b2_service_meter.c; do
     cp -- "$V3/software/p08/$n" "$BUILD/source/"
 done
@@ -56,7 +56,7 @@ for n in p03_hw_adapter.c p03_hw_xilinx_io.c; do
     cp -- "$V3/software/p03/$n" "$BUILD/source/"
 done
 for n in p08_b2_ingress.h p08_b2_context_reset.h p08_b45_reset_variants.h \
-         p08_b45_perf_reset.h p08_b2_service_meter.h; do
+         p08_b45_perf_reset.h p08_b45_perf_startup.h p08_b2_service_meter.h; do
     cp -- "$V3/software/p08/$n" "$BUILD/source/"
 done
 cp -- "$PIN_HEADER" "$BUILD/source/p08_b2_2_original_context_sha256.h"

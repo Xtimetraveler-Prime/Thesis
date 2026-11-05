@@ -189,9 +189,14 @@ def review(args:argparse.Namespace)->dict:
 def main(argv:list[str]|None=None)->int:
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--experiment",choices=("once","unchecked"),required=True)
+    # The independent reviewer invokes bench.admission(args), which
+    # REQUIRES the two previously accepted real pilot16 report paths.
+    # Keep the same operator FULL_COMMON array as the guarded physical
+    # runner; independently authenticate those SHA-pinned receipts again.
     for key in ("evidence","stage","first16","b3_report","shards",
                 "ingress","oracle","b4_independent_report",
-                "b44_timing_report","build","original_elf","reset_pins",
+                "b44_timing_report","pilot_once_report",
+                "pilot_unchecked_report","build","original_elf","reset_pins",
                 "reports","out"):
         p.add_argument("--"+key.replace("_","-"),required=True,type=Path)
     a=p.parse_args(argv)

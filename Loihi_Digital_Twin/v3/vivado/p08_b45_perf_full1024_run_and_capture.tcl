@@ -1,4 +1,4 @@
-# ORIGINAL 1024-image inference ABI and JTAG capture retained in a DISTINCT
+# V2 fresh A53 startup/BSS admission and failure-only bind code telemetry.\n# ORIGINAL 1024-image inference ABI and JTAG capture retained in a DISTINCT
 # B4.5 UNPROTECTED performance-only pilot. Same frozen 27 P02 backup and
 # 1024-image pixel pool; per-image work all 1024.
 # No XMPU claim. Requires operator-approved CPU/DDR takeover and POST-RUN
@@ -23,8 +23,8 @@ if {$mode ni {once unchecked} || ![regexp {^[0-9a-f]{64}$} $pin]} {
 }
 set expected_elf "p08_b45_perf_${mode}_full1024.elf"
 set identity [expr {$mode eq "once" ?
-    "P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V1" :
-    "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V1"}]
+    "P08_B45_PERF_AUTH_ONCE_ORIGINAL_27CORE_1024_A53_V2" :
+    "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V2"}]
 set terminal_label [expr {$mode eq "once" ?
     "P08_B45_PERF_AUTH_ONCE_1024_TERMINAL_DONE=1" :
     "P08_B45_PERF_UNCHECKED_1024_TERMINAL_DONE=1"}]
