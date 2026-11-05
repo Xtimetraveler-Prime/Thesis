@@ -1,41 +1,72 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5.4.5 IN DEVELOPMENT — generated PSU source dependency and offline boot candidate inventory (PC-ONLY)
+## P08-B4.5 ACTIVE — source-channel and trusted-boot readiness (PC-ONLY)
 
-New descendant branch `agent/v3-p08-b4545-generated-psu-audit`,
-stacked on accepted B4.5.4.4 draft PR #59. **Operator-local verification
-and real-source JSON SHA are pending; this is NOT accepted physical
-evidence.** The original accepted 4.4 report SHA is pinned:
-`e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9`.
-The new read-only script `scripts/p08_b4545_generated_psu_graph.py`
-verifies original routed P03 XSA and independent generated
-`psu_init.c`, `psu_init.h`, `psu_init.tcl` exact-byte identity.
-It walks named C dependencies from `psu_protection()` /
-`psu_protection_lock()`, records unresolved function/macro references,
-literal register call sites, port-level hints and HWH/Tcl symbols,
-and SHA-inventories only optional operator-specified pre-existing
-BOOT.BIN/BIF/FSBL build artifacts. Because this is not a preprocessor,
-symbolic source hints cannot prove region-slot, secure/NS, 10-bit
-master IDs, priority, permissions or locked effective XMPU state.
-Possible absence of literal XMPU sites is NOT proof that generated
-tables do nothing. All original ELF, HLS/bitstream, 27 frozen P02
-records and official TEST stay unchanged; **no board contact or writes**.
+**Current work package:** P08-B4.5 FSBL C vs XSDB Tcl generated-protection
+source-channel preflight. New branch
+`agent/v3-p08-b45-physical-readiness-source-gate`,
+new draft PR stacked on B4.5.4.5's draft PR #60.
+Native CI is host-only; operator-local actual original-source rerun
+and report SHA are **pending**. No board access, XSDB, DDR writes,
+FSBL/BOOT.BIN rebuild or official MNIST TEST are authorized.
+The previous 4.5.4.5 operator report is an accepted SOURCE observation,
+**not** boot, active register or exclusive DDR ownership proof.
 
-Native negative tests and the no-board CI workflow are newly added.
-Operator runbook (all required exports and bounded read-only
-`find` commands):
-[docs/P08_B4_5_4_5_GENERATED_PSU_SOURCE_AND_BOOT_CANDIDATE_RUNBOOK.md](docs/P08_B4_5_4_5_GENERATED_PSU_SOURCE_AND_BOOT_CANDIDATE_RUNBOOK.md).
-Do not mark accepted without operator report and SHA. The currently
-active KV260 FSBL/compiler flags/boot medium, all DDR master owners,
-13.5 MiB backup protection and adjacent 512 KiB remain unproven.
-A53 guard remains fail-closed. **NO-GO** for XMPU enabling, firmware
-changes, DDR/JTAG/PL access or physical inference.
+The key data gap is now explicit. The original generated C
+`psu_protection()` reaches all six
+`psu_ddr_xmpu[0-5]_data` names, each with 21 source bytes and
+zero named calls in the operator's previous report; lock data
+has 87 source bytes and zero named calls. The original
+`psu_init.tcl` contains XMPU symbols but AMD PG201 documents
+Tcl as the XSDB initialization path, while the FSBL uses generated
+C: https://docs.amd.com/r/en-US/pg201-zynq-ultrascale-plus-processing-system/Output-Generation .
+**Tcl content cannot substitute for actual cold-boot C
+protection or XMPU register readback.** New
+`scripts/p08_b45_fsbl_source_channel_gate.py` re-verifies
+the original SHA-pinned source report/XSA/C/H/Tcl and computes a
+per-port C-vs-Tcl *source-only* matrix. It only SHA-inventories
+operator-specified existing host BOOT.BIN/BIF/FSBL build files.
+The listed physical permissions/boot flags are always reported
+unproven; no physical action is built in.
 
-**Numbering simplification (after the current 4.5 family closes):**
-use one `B4.x` entry per substantive next deliverable and record its
-individual checks in the entry/PR; do not continue a `4.5.4.6`
-subsubsubtask chain. Preserve existing numbered accepted evidence and
-stacked draft PRs intact until explicitly approved to merge.
+**AMD source/register attribution:** AMD PG201 above and
+UG1085 six-DDR-port register bases
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances ,
+UG1085 XMPU register layout
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/XMPU-Register-Set-Overview ,
+AMD/Xilinx FSBL 2025.2 bypass header
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hw.h .
+These are adapted AMD mechanisms, not new invented thesis IP.
+
+**Runbook:** [docs/P08_B45_FSBL_C_VS_TCL_PHYSICAL_READINESS_PC_ONLY_RUNBOOK.md](docs/P08_B45_FSBL_C_VS_TCL_PHYSICAL_READINESS_PC_ONLY_RUNBOOK.md).
+Keep original 27 P02 backups and A53 fail-closed guard unchanged.
+The trusted prelock staging of all 13.5MiB immutable contexts,
+512KiB adjacent-owner proof, actual six-port master IDs,
+region priority/permissions, compiled current FSBL selection,
+continuing A53 guard, recoverable boot medium and explicit
+operator hardware authorization all remain **NO-GO**.
+
+**Numbering rule:** B4.5 has named work packages and PRs
+rather than another B4.5.4.6 level. Reserve already-defined
+P08-B4.6 for the later paired A/B physical study, and do
+not alter accepted historical milestone labels.
+
+### B4.5.4.5 — operator-reported original source observation ACCEPTED (2026-11-05 UTC)
+
+Operator supplied original PC-only output:
+`P08_B4545_ORIGINAL_XSA_C_H_TCL_BYTE_IDENTITY_PASS=1`
+and
+`P08_B4545_GENERATED_PROTECTION_SOURCE_GRAPH_RECORDED=1`.
+External original report
+`/home/dna/Thesis_Evidence/p08_b4545_psu_source_20261105T065516Z.json`,
+operator-reported SHA-256
+`2d6f9e079b3bf9845ebd07d69b2de4611b90dc821341b0c9ada6458b2daa74a0`.
+All current physical flags remain zero/false and the decision is
+`GENERATED_PSU_SOURCE_GRAPH_ONLY_ACTIVE_BOOT_AND_XMPU_NO_GO`.
+Original source report was pasted with SHA output (not independently
+rehashed from a local file by the assistant), and no local pytest
+transcript was supplied; prior GitHub native no-board CI PASSED.
+See [docs/P08_B4_5_4_5_OPERATOR_REPORTED_GENERATED_PSU_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_5_OPERATOR_REPORTED_GENERATED_PSU_ACCEPTANCE_2026_11_05.md).
 
 ---
 
