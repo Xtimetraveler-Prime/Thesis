@@ -27,8 +27,18 @@ SHA matched exactly; the authenticated-once report also matched the
 runbook have been corrected to the original 64-digit SHA. A new
 regression requires six proper 64-character lowercase hexadecimal
 digests and explicitly pins the correct once admission-report SHA.
-**The independently recomputed paired-admission pass is still pending**
-and should now be rerun without touching built artifacts. Do not claim independently accepted build provenance until
+**INDEPENDENT OFFLINE PAIR VERIFIED / P08-B4.5.3 ACCEPTED (2026-11-05 UTC).**
+The operator reran the independently recomputed genuine paired-A53
+offline checker and posted
+`P08_B45_TWO_GENUINE_A53_ELFS_INDEPENDENT_OFFLINE_PASS=1` and
+`P08_B45_BOTH_PROVENANCE_AND_SOURCE_GUARD_MATCH=1`.
+Independent JSON path:
+`/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`;
+SHA-256
+`03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+Full source-derived acceptance:
+`docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
+No physical inference, DDR ownership proof or JTAG launch occurred. Do not claim independently accepted build provenance until
 that local report is presented. No JTAG, DDR writes, physical KV260
 inference or neural/latency verification are authorized or reported.
 
@@ -63,7 +73,7 @@ demonstrate that content corruption is intentionally not detected.
 
 ### P08-B4.5.3 — separate A53 source and Vitis offline builds
 
-**TWO GENUINE A53 BUILD ARTIFACTS REPORTED; independent PC recheck PENDING.**
+**ACCEPTED (2026-11-05 UTC): two genuine Vitis A53 builds and independent paired PC-only static admission.**
 
 Two distinct A53 mains now exist:
 `software/p08/p08_b45_auth_once_full1024_a53.c` and
@@ -103,16 +113,15 @@ exports and read-only `find`/SHA validation commands. Both offline
 Vitis builds subsequently completed according to operator-supplied
 six-file SHA-256 output.
 
-**Next operator gate:** pull latest B4.5 branch and run the PC-only
-independent paired-ELF checker against both original local build roots,
-accepted original B2.3 ELF/P03 XSA/B2.2 SHA header, and all six pinned
-operator-reported ELF/map/report digests. The checker **re-runs both
-admission algorithms** and requires exact JSON equivalence, preserved
-frozen original provenance, correct unprovisioned guard, distinct
-mode-specific C entrypoints and nonoverlapping ELF64 PT_LOAD regions.
-Only after operator output and new report SHA are recorded may B4.5.3
-build/static-admission be marked complete. B4.5.4 physical remains
-blocked by independent DDR owner/protection evidence and new consent.
+**Next operator gate:** begin P08-B4.5.4.1 **PC-only
+boot/DDR ownership and backup-protection audit**, in a NEW descendant
+branch based on this accepted B4.5.3 head. Inventory actual source
+memory envelopes, preserve original pinned A53 evidence, and produce
+a fail-closed owner/protection gap report. Do NOT run any new physical
+DDR, JTAG, PL, ELF download or inference. An independently proven,
+persistent read-only backup mechanism plus A53/PL/OS ownership audit,
+new build and fresh operator authorization are prerequisites for later
+physical pilot work.
 
 Runbooks and commands:
 [docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md)
