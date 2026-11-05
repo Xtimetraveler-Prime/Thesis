@@ -101,6 +101,9 @@ def test_original_failclosed_and_full_jtag_contract():
     for expected in ("import p08_b3_pilot16_physical_run as b3",
                      "import p08_b3_pilot16_stage_host as original_stage",
                      "oracle_merge.merge(","original_profile.ORIGINAL_B44_TIMING_SHA",
+                     "pilot_once_report", "pilot_unchecked_report",
+                     "7ab975d3c062df2606357080c1eeda0904ea8aaba0aed4c02fda8ce1140ecdca",
+                     "5f29cda8661cad64fe39231d42a84c3293bef96af6c7fe74c9c74b466a2195aa",
                      "b3.readback_original(","neural.verify(","check_post_backup(",
                      "z262144.write_bytes(bytes(262144))",
                      "i<1023","default=\"preflight\""):
