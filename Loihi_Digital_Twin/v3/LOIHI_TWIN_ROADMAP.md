@@ -1,5 +1,42 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.5 ACTIVE — V2 once real 1024 physical preliminary PASS, independent review CLI repair (2026-11-05 later)
+
+**Operator actual new V2 `once` full1024 physical observation:** original
+six DDR staging/readbacks exact, newly pinned V2 ELF downloaded,
+strict **1024/1024 terminal** observed, all three complete journal/
+service/reset-profile sidecars physically captured, **all 27 original
+backup context records physically read back**, and the physical
+driver's original complete-1024 software scalar/FNV+backup
+verification reported
+`P08_B45_PERF_FULL1024_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1`.
+This is strong preliminary physical acceptance, but a separate
+independent operator PC verifier **did not execute**, because its
+argument parser rejected `--pilot-once-report` /
+`--pilot-unchecked-report` from the common argument array.
+The downstream verifier actually invokes `bench.admission(args)`
+which REQUIRES those two authentic pilot JSON paths.
+**Bug fixed on current PR branch** by declaring both required CLI
+options and adding new native parser-contract tests for both modes;
+no actual A53 ELF, original source oracle, P03, security policy
+or physical runner was modified. Original captured physical evidence
+remains valid; **DO NOT repeat the real V2 once JTAG session to fix
+a PC-only CLI error**. Independently verify the saved once evidence
+using same accepted `P08_B45_FULL_COMMON` after pulling fix.
+
+**Operator also reports new `unchecked` full1024 V2 currently running**.
+Its outcome is UNKNOWN. Do not change the current working tree,
+interrupt/duplicate its active XSDB hardware client, or assert
+1024 unchecked success. After its physical attempt ends, mandatory
+power-cycle and only then pull the latest branch and execute
+the now-corrected independent PC-only verifier for **each existing
+physical capture**. Do not interpret captured data as accepted
+until independent reports and SHA digests exist. Original TEST sealed,
+backup hardware security still unproven. See
+[runbook addendum](docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md).
+
+---
+
 ## P08-B4.5 ACTIVE — FULL1024 V2 startup / fault 105 repair for BOTH unprotected modes (2026-11-05)
 
 **New operator-provided exact offline failure evidence:** full1024
