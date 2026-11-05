@@ -24,11 +24,12 @@
 #include "p08_b2_context_reset.h"
 #include "p08_b45_reset_variants.h"
 #include "p08_b45_perf_reset.h"
+#include "p08_b45_perf_startup.h"
 #include "p08_b2_service_meter.h"
 /* Generated ONLY from original frozen B2.4 33-file source at build staging. */
 #include "p08_b2_2_original_context_sha256.h"
 
-#define B23_ID "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V1"
+#define B23_ID "P08_B45_PERF_UNCHECKED_ORIGINAL_27CORE_1024_A53_V2"
 #define B45_MODE P08_B45_UNCHECKED_CONTENT
 #define B23_FRAMES 1024u
 #define B23_RAW_POOL 0x42100000u
@@ -337,6 +338,53 @@ static void commit_reset_profile(uint32_t index,
     for(i=0u;i<B23_WORDS;i++)dest[i]=words[i];
     flush(B45_PROFILE_BASE+(uintptr_t)index*B23_ROW_BYTES,B23_ROW_BYTES);
 }
+/* Standalone JTAG reset may leave previous application BSS contents.
+ * In the FAILED first full1024 attempt the pre-frame mailbox already
+ * reported 702 pager dispatches and 26 barriers, which can only be
+ * leftover values before prepare_new_scheduler() runs. Make the original
+ * workspace fresh ONCE at new image entry (outside any timed service).
+ * Keep reset_state unmodified here: audited bootstrap records its old
+ * magic and validates independent DDR bounds before safely clearing it.
+ */
+static void prepare_first_entry_workspaces(void){
+    memset(&hw,0,sizeof(hw));
+    memset(&pager,0,sizeof(pager));
+    memset(&scheduler,0,sizeof(scheduler));
+    memset(&binding_receipt,0,sizeof(binding_receipt));
+    memset(&frozen,0,sizeof(frozen));
+    memset(&buffers,0,sizeof(buffers));
+    memset(&receipt,0,sizeof(receipt));
+    memset(&b23_input_routes,0,sizeof(b23_input_routes));
+    memset(&meter,0,sizeof(meter));
+    memset(&cookie,0,sizeof(cookie));
+    memset(packet_words,0,sizeof(packet_words));
+    memset(p03_scratch,0,sizeof(p03_scratch));
+    memset(route_buffer,0,sizeof(route_buffer));
+    memset(compartment_buffer,0,sizeof(compartment_buffer));
+    memset(verified_spikes,0,sizeof(verified_spikes));
+    memset(current_words,0,sizeof(current_words));
+    memset(packet_scratch,0,sizeof(packet_scratch));
+    memset(packet_frame,0,sizeof(packet_frame));
+}
+/* FAILURE-ONLY extension; success mailbox ABI and neural oracle untouched.
+ * Word14 signature, 15 reason code, 16 previous state magic, 17 old
+ * generation, 18 old poison, 19/20 prior pager dispatch/barrier counters,
+ * 21 reset-state was initialized after range validation. No XMPU writes.
+ */
+static void explain_preloop_bind_failure(
+    const p08_b45_perf_startup_receipt *r,
+    uint32_t old_dispatches, uint32_t old_barriers){
+    volatile uint32_t *m=(volatile uint32_t *)(uintptr_t)B23_MAILBOX;
+    m[14]=UINT32_C(0x504D4244);
+    m[15]=r->reason;
+    m[16]=r->prezero_magic;
+    m[17]=r->prezero_generation;
+    m[18]=r->prezero_poison;
+    m[19]=old_dispatches;
+    m[20]=old_barriers;
+    m[21]=r->reset_state_zeroed;
+    flush(B23_MAILBOX,B23_ROW_BYTES);
+}
 int main(void){
     const uint8_t *raw=(const uint8_t *)(uintptr_t)B23_RAW_POOL;
     const uint8_t *inroutes=(const uint8_t *)(uintptr_t)P07_B4M_ROUTE_IN_BASE;
@@ -345,7 +393,11 @@ int main(void){
     uint64_t cntfrq;
     uint32_t index;
     int result;
+    p08_b45_perf_startup_receipt b45_startup={0};
+    uint32_t old_pager_dispatches=pager.counters.dispatches;
+    uint32_t old_pager_barriers=pager.counters.barriers;
     (void)app_identity;
+    prepare_first_entry_workspaces();
     mailbox(UINT32_C(0xC0DE0000),B23_FIRST_FAULT_FRAME,0u,0u,0u);
     if(p03_hw_xilinx_fpd128_ready()!=0){
         mailbox(B23_FAIL,B23_FIRST_FAULT_FRAME,100u,0u,0u);
@@ -392,12 +444,26 @@ int main(void){
      * post-run backup readback, NOT in-band physical write prevention.
      */
     {
+        /* Configuration is checked BEFORE any reset-state write; no
+         * callback or A53 address admission is bypassed. Then explicitly
+         * zero the isolated state once to avoid stale previous JTAG BSS.
+         */
+        int prep=p08_b45_perf_prepare_new_session(
+            &reset_state,&reset_config,B45_MODE,&b45_startup);
+        if(prep!=P08_B45_START_OK){
+            mailbox(B23_FAIL,B23_FIRST_FAULT_FRAME,105u,1u,cntfrq);
+            explain_preloop_bind_failure(&b45_startup,
+                                         old_pager_dispatches,old_pager_barriers);
+            halt();
+        }
         uint64_t t0=observed_counter();
         int bind_result=p08_b45_perf_reset_bind(&reset_state,&reset_config,B45_MODE);
         uint64_t t1=observed_counter();
         if(bind_result!=P08_B45_RESET_OK || t1<t0){
             mailbox(B23_FAIL,B23_FIRST_FAULT_FRAME,105u,
                     (uint32_t)(-bind_result),cntfrq);
+            explain_preloop_bind_failure(&b45_startup,
+                                         old_pager_dispatches,old_pager_barriers);
             halt();
         }
         bind_ticks=t1-t0;
