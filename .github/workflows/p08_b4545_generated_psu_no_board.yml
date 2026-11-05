@@ -1,0 +1,53 @@
+name: P08-B4.5.4.5 generated PSU source graph NO BOARD
+on:
+  push:
+    branches: [agent/v3-p08-b4545-generated-psu-audit]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4545_generated_psu_graph.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4545_generated_psu_graph.py"
+      - ".github/workflows/p08_b4545_generated_psu_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4545_generated_psu_graph.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4545_generated_psu_graph.py"
+      - ".github/workflows/p08_b4545_generated_psu_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  pc-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Original inherited native B4.5 owner and FSBL test suites
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b454_ddr_owner_preflight.py \
+            tests/test_p08_b4542_xmpu_boot_policy.py \
+            tests/test_p08_b4543_fsbl_boot_source_inventory.py \
+            tests/test_p08_b4544_fsbl_protection_path.py
+      - name: Source-only generated PSU / boot artifacts negative tests
+        run: |
+          python3 -m pytest -q -rs tests/test_p08_b4545_generated_psu_graph.py
+      - name: Assert source tool cannot use physical or compile interfaces
+        run: |
+          python3 -m py_compile scripts/p08_b4545_generated_psu_graph.py tests/test_p08_b4545_generated_psu_graph.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path("scripts/p08_b4545_generated_psu_graph.py").read_text()
+          for forbidden in ("import subprocess", "import socket", "os.system(",
+                            "os.popen(", "Xil_Out32(", "xsdb -", "bootgen -",
+                            "vitis -s", "/dev/mem"):
+              assert forbidden not in s, forbidden
+          PY
+          echo P08_B4545_GENERATED_PSU_SOURCE_NATIVE_PASS=1
+          echo P08_B4545_ACTIVE_BOOT_PROVEN=0
+          echo P08_B4545_BOARD_CONTACT=NOT_RUN
