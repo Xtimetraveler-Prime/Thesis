@@ -1,6 +1,6 @@
 {
   "schema": "p08-b4542-zynqmp-ddr-xmpu-boot-candidate-UNIMPLEMENTED-v1",
-  "disposition": "HYPOTHETICAL_STATIC_POLICY_NOT_HARDWARE_ATTESTATION",
+  "disposition": "DENY_ALL_BACKUP_COVER_PLUS_UNRESOLVED_READ_WHITELIST_STATIC_ONLY",
   "source_derivation": "AMD_UG1085_UG1137_UG1283_AND_PUBLIC_XFSLB_HOOKS_ADAPTED_FOR_THESIS",
   "documentation_sources": {
     "amd_ug1085_instances": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances",
@@ -45,7 +45,7 @@
       "stage_27_original_p02_records_into_backup",
       "verify_all_original_27_context_SHA256",
       "quiesce_all_PSU_and_PL_write_masters",
-      "program_all_six_ddr_xmpu_backup_RO_regions",
+      "program_all_six_ddr_xmpu_priority14_deny_all_and_priority15_reader_whitelist",
       "secure_readback_all_six_ddr_xmpu_region_configs",
       "lock_all_six_ddr_xmpu_configs",
       "secure_readback_lock_and_coverage",
@@ -59,17 +59,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     },
     {
       "ddr_xmpu_port": 1,
@@ -77,17 +94,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     },
     {
       "ddr_xmpu_port": 2,
@@ -95,17 +129,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     },
     {
       "ddr_xmpu_port": 3,
@@ -113,17 +164,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     },
     {
       "ddr_xmpu_port": 4,
@@ -131,17 +199,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     },
     {
       "ddr_xmpu_port": 5,
@@ -149,17 +234,34 @@
       "registers_readback": false,
       "lock_readback_proven": false,
       "existing_regions_and_defaults_audited": false,
-      "priority_region_design": {
-        "region_index": 15,
-        "start": "0x43000000",
-        "end_exclusive": "0x43e00000",
-        "enabled": true,
-        "master_id": 0,
-        "master_mask": 0,
-        "secure_only": false,
-        "read_allowed": true,
-        "write_allowed": false
-      }
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
     }
   ],
   "selected_master_cases": [
@@ -188,11 +290,20 @@
     "cpu_0x0_to_0x109BC0_boot_DDR_exclusive": false,
     "test_of_rejected_write_on_disposable_board": false,
     "trusted_guard_enabled_new_A53_ELFs_admitted": false,
-    "operator_new_board_authorization": false
+    "operator_new_board_authorization": false,
+    "read_whitelist_per_port_real_AXI_MASTER_ID_confirmed": false,
+    "priority14_and_priority15_slots_available_on_all_ports": false
   },
   "no_jtag": true,
   "no_xmpu_register_writes": true,
   "no_boot_bin_build": true,
   "approved_for_physical_execution": false,
-  "official_mnist_test": "SEALED_NOT_ACCESSED"
+  "official_mnist_test": "SEALED_NOT_ACCESSED",
+  "security_design_note": "Priority14 catches all IDs and blocks read/write; priority15 shall later permit read only for individually verified master IDs. No read grant is enabled or presumed. Both regions require actual existing-region/port audits before hardware use.",
+  "initial_static_policy_results_expected": {
+    "all_writes_into_protected_cover_rejected": true,
+    "any_A53_backup_read_allowed": false,
+    "reader_whitelist_policy_ready": false,
+    "physically_verified": false
+  }
 }
