@@ -31,7 +31,7 @@ XSA_SHA = orig.EXPECTED_XSA_SHA
 PINS_SHA = orig.EXPECTED_PINS_SHA
 SCHEMA = "p08-b45-unprotected-performance-pilot16-offline-elf-admission-v1"
 PROFILE_BASE = 0x42400000
-PROFILE_BYTES = 1024 * 256
+PROFILE_BYTES = 16 * 256
 
 
 class VariantElfNoGo(ValueError):
@@ -90,7 +90,7 @@ def audit(mode: str, elf: Path, linker_map: Path, original_elf: Path,
             for seg in segments),
             "new ELF PT_LOAD overlaps original P08 DDR envelope")
     require(PROFILE_BASE == 0x42400000 and
-            PROFILE_BYTES == 262144 and
+            PROFILE_BYTES == 4096 and
             PROFILE_BASE + PROFILE_BYTES <= 0x43000000,
             "proposed reset sidecar DDR envelope drift")
 
