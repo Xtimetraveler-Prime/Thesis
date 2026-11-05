@@ -1,6 +1,77 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5 ACTIVE — unprotected performance-only PILOT16 (2026-11-05 UTC)
+## P08-B4.5 ACTIVE — separate unprotected FULL1024 physical A53 preparations and LIVE PC monitor (2026-11-05 UTC)
+
+**UPDATE superseding the following historical PILOT16 preflight plan:** both real original
+TRAIN-derived 16-image once and unchecked hardware pilots **PASSED actual
+A53 JTAG inference and independent original scalar/FNV, backup after-run
+verification**. Operator supplied full logs and local independent JSON
+SHA: once
+`7ab975d3c062df2606357080c1eeda0904ea8aaba0aed4c02fda8ce1140ecdca`,
+unchecked
+`5f29cda8661cad64fe39231d42a84c3293bef96af6c7fe74c9c74b466a2195aa`.
+FPD/LPD128, original P03 PL, genuine six DDR original source
+readback, strict 16 terminal and physical all-27 postrun backup
+readbacks occurred in both, followed by the original independent reviewer PASS.
+The user shared terminal transcript only (not actual operator
+JSON or raw DDR files). It reported no numerical or hardware failures;
+record original XSDB `rst -processor` warning without dismissing it.
+See [pilot16 actual results](docs/P08_B45_OPERATOR_REPORTED_REAL_UNPROTECTED_PILOT16_ACCEPTANCE_2026_11_05.md).
+**Backup write-protection security remains NOT PROVEN and NOT CLAIMED.**
+
+**Next distinct work** (current branch `agent/v3-p08-b45-unprotected-full1024-progress`,
+DRAFT PR #63 stacked on pilot16 PR #62, both unmerged):
+two distinct FULL1024 performance-only A53 variants
+`p08_b45_perf_once_full1024_a53.c` /
+`p08_b45_perf_unchecked_full1024_a53.c`
+with unique source/ELF identities, 1024 original frame outputs, three
+256KiB journal/timing/reset sidecars, unchanged original 27 P02
+neural records and frozen raw1024/train scalar source, quiescence,
+error poisoning, cache/barrier. Sidecar guard flag word19 must
+be ZERO; protected-mode variant and original fail-closed callback
+are untouched. NEW dedicated Vitis 2025.2 builder and mode-specific
+ELF/map/PT_LOAD admission; no previously accepted pilot ELF is reused.
+
+The **PC offline preflight** requires both actual accepted pilot16
+independent JSON SHA pins, accepted genuine original physical B4.2
+1024 numerical report SHA, B4.4 1023 ordinary-timing report SHA
+and recomputed original 64 scalar shards, along with immutable
+P03/XSA/B2.2 pins and original B3 source/readback. Physical runner
+reuses accepted dedicated B4i original A53 stop+128-bit gate,
+P03 programming and B3 six source DDR transfer+readbacks. It
+captures strict genuine all1024 terminal, 1024 neural/FNV
+and six service phases, 1024 reset profiles, and all 27x512KiB
+AFTER-RUN signed backup records. Unique result/evidence paths;
+ten explicit risk approvals per physical JTAG attempt; reboot
+after every attempt, NEVER resume halted Linux.
+
+**Second-terminal nonintrusive live progress:** The SAME active XSDB
+process polls the genuine A53 mailbox. It writes
+`performance1024_capture/progress_state.txt` via atomic host-side
+rename; separate PC Python reader only reads this file and
+`stage.txt`, never opens JTAG or contacts PuTTY/DDR. Displays
+completed/1024, percent, observed throughput and elapsed
+during original staged JTAG run. A terminal/progress status is
+NOT independent neural parity success; a separately executed
+PC-only independent all1024 FNV/spikes/time and original
+27-backup review is mandatory. Exclude special trace ordinal
+1023 for ordinary 1023 service/reset timing distributions.
+Original B4.4 one-session descriptive reference is preserved;
+no randomized paired AB/BA six-session statistical claim yet.
+Original MNIST TEST SEALED. No full1024 new hardware
+attempt has yet been accepted at this revision.
+
+**Exact operator PC Vitis build + offline test + physical launch + two-terminal
+monitor + independent verification for each mode:**
+[docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md](docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md).
+Only optional PuTTY commands are short `sudo xmutil listapps`
+and conditional `sudo xmutil unloadapp`. All long commands live
+inside VS Code on PC. Never merge this stack without explicit user
+authorization.
+
+---
+
+## P08-B4.5 HISTORICAL — unprotected performance-only PILOT16 (2026-11-05 UTC)
 
 **New user-directed research scope:** Test actual original KV260 neural
 prediction/FNV parity and reset latency for `authenticate-once`
