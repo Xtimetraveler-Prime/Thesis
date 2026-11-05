@@ -146,7 +146,9 @@ def audit(manifest: Path, original_elf: Path, xsa: Path, pins: Path,
             expected_sha = record.get(kind + "_sha256")
             need(type(expected_sha) is str and len(expected_sha) == 64 and
                  actual_sha == expected_sha,
-                 "operator-pinned " + mode + " " + kind + " SHA-256 mismatch")
+                 "operator-pinned " + mode + " " + kind +
+                 " SHA-256 mismatch: expected=" + str(expected_sha) +
+                 " actual=" + actual_sha + " file=" + str(file))
             sha_checks[kind] = actual_sha
         source_guard_audit(root, mode)
         admitted = load_json(files["report"])
