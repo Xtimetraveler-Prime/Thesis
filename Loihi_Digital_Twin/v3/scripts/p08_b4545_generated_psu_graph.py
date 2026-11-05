@@ -165,15 +165,23 @@ def graph_report(c_source: str, h_source: str, tcl_source: str) -> dict:
     operations = []
     for fname in touched:
         for match in WRITE_RE.finditer(funcs[fname]):
-            argument = match.group(2).split(",", 1)[0].strip()
-            literal = re.fullmatch(r"(?:\(?\s*)?(0[xX][0-9a-fA-F]{6,8})(?:\s*\)?)", argument)
+            # Report exact source-level expressions. Do not execute C, Tcl,
+            # preprocessor, macro expansions, or register writes.
+            fields = [v.strip()[:160] for v in match.group(2).split(",")]
+            argument = fields[0]
+            literal = re.fullmatch(
+                r"(?:\(?\s*)?(0[xX][0-9a-fA-F]{6,8})(?:[uUlL]*\s*\)?)",
+                argument)
             address = int(literal.group(1), 16) if literal else None
             port = ((address - 0xFD000000) // 0x10000
                     if address is not None and
                     0xFD000000 <= address < 0xFD060000 else None)
             operations.append({
                 "source_function": fname, "source_call": match.group(1),
-                "address_expression": argument[:160],
+                "address_expression": argument,
+                "mask_expression": fields[1] if len(fields) > 1 else None,
+                "value_expression": fields[2] if len(fields) > 2 else None,
+                "argument_count_source_guess": len(fields),
                 "literal_address": f"0x{address:08x}" if address is not None else None,
                 "candidate_ddr_xmpu_port": port,
                 "actual_effective_register_write_proven": False,
@@ -186,6 +194,23 @@ def graph_report(c_source: str, h_source: str, tcl_source: str) -> dict:
                              for v in operations) for i in range(6)}
     unresolved = sorted({call for name in touched
                          for call in graph[name]["unresolved_or_external_calls"]})
+    # Repeated writes to a single literal address are candidate source
+    # interactions, NOT effective XMPU permission conflicts.
+    duplicate_address_candidates = {}
+    for operation in operations:
+        address = operation["literal_address"]
+        if address is not None:
+            duplicate_address_candidates.setdefault(address, []).append({
+                "source_function": operation["source_function"],
+                "mask_expression": operation["mask_expression"],
+                "value_expression": operation["value_expression"],
+            })
+    duplicate_address_candidates = {
+        k: v for k, v in sorted(duplicate_address_candidates.items()) if len(v) > 1
+    }
+    region_symbols = sorted(set(re.findall(
+        r"\b[A-Za-z_]*REGION[_A-Za-z0-9]*\b", h_source + "\n" + tcl_source,
+        re.IGNORECASE)))[:250]
     return {
         "source_definition_count": len(funcs),
         "roots": list(roots),
@@ -195,6 +220,9 @@ def graph_report(c_source: str, h_source: str, tcl_source: str) -> dict:
         "candidate_register_call_sites": operations[:1000],
         "candidate_register_site_truncated": len(operations) > 1000,
         "literal_ddr_xmpu_sites_by_port": per_port,
+        "candidate_repeated_literal_register_write_sites": duplicate_address_candidates,
+        "source_region_symbols_without_accepted_slot_mapping": region_symbols,
+        "candidate_mask_value_expressions_not_effective_permissions": True,
         "header_xmpu_symbol_names": header_words,
         "tcl_xmpu_symbol_names": tcl_words,
         "tcl_protection_data_mentions": len(re.findall(
