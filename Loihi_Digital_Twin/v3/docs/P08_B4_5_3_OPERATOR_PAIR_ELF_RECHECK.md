@@ -1,5 +1,12 @@
 # P08-B4.5.3 — independent PC-only verification of BOTH genuine A53 builds
 
+**Correction after operator's independent SHA diagnostic:** An earlier
+copy of the pinned Experiment A admission JSON digest omitted its terminal
+hex character `e` (63 characters rather than 64). The corrected value
+`602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e`
+exactly matches the originally posted operator SHA and the rechecked
+on-disk report. No ELF, map or JSON was modified or rebuilt.
+
 **Evidence status (November 4, 2026 local / November 5 UTC):**
 The operator reported successful genuine offline Vitis 2025.2 builds
 for authenticated-once (A) and unchecked-content (B), and supplied exact
@@ -13,7 +20,7 @@ independently accessible to GitHub CI.**
 
 | Mode | Root | ELF SHA-256 | Map SHA-256 | Admission JSON SHA-256 |
 | --- | --- | --- | --- | --- |
-| A / `once` | `/home/dna/Thesis_Evidence/p08_b45_once_build_20261105T041935Z` | `70501217482d156d59037a8694b9b837938026cba0d62ccd1f8939bfdd112e04` | `946ed7105d01bb9bf0548208c46707d6dc2d6df7edfd31f937bd58f70fbfe691` | `602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526` |
+| A / `once` | `/home/dna/Thesis_Evidence/p08_b45_once_build_20261105T041935Z` | `70501217482d156d59037a8694b9b837938026cba0d62ccd1f8939bfdd112e04` | `946ed7105d01bb9bf0548208c46707d6dc2d6df7edfd31f937bd58f70fbfe691` | `602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e` |
 | B / `unchecked` | `/home/dna/Thesis_Evidence/p08_b45_unchecked_build_20261105T042140Z` | `f6e09a8cde5ecd05900b30f0cc91d8d9549f2ae1e446157eb2c06024e0fd1655` | `f23298ccd3842e3ef89ed2157238123f38e1995a42ccca0f830fad12028e7545` | `be2284d366dd53d1474719eabefaa7133fa59a809fa047251dff20884b45998b` |
 
 ## Pull current sources and set EVERY input path
