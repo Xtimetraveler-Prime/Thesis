@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import struct
 import sys
@@ -61,13 +62,31 @@ def synthetic(tmp_path: Path, monkeypatch):
         app = ("p08_b45_auth_once_1024" if mode == "once"
                else "p08_b45_unchecked_1024")
         elf = stage / (app + ".elf")
+        linkmap = stage / (app + ".map")
+        admission = root / ("p08_b45_" + mode + "_elf_admission.json")
         elf.write_bytes(fake_aarch64_elf())
-        pins = sha(elf.read_bytes())
-        pin["variants"][mode] = {"build_root": str(root), "elf_sha256": pins}
-        paired["independent_report_files"][mode] = {"elf": pins}
+        linkmap.write_bytes(b"SYNTHETIC ONLY linker map for " + mode.encode())
+        admission.write_bytes(b"{\\\"synthetic_only\\\": true}\\n".decode("unicode_escape").encode())
+        stage_sources = root / "source"
+        stage_sources.mkdir()
+        for name in (
+            "p08_b45_reset_variants.c", "p08_b45_reset_variants.h",
+            "p08_b45_a53_backup_guard.c", "p08_b45_a53_backup_guard.h",
+            ("p08_b45_auth_once_full1024_a53.c" if mode == "once"
+             else "p08_b45_unchecked_full1024_a53.c"),
+        ):
+            shutil.copy2(ROOT / "software/p08" / name, stage_sources / name)
+        digest = {"elf": sha(elf.read_bytes()),
+                  "map": sha(linkmap.read_bytes()),
+                  "report": sha(admission.read_bytes())}
+        pin["variants"][mode] = {
+            "build_root": str(root), **{k + "_sha256": v for k, v in digest.items()}
+        }
+        paired["independent_report_files"][mode] = digest
         roots[mode] = root
     pinfile = tmp_path / "synthetic_pins.json"
     pinfile.write_text(json.dumps(pin))
+    paired["operator_pins_sha256"] = sha(pinfile.read_bytes())
     pairfile = tmp_path / "synthetic_pair.json"
     pairfile.write_text(json.dumps(paired))
     monkeypatch.setattr(gate, "PINS_PATH", pinfile)
@@ -115,6 +134,8 @@ def test_pc_gap_report_is_static_pass_and_unconditional_board_no_go(synthetic, t
     "tampered_elf", "overlapping_elf", "out_of_aperture",
     "changed_root", "padded_sha_in_pins", "altered_pair_json",
     "no_src_geometry", "missing_input_elf",
+    "changed_map_after_accept", "changed_report_after_accept",
+    "changed_stage_guard_after_accept", "changed_pin_manifest_after_accept",
 ))
 def test_fail_closed_on_swapped_pins_sources_elf_or_geometry(
         synthetic, tmp_path, monkeypatch, bad):
@@ -156,8 +177,18 @@ def test_fail_closed_on_swapped_pins_sources_elf_or_geometry(
         monkeypatch.setattr(gate, "BACKUP", (0x43000000, 0x44000000))
     elif bad == "missing_input_elf":
         once.unlink()
+    elif bad == "changed_map_after_accept":
+        (roots["once"] / "vitis_workspace/p08_b45_auth_once_1024.map").write_bytes(b"modified map")
+    elif bad == "changed_report_after_accept":
+        (roots["once"] / "p08_b45_once_elf_admission.json").write_bytes(b"modified report")
+    elif bad == "changed_stage_guard_after_accept":
+        (roots["once"] / "source/p08_b45_a53_backup_guard.c").write_bytes(b"return 0;")
+    elif bad == "changed_pin_manifest_after_accept":
+        pins["variants"]["once"]["map_sha256"] = "f" * 64
+        pinfile.write_text(json.dumps(pins))
     out = tmp_path / "must_not_exist.json"
-    with pytest.raises((gate.DdrGapNoGo, gate.pair.gate.orig.ElfNoGo)):
+    with pytest.raises((gate.DdrGapNoGo, gate.pair.PairElfNoGo,
+                        gate.pair.gate.orig.ElfNoGo)):
         review(synthetic, out)
     assert not out.exists()
 
