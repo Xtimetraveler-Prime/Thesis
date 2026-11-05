@@ -1,6 +1,6 @@
 # ORIGINAL 1024-image inference ABI and JTAG capture retained in a DISTINCT
 # B4.5 UNPROTECTED performance-only pilot. Same frozen 27 P02 backup and
-# 1024-image pixel pool; per-image work only 16.
+# 1024-image pixel pool; per-image work all 1024.
 # No XMPU claim. Requires operator-approved CPU/DDR takeover and POST-RUN
 # 27x512KiB backup readback. Reboot after any attempt. Do not resume Linux.
 # P08-B4.5 PERF1024 full1024 DESTRUCTIVE A53 JTAG run; only after physically verified
@@ -36,7 +36,7 @@ if {![file isfile $elf] || [file tail $elf] ne $expected_elf ||
     ![file isfile $zeros262144] || [file size $zeros262144]!=262144 ||
     ![file isdirectory $out] ||
     [llength [glob -nocomplain -directory $out *]]!=0} {
-    error "P08-B4.5 PERF1024: exact pilot ELF, two zero sentinels and fresh physical capture dir required"
+    error "P08-B4.5 PERF1024: exact full1024 ELF, two zero sentinels and fresh physical capture dir required"
 }
 proc pilot_read {file} {
     set f [open $file rb]
@@ -205,7 +205,7 @@ set failed [catch {
         error "P08-B4.5 PERF1024: no physically observed terminal mailbox"
     }
     file rename $scratch $mailbox
-    p08_perf1024_progress $out $mode $previous_completed TERMINAL_CAPTURE $started
+    p08_perf1024_progress $out $mode $previous_completed POLLING $started
     pilot_halt_cpu POST_CAPTURE
     puts "P08_B45_PERF1024_PHYSICAL_TERMINAL_MAILBOX_CAPTURED_256B=1"
     pilot_psu
@@ -228,7 +228,7 @@ set failed [catch {
         error "P08-B4.5 PERF1024: real A53 reported a TERMINAL FAILURE. Original fault mailbox and partial sidecars preserved; REBOOT."
     }
     if {$terminal_state ne "SUCCESS"} {
-        error "P08-B4.5 PERF1024: not a genuine 16/1024 terminal success."
+        error "P08-B4.5 PERF1024: not a genuine 1024/1024 terminal success."
     }
     set data [pilot_read $mailbox]
     binary scan $data i64 words
