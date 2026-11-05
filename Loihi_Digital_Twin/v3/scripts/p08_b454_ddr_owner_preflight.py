@@ -50,11 +50,15 @@ MASTER_GAPS = (
 # not newly proposed temporary allocations.
 REGIONS = (
     ("27_mutable_P02_records", *MUTABLE, "A53 copy target, PL/AXI DDR paging"),
+    ("P07_B4M_route_input", 0x41000000, 0x410E0000, "frozen input routing"),
+    ("P07_B4M_frame_staging", 0x41100000, 0x411E0000, "input frame staging"),
     ("1024_raw_MNIST_TRAIN_pool", 0x42100000, 0x421C4000, "raw input"),
     ("1024_result_journal", 0x42200000, 0x42240000, "result"),
     ("1024_whole_image_timing", 0x42300000, 0x42340000, "meter"),
     ("1024_B45_reset_sidecar", 0x42400000, 0x42440000, "meter"),
     ("27_immutable_P02_backup", *BACKUP, "requested read-only"),
+    ("P07_B4L_bindings", 0x43FC0000, 0x43FC4000, "frozen source bindings"),
+    ("P07_B4M_route_output", 0x43FC4000, 0x43FD8000, "route writeout"),
     ("B45_terminal_mailbox", 0x43FF0200, 0x43FF0300, "mailbox"),
 )
 
@@ -79,6 +83,19 @@ def source_contract() -> None:
          and "#define P03_HW_BACKING_BYTES UINT64_C(0x04000000)" in p03
          and "#define P03_HW_RECORD_BYTES UINT64_C(0x00080000)" in p03,
          "original routed P03 address/record geometry drifted")
+    route = (V3 / "software/p07/include/p07_b4m_frozen_routes.h").read_text()
+    binding = (V3 / "software/p07/include/p07_b4l_b3_bindings.h").read_text()
+    need(all(x in route for x in (
+        "#define P07_B4M_ROUTE_IN_BASE UINT32_C(0x41000000)",
+        "#define P07_B4M_ROUTE_IN_BYTES UINT32_C(0x000E0000)",
+        "#define P07_B4M_FRAME_BASE UINT32_C(0x41100000)",
+        "#define P07_B4M_FRAME_MAX_BYTES UINT32_C(0x000E0000)",
+        "#define P07_B4M_ROUTE_OUT_BASE UINT32_C(0x43FC4000)",
+        "#define P07_B4M_ROUTE_OUT_BYTES UINT32_C(0x00014000)",
+    )), "frozen B4M routing memory envelope drifted")
+    need("#define B4L_BIND_BASE UINT32_C(0x43FC0000)" in binding
+         and "#define B4L_BIND_SIZE 0x4000u" in binding,
+         "frozen B4L binding memory envelope drifted")
     for mode, main in (
         ("once", "p08_b45_auth_once_full1024_a53.c"),
         ("unchecked", "p08_b45_unchecked_full1024_a53.c"),
