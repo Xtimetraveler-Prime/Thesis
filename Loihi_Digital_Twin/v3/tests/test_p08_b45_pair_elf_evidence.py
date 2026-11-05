@@ -75,7 +75,7 @@ def synthetic(tmp_path, monkeypatch):
         report = root / ("p08_b45_" + mode + "_elf_admission.json")
         elf.write_bytes(fake_elf(pair.gate.IDENTITIES[mode] +
                                  pair.gate.TERMINAL[mode]))
-        linker.write_bytes(MAP)
+        linker.write_bytes(MAP + b"synthetic experiment mode: " + mode.encode())
         for filename in (
             "p08_b45_reset_variants.c", "p08_b45_reset_variants.h",
             "p08_b45_a53_backup_guard.c", "p08_b45_a53_backup_guard.h",
