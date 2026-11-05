@@ -119,6 +119,33 @@ def admission(args: argparse.Namespace) -> dict:
             prior_timed.get("one_independently_verified_real_physical_session") is True and
             prior_timed.get("official_MNIST_TEST") == "SEALED_NOT_ACCESSED",
             "original B4.4 1023 ordinary-frame baseline invalid")
+    # Two new B4.5 16-image pilots were independently accepted by
+    # the operator on 2026-11-05. Require BOTH ORIGINAL local receipts;
+    # no fabricated 1024 admission from source-only passes.
+    pilot_pins={
+        "once":("7ab975d3c062df2606357080c1eeda0904ea8aaba0aed4c02fda8ce1140ecdca",
+                "d528c5a7168a7c119668e2db957bf66d5271ca6edae85115eefa694bc390fbab"),
+        "unchecked":("5f29cda8661cad64fe39231d42a84c3293bef96af6c7fe74c9c74b466a2195aa",
+                     "a59f6ce8e158f4b813ffb0a63d42d80675a8acc504a875a060c36d57fbcf269f")
+    }
+    for label,path in (("once",args.pilot_once_report),
+                       ("unchecked",args.pilot_unchecked_report)):
+        digest,expected_elf=pilot_pins[label]
+        require(sha(path)==digest,
+                "accepted REAL B4.5 "+label+" independent pilot16 SHA drift")
+        pilot=json.loads(path.read_text())
+        require(pilot.get("schema")==
+                    "p08-b45-unprotected-perf-pilot16-independent-hardware-evidence-v1" and
+                pilot.get("experiment")==label and
+                pilot.get("genuine_A53_ELF_sha256")==expected_elf and
+                pilot.get("all_16_original_neural_outputs_and_26tick_trace_FNV_equal_scalar") is True and
+                pilot.get("all_27_postrun_backup_records_byte_identical_to_original") is True and
+                pilot.get("backup_protection_verified") is False and
+                pilot.get("unprotected_backing_DDR") is True and
+                pilot.get("official_MNIST_TEST") is None and
+                pilot.get("original_OFFICIAL_MNIST_TEST")=="SEALED_NOT_ACCESSED",
+                "accepted original "+label+" 16-image JTAG source evidence invalid")
+
     baseline = json.loads(args.b3_report.read_text())
     require(
         baseline.get("schema") ==
@@ -163,6 +190,8 @@ def admission(args: argparse.Namespace) -> dict:
     return {
         "schema": "p08-b45-unprotected-full1024-offline-pc-preflight-v1",
         "original_full1024_scalar_oracle_sha256": original_full.ORIGINAL_FULL1024_ORACLE_SHA,
+        "accepted_once_16image_independent_JTAG_sha256":pilot_pins["once"][0],
+        "accepted_unchecked_16image_independent_JTAG_sha256":pilot_pins["unchecked"][0],
         "accepted_original_1024_JTAG_report_sha256": original_profile.ORIGINAL_B4_PHYSICAL_REPORT_SHA,
         "accepted_original_1023_timing_report_sha256": original_profile.ORIGINAL_B44_TIMING_SHA,
         "experiment": args.experiment,
@@ -398,7 +427,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--experiment", choices=build_gate.MODES, required=True)
     for name in (
         "stage", "first16", "b3_report", "shards", "ingress", "oracle",
-        "b4_independent_report", "b44_timing_report", "build",
+        "b4_independent_report", "b44_timing_report",
+        "pilot_once_report", "pilot_unchecked_report", "build",
         "original_elf", "reset_pins", "reports"
     ):
         parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
