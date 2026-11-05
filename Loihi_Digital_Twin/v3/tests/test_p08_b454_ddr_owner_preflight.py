@@ -66,7 +66,7 @@ def synthetic(tmp_path: Path, monkeypatch):
         admission = root / ("p08_b45_" + mode + "_elf_admission.json")
         elf.write_bytes(fake_aarch64_elf())
         linkmap.write_bytes(b"SYNTHETIC ONLY linker map for " + mode.encode())
-        admission.write_bytes(b"{\\\"synthetic_only\\\": true}\\n".decode("unicode_escape").encode())
+        admission.write_text(json.dumps({"synthetic_only": True}) + "\n")
         stage_sources = root / "source"
         stage_sources.mkdir()
         for name in (
