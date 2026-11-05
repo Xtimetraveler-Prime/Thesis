@@ -1,10 +1,15 @@
 # P08-B4.5.3 — Two distinct A53 applications, offline Vitis build instructions
 
-**Status (2026-11-03): SOURCE / NATIVE CI.** The two mode-specific
-standalone A53 applications and their offline source/Vitis/ELF tests are
-implemented. A **genuine local Vitis 2025.2 AArch64 ELF/map build has not
-yet been run or admitted** in this milestone. No new physical JTAG,
-DDR writes, PL program or KV260 inference have been authorized.
+**Status (2026-11-05 UTC): TWO OPERATOR-REPORTED GENUINE VITIS BUILDS.**
+The operator reported complete offline A53 `once` and `unchecked`
+ELF/map builds and provided all six SHA-256 hashes. These are pinned in
+`P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`.
+The independently recomputed paired-artifact recheck against actual
+local files is still pending, so this does **not** assert independent
+ELF admission acceptance or board behavior. Full export and commands:
+[Operator paired ELF recheck](P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md).
+No new physical JTAG, DDR writes, PL program or KV260 inference have
+been authorized or performed for B4.5.
 
 ## Why two applications, not one mutable production ELF?
 
@@ -261,7 +266,18 @@ If a build fails, preserve its external staged sources, logs and
 readelf output. Do not overwrite directories or substitute the accepted
 B2.3/B4.4 ELF to satisfy new identity checks.
 
-## Step 5 — what can and cannot be tested after Vitis build
+## Step 5 — independently recheck BOTH completed genuine builds
+
+The operator reported genuine A53 build roots (2026-11-05 UTC):
+`/home/dna/Thesis_Evidence/p08_b45_once_build_20261105T041935Z` and
+`/home/dna/Thesis_Evidence/p08_b45_unchecked_build_20261105T042140Z`.
+
+Use the [complete five-export PC-only paired-ELF recheck runbook](P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md).
+This step cryptographically verifies original and new artifact provenance,
+recomputes two original ELF admission reports and rejects any changed
+unprovisioned guard source. It does NOT interact with the board.
+
+## Step 6 — what can and cannot be tested after Vitis build
 
 **Can test now:** exact source inventory, strict native C11 syntax, real
 Vitis 2025.2 compilation/linking, distinct ELF identities, actual
