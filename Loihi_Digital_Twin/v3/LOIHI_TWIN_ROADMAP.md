@@ -5,13 +5,22 @@
 **Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
 A53 applications are implemented. Operator posted a clean local PASS of
 the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
-Current expanded GitHub Actions no-board CI passes those 72 tests plus
-**81** dual-application source/strict-GCC-syntax/synthetic-ELF/sidecar
-and pinned-SHA-regression tests (153 total; updated no-board CI PASS). Draft PR #55
-is stacked onto open draft PR #54, with no merge authorization.
-The real Vitis 2025.2 **two ELFs/maps are NOT YET BUILT**
-or admitted. No JTAG, DDR write or physical KV260 run has been authorized
-or performed for B4.5.
+Current GitHub Actions no-board regression passes the original 72 tests,
+81 prior source/strict-GCC-syntax/synthetic-ELF/sidecar/pinned-SHA tests
+and **15 new independent paired-ELF-verifier tests** (168 total; CI PASS
+at code commit `3c395b64cc0507d7bd357cf48c5dd2d4c7a8b958`).
+Draft PR #55 remains stacked on draft PR #54 and unmerged.
+
+**Both genuine Vitis 2025.2 A53 ELFs/maps are now OPERATOR-REPORTED
+BUILT (2026-11-05 UTC).** The operator supplied six distinct SHA-256
+digests for the `once` and `unchecked` ELF, map and admission JSON.
+These are pinned in the
+`docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`
+source-reported evidence manifest, but the operator has NOT YET run
+the new independently recomputed paired-ELF report verifier on actual
+local files. Do not claim independently accepted build provenance until
+that local report is presented. No JTAG, DDR writes, physical KV260
+inference or neural/latency verification are authorized or reported.
 
 The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
 1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
@@ -44,7 +53,7 @@ demonstrate that content corruption is intentionally not detected.
 
 ### P08-B4.5.3 — separate A53 source and Vitis offline builds
 
-**SOURCE IMPLEMENTED / NATIVE CI PASS; genuine Vitis build PENDING.**
+**TWO GENUINE A53 BUILD ARTIFACTS REPORTED; independent PC recheck PENDING.**
 
 Two distinct A53 mains now exist:
 `software/p08/p08_b45_auth_once_full1024_a53.c` and
@@ -79,17 +88,27 @@ expected SHA**, not evidence of a changed original model. Corrected its
 literal to the accepted B2.2 header SHA
 `5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
 A CI regression now compares B4.5 shell pins against accepted B2.3
-admission constants and B4.4 shell pins. Runbook now includes all five
-exports and read-only `find`/SHA validation commands. Both genuine
-Vitis ELF/map builds are still pending.
+admission constants and B4.4 shell pins. Runbook includes complete
+exports and read-only `find`/SHA validation commands. Both offline
+Vitis builds subsequently completed according to operator-supplied
+six-file SHA-256 output.
 
-**Next operator gate:** pull the branch, locally run the new expanded
-A53/native tests, then genuinely build **both** separately versioned
-Vitis 2025.2 ELF/map artifacts into fresh out-of-repo evidence dirs.
-Record hashes and independent static admission. No board/JTAG action.
+**Next operator gate:** pull latest B4.5 branch and run the PC-only
+independent paired-ELF checker against both original local build roots,
+accepted original B2.3 ELF/P03 XSA/B2.2 SHA header, and all six pinned
+operator-reported ELF/map/report digests. The checker **re-runs both
+admission algorithms** and requires exact JSON equivalence, preserved
+frozen original provenance, correct unprovisioned guard, distinct
+mode-specific C entrypoints and nonoverlapping ELF64 PT_LOAD regions.
+Only after operator output and new report SHA are recorded may B4.5.3
+build/static-admission be marked complete. B4.5.4 physical remains
+blocked by independent DDR owner/protection evidence and new consent.
 
-Runbook and commands:
-[docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md).
+Runbooks and commands:
+[docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md)
+and
+[docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md](docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md).
+All verification is PC-only.
 
 Keep original B2.3 production firmware, accepted P08-B4.4.2
 profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
