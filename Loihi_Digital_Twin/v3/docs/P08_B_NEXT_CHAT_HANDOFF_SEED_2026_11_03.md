@@ -2,6 +2,38 @@
 
 > **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 reset-integrity optimization.
 
+> **LATEST P08-B4.5.4.4 (2026-11-05 UTC):**
+> B4.5.4.3 user accepted PC-only real FSBL/XSA inventory:
+> `/home/dna/Thesis_Evidence/p08_b4543_fsbl_xsa_inventory_20261105T060831Z.json`;
+> SHA-256 `9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`.
+> It confirms real **installed** Vitis 2025.2 FSBL protection-config
+> before ordinary beforehandoff hook, plus original P03 XSA-generated
+> `psu_init.c` SHA `049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679`.
+>
+> **Current development branch `agent/v3-p08-b4544-fsbl-protection-review`**
+> (descendant of B4.5.4.3 draft PR #58). New PC-only source auditor
+> `scripts/p08_b4544_fsbl_protection_path.py`, native negative tests
+> `tests/test_p08_b4544_fsbl_protection_path.py`, and complete
+> operator commands in
+> `docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md`.
+> Next operator task: pull branch, export all 6 exact accepted source
+> paths, run tests and local read-only report, send its SHA and output.
+> Neither the original firmware nor real hardware was changed.
+>
+> **NEW AMD/Xilinx vendor insight to cite:** 2025.2
+> `xfsbl_hw.h` DEFAULT defines `XFSBL_PROT_BYPASS` unless
+> `FSBL_PROT_BYPASS_EXCLUDE` is compiled in. Under default,
+> `XFsbl_ProtectionConfig` calls only `psu_apply_master_tz`
+> and `psu_ocm_protection`, NOT `psu_protection()` or
+> `psu_protection_lock()`; opposite branch runs those full
+> generated protection/lock calls BEFORE handoff. Exact vendor
+> release references in roadmap B4.5.4.4.
+> **Actual KV260 current boot FSBL compile flags/BOOT.BIN UNKNOWN**.
+> Do NOT blindly flip macro or configure registers. Offline source
+> scanning and simulated DDR policy do not authorize physical tests.
+> User requires every set of commands to include complete exports
+> and find commands, and NO merges without explicit approval.
+>
 > **LATEST ACTIVE DEVELOPMENT: B4.5.4.3 PC-ONLY FSBL/XSA SOURCE
 > INVENTORY (2026-11-05 UTC).** Accepted B4.5.4.2 operator's genuine
 > PC-only symbolic six-port policy report:
