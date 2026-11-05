@@ -55,7 +55,7 @@ def review(args: argparse.Namespace) -> dict:
     pilot.b4j.require_programmed_shell(
         (root / "accepted_p03_program.log").read_text())
     staged_log = root / "six_original_ddr_physical_stage.log"
-    pilot.marker(staged_log.read_text() and staged_log,
+    pilot.marker(staged_log,
                  "P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1")
     signed = pilot.b3.readback_original(args.stage, root / "source_physical_readback")
     original_receipt = json.loads((root / "same_session_six_source_receipt.json").read_text())
