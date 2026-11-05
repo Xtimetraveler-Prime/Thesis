@@ -133,6 +133,62 @@ Keep original B2.3 production firmware, accepted P08-B4.4.2
 profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
 unchanged. No variant may silently replace the accepted baseline.
 
+### P08-B4.5.4.1 — PC-only DDR owner/backup-protection gap inventory
+
+**ACCEPTED (2026-11-05 UTC): operator's original PC-only DDR geometry
+and physical-owner evidence-gap report; draft PR #56 stacked on PR #55,
+both UNMERGED.** This step
+follows the independent accepted B4.5.3 paired A53 report
+`/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`
+SHA-256
+`03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+It is deliberately NOT a board execution milestone.
+
+`scripts/p08_b454_ddr_owner_preflight.py` authenticates that
+independently accepted paired report by SHA and its typed fields,
+rereads all six genuine A53 ELF/map/admission artifact pins and
+the staged fail-closed guard, parses the actual A53 ELF64 PT_LOAD
+geometry, and checks original P03 + P07 routing + frozen 27-context
+and B4.5 original source-declared DDR allocations for static overlap.
+The code does not call Vitis, XSDB/JTAG, MMIO, PL or board hardware.
+Its owner-gap matrix explicitly marks FSBL, TF-A, U-Boot, Linux,
+APU, RPU, PMU/CSU, PL/DMA, all six DDR-XMPU ports and debug/low-DDR
+owners as unproven; optional operator-provided boot snapshots remain
+unauthenticated observations rather than permission.
+
+**New physical requirement discovered:** the original 13.5MiB immutable
+backup `[0x43000000,0x43D80000)` would need conservative 1MiB DDR-XMPU
+cover `[0x43000000,0x43E00000)`, including another **512KiB** of
+neighboring DDR. The report flags this overprotection as a geometry
+consideration only, NOT a configured or locked hardware protection.
+AMD UG1085 restricts XMPU configuration to secure masters and
+recommends boot-time, locked provisioning. Software-only read-only
+page permissions do not prove other DMA/PS/PL master exclusion.
+The previously accepted A53 applications still ship the intentional
+backup-lock callbacks that return `-1`; they cannot start physical
+inference, and no current change enables them.
+
+**Operator-accepted actual risk report:** 
+`/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
+SHA-256
+`7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`,
+schema `p08-b454-ddr-owner-gap-pc-only-preflight-v1`,
+`decision=PC_STATIC_GEOMETRY_PASS_PHYSICAL_OWNER_NO_GO`.
+Both original new A53 ELFs' observed on-disk PT_LOAD are
+`[0x0,0x00109BC0)` (1,088,448B each). None of
+the 14 classes of actual PS/PL/boot/DDR owners is proven; no XMPU
+was programmed or read. Acceptance document:
+[docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md).
+Full static-PC runbook remains
+[docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md](docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md).
+
+**Next:** B4.5.4.2 trusted-boot DDR-XMPU immutable-backup
+protection *design and host-only policy admission*, not real firmware
+writes or physical access. Hardware and 16/1024-frame pilots remain
+NO-GO until independent proof, a separately rebuilt and statically
+admitted guarded A53/boot image, recovery readiness and explicit
+operator approval.
+
 ### P08-B4.5.4 — bounded physical validation and full1024 measurements
 
 Only after independent proof of DDR ownership and persistent backup
