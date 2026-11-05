@@ -120,6 +120,7 @@ def decode_mailbox(blob:bytes)->dict:
             "original_P03_and_XMPU_protection_not_attested":True,
         }
     return {
+        "terminal_failure":True,
         "v2_failure_only_bootstrap_diagnostic":diagnosis,
         "status_hex":f"0x{words[2]:08X}",
         "failing_frame_ordinal":None if before_frame else frame,
