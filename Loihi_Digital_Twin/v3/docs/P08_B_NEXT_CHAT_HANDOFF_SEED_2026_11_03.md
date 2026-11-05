@@ -375,7 +375,7 @@ It failed closed at the inherited A53 #1 stop gate with “External debug access
 
 **Limitations:** one instrumented physical profiling session; no accepted six-session paired A/B benchmark; no PL-only neural time, pure speedup, energy result, or independent boot-firmware/PS/RPU/DMA exclusive-DDR-owner proof. Experimental profile region `[0x42400000,0x42440000)` (262,144 bytes) still has unproven exclusive ownership. Track B official MNIST TEST remains sealed.
 
-## 4. Next work — P08-B4.5 reset-integrity optimization, then P08-B4.6 paired A/B
+## 4. Ongoing P08-B4.5 reset-integrity experiment and future P08-B4.6
 
 P08-B4.4.2 is physically accepted and remains the full-SHA reference. The
 new P08-B4.5 milestone compares two separately versioned reset variants.
@@ -402,11 +402,14 @@ new P08-B4.5 milestone compares two separately versioned reset variants.
 
 ### Shared B4.5 execution gates
 
-**Two separately named A53 source applications and the PC-only Vitis
-build/ELF-admission tools now exist.** Follow
+**Both original A53 variants were genuinely built under Vitis 2025.2
+and independently accepted for OFFLINE static admission (B4.5.3).
+B4.5.4.1–.4 PC-only ownership/source studies are also accepted.
+No physical B4.5 inference has run, and the original guard fails
+closed.** Follow
 `docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md`.
-The current protection adapter always refuses to lock/verify the backup,
-so any genuine new ELF is **for offline static admission only**. There
+The original protection adapter still refuses to lock/verify the backup,
+so original A/B ELFs are **for accepted offline static admission only**. There
 is no B4.5 new board inference evidence.
 
 1. Run inherited B4.4 regression tests and new strict C11 native tests.
@@ -516,51 +519,186 @@ Do not overwrite/rebuild these original artifacts or replace the accepted P03 sh
 7. Track B official MNIST TEST remains SEALED_NOT_ACCESSED. Do not read it, tune on it, or claim its accuracy.
 8. The FPGA architecture is Loihi-inspired and event-driven but uses synchronous ticks/global barriers and PS orchestration. Do not claim real asynchronous Loihi silicon equivalence.
 
-## 9. First local pull, tests and genuine offline Vitis build
+## 9. Practical operator commands and the NEXT source-only phase
 
-The B4.4.2 physical results and 70+2 operator-local native gate are already
-accepted. Operator has now also completed the previous 82-test source
-suite and reported two distinct actual offline A53 build triples.
-Next action is paired local static re-verification, **NOT a repeat Vitis
-build**. Commands and all required exports: see
-`docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. No board or XSDB.
+**B4.5.3 authentic-once and unchecked A53 apps were ALREADY genuinely
+built in Vitis 2025.2, independently PC-audited, and accepted.**
+**B4.5.4.1–.4 were ALREADY locally completed and accepted
+PC-only; do NOT repeat them as though pending.**
+Next task is B4.5.4.5 generated security data/call-graph/boot
+provenance source audit. If the user explicitly says "continue",
+create a NEW descendant branch from #59 head and implement
+a host-only `psu_protection` dependency/table analyzer with
+negative tests, CI and an operator runbook. **No physical
+programming or Vitis boot-image build is authorized.**
+
+### Fresh checkout and complete accepted source exports
 
 ```bash
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch agent/v3-p08-b45-reset-integrity
-git pull --ff-only origin agent/v3-p08-b45-reset-integrity
+git switch agent/v3-p08-b4544-fsbl-protection-review
+git pull --ff-only origin agent/v3-p08-b4544-fsbl-protection-review
 git rev-parse HEAD
 
 source ~/Git/Thesis/.venv-p08/bin/activate
 cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 
-PYTHONPATH="$PWD/src" python -m pytest -q -rs \
-  tests/test_p08_b45_reset_variants.py \
-  tests/test_p08_b45_a53_build.py \
-  tests/test_p08_b45_elf_admission.py \
-  tests/test_p08_b45_sidecar.py
+# Accepted B4.5.3 two genuine A53 Vitis build roots (read-only):
+export P08_B45_ONCE_BUILD_DIR="$HOME/Thesis_Evidence/p08_b45_once_build_20261105T041935Z"
+export P08_B45_UNCHECKED_BUILD_DIR="$HOME/Thesis_Evidence/p08_b45_unchecked_build_20261105T042140Z"
+
+# Accepted independent 2-ELF evidence and subsequent audits:
+export P08_B454_ACCEPTED_PAIR="$HOME/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json"
+export P08_B454_GAP_REPORT="$HOME/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json"
+export P08_B4542_POLICY_REPORT="$HOME/Thesis_Evidence/p08_b4542_xmpu_policy_pc_20261105T054738Z.json"
+export P08_B4543_SOURCE_REPORT="$HOME/Thesis_Evidence/p08_b4543_fsbl_xsa_inventory_20261105T060831Z.json"
+export P08_B4544_SOURCE_REPORT="$HOME/Thesis_Evidence/p08_b4544_fsbl_protection_branch_20261105T062334Z.json"
+
+# Original P03 routed build and exact accepted hardware XSA:
+export P08_B4545_P03_BUILD="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z"
+export P08_B4545_XSA="$P08_B4545_P03_BUILD/reports/p03_2_ps_mmio.xsa"
+
+# Installed Vitis 2025.2 FSBL source; not proof of active boot:
+export P08_B4545_FSBL_ROOT="$HOME/Vivado/2025.2/data/embeddedsw/lib/sw_apps/zynqmp_fsbl/src"
+export P08_B4545_FSBL_HANDOFF="$P08_B4545_FSBL_ROOT/xfsbl_handoff.c"
+export P08_B4545_FSBL_HW_HEADER="$P08_B4545_FSBL_ROOT/xfsbl_hw.h"
+export P08_B4545_FSBL_HOOKS="$P08_B4545_FSBL_ROOT/xfsbl_hooks.c"
+
+# Exact previous P03-generated and XSA-matching psu_init.c:
+export P08_B4545_PSU_GEN="$P08_B4545_P03_BUILD/project/loihi_twin_v3_p03_mmio_impl.gen/sources_1/bd/loihi_twin_v3_p03_mmio_impl/ip/loihi_twin_v3_p03_mmio_impl_zynq_ultra_ps_e_0_0"
+export P08_B4545_PSU_INIT="$P08_B4545_PSU_GEN/psu_init.c"
+
+# Optional header/Tcl to discover: DO NOT fake their existence:
+export P08_B4545_PSU_HEADER=""
+export P08_B4545_PSU_TCL=""
+export P08_B4545_ACTIVE_BOOT_BIF=""
+export P08_B4545_ACTIVE_BOOT_ELF=""
+export P08_B4545_ACTIVE_BOOT_BIN=""
+
+# New host-only result: fresh external NO-OVERWRITE file:
+export P08_B4545_SOURCE_REPORT="$HOME/Thesis_Evidence/p08_b4545_psu_config_source_$(date -u +%Y%m%dT%H%M%SZ).json"
 ```
 
-After the tests pass, follow the TWO separate original-XSA/pinned-original-
-ELF Vitis 2025.2 build procedures in
-`docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md`.
-Run `bash scripts/build_p08_b45_variant.sh` once with
-`P08_B45_MODE=once`, then separately with `P08_B45_MODE=unchecked`,
-each with a NEW `P08_B45_BUILD_DIR` external evidence root. The script
-requires original `P07_B4L_REPORTS`, `P08_B2_RESET_PINS` and
-`P08_B45_ORIGINAL_ELF` and their accepted hashes; it links
-`p08_b45_auth_once_1024.elf` and `p08_b45_unchecked_1024.elf`
-respectively. Record each distinct ELF/map and admission JSON SHA. Do not
-mistake synthetic native ELF tests for the real Vitis build.
+The **new** B4.5.4.5 implementation has not yet been created:
+the path above is a naming suggestion, not an existing script.
+After the next assistant implements it, tests/arguments must
+match the actual committed code and runbook rather than being
+invented in advance.
 
-Actual physical execution remains deliberately BLOCKED: the included
-unprovisioned guard returns failure on bind and has never established
-ownership/protection of the backup DDR. No direct XMPU writes without
-separate boot/runtime ownership audit and explicit operator consent.
+### Read-only exact path discovery, hashes, and source details
 
-No PR merge is authorized. PR #52/#53/#54/#55 remain stacked; preserve their
-dependency order. Track B official MNIST TEST remains sealed.
+```bash
+find "$P08_B4545_PSU_GEN" -maxdepth 2 -type f \
+  \( -name 'psu_init.h' -o -name 'psu_init.tcl' \
+     -o -name 'psu_init_gpl.c' -o -name 'psu_init_gpl.h' \) \
+  -print 2>/dev/null
 
-**End of handoff seed. The next task is NEW 81-test A53/ELF/sidecar/pinned-SHA local source verification and two genuine OFFLINE Vitis 2025.2 builds, with no board interaction; physical inference remains blocked by DDR ownership/protection proof.**
+find "$P08_B4545_P03_BUILD" -type f \
+  \( -name 'psu_init.h' -o -name 'psu_init.tcl' \
+     -o -name 'psu_protection.c' \) -print 2>/dev/null
+
+# Acceptable to inspect these 4 verified XSA ROOT MEMBERS
+# without writing/extracting; inspect exact ZIP entries in Python:
+python3 - <<'PY'
+import zipfile, hashlib, os
+from pathlib import Path
+xsa = Path(os.environ["P08_B4545_XSA"])
+with zipfile.ZipFile(xsa) as zf:
+    for name in ("psu_init.c", "psu_init.h",
+                 "psu_init.tcl", "psu_init_gpl.c"):
+        if name in zf.namelist():
+            info = zf.getinfo(name)
+            if info.file_size > 2*1024*1024:
+                print("SKIP OVERSIZE:", name, info.file_size)
+                continue
+            raw = zf.read(info)
+            print(name, len(raw), hashlib.sha256(raw).hexdigest())
+        else:
+            print("MISSING:", name)
+PY
+
+# Read-only grep for generated security call graph:
+grep -n -E 'psu_protection\(|psu_protection_lock\(|psu_protection_data\(|psu_mask_write\(' \
+  "$P08_B4545_PSU_INIT" | head -90
+
+# Investigate what filesystem contains; NO assumption
+# that a found BOOT.BIN/BIF/ELF is actually booted:
+find "$HOME/Thesis_Evidence" "$PWD" "$HOME/Vivado/2025.2" \
+  -type f \( -name 'BOOT.BIN' -o -name '*.bif' \
+     -o -iname '*fsbl*.elf' -o -name 'compile_commands.json' \) \
+  -print 2>/dev/null | head -100
+
+# Known original exact fingerprint integrity checks:
+sha256sum "$P08_B4544_SOURCE_REPORT" "$P08_B4543_SOURCE_REPORT" \
+  "$P08_B4545_FSBL_HANDOFF" "$P08_B4545_FSBL_HW_HEADER" \
+  "$P08_B4545_PSU_INIT" "$P08_B4545_XSA"
+```
+
+**Expected hashes for the six lines just above:**
+
+```text
+e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9
+9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5
+161ffc06037594fd14be856dce29ec6643eb97c8dcbe2872abc414b8c4d5d80a
+f8dc576e02f3f8678600e210eda7ee7b7a6713c15b112078da88036d6cb5d1f7
+049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679
+52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f
+```
+
+If a path is missing, use actual `find` results and the
+**accepted expected SHA** to select the true original source.
+For source not found (e.g. active BOOT.BIN) mark UNKNOWN rather
+than substituting another board's example. **Never modify**
+the installed FSBL, generated Vivado P03 output, original
+accepted ELF/bitstream or BOOT.BIN during investigation.
+
+### New development/testing commands (next instance to tailor)
+
+```bash
+# After the new branch/source/tests have been created via GitHub:
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+# Replace BRANCH_NAME with the ACTUAL newly created feature branch:
+# git switch BRANCH_NAME
+# git pull --ff-only origin BRANCH_NAME
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+
+# Run tests for each code milestone; actual test filename from commit:
+# PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+#   tests/test_p08_b4545_<actual_name>.py
+
+# Always set every script input and NEW external out export, then
+# run the exact command saved in its corresponding new runbook.
+```
+
+**No real board actions are approved.** A future real KV260
+pilot is a separate, gated task only after boot provenance,
+genuine DDR/XMPU ownership, validated PS+PL reader exceptions,
+backup write denial, trusted guard attestation, a new admitted
+ELF, reversible boot media and fresh explicit consent.
+
+### Historical physics and frozen scientific context
+
+P08-B4.4.2 physically accepted ~5826.77 ms A53 reset
+median (~2908.6 ms SHA source + ~2908.6 ms SHA destination,
+~7.0 ms total memcpy), so the B4.5 authenticated-once
+hypothesis aims to remove per-image SHA overhead without
+weakening source immutability. Prior uninstrumented
+~13,034.1 ms whole-image median was from a **different**
+session; these medians cannot be subtracted as if paired.
+B4.5.2 unchecked mode is an intentional integrity-free
+diagnostic lower bound, NOT a safe protected variant.
+
+The official Track B MNIST TEST remains
+`SEALED_NOT_ACCESSED`. No new physical KV260 B4.5.1
+or B4.5.2 inference session is admitted or authorized.
+PR #52 through #59 remain stacked and unmerged unless
+the user specifically approves a merge.
+
+**END: Next task is B4.5.4.5 read-only generated PSU/FSBL
+XMPU configuration source tracing; not a repeat A53 build
+and not a KV260 board pilot.**
