@@ -39,7 +39,8 @@ jobs:
       - name: New full1024 isolated once/unchecked mains, exact negative and monitor tests
         run: |
           PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
-            tests/test_p08_b45_perf_full1024.py
+            tests/test_p08_b45_perf_full1024.py \
+            tests/test_p08_b45_perf_full1024_tcl.py
       - name: Python and bash syntax (NO BOARD)
         run: |
           python3 -m py_compile \
