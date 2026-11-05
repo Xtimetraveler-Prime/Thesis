@@ -21,18 +21,25 @@ The script is corrected and a regression now compares all B4.5 shell
 pinned hashes against accepted B2.3/B4.4 sources. The updated
 `docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md` includes
 complete environment exports, `find` discovery, and SHA checks.
-**No genuine Vitis B4.5 ELF/map has been completed yet.** The operator
-requests that EVERY future build/test instruction include all required
-`export` commands, or specific `find` commands plus their assignment.
-Do not assume persistent environment variables across terminals.
+**Update 2026-11-05 UTC:** The operator has now built BOTH genuine
+B4.5 offline A53 Vitis ELF/map/report triples and provided exact six
+SHA-256 digests. They are pinned as **operator-reported, not yet
+independently reverified** in
+`docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`.
+Next operator task is the PC-only paired-ELF recomputation tool and
+commands in `docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. No B4.5
+KV260/JTAG/DDR action has occurred. EVERY future build/test instruction
+must include all required `export` commands, or specific `find`
+commands plus assignments. Do not assume persistent environment
+variables across terminals.
 
-The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 81 expanded source/synthetic/pinned-SHA tests (153 total) with NO BOARD. The user has NOT yet run these 80 expanded tests locally or built either genuine Vitis A53 ELF/map. Do not claim physical A53 inference or genuine ELF acceptance. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
+The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 81 expanded source/synthetic/pinned-SHA tests (153 total) with NO BOARD. The user has since locally run the previous 82-test B4.5 suite and now reported two genuine Vitis ELF/map/report build triples. Expanded CI (168 tests with 15 new independent paired-ELF synthetic verifier tests) passes. Do not claim physical A53 inference or independently reverified local dual-ELF acceptance until the operator runs the paired-artifact script and supplies its fresh output. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
 
 **First actions in a fresh chat:**
 1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
 2. Check live PR #52/#53/#54 status and branch `agent/v3-p08-b45-reset-integrity` head; do not assume these SHAs remain current.
-3. Give the user the Section 9 pull/test commands and wait for their exact output.
-4. The next permitted action is **PC-only local Vitis 2025.2 compilation/linking and independent ELF/map admission** for BOTH variants. No new JTAG/DDR run; the currently included A53 DDR-guard adapter intentionally fails closed. A real physical run requires a separate owner/protection audit, newly admitted guard-enabled ELF, read-only preflight, recovery plan and explicit operator authorization.
+3. Next operator verification: pull B4.5 branch, source the original Python venv, export all source/report directories and both completed build roots, then run `scripts/p08_b45_pair_elf_evidence.py` exactly as in `docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. Require a new independent report SHA and printed PASS. Do not rebuild or restage accepted binaries just to test them.
+4. Two original A53 offline Vitis builds have been reported, but full independent local static admission is pending. No new JTAG/DDR run; the included DDR-guard adapter intentionally fails closed. A real physical run requires a separate owner/protection audit, newly admitted guard-enabled ELF, read-only preflight, recovery plan and explicit operator authorization.
 
 GitHub connector tools may be available through `functions.exec` as `tools.mcp__GitHub__*`. Use them for repository reads/writes and verify the actual commit/PR state. A repository commit does not mean local native tests or board tests passed.
 
@@ -358,8 +365,11 @@ Do not overwrite/rebuild these original artifacts or replace the accepted P03 sh
 ## 9. First local pull, tests and genuine offline Vitis build
 
 The B4.4.2 physical results and 70+2 operator-local native gate are already
-accepted. The next command gate is the NEW expanded source/ELF/sidecar
-test suite, followed by genuine offline Vitis builds. No board or XSDB.
+accepted. Operator has now also completed the previous 82-test source
+suite and reported two distinct actual offline A53 build triples.
+Next action is paired local static re-verification, **NOT a repeat Vitis
+build**. Commands and all required exports: see
+`docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. No board or XSDB.
 
 ```bash
 cd ~/Git/Thesis
