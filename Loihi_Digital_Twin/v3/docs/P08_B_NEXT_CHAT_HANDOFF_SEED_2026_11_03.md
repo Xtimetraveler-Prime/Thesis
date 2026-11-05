@@ -26,6 +26,21 @@ B4.5 offline A53 Vitis ELF/map/report triples and provided exact six
 SHA-256 digests. They are pinned as **operator-reported, not yet
 independently reverified** in
 `docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`.
+**Operator read-only SHA diagnostic (2026-11-04 local):** All four
+genuine A53 ELF/map digests MATCHED exactly, as did the unchecked
+admission JSON SHA. The initial paired checker failed on the
+authenticated-once admission report only because *we omitted its final
+hex digit `e` in the checked-in pin manifest* (63 digits versus a
+valid 64-digit SHA-256). The operator's actual SHA matched their
+originally posted 64-digit SHA:
+`602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e`.
+The checked-in pin manifest and operator-pair runbook have been
+corrected. Regression tests require full 64-character lowercase hex
+hashes for all six new artifacts and explicitly pin the original SHA.
+NO ELF, map or admission JSON needed modification. Next operator task
+is to PULL the corrected branch and rerun the PC-only independent
+paired-ELF verification with a new `--out` path.
+
 Next operator task is the PC-only paired-ELF recomputation tool and
 commands in `docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. No B4.5
 KV260/JTAG/DDR action has occurred. EVERY future build/test instruction
