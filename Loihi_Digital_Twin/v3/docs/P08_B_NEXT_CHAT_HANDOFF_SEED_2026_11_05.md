@@ -1,5 +1,39 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST USER RESEARCH DIRECTION AND ACTIVE BRANCH — 2026-11-05.**
+> User explicitly chose to validate numerical prediction/FNV parity and
+> reset latency using UNPROTECTED immutable source backups as a stated
+> research limitation, rather than treating DDR XMPU as a prerequisite
+> for B4.5 physical performance experiments. The prior XMPU/FSBL
+> original source work remains accepted research history, but is
+> not the next blocker. DO NOT change the originally accepted B4.5
+> `p08_b45_a53_backup_guard.c` that returns -1; do not modify frozen
+> P03/P07/P08 model, inputs or original accepted 1024 profile.
+>
+> **New active branch:** `agent/v3-p08-b45-unprotected-pilot16`
+> stacked on draft PR #61; new draft PR should remain unmerged without
+> explicit operator instruction. It adds separate explicit
+> `p08_b45_perf_reset.c/.h`, NEW `once` and `unchecked` A53
+> 16-frame entry points and Vitis 2025.2 build wrappers, new
+> mode-unique SHA/ELF admission, original B3/P03 physical
+> stage/readback+CPU takeover+FPD128 gated runner, 16-frame
+> terminal/neural/FNV/full-service/4KiB-reset sidecar capture,
+> 27x512KiB post-run immutable backup readback, and separate
+> independent PC-only evidence review. Sidecar backup guard word 19
+> MUST be 0; do not misrepresent content immutability.
+>
+> **Exact full commands:** read
+> `docs/P08_B45_UNPROTECTED_PERFORMANCE_PILOT16_RUNBOOK.md`.
+> First operator must build TWO new genuine mode-specific Vitis
+> ELFs/maps and run both PC-only preflights. Only then can operator
+> separately execute pilot16 physical modes with ten affirmative
+> scoped risks and disposable CPU/JTAG session. Full 1024-image
+> optimized benchmark is NOT yet implemented/approved. Reboot board
+> after ANY JTAG attempt. No PuTTY scripting: short
+> `sudo xmutil listapps`, conditionally `sudo xmutil unloadapp`;
+> all heavy tools run on PC VS Code. Official MNIST TEST stays sealed.
+>
+---
 > **LATEST GIT HISTORY / OPERATOR SOURCE RESULT — 2026-11-05 UTC.**
 > P08-B4.5 original C-vs-Tcl source-gate report is **operator-reported
 > PC-ONLY PASS**, physical NO-GO. Original external JSON
