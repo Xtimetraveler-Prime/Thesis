@@ -305,8 +305,8 @@ A53 candidate before a separately approved pilot.
 
 ### P08-B4.5.4.3 — real Vitis/FSBL/XSA source inventory (PC-ONLY)
 
-**NEW source/tools/tests/CI PASS; operator-local original source
-inventory PENDING** on branch
+**B4.5.4.3 ACCEPTED (2026-11-05 UTC): operator-local SHA-pinned original
+FSBL + accepted XSA source inventory; active boot protection NO-GO.** On branch
 `agent/v3-p08-b4543-fsbl-boot-inventory`,
 **draft PR #58 stacked on draft PR #57** (both UNMERGED).
 Unlike prior symbolic 147456-master-access simulation, this submilestone
@@ -353,6 +353,29 @@ verification of boot/DDR isolation.
 `tests/test_p08_b4543_fsbl_boot_source_inventory.py`,
 `.github/workflows/p08_b4543_fsbl_xsa_pc_only.yml`, and
 [docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md](docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md).
+Operator-supplied original report
+`/home/dna/Thesis_Evidence/p08_b4543_fsbl_xsa_inventory_20261105T060831Z.json`,
+SHA-256
+`9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`.
+Installed Vitis 2025.2 FSBL handoff, hooks and original Vivado PS
+sources were actually supplied. Handoff source shows
+`PROTECTION_CONFIG_CALLED_BEFORE_BEFOREHANDOFF_HOOK`; accepted P03
+XSA internal `psu_init.c` SHA matches selected generated
+`psu_init.c` exactly. However active boot/compiled FSBL, XMPU lock
+readback, actual reader IDs and low DDR ownership remain unproven.
+Acceptance:
+[docs/P08_B4_5_4_3_OPERATOR_FSBL_XSA_SOURCE_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_3_OPERATOR_FSBL_XSA_SOURCE_ACCEPTANCE_2026_11_05.md).
+
+**Next B4.5.4.4:** inspect exact source-function protection branches
+and generated PS DDR XMPU initialization. AMD/Xilinx 2025.2
+`XFsbl_ProtectionConfig` has an `XFSBL_PROT_BYPASS` conditional
+with different protection behavior. The user's active boot build
+macro is UNKNOWN, so proving source availability is not proof of
+a physical lock. Vendor source:
+https://raw.githubusercontent.com/Xilinx/embeddedsw/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c
+and AMD TRM:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+
 The operator must supply actual installed source and prior report
 paths or let the scanner report missing source honestly.
 The current checker may print source inventory PASS but ALWAYS
