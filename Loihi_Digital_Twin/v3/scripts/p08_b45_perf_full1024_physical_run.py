@@ -3,7 +3,7 @@
 
 DEFAULT preflight: NO BOARD. Separately approved execute: destructive JTAG
 dedicated standalone A53, ORIGINAL six signed DDR stage/readbacks, accepted
-P03 bitstream, new unprotected 16-image A53 app, all 16 scalar/FNV receipts,
+P03 bitstream, new unprotected 1024-image A53 app, all 1024 scalar/FNV receipts,
 all 27 postrun backup readbacks. NO XMPU programming and NO security claims.
 DO NOT run on live Linux-owned DDR; REBOOT after every physical attempt.
 """
@@ -24,8 +24,8 @@ from tempfile import TemporaryDirectory
 
 import p07_b4i_physical_pilot as b4i
 import p07_b4j_shell_program_pilot as b4j
-import p08_b3_full1024_physical_run as b3
-import p08_b3_full1024_stage_host as original_stage
+import p08_b3_pilot16_physical_run as b3
+import p08_b3_pilot16_stage_host as original_stage
 import p08_b4_2_verify_full1024 as neural
 import p08_b2_4_verify_untrusted_first16 as timing_parser
 import p08_b4_1_merge_scalar_1024 as oracle_merge
