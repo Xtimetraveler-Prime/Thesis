@@ -5,11 +5,14 @@
 **Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
 A53 applications are implemented. Operator posted a clean local PASS of
 the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
-Current GitHub Actions no-board regression passes the original 72 tests,
-81 prior source/strict-GCC-syntax/synthetic-ELF/sidecar/pinned-SHA tests
-and **15 new independent paired-ELF-verifier tests** (168 total; CI PASS
-at code commit `3c395b64cc0507d7bd357cf48c5dd2d4c7a8b958`).
-Draft PR #55 remains stacked on draft PR #54 and unmerged.
+Original P08-B4.5.3 no-board regression passed the inherited 72 +
+81 source/ELF/sidecar/pinned-SHA + 15 paired-ELF tests (168 total).
+B4.5.4.1 added independent DDR-owner gap tests; the B4.5.4.2
+policy branch adds six-port/10-bit-ID/region-priority/boot-order
+native tests. The **current stacked no-board CI passes all inherited
+and new tests** (B4.5.4.2 run `41974939755`, PASS). Draft PR stack:
+#54 (B4.4) -> #55 (B4.5.3) -> #56 (B4.5.4.1) ->
+#57 (B4.5.4.2); all open/draft/unmerged.
 
 **Both genuine Vitis 2025.2 A53 ELFs/maps are now OPERATOR-REPORTED
 BUILT (2026-11-05 UTC).** The operator supplied six distinct SHA-256
@@ -192,8 +195,8 @@ operator approval.
 
 **SOURCE / SYMBOLIC PROTOTYPE IMPLEMENTED; CI PASS;
 operator-local verification pending.**
-Development branch `agent/v3-p08-b4542-xmpu-boot-policy` is stacked
-on B4.5.4.1 draft PR #56. Preserve both original B4.5.3 Vitis ELF/map
+Development branch `agent/v3-p08-b4542-xmpu-boot-policy`, draft PR #57,
+is stacked on B4.5.4.1 draft PR #56. Preserve both original B4.5.3 Vitis ELF/map
 triples and immutable original scalar oracle; DO NOT merge or execute.
 
 **Design decision (adapted from AMD, NOT an original invented IP core):**
