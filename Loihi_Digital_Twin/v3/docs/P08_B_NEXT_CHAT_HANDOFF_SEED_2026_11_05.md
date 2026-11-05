@@ -1,5 +1,67 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST GIT HISTORY / OPERATOR SOURCE RESULT — 2026-11-05 UTC.**
+> P08-B4.5 original C-vs-Tcl source-gate report is **operator-reported
+> PC-ONLY PASS**, physical NO-GO. Original external JSON
+> `/home/dna/Thesis_Evidence/p08_b45_fsbl_c_tcl_20261105T071335Z.json`
+> SHA-256 `61e4b668e08b760800e69b39fdb61c5382aa23c0df568a31c3a49beff6c16bde`.
+> All six original DDR-XMPU helper bodies were 21 bytes and had
+> zero obvious C writes, while the debugger Tcl referred to their
+> names. No live FSBL/XMPU or ownership proof; candidate boot artifact
+> array was empty because none were supplied.
+> **Before repeating ANY board inspection**, read
+> `docs/P08_B45_HISTORICAL_KV260_INSPECTION_REUSE_2026_11_05.md`:
+> October 21 Ubuntu 24.04.2 / Image A BootFW screenshot, all 19
+> Track A and seven P08-A width logs, Oct 22 Linux `devmem` vs XSDB
+> inconsistent width readings and successful B4i CPU takeover,
+> Nov 2–3 failed read-only A53 debug observations followed by
+> Nov 3 **successful original 1024-image** B4.4 profiling.
+> These are saved, NOT a reason for new serial/JTAG reads.
+> Next work should start with **PC-only search of existing BOOT.BIN/
+> BIF/FSBL image/build receipts**, not PuTTY.
+> User cannot easily paste into PuTTY; if a new board snapshot later
+> becomes necessary and separately approved, use only one short,
+> easy-to-type read-only command at a time. No multiline loops,
+> raw register reads/writes, XSDB, A53 takeovers or boot edits
+> without a new narrowly scoped physical plan and approval.
+> Draft PR #61 is current, stacked on #60; no merges authorized.
+>
+> **LATEST STATUS OVERRIDE — 2026-11-05 UTC, P08-B4.5 source-channel work package in progress.**
+> This note supersedes older `NEXT ASSISTANT ACTION = B4.5.4.5` passages
+> below; those remain historical only. Operator reported original B4.5.4.5
+> source verification PASS from
+> `/home/dna/Thesis_Evidence/p08_b4545_psu_source_20261105T065516Z.json`,
+> SHA-256 `2d6f9e079b3bf9845ebd07d69b2de4611b90dc821341b0c9ada6458b2daa74a0`.
+> See `docs/P08_B4_5_4_5_OPERATOR_REPORTED_GENERATED_PSU_ACCEPTANCE_2026_11_05.md`.
+>
+> **Current branch:** `agent/v3-p08-b45-physical-readiness-source-gate`,
+> **draft PR #61**, stacked on `agent/v3-p08-b4545-generated-psu-audit`
+> **draft PR #60**; ancestors #59 etc remain unmerged. DO NOT MERGE
+> without the operator's explicit approval. New
+> `scripts/p08_b45_fsbl_source_channel_gate.py` + native negative tests +
+> no-board CI + exact operator runbook are in draft PR #61.
+> Read `docs/P08_B45_FSBL_C_VS_TCL_PHYSICAL_READINESS_PC_ONLY_RUNBOOK.md`
+> first. The original-source run has now been operator-reported PASS
+> with the SHA and path pinned above; do not request a duplicate test.
+> Its PC-only NO-GO status is unchanged.
+>
+> **Current scientific finding:** Generated C `psu_protection` reaches
+> all six 21-byte DDR-XMPU C helper definitions, while Tcl has XMPU
+> symbols. AMD PG201 distinguishes C as FSBL source from Tcl as debugger
+> initialization, so Tcl does NOT establish active boot protection.
+> 2025.2 FSBL default bypass remains only a source default. Current KV260
+> BOOT.BIN, current FSBL compiler branch, 6-port XMPU security policy,
+> original backup exclusive ownership, 512KiB extra cover, and trusted
+> A53 guard are all **UNPROVEN**. Never enable protection blindly or
+> run JTAG/DDR/MMIO/BOOT.BIN changes under a source-only task.
+> Official Track B MNIST TEST remains sealed.
+>
+> **Numbering:** Previous B4.5.4.5 evidence is preserved as accepted;
+> future P08-B4.5 work uses named packages/PRs, NOT B4.5.4.6.
+> P08-B4.6 remains the separately gated paired A/B study.
+>
+---
+
 > **Read the CURRENT status first, not historical stale next-step
 > instructions later in older stage documents.** Current development
 > branch: `agent/v3-p08-b4544-fsbl-protection-review`; draft PR
