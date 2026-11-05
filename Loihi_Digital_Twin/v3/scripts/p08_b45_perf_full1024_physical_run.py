@@ -329,7 +329,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
     reads.mkdir()
     try:
         (root / "stage.txt").write_text(
-            "B45_PERF16_DESTRUCTIVE_UNPROTECTED_JTAG_ATTEMPT_STARTED_REBOOT_REQUIRED\n")
+            "B45_PERF1024_DESTRUCTIVE_UNPROTECTED_JTAG_ATTEMPT_STARTED_REBOOT_REQUIRED\n")
         b4i.log_call([
             "xsdb", b4j.TAKEOVER_TCL, "DEDICATED_DISCARD_LINUX_APPROVED",
             "tcp:127.0.0.1:3121",
@@ -364,21 +364,21 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
             }, indent=2, sort_keys=True) + "\n"
         )
         z256 = root / "zero256.bin"
-        z4096 = root / "zero4096.bin"
+        z262144 = root / "zero262144.bin"
         z256.write_bytes(bytes(256))
-        z4096.write_bytes(bytes(4096))
+        z262144.write_bytes(bytes(262144))
         elf, _, _, _ = artifact_paths(args)
         b4i.log_call([
             "xsdb", RUN_TCL, RUN_TOKEN, args.experiment, str(elf),
             preflight["new_performance_full1024_ELF_sha256"],
-            str(z256), str(z4096), str(cap),
+            str(z256), str(z262144), str(cap),
             "tcp:127.0.0.1:3121",
         ], root / "full1024_a53_physical_run.log")
         result = verify_capture(args, preflight, root)
-        require(result["all_16_original_scalar_classifier_and_full_26tick_FNV_match"] is True,
+        require(result["all_1024_original_classifier_spikes_26tick_FNV_match_scalar"] is True,
                 "actual original frozen numerical results did not match")
         (root / "stage.txt").write_text(
-            "B45_PERF16_NEURAL_AND_POSTBACKUP_PRESERVED_PRELIMINARY_PASS_REBOOT_REQUIRED\n")
+            "B45_PERF1024_NEURAL_AND_POSTBACKUP_PRESERVED_PRELIMINARY_PASS_REBOOT_REQUIRED\n")
         print("P08_B45_PERF_FULL1024_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1")
         print("P08_B45_PERF_PHYSICAL_BACKUP_HARDWARE_PROTECTED=0")
         print("P08_B45_PERF_SECURITY_EQUIVALENCE_WITH_ORIGINAL_CLAIMED=0")
@@ -419,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except (PilotNoGo, b3.PilotPhysicalNoGo, b3.source.StageNoGo,
             elf_gate.VariantElfNoGo, sidecar.SidecarNoGo,
-            neural.RecordNoGo, KeyError, TypeError, OSError, ValueError,
+            neural.FullRecordNoGo, KeyError, TypeError, OSError, ValueError,
             RuntimeError, subprocess.TimeoutExpired) as exc:
         print("P08_B45_PERF_FULL1024_NO_GO=" + str(exc), file=sys.stderr, flush=True)
         return 3
