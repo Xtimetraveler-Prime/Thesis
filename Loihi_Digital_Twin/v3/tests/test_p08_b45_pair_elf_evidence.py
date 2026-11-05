@@ -122,6 +122,7 @@ def test_independent_pair_with_exact_recomputed_elf_geometry(synthetic, tmp_path
     "changed_original_xsa", "changed_original_pins",
     "edited_frozen_pin", "replaced_guard_provisioned",
     "wrong_root", "two_same_elves", "physical_claim",
+    "malformed_63_char_report_pin", "nonhex_64_char_report_pin",
 ))
 def test_cross_mode_fails_closed(synthetic, tmp_path, tamper):
     original, xsa, pins, manifest_path, manifest = synthetic
@@ -165,6 +166,12 @@ def test_cross_mode_fails_closed(synthetic, tmp_path, tamper):
             elf_unchecked.read_bytes())
     elif tamper == "physical_claim":
         manifest["physical_KV260_executed"] = True
+    elif tamper == "malformed_63_char_report_pin":
+        manifest["variants"]["once"]["report_sha256"] = (
+            manifest["variants"]["once"]["report_sha256"][:-1]
+        )
+    elif tamper == "nonhex_64_char_report_pin":
+        manifest["variants"]["once"]["report_sha256"] = "z" * 64
     manifest_path.write_text(json.dumps(manifest))
     out = tmp_path / "must_not_create.json"
     with pytest.raises((pair.PairElfNoGo, pair.gate.VariantElfNoGo)):
@@ -179,6 +186,12 @@ def test_original_operator_pins_are_not_synthetic():
         "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1")
     assert report["variants"]["once"]["elf_sha256"] == (
         "70501217482d156d59037a8694b9b837938026cba0d62ccd1f8939bfdd112e04")
+    assert report["variants"]["once"]["report_sha256"] == (
+        "602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e")
+    for mode in ("once", "unchecked"):
+        for file_kind in ("elf", "map", "report"):
+            digest = report["variants"][mode][file_kind + "_sha256"]
+            assert pair.valid_sha256(digest), (mode, file_kind, digest)
     assert report["variants"]["unchecked"]["elf_sha256"] == (
         "f6e09a8cde5ecd05900b30f0cc91d8d9549f2ae1e446157eb2c06024e0fd1655")
     assert report["evidence_status"].startswith("OPERATOR_REPORTED_")
