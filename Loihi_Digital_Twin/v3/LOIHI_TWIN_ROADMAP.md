@@ -305,10 +305,10 @@ A53 candidate before a separately approved pilot.
 
 ### P08-B4.5.4.3 — real Vitis/FSBL/XSA source inventory (PC-ONLY)
 
-**NEW source/tools/tests/CI implemented; operator-local original source
+**NEW source/tools/tests/CI PASS; operator-local original source
 inventory PENDING** on branch
-`agent/v3-p08-b4543-fsbl-boot-inventory`
-(stacked descendant of B4.5.4.2 draft PR #57).
+`agent/v3-p08-b4543-fsbl-boot-inventory`,
+**draft PR #58 stacked on draft PR #57** (both UNMERGED).
 Unlike prior symbolic 147456-master-access simulation, this submilestone
 begins inspecting **real vendor/project source bytes**. No boot image
 or physical permission has been established.
