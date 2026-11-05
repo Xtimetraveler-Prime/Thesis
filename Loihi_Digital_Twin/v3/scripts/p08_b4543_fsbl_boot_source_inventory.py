@@ -67,6 +67,27 @@ def hash_file(path: Path, *, max_bytes: int) -> tuple[str, bytes]:
     return sha_bytes(data), data
 
 
+def stream_sha(path: Path, *, max_bytes: int) -> str:
+    """Hash large original archives without reading gigabytes into RAM."""
+    require(path.is_absolute() and path.is_file() and not path.is_symlink(),
+            "file must be absolute/regular/non-symlink: " + str(path))
+    before = path.stat()
+    require(0 < before.st_size <= max_bytes,
+            "original archive file too large or empty")
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        while True:
+            part = source.read(1024 * 1024)
+            if not part:
+                break
+            digest.update(part)
+    after = path.stat()
+    require(before.st_size == after.st_size and
+            before.st_mtime_ns == after.st_mtime_ns,
+            "original archive modified during read-only hashing")
+    return digest.hexdigest()
+
+
 def remove_c_comments(data: str) -> str:
     """Parser used ONLY for source-call ordering, not C compilation."""
     data = re.sub(r"/\*.*?\*/", " ", data, flags=re.DOTALL)
@@ -152,7 +173,7 @@ def examine_source(path: Path | None, *, role: str) -> dict:
 
 
 def examine_archive(xsa: Path) -> dict:
-    digest, _ = hash_file(xsa, max_bytes=2 * 1024 * 1024 * 1024)
+    digest = stream_sha(xsa, max_bytes=2 * 1024 * 1024 * 1024)
     require(digest == ACCEPTED_P03_XSA_SHA,
             "wrong original accepted routed P03 XSA bytes")
     try:
