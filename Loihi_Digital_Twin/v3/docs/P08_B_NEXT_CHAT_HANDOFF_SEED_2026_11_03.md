@@ -2,6 +2,44 @@
 
 > **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 reset-integrity optimization.
 
+> **LATEST B4.5 STATUS (2026-11-05 UTC):** P08-B4.5.3
+> successfully closed on `agent/v3-p08-b45-reset-integrity`:
+> the operator independently verified both genuine A53 Vitis
+> ELF/map/admission triples. Report path
+> `/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`,
+> SHA-256
+> `03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+> Acceptance document:
+> `docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
+>
+> **Current descendant development branch:**
+> `agent/v3-p08-b454-ddr-owner-audit`. P08-B4.5.4.1 first step
+> implements **PC-only** memory geometry and source/runtime
+> owner protection evidence gaps in
+> `scripts/p08_b454_ddr_owner_preflight.py`;
+> native tests in `tests/test_p08_b454_ddr_owner_preflight.py`;
+> detailed instructions + all exports in
+> `docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md`.
+> Next user task: pull this branch, run tests and generate the
+> PC-only independent DDR gap report using their pinned B4.5.3
+> pair JSON. No protected A53/PL launch or hardware read is
+> authorized. The inherited B4.5.3 guard still **fails closed**.
+> Independently prove all DDR masters and persistent backup protection
+> before any physical pilot, plus new explicit user permission.
+> Do not confuse a PC static geometry PASS with physical GO.
+>
+> **Critical discovery:** 27x512KiB backup
+> `[0x43000000,0x43D80000)` is 13.5MiB; conservative
+> 1MiB-aligned XMPU cover `[0x43000000,0x43E00000)`
+> includes an extra 512KiB needing ownership audit.
+> AMD UG1085 recommends configuring/locking XMPUs at
+> boot via secure masters; never patch registers speculatively
+> in the user-visible A53 binary.
+>
+> User requires EVERY set of terminal instructions to include complete
+> `export`s and/or `find` commands and fresh external report paths.
+> No PR merge without explicit user authorization.
+
 ## 0. Immediate instructions to the next assistant
 
 We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
