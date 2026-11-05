@@ -16,9 +16,19 @@ BUILT (2026-11-05 UTC).** The operator supplied six distinct SHA-256
 digests for the `once` and `unchecked` ELF, map and admission JSON.
 These are pinned in the
 `docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`
-source-reported evidence manifest, but the operator has NOT YET run
-the new independently recomputed paired-ELF report verifier on actual
-local files. Do not claim independently accepted build provenance until
+source-reported evidence manifest. **On the first local paired-ELF
+verification, the operator found that the new evidence manifest had
+accidentally omitted the final `e` in the authenticated-once admission
+JSON SHA: recorded `602238...c526` (63 characters), actual/original
+`602238...c526e` (64 characters).** The operator's read-only
+diagnostic showed all four real ELF/map hashes and the unchecked-report
+SHA matched exactly; the authenticated-once report also matched the
+*originally supplied* correct SHA. The source-evidence manifest and
+runbook have been corrected to the original 64-digit SHA. A new
+regression requires six proper 64-character lowercase hexadecimal
+digests and explicitly pins the correct once admission-report SHA.
+**The independently recomputed paired-admission pass is still pending**
+and should now be rerun without touching built artifacts. Do not claim independently accepted build provenance until
 that local report is presented. No JTAG, DDR writes, physical KV260
 inference or neural/latency verification are authorized or reported.
 
