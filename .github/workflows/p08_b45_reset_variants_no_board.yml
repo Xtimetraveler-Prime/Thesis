@@ -18,6 +18,9 @@ on:
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json"
       - ".github/workflows/p08_b45_reset_variants_no_board.yml"
   pull_request:
     paths:
@@ -36,6 +39,9 @@ on:
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
       - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
       - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json"
       - ".github/workflows/p08_b45_reset_variants_no_board.yml"
 permissions:
   contents: read
@@ -68,7 +74,8 @@ jobs:
           python3 -m pytest -q -rs \
             tests/test_p08_b45_a53_build.py \
             tests/test_p08_b45_elf_admission.py \
-            tests/test_p08_b45_sidecar.py
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py
       - name: Explicitly no board access
         run: |
           echo "P08_B45_RESET_VARIANTS_NATIVE_PASS=1"
