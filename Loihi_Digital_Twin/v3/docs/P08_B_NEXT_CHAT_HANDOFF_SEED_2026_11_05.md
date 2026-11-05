@@ -17,7 +17,7 @@
 > DO NOT ask user to repeat either successful 16-image physical run.
 >
 > **ACTIVE DESCENDANT BRANCH** `agent/v3-p08-b45-unprotected-full1024-progress`
-> stacked on unmerged draft PR #62. Two DISTINCT full1024 A53 sources,
+> DRAFT PR #63 stacked on unmerged draft PR #62. Two DISTINCT full1024 A53 sources,
 > builder+original SHA gates, original full 64 scalar shard re-check,
 > accepted B4.2/B4.4 original physical baseline SHA,
 > BOTH accepted real pilot16 JSON pins, strict 1024 single-session
