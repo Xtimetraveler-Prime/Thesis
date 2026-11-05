@@ -294,10 +294,8 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
         ], root / "six_original_ddr_physical_stage.log")
         marker(root / "six_original_ddr_physical_stage.log",
                "P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1")
-        signed = b3.source.readback_original(args.stage, reads) if hasattr(b3.source, "readback_original") else None
-        # The accepted pilot's exact independent original SHA readback is
-        # implemented by b3.prior.readback_original, never by the new bench.
-        signed = b3.prior.readback_original(args.stage, reads)
+        # Reuse original P08-B3 signed physical readback verifier unchanged.
+        signed = b3.readback_original(args.stage, reads)
         (root / "same_session_six_source_receipt.json").write_text(
             json.dumps({
                 "original_six_physical_source_sha256": signed,
