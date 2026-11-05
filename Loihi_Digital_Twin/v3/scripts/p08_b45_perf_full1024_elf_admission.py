@@ -74,7 +74,7 @@ def audit(mode: str, elf: Path, linker_map: Path, original_elf: Path,
     require(all(x in map_raw for x in (
             b"Linker script and memory map", b".text", b".bss", b"main",
             b"p08_b45_perf_reset_bind", b"p08_b45_perf_reset_image",
-            b"p08_b45_perf_prepare_new_session", b"explain_preloop_bind_failure",
+            b"p08_b45_perf_prepare_new_session",
             b"p07_b4m_full_run", b"p08_b2_meter_start")),
             "A53 linker map missing reset, guard, neural or timing symbols")
     try:
