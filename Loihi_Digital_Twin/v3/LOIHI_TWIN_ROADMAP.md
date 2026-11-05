@@ -193,8 +193,7 @@ operator approval.
 
 ### P08-B4.5.4.2 — trusted-boot DDR XMPU immutable-backup policy (PC-ONLY)
 
-**SOURCE / SYMBOLIC PROTOTYPE IMPLEMENTED; CI PASS;
-operator-local verification pending.**
+**B4.5.4.2 ACCEPTED 2026-11-05 UTC — operator-local PC-only symbolic 6-port XMPU-model validation; hardware protection NOT YET PROVEN.**
 Development branch `agent/v3-p08-b4542-xmpu-boot-policy`, draft PR #57,
 is stacked on B4.5.4.1 draft PR #56. Preserve both original B4.5.3 Vitis ELF/map
 triples and immutable original scalar oracle; DO NOT merge or execute.
@@ -223,6 +222,37 @@ candidate deliberately cannot provide working A53/PL backup reads.
 Its PC sweep exercises all 1024 possible MIDs, both security classes,
 multiple addresses and all six ports as **symbolic inference only**.
 The existing firmware guard remains unprovisioned/fail-closed.
+
+**Accepted operator evidence (original):**
+`/home/dna/Thesis_Evidence/p08_b4542_xmpu_policy_pc_20261105T054738Z.json`,
+SHA-256
+`ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`.
+Source policy SHA-256 at audit:
+`7f78e7582e7fee12a06d83f14e45f1de1faf877ce1429af441dd83db3e851d2a`.
+The 147,456 symbolic transactions passed, while
+`REAL_READER_ALLOWLIST_READY=0`,
+`FSBL_BOOT_PROTECTION_PROVEN=0`,
+`XMPU_REGISTERS_PROGRAMMED=0`,
+`BOARD_JTAG_DDR_ACTION_AUTHORIZED=0`. 
+Source acceptance:
+[docs/P08_B4_5_4_2_OPERATOR_SYMBOLIC_XMPU_POLICY_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_2_OPERATOR_SYMBOLIC_XMPU_POLICY_ACCEPTANCE_2026_11_05.md).
+
+**Additional upstream FSBL finding with attribution:** AMD/Xilinx
+public `xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()`
+**before** `XFsbl_HookBeforeHandoff(EarlyHandoff)`.
+The initial assumption that the handoff hook could necessarily
+reprogram a locked XMPU is therefore **not valid** without
+inspecting the exact local Vitis FSBL and prior boot config.
+This new source is
+https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c ;
+AMD UG1137 handoff describes protection configuration:
+https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Handoff.
+The next B4.5.4.3 must inventory actual PS initialization and
+FSBL/boot sources BEFORE selecting a real secure integration point;
+`XFsbl_HookBeforeHandoff` is now **unverified, potentially too late**.
+Neither the public upstream `master` source nor this source-coded
+observation establishes the user's current installed FSBL version
+or board runtime.
 
 **Upstream AMD reference attribution and scope:**
 
