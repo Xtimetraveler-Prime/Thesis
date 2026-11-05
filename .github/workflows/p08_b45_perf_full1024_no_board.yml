@@ -1,0 +1,55 @@
+name: P08-B4.5 unprotected full1024 original scalar and host-only monitor
+on:
+  push:
+    branches: [agent/v3-p08-b45-unprotected-full1024-progress]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_b45_perf*full1024*'
+      - 'Loihi_Digital_Twin/v3/software/p08/build_p08_b45_perf_full1024.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b45_perf_full1024*'
+      - 'Loihi_Digital_Twin/v3/scripts/build_p08_b45_perf_full1024.sh'
+      - 'Loihi_Digital_Twin/v3/vivado/p08_b45_perf_full1024*'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_perf_full1024.py'
+      - '.github/workflows/p08_b45_perf_full1024_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Protected originals and accepted real physical verifier regression
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_perf_pilot16.py \
+            tests/test_p08_b45_perf_pilot16_independent.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b45_sidecar.py
+      - name: New full1024 isolated once/unchecked mains, exact negative and monitor tests
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_perf_full1024.py
+      - name: Python and bash syntax (NO BOARD)
+        run: |
+          python3 -m py_compile \
+            software/p08/build_p08_b45_perf_full1024.py \
+            scripts/p08_b45_perf_full1024_elf_admission.py \
+            scripts/p08_b45_perf_full1024_physical_run.py \
+            scripts/p08_b45_perf_full1024_independent_verify.py \
+            scripts/p08_b45_perf_full1024_monitor.py
+          bash -n scripts/build_p08_b45_perf_full1024.sh
+          echo P08_B45_PERF_FULL1024_NATIVE_NO_BOARD_PASS=1
+          echo P08_B45_PERF_FULL1024_ACTUAL_VITIS_BUILD_PROVEN=0
+          echo P08_B45_PERF_FULL1024_BOARD_VISITED=0
+          echo P08_B45_PERF_FULL1024_SECURITY_EQUIVALENCE_CLAIMED=0
