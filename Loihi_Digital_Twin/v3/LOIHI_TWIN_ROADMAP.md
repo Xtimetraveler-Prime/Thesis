@@ -6,8 +6,14 @@
 source-channel preflight. New branch
 `agent/v3-p08-b45-physical-readiness-source-gate`,
 new draft PR stacked on B4.5.4.5's draft PR #60.
-Native CI is host-only; operator-local actual original-source rerun
-and report SHA are **pending**. No board access, XSDB, DDR writes,
+Native CI is host-only and the **operator-reported original source
+rerun is ACCEPTED (2026-11-05 UTC)**: all five terminal source-channel
+PASS/NO-GO markers were supplied; external JSON
+`/home/dna/Thesis_Evidence/p08_b45_fsbl_c_tcl_20261105T071335Z.json`,
+operator-reported SHA-256
+`61e4b668e08b760800e69b39fdb61c5382aa23c0df568a31c3a49beff6c16bde`.
+The original JSON/PSU bytes remain local, not independently
+rehashable by GitHub. No board access, XSDB, DDR writes,
 FSBL/BOOT.BIN rebuild or official MNIST TEST are authorized.
 The previous 4.5.4.5 operator report is an accepted SOURCE observation,
 **not** boot, active register or exclusive DDR ownership proof.
@@ -45,6 +51,24 @@ The trusted prelock staging of all 13.5MiB immutable contexts,
 region priority/permissions, compiled current FSBL selection,
 continuing A53 guard, recoverable boot medium and explicit
 operator hardware authorization all remain **NO-GO**.
+
+**Historical Git inspection de-duplication completed (2026-11-05):**
+the previously recorded 19 Track A and seven P08-A PS-width logs,
+Oct 21 Ubuntu/BootFW Image A snapshot and overlay observation,
+Oct 22 Linux-vs-XSDB width discrepancy and later accepted B4i
+A53 takeover, Nov 2–3 failed read-only A53 target scans, and the
+later SUCCESSFUL Nov 3 1024-frame B4.4 reset-profile run were
+reconciled. Repeating these is not a prerequisite for understanding
+the generated FSBL security sources. **The operator's
+`optional_host_existing_boot_candidates: []` means no PC candidates
+were submitted, NOT that no BOOT.BIN/BIF/FSBL artifacts exist.**
+No historical record located proves active compiled FSBL/XMPU lock,
+10-bit DDR master permissions, or owner of the 512KiB added cover.
+For detailed citations, preserved evidence paths and **PuTTY
+single-line-only** future plan, see
+[docs/P08_B45_HISTORICAL_KV260_INSPECTION_REUSE_2026_11_05.md](docs/P08_B45_HISTORICAL_KV260_INSPECTION_REUSE_2026_11_05.md).
+Before any new board commands, search the already saved PC artifacts;
+no physical inspection has been requested or authorized here.
 
 **Numbering rule:** B4.5 has named work packages and PRs
 rather than another B4.5.4.6 level. Reserve already-defined
