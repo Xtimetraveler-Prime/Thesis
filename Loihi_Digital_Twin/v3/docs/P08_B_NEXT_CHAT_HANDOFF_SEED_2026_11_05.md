@@ -1,5 +1,40 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST NEW ORIGINAL FULL1024 PHYSICAL FAILURE (OVERRIDES LOWER PLANS).**
+> 2026-11-05 operator attempted unprotected B4.5 `once`
+> FULL1024 genuine A53 physical inference. Six original DDR readbacks,
+> original P03/FPD+LPD128, full sidecar zero readbacks,
+> genuine SHA-pinned A53 ELF download and terminal mailbox/
+> journal/timing/reset-profile captures PASS. A53 **reported a
+> real TERMINAL FAILURE**; XSDB printed
+> `P08_B45_PERF1024_JTAG_ATTEMPT_FAILED_REBOOT_REQUIRED=1`
+> and runner aborted, preserving originals in
+> `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_physical_20261105T172141Z`.
+> NO actual terminal 1024/1024 numerical PASS, NO postrun 27 backup
+> readback and NO full performance speedup accepted. Fault/index
+> unknown until saved mailbox decoded. DO NOT infer root cause from
+> reset warning; appeared in previously successful physical pilots.
+> Operator MUST physically REBOOT after failed JTAG. DO NOT run
+> unchecked full1024 or repeat any physical run now.
+>
+> **ACTIVE** `agent/v3-p08-b45-full1024-failure-triage` stacked
+> on draft PR #63. It adds **PC-only, read-only**
+> `scripts/p08_b45_full1024_failed_run_postmortem.py`,
+> synthetic native tests, new incident docs and roadmap NO-GO.
+> Reads saved 256B FAIL mailbox (real fault, exact index/count),
+> three 256KiB original journals/timing/reset profiles, CRC
+> and ORIGINAL frozen full1024 scalar/FNV oracle: fail-closed
+> evidence of all completed frames, never claim complete run
+> or postrun backup security. No board/serial/JTAG contact
+> or new ELF build. See
+> `docs/P08_B45_FULL1024_AUTH_ONCE_FAILED_JTAG_POSTMORTEM_2026_11_05.md`
+> for exact VS Code terminal commands; user provides report
+> SHA and actual fault marker. Only after diagnosis decide
+> whether new code changes/tests and genuinely NEW ELF
+> would be justified. Successful 16-frame once+unchecked
+> independent physical receipts remain accepted and unmodified.
+> No merges without explicit approval.
+>
 > **LATEST ACCEPTED 2026-11-05 PHYSICAL PILOT RESULTS AND NEW FULL1024 WORK (OVERRIDES ALL LOWER STATUS).**
 > Both actual unprotected performance-only once and unchecked first16
 > KV260 A53 pilots passed B4i CPU halt/FPD+LPD128 gate, original P03 shell,
