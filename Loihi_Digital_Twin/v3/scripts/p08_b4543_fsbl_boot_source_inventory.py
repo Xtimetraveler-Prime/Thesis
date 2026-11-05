@@ -171,11 +171,17 @@ def examine_archive(xsa: Path) -> dict:
                         ".." not in Path(info.filename).parts and
                         "\\" not in info.filename,
                         "unsafe XSA member path (never extracted)")
-                require(info.file_size <= MAX_SELECTED_MEMBER,
-                        "XSA candidate text member exceeds scan bound")
+                if info.file_size > MAX_SELECTED_MEMBER or (
+                    total + info.file_size > MAX_SELECTED_TOTAL
+                ):
+                    inspected.append({
+                        "member": info.filename, "bytes": info.file_size,
+                        "sha256": None,
+                        "status": "SKIPPED_OVERSIZE_NO_DECOMPRESSION",
+                        "active_boot_image_identity_proven": False,
+                    })
+                    continue
                 total += info.file_size
-                require(total <= MAX_SELECTED_TOTAL,
-                        "XSA total selected scan exceeds memory bound")
                 raw = zf.read(info)
                 require(len(raw) == info.file_size,
                         "XSA member length/CRC check failed")
