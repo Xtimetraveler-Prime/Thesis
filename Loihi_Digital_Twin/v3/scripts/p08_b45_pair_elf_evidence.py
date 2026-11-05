@@ -65,6 +65,12 @@ def hex_sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def valid_sha256(value: object) -> bool:
+    """Canonical lowercase 64-character SHA-256 digest (no truncated pins)."""
+    return (type(value) is str and len(value) == 64 and
+            all(char in "0123456789abcdef" for char in value))
+
+
 def source_guard_audit(root: Path, mode: str) -> None:
     """Check staged source really is the approved offline fail-closed source."""
     source = root / "source"
@@ -144,8 +150,12 @@ def audit(manifest: Path, original_elf: Path, xsa: Path, pins: Path,
                  "missing actual " + mode + " " + kind)
             actual_sha = hex_sha(file.read_bytes())
             expected_sha = record.get(kind + "_sha256")
-            need(type(expected_sha) is str and len(expected_sha) == 64 and
-                 actual_sha == expected_sha,
+            need(valid_sha256(expected_sha),
+                 "operator-pinned " + mode + " " + kind +
+                 " SHA-256 pin MUST be exactly 64 lowercase hex characters;" +
+                 " got length=" + str(len(expected_sha) if
+                                     type(expected_sha) is str else "not_a_string"))
+            need(actual_sha == expected_sha,
                  "operator-pinned " + mode + " " + kind +
                  " SHA-256 mismatch: expected=" + str(expected_sha) +
                  " actual=" + actual_sha + " file=" + str(file))
