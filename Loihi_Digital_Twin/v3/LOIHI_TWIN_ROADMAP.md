@@ -396,6 +396,151 @@ extra-512KiB ownership, A53 low DDR exclusivity, staging and
 persistent RO readback and obtain NEW operator approval before pilot.
 Nothing in this source-only stage closes those gates.
 
+### P08-B4.5.4.4 — original Vitis FSBL compile-time bypass / generated protection source (PC-ONLY)
+
+**ACCEPTED 2026-11-05 UTC — native 16/16 and operator-local
+source/FSBL branch provenance PASS; real XMPU/boot NO-GO.** New descendant branch
+`agent/v3-p08-b4544-fsbl-protection-review`,
+draft PR **#59 stacked on draft PR #58**, all UNMERGED,
+stacked on the
+operator-accepted original B4.5.4.3 report SHA
+`9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`
+(see source acceptance document).
+
+**High-impact AMD/Xilinx 2025.2 source finding and attribution:**
+the **versioned release `xlnx_rel_v2025.2`** FSBL `xfsbl_hw.h`
+contains `#if !defined(FSBL_PROT_BYPASS_EXCLUDE)` /
+`#define XFSBL_PROT_BYPASS`. Thus, under unmodified/default
+compile options, `XFSBL_PROT_BYPASS` is defined. The
+**2025.2** `XFsbl_ProtectionConfig` in
+`xfsbl_handoff.c` has two distinct code paths:
+
+- When BYPASS is defined, invoke `psu_apply_master_tz()`
+  and `psu_ocm_protection()`, **not** the generated
+  `psu_protection()` and `psu_protection_lock()`.
+- With `FSBL_PROT_BYPASS_EXCLUDE` defined by a
+  verified separate FSBL build, call
+  `psu_protection()` then `psu_protection_lock()`
+  **before** ordinary before-handoff hook.
+  This could activate generated security settings for
+  all relevant XMPU/XPPU units, and is **not automatically
+  safe** without full default/region/MID review.
+
+**Original source links (AMD vendor technology, NOT novel thesis IP):**
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hw.h
+and
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c .
+AMD UG1085 XMPU permissions:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+
+**Crucial caveat:** the operator's currently active KV260
+BOOT.BIN/FSBL ELF/compiler flags are still UNKNOWN. These
+2025.2 source defaults do NOT show which branch was actually
+compiled into the running board image. We MUST NOT claim
+the source default equals the observed physical lock state.
+Also, simply enabling `FSBL_PROT_BYPASS_EXCLUDE` without
+first auditing the original 2025.2 generated PS security
+configuration could break existing boot/PL/DDR permissions.
+No new build, boot image, XMPU writes or JTAG is permitted.
+
+New `scripts/p08_b4544_fsbl_protection_path.py` checks
+the exact accepted operator B4.5.4.3 SHA, the
+independently pinned local `xfsbl_handoff.c`/generated
+`psu_init.c` and original routed P03 XSA, and a
+new read-only `xfsbl_hw.h` source input. It parses
+the actual C function's guarded bypass/full-protection
+cases, checks full protection->lock ordering and counts
+generated PSU protection functions/literal DDR XMPU
+register references. Native tests reject tampered
+original reports/PSU/FSBL/XSA, inverted protections,
+missing compile option and invented physical proof.
+All output and hard NO-GO flags are **PC-only**.
+Runbook with every export/find command:
+[docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md](docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md).
+
+**Original B4.5.4.4 accepted operator report:**
+`/home/dna/Thesis_Evidence/p08_b4544_fsbl_protection_branch_20261105T062334Z.json`,
+SHA-256
+`e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9`.
+The operator ran 16 new native tests (all PASS), confirmed original
+source hashes and posted
+`ACTUAL_LOCAL_FSBL_TWO_BRANCHES_PARSED=1`,
+`VITIS_HEADER_DEFAULT_PROTECTION_BYPASS=1`,
+`XSA_TO_GENERATED_PSU_INIT_EXACT_SHA_MATCH=1`, but also
+`REAL_FSBL_BUILD_COMPILE_FLAGS_PROVEN=0`,
+`REAL_DDR_XMPU_PERMISSIONS_PROVEN=0`,
+`BOARD_JTAG_BOOT_DDR_WRITES_AUTHORIZED=0`.
+Exact final decision:
+`FSBL_SOURCE_BYPASS_PATH_IDENTIFIED_REAL_BOOT_AND_XMPU_NO_GO`.
+Source acceptance:
+[docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md).
+The next-chat **self-contained handoff seed**, based on the original
+historical seed but updated to accepted B4.5.4.4 and proposed next
+B4.5.4.5 source-only work, is
+[docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md](docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md).
+It preserves the original branch/PR workflow, Vitis+Vivado source
+locations, evidence SHA list, all initial exports/finds, source
+attribution and explicit physical NO-GO gates.
+
+**Critical scope limit of current C parser:** `psu_protection()`
+was only 130 bytes of *source body* and `psu_protection_lock()`
+43 bytes. Six-port direct-literal XMPU register hits were all zero
+in the scanner's restricted literal-address search. This C
+source check does **NOT** prove that generated protection does
+nothing. It may dispatch into generated helper/config tables or
+header/Tcl definitions. It also does not prove active boot
+compiler macros, security ID assignments or XMPU state. Do
+NOT mistake zero matches for an empty XMPU policy.
+
+**NEXT PROPOSED B4.5.4.5 — PC-only exact generated protection
+call-graph and active boot artifact search** (new descendant
+feature branch from B4.5.4.4 PR #59, unmerged, draft PR,
+native tests, real local operator review before continuing):
+
+1. Read and SHA-pin original P03 XSA `psu_init.c`, `psu_init.h`,
+   `psu_init.tcl`, and HWH. Trace full
+   `psu_protection()`/`psu_protection_lock()` call graph,
+   `psu_protection_data()` and related generated tables,
+   literal/macro register addresses, masks, writes and lock
+   sequencing. Produce per-port and region-level *source*
+   inventory, independent of direct-body literal counting.
+   Use original generated PS protection configuration and
+   source-specified AXI interface/PL port identities, but
+   mark any unproven runtime master ID as UNKNOWN.
+2. Search locally for actual BOOT.BIN/BIF/FSBL ELF/FSBL
+   build flags/compile_commands/map only by **read-only**
+   `find`, `sha256sum` and bounded static analysis. Presence
+   does not prove which boot medium the board used. Require
+   independent boot-media provenance and read-only board
+   approval for any future device observation.
+3. Create a **boot-source dependency/region/priority/mask
+   conflicts report** with strict SHA/size bounds and
+   negative tests. Never enable `FSBL_PROT_BYPASS_EXCLUDE`
+   blindly; globally enabling generated security may
+   interrupt existing board access.
+4. Determine whether a trusted prelock staging/authentication
+   mechanism exists or requires a new recoverable boot design.
+   Preserve the 27 original frozen P02 records, full 13.5MiB
+   `[0x43000000,0x43D80000)` and 512KiB overcoverage
+   `[0x43D80000,0x43E00000)`.
+
+**Subsequent, separately gated phases (not approved yet):**
+(i) actual boot/DDR-master/exclusive-owner provenance and
+safe, read-only physical inspection **only with new user consent**;
+(ii) separately built trusted FSBL/boot image on recoverable
+development media, staging all SHA-verified backups before
+per-port XMPU RO/lock, with a verified read-only A53/PL
+master allow-list and no unauthorized writes; (iii) a NEW
+independently admitted A53 backup guard capable of **trusted
+continuing protection attestation**, not an untrusted flag;
+(iv) explicit operator-authorized 16-image KV260 pilot
+with full oracle/FNV/neural parity; (v) separately approved
+1024-image authenticated-once vs unchecked-content profiles
+and whole-service matched comparison. Freeze all previous
+Vitis A53 ELFs, bitstreams, XSA and physical evidence.
+No project permission for current XMPU/DDR/PL/JTAG writes,
+boot-media changes or official MNIST TEST access.
+
 ### P08-B4.5.4 — bounded physical validation and full1024 measurements
 
 Only after independent proof of DDR ownership and persistent backup
