@@ -215,78 +215,92 @@ def check_post_backup(stage: Path, cap: Path) -> list[str]:
 
 
 def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dict:
-    cap = root / "performance1024_capture"
-    log = root / "full1024_a53_physical_run.log"
+    cap=root/"performance1024_capture"
+    log=root/"full1024_a53_physical_run.log"
     for line in (
         "P08_B45_PERF1024_EXACT_OPERATOR_SHA_PINNED_ELF_DOWNLOADED=1",
-        "P08_B45_PERF1024_REAL_16_JOURNAL_AND_TIMING_SIDECARS_PHYSICAL_CAPTURED=1",
-        "P08_B45_PERF1024_EXACT_16_FRAME_HARDWARE_TERMINAL_OBSERVED=1",
+        "P08_B45_PERF1024_REAL_1024_JOURNAL_AND_TIMING_SIDECARS_PHYSICAL_CAPTURED=1",
+        "P08_B45_PERF1024_EXACT_1024_FRAME_HARDWARE_TERMINAL_OBSERVED=1",
         "P08_B45_PERF1024_27_BACKUP_POST_RUN_PHYSICAL_READBACKS_CAPTURED=1",
     ):
-        marker(log, line)
-    sha_source = check_post_backup(args.stage, cap)
-    neural_result = neural.verify(
-        args.first16,
-        cap / "journal16_physical.bin",
-        cap / "timing16_physical.bin",
-        cap / "mailbox_terminal_physical.bin",
-        root / "full1024_untrusted_neural_verify.json",
-    )
-    require(neural_result["verified_frames"] == 16 and
-            neural_result["all_16_independent_scalar_counters_match"] is True and
-            neural_result["all_16_full_26tick_trace_FNV_match"] is True,
-            "untrusted 16-image neural/FNV check failed")
-    hz = neural_result["end_mailbox"]["observed_CNTFRQ_EL0_hz"]
-    profile_raw = (cap / "reset_profile16_physical.bin").read_bytes()
-    perf = sidecar.audit(
-        profile_raw, mode=args.experiment, expected_rows=16,
-        observed_hz=hz, require_protection=False,
-    )
-    require(perf["backing_backup_guard_provisioned_flag"] == 0 and
-            perf["frames_structurally_verified"] == 16 and
+        marker(log,line)
+    snapshot=(cap/"progress_state.txt").read_text()
+    require("completed=1024" in snapshot and
+            "state=CAPTURE_DONE_PENDING_INDEPENDENT" in snapshot,
+            "atomic host progress terminal is incomplete")
+    after=check_post_backup(args.stage,cap)
+    result=neural.verify(
+        args.oracle,args.first16,
+        cap/"journal1024_physical.bin",cap/"timing1024_physical.bin",
+        cap/"mailbox_terminal_physical.bin",
+        root/"full1024_untrusted_neural_verify.json")
+    require(result["count"]==1024 and
+            result["all_1024_original_full26_tick_neural_FNV_equal_scalar"] is True and
+            result["all_1024_10_output_spikes_and_classifications_equal_scalar"] is True and
+            result["all_1024_timing_rows_additive_and_monotonic"] is True,
+            "untrusted 1024 image neural/FNV/clock reference mismatch")
+    hz=result["terminal"]["CNTFRQ_EL0_hz"]
+    profile=(cap/"reset_profile1024_physical.bin").read_bytes()
+    perf=sidecar.audit(profile,mode=args.experiment,expected_rows=1024,
+                       observed_hz=hz,require_protection=False)
+    require(perf["backing_backup_guard_provisioned_flag"]==0 and
+            perf["frames_structurally_verified"]==1024 and
+            perf["ordinary_frames"]==1023 and
             perf["strict_protection_required"] is False,
-            "unprotected mode misreported protected DDR or corrupt reset timing")
-    # Performance reset must lie inside the identical image-service
-    # phase0 interval as in the original accepted full A53 service meter.
-    timers = neural_result["timing_frames"]
-    require(len(timers) == 16, "incomplete original 16 A53 service timers")
-    for ordinal, timer in enumerate(timers):
-        words = struct.unpack_from("<64I", profile_raw, ordinal * 256)
-        reset_ticks = words[15] | (words[16] << 32)
-        require(0 < reset_ticks <= timer["phase_counter_ticks"][0],
-                f"frame {ordinal}: measured reset exceeds complete A53 phase0 span")
-    record = {
-        "schema": SCHEMA,
-        "operator_experiment": args.experiment,
-        "new_full1024_elf_sha256": preflight["new_performance_full1024_ELF_sha256"],
-        "same_session_original_six_DDR_source_readbacks_proven": True,
-        "actual_JTAG_A53_stop_P03_prog_and_16_terminal_proven": True,
-        "all_16_original_scalar_classifier_and_full_26tick_FNV_match": True,
-        "all_16_reset_profile_source_and_dest_count_structurally_valid": True,
-        "all_27_backup_records_physically_equal_frozen_after_16_images": True,
-        "postrun_original_backup_sha256_by_core": sha_source,
-        "neural": {
-            "verified_frames": 16,
-            "original_scalar_sha256": neural_result["independent_scalar_oracle_sha256"],
-            "journal_sha256": neural_result["unverified_input_journal_sha256"],
-            "timing_sha256": neural_result["unverified_input_timing_sha256"],
-            "mailbox_sha256": neural_result["unverified_input_mailbox_sha256"],
-        },
-        "reset_timing_structural": perf,
-        "backup_hardware_write_exclusion_proven": False,
-        "backup_transient_mutation_excluded": False,
-        "true_XMPU_or_FSBL_configuration_proven": False,
-        "physical_inference_computational_correctness": "16_FRAMES_ACCEPTED_ONLY",
-        "physical_security_guarantee": "NOT_CLAIMED",
-        "physical_1024_image_speedup_accepted": False,
-        "unverified_external_DMA_and_early_boot_owners": True,
-        "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
-        "reboot_required_after_attempt": True,
+            "unprotected backup reported as protected or profile invalid")
+    timers=(cap/"timing1024_physical.bin").read_bytes()
+    require(len(timers)==262144,"expected 1024x256B timing")
+    prior=None
+    service_ms=[]
+    phase0_ms=[]
+    for i in range(1024):
+        timed=timing_parser.verify_timing(timers[i*256:(i+1)*256],i,prior)
+        prior=timed["after_journal_commit_CNTVCT"]
+        row=struct.unpack_from("<64I",profile,i*256)
+        ticks=row[15] | (row[16]<<32)
+        require(0<ticks<=timed["phase_counter_ticks"][0],
+                f"frame {i}: reset ticks exceed actual original restore phase0")
+        if i<1023:
+            service_ms.append(timed["complete_service_counter_ticks"]*1000.0/hz)
+            phase0_ms.append(timed["phase_counter_ticks"][0]*1000.0/hz)
+    def describe(vals: list[float])->dict:
+        ordered=sorted(vals)
+        return {"ordinary_frame_count":1023,"min_ms":ordered[0],
+                "median_ms":statistics.median(ordered),
+                "p95_nearest_rank_ms":ordered[math.ceil(0.95*len(ordered))-1],
+                "max_ms":ordered[-1]}
+    record={
+        "schema":SCHEMA,
+        "experiment":args.experiment,
+        "new_full1024_ELF_sha256":preflight["new_performance_full1024_ELF_sha256"],
+        "original_full1024_scalar_SHA256":preflight["original_full1024_scalar_oracle_sha256"],
+        "same_session_original_six_DDR_source_readbacks_proven":True,
+        "physical_A53_stop_P03_program_and_strict_1024_terminal_observed":True,
+        "all_1024_original_classifier_spikes_26tick_FNV_match_scalar":True,
+        "all_1024_full_service_timing_and_reset_subspans_valid":True,
+        "all_27_backup_records_byte_identical_to_original_after_run":True,
+        "postrun_backup_sha256_by_core":after,
+        "reset_timing":perf,
+        "whole_image_service_timing":describe(service_ms),
+        "restore_phase0_timing":describe(phase0_ms),
+        "raw_neural_journal_sha256":sha(cap/"journal1024_physical.bin"),
+        "raw_service_timing_sha256":sha(cap/"timing1024_physical.bin"),
+        "raw_reset_profile_sha256":sha(cap/"reset_profile1024_physical.bin"),
+        "raw_terminal_mailbox_sha256":sha(cap/"mailbox_terminal_physical.bin"),
+        "original_1023_ordinary_reference_timing_sha256":
+            preflight["accepted_original_1023_timing_report_sha256"],
+        "exclude_trace_image_index_1023_from_ordinary_statistics":True,
+        "physical_backup_protection_claim":False,
+        "transient_backup_mutation_excluded":False,
+        "FSBL_XMPU_DMA_owner_exclusivity_proven":False,
+        "speedup_vs_original_not_paired_or_multisession_accepted":True,
+        "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
+        "reboot_required_after_any_JTAG_attempt":True,
     }
-    out = root / "full1024_unprotected_physical_preliminary.json"
-    with out.open("x", encoding="utf-8") as stream:
-        json.dump(record, stream, indent=2, sort_keys=True)
-        stream.write("\n")
+    with (root/"full1024_unprotected_physical_preliminary.json").open(
+        "x",encoding="utf-8") as fd:
+        json.dump(record,fd,indent=2,sort_keys=True)
+        fd.write("\n")
     return record
 
 
