@@ -13,6 +13,8 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import statistics
+import math
 import sys
 from tempfile import TemporaryDirectory
 
@@ -99,6 +101,22 @@ def review(args: argparse.Namespace) -> dict:
         ticks = words[15] | (words[16] << 32)
         need(0 < ticks <= timer["phase_counter_ticks"][0],
              f"frame {i}: new reset span exceeds complete original phase0")
+    hz = n["end_mailbox"]["observed_CNTFRQ_EL0_hz"]
+    service_ms = [timer["complete_service_counter_ticks"] * 1000.0 / hz
+                  for timer in timers]
+    need(len(service_ms) == 16 and min(service_ms) > 0,
+         "missing positive complete image-service latency")
+    sorted_ms = sorted(service_ms)
+    service_descriptive = {
+        "frames": 16,
+        "actual_A53_counter_frequency_hz": hz,
+        "service_min_ms": sorted_ms[0],
+        "service_median_ms": statistics.median(service_ms),
+        "service_p95_nearest_rank_ms":
+            sorted_ms[math.ceil(0.95 * len(sorted_ms)) - 1],
+        "service_max_ms": sorted_ms[-1],
+        "not_same_session_paired_against_original_B44_baseline": True,
+    }
     preliminary = json.loads(
         (root / "pilot16_unprotected_physical_preliminary.json").read_text())
     need(preliminary.get("schema") == pilot.SCHEMA and
@@ -121,7 +139,8 @@ def review(args: argparse.Namespace) -> dict:
         "all_16_service_timing_and_reset_subspans_verified": True,
         "all_27_postrun_backup_records_byte_identical_to_original": True,
         "postrun_backup_sha256_by_core": after,
-        "timing": reset,
+        "reset_timing": reset,
+        "whole_image_service_timing": service_descriptive,
         "raw_journal_sha256": sha(cap / "journal16_physical.bin"),
         "raw_timing_sha256": sha(cap / "timing16_physical.bin"),
         "raw_reset_profile_sha256": sha(cap / "reset_profile16_physical.bin"),
