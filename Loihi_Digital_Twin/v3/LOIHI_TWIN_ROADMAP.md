@@ -1,5 +1,178 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
+
+**Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
+A53 applications are implemented. Operator posted a clean local PASS of
+the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
+Current GitHub Actions no-board regression passes the original 72 tests,
+81 prior source/strict-GCC-syntax/synthetic-ELF/sidecar/pinned-SHA tests
+and **15 new independent paired-ELF-verifier tests** (168 total; CI PASS
+at code commit `3c395b64cc0507d7bd357cf48c5dd2d4c7a8b958`).
+Draft PR #55 remains stacked on draft PR #54 and unmerged.
+
+**Both genuine Vitis 2025.2 A53 ELFs/maps are now OPERATOR-REPORTED
+BUILT (2026-11-05 UTC).** The operator supplied six distinct SHA-256
+digests for the `once` and `unchecked` ELF, map and admission JSON.
+These are pinned in the
+`docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`
+source-reported evidence manifest. **On the first local paired-ELF
+verification, the operator found that the new evidence manifest had
+accidentally omitted the final `e` in the authenticated-once admission
+JSON SHA: recorded `602238...c526` (63 characters), actual/original
+`602238...c526e` (64 characters).** The operator's read-only
+diagnostic showed all four real ELF/map hashes and the unchecked-report
+SHA matched exactly; the authenticated-once report also matched the
+*originally supplied* correct SHA. The source-evidence manifest and
+runbook have been corrected to the original 64-digit SHA. A new
+regression requires six proper 64-character lowercase hexadecimal
+digests and explicitly pins the correct once admission-report SHA.
+**INDEPENDENT OFFLINE PAIR VERIFIED / P08-B4.5.3 ACCEPTED (2026-11-05 UTC).**
+The operator reran the independently recomputed genuine paired-A53
+offline checker and posted
+`P08_B45_TWO_GENUINE_A53_ELFS_INDEPENDENT_OFFLINE_PASS=1` and
+`P08_B45_BOTH_PROVENANCE_AND_SOURCE_GUARD_MATCH=1`.
+Independent JSON path:
+`/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`;
+SHA-256
+`03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+Full source-derived acceptance:
+`docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
+No physical inference, DDR ownership proof or JTAG launch occurred. Do not claim independently accepted build provenance until
+that local report is presented. No JTAG, DDR writes, physical KV260
+inference or neural/latency verification are authorized or reported.
+
+The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
+1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
+SHA-256 median **2,908.5978 ms**; destination SHA-256 median
+**2,908.5991 ms**; mutable 27-context memcpy median **7.0247 ms**.
+The two SHA scans account for approximately **99.84% of summed reset ticks**.
+The separate original B4.4 full image-service median was **13,034.111501 ms**.
+These are distinct sessions and must not be subtracted as if paired.
+
+### P08-B4.5.1 — authenticate once, lightweight per-image checks
+
+Authenticate all 27 immutable backup records once at session bind. Require a
+real platform mechanism that establishes persistent exclusive/read-only
+ownership of the entire backup range. On each image, confirm that protection
+remains active, validate all 27 source P02 headers before the first copy,
+perform the original 27-context memcpy/cache/barrier sequence, and validate
+all 27 destination headers. No per-image SHA-256 is permitted. This mode is
+only integrity-defensible if the platform actually prevents backup mutation;
+a software flag or no-op lock callback is not proof.
+
+### P08-B4.5.2 — unchecked-content performance bound
+
+Remove SHA-256, P02-header, CRC and payload-content checks from the reset
+variant. Retain operational safety controls: pointer/range/size admission,
+persistent backup ownership/protection, positive quiescence, cache
+maintenance, barriers, callback error handling, generation accounting and
+fail-stop poisoning after a partial restore. This is an experimental
+performance lower bound, not a production recommendation. Native tests must
+demonstrate that content corruption is intentionally not detected.
+
+### P08-B4.5.3 — separate A53 source and Vitis offline builds
+
+**ACCEPTED (2026-11-05 UTC): two genuine Vitis A53 builds and independent paired PC-only static admission.**
+
+Two distinct A53 mains now exist:
+`software/p08/p08_b45_auth_once_full1024_a53.c` and
+`software/p08/p08_b45_unchecked_full1024_a53.c`. Both reuse the
+original frozen P07/P03 26-tick/702-dispatch neural path, original
+complete A53 image-service meter and neural result journals. Only reset
+integrity policy differs; the unchecked variant still retains unrelated
+raw-input provenance SHA and original result-journal raw/wire hashes.
+
+`software/p08/build_p08_b45_variant.py`,
+`scripts/build_p08_b45_variant.sh` and
+`scripts/p08_b45_elf_admission.py` now support two separate, source-pinned
+offline Vitis applications and ELF/map identity/low-DDR PT_LOAD admission.
+The B4.5 sidecar uses a new 256B record schema with its own
+`scripts/p08_b45_sidecar.py` PC-only structural verifier and native
+negative tests. These are **not** actual physical measurements.
+
+**CRITICAL deliberate STOP:** the included
+`software/p08/p08_b45_a53_backup_guard.c` refuses backup-region locking
+and lock verification. The resulting offline-buildable ELFs are
+**intentionally incapable of executing inference on the board** until a
+separately audited and accepted real PS/PL DDR backup owner/protection
+provider is implemented. Do not replace it with a no-op. Hardware XMPU
+configuration may be boot-time/secure-master controlled; never perform
+speculative runtime XMPU writes. Source, stage and ELF admission explicitly
+pin this fail-closed adapter and continue to report DDR ownership unproven.
+
+**Operator build-preflight fix (2026-11-03):** the first attempt to build
+B4.5.1 stopped before Vitis at `original context SHA header drift`.
+Investigation found the **new B4.5 shell script contained a mistyped
+expected SHA**, not evidence of a changed original model. Corrected its
+literal to the accepted B2.2 header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+A CI regression now compares B4.5 shell pins against accepted B2.3
+admission constants and B4.4 shell pins. Runbook includes complete
+exports and read-only `find`/SHA validation commands. Both offline
+Vitis builds subsequently completed according to operator-supplied
+six-file SHA-256 output.
+
+**Next operator gate:** begin P08-B4.5.4.1 **PC-only
+boot/DDR ownership and backup-protection audit**, in a NEW descendant
+branch based on this accepted B4.5.3 head. Inventory actual source
+memory envelopes, preserve original pinned A53 evidence, and produce
+a fail-closed owner/protection gap report. Do NOT run any new physical
+DDR, JTAG, PL, ELF download or inference. An independently proven,
+persistent read-only backup mechanism plus A53/PL/OS ownership audit,
+new build and fresh operator authorization are prerequisites for later
+physical pilot work.
+
+Runbooks and commands:
+[docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md)
+and
+[docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md](docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md).
+All verification is PC-only.
+
+Keep original B2.3 production firmware, accepted P08-B4.4.2
+profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
+unchanged. No variant may silently replace the accepted baseline.
+
+### P08-B4.5.4 — bounded physical validation and full1024 measurements
+
+Only after independent proof of DDR ownership and persistent backup
+protection, fresh read-only preflight, recovery readiness and new explicit
+operator approval: run a bounded 16-image physical pilot for each variant.
+Require exact independent scalar-oracle neural/spike/FNV parity before
+accepting timing. After each pilot passes, run a separately approved
+1,024-image session. Preserve all 1,024 neural rows, isolate selected trace
+ordinal 1023, and use the 1,023 ordinary frames for latency distributions.
+Measure both reset subspan and complete A53 image service with matched
+boundaries and actual per-session `CNTFRQ_EL0`.
+
+The original immutable backup range
+`[0x43000000,0x43D80000)` and B4.4 profiling sidecar range
+`[0x42400000,0x42440000)` still require a complete runtime ownership audit
+covering boot firmware, TF-A, U-Boot, Linux, RPU, PL DMA and other masters.
+Static non-overlap is insufficient. If ownership/protection cannot be
+established, stop and redesign. No official MNIST TEST access.
+
+### P08-B4.5.5 — differential analysis and closeout
+
+Compare baseline, authenticated-once and unchecked-content variants using
+separately pinned builds and accepted evidence. Report neural parity,
+reset latency, complete image-service latency, instrumentation perturbation,
+integrity guarantees and failure modes. Do not call the unchecked result a
+safe optimization or infer PL-only speedup.
+
+### P08-B4.6 — repeated paired Track A/Track B system comparison
+
+The previously proposed six independent physical sessions in AB/BA/AB
+order move here, after B4.5. Use the same frozen 1,024-image population,
+1,023 ordinary frames per run, selected trace ordinal 1023 isolated,
+complete matched image-service boundaries, actual per-run A53 frequency,
+cold-boot/recovery accounting and run-level uncertainty. Track A (42
+neurons/26 dispatches) and Track B (1,010 neurons/702 dispatches) are
+different workloads; this is a system/workload comparison, not matched
+complexity or pure FPGA speedup.
+
+---
+
 ## P08-B4.4.2 ACCEPTED — genuine full1024 original 27-context reset microprofiling (2026-11-03)
 
 The operator supplied the output of the separate genuine KV260 profiling
@@ -47,12 +220,14 @@ Full evidence, hashes, limitations and next gate:
 Earlier roadmap entries below that describe B4.4 physical capture as pending
 or not yet done are historical snapshots and are superseded by this
 2026-11-03 acceptance entry; their failed-attempt records remain preserved.
-Next proposed work is B4.5 protocol design for six independent physical
-sessions in AB/BA/AB order, with complete matched image-service boundaries
-and run-level reporting. Design/review this protocol before changing
-firmware or touching the board. Track A and B have materially different
-network sizes, so this remains a system/workload comparison, not a
-matched-complexity or pure accelerator speedup.
+Next work is **P08-B4.5 reset-integrity optimization**: compare
+one-time authenticated restoration with lightweight per-image header checks
+against an unchecked-content performance-bound variant. Preserve the accepted
+full-SHA implementation as the reference. The previously proposed six-session
+paired Track A/Track B protocol is renumbered **P08-B4.6** and follows B4.5.
+No new physical run is authorized until the full DDR ownership/protection
+audit and fresh operator approvals are complete. Track A and B remain
+materially different workloads, not a matched-complexity comparison.
 
 ---
 
@@ -4142,7 +4317,7 @@ Track A's 94.56% *official TEST* from Track B's 97.08%
 
 # P08 — Independent physical baseline and scaling measurements
 
-**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED).** This satisfies the user-approved entry gate to **P06-B1 SCALED PACKING FIRST**, then P06-B2 separate checkpoint, P07-B physical virtualization and P08-B scaled measurements. **P08-B NOT YET STARTED.**
+**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED). P08-B SCALED TRACK IS ACTIVE:** P07-B physical acceptance and P08-B4.1/B4.2/B4.4/B4.4.2 results are recorded above; P08-B4.5 reset-integrity optimization is the active next milestone; P08-B4.6 paired Track A/Track B comparison follows. Power/energy remain deferred and official Track B MNIST TEST remains sealed.
 
 ## P08-A — Compact physical KV260 latency baseline
 
@@ -4164,26 +4339,21 @@ For the active Track A **physical latency** study, collect actual A53 per-frame 
 
 ## P08-B — Scaled physical resource/traffic/energy study
 
-Repeat the same measurement method for the
-frozen scaled model. In addition, record
-logical core count, 3 resident slots,
-actual HLS dispatches, per-core paging
-hits/misses/evictions, bytes moved, routed
-packet fanout/barrier time, event-bank
-occupancy and resource mapping across
-all cores; compare these against P08-A.
+Repeat the same measurement method for the frozen scaled model. In addition,
+record logical core count, three resident slots, actual HLS dispatches,
+per-core paging hits/misses/evictions, bytes moved, routed packet
+fanout/barrier time, event-bank occupancy and resource mapping across all
+cores; compare these against P08-A.
 
-Report *two different model sizes and
-checkpoints*: improvements in classification
-accuracy and costs from model scaling
-are not pure FPGA architecture speedups.
-Avoid claiming direct Intel Loihi
-power/latency comparisons where workload
-or scope differs. An extra physical
-engine is a **deferred, optional**
-optimization only after one-engine
-baseline and scaled bottlenecks are measured.
+The active reset-integrity sequence is P08-B4.5. The repeated paired
+Track A/Track B comparison is P08-B4.6 and follows the two reset variants.
 
+Report two different model sizes and checkpoints: improvements in
+classification accuracy and costs from model scaling are not pure FPGA
+architecture speedups. Avoid claiming direct Intel Loihi power/latency
+comparisons where workload or scope differs. An extra physical engine is a
+deferred, optional optimization only after one-engine baseline and scaled
+bottlenecks are measured.
 ---
 
 # P09 — Thesis comparison and closure

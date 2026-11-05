@@ -1,0 +1,24 @@
+{
+  "schema": "p08-b45-operator-reported-two-a53-offline-artifact-pins-v1",
+  "evidence_status": "OPERATOR_REPORTED_SHA256_ONLY_NOT_YET_INDEPENDENTLY_REVERIFIED",
+  "image_population": "frozen_1024_MNIST_TRAIN_DERIVED_validation",
+  "physical_KV260_executed": false,
+  "tested_with_original_MNIST_TEST": false,
+  "original_B2_3_elf_sha256": "0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1",
+  "original_P03_XSA_sha256": "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f",
+  "original_B2_2_27_context_pin_sha256": "5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171",
+  "variants": {
+    "once": {
+      "build_root": "/home/dna/Thesis_Evidence/p08_b45_once_build_20261105T041935Z",
+      "elf_sha256": "70501217482d156d59037a8694b9b837938026cba0d62ccd1f8939bfdd112e04",
+      "map_sha256": "946ed7105d01bb9bf0548208c46707d6dc2d6df7edfd31f937bd58f70fbfe691",
+      "report_sha256": "602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e"
+    },
+    "unchecked": {
+      "build_root": "/home/dna/Thesis_Evidence/p08_b45_unchecked_build_20261105T042140Z",
+      "elf_sha256": "f6e09a8cde5ecd05900b30f0cc91d8d9549f2ae1e446157eb2c06024e0fd1655",
+      "map_sha256": "f23298ccd3842e3ef89ed2157238123f38e1995a42ccca0f830fad12028e7545",
+      "report_sha256": "be2284d366dd53d1474719eabefaa7133fa59a809fa047251dff20884b45998b"
+    }
+  }
+}
