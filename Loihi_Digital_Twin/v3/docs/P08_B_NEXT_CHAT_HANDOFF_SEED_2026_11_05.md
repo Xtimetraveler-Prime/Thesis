@@ -1,5 +1,32 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST OPERATOR V2 physical once preliminary PASS + independent CLI fix (OVERRIDES LOWER).**
+> New V2 `once` genuine full1024 physical runner reports six original
+> physical DDR readbacks PASS, SHA-pinned V2 ELF, strict 1024 terminal,
+> 1024 neural/timing/reset sidecar captures, all 27 backup context
+> after-run readbacks, and original frozen 1024 scalar/FNV+backup
+> `P08_B45_PERF_FULL1024_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1`.
+> Separate PC-only independent verifier **failed to begin** because
+> `p08_b45_perf_full1024_independent_verify.py` had omitted the
+> required `--pilot-once-report`/`--pilot-unchecked-report` flags
+> from argparse despite invoking `bench.admission(args)` which
+> requires both. Fixed them as REQUIRED arguments; new regression
+> tests simulate `once` AND `unchecked` with the exact existing
+> `P08_B45_FULL_COMMON`, fail closed if pilot files omitted.
+> No ELF, XSDB or original scalar changes. The saved once
+> physical evidence is valid; operator must run independent review
+> after pulling latest branch, **NO JTAG re-run** for this CLI mistake.
+> The operator reported the new V2 unchecked physical run currently
+> IN PROGRESS; no result yet. **Do not edit/pull running checkout,
+> open another hardware debugger, or restart KV260 until current
+> experiment exits.** Then physically power-cycle KV260 before
+> any further PC work as prescribed and run independent reviewer
+> separately for both saved captures. Never claim final full1024
+> parity or performance acceptance without independent PASS/JSON SHA.
+> Active branch remains `agent/v3-p08-b45-full1024-reset-bind-repair`
+> (stacked draft PR #65); no merge. See latest
+> `docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md`.
+>
 > **LATEST REAL FAULT 105 DIAGNOSIS + FULL1024 V2 BOTH-MODE FIX (OVERRIDES LOWER WORK).**
 > Operator actually ran PC-only original failure decoder on
 > `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_physical_20261105T172141Z`.
