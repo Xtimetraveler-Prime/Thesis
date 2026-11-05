@@ -1,195 +1,201 @@
-# P08-B — NEXT CHAT HANDOFF SEED (2026-11-03; B4.4.2 physically accepted)
+# P08-B — NEXT CHAT HANDOFF SEED (updated 2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
-> **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 reset-integrity optimization.
+> **Read the CURRENT status first, not historical stale next-step
+> instructions later in older stage documents.** Current development
+> branch: `agent/v3-p08-b4544-fsbl-protection-review`; draft PR
+> **#59**, stacked on draft #58 (B4.5.4.3), #57 (B4.5.4.2),
+> #56 (B4.5.4.1), #55 (B4.5.3), #54/#53/#52 (earlier P08).
+> All remain **UNMERGED** unless live GitHub says otherwise.
+> **NEVER MERGE without express user instruction.** Do not switch
+> to stale `main`; create next incremental branch from the
+> **current** `agent/v3-p08-b4544-fsbl-protection-review` head.
+>
+> **Accepted source evidence, 2026-11-05 UTC:**
+> The operator locally ran 16 B4.5.4.4 negative/source tests:
+> `................ [100%]`. The source checker passed both real
+> Vitis FSBL C-source branch parsing and original XSA vs
+> P03-generated `psu_init.c` SHA comparison. Original file:
+> `/home/dna/Thesis_Evidence/p08_b4544_fsbl_protection_branch_20261105T062334Z.json`.
+> Report SHA-256:
+> `e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9`.
+> Decision: `FSBL_SOURCE_BYPASS_PATH_IDENTIFIED_REAL_BOOT_AND_XMPU_NO_GO`.
+> See
+> `docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md`.
+>
+> **Major AMD/Xilinx source discovery (citations preserved below
+> and in roadmap):** The installed Vitis 2025.2
+> `xfsbl_hw.h` defaults to `XFSBL_PROT_BYPASS` unless
+> `FSBL_PROT_BYPASS_EXCLUDE` is supplied to the compiler.
+> The bypass branch runs `psu_apply_master_tz()` and
+> `psu_ocm_protection()`, NOT full generated
+> `psu_protection()` / `psu_protection_lock()`; the full
+> branch invokes those two in order **before** ordinary
+> `XFsbl_HookBeforeHandoff()`. The **active KV260
+> BOOT.BIN/FSBL macro choice remains UNKNOWN**.
+> Source availability is NOT physical XMPU configuration.
+>
+> **Critical next-source gap:** The operator's generated
+> `psu_protection()` body is 130 source bytes;
+> `psu_protection_lock()` only 43; the current limited
+> direct-hex-address scan found no 0xFD00... DDR XMPU
+> register literals. This **does not mean the XMPU config
+> is empty**. Trace these wrappers to generated
+> `psu_init.h`, `psu_init.tcl`, table entries,
+> function calls, mask/write programs and HWH PS security
+> metadata before concluding anything about real regions.
+> No `FSBL_PROT_BYPASS_EXCLUDE` change or XMPU writes yet.
+>
+> **NEXT ASSISTANT ACTION = B4.5.4.5 (PC-only):**
+> inspect the accepted generated P03 PS security/protection
+> configuration and local pre-existing FSBL/BOOT.BIN/BIF
+> source or build artifacts (only read-only host operations).
+> First inspect the roadmap, this seed, real original SHA pins
+> and source review runbooks; create a NEW feature branch
+> derived from PR #59's current head, then add a strict,
+> fail-closed source call-graph/table analyzer, native
+> negative tests, no-board GitHub Actions and runbook with
+> complete exports/find commands. Request operator's
+> local native verification and report SHA before advancing.
+> Do NOT run the KV260/XSDB/JTAG, write XMPU or DDR,
+> enable A53 guard, build/rewrite active boot media or touch
+> official MNIST TEST under this task.
+>
+> **Physical blocker:** Original 27x512KiB immutable
+> backup `[0x43000000,0x43D80000)` (13.5 MiB) requires
+> conservative 1MiB-aligned potential RO cover
+> `[0x43000000,0x43E00000)`, including extra 512KiB
+> `[0x43D80000,0x43E00000)`; actual FSBL/TF-A/Linux/
+> APU/RPU/PL/DMA/JTAG DDR ownership, per-port AXI
+> Master IDs, region slots and active lock remain unproven.
+> The original A/B A53 backup-guard callbacks deliberately
+> return failure and **MUST NOT be bypassed**.
+> Any future hardware experiment requires a separately
+> proven boot + DDR protection design, trusted continuing
+> attestation, signed/admitted NEW firmware, recovery plan,
+> read-only preflight and **new explicit operator approval**.
+>
+> **Workflow preferences — strictly follow:** work in
+> small separate submilestones in feature branches;
+> no merges without explicit user instruction; maintain
+> original immutable source/models/binaries and evidence;
+> include complete `export` commands and/or exact `find`
+> commands for EVERY operator local test/build, plus
+> `git fetch/switch/pull` and `PYTHONPATH` tests after
+> each code change; run CI, negative tests, wait for
+> operator verification before stage acceptance.
+> Output external evidence under `$HOME/Thesis_Evidence`
+> with fresh timestamped no-overwrite paths.
+>
 
-> **LATEST P08-B4.5.4.4 (2026-11-05 UTC):**
-> B4.5.4.3 user accepted PC-only real FSBL/XSA inventory:
-> `/home/dna/Thesis_Evidence/p08_b4543_fsbl_xsa_inventory_20261105T060831Z.json`;
-> SHA-256 `9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`.
-> It confirms real **installed** Vitis 2025.2 FSBL protection-config
-> before ordinary beforehandoff hook, plus original P03 XSA-generated
-> `psu_init.c` SHA `049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679`.
->
-> **Current development branch `agent/v3-p08-b4544-fsbl-protection-review`**,
-> draft PR **#59**, descended from B4.5.4.3 draft PR #58
-> (all unmerged). New PC-only source auditor
-> `scripts/p08_b4544_fsbl_protection_path.py`, native negative tests
-> `tests/test_p08_b4544_fsbl_protection_path.py`, and complete
-> operator commands in
-> `docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md`.
-> Next operator task: pull branch, export all 6 exact accepted source
-> paths, run tests and local read-only report, send its SHA and output.
-> Neither the original firmware nor real hardware was changed.
->
-> **NEW AMD/Xilinx vendor insight to cite:** 2025.2
-> `xfsbl_hw.h` DEFAULT defines `XFSBL_PROT_BYPASS` unless
-> `FSBL_PROT_BYPASS_EXCLUDE` is compiled in. Under default,
-> `XFsbl_ProtectionConfig` calls only `psu_apply_master_tz`
-> and `psu_ocm_protection`, NOT `psu_protection()` or
-> `psu_protection_lock()`; opposite branch runs those full
-> generated protection/lock calls BEFORE handoff. Exact vendor
-> release references in roadmap B4.5.4.4.
-> **Actual KV260 current boot FSBL compile flags/BOOT.BIN UNKNOWN**.
-> Do NOT blindly flip macro or configure registers. Offline source
-> scanning and simulated DDR policy do not authorize physical tests.
-> User requires every set of commands to include complete exports
-> and find commands, and NO merges without explicit approval.
->
-> **LATEST ACTIVE DEVELOPMENT: B4.5.4.3 PC-ONLY FSBL/XSA SOURCE
-> INVENTORY (2026-11-05 UTC).** Accepted B4.5.4.2 operator's genuine
-> PC-only symbolic six-port policy report:
-> `/home/dna/Thesis_Evidence/p08_b4542_xmpu_policy_pc_20261105T054738Z.json`,
-> SHA-256
-> `ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`.
-> It performed 147,456 symbolic transactions and proved NO physical
-> backup, FSBL, XMPU, AXI reader or DDR owner state; all physical GO=0.
->
-> **New branch `agent/v3-p08-b4543-fsbl-boot-inventory`, draft PR #58
-> stacked on draft PR #57, all unmerged.**
-> Implemented read-only `scripts/p08_b4543_fsbl_boot_source_inventory.py`
-> and negative `tests/test_p08_b4543_fsbl_boot_source_inventory.py`,
-> with new no-board CI. Full predeclared original XSA/policy report
-> exports, source-file `find`, optional FSBL/BIF source exports,
-> test/run/report commands in
-> `docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md`.
-> Next operator task is to run these tests + source inventory on
-> original **local** files, return the fresh external JSON SHA and
-> observed source call order, NOT contact the board.
->
-> **New AMD/Xilinx public source research:** upstream
-> `xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()` **BEFORE**
-> `XFsbl_HookBeforeHandoff(EarlyHandoff)`. Prior handoff-hook
-> placement assumption is therefore unsafe until actual installed
-> FSBL sources and current boot provenance are reviewed. AMD UG1085's
-> example uses DDR XMPU ports 1/2 for the CCI while ports 0,3,4,5
-> default deny; cannot assume those actual K26 route priorities.
-> Sources documented in ROADMAP and B4.5.4.3 runbook. Do NOT
-> program XMPU or modify original A53 guard, FSBL, QSPI, PL or DDR.
->
-> User requires complete export commands or exact find alternatives
-> with EVERY local test/build instruction; no merges until explicit
-> authorization.
-
-> **LATEST B4.5 STATUS (2026-11-05 UTC):** P08-B4.5.3
-> successfully closed on `agent/v3-p08-b45-reset-integrity`:
-> the operator independently verified both genuine A53 Vitis
-> ELF/map/admission triples. Report path
-> `/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`,
-> SHA-256
-> `03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
-> Acceptance document:
-> `docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
->
-> **Prior B4.5.4.1 branch:** `agent/v3-p08-b454-ddr-owner-audit`
-> (draft PR #56). Operator completed its original static DDR gap:
-> `/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
-> SHA-256
-> `7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`.
-> This was source/ELF geometry only; physical owner/protection=0.
-> The original B4.5.3 guard still **fails closed**.
->
-> **Critical discovery:** 27x512KiB backup
-> `[0x43000000,0x43D80000)` is 13.5MiB; conservative
-> 1MiB-aligned XMPU cover `[0x43000000,0x43E00000)`
-> includes an extra 512KiB needing ownership audit.
-> AMD UG1085 recommends configuring/locking XMPUs at
-> boot via secure masters; never patch registers speculatively
-> in the user-visible A53 binary.
->
-> User requires EVERY set of terminal instructions to include complete
-> `export`s and/or `find` commands and fresh external report paths.
-> No PR merge without explicit user authorization.
-
-> **LATEST P08-B4.5.4.2 / NOVEMBER 5 UTC STATUS:**
-> Accepted B4.5.4.1 PC-only DDR gap report:
-> `/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
-> SHA `7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`.
-> The operator reported success and provided the entire source-derived
-> geometry matrix. The physical boot, DDR master and all-six-XMPU
-> write protections remain **NOT ESTABLISHED**.
->
-> **New development branch `agent/v3-p08-b4542-xmpu-boot-policy`**
-> / draft PR #57 (unmerged), descended from
-> `agent/v3-p08-b454-ddr-owner-audit` / draft PR #56, implements
-> a PC-only AMD-sourced boot-time DDR-XMPU *policy candidate*, not
-> real FSBL, BOOT.BIN, secure monitor, register writes or a new
-> A53 runtime. Source and original vendor links are documented in
-> `docs/P08_B4_5_4_2_BOOT_LOCKED_DDR_XMPU_DESIGN_AND_PC_RUNBOOK.md`
-> and `LOIHI_TWIN_ROADMAP.md` B4.5.4.2.
->
-> **Very important security choice:** A catch-all READ-ONLY policy
-> with all-master read grants could open new unauthorized reads.
-> Candidate priority-14 symbolic 1MiB-aligned deny-read/deny-write
-> rule matches all 10-bit AXI MIDs on six DDR XMPU ports; priority-15
-> reader override remains DISABLED until actual master IDs and port
-> slots are independently verified. Tests sweep 1024 MIDs, both
-> secure modes and all six ports. Expected candidate result:
-> `P08_B4542_SIX_PORT_SYMBOLIC_WRITE_DENIAL_PC_ONLY_PASS=1`
-> BUT `REAL_READER_ALLOWLIST_READY=0` and
-> `BOARD_JTAG_DDR_ACTION_AUTHORIZED=0`.
-> Absolutely no inference or PL/DDRx master access authorized.
-> Preserve original B4.5.3 two A53 ELFs and fail-closed guard.
->
-> **Next user step:** pull B4.5.4.2 branch, run host-only tests
-> and real pinned gap-report source policy command. All exports/find
-> and output SHA commands provided in new runbook. Wait for exact
-> operator outputs before claiming acceptance. Do not merge PRs.
->
 ## 0. Immediate instructions to the next assistant
 
-We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
+The thesis is a **Loihi-inspired synchronous/event-driven
+neuromorphic digital twin** using an AMD KV260/K26 Zynq
+UltraScale+ PS+PL architecture. Repository:
+`https://github.com/Xtimetraveler-Prime/Thesis`, source root
+`Loihi_Digital_Twin/v3/`.
 
-**Current work branch:** `agent/v3-p08-b45-reset-integrity`, created from the live PR #54 head `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Since the initial reset-kernel source commit, this branch now also includes TWO distinct A53 mains, standalone Vitis builder/wrapper, dedicated ELF and sidecar validators, native/C11 tests and build runbook. Recheck the live head before fetching; it has moved beyond the earlier `728613fde6f75a7b0d52ca6ddf6972893d67a510` CI snapshot. This is intentionally stacked on the current P08-B4.4 profiling branch, not on stale `main`.  
-**Current parent PR:** **#54**, “P08-B4.4 profiling: separate original 27-context reset SHA/copy/cache timing candidate,” still **OPEN / DRAFT / UNMERGED**.  
-**Dependency stack (rechecked 2026-11-03):** PR #52 `agent/v3-p08-b-scaled-latency` → `main`; PR #53 `agent/v3-p08-b4-fullscale` → PR #52 branch; PR #54 `agent/v3-p08-b44-profiling` → PR #53 branch. All three remain open drafts. PR #52 head: `6fbf748a7987c4f173c4070dc27b78fc01329683`; PR #53 head: `235c3eef2672706e6c784b344ae29c1bc6e50f3a`; PR #54 head at B4.5 branch creation: `1669eec7b4b520a32f717d3276b042e3b9ea1929`. Recheck live PRs and branch heads before acting. **Current B4.5 draft PR #55** targets `agent/v3-p08-b44-profiling`, the PR #54 head branch. It remains open/draft/unmerged.  
-**Do not merge any PR unless the user explicitly authorizes it.** Keep the dependency chain intact. The new B4.5 branch deliberately includes the #52/#53/#54 ancestry; do not rebase it onto stale `main` or merge the parent stack without user authorization.
+### Fresh-chat process (current gate)
 
-**New B4.5 operator feedback (2026-11-03):** The operator ran the expanded
-82-test B4.5 source/ELF/sidecar suite locally and displayed all passing
-dots. The subsequent B4.5.1 offline Vitis build stopped at a pinned SHA
-gate before Vitis; the B4.5 shell script had mistakenly copied a *wrong*
-expected 27-core B2.2 header SHA. The corrected accepted expected header
-SHA is `5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
-The script is corrected and a regression now compares all B4.5 shell
-pinned hashes against accepted B2.3/B4.4 sources. The updated
-`docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md` includes
-complete environment exports, `find` discovery, and SHA checks.
-**Update 2026-11-05 UTC:** The operator has now built BOTH genuine
-B4.5 offline A53 Vitis ELF/map/report triples and provided exact six
-SHA-256 digests. They are pinned as **operator-reported, not yet
-independently reverified** in
-`docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`.
-**Operator read-only SHA diagnostic (2026-11-04 local):** All four
-genuine A53 ELF/map digests MATCHED exactly, as did the unchecked
-admission JSON SHA. The initial paired checker failed on the
-authenticated-once admission report only because *we omitted its final
-hex digit `e` in the checked-in pin manifest* (63 digits versus a
-valid 64-digit SHA-256). The operator's actual SHA matched their
-originally posted 64-digit SHA:
-`602238d0fddc9d13c9c4a67176f023748f77e62ee49f28564b4e2d20793c526e`.
-The checked-in pin manifest and operator-pair runbook have been
-corrected. Regression tests require full 64-character lowercase hex
-hashes for all six new artifacts and explicitly pin the original SHA.
-NO ELF, map or admission JSON needed modification. Next operator task
-is to PULL the corrected branch and rerun the PC-only independent
-paired-ELF verification with a new `--out` path.
+1. Read `LOIHI_TWIN_ROADMAP.md` (the P08-B4.5.4.1–.4
+   subsections), this seed, then
+   `docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md`,
+   `docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md`,
+   `docs/P08_B4_5_4_3_OPERATOR_FSBL_XSA_SOURCE_ACCEPTANCE_2026_11_05.md`,
+   `docs/P08_B4_5_4_2_OPERATOR_SYMBOLIC_XMPU_POLICY_ACCEPTANCE_2026_11_05.md`,
+   and the original `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`.
+   For historical ground truth read
+   `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`.
+2. Check CURRENT branch/PR heads and existing CI:
+   #52→#53→#54→#55→#56→#57→#58→#59.
+   **Current: `agent/v3-p08-b4544-fsbl-protection-review`**,
+   draft PR #59 onto `agent/v3-p08-b4543-fsbl-boot-inventory`
+   (draft #58). These are stacked, not merged. NO
+   speculative rebase/merge to stale `main`.
+3. Treat B4.5.4.4 original operator-local evidence as ACCEPTED
+   **PC-only source** (report SHA pinned in current top block),
+   not real FSBL boot or XMPU hardware proof. Do NOT rerun
+   B4.5.3 authentic/unchecked Vitis apps just because
+   a source audit completed; their full offline admission
+   has already been independently accepted.
+4. Implement **B4.5.4.5 source-only generated PSU security
+   call-graph/boot-artifact provenance** on a **new feature
+   branch from latest PR #59 head**, not inside an old
+   B4.5.4.1–.4 branch. Keep each deliverable small,
+   tests/CI passing and source/no-go outputs explicit.
+   Update roadmap with authoritative AMD citations,
+   plan/known gaps and new runbook, open stacked draft PR.
+   Then provide the user FULL local commands with
+   all exports/find alternatives and await local results.
+5. Only AFTER the user verifies B4.5.4.5 may the next
+   controlled submilestone assess actual boot-image
+   provenance, per-port AXI reader IDs/slot permissions,
+   14MiB backup/extra-half-MiB owner, and low-DDR A53
+   owners. No board modifications or XSDB without
+   a **separate explicit authorization and recovery plan**.
 
-Next operator task is the PC-only paired-ELF recomputation tool and
-commands in `docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. No B4.5
-KV260/JTAG/DDR action has occurred. EVERY future build/test instruction
-must include all required `export` commands, or specific `find`
-commands plus assignments. Do not assume persistent environment
-variables across terminals.
+### Environment, working style, and actual output location
 
-The operator posted a local PASS (2026-11-03) of 70 inherited B4.4 regression tests and 2 new B4.5 native tests. Later, after two separate A53 application sources, Vitis offline builder, independent ELF/sidecar parser and negative tests were added, GitHub Actions run #41688244606 (see live Actions for subsequent commits) passed the inherited 70 + 2 native + 81 expanded source/synthetic/pinned-SHA tests (153 total) with NO BOARD. The user has since locally run the previous 82-test B4.5 suite and now reported two genuine Vitis ELF/map/report build triples. Expanded CI (168 tests with 15 new independent paired-ELF synthetic verifier tests) passes. Do not claim physical A53 inference or independently reverified local dual-ELF acceptance until the operator runs the paired-artifact script and supplies its fresh output. Distinguish source CI, native tests, operator-local Vitis builds, independent ELF admission and board evidence.
+- Host: Linux terminal `dna@PC`; repo:
+  `/home/dna/Git/Thesis`, current v3 tree:
+  `/home/dna/Git/Thesis/Loihi_Digital_Twin/v3`.
+- Python venv:
+  `source ~/Git/Thesis/.venv-p08/bin/activate`.
+  Use `PYTHONPATH="$PWD/scripts:$PWD/src" python3
+  -m pytest -q -rs tests/test_...py` from `v3`.
+- AMD Vitis installation `$HOME/Vivado/2025.2`.
+  Installed public FSBL source:
+  `$HOME/Vivado/2025.2/data/embeddedsw/lib/sw_apps/zynqmp_fsbl/src/`.
+  Typical `xfsbl_handoff.c`, `xfsbl_hooks.c`,
+  `xfsbl_hw.h` there; installed source does NOT
+  prove it was used to build the active board FSBL.
+- ORIGINAL Vivado routed P03 build is
+  `v3/vivado/build/p03_2c_fpd128_route_20261011T225538Z/`.
+  P03 routed XSA: `reports/p03_2_ps_mmio.xsa`
+  SHA-256 `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+  Original matching generated PS init C is under
+  `project/loihi_twin_v3_p03_mmio_impl.gen/sources_1/bd/
+  loihi_twin_v3_p03_mmio_impl/ip/
+  loihi_twin_v3_p03_mmio_impl_zynq_ultra_ps_e_0_0/psu_init.c`
+  SHA `049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679`.
+  Its original XSA ZIP root member has the SAME SHA.
+- Evidence outside repo only:
+  `$HOME/Thesis_Evidence`. Every script report
+  gets a **NEW** `..._$(date -u +%Y%m%dT%H%M%SZ).json`.
+  Use `test ! -e "$NEW_REPORT"`. Never delete/reuse
+  operator successful or failed attempts.
+- Do not copy/replace upstream AMD protected code
+  without attribution. Keep references to tagged AMD/Xilinx
+  2025.2 `xfsbl_hw.h`, `xfsbl_handoff.c` and AMD UG1085
+  in roadmap and final thesis methods. These are
+  vendor protection mechanisms, not new thesis inventions.
 
-**First actions in a fresh chat:**
-1. Read this seed, `Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md`, `docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md`, `docs/P08_B4_5_RESET_INTEGRITY_OPTIMIZATION_PROTOCOL.md`, `docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md`, `docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md`, `docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md`, and `docs/P08_B2_2_CONTEXT_RESET_AND_METER.md`.
-2. Check live PR #52/#53/#54 status and branch `agent/v3-p08-b45-reset-integrity` head; do not assume these SHAs remain current.
-3. Next operator verification: pull B4.5 branch, source the original Python venv, export all source/report directories and both completed build roots, then run `scripts/p08_b45_pair_elf_evidence.py` exactly as in `docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md`. Require a new independent report SHA and printed PASS. Do not rebuild or restage accepted binaries just to test them.
-4. Two original A53 offline Vitis builds have been reported, but full independent local static admission is pending. No new JTAG/DDR run; the included DDR-guard adapter intentionally fails closed. A real physical run requires a separate owner/protection audit, newly admitted guard-enabled ELF, read-only preflight, recovery plan and explicit operator authorization.
+### GitHub development tools and gating
 
-GitHub connector tools may be available through `functions.exec` as `tools.mcp__GitHub__*`. Use them for repository reads/writes and verify the actual commit/PR state. A repository commit does not mean local native tests or board tests passed.
+GitHub connector is available through `functions.exec` via
+`tools.mcp__GitHub__fetch_file/create_file/update_file/
+create_branch/create_pull_request/get_pr_info/fetch`.
+Use `ALL_TOOLS` metadata discovery and actual action schemas.
+A GitHub source commit or CI PASS is **not** equivalent to
+an operator's actual Vitis build or physical KV260 evidence.
+Use new branch; record full paths/SHAs; implement negative tests
+for malformed C, missing generated XMPU config, false physical
+claims and swapped original hashes; run no-board CI; wait for
+operator local verification before completing a submilestone.
+
+### Accepted phase evidence sequence (all from user's PC)
+
+| Phase | Verification scope | Original external JSON SHA-256 |
+| --- | --- | --- |
+| B4.5.3 | Genuine distinct authentic-once and unchecked A53 ELF/map/report static paired recheck | `03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1` |
+| B4.5.4.1 | Original source DDR geometry/ownership gap (physical NO-GO) | `7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2` |
+| B4.5.4.2 | 6-port symbolic XMPU, 147456 transactions, reader list disabled | `ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2` |
+| B4.5.4.3 | Original XSA and installed FSBL source identity / call order | `9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5` |
+| B4.5.4.4 | Local Vitis FSBL compile-time bypass/full-protection paths (16 tests PASS) | `e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9` |
+
+Exact original JSON filenames/paths and more details are in
+the next section 9. Preserve them as existing source evidence,
+not proof of real boot XMPU permissions.
 
 ## 1. Research identity and overall architecture
 
