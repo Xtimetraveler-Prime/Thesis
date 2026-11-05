@@ -40,6 +40,40 @@
 > `export`s and/or `find` commands and fresh external report paths.
 > No PR merge without explicit user authorization.
 
+> **LATEST P08-B4.5.4.2 / NOVEMBER 5 UTC STATUS:**
+> Accepted B4.5.4.1 PC-only DDR gap report:
+> `/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
+> SHA `7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`.
+> The operator reported success and provided the entire source-derived
+> geometry matrix. The physical boot, DDR master and all-six-XMPU
+> write protections remain **NOT ESTABLISHED**.
+>
+> **New development branch `agent/v3-p08-b4542-xmpu-boot-policy`**,
+> descended from `agent/v3-p08-b454-ddr-owner-audit`, implements
+> a PC-only AMD-sourced boot-time DDR-XMPU *policy candidate*, not
+> real FSBL, BOOT.BIN, secure monitor, register writes or a new
+> A53 runtime. Source and original vendor links are documented in
+> `docs/P08_B4_5_4_2_BOOT_LOCKED_DDR_XMPU_DESIGN_AND_PC_RUNBOOK.md`
+> and `LOIHI_TWIN_ROADMAP.md` B4.5.4.2.
+>
+> **Very important security choice:** A catch-all READ-ONLY policy
+> with all-master read grants could open new unauthorized reads.
+> Candidate priority-14 symbolic 1MiB-aligned deny-read/deny-write
+> rule matches all 10-bit AXI MIDs on six DDR XMPU ports; priority-15
+> reader override remains DISABLED until actual master IDs and port
+> slots are independently verified. Tests sweep 1024 MIDs, both
+> secure modes and all six ports. Expected candidate result:
+> `P08_B4542_SIX_PORT_SYMBOLIC_WRITE_DENIAL_PC_ONLY_PASS=1`
+> BUT `REAL_READER_ALLOWLIST_READY=0` and
+> `BOARD_JTAG_DDR_ACTION_AUTHORIZED=0`.
+> Absolutely no inference or PL/DDRx master access authorized.
+> Preserve original B4.5.3 two A53 ELFs and fail-closed guard.
+>
+> **Next user step:** pull B4.5.4.2 branch, run host-only tests
+> and real pinned gap-report source policy command. All exports/find
+> and output SHA commands provided in new runbook. Wait for exact
+> operator outputs before claiming acceptance. Do not merge PRs.
+>
 ## 0. Immediate instructions to the next assistant
 
 We are developing a **Loihi-inspired neuromorphic architectural digital twin** on an AMD/Xilinx **KV260 (K26 Zynq UltraScale+)**. The repository is `Xtimetraveler-Prime/Thesis`, active implementation tree `Loihi_Digital_Twin/v3/`.
