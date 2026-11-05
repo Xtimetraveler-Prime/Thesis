@@ -271,8 +271,10 @@ or board runtime.
   https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Configuration
 - **AMD UG1137, Partition Loading and FSBL Hooks:** boot partition
   load into DDR and proposed customization point
-  `XFsbl_HookBeforeHandoff(u32 EarlyHandoff)` (actual Vitis 2025.2
-  timing, early handoff, existing XMPU locks still **UNVERIFIED**).
+  `XFsbl_HookBeforeHandoff(u32 EarlyHandoff)` (**previous proposal;
+  may be TOO LATE to adjust XMPU** because AMD public FSBL handoff
+  calls `XFsbl_ProtectionConfig` earlier; real Vitis 2025.2
+  source, early handoff and existing XMPU locks still **UNVERIFIED**).
   https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Partition-Loading
   and https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Hooks-in-FSBL
 - **AMD UG1283, Bootgen `load` attribute:** possible partition
@@ -300,6 +302,76 @@ Next work requires actual boot/FPD/DDR port master inventory,
 specific verified reader IDs, trusted boot image sequencing and
 secure XMPU readback, plus a new independently admitted guard-enabled
 A53 candidate before a separately approved pilot.
+
+### P08-B4.5.4.3 — real Vitis/FSBL/XSA source inventory (PC-ONLY)
+
+**NEW source/tools/tests/CI implemented; operator-local original source
+inventory PENDING** on branch
+`agent/v3-p08-b4543-fsbl-boot-inventory`
+(stacked descendant of B4.5.4.2 draft PR #57).
+Unlike prior symbolic 147456-master-access simulation, this submilestone
+begins inspecting **real vendor/project source bytes**. No boot image
+or physical permission has been established.
+
+The new
+`scripts/p08_b4543_fsbl_boot_source_inventory.py`
+SHA-pins the accepted operator B4.5.4.2 JSON report
+`ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`
+and the accepted routed P03 XSA
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+It reads XSA ZIP metadata without modifying/extracting files,
+hashes relevant bounded embedded PS initialization/hardware descriptors,
+and optionally hashes actual operator-selected installed
+`xfsbl_handoff.c`, `xfsbl_hooks.c`, `psu_init.c`,
+`psu_protection.c`, boot `.bif` and FSBL ELF.
+When a local handoff C source is provided, it reports the
+source-observed order of protection configuration relative to
+the before-handoff hook. **It does not prove** that any local source
+was compiled into the KV260's current QSPI/SD BOOT.BIN or that source
+order implies the true active XMPU lock/reader/DDR owner state.
+
+**New AMD-derived design correction:** upstream
+`xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()` **before**
+`XFsbl_HookBeforeHandoff(EarlyHandoff)`, so copying an XMPU
+register-writing step into the nominal before-handoff hook is
+NOT accepted as a safe integration plan. Reference:
+https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c
+and AMD UG1137 Handoff
+https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Handoff .
+AMD UG1085's example explicitly programs two CCI-connected
+DDR XMPUs (ports 1,2) and defaults other four (0,3,4,5)
+to deny; that example cannot be substituted for the K26's
+real port topology/region settings:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+This is **adaptation of public AMD/Xilinx firmware architecture**,
+not a novel independently discovered memory-protection primitive.
+Our original contribution remains the frozen Loihi digital-twin
+context-copy/integrity/performance design and independent
+verification of boot/DDR isolation.
+
+**Files:** `scripts/p08_b4543_fsbl_boot_source_inventory.py`,
+`tests/test_p08_b4543_fsbl_boot_source_inventory.py`,
+`.github/workflows/p08_b4543_fsbl_xsa_pc_only.yml`, and
+[docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md](docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md).
+The operator must supply actual installed source and prior report
+paths or let the scanner report missing source honestly.
+The current checker may print source inventory PASS but ALWAYS
+states `ACTIVE_KV260_BOOT_FSBL_PROVEN=0`,
+`PROTECTION_CONFIG_AND_MASTER_IDS_PROVEN=0`,
+`FSBL_HOOK_APPROVED_FOR_XMPU_CHANGES=0` and
+`BOARD_JTAG_DDR_EXECUTION_AUTHORIZED=0`.
+No FSBL build, BOOT.BIN, A53 guard provisioning, JTAG, DDR writes,
+PL/MMIO, hardware XMPU read/write or official TEST.
+
+**Next physical prerequisites:** establish exact board boot source
+and a reproducible signed boot chain; compare the actually
+booted FSBL ELF/partitions with installed C/Vivado-generated
+`psu_protection` source; select a trusted integration point
+BEFORE any one-time XMPU locking, with verified PS/PL master
+IDs and unallocated region slots. Independently prove backup and
+extra-512KiB ownership, A53 low DDR exclusivity, staging and
+persistent RO readback and obtain NEW operator approval before pilot.
+Nothing in this source-only stage closes those gates.
 
 ### P08-B4.5.4 — bounded physical validation and full1024 measurements
 
