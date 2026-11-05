@@ -400,7 +400,9 @@ Nothing in this source-only stage closes those gates.
 
 **SOURCE IMPLEMENTED / NO-BOARD CI PASS / USER-LOCAL ORIGINAL-FILE
 AUDIT PENDING.** New descendant branch
-`agent/v3-p08-b4544-fsbl-protection-review`, stacked on the
+`agent/v3-p08-b4544-fsbl-protection-review`,
+draft PR **#59 stacked on draft PR #58**, all UNMERGED,
+stacked on the
 operator-accepted original B4.5.4.3 report SHA
 `9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`
 (see source acceptance document).
