@@ -396,6 +396,78 @@ extra-512KiB ownership, A53 low DDR exclusivity, staging and
 persistent RO readback and obtain NEW operator approval before pilot.
 Nothing in this source-only stage closes those gates.
 
+### P08-B4.5.4.4 — original Vitis FSBL compile-time bypass / generated protection source (PC-ONLY)
+
+**SOURCE IMPLEMENTED / NO-BOARD CI PASS / USER-LOCAL ORIGINAL-FILE
+AUDIT PENDING.** New descendant branch
+`agent/v3-p08-b4544-fsbl-protection-review`, stacked on the
+operator-accepted original B4.5.4.3 report SHA
+`9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`
+(see source acceptance document).
+
+**High-impact AMD/Xilinx 2025.2 source finding and attribution:**
+the **versioned release `xlnx_rel_v2025.2`** FSBL `xfsbl_hw.h`
+contains `#if !defined(FSBL_PROT_BYPASS_EXCLUDE)` /
+`#define XFSBL_PROT_BYPASS`. Thus, under unmodified/default
+compile options, `XFSBL_PROT_BYPASS` is defined. The
+**2025.2** `XFsbl_ProtectionConfig` in
+`xfsbl_handoff.c` has two distinct code paths:
+
+- When BYPASS is defined, invoke `psu_apply_master_tz()`
+  and `psu_ocm_protection()`, **not** the generated
+  `psu_protection()` and `psu_protection_lock()`.
+- With `FSBL_PROT_BYPASS_EXCLUDE` defined by a
+  verified separate FSBL build, call
+  `psu_protection()` then `psu_protection_lock()`
+  **before** ordinary before-handoff hook.
+  This could activate generated security settings for
+  all relevant XMPU/XPPU units, and is **not automatically
+  safe** without full default/region/MID review.
+
+**Original source links (AMD vendor technology, NOT novel thesis IP):**
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hw.h
+and
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c .
+AMD UG1085 XMPU permissions:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+
+**Crucial caveat:** the operator's currently active KV260
+BOOT.BIN/FSBL ELF/compiler flags are still UNKNOWN. These
+2025.2 source defaults do NOT show which branch was actually
+compiled into the running board image. We MUST NOT claim
+the source default equals the observed physical lock state.
+Also, simply enabling `FSBL_PROT_BYPASS_EXCLUDE` without
+first auditing the original 2025.2 generated PS security
+configuration could break existing boot/PL/DDR permissions.
+No new build, boot image, XMPU writes or JTAG is permitted.
+
+New `scripts/p08_b4544_fsbl_protection_path.py` checks
+the exact accepted operator B4.5.4.3 SHA, the
+independently pinned local `xfsbl_handoff.c`/generated
+`psu_init.c` and original routed P03 XSA, and a
+new read-only `xfsbl_hw.h` source input. It parses
+the actual C function's guarded bypass/full-protection
+cases, checks full protection->lock ordering and counts
+generated PSU protection functions/literal DDR XMPU
+register references. Native tests reject tampered
+original reports/PSU/FSBL/XSA, inverted protections,
+missing compile option and invented physical proof.
+All output and hard NO-GO flags are **PC-only**.
+Runbook with every export/find command:
+[docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md](docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md).
+
+**Next physical-readiness work:** obtain a proven current
+boot image (not only installed code), FSBL build configuration,
+actual per-port XMPU policies and PS/PL AXI master IDs,
+exclusive backup+overcoverage and low-DDR owner map,
+and a trusted pre-lock data-provisioning plan.
+Only after these are separately reviewed can we create
+a **new**, separately admitted, protected-boot candidate
+with genuine guard attestation on recoverable media,
+then request explicit authorization for a bounded
+16-image KV260 physical pilot. Frozen original A53
+B4.5.3 binaries remain unchanged and fail closed.
+
 ### P08-B4.5.4 — bounded physical validation and full1024 measurements
 
 Only after independent proof of DDR ownership and persistent backup
