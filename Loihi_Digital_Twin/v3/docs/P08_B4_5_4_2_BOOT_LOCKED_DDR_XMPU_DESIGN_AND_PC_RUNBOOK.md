@@ -213,6 +213,30 @@ The report's conclusion is
 This is correct even when the source/geometry/mask/precedence models
 pass every host regression. Never treat this as physical write exclusion.
 
+## Optional read-only local boot-source discovery for the NEXT submilestone
+
+The current policy simulation deliberately cannot fill in the actual
+secure boot image's XMPU region slots or master IDs. To plan the
+next submilestone without guessing, operators can locate existing
+local **sources only**. Do not build, modify or boot anything based
+on these paths. The variable below is an EXISTING installation path,
+not a newly created output:
+
+```bash
+export P08_B4542_VITIS_INSTALL="$HOME/Vivado/2025.2"
+
+find "$P08_B4542_VITIS_INSTALL" "$PWD/vivado/build" \
+  -type f \( -name 'xfsbl_hooks.c' -o -name 'xfsbl_handoff.c' \
+          -o -name 'psu_init.c' -o -name '*.bif' \) \
+  -print 2>/dev/null | head -80
+```
+
+Results identify potential input files to review for *actual*
+Vivado 2025.2 boot PS/XMPU sequencing. Finding a file is not proof it
+belongs to the active board boot image; any later analysis must
+pin its SHA-256 and reconcile boot media, FSBL ELF, secure actors and
+partition provenance.
+
 ## Engineering decisions needed before a *future* hardware-enabled design
 
 - Inventory the actual Vivado/Vitis 2025.2 PS configuration and
