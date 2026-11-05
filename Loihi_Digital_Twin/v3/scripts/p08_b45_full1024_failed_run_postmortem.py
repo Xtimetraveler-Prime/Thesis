@@ -30,6 +30,19 @@ FAIL=0xDEAD0823
 DONE=0xC0DEF00D
 STATUS=0x600D0823
 SCHEMA="p08-b45-unprotected-full1024-failed-run-offline-postmortem-v1"
+BIND_DIAG_MAGIC=0x504D4244
+BIND_DIAG={
+    0:"CONFIG_OK; if bind rejected then state mutated after fresh startup check",
+    1:"BAD_ARGS",
+    2:"BAD_MODE",
+    3:"MISSING_MEMORY_CALLBACK_OR_POINTER",
+    4:"INVALID_CONTEXT_COPY_GEOMETRY",
+    5:"ORIGINAL_SHA_HEADER_MISSING_FOR_AUTH_ONCE",
+    6:"ADDRESS_OVERFLOW",
+    7:"MUTABLE_BACKUP_DDR_OVERLAP",
+    8:"RESET_STATE_OVERLAPS_CONTEXT_DDR",
+    9:"PINNED_SHA_HASH_POINTER_OVERLAPS_MEMORY",
+}
 FAULTS={
     100:"PS width or hardware readiness",
     101:"A53 counter frequency unavailable",
@@ -87,8 +100,27 @@ def decode_mailbox(blob:bytes)->dict:
     if not before_frame:
         require(words[5]==frame,
                 "A53 complete-count must equal number of prior frames")
+    diagnosis=None
+    if words[14]==BIND_DIAG_MAGIC:
+        require(before_frame and words[4]==105,
+                "V2 bootstrap detailed failure is only valid before image 0")
+        code=words[15]
+        require(code in BIND_DIAG,
+                "unknown V2 bind/geometry reason")
+        diagnosis={
+            "diagnostic_format":"p08-b45-v2-preloop-bind-details",
+            "boot_geometry_reason_code":code,
+            "boot_geometry_reason":BIND_DIAG[code],
+            "reset_state_magic_before_explicit_clear_hex":f"0x{words[16]:08X}",
+            "previous_reset_generation":words[17],
+            "previous_reset_poison":words[18],
+            "prior_pager_dispatches_before_explicit_zero":words[19],
+            "prior_pager_barriers_before_explicit_zero":words[20],
+            "new_reset_state_zeroed_after_geometry_check":words[21]==1,
+            "original_P03_and_XMPU_protection_not_attested":True,
+        }
     return {
-        "terminal_failure":True,
+        "v2_failure_only_bootstrap_diagnostic":diagnosis,
         "status_hex":f"0x{words[2]:08X}",
         "failing_frame_ordinal":None if before_frame else frame,
         "completed_frames_mailbox":words[5] if not before_frame else 0,
