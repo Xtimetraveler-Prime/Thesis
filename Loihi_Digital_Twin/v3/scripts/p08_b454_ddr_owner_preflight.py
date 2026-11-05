@@ -181,6 +181,8 @@ def review(*, paired: Path, once_build: Path, unchecked_build: Path,
     pins = pair.load_json(PINS_PATH)
     need(pins.get("schema") == pair.PIN_SCHEMA,
          "original operator SHA-256 manifest schema changed")
+    need(accepted.get("operator_pins_sha256") == pair.hex_sha(PINS_PATH.read_bytes()),
+         "independent accepted report no longer matches operator source pin manifest")
     source_contract()
 
     segments_by_mode = {}
@@ -190,11 +192,20 @@ def review(*, paired: Path, once_build: Path, unchecked_build: Path,
              mode + " build root differs from independently accepted operator path")
         app = "p08_b45_auth_once_1024" if mode == "once" else "p08_b45_unchecked_1024"
         elf = root / "vitis_workspace" / (app + ".elf")
-        need(elf.is_file() and not elf.is_symlink(), mode + " genuine ELF absent")
+        for kind, source_file in (
+            ("elf", elf),
+            ("map", root / "vitis_workspace" / (app + ".map")),
+            ("report", root / ("p08_b45_" + mode + "_elf_admission.json")),
+        ):
+            need(source_file.is_file() and not source_file.is_symlink(),
+                 mode + " actual accepted " + kind + " missing")
+            expected = pins["variants"][mode][kind + "_sha256"]
+            need(pair.valid_sha256(expected) and
+                 pair.hex_sha(source_file.read_bytes()) == expected ==
+                 accepted["independent_report_files"][mode][kind],
+                 mode + " " + kind + " hash differs from accepted B4.5.3 evidence")
+        pair.source_guard_audit(root, mode)
         raw = elf.read_bytes()
-        need(pair.hex_sha(raw) == pins["variants"][mode]["elf_sha256"] ==
-             accepted["independent_report_files"][mode]["elf"],
-             mode + " genuine ELF hash no longer matches accepted B4.5.3 evidence")
         # Parses actual ELF64/AArch64 PT_LOAD from disk, not a static
         # approximation or unproven statement about low-DDR ownership.
         parsed = pair.gate.orig.load_segments(raw)
