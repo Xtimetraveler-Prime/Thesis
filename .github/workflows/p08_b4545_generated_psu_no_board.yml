@@ -27,9 +27,19 @@ jobs:
           python-version: "3.12"
       - name: Install pytest
         run: python3 -m pip install -q pytest
-      - name: Original inherited native B4.5 owner and FSBL test suites
+      - name: Inherited B4.4/B4.5 native original-source and safety suites
         run: |
           python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
             tests/test_p08_b454_ddr_owner_preflight.py \
             tests/test_p08_b4542_xmpu_boot_policy.py \
             tests/test_p08_b4543_fsbl_boot_source_inventory.py \
