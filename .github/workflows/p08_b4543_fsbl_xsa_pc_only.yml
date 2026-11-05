@@ -1,0 +1,61 @@
+name: P08-B4.5.4.3 FSBL/XSA source inventory NO BOARD
+on:
+  push:
+    branches: [agent/v3-p08-b4543-fsbl-boot-inventory]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4543_fsbl_boot_source_inventory.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4543_fsbl_boot_source_inventory.py"
+      - ".github/workflows/p08_b4543_fsbl_xsa_pc_only.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4543_fsbl_boot_source_inventory.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4543_fsbl_boot_source_inventory.py"
+      - ".github/workflows/p08_b4543_fsbl_xsa_pc_only.yml"
+permissions:
+  contents: read
+jobs:
+  host-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Inherited P08 original/reset/DDR/XMPU native regressions
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
+            tests/test_p08_b454_ddr_owner_preflight.py \
+            tests/test_p08_b4542_xmpu_boot_policy.py
+      - name: New B4.5.4.3 XSA and FSBL source-only provenance and negative gates
+        run: |
+          python3 -m pytest -q -rs tests/test_p08_b4543_fsbl_boot_source_inventory.py
+      - name: No board, bootgen, XSDB, memory writes or hardware transactions
+        run: |
+          python3 -m py_compile scripts/p08_b4543_fsbl_boot_source_inventory.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/p08_b4543_fsbl_boot_source_inventory.py").read_text()
+          for forbidden in ("import subprocess", "import socket", "Xil_Out32(",
+                            "os.system(", "os.popen(", "xsdb -", "bootgen -",
+                            "vitis -s", "/dev/mem", "XMPU_REG_WRITE("):
+              assert forbidden not in p, forbidden
+          PY
+          echo P08_B4543_HOST_ONLY_FSBL_XSA_SOURCE_INVENTORY_TESTS_PASS=1
+          echo P08_B4543_ACTIVE_BOOT_FSBL_AND_XMPU_OWNER_PROVEN=0
+          echo P08_B4543_KV260_PHYSICAL_ACTION=NOT_RUN
