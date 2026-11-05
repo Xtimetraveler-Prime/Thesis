@@ -67,8 +67,7 @@ static int config_valid(const p08_b45_reset_state *state,
     m = &config->memory;
     if (m->mutable_records == NULL || m->immutable_backup == NULL ||
         m->invalidate == NULL || m->clean == NULL ||
-        m->quiescent == NULL || m->barrier == NULL ||
-        0) return 0;
+        m->quiescent == NULL || m->barrier == NULL) return 0;
     if (m->record_bytes != P08_B2_CONTEXT_TOTAL ||
         m->backup_bytes != P08_B2_CONTEXT_TOTAL) return 0;
     if (mode == P08_B45_AUTHENTICATED_ONCE &&
@@ -126,7 +125,7 @@ int p08_b45_perf_reset_bind(p08_b45_reset_state *state,
     accepted.mode = (uint32_t)mode;
     accepted.config = *config;
 
-    /* Both variants invalidate source cache once after protection. The
+    /* Both variants invalidate source cache once after staging. The
      * authenticated variant validates all 27 headers and SHA digests once.
      */
     for (core = 0u; core < P08_B2_CONTEXT_CORES; ++core) {
