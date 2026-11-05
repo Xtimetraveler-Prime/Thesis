@@ -14,6 +14,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -198,10 +199,10 @@ def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dic
             neural_result["all_16_full_26tick_trace_FNV_match"] is True,
             "untrusted 16-image neural/FNV check failed")
     hz = neural_result["end_mailbox"]["observed_CNTFRQ_EL0_hz"]
+    profile_raw = (cap / "reset_profile16_physical.bin").read_bytes()
     perf = sidecar.audit(
-        (cap / "reset_profile16_physical.bin").read_bytes(),
-        mode=args.experiment, expected_rows=16, observed_hz=hz,
-        require_protection=False,
+        profile_raw, mode=args.experiment, expected_rows=16,
+        observed_hz=hz, require_protection=False,
     )
     require(perf["backing_backup_guard_provisioned_flag"] == 0 and
             perf["frames_structurally_verified"] == 16 and
@@ -211,8 +212,11 @@ def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dic
     # phase0 interval as in the original accepted full A53 service meter.
     timers = neural_result["timing_frames"]
     require(len(timers) == 16, "incomplete original 16 A53 service timers")
-    require(all(t["phase_counter_ticks"][0] > 0 for t in timers),
-            "reset phase absent from A53 service timer")
+    for ordinal, timer in enumerate(timers):
+        words = struct.unpack_from("<64I", profile_raw, ordinal * 256)
+        reset_ticks = words[15] | (words[16] << 32)
+        require(0 < reset_ticks <= timer["phase_counter_ticks"][0],
+                f"frame {ordinal}: measured reset exceeds complete A53 phase0 span")
     record = {
         "schema": SCHEMA,
         "operator_experiment": args.experiment,
