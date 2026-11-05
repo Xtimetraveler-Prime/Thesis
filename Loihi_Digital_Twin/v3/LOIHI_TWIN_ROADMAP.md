@@ -1,5 +1,44 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.5.4.5 IN DEVELOPMENT — generated PSU source dependency and offline boot candidate inventory (PC-ONLY)
+
+New descendant branch `agent/v3-p08-b4545-generated-psu-audit`,
+stacked on accepted B4.5.4.4 draft PR #59. **Operator-local verification
+and real-source JSON SHA are pending; this is NOT accepted physical
+evidence.** The original accepted 4.4 report SHA is pinned:
+`e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9`.
+The new read-only script `scripts/p08_b4545_generated_psu_graph.py`
+verifies original routed P03 XSA and independent generated
+`psu_init.c`, `psu_init.h`, `psu_init.tcl` exact-byte identity.
+It walks named C dependencies from `psu_protection()` /
+`psu_protection_lock()`, records unresolved function/macro references,
+literal register call sites, port-level hints and HWH/Tcl symbols,
+and SHA-inventories only optional operator-specified pre-existing
+BOOT.BIN/BIF/FSBL build artifacts. Because this is not a preprocessor,
+symbolic source hints cannot prove region-slot, secure/NS, 10-bit
+master IDs, priority, permissions or locked effective XMPU state.
+Possible absence of literal XMPU sites is NOT proof that generated
+tables do nothing. All original ELF, HLS/bitstream, 27 frozen P02
+records and official TEST stay unchanged; **no board contact or writes**.
+
+Native negative tests and the no-board CI workflow are newly added.
+Operator runbook (all required exports and bounded read-only
+`find` commands):
+[docs/P08_B4_5_4_5_GENERATED_PSU_SOURCE_AND_BOOT_CANDIDATE_RUNBOOK.md](docs/P08_B4_5_4_5_GENERATED_PSU_SOURCE_AND_BOOT_CANDIDATE_RUNBOOK.md).
+Do not mark accepted without operator report and SHA. The currently
+active KV260 FSBL/compiler flags/boot medium, all DDR master owners,
+13.5 MiB backup protection and adjacent 512 KiB remain unproven.
+A53 guard remains fail-closed. **NO-GO** for XMPU enabling, firmware
+changes, DDR/JTAG/PL access or physical inference.
+
+**Numbering simplification (after the current 4.5 family closes):**
+use one `B4.x` entry per substantive next deliverable and record its
+individual checks in the entry/PR; do not continue a `4.5.4.6`
+subsubsubtask chain. Preserve existing numbered accepted evidence and
+stacked draft PRs intact until explicitly approved to merge.
+
+---
+
 ## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
 
 **Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
