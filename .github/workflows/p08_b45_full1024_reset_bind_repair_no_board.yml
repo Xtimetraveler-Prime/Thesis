@@ -11,6 +11,7 @@ on:
       - 'Loihi_Digital_Twin/v3/scripts/p08_b45_perf_full1024_elf_admission.py'
       - 'Loihi_Digital_Twin/v3/vivado/p08_b45_perf_full1024_run_and_capture.tcl'
       - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_full1024_reset_bind_repair.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_perf_full1024_independent_cli.py'
       - '.github/workflows/p08_b45_full1024_reset_bind_repair_no_board.yml'
 permissions:
   contents: read
@@ -31,6 +32,7 @@ jobs:
         run: |
           PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
             tests/test_p08_b45_full1024_reset_bind_repair.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
             tests/test_p08_b45_perf_full1024.py \
             tests/test_p08_b45_perf_full1024_tcl.py
       - name: Preserve prior successful pilot/protected and actual failure postmortem
