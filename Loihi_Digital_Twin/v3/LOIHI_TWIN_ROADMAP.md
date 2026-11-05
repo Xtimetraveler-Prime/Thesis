@@ -135,9 +135,9 @@ unchanged. No variant may silently replace the accepted baseline.
 
 ### P08-B4.5.4.1 — PC-only DDR owner/backup-protection gap inventory
 
-**NEW BRANCH `agent/v3-p08-b454-ddr-owner-audit` / DRAFT PR #56
-STACKED ON DRAFT PR #55 / PC SOURCE AND CI PASS /
-OPERATOR-LOCAL PC AUDIT PENDING.** This step
+**ACCEPTED (2026-11-05 UTC): operator's original PC-only DDR geometry
+and physical-owner evidence-gap report; draft PR #56 stacked on PR #55,
+both UNMERGED.** This step
 follows the independent accepted B4.5.3 paired A53 report
 `/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`
 SHA-256
@@ -168,17 +168,26 @@ The previously accepted A53 applications still ship the intentional
 backup-lock callbacks that return `-1`; they cannot start physical
 inference, and no current change enables them.
 
-Next operator gate: pull new branch, run
-`tests/test_p08_b454_ddr_owner_preflight.py`, and generate the
-fresh independent external PC-only JSON via
+**Operator-accepted actual risk report:** 
+`/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
+SHA-256
+`7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`,
+schema `p08-b454-ddr-owner-gap-pc-only-preflight-v1`,
+`decision=PC_STATIC_GEOMETRY_PASS_PHYSICAL_OWNER_NO_GO`.
+Both original new A53 ELFs' observed on-disk PT_LOAD are
+`[0x0,0x00109BC0)` (1,088,448B each). None of
+the 14 classes of actual PS/PL/boot/DDR owners is proven; no XMPU
+was programmed or read. Acceptance document:
+[docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md).
+Full static-PC runbook remains
 [docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md](docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md).
-Expected `HOST_ONLY_GENUINE_A53_MEMORY_GEOMETRY_PASS=1` but
-`DDR_MASTER_OWNER_PROOF=0`,
-`PERSISTENT_BACKUP_PROTECTION_PROVEN=0` and
-`BOARD_JTAG_AND_DDR_ACTION_AUTHORIZED=0`. No new physical
-16-image pilot, 1024 session, XMPU writes or pilot runner until
-independent ownership/protection evidence, a newly built guarded
-firmware, fresh read-only board preflight and explicit permission.
+
+**Next:** B4.5.4.2 trusted-boot DDR-XMPU immutable-backup
+protection *design and host-only policy admission*, not real firmware
+writes or physical access. Hardware and 16/1024-frame pilots remain
+NO-GO until independent proof, a separately rebuilt and statically
+admitted guarded A53/boot image, recovery readiness and explicit
+operator approval.
 
 ### P08-B4.5.4 — bounded physical validation and full1024 measurements
 
