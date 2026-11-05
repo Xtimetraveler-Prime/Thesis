@@ -1,0 +1,66 @@
+name: P08-B4.5 FSBL source-channel readiness (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b45-physical-readiness-source-gate]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_fsbl_source_channel_gate.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_fsbl_source_channel_gate.py"
+      - ".github/workflows/p08_b45_fsbl_source_channel_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_fsbl_source_channel_gate.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_fsbl_source_channel_gate.py"
+      - ".github/workflows/p08_b45_fsbl_source_channel_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  offline-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Existing B4.4/B4.5 integrity and provenance tests
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
+            tests/test_p08_b454_ddr_owner_preflight.py \
+            tests/test_p08_b4542_xmpu_boot_policy.py \
+            tests/test_p08_b4543_fsbl_boot_source_inventory.py \
+            tests/test_p08_b4544_fsbl_protection_path.py \
+            tests/test_p08_b4545_generated_psu_graph.py
+      - name: New PS source C vs Tcl FSBL/XSDB and candidate-artifact negative tests
+        run: |
+          python3 -m pytest -q -rs tests/test_p08_b45_fsbl_source_channel_gate.py
+      - name: Assert new tool contains no build, board, network or device operations
+        run: |
+          python3 -m py_compile \
+            scripts/p08_b45_fsbl_source_channel_gate.py \
+            tests/test_p08_b45_fsbl_source_channel_gate.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path("scripts/p08_b45_fsbl_source_channel_gate.py").read_text()
+          for prohibited in ("import subprocess", "import socket", "os.system(",
+                             "os.popen(", "Xil_Out32(", "xsdb -", "bootgen -",
+                             "vitis -s", "/dev/mem"):
+              assert prohibited not in s, prohibited
+          PY
+          echo P08_B45_FSBL_VS_TCL_HOST_NATIVE_PASS=1
+          echo P08_B45_ACTIVE_BOOT_PROVEN=0
+          echo P08_B45_PHYSICAL_DEVICE_CONTACT=0
