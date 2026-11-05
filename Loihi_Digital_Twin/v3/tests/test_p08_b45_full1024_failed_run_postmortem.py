@@ -100,6 +100,31 @@ def test_saved_failure_not_misreported_as_success(fault_frame):
     with pytest.raises(triage.PostmortemNoGo):
         triage.decode_mailbox(mailbox(fault_frame,999))
 
+def test_v2_failure_only_mailbox_explains_BSS_residual_and_config():
+    original=bytearray(mailbox(0xFFFFFFFF,105,completed=1))
+    words=list(struct.unpack("<64I",original))
+    words[14]=triage.BIND_DIAG_MAGIC
+    words[15]=4  # invalid source-record geometry rejected, no state writes
+    words[16]=triage.reset.DONE
+    words[17]=1024
+    words[18]=1
+    words[19]=702
+    words[20]=26
+    words[21]=0
+    decoded=triage.decode_mailbox(struct.pack("<64I",*words))
+    reason=decoded["v2_failure_only_bootstrap_diagnostic"]
+    assert reason["boot_geometry_reason_code"]==4
+    assert "GEOMETRY" in reason["boot_geometry_reason"]
+    assert reason["prior_pager_dispatches_before_explicit_zero"]==702
+    assert reason["prior_pager_barriers_before_explicit_zero"]==26
+    assert reason["new_reset_state_zeroed_after_geometry_check"] is False
+    assert decoded["completed_frames_mailbox"]==0
+
+def test_original_v1_failure_mailbox_does_not_fabricate_V2_details():
+    decoded=triage.decode_mailbox(mailbox(0xFFFFFFFF,105,completed=1))
+    assert decoded["v2_failure_only_bootstrap_diagnostic"] is None
+    assert decoded["completed_frames_mailbox"]==0
+
 def test_zero_row_capture_frame0_pre_failure(tmp_path,monkeypatch):
     evidence,oracle,out=fixture_failed(tmp_path,monkeypatch)
     report=triage.examine(evidence,oracle,out)
