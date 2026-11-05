@@ -20,7 +20,7 @@ See [pilot16 actual results](docs/P08_B45_OPERATOR_REPORTED_REAL_UNPROTECTED_PIL
 **Backup write-protection security remains NOT PROVEN and NOT CLAIMED.**
 
 **Next distinct work** (current branch `agent/v3-p08-b45-unprotected-full1024-progress`,
-draft new PR stacked on pilot16 PR #62, both unmerged):
+DRAFT PR #63 stacked on pilot16 PR #62, both unmerged):
 two distinct FULL1024 performance-only A53 variants
 `p08_b45_perf_once_full1024_a53.c` /
 `p08_b45_perf_unchecked_full1024_a53.c`
