@@ -1,6 +1,51 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5 ACTIVE — separate unprotected FULL1024 physical A53 preparations and LIVE PC monitor (2026-11-05 UTC)
+## P08-B4.5 FULL1024 real A53 once TERMINAL FAILURE — PC-only postmortem active (2026-11-05 UTC)
+
+**NEW CURRENT PHYSICAL NO-GO:** Operator attempted the genuine
+unprotected original `once` full1024 image A53 session. Original
+six DDR source physical readbacks, accept P03/FPD+LPD128 gate,
+four zero buffer readbacks, newly pinned A53 ELF download,
+and physical terminal mailbox/journal/timing/reset-profile
+capture succeeded. The A53 **reported a real TERMINAL FAILURE**
+(`P08_B45_PERF1024_JTAG_ATTEMPT_FAILED_REBOOT_REQUIRED=1`);
+the script intentionally aborted before strict full1024
+terminal PASS or 27 backup postrun capture. Saved original
+evidence root `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_physical_20261105T172141Z`.
+The actual mailbox fault ordinal/code is NOT in the supplied
+snippet; no cause is established. Do not guess 201 reset/208 neural.
+**After JTAG failure power-cycle the board; do not resume halted Linux.
+DO NOT run unchecked or repeat full1024 until offline diagnosis.**
+No actual complete 1024 numerical/performance result is accepted.
+Accepted independently verified once+unchecked **16-image** physical
+pilots remain unchanged.
+
+**Active incident branch**
+`agent/v3-p08-b45-full1024-failure-triage`, stacked on full1024
+draft PR #63 (unmerged). New
+`scripts/p08_b45_full1024_failed_run_postmortem.py`
+is **PC-only / NO BOARD**: requires saved terminal failure
+mailbox, original raw three 256KiB sidecars and immutable
+1024 scalar oracle; prints actual fault ordinal/code/label and
+contiguous committed journal+timer+reset CRC rows, verifies
+frozen scalar/FNV/spikes and reset<=original service phase0 for
+all A53-acknowledged completed frames. False success claims,
+missing raw data, inconsistent frame count and original SHA
+mismatches fail closed. Fresh JSON report only; immutable
+failure captured source unmodified. Native synthetic
+error/partial-source tests are host-only and independent of
+real hardware data.
+
+**Exact read-only local operator instructions:** 
+[docs/P08_B45_FULL1024_AUTH_ONCE_FAILED_JTAG_POSTMORTEM_2026_11_05.md](docs/P08_B45_FULL1024_AUTH_ONCE_FAILED_JTAG_POSTMORTEM_2026_11_05.md).
+Do not update/full-run retry or prepare code fix until the
+operator provides the actual mailbox fault and prefix report;
+no second XSDB client or PuTTY board inspection needed.
+Never merge draft stack without explicit authorization.
+
+---
+
+## P08-B4.5 HISTORICAL PREP — separate unprotected FULL1024 physical A53 preparations and LIVE PC monitor (2026-11-05 UTC)
 
 **UPDATE superseding the following historical PILOT16 preflight plan:** both real original
 TRAIN-derived 16-image once and unchecked hardware pilots **PASSED actual

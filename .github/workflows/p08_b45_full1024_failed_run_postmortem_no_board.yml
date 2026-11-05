@@ -1,0 +1,38 @@
+name: P08-B4.5 original FULL1024 failed-run OFFLINE diagnostics (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b45-full1024-failure-triage]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b45_full1024_failed_run_postmortem.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_full1024_failed_run_postmortem.py'
+      - '.github/workflows/p08_b45_full1024_failed_run_postmortem_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  host-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: New read-only failure postmortem and original accepted inference regressions
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_failed_run_postmortem.py \
+            tests/test_p08_b45_perf_full1024.py \
+            tests/test_p08_b45_perf_full1024_tcl.py \
+            tests/test_p08_b45_perf_pilot16.py \
+            tests/test_p08_b45_reset_variants.py
+      - name: Syntax and explicit NO BOARD proof
+        run: |
+          python3 -m py_compile scripts/p08_b45_full1024_failed_run_postmortem.py
+          echo P08_B45_FAILED_FULL1024_HOST_ONLY_TRIAGE_NATIVE_PASS=1
+          echo P08_B45_FAILED_FULL1024_PHYSICAL_KV260_VISITED=0
+          echo P08_B45_FAILED_FULL1024_NUMERICAL_ALL1024_ACCEPTED=0
