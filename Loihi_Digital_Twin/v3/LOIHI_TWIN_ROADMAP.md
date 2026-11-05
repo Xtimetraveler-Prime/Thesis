@@ -135,8 +135,9 @@ unchanged. No variant may silently replace the accepted baseline.
 
 ### P08-B4.5.4.1 — PC-only DDR owner/backup-protection gap inventory
 
-**NEW BRANCH `agent/v3-p08-b454-ddr-owner-audit` / PC SOURCE AND
-CI IMPLEMENTED / OPERATOR-LOCAL PC AUDIT PENDING.** This step
+**NEW BRANCH `agent/v3-p08-b454-ddr-owner-audit` / DRAFT PR #56
+STACKED ON DRAFT PR #55 / PC SOURCE AND CI PASS /
+OPERATOR-LOCAL PC AUDIT PENDING.** This step
 follows the independent accepted B4.5.3 paired A53 report
 `/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`
 SHA-256
