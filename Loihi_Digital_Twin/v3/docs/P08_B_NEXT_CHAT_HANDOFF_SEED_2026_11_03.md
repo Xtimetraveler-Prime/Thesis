@@ -48,8 +48,9 @@
 > geometry matrix. The physical boot, DDR master and all-six-XMPU
 > write protections remain **NOT ESTABLISHED**.
 >
-> **New development branch `agent/v3-p08-b4542-xmpu-boot-policy`**,
-> descended from `agent/v3-p08-b454-ddr-owner-audit`, implements
+> **New development branch `agent/v3-p08-b4542-xmpu-boot-policy`**
+> / draft PR #57 (unmerged), descended from
+> `agent/v3-p08-b454-ddr-owner-audit` / draft PR #56, implements
 > a PC-only AMD-sourced boot-time DDR-XMPU *policy candidate*, not
 > real FSBL, BOOT.BIN, secure monitor, register writes or a new
 > A53 runtime. Source and original vendor links are documented in
