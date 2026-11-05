@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P08-B4.5 explicit reduced-integrity performance-only KV260 pilot16.
+"""P08-B4.5 explicit reduced-integrity performance-only KV260 full1024.
 
 DEFAULT preflight: NO BOARD. Separately approved execute: destructive JTAG
 dedicated standalone A53, ORIGINAL six signed DDR stage/readbacks, accepted
@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
+import statistics
+import struct
 import json
 from pathlib import Path
 import shutil
@@ -21,19 +24,23 @@ from tempfile import TemporaryDirectory
 
 import p07_b4i_physical_pilot as b4i
 import p07_b4j_shell_program_pilot as b4j
-import p08_b3_pilot16_physical_run as b3
-import p08_b3_pilot16_stage_host as original_stage
-import p08_b2_4_verify_untrusted_first16 as neural
+import p08_b3_full1024_physical_run as b3
+import p08_b3_full1024_stage_host as original_stage
+import p08_b4_2_verify_full1024 as neural
+import p08_b2_4_verify_untrusted_first16 as timing_parser
+import p08_b4_1_merge_scalar_1024 as oracle_merge
+import p08_b4_2_physical_run as original_full
+import p08_b44_profile_physical_run as original_profile
 import p08_b45_sidecar as sidecar
-import p08_b45_perf_pilot16_elf_admission as elf_gate
+import p08_b45_perf_full1024_elf_admission as elf_gate
 
 V3 = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(V3 / "software" / "p08"))
-import build_p08_b45_perf_pilot16 as build_gate
+import build_p08_b45_perf_full1024 as build_gate
 
 B3_REPORT_SHA = "b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11"
-RUN_TCL = "vivado/p08_b45_perf_pilot16_run_and_capture.tcl"
-RUN_TOKEN = "P08_B45_PERF_16_AFTER_SIX_SIGNED_READBACK_UNPROTECTED_RISK_APPROVED"
+RUN_TCL = "vivado/p08_b45_perf_full1024_run_and_capture.tcl"
+RUN_TOKEN = "P08_B45_PERF_1024_AFTER_SIX_SIGNED_READBACK_UNPROTECTED_RISK_APPROVED"
 APPROVALS = (
     "dedicated_jtag_owner",
     "discard_linux_and_halt_all_a53_approved",
@@ -46,7 +53,7 @@ APPROVALS = (
     "post_run_backup_readback_approved",
     "reboot_and_recovery_approved",
 )
-SCHEMA = "p08-b45-perf-unprotected-pilot16-scalar-and-backup-physical-v1"
+SCHEMA = "p08-b45-perf-unprotected-full1024-scalar-and-backup-physical-v1"
 
 
 class PilotNoGo(ValueError):
@@ -73,7 +80,7 @@ def artifact_paths(args: argparse.Namespace) -> tuple[Path, Path, Path, Path]:
     return (
         root / "vitis_workspace" / (app + ".elf"),
         root / "vitis_workspace" / (app + ".map"),
-        root / f"p08_b45_perf_{args.experiment}_pilot16_elf_admission.json",
+        root / f"p08_b45_perf_{args.experiment}_full1024_elf_admission.json",
         root / "source",
     )
 
@@ -84,6 +91,34 @@ def admission(args: argparse.Namespace) -> dict:
     b3.original_inputs(args.stage, args.first16)
     require(sha(args.b3_report) == B3_REPORT_SHA,
             "original B3 independently verified 16-image physical report changed")
+    require(sha(args.oracle) == original_full.ORIGINAL_FULL1024_ORACLE_SHA,
+            "original complete TRAIN 1024 scalar oracle SHA drift")
+    with TemporaryDirectory(prefix="b45_perf1024_64_shards_") as td:
+        regenerated=oracle_merge.merge(
+            args.shards,args.ingress,args.first16,
+            Path(td)/"original1024.json")
+    require(json.loads(args.oracle.read_text()) == regenerated,
+            "full 1024 original scalar oracle differs from 64 immutable shards")
+
+    require(sha(args.b4_independent_report) ==
+            original_profile.ORIGINAL_B4_PHYSICAL_REPORT_SHA,
+            "accepted prior original 1024 JTAG numerical evidence drift")
+    origphys=json.loads(args.b4_independent_report.read_text())
+    require(origphys.get("single_session_full1024_numerical_parity_accepted") is True and
+            origphys.get("real_1024_A53_terminal_PASS_observed") is True and
+            origphys.get("all_1024_full_26tick_1010_neuron_FNV_fingerprints_equal_scalar") is True and
+            origphys.get("original_full1024_scalar_sha256") ==
+                original_full.ORIGINAL_FULL1024_ORACLE_SHA and
+            origphys.get("official_MNIST_TEST") == "SEALED_NOT_ACCESSED",
+            "prior full original 1024 independent result invalid")
+    require(sha(args.b44_timing_report) ==
+            original_profile.ORIGINAL_B44_TIMING_SHA,
+            "accepted B4.4 original measured latency report SHA drift")
+    prior_timed=json.loads(args.b44_timing_report.read_text())
+    require(prior_timed.get("ordinary_frame_count") == 1023 and
+            prior_timed.get("one_independently_verified_real_physical_session") is True and
+            prior_timed.get("official_MNIST_TEST") == "SEALED_NOT_ACCESSED",
+            "original B4.4 1023 ordinary-frame baseline invalid")
     baseline = json.loads(args.b3_report.read_text())
     require(
         baseline.get("schema") ==
@@ -119,23 +154,26 @@ def admission(args: argparse.Namespace) -> dict:
             args.reset_pins / "p08_b2_2_original_context_sha256.h",
             Path(directory) / "recheck.json",
         )
-    require(accepted == result and result.get("frames") == 16 and
+    require(accepted == result and result.get("frames") == 1024 and
             result.get("unprotected_performance_only") is True and
             result.get("physical_DDR_immutability_not_claimed") is True and
             result["new_elf_sha256"] == actual_elf_sha and
             result["new_linker_map_sha256"] == actual_map_sha,
-            "new genuine pilot16 ELF+map+independent recheck do not agree")
+            "new genuine full1024 ELF+map+independent recheck do not agree")
     return {
-        "schema": "p08-b45-unprotected-pilot16-offline-pc-preflight-v1",
+        "schema": "p08-b45-unprotected-full1024-offline-pc-preflight-v1",
+        "original_full1024_scalar_oracle_sha256": original_full.ORIGINAL_FULL1024_ORACLE_SHA,
+        "accepted_original_1024_JTAG_report_sha256": original_profile.ORIGINAL_B4_PHYSICAL_REPORT_SHA,
+        "accepted_original_1023_timing_report_sha256": original_profile.ORIGINAL_B44_TIMING_SHA,
         "experiment": args.experiment,
         "original_b3_physical_provenance_report_sha256": B3_REPORT_SHA,
         "original_first16_oracle_sha256": sha(args.first16),
         "original_27context_PC_stage_sha256":
             sha(args.stage / original_stage.FILES[0][0]),
-        "new_performance_pilot16_ELF_sha256": actual_elf_sha,
-        "new_performance_pilot16_linker_map_sha256": actual_map_sha,
-        "new_performance_pilot16_admission_sha256": sha(report),
-        "new_performance_pilot16_source_inventoried": True,
+        "new_performance_full1024_ELF_sha256": actual_elf_sha,
+        "new_performance_full1024_linker_map_sha256": actual_map_sha,
+        "new_performance_full1024_admission_sha256": sha(report),
+        "new_performance_full1024_source_inventoried": True,
         "original_P03_images_sha256": dict(b4i.EXPECTED_SHA),
         "unprotected_backup": True,
         "DDR_immutable_backup_hardware_protected": False,
@@ -177,13 +215,13 @@ def check_post_backup(stage: Path, cap: Path) -> list[str]:
 
 
 def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dict:
-    cap = root / "performance16_capture"
-    log = root / "pilot16_a53_physical_run.log"
+    cap = root / "performance1024_capture"
+    log = root / "full1024_a53_physical_run.log"
     for line in (
-        "P08_B45_PERF16_EXACT_OPERATOR_SHA_PINNED_ELF_DOWNLOADED=1",
-        "P08_B45_PERF16_REAL_16_JOURNAL_AND_TIMING_SIDECARS_PHYSICAL_CAPTURED=1",
-        "P08_B45_PERF16_EXACT_16_FRAME_HARDWARE_TERMINAL_OBSERVED=1",
-        "P08_B45_PERF16_27_BACKUP_POST_RUN_PHYSICAL_READBACKS_CAPTURED=1",
+        "P08_B45_PERF1024_EXACT_OPERATOR_SHA_PINNED_ELF_DOWNLOADED=1",
+        "P08_B45_PERF1024_REAL_16_JOURNAL_AND_TIMING_SIDECARS_PHYSICAL_CAPTURED=1",
+        "P08_B45_PERF1024_EXACT_16_FRAME_HARDWARE_TERMINAL_OBSERVED=1",
+        "P08_B45_PERF1024_27_BACKUP_POST_RUN_PHYSICAL_READBACKS_CAPTURED=1",
     ):
         marker(log, line)
     sha_source = check_post_backup(args.stage, cap)
@@ -192,7 +230,7 @@ def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dic
         cap / "journal16_physical.bin",
         cap / "timing16_physical.bin",
         cap / "mailbox_terminal_physical.bin",
-        root / "pilot16_untrusted_neural_verify.json",
+        root / "full1024_untrusted_neural_verify.json",
     )
     require(neural_result["verified_frames"] == 16 and
             neural_result["all_16_independent_scalar_counters_match"] is True and
@@ -220,7 +258,7 @@ def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dic
     record = {
         "schema": SCHEMA,
         "operator_experiment": args.experiment,
-        "new_pilot16_elf_sha256": preflight["new_performance_pilot16_ELF_sha256"],
+        "new_full1024_elf_sha256": preflight["new_performance_full1024_ELF_sha256"],
         "same_session_original_six_DDR_source_readbacks_proven": True,
         "actual_JTAG_A53_stop_P03_prog_and_16_terminal_proven": True,
         "all_16_original_scalar_classifier_and_full_26tick_FNV_match": True,
@@ -245,7 +283,7 @@ def verify_capture(args: argparse.Namespace, preflight: dict, root: Path) -> dic
         "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
         "reboot_required_after_attempt": True,
     }
-    out = root / "pilot16_unprotected_physical_preliminary.json"
+    out = root / "full1024_unprotected_physical_preliminary.json"
     with out.open("x", encoding="utf-8") as stream:
         json.dump(record, stream, indent=2, sort_keys=True)
         stream.write("\n")
@@ -271,7 +309,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
             "physical_JTAG_session_started": False
         }, indent=2, sort_keys=True) + "\n"
     )
-    cap = root / "performance16_capture"
+    cap = root / "performance1024_capture"
     cap.mkdir()
     reads = root / "source_physical_readback"
     reads.mkdir()
@@ -304,7 +342,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
             json.dumps({
                 "original_six_physical_source_sha256": signed,
                 "signed_new_benchmark_elf_sha256":
-                    preflight["new_performance_pilot16_ELF_sha256"],
+                    preflight["new_performance_full1024_ELF_sha256"],
                 "same_session_six_source_JTAG_proven": True,
                 "source_frozen_original": True,
                 "hardware_DDR_backup_immutable": False,
@@ -318,16 +356,16 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
         elf, _, _, _ = artifact_paths(args)
         b4i.log_call([
             "xsdb", RUN_TCL, RUN_TOKEN, args.experiment, str(elf),
-            preflight["new_performance_pilot16_ELF_sha256"],
+            preflight["new_performance_full1024_ELF_sha256"],
             str(z256), str(z4096), str(cap),
             "tcp:127.0.0.1:3121",
-        ], root / "pilot16_a53_physical_run.log")
+        ], root / "full1024_a53_physical_run.log")
         result = verify_capture(args, preflight, root)
         require(result["all_16_original_scalar_classifier_and_full_26tick_FNV_match"] is True,
                 "actual original frozen numerical results did not match")
         (root / "stage.txt").write_text(
             "B45_PERF16_NEURAL_AND_POSTBACKUP_PRESERVED_PRELIMINARY_PASS_REBOOT_REQUIRED\n")
-        print("P08_B45_PERF_PILOT16_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1")
+        print("P08_B45_PERF_FULL1024_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1")
         print("P08_B45_PERF_PHYSICAL_BACKUP_HARDWARE_PROTECTED=0")
         print("P08_B45_PERF_SECURITY_EQUIVALENCE_WITH_ORIGINAL_CLAIMED=0")
         print("P08_B45_PERF_1024_PERFORMANCE_COMPARISON_ACCEPTED=0")
@@ -342,7 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=("preflight", "execute"), default="preflight")
     parser.add_argument("--experiment", choices=build_gate.MODES, required=True)
     for name in (
-        "stage", "first16", "b3_report", "build",
+        "stage", "first16", "b3_report", "shards", "ingress", "oracle",
+        "b4_independent_report", "b44_timing_report", "build",
         "original_elf", "reset_pins", "reports"
     ):
         parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
@@ -353,9 +392,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         verified = admission(args)
-        print("P08_B45_PERF_PILOT16_ORIGINAL_SOURCES_AND_REAL_ELF_OFFLINE_PASS=1")
+        print("P08_B45_PERF_FULL1024_ORIGINAL_SOURCES_AND_REAL_ELF_OFFLINE_PASS=1")
         print("P08_B45_PERF_ELF_SHA256=" +
-              verified["new_performance_pilot16_ELF_sha256"])
+              verified["new_performance_full1024_ELF_sha256"])
         print("P08_B45_PERF_BACKUP_HARDWARE_PROTECTED=0")
         print("P08_B45_PERF_UNPROVEN_BOOT_DMA_DDR_OWNERSHIP_EXPLICIT=1")
         if args.mode == "preflight":
@@ -368,7 +407,7 @@ def main(argv: list[str] | None = None) -> int:
             elf_gate.VariantElfNoGo, sidecar.SidecarNoGo,
             neural.RecordNoGo, KeyError, TypeError, OSError, ValueError,
             RuntimeError, subprocess.TimeoutExpired) as exc:
-        print("P08_B45_PERF_PILOT16_NO_GO=" + str(exc), file=sys.stderr, flush=True)
+        print("P08_B45_PERF_FULL1024_NO_GO=" + str(exc), file=sys.stderr, flush=True)
         return 3
 
 
