@@ -90,6 +90,10 @@ def test_original_three_file_sha_and_source_dependencies(original, tmp_path):
     assert "psu_protection_data" in g["reachable_source_functions"]["psu_protection"]
     assert g["literal_ddr_xmpu_sites_by_port"]["1"] == 1
     assert g["literal_ddr_xmpu_sites_by_port"]["2"] == 1
+    assert g["candidate_register_call_sites"][0]["mask_expression"] == "0xffff"
+    assert g["candidate_register_call_sites"][0]["value_expression"] == "0"
+    assert g["candidate_mask_value_expressions_not_effective_permissions"] is True
+    assert "DDR_XMPU_REGION_14" in g["source_region_symbols_without_accepted_slot_mapping"]
     assert g["region_slot_priority_mask_register_semantics_proven"] is False
     assert report["original_p03_xsa"]["hwh_descriptors"][0]["xmpu_mentions"] == 1
     assert report["current_boot_bin_fsbl_elf_and_flags_bound_to_board"] is False
@@ -176,3 +180,14 @@ def test_original_operator_frozen_sha_pins():
         "e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9")
     assert gate.EXPECTED_PSU_C_SHA == (
         "049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679")
+
+def test_repeated_address_is_only_candidate_interaction():
+    changed = C.replace(
+        "    return 0;\n}\nstatic int psu_protection_lock",
+        "    psu_mask_write(0xFD010100, 0xff, 1);\n"
+        "    return 0;\n}\nstatic int psu_protection_lock")
+    g = gate.graph_report(changed, H, T)
+    duplicate = g["candidate_repeated_literal_register_write_sites"]
+    assert "0xfd010100" in duplicate
+    assert len(duplicate["0xfd010100"]) == 2
+    assert g["region_slot_priority_mask_register_semantics_proven"] is False
