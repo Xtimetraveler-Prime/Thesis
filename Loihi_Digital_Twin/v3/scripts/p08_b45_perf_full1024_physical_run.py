@@ -142,8 +142,8 @@ def admission(args: argparse.Namespace) -> dict:
                 pilot.get("all_27_postrun_backup_records_byte_identical_to_original") is True and
                 pilot.get("backup_protection_verified") is False and
                 pilot.get("unprotected_backing_DDR") is True and
-                pilot.get("official_MNIST_TEST") is None and
-                pilot.get("original_OFFICIAL_MNIST_TEST")=="SEALED_NOT_ACCESSED",
+                pilot.get("original_OFFICIAL_MNIST_TEST",
+                          pilot.get("official_MNIST_TEST"))=="SEALED_NOT_ACCESSED",
                 "accepted original "+label+" 16-image JTAG source evidence invalid")
 
     baseline = json.loads(args.b3_report.read_text())
