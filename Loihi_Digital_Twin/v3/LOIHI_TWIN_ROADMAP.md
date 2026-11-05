@@ -474,6 +474,13 @@ Exact final decision:
 `FSBL_SOURCE_BYPASS_PATH_IDENTIFIED_REAL_BOOT_AND_XMPU_NO_GO`.
 Source acceptance:
 [docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md).
+The next-chat **self-contained handoff seed**, based on the original
+historical seed but updated to accepted B4.5.4.4 and proposed next
+B4.5.4.5 source-only work, is
+[docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md](docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md).
+It preserves the original branch/PR workflow, Vitis+Vivado source
+locations, evidence SHA list, all initial exports/finds, source
+attribution and explicit physical NO-GO gates.
 
 **Critical scope limit of current C parser:** `psu_protection()`
 was only 130 bytes of *source body* and `psu_protection_lock()`
