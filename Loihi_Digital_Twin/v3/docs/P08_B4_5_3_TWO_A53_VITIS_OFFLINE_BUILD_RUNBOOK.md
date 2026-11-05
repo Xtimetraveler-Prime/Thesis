@@ -161,11 +161,9 @@ export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/r
 # sources and select only a directory with BOTH required originals:
 if [[ ! -s "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa" ||
       ! -f "$P07_B4L_REPORTS/p03_2_post_route_metrics.txt" ]]; then
-  printf 'Original P03 route reports directory moved; candidates:\\n'
-  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f \\
-    -name "p03_2_post_route_metrics.txt" -print 2>/dev/null
-  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f \\
-    -name "p03_2_ps_mmio.xsa" -print 2>/dev/null
+  echo 'Original P03 route reports directory moved; candidates:'
+  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f -name "p03_2_post_route_metrics.txt" -print 2>/dev/null
+  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f -name "p03_2_ps_mmio.xsa" -print 2>/dev/null
   echo 'STOP: review candidate XSA SHA and original sibling metrics before export'
 fi
 
