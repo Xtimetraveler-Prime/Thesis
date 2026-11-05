@@ -138,24 +138,35 @@ find /tools /opt "$HOME" -type f -path "*/Vitis/2025.2/settings64.sh" -print 2>/
 The next block is a **complete export example for the original accepted
 artifacts** as recorded in this project's B4.4 runbook. The original ELF
 and pin paths have been used in the operator's current B4.5 session.
-For the reports path, the script below discovers a directory by the
-**actual accepted XSA SHA**, not by arbitrary filename ordering. It also
-checks that the required original metrics file is alongside the XSA.
+**Important operator correction (2026-11-04):** The previous `find`
+searched only `$HOME/Thesis_Evidence`. The original accepted P07-B4L
+runbook (`docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md`) explicitly
+places the routed P03.2c reports inside the **project's Vivado build tree**:
+`$V3/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports`.
+Vitis-imported copies in `Thesis_Evidence` often contain the XSA but NOT
+the original companion `p03_2_post_route_metrics.txt`, so discovery
+limited to `Thesis_Evidence` can never set `P07_B4L_REPORTS`. Set this
+canonical path first and verify its XSA SHA; if missing, search the Vivado
+build tree and evidence dirs for both files rather than guessing.
 
 ```bash
 export P08_B45_ORIGINAL_ELF="$HOME/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf"
 export P08_B2_RESET_PINS="$HOME/Thesis_Evidence/p08_b2_2_original_reset_pins_20261102T005118Z"
 
-# Reuse the accepted reports path if already exported. Otherwise locate
-# an actual matching P03 routed XSA with its metrics sibling:
-if [[ -z "${P07_B4L_REPORTS:-}" ]]; then
-  for xsa in $(find "$HOME/Thesis_Evidence" -type f -name p03_2_ps_mmio.xsa -print); do
-    if [[ "$(sha256sum "$xsa" | awk '{print $1}')" == "52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f" &&
-          -f "$(dirname "$xsa")/p03_2_post_route_metrics.txt" ]]; then
-      export P07_B4L_REPORTS="$(dirname "$xsa")"
-      break
-    fi
-  done
+# Exact accepted P07-B4L original Vivado routed reports location,
+# taken from docs/P07_B4L_CONSOLIDATED_MODEL_DEPLOYMENT.md:
+export P07_B4L_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"
+
+# If the exact original build directory was relocated, inspect BOTH
+# sources and select only a directory with BOTH required originals:
+if [[ ! -s "$P07_B4L_REPORTS/p03_2_ps_mmio.xsa" ||
+      ! -f "$P07_B4L_REPORTS/p03_2_post_route_metrics.txt" ]]; then
+  printf 'Original P03 route reports directory moved; candidates:\\n'
+  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f \\
+    -name "p03_2_post_route_metrics.txt" -print 2>/dev/null
+  find "$PWD/vivado/build" "$HOME/Thesis_Evidence" -type f \\
+    -name "p03_2_ps_mmio.xsa" -print 2>/dev/null
+  echo 'STOP: review candidate XSA SHA and original sibling metrics before export'
 fi
 
 # Print all active exports before launching an expensive build:
