@@ -1,5 +1,61 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST REAL FAULT 105 DIAGNOSIS + FULL1024 V2 BOTH-MODE FIX (OVERRIDES LOWER WORK).**
+> Operator actually ran PC-only original failure decoder on
+> `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_physical_20261105T172141Z`.
+> Original independent postmortem JSON
+> `/home/dna/Thesis_Evidence/p08_b45_failure_diagnostic_20261105T174301Z.json`
+> SHA `e500d8a6507ff4319216fc9e6a3ca1b7fce8a46e6d58d333f9e73b86a3324fb3`,
+> saved failure mailbox SHA
+> `8b7aa5810c9bf5977218936a0314a1fcfac3b07073b6dd8d4da625e9147e7231`.
+> Physical mailbox FAIL `0xDEAD0823`,
+> ordinal `0xFFFFFFFF` **PRE-IMAGE-0**, fault 105,
+> `-bind_result=1` means underlying `P08_B45_RESET_INVALID=-1`;
+> NOT one completed frame. 1024 ALL ZERO journal,
+> timing, reset-only rows, zero numerical inferences completed.
+> Preloop `pager.counters.dispatches=702` and `pager.counters.barriers=26`
+> reflect likely STALE A53 global/BSS data: original A53
+> page scheduler `p07_b3_init` runs only inside per-image
+> loop that was never entered. Stale `reset_state.magic`
+> was NOT recorded in V1, so do not claim an exact invalid branch.
+>
+> **NEW ACTIVE BRANCH**
+> `agent/v3-p08-b45-full1024-reset-bind-repair`, draft stacked
+> atop failure triage PR #64 (NO MERGES).
+> Two distinct full1024 original `once` and `unchecked`
+> A53 mains now use a one-time startup BSS workspace zero
+> before P03/inference and new `p08_b45_perf_startup.c/.h`
+> to check original backing/backup/sha-pointer disjoint
+> geometry/callbacks/mode, then clear only the isolated
+> reset state ONCE before its existing fail-closed
+> `p08_b45_perf_reset_bind()`. Failure-only mailbox
+> V2 fields record exact bootstrap reason code and
+> old reset state magic/generation/poison and pager
+> dispatch/barrier counts. PC-only V1/V2 postmortem
+> decoder extended. GENUINE A53 Vitis images now require
+> `P08_B45_PERF_[AUTH_ONCE|UNCHECKED]_ORIGINAL_27CORE_1024_A53_V2`
+> identity and new sources; old V1 binaries FAIL gate.
+> All accepted original MODEL/26tick/702 dispatch,
+> baseline, both real successful pilot16 binaries,
+> protected fail-closed guard, 1024 oracle/FNV/
+> postrun 27 backup contract UNCHANGED. No
+> hardware-backup/XMPU security claim.
+>
+> **Exact PC-only operator commands** in
+> `docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md`:
+> pull new branch, run all native regression tests, then build
+> **two NEW genuinely Vitis 2025.2 V2 ELFs/maps in separate fresh
+> output dirs**, check both new genuine SHA/identity and both
+> whole original 64-scalar shards/pilot source preflights.
+> Only after offline PASS separately discuss/approve
+> destructive dedicated JTAG rerun using same two-terminal
+> nonintrusive host-side monitor; board reboot after any
+> attempt. Original V1 failure evidence remains immutable.
+> No new V2 physical run, no full1024 speedup accepted.
+> No board-side or PuTTY diagnostics currently required;
+> if V2 returns fault 105, its added reason code
+> determines next targeted fix. Official TEST sealed.
+>
 > **LATEST NEW ORIGINAL FULL1024 PHYSICAL FAILURE (OVERRIDES LOWER PLANS).**
 > 2026-11-05 operator attempted unprotected B4.5 `once`
 > FULL1024 genuine A53 physical inference. Six original DDR readbacks,
