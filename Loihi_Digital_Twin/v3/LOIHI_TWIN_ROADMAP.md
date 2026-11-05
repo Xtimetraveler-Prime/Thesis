@@ -1,5 +1,77 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.5 ACTIVE — unprotected performance-only PILOT16 (2026-11-05 UTC)
+
+**New user-directed research scope:** Test actual original KV260 neural
+prediction/FNV parity and reset latency for `authenticate-once`
+and `unchecked reset` WITHOUT asserting equivalent persistent
+backup security. This expressly supersedes the XMPU-as-performance-
+prerequisite planning below; preserve the earlier PC-only FSBL/XMPU
+audit and historical results as evidence, not as the gating next
+development task. The user accepts reduced backup integrity as a
+stated thesis limitation. DO NOT falsely report effective XMPU
+protection. Retain original fail-closed `p08_b45_a53_backup_guard.c`,
+both previously verified protected-mode ELFs, original B4.4.2
+profile and frozen P03/27-core TRAIN sources **unaltered**.
+
+**New descendant branch:**
+`agent/v3-p08-b45-unprotected-pilot16`, stacked on historical
+reconciliation draft PR #61 (its parent stack remains unmerged).
+Distinct `software/p08/p08_b45_perf_reset.c` exposes two newly named
+performance-only reset API methods and intentionally uses NO
+backup lock/protection callbacks. The original B4.5 protected-mode
+library and explicit fail-closed guard remain independently
+tested. Distinct new A53 mains
+`p08_b45_perf_once_pilot16_a53.c` and
+`p08_b45_perf_unchecked_pilot16_a53.c`
+have unique 16-image identities, intact 1024-pixel raw source SHA
+and 26-tick/702-dispatch original inference, distinct 4096B profile
+sidecars with **guard flag word19 exactly ZERO**. Auth-once does
+27 original source SHA passes at bind and per-frame P02 headers;
+unchecked deliberately omits context-content integrity checks
+while preserving original quiescence, copy geometry, cache/barrier
+and failure poisoning. End-of-session 27 physical backup
+512KiB records must independently match original frozen SHA bytes.
+Such endpoint checking cannot exclude transient unprotected
+DDR mutation or cross-master DMA/early-boot ownership conflicts.
+
+**Host-only preparations:** isolated Vitis 2025.2 build wrapper,
+genuine mode-specific ELF/map audit, strict 16-frame signed
+JTAG/PS width/P03/six original DDR transfer/terminal and postrun
+backup capture driver, a distinct independent PC-only review,
+native C11+GCC negative/same-source tests and new no-board CI.
+The independently accepted B3 original TRAIN first16 scalar,
+original 27-context source+raw1024 DDR stage and original P03
+width-first/CPU stop gate are reused: NO repeated data
+generation or unnecessary serial board inspection. **No
+genuine new Vitis performance ELF or physical 16 run
+is yet accepted.** Runner defaults to no-board preflight;
+`execute` requires ten explicit scoped operator YES approvals,
+fresh evidence root and a dedicated disposable Linux/JTAG
+session. Failed CPU takeover aborts before any PL/DDR
+operation. Reboot physically after EVERY attempt. No
+FSBL, BOOT.BIN, XMPU or official TEST actions.
+
+**Exact PC/PuTTY operator commands:** 
+[docs/P08_B45_UNPROTECTED_PERFORMANCE_PILOT16_RUNBOOK.md](docs/P08_B45_UNPROTECTED_PERFORMANCE_PILOT16_RUNBOOK.md).
+Only PuTTY commands, if actually necessary, are simple
+`sudo xmutil listapps` and `sudo xmutil unloadapp`
+under the original accepted FPGA app unload sequence.
+All complex build/test/XSDB commands run from VS Code on PC,
+not through PuTTY. Next accept 16 once+unchecked **separately
+and independently**, then a **new 1024-image paired
+performance** preparation, NOT a renamed 16-image ELF.
+Any reduction of reset SHA/checking cost is a hypothesis until
+physical reset and whole-service counters are measured and
+compared with consistent source and timing boundaries.
+
+**Experiment status as of this roadmap update:** native implementation
+and CI source tests completed; operator two genuine new
+Vitis builds and independent ELF/map preflight pending; physical
+JTAG not yet executed. No PR merge without explicit instruction.
+
+---
+
 ## P08-B4.5 ACTIVE — source-channel and trusted-boot readiness (PC-ONLY)
 
 **Current work package:** P08-B4.5 FSBL C vs XSDB Tcl generated-protection
