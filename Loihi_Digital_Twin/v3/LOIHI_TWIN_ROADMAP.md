@@ -1,6 +1,73 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5 FULL1024 real A53 once TERMINAL FAILURE — PC-only postmortem active (2026-11-05 UTC)
+## P08-B4.5 ACTIVE — FULL1024 V2 startup / fault 105 repair for BOTH unprotected modes (2026-11-05)
+
+**New operator-provided exact offline failure evidence:** full1024
+`once` original physical JTAG terminal mailbox `0xDEAD0823`,
+frame `0xFFFFFFFF` **BEFORE FIRST IMAGE**, fault `105`,
+`-bind_result=1` (underlying `P08_B45_RESET_INVALID=-1`).
+The reported `1` is **NOT one completed image**.
+All 1024 rows in each 256KiB real physically captured journal,
+service-timing and reset-only sidecar were zero; **zero neural
+inferences actually completed**, therefore this was not a
+prediction/FNV mismatch or a demonstrated reset performance
+failure. The original postmortem
+`/home/dna/Thesis_Evidence/p08_b45_failure_diagnostic_20261105T174301Z.json`
+SHA `e500d8a6507ff4319216fc9e6a3ca1b7fce8a46e6d58d333f9e73b86a3324fb3`.
+Original mailbox SHA `8b7aa5810c9bf5977218936a0314a1fcfac3b07073b6dd8d4da625e9147e7231`.
+**Strong causal clue:** pre-image0 pager counters read
+702 hardware dispatches / 26 barriers even though the pager
+is normally initialized only in the per-image loop, which
+had not run. This supports stale A53 static/BSS working
+memory after JTAG `rst -processor` warning. The original
+fault mailbox did not log `reset_state.magic` or config
+rejection cause, so an exact invalid branch is NOT proven.
+
+**Fix in new unmerged branch**
+`agent/v3-p08-b45-full1024-reset-bind-repair` stacked on
+incident draft PR #64. DISTINCT full1024 `once` and
+`unchecked` A53 entry points now explicitly zero all
+original static workspaces ONCE before hardware and inference
+(outside measured time). New isolated
+`p08_b45_perf_startup.c/.h` validates all physical
+backing/backup/instance/sha-pointer geometry and required
+callbacks before clearing only the reset-state instance,
+preserving the original `p08_b45_perf_reset_bind` fail-closed
+checks. No original pilot16, frozen network, static P03,
+protected reset guard or security mechanism changed.
+Failure-only A53 mailbox now records detailed startup
+reason (word15) and old state magic/pager counters
+(words16–21) with marker `0x504D4244`; the existing
+PC-only postmortem supports both old V1 and new V2.
+**V2 unique genuine ELF identities** mandatory for both
+new A53 Vitis builds, linker maps and physical XSDB
+admission; old V1 physical binaries CANNOT pass.
+
+Native strict C11 synthetic tests check both modes,
+stale magic/poison, original 27x512KiB memory range,
+callback/mode/hash negative paths and preserving
+pilot16/protected original regressions; native CI host-only.
+**Physical status remains NO NEW V2 KV260 RUN**.
+No extra board diagnostics justified before actual V2
+Vitis 2025.2 builds and fresh offline preflights.
+Original accepted pilot16 and failure raw capture are
+immutable. Stop after any failed build/preflight and
+preserve logs, do not bypass original admission.
+Full size physical rerun is separately scoped, with
+B4i 128-bit and CPU halt check, risk-approved
+dedicated disposable JTAG, all original 6 DDR
+readback, all1024 scalar/FNV plus all27 backup
+postrun checks, 2nd PC terminal host-file monitor,
+and reboot after attempt. Official TEST still SEALED.
+
+**New exact PC commands and new branch:**
+[docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md](docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md).
+Original full1024 V1 runbook is historical and carries an
+override banner. Do not merge draft stack without explicit approval.
+
+---
+
+## P08-B4.5 FULL1024 real A53 once TERMINAL FAILURE — PC-only postmortem HISTORICAL (2026-11-05 UTC)
 
 **NEW CURRENT PHYSICAL NO-GO:** Operator attempted the genuine
 unprotected original `once` full1024 image A53 session. Original
