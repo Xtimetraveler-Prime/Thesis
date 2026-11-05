@@ -1,5 +1,19 @@
 # P08-B4.5 unprotected original full1024 A53 physical experiments with second-terminal progress
 
+> **2026-11-05 V2 OVERRIDE — important incident repair.**
+> The previous original `once` full1024 A53 run reported real
+> pre-image0 fault 105 (`-1 RESET_INVALID`); its pre-loop
+> pager counters 702/26 strongly suggest stale standalone JTAG
+> static/BSS state. OLD V1 full1024 builds and run commands below
+> MUST NOT be reused. First follow the new
+> [V2 reset-bind repair and genuine PC build/preflight runbook](P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md).
+> Use branch `agent/v3-p08-b45-full1024-reset-bind-repair`
+> and new V2 ELFs. Only after both new Vitis builds and independent
+> preflights PASS, separately review any physical run approvals
+> and old two-terminal host-only progress procedures.
+> No unprotected V2 KV260 physical 1024 pass is claimed.
+>
+
 **Active branch:** agent/v3-p08-b45-unprotected-full1024-progress
 **Hardware status:** genuine new full1024 Vitis ELFs and local preflights are
 PENDING. Native/GitHub CI is HOST ONLY and must never be treated as a real
