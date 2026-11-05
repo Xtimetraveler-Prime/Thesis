@@ -38,8 +38,7 @@ def test_both_new_full1024_mains_require_BSS_bootstrap_and_reason_mailbox(mode):
                  "packet_words","p03_scratch","route_buffer",
                  "compartment_buffer","verified_spikes","current_words",
                  "packet_scratch","packet_frame"):
-        assert ("memset(&"+name+",0,") in s or (
-            "memset("+name+",0,") in s)
+        assert (f"memset(&{name},0," in s or f"memset({name},0," in s)
     assert "words[19]=0u;" in s
     assert "p08_b45_a53_backup_lock" not in s
     assert "B23_FRAMES 1024u" in s
