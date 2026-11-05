@@ -1,0 +1,309 @@
+{
+  "schema": "p08-b4542-zynqmp-ddr-xmpu-boot-candidate-UNIMPLEMENTED-v1",
+  "disposition": "DENY_ALL_BACKUP_COVER_PLUS_UNRESOLVED_READ_WHITELIST_STATIC_ONLY",
+  "source_derivation": "AMD_UG1085_UG1137_UG1283_AND_PUBLIC_XFSBL_HOOKS_ADAPTED_FOR_THESIS",
+  "documentation_sources": {
+    "amd_ug1085_instances": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances",
+    "amd_ug1085_xmpu_regions": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/XMPU-Regions",
+    "amd_ug1085_mid_validation": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Master-ID-Validation",
+    "amd_ug1085_configuration": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Configuration",
+    "amd_ug1085_permissions": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/AMD-Memory-Protection-Unit",
+    "amd_ug1137_fsbl_hooks": "https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Hooks-in-FSBL",
+    "amd_ug1137_partition_loading": "https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Partition-Loading",
+    "amd_ug1283_bootgen_load": "https://docs.amd.com/r/en-US/ug1283-bootgen-user-guide/load",
+    "amd_public_fsbl_hook_source": "https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hooks.c"
+  },
+  "hardware": "AMD_KV260_K26_Zynq_UltraScale_Plus",
+  "proposed_backup": {
+    "start": "0x43000000",
+    "end_exclusive": "0x43d80000",
+    "bytes": 14155776,
+    "full_1MiB_cover": [
+      "0x43000000",
+      "0x43e00000"
+    ],
+    "additional_write_protected_bytes": 524288,
+    "additional_region_owner_independently_proven": false
+  },
+  "boot_plan": {
+    "boot_media": "SEPARATE_RECOVERABLE_DEV_MEDIA_CANDIDATE_ONLY",
+    "existing_qspi_or_accepted_boot_image_to_modify": false,
+    "proposed_fsbl_integration_point": "XFsbl_HookBeforeHandoff",
+    "no_early_handoff_required": true,
+    "verified_hook_occurs_after_all_partitions": false,
+    "partition_source_kind": "ORIGINAL_27_SIGNED_P02_RECORDS_ON_BOOT_MEDIA",
+    "partition_load_address": "0x43000000",
+    "partition_exact_bytes": 14155776,
+    "partition_original_SHA256_27_PROVEN": false,
+    "boot_chain_authenticated": false,
+    "prevent_any_post_lock_backup_partition_write": true,
+    "trust_domain_for_xmpu_programming": "SECURE_FSBL_OR_TRUSTED_EL3_SERVICE",
+    "no_runtime_a53_xmpu_writes": true,
+    "stage_before_lock": true,
+    "candidate_event_order": [
+      "verify_boot_image_and_exact_partition",
+      "stage_27_original_p02_records_into_backup",
+      "verify_all_original_27_context_SHA256",
+      "quiesce_all_PSU_and_PL_write_masters",
+      "program_all_six_ddr_xmpu_priority14_deny_all_and_priority15_reader_whitelist",
+      "secure_readback_all_six_ddr_xmpu_region_configs",
+      "lock_all_six_ddr_xmpu_configs",
+      "secure_readback_lock_and_coverage",
+      "first_apu_handoff"
+    ]
+  },
+  "ddr_xmpu_ports": [
+    {
+      "ddr_xmpu_port": 0,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    },
+    {
+      "ddr_xmpu_port": 1,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    },
+    {
+      "ddr_xmpu_port": 2,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    },
+    {
+      "ddr_xmpu_port": 3,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    },
+    {
+      "ddr_xmpu_port": 4,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    },
+    {
+      "ddr_xmpu_port": 5,
+      "registers_programmed": false,
+      "registers_readback": false,
+      "lock_readback_proven": false,
+      "existing_regions_and_defaults_audited": false,
+      "region_slot_14_and_15_independently_available_proven": false,
+      "proposed_regions": [
+        {
+          "region_index": 14,
+          "purpose": "CATCH_ALL_BLOCK_BOTH",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": true,
+          "master_id": 0,
+          "master_mask": 0,
+          "secure_only": false,
+          "read_allowed": false,
+          "write_allowed": false
+        },
+        {
+          "region_index": 15,
+          "purpose": "WHITELIST_VERIFIED_READER_READONLY",
+          "start": "0x43000000",
+          "end_exclusive": "0x43e00000",
+          "enabled": false,
+          "master_id": null,
+          "master_mask": null,
+          "secure_only": false,
+          "read_allowed": true,
+          "write_allowed": false
+        }
+      ],
+      "known_readers_with_real_physical_AXIMIDs_proven": false
+    }
+  ],
+  "selected_master_cases": [
+    0,
+    1,
+    128,
+    1023
+  ],
+  "all_master_IDs_swept": true,
+  "both_secure_and_nonsecure_access_modes_modeled": true,
+  "firmware_drift_constraints": {
+    "accepted_b4541_gap_SHA256": "7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2",
+    "accepted_b453_pair_SHA256": "03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1",
+    "original_guard_provisioned": false
+  },
+  "hardware_evidence_gaps": {
+    "fsbl_2025_2_real_hook_order_audited": false,
+    "boot_image_partition_authenticated_and_staged": false,
+    "all_six_ports_existence_and_route_coverage_observed": false,
+    "reserved_15th_region_on_every_port_available": false,
+    "all_existing_higher_priority_region_matches_audited": false,
+    "default_XMPU_access_policy_without_regression_audited": false,
+    "original_and_extra_half_MiB_DDR_owner_proven": false,
+    "secure_xmpu_readback_collected": false,
+    "hardware_lock_persists_through_A53_session": false,
+    "cpu_0x0_to_0x109BC0_boot_DDR_exclusive": false,
+    "test_of_rejected_write_on_disposable_board": false,
+    "trusted_guard_enabled_new_A53_ELFs_admitted": false,
+    "operator_new_board_authorization": false,
+    "read_whitelist_per_port_real_AXI_MASTER_ID_confirmed": false,
+    "priority14_and_priority15_slots_available_on_all_ports": false
+  },
+  "no_jtag": true,
+  "no_xmpu_register_writes": true,
+  "no_boot_bin_build": true,
+  "approved_for_physical_execution": false,
+  "official_mnist_test": "SEALED_NOT_ACCESSED",
+  "security_design_note": "Priority14 catches all IDs and blocks read/write; priority15 shall later permit read only for individually verified master IDs. No read grant is enabled or presumed. Both regions require actual existing-region/port audits before hardware use.",
+  "initial_static_policy_results_expected": {
+    "all_writes_into_protected_cover_rejected": true,
+    "any_A53_backup_read_allowed": false,
+    "reader_whitelist_policy_ready": false,
+    "physically_verified": false
+  }
+}
