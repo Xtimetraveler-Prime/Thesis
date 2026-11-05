@@ -1,5 +1,29 @@
 # P08-B4.5 unprotected FULL1024 V2 A53 startup / reset-bind repair (PC-ONLY build gate)
 
+> **2026-11-05 independent-verifier CLI repair (NO BOARD).** The
+> operator successfully executed a genuine V2 `once` full1024 A53
+> physical session: original six DDR physical readbacks, strict
+> 1024-frame terminal, 3x1024 timing/journal/reset-profile records,
+> 27 postrun backup physical captures, and *in-run* original scalar/FNV
+> and backup PASS. The separately invoked PC-only independent reviewer
+> DID NOT RUN: argparse rejected `--pilot-once-report` and
+> `--pilot-unchecked-report` passed by existing
+> `P08_B45_FULL_COMMON`. These are actually required by
+> `bench.admission(args)`. Fixed the independent reviewer's CLI to
+> **require both flags**, preserving all original source SHA pins.
+> New native parser regression covers `once` and `unchecked`.
+> The V2 once report is still PENDING independent acceptance.
+> The operator reported unchecked physical execution in progress;
+> **no unchecked outcome is claimed at this update**.
+> Do not restart, switch branches, or modify files locally while
+> an active XSDB physical runner is using this checkout; after the
+> physical attempt ends, power-cycle the KV260 as prescribed,
+> `git pull --ff-only` and re-run ONLY independent PC verification
+> with the previously defined `P08_B45_FULL_COMMON` unchanged.
+> No fresh ELF or physical repeat is required for this CLI fix.
+>
+
+
 ## Accepted failure diagnosis and limits
 
 Operator's real 2026-11-05 original A53 once full1024 JTAG session:
