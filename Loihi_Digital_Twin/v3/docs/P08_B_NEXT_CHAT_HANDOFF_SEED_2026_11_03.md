@@ -2,6 +2,41 @@
 
 > **How to use this seed:** Copy this entire document into the next ChatGPT project conversation, or give that instance the GitHub URL and instruct it to read this file and the linked roadmap/runbooks before taking action. This supersedes the older P07-B handoff seed for current project status; it preserves the original research/architecture context while moving the active work to P08-B4.5 reset-integrity optimization.
 
+> **LATEST ACTIVE DEVELOPMENT: B4.5.4.3 PC-ONLY FSBL/XSA SOURCE
+> INVENTORY (2026-11-05 UTC).** Accepted B4.5.4.2 operator's genuine
+> PC-only symbolic six-port policy report:
+> `/home/dna/Thesis_Evidence/p08_b4542_xmpu_policy_pc_20261105T054738Z.json`,
+> SHA-256
+> `ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`.
+> It performed 147,456 symbolic transactions and proved NO physical
+> backup, FSBL, XMPU, AXI reader or DDR owner state; all physical GO=0.
+>
+> **New branch `agent/v3-p08-b4543-fsbl-boot-inventory`, draft PR #58
+> stacked on draft PR #57, all unmerged.**
+> Implemented read-only `scripts/p08_b4543_fsbl_boot_source_inventory.py`
+> and negative `tests/test_p08_b4543_fsbl_boot_source_inventory.py`,
+> with new no-board CI. Full predeclared original XSA/policy report
+> exports, source-file `find`, optional FSBL/BIF source exports,
+> test/run/report commands in
+> `docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md`.
+> Next operator task is to run these tests + source inventory on
+> original **local** files, return the fresh external JSON SHA and
+> observed source call order, NOT contact the board.
+>
+> **New AMD/Xilinx public source research:** upstream
+> `xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()` **BEFORE**
+> `XFsbl_HookBeforeHandoff(EarlyHandoff)`. Prior handoff-hook
+> placement assumption is therefore unsafe until actual installed
+> FSBL sources and current boot provenance are reviewed. AMD UG1085's
+> example uses DDR XMPU ports 1/2 for the CCI while ports 0,3,4,5
+> default deny; cannot assume those actual K26 route priorities.
+> Sources documented in ROADMAP and B4.5.4.3 runbook. Do NOT
+> program XMPU or modify original A53 guard, FSBL, QSPI, PL or DDR.
+>
+> User requires complete export commands or exact find alternatives
+> with EVERY local test/build instruction; no merges until explicit
+> authorization.
+
 > **LATEST B4.5 STATUS (2026-11-05 UTC):** P08-B4.5.3
 > successfully closed on `agent/v3-p08-b45-reset-integrity`:
 > the operator independently verified both genuine A53 Vitis
@@ -12,21 +47,13 @@
 > Acceptance document:
 > `docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
 >
-> **Current descendant development branch:**
-> `agent/v3-p08-b454-ddr-owner-audit`. P08-B4.5.4.1 first step
-> implements **PC-only** memory geometry and source/runtime
-> owner protection evidence gaps in
-> `scripts/p08_b454_ddr_owner_preflight.py`;
-> native tests in `tests/test_p08_b454_ddr_owner_preflight.py`;
-> detailed instructions + all exports in
-> `docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md`.
-> Next user task: pull this branch, run tests and generate the
-> PC-only independent DDR gap report using their pinned B4.5.3
-> pair JSON. No protected A53/PL launch or hardware read is
-> authorized. The inherited B4.5.3 guard still **fails closed**.
-> Independently prove all DDR masters and persistent backup protection
-> before any physical pilot, plus new explicit user permission.
-> Do not confuse a PC static geometry PASS with physical GO.
+> **Prior B4.5.4.1 branch:** `agent/v3-p08-b454-ddr-owner-audit`
+> (draft PR #56). Operator completed its original static DDR gap:
+> `/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
+> SHA-256
+> `7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`.
+> This was source/ELF geometry only; physical owner/protection=0.
+> The original B4.5.3 guard still **fails closed**.
 >
 > **Critical discovery:** 27x512KiB backup
 > `[0x43000000,0x43D80000)` is 13.5MiB; conservative
