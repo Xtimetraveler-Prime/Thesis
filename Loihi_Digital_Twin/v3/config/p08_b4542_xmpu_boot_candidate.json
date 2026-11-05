@@ -1,7 +1,7 @@
 {
   "schema": "p08-b4542-zynqmp-ddr-xmpu-boot-candidate-UNIMPLEMENTED-v1",
   "disposition": "DENY_ALL_BACKUP_COVER_PLUS_UNRESOLVED_READ_WHITELIST_STATIC_ONLY",
-  "source_derivation": "AMD_UG1085_UG1137_UG1283_AND_PUBLIC_XFSLB_HOOKS_ADAPTED_FOR_THESIS",
+  "source_derivation": "AMD_UG1085_UG1137_UG1283_AND_PUBLIC_XFSBL_HOOKS_ADAPTED_FOR_THESIS",
   "documentation_sources": {
     "amd_ug1085_instances": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances",
     "amd_ug1085_xmpu_regions": "https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/XMPU-Regions",
