@@ -97,7 +97,7 @@ def check_stage(source: Path, mode: str) -> None:
             "words[19]=0u;" not in chosen or
             "reset_config.lock_backup=" in chosen or
             "p08_b45_a53_backup_lock" in chosen):
-        raise ValueError("pilot must run only first 16 with original full raw SHA, no fake lock")
+        raise ValueError("full1024 experiment must run exactly 1024 original raw frames and never fake backup protection")
     for n in (MAINS[mode], "p08_b45_perf_reset.c", "p08_b45_perf_reset.h"):
         original = V3 / "software" / "p08" / n
         if hashlib.sha256((source / n).read_bytes()).digest() != hashlib.sha256(
