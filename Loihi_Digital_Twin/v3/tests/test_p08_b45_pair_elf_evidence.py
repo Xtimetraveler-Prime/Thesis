@@ -183,3 +183,23 @@ def test_original_operator_pins_are_not_synthetic():
         "f6e09a8cde5ecd05900b30f0cc91d8d9549f2ae1e446157eb2c06024e0fd1655")
     assert report["evidence_status"].startswith("OPERATOR_REPORTED_")
     assert report["physical_KV260_executed"] is False
+
+
+
+def test_report_hash_diagnostic_identifies_actual_expected_and_path(
+        synthetic, tmp_path):
+    """The operator must know which of the six files differs, and why."""
+    _, _, _, _, manifest = synthetic
+    root = Path(manifest["variants"]["once"]["build_root"])
+    report = root / "p08_b45_once_elf_admission.json"
+    expected = manifest["variants"]["once"]["report_sha256"]
+    report.write_bytes(report.read_bytes() + b"\n")
+    actual = sha(report.read_bytes())
+    out = tmp_path / "not_created.json"
+    with pytest.raises(pair.PairElfNoGo) as failure:
+        do_audit(synthetic, out)
+    assert "operator-pinned once report SHA-256 mismatch" in str(failure.value)
+    assert "expected=" + expected in str(failure.value)
+    assert "actual=" + actual in str(failure.value)
+    assert "file=" + str(report) in str(failure.value)
+    assert not out.exists()
