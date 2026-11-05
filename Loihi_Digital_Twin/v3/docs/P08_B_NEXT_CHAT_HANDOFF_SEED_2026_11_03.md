@@ -10,8 +10,9 @@
 > before ordinary beforehandoff hook, plus original P03 XSA-generated
 > `psu_init.c` SHA `049ae8a025fab04526218d351b74d06313f7f163633dfcfde2cb5579e22b8679`.
 >
-> **Current development branch `agent/v3-p08-b4544-fsbl-protection-review`**
-> (descendant of B4.5.4.3 draft PR #58). New PC-only source auditor
+> **Current development branch `agent/v3-p08-b4544-fsbl-protection-review`**,
+> draft PR **#59**, descended from B4.5.4.3 draft PR #58
+> (all unmerged). New PC-only source auditor
 > `scripts/p08_b4544_fsbl_protection_path.py`, native negative tests
 > `tests/test_p08_b4544_fsbl_protection_path.py`, and complete
 > operator commands in
