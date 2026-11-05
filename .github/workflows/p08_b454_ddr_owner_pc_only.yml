@@ -1,0 +1,54 @@
+name: P08-B4.5.4.1 PC-only DDR ownership gap checks
+on:
+  push:
+    branches: [agent/v3-p08-b454-ddr-owner-audit]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b454_ddr_owner_preflight.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b454_ddr_owner_preflight.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json"
+      - ".github/workflows/p08_b454_ddr_owner_pc_only.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b454_ddr_owner_preflight.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b454_ddr_owner_preflight.py"
+      - ".github/workflows/p08_b454_ddr_owner_pc_only.yml"
+permissions:
+  contents: read
+jobs:
+  offline-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Inherited P08-B4.4 and B4.5 C11/ELF native suites
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py
+      - name: P08-B4.5.4.1 DDR owner audit hard-stop and negative tests
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b454_ddr_owner_preflight.py
+      - name: Static prohibition against board and protection claims
+        run: |
+          python3 -m py_compile scripts/p08_b454_ddr_owner_preflight.py
+          ! grep -E -i 'subprocess|import socket|xsdb|dev/mem|vitis -s|xil_out32' scripts/p08_b454_ddr_owner_preflight.py | grep -E '^[[:space:]]*(import |from |subprocess\.|socket\.|os\.system|Xil_Out32|/dev/mem)' 
+          echo P08_B454_PC_ONLY_STATIC_DDR_AUDIT_SUITE_PASS=1
+          echo P08_B454_PHYSICAL_DDR_PROTECTION_PROVEN=0
+          echo P08_B454_NEW_KV260_JTAG_EXECUTION=NOT_RUN
