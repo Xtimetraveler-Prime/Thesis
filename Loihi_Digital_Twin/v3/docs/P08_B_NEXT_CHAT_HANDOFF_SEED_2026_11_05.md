@@ -1,5 +1,47 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST ACCEPTED 2026-11-05 PHYSICAL PILOT RESULTS AND NEW FULL1024 WORK (OVERRIDES ALL LOWER STATUS).**
+> Both actual unprotected performance-only once and unchecked first16
+> KV260 A53 pilots passed B4i CPU halt/FPD+LPD128 gate, original P03 shell,
+> six original signed DDR transfer/readbacks, strict terminal neural
+> completion, 27 postrun DDR backup records, and separately executed
+> independent original first16 scalar+FNV+backup PASS.
+> Operator-report original JSON/sha:
+> once `/home/dna/Thesis_Evidence/p08_b45_perf_once_independent_20261105T154923Z.json`
+> SHA `7ab975d3c062df2606357080c1eeda0904ea8aaba0aed4c02fda8ce1140ecdca`;
+> unchecked `/home/dna/Thesis_Evidence/p08_b45_perf_unchecked_independent_20261105T160411Z.json`
+> SHA `5f29cda8661cad64fe39231d42a84c3293bef96af6c7fe74c9c74b466a2195aa`.
+> Source: pasted 488-line terminal transcript; raw JSON and DDR binary not
+> uploaded. Both genuine pilot ELF source digests and reset warnings recorded
+> in docs/P08_B45_OPERATOR_REPORTED_REAL_UNPROTECTED_PILOT16_ACCEPTANCE_2026_11_05.md.
+> DO NOT ask user to repeat either successful 16-image physical run.
+>
+> **ACTIVE DESCENDANT BRANCH** `agent/v3-p08-b45-unprotected-full1024-progress`
+> stacked on unmerged draft PR #62. Two DISTINCT full1024 A53 sources,
+> builder+original SHA gates, original full 64 scalar shard re-check,
+> accepted B4.2/B4.4 original physical baseline SHA,
+> BOTH accepted real pilot16 JSON pins, strict 1024 single-session
+> dedicated JTAG runner and all27 backup after capture, separate
+> independent full1024 verifier. Live progress in SECOND PC VS Code
+> terminal ONLY via host-side atomic progress_state.txt snapshots
+> authored by the SAME XSDB mailbox polling process; no competing JTAG.
+> No real new full1024 Vitis ELF nor physical execution yet. Never
+> claim true speedup until all1024 original prediction/FNV receipts,
+> 1024 valid reset+service timers, and independent 27 backup postrun
+> byte equality pass. Exclude final special trace ordinal 1023 from
+> 1023 ordinary latency medians. A single run per mode is descriptive,
+> not a paired AB/BA repeated statistical estimate.
+>
+> **Runbook and operator exact commands:**
+> `docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md`.
+> All complex commands in PC VS Code. PuTTY only short
+> `sudo xmutil listapps`, conditional `sudo xmutil unloadapp`.
+> Destructive execute requires ten explicit scoped YES risk flags,
+> original CPU stop/PS128 first, and physical reboot after every
+> JTAG attempt. Leave original protected B4.5 fail-closed guard,
+> original accepted P03/P07/TEST and prior pilot/benchmark receipts
+> unmodified. No PR merge without explicit operator approval.
+>
 > **LATEST USER RESEARCH DIRECTION AND ACTIVE BRANCH — 2026-11-05.**
 > User explicitly chose to validate numerical prediction/FNV parity and
 > reset latency using UNPROTECTED immutable source backups as a stated
