@@ -336,6 +336,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
         ], root / "a53_takeover_and_ps128.log")
         b4i.verify_takeover_log(
             (root / "a53_takeover_and_ps128.log").read_text())
+        (root/"stage.txt").write_text("A53_HALTED_P03_PROGRAMMING\n")
         b4i.log_call([
             "vivado", "-mode", "batch", "-source", b4j.PROGRAM_TCL,
             "-tclargs", str(args.reports / "p03_2_ps_mmio.bit"),
@@ -343,6 +344,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
         ], root / "accepted_p03_program.log")
         b4j.require_programmed_shell(
             (root / "accepted_p03_program.log").read_text())
+        (root/"stage.txt").write_text("P03_PROGRAMMED_SIX_DDR_STAGING\n")
         originals = [args.stage / n for n, _, _ in original_stage.FILES]
         b4i.log_call([
             "xsdb", b3.STAGE_TCL, b3.STAGE_TOKEN, *map(str, originals),
@@ -352,6 +354,7 @@ def execute(args: argparse.Namespace, preflight: dict) -> None:
                "P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1")
         # Reuse original P08-B3 signed physical readback verifier unchanged.
         signed = b3.readback_original(args.stage, reads)
+        (root/"stage.txt").write_text("SIX_SIGNED_DDR_READBACKS_PASS_A53_RUNNING\n")
         (root / "same_session_six_source_receipt.json").write_text(
             json.dumps({
                 "original_six_physical_source_sha256": signed,
