@@ -57,7 +57,7 @@
 #define B23_FIRST_FAULT_FRAME UINT32_C(0xFFFFFFFF)
 
 _Static_assert(B23_RAW_POOL_BYTES==802816u,"original matched raw pool geometry");
-_Static_assert(B45_PROFILE_BYTES==262144u,"one profiled 256B row per original 1024");
+_Static_assert(B45_PROFILE_BYTES==4096u,"one 256B profile row per 16 pilot frames");
 _Static_assert(B45_PROFILE_BASE>=B23_TIMING+0x100000u,
                "profile sidecar must not overlap accepted original timing");
 _Static_assert(B45_PROFILE_END<=B23_BACKUP,
