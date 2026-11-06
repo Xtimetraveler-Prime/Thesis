@@ -1,5 +1,54 @@
 # P08-B — CURRENT NEXT-CHAT HANDOFF (B4.6 A2.1 REAL1024 ACCEPTED; SIX NEW A/B SESSIONS NEXT)
 
+> **NEWEST operator-reported B4.6.4b PHYSICAL STATUS: SESSION01 A ACCEPTED (2026-11-05 local / Nov 6 UTC), SIX-SESSION STUDY = 1/6.**
+> Original standalone rebuilt A2.1 1024 physical validation and B_AUTH_ONCE V2 prior single physical work remain separate; neither counts as the new session. NEW physical A run \`/home/dna/Thesis_Evidence/p08_b46_s01_A_20261106T052149Z/\` was independently verified for all1024 original P07 packed neural/selected 26x42 trace, actual A53 CNTFRQ **99999001**Hz and original 1023 ordinary-image service median **35.67722641549189ms**. Original new independent JSON SHA **26e9cfbc9b6485313d89e72f80ec578498539c902838140940f1027da4038eb0**, output hash manifest SHA **8c5e1b05775bbcaf087b55203569da949abfe16ebc3d46d0b98035002a3a6440**. Separate original PC rereview SHA identical (not a second boot). Source physical script \`script_exit_status=0\`. Original external signed first A ledger \`/home/dna/Thesis_Evidence/p08_b46_s01_A_accepted_20261106T052707Z.json\` SHA **ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec**. Receipt native PASS, current accepted original session slot01, new physical B4.6 count1, statistical six-run not accepted. Fresh coldboot and post-JTAG power-cycle **operator attestations only**, no instrument electrical confirmation. Github connector cannot read user PC original raw captures; operator pasted hashes/terminals. Full dated receipt: \`docs/P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md\`.
+>
+> **IMMEDIATE NEXT OPERATOR TASK:** separately approved **02:B AUTH_ONCE UNPROTECTED V2**, exact original V2 SHA \`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85\`. First verify **original prior ledger** SHA ceb170... and locate the SAME original signed six-session PC plan by hash stored inside ledger; NEVER mint new plan or overwrite original evidence. Reuse exact accepted original B4.5 V2 build, original signed 1024 scalar/FNV source, genuine accepted 6 physical DDR staging and 27 backup source. NEW PC only mode=preflight and fresh unique \`p08_b46_s02_B_<UTC>\` root. Operator separately reviews B's TEN original destructive JTAG risk approvals; fresh coldboot, dedicated A53/Linux and JTAG ownership, no competing PL/DMA; B backup hardware immutability NOT established. New real B mode=execute only, physical power-cycle after ANY attempt, independent new 1024 FNV/reset/A53 sidecars/27 endpoint backup, then append SHA-linked NEW B study receipt slot02. Stop for review before slot03:B. Original official TEST SEALED. **NO merges authorized.** The prior B4.6.4a PC static A/B source audit hash \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\` is not strict matched physical timers. Original B independent report uses \`whole_image_service_descriptive_1023.ordinary_frames\`, distinct from preliminary \`ordinary_frame_count\`.
+>
+> **LATEST P08-B4.6.4b SIX-SESSION DEVELOPMENT AND OPERATOR AUTHORIZATION BOUNDARY (2026-11-05 local / 2026-11-06 UTC).**
+> User's actual local SHA-pinned B4.6.4a **PC SOURCE** JSON
+> \`/home/dna/Thesis_Evidence/p08_b46_ab_boundary_source_audit_20261106T045251Z.json\`
+> SHA256 \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\`
+> and printed original static frozen A/B source boundary PASS.
+> **NOT** the six-run physical test or proof of identical physical
+> timer work. User requested to proceed with physical tests, but
+> original per-session destructive JTAG/DDRx authorizations remain
+> individual; DO NOT run all six automatically.
+>
+> **Current new descendant:** \`agent/v3-p08-b46-4b-six-session-physical-admission\`,
+> built on \`agent/v3-p08-b46-4a-service-boundary-audit\` draft PR #70
+> (and accepted A physical parent PR #69), no PR merges authorized.
+> New PC-only \`scripts/p08_b46_4b_six_session_plan.py\` checks six
+> original operator SHA-pinned sources/reports/ELFs, outputs a NEW
+> outside-checkout no-overwrite six-slot exact order A B / B A / A B,
+> all permissions FALSE, previous A/B standalone runs count ZERO.
+> New PC-only \`scripts/p08_b46_4b_session_receipt.py\` independently
+> SHA-checks new original A or B capture assets/reviewer report,
+> strict 1023 ordinary timers plus selected trace, coldboot
+> operator acknowledgment and post-JTAG physical power-cycle
+> operator acknowledgment (not independent electrical proof),
+> previous hash-linked session sequence, refuses old historical reports.
+> Native negative synthetic pytest and no-board CI.
+>
+> **EXACT PC AND ONE-AT-A-TIME KV260 RUNBOOK**:
+> \`docs/P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md\`.
+> First pull branch / native tests, run original source/ELF+old
+> physical evidence PC-only study plan; return plan SHA and test
+> summary. Then first **NEW** Session01=A rebuilt, original genuine
+> SHA \`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793\`,
+> dedicated fresh coldboot, separate original A offline preflight,
+> ONE newly explicit operator scoped approval before destructive
+> 64MiB DDR/JTAG, independent original all1024 packed neural,
+> 26x42 trace and A53 timing, new no-overwrite receipt,
+> mandatory power-cycle after ANY attempt. The previously accepted
+> standalone A SHA \`b57f20be...\` and B once physical
+> \`06a007b7...\` remain separate prior validations and count
+> ZERO of the six new B4.6 sessions. Next B only after A independently
+> accepted and power-cycled; all source and physical failures preserved.
+> All protected memories/memory owners remain unproven, no XMPU
+> protection claim, no pure PL-compute or model-matched speedup,
+> official MNIST TEST sealed. NEVER place sole accepted artifacts /tmp.
+>
 > **B4.6.4a LATEST PC-ONLY DEVELOPMENT (2026-11-05 local / 2026-11-06 UTC).**
 > `agent/v3-p08-b46-4a-service-boundary-audit` is NEW child branch
 > from `agent/v3-p08-b46-a21-candidate-physical-validation`, draft
