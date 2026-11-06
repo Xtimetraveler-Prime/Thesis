@@ -30,6 +30,9 @@ def test_original_five_frozen_source_snapshots_admitted():
     data = gate.inspect_sources(ROOT)
     assert data["schema"] == gate.SCHEMA
     assert data["source_only_static_audit_pass"] is True
+    assert data["rebuilt_A21_new_accepted_ELF_SHA256"] == "fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793"
+    assert data["prior_A21_rebuilt_one_1024_physical_run_operator_attested"] is True
+    assert data["prior_A21_standalone_run_is_one_of_six_future_counterbalanced_sessions"] is False
     assert data["frozen_git_blob_sha1"] == gate.PINNED_BLOBS
     assert data["both_broad_entry_to_neural_journal_commit_scope_present"] is True
     assert data["A_B_physical_timer_boundary_equivalence_proven"] is False
@@ -85,6 +88,20 @@ def test_b_unauthenticated_mode_cannot_be_relabeled_once(copy_frozen, monkeypatc
     pins[rel] = gate.blob_sha(file.read_bytes())
     monkeypatch.setattr(gate, "PINNED_BLOBS", pins)
     with pytest.raises(gate.BoundaryNoGo, match="B V2 identity, mode"):
+        gate.inspect_sources(copy_frozen)
+
+
+def test_rebuilt_A21_risk_and_new_ELF_gate_cannot_silently_change(copy_frozen, monkeypatch):
+    rel = "scripts/run_p08_b46_rebuilt_a21_1024.sh"
+    file = copy_frozen / rel
+    before = file.read_text()
+    assert "P08_B46_CONFIRM_PWR_CYCLE_AFTER_ANY_ATTEMPT" in before
+    file.write_text(before.replace("P08_B46_CONFIRM_PWR_CYCLE_AFTER_ANY_ATTEMPT",
+                                   "UNSAFE_REPLACEMENT", 1))
+    pins = dict(gate.PINNED_BLOBS)
+    pins[rel] = gate.blob_sha(file.read_bytes())
+    monkeypatch.setattr(gate, "PINNED_BLOBS", pins)
+    with pytest.raises(gate.BoundaryNoGo, match="rebuilt A2.1 accepted candidate"):
         gate.inspect_sources(copy_frozen)
 
 
