@@ -1,6 +1,90 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5.5 ACTIVE — BOTH independent full1024 V2 physical PASS; auditable quantitative closeout (2026-11-05 local / Nov 6 UTC)
+## P08-B4.6 ACTIVE — selected B_AUTH_ONCE V2 matched-source study PC gate (2026-11-05 local / Nov 6 UTC)
+
+**P08-B4.5.5 CLOSED / OPERATOR-REPORTED ACCEPTANCE.** The
+operator completed the FOUR real original/once/unchecked
+SHA-pinned physical comparison and reopened original
+1024x256B A53 service/reset sidecars. Final no-overwrite
+quantitative synthesis:
+`/home/dna/Thesis_Evidence/p08_b45_full1024_synthesis_20261106T011541Z.json`
+SHA256 `b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0`;
+readable Markdown SHA
+`8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3`.
+The user supplied report hashes and complete table, not actual
+raw operator JSON bytes. New both-mode 1024 original prediction,
+ten spike count, full 26tick neural FNV, timing and 27
+post-run backup context endpoint equality verified in prior
+independent reports. New original-architecture residual
+six-phase A53 service attribution: V2 once median mixed
+26tick/702 dispatches, pager, routing **6944.179ms** and
+**96.11% share of SUMMED ordinary image-service timer ticks**.
+Unchecked residual 6941.350ms and 96.11%. Once original
+reset 8.766998ms, full service 7225.137459ms vs
+original separately instrumented reset 5826.767549ms
+and original complete service 13034.111501ms. Descriptive
+~664.63x reset, ~1.804x complete-service ratio of
+medians from DIFFERENT physical sessions. The
+26tick ~6.94s interval is MIXED A53+PL software paging,
+routing, MMIO polling and dispatch, not isolated PL
+neural compute or energy. N=1 genuine optimized physical
+session per arm; no randomized repeated statistical
+speedup, hardware XMPU or transient-corruption guarantee.
+Original TEST still SEALED. See
+[final accepted B4.5.5 closeout](docs/P08_B45_5_FINAL_REAL_PHYSICAL_QUANTITATIVE_ACCEPTANCE_2026_11_05.md).
+
+**User-approved B4.6 study architecture:**
+Track `A_ORIGINAL_A2_1`, original 42 neurons/26 dispatches,
+versus explicit selected optimized Track
+`B_AUTH_ONCE_UNPROTECTED_V2`, 1010 neurons/27 virtual cores/
+702 dispatches. **Do NOT silently claim original B4.4
+per-image full-SHA backup integrity, matched network complexity,
+original ML TEST accuracy, isolated PL neural compute or
+memory write protection.** Both arms must independently
+pass their OWN original scalar/FNV oracle on the same frozen
+1024 TRAIN-derived raw image IDs/pixels.
+
+**New stacked active branch:**
+`agent/v3-p08-b46-auth-once-comparator-gate` built off
+unmerged draft PR #66, no merge permission. Implements
+`scripts/p08_b46_auth_once_source_gate.py`: requires original
+A2.1 exact ELF SHA
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`,
+accepted V2 B_AUTH_ONCE exact ELF SHA
+`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85`,
+SHA-pinned independently accepted real B4.5 once 1024
+numerical report + B4.5.5 complete comparison JSON,
+original B4.1 1024 scalar source, canonical original
+A P08-A3.2 stage, full strict original TRAIN IDX split,
+all 33 B2.4 frozen assets, and all 1024 original
+image IDs + exact 784B pixel SHA equality. Emits new
+no-overwrite **PC-only B4.6 A/B_AUTH_ONCE experiment
+identity and six-session order manifest**. Native tests
+reject fake model/XMPU, wrong original input frame,
+modified source report, wrong old/unmatched A/B ELF,
+original TEST access and report overwrite. Official
+B4.6 time-boundary equivalence, A/B runner for six
+independent rebooted A B / B A / A B sessions and
+per-run DDR ownership/recovery still NOT PROVEN;
+no physical/JTAG execution authorized.
+
+**Runbook and commands**:
+[docs/P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md](docs/P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md).
+Next PC-side gate after user runs original data/ELF audit:
+inspect original Track A `scripts/run_p08_a3_2_1024.sh` vs
+B_AUTH_ONCE `scripts/p08_b45_perf_full1024_physical_run.py`
+timing boundaries, evidence directory and A53 launch/PS128
+safety for six truly separate physical sessions. Then
+specify/implement independently verified source-gated
+session adapters/analysis and seek separately scoped
+operator permission BEFORE any JTAG. A is not B
+workload-equivalent; six runs would establish a
+descriptive *system/workload comparison*, not
+matched-neuron FPGA arithmetic speedup.
+
+---
+
+## P08-B4.5.5 HISTORICAL/CLOSED — BOTH independent full1024 V2 physical PASS; auditable quantitative closeout (2026-11-05 local / Nov 6 UTC)
 
 **Major result: both modes physically completed and independently PASSED.**
 Operator supplied real independent full1024 once SHA
