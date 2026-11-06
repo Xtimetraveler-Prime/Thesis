@@ -211,3 +211,17 @@ def test_never_launch_or_grant_a_destructive_jtag_operation():
                       "P08_B46_CONFIRM_OVERWRITE_ORIGINAL_64M_DDR=YES"):
         assert dangerous not in text
     assert '"all_new_session_authorizations_granted": False' in text
+
+
+def test_B_original_independent_verifier_schema_contract_not_guessed():
+    # The B4.5 independent verifier creates the ACCEPTED real JSON.
+    # It uses ordinary_frames (not the *preliminary* report's
+    # ordinary_frame_count). Keep both B4.6 gates aligned to its output.
+    original=(ROOT/"scripts"/"p08_b45_perf_full1024_independent_verify.py").read_text()
+    plan_source=(ROOT/"scripts"/"p08_b46_4b_six_session_plan.py").read_text()
+    receipt_source=(ROOT/"scripts"/"p08_b46_4b_session_receipt.py").read_text()
+    assert 'return {"ordinary_frames":1023' in original
+    assert '"whole_image_service_descriptive_1023":service_summary' in original
+    assert '["ordinary_frames"]' in plan_source
+    assert 'service.get("ordinary_frames") == 1023' in receipt_source
+    assert 'ordinary_frame_count' not in plan_source
