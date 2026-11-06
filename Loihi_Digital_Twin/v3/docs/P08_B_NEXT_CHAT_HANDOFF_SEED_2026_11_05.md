@@ -1,5 +1,49 @@
 # P08-B — CURRENT NEXT-CHAT HANDOFF (B4.6 A2.1 REAL1024 ACCEPTED; SIX NEW A/B SESSIONS NEXT)
 
+> **LATEST P08-B4.6.4b SIX-SESSION DEVELOPMENT AND OPERATOR AUTHORIZATION BOUNDARY (2026-11-05 local / 2026-11-06 UTC).**
+> User's actual local SHA-pinned B4.6.4a **PC SOURCE** JSON
+> \`/home/dna/Thesis_Evidence/p08_b46_ab_boundary_source_audit_20261106T045251Z.json\`
+> SHA256 \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\`
+> and printed original static frozen A/B source boundary PASS.
+> **NOT** the six-run physical test or proof of identical physical
+> timer work. User requested to proceed with physical tests, but
+> original per-session destructive JTAG/DDRx authorizations remain
+> individual; DO NOT run all six automatically.
+>
+> **Current new descendant:** \`agent/v3-p08-b46-4b-six-session-physical-admission\`,
+> built on \`agent/v3-p08-b46-4a-service-boundary-audit\` draft PR #70
+> (and accepted A physical parent PR #69), no PR merges authorized.
+> New PC-only \`scripts/p08_b46_4b_six_session_plan.py\` checks six
+> original operator SHA-pinned sources/reports/ELFs, outputs a NEW
+> outside-checkout no-overwrite six-slot exact order A B / B A / A B,
+> all permissions FALSE, previous A/B standalone runs count ZERO.
+> New PC-only \`scripts/p08_b46_4b_session_receipt.py\` independently
+> SHA-checks new original A or B capture assets/reviewer report,
+> strict 1023 ordinary timers plus selected trace, coldboot
+> operator acknowledgment and post-JTAG physical power-cycle
+> operator acknowledgment (not independent electrical proof),
+> previous hash-linked session sequence, refuses old historical reports.
+> Native negative synthetic pytest and no-board CI.
+>
+> **EXACT PC AND ONE-AT-A-TIME KV260 RUNBOOK**:
+> \`docs/P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md\`.
+> First pull branch / native tests, run original source/ELF+old
+> physical evidence PC-only study plan; return plan SHA and test
+> summary. Then first **NEW** Session01=A rebuilt, original genuine
+> SHA \`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793\`,
+> dedicated fresh coldboot, separate original A offline preflight,
+> ONE newly explicit operator scoped approval before destructive
+> 64MiB DDR/JTAG, independent original all1024 packed neural,
+> 26x42 trace and A53 timing, new no-overwrite receipt,
+> mandatory power-cycle after ANY attempt. The previously accepted
+> standalone A SHA \`b57f20be...\` and B once physical
+> \`06a007b7...\` remain separate prior validations and count
+> ZERO of the six new B4.6 sessions. Next B only after A independently
+> accepted and power-cycled; all source and physical failures preserved.
+> All protected memories/memory owners remain unproven, no XMPU
+> protection claim, no pure PL-compute or model-matched speedup,
+> official MNIST TEST sealed. NEVER place sole accepted artifacts /tmp.
+>
 > **B4.6.4a LATEST PC-ONLY DEVELOPMENT (2026-11-05 local / 2026-11-06 UTC).**
 > `agent/v3-p08-b46-4a-service-boundary-audit` is NEW child branch
 > from `agent/v3-p08-b46-a21-candidate-physical-validation`, draft
