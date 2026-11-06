@@ -43,6 +43,16 @@
 > source/report SHA and six phase breakdown before closing
 > B4.5.5. No new Vitis build/FPGA/JTAG/PuTTY currently needed.
 >
+> **B4.6.1 PC-only design draft now exists:**
+> `docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md`.
+> It explicitly defines original frozen A-vs-original frozen B
+> six independent coldboot sessions AB/BA/AB, 1023 ordinary
+> original TRAIN-source frames, actual A53 CNTFRQ, all
+> neural/FNV provenance, pre-registered pairing across 3
+> sessions (NOT treating 1023 images as independent boots),
+> workload-size mismatch and reduced-integrity optimized B
+> labeling restrictions. NO new physical authorization.
+>
 > **Exact commands and accepted paths**:
 > `docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md`.
 > After report PASS, B4.6 original roadmap next step is the
