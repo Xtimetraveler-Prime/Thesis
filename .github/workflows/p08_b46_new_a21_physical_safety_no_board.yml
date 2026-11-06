@@ -1,0 +1,43 @@
+name: P08-B4.6 rebuilt A2.1 first real 1024 physical validation scripts safety (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b46-a21-candidate-physical-validation]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/run_p08_b46_rebuilt_a21_1024.sh'
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_a21_rebuilt_independent_physical_verify.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b46_new_a21_physical_safety.py'
+      - '.github/workflows/p08_b46_new_a21_physical_safety_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  static-first-run-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Source-only no-board physical runner and independent verifier negative checks
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_new_a21_physical_safety.py \
+            tests/test_p08_b46_auth_once_source_gate.py
+      - name: Previous B4.5 neural/timing and V2 reset regression
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_latency_synthesis.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
+            tests/test_p08_b45_full1024_reset_bind_repair.py
+      - name: Valid bash and Python syntax and fail-closed historical SHA isolation
+        run: |
+          bash -n scripts/run_p08_b46_rebuilt_a21_1024.sh
+          python3 -m py_compile scripts/p08_b46_a21_rebuilt_independent_physical_verify.py
+          echo P08_B46_NEW_A21_PHYSICAL_SCRIPTS_NATIVE_PC_PASS=1
+          echo P08_B46_NEW_A21_ACTUAL_BOARD_PHYSICAL_RUN=0
+          echo P08_B46_SIX_REPEATED_A_B_SESSIONS_ACCEPTED=0

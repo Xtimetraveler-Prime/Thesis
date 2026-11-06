@@ -1,5 +1,21 @@
 # P08-B4.6.2R — new rebuilt A2.1 A53 ELF, distinct source admission (PC ONLY)
 
+> **LATEST: PC source gate PASSED; new A21-only hardware recovery runner exists, NOT YET EXECUTED.**
+> User independently ran source-matched rebuilt A2.1 vs
+> selected original B_AUTH_ONCE original 1024 TRAIN input
+> gate, report SHA
+> `ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56`.
+> New separate source-pinned A2.1 JTAG
+> physical validation script has PC-only preflight +
+> explicitly approved physical execution + original
+> P07 1024 neural and real A53 timing independent
+> verifier. Exact current commands:
+> [B4.6 first rebuilt A21 physical runbook](P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md).
+> Old historical original A2.1 ELF SHA/runner remain
+> immutable. Do not claim six new A/B repeats after one
+> newly accepted A21 recovery session.
+>
+
 **User rebuild: successful (build-only), original historical A2.1 ELF NOT reproduced.**
 
 The user ran the unchanged \`scripts/build_p08_a2.sh\` under Vitis 2025.2,
