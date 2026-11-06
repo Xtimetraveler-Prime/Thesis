@@ -48,7 +48,7 @@ def compact_c(body: str) -> str:
 
 
 def function(source: str, name: str) -> str:
-    m = list(re.finditer(r"\b" + re.escape(name) +
+    m = list(re.finditer(re.escape(name) +
                         r"\s*\([^;{}]*\)\s*\{", source))
     require(len(m) == 1, f"missing/ambiguous C definition: {name}")
     start = m[0].end() - 1
