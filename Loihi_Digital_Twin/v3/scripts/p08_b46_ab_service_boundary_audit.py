@@ -72,20 +72,13 @@ def ordered(source: str, tokens: tuple[str, ...], label: str) -> None:
         end = pos
 
 
-def audit(v3_root: Path, out: Path) -> dict:
+def inspect_sources(v3_root: Path) -> dict:
+    """Pure read-only source audit; suitable for synthetic native tests."""
     require(v3_root.is_absolute() and v3_root.is_dir(),
             "absolute existing v3 source directory required")
     root = v3_root.resolve()
     require((root / "LOIHI_TWIN_ROADMAP.md").is_file(),
             "v3 source root is not the accepted project")
-    require(out.is_absolute() and out.parent.is_dir() and
-            not out.exists() and not out.is_symlink(),
-            "new absolute no-overwrite output required")
-    target = out.resolve()
-    require(not target.is_relative_to(root) and
-            not any(target.is_relative_to(d) for d in
-                    (Path("/tmp"), Path("/var/tmp"))),
-            "audit evidence must be durable outside checkout and temporary dirs")
     sources: dict[str, str] = {}
     pinned: dict[str, str] = {}
     for path, expected in PINNED_BLOBS.items():
@@ -212,7 +205,21 @@ def audit(v3_root: Path, out: Path) -> dict:
                      "recover A2.1 ELF or separately validate reconstruction; "
                      "require new per-session authorization before any physical action",
     }
-    # Exclusive creation; failed audits NEVER emit a success report.
+    return result
+
+
+def audit(v3_root: Path, out: Path) -> dict:
+    require(out.is_absolute() and out.parent.is_dir() and
+            not out.exists() and not out.is_symlink(),
+            "new absolute no-overwrite output required")
+    target = out.resolve()
+    root = v3_root.resolve()
+    require(not target.is_relative_to(root) and
+            not any(target.is_relative_to(d) for d in
+                    (Path("/tmp"), Path("/var/tmp"))),
+            "audit evidence must be durable outside checkout and temporary dirs")
+    result = inspect_sources(v3_root)
+    # Exclusive creation; failed source audits NEVER emit a success report.
     with out.open("x", encoding="utf-8") as fd:
         json.dump(result, fd, sort_keys=True, indent=2)
         fd.write("\n")
