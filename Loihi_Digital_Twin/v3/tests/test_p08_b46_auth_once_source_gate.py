@@ -311,3 +311,21 @@ def test_new_rebuilt_candidate_no_overwrite_and_no_hardware(rebuilt_A21):
     assert "import subprocess" not in src
     assert "xsdb " not in src
     assert "import vitis" not in src
+
+
+def test_rebuilt_candidate_Vitis_imported_C_drift_detected_even_when_build_stage_exact(rebuilt_A21):
+    build,_,xsa,report=rebuilt_A21
+    import_source=build/"vitis_workspace/p08_a2_board/src/p08_a2_board.c"
+    import_source.write_bytes(import_source.read_bytes()+b"\n/* VITIS IMPORT TAMPER */")
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="Vitis imported app C/header"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert not report.exists()
+
+
+def test_rebuilt_candidate_Vitis_imported_extra_C_denied(rebuilt_A21):
+    build,_,xsa,report=rebuilt_A21
+    extra=build/"vitis_workspace/p08_a2_board/src/rogue.c"
+    extra.write_bytes(b"int rogue(void){return 1;}")
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="C-file set"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert not report.exists()
