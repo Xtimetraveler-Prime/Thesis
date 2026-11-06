@@ -148,3 +148,162 @@ def test_real_source_has_no_xsdb_subprocess_or_execute_permission():
     assert "six_new_physical_JTAG_runs_authorized" in src
     assert "B_AUTH_ONCE" in src and "P08-B4.5" in src
     assert "B45_SYNTHESIS_SHA=" in src
+
+
+# Rebuilt genuine-A2.1 branch: synthesize an ELF64/AArch64 binary and
+# exact frozen-source Vitis staged byte copies. These are ONLY tests.
+# No synthetic result may be treated as genuine operator firmware.
+import shutil
+import struct
+
+@pytest.fixture
+def rebuilt_A21(tmp_path,monkeypatch):
+    build=tmp_path/"rebuilt"
+    stage=build/"source"
+    stage.mkdir(parents=True)
+    (build/"vitis_workspace").mkdir()
+    blob=bytearray(128+len(gate.rebuilt.ELF_ID))
+    blob[:6]=b"\x7fELF\x02\x01"
+    struct.pack_into("<HH",blob,16,2,183)
+    struct.pack_into("<Q",blob,32,64)
+    struct.pack_into("<HH",blob,54,56,1)
+    struct.pack_into("<IIQQQQQQ",blob,64,1,5,128,0x20000000,0x20000000,
+                     len(gate.rebuilt.ELF_ID),len(gate.rebuilt.ELF_ID),4096)
+    blob[128:]=gate.rebuilt.ELF_ID
+    elf=build/gate.rebuilt.A_BUILD_REL
+    elf.write_bytes(blob)
+    xsa=tmp_path/"p03_2_ps_mmio.xsa"
+    xsa.write_bytes(b"synthetic-P03.2c-XSA")
+    monkeypatch.setattr(gate.rebuilt,"NEW_A21_SHA",hashfile(elf))
+    monkeypatch.setattr(gate.rebuilt,"P03_XSA_SHA",hashfile(xsa))
+    monkeypatch.setattr(gate.rebuilt,"VOLATILE_PREFIXES",())
+    lines=[
+        "P08_A2_1_XSA_SHA256="+hashfile(xsa),
+        "P08_A2_1_ELF="+str(elf),
+        "P08_A2_1_ELF_SHA256="+hashfile(elf),
+        "P08_A2_1_VITIS_BUILD_PASS=1",
+        "P08_A2_1_KV260_LATENCY=NOT_RUN",
+    ]
+    (build/"build_identity.txt").write_text("\n".join(lines)+"\n")
+    (build/"vitis_build.log").write_text("P08_A2_A53_VITIS_BUILD_PASS=1\n")
+    (build/"elf_program_headers.txt").write_text(" LOAD synthetic AARCH64\n")
+    for relative,names in gate.rebuilt.SOURCES.items():
+        for name in names:
+            original=ROOT/relative/name
+            dest=stage/name
+            shutil.copyfile(original,dest)
+            if relative=="software/p07/include":
+                dest=(stage/"include"/name)
+                dest.parent.mkdir(exist_ok=True)
+                shutil.copyfile(original,dest)
+    report=tmp_path/"rebuilt_pc_admission.json"
+    return build,elf,xsa,report
+
+
+def test_distinct_rebuilt_A21_original_frozen_source_host_pass(rebuilt_A21):
+    build,elf,xsa,report=rebuilt_A21
+    outcome=gate.rebuilt.attest(build,xsa,report)
+    assert outcome["schema"]==gate.rebuilt.SCHEMA
+    assert outcome["original_A2_1_source_files_byte_exact_to_rebuilt_stage"] is True
+    assert outcome["new_A2_1_candidate_KV260_1024_neural_oracle_acceptance"] is False
+    assert outcome["historical_original_A2_1_ELF_recovered"] is False
+    assert outcome["ELF_header_and_PT_LOAD_checks"]["original_64MiB_DDR_disjoint"] is True
+    assert len(outcome["source_Git_sha256_checks"])==len(
+        [name for names in gate.rebuilt.SOURCES.values() for name in names])
+    assert report.is_file()
+
+
+def test_B46_explicit_candidate_source_manifest_but_NO_new_JTAG(inputs,rebuilt_A21):
+    args,_=inputs
+    build,elf,xsa,report=rebuilt_A21
+    gate.rebuilt.attest(build,xsa,report)
+    args[0]=elf
+    out=gate.audit(*args,a_rebuilt_admission=report,a_rebuilt_xsa=xsa)
+    assert out["schema"]==gate.REBUILT_SCHEMA
+    assert out["selected_A_elf_provenance"]=="REBUILT_A21_NEW_SHA_PC_VALIDATED_PHYSICAL_PENDING"
+    assert out["original_A_image_timing_elf_sha256"]==gate.A_ELF_SHA
+    assert out["selected_A_real_elf_sha256"]==gate.rebuilt.NEW_A21_SHA
+    assert out["new_A_rebuilt_candidate_KV260_neural_parity_and_timing_reaccepted"] is False
+    assert out["six_new_physical_JTAG_runs_authorized"] is False
+    assert out["arm_A"].startswith("A_REBUILT_A21_CANDIDATE")
+    assert out["planned_six_independently_rebooted_sessions"][0]["arm"]==out["arm_A"]
+
+
+def test_rebuilt_SHA_cannot_replace_historical_A21_default_gate(inputs,rebuilt_A21):
+    args,_=inputs
+    _,elf,_,_=rebuilt_A21
+    args[0]=elf
+    with pytest.raises(gate.GateNoGo,match="original accepted A2.1 ELF SHA"):
+        gate.audit(*args)
+    assert not args[-1].exists()
+
+
+def test_signed_candidate_report_mutation_is_reaudited(inputs,rebuilt_A21):
+    args,_=inputs
+    build,elf,xsa,report=rebuilt_A21
+    gate.rebuilt.attest(build,xsa,report)
+    args[0]=elf
+    body=json.loads(report.read_text())
+    body["new_A2_1_candidate_KV260_1024_neural_oracle_acceptance"]=True
+    writejson(report,body)
+    with pytest.raises(gate.GateNoGo,match="manifest differs"):
+        gate.audit(*args,a_rebuilt_admission=report,a_rebuilt_xsa=xsa)
+    assert not args[-1].exists()
+
+
+def test_built_original_source_mutation_detected_even_with_old_good_report(inputs,rebuilt_A21):
+    args,_=inputs
+    build,elf,xsa,report=rebuilt_A21
+    gate.rebuilt.attest(build,xsa,report)
+    args[0]=elf
+    staged=build/"source"/"p08_a2_board.c"
+    staged.write_bytes(staged.read_bytes()+b"\n/* TAMPER */")
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="staged source differs"):
+        gate.audit(*args,a_rebuilt_admission=report,a_rebuilt_xsa=xsa)
+    assert not args[-1].exists()
+
+
+def test_rebuilt_ELF_PT_LOAD_overlap_DENIED(rebuilt_A21,monkeypatch):
+    build,elf,xsa,report=rebuilt_A21
+    bad=bytearray(elf.read_bytes())
+    # ELF64 program header p_vaddr offset = e_phoff(64)+16
+    struct.pack_into("<Q",bad,80,0x40000000)
+    elf.write_bytes(bad)
+    monkeypatch.setattr(gate.rebuilt,"NEW_A21_SHA",hashfile(elf))
+    # Match builder metadata updated just to prove independent header check:
+    content=(build/"build_identity.txt").read_text()
+    content=content.replace(
+        next(x for x in content.splitlines() if x.startswith("P08_A2_1_ELF_SHA256=")),
+        "P08_A2_1_ELF_SHA256="+hashfile(elf))
+    (build/"build_identity.txt").write_text(content)
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="PT_LOAD overlaps"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert not report.exists()
+
+
+def test_candidate_FPD_XSA_wrong_even_if_ELF_valid(rebuilt_A21):
+    build,elf,xsa,report=rebuilt_A21
+    xsa.write_bytes(xsa.read_bytes()+b"changed")
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="hardware XSA SHA"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert not report.exists()
+
+
+def test_rebuilt_candidate_CANNOT_lie_or_write_to_temp_production(rebuilt_A21,monkeypatch):
+    build,_,xsa,report=rebuilt_A21
+    monkeypatch.setattr(gate.rebuilt,"VOLATILE_PREFIXES",(Path("/tmp"),))
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="volatile"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert not report.exists()
+
+
+def test_new_rebuilt_candidate_no_overwrite_and_no_hardware(rebuilt_A21):
+    build,elf,xsa,report=rebuilt_A21
+    report.write_text("DO_NOT_OVERWRITE")
+    with pytest.raises(gate.rebuilt.CandidateNoGo,match="no-overwrite"):
+        gate.rebuilt.attest(build,xsa,report)
+    assert report.read_text()=="DO_NOT_OVERWRITE"
+    src=(ROOT/"scripts"/"p08_b46_a21_rebuild_admission.py").read_text()
+    assert "import subprocess" not in src
+    assert "xsdb " not in src
+    assert "import vitis" not in src
