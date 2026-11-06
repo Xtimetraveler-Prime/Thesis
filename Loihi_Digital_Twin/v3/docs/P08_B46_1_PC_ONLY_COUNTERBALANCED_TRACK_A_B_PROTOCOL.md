@@ -1,5 +1,28 @@
 # P08-B4.6.1 — PC-only pre-registered Track A / Track B repeated physical study design
 
+> **SUPERSEDED ARM SELECTION — 2026-11-05 local.** The user
+> explicitly selected the independently verified original
+> `authenticate-once V2` architecture for B4.6. The earlier
+> draft below targeted original B4.4 per-image SHA Track B.
+> Retain that draft as historical research design; **DO NOT
+> execute it or label B_AUTH_ONCE as original B4.4**.
+> The CURRENT primary P08-B4.6 study is instead
+> original A2.1 Track A vs
+> `B_AUTH_ONCE_UNPROTECTED_V2`, six new coldboot sessions
+> AB / BA / AB, same original frozen 1024 TRAIN inputs,
+> different 42-vs-1010-neuron workloads, explicit
+> unprotected backup integrity tradeoff and numerical
+> parity per own oracle. Exact source identities, PC-only
+> gate, operator commands and hardware-readiness blockers:
+> [P08-B4.6 selected authenticate-once runbook](P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md).
+> B4.5.5 was accepted from signed real local four-source
+> quantitative synthesis JSON SHA
+> `b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0`,
+> Markdown SHA
+> `8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3`.
+> No further destructive JTAG permission is implied.
+>
+
 **STATUS: DESIGN ONLY. NO NEW HARDWARE AUTHORIZATION.**
 This is the original B4.6 next milestone after B4.5.5 independently
 signed residual-latency phase reconstruction. Draft protocol must
