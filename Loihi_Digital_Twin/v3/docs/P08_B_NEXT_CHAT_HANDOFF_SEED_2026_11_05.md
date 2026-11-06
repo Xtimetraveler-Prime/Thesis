@@ -1,4 +1,4 @@
-# P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
+# P08-B — CURRENT NEXT-CHAT HANDOFF (B4.6 A2.1 REAL1024 ACCEPTED; SIX NEW A/B SESSIONS NEXT)
 
 
 # AUTHORITATIVE CURRENT HANDOFF — START HERE (2026-11-05 local / 2026-11-06 UTC)
@@ -14,8 +14,8 @@
 ## 0. AT-A-GLANCE VERIFIED PROJECT STATE
 
 **Project:** Loihi-inspired K26/KV260 FPGA digital twin, GitHub
-\`Xtimetraveler-Prime/Thesis\`, project root
-\`Loihi_Digital_Twin/v3\`. Primary research objective:
+`Xtimetraveler-Prime/Thesis`, project root
+`Loihi_Digital_Twin/v3`. Primary research objective:
 **board-local** A53 scheduling/DDR virtualized contexts with PL
 Loihi-like neural execution; frozen independent software oracle,
 physical numeric equivalence, reproducible full-image A53
@@ -25,73 +25,73 @@ service latency, integrity risk strictly scoped.
 On November 5 local (November 6 UTC), operator physically
 executed 1,024 original TRAIN-derived input images with
 **new genuine rebuilt A2.1 standalone A53 ELF** SHA
-\`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793\`.
+`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`.
 Original P07 packed software oracle, selected 26×42 trace
 and 1,024 CRC/clock-checked A53 service records **PASS**;
 physical JTAG runner printed final
-\`P08_B46_NEW_REBUILT_A21_ORIGINAL_1024_PHYSICAL_AND_INDEPENDENT_PASS=1\`
-and \`script_exit_status=0\`. Real A53 counter:
+`P08_B46_NEW_REBUILT_A21_ORIGINAL_1024_PHYSICAL_AND_INDEPENDENT_PASS=1`
+and `script_exit_status=0`. Real A53 counter:
 **99,999,001 Hz**. Median over 1,023 ordinary
 images (selected trace ordinal 1023 excluded):
 **35.696886611897256 ms**.
 
 Actual physical run evidence:
-\`/home/dna/Thesis_Evidence/p08_b46_A21_rebuilt_real1024_20261106T033101Z/\`.
+`/home/dna/Thesis_Evidence/p08_b46_A21_rebuilt_real1024_20261106T033101Z/`.
 First physically verified report
-\`p08_b46_rebuilt_A21_1024_independent.json\`
-SHA **\`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6\`**.
-Captured \`physical_output_sha256.txt\` SHA
-**\`7978b82ade256fc9e419510036131115e93a18b6b80e55048e3132904d223a7e\`**.
+`p08_b46_rebuilt_A21_1024_independent.json`
+SHA **`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`**.
+Captured `physical_output_sha256.txt` SHA
+**`7978b82ade256fc9e419510036131115e93a18b6b80e55048e3132904d223a7e`**.
 Independent OFFLINE **rereview of the SAME original physical
 capture** (not a second boot) produced
-\`/home/dna/Thesis_Evidence/p08_b46_rebuilt_A21_rereview_20261106T034152Z.json\`,
+`/home/dna/Thesis_Evidence/p08_b46_rebuilt_A21_rereview_20261106T034152Z.json`,
 same SHA
-**\`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6\`**.
+**`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`**.
 User pasted terminal output and SHA values; GitHub connector
 did **not** receive/download their raw PC private evidence.
 See [accepted physical receipt](P08_B46_REBUILT_A21_REAL1024_ACCEPTANCE_AND_NEXT_STUDY_2026_11_05.md).
 
 **Previous source gate:** Actual reconstructed-A2.1 vs selected
 B_AUTH_ONCE same original TRAIN 1,024 image order/pixel SHA pass:
-\`/home/dna/Thesis_Evidence/p08_b46_Arebuild_vs_Bauthonce_source_20261106T025815Z.json\`,
-SHA \`ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56\`,
-marker \`P08_B46_SOURCE_GATE_PC_ONLY_PASS=1\`.
+`/home/dna/Thesis_Evidence/p08_b46_Arebuild_vs_Bauthonce_source_20261106T025815Z.json`,
+SHA `ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56`,
+marker `P08_B46_SOURCE_GATE_PC_ONLY_PASS=1`.
 This source report historically contains
-\`P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0\`:
+`P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0`:
 it was finalized **BEFORE** the genuine A2.1 revalidation,
 so **do not change its bytes**; the new accepted physical
 report and this dated handoff supersede it for A2.1's
 ONE independently accepted physical run.
 
 **Historical A2.1 original ELF** SHA
-\`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0\`
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
 was originally built under
-\`/tmp/v3_p08_a2_build_20261018T193149Z\`
+`/tmp/v3_p08_a2_build_20261018T193149Z`
 and is now missing following PC reboot; **DO NOT claim
 recreated byte-for-byte** or relax old historical A3.2
 acceptance. Rebuilt A ELF is separately source-, XSA-,
 and hardware-reaccepted. Frozen P03.2c XSA SHA
-\`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f\`.
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
 Real ELF directory:
-\`/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z/vitis_workspace/p08_a2_board.elf\`.
+`/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z/vitis_workspace/p08_a2_board.elf`.
 
 **B4.5.5 CLOSED:** User independently completed REAL
 1,024-image physical V2 authenticate-once and unchecked
 trials, all predictions/spike vectors/full 26tick 1010-neuron
 FNV and 27 post-run context backup endpoints exact.
 Selected future B architecture is **auth-once V2**, NOT unchecked:
-\`B_AUTH_ONCE_UNPROTECTED_V2\`, ELF SHA
-\`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85\`.
+`B_AUTH_ONCE_UNPROTECTED_V2`, ELF SHA
+`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85`.
 Accepted once independent original scalar/full1024 JSON:
-\`/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_V2_verified_20261106T005213Z.json\`,
-SHA \`06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a\`.
+`/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_V2_verified_20261106T005213Z.json`,
+SHA `06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a`.
 Unchecked independent SHA
-\`68655383c582577986d7bdd253b21ecf1c933d234136d51b7b5076591c63cf79\`.
+`68655383c582577986d7bdd253b21ecf1c933d234136d51b7b5076591c63cf79`.
 Final four-source B4.5.5 accepted synthesis:
-\`/home/dna/Thesis_Evidence/p08_b45_full1024_synthesis_20261106T011541Z.json\`,
-SHA \`b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0\`;
+`/home/dna/Thesis_Evidence/p08_b45_full1024_synthesis_20261106T011541Z.json`,
+SHA `b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0`;
 Markdown SHA
-\`8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3\`.
+`8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3`.
 Original B4.4 complete-service median 13034.111501ms vs
 auth-once 7225.137459ms; original separately instrumented
 reset median 5826.767549ms vs auth-once 8.766998ms.
@@ -116,23 +116,23 @@ is **NOT yet accepted**.
 The A standalone validation and earlier B4.5 once physical
 test are NOT B4.6 repeated paired study sessions.
 Last output:
-\`P08_B46_NEW_A_B_SIX_REPEATED_PHYSICAL_SESSIONS_ACCEPTED=0\`,
-\`P08_B46_A_B_TIMER_BOUNDARY_EQUIVALENCE_PROVEN=0\`,
-\`P08_B46_6_SESSION_TRACK_A_VS_B_AUTH_ONCE_STUDY=NOT_RUN\`.
+`P08_B46_NEW_A_B_SIX_REPEATED_PHYSICAL_SESSIONS_ACCEPTED=0`,
+`P08_B46_A_B_TIMER_BOUNDARY_EQUIVALENCE_PROVEN=0`,
+`P08_B46_6_SESSION_TRACK_A_VS_B_AUTH_ONCE_STUDY=NOT_RUN`.
 Board printed mandatory “REBOOT KV260”; separate power-cycle
 confirmation was **not supplied**. Confirm full power cycle
 before any further JTAG.
 
 ## 1. DEVELOPER WORKFLOW AND ACCESS BOUNDARIES
 
-**Repo:** \`https://github.com/Xtimetraveler-Prime/Thesis\`.
+**Repo:** `https://github.com/Xtimetraveler-Prime/Thesis`.
 All new source/code changes on **feature branches** using the
 GitHub connector, with native negative/contract tests and GitHub
 Actions CI, then user pulls to Ubuntu VS Code and runs EXACTLY the
 matching native test suite, Vitis builds and physical runs.
 The assistant can read/update public GitHub source through
 GitHub tools; it **cannot see** user-owned real
-\`/home/dna/Thesis_Evidence\` files on their PC unless user
+`/home/dna/Thesis_Evidence` files on their PC unless user
 pastes/upload them. DO NOT claim board/JTAG test was run
 by assistant or GitHub CI. Operator handles all KV260 hardware,
 PuTTY, xsdb and physical approvals personally. All accepted
@@ -142,7 +142,7 @@ VS Code terminal commands after every development + test change,
 branch names, sha, CI and clear STOP/PASS markers.
 
 **Current actual branch:**
-\`agent/v3-p08-b46-a21-candidate-physical-validation\`,
+`agent/v3-p08-b46-a21-candidate-physical-validation`,
 draft PR **#69**, stacked on unmerged draft #68
 (rebuilt-A candidate admission), #67 (B4.6 A vs B_AUTH_ONCE
 same-source), #66 (B4.5.5 quantitative closeout), #65
@@ -151,7 +151,7 @@ Latest snapshot after recorded physical acceptance has
 docs-only updates. **NEVER merge into main or merge stacked
 PRs unless user explicitly requests.** For next B4.6
 work, create a NEW distinct branch from CURRENT #69 head
-(e.g. \`agent/v3-p08-b46-service-boundary-audit\`), then
+(e.g. `agent/v3-p08-b46-service-boundary-audit`), then
 a draft PR stacked on #69. Don't modify protected
 historical P07/P03/V2 B4.5 original source or
 historical A3.2 runner/ELF SHA in place.
@@ -182,12 +182,12 @@ bash -n scripts/run_p08_b46_rebuilt_a21_1024.sh
 git status --short
 ~~~
 
-Change \`git switch\` + \`git pull\` branch names only when
-a new branch exists; use \`--ff-only\`, never force push,
+Change `git switch` + `git pull` branch names only when
+a new branch exists; use `--ff-only`, never force push,
 reset --hard, discard uncommitted user edits, or merge without
 approval. Tests run on host need original project imports
-\`PYTHONPATH="$PWD/scripts:$PWD/src"\`; PC may require
-\`~/Git/Thesis/.venv-p08\` for \`torch\` dependencies of
+`PYTHONPATH="$PWD/scripts:$PWD/src"`; PC may require
+`~/Git/Thesis/.venv-p08` for `torch` dependencies of
 historical independent original P07 neural verifier.
 Use Python 3.x interpreter from existing venv; don't silently
 retrain or regenerate accepted original model/artifacts.
@@ -222,8 +222,8 @@ retrain or regenerate accepted original model/artifacts.
 ~~~
 
 P03 accepted route:
-\`$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports\`
-with \`p03_2_ps_mmio.xsa/.bit/.ltx\` and original metrics.
+`$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports`
+with `p03_2_ps_mmio.xsa/.bit/.ltx` and original metrics.
 **Do not move/overwrite original route/XSA**. Normal
 Vitis build command, when new rebuild explicitly approved:
 
@@ -236,15 +236,15 @@ export P03_DIAG_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/
 # bash scripts/build_p08_a2.sh
 ~~~
 
-**CRITICAL NEVER use \`/tmp\`, \`/var/tmp\`, pytest directories,
-\`/dev/shm\` or Git checkout as the SOLE copy** of an
+**CRITICAL NEVER use `/tmp`, `/var/tmp`, pytest directories,
+`/dev/shm` or Git checkout as the SOLE copy** of an
 accepted ELF, Vitis build/source, linker map, bitstream/XSA,
 original model, oracle, JTAG evidence or report. A
 restart erased/made unavailable historical A2.1 /tmp build;
 pytest-discovered similarly named ELFs were **synthetic**
-SHA \`13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0\`.
+SHA `13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0`.
 Always store dated unique persistent
-\`$HOME/Thesis_Evidence/<experiment>_<UTC>\`
+`$HOME/Thesis_Evidence/<experiment>_<UTC>`
 folders; preserve source, ELF/map, build_identity.txt,
 Vitis logs, SHA manifest and hardware raw captures.
 Make a separate SHA-verified off-machine backup.
@@ -279,8 +279,8 @@ sha256sum "$P08_B46_REBUILT_A21_BUILD/vitis_workspace/p08_a2_board.elf" \
 Expected exact SHA pins from top paragraphs. The rebuilt-A
 source-only admission JSON hash/path was NOT included in the
 latest user logs; retrieve its actual original file via
-\`find "$HOME/Thesis_Evidence" -maxdepth 1 -name 'p08_b46_a21_rebuilt_source_admission_*.json' -print\`
-or read physical capture \`physical_identity.txt\` for its
+`find "$HOME/Thesis_Evidence" -maxdepth 1 -name 'p08_b46_a21_rebuilt_source_admission_*.json' -print`
+or read physical capture `physical_identity.txt` for its
 signed SHA; do not invent filename or SHA.
 
 **If first reviewing actual physical evidence on PC WITHOUT
@@ -305,7 +305,7 @@ stored evidence; do not count twice.
 **Hardware:** KV260/K26 Zynq UltraScale+ MPSoC.
 PC Ubuntu + VS Code for development; PuTTY for board UART;
 Vivado/Vitis **2025.2** for PC builds and JTAG; one
-dedicated \`hw_server -s tcp::3121\` where required.
+dedicated `hw_server -s tcp::3121` where required.
 Never let assistant/cloud claim actual board tests without
 operator receipts.
 
@@ -319,7 +319,7 @@ contexts and unprotected original backup contexts, a
 different JTAG launcher and exact genuine 1010-neuron
 source. The two original launchers are NOT interchangeable.
 Do not assume stopping Linux applications via
-\`sudo xmutil listapps\` / \`sudo xmutil unloadapp\`
+`sudo xmutil listapps` / `sudo xmutil unloadapp`
 excludes boot DMA / DDR masters. Real memory
 ownership/DMA exclusivity NOT proven by readback or
 128bit PS interface checks. Earlier operator explicitly
@@ -331,7 +331,7 @@ approval. No hardware backup XMPU/protection equivalence.
 KV260 Linux/JTAG session, dedicated USB/debug owner,
 no competing XSDB/Vivado sessions, explicit range/source
 risk consent, original signed sources and a NEW
-\`~/Thesis_Evidence\` evidence dir, check output hashes,
+`~/Thesis_Evidence` evidence dir, check output hashes,
 then **POWER-CYCLE THE BOARD even if FAIL**. Never
 resume halted Linux. Abort upon unexpected terminal,
 timeouts, output mismatches or concurrent clients.
@@ -342,7 +342,7 @@ operator runs each session, verifies/records physical
 results and reboot before next.
 
 **No official MNIST TEST** (t10k) data opened, retrained,
-or scored; \`SEALED_NOT_ACCESSED\`. All original
+or scored; `SEALED_NOT_ACCESSED`. All original
 TRAIN-derived input population (1024 frozen indices/raw
 784-byte pixel SHA) immutable; no secret retraining or
 model edits; each arm has its OWN frozen neural oracle.
@@ -353,20 +353,20 @@ their predictions need not match each other.
 
 1. **CURRENT NEXT: PC-only A/B image-service boundary audit.**
    Source A
-   \`software/p08/p08_a2_board.c\` \`execute_image\`:
-   \`t.service_start=read_ticks(NULL)\` just BEFORE
-   \`load_image_record\`; \`t.after_commit=read_ticks(NULL)\`
-   just AFTER \`commit_frame_result\` (and optional selected
+   `software/p08/p08_a2_board.c` `execute_image`:
+   `t.service_start=read_ticks(NULL)` just BEFORE
+   `load_image_record`; `t.after_commit=read_ticks(NULL)`
+   just AFTER `commit_frame_result` (and optional selected
    trace flush). Source B selected
-   \`software/p08/p08_b45_perf_once_full1024_a53.c\`:
-   \`p08_b2_meter_start(...,observed_counter())\`
-   before original 27-context reset; \`AFTER_JOURNAL_COMMIT\`
-   captured after \`commit_journal\`. Both include mixed
+   `software/p08/p08_b45_perf_once_full1024_a53.c`:
+   `p08_b2_meter_start(...,observed_counter())`
+   before original 27-context reset; `AFTER_JOURNAL_COMMIT`
+   captured after `commit_journal`. Both include mixed
    PS+PL work; image 1023 trace effects excluded from ordinary
    1023 medians. **Do not call scopes equivalent just
    because these look similar**—write precise source-level
    timer contract and read both original timing sidecar
-   schemas and relevant \`cntfrq_el0\`/timestamp parsing.
+   schemas and relevant `cntfrq_el0`/timestamp parsing.
    Check whether B per-image timer includes reset, A
    restore, scheduler setup, ingress and output commit,
    and whether trace/flush are outside ordinary measure.
@@ -379,15 +379,15 @@ their predictions need not match each other.
    Pre-register three counterbalanced temporal pairs
    **A B / B A / A B**; six fresh board boot sessions,
    THREE A and THREE selected B_AUTH_ONCE. A is the
-   **rebuilt accepted new SHA** \`fa9268...\`; B is
+   **rebuilt accepted new SHA** `fa9268...`; B is
    **the genuine B_AUTH_ONCE V2 accepted ELF** SHA
-   \`a19b50...\`, NOT unchecked or original full-SHA B4.4.
+   `a19b50...`, NOT unchecked or original full-SHA B4.4.
    Require actual independent original P07 packed neural
    all1024/selected26×42 trace for each A; original
    1010-neuron scalar/FNV full26 tick+10 spike count and
    27 postrun backup readbacks for each B; stage/readback
    original TRAIN 1024 sources; capture A53 actual
-   \`CNTFRQ_EL0\`; 1023 ordinary image latency rows
+   `CNTFRQ_EL0`; 1023 ordinary image latency rows
    (ordinal1023 isolated); signed original hardware and
    ELF, power-cycle proof after every physical attempt.
    Need new source/runner studies and distinct approval
@@ -420,12 +420,12 @@ their predictions need not match each other.
    deferred multi-physical HLS compute engines only
    if resident-context memory port arbitration is
    redesigned. Do not invent an already approved
-   \`B4.7\` milestone. Keep TEST seal and prior original
+   `B4.7` milestone. Keep TEST seal and prior original
    protected vs unprotected variant distinctions.
 
 **Immediate code starting point:** new draft branch
-\`agent/v3-p08-b46-service-boundary-audit\` based on
-\`agent/v3-p08-b46-a21-candidate-physical-validation\`
+`agent/v3-p08-b46-service-boundary-audit` based on
+`agent/v3-p08-b46-a21-candidate-physical-validation`
 when user asks to continue. Work PC-only first, add native
 negative tests, CI, documentation and commands; then
 bring the owner-controlled KV260 study to operator
@@ -441,7 +441,7 @@ single B separately passed. Current PR #69 not merged.
 4. [B4.6 new A2.1 rebuilt C/ELF original-source admission](P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md)
 5. [B4.5.5 accepted final 1024 physical quantitative phase closeout](P08_B45_5_FINAL_REAL_PHYSICAL_QUANTITATIVE_ACCEPTANCE_2026_11_05.md)
 6. [B4.6 draft preregistered counterbalanced protocol — earliest B arm selection superseded by auth-once](P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md)
-7. \`LOIHI_TWIN_ROADMAP.md\` in v3 root, authoritative dated longitudinal roadmap, chronological history below.
+7. `LOIHI_TWIN_ROADMAP.md` in v3 root, authoritative dated longitudinal roadmap, chronological history below.
 
 **Never mistake historical headings below, which precede this update,
 for the current milestone state.**
