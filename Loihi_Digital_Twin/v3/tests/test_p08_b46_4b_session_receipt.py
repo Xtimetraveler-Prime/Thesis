@@ -114,7 +114,7 @@ def sample():
             "original_OFFICIAL_MNIST_TEST":"SEALED_NOT_ACCESSED",
             "actual_A53_CNTFRQ_hz":99999001,
             "whole_image_service_descriptive_1023":{
-                "ordinary_frame_count":1023,"median_ms":7225.1},
+                "ordinary_frames":1023,"median_ms":7225.1},
             **raw_b,
         })
         pre_b=root/"new_B_pc_preflight.log"
