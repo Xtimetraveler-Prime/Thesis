@@ -1,5 +1,60 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST B4.6 SOURCE PASSED; DISTINCT REBUILT A2.1 REAL HARDWARE VALIDATION RUNNER READY / NOT RUN (NOV 6 UTC).**
+> Operator ran NEW B4.6 original 1024 frozen TRAIN-index/pixel
+> matched A candidate vs selected authentic-once B gate:
+> `P08_B46_REBUILT_A21_VS_AUTH_ONCE_FROZEN_1024_TRAIN_POPULATION_PASS=1`,
+> `P08_B46_SOURCE_GATE_PC_ONLY_PASS=1`. Real new source report:
+> `/home/dna/Thesis_Evidence/p08_b46_Arebuild_vs_Bauthonce_source_20261106T025815Z.json`,
+> SHA `ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56`.
+> New A2.1 historical-source rebuilt A53 ELF exact SHA
+> `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`;
+> historical 2026-10-18 A2.1 ELF SHA
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+> NOT reproduced, and old accepted A3.2 physical results
+> remain tied to historical ELF. Distinct new PC A2.1
+> actual Vitis source/ELF admission file SHA not supplied
+> in this turn; runner requires the existing real file
+> and compares every staged and imported C/header, XSA,
+> ELF and build receipt anew.
+>
+> **CURRENT ACTIVE STACKED BRANCH**
+> `agent/v3-p08-b46-a21-candidate-physical-validation`,
+> built on unmerged #68, adds NEW
+> `scripts/run_p08_b46_rebuilt_a21_1024.sh`
+> and `scripts/p08_b46_a21_rebuilt_independent_physical_verify.py`,
+> standalone original NEW-SHA rebuilt A21 1024 TRAIN numerical
+> recovery. The new physical runner retains original P03.2c
+> XSDB FPD 128-bit, 64MiB DDR overwrite, 6-source
+> physical readbacks, original P03 bitstream, isolated new
+> A53 ELF and original P07 packed software neural oracle
+> + selected 26x42 trace, 1024 CRC-checked A53 service
+> receipts. Both original JTAG/FPGA source and old original
+> physical runner are frozen. `P08_B46_PREFLIGHT_ONLY=YES`
+> runs source/SHA/geometry gates and NEVER contacts board.
+> Physical execute requires 6 explicit owner/memory/risk/
+> reboot/TEST/new candidate approvals; user performs hardware
+> only in fresh disposable Linux/JTAG session with no conflicting
+> DDR/DMA owners; mandatory board power cycle after ANY
+> JTAG attempt. New independent report proves A21 neural
+> reacceptance for THIS original 1024 run only, NOT
+> six coldboot A-vs-B_AUTH_ONCE comparison, same
+> time boundary, hardware XMPU or electrical efficiency.
+> No new board operations performed by assistant.
+>
+> **Operator current exact VS Code and KV260 instructions:**
+> `docs/P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md`.
+> Ask for new real A2.1 terminal and independent report SHA,
+> after reboot. Then review A/B common A53 timing boundaries
+> and stage six new separately authorized A B/B A/A B
+> sessions with original frozen TRAIN image population and
+> each arm's OWN independently authenticated scalar oracle.
+> DO NOT launch six experiments from only the source PASS;
+> prior B4.5 once physical run is not a new B4.6 repeat.
+> Preserve historical original ELF original TEST seal,
+> PC-only source reports, and all physical data outside /tmp.
+>
+
 > **LATEST USER A2.1 REBUILD COMPLETED; DISTINCT SHA, B4.6.2R PC-ONLY ADMISSION NEXT (OVERRIDES ALL BELOW).**
 > User successfully rebuilt original Track A2.1 A53 firmware
 > under persistent
