@@ -1,5 +1,77 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST 2026-11-05 LOCAL / 2026-11-06 UTC B4.5.5 CLOSED AND B4.6 AUTHENTICATE-ONCE SELECTED (OVERRIDES ALL BELOW).**
+> User supplied genuine four-report B4.5.5 original/optimized
+> source-pinned, all1024 A53 physical service+reset
+> sidecar re-audit Markdown and hash. Final
+> `/home/dna/Thesis_Evidence/p08_b45_full1024_synthesis_20261106T011541Z.json`
+> SHA `b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0`;
+> Markdown SHA `8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3`.
+> Both V2 modes fully accepted independent real 1024
+> original neural/FNV/spike and 27 final DDR context
+> equality; original full service median 13034.1115ms,
+> optimized once 7225.137459ms / unchecked
+> 7222.415632ms; original instrumented reset median
+> 5826.767549ms, once 8.766998ms / unchecked
+> 8.732007ms. Same selected last trace ordinal1023
+> excluded. Four sessions/distinct profiled ELF;
+> descriptive cross-session ratios only.
+> **Important confirmed NEW PHASE result:** authentic once
+> all 26 ticks/702 virtualized dispatches+DDR paging+
+> routing mixed A53/PL phase median `6944.179ms`,
+> **96.11% of sum of ordinary image-service timer
+> ticks**, versus context reset 0.12%. Unchecked
+> same mixed neural stage median `6941.350ms`,
+> also 96.11%. This is NOT PL neural compute-only.
+> Do not repeat accepted 16/1024 hardware tests.
+>
+> **USER SELECTED B4.6 PRIMARY ARCHITECTURE**
+> `B_AUTH_ONCE_UNPROTECTED_V2`. A = frozen original
+> Track A A2.1, 42 neurons / 26 dispatch, original
+> exact ELF SHA
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`.
+> B = **frozen original V2 authenticate-once** 1010
+> neurons / 27 virtual cores / 702 dispatch, original
+> exact ELF SHA
+> `a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85`.
+> **NOT** old B4.4 full per-image SHA arm, and NOT
+> unchecked. No false memory protection security equivalence,
+> matched network complexity, PL-only speedup or energy claim.
+> Each arm independently validates OWN oracle, same
+> original 1024 TRAIN-derived source IDs + 784B pixel
+> SHA and selected trace 1023.
+>
+> **NEW ACTIVE DESCENDANT**
+> `agent/v3-p08-b46-auth-once-comparator-gate`,
+> stacked on unmerged B4.5.5 PR #66. New
+> `scripts/p08_b46_auth_once_source_gate.py`
+> and native synthetic tests, source-only
+> A old ELF and B_AUTH_ONCE V2 ELF / original B4.5
+> independent/SHA-pinned synthesis, complete canonical
+> original P08-A3.2 stage + strict original TRAIN dataset
+> and 33 B2.4 frozen source assets,
+> and 1024 exact raw image source index/pixel SHA
+> comparison against original B scalar oracle. Outputs
+> NEW no-overwrite outside-checkout six-session
+> proposed `AB/BA/AB` JSON with all hardware
+> authorizations FALSE, A/B timer equivalence FALSE
+> (needs review), owner proof FALSE, full repeated
+> physical benchmark NOT ACCEPTED. No JTAG/board
+> writes performed. No new A/B physical sessions
+> authorized by original user direction.
+>
+> **Operator exact PC instructions and source selection:**
+> `docs/P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md`.
+> Locate original Track A2.1 ELF on local PC,
+> check SHA, run PC-only native tests and original
+> full TRAIN-source gate, return source admission JSON SHA,
+> then review A/B service boundaries and historical
+> different DDR/JTAG launchers before any new physical
+> approvals. B4.5.5 real acceptance document:
+> `docs/P08_B45_5_FINAL_REAL_PHYSICAL_QUANTITATIVE_ACCEPTANCE_2026_11_05.md`.
+> Both old source artifacts and Test seal preserved;
+> do not merge draft stack without explicit authorization.
+>
 > **LATEST REAL P08-B4.5 BOTH PHYSICAL FULL1024 INDEPENDENT ACCEPTANCES (OVERRIDES ALL LOWER STATUS).**
 > 2026-11-05 (local; JSON timestamp Nov 6 UTC): new original
 > V2 `once` independent FULL1024 real JTAG original frozen scalar,
