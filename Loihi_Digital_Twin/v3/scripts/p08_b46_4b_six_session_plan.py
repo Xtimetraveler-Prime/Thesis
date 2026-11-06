@@ -139,7 +139,7 @@ def prepare(boundary: Path, matched_source: Path, a_prior: Path,
          isinstance(b_real.get("actual_A53_CNTFRQ_hz"), int) and
          b_real["actual_A53_CNTFRQ_hz"] > 0 and
          isinstance(b_real.get("whole_image_service_descriptive_1023"), dict) and
-         b_real["whole_image_service_descriptive_1023"].get("ordinary_frame_count") == 1023,
+         b_real["whole_image_service_descriptive_1023"].get("ordinary_frames") == 1023,
          "B4.5 V2 original once standalone independent evidence invalid")
 
     slots = []
