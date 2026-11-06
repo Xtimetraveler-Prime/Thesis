@@ -1,5 +1,44 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.6.3 IN PROGRESS — A/B_AUTH_ONCE service boundary PC-only audit (2026-11-05)
+
+**New stacked branch** \`agent/v3-p08-b46-ab-service-boundary-audit\` from
+\`agent/v3-p08-b46-auth-once-comparator-gate\`; unmerged, no physical
+permission or operator-local PASS yet. The new read-only
+\`scripts/p08_b46_ab_service_boundary_audit.py\` pins original Git blobs
+of frozen A2.1 C, B V2 authenticate-once C, B six-phase timer source,
+both distinct historical physical launchers; verifies precise per-image
+boundary call order and writes a **new external no-overwrite JSON**
+whose actual timer-equivalence and hardware authorization are FALSE.
+Native tests reject every source blob change, changed meter endpoint,
+wrong B mode, source symlink, ephemeral/overwriting evidence. New no-board
+CI and complete commands:
+[PC-only boundary audit and operator runbook](docs/P08_B46_3_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md).
+
+**Static finding:** A original A53 timer begins before encoded
+image load and P07-A prepare/reset and ends after journal flush;
+B authenticate-once timer begins before 27-context mutable reset and
+raw-pixel ingress encoding, ends at B journal commit; its one-time
+original SHA bind runs before the 1024-frame loop. Both use A53
+CNTVCT/CNTFRQ and exclude timing sidecar I/O from the per-image
+interval, but have different ingress, reset, output writes and
+historical JTAG/DDR setup. Broad entry-to-commit resemblance does
+**NOT** prove identical work, physical timer-boundary equivalence,
+memory owner safety or permission to simply reuse either runner
+for six sessions. A2.1 original SHA-pinned genuine ELF is still
+MISSING (see blocker below); no artificial acceptance or reconstruction
+relabeling. B_AUTH_ONCE backup remains hardware UNPROTECTED.
+Official MNIST TEST sealed.
+
+**Next:** get operator local pytest/audit JSON SHA, review original
+A vs B service and DDR/JTAG/coldboot/recovery differences, recover
+A2.1 genuine ELF or separately admit a reconstructed candidate,
+and design signed per-session capture/analysis *offline* before
+asking for individual physical permissions. Keep accepted earlier
+1024/16 hardware evidence untouched; no merge permission.
+
+---
+
 ## P08-B4.6 CRITICAL A2.1 COMPILED ARTIFACT RETENTION BLOCKER (2026-11-05)
 
 The user reports that the historical A2.1 genuine Vitis ELF
