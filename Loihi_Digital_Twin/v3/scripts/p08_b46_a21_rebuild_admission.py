@@ -124,6 +124,14 @@ def inspect_rebuild(build:Path,xsa:Path)->dict:
          "builder original readelf PT_LOAD check missing")
 
     source_dir=build/"source"
+    app_src=build/"vitis_workspace/p08_a2_board/src"
+    must(app_src.is_dir() and not app_src.is_symlink(),
+         "Vitis imported genuine p08_a2_board/src component missing")
+    expected_C={name for names in SOURCES.values() for name in names
+                if name.endswith(".c")}
+    actual_C={p.name for p in app_src.rglob("*.c")}
+    must(actual_C==expected_C,
+         "Vitis linked source tree C-file set not original A2.1 contract")
     checks={}
     for relative,names in SOURCES.items():
         for name in names:
@@ -134,6 +142,13 @@ def inspect_rebuild(build:Path,xsa:Path)->dict:
             must(sha(built)==sha(original),
                  "A2.1 staged source differs from current frozen Git source "+name)
             checks[str(relative+"/"+name)]=sha(built)
+            imported=app_src/name
+            if relative=="software/p07/include":
+                # Nested include paths are extra copies supplied by Vitis builder.
+                must(sha(app_src/"include"/name)==sha(original),
+                     "Vitis imported nested original P07 header drift "+name)
+            must(sha(imported)==sha(built),
+                 "actual Vitis imported app C/header does not match staged Git original "+name)
             # Existing original build script keeps the flat staged P07 include
             # as well as the nested include for the app component.
             if relative=="software/p07/include":
@@ -148,6 +163,7 @@ def inspect_rebuild(build:Path,xsa:Path)->dict:
         "original_accepted_P03_XSA_SHA256":P03_XSA_SHA,
         "source_Git_sha256_checks":checks,
         "original_A2_1_source_files_byte_exact_to_rebuilt_stage":True,
+        "Vitis_actual_imported_A2_1_C_and_header_source_byte_exact_to_stage":True,
         "original_builder_success_and_not_run_receipts":True,
         "ELF_header_and_PT_LOAD_checks":ph,
         "historical_original_A2_1_ELF_recovered":False,
