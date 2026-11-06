@@ -1,5 +1,62 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.6.2R ACTIVE — new A2.1 genuine Vitis ELF distinct SHA PC reacceptance (2026-11-05 local / Nov 6 UTC)
+
+The operator completed a genuine original-source Vitis 2025.2
+**BUILD ONLY** for original Track A2.1 in PERSISTENT storage:
+`/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z/vitis_workspace/p08_a2_board.elf`;
+new ELF SHA
+`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
+accepted original P03.2c routed XSA SHA
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`,
+`P08_A2_A53_VITIS_BUILD_PASS=1`,
+`P08_A2_1_ELF_DDR_ISOLATION_PASS=1`,
+`P08_A2_1_VITIS_BUILD_PASS=1`, and
+`P08_A2_1_KV260_LATENCY=NOT_RUN`. The historical accepted
+2026-10-18 physical A2.1 ELF SHA
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+**WAS NOT REPRODUCED**. No source or binary equivalence
+of the old artifact is implied; its original 1024-image physical
+results remain tied to old SHA.
+
+**New stacked descendant**
+`agent/v3-p08-b46-a21-rebuild-admission`: new
+`scripts/p08_b46_a21_rebuild_admission.py` separately requires
+new ELF SHA, original XSA SHA, original build + Vitis log,
+frozen original A2.1/P07/P03 staged C and headers byte-exact
+to current Git originals, exact firmware identity, AArch64
+ELF PT_LOAD 64MiB DDR nonoverlap and persistent build path.
+Creates non-overwriting **HOST-ONLY NEW REBUILT CANDIDATE**
+source/ELF report with physical neural/TIMER acceptance FALSE.
+The earlier default original A2.1 exact SHA gate remains unchanged.
+`scripts/p08_b46_auth_once_source_gate.py` now offers explicit
+**separate** `--a-rebuilt-admission` and `--a-rebuilt-xsa`
+flags; independently re-audits new ELF/build/stage before the
+original 1024 canonical TRAIN image IDs/pixel hash comparison,
+and labels study arm A as REBUILT CANDIDATE, not historical ELF.
+The selected B still exact accepted original
+`B_AUTH_ONCE_UNPROTECTED_V2` genuine SHA and physical
+1024 scalar/FNV receipt, and no XMPU backup write exclusion.
+Native host-only ELF safety, tampering, no-overwrite, no-old-SHA
+spoof negative tests and dedicated CI.
+
+**Operator's next step is PC only**: execute two source gates
+and supply both fresh JSON SHA digests. Exact commands:
+[docs/P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md](docs/P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md).
+No further Vitis rebuild needed. If these pass, the
+A candidate is admitted as a distinct source/ELF build,
+**NOT yet physically reaccepted**; original Track A physical
+runner still SHA-pins old accepted ELF and SHALL NOT
+be modified to silently run new candidate. Physical neural
+equivalence and matched A53 timer proof remain a later,
+separately authorized genuine KV260 session with independent
+P07 oracle and reboot. No new JTAG permission inferred.
+Persist all future builds/evidence OUTSIDE /tmp; protect
+TEST, original accepted evidence and unmerged draft stack.
+
+---
+
+
 ## P08-B4.6 CRITICAL A2.1 COMPILED ARTIFACT RETENTION BLOCKER (2026-11-05)
 
 The user reports that the historical A2.1 genuine Vitis ELF

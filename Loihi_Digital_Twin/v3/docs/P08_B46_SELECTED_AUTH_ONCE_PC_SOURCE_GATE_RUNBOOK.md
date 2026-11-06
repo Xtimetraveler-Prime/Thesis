@@ -1,5 +1,22 @@
 # P08-B4.6.1/.2 — frozen Track A versus selected B_AUTH_ONCE study
 
+> **IMPORTANT 2026-11-05 NEW VALID REBUILD (OVERRIDES THE OLD
+> MISSING-ELF RUNBOOK BELOW).** User physically built NONE
+> but successfully completed PC-only standalone original-source
+> A2.1 Vitis compile with original P03 XSA:
+> `/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z/vitis_workspace/p08_a2_board.elf`
+> SHA `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`.
+> This did **NOT** reproduce historical accepted A2.1
+> SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`.
+> The new, current source-admission process is a SEPARATE
+> candidate gate and the earlier default original candidate SHA
+> must remain immutable. Complete new native and PC source
+> acceptance commands:
+> [new B4.6 reconstructed A2.1 runbook](P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md).
+> Passing that source gate DOES NOT establish new A2.1 hardware
+> neural parity or six-session benchmark readiness.
+>
+
 > **A3.1 TAR DOES NOT BY ITSELF RESTORE A2.1.**
 > User found `~/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz`.
 > Original accepted A3.1 pilot used **A2.2 detailed per-tick
