@@ -61,6 +61,17 @@ The operator should verify the new report and return the six-phase
 results and SHA. This will close B4.5.5 and identify next dominant
 mixed PS+PL service interval.
 
+**P08-B4.6.1 FIRST PC-ONLY PROTOCOL DRAFT COMPLETED:**
+[docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md](docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md)
+defines the original-frozen A vs original-frozen B arm identities, exact
+six distinct coldboot sessions in AB / BA / AB pairs, 1023 ordinary
+frames, non-equivalent 42- vs 1010-neuron and 26- vs 702-dispatch
+workloads, actual per-session CNTFRQ, original oracle/FNV and
+recovery proofs, and pair-level median ratio analysis without
+fabricated image-level independent hardware trials. **This is
+NOT approval for any new JTAG or DDR activity.** B4.6.2 later
+requires distinct PC source-pinned A/B admission and user review.
+
 **P08-B4.6 next after B4.5.5 acceptance:** Per original
 roadmap, prepare *PC-only* repeated six-session
 Track A-vs-Track B counterbalanced AB/BA/AB study
