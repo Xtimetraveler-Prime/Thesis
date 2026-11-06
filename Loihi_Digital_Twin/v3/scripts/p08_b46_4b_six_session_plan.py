@@ -15,7 +15,7 @@ import sys
 
 SCHEMA = "p08-b46-six-new-coldboot-auth-once-A-B-study-readiness-plan-v1"
 BOUNDARY_SCHEMA = "p08-b46-a-vs-b-auth-once-service-boundary-static-audit-v1"
-SOURCE_SCHEMA = "p08-b46-original-A-vs-unprotected-B-auth-once-rebuilt-A21-offline-source-gate-v1"
+SOURCE_SCHEMA = "p08-b46-reconstructed-A21-vs-B-auth-once-offline-source-gate-v1"
 A_SCHEMA = "p08-b46-rebuilt-A21-1024-independent-physical-neural-and-timing-v1"
 B_SCHEMA = "p08-b45-unprotected-full1024-independent-real-jtag-v1"
 A_ARM = "A_REBUILT_A21_SEPARATELY_PHYSICALLY_ACCEPTED_42_NEURONS_26_DISPATCHES"
