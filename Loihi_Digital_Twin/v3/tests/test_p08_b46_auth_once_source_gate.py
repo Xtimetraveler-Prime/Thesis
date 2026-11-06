@@ -196,6 +196,9 @@ def rebuilt_A21(tmp_path,monkeypatch):
                 dest=(stage/"include"/name)
                 dest.parent.mkdir(exist_ok=True)
                 shutil.copyfile(original,dest)
+    # Actual Vitis builder imports all originals into the standalone
+    # app/src and duplicates P07 headers under app/src/include.
+    shutil.copytree(stage,build/"vitis_workspace"/"p08_a2_board"/"src")
     report=tmp_path/"rebuilt_pc_admission.json"
     return build,elf,xsa,report
 
@@ -205,6 +208,7 @@ def test_distinct_rebuilt_A21_original_frozen_source_host_pass(rebuilt_A21):
     outcome=gate.rebuilt.attest(build,xsa,report)
     assert outcome["schema"]==gate.rebuilt.SCHEMA
     assert outcome["original_A2_1_source_files_byte_exact_to_rebuilt_stage"] is True
+    assert outcome["Vitis_actual_imported_A2_1_C_and_header_source_byte_exact_to_stage"] is True
     assert outcome["new_A2_1_candidate_KV260_1024_neural_oracle_acceptance"] is False
     assert outcome["historical_original_A2_1_ELF_recovered"] is False
     assert outcome["ELF_header_and_PT_LOAD_checks"]["original_64MiB_DDR_disjoint"] is True
