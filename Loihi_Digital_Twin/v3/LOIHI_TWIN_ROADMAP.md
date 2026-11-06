@@ -1,6 +1,92 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.5 ACTIVE — V2 once real 1024 physical preliminary PASS, independent review CLI repair (2026-11-05 later)
+## P08-B4.5.5 ACTIVE — BOTH independent full1024 V2 physical PASS; auditable quantitative closeout (2026-11-05 local / Nov 6 UTC)
+
+**Major result: both modes physically completed and independently PASSED.**
+Operator supplied real independent full1024 once SHA
+`06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a`
+and unchecked SHA
+`68655383c582577986d7bdd253b21ecf1c933d234136d51b7b5076591c63cf79`.
+Both separate, real KV260 runs passed original P03/27-core
+neural scalar/FNV/10 output spike-vector parity for **ALL 1024
+TRAIN-derived original images**, complete timing+reset sidecar audit,
+and 27 original context backup physical readback equality after the run.
+No hardware write-protected backing or transient-corruption exclusion
+is claimed. The earlier full1024 V1 PREIMAGE0 bind failure and its raw
+evidence remain separately preserved; new V2 fresh-state startup fixed
+the observed initialization path in the new real physical session.
+The user provided operator terminal output and independent JSON SHA,
+not the raw external files to GitHub.
+
+**Original B4.4.2 separately instrumented reset median** 5826.767549 ms
+versus **V2 once** 8.7669975823 ms and **V2 unchecked**
+8.7320072328 ms. Descriptive *ratio of medians from separate real
+sessions* ~664.63x and ~667.29x.
+**Original B4.4 complete A53 image-service median**
+13034.111500773894 ms versus **V2 once** 7225.137459123217 ms
+and **V2 unchecked** 7222.415631932163 ms, descriptive
+~1.804x complete-service ratio or ~44.57–44.59% lower service
+median. Old B4.4.2 showed 99.84% of reset time spent on the
+two full 13.5MiB source/destination SHA scans, vs ~7.025ms
+context memcpy. Original baseline service B4.4,
+reset profile B4.4.2 and new optimized runs are FOUR
+distinct physical sessions. No paired session-level uncertainty,
+significance, isolated PL compute/energy speedup, or secure
+backup equivalence is proven. All use 1023 ordinary frames,
+special trace ordinal 1023 excluded. Full original
+TRAIN derived source and official MNIST TEST seal preserved.
+
+**Current descendant research branch:**
+`agent/v3-p08-b45-comparison-and-b46-handoff`, stacked on
+unmerged draft PR #65. Dedicated PC-only source SHA-pinned
+`scripts/p08_b45_full1024_latency_synthesis.py`
+accepts the exact four independent original+optimized
+report SHAs, original model scalar and physical provenance,
+and the TWO real optimized 1024x256B A53 service timing
++ reset-profile binary captures. It replays original 1024
+CRC+monotonic six disjoint phases and both reset sidecars,
+validates actual per-run A53 CNTFRQ, all original independent
+report metrics, and outputs fresh external no-overwrite
+quantitative JSON plus readable Markdown per-phase share-of-sum
+and dominant remaining service phase. Native synthetic
+host-only negative tests and CI. **Operator has NOT yet run
+this new final four-report comparison on actual external raw
+sidecars**; do not invent specific new phase share results
+before local tool PASS and report hashes. No new hardware access
+or Vitis/XSDB/PuTTY is required for this step.
+
+**Exact PC-only commands and accepted hashes:**
+[docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md](docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md).
+The operator should verify the new report and return the six-phase
+results and SHA. This will close B4.5.5 and identify next dominant
+mixed PS+PL service interval.
+
+**P08-B4.6.1 FIRST PC-ONLY PROTOCOL DRAFT COMPLETED:**
+[docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md](docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md)
+defines the original-frozen A vs original-frozen B arm identities, exact
+six distinct coldboot sessions in AB / BA / AB pairs, 1023 ordinary
+frames, non-equivalent 42- vs 1010-neuron and 26- vs 702-dispatch
+workloads, actual per-session CNTFRQ, original oracle/FNV and
+recovery proofs, and pair-level median ratio analysis without
+fabricated image-level independent hardware trials. **This is
+NOT approval for any new JTAG or DDR activity.** B4.6.2 later
+requires distinct PC source-pinned A/B admission and user review.
+
+**P08-B4.6 next after B4.5.5 acceptance:** Per original
+roadmap, prepare *PC-only* repeated six-session
+Track A-vs-Track B counterbalanced AB/BA/AB study
+and its source/measurement/uncertainty protocol.
+Track A 42 neurons/26 dispatches vs Track B
+1010 neurons/702 dispatches: system/workload
+difference, NOT matched-complexity neural kernel.
+The existing hardware experiments DO NOT automatically
+authorize any further JTAG, and the reduced-integrity
+B4.5 optimized variant cannot be relabeled as original
+security-equivalent Track B. Original model/TEST sealed.
+
+---
+
+## P08-B4.5 HISTORICAL — V2 once real 1024 physical preliminary PASS, independent review CLI repair (2026-11-05 later)
 
 **Operator actual new V2 `once` full1024 physical observation:** original
 six DDR staging/readbacks exact, newly pinned V2 ELF downloaded,

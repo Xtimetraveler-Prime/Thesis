@@ -1,5 +1,71 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST REAL P08-B4.5 BOTH PHYSICAL FULL1024 INDEPENDENT ACCEPTANCES (OVERRIDES ALL LOWER STATUS).**
+> 2026-11-05 (local; JSON timestamp Nov 6 UTC): new original
+> V2 `once` independent FULL1024 real JTAG original frozen scalar,
+> 10 spikes + 26tick trace FNV, original source, 27 final DDR backup
+> and timing/reset report PASS; JSON
+> `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_V2_verified_20261106T005213Z.json`,
+> SHA `06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a`.
+> New V2 `unchecked` also independently PASS same original
+> 1024-frame numerical/reset/backup criteria;
+> `/home/dna/Thesis_Evidence/p08_b45_perf_unchecked_full1024_V2_verified_20261106T005240Z.json`,
+> SHA `68655383c582577986d7bdd253b21ecf1c933d234136d51b7b5076591c63cf79`.
+> Original B4.4.2 separately instrumented reset
+> median 5826.767549ms, V2 once 8.766998ms / unchecked 8.732007ms:
+> descriptive 664.6x / 667.3x ratio of separate medians.
+> Original B4.4 whole service median 13034.111501ms,
+> once 7225.137459ms / unchecked 7222.415632ms:
+> descriptive ~1.804x whole-image speed ratio.
+> Both selected trace ordinal 1023 excluded, 1023 ordinary frames.
+> Do NOT claim repeated counterbalanced statistical significance,
+> pure PL neural speedup, identical reset instrumentation,
+> memory write protection, transient DDR exclusion or energy.
+> The previously recorded V1 failed bind and preserved
+> signed raw evidence remain valid historical artifacts;
+> source of observed failure is solved sufficiently by genuine
+> V2 result, no repeat first16/full1024 physical runs needed.
+>
+> **ACTIVE** `agent/v3-p08-b45-comparison-and-b46-handoff`,
+> descendant of unmerged PR #65. Implements B4.5.5 **PC-only
+> physical quantitative synthesis**:
+> `scripts/p08_b45_full1024_latency_synthesis.py`
+> accepts FOUR SHA-pinned independent original B4.4 service,
+> B4.4.2 profiled reset, new V2 once/unchecked physical
+> reports; separately verifies both NEW raw original 1024x256B
+> A53 timing+reset physical captures and six CRC-additive
+> clock-phase counters with actual per-session CNTFRQ.
+> Emits new no-overwrite JSON+Markdown, all 1023 ordinary
+> phase medians and share-of-sum percentages (identifies
+> next paging/dispatch 26tick mixed A53/PL bottleneck).
+> Native synthetic tests/CI PC only. Operator still needs
+> to run this script against genuine local evidence, share
+> source/report SHA and six phase breakdown before closing
+> B4.5.5. No new Vitis build/FPGA/JTAG/PuTTY currently needed.
+>
+> **B4.6.1 PC-only design draft now exists:**
+> `docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md`.
+> It explicitly defines original frozen A-vs-original frozen B
+> six independent coldboot sessions AB/BA/AB, 1023 ordinary
+> original TRAIN-source frames, actual A53 CNTFRQ, all
+> neural/FNV provenance, pre-registered pairing across 3
+> sessions (NOT treating 1023 images as independent boots),
+> workload-size mismatch and reduced-integrity optimized B
+> labeling restrictions. NO new physical authorization.
+>
+> **Exact commands and accepted paths**:
+> `docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md`.
+> After report PASS, B4.6 original roadmap next step is the
+> PC-only protocol for six truly independent counterbalanced
+> Track A-vs-Track B sessions AB/BA/AB with matched complete
+> service start/stop, 1023 ordinary frames, per-run A53 frequency,
+> independent coldboot/recovery and neural FNV, and study-level
+> uncertainty. Track A 42 neurons/26 dispatch vs B 1010/702:
+> system/workload not complexity-matched pure FPGA speedup.
+> DO NOT silently treat B4.5 unprotected optimized
+> configuration as original secure B4.4 Track B.
+> Never merge draft stack without explicit user authorization.
+>
 > **LATEST OPERATOR V2 physical once preliminary PASS + independent CLI fix (OVERRIDES LOWER).**
 > New V2 `once` genuine full1024 physical runner reports six original
 > physical DDR readbacks PASS, SHA-pinned V2 ELF, strict 1024 terminal,
