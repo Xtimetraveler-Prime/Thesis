@@ -1,0 +1,44 @@
+name: P08-B4.6.4b six new A/B coldboot study PC-only admission (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b46-4b-six-session-physical-admission]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_4b_six_session_plan.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b46_4b_six_session_plan.py'
+      - '.github/workflows/p08_b46_4b_six_session_study_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  strict-host-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Six independent session plan, signed-input negative tests, false hardware acceptance guard
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_4b_six_session_plan.py
+      - name: Frozen A/B service, recent A physical and original B verification regression
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_ab_service_boundary_audit.py \
+            tests/test_p08_b46_auth_once_source_gate.py \
+            tests/test_p08_b46_new_a21_physical_safety.py \
+            tests/test_p08_b45_full1024_latency_synthesis.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py
+      - name: No destructive JTAG or physical session acceptance
+        run: |
+          python3 -m py_compile scripts/p08_b46_4b_six_session_plan.py
+          bash -n scripts/run_p08_b46_rebuilt_a21_1024.sh
+          echo P08_B46_SIX_SESSION_PLAN_OFFLINE_NATIVE_PASS=1
+          echo P08_B46_NEW_ABBAAB_REPEATED_REAL_HARDWARE_SESSIONS_EXECUTED=0
+          echo P08_B46_NEW_ABBAAB_PHYSICAL_JTAG_AUTHORIZED=0
+          echo P08_B46_OFFICIAL_TEST_REMAINS_SEALED=1
