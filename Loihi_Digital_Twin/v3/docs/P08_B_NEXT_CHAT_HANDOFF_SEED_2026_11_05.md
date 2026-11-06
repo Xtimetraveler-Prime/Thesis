@@ -1,5 +1,35 @@
 # P08-B — CURRENT NEXT-CHAT HANDOFF (B4.6 A2.1 REAL1024 ACCEPTED; SIX NEW A/B SESSIONS NEXT)
 
+> **B4.6.4a LATEST PC-ONLY DEVELOPMENT (2026-11-05 local / 2026-11-06 UTC).**
+> `agent/v3-p08-b46-4a-service-boundary-audit` is NEW child branch
+> from `agent/v3-p08-b46-a21-candidate-physical-validation`, draft
+> PR #69. Existing accepted independent rebuilt A2.1 all1024
+> KV260 *single* physical evidence remains accepted: SHA
+> `b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`;
+> genuinely new ELF `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
+> original old SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+> still missing. No old immutable receipts rewritten.
+>
+> **NOW CURRENT TASK:** PC source-only original A (rebuilt source)
+> versus B_AUTH_ONCE_UNPROTECTED_V2 per-image A53 service timing
+> boundary audit and distinct launcher/DDR owner crosswalk. New
+> `scripts/p08_b46_ab_service_boundary_audit.py`, negative native
+> tests, no-board CI, roadmap and exact operator terminal runbook:
+> `docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md`.
+> It proves frozen C call order only: both A53 timers start before
+> per-image service and end after neural journal, but A one-core
+> prepare/ingress, B 27-context reset/virtual scheduler, A/B sidecar
+> and separate JTAG/DDR/recovery are NOT identical. Original B
+> authenticated-once source SHA bind is OUTSIDE per-image service.
+> Source report deliberately says PHYSICAL boundary equivalence
+> FALSE and NO new board authorization. Existing A accepted
+> single run and B standalone once 1024 are NOT any of the six
+> new AB/BA/AB sessions. No PL-only speedup or DDR XMPU
+> protection claim. User must run local pytest and external
+> source-audit JSON then provide SHA before stage signoff.
+> Official MNIST TEST remains sealed. No new JTAG/DDR/BOOT.BIN,
+> no forced user runs, no PR merge without explicit authorization.
+>
 
 # AUTHORITATIVE CURRENT HANDOFF — START HERE (2026-11-05 local / 2026-11-06 UTC)
 
