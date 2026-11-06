@@ -1,5 +1,30 @@
 # P08-B4.6.1/.2 — frozen Track A versus selected B_AUTH_ONCE study
 
+> **IMPORTANT A2.1 SOURCE BLOCKER / NO TEMP-BUILD STORAGE — 2026-11-05.**
+> Git's original P08-A3.2.2 capture protocol explicitly
+> identifies original A2.1 genuine ELF at
+> `/tmp/v3_p08_a2_build_20261018T193149Z/vitis_workspace/p08_a2_board.elf`
+> (historical accepted SHA
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`).
+> Operator reports that original directory is now MISSING after
+> a Linux PC reboot and no matching original ELF under $HOME.
+> Discovered `/tmp/pytest-of-dna` ELF files are SYNTHETIC TEST
+> fixtures (SHA `13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0`).
+> The A/B source gate must remain NO-GO until a genuine matching
+> ELF is recovered or a separate transparent reproducible
+> reconstruction and original numerical/hardware admission is completed.
+> **DO NOT disable/replace the historical SHA gate.**
+> Search archive/snapshot/off-machine backup or moved file names
+> before proposing a new Vitis ELF. A reboot or tmpfiles
+> cleanup CAN erase /tmp; the exact deletion cause is unknown.
+> Mandatory future practice: durable unique
+> `$HOME/Thesis_Evidence/<build>` paths OUTSIDE Git for
+> ALL meaningful ELFs, .map, stage sources, XSA/bitstream,
+> build identities and evidence; copy then SHA256-verify to
+> independent persistent backup. NO sole builds in
+> `/tmp`, `/var/tmp`, pytest temp or volatile caches.
+>
+
 **Selected research architecture: authenticated once, experimental
 UNPROTECTED backup, V2 A53 ELF.** Explicit user direction overrides
 the earlier unlaunched B4.6 protocol that had selected old B4.4
