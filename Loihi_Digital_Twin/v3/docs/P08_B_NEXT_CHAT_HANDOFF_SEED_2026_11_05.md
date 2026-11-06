@@ -1,5 +1,57 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST USER A2.1 REBUILD COMPLETED; DISTINCT SHA, B4.6.2R PC-ONLY ADMISSION NEXT (OVERRIDES ALL BELOW).**
+> User successfully rebuilt original Track A2.1 A53 firmware
+> under persistent
+> `/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z`.
+> GENUINE new A2.1 ELF SHA
+> `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`;
+> original XSA SHA
+> `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+> Vitis original builder pass, DDR PT_LOAD isolation pass,
+> and `P08_A2_1_KV260_LATENCY=NOT_RUN`.
+> OLD historical A2.1 ELF SHA
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+> WAS NOT reproduced (`ORIGINAL_A21_BINARY_REPRODUCED=0`).
+> The original accepted A2.1/A2.2 1024 physical results
+> are historical and attached only to original accepted A
+> SHA. NEVER change old original pin or pretend new ELF
+> has already passed real board oracle.
+>
+> **NEW CURRENT ACTIVE BRANCH**
+> `agent/v3-p08-b46-a21-rebuild-admission`, stacked on draft
+> #67, not merged. New `scripts/p08_b46_a21_rebuild_admission.py`
+> checks separate new A2.1 actual SHA, real original P03
+> XSA, Vitis receipt/build identity, complete original A2.1/P07/P03
+> staged C+headers hash to Git, real AArch64 ELF header and
+> load segments disjoint from 0x40000000–0x44000000, rejects
+> tmp as sole authoritative build, emits fresh source admission
+> with no false physical neural acceptance. Existing
+> `scripts/p08_b46_auth_once_source_gate.py` original SHA
+> default remains FAIL-CLOSED. New two explicit optional
+> `--a-rebuilt-admission` + `--a-rebuilt-xsa`
+> independently re-audit rebuilt actual candidate before
+> B1 strict original 1024 TRAIN source IDs and raw pixel SHA
+> against original genuine B4.5 once/64-shard oracle.
+> Output B4.6 manifest flags NEW A2.1 CANDIDATE,
+> old historical binary NOT recovered, per-session
+> physical JTAG NOT authorized, new A neural parity/TIMER
+> hardware acceptance still FALSE. No KV260 touched.
+>
+> **NEXT USER ACTION** PC-only commands and safeguards:
+> `docs/P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md`.
+> Run new native host tests, new A source/ELF admission,
+> then A candidate vs original B_AUTH_ONCE 1024 shared TRAIN
+> source gate. Share both new JSON SHA and any NO-GO. Only
+> after both PC gates pass do we design new distinct
+> user-authorized A candidate 1024 physical revalidation runner
+> + independent P07 packed oracle and A53 timer evaluation.
+> Do NOT invoke historical A3.2 physical runner against a
+> binary with different SHA, or waive original XSA/DDR/FPD
+> gates. NO six paired study runs yet. Keep original TEST
+> SEALED and build/evidence off /tmp with backup.
+>
+
 > **LATEST A2.1 ARCHIVE SEARCH AND CONTROLLED PC-ONLY REBUILD PATH.**
 > User found only `/home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz`
 > using their broad home/archive search. Original Git
