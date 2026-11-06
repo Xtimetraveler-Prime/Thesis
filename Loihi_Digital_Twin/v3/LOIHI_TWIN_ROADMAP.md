@@ -1,5 +1,17 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.6.4a ACTIVE — original A/B_AUTH_ONCE A53 boundary STATIC AUDIT (PC-only; 2026-11-05 local)
+
+**NEW child research branch** `agent/v3-p08-b46-4a-service-boundary-audit` descends directly from the accepted **B4.6.3 real rebuilt A2.1** draft PR #69 `agent/v3-p08-b46-a21-candidate-physical-validation` (all PRs unmerged). New `scripts/p08_b46_ab_service_boundary_audit.py` checks byte-exact original A2.1 C, B4.5 authenticate-once V2 C, original B meter C and both original plus separately rebuilt A/Track B JTAG launchers via fixed Git blob SHA1, then ordered service timestamps. PC-only negative tests verify source drift, start/end tampering, wrong B mode, rebuilt A specific NEW-ELF risk gate, symlinks and no-overwrite outside-checkout evidence. New GitHub Actions **NO BOARD** workflow, full local terminal commands and risk crosswalk in [B4.6.4a runbook](docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md).
+
+**Preserve previously accepted** single standalone rebuilt A2.1 physical receipt SHA `b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`, original source/ELF SHA `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`, 1023 ordinary-image A53 median 35.696886611897256ms, real 99,999,001Hz CNTFRQ; operator-attested original 1024 neural/26x42 trace parity. Historical old A2.1 ELF SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0` remains missing, never relabeled. Original B once source and single 1024 physical acceptance preserved. Both accepted standalone runs count as ZERO of six **NEW** A/B sessions.
+
+**Static source finding, NOT new hardware acceptance:** A `execute_image` entry timer starts before validated encoded-image load, P07 prepare and 26 one-core dispatches; ends after neural journal/selected trace flush, before A timing sidecar. B meter starts before **27-context** reset and raw input encode, includes 26-tick virtual scheduler/702 dispatches and ends after neural journal, before B timing/reset/progress writes. B once-only source SHA bind runs outside all per-image timers. Both use A53 CNTVCT/CNTFRQ and broad entry-to-neural-journal-commit definition, but neural work, reset/ingress, sidecar overhead, DDR ownership and JTAG/FPD+LPD/coldboot protocol differ. **Identical A/B physical timing boundaries NOT PROVEN; six-run source/ELF, DDR owner and coldboot/recovery readiness NOT PROVEN. No new board/JTAG authorizations**. No claim of pure PL compute, matched model complexity, memory-XMPU backup protection, energy or significance. Official MNIST TEST sealed.
+
+**Operator verification still pending:** first run new native tests and write new `$HOME/Thesis_Evidence/p08_b46_ab_boundary_source_audit_<UTC>.json` using the [runbook](docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md), return SHA256 and logs. Next separately reviewed phase: per-session source+oracle+timing+physical risks, six independent coldboots `A B / B A / A B`, individual approval before each physical action, distinct append-only evidence and mandatory power-cycle after any JTAG. No unapproved hardware, no PR merge.
+
+---
+
 ## P08-B4.6.3 ACCEPTED — genuine rebuilt A2.1 1024-image KV260 physical + separate independent PC rereview (2026-11-05 local / 2026-11-06 UTC)
 
 **CURRENT STATUS: COMPLETE for standalone reconstructed A2.1 1024-image physical revalidation. B4.6 six-session comparison NOT RUN.** User physically executed exact NEW original-source rebuilt A2.1 A53 ELF SHA
