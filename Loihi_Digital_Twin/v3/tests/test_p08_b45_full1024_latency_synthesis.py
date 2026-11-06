@@ -133,7 +133,12 @@ def signed_inputs(tmp_path,monkeypatch):
             },
         },
     }
-    writejson(a,x);writejson(b,y)
+    writejson(a,x)
+    # Synthetic signed baseline SHA must be installed before constructing
+    # signed nested provenance references from later synthetic reports.
+    monkeypatch.setitem(syn.SHA,"original_service",checksum(a))
+    y["accepted_original_1023_B4_4_timing_report_sha256"]=syn.SHA["original_service"]
+    writejson(b,y)
     od,_=sidecars(c,"once")
     ud,_=sidecars(d,"unchecked")
     writejson(once,od);writejson(unchecked,ud)
