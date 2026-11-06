@@ -1,6 +1,11 @@
 # B4.6 reconstructed A2.1: first genuine 1024 KV260 physical revalidation
 
-**STATUS: SOURCE-CODE READY / PC CI PASS; NO NEW PHYSICAL RESULT REPORTED.**
+> **PHYSICAL EXPERIMENT ACCEPTED, CURRENT AS OF NOV 6 UTC — READ THIS BEFORE THE ORIGINAL INSTRUCTIONS BELOW.**
+> The operator completed the ONE rebuilt A2.1 all-1024 TRAIN-derived KV260 JTAG validation and independent original P07 packed neural / 26×42 trace / A53 clock and timing acceptance. Runner `script_exit_status=0` and `P08_B46_NEW_REBUILT_A21_ORIGINAL_1024_PHYSICAL_AND_INDEPENDENT_PASS=1`. Evidence dir `/home/dna/Thesis_Evidence/p08_b46_A21_rebuilt_real1024_20261106T033101Z/`; report SHA `b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`; independent PC rereview of SAME captured evidence `/home/dna/Thesis_Evidence/p08_b46_rebuilt_A21_rereview_20261106T034152Z.json` has the SAME SHA; physical output SHA manifest digest `7978b82ade256fc9e419510036131115e93a18b6b80e55048e3132904d223a7e`. Measured A53 counter 99,999,001Hz and 1023 ordinary-frame median 35.696886611897256ms. Historical original A2.1 ELF SHA remains different and not reproduced. This accepted run is **NOT** any of six NEW B4.6 A/B physical study sessions, and a second rereview of the same evidence is not a second boot. The status/instructions below are retained as historical execution reproducibility instructions, **not a request to re-run A2.1**. No A-vs-B matching timing-boundary proof or new A/B six-session JTAG approval exists. The board displayed mandatory "REBOOT KV260"; no separate power-cycle confirmation was supplied. Verify physical power-cycle before any new JTAG.
+>
+> Accepted receipt and current next steps: [B4.6 rebuilt A2.1 physical acceptance](P08_B46_REBUILT_A21_REAL1024_ACCEPTANCE_AND_NEXT_STUDY_2026_11_05.md), [current developer handoff](P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md).
+>
+**HISTORICAL AT TIME OF ORIGINAL RUNBOOK CREATION:** **STATUS: SOURCE-CODE READY / PC CI PASS; NO NEW PHYSICAL RESULT REPORTED.**
 This is ONE original-source rebuilt A2.1 (new SHA) real
 1024 TRAIN-derived physical neural/time session, NOT six independent
 A-vs-B_AUTH_ONCE AB/BA/AB study sessions. The historical Track A2.1
