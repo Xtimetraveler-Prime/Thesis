@@ -1,0 +1,47 @@
+name: P08-B4.6 A2.1 versus B_AUTH_ONCE A53 service boundary source audit (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b46-ab-service-boundary-audit]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_ab_service_boundary_audit.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b46_ab_service_boundary_audit.py'
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_a2_board.c'
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_b45_perf_once_full1024_a53.c'
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_b2_service_meter.c'
+      - 'Loihi_Digital_Twin/v3/scripts/run_p08_a3_2_1024.sh'
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b45_perf_full1024_physical_run.py'
+      - '.github/workflows/p08_b46_ab_service_boundary_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  frozen-boundary-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Source snapshot and negative boundary/timing/launcher tests only
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_ab_service_boundary_audit.py
+      - name: Preserve original B46 exact source and original B45 accepted report parsers
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_auth_once_source_gate.py \
+            tests/test_p08_b45_full1024_latency_synthesis.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py
+      - name: Native syntax and explicit NO NEW HARDWARE status
+        run: |
+          python3 -m py_compile scripts/p08_b46_ab_service_boundary_audit.py
+          bash -n scripts/run_p08_a3_2_1024.sh
+          echo P08_B46_AB_SOURCE_AUDIT_TESTS_PC_ONLY_PASS=1
+          echo P08_B46_AB_A2_1_GENUINE_ELF_RECOVERED=0
+          echo P08_B46_AB_SIX_NEW_PHYSICAL_RUNS_AUTHORIZED=0
+          echo P08_B46_AB_PAIRED_REAL_PHYSICAL_COMPARISON_ACCEPTED=0
