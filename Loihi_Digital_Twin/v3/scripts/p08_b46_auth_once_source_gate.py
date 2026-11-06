@@ -62,7 +62,7 @@ def audit(a_elf:Path,b_elf:Path,a_stage:Path,train:Path,frozen:Path,
           b_oracle:Path,b_once_report:Path,synthesis:Path,out:Path)->dict:
     check(out.is_absolute() and out.parent.is_dir() and
           not out.exists() and not out.is_symlink() and
-          not out.resolve().is_relative_to(b1.ROOT.resolve()),
+          not out.resolve().is_relative_to(Path(__file__).resolve().parents[1]),
           "new external absolute no-overwrite manifest required")
     check(sha(a_elf)==A_ELF_SHA and
           a_elf.name=="p08_a2_board.elf" and
