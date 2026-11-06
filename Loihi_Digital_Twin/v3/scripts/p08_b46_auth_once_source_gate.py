@@ -23,7 +23,9 @@ from pathlib import Path
 import sys
 
 import p08_b1_matched_source_audit as b1
-import p08_a3_2_pair_check as a3
+# ORIGINAL A2.1 authentic A53 ELF pin from accepted P08-A3.2 source audit.
+# Do not import the full A3.2 verifier here: it imports torch at module
+# scope, which is unnecessary for this lightweight CI offline gate.
 import p08_b4_2_physical_run as original_b
 import p08_b45_perf_full1024_elf_admission as b45elf
 
@@ -65,8 +67,7 @@ def audit(a_elf:Path,b_elf:Path,a_stage:Path,train:Path,frozen:Path,
           not out.resolve().is_relative_to(Path(__file__).resolve().parents[1]),
           "new external absolute no-overwrite manifest required")
     check(sha(a_elf)==A_ELF_SHA and
-          a_elf.name=="p08_a2_board.elf" and
-          a3.ELF_A21_SHA256==A_ELF_SHA,
+          a_elf.name=="p08_a2_board.elf",
           "original accepted A2.1 ELF SHA/identity changed")
     check(sha(b_elf)==B_ELF_SHA and
           b_elf.name=="p08_b45_perf_once_full1024.elf",
