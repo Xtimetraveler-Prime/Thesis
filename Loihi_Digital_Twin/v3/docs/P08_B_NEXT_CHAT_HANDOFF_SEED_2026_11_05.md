@@ -1,5 +1,33 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST A2.1 ARCHIVE SEARCH AND CONTROLLED PC-ONLY REBUILD PATH.**
+> User found only `/home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz`
+> using their broad home/archive search. Original Git
+> `docs/P08_A3_1_PHYSICAL_ACCEPTANCE.md` establishes that
+> A3.1 pilot used **A2.2 detailed per-tick ELF** SHA
+> `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`,
+> not A2.1 image-only. The tar contents have NOT yet been
+> listed; verify read-only with
+> `tar -tzf "$HOME/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz" | grep -Ei 'p08_a2_board[.]elf|p08_a2_2_board[.]elf|build_identity|[.]elf$'`.
+> If a genuine A2.1 ELF is inside, extract separately OUTSIDE
+> existing accepted evidence and check original SHA
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`.
+> Otherwise use the original historical script
+> `scripts/build_p08_a2.sh` with
+> `P08_A2_BUILD_DIR="$HOME/Thesis_Evidence/p08_a2_1_rebuild_<UTC>"`,
+> `P03_DIAG_REPORTS="$PWD/vivado/build/p03_2c_fpd128_route_20261011T225538Z/reports"`
+> (only if actual accepted routed XSA SHA
+> `52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`),
+> after sourcing Vitis 2025.2. This build stage only,
+> no board. Compare the new ELF SHA to accepted A2.1.
+> If different, DO NOT spoof original SHA or change
+> original accepted B4.6 gate: treat it as NEW candidate
+> pending separately reviewed static, numerical and
+> physical reacceptance. Archive build sources, ELF/map,
+> build_identity and Vitis build log persistently and
+> SHA-verify independent backup.
+>
+
 > **CRITICAL ARTIFACT RETENTION / B4.6 BLOCKER — 2026-11-05 local.**
 > The historical genuine accepted Track A A2.1 Vitis standalone
 > ELF SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
