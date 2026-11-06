@@ -167,7 +167,7 @@ def test_cannot_claim_second_slot_without_new_first_ledger(sample):
 
 def test_wrong_arm_or_recycled_run_directory_rejected(sample):
     wrong=sample["A_run"]
-    wrong.rename(sample["root"]/"old_runner_evidence")
+    sample["A_run"] = wrong.rename(sample["root"]/"old_runner_evidence")
     with pytest.raises(receipt.SessionNoGo,match="exact slot and arm"):
         add_one(sample,1)
 
