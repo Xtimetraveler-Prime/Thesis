@@ -222,6 +222,6 @@ def test_B_original_independent_verifier_schema_contract_not_guessed():
     receipt_source=(ROOT/"scripts"/"p08_b46_4b_session_receipt.py").read_text()
     assert 'return {"ordinary_frames":1023' in original
     assert '"whole_image_service_descriptive_1023":service_summary' in original
-    assert '["ordinary_frames"]' in plan_source
+    assert '.get("ordinary_frames") == 1023' in plan_source
     assert 'service.get("ordinary_frames") == 1023' in receipt_source
     assert 'ordinary_frame_count' not in plan_source
