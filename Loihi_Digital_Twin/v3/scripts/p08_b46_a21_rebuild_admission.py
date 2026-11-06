@@ -87,20 +87,14 @@ def validate_elf_header_and_loads(blob:bytes)->dict:
     return {"aarch64_little_endian_elf64":True,"PT_LOAD":loads,
             "original_64MiB_DDR_disjoint":True}
 
-def attest(build:Path,xsa:Path,out:Path)->dict:
+def inspect_rebuild(build:Path,xsa:Path)->dict:
+    """Independent read-only reinspection (reusable by the B4.6 study gate)."""
     must(build.is_absolute() and build.is_dir() and not build.is_symlink() and
          not build.resolve().is_relative_to(ROOT.resolve()),
          "isolated existing persistent build dir outside checkout required")
     must("/tmp/" not in str(build)+"/" and "/var/tmp/" not in str(build)+"/" and
          not str(build).startswith(("/tmp","/var/tmp","/dev/shm")),
          "historical volatile /tmp or /var/tmp not a durable build root")
-    must(out.is_absolute() and out.parent.is_dir() and
-         not out.exists() and not out.is_symlink() and
-         not out.resolve().is_relative_to(ROOT.resolve()),
-         "fresh no-overwrite external JSON path required")
-    must(out.resolve()!=build.resolve() and
-         not out.resolve().is_relative_to(build.resolve()),
-         "source build must stay immutable (report outside build)")
     must(xsa.is_absolute() and sha(xsa)==P03_XSA_SHA,
          "original accepted P03.2c routed hardware XSA SHA changed")
     elf=build/A_BUILD_REL
@@ -165,6 +159,16 @@ def attest(build:Path,xsa:Path,out:Path)->dict:
         "official_MNIST_TEST":"SEALED_NOT_ACCESSED",
         "new_board_or_XSDB_contact":False,
     }
+    return output
+
+def attest(build:Path,xsa:Path,out:Path)->dict:
+    must(out.is_absolute() and out.parent.is_dir() and
+         not out.exists() and not out.is_symlink() and
+         not out.resolve().is_relative_to(ROOT.resolve()),
+         "fresh no-overwrite external JSON path required")
+    must(not out.resolve().is_relative_to(build.resolve()),
+         "source build must stay immutable (report outside build)")
+    output=inspect_rebuild(build,xsa)
     with out.open("x",encoding="utf-8") as f:
         json.dump(output,f,indent=2,sort_keys=True)
         f.write("\n")
