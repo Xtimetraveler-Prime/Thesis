@@ -47,8 +47,7 @@ cd ~/Git/Thesis/Loihi_Digital_Twin/v3
 PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
   tests/test_p08_b46_ab_service_boundary_audit.py \
   tests/test_p08_b46_auth_once_source_gate.py \
-  tests/test_p08_b46_a21_rebuild_admission.py \
-  tests/test_p08_b46_rebuilt_a21_first1024_physical.py \
+  tests/test_p08_b46_new_a21_physical_safety.py \
   tests/test_p08_b45_full1024_latency_synthesis.py \
   tests/test_p08_b45_perf_full1024_independent_cli.py
 
