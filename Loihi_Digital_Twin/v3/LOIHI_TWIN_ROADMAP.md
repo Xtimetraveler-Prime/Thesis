@@ -1,5 +1,40 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.6 CRITICAL A2.1 COMPILED ARTIFACT RETENTION BLOCKER (2026-11-05)
+
+The user reports that the historical A2.1 genuine Vitis ELF
+originally built at
+`/tmp/v3_p08_a2_build_20261018T193149Z/vitis_workspace/p08_a2_board.elf`
+(accepted SHA256
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`)
+is no longer present following Linux PC restart. The path
+is established in original P08-A3.2.2 and A3.2.3 Git
+documents. Home-wide search found no matching original;
+current /tmp/pytest-of-dna p08_a2_board.elf files are only
+synthetic test fixtures SHA
+`13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0`.
+**B4.6.2 authentic A ELF admission BLOCKED** until exact
+accepted original genuine ELF is recovered from broader
+filesystem or existing archives/backups OR a new genuine
+Vitis ELF is separately source-pinned, checked and newly
+validated without impersonating the historical SHA.
+
+**Permanent handoff rule:** no irreplaceable built ELF,
+linker map, accepted XSA/bitstream, Vitis source stage,
+original trained model, numerical oracle or physical
+evidence shall have its SOLE copy under /tmp or /var/tmp.
+They may be erased at reboot or tmpfiles cleanup.
+Use unique persistent $HOME/Thesis_Evidence builds OUTSIDE
+the checkout plus independently SHA-verified off-machine
+backup and original build_identity.txt. Existing Git
+Markdown/source provenance is NOT proof that the missing
+compiled bytes are backed up. Do not tamper with original
+physical PASS evidence or relax accepted A2.1 SHA gates.
+NO physical activity authorized by this incident note.
+
+---
+
+
 ## P08-B4.6 ACTIVE — selected B_AUTH_ONCE V2 matched-source study PC gate (2026-11-05 local / Nov 6 UTC)
 
 **P08-B4.5.5 CLOSED / OPERATOR-REPORTED ACCEPTANCE.** The
