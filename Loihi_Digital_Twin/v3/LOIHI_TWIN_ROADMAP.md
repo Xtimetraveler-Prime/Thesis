@@ -1,6 +1,98 @@
 # Loihi Digital Twin v3 Development Roadmap
 
-## P08-B4.6.3 NEW A2.1 candidate first 1024 real physical validation RUNNER READY — NOT RUN (Nov 6 UTC)
+## P08-B4.6.3 ACCEPTED — genuine rebuilt A2.1 1024-image KV260 physical + separate independent PC rereview (2026-11-05 local / 2026-11-06 UTC)
+
+**CURRENT STATUS: COMPLETE for standalone reconstructed A2.1 1024-image physical revalidation. B4.6 six-session comparison NOT RUN.** User physically executed exact NEW original-source rebuilt A2.1 A53 ELF SHA
+\`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793\`
+on KV260 with the original P03.2c accepted XSA SHA
+\`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f\`.
+Original P07 independent 1024-image TRAIN-derived packed software
+neural results, selected full 26-tick × 42-neuron trace and actual
+A53 image timing verified. Terminal:
+\`P08_A2_1_TIMING_STATUS=0x600D600D\`,
+\`P08_A2_1_KV260_STATUS=TERMINAL_BOTH_SUCCESS_UNVERIFIED_NUMERICS\`,
+**followed by** independent
+\`P08_B46_REBUILT_A21_INDEPENDENT_ORIGINAL_ALL1024_PACKED_NEURAL_AND_TIMING_PASS=1\`
+and final physical runner
+\`P08_B46_NEW_REBUILT_A21_ORIGINAL_1024_PHYSICAL_AND_INDEPENDENT_PASS=1\`.
+\`script_exit_status=0\`.
+
+**Exactly one genuine new physical session:**
+\`/home/dna/Thesis_Evidence/p08_b46_A21_rebuilt_real1024_20261106T033101Z/\`;
+\`p08_b46_rebuilt_A21_1024_independent.json\`
+SHA **\`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6\`**;
+\`physical_output_sha256.txt\`
+SHA \`7978b82ade256fc9e419510036131115e93a18b6b80e55048e3132904d223a7e\`.
+Operator reran independent physical verifier on SAME saved raw captures:
+\`/home/dna/Thesis_Evidence/p08_b46_rebuilt_A21_rereview_20261106T034152Z.json\`,
+SHA **identical**
+\`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6\`.
+The rereview is not a second physical session. A53 actual
+\`CNTFRQ_EL0=99999001\` Hz. **Median 1023 ordinary image service
+=35.696886611897256ms**, original trace index1023 excluded.
+The user submitted local hashes/terminal output and GitHub does
+not directly access their raw original PC-only report bytes.
+No second JTAG or B4.6 A/B run was performed.
+
+The original historical accepted A2.1 ELF SHA
+\`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0\`
+remains missing and not byte-reproduced. The current ACCEPTANCE is
+for a distinct rebuilt candidate with independently accepted
+numerics and A53 timer; the historical original SHA and A3.2
+old physical evidence remain unmodified. Original official
+MNIST TEST remains sealed.
+
+**B4.6 NOW NEXT GATE — PC-ONLY original A21 vs selected
+B_AUTH_ONCE V2 A53 SERVICE TIMING-BOUNDARY AUDIT.** Freeze exact
+service-start to journal-commit scope, reconstructed A
+42neuron/26dispatch and authentic-once original B
+1010neuron/702dispatch, 1023 ordinary images per physical
+session with selected trace ordinal1023 separately checked,
+per-run genuine CNTFRQ and actual sidecar schema/CRC.
+A's source times before \`load_image_record\` through after
+\`commit_frame_result\`; B_AUTH_ONCE meter starts before context
+reset, ends after \`commit_journal\`. Similar full-service
+intent, but different firmware: a formal signed matched
+boundary audit is **NOT yet proven**. Independently audit
+both distinct Track A vs B DDR/PS/boot/DMA ownership,
+approved source contracts and capture scripts. No hardware
+JTAG from source boundary work.
+
+**P08-B4.6 remaining after timer alignment:** implement
+verified independent run-sheet for six *new* separate
+coldboot/JTAG sessions, order \`A B / B A / A B\`, with
+user approval, independent A/B original neural oracle and
+trace, actual A53 times, no-overwrite physical captures,
+mandatory power-cycle after any physical attempt. The old
+B4.5 once session and this current rebuilt A-only
+revalidation do NOT count towards any of six B4.6 sessions.
+After six accepted, report three paired session-median
+B/A ratios, original 1023 ordinary images, ordered spread
+and explicit N=3-pair uncertainty. Do not claim statistically
+replicated speedup, matched 42 vs 1010 neuron complexity,
+pure PL speed or energy, secure backup, XMPU or
+unproven boot/DMA exclusion. User selected authentic-once
+V2 B_ELF SHA
+\`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85\`
+(no full reset SHA every frame, unprotected DDR backups).
+Board printed \`REBOOT KV260\`; the user's paste did
+**not** confirm the actual power-cycle occurred.
+
+**Workflow and current handoff:**
+[docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md](docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md)
+now has authoritative top context for branches, evidence dirs,
+commands, physics safety and the B4.6 closeout/beyond plan;
+[accepted new original KV260 physical record](docs/P08_B46_REBUILT_A21_REAL1024_ACCEPTANCE_AND_NEXT_STUDY_2026_11_05.md).
+Current unmerged stacked draft PR #69 on
+\`agent/v3-p08-b46-a21-candidate-physical-validation\`.
+New B4.6 timing-contract work should be separate child branch
+and PC-only first. No merged branches; operator performs all
+real board activity. Protect original TEST and all external
+accepted evidence, keep irreplaceable artifacts out of /tmp.
+
+---
+
+## P08-B4.6.3 NEW A2.1 candidate first 1024 real physical validation HISTORICAL PRE-ACCEPTANCE — RUNNER WAS READY / NOT RUN (Nov 6 UTC)
 
 Operator's separate source-gate for rebuilt A2.1 genuine ELF
 and accepted B_AUTH_ONCE V2 passed original 1024 raw TRAIN
