@@ -1,5 +1,62 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B4.6.3 NEW A2.1 candidate first 1024 real physical validation RUNNER READY — NOT RUN (Nov 6 UTC)
+
+Operator's separate source-gate for rebuilt A2.1 genuine ELF
+and accepted B_AUTH_ONCE V2 passed original 1024 raw TRAIN
+source image indices/pixel SHAs:
+`/home/dna/Thesis_Evidence/p08_b46_Arebuild_vs_Bauthonce_source_20261106T025815Z.json`,
+SHA `ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56`.
+Printed `P08_B46_SOURCE_GATE_PC_ONLY_PASS=1` and
+`P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0`.
+Distinct new ELF `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
+original historical ELF `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+NOT recovered/reproduced.
+
+New separate branch `agent/v3-p08-b46-a21-candidate-physical-validation`
+stacked on prior unmerged draft PR #68.
+New `scripts/run_p08_b46_rebuilt_a21_1024.sh`
+derives from original accepted A3.2 JTAG runner and keeps original
+historical runner SHA and evidence unchanged. NEW physical script
+locks exact new candidate, signed original 1024 A-vs-B source
+SHA and original independent new A source/ELF admission,
+requires explicit DESCTRUCTIVE JTAG/64MiB DDR/memory risk/
+TRAIN-only/mandatory-reboot/new ELF approvals. Its first
+mode is PC-only `P08_B46_PREFLIGHT_ONLY=YES` with no
+hardware contact. If later executed by USER after fresh
+dedicated disposable KV260 boot, first checks FPD HPM0 128bit,
+original P07 source physical staging+readback, original P03.2c
+PL programming, new reconstructed A2.1 ELF download,
+1024 journal/trace/image timing capture. It invokes new
+`scripts/p08_b46_a21_rebuilt_independent_physical_verify.py`
+requiring actual original P07 packed software oracle ALL1024,
+selected trace26x42, 1024 A53 CRC timing/actual CNTFRQ,
+and unique physical evidence with no six-run claim.
+A53/DDR boot ownership NOT PROVEN, unprotected risks explicit;
+must power-cycle KV260 after each destructive attempt.
+PC-only native/CI test safety, original frozen source, TEST seal.
+
+**USER has NOT yet performed this NEW real A2.1 experiment.**
+Consequently rebuilt A2.1 neural numerical parity remains
+pending real KV260 validation and original A/B service
+timing boundary parity remains unverified. No B4.6 six-session
+A B/B A/A B benchmark is accepted, and prior genuine
+B4.5 once 1024 run cannot substitute for a new B4.6 replicate.
+
+**Operator's EXACT current first physical runbook:**
+[docs/P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md](docs/P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md).
+Next gate after A21 independent real PASS+SHA: inspect A/B
+common start→neural journal commit scope and both DDR
+source/PS reset/physical runner contracts. Then source-gate
+six truly independent coldboots AB/BA/AB, each new
+permission, reboot, scalar oracle, actual clock and full
+1023 ordinary-frame capture, with independent session
+medians and explicit network-size mismatch.
+No physical study authorization inferred from PC-only tests.
+
+---
+
+
 ## P08-B4.6.2R ACTIVE — new A2.1 genuine Vitis ELF distinct SHA PC reacceptance (2026-11-05 local / Nov 6 UTC)
 
 The operator completed a genuine original-source Vitis 2025.2
