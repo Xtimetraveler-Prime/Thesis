@@ -239,7 +239,10 @@ def main(argv=None)->int:
         print("P08_B46_AUTH_ONCE_SOURCE_NO_GO="+str(err),
               file=sys.stderr,flush=True)
         return 3
-    print("P08_B46_ORIGINAL_A_VS_AUTH_ONCE_FROZEN_1024_TRAIN_POPULATION_PASS=1")
+    if args.a_rebuilt_admission is not None:
+        print("P08_B46_REBUILT_A21_VS_AUTH_ONCE_FROZEN_1024_TRAIN_POPULATION_PASS=1")
+    else:
+        print("P08_B46_ORIGINAL_A_VS_AUTH_ONCE_FROZEN_1024_TRAIN_POPULATION_PASS=1")
     print("P08_B46_TRACK_A_A21_HISTORICAL_SHA="+A_ELF_SHA)
     print("P08_B46_TRACK_A_ACTUAL_SELECTED_SHA="+ans["selected_A_real_elf_sha256"])
     print("P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0" if args.a_rebuilt_admission is not None else "P08_B46_ORIGINAL_A2_1_PINNED_SHA_ACCEPTED=1")
