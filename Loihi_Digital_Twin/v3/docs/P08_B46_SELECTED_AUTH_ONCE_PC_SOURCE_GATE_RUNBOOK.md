@@ -1,5 +1,26 @@
 # P08-B4.6.1/.2 — frozen Track A versus selected B_AUTH_ONCE study
 
+> **A3.1 TAR DOES NOT BY ITSELF RESTORE A2.1.**
+> User found `~/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz`.
+> Original accepted A3.1 pilot used **A2.2 detailed per-tick
+> instrumentation** with ELF SHA
+> `87cf5fc4fe37d9d053a3c365db8ae9fdc7e782857612f273835cf5e611aba361`,
+> whereas the required frozen A2.1 image-only ELF had
+> `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`.
+> Archive contents not yet confirmed. Inspect via
+> `tar -tzf "$HOME/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz"`
+> without extracting over saved evidence. If no exact
+> SHA-matching original A2.1 ELF exists, build with the
+> **existing frozen** `scripts/build_p08_a2.sh` into
+> a NEW `$HOME/Thesis_Evidence/p08_a2_1_rebuild_<UTC>`
+> after sourcing installed Vitis 2025.2 and checking
+> SHA-pinned accepted P03.2c XSA. Any new hash different
+> from the original must be labeled a reconstructed candidate:
+> do not alter accepted historical source/ELF pins, old
+> evidence, or B4.6.2 source admission to make it pass.
+> New physical acceptance, if needed, is separately gated.
+>
+
 > **IMPORTANT A2.1 SOURCE BLOCKER / NO TEMP-BUILD STORAGE — 2026-11-05.**
 > Git's original P08-A3.2.2 capture protocol explicitly
 > identifies original A2.1 genuine ELF at
