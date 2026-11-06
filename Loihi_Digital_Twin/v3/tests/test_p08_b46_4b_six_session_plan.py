@@ -84,7 +84,7 @@ def sources(tmp_path, monkeypatch):
         "hardware_DDR_backup_protection_proven":False,
         "paired_AB_BA_AB_six_session_speedup_not_established":True,
         "actual_A53_CNTFRQ_hz":99999001,
-        "whole_image_service_descriptive_1023":{"ordinary_frame_count":1023},
+        "whole_image_service_descriptive_1023":{"ordinary_frames":1023},
         "original_OFFICIAL_MNIST_TEST":"SEALED_NOT_ACCESSED",
     })
     paths["a_rebuilt_elf"].write_bytes(gate.A_MARKER + b"\0synthetic fixture A")
