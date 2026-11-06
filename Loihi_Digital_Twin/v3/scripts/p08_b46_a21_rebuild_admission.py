@@ -39,6 +39,7 @@ SOURCES={
                          "p03_hw_xilinx_io.h"),
 }
 P07_HEADERS=SOURCES["software/p07/include"]
+VOLATILE_PREFIXES=(Path("/tmp"),Path("/var/tmp"),Path("/dev/shm"))
 
 class CandidateNoGo(ValueError):
     pass
@@ -92,9 +93,8 @@ def inspect_rebuild(build:Path,xsa:Path)->dict:
     must(build.is_absolute() and build.is_dir() and not build.is_symlink() and
          not build.resolve().is_relative_to(ROOT.resolve()),
          "isolated existing persistent build dir outside checkout required")
-    must("/tmp/" not in str(build)+"/" and "/var/tmp/" not in str(build)+"/" and
-         not str(build).startswith(("/tmp","/var/tmp","/dev/shm")),
-         "historical volatile /tmp or /var/tmp not a durable build root")
+    must(not any(build.resolve().is_relative_to(root) for root in VOLATILE_PREFIXES),
+         "historical volatile /tmp, /var/tmp or RAM-backed /dev/shm not a durable build root")
     must(xsa.is_absolute() and sha(xsa)==P03_XSA_SHA,
          "original accepted P03.2c routed hardware XSA SHA changed")
     elf=build/A_BUILD_REL
