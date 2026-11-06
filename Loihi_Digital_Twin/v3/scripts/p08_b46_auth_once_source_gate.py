@@ -28,8 +28,10 @@ import p08_b1_matched_source_audit as b1
 # scope, which is unnecessary for this lightweight CI offline gate.
 import p08_b4_2_physical_run as original_b
 import p08_b45_perf_full1024_elf_admission as b45elf
+import p08_b46_a21_rebuild_admission as rebuilt
 
 SCHEMA="p08-b46-original-A-vs-unprotected-B-auth-once-offline-source-gate-v1"
+REBUILT_SCHEMA="p08-b46-reconstructed-A21-vs-B-auth-once-offline-source-gate-v1"
 A_ELF_SHA="fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0"
 B_ELF_SHA="a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85"
 B_ONCE_INDEPENDENT_SHA="06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a"
@@ -61,14 +63,47 @@ def check_signed_json(path:Path,expected:str,schema:str)->dict:
     return body
 
 def audit(a_elf:Path,b_elf:Path,a_stage:Path,train:Path,frozen:Path,
-          b_oracle:Path,b_once_report:Path,synthesis:Path,out:Path)->dict:
+          b_oracle:Path,b_once_report:Path,synthesis:Path,out:Path,
+          a_rebuilt_admission:Path|None=None,
+          a_rebuilt_xsa:Path|None=None)->dict:
     check(out.is_absolute() and out.parent.is_dir() and
           not out.exists() and not out.is_symlink() and
           not out.resolve().is_relative_to(Path(__file__).resolve().parents[1]),
           "new external absolute no-overwrite manifest required")
-    check(sha(a_elf)==A_ELF_SHA and
-          a_elf.name=="p08_a2_board.elf",
-          "original accepted A2.1 ELF SHA/identity changed")
+    # Default historical path remains EXACTLY fail-closed. A separate
+    # explicit candidate option independently re-audits the new build;
+    # it NEVER makes the reconstructed SHA masquerade as original A2.1.
+    a_candidate=None
+    a_provenance="ORIGINAL_HISTORICAL_SHA_PINNED_A21"
+    a_actual_sha=A_ELF_SHA
+    study_A_arm=A_ARM
+    if a_rebuilt_admission is None:
+        check(a_rebuilt_xsa is None,
+              "rebuilt XSA without distinct candidate admission refused")
+        check(sha(a_elf)==A_ELF_SHA and
+              a_elf.name=="p08_a2_board.elf",
+              "original accepted A2.1 ELF SHA/identity changed")
+    else:
+        check(a_rebuilt_xsa is not None,
+              "rebuilt A2.1 requires original accepted P03 XSA to re-audit")
+        check(sha(a_elf)==rebuilt.NEW_A21_SHA and
+              a_elf.name=="p08_a2_board.elf",
+              "distinct newly rebuilt candidate ELF SHA changed")
+        check(a_rebuilt_admission.is_absolute() and
+              a_rebuilt_admission.is_file() and
+              not a_rebuilt_admission.is_symlink(),
+              "rebuilt host-only source admission missing")
+        # Re-inspect original actual Vitis build/source/ELF/XSA from disk,
+        # rather than trusting self-reported JSON Boolean flags.
+        reread=rebuilt.inspect_rebuild(a_elf.parent.parent,a_rebuilt_xsa)
+        a_candidate=json.loads(a_rebuilt_admission.read_text())
+        check(a_candidate==reread and
+              a_candidate.get("new_A2_1_candidate_KV260_1024_neural_oracle_acceptance") is False and
+              a_candidate.get("historical_original_A2_1_ELF_recovered") is False,
+              "rebuilt source manifest differs from independent read-only audit")
+        a_provenance="REBUILT_A21_NEW_SHA_PC_VALIDATED_PHYSICAL_PENDING"
+        a_actual_sha=rebuilt.NEW_A21_SHA
+        study_A_arm="A_REBUILT_A21_CANDIDATE_42_NEURONS_26_DISPATCHES"
     check(sha(b_elf)==B_ELF_SHA and
           b_elf.name=="p08_b45_perf_once_full1024.elf",
           "real accepted V2 authenticate-once ELF SHA changed")
@@ -129,14 +164,15 @@ def audit(a_elf:Path,b_elf:Path,a_stage:Path,train:Path,frozen:Path,
     schedule=[
       {"sequence_number":i+1,"pair":i//2+1,
        "position_in_pair":"first" if i%2==0 else "second",
-       "arm":arm,"fresh_coldboot_required":True,
+       "arm":(study_A_arm if arm==A_ARM else arm),
+       "fresh_coldboot_required":True,
        "individual_physical_JTAG_permission_granted":False,
        "new_signed_physical_capture_accepted":False}
        for i,arm in enumerate(ARM_ORDER)]
     result={
-      "schema":SCHEMA,
-      "study":"A ORIGINAL vs B_AUTH_ONCE V2 UNPROTECTED optimized system/workload",
-      "arm_A":A_ARM,
+      "schema":REBUILT_SCHEMA if a_candidate is not None else SCHEMA,
+      "study":"A original 42-neuron SOURCE (rebuilt ELF if selected) vs B_AUTH_ONCE V2 unprotected system/workload",
+      "arm_A":study_A_arm,
       "arm_B":B_ARM,
       "A_neurons":42,"A_FPGA_dispatches_per_image":26,
       "B_neurons":1010,"B_virtualized_cores":27,
@@ -148,6 +184,11 @@ def audit(a_elf:Path,b_elf:Path,a_stage:Path,train:Path,frozen:Path,
       "identical_original_TRAIN_1024_source_index_and_raw_pixel_SHA":True,
       "same_network_complexity":False,
       "original_A_image_timing_elf_sha256":A_ELF_SHA,
+      "selected_A_real_elf_sha256":a_actual_sha,
+      "selected_A_elf_provenance":a_provenance,
+      "new_A_rebuilt_candidate_source_manifest_sha256":sha(a_rebuilt_admission) if a_candidate is not None else None,
+      "new_A_rebuilt_candidate_KV260_neural_parity_and_timing_reaccepted":False if a_candidate is not None else None,
+      "old_historical_A2_1_ELF_recovered":False if a_candidate is not None else True,
       "optimized_B_once_full1024_elf_sha256":B_ELF_SHA,
       "B_original_scalar_oracle_sha256":B_ORACLE_SHA,
       "accepted_B_once_1024_independent_sha256":B_ONCE_INDEPENDENT_SHA,
@@ -183,18 +224,25 @@ def main(argv=None)->int:
                  "frozen_b","b_oracle","b_once_report",
                  "b45_synthesis","out"):
         p.add_argument("--"+name.replace("_","-"),required=True,type=Path)
+    p.add_argument("--a-rebuilt-admission",type=Path,default=None,
+                   help="distinct newly rebuilt A2.1 PC report (NOT historical ELF)")
+    p.add_argument("--a-rebuilt-xsa",type=Path,default=None,
+                   help="genuine original P03 XSA for separate rebuilt A2.1 reinspection")
     args=p.parse_args(argv)
     try:
         ans=audit(args.a_elf,args.b_once_elf,args.a_stage,
                   args.train_data_dir,args.frozen_b,args.b_oracle,
-                  args.b_once_report,args.b45_synthesis,args.out)
-    except (GateNoGo,b1.P08B1Error,ValueError,TypeError,
+                  args.b_once_report,args.b45_synthesis,args.out,
+                  args.a_rebuilt_admission,args.a_rebuilt_xsa)
+    except (GateNoGo,rebuilt.CandidateNoGo,b1.P08B1Error,ValueError,TypeError,
             OSError,KeyError,AssertionError) as err:
         print("P08_B46_AUTH_ONCE_SOURCE_NO_GO="+str(err),
               file=sys.stderr,flush=True)
         return 3
     print("P08_B46_ORIGINAL_A_VS_AUTH_ONCE_FROZEN_1024_TRAIN_POPULATION_PASS=1")
-    print("P08_B46_TRACK_A_A21_EXACT_SHA="+A_ELF_SHA)
+    print("P08_B46_TRACK_A_A21_HISTORICAL_SHA="+A_ELF_SHA)
+    print("P08_B46_TRACK_A_ACTUAL_SELECTED_SHA="+ans["selected_A_real_elf_sha256"])
+    print("P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0" if args.a_rebuilt_admission is not None else "P08_B46_ORIGINAL_A2_1_PINNED_SHA_ACCEPTED=1")
     print("P08_B46_TRACK_B_AUTH_ONCE_V2_EXACT_SHA="+B_ELF_SHA)
     print("P08_B46_B45_VERIFIED_ONE_SESSION_SOURCE_SHA="+B_ONCE_INDEPENDENT_SHA)
     print("P08_B46_NEW_SIX_SESSION_STUDY_JTAG_AUTHORIZED=0")
