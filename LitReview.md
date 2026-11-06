@@ -470,6 +470,131 @@ The final two links appear in the attached project note `ML on FPGA with Vivado.
 
 ---
 
+
+# G. Additional FPGA emulation, acceleration, interoperability, and benchmarking papers (2024–2025)
+
+These five sources were identified during the literature-review expansion and checked against their publication records. They extend the earlier architectural-emulation bibliography with complementary research on modular FPGA emulators, application-specialized accelerators, cross-platform model representations, and standardized measurement. They are **literature references**, not implementations reproduced or measured by this project.
+
+## 16. ModNEF (Saulquin et al., 2025): modular FPGA neuromorphic emulation
+
+**Title:** *ModNEF: An Open Source Modular Neuromorphic Emulator for FPGA for Low-Power In-Edge Artificial Intelligence*  
+**Authors:** Aurélie Saulquin, Mazdak Fatahi, Pierre Boulet, Samy Meftali  
+**Venue:** *ACM Transactions on Architecture and Code Optimization* 22(2), Article 73, 1–24 (2025)  
+**DOI:** [10.1145/3730581](https://doi.org/10.1145/3730581)  
+**Source:** https://gitlab.univ-lille.fr/bioinsp/ModNEF  
+**Relevance:** **Very high — direct comparison for configurable FPGA emulators.**
+
+### Approach and evaluated results
+
+- Open-source digital FPGA SNN emulator composed of communicating modules, with configurable neuron and synaptic behavior.
+- Supports alternative LIF neuron modules and network structures, including recurrent arrangements; its architecture is explicitly **clock-driven**, updating neuron state periodically even without input spikes.
+- Evaluated MNIST and N-MNIST inference, latency, hardware resources, and power on a Xilinx Zynq XC7Z020 FPGA.
+
+### Relation to this thesis
+
+ModNEF demonstrates that reconfigurable FPGA neuromorphic emulation and configurable networks are established research directions. The distinction worth investigating is not simply that this project uses an FPGA, but its **particular Loihi-1-inspired architectural semantics, software/hardware conformance boundaries, logical-core virtualization, DDR-backed context residency, and measured paging/routing/synchronization costs**. Do not compare ModNEF's per-image timing or power directly with KV260 results without matching the workloads and measurement scope.
+
+---
+
+## 17. Spiker+ (Carpegna et al., 2025): generated FPGA SNN accelerators
+
+**Title:** *Spiker+: A Framework for the Generation of Efficient Spiking Neural Networks FPGA Accelerators for Inference at the Edge*  
+**Authors:** Alessio Carpegna, Alessandro Savino, Stefano Di Carlo  
+**Venue:** *IEEE Transactions on Emerging Topics in Computing* (published version associated with DOI below; author preprint released 2024)  
+**DOI:** [10.1109/TETC.2024.3511676](https://doi.org/10.1109/TETC.2024.3511676)  
+**Preprint:** https://arxiv.org/abs/2401.01141  
+**Relevance:** High — reference for FPGA-specific specialization and efficiency.
+
+### Approach and evaluated results
+
+- Python-driven framework to generate customizable multilayer SNN inference accelerators with a library of resource-conscious neuron hardware.
+- Evaluates MNIST and Spiking Heidelberg Digits (SHD), including FPGA logic/memory resources, power and inference latency.
+- Shows the efficiency potential of **specializing hardware around a chosen model** rather than exposing a general-purpose neuromorphic manycore execution contract.
+
+### Relation to this thesis
+
+Spiker+ provides a useful contrast between an application-specialized SNN accelerator and an architectural emulator. Its performance can motivate hardware optimization, but high throughput on a chosen model does **not** by itself establish fidelity to Loihi's cores, packet semantics, resource capacities, or timestep behavior. Any quantitative comparison should preserve network, precision, clocking, and end-to-end timing boundaries.
+
+---
+
+## 18. FireFly v2 (Li et al., 2024): spatiotemporal FPGA dataflow optimization
+
+**Title:** *FireFly v2: Advancing Hardware Support for High-Performance Spiking Neural Network With a Spatiotemporal FPGA Accelerator*  
+**Authors:** Jindong Li, Guobin Shen, Dongcheng Zhao, Qian Zhang, Yi Zeng  
+**Venue:** *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems* 43(9), 2647–2660 (2024)  
+**DOI:** [10.1109/TCAD.2024.3380550](https://doi.org/10.1109/TCAD.2024.3380550)  
+**Author manuscript:** https://floyedshen.github.io/pdf/li2024fireflyv2.pdf  
+**Relevance:** High — contrasting high-performance accelerator design.
+
+### Approach and evaluated results
+
+- FPGA SNN accelerator using a spatiotemporal dataflow with multiple parallelism dimensions and a systolic-array spike-processing engine.
+- Designed to accommodate nonspiking operations as well as spike computation, improving compatibility with some modern SNN algorithms.
+- Evaluates processing performance and hardware efficiency; the authors compare throughput, DSP efficiency, and power efficiency against prior accelerators.
+
+### Relation to this thesis
+
+FireFly v2 illustrates the tradeoff between a **performance-optimized application dataflow** and a **specified neuromorphic processor model**. It is useful prior art for discussing compute parallelism, membrane-state storage, and speed/resource optimizations; it should not be counted as a Loihi architectural digital twin merely because it processes spikes.
+
+---
+
+## 19. Neuromorphic Intermediate Representation (Pedersen et al., 2024)
+
+**Title:** *Neuromorphic intermediate representation: A unified instruction set for interoperable brain-inspired computing*  
+**Authors:** Jens E. Pedersen, Steven Abreu, Matthias Jobst, et al.  
+**Venue:** *Nature Communications* 15, Article 8122 (2024)  
+**DOI:** [10.1038/s41467-024-52259-9](https://doi.org/10.1038/s41467-024-52259-9)  
+**Open access:** https://www.nature.com/articles/s41467-024-52259-9  
+**Relevance:** High — cross-platform model representation and reproducibility.
+
+### Approach and evaluated results
+
+- Defines Neuromorphic Intermediate Representation (NIR), a composable representation of neural computational primitives that separates a neural model from simulator- or hardware-specific implementation choices.
+- Demonstrates model exchange with **seven neuromorphic simulators and four digital hardware platforms**.
+- Explicitly treats discretization and execution-platform differences as reproducibility concerns.
+
+### Relation to this thesis
+
+NIR provides a useful framework for discussing **model portability versus numerical and architectural fidelity**. The project's Python oracle, network compiler, packed hardware image, and FPGA implementation share a specified execution contract, but that is not the same as claiming NIR compatibility or cross-platform interchangeability. A preserved computational representation can still leave core scheduling, routing, and physical timing outside its scope.
+
+---
+
+## 20. NeuroBench (Yik et al., 2025): neuromorphic measurement methodology
+
+**Title:** *The neurobench framework for benchmarking neuromorphic computing algorithms and systems*  
+**Authors:** Jason Yik, Korneel Van den Berghe, Douwe den Blanken, et al.  
+**Venue:** *Nature Communications* 16, Article 1545 (2025); published as a **Perspective**  
+**DOI:** [10.1038/s41467-025-56739-4](https://doi.org/10.1038/s41467-025-56739-4)  
+**Open access:** https://www.nature.com/articles/s41467-025-56739-4  
+**Benchmark framework:** https://github.com/NeuroBench/neurobench  
+**Relevance:** **Very high — benchmarking boundaries and interpretation.**
+
+### Approach and evaluated results
+
+- Defines community-oriented benchmark methodology with a **hardware-independent algorithm track** and a **hardware-dependent system track**.
+- Promotes explicit tasks, metrics and reproducible harnesses to make heterogeneous neuromorphic hardware and algorithm results easier to compare.
+- Separates algorithm complexity and task correctness from measured deployed-system performance.
+
+### Relation to this thesis
+
+NeuroBench provides methodological support for publishing **classification correctness, execution latency, throughput, actual hardware utilization, and energy only when measured at a disclosed boundary**. For the KV260 twin, it motivates separating Python/oracle predictions, Vivado implementation data, FPGA engine timing, PS scheduling, DDR transfers, routing/barriers, and true end-to-end board-local inference. Citing NeuroBench does not mean the project has executed NeuroBench's official harness.
+
+---
+
+## Cross-paper synthesis: architectural emulation versus inference acceleration
+
+| Source | Main contribution | Main evaluation focus | Important distinction |
+| --- | --- | --- | --- |
+| ModNEF | Configurable, modular clock-driven FPGA emulator | SNN accuracy, FPGA resources, latency, power | General modular SNN emulation, not a verified Loihi-1 multicore replica |
+| Spiker+ | Generated, specialized FPGA SNN accelerators | Accuracy, resource cost, power and latency | Deployment efficiency prioritized over emulating a reference processor |
+| FireFly v2 | Spatiotemporal accelerator dataflow | Throughput, DSP efficiency, power efficiency | High-throughput SNN dataflow rather than architecture-specific core behavior |
+| NIR | Common neural computation representation | Model interoperability across software/hardware | Computational portability does not ensure physical execution equivalence |
+| NeuroBench | Standardized benchmarking framework | Algorithm- and system-level benchmarking | Comparison quality depends on workloads, metrics, and measurement boundaries |
+
+**Implication for the review paper:** Compare system intent first (neural-model accelerator, architecture emulator, interoperable software representation, or benchmark framework), then compare fidelity, configurability, actual hardware resources, scaling, and measured runtime. Do not rank unlike systems by single headline latency, neuron count, or power numbers.
+
+---
+
 # F. Consolidated bibliography
 
 1. Michaelis, C., Lehr, A. B., Oed, W., & Tetzlaff, C. (2022). *Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian.* Frontiers in Neuroinformatics, 16, 1015624. https://doi.org/10.3389/fninf.2022.1015624
@@ -488,5 +613,11 @@ The final two links appear in the attached project note `ML on FPGA with Vivado.
 13. Renner, A., Sheldon, F., Zlotnik, A., Tao, L., & Sornborger, A. (2024). *The backpropagation algorithm implemented on spiking neuromorphic hardware.* Nature Communications, 15, 9691. https://doi.org/10.1038/s41467-024-53827-9
 14. Diehl, P. U., & Cook, M. (2015). *Unsupervised learning of digit recognition using spike-timing-dependent plasticity.* Frontiers in Computational Neuroscience, 9, 99. https://doi.org/10.3389/fncom.2015.00099
 15. Eshraghian, J. K., et al. (2023). *Training Spiking Neural Networks Using Lessons From Deep Learning.* Proceedings of the IEEE, 111(9), 1016–1054. https://doi.org/10.1109/JPROC.2023.3308088
+
+16. Saulquin, A., Fatahi, M., Boulet, P., & Meftali, S. (2025). *ModNEF: An Open Source Modular Neuromorphic Emulator for FPGA for Low-Power In-Edge Artificial Intelligence.* ACM Transactions on Architecture and Code Optimization, 22(2), Article 73, 1–24. https://doi.org/10.1145/3730581
+17. Carpegna, A., Savino, A., & Di Carlo, S. (2025). *Spiker+: A Framework for the Generation of Efficient Spiking Neural Networks FPGA Accelerators for Inference at the Edge.* IEEE Transactions on Emerging Topics in Computing. https://doi.org/10.1109/TETC.2024.3511676 ; https://arxiv.org/abs/2401.01141
+18. Li, J., Shen, G., Zhao, D., Zhang, Q., & Zeng, Y. (2024). *FireFly v2: Advancing Hardware Support for High-Performance Spiking Neural Network With a Spatiotemporal FPGA Accelerator.* IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 43(9), 2647–2660. https://doi.org/10.1109/TCAD.2024.3380550
+19. Pedersen, J. E., Abreu, S., Jobst, M., et al. (2024). *Neuromorphic intermediate representation: A unified instruction set for interoperable brain-inspired computing.* Nature Communications, 15, 8122. https://doi.org/10.1038/s41467-024-52259-9
+20. Yik, J., Van den Berghe, K., den Blanken, D., et al. (2025). *The neurobench framework for benchmarking neuromorphic computing algorithms and systems.* Nature Communications, 16, 1545 (Perspective). https://doi.org/10.1038/s41467-025-56739-4
 
 **Use as research notes:** Primary-source assertions, comparison interpretations, and speculative thesis gaps are deliberately separated above. Before the final thesis literature-review chapter, expand the search for Loihi-specific FPGA emulators, virtualized multicore SNN accelerators, neuromorphic paging architectures, and rigorous power/energy methodologies; revise novelty claims accordingly.
