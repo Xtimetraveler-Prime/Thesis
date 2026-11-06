@@ -56,7 +56,6 @@ def inputs(tmp_path,monkeypatch):
             "original_full1024_scalar_oracle":hashfile(oracle),
         }})
     monkeypatch.setattr(gate,"A_ELF_SHA",hashfile(aelf))
-    monkeypatch.setattr(gate.a3,"ELF_A21_SHA256",hashfile(aelf))
     monkeypatch.setattr(gate,"B_ELF_SHA",hashfile(belf))
     monkeypatch.setattr(gate,"B_ORACLE_SHA",hashfile(oracle))
     monkeypatch.setattr(gate,"B_ONCE_INDEPENDENT_SHA",hashfile(once))
