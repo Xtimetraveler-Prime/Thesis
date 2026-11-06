@@ -94,12 +94,12 @@ def sources(tmp_path, monkeypatch):
     monkeypatch.setattr(gate,"PINS",pins)
     # Preserve referencing synthetic SHA pins, WITHOUT mocking true oracle/CI.
     for label, key, target in (
+        ("a_prior_independent","new_rebuilt_A2_1_distinct_ELF_SHA256","a_rebuilt_elf"),
+        ("b_prior_independent","genuine_new_mode_specific_A53_ELF_sha256","b_auth_once_elf"),
         ("boundary","rebuilt_A21_new_accepted_ELF_SHA256","a_rebuilt_elf"),
         ("boundary","prior_A21_rebuilt_one_1024_physical_report_SHA256","a_prior_independent"),
         ("matched_source","selected_A_real_elf_sha256","a_rebuilt_elf"),
         ("matched_source","optimized_B_once_full1024_elf_sha256","b_auth_once_elf"),
-        ("a_prior_independent","new_rebuilt_A2_1_distinct_ELF_SHA256","a_rebuilt_elf"),
-        ("b_prior_independent","genuine_new_mode_specific_A53_ELF_sha256","b_auth_once_elf"),
     ):
         doc = json.loads(paths[label].read_text())
         doc[key] = sha(target)
@@ -159,6 +159,11 @@ def test_false_frozen_physical_claims_rejected_even_if_digests_replaced(
     doc=json.loads(sources[key].read_text())
     doc[field]=value
     save(sources[key],doc)
+    if key == "a_prior_independent":
+        boundary=json.loads(sources["boundary"].read_text())
+        boundary["prior_A21_rebuilt_one_1024_physical_report_SHA256"] = (
+            hashlib.sha256(sources[key].read_bytes()).hexdigest())
+        save(sources["boundary"],boundary)
     repin(sources,monkeypatch)
     with pytest.raises(gate.StudyNoGo,match=why):
         run(sources)
