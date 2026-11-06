@@ -100,7 +100,7 @@ def audit(build:Path,xsa:Path,source_report:Path,candidate_report:Path,
         "actual_real_A53_journal":journal,
         "actual_real_A53_selected_trace":trace,
         "actual_real_A53_timing":timing,
-        "actual_real_physical_DDR_readback_master":run/"readback"/"readback_40000000.bin",
+        "actual_real_physical_DDR_readback_master":run/"readback"/"readback_43F00000.bin",
     }
     need(all(v.is_file() for v in evidence.values()),"missing original evidence file")
     result={
