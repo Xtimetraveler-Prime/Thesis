@@ -1,0 +1,42 @@
+name: B4.6 newly rebuilt A2.1 source and ELF admission distinct from historical SHA (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b46-a21-rebuild-admission]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_a21_rebuild_admission.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_auth_once_source_gate.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b46_auth_once_source_gate.py'
+      - '.github/workflows/p08_b46_a21_rebuild_source_admission_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  host-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Rebuilt A2.1 independent ELF64, original C staged source, XSA, no-history-spoof source gate
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_auth_once_source_gate.py
+      - name: Preserve original 1,024-image full neural and phase tests, old pins, reset-binder
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_latency_synthesis.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
+            tests/test_p08_b45_full1024_reset_bind_repair.py
+      - name: Host-only syntax and independent immutable historical source pins
+        run: |
+          python3 -m py_compile scripts/p08_b46_a21_rebuild_admission.py scripts/p08_b46_auth_once_source_gate.py
+          grep -Fq 'fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0' scripts/p08_b46_auth_once_source_gate.py
+          grep -Fq 'fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793' scripts/p08_b46_a21_rebuild_admission.py
+          echo P08_B46_REBUILT_A21_A53_REAL_OPERATOR_CANDIDATE_NOT_TESTED_ON_BOARD=1
+          echo P08_B46_NATIVE_SOURCE_GUARD_AND_NO_BOARD_PASS=1
