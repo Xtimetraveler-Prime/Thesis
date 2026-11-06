@@ -22,6 +22,7 @@ PINNED_BLOBS = {
     "software/p08/p08_b45_perf_once_full1024_a53.c": "2799620de02bebbe43ccdf45ca2657920936d1da",
     "software/p08/p08_b2_service_meter.c": "5f13798281a55c8e8ddaa3eb969b351b461b53cf",
     "scripts/run_p08_a3_2_1024.sh": "3c03d9f5a0f3bf3261542dde6cd5f3abcaea1e93",
+    "scripts/run_p08_b46_rebuilt_a21_1024.sh": "e9a816d7d3560d4f503e3c4ea76cf81cd911feb7",
     "scripts/p08_b45_perf_full1024_physical_run.py": "1c607a57aa8528a777a77508199ff4ebae77518e",
 }
 
@@ -159,11 +160,21 @@ def inspect_sources(v3_root: Path) -> dict:
 
     launcher_a = sources["scripts/run_p08_a3_2_1024.sh"]
     launcher_b = sources["scripts/p08_b45_perf_full1024_physical_run.py"]
+    launcher_a_rebuilt = sources["scripts/run_p08_b46_rebuilt_a21_1024.sh"]
     require("P08_A3_2_PREFLIGHT_ONLY" in launcher_a and
             "P08_A3_2_CONFIRM_DDR_OVERWRITE" in launcher_a and
             "0x40000000..0x43FFFFFF" in launcher_a and
             "PINNED_ELF_SHA=fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0" in launcher_a,
             "A original guarded DDR staging or A2.1 ELF gate drift")
+    require("PINNED_ELF_SHA=fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793" in launcher_a_rebuilt and
+            "P08_B46_PREFLIGHT_ONLY" in launcher_a_rebuilt and
+            "P08_B46_SIGNED_SOURCE_REPORT" in launcher_a_rebuilt and
+            "P08_B46_SIGNED_A_ADMISSION" in launcher_a_rebuilt and
+            "P08_B46_CONFIRM_UNPROVEN_BOOT_DDR_DMA_RISK" in launcher_a_rebuilt and
+            "P08_B46_CONFIRM_PWR_CYCLE_AFTER_ANY_ATTEMPT" in launcher_a_rebuilt and
+            "P08_B46_CONFIRM_NEW_CANDIDATE_ELF" in launcher_a_rebuilt and
+            "0x40000000..0x43FFFFFF" in launcher_a_rebuilt,
+            "rebuilt A2.1 accepted candidate ELF, host-only preflight or risk gate drift")
     require("APPROVALS = (" in launcher_b and
             "TAKEOVER_TCL" in launcher_b and
             "six_original_ddr_transfers_overwrite_approved" in launcher_b and
@@ -175,7 +186,13 @@ def inspect_sources(v3_root: Path) -> dict:
         "schema": SCHEMA,
         "source_only_static_audit_pass": True,
         "frozen_git_blob_sha1": pinned,
-        "arm_A": "A_ORIGINAL_A2_1_42_NEURONS_26_DISPATCHES",
+        "arm_A": "A_REBUILT_A21_SEPARATELY_PHYSICALLY_ACCEPTED_42_NEURONS_26_DISPATCHES",
+        "historical_A21_original_ELF_SHA256_missing": "fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0",
+        "rebuilt_A21_new_accepted_ELF_SHA256": "fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793",
+        "prior_A21_rebuilt_one_1024_physical_run_operator_attested": True,
+        "prior_A21_rebuilt_one_1024_physical_report_SHA256": "b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6",
+        "prior_A_rebuilt_vs_B_source_population_report_SHA256": "ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56",
+        "prior_A21_standalone_run_is_one_of_six_future_counterbalanced_sessions": False,
         "arm_B": "B_AUTH_ONCE_UNPROTECTED_V2_1010_NEURONS_702_DISPATCHES",
         "A_start": "CNTVCT before load_image_record(frame) and P07 run_frame prepare/reset",
         "A_end": "CNTVCT after original compact neural journal flush; before P08 timing record/header",
@@ -195,15 +212,16 @@ def inspect_sources(v3_root: Path) -> dict:
         "A_B_physical_timer_boundary_equivalence_proven": False,
         "A_B_JTAG_DDR_staging_and_recovery_equivalence_proven": False,
         "A_B_compiled_ELFs_admitted_by_this_audit": False,
-        "original_A2_1_ELF_recovered_by_this_audit": False,
+        "historical_A2_1_original_ELF_recovered_by_this_audit": False,
+        "rebuilt_A21_new_ELF_physical_acceptance_revoked_by_this_audit": False,
         "B_original_immutable_backup_hardware_protected": False,
         "new_six_session_hardware_authorization_granted": False,
         "new_A_B_physical_sessions_performed": False,
         "new_physical_statistics_accepted": False,
         "official_MNIST_TEST": "SEALED_NOT_ACCESSED",
         "next_gate": "review timer-scope differences and per-arm DDR/JTAG ownership/recovery; "
-                     "recover A2.1 ELF or separately validate reconstruction; "
-                     "require new per-session authorization before any physical action",
+                     "preserve accepted separately rebuilt A2.1 original 1024 physical receipt; "
+                     "design signed six NEW sessions with independent authorization before any physical action",
     }
     return result
 
@@ -240,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
         return 3
     print("P08_B46_AB_FROZEN_SERVICE_BOUNDARY_SOURCE_AUDIT_PASS=1")
     print("P08_B46_AB_PHYSICAL_BOUNDARY_EQUIVALENCE_PROVEN=0")
-    print("P08_B46_AB_A21_ELF_SOURCE_ADMITTED=0")
+    print("P08_B46_AB_ELF_OR_PHYSICAL_ADMISSION_PERFORMED_BY_STATIC_AUDIT=0")
     print("P08_B46_AB_NEW_HARDWARE_AUTHORIZED=0")
     print("P08_B46_AB_BOUNDARY_REPORT=" + str(args.out))
     return 0
