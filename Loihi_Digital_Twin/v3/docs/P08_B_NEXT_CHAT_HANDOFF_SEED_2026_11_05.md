@@ -1,5 +1,42 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **CRITICAL ARTIFACT RETENTION / B4.6 BLOCKER — 2026-11-05 local.**
+> The historical genuine accepted Track A A2.1 Vitis standalone
+> ELF SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+> was compiled at
+> `/tmp/v3_p08_a2_build_20261018T193149Z/vitis_workspace/p08_a2_board.elf`
+> per `docs/P08_A3_2_2_PHYSICAL_CAPTURE_PROTOCOL.md` and
+> `docs/P08_A3_2_3_REPEATED_LATENCY_PROTOCOL.md`.
+> Operator later rebooted their Linux PC; that original /tmp build
+> directory is missing. All discovered `/tmp/pytest-of-dna/`
+> `p08_a2_board.elf` files are TEST-ONLY synthetic fixtures
+> SHA `13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0`
+> and MUST NEVER be used as genuine Track A firmware.
+> Original A2.1 ELF recovery remains UNRESOLVED;
+> B4.6 source gate cannot PASS until exact original genuine ELF
+> is found or a distinctly identified reconstructed ELF is
+> separately admitted and revalidated. DO NOT weaken pinned SHA
+> or pretend a reconstructed ELF is the historical accepted binary.
+>
+> **PERSISTENT STORAGE RULE FOR ALL FUTURE CHATS:** NEVER
+> place sole/authoritative Vitis builds, genuine ELFs and linker
+> maps, XSAs, bitstreams, original input sources, host snapshots,
+> test evidence, baseline reports, original SHA pins or run
+> manifests under `/tmp`, `/var/tmp`, system cache or pytest
+> working dirs. These are disposable and can be purged across
+> boots/automatic cleanup. Use dated, dedicated durable
+> `$HOME/Thesis_Evidence/<unique_build_or_run>` directories
+> OUTSIDE the Git checkout, verify their original SHA256,
+> retain `build_identity.txt`, ELF, map, staged source pins,
+> reports, exact toolchain/XSA identity and accepted run receipts;
+> make a separate off-machine backup before destructive
+> work and check archived SHA after copying.
+> A Git source file or Markdown path DOES NOT back up a
+> user-local compiled ELF. Do not modify historically accepted
+> evidence in place. Stop on missing artifact before any
+> physical operation. No new KV260 authorization here.
+>
+
 > **LATEST 2026-11-05 LOCAL / 2026-11-06 UTC B4.5.5 CLOSED AND B4.6 AUTHENTICATE-ONCE SELECTED (OVERRIDES ALL BELOW).**
 > User supplied genuine four-report B4.5.5 original/optimized
 > source-pinned, all1024 A53 physical service+reset
