@@ -165,7 +165,7 @@ def review(plan_path: Path, expected_plan_sha: str, slot: int, run: Path,
         hz = evidence.get("actual_A53_CNTFRQ_hz")
         service = evidence.get("whole_image_service_descriptive_1023")
         need(isinstance(service, dict) and
-             service.get("ordinary_frame_count") == 1023,
+             service.get("ordinary_frames") == 1023,
              "B ordinary 1023-frame counter statistics not present")
         median = service.get("median_ms")
     need(isinstance(hz, int) and not isinstance(hz, bool) and
