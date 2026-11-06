@@ -1,5 +1,27 @@
 # P08-B — NEXT CHAT HANDOFF SEED (2026-11-05 UTC; B4.5.4.4 PC-only accepted)
 
+> **LATEST B4.6.3 CURRENT SOURCE DEVELOPMENT (2026-11-05 LOCAL):**
+> New feature branch \`agent/v3-p08-b46-ab-service-boundary-audit\`
+> is stacked on \`agent/v3-p08-b46-auth-once-comparator-gate\`; NO MERGES.
+> The next step is a PC-only frozen A2.1 versus B_AUTH_ONCE V2
+> A53 image-service timing-boundary audit. New source-pinned,
+> no-board \`scripts/p08_b46_ab_service_boundary_audit.py\`,
+> negative native tests, no-board workflow, runbook and roadmap.
+> **Original A2.1 genuine ELF is still missing**; do not modify
+> accepted SHA, substitute A2.2/test ELF, or authorize JTAG.
+> Scope finding: A CNTVCT starts before image ingress/load;
+> B CNTVCT starts before 27-context reset, both end after neural
+> journal commit before sidecar; B once-per-session SHA bind is
+> outside all image timers. A/B algorithm, reset work, JTAG/DDR
+> launchers and in-memory ownership differ. Physical equivalent
+> boundary, new numerical parity and six independent AB/BA/AB
+> sessions remain UNPROVEN. Operator must first run native tests
+> and external source audit JSON; report path/SHA.
+> **Exact PC commands:** see
+> \`docs/P08_B46_3_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md\`.
+> Do not initiate board operations or merge without explicit user
+> permission; keep accepted original B4.5 1024 evidence intact.
+>
 > **LATEST A2.1 ARCHIVE SEARCH AND CONTROLLED PC-ONLY REBUILD PATH.**
 > User found only `/home/dna/Thesis_Evidence/p08_a3_1_pilot_20261018T203342Z.tar.gz`
 > using their broad home/archive search. Original Git
