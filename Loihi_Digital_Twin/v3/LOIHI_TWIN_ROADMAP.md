@@ -1,5 +1,401 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## P08-B3.1 third physical KV260 run: FIRST actual 16/16 terminal & scalar precheck PASS — independent evidence audit NEXT
+
+Operator reports third **dedicated fresh-session KV260 JTAG** run
+successfully completed physical P03.2c PS-MMIO bitstream programming
+and VIO reset release, identified physical PSU DDR target, staged and
+physically read back **all 27 original mutable P02 core records and all
+27 independently staged immutable backup records (54×512KiB)**,
+original B4l 16KiB descriptor, original B4m 896KiB input routes and
+80KiB output routes and the matched original 1,024-image raw-pixel
+pool. Tcl reported six physical source transfers byte-exact PASS.
+This third run progressed *beyond both earlier aborted sessions*.
+
+Genuine operator console further reports physical zero/readback of
+all three dedicated result regions, exact **SHA-pinned first16 A53
+ELF downloaded to real hardware**, A53 terminal 16/16 physically
+observed, real 256-byte mailbox + 16×256B neural journal +
+16×256B A53 timing journal physically captured, and the *separate
+preliminary untrusted-file scalar verifier* PASS
+(`P08_B3_FIRST16_BOARD_RESULT_NUMERICAL_PRECHECK_PASS=1`).
+This is **new actual physical 16-image inference evidence**, not
+merely PC mock data or original P07 one-frame experiment.
+
+**Acceptance boundary remains explicit:** independent verification of
+same-session physical provenance and all 16 neural/trace-fingerprint
+records is **PENDING**, because the printed terminal ends with
+`P08_B3_PILOT16_INDEPENDENT_PHYSICAL_PROVENANCE_VERIFICATION_PENDING=1`.
+The genuine *third-session* external evidence path was not specified
+by operator (do NOT infer it from previous second-session readback path
+`.../p08_b3_pilot16_physical_retry_20261102T052232Z`).
+User should identify newest `p08_b3_pilot16_physical_retry_*`
+evidence directory whose `stage.txt` equals
+`P08_B3_FIRST16_JTAG_RESULTS_MATCH_SCALAR_PRECHECK_INDEPENDENT_PHYSICAL_ATTESTATION_PENDING_REBOOT_REQUIRED`,
+then execute **PC-only**
+`scripts/p08_b3_pilot16_independent_physical_verify.py` against
+original frozen PC stage, scalar oracle, exact genuine ELF/map,
+accepted P03 hardware reports, and B2.2 reset pins. Require
+`P08_B3_PILOT16_REAL_16_FRAMES_ORIGINAL_SCALAR_NUMERICAL_FNV_PASS=1`
+and the separate independent report before calling accepted physical
+numerical fingerprint parity. Store the report SHA. Reboot/power-cycle
+KV260 after the JTAG attempt; do not resume discarded Linux.
+
+No current physical 1,024-image Track B latency benchmark or
+energy/speedup claims; no direct full raw 26×1,010 neuron-trace
+byte equality obtained. DDR boot/firmware/RPU/DMA ownership remains
+independently **unproven**, although user has accepted the experimental
+risk. No changes to frozen original B2.4 33-asset model, original
+P03 bit/XSA, accepted Track A six sessions, P07-B accepted V3/B5,
+root `LitReview.md` or sealed official MNIST TEST. Next after
+independent 16-frame pass: freeze this first verified physical
+pilot as B3 acceptance evidence, inspect timestamp distributions
+without calling them a 1,024-image latency result, then plan the
+scalable controlled Track B physical matched-source latency
+experiment and A-vs-B comparison.
+
+## P08-B3.1 second physical JTAG session — all 6 original DDR readbacks PASS, host Python key error before A53 launch
+
+Operator second dedicated KV260 run **completed physical original frozen staging**:
+accepted P03 PL bitstream/VIO release pass, physically selected PSU,
+all 27 original **mutable** B2.4 P02 core 512KiB physical readbacks
+PASS, all 27 independent **immutable backup** P02 core readbacks PASS,
+and signed 16KiB B4l bindings, original 896KiB B4m input routes,
+80KiB B4m output routes and original matched 802,816B 1,024 raw
+TRAIN-derived images all reported physical byte-for-byte PASS.
+Tcl emitted `P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1`
+and `P08_B3_PILOT_ORIGINAL_FROZEN_SIX_TRANSFERS_STAGED_REBOOT_REQUIRED=1`.
+These are authentic *operator-provided* physical staging logs; the
+separately independent host verification was NOT yet completed.
+
+Despite full Tcl staging success, host Python runner halted with
+`P08_B3_PILOT16_PHYSICAL_NO_GO=PosixPath('.../original_27core_backup_source_14155776.bin')`,
+a `KeyError` because `scripts/p08_b3_pilot16_physical_run.py`'s
+`readback_original(stage,readback)` indexed
+`source.EXPECTED_SHA[original]` where `original` was a full
+`Path`, while SHA keys are filenames (`str`).
+Both occurrences fixed by retaining `original_name=source.FILES[0][0]`,
+`original_path=stage/original_name`, and
+`source.EXPECTED_SHA[original_name]`.
+**No new pilot16 ELF was downloaded, no inference executed,
+no neural parity or latency verified.** JTAG touched DDR, so **reboot
+required and no old-Linux resume**.
+
+New synthetic host-only regression independently exercises exact
+`readback_original` on **54 full 512KiB P02 physical-copy fixture files**
+plus all 4 source staged payload fixtures. It asserts all 6 source
+SHA results and injects backup-core and route corruption to confirm
+fail-closed behavior. Historical full fake-PSU Tcl six-stage regression
+remains intact. **All seven P08 native CI workflows GREEN**.
+No accepted original frozen B2.4 assets, P07-B, P08-A physical
+sessions, original P03 BIT/XSA or root `LitReview.md` touched.
+Exact operator new PILOT16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`
+and original scalar first16 oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`
+remain intact; original TEST sealed.
+
+NEXT: use fixed Python `readback_original` on **the second
+session's preserved external `source_physical_readback/`** files
+as an offline, read-only staging-forensics check before another
+destructive run. A PASS retrospectively validates saved source
+readbacks but **cannot revive the old JTAG session**. After reboot,
+run only a NEW dedicated session with new external evidence root,
+full fresh six-source staging/readback and subsequent separately
+SHA-pinned A53 ELF launch/16 original held-out TRAIN validation
+inferences. Independent 16 journal, timer, terminal and scalar
+FNV verification still pending. Risk of unproven independent
+PS/boot/RPU/PL-DMA/firmware DDR owner remains acknowledged, NOT solved.
+
+## P08-B3.1 first hardware attempt (2026-11-02 UTC): Tcl receipt interpolation abort, no A53 launch
+
+Operator initiated **first physical KV260 P08-B3 pilot16** dedicated JTAG
+execution with genuine user-built first16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`.
+External session evidence
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_20261102T050721Z`.
+User-provided genuine physical console establishes accepted P03 PL
+shell programmed and VIO reset released, PSU physical target selected,
+all **27 original mutable 512KiB P02 context copies** read back
+byte-exact, all **27 original independent 512KiB reset-backup P02
+copies** read back byte-exact. This is useful hardware staging evidence,
+**NOT a complete six-payload readback, NOT an A53 ELF launch, and
+NOT a 16-image inference/latency result**.
+
+**Observed failure after these two full P02 readback sets:**
+`P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1`,
+Tcl `can't read "name_BYTE_EXACT_PASS": no such variable` at
+`vivado/p08_b3_pilot16_six_ddr_stage.tcl` dynamic route/binding/raw
+source status emission. Root cause was Tcl interpreting
+`$name_BYTE_EXACT_PASS` as a single nonexistent variable, rather than
+a base filename variable followed by a literal suffix.
+Corrected to `\${name}_BYTE_EXACT_PASS` using Tcl braced variable
+expansion (only new P08 B3 staging Tcl source modified).
+NO ELF downloaded and NO inference in failed session.
+Even if partial later source write occurred, its session is NOT reusable.
+**Power-cycle/reboot KV260; never resume halted old Linux**.
+
+Added host-only end-to-end `tclsh` fake-PSU DDR simulation regression
+`test_six_original_ddr_stage_full_mock_xsdb_byte_roundtrip`: exercises
+ALL 54 original mutable/backup 512KiB P02 core stages/readbacks and
+4 other original source transfers and exact status markers against
+synthetic host-only stage data. It then deliberately restores the
+incorrect Tcl variable and proves the old failure would be caught.
+CI B3.1 and all other P08 native workflows **PASS**. NO new Vitis
+A53 source/ELF/map, original frozen 33 B2.4 assets, prior accepted
+P07-B/A evidence, root `LitReview.md` or official TEST changed.
+
+**Next:** after local pull and passing B3.1 full fake staging regression,
+take a brand-new dedicated rebooted JTAG session with a NEW external
+evidence directory. Re-run all six original source transfers and
+independent same-session readbacks from scratch. Same exact original
+pilot16 ELF and source stage should be reused; do not manually continue
+from the failed B3.1 partial stage or claim pilot success based on
+P02-only PASS. Independent first16 classifier/spike/FNV results remain
+unmeasured, firmware/boot DDR owner risk remains unproven, and explicit
+per-run consent flags/reboot recovery still apply.
+
+## P08-B3.1 real JTAG original 16-image physical pilot pipeline — 2026-11-01
+
+Operator reports **genuine separate original B2.4 first16 Vitis 2025.2
+A53 ELF build and oracle admission PASS**, with ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`,
+map SHA `9d2106d82347385e936bb27176aa8f50a332beb3f13c3ca8e182890a689c674b`,
+selected original first16 scalar oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+These are operator **offline** observations. There has been NO
+P08-B3 physical board attempt or measured inference yet.
+
+New [B3.1 original first16 dedicated cold-boot JTAG runbook]
+(docs/P08_B3_1_FIRST16_DESTRUCTIVE_JTAG_RUNBOOK.md) and source:
+`scripts/p08_b3_pilot16_physical_run.py` defaults to **READ-ONLY HOST
+PREFLIGHT**, authenticates original 27×512KiB and separate backup
+destination, all five frozen source SHA payloads/six proposed transfers,
+separate exact user-built pilot ELF/map SHA and already accepted
+original P03 BIT/XSA/LTX, new 16 scalar oracle. Destructive
+`--mode execute` requires **eight individually explicit operator
+YES flags**, including A53/Linux discard, unproven PS/boot/firmware/DMA
+ownership RISK acceptance, all six DDR transfers, PS/PL programming,
+low DDR ELF and sidecar overwrite and mandatory reboot.
+New `vivado/p08_b3_pilot16_six_ddr_stage.tcl` physically reads
+back and validates **both full 27×512KiB original neuron contexts**
+(mutable and independent immutable backup) and original
+B4l metadata/B4m route tables/full 1,024-source raw pool
+before any ELF download; Python independently authenticates every
+PSU readback byte SHA within same dedicated session.
+New `vivado/p08_b3_pilot16_run_and_capture.tcl` zeroes and reads
+back new 256B terminal mailbox, 4KiB original first16 neural and
+4KiB timer journals; downloads exact pilot16 SHA-pinned A53
+ELF only after physical source readbacks and catches bounded
+first16 PASS versus timeouts/faults; captures exact physical 16 journals
+and mailbox after halting A53. Independent
+`scripts/p08_b3_pilot16_independent_physical_verify.py`
+checks authentic XSDB/Vivado logs, original 6 source readbacks,
+all 16 original scalar spike-count/trace FNV and timing receipt.
+Neither fingerprint comparison nor successful PC-only gate proves
+full RAW physical neuron trace, standalone firmware memory ownership,
+calibrated 1,024 latency, speedup or energy.
+
+**New native negative/default-deny CI PASS; operator PC-only dry-run
+preflight PENDING and destructive physical execution NOT AUTHORIZED by
+preflight.** In particular verified ELF low-DDR PT_LOAD nonoverlap does
+not prove independent PS Linux, FSBL/TF-A, U-Boot, PMUFW, RPU, CMA or
+PL DMA ownership. User must review/acknowledge this risk and agree to
+discard Linux / reboot after every attempted JTAG. The user request
+to progress toward physical test did not itself resolve unproven DDR
+owners. No P08-B3 physical JTAG action executed by agent; original
+P07-B V3/B5 evidence and untouched original 33 B2.4 assets, six
+accepted Track A latency sessions, protected root `LitReview.md`
+and original B official MNIST TEST remain unchanged.
+**P09 and all energy/speedup claims deferred.**
+
+## P08-B3.0 bounded original B2.4 first16 A53 pilot source and safe offline stage — 2026-11-01
+
+Operator genuine original P08-B2.4 independent scalar **first16 PASS**,
+including reproduction of the first 3 frozen B2.3 scalar witnesses:
+external `p08_b2_4_original_first16_scalar_20261102T042201Z.json`
+SHA `13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+Physical numerical parity remains **UNTESTED**.
+
+New [bounded original 27core pilot ELF and offline staging contract]
+(docs/P08_B3_PILOT16_OFFLINE_ELF_AND_STAGE.md): **separate**
+`p08_b3_pilot16_a53.c` with original B2.4 27-core/3-slot/26-tick engine
+and 27x512KiB source-SHA reset, but bounded **exactly 16 images**;
+distinct application identity and terminal receipt.
+It still SHA-authenticates **all original 1,024** raw pixels to avoid
+changing matched Track A/B population. A separate Vitis 2025.2
+standalone A53 builder and **PC-only** ELF PT_LOAD / map / accepted
+first16 scalar-report SHA admission are provided.
+PC-only original B2.4 source packaging independently verifies original
+33 frozen model assets, 27 original P02 context SHA, original
+16KiB axon bindings, signed 80/896KiB routes and 802,816-byte raw
+pool, then writes a no-overwrite **five immutable-copy file** transfer
+proposal with two proposed copies of identical original 27core bundle
+in disjoint mutable/backup DDR slots. No JTAG command is issued.
+
+**Genuine new pilot16 ELF+map not built by operator yet.**
+No physical proof of PS Linux/FSBL/TF-A/RPU/PL DMA/stack and reserved DDR
+ownership, no independent same-session physical DDR/model/route/backup
+readbacks, no operator authorization for destructive JTAG takeover and no
+pilot hardware neural/latency measurement. Original **1024-image**
+B2.3 ELF must never substitute for this separately bounded pilot.
+Original accepted P07-B V3/B5, B2.4 33 frozen files, Track A six
+sessions, root `LitReview.md` and original official TEST are
+untouched. **P09 and numerical/speedup/energy claims deferred.**
+
+## P08-B2.4 original B2.4 matched first16 scalar oracle and untrusted record gate — 2026-11-01
+
+Operator reports **fixed original 1,024-frame C encoder PASS** plus
+genuine Vitis P08-B2.3 new A53 image-only ELF built, real linker map
+and `PT_LOAD` low-DDR static non-overlap audit PASS.
+ELF SHA `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`,
+map SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+**No DDR ownership proof or physical FPGA deployment.**
+
+[P08-B2.4 original scalar first16 and record contract]
+(docs/P08_B2_4_FIRST16_SCALAR_AND_RECORD_GATES.md) adds independent
+original frozen B2.4 first 16 of the *exact same* 1,024 held-out
+TRAIN-derived source and a new external no-overwrite numerical oracle
+generator. It reauthenticates original B2.4 33 assets, original route
+tables, accepted P08-A source and original P08-B2.1 raw/wire SHA,
+reproduces first three independently signed B2.3 scalar numerical
+witnesses, simulates original frozen scalar 25+1 ticks and derives
+per-image classification, all 10 spike counts, external CURRENT/source
+spikes/captured+NEXT packets, and full 26×1,010 trace FNV.
+**Genuine first16 scalar oracle run on operator workstation PENDING.**
+
+Separate `p08_b2_4_verify_untrusted_first16.py` rejects a mismatched
+original numeric receipt, incorrect timestamp accounting, altered
+per-frame SHA256, wrong journal CRC, malformed terminal mailbox, frame
+order/length and truncated/incomplete 16 evidence. Its result *cannot*
+establish actual physical provenance, because same-session JTAG
+readback/DDR/ELF evidence is NOT YET BUILT. CI synthetic native
+26 negative/positive tests PASSED. This is a **source-only** offline
+checkpoint. Original P08-B2.3 ELF is **1024-image**, not safe to use for a
+16-image physical pilot. A separate 16-image A53 pilot firmware ELF/map,
+verified hardware DDR source ownership including untouched first original
+27 backing contexts and independent backup and signed XSDB readback
+procedure remain to build before explicit operator destructive approval.
+Accepted P07-B/A and frozen original 33-asset B2.4, original 1024
+Track A runs, root `LitReview.md` and official Track B TEST SEALED.
+**No P09 or physical speedup/energy claim.**
+
+## P08-B2.1 original-route C hash corrected; new B2.3 image-only A53 offline build candidate — 2026-11-01
+
+Operator **P08-B2.2 SHA-pins gate PASSED**: 27 original
+SHA-pinned initial P02 cores, original 14,155,776B aggregate SHA
+`3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e`;
+external original context header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+The operator's B2.1 C all-1024 verification discovered
+`P08_B2_NATIVE_ORIGINAL_896K_ROUTE_SHA_NO_GO`; **P08 new C route
+SHA constant was hand-transcribed incorrectly** (final 16 bytes).
+C source now matches accepted immutable 896KiB original B4M route
+SHA `380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8`.
+The original immutable route table and accepted Python stage passed;
+real C 1024-frame revalidation is **PENDING** after correction.
+CI now checks literal C/Python SHA equivalence and positive
+1,024-frame native C P06B13I1 wire parity using a strictly
+test-only synthetic 896KiB route with separate temporary SHA.
+
+New [P08-B2.3 independent image-only A53 application and offline Vitis
+build contract](docs/P08_B2_3_IMAGE_ONLY_A53_OFFLINE_VITIS.md): separate
+`p08_b2_3_image_only_a53.c` uses genuine P07 B4m 26-tick original
+engine (702 dispatches, 3 slots), per-image original 27-context
+SHA restoration/reinit, original 1,024 raw-pixel pool and bound 27-core
+ingress, CNTVCT/CNTFRQ full-A53 service timestamps, raw+encoded SHA
+and neural-result journal, timing sidecar outside measured interval.
+New separate Vitis 2025.2 offline-only app builder/source stage and
+read-only genuine ELF/low-DDR PT_LOAD admission; **not yet built
+by local Vitis, no new A53 ELF/map accepted**. Native C syntax and
+synthetic ELF gate only, no board contact. Genuine B1.3 C all-1,024
+local parity and **Vitis real ELF/map PT_LOAD acceptance pending**.
+No destructive JTAG, original-backed DDR physical ownership,
+oracle parity on actual hardware, detailed tick ELF, selected full
+raw trace, or P08-B 1,024 physical inference/latency accepted.
+Official Track B TEST SEALED; original Track A six sessions,
+P07-B original V3/B5 ELF, original frozen B2.4 and root
+`LitReview.md` remain unchanged. **P09 deferred.**
+
+## P08-B2.2 source-only reset/timer development — 2026-11-01
+
+The operator reported **P08-B2.1 host 1,024 original-B ingress staging
+PASS** (802,816B raw pool; 123,216B frames; 1,024 SHA rows) in new
+external folder `p08_b2_1_original1024_20261102T003256Z`; full
+independent native-C 1,024 wire parity has not yet been shown. File
+hashes are recorded in
+[reset source contract](docs/P08_B2_2_CONTEXT_RESET_AND_METER.md).
+
+P08-B2.2 adds **new** isolated C11 original 27×512KiB SHA-bound
+context-restoration primitive with all 27 backup hashes checked before
+the first write, cache-coherent destination SHA check, permanent poison
+on any failed reset; a bounded CNTVCT/CNTFRQ seven-boundary six-phase
+full-A53-service meter; a no-overwrite original frozen 33-asset
+SHA-pin header generator and 27×512KiB native fake-DDR two-image
+regression. **New source in CI; operator local source validation pending.**
+No real A53 app/ELF, physical DDR owner, backup readback, original 1024
+scalar oracle, signed timing sidecar, JTAG launch, or B physical latency
+is yet accepted. The 26-tick meter INCLUDES nested P03 trace hooks
+during the dispatch; no artificial isolated dispatch/pretrace claim.
+Separate full P08-B app and genuine Vitis ELF work remain to implement
+before any operator-approved destructive B3 pilot. Original A six
+latency sessions, B2.4 frozen model, B5 acceptance and sealed official
+MNIST TEST unchanged. **P09 deferred.**
+
+## P08-B2.1 source-only candidate: authenticated original 1024 B ingress — 2026-11-01
+
+The operator reported a genuine local P08-B1 `MATCHED_DATASET_OFFLINE_PASS=1`
+on the original Track A first1024 stage and accepted B2.4 freeze, with
+zero B training index overlap. **B1 source/dataset gate is accepted for
+continued development**, although the assistant has not re-opened the
+operator-local JSON. New separate [P08-B2.1 original scaled ingress and
+DDR design](docs/P08_B2_1_ORIGINAL_MATCHED_INGRESS_AND_DDR_CANDIDATE.md)
+adds a strict, no-overwrite PC-only 1024 raw-pixel 802,816B pool, original
+P06B13I1 27-core frame hash manifest, strict C11 original 896KiB SHA-bound
+route/ingress builder and native 1,024-frame cross-encoder verifier.
+
+**B2.1 operator local validation pending.** The newly proposed
+27×512KiB backup, raw-pixel/journal/timing DDR spans are statically
+non-overlapping only. **B2.2/B2.3 NOT built**: no new A53 firmware,
+per-image neural state reset, neural oracle/sidecar/ELF/map or independently
+proved DDR owner. No authorized destructive B3 physical session or
+P08-B latency has occurred; original TRAIN-derived stage and B2.4 freeze,
+P07-B hardware/ELFs, Track A accepted measurements, root literature,
+and sealed Track B official TEST remain untouched. **P09 deferred.**
+
+## P08-B1 launched: matched 27-core latency source contract — 2026-11-01
+
+**P08-B STARTED (B1 PC-ONLY SOURCE CANDIDATE; LOCAL OPERATOR VALIDATION PENDING).**
+Development branch `agent/v3-p08-b-scaled-latency` from accepted main
+`2c9767ba6f6e001b52b14ff4285ae60c2d7ab47b` contains
+[the new B1 matched-dataset/latency contract](docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md),
+a strict offline original Track A 1,024-image source/ledger audit with
+read-only 33-asset B2.4 freeze validation, and negative native tests.
+Both Track A P07-A4 and Track B P06-B2.2 training sources pin the SAME
+canonical 50k/10k TRAIN-derived partition; seeded first1024 membership
+has zero overlap with Track B training. Stage pixel and original freeze
+file hashes must still be independently checked on the local workstation.
+
+**B1 gate:** user must run native tests and original source/stage audit,
+report the actual no-overwrite output, and accept the dataset provenance.
+**B2 NOT started:** implement a distinct instrumented scaled A53
+image-service/tick runtime, arbitrary-image frozen scalar oracle, safe
+per-image 27-record restoration, nonoverlapping DDR buffers, external
+Vitis ELF/map and strict read-only preflight. **B3 NOT approved:**
+operator-authorized destructive cold-boot 16-frame KV260 pilot only
+after B2 passes. **B4 future:** matched six independently cold-booted
+A2.1/A2.2-style paired 1,024-frame runs AB/BA/AB, ordinary frames
+0–1022, frame 1023 selected trace, full independent numerical parity
+before latency. **B5 future:** immutable physical results and P09 handoff;
+branch merge only by separate operator permission.
+
+**No new physical measurements, new FPGA bitstream, official MNIST
+TEST access, energy sampling, standalone scaled latency or P09
+comparison are claimed.** Original P07-B and Track A freeze and root
+`LitReview.md` remain untouched. The preserved historical
+"P08-B not started" statement below records P07-B closeout time,
+not the present development branch status.
+
 ## P07-B final acceptance and GitHub integration — 2026-11-01
 
 **P07-B COMPLETED, FORMALLY OPERATOR ACCEPTED AND MERGED INTO MAIN.**

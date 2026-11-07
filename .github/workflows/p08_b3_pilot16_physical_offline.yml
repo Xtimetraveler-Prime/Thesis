@@ -1,0 +1,57 @@
+name: P08-B3.1 physical pilot16 runner source NO BOARD and strict negative admission
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_physical_run.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_independent_physical_verify.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b3_pilot16_six_ddr_stage.tcl"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b3_pilot16_run_and_capture.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b3_pilot16_physical.py"
+      - ".github/workflows/p08_b3_pilot16_physical_offline.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_physical_run.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_independent_physical_verify.py"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b3_pilot16_six_ddr_stage.tcl"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b3_pilot16_run_and_capture.tcl"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b3_pilot16_physical.py"
+      - ".github/workflows/p08_b3_pilot16_physical_offline.yml"
+permissions:
+  contents: read
+jobs:
+  read-only-native-failclosed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install native pytest only (NO Vitis, XSDB or board)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: New physical runner and attestation syntax only
+        run: |
+          python3 -m compileall -q \
+            scripts/p08_b3_pilot16_physical_run.py \
+            scripts/p08_b3_pilot16_independent_physical_verify.py \
+            tests/test_p08_b3_pilot16_physical.py
+      - name: Native default deny and source identity / physical capture tests (NO HARDWARE)
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b3_pilot16_physical.py \
+            tests/test_p08_b3_pilot16.py \
+            tests/test_p08_b2_4_numerical.py
+      - name: Classification
+        run: |
+          echo "P08_B3_1_PHYSICAL_RUNNER_OFFLINE_NEGATIVE_CI=PASS"
+          echo "P08_B3_1_OPERATOR_DESTRUCTIVE_JTAG_APPROVAL=NOT_GRANTED"
+          echo "P08_B3_1_OFFLINE_DDR_OWNERSHIP_PROVEN=0"
+          echo "P08_B3_1_PHYSICAL_BOARD_VISITED_IN_CI=0"
+          echo "P08_B3_1_FIRST16_REAL_PL_INFERENCE=NOT_RUN"
+          echo "P08_B3_1_MNIST_OFFICIAL_TEST=SEALED_NOT_ACCESSED"

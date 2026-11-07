@@ -1,0 +1,56 @@
+name: P08-B2.1 original 1024 B-ingress native/DDR contract
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_ingress.*"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_stage_1024_ingress.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_ingress.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b2_ingress_native.c"
+      - ".github/workflows/p08_b2_ingress_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_ingress.*"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_stage_1024_ingress.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_ingress.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b2_ingress_native.c"
+      - ".github/workflows/p08_b2_ingress_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  native-no-hardware:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest only (no MNIST / Vitis / torch)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Compile new standalone input staging/parser native sources
+        run: |
+          python3 -m compileall -q scripts/p08_b2_stage_1024_ingress.py tests/test_p08_b2_ingress.py
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic \
+            -I software/p08 -I software/p07/include \
+            software/p08/p08_b2_ingress.c \
+            software/p07/p07_a2_sha256.c \
+            tests/native/p08_b2_ingress_native.c \
+            -o /tmp/p08_b2_native
+          /tmp/p08_b2_native --reject-zeros
+      - name: Negative corruption and B13 wire-format parity tests
+        run: python3 -m pytest -q -rs tests/test_p08_b2_ingress.py tests/test_p08_b1_matched_source.py
+      - name: Scope classification (not full 1024 original local stage)
+        run: |
+          echo "P08_B2_1_NATIVE_SOURCE_GATES=PASS"
+          echo "P08_B2_1_REAL_ORIGINAL_B24_ASSETS_IN_CI=NOT_AVAILABLE"
+          echo "P08_B2_1_NEW_A53_ELF=NOT_BUILT"
+          echo "P08_B2_1_PHYSICAL_KV260_LATENCY=NOT_RUN"
+          echo "P08_B2_1_OFFICIAL_MNIST_TEST=SEALED_NOT_ACCESSED"

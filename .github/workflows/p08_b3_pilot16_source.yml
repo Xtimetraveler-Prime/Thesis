@@ -1,0 +1,63 @@
+name: P08-B3 first16 pilot A53 source + offline original DDR staging (NO JTAG)
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b3_pilot16_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b3_pilot16.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b3_pilot16.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_stage_host.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b3_pilot16.py"
+      - ".github/workflows/p08_b3_pilot16_source.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b3_pilot16_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b3_pilot16.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b3_pilot16.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b3_pilot16_stage_host.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b3_pilot16.py"
+      - ".github/workflows/p08_b3_pilot16_source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-source-syntax-and-16-frame-owner-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: pytest only, no FPGA or Vitis
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Check pure Python syntax / pure bash syntax
+        run: |
+          python3 -m compileall -q \
+            software/p08/build_p08_b3_pilot16.py \
+            scripts/p08_b3_pilot16_admission.py \
+            scripts/p08_b3_pilot16_stage_host.py \
+            tests/test_p08_b3_pilot16.py
+          bash -n scripts/build_p08_b3_pilot16.sh
+      - name: Strict pilot C11 source syntax with declaration-only Xilinx stubs, negative source/oracle tests
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b3_pilot16.py \
+            tests/test_p08_b2_4_numerical.py \
+            tests/test_p08_b2_3_image_only.py
+      - name: Boundaries
+        run: |
+          echo "P08_B3_DISTINCT_PILOT16_A53_SOURCE_OFFLINE_CI=PASS"
+          echo "P08_B3_REAL_PILOT16_VITIS_ELF_AND_MAP_IN_CI=NOT_BUILT"
+          echo "P08_B3_FIRST16_ORIGINAL_SCALAR_CI_REAL_ASSETS=NOT_AVAILABLE"
+          echo "P08_B3_PC_ONLY_STAGE_OR_PHYSICAL_READBACK_IN_CI=NOT_RUN"
+          echo "P08_B3_OPERATOR_APPROVED_DESTRUCTIVE_JTAG=0"
+          echo "P08_B3_MNIST_OFFICIAL_TEST=SEALED_NOT_ACCESSED"
