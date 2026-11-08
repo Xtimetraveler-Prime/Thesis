@@ -1,75 +1,65 @@
-# Thesis
+# Thesis — Virtualized Neuromorphic Computing on FPGA
 
-This repository contains the software and verification work for an FPGA-based
-architecture-level digital twin of a Loihi-inspired neuromorphic processor.
+**Current thesis direction (2026-11-07):** Study the costs, benefits, and limits of **DDR-backed virtualization** in sparse/event-driven FPGA spiking neural network (SNN) inference. We are preserving the verified LIF neuron dynamics and logical-to-physical virtualization learned from our Loihi-inspired v3 digital twin, while **removing Loihi-specific architectural constraints** for a future **v4 accelerator**. The KV260 remains the current research board. No v4 architecture, implementation or benchmark has yet been accepted.
 
-The validated FPGA-v1 implementation is preserved under
-[`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/). Its completed M1-M13 development
-history is recorded in
-[`Loihi_Digital_Twin/v1/MILESTONES.md`](Loihi_Digital_Twin/v1/MILESTONES.md).
+## Central research questions
 
-**Active research is FPGA-v3** under
-[`Loihi_Digital_Twin/v3/`](Loihi_Digital_Twin/v3/). Its authoritative
-current roadmap is
-[`v3/LOIHI_TWIN_ROADMAP.md`](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md);
-the accepted FPGA-v2 version remains preserved under `v2/`.
-Read [the P06-B2.5 final host-software closeout](Loihi_Digital_Twin/v3/docs/P06_B2_5_HOST_SOFTWARE_EXIT_AND_P07B_HANDOFF.md)
-and [the P07-B new-chat handoff seed](Loihi_Digital_Twin/v3/docs/P07_B_NEXT_CHAT_HANDOFF_SEED.md)
-before starting new development.
+> **1. How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?**
 
-**Current integration (2026-10-19):** P06-B1 and B2 were merged to `main`
-through [PR #46](https://github.com/Xtimetraveler-Prime/Thesis/pull/46)
-and [PR #47](https://github.com/Xtimetraveler-Prime/Thesis/pull/47).
-The independent 784→1000→10 trained signed24 LIF model passed its
-host-only B2 acceptance: **97.08% on 10,000 TRAIN-derived validation images**,
-27 precise initial P02 DDR contexts and three separately verified
-26-tick trained dense numerical frames. **P07-B board-resident 27-core
-execution is the next phase, not a completed physical result; B2 official
-MNIST TEST remains sealed.** Track A retains its separately accepted physical
-one-core baseline. The original Loihi-1 architecture specification remains
-available at [v3/docs/LOIHI1_TARGET_SPEC.md](Loihi_Digital_Twin/v3/docs/LOIHI1_TARGET_SPEC.md).
+> **2. How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?**
 
-The current application is a **project-trained, Loihi-inspired LIF MNIST
-digital twin**, not a bitwise clone of original Loihi silicon or the
-published snnTorch tutorial checkpoint. NxTF and alternative Rao/AHP
-model research are historical, unselected comparison directions. The
-counterfactual studies in [`EXPERIMENTS.md`](EXPERIMENTS.md)
-remain deferred while hardware validation is pursued.
+The central research challenge is not merely whether hardware can time-multiplex neurons—that is established prior art—but **when virtualizing neuron/context state in external memory is worthwhile, how sparse activity interacts with context locality, and which working-set policies recover memory and scheduling overhead**.
 
-## Repository structure
+## Potential thesis contributions (hypotheses, NOT demonstrated results)
 
-- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) contains the versioned architecture work.
-  - [`v1/`](Loihi_Digital_Twin/v1/) is the preserved validated baseline, including
-    Python model, verification, HLS, RTL, documentation, and M1-M13 history.
-  - [`v2/`](Loihi_Digital_Twin/v2/) is the preserved accepted Loihi-1 manycore architecture baseline.
-  - [`v3/`](Loihi_Digital_Twin/v3/) is the active KV260 board-local architecture,
-    accepted P06 Track A/Track B software work and upcoming P07-B scaled physical integration.
-- [`applications/`](applications/) contains application workloads. The completed first
-  application is preserved at
-  [`applications/mnist_baseline/`](applications/mnist_baseline/).
-- [`EXPERIMENTS.md`](EXPERIMENTS.md) records deferred controlled experiments.
-- [`AUDIT.md`](AUDIT.md) and the phase audit files record historical project audits and
-  validation findings.
-- [`Neuromorphic Digital Twin`](Neuromorphic%20Digital%20Twin) is a compatibility symlink
-  to `Loihi_Digital_Twin/v1` so historical v1 commands continue to resolve.
+1. **Controlled characterization of virtualization cost.** Measure end-to-end inference latency, throughput, effective synaptic work, DDR bytes/transactions, context swaps and stalls, on-chip resource consumption, network-size scaling, activity/connectivity sparsity, and **active-context locality**. Determine how virtualization cost changes with on-chip resident capacity, rather than treating all sparsity distributions as equivalent.
+2. **Sparsity-aware virtual-context scheduling and caching.** Design and test one or more activity-/locality-aware policies against explicit simple baselines (e.g., fixed order or no cache); quantify cache hits, context transfers, scheduler stalls, and inference correctness. A performance win is a hypothesis to test, not a presumed outcome.
+3. **A verified, resource-constrained virtualized SNN inference accelerator.** Reuse and independently verify the LIF reference semantics while relaxing Loihi implementation restrictions. Establish fair on-chip/DDR and timestep/event-driven controls at network sizes that fit all configurations, then study DDR-backed scaling beyond on-chip capacity. Compare with external FPGA accelerators only when network, numeric precision, dataset and measurement boundary are disclosed; do not claim unmatched speed, energy, or power without measurement.
 
-## Working with FPGA-v1
+**Candidate experimental matrix:** timestep-driven/on-chip, event-driven/on-chip, timestep-driven/DDR, and event-driven/DDR. This is a planning framework, not four existing RTL builds. Investigate access locality at fixed event count, and distinguish per-engine, transfer, scheduler and true end-to-end timing. Relevant prior work includes YANA, SENECA, HiAER-Spike, time-multiplexed FPGA SNN accelerators, NIR, and NeuroBench; see the [preserved and extended literature review](LitReview.md). Time-multiplexing, virtual neurons, and off-chip synaptic storage are not novel in themselves.
 
-The canonical v1 Python project is:
+## Status and versioned history
 
-```text
-Loihi_Digital_Twin/v1/
+- **v1 — preserved validated baseline** under [`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/), with completed [M1–M13 milestones](Loihi_Digital_Twin/v1/MILESTONES.md).
+- **v2 — preserved accepted Loihi-inspired manycore architecture** under [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/).
+- **v3 — FROZEN research and physical-evidence baseline** under [`Loihi_Digital_Twin/v3/`](Loihi_Digital_Twin/v3/): original trained LIF MNIST source, DDR-backed 27-logical-core/1,010-neuron SNN execution, original all-1,024-image neural verification and real KV260 A53 service measurements; also a separately verified smaller 42-neuron Track A. These unequal workload measurements do **not** establish matched-network acceleration. The planned six independent A/B sessions stopped after **one new accepted A session (1/6)**; the five remaining physical sessions were **canceled, not executed**. The former v3 future milestones were canceled or archived, with **P10 a final, optional, DEFERRED bounded optimization milestone**, not authorized for execution. Existing physical receipts and exact checksums remain immutable; official MNIST TEST remains sealed. Read the [authoritative frozen v3 roadmap](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md) and [current handoff](Loihi_Digital_Twin/v3/docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md) rather than interpreting old 'NEXT' sections as live instructions.
+- **v4 — design/planning NEXT; NOT implemented.** A separate version root and branch should be created only after the v4 architecture, reference neuron semantics, measurement contract, and validation plan are agreed.
+
+**What v3 established:** independent software–hardware LIF numerical validation, FPGA/PS orchestration and DDR virtual-context movement on real hardware. **What it did not establish:** a Loihi silicon-exact replica, true fully asynchronous physics, protected DDR/XMPU context backups, all six new A/B physical sessions, matched A/B workloads or timing boundaries, pure-PL acceleration, power/energy savings, or v4 performance.
+
+## Repository structure and working workflow
+
+- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) — preserved versioned v1/v2/v3 architectures and future v4 home.
+- [`applications/`](applications/) — application workloads, including [MNIST baseline](applications/mnist_baseline/).
+- [`LitReview.md`](LitReview.md) — existing research notes and new event-driven/virtualization prior art.
+- [`EXPERIMENTS.md`](EXPERIMENTS.md), [`AUDIT.md`](AUDIT.md) — historical experiments and audit evidence.
+- [`Neuromorphic Digital Twin`](Neuromorphic%20Digital%20Twin) — historical compatibility symlink to v1; don't rename.
+
+**Local PC (VS Code Ubuntu):**
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch main
+git pull --ff-only origin main
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+  tests/test_p08_b46_4b_six_session_plan.py \
+  tests/test_p08_b46_4b_session_receipt.py \
+  tests/test_p08_b45_perf_full1024_independent_cli.py
 ```
 
-From that directory, use:
+For new research, branch from freshly updated `main`, keep evidence under `$HOME/Thesis_Evidence/` outside the checkout, run relevant native tests and no-board CI, record original source/ELF/bitstream SHAs and separate physical acceptance, and merge only with express approval. **Do not launch any old KV260 JTAG runner from an archived runbook without a newly reviewed, session-specific destructive-risk authorization**; power-cycle the board after any JTAG attempt and never resume halted Linux.
+
+## Preserved FPGA-v1 regression
+
+From `Loihi_Digital_Twin/v1/`:
 
 ```bash
 python -m pip install -e ".[dev,compare]"
 python -m pytest -q
 ```
 
-Use `python -m pytest` rather than bare `pytest` for the historical v1 suite because
-one preserved test imports helper code from the project-root `examples/` directory.
-
-Generated bytecode, package metadata, test caches, and comparison outputs are
-excluded from version control by the repository `.gitignore`.
+The historical v1 suite intentionally uses `python -m pytest` (not bare `pytest`) because one preserved test imports project-root `examples/` helpers. Generated caches, package metadata and outputs are excluded from source control.
