@@ -7,6 +7,6 @@ This top-level directory houses the **new, independently versioned research prog
 - [Root research questions and potential contributions](../README.md).
 - [Research literature and novelty boundary](../LitReview.md).
 
-**Project status:** New folder and conceptual notes only; there is NO new tested neuron engine, RTL, bitstream, throughput, power result or approved physical JTAG procedure. No old v3 firmware or fixed 27-core mapping is automatically imported into v1.
+**Project status:** First M01 **PC-only analytical neuron-state traffic modeling and regression tests are active**, with no selected hardware architecture. There is NO new implemented LIF evaluation engine, verified SNN inference, RTL, bitstream, physical throughput/power result or approved physical JTAG procedure. [Current M01 decision memo](v1/docs/M01_ARCHITECTURE_OPTIONS.md) and [no-board operator test runbook](v1/docs/M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md). No old v3 firmware or fixed 27-core mapping is automatically imported into v1.
 
 For code changes, develop in a new branch from current `main`; use native no-board regressions and explicit evidence/CI checks before requesting separately authorized FPGA measurements. Preserve old evidence, source hashes and official MNIST TEST seal.
