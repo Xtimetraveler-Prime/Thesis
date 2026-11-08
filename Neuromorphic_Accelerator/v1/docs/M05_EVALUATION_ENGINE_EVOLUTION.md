@@ -134,6 +134,59 @@ passed output-stall run remain distinct evidence entries.
 - The previously established **signed32 evaluation kernel** `m05_rolling.cpp` (Git blob `e5443aa87dcc8819ee8aa680b6ca105facc1aced`), HLS CSim, XSim C/RTL post-check and genuine 6.503 ns post-route 35-BRAM OOC proof are **unchanged**; changes involve only testbenches and verification tooling.
 - [M05.7 runbook](M05_INGRESS_BACKPRESSURE_GATE_2026_11_08.md) contains failure triage, reproducible old-vs-new tests and commands. If 64 inputs still do not stall, inspect actual Vitis-generated regslice/FIFO depth and READY waveform. Don't silently reduce the required 10-cycle input stall threshold, alter HLS kernel to force a test PASS, or infer a hardware issue from a test-coverage miss.
 
+### M05.7 verified bidirectional directed AXIS stall gate (2026-11-08)
+
+Operator ran the **64-neuron direct generated-Verilog XSim ingress** scenario,
+source checkout `809f6f7aa2add553708e93e9741b69e28b2d263c` (or its
+identical bench SHA), evidence directory
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T210506Z_227783`,
+`exit_status=0`, `stress_mode=ingress`. Genuine Vitis HLS 2025.2
+generated RTL: `xvlog` PASS, `xelab` PASS, `xsim` **PASS**.
+The 11 genuine RAM-init `.dat` files were staged with checksum manifest
+(no missing-file warnings). Exact XSim output:
+
+```text
+INFO: M05 ingress prestart accepted N/S/E=2/1/1; stalls N/S/E=283/0/0; pending neurons_TVALID=1 neurons_TREADY=0
+PASS: M05 REAL RTL AXIS INGRESS stall stress N=64 E=1 S=1 T=12; trace=768; stalled_output_cycles=7573;ingress_gap_cycles=16762; input_stalls N/S/E=312/0/0; final_status=0
+```
+
+The two-synapse/single-event baseline is unchanged and earlier output test
+also PASS (24/24 rows, 188 output stalls). Current new hardware evidence
+therefore demonstrates **actual neuron-side READY backpressure plus trace
+output READY backpressure under one directed workload**, with 768 exact
+ordered output records and final status 0. The synapse and external ports
+each only supplied one packet and did **not** experience measured input
+stall: do NOT infer saturation of those independent channels. Simulated
+handshake counts are neither physical device throughput nor a speedup
+against the eight-tick integrated kernel.
+
+### M05.8 next verification — late-error transactional RTL discard (pending)
+
+With input/output directed stalls confirmed, the next failure-mode risk
+is **prematurely committing speculative trace** before completion. The
+kernel streams tick0..3 even if tick4 detects an invalid late external
+event: three external packets (tick0/+5→neuron0, tick4/+5→neuron0,
+then OUT-OF-ORDER tick3/+5→neuron0) trigger
+`M05_ROLL_BAD_EXTERNAL=4` only after 4×2 = **8 valid provisional rows**
+(including a real t0 neuron0 spike). New separately compiled direct
+generated-RTL testbench:
+[`tb_m05_rolling_axis_late_error.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv).
+A new `--late-error` selector in
+[`run_m05_rolling_rtl_stress.sh`](../scripts/run_m05_rolling_rtl_stress.sh)
+reuses unchanged prior genuine 6.503 ns routed OOC HLS IP. It asserts
+ordered partial trace, output TREADY stalls, final AXI-Lite status4 and
+no extra records. A separate
+[`m05_rtl_transaction_replay.py`](../scripts/m05_rtl_transaction_replay.py)
+parses the new run's **actual** XSim provisional beat transcript into
+existing native `RollingTraceCommitGate`, verifies **0 accepted rows**
+after status4, and saves `05_trace_commit.log`.
+
+**This new M05.8 generated-RTL XSim case is NOT YET operator verified.**
+The native replay tests rely on SYNTHETIC logs, not a real kernel. The
+unchanged signed32 evaluation source and previously verified physical
+OOC clock/resource estimates remain exactly as recorded above. M05 open,
+draft PR #79 unmerged. [M05.8 detailed runbook and commands](M05_LATE_ERROR_TRANSACTION_GATE_2026_11_08.md).
+
 ## F. Next controlled experiments / acceptance gates
 
 1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
