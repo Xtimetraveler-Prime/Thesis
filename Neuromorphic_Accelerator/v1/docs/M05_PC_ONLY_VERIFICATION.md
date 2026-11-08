@@ -33,7 +33,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-Expected: **17 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 108 named unittest methods**, all PASS. One M05 method loops over 12 deterministic recurrent-network subcases. Native C++ compilation or malformed replies fail; no external GPU, MNIST TEST, Vitis, Vivado or KV260 is needed.
+Expected: **45 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 136 named unittest methods**, all PASS. Seeded recurrent-network methods include 12 streaming, 8 state-memory and 6 accumulator test subcases; these do not increase the number of named methods. Native C++ compilation or malformed replies fail; no external GPU, MNIST TEST, Vitis, Vivado or KV260 is needed.
 
 ## 2a. Optional native-only smoke of the separate HLS Csim testbench
 
@@ -83,6 +83,19 @@ sha256sum \
   hls/m05_stream_eval/m05_hls_csim_tb.cpp \
   src/neuromorphic_accelerator_v1/m05_host_runtime.py \
   tests/test_m05_stream.py \
+  tests/test_m05_stateful.py \
+  tests/test_m05_accumulator.py \
+  tests/test_m05_hls_setup.py \
+  hls/m05_stateful/m05_stateful.hpp \
+  hls/m05_stateful/m05_stateful.cpp \
+  hls/m05_stateful/m05_stateful_csim_tb.cpp \
+  hls/m05_stateful/m05_stateful_hls_config.cfg \
+  hls/m05_accumulator/m05_accumulator.hpp \
+  hls/m05_accumulator/m05_accumulator.cpp \
+  hls/m05_accumulator/m05_accum_csim_tb.cpp \
+  hls/m05_accumulator/m05_accum_hls_config.cfg \
+  hls/m05_stream_eval/run_m05_offline_hls.sh \
+  docs/M05_HLS_OPERATOR_RUNBOOK.md \
   docs/M05_ENGINE_V3_COMPARISON.md \
   docs/M05_TESTS_EXPLAINED.md \
   > "$M05_EVIDENCE/source_sha256.txt"
@@ -107,27 +120,30 @@ git status --short
 
 If a test fails, **preserve the failed original evidence unchanged** and start a *new* evidence directory for a rerun. CI source checkout and operator-native PC results are separate evidence.
 
-## 4. Optional genuine offline Vitis HLS exploration — not JTAG
+## 4. Genuine offline Vitis HLS verification for THREE independent tops — not JTAG
 
-This step is **optional**, and has **NOT BEEN RUN by the development agent** because no installed Vitis HLS is available. It requires an appropriate Vitis/Vivado 2025.2 installation and the exact K26 part; no board connection required. Source Vitis settings first with your local installation path, then:
+**The project assistant cannot run Vitis HLS in this execution environment.** All real C-simulation, synthesis, and C/RTL co-simulation work remains **NOT RUN** until the operator runs it. Follow the comprehensive, tool-checked [M05_HLS_OPERATOR_RUNBOOK.md](M05_HLS_OPERATOR_RUNBOOK.md), which contains version checks, full commands, fresh source/report hashes, stage-by-stage pass criteria, OOC implementation and exact artifacts to share.
+
+After sourcing YOUR Vitis 2025.2 `settings64.sh`, from `Neuromorphic_Accelerator/v1`, start with **three isolated genuine Csim runs**:
 
 ```bash
-cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
-export HLS_PART=xck26-sfvc784-2LV-c
-# Vitis C-simulation only:
-bash hls/m05_stream_eval/run_m05_offline_hls.sh
-
-# Later, if the C simulation succeeds and you elect offline synthesis:
-bash hls/m05_stream_eval/run_m05_offline_hls.sh --synth
-
-# Only with a verified synthesizable top and Vitis simulator:
-bash hls/m05_stream_eval/run_m05_offline_hls.sh --cosim
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --csim
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --csim
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --csim
 ```
 
-The runner rejects missing/wrong-version tools, uses a new exclusive-create `$HOME/Thesis_Evidence` output directory, records source SHA and report paths, never touches old v3 staging scripts, and does **not** connect to the KV260. Synthesis success would produce **estimates**, not real post-route timing or actual observed FPGA inference. If Vitis fails, keep the original logs for diagnosis; do not fabricate a PASS.
+Only after each Csim passes:
+
+```bash
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --synth
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --synth
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --synth
+```
+
+`--cosim` performs Csim + synth + RTL co-sim; `--impl` further performs **offline OOC**, not an actual KV260 deployment. Each invocation creates its own exclusive evidence directory outside Git and preserves failures. **The three successful isolated IPs would still NOT constitute a connected M05 event-driven accelerator.**
 
 ## 5. What to report for your verification
 
 Report the current branch HEAD SHA; M05 native count/PASS or any failing method; prior regression counts; original log/evidence SHA hashes if generated. For genuine offline HLS runs, separately share actual Vitis version, selected part, command, original Csim/synthesis/cosim logs, report SHA and estimated II/latency/LUT/FF/BRAM/URAM/DSP if present.
 
-**Scientific boundary:** this work does not prove a full on-chip event scheduler, physically bounded FIFO or actual neuron-state BRAM; it does not show DDR virtualization, acceleration, power savings or Loihi/YANA silicon equivalence. M05 remains open and unmerged until the user explicitly authorizes closure. See [M05 source comparison](M05_ENGINE_V3_COMPARISON.md) and [test explanations](M05_TESTS_EXPLAINED.md).
+**Scientific boundary:** this work includes HLS-oriented C++ candidates for local BRAM and exact per-tick accumulation, but native tests do not prove inferred BRAM, full on-chip event routing, a physically bounded future FIFO, global barrier or RTL flow; it does not show DDR virtualization, acceleration, power savings or Loihi/YANA silicon equivalence. M05 remains open and unmerged until the user explicitly authorizes closure. See [M05 source comparison](M05_ENGINE_V3_COMPARISON.md) and [test explanations](M05_TESTS_EXPLAINED.md).
