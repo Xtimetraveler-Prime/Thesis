@@ -1,0 +1,88 @@
+name: Neuromorphic Accelerator v1 M03 matched workloads and DDR traffic (NO BOARD)
+
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m03_pc_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m03_pc_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m03-pc-workloads:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python syntax (no board)
+        run: python3 -m compileall -q src scripts tests
+      - name: M03 independent neural equivalence and synthetic traffic tests
+        run: python3 -m unittest discover -s tests -p "test_m03*.py" -v
+      - name: Accepted M02 neural reference and M01 traffic regressions
+        run: |
+          python3 -m unittest discover -s tests -p "test_m02*.py" -q
+          python3 -m unittest discover -s tests -p "test_m01*.py" -q
+      - name: Generate original isomorphic clustered/dispersed neural and traffic record
+        run: |
+          set -euo pipefail
+          python3 scripts/m03_explore.py \
+            --neuron-count 128 --active-roles 16 \
+            --fanout-per-active 4 --external-events-per-tick 6 \
+            --ticks 16 --seed 20261107 --block-neurons 8 \
+            --resident-budget-bytes 512 --onchip-capacity-bytes 2048 \
+            --out "$RUNNER_TEMP/m03_isomorphic_pc_only_original.json"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          obj=json.loads((Path(os.environ["RUNNER_TEMP"])/"m03_isomorphic_pc_only_original.json").read_text())
+          assert obj["isomorphic_pair_verified"] is True
+          assert obj["measurement_status"]=="PC_ONLY_FUNCTIONAL_ORACLE_AND_ANALYTICAL_TRAFFIC"
+          scenarios=obj["experimental_results"]
+          assert set(scenarios)=={"clustered","dispersed"}
+          c,d=scenarios["clustered"],scenarios["dispersed"]
+          assert c["canonical_role_workload_sha256"]==d["canonical_role_workload_sha256"]
+          assert c["canonical_functional_trace_sha256"]==d["canonical_functional_trace_sha256"]
+          for place,s in scenarios.items():
+              assert s["neural_equivalence"]["dense_vs_M02_queued"]
+              assert s["neural_equivalence"]["dense_vs_M03_sparse_exact"]
+              assert len(s["four_way_models"])==4
+              for mode, values in s["four_way_models"].items():
+                  assert values["available"] is True
+                  assert values["functional_parity_verified"] is True
+                  assert values["total_modeled_bytes"]>=0
+                  print(
+                      f"M03_PC_MODEL locality={place} mode={mode} "
+                      f"updates={values['evaluated_neuron_steps']} "
+                      f"synapse_visits={values['synapse_edge_visits']} "
+                      f"state_R={values['state_read_bytes']} "
+                      f"state_W={values['state_write_bytes']} "
+                      f"synapse_R={values['synapse_read_bytes']} "
+                      f"transactions={values['total_modeled_transactions']}"
+                  )
+          print("M03_ISOMORPHIC_MATCHED_FUNCTIONAL_AND_TRAFFIC_PASS=1")
+          PY
+      - name: Original report cannot be overwritten and invalid model fails closed
+        run: |
+          set -euo pipefail
+          if python3 scripts/m03_explore.py --out "$RUNNER_TEMP/m03_isomorphic_pc_only_original.json" >/dev/null 2>&1; then
+            echo "FAIL: overwritten original M03 PC JSON"; exit 1
+          fi
+          if python3 scripts/m03_explore.py --block-neurons 3 >/dev/null 2>&1; then
+            echo "FAIL: invalid M03 group mapping allowed"; exit 1
+          fi
+          echo "M03_NO_OVERWRITE_INVALID_CONFIGURATION_PASS=1"
+      - name: Preserve PC-only reference/traffic report
+        uses: actions/upload-artifact@v4
+        with:
+          name: m03-matched-neural-traffic-pc-only
+          path: ${{ runner.temp }}/m03_isomorphic_pc_only_original.json
+          if-no-files-found: error
+          retention-days: 30
