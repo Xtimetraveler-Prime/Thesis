@@ -100,7 +100,7 @@ class M05NativeStreamingTests(unittest.TestCase):
         valid = " ".join(map(str, self.req()))
         bad = ["1025\n", "-1\n", "1\n", "1\n" + valid + " extra\n",
                "1\n" + valid + "\n" + valid + "\n",
-               "1\n" + valid.replace(" 0 1 1", " 0 1 4294967296") + "\n",
+               "1\n" + " ".join(valid.split()[:10] + ["4294967296"]) + "\n",
                "not_an_integer\n"]
         for payload in bad:
             with self.subTest(payload=payload[:40]):
