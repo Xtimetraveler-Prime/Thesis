@@ -1,6 +1,6 @@
 # M03 — Exact tests performed and what they establish
 
-**Milestone:** active M03, **NOT accepted**. This is Python no-board science/traffic modeling, not synthesis, DDR timing, physical accelerator verification, classifier accuracy, or Loihi/YANA equivalence. Accepted M01 has 20 tests and M02 21 tests; this new M03 set adds **28 native test methods** across four source files (some methods contain many independent generated cases).
+**Milestone:** **M03 COMPLETE / USER-ACCEPTED in its PC-only synthetic workload/traffic scope**. User-reported native PASS and HEAD source CI PASS; original user-local report SHA256s not provided. This is Python no-board science/traffic modeling, not synthesis, DDR timing, physical accelerator verification, classifier accuracy, or Loihi/YANA equivalence. Accepted M01 has 20 tests and M02 21 tests; this new M03 set adds **28 native test methods** across four source files (some methods contain many independent generated cases).
 
 ## 1. Workload and exact locality controls — six methods
 
