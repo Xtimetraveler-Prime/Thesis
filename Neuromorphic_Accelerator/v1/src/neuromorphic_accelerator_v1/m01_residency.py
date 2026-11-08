@@ -188,8 +188,10 @@ def simulate(
             result.read_transactions += ntrans
 
     if pins:
-        for neuron in range(pins):
-            transfer(nbytes, write=False)  # explicit cold-start pin prefetch
+        # The pinned prefix is contiguous in the provisional DDR layout;
+        # unlike random individual neuron requests, it can be prefetched
+        # in a single sequential region split at max-transfer boundaries.
+        transfer(pins * nbytes, write=False)
         result.prefetch_records = pins
 
     for neuron in requests:
@@ -229,9 +231,21 @@ def simulate(
     for _key in cache:
         transfer(unit_bytes, write=True)
         result.final_dirty_flushes += 1
-    for _neuron in sorted(dirty_pins):
-        transfer(nbytes, write=True)
+    # Coalesce adjacent dirty pinned IDs into maximal sequential write
+    # regions, without writing an untouched pinned record.
+    pin_run_start = None
+    pin_run_last = None
+    for neuron in sorted(dirty_pins):
+        if pin_run_start is None:
+            pin_run_start = pin_run_last = neuron
+        elif neuron == pin_run_last + 1:
+            pin_run_last = neuron
+        else:
+            transfer((pin_run_last - pin_run_start + 1) * nbytes, write=True)
+            pin_run_start = pin_run_last = neuron
         result.final_dirty_flushes += 1
+    if pin_run_start is not None:
+        transfer((pin_run_last - pin_run_start + 1) * nbytes, write=True)
 
     result.distinct_neurons_touched = len(set(requests))
     result.distinct_residency_units_touched = len(touched_units)
