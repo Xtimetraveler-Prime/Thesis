@@ -6,6 +6,8 @@
 **References consolidated:** 2026-11-04  
 **Status:** Thesis literature-review research notes; not a systematic review.
 
+**Research-direction addendum (2026-11-07):** The Loihi-constrained **v3** architecture is now a frozen, separately verified *historical digital-twin baseline*. The advisor-approved **v4 research question** instead concerns DDR-backed neural virtualization, event-driven sparsity, on-chip working-set capacity and active-context locality in a future FPGA LIF inference accelerator. The earlier Loihi emulation review remains intact below because it documents the prior architecture and its originality limits; it is not the current sole thesis target. No new v4 accelerator measurements, design implementation or benchmark parity is yet accepted. New related work and current questions are given in **Section H**; previous conclusions about v3 must be read as historically dated.
+
 ## Scope and central distinction
 
 This review surveys research relevant to an **FPGA-based architectural digital twin of a documented subset of Intel Loihi 1**, currently developed on the AMD/Xilinx Kria KV260 (K26 Zynq UltraScale+). The emphasis is on (1) software behavioral emulation, (2) multicore neuromorphic architectural emulation on FPGAs, (3) synchronization and hardware/software equivalence, and (4) hardware resource/performance experimentation.
@@ -191,6 +193,13 @@ Replacing barriers with independent local-time execution would be a substantial 
 
 YANA shows that a useful SNN accelerator can be engineered on essentially the same SoM family and provides nearby implementation/measurement practice. Its principal research claim is **efficient, accessible SNN acceleration**, not an architectural twin of Loihi 1 with Loihi-inspired capacities and explicit virtual-core semantics.
 
+### Additional interpretation for v4 (primary-source verified 2026-11-07)
+
+- The **Hot Neurons FIFO** tracks neurons receiving events during the current logical timestep; rather than visiting all neurons, the neuron stage updates those hot neurons. The paper also tracks last-update timestamps and implements elapsed-time LIF leak using a fixed-point **lookup table**; it supports **time-multiplexed** physical neurosynaptic logic and arbitrary point-to-point SNN connections.
+- Its reported core stores synaptic/event data using on-chip **URAM and BRAM**, with a reported single-core capacity of 1,024 neurons and 131,072 synapses for the cited synthesis configuration. This is useful for **on-chip event-driven control**, not evidence that YANA has already solved the project's proposed **DDR-backed neuron-context cache/paging** questions.
+- Its sparsity scaling is based on the **Spiking Heidelberg Digits** task with 100 hidden LIF units, event dropping and weight pruning. The authors explicitly do not evaluate task accuracy in that particular sparsity sweep. Do not claim published YANA inference timing is a matched comparison to v3's 1,010-neuron/27-context A53 system-service median.
+- The public source repository is [fzi-forschungszentrum-informatik/yana](https://github.com/fzi-forschungszentrum-informatik/yana) and indicates availability for KR260/KV260 workflows. **Publication metadata caveat:** the inspected 2026 arXiv record is dated April 3, 2026, while the authors' repository lists a *Brain Informatics 2025* conference citation. Check authoritative proceedings metadata before selecting a final formal bibliography version; neither automatically means that the arXiv version is a new 2026 journal article.
+
 
 ---
 
@@ -314,15 +323,13 @@ The project repository's published roadmap identifies **FPGA-v3** as the active 
 5. **Power/energy (after measurement contract):** distinguish idle vs active board power and measure energy/inference using appropriate real board telemetry.
 6. **Future architecture variants (clearly labeled):** compare scheduling or synchronization strategies without silently altering what counts as Loihi fidelity.
 
-### Possible central research question
+### Central research questions — revised for v4 on 2026-11-07
 
-> How faithfully can a resource-constrained FPGA system reproduce a defined subset of Intel Loihi 1's multicore execution semantics, and what latency, memory, routing, and energy tradeoffs arise when many logical neuromorphic cores share a smaller number of physical execution resources?
+> How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?
 
-A narrower, hardware-measurable alternative:
+> How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?
 
-> What are the dominant costs of DDR-backed logical-core virtualization during board-local execution of a Loihi-inspired multicore spiking neural network on the KV260?
-
-Both formulations demand a *specific, reproducible evaluation*, not simply an implementation demonstration.
+The previous Loihi-specific research question is retained **historically** in v3's frozen roadmap and old literature context, not as an active v4 constraint. The testable interaction is logical network size × physical resident capacity × temporal/spatial sparsity × **activity locality** (how concentrated events are within DDR-backed virtual contexts). All three contributions in Section H are prospective, not demonstrated.
 
 ---
 
@@ -557,6 +564,8 @@ FireFly v2 illustrates the tradeoff between a **performance-optimized applicatio
 
 NIR provides a useful framework for discussing **model portability versus numerical and architectural fidelity**. The project's Python oracle, network compiler, packed hardware image, and FPGA implementation share a specified execution contract, but that is not the same as claiming NIR compatibility or cross-platform interchangeability. A preserved computational representation can still leave core scheduling, routing, and physical timing outside its scope.
 
+**v4 relevance (2026-11-07):** NIR may eventually make a trained LIF workload portable to YANA and a custom accelerator, reducing application-model confounds. That is an **optional interoperability objective**; NIR translation does not guarantee bit-exact fixed-point rounding, spike scheduling, identical hardware workloads or measured performance equivalence. It is not a prerequisite for the first v4 prototype.
+
 ---
 
 ## 20. NeuroBench (Yik et al., 2025): neuromorphic measurement methodology
@@ -595,6 +604,72 @@ NeuroBench provides methodological support for publishing **classification corre
 
 ---
 
+# H. Added prior art and 2026-11-07 v4 virtualization / event-driven accelerator research direction
+
+## 21. SENECA (Tang et al., 2023): neuron time-multiplexing and state-movement tradeoffs
+
+**Title:** *SENECA: building a fully digital neuromorphic processor, design trade-offs and challenges*  
+**Authors:** Guangzhi Tang, Kanishkan Vadivel, Yingfu Xu, et al.  
+**Venue:** *Frontiers in Neuroscience* 17:1187252 (23 June 2023)  
+**DOI / paper:** https://doi.org/10.3389/fnins.2023.1187252  
+**Relevance:** **Very high**: explicit analysis of time-multiplexing neurons, associated memory loads/stores, area/energy/flexibility and processor-control organization.
+
+**Brief summary.** SENECA explores a fully digital neuromorphic processing core with a flexible RISC-V controller and an optimized loop-buffer controller, sharing compute resources across neural operations. The authors explain that **time-multiplexing neuron hardware is established practice** and can increase the number of emulated logical neurons per physical datapath, but requires storing/loading neural state and introduces scheduling and memory-operation costs. Other important topics are algorithm flexibility, memory mapping, synchronization and synchronous versus asynchronous execution.
+
+**v4 implication and novelty boundary.** We **cannot** claim to invent time-multiplexed/virtualized neurons. The potentially publishable contribution is empirical: how do specific **DDR** transaction patterns, context size/cache capacity and spike activity locality change the cost of virtualization on KV260 relative to a constrained on-chip control? Do not extrapolate SENECA's ASIC energy numbers to KV260.
+
+---
+
+## 22. HiAER-Spike (Frank et al., 2026): large sparse event-driven FPGA architecture using HBM
+
+**Title:** *HiAER-spike software-hardware reconfigurable platform for event-driven neuromorphic computing at scale*  
+**Authors:** Gwenevere Frank, Gopabandhu Hota, Keli Wang, et al.  
+**Venue:** *npj Unconventional Computing* 3, Article 22 (4 May 2026)  
+**DOI / paper:** https://doi.org/10.1038/s44335-026-00062-8  
+**Preprint:** https://arxiv.org/abs/2602.18072  
+**Relevance:** **Very high**: prior art for large-scale, sparse address-event SNN acceleration, external-memory hierarchy, core multiplexing and scalable routing.
+
+**Brief summary.** HiAER-Spike proposes a software/hardware-reconfigurable hierarchy of spike routing and FPGA processing for large spiking networks. Its hardware platform combines local FPGA processing/SRAM with very high bandwidth **HBM** for large-scale network data and multi-FPGA communication. It includes configurable LIF behavior, sparse activity/connectivity, and a Python-level deployment interface. The article describes a system aiming to support up to 160 million neurons/40 billion synapses, but **clearly distinguishes a single-core initial physical evaluation from projected large-system scale**; the entire intended multi-FPGA upper bound must not be described as a measured benchmark.
+
+**v4 implication and novelty boundary.** External memory and sparse large-network acceleration are already demonstrated design directions. KV260 **DDR** is not HBM; our more bounded study would specifically characterize dynamic **logical-neuron or virtual-core context backing**, working-set/cache locality and PS/PL scheduling costs under matched networks, not compete on headline neuron count or infer equivalence to HiAER-Spike.
+
+---
+
+## 23. Time-multiplexed FPGA LIF inference (Ansari & Wielgosz, 2026)
+
+**Title:** *A Time-Multiplexed Spiking Neural Network Accelerator with Pipelined Readout for FPGA Inference*  
+**Authors:** Reza Ansari and Maciej Wielgosz  
+**Status:** arXiv preprint posted 1 August 2026  
+**Preprint:** https://arxiv.org/abs/2608.00595  
+**Relevance:** **High**: practical low-cost FPGA LIF arithmetic, serialized spike distribution, localized weights, pipelined readout and timing closure.
+
+**Brief summary.** Presents an inference-only **784-64-10 MNIST** accelerator on an Artix-7, using time-multiplexed 1-bit spike feeding, localized weight storage, integer LIF neurons and a pipelined argmax/tie-break readout to relieve routing/critical-path bottlenecks. Reports a post-implementation maximum clock rate improvement from 13.3 MHz to 167 MHz; the abstract reports **82 µs per image and a 1,000-sample VHDL simulation** completed in 0.082 s, with on-chip power **estimated** using Vivado vector-based analysis. These are **not verified here as physically sampled KV260 end-to-end A53 measurements**.
+
+**v4 implication and novelty boundary.** Shared-neuron compute, fixed-point LIF and pipeline optimization are existing engineering techniques. Compare compute pipeline throughput and resource accounting in matched conditions, not the preprint's 82 µs simulation/hardware-analysis estimate directly to our former system-service latency.
+
+---
+
+## Revised experiment design and candidate contributions (proposal, not v4 results)
+
+**Central questions:**
+
+> How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?
+
+> How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?
+
+**Potential contributions:**
+
+1. A controlled **virtualization-efficiency curve** measuring network size, spike and connectivity sparsity, physical resident state budget, DDR transfers, stalls, actual end-to-end inference time and hardware resource use. Repetition/statistical unit is independently tested physical execution or run where required, not simply each input event.
+2. An evaluated **activity-/locality-aware virtual-context scheduling or caching policy**, demonstrated against no-cache/fixed-order and simple replacement baselines at matched neural semantics and fair resident memory/computation resources. A negative result is informative if independently reproducible.
+3. A **bit-exactly or numerically specified, independently verified sparse LIF FPGA inference accelerator** that supports working sets larger than limited on-chip storage via DDR backing, with a fair comparison against an on-chip baseline at sizes where it fits and distinct DDR-only large-scale measurements.
+
+**Factorial controls to consider during v4 design:** timestep-driven on-chip, event-driven on-chip, timestep-driven DDR, event-driven DDR (the same network and input streams where all fit), followed by cache/retention variants and larger DDR-only workloads. Separate temporal sparsity from **active-context locality**: 100 events targeting one context should be compared with 100 events scattered across many contexts. Instrument DDR bytes, transaction count, cache misses/evictions, stall cycles, PL processing cycles, PS command overhead, total service boundary, 1,024-like neural/reference correctness and FPGA utilization; power and energy only when actually measured with an appropriate device method.
+
+**Critical model-equivalence warning:** deferring LIF leak by n timesteps can change repeated fixed-point rounding, saturation, threshold, reset, refractory and bias behavior. Preserve a defined neural reference and test hardware parity before attributing runtime differences solely to accelerator scheduling. Published YANA results are useful architectural guidance, not evidence our FPGA design is already fast.
+
+**Literature status:** this is an expansion of research notes, **not a systematic prior-art exclusion search** and not a claim no prior system combined these ingredients. Preserve existing Loihi, RANC, NeuroScale, Spiker+, FireFly, ModNEF, NIR and NeuroBench summaries below/above; these remain key comparison context. Additional primary-source searches will be required before definitive novelty claims.
+
+---
 # F. Consolidated bibliography
 
 1. Michaelis, C., Lehr, A. B., Oed, W., & Tetzlaff, C. (2022). *Brian2Loihi: An emulator for the neuromorphic chip Loihi using the spiking neural network simulator Brian.* Frontiers in Neuroinformatics, 16, 1015624. https://doi.org/10.3389/fninf.2022.1015624
@@ -619,5 +694,8 @@ NeuroBench provides methodological support for publishing **classification corre
 18. Li, J., Shen, G., Zhao, D., Zhang, Q., & Zeng, Y. (2024). *FireFly v2: Advancing Hardware Support for High-Performance Spiking Neural Network With a Spatiotemporal FPGA Accelerator.* IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 43(9), 2647–2660. https://doi.org/10.1109/TCAD.2024.3380550
 19. Pedersen, J. E., Abreu, S., Jobst, M., et al. (2024). *Neuromorphic intermediate representation: A unified instruction set for interoperable brain-inspired computing.* Nature Communications, 15, 8122. https://doi.org/10.1038/s41467-024-52259-9
 20. Yik, J., Van den Berghe, K., den Blanken, D., et al. (2025). *The neurobench framework for benchmarking neuromorphic computing algorithms and systems.* Nature Communications, 16, 1545 (Perspective). https://doi.org/10.1038/s41467-025-56739-4
+21. Tang, G., Vadivel, K., Xu, Y., et al. (2023). *SENECA: building a fully digital neuromorphic processor, design trade-offs and challenges.* Frontiers in Neuroscience, 17, 1187252. https://doi.org/10.3389/fnins.2023.1187252
+22. Frank, G., Hota, G., Wang, K., et al. (2026). *HiAER-spike software-hardware reconfigurable platform for event-driven neuromorphic computing at scale.* npj Unconventional Computing, 3, 22. https://doi.org/10.1038/s44335-026-00062-8 ; https://arxiv.org/abs/2602.18072
+23. Ansari, R., & Wielgosz, M. (2026). *A Time-Multiplexed Spiking Neural Network Accelerator with Pipelined Readout for FPGA Inference.* arXiv preprint, arXiv:2608.00595. https://arxiv.org/abs/2608.00595
 
 **Use as research notes:** Primary-source assertions, comparison interpretations, and speculative thesis gaps are deliberately separated above. Before the final thesis literature-review chapter, expand the search for Loihi-specific FPGA emulators, virtualized multicore SNN accelerators, neuromorphic paging architectures, and rigorous power/energy methodologies; revise novelty claims accordingly.
