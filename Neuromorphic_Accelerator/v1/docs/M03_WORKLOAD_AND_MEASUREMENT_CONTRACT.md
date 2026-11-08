@@ -1,6 +1,6 @@
 # M03 — Reproducible workloads, neural state/DDR traffic and quantitative measurement contract
 
-**Status:** M03 ACTIVE / PC-only mathematical and traffic-model development. NOT user-accepted; no FPGA build, measured DDR operation, HLS implementation, real benchmark accuracy, power or energy. Based on the **user-accepted M01 provisional configurable state-block baseline** and **user-accepted M02 initial integer LIF reference revision 1**. No published accelerator's RTL/software has been copied.
+**Status:** **M03 COMPLETE / USER-ACCEPTED for PC-only scope (2026-11-07 local)**. The user reports native M03+M02+M01 tests PASS and authorized M03 merge; no FPGA build, measured DDR operation, HLS implementation, real benchmark accuracy, power or energy. Based on the **user-accepted M01 provisional configurable state-block baseline** and **user-accepted M02 initial integer LIF reference revision 1**. No published accelerator's RTL/software has been copied.
 
 ## 1. What is fixed and what is varied
 
@@ -90,14 +90,14 @@ These are **future requirements**, not a claim the counters or timer boundaries 
 
 **Experiment acceptance principle:** A negative virtualization/sparsity result is a meaningful research outcome if the workload and measurement contracts are explicit. Never tune a cache policy on evaluation traces without disclosing training/calibration; keep synthetic seed settings and application TEST split boundaries fixed before comparing configurations.
 
-## 6. Open M03 gates (not accepted yet)
+## 6. M03 acceptance — CLOSED (PC-only scope only)
 
 - [x] Deterministic N/fanout/stimulus/seed workloads with exact role-isomorphic neural SHA controls.
 - [x] Independently accepted M02 dense + queued numerical parity vs M03 provably safe zero-state skip.
 - [x] State and synapse bytes, transaction accounting, active-group counters and modeled pending-delivery work separated, with cold writes/dirty end flush.
 - [x] Four analytical control definitions, capacity gating, source/trace provenance and 36-paired-case no-board sweep tools.
-- [ ] Operator runs native PC M03 + M02/M01 regression tests and reproduces original no-overwrite JSON; report original SHA(s).
-- [ ] User reviews the **four-way model scope**, synthetic workload limitations, capacity/memory-placement assumptions and *future* physical measurement contract.
-- [ ] M03 acceptance/merge authorized; M04 hardware engine reuse assessment stays a separately scoped milestone.
+- [x] User independently reports native M03 (28) + M02 (21) + M01 (20) tests PASS. GitHub no-board CI PASS and generated both original modeled-traffic JSON artifacts. **User-local original JSON SHA256s were not supplied**; do not invent raw local evidence receipts.
+- [x] User explicitly approves milestone closure and merge, accepting the **PC-only source/experiment scope**, with hardware resource matching, measured DDR latency and per-session physical evidence still required in later milestones. Approval does not establish realized 4-way FPGA engines.
+- [x] M03 acceptance/merge expressly authorized. **M04 HLS engine reuse investigation is a new separate branch milestone and has not been executed.** See [M04 next-chat handoff seed](M04_NEXT_CHAT_HANDOFF_SEED_2026_11_07.md).
 
 Further implementation and original instructions: [M03 native verification runbook](M03_PC_ONLY_VERIFICATION.md) and [M03 test-by-test explanation](M03_TESTS_EXPLAINED.md). Historical reference: [M02 initial accepted contract](M02_PROVISIONAL_LIF_CONTRACT.md) and [root literature review](../../../LitReview.md).
