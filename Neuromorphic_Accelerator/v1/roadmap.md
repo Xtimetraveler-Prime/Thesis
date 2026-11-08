@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Development and Experimental Roadmap
 
-**Status:** **M01 COMPLETE / USER-ACCEPTED 2026-11-07 local (PC-ONLY architecture/model scope)**; **M02 COMPLETE / USER-ACCEPTED (initial v1 neural contract, PC-only)**; M03–M09 PLANNED. M01 acceptance covers analytical memory-residency tradeoffs; **M02 accepts the first precise LIF software behavior and independently verified dense/event-queued traces**, not any FPGA inference speed, physical DDR measurements, or equivalence to Loihi/YANA silicon. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
+**Status:** **M01 COMPLETE / USER-ACCEPTED 2026-11-07 local (PC-ONLY architecture/model scope)**; **M02 COMPLETE / USER-ACCEPTED (initial v1 neural contract, PC-only)**; **M03 ACTIVE (PC-ONLY REPRODUCIBLE WORKLOADS/TRAFFIC; USER VERIFICATION PENDING)**; M04–M09 PLANNED. M01 acceptance covers analytical memory-residency tradeoffs; **M02 accepts the first precise LIF software behavior and independently verified dense/event-queued traces**, not any FPGA inference speed, physical DDR measurements, or equivalence to Loihi/YANA silicon. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
 
 ## 0. Purpose and research thesis
 
@@ -20,7 +20,7 @@
 | --- | --- | --- | --- |
 | **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **COMPLETE / USER-ACCEPTED** — user-reported 20 native tests PASS, branch CI PASS, provisional block baseline approved; NO FPGA neural/timing results. |
 | **M02 — Independent LIF and event-order reference contract** | Define exact numerical/spike semantics and immutable independent oracle; verify sparse equivalence. | M01 interface assumptions | **COMPLETE / USER-ACCEPTED** — 21 M02 + 20 M01 native CI PASS; user reports M02 PC tests PASS and approves this first LIF contract as current baseline; not an FPGA claim. |
-| **M03 — Workloads, traffic model and measurement contract** | Trace-driven DDR/cache model, sparsity/locality generators and 4-way comparison rules. | M01 + M02 | **PLANNED** — reproducible experiment specification. |
+| **M03 — Workloads, traffic model and measurement contract** | Trace-driven DDR/cache model, sparsity/locality generators and 4-way comparison rules. | M01 + M02 | **ACTIVE / NOT ACCEPTED** — role-isomorphic workload source, 3-reference parity, four-way analytical counters, multi-seed sweep and future KV260 measurement contract; user PC verification pending. |
 | **M04 — v3 HLS neuron-engine reuse feasibility** | Audit arithmetic versus dispatch/controller coupling; decide extract/adapt/new engine from evidence. | M02 + M03 | **PLANNED** — documented engineering decision. |
 | **M05 — Sparse event scheduling and on-chip accelerator prototype** | Implement independent event/worklist processing with bounded on-chip state; correct event/timestep behavior. | M02–M04 | **PLANNED** — software/RTL/HLS parity, no DDR dependency. |
 | **M06 — DDR state backing and virtual residency engine** | Add programmable state-block mapping, transfers, eviction/writeback and measurable context stalls. | M05 + M03 | **PLANNED** — correct bounded DDR virtual state. |
@@ -78,6 +78,8 @@
 **Acceptance:** bit-exact state/spike trace parity for chosen v1 specification (or an explicit, approved numerical tolerance + accuracy test if arithmetic differs), with negative tests that catch altered event ordering and context state. The reference is the immutable neural truth for M05–M09, not the optimizer's performance oracle.
 
 ## M03 — Reproducible workload, memory-traffic model and metrics
+
+**2026-11-07/08 M03 PC-only development progress (NOT accepted):** Deterministic [role-isomorphic synthetic networks and signed current streams](src/neuromorphic_accelerator_v1/m03_workloads.py) isolate active-neuron-ID locality without changing fanout, weights or exact neural behavior; [M03 exact sparse zero-state safe-skip reference](src/neuromorphic_accelerator_v1/m03_sparse_reference.py) is bit-exact against **both accepted M02 independent evaluators**. [Four-way analytical model](src/neuromorphic_accelerator_v1/m03_traffic.py) separately counts neuron updates, synapse traversals, hypothetical state/synaptic DDR bytes/transactions, group touches, and conceptual pending event deliveries; onchip rows become **UNAVAILABLE** when the state footprint exceeds capacity. Reproducible [matched pair](scripts/m03_explore.py) and [36-pair two-seed workload sweep](scripts/m03_sweep.py), [28 native M03 tests](tests/) and source-only no-board CI added. Detailed [model/future physical measurement contract](docs/M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md), [actual tests](docs/M03_TESTS_EXPLAINED.md) and [operator local test runbook](docs/M03_PC_ONLY_VERIFICATION.md). **Hardware RTL, real DDR timing, HLS reuse, accelerator performance, trained-model accuracy and physical energy remain UNMEASURED.** User PC run and acceptance of the comparison protocol are still required.
 
 **Deliverables:**
 
@@ -195,14 +197,14 @@
 
 **Version root:** `Neuromorphic_Accelerator/v1/`. M01 introduced a standard-library **PC-only state traffic model** in `src/neuromorphic_accelerator_v1/`, `tests/`, `scripts/` and `docs/M01_*`. No v1 LIF reference, HLS/RTL or physical Vivado board implementation exists yet. Keep these explicitly separate from frozen `Loihi_Digital_Twin/v3/`.
 
-PC checkout after user-authorized M01 merge to main:
+PC checkout of **current active M03 development branch** for operator no-board verification (after the M02 user-authorized merge to `main`):
 
 ```bash
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch main
-git pull --ff-only origin main
+git switch agent/neuromorphic-accelerator-v1-m03-workloads-traffic
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m03-workloads-traffic
 ls -l Neuromorphic_Accelerator/v1/
 sed -n '1,120p' Neuromorphic_Accelerator/v1/roadmap.md
 git status --short
