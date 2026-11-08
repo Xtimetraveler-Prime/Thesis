@@ -25,11 +25,11 @@ The three genuine `--csim` commands in section C are **the next required operato
 
 ## New M05 integrated finite-horizon IP — fourth top, not covered by prior genuine HLS PASS
 
-The first connected **PL-oriented** scheduler + LIF datapath is now source-staged at [`m05_integrated_replay`](../hls/m05_integrated/m05_integrated.cpp). A single run has resident synapses and state, 8 future-tick aggregate buckets, recurrent positive delays, a 4096-individual-deliveries-per-tick cap, output buffer with failure suppression, and complete ticks without host orchestration. **11 new native test methods PASS; no genuine Vitis tool results exist yet for THIS new top.** [Detailed contract](M05_INTEGRATED_FINITE_HORIZON_DESIGN.md).
+The first connected **PL-oriented** scheduler + LIF datapath is now source-staged at [`m05_integrated_replay`](../hls/m05_integrated/m05_integrated.cpp). A single run has resident synapses and state, 8 future-tick aggregate buckets, recurrent positive delays, a 4096-individual-deliveries-per-tick cap, output buffer with failure suppression, and complete ticks without host orchestration. **12 new native test methods PASS; no genuine Vitis tool results exist yet for THIS new top.** [Detailed contract](M05_INTEGRATED_FINITE_HORIZON_DESIGN.md).
 
 ```bash
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
-python3 -m unittest discover -s tests -p 'test_m05*.py' -v  # expect 59
+python3 -m unittest discover -s tests -p 'test_m05*.py' -v  # expect 60
 # Source your installed Vitis 2025.2 if needed, then:
 export HLS_PART=xck26-sfvc784-2LV-c
 bash hls/m05_stream_eval/run_m05_offline_hls.sh --integrated --csim
@@ -63,7 +63,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-Expected source-only count **59 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 150 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
+Expected source-only count **60 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 150 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
 
 ## B. Load Vitis 2025.2 tools (example; adjust INSTALL_ROOT)
 
