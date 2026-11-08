@@ -26,7 +26,7 @@ Repository: Xtimetraveler-Prime/Thesis. First-generation program at Neuromorphic
 
 Default N128/K16/T16/F4, group8, 512 B state cache; 2048 B resident full-state capacity:
 - Dense always evaluates **2048 neurons**, event exact-safe-skip **213**, dense scans **1024 edges**, sparse fanout **260**. Each resulting voltage/spike state and canonical role trace MATCH across M02 dense, queued, M03 sparse and both location relabelings.
-- Time/DD​​R both localities: state read+write **65536 B**, synapse read **8192 B**, total **544 modeled transactions**.
+- Timestep/DDR both localities: state read+write **65536 B**, synapse read **8192 B**, total **544 modeled transactions**.
 - Event/DDR clustered: state read+write **512 B**, synapse read **2080 B**, **69 modeled transactions**.
 - Event/DDR dispersed: state read+write **54528 B**, synapse read **2080 B**, **491 modeled transactions**.
 - Onchip model reports zero DDR by definition; no actual resource-matched hardware builds. These values are CPU logical work and hypothetical memory traffic ONLY, never achieved KV260 latency, energy/power, real DDR bursts, bandwidth or throughput.
