@@ -124,24 +124,58 @@ class M05RTLStallPrepTests(unittest.TestCase):
         self.assertIn("cycle_count % 11 == 0", tb)
         self.assertNotIn("force dut", tb)  # normal AXIS pins only
 
-    def test_direct_rtl_has_measured_input_stall_coverage_and_hold_checks(self):
-        # First genuine direct RTL PASS measured 188 output-stall cycles
-        # but ZERO N/S/E ingress stalls. This next test forces input VALID
-        # while the engine is idle, then insists on actual input READY stalls.
+    def test_verifiably_preserved_original_output_stall_scenario(self):
+        # Preserve the successfully XSim-verified 2026-11-08 2-neuron
+        # baseline independently of the experimental saturation scenario.
         tb = (ROOT / "hls/m05_rolling/rtl_stress/"
               "tb_m05_rolling_axis_stress.sv").read_text()
-        self.assertIn("stalled_neurons_prior", tb)
-        self.assertIn("stalled_synapses_prior", tb)
-        self.assertIn("stalled_external_prior", tb)
-        self.assertIn("prior_neurons_word", tb)
-        self.assertIn("prior_synapses_word", tb)
-        self.assertIn("prior_external_word", tb)
-        self.assertIn("neurons input VALID/TDATA changed while stalled", tb)
-        self.assertIn("synapses input VALID/TDATA changed while stalled", tb)
-        self.assertIn("external input VALID/TDATA changed while stalled", tb)
-        self.assertIn('input TVALID gaps");', tb)
-        self.assertIn("no meaningful incoming AXIS backpressure", tb)
-        self.assertIn("repeat (45) @(negedge ap_clk);", tb)
+        self.assertIn("trace_received == 24", tb)
+        self.assertIn("axi_write(`M05_ADDR_NEURON_COUNT_DATA, 2)", tb)
+        self.assertIn("PASS: M05 REAL RTL AXIS stall stress N=2", tb)
+        self.assertNotIn("stalled_neurons_prior", tb)
+        self.assertNotIn("no meaningful incoming AXIS backpressure", tb)
+
+    def test_separate_64_neuron_ingress_backpressure_scenario(self):
+        # Previous 2-neuron/1-edge/1-event test showed 0 N/S/E input
+        # stalls even with prestart VALID. Fill the *real* input buffer
+        # with 64 neuron packets before ap_start to demand TREADY low.
+        tb = (ROOT / "hls/m05_rolling/rtl_stress/"
+              "tb_m05_rolling_axis_ingress_stress.sv").read_text()
+        self.assertIn("module tb_m05_rolling_axis_ingress_stress;", tb)
+        self.assertIn("localparam integer NUM_NEURONS = 64;", tb)
+        self.assertIn("localparam integer NUM_TICKS = 12;", tb)
+        self.assertIn("EXPECTED_ROWS = NUM_NEURONS * NUM_TICKS", tb)
+        self.assertIn("neurons_sent < NUM_NEURONS", tb)
+        self.assertIn("axi_write(`M05_ADDR_NEURON_COUNT_DATA, NUM_NEURONS)", tb)
+        self.assertIn("expected_tick = trace_received / NUM_NEURONS;", tb)
+        self.assertIn("expected_id = trace_received % NUM_NEURONS;", tb)
+        self.assertIn("wait(trace_received == EXPECTED_ROWS);", tb)
+        self.assertIn("repeat (300) @(negedge ap_clk);", tb)
+        self.assertIn("PASS: M05 REAL RTL AXIS INGRESS stall stress", tb)
+        for part in (
+            "stalled_neurons_prior", "stalled_synapses_prior",
+            "stalled_external_prior", "prior_neurons_word",
+            "prior_synapses_word", "prior_external_word",
+            "neurons input VALID/TDATA changed while stalled",
+            "synapses input VALID/TDATA changed while stalled",
+            "external input VALID/TDATA changed while stalled",
+            "no meaningful incoming AXIS backpressure",
+            "no deliberate input TVALID gaps",
+            "stalled_trace_prior",
+        ):
+            with self.subTest(part=part):
+                self.assertIn(part, tb)
+
+    def test_runner_routes_independent_scenarios_and_treats_fatal_as_failure(self):
+        runner = (ROOT / "scripts/run_m05_rolling_rtl_stress.sh").read_text()
+        self.assertIn("MODE=\"output\"", runner)
+        self.assertIn('if [[ "$2" != "--ingress" ]]', runner)
+        self.assertIn("tb_m05_rolling_axis_ingress_stress.sv", runner)
+        self.assertIn("tb_m05_rolling_axis_stress.sv", runner)
+        self.assertIn('TOP_MODULE="tb_m05_rolling_axis_ingress_stress"', runner)
+        self.assertIn('PASS_MARKER="PASS: M05 REAL RTL AXIS INGRESS stall stress"', runner)
+        self.assertIn("Fatal: RTL_STRESS_FAIL", runner)
+        self.assertIn("stress_mode.txt", runner)
 
     def test_no_adjacent_format_string_literals_in_xvlog_stressbench(self):
         # Regression for operator's real 2026-11-08 xvlog failure VRFC
