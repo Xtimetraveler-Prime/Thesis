@@ -10,16 +10,20 @@
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
-    echo "Usage: bash $0 <rolling --impl evidence dir> [--ingress]" >&2
+    echo "Usage: bash $0 <rolling --impl evidence dir> [--ingress|--late-error]" >&2
     exit 2
 fi
 MODE="output"
 if [[ "$#" -eq 2 ]]; then
-    if [[ "$2" != "--ingress" ]]; then
-        echo "ERROR: second argument must be --ingress" >&2
+    if [[ "$2" != "--ingress" && "$2" != "--late-error" ]]; then
+        echo "ERROR: second argument must be --ingress or --late-error" >&2
         exit 2
     fi
-    MODE="ingress"
+    if [[ "$2" == "--ingress" ]]; then
+        MODE="ingress"
+    else
+        MODE="late-error"
+    fi
 fi
 IMPL="$(realpath -e -- "$1")"
 if [[ ! -d "$IMPL" ]] || [[ "$(basename "$IMPL")" != neuromorphic_v1_m05_rolling_impl_* ]]; then
@@ -71,6 +75,8 @@ git status --porcelain=v1 > "$OUT/working_tree_status.txt"
 printf '%s\n' "xck26-sfvc784-2LV-c" > "$OUT/part.txt"
 sha256sum "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv" \
     "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_ingress_stress.sv" \
+    "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv" \
+    "$ROOT/scripts/m05_rtl_transaction_replay.py" \
     "$ROOT/scripts/m05_axis_regmap.py" \
     "$ROOT/scripts/m05_rtl_meminit.py" \
     "$ROOT/scripts/run_m05_rolling_rtl_stress.sh" \
@@ -112,6 +118,12 @@ if [[ "$MODE" == "ingress" ]]; then
     SNAPSHOT="m05_rolling_axis_ingress_stress_snapshot"
     PASS_MARKER="PASS: M05 REAL RTL AXIS INGRESS stall stress"
 fi
+if [[ "$MODE" == "late-error" ]]; then
+    TOP_SV="$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv"
+    TOP_MODULE="tb_m05_rolling_axis_late_error"
+    SNAPSHOT="m05_rolling_axis_late_error_snapshot"
+    PASS_MARKER="PASS: M05 REAL RTL AXIS LATE-ERROR"
+fi
 # Compile in a unique evidence-local cwd so no xsim.dir or .jou is deposited
 # in the user's Git worktree or an earlier Vitis proof directory.
 cd "$OUT"
@@ -142,5 +154,11 @@ fi
 if grep -Eq 'Fatal: RTL_STRESS_FAIL|ERROR: RTL_STRESS_FAIL' "$OUT/04_xsim.log"; then
     echo "ERROR: XSim signaled RTL_STRESS_FAIL, even if exit code was zero" >&2
     exit 1
+fi
+if [[ "$MODE" == "late-error" ]]; then
+    # Replay the *actual* XSim provisional trace through the existing Python
+    # host gate. A nonzero final AXI-Lite status must DISCARD all 8 prior rows.
+    python3 "$ROOT/scripts/m05_rtl_transaction_replay.py" \
+        --xsim-log "$OUT/04_xsim.log" 2>&1 | tee "$OUT/05_trace_commit.log"
 fi
 echo "PASS: Direct generated RTL AXI $MODE stall stress; no board operations."
