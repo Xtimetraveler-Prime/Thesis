@@ -1,6 +1,23 @@
 #include "m05_rolling.hpp"
+#include <limits>
 
-// A rolling wheel of 8 signed-i64 aggregate buckets reuses BRAM irrespective
+// The temporal wheel has at most 4096 individual signed-W16 deliveries
+// across ALL neurons in one logical tick (external + recurrent, even zero).
+// Therefore every legal intermediate per-neuron sum, for ANY arrival order,
+// fits the closed interval [-4096*32768, +4096*32767]. In particular, the
+// negative endpoint is -2^27 and the positive endpoint is below +2^27.
+// A signed 32-bit BRAM cell is exact without changing the 64-bit M04 API.
+// A future change to per-tick admission or term width MUST revisit this proof.
+constexpr std::int64_t M05_ROLL_MIN_CURRENT =
+    -static_cast<std::int64_t>(M05_INT_MAX_PER_TICK) * 32768;
+constexpr std::int64_t M05_ROLL_MAX_CURRENT =
+    static_cast<std::int64_t>(M05_INT_MAX_PER_TICK) * 32767;
+static_assert(M05_ROLL_MIN_CURRENT >=
+              std::numeric_limits<std::int32_t>::min(), "wheel underflows i32");
+static_assert(M05_ROLL_MAX_CURRENT <=
+              std::numeric_limits<std::int32_t>::max(), "wheel overflows i32");
+
+// A rolling wheel of 8 exact signed-i32 aggregate buckets reuses BRAM irrespective
 // of run length. This is one autonomous HLS-oriented neural-run top, with no
 // Python/PS service per logical tick. Individual deliveries are COUNTED
 // independently from aggregate/touch, even when zero or canceling.
@@ -46,7 +63,7 @@ std::uint32_t m05_rolling_replay(
     static std::int16_t weight[M05_INT_MAX_SYNAPSES];
     static std::uint8_t delay[M05_INT_MAX_SYNAPSES];
 
-    static std::int64_t current[M05_ROLLING_SLOTS][M05_INT_MAX_NEURONS];
+    static std::int32_t current[M05_ROLLING_SLOTS][M05_INT_MAX_NEURONS];
     static std::uint8_t touched[M05_ROLLING_SLOTS][M05_INT_MAX_NEURONS];
     static std::uint32_t delivery_count[M05_ROLLING_SLOTS];
     static std::int16_t tick_voltage[M05_INT_MAX_NEURONS];
@@ -138,7 +155,7 @@ std::uint32_t m05_rolling_replay(
             }
             ++delivery_count[slot];
             current[slot][pending.neuron_id] +=
-                static_cast<std::int64_t>(pending.current);
+                static_cast<std::int32_t>(pending.current);
             touched[slot][pending.neuron_id] = 1;
             have_pending = 0;
         }
@@ -156,7 +173,10 @@ std::uint32_t m05_rolling_replay(
                 request.neuron_count = neuron_count;
                 request.tick = t;
                 request.previous_voltage = voltage[i];
-                request.aggregated_current = current[slot][i];
+                // Sign-extend the exact i32 aggregate for unchanged M04 i64
+                // request semantics; do NOT saturate per contribution.
+                request.aggregated_current =
+                    static_cast<std::int64_t>(current[slot][i]);
                 request.bias = bias[i];
                 request.threshold = threshold[i];
                 request.reset_voltage = reset[i];
@@ -195,7 +215,7 @@ std::uint32_t m05_rolling_replay(
                 ++delivery_count[future_slot];
                 const std::uint32_t dest = post[edge];
                 current[future_slot][dest] +=
-                    static_cast<std::int64_t>(weight[edge]);
+                    static_cast<std::int32_t>(weight[edge]);
                 touched[future_slot][dest] = 1;
             }
         }
