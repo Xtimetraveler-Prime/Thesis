@@ -54,7 +54,7 @@ else
     CONFIG="$ROOT/hls/m05_stream_eval/m05_hls_config.cfg"
     TOP="m05_stream_eval"
 fi
-for tool in git sha256sum vitis-run; do
+for tool in git sha256sum python3 vitis-run; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "ERROR: $tool missing; source Vitis 2025.2 settings64.sh" >&2
         exit 2
@@ -73,7 +73,7 @@ fi
 if [[ ! -f "$CONFIG" ]] || \
    ! grep -qx "part=$PART" "$CONFIG" || \
    ! grep -qx "syn.top=$TOP" "$CONFIG" || \
-   ! grep -qx "syn.output.format=rtl" "$CONFIG" || \
+   ! grep -qx "package.output.format=rtl" "$CONFIG" || \
    ! grep -qx "clock=10ns" "$CONFIG"; then
     echo "ERROR: config/part/top/clock mismatch: $CONFIG" >&2; exit 2
 fi
@@ -106,7 +106,20 @@ sha256sum \
     hls/m05_accumulator/m05_accum_csim_tb.cpp \
     hls/m05_accumulator/m05_accum_hls_config.cfg \
     hls/m05_stream_eval/run_m05_offline_hls.sh \
+    hls/m05_stream_eval/prepare_hls_config.py \
     > "$OUT/source_sha256.txt"
+
+# Vitis 2025.2 resolves source/include and testbench paths after moving into
+# the evidence WORK DIRECTORY, not necessarily from the operator's source cwd.
+# The checked-in config is a template; generate an evidence-local effective INI
+# containing verified ABSOLUTE paths. Never overwrite the source template.
+EFFECTIVE_CONFIG="$OUT/hls_effective_config.cfg"
+python3 "$ROOT/hls/m05_stream_eval/prepare_hls_config.py" \
+    --root "$ROOT" --template "$CONFIG" --top "$TOP" \
+    --output "$EFFECTIVE_CONFIG"
+sha256sum "$EFFECTIVE_CONFIG" > "$OUT/effective_config_sha256.txt"
+echo "Effective HLS config with absolute paths: $EFFECTIVE_CONFIG"
+
 # A nonzero tool status still preserves original logs and an explicit failure.
 finish() {
     local status="$?"
@@ -132,24 +145,24 @@ trap finish EXIT
 echo "M05 OFFLINE HLS kernel=$KERNEL mode=$MODE source=$(cat "$OUT/commit.txt")"
 echo "Preserving outputs under $OUT"
 echo "== Step 1: Vitis C simulation =="
-vitis-run --mode hls --csim --config "$CONFIG" \
+vitis-run --mode hls --csim --config "$EFFECTIVE_CONFIG" \
     --work_dir "$OUT/work" --part "$PART" \
     2>&1 | tee "$OUT/01_csim.log"
 if (( LEVEL >= 1 )); then
     echo "== Step 2: HLS C synthesis, report *achieved* II/latency/resources =="
-    v++ -c --mode hls --config "$CONFIG" \
+    v++ -c --mode hls --config "$EFFECTIVE_CONFIG" \
         --work_dir "$OUT/work" --part "$PART" \
         2>&1 | tee "$OUT/02_csynth.log"
 fi
 if (( LEVEL >= 2 )); then
     echo "== Step 3: synthesized C/RTL co-simulation =="
-    vitis-run --mode hls --cosim --config "$CONFIG" \
+    vitis-run --mode hls --cosim --config "$EFFECTIVE_CONFIG" \
         --work_dir "$OUT/work" --part "$PART" \
         2>&1 | tee "$OUT/03_cosim.log"
 fi
 if (( LEVEL >= 3 )); then
     echo "== Step 4: Vivado out-of-context implementation (NOT full shell) =="
-    vitis-run --mode hls --impl --config "$CONFIG" \
+    vitis-run --mode hls --impl --config "$EFFECTIVE_CONFIG" \
         --work_dir "$OUT/work" --part "$PART" \
         2>&1 | tee "$OUT/04_ooc_impl.log"
 fi
