@@ -40,7 +40,10 @@ static bool reject_without_partial_trace() {
     return result == M05_INT_DELIVERY_OVERFLOW && trace.empty();
 }
 int main() {
-    // A full successful run after a previous failed run must not see stale\n    // state or queued future events (fresh-run logical reset).\n    if (!self_recurrence() || !reject_without_partial_trace() ||\n        !self_recurrence()) {
+    // A full successful run after a previous failed run must not see stale
+    // state or queued future events (fresh-run logical reset).
+    if (!self_recurrence() || !reject_without_partial_trace() ||
+        !self_recurrence()) {
         std::cerr << "FAIL: M05 integrated temporal CSim vectors\n";
         return 1;
     }
