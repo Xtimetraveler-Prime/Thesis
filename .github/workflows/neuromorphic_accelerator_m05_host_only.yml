@@ -94,6 +94,24 @@ jobs:
             rtl/m05_11/m05_ingress_dma_unpad.v rtl/m05_11/tb_m05_11_ingress.sv
           vvp "$RUNNER_TEMP/m05_11_ingress" | tee "$RUNNER_TEMP/m05_11_ingress.log"
           grep -Fq "PASS: M05.11 RTL ingress" "$RUNNER_TEMP/m05_11_ingress.log"
+      - name: M05.11b standalone AXI-Lite RTL (Icarus only, NOT Vivado or PS)
+        run: |
+          iverilog -g2012 -s tb_m05_11_axil_controller \
+            -o "$RUNNER_TEMP/m05_11_axil" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/tb_m05_11_axil_controller.sv
+          timeout 15s vvp "$RUNNER_TEMP/m05_11_axil" | tee "$RUNNER_TEMP/m05_11_axil.log"
+          grep -Fq "PASS: M05.11b AXI-Lite" "$RUNNER_TEMP/m05_11_axil.log"
+          iverilog -g2012 -s m05_11_stream_shell \
+            -o "$RUNNER_TEMP/m05_11_shell_elab" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_11_stream_shell.v \
+            rtl/m05_11/tb_m05_11_axil_controller.sv \
+            scripts/run_m05_11_axil_xsim.sh \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/m05_11_stream_shell.v
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
