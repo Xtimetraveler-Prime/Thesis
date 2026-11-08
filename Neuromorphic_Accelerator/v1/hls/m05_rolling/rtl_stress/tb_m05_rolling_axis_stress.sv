@@ -99,6 +99,14 @@ module tb_m05_rolling_axis_stress;
 
     reg stalled_trace_prior = 0;
     reg [191:0] prior_trace_word = 0;
+    // Ingress drivers must likewise HOLD VALID and data until accepted.
+    // The earlier passing run had gaps but ZERO input stall cycles.
+    reg stalled_neurons_prior = 0;
+    reg stalled_synapses_prior = 0;
+    reg stalled_external_prior = 0;
+    reg [127:0] prior_neurons_word = 0;
+    reg [191:0] prior_synapses_word = 0;
+    reg [127:0] prior_external_word = 0;
 
     // Successful 12-tick workload:
     //   neuron0 at tick0 receives +5, fires and resets to 0.
@@ -130,6 +138,12 @@ module tb_m05_rolling_axis_stress;
             external_events_TVALID <= 0;
             stalled_trace_prior <= 0;
             prior_trace_word <= 0;
+            stalled_neurons_prior <= 0;
+            stalled_synapses_prior <= 0;
+            stalled_external_prior <= 0;
+            prior_neurons_word <= 0;
+            prior_synapses_word <= 0;
+            prior_external_word <= 0;
         end else begin
             cycle_count <= cycle_count + 1;
             if (cycle_count >= 200000)
@@ -169,6 +183,28 @@ module tb_m05_rolling_axis_stress;
                 synapse_stall_cycles <= synapse_stall_cycles + 1;
             if (external_events_TVALID && !external_events_TREADY)
                 external_stall_cycles <= external_stall_cycles + 1;
+
+            // Explicitly check ingress-ready stalls as true clock-level
+            // ready/valid handshakes, not just the existence of TVALID gaps.
+            // Each producer must keep VALID asserted with the same TDATA
+            // until its current beat is transferred by VALID && READY.
+            if (stalled_neurons_prior &&
+                (!neurons_TVALID || neurons_TDATA !== prior_neurons_word))
+                $fatal(1, "RTL_STRESS_FAIL neurons input VALID/TDATA changed while stalled");
+            if (stalled_synapses_prior &&
+                (!synapses_TVALID || synapses_TDATA !== prior_synapses_word))
+                $fatal(1, "RTL_STRESS_FAIL synapses input VALID/TDATA changed while stalled");
+            if (stalled_external_prior &&
+                (!external_events_TVALID ||
+                 external_events_TDATA !== prior_external_word))
+                $fatal(1, "RTL_STRESS_FAIL external input VALID/TDATA changed while stalled");
+            stalled_neurons_prior <= neurons_TVALID && !neurons_TREADY;
+            stalled_synapses_prior <= synapses_TVALID && !synapses_TREADY;
+            stalled_external_prior <= external_events_TVALID &&
+                                      !external_events_TREADY;
+            prior_neurons_word <= neurons_TDATA;
+            prior_synapses_word <= synapses_TDATA;
+            prior_external_word <= external_events_TDATA;
 
             // Real AXIS stability contract: VALID and payload must remain
             // stable from a stalled cycle through the subsequent cycle,
@@ -269,6 +305,13 @@ module tb_m05_rolling_axis_stress;
         repeat (12) @(negedge ap_clk);
         ap_rst_n = 1;
 
+        // Begin holding ingress VALID while the engine is still idle.
+        // The IP must backpressure the source until it can safely accept.
+        // This specifically exercises the missing input-stall coverage
+        // observed in the first successful 12-tick RTL output-stall test.
+        enable_feeds = 1;
+        repeat (45) @(negedge ap_clk);
+
         // Register offsets are parsed from Vitis-generated *_hw.h, not
         // assumed from memory or a hard-coded prior tool version.
         axi_write(`M05_ADDR_NEURON_COUNT_DATA, 2);
@@ -277,7 +320,6 @@ module tb_m05_rolling_axis_stress;
         axi_write(`M05_ADDR_TICKS_DATA, 12);
         axi_write(`M05_ADDR_DECAY_NUM_DATA, 1);
         axi_write(`M05_ADDR_DECAY_DEN_DATA, 1);
-        enable_feeds = 1;
         axi_write(`M05_ADDR_AP_CTRL, 1);  // ap_start, one hardware run
 
         wait(trace_received == 24);
@@ -298,6 +340,9 @@ module tb_m05_rolling_axis_stress;
             $fatal(1, "RTL_STRESS_FAIL no meaningful AXIS output backpressure");
         if (ingress_gap_cycles < 10)
             $fatal(1, "RTL_STRESS_FAIL no deliberate input TVALID gaps");
+        if (neuron_stall_cycles + synapse_stall_cycles +
+            external_stall_cycles < 10)
+            $fatal(1, "RTL_STRESS_FAIL no meaningful incoming AXIS backpressure");
         repeat (25) @(negedge ap_clk);
         if (trace_received != 24)
             $fatal(1, "RTL_STRESS_FAIL extra trace rows after completion");
