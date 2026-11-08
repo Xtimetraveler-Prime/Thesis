@@ -214,8 +214,15 @@ class M02LifReferenceTests(unittest.TestCase):
         self.assertEqual(a, b)
         self.assertEqual(tuple(events), before)
         raw = json.dumps(asdict(a), separators=(",", ":"), sort_keys=True).encode("utf-8")
+        # Independently hand-derived states: node0 fires at t0; node1
+        # receives its delayed +2 plus external -1 at t1, reaches 3 and fires;
+        # then its +1 bias triggers another spike at t4.
+        self.assertEqual(a.voltage_rows,
+                         ((0, 1), (0, 0), (0, 1), (0, 2),
+                          (0, 0), (0, 1), (0, 2)))
+        self.assertEqual(a.emitted_spikes, ((0, 0), (1, 1), (4, 1)))
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
-                         hashlib.sha256(raw).hexdigest())
+                         "8bbb6530626598c4f6f199062cd30f53962fff5eed2bd6a39c670b0dc8b0db3b")
         self.assertEqual(a, evaluate_dense(net, events, ticks=7))
 
     def test_input_generator_accepted_once_per_evaluator(self):
