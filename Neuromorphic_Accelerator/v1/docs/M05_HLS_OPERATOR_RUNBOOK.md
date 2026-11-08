@@ -1,8 +1,12 @@
 # M05 Vitis HLS 2025.2 offline operator verification (KV260/K26, NO BOARD)
 
-**Current scope:** Three independent, project-owned **HLS-oriented C++ candidate IPs** in `Neuromorphic_Accelerator/v1/hls/`: `m05_stream_eval` (stateless per-neuron update), `m05_stateful_service` (persistent 1,024-row neural state/config memory with exact-once per-ID/tick guard), and `m05_event_accumulator` (signed i64 per-neuron coalescing, 4,096 individual contributions/tick with SEALED readout and sticky overflow). They are **not yet joined into a complete PL scheduler**, and no genuine Vitis HLS Csim, synthesis, RTL cosim or physical KV260 action has yet been run by this project assistant.
+**Current scope:** Three independent, project-owned **HLS-oriented C++ candidate IPs** in `Neuromorphic_Accelerator/v1/hls/`: `m05_stream_eval` (stateless per-neuron update), `m05_stateful_service` (persistent 1,024-row neural state/config memory with exact-once per-ID/tick guard), and `m05_event_accumulator` (signed i64 per-neuron coalescing, 4,096 individual contributions/tick with SEALED readout and sticky overflow). They are **not yet joined into a complete PL scheduler**. On 2026-11-08 the **operator** ran and reported genuine Vitis HLS CSim, HLS synthesis, and XSim C/RTL co-simulation **PASS for all three standalone tops**, with reports and evidence paths cataloged in [the real HLS evidence summary](M05_REAL_HLS_RESULTS_2026_11_08.md). The assistant has not run Vitis locally; there has been no integrated simulator or physical KV260 action.
 
 This runbook uses Vitis HLS **2025.2** and K26 part **`xck26-sfvc784-2LV-c`** with a **10 ns requested clock, 12% uncertainty**. These are goals, not achieved timing/area. Original source and reports live in new exclusive-create directories under `$HOME/Thesis_Evidence`, never tracked/overwritten in Git. Do NOT run old v3 JTAG/DDR scripts. No Vivado Hardware Manager/device programming here.
+
+> **LATEST PASS STATUS (after the originally failed attempts):** The three retried genuine CSim benches **all passed**, three individual RTL syntheses **all passed**, and three individual XSim C/RTL cosimulations **all passed** on the operator's Vitis 2025.2 installation. See [exact original evidence directories, resources and scope](M05_REAL_HLS_RESULTS_2026_11_08.md). The older failure diagnosis below is historical and explains the corrected absolute-path generator. **Do not confuse independent IP PASS with a completed M05 on-chip event scheduler.**
+>
+> **Next engineering work:** PL event routing/scheduling and state/accumulator integration, full-system temporal parity. OOC implementation is optional and does not substitute for an integrated RTL bench.
 
 ## 2026-11-08 real HLS failure and fix — review before rerunning
 
