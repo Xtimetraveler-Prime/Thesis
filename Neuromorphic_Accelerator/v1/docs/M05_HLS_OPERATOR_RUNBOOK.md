@@ -4,6 +4,21 @@
 
 This runbook uses Vitis HLS **2025.2** and K26 part **`xck26-sfvc784-2LV-c`** with a **10 ns requested clock, 12% uncertainty**. These are goals, not achieved timing/area. Original source and reports live in new exclusive-create directories under `$HOME/Thesis_Evidence`, never tracked/overwritten in Git. Do NOT run old v3 JTAG/DDR scripts. No Vivado Hardware Manager/device programming here.
 
+## 2026-11-08 real HLS failure and fix — review before rerunning
+
+The operator ran all three **genuine** Vitis v2025.2 Csim commands on M05 source commit `6f5ca78a`; **all three failed** with `HLS 200-2001` (source and testbench not found) then `HLS 200-627` (no C testbench). This occurred because Vitis changed into the external `Thesis_Evidence` directory before resolving project-relative `syn.file`, `tb.file` and `-I` paths. The Vitis logs also confirmed `syn.output.format` is **deprecated** and should be `package.output.format`. Those failures prove **a configuration defect**, not faulty neural arithmetic; **no neuron logic reached Vitis CSim**. Preserve all three old failure folders unchanged. See [original failure analysis](M05_HLS_CSIM_FAILURE_2026_11_08.md).
+
+**Fix on the same branch:** each new run generates and saves `hls_effective_config.cfg` beside its original evidence logs, containing verified **absolute** paths for every C++ source, testbench, and include directory. All Csim, synthesis, cosim and OOC commands now receive this effective config. The helper refuses a missing file or overwriting another run's config. `package.output.format=rtl` is used. The local mock-Vitis regression exercises the exact *directory change* and tests all 3 tops; it is **not genuine HLS evidence**.
+
+After pulling the new branch, check:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m05_hls*.py' -v
+```
+
+The three genuine `--csim` commands in section C are **the next required operator validation**. Start with the stream top; stop at the first failure, upload the new original log and `hls_effective_config.cfg`. Do not proceed to synthesis until ALL three genuine Csim logs pass.
+
 ## A. Prepare VS Code Ubuntu terminal
 
 ```bash
@@ -26,7 +41,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-Expected source-only count **45 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 136 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
+Expected source-only count **48 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 139 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
 
 ## B. Load Vitis 2025.2 tools (example; adjust INSTALL_ROOT)
 
@@ -49,7 +64,7 @@ If Vitis is installed at `/opt/Xilinx/Vitis/2025.2`, change the source path acco
 
 ## C. Phase 1 — **Genuine** Vitis C simulation, one independent top at a time
 
-The repository script performs **real** `vitis-run --mode hls --csim`, checks Vitis 2025.2/part/source config, and writes originals to a newly created `$HOME/Thesis_Evidence` folder. It **does not** silently run a Python substitute.
+The repository script performs **real** `vitis-run --mode hls --csim`, checks Vitis 2025.2/part/source config, generates `hls_effective_config.cfg` with absolute paths for all design/testbench files and headers, and writes originals to a newly created `$HOME/Thesis_Evidence` folder. It **does not** silently run a Python substitute.
 
 ```bash
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
@@ -134,7 +149,7 @@ find "$M05_RUN" -type f \( -name '*_csynth.rpt' \
   -o -name '*cosim*.rpt' -o -name 'syn_report*.xml' \) -print
 ```
 
-**Send:** the terminal summary and any **complete original** `01_csim.log`, `02_csynth.log`, `03_cosim.log`, or `04_ooc_impl.log` actually produced. For completed synthesis, share the complete `*_csynth.rpt` (or its actual report filename) and `report_paths.txt`. For errors, paste the first error **plus preceding warnings and source/line context**, not only the last `ERROR:` line. Include the `commit.txt` and `source_sha256.txt` so we can confirm exactly which source was tested. You can upload selected logs/report files; entire build directories/bitstreams are unnecessary.
+**Send:** the terminal summary and any **complete original** `01_csim.log`, `02_csynth.log`, `03_cosim.log`, or `04_ooc_impl.log` actually produced. For completed synthesis, share the complete `*_csynth.rpt` (or its actual report filename) and `report_paths.txt`. For errors, paste the first error **plus preceding warnings and source/line context**, not only the last `ERROR:` line. Include the `commit.txt`, `source_sha256.txt`, `hls_effective_config.cfg`, and `effective_config_sha256.txt` so we can confirm exactly which source and resolved paths Vitis received. You can upload selected logs/report files; entire build directories/bitstreams are unnecessary.
 
 **Safety:** do not give me private credentials or machine-specific tokens, and do not perform JTAG or DDR writes. Retain failed evidence unchanged and rerun in a new directory after any source correction.
 
