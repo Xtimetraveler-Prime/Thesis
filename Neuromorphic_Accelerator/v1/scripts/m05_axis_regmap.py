@@ -91,7 +91,7 @@ def parse_control_verilog(text: str) -> dict[str, int]:
     addresses: dict[str, int] = {}
     candidates: dict[str, list[int]] = {}
     for match in re.finditer(
-        r"\\bADDR_([A-Z0-9_]+)\\s*=\\s*([0-9]+)'[hH]([0-9a-fA-F]+)",
+        r"\bADDR_([A-Z0-9_]+)\s*=\s*([0-9]+)'[hH]([0-9a-fA-F]+)",
         text
     ):
         raw, _, number = match.groups()
