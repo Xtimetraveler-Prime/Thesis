@@ -28,7 +28,7 @@ jobs:
           git rev-parse HEAD
       - name: Python syntax (no hardware)
         run: python3 -m compileall -q src scripts tests
-      - name: M05 native C++ stream, state-store, accumulator and host scheduler methods
+      - name: M05 native stream, state, accumulator, and Vitis workdir-path regression
         run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
       - name: HLS Csim vector testbench native-only compile/smoke (NOT Vitis)
         run: |
@@ -72,6 +72,8 @@ jobs:
             tests/test_m05_stream.py \
             tests/test_m05_stateful.py \
             tests/test_m05_hls_setup.py \
+            tests/test_m05_hls_path_regression.py \
+            hls/m05_stream_eval/prepare_hls_config.py \
             tests/test_m05_accumulator.py \
             hls/m05_accumulator/m05_accumulator.hpp \
             hls/m05_accumulator/m05_accumulator.cpp \
