@@ -1,6 +1,8 @@
 # M05 integrated finite-horizon temporal scheduler — first physical-IP increment
 
-**Status:** source and **native C++** verification PASS on the M05 development branch; the new integrated `m05_integrated_replay` top is **NOT YET tested in actual Vitis CSim, synthesis, XSim C/RTL or FPGA fabric**. Do not borrow real standalone IP HLS evidence as proof of this new top. M05 remains OPEN and PR #79 draft/unmerged.
+**Updated verification status 2026-11-08:** the operator's genuine Vitis 2025.2 K26 HLS CSim, standalone HLS csynth and XSim C/RTL cosimulation for `m05_integrated_replay` **all PASS**; no physical device operation, live AXIS ready/valid performance or routed timing. The former source-only text below is historical. Do not borrow real standalone IP HLS evidence as proof of this new top. M05 remains OPEN and PR #79 draft/unmerged.
+
+**Top-level HLS synthesis estimates:** target 10.00 ns; estimated period **8.002 ns**; **5,914 LUT, 3,122 FF, 6 DSP, 74 BRAM18K, zero URAM**; top-level latency `?` (unresolved). The original C/RTL console postcheck PASS and return 0 are confirmed; pending detailed [cosimulation timing report](M05_ROLLING_WHEEL_DESIGN_2026_11_08.md). Operator original evidence folders recorded in [rolling design and evidence metadata](M05_ROLLING_WHEEL_DESIGN_2026_11_08.md). The more scalable rolling follow-on is still native-only.
 
 ## Motivation and scope
 
