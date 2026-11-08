@@ -136,8 +136,8 @@ class ResidencyAccountingTests(unittest.TestCase):
         self.assertEqual((result.read_bytes, result.write_bytes), (32, 16))
         self.assertEqual((result.resident_hits, result.misses), (3, 0))
         self.assertEqual(result.final_dirty_flushes, 2)
-        self.assertEqual(result.read_transactions, 4)
-        self.assertEqual(result.write_transactions, 2)
+        self.assertEqual(result.read_transactions, 2)
+        self.assertEqual(result.write_transactions, 1)
 
     def test_hybrid_pinned_and_unpinned_do_not_double_cache(self):
         cfg = self.config()
