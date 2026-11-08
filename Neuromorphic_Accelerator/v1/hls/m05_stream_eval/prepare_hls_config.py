@@ -17,7 +17,8 @@ import shlex
 FILES = {"syn.file", "tb.file"}
 INCLUDE_FIELDS = {"syn.cflags", "syn.csimflags", "tb.cflags"}
 ALLOWED_TOPS = {
-    "m05_stream_eval", "m05_stateful_service", "m05_event_accumulator"
+    "m05_stream_eval", "m05_stateful_service", "m05_event_accumulator",
+    "m05_integrated_replay"
 }
 EXPECTED_PART = "xck26-sfvc784-2LV-c"
 
