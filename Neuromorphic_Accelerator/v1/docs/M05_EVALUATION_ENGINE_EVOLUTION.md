@@ -68,7 +68,28 @@ python3 scripts/m05_hls_evidence_audit.py --markdown --evidence \
 
 If both original `source_sha256.txt` manifests are present, compare testbench hashes to decide whether per-case HLS co-sim timing comparisons are remotely meaningful. Even identical testbench code hashes do NOT prove identical datasets or injected stalls unless workload manifests and seeds are also fixed.
 
-## E. Next controlled experiments / acceptance gates
+## E. Genuine post-route OOC feasibility — 2026-11-08
+
+**New operator result received after the i32 C/RTL PASS: actual offline Vivado 2025.2 out-of-context implementation PASS.** This is the first **placed-and-routed hardware-design estimate** in the M05 evaluation-engine evolution, NOT a result measured on a physical FPGA.
+
+- **Original evidence:** `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_impl_20261108T200432Z_186026`, checkout commit **`334ca0ee78c2651019d72101f23f253b62396aed`**, `exit_status=0`. The `m05_rolling.cpp` kernel remains identical to the earlier i32 HLS/XSim-verified source. `--rolling --impl` ran cumulative genuine CSim, HLS synthesis, XSim and Vivado implementation; only the **impl and routed summary** were quoted in this operator reply, so don't manufacture any unquoted per-stage results.
+- Vivado `export_impl.rpt`: **required 10.000 ns**, **achieved after place-and-route 6.503 ns**, **WNS +3.497081 ns**, **WHS +0.055000 ns**, **TPWS 0.000000 ns**, **0 unrouted nets**. `CP achieved post-synthesis: 4.963 ns`; route-induced change is expected and **not a physical throughput figure**.
+- **Post-implementation resources:** **6,257 LUT, 6,887 FF, 35 BRAM, 2 DSP, 0 URAM, 162 SRL, 1,215 CLB**. This area is a different compilation stage and shouldn't be presented as though it were the HLS 9,956 LUT / 8,346 FF / 39 BRAM estimate. The achieved utilization reports were for the K26 stand-alone **out-of-context** HLS IP; the PS, clocks/reset, shell, interconnect, DMA, DDR, and board constraints are not incorporated.
+- Tool reported **zero critical warnings/errors** and failfast design metrics **all OK**, with 2 other warnings not enumerated in the pasted log. Actual routed path-detail and timing summary files exist under `work/hls/impl/verilog/report/` and `work/hls/impl/verilog/project.runs/impl_1/`; inspect them before claiming all specific interface paths are constrained.
+
+### Synthesis-vs-placement results for the SAME optimized i32 rolling kernel
+
+| Gate | Clock metric | LUT | FF | BRAM18K | DSP |
+|---|---|---:|---:|---:|---:|
+| Vitis HLS synthesis estimate | 8.256 ns estimated | 9,956 | 8,346 | 39 | 2 |
+| Vivado OOC **routed** implementation | **6.503 ns achieved** (10 ns required) | **6,257** | **6,887** | **35** | **2** |
+
+### Interpretation and next gate
+
+This demonstrates a technically credible **routed neuromorphic evaluation-engine IP** on the target FPGA family with useful resource headroom. It does **not** establish a viable PS/AXI integration, physical input stream feed, sustained throughput, or reliable backpressure. The next new test must drive actual synthesized Verilog **`trace_TREADY` stalls** and **input `TVALID` gaps**, asserting data/VALID stability and complete handshake-ordered trace. The verified kernel will not be edited for this gate. A dedicated offline XSim testbench/launcher is located at [`rtl_stress/tb_m05_rolling_axis_stress.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv) and [`scripts/run_m05_rolling_rtl_stress.sh`](../scripts/run_m05_rolling_rtl_stress.sh); **Genuine direct RTL stress result PENDING operator execution**, not equivalent to prior Vitis HLS co-sim.
+
+## F. Next controlled experiments / acceptance gates
+
 
 1. **Already achieved:** i32 rolling engine genuine CSim, HLS synthesis and C/RTL XSim PASS; source immutable until next explicit hardware experiment.
 2. **Next offline hardware-feasibility gate:** attempt Vivado **out-of-context HLS IP implementation** using existing safe runner `--rolling --impl` (cumulative CSim+synth+cosim+OOC implementation), then inspect actual implementation clock/BRAM/LUT/FF reports. This is an offline device-family placement/routing experiment, **not** an actual full KV260 shell/PS/DDR integration or board measurement. If the report doesn't provide routed timing, say so.
