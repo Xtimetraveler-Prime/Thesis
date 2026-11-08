@@ -1,6 +1,6 @@
 # M05 — Tests explained (native stream candidate + PC event scheduling)
 
-**Status:** M05 IN PROGRESS, not user-accepted. M05 has **45 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) and [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **136 named methods total**. Three separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
+**Status:** M05 IN PROGRESS, not user-accepted. M05 has **48 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) and [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **139 named methods total**. Three separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
 
 ## Test setup and methodology
 
@@ -87,3 +87,17 @@ The M05 workflow now also compiles [`m05_hls_csim_tb.cpp`](../hls/m05_stream_eva
 **Observed source-only CI:** [M05 run 42456476435](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42456476435), source commit `7cb863b6`: **45 M05 tests PASS**, previous **91 tests PASS**, and **three separate HLS vector testbenches compiled/run with native g++ PASS**. Initial new accumulator test failed because a Python expected-row index was off by one; fixed and reverified, with no accumulator arithmetic change.
 
 **Not validated:** actual 2025.2 HLS Csim/synthesis, RTL equivalence, inferred BRAM/URAM, achieved II/latency/Fmax, AXIS framing/backpressure, on-chip temporal FIFO/synaptic fanout, integrated global tick barrier, PS/AXI/DDR interface, physical K26 or overall speedup. Do not accept M05 as complete based only on native results. **Exact operator HLS stages and required original logs:** [M05_HLS_OPERATOR_RUNBOOK.md](M05_HLS_OPERATOR_RUNBOOK.md). M05 remains OPEN and unmerged pending user verification.
+
+
+## 2026-11-08 genuine Vitis HLS CSim failure and three new workdir-path regressions
+
+**Real operator evidence (not a CSim PASS):** all three Vitis 2025.2 CSim runs from initial commit `6f5ca78a` **FAILED** before source compilation, with warnings `HLS 200-2001` about missing `syn.file`/`tb.file`, followed by `HLS 200-627` no testbench; Vitis had changed into the evidence folder where old `relative_roots=cwd` no longer referred to the project. It additionally warned `syn.output.format` was deprecated, superseded by `package.output.format`. [Line-level error and remediation](M05_HLS_CSIM_FAILURE_2026_11_08.md).
+
+**Correction:** [`prepare_hls_config.py`](../hls/m05_stream_eval/prepare_hls_config.py) creates a new evidence-local, validated `hls_effective_config.cfg` with absolute design/testbench/include paths and canonical package output format; the [runner](../hls/m05_stream_eval/run_m05_offline_hls.sh) passes it to **each** Vitis command and preserves config/report hashes. The original failed operator evidence is untouched.
+
+**New methods (three named tests):**
+- `test_all_three_effective_configs_resolve_from_unrelated_directory`: generate per-run configs for **each** top, prove all referenced C++ files exist via absolute paths even after changing outside the project, verify checked-in templates remained unchanged.
+- `test_absolute_config_is_exclusive_and_fails_on_missing_input`: fail explicitly if a C testbench is absent (instead of leaving the error for Vitis) or if an output INI is being overwritten.
+- `test_offline_runner_three_kernels_survive_vitis_chdir_with_stub`: run the **actual no-board runner** three times against an **explicitly fake Vitis executable** that changes CWD into each external evidence directory, validates the effective config, and checks that original logs/config hashes/result files are produced. **Stubbed tool output is NOT genuine Vitis CSim.**
+
+The existing five HLS setup tests now assert the corrected `package.output.format=rtl` and `relative_roots=file/../..` (template), plus runner use of the generated effective config, instead of enforcing the deprecated key. Prior 45 M05 tests unchanged; new count **48 M05**, accepted regressions **91**, total **139** named host tests. Real successful Vitis Csim/synthesis/C-RTL evidence is still **NOT RECEIVED**; rerun the three actual CSim steps per [updated operator instructions](M05_HLS_OPERATOR_RUNBOOK.md) and review the original outputs before proceeding.
