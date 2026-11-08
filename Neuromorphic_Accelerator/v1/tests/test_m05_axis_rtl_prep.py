@@ -152,7 +152,7 @@ class M05RTLStallPrepTests(unittest.TestCase):
             rtl = (root / "work/hls/syn/verilog/"
                    "m05_rolling_replay_control_s_axi.v")
             rtl.parent.mkdir(parents=True)
-            rtl.write_text("localparam\\n" + "\n".join(
+            rtl.write_text("localparam\n" + "\n".join(
                 f"ADDR_{k if k in ('AP_CTRL', 'AP_RETURN') else k + '_0'}"
                 f" = 7'h{v:02x},"
                 for k, v in EXAMPLE.items()))
