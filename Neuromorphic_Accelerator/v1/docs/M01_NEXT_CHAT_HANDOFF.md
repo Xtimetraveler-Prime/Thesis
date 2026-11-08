@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — CURRENT M01 Next-Chat Handoff
 
-**Last updated:** 2026-11-07 local / November 8 UTC. **Current task:** M01 — neuron-state virtualization trade study. **Authoritative live instructions for NEW accelerator project; old Loihi digital twin handoffs are historical and must not become active tasks.**
+**Last updated:** 2026-11-07 local / November 8 UTC. **Current task:** M01 CLOSEOUT accepted, begin separate M02 reference milestone. **Authoritative live instructions for NEW accelerator project; old Loihi digital twin handoffs are historical and must not become active tasks.**
 
 ## Research direction and immutable history
 
@@ -16,7 +16,7 @@ Conceptual design: retain independently checked LIF semantics and configurable l
 
 - Explicit prior user request merged new workspace PR #73 and roadmap PR #74 to main, original integration main commit 8770000419600b377721130e29507b3c5816d3b3.
 - **Active new development branch:** agent/neuromorphic-accelerator-v1-m01-trade-study, based directly on the above main. Develop/test in branch; **do NOT merge M01 without user verification and explicit approval**.
-- **M01 status: ACTIVE, PC-only candidate study; NOT ACCEPTED.** M02–M09 are PLANNED. M01 options memo and safe experiment tool exist, but no chosen hardware interface or calibrated DDR/BRAM/URAM design; no actual physical acceleration.
+- **M01 status: COMPLETE / USER-ACCEPTED strictly PC-only.** User-reported native 20-test PASS and provisional B/group baseline approval; **user-local raw JSON hashes not furnished**. M02–M09 require separate acceptance; M02 is the next approved development scope. M01 options memo and safe experiment tool exist, but no chosen hardware interface or calibrated DDR/BRAM/URAM design; no actual physical acceleration.
 - Milestone roadmap: ../roadmap.md. Architecture alternatives / modeled numbers: M01_ARCHITECTURE_OPTIONS.md. Exact PC commands and original-safe JSON output: M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md. Earlier open design prompts: ARCHITECTURE_DESIGN_QUESTIONS.md.
 - Native no-board GitHub Actions workflow: .github/workflows/neuromorphic_accelerator_m01_pc_only.yml; status historically 20 standard-library unit tests PASS on a successful development-branch workflow (latest workflow result should always be rechecked at branch HEAD before claiming it again).
 
@@ -56,7 +56,7 @@ Then follow M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md to generate TWO *new* origina
 
 ## Next explicit decision and upcoming development
 
-**M01 unresolved review:** Is an adjustable **block/group-based residence mechanism** acceptable as the *initial* implementation baseline if an individual-neuron model and simple hybrid policy are retained as mandatory controls? Should neuron state and synaptic connectivity be addressed as **separate independent virtualization axes**? This is not a decision that prevents the existing PC-only study, but must be settled before M02/M04 hardware data layout.
+**M01 RESOLVED:** The user approved adjustable **block/group-based residency as initial provisional baseline**, with individual-neuron and hybrid controls retained. Neuron state and synaptic connectivity stay **separate memory-placement variables**; their exact layouts and on-chip budgets are **not** decided. The detailed test-by-test acceptance explanation is [M01_TESTS_EXPLAINED.md](M01_TESTS_EXPLAINED.md).
 
 **M02 unresolved neural reference:** Select exact v1 LIF arithmetic/precision, decay and idle/bias semantics, spike order/time bucket, delays, saturation/reset/refractory, recurrent scope and reference oracle test vectors. Reuse original v3 golden behavior as comparative fixtures where identical; build a small independent dense timestep v1 LIF oracle with a separate sparse-model checker; don't rely on HLS or YANA as sole source of neural truth.
 
