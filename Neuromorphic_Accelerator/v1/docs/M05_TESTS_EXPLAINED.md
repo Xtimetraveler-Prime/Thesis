@@ -1,6 +1,6 @@
 # M05 — Tests explained (native stream candidate + PC event scheduling)
 
-**Status:** M05 IN PROGRESS, not user-accepted. M05 has **59 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py) and [11 integrated finite-horizon network tests](../tests/test_m05_integrated.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **150 named methods total**. Four separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
+**Status:** M05 IN PROGRESS, not user-accepted. M05 has **60 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py) and [12 integrated finite-horizon network tests](../tests/test_m05_integrated.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **151 named methods total**. Four separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
 
 ## Test setup and methodology
 
@@ -119,6 +119,7 @@ The existing five HLS setup tests now assert the corrected `package.output.forma
 | `test_4097_recurrent_deliveries_fail_before_any_trace` | Future-bucket recurrent overflow causes entire trace to be suppressed |
 | `test_horizon_and_shape_validation_no_publication` | Reject 0/9 ticks, zero neurons, invalid unsigned decay ratio |
 | `test_invalid_neuron_synapse_and_external_fail_closed` | Invalid threshold/delay/tick/W16 reject without output |
+| `test_native_wrapper_rejects_extra_unframed_fields` | Reject trailing malformed data in the test-only native command adapter without publishing a misleading result | 
 | `test_seeded_networks_full_trace_and_sparse_schedule` | 16 seeded recurrent networks, 8 ticks each; every voltage, spike, touched worklist and arrival count compared against independent M02 dense, event, and M03 sparse |
 
-**Count now:** 59 M05 named PC-only methods + 91 M01–M04 = **150 native methods**, plus four native-compiled CSim vector benches. **NEXT REAL TOOL GATE:** new fourth `--integrated --csim`, then `--synth`, then `--cosim`, preserving full original Vitis evidence outside Git.
+**Count now:** 60 M05 named PC-only methods + 91 M01–M04 = **151 native methods**, plus four native-compiled CSim vector benches. **NEXT REAL TOOL GATE:** new fourth `--integrated --csim`, then `--synth`, then `--cosim`, preserving full original Vitis evidence outside Git.
