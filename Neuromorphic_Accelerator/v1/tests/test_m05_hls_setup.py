@@ -42,11 +42,12 @@ class M05HLSSetupTests(unittest.TestCase):
                 self.assertEqual(data[(None, "part")],
                                  ["xck26-sfvc784-2LV-c"])
                 self.assertEqual(data[("hls", "syn.top")], [top])
-                self.assertEqual(data[("hls", "syn.output.format")], ["rtl"])
+                self.assertEqual(data[("hls", "package.output.format")], ["rtl"])
                 self.assertEqual(data[("hls", "flow_target")], ["vivado"])
                 self.assertEqual(data[("hls", "clock")], ["10ns"])
                 self.assertEqual(data[("hls", "clock_uncertainty")], ["12%"])
-                self.assertNotIn(("hls", "package.output.format"), data)
+                self.assertNotIn(("hls", "syn.output.format"), data)
+                self.assertEqual(data[("hls", "relative_roots")], ["file/../.."])
 
     def test_configs_reference_real_sources_and_independent_benches(self):
         for name, (path, _) in CONFIGS.items():
@@ -87,6 +88,9 @@ class M05HLSSetupTests(unittest.TestCase):
         self.assertNotIn("rm -rf", text)
         self.assertIn("trap finish EXIT", text)
         self.assertIn("result.txt", text)
+        self.assertIn("hls_effective_config.cfg", text)
+        self.assertIn("prepare_hls_config.py", text)
+        self.assertIn("--config \"$EFFECTIVE_CONFIG\"", text)
 
     def test_three_tops_are_distinct_and_syn_top_always_matches(self):
         source_stream = (HLS / "m05_stream_eval/m05_stream.cpp").read_text()
