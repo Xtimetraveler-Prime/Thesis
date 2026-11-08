@@ -219,6 +219,12 @@ module tb_m05_11c_real_hls_shell;
                     $fatal(1,"M05_11C_FAIL invalid TKEEP");
                 wanted_session=(run_epoch==0 ? SID_SUCCESS : SID_FAILURE);
                 wanted_status=(run_epoch==0 ? 0 : 4);
+                // Log ACTUAL accepted 256b DMA TDATA, not reconstructed
+                // expected oracle rows. The postcheck replays these raw
+                // handshakes through the existing host DMA frame decoder.
+                $display("M05_11C_DMA run=%0d data=%064h last=%0d keep=%08h",
+                         run_epoch, dma_trace_data, dma_trace_last,
+                         dma_trace_keep);
                 if(dma_trace_last) begin
                     if(frame_footers!=0 || dma_trace_data[255:192]!==MAGIC ||
                        dma_trace_data[191:128]!==wanted_session ||
