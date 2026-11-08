@@ -8,6 +8,8 @@
 
 ## Current research pivot — DDR-backed virtualized SNN acceleration (2026-11-07)
 
+> **Naming update (2026-11-07):** The formerly proposed *v4* accelerator is now an independent new research program under **`Neuromorphic_Accelerator/v1/`** (not `Loihi_Digital_Twin/v4`). Any remaining 'v4' phrasing below is historical research-context terminology; the research questions, candidate contributions and literature remain the same. The new v1 contains no implemented RTL or physical benchmarks.
+
 **This heading supersedes the v3-only research scope below, but deliberately PRESERVES every earlier literature entry, comparison and bibliography item as historical source notes.** The project completed a bounded Loihi-inspired FPGA-v3 LIF neural/DDR-backed virtual-core demonstration; v3 is now frozen, and the remaining five new A/B physical sessions have been canceled after one genuine new A acceptance. Future **v4 is a proposed accelerator, not an existing implementation**. Preserve the verified LIF neuron model and virtualization; drop Loihi-specific capacity or architectural constraints unless they are experimentally justified.
 
 **New central questions:**
