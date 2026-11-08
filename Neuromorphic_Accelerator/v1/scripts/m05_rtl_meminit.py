@@ -28,7 +28,7 @@ import sys
 # Generated files reference literal file names, usually through an INIT_FILE
 # parameter propagated down to a $readmemh. Do not pretend other formats are
 # supported. All matches must be simple base names to prevent path traversal.
-INIT_FILENAME = re.compile(r"""["']([A-Za-z0-9_.-]+\.dat)["']""")
+INIT_FILENAME = re.compile(r"""["'](?:\./)?([A-Za-z0-9_.-]+\.dat)["']""")
 EXPECTED_PREFIX = "m05_rolling_replay_"
 
 
