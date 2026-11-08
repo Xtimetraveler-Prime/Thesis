@@ -25,6 +25,8 @@ CONFIGS = {
     "accumulator": ("m05_accumulator/m05_accum_hls_config.cfg", "m05_event_accumulator"),
     "integrated": ("m05_integrated/m05_integrated_hls_config.cfg",
                    "m05_integrated_replay"),
+    "rolling": ("m05_rolling/m05_rolling_hls_config.cfg",
+                "m05_rolling_replay"),
 }
 
 STUB = r"""#!/usr/bin/env python3
