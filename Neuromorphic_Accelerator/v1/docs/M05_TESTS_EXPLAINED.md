@@ -31,3 +31,8 @@
 **Observed CI:** initial M05 compile **failed** on `-Werror=unused-label` in the HLS top; removed label without changing behavior. Tightened an invalid u32-denominator fixture. [Run 42454758437](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42454758437) at `cd483fe5` logged **17 M05 PASS, 22 M04 PASS, 28 M03 PASS, 21 M02 PASS, 20 M01 PASS**. Documentation/source additions require final HEAD CI recheck.
 
 **What these tests do NOT establish:** HLS synthesis, C/RTL co-sim, actual AXIS backpressure, real bounded event FIFO or future queue, on-chip state memory ownership/RAW hazards, DDR/AXI traffic, microarchitectural II/latency, routed clock, physical FPGA performance, energy or Loihi/YANA equivalence. [HLS Csim vectors](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) are **unexecuted** Vitis inputs; include no fake HLS PASS. M05 operator native testing and user approval remain pending. See [M05 verification](M05_PC_ONLY_VERIFICATION.md) and [v3 comparison](M05_ENGINE_V3_COMPARISON.md).
+
+
+## Additional independent native Csim-testbench smoke gate (not a unittest method)
+
+The M05 workflow now also compiles [`m05_hls_csim_tb.cpp`](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) against the *same* C++ M05 kernel/M04 step via native `g++`, runs it, and requires the testbench's fixed scalar fixtures to return PASS. This confirms the staged Vitis testbench **itself** is internally consistent under the host-only stream shim. It does **not** add an 18th unittest method, call Vitis, prove AXIS ready/valid, achieve II=1, or demonstrate C/RTL parity. **Genuine Vitis HLS Csim/synthesis/C-RTL remain NOT RUN.**
