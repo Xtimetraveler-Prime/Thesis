@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Architecture Research (PLANNING)
 
-**Status: INITIAL DESIGN DISCUSSION — no source implementation, hardware bitstream or claims of accelerated performance.** This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
+**Status: M01 ACTIVE — PC-only analytical neuron-state traffic model and tests exist, but no chosen physical microarchitecture, LIF engine, RTL/bitstream, KV260 measurement or claim of accelerated performance.** This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
 
 ## Motivation and questions
 
@@ -27,11 +27,11 @@ No mandate for fixed virtual cores, group size, neuron-to-group mapping, neuron/
 
 Initial architecture brainstorming: [`docs/ARCHITECTURE_DESIGN_QUESTIONS.md`](docs/ARCHITECTURE_DESIGN_QUESTIONS.md).
 
-**Development milestone plan:** [`roadmap.md`](roadmap.md) — M01–M09 stage gates covering virtual neuron/group/hybrid trade studies, independent LIF oracle, workloads/traffic, existing HLS reuse, event scheduling engine, DDR virtualization, policy variants, KV260 validation and final quantitative characterization. M01 has **not** started.
+**Development milestone plan:** [`roadmap.md`](roadmap.md) — M01–M09 stage gates covering virtual neuron/group/hybrid trade studies, independent LIF oracle, workloads/traffic, existing HLS reuse, event scheduling engine, DDR virtualization, policy variants, KV260 validation and final quantitative characterization. M01 is **in progress**, with no-board source CI; operator-native verification and design-choice approval are still pending. See the [M01 architecture options and sample modeled counts](docs/M01_ARCHITECTURE_OPTIONS.md) and [local PC verification runbook](docs/M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md).
 
-## Next step (planning, NOT implementation)
+## Next step (planning, NOT a hardware implementation)
 
-Specify a reference LIF and event-order contract; prototype a trace-driven latency/DDR-traffic cost model for sparse virtual-neuron working sets; then compare candidate state-storage and grouping/scheduling strategies before selecting hardware interfaces. A minimal on-chip-versus-DDR and timestep-versus-event-driven control matrix should be planned before writing hardware.
+Review the current **PC-only** M01 state-residency model, reproduce its 20 native tests and synthetic reports, then decide on a provisional block-versus-neuron-versus-hybrid memory placement. **Do not interpret modeled state-access transactions as timed SNN inference.** The next independent M02 step is to specify and implement a dense scalar LIF and event-order reference before selecting a streaming HLS/RTL interface. See [dedicated current v1 handoff](docs/M01_NEXT_CHAT_HANDOFF.md) when available. A minimal on-chip-versus-DDR and timestep-versus-event-driven control matrix should be planned before writing hardware.
 
 ## Repository / workflow
 
