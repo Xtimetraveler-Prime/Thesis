@@ -5,6 +5,7 @@ module tb_m05_11_axil_controller;
     always #5 clk=~clk;
     reg rst_n=0;
     reg [7:0] awaddr=0;
+    reg [2:0] awprot=0;
     reg awvalid=0;
     wire awready;
     reg [31:0] wdata=0;
@@ -15,6 +16,7 @@ module tb_m05_11_axil_controller;
     wire bvalid;
     reg bready=0;
     reg [7:0] araddr=0;
+    reg [2:0] arprot=0;
     reg arvalid=0;
     wire arready;
     wire [31:0] rdata;
@@ -37,11 +39,13 @@ module tb_m05_11_axil_controller;
 
     m05_11_axil_session_controller dut(
         .clk(clk),.rst_n(rst_n),
-        .s_axi_awaddr(awaddr),.s_axi_awvalid(awvalid),.s_axi_awready(awready),
+        .s_axi_awaddr(awaddr),.s_axi_awprot(awprot),
+        .s_axi_awvalid(awvalid),.s_axi_awready(awready),
         .s_axi_wdata(wdata),.s_axi_wstrb(wstrb),
         .s_axi_wvalid(wvalid),.s_axi_wready(wready),
         .s_axi_bresp(bresp),.s_axi_bvalid(bvalid),.s_axi_bready(bready),
-        .s_axi_araddr(araddr),.s_axi_arvalid(arvalid),.s_axi_arready(arready),
+        .s_axi_araddr(araddr),.s_axi_arprot(arprot),
+        .s_axi_arvalid(arvalid),.s_axi_arready(arready),
         .s_axi_rdata(rdata),.s_axi_rresp(rresp),.s_axi_rvalid(rvalid),
         .s_axi_rready(rready),
         .bridge_start_ready(bridge_ready),
