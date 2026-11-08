@@ -1,0 +1,65 @@
+name: P08-B4.4.1 original27 reset profiling differential NO JTAG
+on:
+  push:
+    branches:
+      - agent/v3-p08-b44-profiling
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b4_4_profile_reset.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b4_4_profile_reset.h"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b44_profile_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_reset_profile_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b44_profile_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b44_profile_full1024.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_build_offline.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_reset_profile_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b44_reset_profile_diff.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_4_1_profile_reset_native.py"
+      - ".github/workflows/p08_b44_1_reset_profiling_offline.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b4_4_profile_reset.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b4_4_profile_reset.h"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b44_profile_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_reset_profile_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b44_profile_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b44_profile_full1024.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b44_profile_full1024.sh"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_build_offline.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_profile_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b44_reset_profile_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b44_reset_profile_diff.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4_4_1_profile_reset_native.py"
+      - ".github/workflows/p08_b44_1_reset_profiling_offline.yml"
+permissions:
+  contents: read
+jobs:
+  portable-original27-profiling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install native portable test dependencies only
+        run: python3 -m pip install -q pytest
+      - name: Verify native compiler
+        run: gcc --version | head -n 1
+      - name: Actual 27x512KiB original baseline vs instrumented clone differential
+        run: python3 -m pytest -q -rs tests/test_p08_b4_4_1_profile_reset_native.py tests/test_p08_b44_reset_profile_sidecar.py tests/test_p08_b44_profile_elf_admission.py tests/test_p08_b44_build_offline.py
+      - name: Preserve accepted first1024 B4 physical source regressions
+        run: python3 -m pytest -q -rs tests/test_p08_b4_4_single_run_timing_audit.py tests/test_p08_b4_2_monitor_mailbox_pc_only.py
+      - name: Explicit physical admission classification
+        run: |
+          echo "P08_B4_4_1_NATIVE_FROZEN_RESET_DIFFERENTIAL_CI=PASS"
+          echo "P08_B4_4_2_DISTINCT_PROFILE_A53_SOURCE_AND_1024_SIDECAR_FORMAT_CI=PASS"
+          echo "P08_B4_4_2_NEW_PROFILE_VITIS_A53_ELF_OFFLINE_GATE_SOURCE_CI=PASS"
+          echo "P08_B4_4_2_NEW_PROFILE_A53_VITIS_BUILD_SCRIPT_AND_PORTABLE_SYNTAX_CI=PASS"
+          echo "P08_B4_4_1_PHYSICAL_JTAG_OR_VITIS_PROFILE_ELF=NOT_RUN"
+          echo "P08_B4_4_1_ORIGINAL_SIGNED_B2_3_ELF_MODEL_SOURCE=UNTOUCHED"
+          echo "P08_B4_4_1_OFFICIAL_MNIST_TEST=SEALED"

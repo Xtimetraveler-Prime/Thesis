@@ -1,0 +1,59 @@
+name: P08 B4.5 real FULL1024 V2 stale-A53-BSS reset-bind repair (PC only)
+on:
+  push:
+    branches: [agent/v3-p08-b45-full1024-reset-bind-repair]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_b45_perf_startup*'
+      - 'Loihi_Digital_Twin/v3/software/p08/p08_b45_perf_*full1024*'
+      - 'Loihi_Digital_Twin/v3/scripts/build_p08_b45_perf_full1024.sh'
+      - 'Loihi_Digital_Twin/v3/software/p08/build_p08_b45_perf_full1024.py'
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b45_perf_full1024_elf_admission.py'
+      - 'Loihi_Digital_Twin/v3/vivado/p08_b45_perf_full1024_run_and_capture.tcl'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_full1024_reset_bind_repair.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_perf_full1024_independent_cli.py'
+      - '.github/workflows/p08_b45_full1024_reset_bind_repair_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  host-c11-and-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: V2 stale BSS native both modes and schema/original C stage guards
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_reset_bind_repair.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
+            tests/test_p08_b45_perf_full1024.py \
+            tests/test_p08_b45_perf_full1024_tcl.py
+      - name: Preserve prior successful pilot/protected and actual failure postmortem
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_failed_run_postmortem.py \
+            tests/test_p08_b45_perf_pilot16.py \
+            tests/test_p08_b45_perf_pilot16_independent.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_profile_physical.py
+      - name: Genuine shell syntax, source-only no JTAG
+        run: |
+          python3 -m py_compile \
+            software/p08/build_p08_b45_perf_full1024.py \
+            scripts/p08_b45_perf_full1024_elf_admission.py \
+            scripts/p08_b45_perf_full1024_physical_run.py \
+            scripts/p08_b45_perf_full1024_independent_verify.py \
+            scripts/p08_b45_full1024_failed_run_postmortem.py
+          bash -n scripts/build_p08_b45_perf_full1024.sh
+          echo P08_B45_FULL1024_V2_STALE_BSS_REPAIR_NO_BOARD_CI_PASS=1
+          echo P08_B45_FULL1024_V2_ACTUAL_A53_VITIS_ELF_BUILT_BY_CI=0
+          echo P08_B45_FULL1024_V2_REAL_KV260_RETEST_DONE=0
+          echo P08_B45_FULL1024_V2_BACKUP_HARDWARE_PROTECTED=0

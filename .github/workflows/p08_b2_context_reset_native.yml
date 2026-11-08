@@ -1,0 +1,64 @@
+name: P08-B2.2 native 27x512KiB context restore and A53 meter
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_context_reset.*"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_service_meter.*"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_2_prepare_reset_pins.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_2_reset.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b2_reset_native.c"
+      - ".github/workflows/p08_b2_context_reset_native.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_context_reset.*"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b2_service_meter.*"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_2_prepare_reset_pins.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_2_reset.py"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b2_reset_native.c"
+      - ".github/workflows/p08_b2_context_reset_native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  native-fake-ddr-reset-timer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest only (no MNIST or torch; no FPGA)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Native C11 strict compiler and two-image 27-core reset
+        run: |
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic \
+            -I software/p08 -I software/p07/include \
+            software/p08/p08_b2_context_reset.c \
+            software/p08/p08_b2_service_meter.c \
+            software/p07/p07_a2_sha256.c \
+            tests/native/p08_b2_reset_native.c \
+            -o /tmp/p08_b2_2_native
+          /tmp/p08_b2_2_native
+      - name: Check new frozen original SHA pin generator and Python gates
+        run: |
+          python3 -m compileall -q scripts/p08_b2_2_prepare_reset_pins.py tests/test_p08_b2_2_reset.py
+          python3 -m pytest -q -rs \
+            tests/test_p08_b2_2_reset.py \
+            tests/test_p08_b2_ingress.py \
+            tests/test_p08_b1_matched_source.py
+      - name: Evidence classification
+        run: |
+          echo "P08_B2_2_SOURCE_ONLY_NATIVE=PASS"
+          echo "P08_B2_2_ORIGINAL_27_CONTEXT_PHYSICAL_BACKUP_IN_CI=NOT_AVAILABLE"
+          echo "P08_B2_2_NEW_A53_FIRMWARE_AND_ELF=NOT_BUILT"
+          echo "P08_B2_2_DDR_OWNERSHIP_PROVEN=0"
+          echo "P08_B2_2_PL_INFERENCE_AND_LATENCY=NOT_RUN"
+          echo "P08_B2_2_ORIGINAL_OFFICIAL_MNIST_TEST=SEALED_NOT_ACCESSED"

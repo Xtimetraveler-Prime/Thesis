@@ -1,5 +1,2873 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## AUTHORITATIVE PIVOT / v3 DEVELOPMENT STOP — 2026-11-07
+
+**Decision:** Research-advisor discussion redirects the thesis from strict Loihi-inspired architectural replication toward a future **v4 sparsity-aware, DDR-backed virtualized LIF inference accelerator**. The preserved novelty candidate is a controlled study of virtualization cost and sparse/event-driven recovery: network size, spike/connectivity sparsity, **active-context locality**, on-chip context residency/cache policy, DDR traffic, PS/PL scheduler overhead, throughput and resource efficiency. Time-multiplexed neurons and off-chip state are established prior art; no claim of first-ever virtualization, performance superiority, equal workload, identical Loihi silicon, or protected DDR.
+
+**v3 is FROZEN AS A RESEARCH BASELINE, not deleted or retroactively declared fully complete.** Earlier actually accepted neural, physical, A53 latency and integrity evidence remains authoritative at its original exact signed SHA, including 27-virtual-core / 1010-neuron original B_AUTH_ONCE V2 independent 1024 PASS and one new 42-neuron A2.1 full1024 Session01 acceptance. The v3 six-new-session counterbalanced A B / B A / A B preregistration is **DISCONTINUED AFTER ACCEPTED SLOT 01 (1/6)**. Slots 02:B, 03:B, 04:A, 05:A, 06:B **NOT RUN** and **CANCELED**, not failed, passed, or counted as physical data. No new paired AB/BA/AB conclusions or matched-workload speedup. Previous standalone physical A/B runs remain separately accepted but are not new six-study sessions. The Session01 original ledger SHA256 is `ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec`; A actual CNTFRQ 99,999,001 Hz and 1,023-image ordinary median 35.67722641549189 ms. Source: [operator-reported accepted session and exact immutable hashes](docs/P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md).
+
+**Why pivot:** v3 proved correct LIF/neural semantics, physical single-engine execution and substantial PS/PL/DDR virtualization overhead; further cross-size latency comparisons are low priority because A and B execute unequal networks and different scheduler/reset work. Exploratory low-risk optimizations may be informative, but extensive v3 performance engineering would duplicate v4's planned architectural redesign. v3 will not keep Loihi restrictions as an optimization target. v4 should retain independently verified LIF semantics (explicitly define any numerical changes) and **DDR-backed virtualization**, but consider sparse event worklists, hardware-resident per-event scheduling, on-chip working-set caches, locality-aware virtual-core organization and controlled resident-vs-DDR comparisons.
+
+**Project questions to pursue in v4:**
+
+> How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?
+
+> How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?
+
+**Prior art to review:** YANA (Pachideh et al., 2026 preprint / 2025 conference citation), SENECA (Tang et al., 2023), HiAER-Spike (Frank et al., 2026), Ansari & Wielgosz (2026 preprint), and NIR (Pedersen et al., 2024). Root `LitReview.md` will retain full references.
+
+**Remaining v3 phase decisions (supersede historical "ACTIVE" / "PLANNED" text below):**
+
+| Former v3 scope | New disposition |
+| --- | --- |
+| P04 extra engine, P05 remaining observability/hardening, P06/P07 unfinished validation expansions | **CANCELED for v3**; retain completed and accepted submilestones; only reconsider on a separately scoped v4 project. |
+| P08 additional performance/power/energy and P08-B4.6 six-new-session AB/BA/AB study | **CANCELED** beyond the genuinely accepted records; Session01 remains 1/6, Session02–06 never executed. No energy measurements implied. |
+| P09 historical full thesis comparison/closure as originally planned | **CANCELED in its historical form**; later thesis writing may cite frozen v3 results, but no remaining v3 deliverables from this phase. |
+| P10 — Deferred bounded v3 optimization | **DEFERRED, last possible v3 milestone**; only activate upon a distinct future user decision, with short timebox and independent validation. |
+
+**Workflow rule:** no further v3 physical/JTAG testing, source changes or automatic optimization from this roadmap without explicit new operator request. Do not run Session02 using the preserved historical B runbooks. Prior signed reports, accepted SHA-pinned assets, original official MNIST TEST seal and physical risk constraints remain unchanged. Reinitialize v4 planning from `main` after approved integration; **no v4 RTL implementation yet**. The history below remains for provenance; any older 'NEXT', 'ACTIVE', or 'PLANNED' entries are historical and superseded by this notice.
+
+---
+## P08-B4.6.4b FIRST NEW AB/BA/AB PHYSICAL SESSION ACCEPTED — 01:A ORIGINAL REBUILT A2.1 (2026-11-05 local / 2026-11-06 UTC)
+
+**Authoritative latest user-reported physical result: NEW Session01 A accepted, 1 of 6.** Real separately rebuilt 42-neuron / 26 dispatch A2.1 exact 1024 original TRAIN-derived validation images, original independent P07 1024 packed neural + 26x42 selected trace and genuine A53 timing: independent verifier PASS, real original physical runner \`script_exit_status=0\`. Original new capture: \`/home/dna/Thesis_Evidence/p08_b46_s01_A_20261106T052149Z/\`. New physical independent JSON SHA256 \`26e9cfbc9b6485313d89e72f80ec578498539c902838140940f1027da4038eb0\`; raw output SHA manifest SHA \`8c5e1b05775bbcaf087b55203569da949abfe16ebc3d46d0b98035002a3a6440\`. Separate PC independent *rereview of same capture* \`/home/dna/Thesis_Evidence/p08_b46_s01_A_rereview_20261106T052539Z.json\` **same** JSON SHA \`26e9cf...\` — **NOT a second boot**. Real CNTFRQ 99999001Hz, 1023 ordinary-image A53 median 35.67722641549189ms.
+
+**New hash-chained independently checked study ledger** \`/home/dna/Thesis_Evidence/p08_b46_s01_A_accepted_20261106T052707Z.json\`, SHA256 **\`ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec\`**. Original local receipt terminal \`P08_B46_NEW_ABBAAB_SESSION_ORIGINAL_NEURAL_AND_A53_RECEIPT_PASS=1\`, \`CURRENT_NEW_SESSION_ACCEPTED_SLOT=1\`, \`ABBAAB_NEW_HARDWARE_SESSION_COUNT=1\`, \`SIX_RUN_STUDY_STATISTICS_ACCEPTED=0\`. Operator explicitly attested physically fresh coldboot before and power-cycle after JTAG to that PC ledger; not electronically instrumented. User supplied console output and SHA values, not full original private raw files to GitHub. Signed session plan original SHA not separately pasted; must read exact existing plan and ledger and refuse drift. Prior standalone accepted A/B sessions count ZERO new sessions. No hardware/firmware changes by assistant, GitHub source/CI only, never modify earlier artifacts.
+
+**Next session** 02:B = ORIGINAL B_AUTH_ONCE_UNPROTECTED_V2 genuine ELF SHA \`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85\`. Read [Session01 original evidence receipt](docs/P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md) and [B4.6.4b six-session workflow](docs/P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md), original [B4.5 1024 once physical command runbook](docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md). Next B V2 requires all immutable real source+ELF acceptance gates, PC preflight, 10 individually accepted destructive A53/Linux/P03/DDR risks, **NEW independent KV260 physical coldboot**, new external \`p08_b46_s02_B_<UTC>\` capture, post-JTAG physical power-cycle EVEN on failure, independent full1024 FNV/timer/27 DDR backup endpoint equality, 1023 ordinary A53 median and PC-only SHA linked study ledger as slot02. Never use unchecked, previous B standalone captures or expired V1. Distinct source service boundaries, secure DDR/XMPU, PL-only performance, energy and paired statistical significance remain unproven. TEST sealed. NO MERGE without explicit user permission.
+
+---
+
+## P08-B4.6.4b ACTIVE — six NEW A/B_AUTH_ONCE physical sessions: separately approved per-run gates (2026-11-05 local / Nov 6 UTC)
+
+**LATEST OPERATOR ORIGINAL B4.6.4a PC SOURCE-BOUNDARY PASS (not a physical A/B experiment):** User ran and pasted the full new SHA-pinned original frozen A/B A53 timer-source audit JSON:
+\`/home/dna/Thesis_Evidence/p08_b46_ab_boundary_source_audit_20261106T045251Z.json\`,
+SHA256 \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\`.
+All six original frozen code/launcher Git blobs and static CNTVCT entry-to-journal-commit check PASS, original train TEST sealed. Its \`A_B_physical_timer_boundary_equivalence_proven=false\`, \`new_six_session_hardware_authorization_granted=false\` and \`new_A_B_physical_sessions_performed=false\` are correct and retained. User did not paste the native pytest summary separately. Do not claim strict identical physical work/PL acceleration; B's context and 702 dispatches are materially different from A's 42-neuron/26-dispatch workload.
+
+**NEW research branch** \`agent/v3-p08-b46-4b-six-session-physical-admission\` stacked on unmerged B4.6.4a PR #70 (itself stacked on separately accepted original rebuilt A2.1 PR #69). Two new PC-only scripts:
+\`scripts/p08_b46_4b_six_session_plan.py\` verifies the exact 6 ORIGINAL prior SHA-pinned evidence files (new static boundary, matched frozen TRAIN source, rebuilt A real 1024 original neural+timer independent receipt, original B_AUTH_ONCE V2 real1024 independent receipt, and both genuine separately frozen A/B ELFs), then generates fresh external no-overwrite \`A B / B A / A B\` six NEW coldboot preregistration manifest with all six physical/JTAG authorizations FALSE. Neither earlier standalone accepted A nor B physical session counts in the six.
+
+\`scripts/p08_b46_4b_session_receipt.py\` is a subsequent **PC-only** per-session sequential receipt tool. It enforces exactly the next A/B slot, previous append-only SHA-linked accepted ledger, actual new A or B original independent 1024 neural/trace/FNV + A53 CNTFRQ/timing acceptance report, reopened source-pinned **genuine NEW physical raw journal, trace and timing** (B: reset profile/mailbox and same-session source receipt), checks 1023 ordinary frame scope and refuses old standalone receipt/new run path reuse. The required **human power-cycle attestations** are labeled operator self-confirmations, **NOT independent electrical measurement**. No JTAG access/DDR/boot writes in new Python scripts, no false PL-only neural, XMPU/energy, coldboot instrumentation or paired significance claim. Native synthetic negative/regression tests and GitHub no-board CI; status pending operator-local tests and individual physical sessions.
+
+**Exact first Session 01 A and subsequent B workflow:** [B4.6.4b source/evidence plus separately authorized real KV260 session runbook](docs/P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md). Run original preflight FIRST. The user requested to proceed with physical tests; that is NOT blanket approval to issue all six destructive JTAG sessions. For every new fresh disposable board session, operator must review exactly scoped 64MiB A / original six-stage B DDR overwrite, CPU halt, boot-DMA ownership (unproven), original accepted P03, accepted rebuilt A ELF or protected-only-by-SHA B V2 once ELF, explicit one-run approval, and power-cycle/recovery BEFORE another. Any failure preserves signed original capture, requires new directory and new physical authorization. Original A accepted one-session report SHA \`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6\`, B original single once SHA \`06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a\` and missing historical A \`fc44...\` SHA unchanged. Official MNIST TEST remains sealed. All draft PRs unmerged without express operator approval.
+
+**Next operator evidence:** new plan JSON SHA, native tests, first A per-run original source preflight, separately operator-approved dedicated KV260 Session 01, original independent 1024 packed neural/timer rereview and first hash-linked session ledger plus actual reboot confirmation. **ZERO of six new physical A/B sessions have been reported performed** at this development stage. Later B only after A success; remaining B/B/A/A/B each independently approved; statistical study evaluation after three accepted pairs.
+
+---
+
+## P08-B4.6.4a ACTIVE — original A/B_AUTH_ONCE A53 boundary STATIC AUDIT (PC-only; 2026-11-05 local)
+
+**NEW child research branch** `agent/v3-p08-b46-4a-service-boundary-audit` descends directly from the accepted **B4.6.3 real rebuilt A2.1** draft PR #69 `agent/v3-p08-b46-a21-candidate-physical-validation` (all PRs unmerged). New `scripts/p08_b46_ab_service_boundary_audit.py` checks byte-exact original A2.1 C, B4.5 authenticate-once V2 C, original B meter C and both original plus separately rebuilt A/Track B JTAG launchers via fixed Git blob SHA1, then ordered service timestamps. PC-only negative tests verify source drift, start/end tampering, wrong B mode, rebuilt A specific NEW-ELF risk gate, symlinks and no-overwrite outside-checkout evidence. New GitHub Actions **NO BOARD** workflow, full local terminal commands and risk crosswalk in [B4.6.4a runbook](docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md).
+
+**Preserve previously accepted** single standalone rebuilt A2.1 physical receipt SHA `b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`, original source/ELF SHA `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`, 1023 ordinary-image A53 median 35.696886611897256ms, real 99,999,001Hz CNTFRQ; operator-attested original 1024 neural/26x42 trace parity. Historical old A2.1 ELF SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0` remains missing, never relabeled. Original B once source and single 1024 physical acceptance preserved. Both accepted standalone runs count as ZERO of six **NEW** A/B sessions.
+
+**Static source finding, NOT new hardware acceptance:** A `execute_image` entry timer starts before validated encoded-image load, P07 prepare and 26 one-core dispatches; ends after neural journal/selected trace flush, before A timing sidecar. B meter starts before **27-context** reset and raw input encode, includes 26-tick virtual scheduler/702 dispatches and ends after neural journal, before B timing/reset/progress writes. B once-only source SHA bind runs outside all per-image timers. Both use A53 CNTVCT/CNTFRQ and broad entry-to-neural-journal-commit definition, but neural work, reset/ingress, sidecar overhead, DDR ownership and JTAG/FPD+LPD/coldboot protocol differ. **Identical A/B physical timing boundaries NOT PROVEN; six-run source/ELF, DDR owner and coldboot/recovery readiness NOT PROVEN. No new board/JTAG authorizations**. No claim of pure PL compute, matched model complexity, memory-XMPU backup protection, energy or significance. Official MNIST TEST sealed.
+
+**Operator verification still pending:** first run new native tests and write new `$HOME/Thesis_Evidence/p08_b46_ab_boundary_source_audit_<UTC>.json` using the [runbook](docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md), return SHA256 and logs. Next separately reviewed phase: per-session source+oracle+timing+physical risks, six independent coldboots `A B / B A / A B`, individual approval before each physical action, distinct append-only evidence and mandatory power-cycle after any JTAG. No unapproved hardware, no PR merge.
+
+---
+
+## P08-B4.6.3 ACCEPTED — genuine rebuilt A2.1 1024-image KV260 physical + separate independent PC rereview (2026-11-05 local / 2026-11-06 UTC)
+
+**CURRENT STATUS: COMPLETE for standalone reconstructed A2.1 1024-image physical revalidation. B4.6 six-session comparison NOT RUN.** User physically executed exact NEW original-source rebuilt A2.1 A53 ELF SHA
+`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`
+on KV260 with the original P03.2c accepted XSA SHA
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+Original P07 independent 1024-image TRAIN-derived packed software
+neural results, selected full 26-tick × 42-neuron trace and actual
+A53 image timing verified. Terminal:
+`P08_A2_1_TIMING_STATUS=0x600D600D`,
+`P08_A2_1_KV260_STATUS=TERMINAL_BOTH_SUCCESS_UNVERIFIED_NUMERICS`,
+**followed by** independent
+`P08_B46_REBUILT_A21_INDEPENDENT_ORIGINAL_ALL1024_PACKED_NEURAL_AND_TIMING_PASS=1`
+and final physical runner
+`P08_B46_NEW_REBUILT_A21_ORIGINAL_1024_PHYSICAL_AND_INDEPENDENT_PASS=1`.
+`script_exit_status=0`.
+
+**Exactly one genuine new physical session:**
+`/home/dna/Thesis_Evidence/p08_b46_A21_rebuilt_real1024_20261106T033101Z/`;
+`p08_b46_rebuilt_A21_1024_independent.json`
+SHA **`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`**;
+`physical_output_sha256.txt`
+SHA `7978b82ade256fc9e419510036131115e93a18b6b80e55048e3132904d223a7e`.
+Operator reran independent physical verifier on SAME saved raw captures:
+`/home/dna/Thesis_Evidence/p08_b46_rebuilt_A21_rereview_20261106T034152Z.json`,
+SHA **identical**
+`b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`.
+The rereview is not a second physical session. A53 actual
+`CNTFRQ_EL0=99999001` Hz. **Median 1023 ordinary image service
+=35.696886611897256ms**, original trace index1023 excluded.
+The user submitted local hashes/terminal output and GitHub does
+not directly access their raw original PC-only report bytes.
+No second JTAG or B4.6 A/B run was performed.
+
+The original historical accepted A2.1 ELF SHA
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+remains missing and not byte-reproduced. The current ACCEPTANCE is
+for a distinct rebuilt candidate with independently accepted
+numerics and A53 timer; the historical original SHA and A3.2
+old physical evidence remain unmodified. Original official
+MNIST TEST remains sealed.
+
+**B4.6 NOW NEXT GATE — PC-ONLY original A21 vs selected
+B_AUTH_ONCE V2 A53 SERVICE TIMING-BOUNDARY AUDIT.** Freeze exact
+service-start to journal-commit scope, reconstructed A
+42neuron/26dispatch and authentic-once original B
+1010neuron/702dispatch, 1023 ordinary images per physical
+session with selected trace ordinal1023 separately checked,
+per-run genuine CNTFRQ and actual sidecar schema/CRC.
+A's source times before `load_image_record` through after
+`commit_frame_result`; B_AUTH_ONCE meter starts before context
+reset, ends after `commit_journal`. Similar full-service
+intent, but different firmware: a formal signed matched
+boundary audit is **NOT yet proven**. Independently audit
+both distinct Track A vs B DDR/PS/boot/DMA ownership,
+approved source contracts and capture scripts. No hardware
+JTAG from source boundary work.
+
+**P08-B4.6 remaining after timer alignment:** implement
+verified independent run-sheet for six *new* separate
+coldboot/JTAG sessions, order `A B / B A / A B`, with
+user approval, independent A/B original neural oracle and
+trace, actual A53 times, no-overwrite physical captures,
+mandatory power-cycle after any physical attempt. The old
+B4.5 once session and this current rebuilt A-only
+revalidation do NOT count towards any of six B4.6 sessions.
+After six accepted, report three paired session-median
+B/A ratios, original 1023 ordinary images, ordered spread
+and explicit N=3-pair uncertainty. Do not claim statistically
+replicated speedup, matched 42 vs 1010 neuron complexity,
+pure PL speed or energy, secure backup, XMPU or
+unproven boot/DMA exclusion. User selected authentic-once
+V2 B_ELF SHA
+`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85`
+(no full reset SHA every frame, unprotected DDR backups).
+Board printed `REBOOT KV260`; the user's paste did
+**not** confirm the actual power-cycle occurred.
+
+**Workflow and current handoff:**
+[docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md](docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md)
+now has authoritative top context for branches, evidence dirs,
+commands, physics safety and the B4.6 closeout/beyond plan;
+[accepted new original KV260 physical record](docs/P08_B46_REBUILT_A21_REAL1024_ACCEPTANCE_AND_NEXT_STUDY_2026_11_05.md).
+Current unmerged stacked draft PR #69 on
+`agent/v3-p08-b46-a21-candidate-physical-validation`.
+New B4.6 timing-contract work should be separate child branch
+and PC-only first. No merged branches; operator performs all
+real board activity. Protect original TEST and all external
+accepted evidence, keep irreplaceable artifacts out of /tmp.
+
+---
+
+## P08-B4.6.3 NEW A2.1 candidate first 1024 real physical validation HISTORICAL PRE-ACCEPTANCE — RUNNER WAS READY / NOT RUN (Nov 6 UTC)
+
+Operator's separate source-gate for rebuilt A2.1 genuine ELF
+and accepted B_AUTH_ONCE V2 passed original 1024 raw TRAIN
+source image indices/pixel SHAs:
+`/home/dna/Thesis_Evidence/p08_b46_Arebuild_vs_Bauthonce_source_20261106T025815Z.json`,
+SHA `ec853c596a9dcfefee57d4da727a31dc55e3852407c589869c7b8838fb0ccd56`.
+Printed `P08_B46_SOURCE_GATE_PC_ONLY_PASS=1` and
+`P08_B46_TRACK_A_REBUILT_CANDIDATE_PHYSICAL_REACCEPTED=0`.
+Distinct new ELF `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
+original historical ELF `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+NOT recovered/reproduced.
+
+New separate branch `agent/v3-p08-b46-a21-candidate-physical-validation`
+stacked on prior unmerged draft PR #68.
+New `scripts/run_p08_b46_rebuilt_a21_1024.sh`
+derives from original accepted A3.2 JTAG runner and keeps original
+historical runner SHA and evidence unchanged. NEW physical script
+locks exact new candidate, signed original 1024 A-vs-B source
+SHA and original independent new A source/ELF admission,
+requires explicit DESCTRUCTIVE JTAG/64MiB DDR/memory risk/
+TRAIN-only/mandatory-reboot/new ELF approvals. Its first
+mode is PC-only `P08_B46_PREFLIGHT_ONLY=YES` with no
+hardware contact. If later executed by USER after fresh
+dedicated disposable KV260 boot, first checks FPD HPM0 128bit,
+original P07 source physical staging+readback, original P03.2c
+PL programming, new reconstructed A2.1 ELF download,
+1024 journal/trace/image timing capture. It invokes new
+`scripts/p08_b46_a21_rebuilt_independent_physical_verify.py`
+requiring actual original P07 packed software oracle ALL1024,
+selected trace26x42, 1024 A53 CRC timing/actual CNTFRQ,
+and unique physical evidence with no six-run claim.
+A53/DDR boot ownership NOT PROVEN, unprotected risks explicit;
+must power-cycle KV260 after each destructive attempt.
+PC-only native/CI test safety, original frozen source, TEST seal.
+
+**USER has NOT yet performed this NEW real A2.1 experiment.**
+Consequently rebuilt A2.1 neural numerical parity remains
+pending real KV260 validation and original A/B service
+timing boundary parity remains unverified. No B4.6 six-session
+A B/B A/A B benchmark is accepted, and prior genuine
+B4.5 once 1024 run cannot substitute for a new B4.6 replicate.
+
+**Operator's EXACT current first physical runbook:**
+[docs/P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md](docs/P08_B46_REBUILT_A21_FIRST_1024_PHYSICAL_RUNBOOK.md).
+Next gate after A21 independent real PASS+SHA: inspect A/B
+common start→neural journal commit scope and both DDR
+source/PS reset/physical runner contracts. Then source-gate
+six truly independent coldboots AB/BA/AB, each new
+permission, reboot, scalar oracle, actual clock and full
+1023 ordinary-frame capture, with independent session
+medians and explicit network-size mismatch.
+No physical study authorization inferred from PC-only tests.
+
+---
+
+
+## P08-B4.6.2R ACTIVE — new A2.1 genuine Vitis ELF distinct SHA PC reacceptance (2026-11-05 local / Nov 6 UTC)
+
+The operator completed a genuine original-source Vitis 2025.2
+**BUILD ONLY** for original Track A2.1 in PERSISTENT storage:
+`/home/dna/Thesis_Evidence/p08_a2_1_rebuild_20261106T023403Z/vitis_workspace/p08_a2_board.elf`;
+new ELF SHA
+`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
+accepted original P03.2c routed XSA SHA
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`,
+`P08_A2_A53_VITIS_BUILD_PASS=1`,
+`P08_A2_1_ELF_DDR_ISOLATION_PASS=1`,
+`P08_A2_1_VITIS_BUILD_PASS=1`, and
+`P08_A2_1_KV260_LATENCY=NOT_RUN`. The historical accepted
+2026-10-18 physical A2.1 ELF SHA
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
+**WAS NOT REPRODUCED**. No source or binary equivalence
+of the old artifact is implied; its original 1024-image physical
+results remain tied to old SHA.
+
+**New stacked descendant**
+`agent/v3-p08-b46-a21-rebuild-admission`: new
+`scripts/p08_b46_a21_rebuild_admission.py` separately requires
+new ELF SHA, original XSA SHA, original build + Vitis log,
+frozen original A2.1/P07/P03 staged C and headers byte-exact
+to current Git originals, exact firmware identity, AArch64
+ELF PT_LOAD 64MiB DDR nonoverlap and persistent build path.
+Creates non-overwriting **HOST-ONLY NEW REBUILT CANDIDATE**
+source/ELF report with physical neural/TIMER acceptance FALSE.
+The earlier default original A2.1 exact SHA gate remains unchanged.
+`scripts/p08_b46_auth_once_source_gate.py` now offers explicit
+**separate** `--a-rebuilt-admission` and `--a-rebuilt-xsa`
+flags; independently re-audits new ELF/build/stage before the
+original 1024 canonical TRAIN image IDs/pixel hash comparison,
+and labels study arm A as REBUILT CANDIDATE, not historical ELF.
+The selected B still exact accepted original
+`B_AUTH_ONCE_UNPROTECTED_V2` genuine SHA and physical
+1024 scalar/FNV receipt, and no XMPU backup write exclusion.
+Native host-only ELF safety, tampering, no-overwrite, no-old-SHA
+spoof negative tests and dedicated CI.
+
+**Operator's next step is PC only**: execute two source gates
+and supply both fresh JSON SHA digests. Exact commands:
+[docs/P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md](docs/P08_B46_REBUILT_A21_DISTINCT_ELF_PC_ADMISSION_2026_11_05.md).
+No further Vitis rebuild needed. If these pass, the
+A candidate is admitted as a distinct source/ELF build,
+**NOT yet physically reaccepted**; original Track A physical
+runner still SHA-pins old accepted ELF and SHALL NOT
+be modified to silently run new candidate. Physical neural
+equivalence and matched A53 timer proof remain a later,
+separately authorized genuine KV260 session with independent
+P07 oracle and reboot. No new JTAG permission inferred.
+Persist all future builds/evidence OUTSIDE /tmp; protect
+TEST, original accepted evidence and unmerged draft stack.
+
+---
+
+
+## P08-B4.6 CRITICAL A2.1 COMPILED ARTIFACT RETENTION BLOCKER (2026-11-05)
+
+The user reports that the historical A2.1 genuine Vitis ELF
+originally built at
+`/tmp/v3_p08_a2_build_20261018T193149Z/vitis_workspace/p08_a2_board.elf`
+(accepted SHA256
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`)
+is no longer present following Linux PC restart. The path
+is established in original P08-A3.2.2 and A3.2.3 Git
+documents. Home-wide search found no matching original;
+current /tmp/pytest-of-dna p08_a2_board.elf files are only
+synthetic test fixtures SHA
+`13d6152f339a100ace3c45f01e35d78e82009562ff99a299294be6ba6a75deb0`.
+**B4.6.2 authentic A ELF admission BLOCKED** until exact
+accepted original genuine ELF is recovered from broader
+filesystem or existing archives/backups OR a new genuine
+Vitis ELF is separately source-pinned, checked and newly
+validated without impersonating the historical SHA.
+
+**Permanent handoff rule:** no irreplaceable built ELF,
+linker map, accepted XSA/bitstream, Vitis source stage,
+original trained model, numerical oracle or physical
+evidence shall have its SOLE copy under /tmp or /var/tmp.
+They may be erased at reboot or tmpfiles cleanup.
+Use unique persistent $HOME/Thesis_Evidence builds OUTSIDE
+the checkout plus independently SHA-verified off-machine
+backup and original build_identity.txt. Existing Git
+Markdown/source provenance is NOT proof that the missing
+compiled bytes are backed up. Do not tamper with original
+physical PASS evidence or relax accepted A2.1 SHA gates.
+NO physical activity authorized by this incident note.
+
+---
+
+
+## P08-B4.6 ACTIVE — selected B_AUTH_ONCE V2 matched-source study PC gate (2026-11-05 local / Nov 6 UTC)
+
+**P08-B4.5.5 CLOSED / OPERATOR-REPORTED ACCEPTANCE.** The
+operator completed the FOUR real original/once/unchecked
+SHA-pinned physical comparison and reopened original
+1024x256B A53 service/reset sidecars. Final no-overwrite
+quantitative synthesis:
+`/home/dna/Thesis_Evidence/p08_b45_full1024_synthesis_20261106T011541Z.json`
+SHA256 `b04aa0ada133a61ce052ce40f7aa7dbf667da6958031cfdc63b99cc57354eff0`;
+readable Markdown SHA
+`8cd181ecedb407e04418ef5ab121e6560a8fef3a5908ac0ec39acfbdae41fef3`.
+The user supplied report hashes and complete table, not actual
+raw operator JSON bytes. New both-mode 1024 original prediction,
+ten spike count, full 26tick neural FNV, timing and 27
+post-run backup context endpoint equality verified in prior
+independent reports. New original-architecture residual
+six-phase A53 service attribution: V2 once median mixed
+26tick/702 dispatches, pager, routing **6944.179ms** and
+**96.11% share of SUMMED ordinary image-service timer ticks**.
+Unchecked residual 6941.350ms and 96.11%. Once original
+reset 8.766998ms, full service 7225.137459ms vs
+original separately instrumented reset 5826.767549ms
+and original complete service 13034.111501ms. Descriptive
+~664.63x reset, ~1.804x complete-service ratio of
+medians from DIFFERENT physical sessions. The
+26tick ~6.94s interval is MIXED A53+PL software paging,
+routing, MMIO polling and dispatch, not isolated PL
+neural compute or energy. N=1 genuine optimized physical
+session per arm; no randomized repeated statistical
+speedup, hardware XMPU or transient-corruption guarantee.
+Original TEST still SEALED. See
+[final accepted B4.5.5 closeout](docs/P08_B45_5_FINAL_REAL_PHYSICAL_QUANTITATIVE_ACCEPTANCE_2026_11_05.md).
+
+**User-approved B4.6 study architecture:**
+Track `A_ORIGINAL_A2_1`, original 42 neurons/26 dispatches,
+versus explicit selected optimized Track
+`B_AUTH_ONCE_UNPROTECTED_V2`, 1010 neurons/27 virtual cores/
+702 dispatches. **Do NOT silently claim original B4.4
+per-image full-SHA backup integrity, matched network complexity,
+original ML TEST accuracy, isolated PL neural compute or
+memory write protection.** Both arms must independently
+pass their OWN original scalar/FNV oracle on the same frozen
+1024 TRAIN-derived raw image IDs/pixels.
+
+**New stacked active branch:**
+`agent/v3-p08-b46-auth-once-comparator-gate` built off
+unmerged draft PR #66, no merge permission. Implements
+`scripts/p08_b46_auth_once_source_gate.py`: requires original
+A2.1 exact ELF SHA
+`fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`,
+accepted V2 B_AUTH_ONCE exact ELF SHA
+`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85`,
+SHA-pinned independently accepted real B4.5 once 1024
+numerical report + B4.5.5 complete comparison JSON,
+original B4.1 1024 scalar source, canonical original
+A P08-A3.2 stage, full strict original TRAIN IDX split,
+all 33 B2.4 frozen assets, and all 1024 original
+image IDs + exact 784B pixel SHA equality. Emits new
+no-overwrite **PC-only B4.6 A/B_AUTH_ONCE experiment
+identity and six-session order manifest**. Native tests
+reject fake model/XMPU, wrong original input frame,
+modified source report, wrong old/unmatched A/B ELF,
+original TEST access and report overwrite. Official
+B4.6 time-boundary equivalence, A/B runner for six
+independent rebooted A B / B A / A B sessions and
+per-run DDR ownership/recovery still NOT PROVEN;
+no physical/JTAG execution authorized.
+
+**Runbook and commands**:
+[docs/P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md](docs/P08_B46_SELECTED_AUTH_ONCE_PC_SOURCE_GATE_RUNBOOK.md).
+Next PC-side gate after user runs original data/ELF audit:
+inspect original Track A `scripts/run_p08_a3_2_1024.sh` vs
+B_AUTH_ONCE `scripts/p08_b45_perf_full1024_physical_run.py`
+timing boundaries, evidence directory and A53 launch/PS128
+safety for six truly separate physical sessions. Then
+specify/implement independently verified source-gated
+session adapters/analysis and seek separately scoped
+operator permission BEFORE any JTAG. A is not B
+workload-equivalent; six runs would establish a
+descriptive *system/workload comparison*, not
+matched-neuron FPGA arithmetic speedup.
+
+---
+
+## P08-B4.5.5 HISTORICAL/CLOSED — BOTH independent full1024 V2 physical PASS; auditable quantitative closeout (2026-11-05 local / Nov 6 UTC)
+
+**Major result: both modes physically completed and independently PASSED.**
+Operator supplied real independent full1024 once SHA
+`06a007b73cb3ff31c02910224e28690215bded5bdb401973e6a0347e44d0d65a`
+and unchecked SHA
+`68655383c582577986d7bdd253b21ecf1c933d234136d51b7b5076591c63cf79`.
+Both separate, real KV260 runs passed original P03/27-core
+neural scalar/FNV/10 output spike-vector parity for **ALL 1024
+TRAIN-derived original images**, complete timing+reset sidecar audit,
+and 27 original context backup physical readback equality after the run.
+No hardware write-protected backing or transient-corruption exclusion
+is claimed. The earlier full1024 V1 PREIMAGE0 bind failure and its raw
+evidence remain separately preserved; new V2 fresh-state startup fixed
+the observed initialization path in the new real physical session.
+The user provided operator terminal output and independent JSON SHA,
+not the raw external files to GitHub.
+
+**Original B4.4.2 separately instrumented reset median** 5826.767549 ms
+versus **V2 once** 8.7669975823 ms and **V2 unchecked**
+8.7320072328 ms. Descriptive *ratio of medians from separate real
+sessions* ~664.63x and ~667.29x.
+**Original B4.4 complete A53 image-service median**
+13034.111500773894 ms versus **V2 once** 7225.137459123217 ms
+and **V2 unchecked** 7222.415631932163 ms, descriptive
+~1.804x complete-service ratio or ~44.57–44.59% lower service
+median. Old B4.4.2 showed 99.84% of reset time spent on the
+two full 13.5MiB source/destination SHA scans, vs ~7.025ms
+context memcpy. Original baseline service B4.4,
+reset profile B4.4.2 and new optimized runs are FOUR
+distinct physical sessions. No paired session-level uncertainty,
+significance, isolated PL compute/energy speedup, or secure
+backup equivalence is proven. All use 1023 ordinary frames,
+special trace ordinal 1023 excluded. Full original
+TRAIN derived source and official MNIST TEST seal preserved.
+
+**Current descendant research branch:**
+`agent/v3-p08-b45-comparison-and-b46-handoff`, stacked on
+unmerged draft PR #65. Dedicated PC-only source SHA-pinned
+`scripts/p08_b45_full1024_latency_synthesis.py`
+accepts the exact four independent original+optimized
+report SHAs, original model scalar and physical provenance,
+and the TWO real optimized 1024x256B A53 service timing
++ reset-profile binary captures. It replays original 1024
+CRC+monotonic six disjoint phases and both reset sidecars,
+validates actual per-run A53 CNTFRQ, all original independent
+report metrics, and outputs fresh external no-overwrite
+quantitative JSON plus readable Markdown per-phase share-of-sum
+and dominant remaining service phase. Native synthetic
+host-only negative tests and CI. **Operator has NOT yet run
+this new final four-report comparison on actual external raw
+sidecars**; do not invent specific new phase share results
+before local tool PASS and report hashes. No new hardware access
+or Vitis/XSDB/PuTTY is required for this step.
+
+**Exact PC-only commands and accepted hashes:**
+[docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md](docs/P08_B45_FULL1024_QUANTITATIVE_CLOSEOUT_AND_B46_HANDOFF_2026_11_05.md).
+The operator should verify the new report and return the six-phase
+results and SHA. This will close B4.5.5 and identify next dominant
+mixed PS+PL service interval.
+
+**P08-B4.6.1 FIRST PC-ONLY PROTOCOL DRAFT COMPLETED:**
+[docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md](docs/P08_B46_1_PC_ONLY_COUNTERBALANCED_TRACK_A_B_PROTOCOL.md)
+defines the original-frozen A vs original-frozen B arm identities, exact
+six distinct coldboot sessions in AB / BA / AB pairs, 1023 ordinary
+frames, non-equivalent 42- vs 1010-neuron and 26- vs 702-dispatch
+workloads, actual per-session CNTFRQ, original oracle/FNV and
+recovery proofs, and pair-level median ratio analysis without
+fabricated image-level independent hardware trials. **This is
+NOT approval for any new JTAG or DDR activity.** B4.6.2 later
+requires distinct PC source-pinned A/B admission and user review.
+
+**P08-B4.6 next after B4.5.5 acceptance:** Per original
+roadmap, prepare *PC-only* repeated six-session
+Track A-vs-Track B counterbalanced AB/BA/AB study
+and its source/measurement/uncertainty protocol.
+Track A 42 neurons/26 dispatches vs Track B
+1010 neurons/702 dispatches: system/workload
+difference, NOT matched-complexity neural kernel.
+The existing hardware experiments DO NOT automatically
+authorize any further JTAG, and the reduced-integrity
+B4.5 optimized variant cannot be relabeled as original
+security-equivalent Track B. Original model/TEST sealed.
+
+---
+
+## P08-B4.5 HISTORICAL — V2 once real 1024 physical preliminary PASS, independent review CLI repair (2026-11-05 later)
+
+**Operator actual new V2 `once` full1024 physical observation:** original
+six DDR staging/readbacks exact, newly pinned V2 ELF downloaded,
+strict **1024/1024 terminal** observed, all three complete journal/
+service/reset-profile sidecars physically captured, **all 27 original
+backup context records physically read back**, and the physical
+driver's original complete-1024 software scalar/FNV+backup
+verification reported
+`P08_B45_PERF_FULL1024_SAME_SESSION_JTAG_SCALAR_FNV_AND_BACKUP_PASS=1`.
+This is strong preliminary physical acceptance, but a separate
+independent operator PC verifier **did not execute**, because its
+argument parser rejected `--pilot-once-report` /
+`--pilot-unchecked-report` from the common argument array.
+The downstream verifier actually invokes `bench.admission(args)`
+which REQUIRES those two authentic pilot JSON paths.
+**Bug fixed on current PR branch** by declaring both required CLI
+options and adding new native parser-contract tests for both modes;
+no actual A53 ELF, original source oracle, P03, security policy
+or physical runner was modified. Original captured physical evidence
+remains valid; **DO NOT repeat the real V2 once JTAG session to fix
+a PC-only CLI error**. Independently verify the saved once evidence
+using same accepted `P08_B45_FULL_COMMON` after pulling fix.
+
+**Operator also reports new `unchecked` full1024 V2 currently running**.
+Its outcome is UNKNOWN. Do not change the current working tree,
+interrupt/duplicate its active XSDB hardware client, or assert
+1024 unchecked success. After its physical attempt ends, mandatory
+power-cycle and only then pull the latest branch and execute
+the now-corrected independent PC-only verifier for **each existing
+physical capture**. Do not interpret captured data as accepted
+until independent reports and SHA digests exist. Original TEST sealed,
+backup hardware security still unproven. See
+[runbook addendum](docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md).
+
+---
+
+## P08-B4.5 ACTIVE — FULL1024 V2 startup / fault 105 repair for BOTH unprotected modes (2026-11-05)
+
+**New operator-provided exact offline failure evidence:** full1024
+`once` original physical JTAG terminal mailbox `0xDEAD0823`,
+frame `0xFFFFFFFF` **BEFORE FIRST IMAGE**, fault `105`,
+`-bind_result=1` (underlying `P08_B45_RESET_INVALID=-1`).
+The reported `1` is **NOT one completed image**.
+All 1024 rows in each 256KiB real physically captured journal,
+service-timing and reset-only sidecar were zero; **zero neural
+inferences actually completed**, therefore this was not a
+prediction/FNV mismatch or a demonstrated reset performance
+failure. The original postmortem
+`/home/dna/Thesis_Evidence/p08_b45_failure_diagnostic_20261105T174301Z.json`
+SHA `e500d8a6507ff4319216fc9e6a3ca1b7fce8a46e6d58d333f9e73b86a3324fb3`.
+Original mailbox SHA `8b7aa5810c9bf5977218936a0314a1fcfac3b07073b6dd8d4da625e9147e7231`.
+**Strong causal clue:** pre-image0 pager counters read
+702 hardware dispatches / 26 barriers even though the pager
+is normally initialized only in the per-image loop, which
+had not run. This supports stale A53 static/BSS working
+memory after JTAG `rst -processor` warning. The original
+fault mailbox did not log `reset_state.magic` or config
+rejection cause, so an exact invalid branch is NOT proven.
+
+**Fix in new unmerged branch**
+`agent/v3-p08-b45-full1024-reset-bind-repair` stacked on
+incident draft PR #64. DISTINCT full1024 `once` and
+`unchecked` A53 entry points now explicitly zero all
+original static workspaces ONCE before hardware and inference
+(outside measured time). New isolated
+`p08_b45_perf_startup.c/.h` validates all physical
+backing/backup/instance/sha-pointer geometry and required
+callbacks before clearing only the reset-state instance,
+preserving the original `p08_b45_perf_reset_bind` fail-closed
+checks. No original pilot16, frozen network, static P03,
+protected reset guard or security mechanism changed.
+Failure-only A53 mailbox now records detailed startup
+reason (word15) and old state magic/pager counters
+(words16–21) with marker `0x504D4244`; the existing
+PC-only postmortem supports both old V1 and new V2.
+**V2 unique genuine ELF identities** mandatory for both
+new A53 Vitis builds, linker maps and physical XSDB
+admission; old V1 physical binaries CANNOT pass.
+
+Native strict C11 synthetic tests check both modes,
+stale magic/poison, original 27x512KiB memory range,
+callback/mode/hash negative paths and preserving
+pilot16/protected original regressions; native CI host-only.
+**Physical status remains NO NEW V2 KV260 RUN**.
+No extra board diagnostics justified before actual V2
+Vitis 2025.2 builds and fresh offline preflights.
+Original accepted pilot16 and failure raw capture are
+immutable. Stop after any failed build/preflight and
+preserve logs, do not bypass original admission.
+Full size physical rerun is separately scoped, with
+B4i 128-bit and CPU halt check, risk-approved
+dedicated disposable JTAG, all original 6 DDR
+readback, all1024 scalar/FNV plus all27 backup
+postrun checks, 2nd PC terminal host-file monitor,
+and reboot after attempt. Official TEST still SEALED.
+
+**New exact PC commands and new branch:**
+[docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md](docs/P08_B45_FULL1024_V2_RESET_BIND_REPAIR_AND_PC_BUILD_RUNBOOK.md).
+Original full1024 V1 runbook is historical and carries an
+override banner. Do not merge draft stack without explicit approval.
+
+---
+
+## P08-B4.5 FULL1024 real A53 once TERMINAL FAILURE — PC-only postmortem HISTORICAL (2026-11-05 UTC)
+
+**NEW CURRENT PHYSICAL NO-GO:** Operator attempted the genuine
+unprotected original `once` full1024 image A53 session. Original
+six DDR source physical readbacks, accept P03/FPD+LPD128 gate,
+four zero buffer readbacks, newly pinned A53 ELF download,
+and physical terminal mailbox/journal/timing/reset-profile
+capture succeeded. The A53 **reported a real TERMINAL FAILURE**
+(`P08_B45_PERF1024_JTAG_ATTEMPT_FAILED_REBOOT_REQUIRED=1`);
+the script intentionally aborted before strict full1024
+terminal PASS or 27 backup postrun capture. Saved original
+evidence root `/home/dna/Thesis_Evidence/p08_b45_perf_once_full1024_physical_20261105T172141Z`.
+The actual mailbox fault ordinal/code is NOT in the supplied
+snippet; no cause is established. Do not guess 201 reset/208 neural.
+**After JTAG failure power-cycle the board; do not resume halted Linux.
+DO NOT run unchecked or repeat full1024 until offline diagnosis.**
+No actual complete 1024 numerical/performance result is accepted.
+Accepted independently verified once+unchecked **16-image** physical
+pilots remain unchanged.
+
+**Active incident branch**
+`agent/v3-p08-b45-full1024-failure-triage`, stacked on full1024
+draft PR #63 (unmerged). New
+`scripts/p08_b45_full1024_failed_run_postmortem.py`
+is **PC-only / NO BOARD**: requires saved terminal failure
+mailbox, original raw three 256KiB sidecars and immutable
+1024 scalar oracle; prints actual fault ordinal/code/label and
+contiguous committed journal+timer+reset CRC rows, verifies
+frozen scalar/FNV/spikes and reset<=original service phase0 for
+all A53-acknowledged completed frames. False success claims,
+missing raw data, inconsistent frame count and original SHA
+mismatches fail closed. Fresh JSON report only; immutable
+failure captured source unmodified. Native synthetic
+error/partial-source tests are host-only and independent of
+real hardware data.
+
+**Exact read-only local operator instructions:** 
+[docs/P08_B45_FULL1024_AUTH_ONCE_FAILED_JTAG_POSTMORTEM_2026_11_05.md](docs/P08_B45_FULL1024_AUTH_ONCE_FAILED_JTAG_POSTMORTEM_2026_11_05.md).
+Do not update/full-run retry or prepare code fix until the
+operator provides the actual mailbox fault and prefix report;
+no second XSDB client or PuTTY board inspection needed.
+Never merge draft stack without explicit authorization.
+
+---
+
+## P08-B4.5 HISTORICAL PREP — separate unprotected FULL1024 physical A53 preparations and LIVE PC monitor (2026-11-05 UTC)
+
+**UPDATE superseding the following historical PILOT16 preflight plan:** both real original
+TRAIN-derived 16-image once and unchecked hardware pilots **PASSED actual
+A53 JTAG inference and independent original scalar/FNV, backup after-run
+verification**. Operator supplied full logs and local independent JSON
+SHA: once
+`7ab975d3c062df2606357080c1eeda0904ea8aaba0aed4c02fda8ce1140ecdca`,
+unchecked
+`5f29cda8661cad64fe39231d42a84c3293bef96af6c7fe74c9c74b466a2195aa`.
+FPD/LPD128, original P03 PL, genuine six DDR original source
+readback, strict 16 terminal and physical all-27 postrun backup
+readbacks occurred in both, followed by the original independent reviewer PASS.
+The user shared terminal transcript only (not actual operator
+JSON or raw DDR files). It reported no numerical or hardware failures;
+record original XSDB `rst -processor` warning without dismissing it.
+See [pilot16 actual results](docs/P08_B45_OPERATOR_REPORTED_REAL_UNPROTECTED_PILOT16_ACCEPTANCE_2026_11_05.md).
+**Backup write-protection security remains NOT PROVEN and NOT CLAIMED.**
+
+**Next distinct work** (current branch `agent/v3-p08-b45-unprotected-full1024-progress`,
+DRAFT PR #63 stacked on pilot16 PR #62, both unmerged):
+two distinct FULL1024 performance-only A53 variants
+`p08_b45_perf_once_full1024_a53.c` /
+`p08_b45_perf_unchecked_full1024_a53.c`
+with unique source/ELF identities, 1024 original frame outputs, three
+256KiB journal/timing/reset sidecars, unchanged original 27 P02
+neural records and frozen raw1024/train scalar source, quiescence,
+error poisoning, cache/barrier. Sidecar guard flag word19 must
+be ZERO; protected-mode variant and original fail-closed callback
+are untouched. NEW dedicated Vitis 2025.2 builder and mode-specific
+ELF/map/PT_LOAD admission; no previously accepted pilot ELF is reused.
+
+The **PC offline preflight** requires both actual accepted pilot16
+independent JSON SHA pins, accepted genuine original physical B4.2
+1024 numerical report SHA, B4.4 1023 ordinary-timing report SHA
+and recomputed original 64 scalar shards, along with immutable
+P03/XSA/B2.2 pins and original B3 source/readback. Physical runner
+reuses accepted dedicated B4i original A53 stop+128-bit gate,
+P03 programming and B3 six source DDR transfer+readbacks. It
+captures strict genuine all1024 terminal, 1024 neural/FNV
+and six service phases, 1024 reset profiles, and all 27x512KiB
+AFTER-RUN signed backup records. Unique result/evidence paths;
+ten explicit risk approvals per physical JTAG attempt; reboot
+after every attempt, NEVER resume halted Linux.
+
+**Second-terminal nonintrusive live progress:** The SAME active XSDB
+process polls the genuine A53 mailbox. It writes
+`performance1024_capture/progress_state.txt` via atomic host-side
+rename; separate PC Python reader only reads this file and
+`stage.txt`, never opens JTAG or contacts PuTTY/DDR. Displays
+completed/1024, percent, observed throughput and elapsed
+during original staged JTAG run. A terminal/progress status is
+NOT independent neural parity success; a separately executed
+PC-only independent all1024 FNV/spikes/time and original
+27-backup review is mandatory. Exclude special trace ordinal
+1023 for ordinary 1023 service/reset timing distributions.
+Original B4.4 one-session descriptive reference is preserved;
+no randomized paired AB/BA six-session statistical claim yet.
+Original MNIST TEST SEALED. No full1024 new hardware
+attempt has yet been accepted at this revision.
+
+**Exact operator PC Vitis build + offline test + physical launch + two-terminal
+monitor + independent verification for each mode:**
+[docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md](docs/P08_B45_UNPROTECTED_FULL1024_PHYSICAL_WITH_LIVE_MONITOR_RUNBOOK.md).
+Only optional PuTTY commands are short `sudo xmutil listapps`
+and conditional `sudo xmutil unloadapp`. All long commands live
+inside VS Code on PC. Never merge this stack without explicit user
+authorization.
+
+---
+
+## P08-B4.5 HISTORICAL — unprotected performance-only PILOT16 (2026-11-05 UTC)
+
+**New user-directed research scope:** Test actual original KV260 neural
+prediction/FNV parity and reset latency for `authenticate-once`
+and `unchecked reset` WITHOUT asserting equivalent persistent
+backup security. This expressly supersedes the XMPU-as-performance-
+prerequisite planning below; preserve the earlier PC-only FSBL/XMPU
+audit and historical results as evidence, not as the gating next
+development task. The user accepts reduced backup integrity as a
+stated thesis limitation. DO NOT falsely report effective XMPU
+protection. Retain original fail-closed `p08_b45_a53_backup_guard.c`,
+both previously verified protected-mode ELFs, original B4.4.2
+profile and frozen P03/27-core TRAIN sources **unaltered**.
+
+**New descendant branch:**
+`agent/v3-p08-b45-unprotected-pilot16`, stacked on historical
+reconciliation draft PR #61 (its parent stack remains unmerged).
+Distinct `software/p08/p08_b45_perf_reset.c` exposes two newly named
+performance-only reset API methods and intentionally uses NO
+backup lock/protection callbacks. The original B4.5 protected-mode
+library and explicit fail-closed guard remain independently
+tested. Distinct new A53 mains
+`p08_b45_perf_once_pilot16_a53.c` and
+`p08_b45_perf_unchecked_pilot16_a53.c`
+have unique 16-image identities, intact 1024-pixel raw source SHA
+and 26-tick/702-dispatch original inference, distinct 4096B profile
+sidecars with **guard flag word19 exactly ZERO**. Auth-once does
+27 original source SHA passes at bind and per-frame P02 headers;
+unchecked deliberately omits context-content integrity checks
+while preserving original quiescence, copy geometry, cache/barrier
+and failure poisoning. End-of-session 27 physical backup
+512KiB records must independently match original frozen SHA bytes.
+Such endpoint checking cannot exclude transient unprotected
+DDR mutation or cross-master DMA/early-boot ownership conflicts.
+
+**Host-only preparations:** isolated Vitis 2025.2 build wrapper,
+genuine mode-specific ELF/map audit, strict 16-frame signed
+JTAG/PS width/P03/six original DDR transfer/terminal and postrun
+backup capture driver, a distinct independent PC-only review,
+native C11+GCC negative/same-source tests and new no-board CI.
+The independently accepted B3 original TRAIN first16 scalar,
+original 27-context source+raw1024 DDR stage and original P03
+width-first/CPU stop gate are reused: NO repeated data
+generation or unnecessary serial board inspection. **No
+genuine new Vitis performance ELF or physical 16 run
+is yet accepted.** Runner defaults to no-board preflight;
+`execute` requires ten explicit scoped operator YES approvals,
+fresh evidence root and a dedicated disposable Linux/JTAG
+session. Failed CPU takeover aborts before any PL/DDR
+operation. Reboot physically after EVERY attempt. No
+FSBL, BOOT.BIN, XMPU or official TEST actions.
+
+**Exact PC/PuTTY operator commands:** 
+[docs/P08_B45_UNPROTECTED_PERFORMANCE_PILOT16_RUNBOOK.md](docs/P08_B45_UNPROTECTED_PERFORMANCE_PILOT16_RUNBOOK.md).
+Only PuTTY commands, if actually necessary, are simple
+`sudo xmutil listapps` and `sudo xmutil unloadapp`
+under the original accepted FPGA app unload sequence.
+All complex build/test/XSDB commands run from VS Code on PC,
+not through PuTTY. Next accept 16 once+unchecked **separately
+and independently**, then a **new 1024-image paired
+performance** preparation, NOT a renamed 16-image ELF.
+Any reduction of reset SHA/checking cost is a hypothesis until
+physical reset and whole-service counters are measured and
+compared with consistent source and timing boundaries.
+
+**Experiment status as of this roadmap update:** native implementation
+and CI source tests completed; operator two genuine new
+Vitis builds and independent ELF/map preflight pending; physical
+JTAG not yet executed. No PR merge without explicit instruction.
+
+---
+
+## P08-B4.5 ACTIVE — source-channel and trusted-boot readiness (PC-ONLY)
+
+**Current work package:** P08-B4.5 FSBL C vs XSDB Tcl generated-protection
+source-channel preflight. New branch
+`agent/v3-p08-b45-physical-readiness-source-gate`,
+new draft PR stacked on B4.5.4.5's draft PR #60.
+Native CI is host-only and the **operator-reported original source
+rerun is ACCEPTED (2026-11-05 UTC)**: all five terminal source-channel
+PASS/NO-GO markers were supplied; external JSON
+`/home/dna/Thesis_Evidence/p08_b45_fsbl_c_tcl_20261105T071335Z.json`,
+operator-reported SHA-256
+`61e4b668e08b760800e69b39fdb61c5382aa23c0df568a31c3a49beff6c16bde`.
+The original JSON/PSU bytes remain local, not independently
+rehashable by GitHub. No board access, XSDB, DDR writes,
+FSBL/BOOT.BIN rebuild or official MNIST TEST are authorized.
+The previous 4.5.4.5 operator report is an accepted SOURCE observation,
+**not** boot, active register or exclusive DDR ownership proof.
+
+The key data gap is now explicit. The original generated C
+`psu_protection()` reaches all six
+`psu_ddr_xmpu[0-5]_data` names, each with 21 source bytes and
+zero named calls in the operator's previous report; lock data
+has 87 source bytes and zero named calls. The original
+`psu_init.tcl` contains XMPU symbols but AMD PG201 documents
+Tcl as the XSDB initialization path, while the FSBL uses generated
+C: https://docs.amd.com/r/en-US/pg201-zynq-ultrascale-plus-processing-system/Output-Generation .
+**Tcl content cannot substitute for actual cold-boot C
+protection or XMPU register readback.** New
+`scripts/p08_b45_fsbl_source_channel_gate.py` re-verifies
+the original SHA-pinned source report/XSA/C/H/Tcl and computes a
+per-port C-vs-Tcl *source-only* matrix. It only SHA-inventories
+operator-specified existing host BOOT.BIN/BIF/FSBL build files.
+The listed physical permissions/boot flags are always reported
+unproven; no physical action is built in.
+
+**AMD source/register attribution:** AMD PG201 above and
+UG1085 six-DDR-port register bases
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances ,
+UG1085 XMPU register layout
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/XMPU-Register-Set-Overview ,
+AMD/Xilinx FSBL 2025.2 bypass header
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hw.h .
+These are adapted AMD mechanisms, not new invented thesis IP.
+
+**Runbook:** [docs/P08_B45_FSBL_C_VS_TCL_PHYSICAL_READINESS_PC_ONLY_RUNBOOK.md](docs/P08_B45_FSBL_C_VS_TCL_PHYSICAL_READINESS_PC_ONLY_RUNBOOK.md).
+Keep original 27 P02 backups and A53 fail-closed guard unchanged.
+The trusted prelock staging of all 13.5MiB immutable contexts,
+512KiB adjacent-owner proof, actual six-port master IDs,
+region priority/permissions, compiled current FSBL selection,
+continuing A53 guard, recoverable boot medium and explicit
+operator hardware authorization all remain **NO-GO**.
+
+**Historical Git inspection de-duplication completed (2026-11-05):**
+the previously recorded 19 Track A and seven P08-A PS-width logs,
+Oct 21 Ubuntu/BootFW Image A snapshot and overlay observation,
+Oct 22 Linux-vs-XSDB width discrepancy and later accepted B4i
+A53 takeover, Nov 2–3 failed read-only A53 target scans, and the
+later SUCCESSFUL Nov 3 1024-frame B4.4 reset-profile run were
+reconciled. Repeating these is not a prerequisite for understanding
+the generated FSBL security sources. **The operator's
+`optional_host_existing_boot_candidates: []` means no PC candidates
+were submitted, NOT that no BOOT.BIN/BIF/FSBL artifacts exist.**
+No historical record located proves active compiled FSBL/XMPU lock,
+10-bit DDR master permissions, or owner of the 512KiB added cover.
+For detailed citations, preserved evidence paths and **PuTTY
+single-line-only** future plan, see
+[docs/P08_B45_HISTORICAL_KV260_INSPECTION_REUSE_2026_11_05.md](docs/P08_B45_HISTORICAL_KV260_INSPECTION_REUSE_2026_11_05.md).
+Before any new board commands, search the already saved PC artifacts;
+no physical inspection has been requested or authorized here.
+
+**Numbering rule:** B4.5 has named work packages and PRs
+rather than another B4.5.4.6 level. Reserve already-defined
+P08-B4.6 for the later paired A/B physical study, and do
+not alter accepted historical milestone labels.
+
+### B4.5.4.5 — operator-reported original source observation ACCEPTED (2026-11-05 UTC)
+
+Operator supplied original PC-only output:
+`P08_B4545_ORIGINAL_XSA_C_H_TCL_BYTE_IDENTITY_PASS=1`
+and
+`P08_B4545_GENERATED_PROTECTION_SOURCE_GRAPH_RECORDED=1`.
+External original report
+`/home/dna/Thesis_Evidence/p08_b4545_psu_source_20261105T065516Z.json`,
+operator-reported SHA-256
+`2d6f9e079b3bf9845ebd07d69b2de4611b90dc821341b0c9ada6458b2daa74a0`.
+All current physical flags remain zero/false and the decision is
+`GENERATED_PSU_SOURCE_GRAPH_ONLY_ACTIVE_BOOT_AND_XMPU_NO_GO`.
+Original source report was pasted with SHA output (not independently
+rehashed from a local file by the assistant), and no local pytest
+transcript was supplied; prior GitHub native no-board CI PASSED.
+See [docs/P08_B4_5_4_5_OPERATOR_REPORTED_GENERATED_PSU_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_5_OPERATOR_REPORTED_GENERATED_PSU_ACCEPTANCE_2026_11_05.md).
+
+---
+
+## P08-B4.5 ACTIVE — context-reset integrity optimization experiments (2026-11-03)
+
+**Status:** P08-B4.5.1/.2 reset kernels and two separate source-level
+A53 applications are implemented. Operator posted a clean local PASS of
+the original **70 B4.4 regression tests** and **2 B4.5 native tests**.
+Original P08-B4.5.3 no-board regression passed the inherited 72 +
+81 source/ELF/sidecar/pinned-SHA + 15 paired-ELF tests (168 total).
+B4.5.4.1 added independent DDR-owner gap tests; the B4.5.4.2
+policy branch adds six-port/10-bit-ID/region-priority/boot-order
+native tests. The **current stacked no-board CI passes all inherited
+and new tests** (B4.5.4.2 run `41974939755`, PASS). Draft PR stack:
+#54 (B4.4) -> #55 (B4.5.3) -> #56 (B4.5.4.1) ->
+#57 (B4.5.4.2); all open/draft/unmerged.
+
+**Both genuine Vitis 2025.2 A53 ELFs/maps are now OPERATOR-REPORTED
+BUILT (2026-11-05 UTC).** The operator supplied six distinct SHA-256
+digests for the `once` and `unchecked` ELF, map and admission JSON.
+These are pinned in the
+`docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json`
+source-reported evidence manifest. **On the first local paired-ELF
+verification, the operator found that the new evidence manifest had
+accidentally omitted the final `e` in the authenticated-once admission
+JSON SHA: recorded `602238...c526` (63 characters), actual/original
+`602238...c526e` (64 characters).** The operator's read-only
+diagnostic showed all four real ELF/map hashes and the unchecked-report
+SHA matched exactly; the authenticated-once report also matched the
+*originally supplied* correct SHA. The source-evidence manifest and
+runbook have been corrected to the original 64-digit SHA. A new
+regression requires six proper 64-character lowercase hexadecimal
+digests and explicitly pins the correct once admission-report SHA.
+**INDEPENDENT OFFLINE PAIR VERIFIED / P08-B4.5.3 ACCEPTED (2026-11-05 UTC).**
+The operator reran the independently recomputed genuine paired-A53
+offline checker and posted
+`P08_B45_TWO_GENUINE_A53_ELFS_INDEPENDENT_OFFLINE_PASS=1` and
+`P08_B45_BOTH_PROVENANCE_AND_SOURCE_GUARD_MATCH=1`.
+Independent JSON path:
+`/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`;
+SHA-256
+`03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+Full source-derived acceptance:
+`docs/P08_B4_5_3_INDEPENDENT_DUAL_A53_OFFLINE_ACCEPTANCE_2026_11_05.md`.
+No physical inference, DDR ownership proof or JTAG launch occurred;
+the genuine **offline** build provenance was independently accepted.
+No JTAG, DDR writes, physical KV260 inference or neural/latency
+verification are authorized or reported.
+
+The accepted P08-B4.4.2 full-SHA reset profile is the immutable reference:
+1,023 ordinary frames; reset-service median **5,826.767549 ms**; source
+SHA-256 median **2,908.5978 ms**; destination SHA-256 median
+**2,908.5991 ms**; mutable 27-context memcpy median **7.0247 ms**.
+The two SHA scans account for approximately **99.84% of summed reset ticks**.
+The separate original B4.4 full image-service median was **13,034.111501 ms**.
+These are distinct sessions and must not be subtracted as if paired.
+
+### P08-B4.5.1 — authenticate once, lightweight per-image checks
+
+Authenticate all 27 immutable backup records once at session bind. Require a
+real platform mechanism that establishes persistent exclusive/read-only
+ownership of the entire backup range. On each image, confirm that protection
+remains active, validate all 27 source P02 headers before the first copy,
+perform the original 27-context memcpy/cache/barrier sequence, and validate
+all 27 destination headers. No per-image SHA-256 is permitted. This mode is
+only integrity-defensible if the platform actually prevents backup mutation;
+a software flag or no-op lock callback is not proof.
+
+### P08-B4.5.2 — unchecked-content performance bound
+
+Remove SHA-256, P02-header, CRC and payload-content checks from the reset
+variant. Retain operational safety controls: pointer/range/size admission,
+persistent backup ownership/protection, positive quiescence, cache
+maintenance, barriers, callback error handling, generation accounting and
+fail-stop poisoning after a partial restore. This is an experimental
+performance lower bound, not a production recommendation. Native tests must
+demonstrate that content corruption is intentionally not detected.
+
+### P08-B4.5.3 — separate A53 source and Vitis offline builds
+
+**ACCEPTED (2026-11-05 UTC): two genuine Vitis A53 builds and independent paired PC-only static admission.**
+
+Two distinct A53 mains now exist:
+`software/p08/p08_b45_auth_once_full1024_a53.c` and
+`software/p08/p08_b45_unchecked_full1024_a53.c`. Both reuse the
+original frozen P07/P03 26-tick/702-dispatch neural path, original
+complete A53 image-service meter and neural result journals. Only reset
+integrity policy differs; the unchecked variant still retains unrelated
+raw-input provenance SHA and original result-journal raw/wire hashes.
+
+`software/p08/build_p08_b45_variant.py`,
+`scripts/build_p08_b45_variant.sh` and
+`scripts/p08_b45_elf_admission.py` now support two separate, source-pinned
+offline Vitis applications and ELF/map identity/low-DDR PT_LOAD admission.
+The B4.5 sidecar uses a new 256B record schema with its own
+`scripts/p08_b45_sidecar.py` PC-only structural verifier and native
+negative tests. These are **not** actual physical measurements.
+
+**CRITICAL deliberate STOP:** the included
+`software/p08/p08_b45_a53_backup_guard.c` refuses backup-region locking
+and lock verification. The resulting offline-buildable ELFs are
+**intentionally incapable of executing inference on the board** until a
+separately audited and accepted real PS/PL DDR backup owner/protection
+provider is implemented. Do not replace it with a no-op. Hardware XMPU
+configuration may be boot-time/secure-master controlled; never perform
+speculative runtime XMPU writes. Source, stage and ELF admission explicitly
+pin this fail-closed adapter and continue to report DDR ownership unproven.
+
+**Operator build-preflight fix (2026-11-03):** the first attempt to build
+B4.5.1 stopped before Vitis at `original context SHA header drift`.
+Investigation found the **new B4.5 shell script contained a mistyped
+expected SHA**, not evidence of a changed original model. Corrected its
+literal to the accepted B2.2 header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+A CI regression now compares B4.5 shell pins against accepted B2.3
+admission constants and B4.4 shell pins. Runbook includes complete
+exports and read-only `find`/SHA validation commands. Both offline
+Vitis builds subsequently completed according to operator-supplied
+six-file SHA-256 output.
+
+**Following B4.5.3:** B4.5.4.1 PC-only geometry and DDR owner-gap
+audit was performed and accepted separately (report SHA and reference
+below). B4.5.4.2 now explores a vendor-sourced *trusted-boot*
+hardware DDR-XMPU policy with native symbolic testing. No physical
+DDR, JTAG, PL, ELF download or inference is allowed without genuine
+backup read-only/owner proof, new guard-enabled signed builds,
+recovery readiness and explicit operator authorization.
+
+Runbooks and commands:
+[docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md](docs/P08_B4_5_3_TWO_A53_VITIS_OFFLINE_BUILD_RUNBOOK.md)
+and
+[docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md](docs/P08_B4_5_3_OPERATOR_PAIR_ELF_RECHECK.md).
+All verification is PC-only.
+
+Keep original B2.3 production firmware, accepted P08-B4.4.2
+profiler, P03 shell/XSA/bitstream, B2.4 frozen assets and scalar oracle
+unchanged. No variant may silently replace the accepted baseline.
+
+### P08-B4.5.4.1 — PC-only DDR owner/backup-protection gap inventory
+
+**ACCEPTED (2026-11-05 UTC): operator's original PC-only DDR geometry
+and physical-owner evidence-gap report; draft PR #56 stacked on PR #55,
+both UNMERGED.** This step
+follows the independent accepted B4.5.3 paired A53 report
+`/home/dna/Thesis_Evidence/p08_b45_pair_independent_20261105T045733Z.json`
+SHA-256
+`03b433527901a9d51dfb8a8ca99c0321d81335859d1be14505eb6a7be9369ec1`.
+It is deliberately NOT a board execution milestone.
+
+`scripts/p08_b454_ddr_owner_preflight.py` authenticates that
+independently accepted paired report by SHA and its typed fields,
+rereads all six genuine A53 ELF/map/admission artifact pins and
+the staged fail-closed guard, parses the actual A53 ELF64 PT_LOAD
+geometry, and checks original P03 + P07 routing + frozen 27-context
+and B4.5 original source-declared DDR allocations for static overlap.
+The code does not call Vitis, XSDB/JTAG, MMIO, PL or board hardware.
+Its owner-gap matrix explicitly marks FSBL, TF-A, U-Boot, Linux,
+APU, RPU, PMU/CSU, PL/DMA, all six DDR-XMPU ports and debug/low-DDR
+owners as unproven; optional operator-provided boot snapshots remain
+unauthenticated observations rather than permission.
+
+**New physical requirement discovered:** the original 13.5MiB immutable
+backup `[0x43000000,0x43D80000)` would need conservative 1MiB DDR-XMPU
+cover `[0x43000000,0x43E00000)`, including another **512KiB** of
+neighboring DDR. The report flags this overprotection as a geometry
+consideration only, NOT a configured or locked hardware protection.
+AMD UG1085 restricts XMPU configuration to secure masters and
+recommends boot-time, locked provisioning. Software-only read-only
+page permissions do not prove other DMA/PS/PL master exclusion.
+The previously accepted A53 applications still ship the intentional
+backup-lock callbacks that return `-1`; they cannot start physical
+inference, and no current change enables them.
+
+**Operator-accepted actual risk report:** 
+`/home/dna/Thesis_Evidence/p08_b454_ddr_owner_gap_20261105T051850Z.json`,
+SHA-256
+`7a1d87cf3278245a4a5ed612773ac228097e506f464861c3e1b69856f6ba56f2`,
+schema `p08-b454-ddr-owner-gap-pc-only-preflight-v1`,
+`decision=PC_STATIC_GEOMETRY_PASS_PHYSICAL_OWNER_NO_GO`.
+Both original new A53 ELFs' observed on-disk PT_LOAD are
+`[0x0,0x00109BC0)` (1,088,448B each). None of
+the 14 classes of actual PS/PL/boot/DDR owners is proven; no XMPU
+was programmed or read. Acceptance document:
+[docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_1_OPERATOR_STATIC_DDR_GAP_ACCEPTANCE_2026_11_05.md).
+Full static-PC runbook remains
+[docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md](docs/P08_B4_5_4_1_DDR_OWNERSHIP_AND_PROTECTION_AUDIT_RUNBOOK.md).
+
+**Next:** B4.5.4.2 trusted-boot DDR-XMPU immutable-backup
+protection *design and host-only policy admission*, not real firmware
+writes or physical access. Hardware and 16/1024-frame pilots remain
+NO-GO until independent proof, a separately rebuilt and statically
+admitted guarded A53/boot image, recovery readiness and explicit
+operator approval.
+
+### P08-B4.5.4.2 — trusted-boot DDR XMPU immutable-backup policy (PC-ONLY)
+
+**B4.5.4.2 ACCEPTED 2026-11-05 UTC — operator-local PC-only symbolic 6-port XMPU-model validation; hardware protection NOT YET PROVEN.**
+Development branch `agent/v3-p08-b4542-xmpu-boot-policy`, draft PR #57,
+is stacked on B4.5.4.1 draft PR #56. Preserve both original B4.5.3 Vitis ELF/map
+triples and immutable original scalar oracle; DO NOT merge or execute.
+
+**Design decision (adapted from AMD, NOT an original invented IP core):**
+A dedicated trusted FSBL/bootloader should load the exact 27 original
+signed P02 records and authenticate their SHA-256 hashes before
+any boot-time DDR-XMPU protection is locked. All six DDR XMPU
+ports would then need the correct 1 MiB-aligned policy covering
+`[0x43000000,0x43E00000)`, including the extra 512KiB whose
+physical owner is NOT yet known. A53 inference handoff must happen
+only after independent secure protection readback and lock evidence.
+No new physical BOOT.BIN, boot partition, FSBL or XMPU register
+writes are generated by this work.
+
+**Security correction:** a blanket read-only rule for all 10-bit AXI
+master IDs prevents writes but may broaden access by allowing
+unauthorized masters to READ the sensitive backup. The candidate
+therefore uses a mathematical **priority-14 ID/MASK=0 wildcard
+deny-read/deny-write** region on each of six DDR XMPUs, plus a
+**priority-15 future narrowly allow-listed read-only exception**.
+The reader exception is **disabled**, because actual DDR AXI
+master IDs, region-slot availability and secure/nonsecure attributes
+have not been independently demonstrated. Consequently the current
+candidate deliberately cannot provide working A53/PL backup reads.
+Its PC sweep exercises all 1024 possible MIDs, both security classes,
+multiple addresses and all six ports as **symbolic inference only**.
+The existing firmware guard remains unprovisioned/fail-closed.
+
+**Accepted operator evidence (original):**
+`/home/dna/Thesis_Evidence/p08_b4542_xmpu_policy_pc_20261105T054738Z.json`,
+SHA-256
+`ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`.
+Source policy SHA-256 at audit:
+`7f78e7582e7fee12a06d83f14e45f1de1faf877ce1429af441dd83db3e851d2a`.
+The 147,456 symbolic transactions passed, while
+`REAL_READER_ALLOWLIST_READY=0`,
+`FSBL_BOOT_PROTECTION_PROVEN=0`,
+`XMPU_REGISTERS_PROGRAMMED=0`,
+`BOARD_JTAG_DDR_ACTION_AUTHORIZED=0`. 
+Source acceptance:
+[docs/P08_B4_5_4_2_OPERATOR_SYMBOLIC_XMPU_POLICY_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_2_OPERATOR_SYMBOLIC_XMPU_POLICY_ACCEPTANCE_2026_11_05.md).
+
+**Additional upstream FSBL finding with attribution:** AMD/Xilinx
+public `xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()`
+**before** `XFsbl_HookBeforeHandoff(EarlyHandoff)`.
+The initial assumption that the handoff hook could necessarily
+reprogram a locked XMPU is therefore **not valid** without
+inspecting the exact local Vitis FSBL and prior boot config.
+This new source is
+https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c ;
+AMD UG1137 handoff describes protection configuration:
+https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Handoff.
+The next B4.5.4.3 must inventory actual PS initialization and
+FSBL/boot sources BEFORE selecting a real secure integration point;
+`XFsbl_HookBeforeHandoff` is now **unverified, potentially too late**.
+Neither the public upstream `master` source nor this source-coded
+observation establishes the user's current installed FSBL version
+or board runtime.
+
+**Upstream AMD reference attribution and scope:**
+
+- **AMD UG1085, Memory Protection Unit / Instances:** six DDR XMPU
+  units, 1 MiB region alignment and independent read/write access
+  checks; https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/AMD-Memory-Protection-Unit
+  and https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances
+- **AMD UG1085, XMPU Regions / Master ID Validation:** 16 regions
+  per unit; higher numbered matching region wins; 10-bit
+  `(ID & MASK) == (AXI_MasterID & MASK)` equation.
+  https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/XMPU-Regions
+  and https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Master-ID-Validation
+- **AMD UG1085, Configuration:** XMPU configurations are
+  secure-master privileged, normally established once at boot and
+  locked. No speculative runtime XMPU writes permitted.
+  https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Configuration
+- **AMD UG1137, Partition Loading and FSBL Hooks:** boot partition
+  load into DDR and proposed customization point
+  `XFsbl_HookBeforeHandoff(u32 EarlyHandoff)` (**previous proposal;
+  may be TOO LATE to adjust XMPU** because AMD public FSBL handoff
+  calls `XFsbl_ProtectionConfig` earlier; real Vitis 2025.2
+  source, early handoff and existing XMPU locks still **UNVERIFIED**).
+  https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Partition-Loading
+  and https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Hooks-in-FSBL
+- **AMD UG1283, Bootgen `load` attribute:** possible partition
+  target address, no real data partition currently generated;
+  https://docs.amd.com/r/en-US/ug1283-bootgen-user-guide/load
+- **AMD/Xilinx public FSBL hook skeleton** used to locate the
+  customization point, not copied into new firmware:
+  https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hooks.c
+
+**Authorship:** AMD's XMPU/FSBL facility and boot partition capability
+are established vendor mechanisms. The symbolic deny/reader exception
+policy, frozen Loihi digital-twin memory envelope and test harness
+are our own thesis-specific application of those vendor concepts,
+NOT an invented hardware primitive. Cite original AMD sources in the
+thesis method section when interpreting any later physical result.
+
+**Files:** `config/p08_b4542_xmpu_boot_candidate.json`,
+`scripts/p08_b4542_xmpu_boot_policy.py`,
+`tests/test_p08_b4542_xmpu_boot_policy.py` and
+[docs/P08_B4_5_4_2_BOOT_LOCKED_DDR_XMPU_DESIGN_AND_PC_RUNBOOK.md](docs/P08_B4_5_4_2_BOOT_LOCKED_DDR_XMPU_DESIGN_AND_PC_RUNBOOK.md).
+The current output must stay
+`SYMBOLIC_WRITE_DENY_CONTRACT_PASS_READERS_AND_REAL_BOOT_NOT_READY_NO_GO`
+and `P08_B4542_BOARD_JTAG_DDR_ACTION_AUTHORIZED=0`.
+Next work requires actual boot/FPD/DDR port master inventory,
+specific verified reader IDs, trusted boot image sequencing and
+secure XMPU readback, plus a new independently admitted guard-enabled
+A53 candidate before a separately approved pilot.
+
+### P08-B4.5.4.3 — real Vitis/FSBL/XSA source inventory (PC-ONLY)
+
+**B4.5.4.3 ACCEPTED (2026-11-05 UTC): operator-local SHA-pinned original
+FSBL + accepted XSA source inventory; active boot protection NO-GO.** On branch
+`agent/v3-p08-b4543-fsbl-boot-inventory`,
+**draft PR #58 stacked on draft PR #57** (both UNMERGED).
+Unlike prior symbolic 147456-master-access simulation, this submilestone
+begins inspecting **real vendor/project source bytes**. No boot image
+or physical permission has been established.
+
+The new
+`scripts/p08_b4543_fsbl_boot_source_inventory.py`
+SHA-pins the accepted operator B4.5.4.2 JSON report
+`ba89166f826425bcd69c86ee7b249f70cd39f359382fa69bd331a366678899f2`
+and the accepted routed P03 XSA
+`52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f`.
+It reads XSA ZIP metadata without modifying/extracting files,
+hashes relevant bounded embedded PS initialization/hardware descriptors,
+and optionally hashes actual operator-selected installed
+`xfsbl_handoff.c`, `xfsbl_hooks.c`, `psu_init.c`,
+`psu_protection.c`, boot `.bif` and FSBL ELF.
+When a local handoff C source is provided, it reports the
+source-observed order of protection configuration relative to
+the before-handoff hook. **It does not prove** that any local source
+was compiled into the KV260's current QSPI/SD BOOT.BIN or that source
+order implies the true active XMPU lock/reader/DDR owner state.
+
+**New AMD-derived design correction:** upstream
+`xfsbl_handoff.c` calls `XFsbl_ProtectionConfig()` **before**
+`XFsbl_HookBeforeHandoff(EarlyHandoff)`, so copying an XMPU
+register-writing step into the nominal before-handoff hook is
+NOT accepted as a safe integration plan. Reference:
+https://github.com/Xilinx/embeddedsw/blob/master/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c
+and AMD UG1137 Handoff
+https://docs.amd.com/r/en-US/ug1137-zynq-ultrascale-mpsoc-swdev/Handoff .
+AMD UG1085's example explicitly programs two CCI-connected
+DDR XMPUs (ports 1,2) and defaults other four (0,3,4,5)
+to deny; that example cannot be substituted for the K26's
+real port topology/region settings:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+This is **adaptation of public AMD/Xilinx firmware architecture**,
+not a novel independently discovered memory-protection primitive.
+Our original contribution remains the frozen Loihi digital-twin
+context-copy/integrity/performance design and independent
+verification of boot/DDR isolation.
+
+**Files:** `scripts/p08_b4543_fsbl_boot_source_inventory.py`,
+`tests/test_p08_b4543_fsbl_boot_source_inventory.py`,
+`.github/workflows/p08_b4543_fsbl_xsa_pc_only.yml`, and
+[docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md](docs/P08_B4_5_4_3_FSBL_XSA_READONLY_BOOT_SOURCE_RUNBOOK.md).
+Operator-supplied original report
+`/home/dna/Thesis_Evidence/p08_b4543_fsbl_xsa_inventory_20261105T060831Z.json`,
+SHA-256
+`9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`.
+Installed Vitis 2025.2 FSBL handoff, hooks and original Vivado PS
+sources were actually supplied. Handoff source shows
+`PROTECTION_CONFIG_CALLED_BEFORE_BEFOREHANDOFF_HOOK`; accepted P03
+XSA internal `psu_init.c` SHA matches selected generated
+`psu_init.c` exactly. However active boot/compiled FSBL, XMPU lock
+readback, actual reader IDs and low DDR ownership remain unproven.
+Acceptance:
+[docs/P08_B4_5_4_3_OPERATOR_FSBL_XSA_SOURCE_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_3_OPERATOR_FSBL_XSA_SOURCE_ACCEPTANCE_2026_11_05.md).
+
+**Next B4.5.4.4:** inspect exact source-function protection branches
+and generated PS DDR XMPU initialization. AMD/Xilinx 2025.2
+`XFsbl_ProtectionConfig` has an `XFSBL_PROT_BYPASS` conditional
+with different protection behavior. The user's active boot build
+macro is UNKNOWN, so proving source availability is not proof of
+a physical lock. Vendor source:
+https://raw.githubusercontent.com/Xilinx/embeddedsw/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c
+and AMD TRM:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+
+The operator must supply actual installed source and prior report
+paths or let the scanner report missing source honestly.
+The current checker may print source inventory PASS but ALWAYS
+states `ACTIVE_KV260_BOOT_FSBL_PROVEN=0`,
+`PROTECTION_CONFIG_AND_MASTER_IDS_PROVEN=0`,
+`FSBL_HOOK_APPROVED_FOR_XMPU_CHANGES=0` and
+`BOARD_JTAG_DDR_EXECUTION_AUTHORIZED=0`.
+No FSBL build, BOOT.BIN, A53 guard provisioning, JTAG, DDR writes,
+PL/MMIO, hardware XMPU read/write or official TEST.
+
+**Next physical prerequisites:** establish exact board boot source
+and a reproducible signed boot chain; compare the actually
+booted FSBL ELF/partitions with installed C/Vivado-generated
+`psu_protection` source; select a trusted integration point
+BEFORE any one-time XMPU locking, with verified PS/PL master
+IDs and unallocated region slots. Independently prove backup and
+extra-512KiB ownership, A53 low DDR exclusivity, staging and
+persistent RO readback and obtain NEW operator approval before pilot.
+Nothing in this source-only stage closes those gates.
+
+### P08-B4.5.4.4 — original Vitis FSBL compile-time bypass / generated protection source (PC-ONLY)
+
+**ACCEPTED 2026-11-05 UTC — native 16/16 and operator-local
+source/FSBL branch provenance PASS; real XMPU/boot NO-GO.** New descendant branch
+`agent/v3-p08-b4544-fsbl-protection-review`,
+draft PR **#59 stacked on draft PR #58**, all UNMERGED,
+stacked on the
+operator-accepted original B4.5.4.3 report SHA
+`9c2a142bc62dc7bbfe73e5f85bd819adcf3854dfc3e02701ee18c9e7162667f5`
+(see source acceptance document).
+
+**High-impact AMD/Xilinx 2025.2 source finding and attribution:**
+the **versioned release `xlnx_rel_v2025.2`** FSBL `xfsbl_hw.h`
+contains `#if !defined(FSBL_PROT_BYPASS_EXCLUDE)` /
+`#define XFSBL_PROT_BYPASS`. Thus, under unmodified/default
+compile options, `XFSBL_PROT_BYPASS` is defined. The
+**2025.2** `XFsbl_ProtectionConfig` in
+`xfsbl_handoff.c` has two distinct code paths:
+
+- When BYPASS is defined, invoke `psu_apply_master_tz()`
+  and `psu_ocm_protection()`, **not** the generated
+  `psu_protection()` and `psu_protection_lock()`.
+- With `FSBL_PROT_BYPASS_EXCLUDE` defined by a
+  verified separate FSBL build, call
+  `psu_protection()` then `psu_protection_lock()`
+  **before** ordinary before-handoff hook.
+  This could activate generated security settings for
+  all relevant XMPU/XPPU units, and is **not automatically
+  safe** without full default/region/MID review.
+
+**Original source links (AMD vendor technology, NOT novel thesis IP):**
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_hw.h
+and
+https://github.com/Xilinx/embeddedsw/blob/xlnx_rel_v2025.2/lib/sw_apps/zynqmp_fsbl/src/xfsbl_handoff.c .
+AMD UG1085 XMPU permissions:
+https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Program-the-DDR-XMPUs .
+
+**Crucial caveat:** the operator's currently active KV260
+BOOT.BIN/FSBL ELF/compiler flags are still UNKNOWN. These
+2025.2 source defaults do NOT show which branch was actually
+compiled into the running board image. We MUST NOT claim
+the source default equals the observed physical lock state.
+Also, simply enabling `FSBL_PROT_BYPASS_EXCLUDE` without
+first auditing the original 2025.2 generated PS security
+configuration could break existing boot/PL/DDR permissions.
+No new build, boot image, XMPU writes or JTAG is permitted.
+
+New `scripts/p08_b4544_fsbl_protection_path.py` checks
+the exact accepted operator B4.5.4.3 SHA, the
+independently pinned local `xfsbl_handoff.c`/generated
+`psu_init.c` and original routed P03 XSA, and a
+new read-only `xfsbl_hw.h` source input. It parses
+the actual C function's guarded bypass/full-protection
+cases, checks full protection->lock ordering and counts
+generated PSU protection functions/literal DDR XMPU
+register references. Native tests reject tampered
+original reports/PSU/FSBL/XSA, inverted protections,
+missing compile option and invented physical proof.
+All output and hard NO-GO flags are **PC-only**.
+Runbook with every export/find command:
+[docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md](docs/P08_B4_5_4_4_FSBL_PROTECTION_BRANCH_AND_PHYSICAL_READINESS_RUNBOOK.md).
+
+**Original B4.5.4.4 accepted operator report:**
+`/home/dna/Thesis_Evidence/p08_b4544_fsbl_protection_branch_20261105T062334Z.json`,
+SHA-256
+`e2c40e2c58a1a58d4c5611be7f95a58671b2c9e172a236323915dcb7368961a9`.
+The operator ran 16 new native tests (all PASS), confirmed original
+source hashes and posted
+`ACTUAL_LOCAL_FSBL_TWO_BRANCHES_PARSED=1`,
+`VITIS_HEADER_DEFAULT_PROTECTION_BYPASS=1`,
+`XSA_TO_GENERATED_PSU_INIT_EXACT_SHA_MATCH=1`, but also
+`REAL_FSBL_BUILD_COMPILE_FLAGS_PROVEN=0`,
+`REAL_DDR_XMPU_PERMISSIONS_PROVEN=0`,
+`BOARD_JTAG_BOOT_DDR_WRITES_AUTHORIZED=0`.
+Exact final decision:
+`FSBL_SOURCE_BYPASS_PATH_IDENTIFIED_REAL_BOOT_AND_XMPU_NO_GO`.
+Source acceptance:
+[docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md](docs/P08_B4_5_4_4_OPERATOR_FSBL_PROTECTION_SOURCE_ACCEPTANCE_2026_11_05.md).
+The next-chat **self-contained handoff seed**, based on the original
+historical seed but updated to accepted B4.5.4.4 and proposed next
+B4.5.4.5 source-only work, is
+[docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md](docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md).
+It preserves the original branch/PR workflow, Vitis+Vivado source
+locations, evidence SHA list, all initial exports/finds, source
+attribution and explicit physical NO-GO gates.
+
+**Critical scope limit of current C parser:** `psu_protection()`
+was only 130 bytes of *source body* and `psu_protection_lock()`
+43 bytes. Six-port direct-literal XMPU register hits were all zero
+in the scanner's restricted literal-address search. This C
+source check does **NOT** prove that generated protection does
+nothing. It may dispatch into generated helper/config tables or
+header/Tcl definitions. It also does not prove active boot
+compiler macros, security ID assignments or XMPU state. Do
+NOT mistake zero matches for an empty XMPU policy.
+
+**NEXT PROPOSED B4.5.4.5 — PC-only exact generated protection
+call-graph and active boot artifact search** (new descendant
+feature branch from B4.5.4.4 PR #59, unmerged, draft PR,
+native tests, real local operator review before continuing):
+
+1. Read and SHA-pin original P03 XSA `psu_init.c`, `psu_init.h`,
+   `psu_init.tcl`, and HWH. Trace full
+   `psu_protection()`/`psu_protection_lock()` call graph,
+   `psu_protection_data()` and related generated tables,
+   literal/macro register addresses, masks, writes and lock
+   sequencing. Produce per-port and region-level *source*
+   inventory, independent of direct-body literal counting.
+   Use original generated PS protection configuration and
+   source-specified AXI interface/PL port identities, but
+   mark any unproven runtime master ID as UNKNOWN.
+2. Search locally for actual BOOT.BIN/BIF/FSBL ELF/FSBL
+   build flags/compile_commands/map only by **read-only**
+   `find`, `sha256sum` and bounded static analysis. Presence
+   does not prove which boot medium the board used. Require
+   independent boot-media provenance and read-only board
+   approval for any future device observation.
+3. Create a **boot-source dependency/region/priority/mask
+   conflicts report** with strict SHA/size bounds and
+   negative tests. Never enable `FSBL_PROT_BYPASS_EXCLUDE`
+   blindly; globally enabling generated security may
+   interrupt existing board access.
+4. Determine whether a trusted prelock staging/authentication
+   mechanism exists or requires a new recoverable boot design.
+   Preserve the 27 original frozen P02 records, full 13.5MiB
+   `[0x43000000,0x43D80000)` and 512KiB overcoverage
+   `[0x43D80000,0x43E00000)`.
+
+**Subsequent, separately gated phases (not approved yet):**
+(i) actual boot/DDR-master/exclusive-owner provenance and
+safe, read-only physical inspection **only with new user consent**;
+(ii) separately built trusted FSBL/boot image on recoverable
+development media, staging all SHA-verified backups before
+per-port XMPU RO/lock, with a verified read-only A53/PL
+master allow-list and no unauthorized writes; (iii) a NEW
+independently admitted A53 backup guard capable of **trusted
+continuing protection attestation**, not an untrusted flag;
+(iv) explicit operator-authorized 16-image KV260 pilot
+with full oracle/FNV/neural parity; (v) separately approved
+1024-image authenticated-once vs unchecked-content profiles
+and whole-service matched comparison. Freeze all previous
+Vitis A53 ELFs, bitstreams, XSA and physical evidence.
+No project permission for current XMPU/DDR/PL/JTAG writes,
+boot-media changes or official MNIST TEST access.
+
+### P08-B4.5.4 — bounded physical validation and full1024 measurements
+
+Only after independent proof of DDR ownership and persistent backup
+protection, fresh read-only preflight, recovery readiness and new explicit
+operator approval: run a bounded 16-image physical pilot for each variant.
+Require exact independent scalar-oracle neural/spike/FNV parity before
+accepting timing. After each pilot passes, run a separately approved
+1,024-image session. Preserve all 1,024 neural rows, isolate selected trace
+ordinal 1023, and use the 1,023 ordinary frames for latency distributions.
+Measure both reset subspan and complete A53 image service with matched
+boundaries and actual per-session `CNTFRQ_EL0`.
+
+The original immutable backup range
+`[0x43000000,0x43D80000)` and B4.4 profiling sidecar range
+`[0x42400000,0x42440000)` still require a complete runtime ownership audit
+covering boot firmware, TF-A, U-Boot, Linux, RPU, PL DMA and other masters.
+Static non-overlap is insufficient. If ownership/protection cannot be
+established, stop and redesign. No official MNIST TEST access.
+
+### P08-B4.5.5 — differential analysis and closeout
+
+Compare baseline, authenticated-once and unchecked-content variants using
+separately pinned builds and accepted evidence. Report neural parity,
+reset latency, complete image-service latency, instrumentation perturbation,
+integrity guarantees and failure modes. Do not call the unchecked result a
+safe optimization or infer PL-only speedup.
+
+### P08-B4.6 — repeated paired Track A/Track B system comparison
+
+The previously proposed six independent physical sessions in AB/BA/AB
+order move here, after B4.5. Use the same frozen 1,024-image population,
+1,023 ordinary frames per run, selected trace ordinal 1023 isolated,
+complete matched image-service boundaries, actual per-run A53 frequency,
+cold-boot/recovery accounting and run-level uncertainty. Track A (42
+neurons/26 dispatches) and Track B (1,010 neurons/702 dispatches) are
+different workloads; this is a system/workload comparison, not matched
+complexity or pure FPGA speedup.
+
+---
+
+## P08-B4.4.2 ACCEPTED — genuine full1024 original 27-context reset microprofiling (2026-11-03)
+
+The operator supplied the output of the separate genuine KV260 profiling
+retry and the subsequent PC-only independent verifier. Successful physical
+evidence root:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_retry_20261103T061707Z`.
+Independent report:
+`/home/dna/Thesis_Evidence/p08_b44_profile1024_independent_20261103T100712Z.json`,
+operator-supplied SHA256
+`47f25cada89dd9220636fbb9539aba5bf0d7705ea3788fdc3ebd1d85f1145cfa`.
+
+All three genuine independent acceptance checks were reported PASS:
+same-session JTAG provenance; all 1,024 original neural outputs/FNV spike
+fingerprints equal the frozen scalar oracle; and all 1,024 physical reset
+profile rows pass SHA/copy/cache/subspan/counter validation. The selected
+trace ordinal 1023 is excluded from the ordinary distribution, leaving
+1,023 ordinary rows. The paired AB/BA/AB Track A/B benchmark remains
+explicitly NOT accepted.
+
+Actual A53 `CNTFRQ_EL0`: **99,999,001 Hz**. Reset-service distribution:
+median **5,826.767549 ms**, nearest-rank P95 **5,826.881051 ms**,
+minimum **5,826.591948 ms**, maximum **5,827.041922 ms**. Five reset
+subphase medians: mutable 27-core memcpy **7.0247 ms** (0.12% of summed
+reset ticks); mutable cache clean/invalidate **1.6885 ms** (0.03%);
+mutable SHA-256 readback **2,908.5991 ms** (49.92%); original immutable
+cache invalidate **0.8392 ms** (0.01%); original immutable SHA-256
+**2,908.5978 ms** (49.92%). Unattributed counter/control residual median
+**0.0157 ms** (0.00% after rounding). The two SHA scans therefore account
+for approximately **99.84% of measured reset-service ticks**. This is a
+strong measured bottleneck finding: the authenticated reset interval is
+dominated by full-context integrity scans, not by the 27-core memcpy.
+
+Interpretation limits are mandatory: this is an instrumented A53 reset
+profile from one physical session, not PL-only compute time, a speedup,
+energy, or a repeated A/B comparison. Phase percentages are based on
+summed ticks; phase medians must not be added to claim the overall median.
+The extra profile DDR region `[0x42400000,0x42440000)` (262,144 bytes)
+still lacks independent proof of exclusive boot-firmware/PS/RPU/DMA
+ownership. Do not repeat destructive JTAG until a separate memory-owner
+audit, fresh read-only preflight and explicit operator approvals are
+complete. Track B official MNIST TEST remains SEALED.
+
+Full evidence, hashes, limitations and next gate:
+[docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md](docs/P08_B4_4_2_RESET_PROFILE_PHYSICAL_RESULTS.md).
+Earlier roadmap entries below that describe B4.4 physical capture as pending
+or not yet done are historical snapshots and are superseded by this
+2026-11-03 acceptance entry; their failed-attempt records remain preserved.
+Next work is **P08-B4.5 reset-integrity optimization**: compare
+one-time authenticated restoration with lightweight per-image header checks
+against an unchecked-content performance-bound variant. Preserve the accepted
+full-SHA implementation as the reference. The previously proposed six-session
+paired Track A/Track B protocol is renumbered **P08-B4.6** and follows B4.5.
+No new physical run is authorized until the full DDR ownership/protection
+audit and fresh operator approvals are complete. Track A and B remain
+materially different workloads, not a matched-complexity comparison.
+
+---
+
+## P08-B4.4 second read-only target-property scan + historical B4i recovery precedent (2026-11-03)
+
+Operator reports normal PuTTY boot and `sudo xmutil unloadapp`
+performed while the PC `hw_server` remained running. New
+read-only XSDB scan still lists ONLY PS TAP / PMU / PL and
+target properties only those 3 nodes. JTAG chain recognizes
+xck26 idcode 04724093 and arm_dap idcode 5ba00477; ARM DAP
+XSDB properties `is_open=1`, `is_active=1`. This confirms
+an active XSDB JTAG DAP node, NOT unlocked Cortex-A53 external
+debug and NOT processor target discovery. No board writes
+were performed. Exact operator log:
+`/home/dna/Thesis_Evidence/p08_b44_a53_properties_readonly_20261103T060320Z.log`
+SHA256 `54739cab92716c665939ffb5038e68a3b68a6907ea76b7c53a36588c6ce2080c`.
+
+**Strong same-project historical precedent:** original
+P07-B4i real KV260 stop/width pass on 2026-10-22 occurred
+after **KV260 reboot, then `sudo xmutil unloadapp`, then
+a new XSDB JTAG session**. Original user-reported signed
+ledger `docs/P07_B4I_2026_10_22_PHYSICAL_TAKEOVER_WIDTH_PASS_LEDGER.json`
+records A53 #0/#1 STOP PASS, #2/#3 exact powered-down
+observations, PSU selection, FPD raw 0x00000A00 / 128-bit,
+LPD raw 0x00000200 / 128-bit, exact
+`P07_B4I_A53_ALL_CORES_ACCOUNTED_AND_PSWIDTH128_GATE_PASS=1`.
+It explicitly did NOT program PL, download ELF, touch DDR,
+or run inference. Historical source commit
+`ca3babc3eb27debe1dc9510595ddea58e8a7529d`.
+AMD UG1089 says `xmutil unloadapp` removes the loaded
+accelerated application; it is a PL/application lifecycle
+operation, not a documented CPU debug unlock. The prior
+ledger doesn't say whether hw_server was restarted, so
+no claim that restart is required. Latest operator didn't
+provide `xmutil listapps` output, so active app removal
+status isn't independently confirmed.
+
+**Bounded next recommendation:** one full B4.4 physical retry
+is reasonable after confirming no active app via PuTTY
+`sudo xmutil listapps` (if active, unload then verify) and
+ensuring no competing XSDB/Vivado client. Do NOT kill
+hw_server merely because it is listening; the prior ledger
+does not say it was restarted. The full B4.4 runner's FIRST
+physical action is the original fail-closed P07-B4i gate,
+which uses filtered `targets -set -filter` selection
+(different from the unfiltered read-only target list).
+If target selection or any A53 stop/accounting fails,
+the runner aborts BEFORE P03 programming, six DDR source
+transfers, new ELF download, experimental DDR overwrite
+or inference. If it passes, the runner proceeds only with
+the nine explicit operator approvals and acknowledged
+unproven DDR-owner risk. Use a NEW evidence directory and
+rerun mandatory read-only B4.4 preflight. If the gate
+fails for missing target, external-debug denial or any
+unexpected response, preserve logs, reboot and STOP;
+no repeated attempts or gate weakening. Any attempt
+requires reboot afterward, successful or not.
+
+See exact details and operator next command in
+`docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md`.
+Original accepted B4.2 physical 1024 numerical parity/
+ordinary timing and new genuine B4.4 ELF/map remain
+immutable; no B4.4 new reset-profile physical evidence
+yet. Official TEST sealed.
+
+## P08-B4.4 post-power-cycle: normal PuTTY boot, physical ARM DAP visible, actual PSU/APU/A53 target hierarchy NOT enumerated (2026-11-02)
+
+Operator confirms KV260 normal serial boot after power cycle,
+then successfully ran only separate read-only XSDB target
+inventory: 1 PS TAP / 2 PMU / 3 PL. JTAG hardware
+chain physically identified xck26 idcode 04724093 and
+arm_dap idcode 5ba00477. NO PSU, RPU, APU,
+Cortex-A53 #0..3 appeared in XSDB target list;
+in AMD UG1725 Zynq UltraScale+ debug-session examples
+the CPU targets normally appear in same targets listing.
+Original accepted B4 physical sessions previously
+succeeded at PSU selection. Existing failed B4.4
+destructive run reported A53 #1 external debug
+disabled; both observations suggest **current
+processor debug target-access/discovery issue**
+but do NOT prove security gate versus power/boot
+firmware/debugger cause. No accidental user command
+is evident; original B2.3/B4.2 and new genuine profile
+ELF artifacts remain valid.
+
+Accepted immutable read-only target inventory at:
+ /home/dna/Thesis_Evidence/p08_b44_a53_target_readonly_20261102T224514Z.log
+ SHA256 f3d7af4824b43a7b1aa66f4bd8ce92669cedc76a8cee73efb3371d97cc22a769
+
+Improved separate read-only diagnostic XSDB
+vivado/p08_b44_a53_status_readonly.tcl to
+also query processor targets -target-properties
+and arm_dap jtag targets -target-properties,
+without stop, rst, mrd, mwr, target -set,
+security register changes, core reset, PL
+programming or DDR/firmware mutation. Native
+tests/test_p08_b44_readonly_a53_diagnostic.py
+with no-board workflow passed; original P07-B4i
+fail-closed CPU halt safety gate untouched.
+Operator instructions and actual original target
+inventory SHA in docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Next: OPTIONAL normal-boot PuTTY Linux CPU online
+and one read-only XSDB property snapshot. Do not
+retry nine-YES destructive B4.4 profiler nor
+attempt debug security gate writes until new
+observations interpreted and dedicated approval
+is considered. Original 1024 neural/FNV and
+1023 ordinary timing accepted; NEW reset
+hardware microprofiles and true paired A/B
+runs/closeout still PENDING. Official TEST
+remains sealed.
+
+## P08-B4.4 A53#1 debug failure after full power cycle — only one hw_server process tree observed; READ-ONLY target inventory pending
+
+Operator physically power cycled the KV260 after a failed first
+B4.4 profiling JTAG attempt and confirmed original exact
+failed evidence root
+/home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+has exactly stage.txt, preflight.json and 486B
+a53_takeover_and_ps128.log; early P07-B4i A53 #0
+stop positive, A53 #1 "External debug access is disabled"
+no-go. This confirms NO later P03 PL programming,
+six original DDR source transfers or new profile
+full1024 ELF execution/capture in that attempt.
+Operator process list after power cycle shows one
+running hw_server process tree (shell/loader/main)
+and NO current local xsdb or Vivado process. Other
+remote JTAG server clients are not independently excluded.
+Normal post-powercycle UART firmware/Linux boot has not
+yet been reported. A53#1 EDAD-disabled debug is not
+equivalent to a confirmed A53#1 no-power state; original
+P07-B4i exact secondary halt/powerdown gate remains
+STRICTLY UNCHANGED and must not be bypassed.
+
+New isolated READ-ONLY diagnostic Tcl
+vivado/p08_b44_a53_status_readonly.tcl permits
+ONLY one localhost hw_server connect, queries
+targets and jtag targets, disconnects and prints
+STATUS-ONLY / NOT HARDWARE ACCEPTED markers;
+NO new STOP, rst, mwr, dow, CPU selection,
+DDRx write, PL programming or Linux interruption.
+Distinct from completely PC-only mailbox monitor:
+this does make hardware JTAG READ observations.
+tests/test_p08_b44_readonly_a53_diagnostic.py
+runs native no-board syntax/localhost restrictions,
+forbidden mutating action source audit, and ensures
+original P07 strict stop gate unchanged. Native
+.github/workflows/p08_b44_profile_physical_no_board.yml
+verifies read-only diagnostic with other B44
+new full1024 profile negative tests. Operator read-only
+serial/target next actions in
+docs/P08_B44_A53_EXTERNAL_DEBUG_READONLY_DIAG.md.
+Do NOT reexecute 9-YES profile runner until
+actual target and expected boot-state diagnosis;
+preserve first failed physical evidence. Original
+signed B4.2 first accepted full1024 physical neural
+parity/timing and new genuine B44 Vitis ELF
+build remain valid/immutable. Real B4.4 profile
+timing still pending, true A-versus-B repeated
+benchmark still pending, official TEST sealed.
+
+## P08-B4.4 first REAL profiling hardware attempt — NO-GO at existing A53 secondary debug halt, NOT firmware execution (2026-11-02)
+
+Operator completed offline read-only B4.4 admission PASS for
+NEW genuine reset profiler ELF SHA
+bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3
+and linker map SHA
+d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9,
+then explicitly invoked separate destructive JTAG with nine YES
+approvals. Actual new physical attempt evidence directory:
+
+    /home/dna/Thesis_Evidence/p08_b44_profile1024_physical_20261102T201705Z
+
+Actual hardware transcript (do not modify or overwrite):
+
+    a53_takeover_and_ps128.log
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=1
+    P07_B4I_A53_0_TRANSIENT_POWER_DOWN_RETRY=2
+    P07_B4I_A53_0_STOP_COMMAND_PASS=1
+    P07_B4I_STOP_WIDTH_GATE_FAIL_REBOOT_REQUIRED=1
+    P07-B.4i stop failed for Cortex-A53 #1:
+    Context Cortex-A53 #1 state: External debug access is disabled
+
+Existing original production P07-B4i takeover explicitly rejects
+all unexpected secondary A53 stop responses: only a genuine confirmed
+halt or TWO exact messages "The core is powered down" and
+"Cannot halt processor core: power down" are admitted.
+"External debug access is disabled" is NOT one of those and
+does NOT prove core #1 is safely halted/powered down. ARM A53
+architecture separately classifies external debug access permissions
+and core-off states, so it is inappropriate to reclassify this
+as a benign exact power-down without other independent evidence.
+Code correctly FAILED CLOSED at early processor takeover.
+NO successful 128bit FPD+LPD width gate, no new original P03
+PL programming, no original six DDR source staging, no new
+profiled ELF download, no 1024 run, no physical profile capture
+or numerical verification is supported by this transcript.
+
+This is **not evidence of erroneous user shell commands**:
+preflight accepted, genuine Vitis artifacts and exact SHA matched.
+Root cause of current external-debug-disabled A53 #1 remains
+undetermined: may depend on core power/debug authorization/boot state
+and requires a separate hardware/serial/secure-boot state assessment.
+Do not assert board damage, firmware bug or successful profile run.
+NO speculative changes to historical accepted P07 B4i takeover;
+do not suppress/auto-accept unexpected debug-disabled errors.
+
+**Operator required:** FULL KV260 power-cycle/reboot after ANY
+destructive JTAG attempt (Linux may no longer be intact).
+Preserve all failed evidence and stopped-CPU transcript;
+perform read-only PC log inspection and ordinary serial/boot
+verification after power-cycle. Prior to any new physical attempt,
+ensure no competing JTAG owner, review exact processor target
+states and any boot/security/low-power changes and require new
+independent operator risk approval, fresh evidence directory
+and same original source+profile ELF preflight; do not reuse
+the failed directory. A follow-up exact external debug
+diagnostic may be conducted separately, without relaxing
+core-stop or PS width admission. Repeated true A-vs-B
+and P08-B closure STILL PENDING. Original accepted B4.2 physical
+neural and 1023 ordinary timing SHA reports unchanged.
+
+## P08-B4.4.2 EXPERIMENTAL 1024 RESET PROFILE: genuine Vitis ELF accepted, full independent same-session hardware pipeline SOURCE CI PASS (2026-11-02)
+
+Operator genuinely completed NEW experimental Vitis 2025.2
+full1024 profile A53 ELF/map separately from immutable original
+B2.3, with original P03/27core SHA and AArch64 PT_LOAD
+static offline source admission PASS:
+- NEW Vitis profile ELF:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.elf
+  SHA256 **bed1301c69594bf7ebeaa37765ad2cb3035aa0f6d5e9cb4d1fb4637042be3ab3**
+- NEW linker map:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/vitis_workspace/p08_b44_reset_profile_1024.map
+  SHA256 **d94fa2695e82cc3a501442313bb77e89eb046f01450167108832a190fd9fd2c9**
+- NEW independent offline ELF source admission JSON:
+  /home/dna/Thesis_Evidence/p08_b44_reset_profile_retry_20261102T195900Z/p08_b44_profile_elf_ptload_preflight.json
+  SHA256 **7a5818dc5469ea288fefcefb87ebc4fd3ab1e5c7bdce0bbfda717a6f2787b129**.
+Actual NEW profile physical JTAG: **NOT RUN**. Original accepted
+B4.2 first real 1024 full neural/FNV+timing report SHA
+297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032
+and original 1023 ordinary descriptive A53 timing report SHA
+4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81
+remain immutable and enforced as source continuity in NEW
+preflight.
+
+Implemented on stacked draft profiling branch and PR #54,
+NO BOARD/NO JTAG CI PASS:
+- scripts/p08_b44_profile_physical_run.py — **read-only default**.
+  Reauthenticates all accepted ORIGINAL B3/B4 numerical/1024
+  scalar 64 shards, original P03 XSA/bit/LTX/P07 DDR staging
+  and NEW exact signed profiling ELF/map/ELF admission (including
+  recomputation). Nine explicit distinct destructive YES
+  approvals required, including the NEW 256KiB profile
+  region [0x42400000,0x42440000). No new DDR boot/RPU/
+  firmware/DMA exclusivity is proven by source check.
+- vivado/p08_b44_profile_full1024_run_and_capture.tcl —
+  NEW ONLY SHA-pinned profile ELF/download and unique identity;
+  same-session independent A53 stop/FPD128+P03 programming,
+  original six DDR source byte-exact physical readbacks,
+  physical zero/readback of ALL four output regions:
+  256B mailbox and three 1024x256B original journal,
+  timer and NEW profile regions. Correct 1024/1024 terminal
+  state, bounded 3600-poll no-image-progress watchdog and
+  global timeout, 1024 original neural+timing and NEW reset
+  profile journals physically captured. Reboot mandatory
+  after any destructive JTAG attempt; original accepted
+  B4.2 Tcl and A53 ELF untouched.
+- scripts/p08_b44_profile_independent_physical_verify.py —
+  second PC-only verifier independently repeats original
+  signed source/ELF SHA/oracle, true JTAG transcript/A53/PSU/P03
+  and six DDR source readbacks, FOUR original signed zeroed DDR
+  capture regions, original complete1024 26tick×1010
+  neural FNV + 10-spike vector and classification parity,
+  all 1024 A53 6-phase timers, NEW original 27core
+  5-phase SHA/cache/memcpy/after SHA CRC/clock/reset-in-A53
+  timestamp nesting. Only separately admits one
+  NEW physical 1024 profile numerical and microtiming
+  record if every gate PASS, not a performance benchmark.
+- tests/test_p08_b44_profile_physical.py,
+  .github/workflows/p08_b44_profile_physical_no_board.yml —
+  real Tcl mailbox classifier replay (intermediate 1024
+  progress does NOT end run), independent synthetically
+  complete1024 original source numerical + new 27core
+  five-component positive, original scalar-neural/FNV,
+  journal CRC, A53 timer CRC, 1024 exact mailbox,
+  reset profile source SHA/CRC/size/timing negatives,
+  no genuine JTAG in CI. Fixed premature preliminary
+  success report: BOTH source+new reset profile must
+  PASS before any combined JSON report created.
+- Original saved **PC-only nonintrusive** long-run monitor
+  scripts/p08_b4_2_monitor_mailbox_pc_only.py now supports
+  explicit --capture-subdir profile1024_capture, default
+  remains original B4.2 full1024_capture. No additional
+  XSDB/hardware/CPU halt/host evidence writes.
+- New docs/P08_B44_PROFILE1024_PHYSICAL_RUNBOOK.md with
+  exact read-only setup/pinned SHA preflight, nine-YES
+  dedicated coldboot physical command, safe PC-only
+  mailbox monitoring, mandatory after-any-JTAG reboot,
+  separate PC independent real1024 source/reset profile
+  acceptance. Operator should **NOT** run new JTAG if
+  read-only source preflight NO-GO or hardware ownership/
+  physical recovery risks are unacceptable.
+
+P08-B closeout STILL PENDING after this source work:
+first independently accepted genuine full1024 NEW reset profile
+hardware session and SHA report; nested 26tick scheduler/
+AXI-paging/MMIO/trace/routing profiling; TRUE repeated
+6 paired A-vs-B AB/BA/AB coldboots, same 1023
+ordinary TRAIN validation IDs and full A53 service
+boundaries, observed CNTFRQ and run-level uncertainty;
+signed P08-B final scientific limitations and user
+authorization before merge. Historical 3 pairs of
+A2.1-vs-A2.2 are within Track A, NOT A-vs-B. Networks
+have 42 versus 1010 neurons and different computational
+load; energy, isolated PL-only speedup and original
+PS/DDR/DMA exclusive ownership NOT proved, official
+MNIST TEST SEALED. Preserve all original B2.4 frozen
+artifacts/P03/P07/A/B3/B4/LitReview immutable.
+
+## P08-B4.4.2 genuine Vitis operator retry gate — FIRST ATTEMPT HOST STAGING ISSUE FIXED, NO PHYSICAL RUN
+
+On 2026-11-02 operator locally executed the real separate
+B4.4.2 Vitis 2025.2 offline builder, with original accepted
+P03 XSA, 27-core SHA pins and accepted original B2.3 ELF.
+Vitis began but the *Python exact stage admission*
+rightly failed BEFORE new ELF compilation/linking:
+
+    missing={p08_b44_profile_full1024_a53.c,
+             p08_b4_4_profile_reset.c,
+             p08_b4_4_profile_reset.h}
+    extra={p08_b2_3_image_only_a53.c}
+
+Cause is unambiguously in the NEW staging Bash script:
+it retained the original B2.3 A53 main and omitted the
+three new B4.4 main/C/H profiling files. It was NOT
+a compiler, P03 hardware, original model or board problem.
+Original accepted physical B4/B3 data, Vitis B2.3
+ELF and original frozen sources are all unchanged.
+
+Fixed scripts/build_p08_b44_profile_full1024.sh:
+it now COPIES new main/profile_reset.c and .h and does
+NOT copy original production main. It invokes
+Python exact actual-stage inventory
+--check-stage-only with PASS marker
+P08_B44_ACTUAL_SHELL_STAGED_PROFILE_SOURCE_EXACT_PASS=1
+BEFORE first Vitis call. A new native regression
+independently parses the literal Bash cp loops against
+the Python Vitis SOURCES+HEADERS and reproduces
+operator missing/new + unexpected/old case as a
+negative test. Native GitHub Actions PASS
+on new source commit e3ae840744d8a01d101dfff29302f13013b20510.
+The failure directory in external Thesis_Evidence must
+not be overwritten or reused. A NEW genuine Vitis
+2025.2 ELF/map retry on operator machine remains
+PENDING; no profile physical JTAG authorized or run.
+Copyable safe native test/new evidence build commands
+preserved in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+
+P08-B final remaining independent gates unchanged:
+new profile ELF/map SHA and physical DDR memory
+admission, dedicated new source-readback+profile
+capture, independently verified original1024
+26tick x1010 scalar/FNV/spike parity, profiling
+of the mixed 26tick MMIO/paging/trace phase,
+six real coldboot matched-source A-vs-B pairs,
+independent closeout report/user review. Earlier
+A2.1-vs-A2.2 three Track-A pairs are NOT paired
+A-vs-B evidence. Official MNIST TEST sealed;
+power, pure PL speedup and DDR DMA exclusivity
+remain unproven.
+
+## P08-B4.4 new 27-core profiled C + independent Vitis build source READY — native CI PASS, real Vitis JTAG NOT RUN
+
+New B4.4.1 full 27x512KiB immutable/mutable SHA, cache+memcpy
+reset differential source and B4.4.2 distinct original 1024-image
+A53 profile sidecar source are **native CI PASS** on new
+stacked DRAFT PR #54, branch agent/v3-p08-b44-profiling
+based on B4 draft PR #53.
+
+Genuine native GCC test links original UNMODIFIED production
+reset with the NEW portable five-subphase profiler and
+original P07 real SHA256. It compares all 13.5MiB of mutable
+context bytes across two generations and matches the original
+source-SHA-corrupt-before-first-copy poison fault.
+Standalone NEW A53 full1024 profile firmware source passes
+native C11 syntax using declaration-only Xilinx headers
+(no hardware). Profile output 1024x256B has new distinct
+CRC/observed CNTFRQ/27SHA/5-phase+residual per-frame rows
+at the separately proposed [0x42400000,0x42440000)
+DDR region. 1024-row sidecar parser validates exact
+ordered CRC/source-SHA/count/clock/additive fields
+and rejects 11 malformed synthetic cases. No real
+profiled Vitis ELF, JTAG physical copy, additional
+full1024 numerical parity or new profile timing observed.
+
+NEW actual Vitis 2025.2 PC-only source build:
+scripts/build_p08_b44_profile_full1024.sh, with
+software/p08/build_p08_b44_profile_full1024.py.
+They stage the original accepted full P07 B4m/27core C
+under a new outside-repo work directory with new
+A53 profiling entrypoint only; immutable originals
+source/ELF unaffected. The build requires original
+routed P03 XSA SHA
+52aea12bd0169584a84e383982304ac1b78ccfe8eb8b035970fa29373492af6f,
+original 27SHA header SHA
+5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171,
+original full1024 B2.3 ELF SHA
+0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1.
+New scripts/p08_b44_profile_elf_admission.py checks
+distinct experimental genuine AArch64 PT_LOAD ELF, map,
+new identity and terminal, original original ELF/XSA/
+27SHA pins; explicitly DENIES destructive JTAG
+permission, no PS FSBL DMA boot ownership proof.
+Build scripts, native C main syntax and synthetic ELF
+11 adverse cases pass native CI.
+
+OPERATOR NEXT PC-only action: after pulling PR #54,
+source Vitis 2025.2 environment and run
+scripts/build_p08_b44_profile_full1024.sh under
+fresh P08_B44_BUILD_DIR; instructions in
+docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md.
+Do NOT attempt JTAG with newly generated ELF.
+Independent 1024-source same-session physical profiler
+capture verifier for the EXTRA region and original
+neural/FNV/timer journals plus new DDR ownership/reboot
+consents must be developed and independently verified
+before any new destructive profile experiment.
+
+Still pending for P08-B closure: nested 26-tick page/
+MMIO/PL-poll/trace/router microprofiles; six true
+Track A vs B coldboot AB/BA/AB paired sessions at
+matching original 1023 ordinary TRAIN sample identities
+and A53 service scope; signed final P08-B limitations/
+uncertainty report and explicit user acceptance before
+merging drafts #52/#53/#54. Historical Track A
+three A2.1-vs-A2.2 pairs are NOT true paired A-vs-B.
+Different 42-neuron A and 1010-neuron B workloads
+limit performance equivalence; no isolated PL
+speedup/energy, exclusive DDR owner or official TEST
+claims are made. All accepted original B3/B4 physical
+SHA evidence/model/bitstream and LitReview unchanged.
+
+## P08-B4.4.1/B4.4.2 profile source development — original immutable baseline, no new physical JTAG (2026-11-02)
+
+**Scope decision:** user accepted real original B4.2 full1024 physical
+neural/FNV parity and genuine 1023 ordinary-frame A53 six-phase
+timing breakdown, and requested to proceed with finer-grained
+reset + 26tick bottleneck profiling toward P08-B closure.
+Previous real B4.4 signed report:
+`/home/dna/Thesis_Evidence/p08_b4_4_first1024_one_session_descriptive_20261102T191317Z.json`,
+SHA256 **4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81**.
+Original physically observed A53 CNTFRQ 99,999,001Hz,
+1023 ordinary median 13.0341115s; restore original 27
+frozen mutable cores 5.826693s/44.695321% of sum,
+mixed 26tick paging/MMIO/FPGA/trace 6.93507s/53.215729%.
+
+**NEW stacked DRAFT profiling branch** agent/v3-p08-b44-profiling,
+based on accepted source B4 DRAFT PR #53 (itself stacked on
+B3 DRAFT PR #52), in separate DRAFT PR #54.
+Original 33-file B2.4 frozen network, original P03 XSA/bit,
+P07-B, Track A, B3/B4 real physical evidence, original
+SHA-pinned B2.3 A53 ELF/map and root LitReview.md UNCHANGED.
+
+B4.4.1 source assets:
+- software/p08/p08_b4_4_profile_reset.[ch] adds NEW distinct
+  portable C11 reset routine p08_b44_profile_reset_image,
+  preserving original 27x512KiB immutable-before-copy source SHA,
+  destination DDR memcpy/cache/barrier/SHA and original
+  generation/receipt/error poisoning. Five new disjoint
+  microtiming categories: source invalidate, source SHA256,
+  destination memcpy, destination clean/invalidate, destination
+  SHA256; explicit unattributed counter/control remainder.
+  Original p08_b2_context_reset.c/h production source NOT edited.
+- Native real 27x512KiB full record-sized differential
+  tests/native/p08_b44_reset_profile_diff.c +
+  tests/test_p08_b4_4_1_profile_reset_native.py,
+  compare production original and profile reset byte-for-byte
+  over two generations, exact original receipt and first-fault
+  SHA corrupt-before-copy behavior. Portable native tests,
+  no FPGA/TEST.
+
+B4.4.2 SOURCE ONLY:
+- software/p08/p08_b44_profile_full1024_a53.c is separate,
+  distinct identity P08_B44_ORIGINAL_27CORE_RESET_PROFILE_1024_A53_V1;
+  accepted B2.3 ELF/source untouched. Uses original B4.2
+  1024 matched source, 26 ticks, frozen neural/route functions,
+  identical original neural and six-phase timing output
+  destinations. Adds a separate 1024x256B experimental
+  state-reset profile sidecar in [0x42400000,0x42440000)
+  after old image service timestamp, exposing five phases,
+  observed CNTFRQ, 27core immutable/mutable SHA counts,
+  CRC and ordinal. Disjointness asserted relative to
+  original B23 timing/backup/bind/frame map, but boot/
+  firmware/PS/PL DMA OWNER EXCLUSIVITY NOT proven.
+- scripts/p08_b44_reset_profile_sidecar.py +
+  tests/test_p08_b44_reset_profile_sidecar.py
+  strictly check 1024 256B order, SHA counts, CRC,
+  observed clock, additive five spans+residual, selected
+  trace ordinal 1023 exclusion, 11 corruption negatives.
+  It NEVER attests real physical source or neural parity
+  based on a profile sidecar alone.
+- .github/workflows/p08_b44_1_reset_profiling_offline.yml:
+  native no-JTAG original-vs-new profile differential and
+  strict 1024 profile record tests, plus existing source
+  B4.4 genuine first-run descriptive analysis regressions.
+- docs/P08_B4_4_1_RESET_PROFILING_DEV_RUNBOOK.md:
+  operator read-only pull/native tests, mandatory Vitis A53
+  distinct experimental ELF, independent JTAG admission,
+  independent full1024 FNV+spike re-verification and
+  experimental sidecar capture before accepting ANY
+  extra reset phase number.
+
+**No profiling Vitis ELF, no new physical 1024 JTAG and no
+experimental reset bottleneck microbenchmarks have actually
+been produced.** All new C/Python tooling is source-only
+until genuine user-local toolchain, new signed ELF/map,
+independent same-session JTAG session, new strict sidecar
+capture and independent physical provenance/numerical verifier
+exist. Do not use accepted B2.3 original ELF hash as
+new experimental ELF. User must explicitly reapprove any
+destructive B4.4 session and recovery; prior board risk
+acceptance does not authorize silent new run.
+
+**Remaining P08-B closeout gates:**
+(1) genuine Vitis profiling ELF + memory/DDR admission,
+(2) original 1024 neural/FNV parity and signed 27core
+source/readback plus profile sidecar first physical experiment,
+(3) nested 26tick per-operation page/PL dispatch wait/
+trace/route profiling and measurement-intrusion assessment,
+(4) true A vs B (NOT historical A2.1/A2.2 within A)
+six coldboot independent AB/BA/AB sessions on same 1023
+ordinary TRAIN frames, same A53 image-service endpoint
+and actual per-run CNTFRQ, with run-level uncertainty and
+different network complexity explicitly qualified,
+(5) independent P08-B signed closeout report with optional
+profiling data, original sealed MNIST official TEST
+status and separate user acceptance before any merges.
+Power, PL-only speedup and exclusive DDR boot/DMA ownership
+remain UNPROVEN/DEFERRED.
+
+---
+
+## P08-B4.4 ACCEPTED first full1024 KV260 real 1023 ordinary-image A53 6-phase descriptive timing and optimization targets (2026-11-02)
+
+Operator directly ran the previously CI-passing PC-only
+scripts/p08_b4_4_single_run_timing_audit.py on the genuine signed,
+independently verified 1024-image physical B4.2 evidence, excluding
+selected trace frame ordinal 1023 from the **1023 ordinary-frame
+latency distribution** and preserving original exact CNTFRQ.
+
+- Actual ORIGINAL B4 physical evidence folder (NOW confirmed by operator):
+  /home/dna/Thesis_Evidence/p08_b4_2_original1024_physical_20261102T145943Z
+- Original B4.2 independent genuine 1024 neural/FNV + A53 timing
+  provenance report SHA256:
+  297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032
+- NEW real one-session six-phase B4.4 descriptive report (PC only,
+  no JTAG):
+  /home/dna/Thesis_Evidence/p08_b4_4_first1024_one_session_descriptive_20261102T191317Z.json
+- **Operator SHA256: 4e0abf43dafab145b2dde6846d5504470c3d122da80923c34441e82877881b81**
+- Actual A53 CNTFRQ_EL0 frequency: **99,999,001 Hz**;
+  **1023 ordinary images**, whole image-service
+  **median 13,034.111500774ms = 13.0341115s**,
+  **nearest-rank p95 13,167.109029419ms = 13.167109s**.
+- Original six disjoint measured stage medians and their
+  population *SUM service time shares*:
+  - 27 frozen context restore **5826.693269ms / 44.695321%**;
+  - original B1.3 input encode **18.673677ms / 0.143253%**;
+  - pager/scheduler reset **228.098739ms / 1.749822%**;
+  - all 26 ticks, 702 dispatches, page-in/out, MMIO/poll,
+    routing/nested trace **6935.069581ms / 53.215729%**;
+  - neural receipt validate **0.000430ms / 0.000003512%**;
+  - journal commit **25.534815ms / 0.195872%**.
+  **Restoration + neural tick mixed software/PL phase account
+  for 97.91105% of the observed A53 whole-service population
+  time**. Do NOT add medians to claim exact total median.
+  Preserve selected frame 1023 separately to prevent
+  trace instrumentation scope bias.
+
+**Source-level implication confirmed:** original
+software/p08/p08_b2_context_reset.c
+p08_b2_reset_image verifies EACH original 27x512KiB immutable
+backup record SHA256 before the first destructive mutable copy;
+then memcpy's each 512KiB into mutable DDR and clean/barrier/
+invalidate/readback SHA256 verifies the destination per core.
+This is a 13.5MiB copy EACH image (13.5GiB copies across
+1024 images), plus a minimum of 27MiB SHA source/dest
+full-context scan traffic per image. Thus 44.7% reset
+includes SOFTWARE integrity SHA, cache maintenance, DDR
+copy and verification, not just copying memory or PL neural
+arithmetic. These checks enforce original independent
+physical model fidelity; removing them changes the
+scientific control and is not a valid unacknowledged
+optimization. The 53.2% all-tick phase includes nested P07
+context paging, AXI/MMIO dispatch and polling, spike routing,
+barriers and 27 logical-core PL runs/tick, not pure PL
+computation. Per-operation contributions INSIDE it remain
+unmeasured. No new physical B4 run required merely to
+interpret this first accepted phase result.
+
+**Next gated B4.4 research:** plan separate 27-context
+reset SHA/cache/copy instrumentation and full26tick per-core
+page-in/out, AXI, neural dispatch+wait, trace/routing counters
+under a separately built/new SHA-pinned profiling ELF, not
+silently change accepted original B2.3 full1024 firmware.
+Before any new hardware JTAG, require matching 1024 original
+frozen scalar FNV spike parity and explicit destructive
+admission. Then plan new independent coldboot six-session
+**TRUE A-vs-B** AB/BA/AB 1023 ordinary matched-source A53
+service comparison (original earlier A2.1-vs-A2.2 three
+pairs are NOT true A-vs-B pairs). Different A/B network
+complexities (42 neurons/26 dispatches vs 1010 neurons/
+702 dispatches + paging) limit direct interpretation.
+Track A previous 35.67–35.72ms ordinary service medians
+are source/boundary context, not an accepted measured
+comparable-complexity speedup ratio. Record run-level
+variance and actual CNTFRQ; do NOT infer PL-only seconds,
+energy, speedup, DDR ownership exclusivity, or official
+MNIST TEST from this single B4.2 physical session.
+Original B4 draft PR #53 stacked on B3 PR #52 remains
+DRAFT/UNMERGED; original model, P03, P07, A and B3
+physical evidence and root LitReview.md unchanged.
+
+## P08-B4.4 single-session first physical 1024 original B2.4 timing descriptive analysis — PENDING actual A53 clock/1023 ordinary phase audit
+
+After accepted genuine full1024 KV260 A53/B2.4 neural and six-phase
+timing provenance PASS, operator read the signed independent
+B4.2 JSON's original 1,024-image FULL service distribution:
+**min 1,283,832,503 A53 ticks; median 1,303,433,920 ticks;
+nearest-rank p95 1,316,697,749 ticks; max 1,327,299,037 ticks;
+n=1024**. Median is in raw A53 CNTVCT ticks; B4 physical
+CNTFRQ was NOT pasted, so no definitive seconds accepted yet.
+Within this one physical session P95 is about **1.018% above median**
+and max-min spread is about **3.386% of min**. These statistics
+alone cannot establish run-to-run clock/thermal variation,
+energy, hardware speedup or a paired Track A/B comparison.
+
+If B4 recorded CNTFRQ is 100,000,000Hz *conditionally*,
+median 13.0343392s/image, min 12.83832503s,
+p95 13.16697749s, max 13.27299037s.
+The original Track A physical paired A2.1/A2.2 sessions
+observed 99,999,001Hz but that is NOT proof of actual
+B4 counter frequency. Accepted Track A ordinary 1,023
+medians ~35.67–35.72ms, but the architectures differ
+fundamentally: 42 neurons/one logical core/26 dispatches
+for A vs 1010 neurons/27 virtual cores/702 dispatches
+and 27-context per-image reset/page IO for B.
+Matched first1024 TRAIN-derived source and 26 ticks
+does NOT imply matched computational workload or pure PL speed.
+No naive speedup/slowdown ratio is accepted. Original A
+first three pairs are A2.1-vs-A2.2 instrumentation,
+not true physical paired A-vs-B sessions.
+
+To extract **ACTUAL frequency and correctly scoped 1,023
+ordinary-frame A53 service** (trace frame 1023 isolated)
+and the six disjoint A53 phase distributions, new read-only
+PC-only tools added:
+- scripts/p08_b4_4_single_run_timing_audit.py:
+  independent already verified physical report SHA
+  297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032;
+  original scalar SHA
+  7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8;
+  physical raw 1024×256B sidecar SHA and terminal mailbox SHA
+  exactly matched from independent report; actual per-row
+  CNTFRQ consistency, original CRC/timestamps and disjoint
+  six service intervals. **No board contact/XSDB**.
+  Outputs fresh outside-repo 1023 ordinary service and
+  six per-phase min/median/p95/max in raw counter ticks
+  and actual frequency-normalized milliseconds. Includes
+  per-phase additive full-population SUM shares but does
+  not naively sum medians. Isolates selected trace frame
+  1023 in distinct report.
+- tests/test_p08_b4_4_single_run_timing_audit.py
+  with complete synthetic 1024-row real wire-ABI sidecar,
+  selected-scope checks and corruption negative cases;
+  .github/workflows/p08_b4_4_single_run_timing_offline.yml
+  native **NO BOARD** source CI.
+- docs/P08_B4_4_SINGLE_SESSION_TIMING_ANALYSIS.md with
+  operator's genuine exact observed raw values and
+  read-only local test/report generation procedure.
+
+**Operator-local genuine descriptive output has NOT yet been
+run/verified**, and no subsequent destructive JTAG session has
+been proposed/authorized by this offline audit.
+Next after actual 1023 ordinary first-session descriptive report:
+plan matched, independently coldbooted six paired AB/BA/AB
+original Track A/B session procedure and run-level uncertainty
+with frozen source identities and scope. Never treat current
+A-only three A2.1/A2.2 pairs as A-versus-B repeats.
+B4 PR #53 DRAFT/UNMERGED, prior B3 PR #52 DRAFT/UNMERGED;
+no changes to frozen 33-asset B2.4, accepted physical source,
+root LitReview.md, P07/B3/A outputs, or sealed official TEST.
+
+## P08-B4.2 ACCEPTED: first genuine original 1024-image KV260 physical numerical/FNV parity and 1024 timing rows (2026-11-02)
+
+Operator completed read-only full1024 original scalar + original genuine
+B2.3 ELF/map/accepted B3 physical evidence preflight; then personally
+ran destructive dedicated original P03/JTAG full1024 original B2.4 A53
+KV260 physical session. ALL 54 original 512KiB P02 **mutable and
+separately backed up** core DDR readbacks PASS; four frozen original
+binding/route/raw1024 source transfers byte exact PASS; result
+mailbox/1024x256B neural and 1024x256B A53 timing regions physically
+zero initialized/read back. Genuine original SHA-pinned original
+full1024 Vitis A53 ELF downloaded. Physical XSDB observed genuine
+A53 exact **1,024/1,024 completed** terminal, not merely DONE/progress,
+captured all 1,024 original neural journal receipts and all 1,024 A53
+timer sidecars; **original independent scalar first-pass numerical
+precheck PASS**.
+
+After reboot protocol, operator executed wholly separate PC-only
+independent same-session provenance verification against exact accepted
+original 64-shard 1024 TRAIN validation scalar/ELF/P03 physical
+sources/earlier B3 accepted evidence. Reported:
+
+~~~text
+P08_B4_2_ALL_1024_ORIGINAL_NEURAL_AND_SPIKE_VECTORS_PHYSICAL_PARITY_PASS=1
+P08_B4_2_ALL_1024_A53_SERVICE_TIMERS_PHYSICAL_CAPTURE_VALID=1
+P08_B4_2_INDEPENDENT_SAME_SESSION_PHYSICAL_PROVENANCE_PASS=1
+P08_B4_2_SIX_SESSION_TRACKB_LATENCY_BENCHMARK_ACCEPTED=0
+~~~
+
+External independent full physical numerical/timing report:
+**/home/dna/Thesis_Evidence/p08_b4_2_independent1024_20261102T184928Z.json**.
+**Operator SHA-256: 297114489eb8312733a2e2597f0ee0567f9868552d2bc71d0dd425139368b032**.
+Operator separately accepted frozen scalar oracle:
+**/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json**,
+SHA256 **7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8**.
+The B4 physical evidence root was referenced as the original
+P08_B4_PHYSICAL shell variable but its literal path was NOT pasted.
+Do not guess or fabricate a physical session path. Evidence files
+and all externally SHA-signed originals must remain immutable.
+Root LitReview.md, frozen original 33 model assets, original Track A
+six accepted physical sessions, P07, earlier accepted B3 physical
+report and official MNIST TEST remain unchanged.
+
+**B4.2 acceptance:** first independently verified single-session
+physical **all 1024** numerical classifier/10-output spike vectors,
+26 ticks x 1,010-neuron FNV fingerprint parity, and internal
+A53 whole-service/six-phase CNTVCT timer consistency.
+This is a meaningful new 64x-sample-scale neural functional
+result relative to the earlier 16-image B3 pilot. It does NOT prove
+single-session latency speedup, overall energy, PL-only speed,
+direct physical byte equality for full raw all-neuron traces,
+uncontested PS/boot firmware/PL-DMA DDR ownership, or the required
+repeated original Track A/B matched cold-boot latency experiment.
+The original selected tracing frame ordinal 1023 must be isolated
+from ordinary latency statistics if its instrumentation differs.
+
+**Useful operator process discovery:** during the long physical
+all1024 run, no terminal progress was printed after A53 ELF download,
+because the single owning XSDB Tcl polls and replaces an existing
+PC-side 256B mailbox file. Reading
+<exact_active_evidence>/full1024_capture/mailbox_poll.tmp in a
+SECOND PC terminal (or mailbox_terminal_physical.bin after completion)
+is NON-INTRUSIVE; status word[2], completed word[5] and fault word[4]
+show image progress. Python reads of these PC files require no
+second JTAG session, board interrupts, A53 halt or restart.
+**Saved the exact two-snapshot Python heredoc commands** in
+docs/P08_B4_2_FULL1024_PHYSICAL_RUNBOOK.md, plus reusable
+scripts/p08_b4_2_monitor_mailbox_pc_only.py with synthetic
+tests/test_p08_b4_2_monitor_mailbox_pc_only.py and no-board CI
+coverage. This technique should be reused on future multi-hour
+physical sessions; absent/partial temporary files are normal,
+and DONE sentinel alone cannot establish completion.
+
+**NEXT (do not prematurely merge):** plan P08-B4.4 controlled
+**six repeated counterbalanced AB/BA/AB** cold-boot matched-source
+Track A vs virtualized 27-core Track B sessions. Before any
+new destructive operation, inspect independently verified B4.2
+report's count/time distributions and accepted Track A 1024
+physical latency-scope timing contract; design original
+matched service-window CNTFRQ/CNTVCT normalization, selected
+trace ordinal 1023 exclusion/instrumentation control and
+trial/session variance estimates. Accept final comparative
+latency only with 6 genuine physically verified paired sessions,
+correct original source/mode and explicit uncertainty. No
+energy or speedup claim yet; all new hardware sessions remain
+separately gated. PR #53 on B4 branch DRAFT/UNMERGED,
+stacked on B3 PR #52 DRAFT/UNMERGED.
+
+## P08-B4.1 genuine original 1024 independent numerical oracle — OPERATOR ACCEPTED (2026-11-02)
+
+Operator ran original independent P06-B2.4 scalar simulation for **64/64 distinct 16-image shards**, including final shard 63 ordinals **1008:1024**, preserving previously individually verified shard0 0:16. Then completed full no-overwrite 64-file merge using original signed B2.1 matched TRAIN-only ingress, frozen original network and SHA-coded routes and exact accepted B3 first16 reference. Genuine operator terminal:
+
+```
+P08_B4_1_ALL_1024_ORIGINAL_SCALAR_ROWS_ADMITTED=1
+P08_B4_1_ALL_64_SHARDS_SHA_VERIFIED=1
+P08_B4_1_ACCEPTED_FIRST16_SCALAR_REPRODUCED=1
+P08_B4_1_PHYSICAL_1024_KV260_EXECUTED=0
+```
+
+Original external 64 shards:
+`/home/dna/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z`.
+Full original scalar oracle:
+`/home/dna/Thesis_Evidence/p08_b4_1_full1024_scalar_20261102T143900Z.json`;
+**operator SHA-256 `7e564d188651aeabdc284328ea65705bcb0b5571468b9f70d5dcacaa3f5493b8`**.
+The FULL genuine independent 1024 TRAIN-source scalar baseline is now ACCEPTED; no physical B4 inference yet. SHA pinned as mandatory frozen B4.2 offline admission (while keeping all 64 shards authenticated independently).
+
+Operator additionally located genuine original full1024 B2.3 Vitis A53 ELF
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.elf`
+and matching linker map
+`/home/dna/Thesis_Evidence/p08_b2_3_image_only_build_20261102T040903Z/vitis_workspace/p08_b2_3_image_only_1024.map`
+with previously authenticated exact SHA pins `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1` and `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`. Neither original ELF/map rebuilt nor modified. B4.2 demands **separate external canonical copies**, independent original ELF AArch64 PT_LOAD/accepted P03 XSA source recheck, all 64 original scalar shards, operator accepted B3 independent report and matched original P03 BIT/LTX before any JTAG.
+
+**Next genuine hardware gate:** User locally stage canonical `p08_b4_original_full1024.elf`/`.map`, verify exact SHA, and run default read-only B4.2 `--mode preflight` with the real full1024 oracle. Only after ORIGINAL signed source/ELF/P03/B3 PASS, attempt new coldboot dedicated destructive 1024 KV260 JTAG session in fresh evidence dir with 8 separate explicit YES; independent after-run PSU 6-source+1024 neuronal FNV/timing verifier still required. Original boot/firmware/DMA DDR exclusive ownership remains UNPROVEN despite operator permission. No 1024 numerical physical result, energy, speedup or six-session A/B latency claimed. Root `LitReview.md`, accepted P07/B3/A, original 33 B2.4 and official MNIST TEST unchanged.
+
+## P08-B4.2 complete full1024 physical runner SOURCE DEVELOPMENT — authentic local preflight and original 64-shard compute REQUIRED
+
+Operator reports genuine **B4.1 shard 0/64** re-simulation from
+original B2.4 frozen 33-asset model PASS:
+`P08_B4_1_ORIGINAL_SCALAR_SHARD_INDEPENDENT_PASS=1`,
+`P08_B4_1_VERIFIED_ORDINAL_RANGE=0:16` from
+`/home/dna/Thesis_Evidence/p08_b4_1_original_scalar_shards_20261102T060939Z/p08_b4_1_scalar_shard_00.json`.
+No user evidence of remaining 63 genuine scalar shards, merged
+1024 oracle SHA, newly signed full1024 Vitis physical-launch
+ELF/map or B4 physical JTAG yet. This is a **source-development
+checkpoint; NO full1024 physical execution claim**.
+
+B4.2 now has SEPARATE fail-closed original 1024 source/CNTVCT/
+physical-evidence tools on `agent/v3-p08-b4-fullscale` (stacked
+DRAFT PR #53, B3 draft PR #52 unchanged):
+- `scripts/p08_b4_2_physical_run.py`: read-only DEFAULT
+  `--mode preflight`, requires original accepted B3 independent
+  physical report SHA
+  `b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11`,
+  exact 64 original scalar shard SHA receipts, strict regeneration
+  of full1024 signed oracle, all six SHA-authenticated original P02/
+  routing/1024 raw sources, original B2.2 SHA header, accepted
+  original P03 XSA/LTX/BIT and genuine **separate** full1024
+  AArch64 ELF SHA `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`
+  and map SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+  Invokes original genuine ELF PT_LOAD admission. Exact 8 YES
+  destructive consent flags mandatory; every real physical operation
+  occurs in dedicated halted-A53 JTAG coldboot session and requires
+  operator reboot afterward. Reuses ORIGINAL B3 full signed-six
+  JTAG DDR stage and independent host 54 original model-core readbacks
+  plus four source blobs before any new ELF download. Never
+  copies B3 pilot16 A53 ELF to full1024 runner.
+- `vivado/p08_b4_2_full1024_run_and_capture.tcl`: actual original
+  B2.3 1024-image firmware ELF identity and 1024 terminal embedded
+  string SHA checked; no new/simulated firmware. Initializes and
+  physically zero-readbacks 256-byte mailbox, **1024×256B**
+  original journal and independent 1024×256B A53 timing sidecar,
+  polls genuine 256B mailbox until EXACT 1024/1024 terminal
+  (DONE sentinel alone is NOT success; intermediate frame 1023
+  progress still not terminal), captures all 524,288B neural/timing
+  receipts + mailbox before final independent verification.
+  A timeout, malformed/tampered terminal or reported A53
+  error **fails closed**, retaining the source evidence and
+  requiring reboot.
+- `scripts/p08_b4_2_verify_full1024.py`: independent
+  original first16 continuity, full1024 source, CRC/26tick
+  1,010-neuron FNV, trained 10-vector spike output and
+  classification, timestamp/6 disjoint service-phase validation.
+  Reports only **UNVERIFIED physical provenance** by design.
+- `scripts/p08_b4_2_independent_physical_verify.py`:
+  separately repeats source/oracle/ELF SHA admission, authentic
+  same-session P03/A53/PSU evidence and all six original DDR
+  readbacks and zero-memory/captured journal checks before
+  accepting first full1024 numerical & timing scope.
+  Reports **single-session** original full1024 numerical parity
+  only, **NOT** six-session Track A/B latency acceptance.
+- `tests/test_p08_b4_2_full1024_physical.py`,
+  `.github/workflows/p08_b4_2_full1024_physical_offline.yml`:
+  actual Tcl mailbox-state replay, synthetic full 1024-row
+  262144B journal+timing positive tests, multiple corrupted
+  numerical/CRC/backtrack/terminal negative tests, source
+  no-board admission and independent provenance fixture refusal.
+  GitHub Actions native source CI **PASS** (no physical board).
+- **Complete exact local operator instructions**:
+  `docs/P08_B4_2_FULL1024_PHYSICAL_RUNBOOK.md`.
+
+**Crucial physical B4 go/no-go:** shard0 PASS alone is NOT B4.1
+complete. Generate and admit 63 remaining genuine original
+B2.4 scalar shards and full1024 oracle first; locate previous
+original B2.3 genuine Vitis ELF/map by their exact SHA and stage
+copies under independent B4 canonical names; then check mandatory
+B4.2 read-only operator preflight before running hardware. NO
+fresh JTAG B4.2 attempted by agent, and no quantitative
+full1024 KV260 latency, PL speedup, energy, 1023 selected full
+raw neural trace or official TEST result yet. Independent boot/
+DMA DDR exclusivity remains unproven, notwithstanding
+operator consent. After one B4.2 physical pass, repeated six
+coldboot AB/BA/AB Track A/B sessions and matched service-scope
+analysis are still separate gated B4.4 work.
+
+## P08-B4.1 full-scale original 1024-image physical Track B PREPARATION — source/CI pass, genuine local scalar computation PENDING
+
+**Operator-accepted B3.1/B3.2 physical gate:** third actual
+KV260 JTAG first16 session
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_retry_20261102T053637Z`
+reached 16/16 original B2.4 A53 terminal with separately authenticated
+physical source P02 mutable/backup and frozen B4l/B4m/raw pixels,
+physical neural/timing sidecars and original scalar precheck.
+The *separate* independent physical verifier subsequently reported
+`P08_B3_PILOT16_SIGNED_ORIGINAL_27CORE_MUTABLE_BACKUP_PHYSICAL_PASS=1`,
+`P08_B3_PILOT16_REAL_16_FRAMES_ORIGINAL_SCALAR_NUMERICAL_FNV_PASS=1`,
+`P08_B3_PILOT16_FULL_SERVICE_TIMER_INTERNAL_CONSISTENCY_PASS=1`.
+Operator external independently verified report
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_independent_20261102T055256Z.json`
+SHA-256 **`b21e388ab2c3896e76373aaf1663b3b3b1a6d6e1e3c192684f7da02d40b0ed11`**.
+**B3 first16 physical neural, spike-vector and 26-tick FNV parity
+accepted on operator-supplied separate verifier evidence, with 16
+internally consistent A53 timer rows.** This does NOT prove direct
+full raw 26×1,010 trace bytes, 1,024-image Track B numerical
+equality, a multi-session latency benchmark, exclusive boot/DMA DDR
+ownership, speedup, energy or anything about official TEST.
+
+**New independent B4 development branch:**
+`agent/v3-p08-b4-fullscale`, stacked on the B3 draft branch, PR #53
+**DRAFT/UNMERGED** (B3 PR #52 also unmerged). Do not alter
+original 33 frozen B2.4 assets, original trained checkpoint,
+P03 BIT/XSA/LTX, P07-B V3/B5, 6 accepted P08-A physical sessions,
+operator B3 physical source/evidence, or `LitReview.md`.
+
+**B4.1 target** independent numerical reference for EVERY one
+of the same 1024 original TRAIN-only matched Track A validation
+pixels, including 26 ticks, all 1,010 neurons' deterministic FNV
+fingerprint, 10-vector spike readout and original 27-core 702
+physical-dispatch comparison geometry. This is **not** the official
+MNIST TEST dataset; keep TEST sealed. An original full1024 A53
+B2.3 candidate exists *as a distinct 1024-image firmware binary
+source* but has not been freshly physical-run or approved for full
+B4 latency sessions. Never replace the accepted B3 first16 ELF.
+
+New **PC-only** scripts:
+- `scripts/p08_b4_1_scalar_shard.py` computes one 16-frame original
+  B2.4 independent scalar segment at a time using the **same**
+  original P06-B2.4 monolithic neural simulator and accepted P08-B2.4
+  `pure_reference()` FNV/counter routines as the proven B3
+  16-frame reference. Each invocation reauthenticates original 33
+  frozen assets, original B4m routes, A3.2 first1024 canonical
+  held-out TRAIN identities, all 1,024 raw pixel/ingress metadata
+  and signed wire hash ledger; re-encodes all 16 selected originals.
+  Shard 0 MUST reproduce the accepted signed first16 scalar frame
+  rows byte-exact; 64 nonoverwriting external shards are required.
+- `scripts/p08_b4_1_merge_scalar_1024.py` demands exactly 64
+  consecutive SHA-derived original 16-frame reports, no duplicate,
+  altered, extra or missing shard, all 1,024 immutable original
+  ingress source identities/hashes, independent 16-model-trace FNV
+  fields, original fully signed first16 reference. Produces
+  separate no-overwrite full1024 JSON and full list of independent
+  shard SHA receipts. **Zero physical board contact**.
+- `tests/test_p08_b4_1_scalar_1024.py` and
+  `.github/workflows/p08_b4_1_fullscale_scalar_offline.yml`
+  run synthetic full 1,024 row positive and nine malformed-source
+  negative admission checks. Native CI **PASS**. Synthetic
+  test artifacts MUST NOT be mistaken for real independent oracle.
+
+**B4.1 acceptance boundary:** genuine *operator-local* shard0 must
+match signed first16, then operator must generate all 64 shards
+from original frozen sources and merge a completely authenticated
+1024-ordinal scalar JSON, report SHA256. The code/CI source PASS
+alone does **not** mean original full1024 scalar computed or 1024
+images run on KV260. B4.1 on local execution PENDING.
+
+**Planned remaining B4 phases (gated; NOT yet implemented/accepted):**
+B4.2 distinct **real Vitis** 1024-image A53 ELF/map full
+range/heap/stack/load admission, output allocation, non-overlap
+and launch-poll verification, 1024x256B CRC journals and timing
+sidecars and exact terminal count; strict JTAG physically authenticated
+capture and new destructive authorization. B4.3 physical full1024
+independent scalar FNV + classifier parity and per-image full
+service CNTVCT/CNTFRQ checks before admitting ANY latency result.
+B4.4 repeated controlled **cold-boot, AB/BA/AB** physical comparison
+protocol, original Track A baseline scope and instrumentation parity,
+scope-selected trace image 1023 handled separately to avoid
+instrumentation-induced bias, analysis of medians/tails and
+per-phase timing. No unproven pure-PL speedup or energy claims.
+All actual B4 physical board calls remain **NOT RUN**.
+
+## P08-B3.1 third physical KV260 run: FIRST actual 16/16 terminal & scalar precheck PASS — independent evidence audit NEXT
+
+Operator reports third **dedicated fresh-session KV260 JTAG** run
+successfully completed physical P03.2c PS-MMIO bitstream programming
+and VIO reset release, identified physical PSU DDR target, staged and
+physically read back **all 27 original mutable P02 core records and all
+27 independently staged immutable backup records (54×512KiB)**,
+original B4l 16KiB descriptor, original B4m 896KiB input routes and
+80KiB output routes and the matched original 1,024-image raw-pixel
+pool. Tcl reported six physical source transfers byte-exact PASS.
+This third run progressed *beyond both earlier aborted sessions*.
+
+Genuine operator console further reports physical zero/readback of
+all three dedicated result regions, exact **SHA-pinned first16 A53
+ELF downloaded to real hardware**, A53 terminal 16/16 physically
+observed, real 256-byte mailbox + 16×256B neural journal +
+16×256B A53 timing journal physically captured, and the *separate
+preliminary untrusted-file scalar verifier* PASS
+(`P08_B3_FIRST16_BOARD_RESULT_NUMERICAL_PRECHECK_PASS=1`).
+This is **new actual physical 16-image inference evidence**, not
+merely PC mock data or original P07 one-frame experiment.
+
+**Acceptance boundary remains explicit:** independent verification of
+same-session physical provenance and all 16 neural/trace-fingerprint
+records is **PENDING**, because the printed terminal ends with
+`P08_B3_PILOT16_INDEPENDENT_PHYSICAL_PROVENANCE_VERIFICATION_PENDING=1`.
+The genuine *third-session* external evidence path was not specified
+by operator (do NOT infer it from previous second-session readback path
+`.../p08_b3_pilot16_physical_retry_20261102T052232Z`).
+User should identify newest `p08_b3_pilot16_physical_retry_*`
+evidence directory whose `stage.txt` equals
+`P08_B3_FIRST16_JTAG_RESULTS_MATCH_SCALAR_PRECHECK_INDEPENDENT_PHYSICAL_ATTESTATION_PENDING_REBOOT_REQUIRED`,
+then execute **PC-only**
+`scripts/p08_b3_pilot16_independent_physical_verify.py` against
+original frozen PC stage, scalar oracle, exact genuine ELF/map,
+accepted P03 hardware reports, and B2.2 reset pins. Require
+`P08_B3_PILOT16_REAL_16_FRAMES_ORIGINAL_SCALAR_NUMERICAL_FNV_PASS=1`
+and the separate independent report before calling accepted physical
+numerical fingerprint parity. Store the report SHA. Reboot/power-cycle
+KV260 after the JTAG attempt; do not resume discarded Linux.
+
+No current physical 1,024-image Track B latency benchmark or
+energy/speedup claims; no direct full raw 26×1,010 neuron-trace
+byte equality obtained. DDR boot/firmware/RPU/DMA ownership remains
+independently **unproven**, although user has accepted the experimental
+risk. No changes to frozen original B2.4 33-asset model, original
+P03 bit/XSA, accepted Track A six sessions, P07-B accepted V3/B5,
+root `LitReview.md` or sealed official MNIST TEST. Next after
+independent 16-frame pass: freeze this first verified physical
+pilot as B3 acceptance evidence, inspect timestamp distributions
+without calling them a 1,024-image latency result, then plan the
+scalable controlled Track B physical matched-source latency
+experiment and A-vs-B comparison.
+
+## P08-B3.1 second physical JTAG session — all 6 original DDR readbacks PASS, host Python key error before A53 launch
+
+Operator second dedicated KV260 run **completed physical original frozen staging**:
+accepted P03 PL bitstream/VIO release pass, physically selected PSU,
+all 27 original **mutable** B2.4 P02 core 512KiB physical readbacks
+PASS, all 27 independent **immutable backup** P02 core readbacks PASS,
+and signed 16KiB B4l bindings, original 896KiB B4m input routes,
+80KiB B4m output routes and original matched 802,816B 1,024 raw
+TRAIN-derived images all reported physical byte-for-byte PASS.
+Tcl emitted `P08_B3_PILOT_SIX_PHYSICAL_DDR_TRANSFERS_BYTE_EXACT_PASS=1`
+and `P08_B3_PILOT_ORIGINAL_FROZEN_SIX_TRANSFERS_STAGED_REBOOT_REQUIRED=1`.
+These are authentic *operator-provided* physical staging logs; the
+separately independent host verification was NOT yet completed.
+
+Despite full Tcl staging success, host Python runner halted with
+`P08_B3_PILOT16_PHYSICAL_NO_GO=PosixPath('.../original_27core_backup_source_14155776.bin')`,
+a `KeyError` because `scripts/p08_b3_pilot16_physical_run.py`'s
+`readback_original(stage,readback)` indexed
+`source.EXPECTED_SHA[original]` where `original` was a full
+`Path`, while SHA keys are filenames (`str`).
+Both occurrences fixed by retaining `original_name=source.FILES[0][0]`,
+`original_path=stage/original_name`, and
+`source.EXPECTED_SHA[original_name]`.
+**No new pilot16 ELF was downloaded, no inference executed,
+no neural parity or latency verified.** JTAG touched DDR, so **reboot
+required and no old-Linux resume**.
+
+New synthetic host-only regression independently exercises exact
+`readback_original` on **54 full 512KiB P02 physical-copy fixture files**
+plus all 4 source staged payload fixtures. It asserts all 6 source
+SHA results and injects backup-core and route corruption to confirm
+fail-closed behavior. Historical full fake-PSU Tcl six-stage regression
+remains intact. **All seven P08 native CI workflows GREEN**.
+No accepted original frozen B2.4 assets, P07-B, P08-A physical
+sessions, original P03 BIT/XSA or root `LitReview.md` touched.
+Exact operator new PILOT16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`
+and original scalar first16 oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`
+remain intact; original TEST sealed.
+
+NEXT: use fixed Python `readback_original` on **the second
+session's preserved external `source_physical_readback/`** files
+as an offline, read-only staging-forensics check before another
+destructive run. A PASS retrospectively validates saved source
+readbacks but **cannot revive the old JTAG session**. After reboot,
+run only a NEW dedicated session with new external evidence root,
+full fresh six-source staging/readback and subsequent separately
+SHA-pinned A53 ELF launch/16 original held-out TRAIN validation
+inferences. Independent 16 journal, timer, terminal and scalar
+FNV verification still pending. Risk of unproven independent
+PS/boot/RPU/PL-DMA/firmware DDR owner remains acknowledged, NOT solved.
+
+## P08-B3.1 first hardware attempt (2026-11-02 UTC): Tcl receipt interpolation abort, no A53 launch
+
+Operator initiated **first physical KV260 P08-B3 pilot16** dedicated JTAG
+execution with genuine user-built first16 ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`.
+External session evidence
+`/home/dna/Thesis_Evidence/p08_b3_pilot16_physical_20261102T050721Z`.
+User-provided genuine physical console establishes accepted P03 PL
+shell programmed and VIO reset released, PSU physical target selected,
+all **27 original mutable 512KiB P02 context copies** read back
+byte-exact, all **27 original independent 512KiB reset-backup P02
+copies** read back byte-exact. This is useful hardware staging evidence,
+**NOT a complete six-payload readback, NOT an A53 ELF launch, and
+NOT a 16-image inference/latency result**.
+
+**Observed failure after these two full P02 readback sets:**
+`P08_B3_PILOT_STAGING_FAILED_REBOOT_REQUIRED=1`,
+Tcl `can't read "name_BYTE_EXACT_PASS": no such variable` at
+`vivado/p08_b3_pilot16_six_ddr_stage.tcl` dynamic route/binding/raw
+source status emission. Root cause was Tcl interpreting
+`$name_BYTE_EXACT_PASS` as a single nonexistent variable, rather than
+a base filename variable followed by a literal suffix.
+Corrected to `\${name}_BYTE_EXACT_PASS` using Tcl braced variable
+expansion (only new P08 B3 staging Tcl source modified).
+NO ELF downloaded and NO inference in failed session.
+Even if partial later source write occurred, its session is NOT reusable.
+**Power-cycle/reboot KV260; never resume halted old Linux**.
+
+Added host-only end-to-end `tclsh` fake-PSU DDR simulation regression
+`test_six_original_ddr_stage_full_mock_xsdb_byte_roundtrip`: exercises
+ALL 54 original mutable/backup 512KiB P02 core stages/readbacks and
+4 other original source transfers and exact status markers against
+synthetic host-only stage data. It then deliberately restores the
+incorrect Tcl variable and proves the old failure would be caught.
+CI B3.1 and all other P08 native workflows **PASS**. NO new Vitis
+A53 source/ELF/map, original frozen 33 B2.4 assets, prior accepted
+P07-B/A evidence, root `LitReview.md` or official TEST changed.
+
+**Next:** after local pull and passing B3.1 full fake staging regression,
+take a brand-new dedicated rebooted JTAG session with a NEW external
+evidence directory. Re-run all six original source transfers and
+independent same-session readbacks from scratch. Same exact original
+pilot16 ELF and source stage should be reused; do not manually continue
+from the failed B3.1 partial stage or claim pilot success based on
+P02-only PASS. Independent first16 classifier/spike/FNV results remain
+unmeasured, firmware/boot DDR owner risk remains unproven, and explicit
+per-run consent flags/reboot recovery still apply.
+
+## P08-B3.1 real JTAG original 16-image physical pilot pipeline — 2026-11-01
+
+Operator reports **genuine separate original B2.4 first16 Vitis 2025.2
+A53 ELF build and oracle admission PASS**, with ELF SHA
+`29482212c80fb9137b3c185b0cbcdf2000f41417e5af8d3c46b0cd39ecb74fd3`,
+map SHA `9d2106d82347385e936bb27176aa8f50a332beb3f13c3ca8e182890a689c674b`,
+selected original first16 scalar oracle SHA
+`13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+These are operator **offline** observations. There has been NO
+P08-B3 physical board attempt or measured inference yet.
+
+New [B3.1 original first16 dedicated cold-boot JTAG runbook]
+(docs/P08_B3_1_FIRST16_DESTRUCTIVE_JTAG_RUNBOOK.md) and source:
+`scripts/p08_b3_pilot16_physical_run.py` defaults to **READ-ONLY HOST
+PREFLIGHT**, authenticates original 27×512KiB and separate backup
+destination, all five frozen source SHA payloads/six proposed transfers,
+separate exact user-built pilot ELF/map SHA and already accepted
+original P03 BIT/XSA/LTX, new 16 scalar oracle. Destructive
+`--mode execute` requires **eight individually explicit operator
+YES flags**, including A53/Linux discard, unproven PS/boot/firmware/DMA
+ownership RISK acceptance, all six DDR transfers, PS/PL programming,
+low DDR ELF and sidecar overwrite and mandatory reboot.
+New `vivado/p08_b3_pilot16_six_ddr_stage.tcl` physically reads
+back and validates **both full 27×512KiB original neuron contexts**
+(mutable and independent immutable backup) and original
+B4l metadata/B4m route tables/full 1,024-source raw pool
+before any ELF download; Python independently authenticates every
+PSU readback byte SHA within same dedicated session.
+New `vivado/p08_b3_pilot16_run_and_capture.tcl` zeroes and reads
+back new 256B terminal mailbox, 4KiB original first16 neural and
+4KiB timer journals; downloads exact pilot16 SHA-pinned A53
+ELF only after physical source readbacks and catches bounded
+first16 PASS versus timeouts/faults; captures exact physical 16 journals
+and mailbox after halting A53. Independent
+`scripts/p08_b3_pilot16_independent_physical_verify.py`
+checks authentic XSDB/Vivado logs, original 6 source readbacks,
+all 16 original scalar spike-count/trace FNV and timing receipt.
+Neither fingerprint comparison nor successful PC-only gate proves
+full RAW physical neuron trace, standalone firmware memory ownership,
+calibrated 1,024 latency, speedup or energy.
+
+**New native negative/default-deny CI PASS; operator PC-only dry-run
+preflight PENDING and destructive physical execution NOT AUTHORIZED by
+preflight.** In particular verified ELF low-DDR PT_LOAD nonoverlap does
+not prove independent PS Linux, FSBL/TF-A, U-Boot, PMUFW, RPU, CMA or
+PL DMA ownership. User must review/acknowledge this risk and agree to
+discard Linux / reboot after every attempted JTAG. The user request
+to progress toward physical test did not itself resolve unproven DDR
+owners. No P08-B3 physical JTAG action executed by agent; original
+P07-B V3/B5 evidence and untouched original 33 B2.4 assets, six
+accepted Track A latency sessions, protected root `LitReview.md`
+and original B official MNIST TEST remain unchanged.
+**P09 and all energy/speedup claims deferred.**
+
+## P08-B3.0 bounded original B2.4 first16 A53 pilot source and safe offline stage — 2026-11-01
+
+Operator genuine original P08-B2.4 independent scalar **first16 PASS**,
+including reproduction of the first 3 frozen B2.3 scalar witnesses:
+external `p08_b2_4_original_first16_scalar_20261102T042201Z.json`
+SHA `13e3e679110059c70f8cfd3d51014c37c62a2cb3ea9c85974e27360606d3b271`.
+Physical numerical parity remains **UNTESTED**.
+
+New [bounded original 27core pilot ELF and offline staging contract]
+(docs/P08_B3_PILOT16_OFFLINE_ELF_AND_STAGE.md): **separate**
+`p08_b3_pilot16_a53.c` with original B2.4 27-core/3-slot/26-tick engine
+and 27x512KiB source-SHA reset, but bounded **exactly 16 images**;
+distinct application identity and terminal receipt.
+It still SHA-authenticates **all original 1,024** raw pixels to avoid
+changing matched Track A/B population. A separate Vitis 2025.2
+standalone A53 builder and **PC-only** ELF PT_LOAD / map / accepted
+first16 scalar-report SHA admission are provided.
+PC-only original B2.4 source packaging independently verifies original
+33 frozen model assets, 27 original P02 context SHA, original
+16KiB axon bindings, signed 80/896KiB routes and 802,816-byte raw
+pool, then writes a no-overwrite **five immutable-copy file** transfer
+proposal with two proposed copies of identical original 27core bundle
+in disjoint mutable/backup DDR slots. No JTAG command is issued.
+
+**Genuine new pilot16 ELF+map not built by operator yet.**
+No physical proof of PS Linux/FSBL/TF-A/RPU/PL DMA/stack and reserved DDR
+ownership, no independent same-session physical DDR/model/route/backup
+readbacks, no operator authorization for destructive JTAG takeover and no
+pilot hardware neural/latency measurement. Original **1024-image**
+B2.3 ELF must never substitute for this separately bounded pilot.
+Original accepted P07-B V3/B5, B2.4 33 frozen files, Track A six
+sessions, root `LitReview.md` and original official TEST are
+untouched. **P09 and numerical/speedup/energy claims deferred.**
+
+## P08-B2.4 original B2.4 matched first16 scalar oracle and untrusted record gate — 2026-11-01
+
+Operator reports **fixed original 1,024-frame C encoder PASS** plus
+genuine Vitis P08-B2.3 new A53 image-only ELF built, real linker map
+and `PT_LOAD` low-DDR static non-overlap audit PASS.
+ELF SHA `0c2de1656eff897e71d6d4fffe5575db9969baf7d3da7b82a2ec765447d36ee1`,
+map SHA `f7ce75a736b6b093066b8df09a8b02aaa41b490fd48c36c23151b4ac22125efc`.
+**No DDR ownership proof or physical FPGA deployment.**
+
+[P08-B2.4 original scalar first16 and record contract]
+(docs/P08_B2_4_FIRST16_SCALAR_AND_RECORD_GATES.md) adds independent
+original frozen B2.4 first 16 of the *exact same* 1,024 held-out
+TRAIN-derived source and a new external no-overwrite numerical oracle
+generator. It reauthenticates original B2.4 33 assets, original route
+tables, accepted P08-A source and original P08-B2.1 raw/wire SHA,
+reproduces first three independently signed B2.3 scalar numerical
+witnesses, simulates original frozen scalar 25+1 ticks and derives
+per-image classification, all 10 spike counts, external CURRENT/source
+spikes/captured+NEXT packets, and full 26×1,010 trace FNV.
+**Genuine first16 scalar oracle run on operator workstation PENDING.**
+
+Separate `p08_b2_4_verify_untrusted_first16.py` rejects a mismatched
+original numeric receipt, incorrect timestamp accounting, altered
+per-frame SHA256, wrong journal CRC, malformed terminal mailbox, frame
+order/length and truncated/incomplete 16 evidence. Its result *cannot*
+establish actual physical provenance, because same-session JTAG
+readback/DDR/ELF evidence is NOT YET BUILT. CI synthetic native
+26 negative/positive tests PASSED. This is a **source-only** offline
+checkpoint. Original P08-B2.3 ELF is **1024-image**, not safe to use for a
+16-image physical pilot. A separate 16-image A53 pilot firmware ELF/map,
+verified hardware DDR source ownership including untouched first original
+27 backing contexts and independent backup and signed XSDB readback
+procedure remain to build before explicit operator destructive approval.
+Accepted P07-B/A and frozen original 33-asset B2.4, original 1024
+Track A runs, root `LitReview.md` and official Track B TEST SEALED.
+**No P09 or physical speedup/energy claim.**
+
+## P08-B2.1 original-route C hash corrected; new B2.3 image-only A53 offline build candidate — 2026-11-01
+
+Operator **P08-B2.2 SHA-pins gate PASSED**: 27 original
+SHA-pinned initial P02 cores, original 14,155,776B aggregate SHA
+`3733e1c289fb5704c69be90f37b59a25e30ddedf7dd8dc305649e0be238af64e`;
+external original context header SHA
+`5be79b38ec7f42622573a7fa59adb689a65bfcf5d8e5a6e8cdaec0e75c9f7171`.
+The operator's B2.1 C all-1024 verification discovered
+`P08_B2_NATIVE_ORIGINAL_896K_ROUTE_SHA_NO_GO`; **P08 new C route
+SHA constant was hand-transcribed incorrectly** (final 16 bytes).
+C source now matches accepted immutable 896KiB original B4M route
+SHA `380268c5e8faa2664a31f993683c6759316239932d96b8e681ddb458c81574e8`.
+The original immutable route table and accepted Python stage passed;
+real C 1024-frame revalidation is **PENDING** after correction.
+CI now checks literal C/Python SHA equivalence and positive
+1,024-frame native C P06B13I1 wire parity using a strictly
+test-only synthetic 896KiB route with separate temporary SHA.
+
+New [P08-B2.3 independent image-only A53 application and offline Vitis
+build contract](docs/P08_B2_3_IMAGE_ONLY_A53_OFFLINE_VITIS.md): separate
+`p08_b2_3_image_only_a53.c` uses genuine P07 B4m 26-tick original
+engine (702 dispatches, 3 slots), per-image original 27-context
+SHA restoration/reinit, original 1,024 raw-pixel pool and bound 27-core
+ingress, CNTVCT/CNTFRQ full-A53 service timestamps, raw+encoded SHA
+and neural-result journal, timing sidecar outside measured interval.
+New separate Vitis 2025.2 offline-only app builder/source stage and
+read-only genuine ELF/low-DDR PT_LOAD admission; **not yet built
+by local Vitis, no new A53 ELF/map accepted**. Native C syntax and
+synthetic ELF gate only, no board contact. Genuine B1.3 C all-1,024
+local parity and **Vitis real ELF/map PT_LOAD acceptance pending**.
+No destructive JTAG, original-backed DDR physical ownership,
+oracle parity on actual hardware, detailed tick ELF, selected full
+raw trace, or P08-B 1,024 physical inference/latency accepted.
+Official Track B TEST SEALED; original Track A six sessions,
+P07-B original V3/B5 ELF, original frozen B2.4 and root
+`LitReview.md` remain unchanged. **P09 deferred.**
+
+## P08-B2.2 source-only reset/timer development — 2026-11-01
+
+The operator reported **P08-B2.1 host 1,024 original-B ingress staging
+PASS** (802,816B raw pool; 123,216B frames; 1,024 SHA rows) in new
+external folder `p08_b2_1_original1024_20261102T003256Z`; full
+independent native-C 1,024 wire parity has not yet been shown. File
+hashes are recorded in
+[reset source contract](docs/P08_B2_2_CONTEXT_RESET_AND_METER.md).
+
+P08-B2.2 adds **new** isolated C11 original 27×512KiB SHA-bound
+context-restoration primitive with all 27 backup hashes checked before
+the first write, cache-coherent destination SHA check, permanent poison
+on any failed reset; a bounded CNTVCT/CNTFRQ seven-boundary six-phase
+full-A53-service meter; a no-overwrite original frozen 33-asset
+SHA-pin header generator and 27×512KiB native fake-DDR two-image
+regression. **New source in CI; operator local source validation pending.**
+No real A53 app/ELF, physical DDR owner, backup readback, original 1024
+scalar oracle, signed timing sidecar, JTAG launch, or B physical latency
+is yet accepted. The 26-tick meter INCLUDES nested P03 trace hooks
+during the dispatch; no artificial isolated dispatch/pretrace claim.
+Separate full P08-B app and genuine Vitis ELF work remain to implement
+before any operator-approved destructive B3 pilot. Original A six
+latency sessions, B2.4 frozen model, B5 acceptance and sealed official
+MNIST TEST unchanged. **P09 deferred.**
+
+## P08-B2.1 source-only candidate: authenticated original 1024 B ingress — 2026-11-01
+
+The operator reported a genuine local P08-B1 `MATCHED_DATASET_OFFLINE_PASS=1`
+on the original Track A first1024 stage and accepted B2.4 freeze, with
+zero B training index overlap. **B1 source/dataset gate is accepted for
+continued development**, although the assistant has not re-opened the
+operator-local JSON. New separate [P08-B2.1 original scaled ingress and
+DDR design](docs/P08_B2_1_ORIGINAL_MATCHED_INGRESS_AND_DDR_CANDIDATE.md)
+adds a strict, no-overwrite PC-only 1024 raw-pixel 802,816B pool, original
+P06B13I1 27-core frame hash manifest, strict C11 original 896KiB SHA-bound
+route/ingress builder and native 1,024-frame cross-encoder verifier.
+
+**B2.1 operator local validation pending.** The newly proposed
+27×512KiB backup, raw-pixel/journal/timing DDR spans are statically
+non-overlapping only. **B2.2/B2.3 NOT built**: no new A53 firmware,
+per-image neural state reset, neural oracle/sidecar/ELF/map or independently
+proved DDR owner. No authorized destructive B3 physical session or
+P08-B latency has occurred; original TRAIN-derived stage and B2.4 freeze,
+P07-B hardware/ELFs, Track A accepted measurements, root literature,
+and sealed Track B official TEST remain untouched. **P09 deferred.**
+
+## P08-B1 launched: matched 27-core latency source contract — 2026-11-01
+
+**P08-B STARTED (B1 PC-ONLY SOURCE CANDIDATE; LOCAL OPERATOR VALIDATION PENDING).**
+Development branch `agent/v3-p08-b-scaled-latency` from accepted main
+`2c9767ba6f6e001b52b14ff4285ae60c2d7ab47b` contains
+[the new B1 matched-dataset/latency contract](docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md),
+a strict offline original Track A 1,024-image source/ledger audit with
+read-only 33-asset B2.4 freeze validation, and negative native tests.
+Both Track A P07-A4 and Track B P06-B2.2 training sources pin the SAME
+canonical 50k/10k TRAIN-derived partition; seeded first1024 membership
+has zero overlap with Track B training. Stage pixel and original freeze
+file hashes must still be independently checked on the local workstation.
+
+**B1 gate:** user must run native tests and original source/stage audit,
+report the actual no-overwrite output, and accept the dataset provenance.
+**B2 NOT started:** implement a distinct instrumented scaled A53
+image-service/tick runtime, arbitrary-image frozen scalar oracle, safe
+per-image 27-record restoration, nonoverlapping DDR buffers, external
+Vitis ELF/map and strict read-only preflight. **B3 NOT approved:**
+operator-authorized destructive cold-boot 16-frame KV260 pilot only
+after B2 passes. **B4 future:** matched six independently cold-booted
+A2.1/A2.2-style paired 1,024-frame runs AB/BA/AB, ordinary frames
+0–1022, frame 1023 selected trace, full independent numerical parity
+before latency. **B5 future:** immutable physical results and P09 handoff;
+branch merge only by separate operator permission.
+
+**No new physical measurements, new FPGA bitstream, official MNIST
+TEST access, energy sampling, standalone scaled latency or P09
+comparison are claimed.** Original P07-B and Track A freeze and root
+`LitReview.md` remain untouched. The preserved historical
+"P08-B not started" statement below records P07-B closeout time,
+not the present development branch status.
+
 ## P07-B final acceptance and GitHub integration — 2026-11-01
 
 **P07-B COMPLETED, FORMALLY OPERATOR ACCEPTED AND MERGED INTO MAIN.**
@@ -208,12 +3076,12 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
-| P04 | Add multi-engine parallel logical-core execution | Deferred |
-| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.2; P05.1 accepted) |
-| P06 | Audit and freeze an exact published MNIST benchmark | In progress (Track A accepted; Track B gated by P08-A) |
-| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | In progress (A1/A2 accepted; A3 validation pending) |
-| P08 | Characterize latency, throughput, power, and energy | Planned |
-| P09 | Final source-backed comparison and v3 closure | Planned |
+| P04 | Add multi-engine parallel logical-core execution | **CANCELED for v3** (formerly deferred) |
+| P05 | Build board-local regression, observability, and data-path hardening | **FROZEN / remaining work canceled**; accepted parts preserved |
+| P06 | Audit and freeze an exact published MNIST benchmark | **FROZEN / remaining work canceled**; accepted parts preserved |
+| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | **FROZEN / remaining work canceled**; accepted real hardware proof preserved |
+| P08 | Characterize latency, throughput, power, and energy | **FROZEN / further characterization canceled**; do not infer power/energy |
+| P09 | Final source-backed comparison and v3 closure | **CANCELED** (historical concept; future thesis writing uses frozen results) |
 
 ---
 
@@ -2722,7 +5590,7 @@ Track A's 94.56% *official TEST* from Track B's 97.08%
 
 # P08 — Independent physical baseline and scaling measurements
 
-**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED).** This satisfies the user-approved entry gate to **P06-B1 SCALED PACKING FIRST**, then P06-B2 separate checkpoint, P07-B physical virtualization and P08-B scaled measurements. **P08-B NOT YET STARTED.**
+**Status:** **P08-A LATENCY-ONLY ACCEPTED BY USER (POWER/ENERGY P08-A4 DEFERRED). P08-B SCALED TRACK IS ACTIVE:** P07-B physical acceptance and P08-B4.1/B4.2/B4.4/B4.4.2 results are recorded above; P08-B4.5 reset-integrity optimization is the active next milestone; P08-B4.6 paired Track A/Track B comparison follows. Power/energy remain deferred and official Track B MNIST TEST remains sealed.
 
 ## P08-A — Compact physical KV260 latency baseline
 
@@ -2744,31 +5612,26 @@ For the active Track A **physical latency** study, collect actual A53 per-frame 
 
 ## P08-B — Scaled physical resource/traffic/energy study
 
-Repeat the same measurement method for the
-frozen scaled model. In addition, record
-logical core count, 3 resident slots,
-actual HLS dispatches, per-core paging
-hits/misses/evictions, bytes moved, routed
-packet fanout/barrier time, event-bank
-occupancy and resource mapping across
-all cores; compare these against P08-A.
+Repeat the same measurement method for the frozen scaled model. In addition,
+record logical core count, three resident slots, actual HLS dispatches,
+per-core paging hits/misses/evictions, bytes moved, routed packet
+fanout/barrier time, event-bank occupancy and resource mapping across all
+cores; compare these against P08-A.
 
-Report *two different model sizes and
-checkpoints*: improvements in classification
-accuracy and costs from model scaling
-are not pure FPGA architecture speedups.
-Avoid claiming direct Intel Loihi
-power/latency comparisons where workload
-or scope differs. An extra physical
-engine is a **deferred, optional**
-optimization only after one-engine
-baseline and scaled bottlenecks are measured.
+The active reset-integrity sequence is P08-B4.5. The repeated paired
+Track A/Track B comparison is P08-B4.6 and follows the two reset variants.
 
+Report two different model sizes and checkpoints: improvements in
+classification accuracy and costs from model scaling are not pure FPGA
+architecture speedups. Avoid claiming direct Intel Loihi power/latency
+comparisons where workload or scope differs. An extra physical engine is a
+deferred, optional optimization only after one-engine baseline and scaled
+bottlenecks are measured.
 ---
 
 # P09 — Thesis comparison and closure
 
-**Status:** PLANNED.
+**Status:** **CANCELED (2026-11-07 pivot)**. Historical goals below preserved as context, NOT active requirements; the accepted v3 evidence is frozen and unfinished energy/official TEST/extra comparisons must not be presented as completed.
 
 First close the complete **Track A evidence
 chain** (published-method scope, independently
@@ -2822,3 +5685,17 @@ These are intentionally not prerequisites for the initial v3 roadmap unless late
 - real-time sensor/event input;
 - multi-board scaling;
 - physically asynchronous FPGA circuitry.
+
+---
+
+# P10 — Deferred, bounded v3 optimization (FINAL v3 milestone; NOT STARTED)
+
+**Status: DEFERRED — not authorized.** This is the **last possible v3 milestone**, reserved for a later explicit user decision. No v3 optimization work, build, or destructive physical verification is active now. The priority is v4 architecture planning.
+
+**Purpose:** If advisor/user later find one short, evidence-driven v3 optimization worthwhile, make a minimal baseline-preserving improvement without changing the Loihi-inspired model, hiding integrity controls, reusing old evidence as a new run, or expanding into a new accelerator architecture. Prioritize measured bottlenecks such as redundant DDR transfers, excessive context switches or A53 orchestration; investigate one or two low-risk changes only.
+
+**Future entry gate:** (1) user explicitly reactivates P10 and sets a strict timebox and stopping criterion; (2) establish a known signed baseline and untouched prior evidence; (3) profile the current bottleneck with existing accepted counters/latency first; (4) approve each change and its no-board tests; (5) separately authorize any individual board/JTAG attempt with fresh artifacts, new evidence folder, recovery/power-cycle and independent neural verification.
+
+**Potential deliverable if resumed:** measured before/after ORIGINAL matched workload and explicitly identical timer boundaries, new independent neural/trace integrity PASS, exact build/source/ELF/bitstream/report SHA and disclosed tradeoffs. No promised speedup. Any major redesign of PS/PL scheduling, sparse event engine, neural state cache or fixed-point semantics should be developed as v4, not P10.
+
+**Exit:** either one or two completed and independently checked small optimizations, or a documented negative result / stop under timebox; archive the result without overwriting v3 history. Do not schedule a return date or treat this deferred milestone as a v4 dependency.

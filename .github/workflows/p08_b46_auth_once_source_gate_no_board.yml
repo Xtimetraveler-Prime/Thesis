@@ -1,0 +1,40 @@
+name: B4.6 original A vs B_AUTH_ONCE V2 canonical TRAIN population source preflight (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b46-auth-once-comparator-gate]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b46_auth_once_source_gate.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b46_auth_once_source_gate.py'
+      - '.github/workflows/p08_b46_auth_once_source_gate_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  host-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: A original vs B_AUTH_ONCE complete 1024 same TRAIN/source, pins, six session permissions fail-closed
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b46_auth_once_source_gate.py
+      - name: Inherit previous original B45 successful physical source verifier and six-phase comparison contracts
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_latency_synthesis.py \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
+            tests/test_p08_b45_full1024_reset_bind_repair.py
+      - name: Host-only syntax, no board access and no physical acceptance claim
+        run: |
+          python3 -m py_compile scripts/p08_b46_auth_once_source_gate.py
+          echo P08_B46_ORIGINAL_A_VS_B_AUTH_ONCE_HOST_ONLY_NATIVE_PASS=1
+          echo P08_B46_REAL_A53_EXPERIMENTS_EXECUTED=0
+          echo P08_B46_ORIGINAL_6_REPEATED_A_B_SESSIONS_ACCEPTED=0

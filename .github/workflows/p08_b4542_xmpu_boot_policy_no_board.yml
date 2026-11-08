@@ -1,0 +1,63 @@
+name: P08-B4.5.4.2 symbolic XMPU boot policy NO BOARD
+on:
+  push:
+    branches: [agent/v3-p08-b4542-xmpu-boot-policy]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4542_xmpu_boot_policy.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4542_xmpu_boot_policy.py"
+      - "Loihi_Digital_Twin/v3/config/p08_b4542_xmpu_boot_candidate.json"
+      - ".github/workflows/p08_b4542_xmpu_boot_policy_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4542_xmpu_boot_policy.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4542_xmpu_boot_policy.py"
+      - "Loihi_Digital_Twin/v3/config/p08_b4542_xmpu_boot_candidate.json"
+      - ".github/workflows/p08_b4542_xmpu_boot_policy_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  host-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Inherited P08 B4.4/B4.5 and DDR-gap suites
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
+            tests/test_p08_b454_ddr_owner_preflight.py
+      - name: New XMPU boot policy symbolic mask, priority and timeline negative gates
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b4542_xmpu_boot_policy.py
+      - name: Verify no KV260 hardware tool invocations
+        run: |
+          python3 -m py_compile scripts/p08_b4542_xmpu_boot_policy.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/p08_b4542_xmpu_boot_policy.py").read_text()
+          for forbidden in ("import subprocess", "import socket", "Xil_Out32(",
+                            "os.system(", "os.popen(", "xsdb -", "bootgen -",
+                            "vitis -s", "/dev/mem", "XMPU_REG_WRITE("):
+              assert forbidden not in p, forbidden
+          PY
+          echo P08_B4542_PC_ONLY_POLICY_TEST_SUITE_PASS=1
+          echo P08_B4542_BOOT_OR_XMPU_HW_PROOF=0
+          echo P08_B4542_KV260_JTAG_DDR_ACTION=NOT_RUN

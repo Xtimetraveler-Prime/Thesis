@@ -1,0 +1,83 @@
+name: P08-B4.5 reset integrity variants native-only
+on:
+  push:
+    branches: [agent/v3-p08-b45-reset-integrity]
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.h"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b45_reset_variants_native.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_reset_variants.py"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_auth_once_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_unchecked_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.h"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b45_variant.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b45_variant.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_a53_build.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json"
+      - ".github/workflows/p08_b45_reset_variants_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_reset_variants.h"
+      - "Loihi_Digital_Twin/v3/tests/native/p08_b45_reset_variants_native.c"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_reset_variants.py"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_auth_once_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_unchecked_full1024_a53.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.c"
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_a53_backup_guard.h"
+      - "Loihi_Digital_Twin/v3/software/p08/build_p08_b45_variant.py"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b45_variant.sh"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_a53_build.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_elf_admission.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_sidecar.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_pair_elf_evidence.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B4_5_3_OPERATOR_REPORTED_A53_ARTIFACT_PINS_2026_11_05.json"
+      - ".github/workflows/p08_b45_reset_variants_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  native-reset-variants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Inherited B4.4 physical-source and timing regressions
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py
+      - name: Strict C11 native differential tests
+        run: python3 -m pytest -q -rs tests/test_p08_b45_reset_variants.py
+      - name: Both A53 offline build staging and synthetic ELF admission
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py
+      - name: Explicitly no board access
+        run: |
+          echo "P08_B45_RESET_VARIANTS_NATIVE_PASS=1"
+          echo "P08_B45_KV260_JTAG_OR_DDR=NOT_RUN"
+          echo "P08_B45_MNIST_TEST=SEALED"

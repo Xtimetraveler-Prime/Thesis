@@ -1,0 +1,46 @@
+name: P08-B1 matched-source native gate (no MNIST download or KV260)
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b1_matched_source_audit.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b1_matched_source.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md"
+      - ".github/workflows/p08_b1_matched_source.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b1_matched_source_audit.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b1_matched_source.py"
+      - "Loihi_Digital_Twin/v3/docs/P08_B1_MATCHED_TRACK_A_LATENCY_CONTRACT.md"
+      - ".github/workflows/p08_b1_matched_source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  original-corpus-offline-unit-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test-only pytest (no MNIST or torch downloads)
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Compile B1 source and negative tests
+        run: python3 -m compileall -q scripts/p08_b1_matched_source_audit.py tests/test_p08_b1_matched_source.py
+      - name: Run offline synthetic negative tests and deterministic pinned split proof
+        run: python3 -m pytest -q -rs tests/test_p08_b1_matched_source.py
+      - name: Scope classification (physical source files are not present in CI)
+        run: |
+          echo "P08_B1_NATIVE_SYNTHETIC_AND_INDEX_GATES=PASS"
+          echo "P08_B1_REAL_A3_1024_PIXEL_STAGE_IN_CI=NOT_AVAILABLE"
+          echo "P08_B1_B24_33_FROZEN_ASSETS_IN_CI=NOT_AVAILABLE"
+          echo "P08_B1_REAL_KV260_LATENCY=NOT_RUN"
+          echo "P08_B1_OFFICIAL_MNIST_TEST=SEALED_NOT_ACCESSED"

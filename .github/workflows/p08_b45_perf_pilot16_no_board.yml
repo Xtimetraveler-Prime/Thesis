@@ -1,0 +1,59 @@
+name: P08-B4.5 unprotected performance pilot16 native only (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b45-unprotected-pilot16]
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/software/p08/p08_b45_perf*"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b45_perf*"
+      - "Loihi_Digital_Twin/v3/scripts/build_p08_b45_perf*"
+      - "Loihi_Digital_Twin/v3/vivado/p08_b45_perf*"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b45_perf*"
+      - ".github/workflows/p08_b45_perf_pilot16_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  pure-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install -q pytest
+      - name: Existing production reset, safeguarded B4.5, real build and source-channel regressions
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
+            tests/test_p08_b454_ddr_owner_preflight.py \
+            tests/test_p08_b4542_xmpu_boot_policy.py \
+            tests/test_p08_b4543_fsbl_boot_source_inventory.py \
+            tests/test_p08_b4544_fsbl_protection_path.py \
+            tests/test_p08_b4545_generated_psu_graph.py \
+            tests/test_p08_b45_fsbl_source_channel_gate.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_profile_physical.py
+      - name: Native GCC and adversarial reduced-integrity pilot source tests
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_perf_pilot16.py \
+            tests/test_p08_b45_perf_pilot16_independent.py
+      - name: Static Python and bash source syntax; no JTAG test
+        run: |
+          python3 -m py_compile \
+            software/p08/build_p08_b45_perf_pilot16.py \
+            scripts/p08_b45_perf_pilot16_elf_admission.py \
+            scripts/p08_b45_perf_pilot16_physical_run.py \
+            scripts/p08_b45_perf_pilot16_independent_verify.py
+          bash -n scripts/build_p08_b45_perf_pilot16.sh
+          echo P08_B45_PERF_PILOT16_HOST_ONLY_NATIVE_PASS=1
+          echo P08_B45_PERF_PHYSICAL_BOARD_CONTACT=0
+          echo P08_B45_PERF_HARDWARE_IMMUTABILITY_CLAIM=0

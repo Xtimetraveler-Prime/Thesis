@@ -1,0 +1,63 @@
+name: P08-B4.5.4.4 FSBL real source protection branch NO BOARD
+on:
+  push:
+    branches: [agent/v3-p08-b4544-fsbl-protection-review]
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4544_fsbl_protection_path.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4544_fsbl_protection_path.py"
+      - ".github/workflows/p08_b4544_fsbl_protection_no_board.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b4544_fsbl_protection_path.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b4544_fsbl_protection_path.py"
+      - ".github/workflows/p08_b4544_fsbl_protection_no_board.yml"
+permissions:
+  contents: read
+jobs:
+  host-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python3 -m pip install -q pytest
+      - name: Inherited B4.4/B4.5/B4.5.4 source and symbolic guard suites
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b44_profile_physical.py \
+            tests/test_p08_b4_2_full1024_physical.py \
+            tests/test_p08_b44_reset_profile_sidecar.py \
+            tests/test_p08_b44_profile_elf_admission.py \
+            tests/test_p08_b44_build_offline.py \
+            tests/test_p08_b45_reset_variants.py \
+            tests/test_p08_b45_a53_build.py \
+            tests/test_p08_b45_elf_admission.py \
+            tests/test_p08_b45_sidecar.py \
+            tests/test_p08_b45_pair_elf_evidence.py \
+            tests/test_p08_b454_ddr_owner_preflight.py \
+            tests/test_p08_b4542_xmpu_boot_policy.py \
+            tests/test_p08_b4543_fsbl_boot_source_inventory.py
+      - name: New FSBL-protection bypass branch, generated-source, lock ordering tests
+        run: |
+          python3 -m pytest -q -rs \
+            tests/test_p08_b4544_fsbl_protection_path.py
+      - name: Assert new tool does NOT use device programming or build tools
+        run: |
+          python3 -m py_compile scripts/p08_b4544_fsbl_protection_path.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("scripts/p08_b4544_fsbl_protection_path.py").read_text()
+          for bad in ("import subprocess", "import socket", "os.system(", "os.popen(",
+                      "Xil_Out32(", "xsdb -", "bootgen -", "vitis -s", "/dev/mem",
+                      "XMPU_REG_WRITE("):
+              assert bad not in s, bad
+          PY
+          echo P08_B4544_REAL_SOURCE_FSBL_BYPASS_BRANCH_NATIVE_PASS=1
+          echo P08_B4544_BOARD_PROTECTION_OR_DMA_PROVEN=0
+          echo P08_B4544_BOARD_CONTACT=NOT_RUN

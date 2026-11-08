@@ -1,0 +1,42 @@
+name: P08-B4.5 four independent full1024 physical reports and A53 phase synthesis (NO BOARD)
+on:
+  push:
+    branches: [agent/v3-p08-b45-comparison-and-b46-handoff]
+  pull_request:
+    paths:
+      - 'Loihi_Digital_Twin/v3/scripts/p08_b45_full1024_latency_synthesis.py'
+      - 'Loihi_Digital_Twin/v3/tests/test_p08_b45_full1024_latency_synthesis.py'
+      - '.github/workflows/p08_b45_latency_synthesis_no_board.yml'
+permissions:
+  contents: read
+jobs:
+  native-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -q pytest
+      - name: Four-SHA independent B4.4 baseline and B4.5 once/unchecked original raw timing reconstruction
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_full1024_latency_synthesis.py
+      - name: Original genuine full1024 safeguards and read-only independent verifier regression
+        run: |
+          PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+            tests/test_p08_b45_perf_full1024_independent_cli.py \
+            tests/test_p08_b45_full1024_reset_bind_repair.py \
+            tests/test_p08_b45_perf_full1024.py \
+            tests/test_p08_b45_full1024_failed_run_postmortem.py \
+            tests/test_p08_b45_reset_variants.py
+      - name: Python import and syntax; ONLY host files inspected
+        run: |
+          python3 -m py_compile scripts/p08_b45_full1024_latency_synthesis.py
+          echo P08_B45_SIGNED_PHYSICAL_LATENCY_SYNTHESIS_NATIVE_PASS=1
+          echo P08_B45_NEW_PHYSICAL_JTAG_VIVADO_RUN=0
+          echo P08_B45_STATISTICAL_REPEATED_AB_BA_ACCEPTED=0

@@ -1,0 +1,48 @@
+name: P08-B2.4 original first16 scalar and journal verifier native (no FPGA)
+
+on:
+  push:
+    branches:
+      - agent/v3-p08-b-scaled-latency
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_4_scalar_first16.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_4_verify_untrusted_first16.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_4_numerical.py"
+      - ".github/workflows/p08_b2_4_first16_oracle.yml"
+  pull_request:
+    paths:
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_4_scalar_first16.py"
+      - "Loihi_Digital_Twin/v3/scripts/p08_b2_4_verify_untrusted_first16.py"
+      - "Loihi_Digital_Twin/v3/tests/test_p08_b2_4_numerical.py"
+      - ".github/workflows/p08_b2_4_first16_oracle.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-first16-fixture-journal-timestamp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: Loihi_Digital_Twin/v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest only
+        run: python3 -m pip install --disable-pip-version-check -q pytest
+      - name: Independent first16 scalar and untrusted record verifiers syntax
+        run: |
+          python3 -m compileall -q scripts/p08_b2_4_scalar_first16.py scripts/p08_b2_4_verify_untrusted_first16.py
+      - name: Native strict synthetic source/CRC/numeric/timing negative gates
+        run: python3 -m pytest -q -rs tests/test_p08_b2_4_numerical.py
+      - name: Evidence qualification
+        run: |
+          echo "P08_B2_4_NATIVE_NEGATIVE_RECORD_GATES=PASS"
+          echo "P08_B2_4_REAL_ORIGINAL_B24_FIRST16_SCALAR_IN_CI=NOT_AVAILABLE"
+          echo "P08_B2_4_PHYSICAL_JTAG_DATA=NOT_PRESENT"
+          echo "P08_B2_4_PHYSICAL_NUMERICAL_PARITY=NOT_CLAIMED"
+          echo "P08_B2_4_OPERATOR_DESTRUCTIVE_APPROVAL=NOT_GRANTED"
+          echo "P08_B2_4_MNIST_OFFICIAL_TEST=SEALED_NOT_ACCESSED"
