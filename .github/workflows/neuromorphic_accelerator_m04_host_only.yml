@@ -29,7 +29,7 @@ jobs:
           git rev-parse HEAD
       - name: Compile Python source (PC only)
         run: python3 -m compileall -q src scripts tests
-      - name: 13 M04 native C++ differential methods / M02 reference
+      - name: 22 M04 numerical/requirements methods / M02 reference (NO BOARD)
         run: python3 -m unittest discover -s tests -p 'test_m04*.py' -v
       - name: Accepted M03 M02 M01 regression suites
         run: |
@@ -38,4 +38,4 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m01*.py' -q
       - name: Source provenance hashes
         run: |
-          sha256sum             hls/m04_lif_eval/m04_eval.hpp             hls/m04_lif_eval/m04_eval.cpp             hls/m04_lif_eval/m04_host_cli.cpp             tests/test_m04_eval.py             src/neuromorphic_accelerator_v1/m02_dense_reference.py             src/neuromorphic_accelerator_v1/m02_event_reference.py
+          sha256sum             hls/m04_lif_eval/m04_eval.hpp             hls/m04_lif_eval/m04_eval.cpp             hls/m04_lif_eval/m04_host_cli.cpp             tests/test_m04_eval.py             tests/test_m04_handoff.py             src/neuromorphic_accelerator_v1/m04_profile.py             src/neuromorphic_accelerator_v1/m02_dense_reference.py             src/neuromorphic_accelerator_v1/m02_event_reference.py
