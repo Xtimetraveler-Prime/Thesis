@@ -124,6 +124,25 @@ class M05RTLStallPrepTests(unittest.TestCase):
         self.assertIn("cycle_count % 11 == 0", tb)
         self.assertNotIn("force dut", tb)  # normal AXIS pins only
 
+    def test_direct_rtl_has_measured_input_stall_coverage_and_hold_checks(self):
+        # First genuine direct RTL PASS measured 188 output-stall cycles
+        # but ZERO N/S/E ingress stalls. This next test forces input VALID
+        # while the engine is idle, then insists on actual input READY stalls.
+        tb = (ROOT / "hls/m05_rolling/rtl_stress/"
+              "tb_m05_rolling_axis_stress.sv").read_text()
+        self.assertIn("stalled_neurons_prior", tb)
+        self.assertIn("stalled_synapses_prior", tb)
+        self.assertIn("stalled_external_prior", tb)
+        self.assertIn("prior_neurons_word", tb)
+        self.assertIn("prior_synapses_word", tb)
+        self.assertIn("prior_external_word", tb)
+        self.assertIn("neurons input VALID/TDATA changed while stalled", tb)
+        self.assertIn("synapses input VALID/TDATA changed while stalled", tb)
+        self.assertIn("external input VALID/TDATA changed while stalled", tb)
+        self.assertIn('input TVALID gaps");', tb)
+        self.assertIn("no meaningful incoming AXIS backpressure", tb)
+        self.assertIn("repeat (45) @(negedge ap_clk);", tb)
+
     def test_no_adjacent_format_string_literals_in_xvlog_stressbench(self):
         # Regression for operator's real 2026-11-08 xvlog failure VRFC
         # 10-4982 at line 305: SystemVerilog doesn't implicitly join
