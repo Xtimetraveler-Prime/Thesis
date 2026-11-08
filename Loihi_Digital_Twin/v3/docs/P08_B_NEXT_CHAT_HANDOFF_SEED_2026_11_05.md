@@ -1,86 +1,55 @@
-# P08-B — CURRENT NEXT-CHAT HANDOFF (B4.6 A2.1 REAL1024 ACCEPTED; SIX NEW A/B SESSIONS NEXT)
+# CURRENT RESEARCH HANDOFF — v3 FROZEN / v4 PLANNING NEXT (2026-11-07)
 
-> **NEWEST operator-reported B4.6.4b PHYSICAL STATUS: SESSION01 A ACCEPTED (2026-11-05 local / Nov 6 UTC), SIX-SESSION STUDY = 1/6.**
-> Original standalone rebuilt A2.1 1024 physical validation and B_AUTH_ONCE V2 prior single physical work remain separate; neither counts as the new session. NEW physical A run \`/home/dna/Thesis_Evidence/p08_b46_s01_A_20261106T052149Z/\` was independently verified for all1024 original P07 packed neural/selected 26x42 trace, actual A53 CNTFRQ **99999001**Hz and original 1023 ordinary-image service median **35.67722641549189ms**. Original new independent JSON SHA **26e9cfbc9b6485313d89e72f80ec578498539c902838140940f1027da4038eb0**, output hash manifest SHA **8c5e1b05775bbcaf087b55203569da949abfe16ebc3d46d0b98035002a3a6440**. Separate original PC rereview SHA identical (not a second boot). Source physical script \`script_exit_status=0\`. Original external signed first A ledger \`/home/dna/Thesis_Evidence/p08_b46_s01_A_accepted_20261106T052707Z.json\` SHA **ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec**. Receipt native PASS, current accepted original session slot01, new physical B4.6 count1, statistical six-run not accepted. Fresh coldboot and post-JTAG power-cycle **operator attestations only**, no instrument electrical confirmation. Github connector cannot read user PC original raw captures; operator pasted hashes/terminals. Full dated receipt: \`docs/P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md\`.
->
-> **IMMEDIATE NEXT OPERATOR TASK:** separately approved **02:B AUTH_ONCE UNPROTECTED V2**, exact original V2 SHA \`a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85\`. First verify **original prior ledger** SHA ceb170... and locate the SAME original signed six-session PC plan by hash stored inside ledger; NEVER mint new plan or overwrite original evidence. Reuse exact accepted original B4.5 V2 build, original signed 1024 scalar/FNV source, genuine accepted 6 physical DDR staging and 27 backup source. NEW PC only mode=preflight and fresh unique \`p08_b46_s02_B_<UTC>\` root. Operator separately reviews B's TEN original destructive JTAG risk approvals; fresh coldboot, dedicated A53/Linux and JTAG ownership, no competing PL/DMA; B backup hardware immutability NOT established. New real B mode=execute only, physical power-cycle after ANY attempt, independent new 1024 FNV/reset/A53 sidecars/27 endpoint backup, then append SHA-linked NEW B study receipt slot02. Stop for review before slot03:B. Original official TEST SEALED. **NO merges authorized.** The prior B4.6.4a PC static A/B source audit hash \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\` is not strict matched physical timers. Original B independent report uses \`whole_image_service_descriptive_1023.ordinary_frames\`, distinct from preliminary \`ordinary_frame_count\`.
->
-> **LATEST P08-B4.6.4b SIX-SESSION DEVELOPMENT AND OPERATOR AUTHORIZATION BOUNDARY (2026-11-05 local / 2026-11-06 UTC).**
-> User's actual local SHA-pinned B4.6.4a **PC SOURCE** JSON
-> \`/home/dna/Thesis_Evidence/p08_b46_ab_boundary_source_audit_20261106T045251Z.json\`
-> SHA256 \`41ea9f2958e9e31aaa120d368b1f325f16bc51ed63834c2748b2dde38d6cb430\`
-> and printed original static frozen A/B source boundary PASS.
-> **NOT** the six-run physical test or proof of identical physical
-> timer work. User requested to proceed with physical tests, but
-> original per-session destructive JTAG/DDRx authorizations remain
-> individual; DO NOT run all six automatically.
->
-> **Current new descendant:** \`agent/v3-p08-b46-4b-six-session-physical-admission\`,
-> built on \`agent/v3-p08-b46-4a-service-boundary-audit\` draft PR #70
-> (and accepted A physical parent PR #69), no PR merges authorized.
-> New PC-only \`scripts/p08_b46_4b_six_session_plan.py\` checks six
-> original operator SHA-pinned sources/reports/ELFs, outputs a NEW
-> outside-checkout no-overwrite six-slot exact order A B / B A / A B,
-> all permissions FALSE, previous A/B standalone runs count ZERO.
-> New PC-only \`scripts/p08_b46_4b_session_receipt.py\` independently
-> SHA-checks new original A or B capture assets/reviewer report,
-> strict 1023 ordinary timers plus selected trace, coldboot
-> operator acknowledgment and post-JTAG physical power-cycle
-> operator acknowledgment (not independent electrical proof),
-> previous hash-linked session sequence, refuses old historical reports.
-> Native negative synthetic pytest and no-board CI.
->
-> **EXACT PC AND ONE-AT-A-TIME KV260 RUNBOOK**:
-> \`docs/P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md\`.
-> First pull branch / native tests, run original source/ELF+old
-> physical evidence PC-only study plan; return plan SHA and test
-> summary. Then first **NEW** Session01=A rebuilt, original genuine
-> SHA \`fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793\`,
-> dedicated fresh coldboot, separate original A offline preflight,
-> ONE newly explicit operator scoped approval before destructive
-> 64MiB DDR/JTAG, independent original all1024 packed neural,
-> 26x42 trace and A53 timing, new no-overwrite receipt,
-> mandatory power-cycle after ANY attempt. The previously accepted
-> standalone A SHA \`b57f20be...\` and B once physical
-> \`06a007b7...\` remain separate prior validations and count
-> ZERO of the six new B4.6 sessions. Next B only after A independently
-> accepted and power-cycled; all source and physical failures preserved.
-> All protected memories/memory owners remain unproven, no XMPU
-> protection claim, no pure PL-compute or model-matched speedup,
-> official MNIST TEST sealed. NEVER place sole accepted artifacts /tmp.
->
-> **B4.6.4a LATEST PC-ONLY DEVELOPMENT (2026-11-05 local / 2026-11-06 UTC).**
-> `agent/v3-p08-b46-4a-service-boundary-audit` is NEW child branch
-> from `agent/v3-p08-b46-a21-candidate-physical-validation`, draft
-> PR #69. Existing accepted independent rebuilt A2.1 all1024
-> KV260 *single* physical evidence remains accepted: SHA
-> `b57f20beb80943fb8d6b526a2e119cd12b17641db6fa7e55dbab8ca9f2f148a6`;
-> genuinely new ELF `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793`,
-> original old SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`
-> still missing. No old immutable receipts rewritten.
->
-> **NOW CURRENT TASK:** PC source-only original A (rebuilt source)
-> versus B_AUTH_ONCE_UNPROTECTED_V2 per-image A53 service timing
-> boundary audit and distinct launcher/DDR owner crosswalk. New
-> `scripts/p08_b46_ab_service_boundary_audit.py`, negative native
-> tests, no-board CI, roadmap and exact operator terminal runbook:
-> `docs/P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md`.
-> It proves frozen C call order only: both A53 timers start before
-> per-image service and end after neural journal, but A one-core
-> prepare/ingress, B 27-context reset/virtual scheduler, A/B sidecar
-> and separate JTAG/DDR/recovery are NOT identical. Original B
-> authenticated-once source SHA bind is OUTSIDE per-image service.
-> Source report deliberately says PHYSICAL boundary equivalence
-> FALSE and NO new board authorization. Existing A accepted
-> single run and B standalone once 1024 are NOT any of the six
-> new AB/BA/AB sessions. No PL-only speedup or DDR XMPU
-> protection claim. User must run local pytest and external
-> source-audit JSON then provide SHA before stage signoff.
-> Official MNIST TEST remains sealed. No new JTAG/DDR/BOOT.BIN,
-> no forced user runs, no PR merge without explicit authorization.
->
+**AUTHORITATIVE FIRST-READ CONTEXT; overrides all older active instructions below.** Following advisor discussion, the thesis is pivoting from Loihi-constrained architectural emulation toward an experimental **sparsity-aware, DDR-backed virtualized LIF SNN accelerator** (future v4). v4 will preserve independently verified neuron dynamics and virtualized logical compute while **not** treating Loihi sizes, access restrictions, or scheduler details as mandatory. Time-multiplexing/off-chip memory are established prior art: novelty must be based on the **measured interaction of DDR-backed virtualization, sparse/event-driven execution, active-context locality and working-set management**, possibly an activity-aware context scheduler. No v4 branch or RTL architecture has yet been selected; next step is design brainstorming, targeted literature, benchmark contract and experiment planning, **not code on v3**.
 
-# AUTHORITATIVE CURRENT HANDOFF — START HERE (2026-11-05 local / 2026-11-06 UTC)
+## Central research questions (working wording)
+
+> How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?
+
+> How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?
+
+Candidate contributions (research hypotheses, **not accepted results**): (1) controlled measurement/curves of virtualization cost versus network size, spike/connectivity sparsity, context locality and resident capacity; (2) design/test sparsity- or locality-aware DDR context scheduling/caching against simple policies; (3) independently neural-correct, demonstrably resource-constrained FPGA SNN acceleration on networks beyond resident memory, with fair local-memory controls and comparison to published accelerators **only** at disclosed equivalent workloads and timer boundaries. Use YANA, SENECA, HiAER-Spike, Ansari/Wielgosz and NIR in root `LitReview.md`. Four controlled small-network variants considered: timestep/on-chip, event/on-chip, timestep/DDR, event/DDR; large DDR-scale study separately where on-chip controls cannot fit. Exact v4 experiments TBD.
+
+## v3 termination status (do not resume legacy physical test runbook)
+
+- v3 **frozen research baseline**. Historical acceptance remains true; incomplete planned work remains incomplete, not silently completed. Previous single 27-core/1010-neuron B_AUTH_ONCE V2 full1024 independently accepted (1023-image median ~7225.137ms), separate 42-neuron A full1024 standalone accepted (median ~35.6969ms); unequal workloads and distinct timer work, so not matched acceleration. The exact original SHA, contexts, runbooks and test logs are preserved.
+- The formerly planned **six independent coldboot A/B_AUTH_ONCE A B / B A / A B** physical study was **discontinued after one genuinely NEW accepted Session 01 A**, not completed. Original slot01 run `/home/dna/Thesis_Evidence/p08_b46_s01_A_20261106T052149Z/`, independent original all1024 neural + 26×42 trace/A53 PASS, CNTFRQ **99,999,001 Hz**, 1023-image ordinary A53 median **35.67722641549189 ms**. Report JSON and same-capture rereview SHA256 **`26e9cfbc9b6485313d89e72f80ec578498539c902838140940f1027da4038eb0`**; raw hash manifest SHA **`8c5e1b05775bbcaf087b55203569da949abfe16ebc3d46d0b98035002a3a6440`**. Operator PC slot01 ledger `/home/dna/Thesis_Evidence/p08_b46_s01_A_accepted_20261106T052707Z.json` SHA **`ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec`**, first slot accepted only. Fresh physical boot/power-cycle operator-attested, **not** electrical instrument proof. All five remaining 02:B/03:B/04:A/05:A/06:B are **CANCELED / NOT RUN**. No paired AB/BA/AB statistic accepted; do **not** run the stale Session02 command under historical sections below.
+- Earlier original B_AUTH_ONCE V2 ELF SHA `a19b50dffb21d897caa1eb19ea62fadd5dec0a1adc27d99354b2d9b6adab0e85` remains verified **unprotected**. The separately rebuilt A2.1 new ELF SHA `fa926823c291b70267c099db00c5052e62405444db58863436c1b2f950a58793` does not replace lost historical original SHA `fc44b5d9d7f3f481e1da2101fea0010661c24b2491005f013e9e66893af138f0`. No Loihi-bitwise silicon clone, secure XMPU/DDR backup hardware protection, energy/power measurement, pure PL acceleration, official MNIST TEST access, strict A/B physical service-work equivalence, or matched-network speedup.
+- `LOIHI_TWIN_ROADMAP.md` has the **2026-11-07 authoritative v3 pivot/freeze banner**; old P04–P09 *remaining* milestones are canceled for v3 while accepted evidence remains; **P10** is the FINAL optional **DEFERRED bounded v3 optimization** (no work now). Future v3 optimizations require a new explicit user decision and timebox. V4 design can reuse source/oracles but no commits or hardware steps authorized yet.
+
+## Repository, command, build and evidence workflow — keep for future chats
+
+- Repo: `Xtimetraveler-Prime/Thesis`, main integration branch `main` after the user-approved current consolidation; version roots `Loihi_Digital_Twin/v1/` preserved verified baseline, `v2/` accepted Loihi manycore, `v3/` preserved KV260 architecture and benchmarks; future v4 should get a **separate** `Loihi_Digital_Twin/v4/` development root *if agreed*. Root `README.md` should be primary thesis question; root `LitReview.md` retains prior source notes and new literature.
+- v3 tree: `Loihi_Digital_Twin/v3/src/loihi_twin_v2/` (historical package name intentionally retained), `scripts/` (source/ELF admissions, PC independent verification, optional destructive hardware runners), `tests/` (native regression), `vivado/` (build, Tcl, bitstream/HDL), `hls/`, `rtl/`, `hardware/`, `docs/`, `artifacts/`, `LOIHI_TWIN_ROADMAP.md`. Source-backed claim scopes and file provenance live in exact historical docs below. Never silently migrate names or discard v1/v2/v3 evidence.
+- Local PC shell (VS Code Ubuntu):
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch main
+git pull --ff-only origin main
+source ~/Git/Thesis/.venv-p08/bin/activate
+cd ~/Git/Thesis/Loihi_Digital_Twin/v3
+PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
+  tests/test_p08_b46_4b_six_session_plan.py \
+  tests/test_p08_b46_4b_session_receipt.py \
+  tests/test_p08_b45_perf_full1024_independent_cli.py
+```
+
+- For future changes: create **new named branch from freshly pulled main**, implement one explicit scope/submilestone, native `python3 -m pytest -q -rs` with relevant regression suites, `python3 -m py_compile` for changed Python, `bash -n` for shell, original Vivado/Vitis/XSA/ELF SHA provenance if relevant; use no-board GitHub Actions, draft PR, obtain user PC native/physical evidence when needed, only merge after explicit user permission. The present user explicitly requested **one-time consolidation of the existing v3 stacked PRs into main**; this does not authorize later merges automatically.
+- User PC immutable real evidence is outside checkout in `$HOME/Thesis_Evidence/` (not `/tmp`), with exact ELF/bitstream/route/report SHA checks; GitHub CI cannot rehash original private board captures. Keep raw logs, signed report and no-overwrite new evidence folders; no reinterpretation of rereviews as separate physical sessions, no fabricated observed CNTFRQ, throughput or energy. Official MNIST TEST remains sealed and is NOT an implicit prerequisite for v4.
+- Physical safety for **future separately approved** KV260 work: `source "$HOME/Vivado/2025.2/Vitis/settings64.sh"`; single `hw_server` on TCP 3121 and no competing Vivado/XSDB clients; use PuTTY only for short read-only inspection (e.g. `sudo xmutil listapps`); any JTAG/DDR/PS halt/PL programming is potentially destructive, needs **session-specific explicit risk review**, known disposable Linux/JTAG ownership, fresh coldboot and **mandatory physical power-cycle after ANY JTAG attempt**; do not resume halted Linux. FSBL/PL/RPU/DMA DDR-ownership exclusion and XMPU unprotected backups remain **UNPROVEN**. **Do not launch any preserved old hardware runner merely because its commands are documented.**
+- Source update links: [frozen v3 roadmap](../LOIHI_TWIN_ROADMAP.md), [first newly accepted A study slot](P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md), [historic six-study runbook, now canceled](P08_B46_4B_SIX_NEW_AB_BA_AB_SESSION_RUNBOOK.md), [historic A/B source boundary audit](P08_B46_4A_AB_SERVICE_BOUNDARY_SOURCE_AUDIT_RUNBOOK.md), root [literature review](../../../LitReview.md), root [README](../../../README.md).
+
+## Archived historical handoff below
+
+Everything below this heading is preserved chronologically to retain provenance, CLI syntax, historical failure/acceptance boundaries and original one-at-a-time physical safety policy. Its old statements 'CURRENT', 'NEXT B', 'NOT RUN', 'PENDING', and 'NO MERGE' refer to their **original time** and do not override the new v3 freeze, canceled experiments, or the one-time user-approved integration request.
+
+---
+
+# ARCHIVED: AUTHORITATIVE CURRENT HANDOFF — START HERE (2026-11-05 local / 2026-11-06 UTC)
+
 
 > **Read this block and the linked accepted evidence FIRST.** The 1,200+
 > lines of historical dated notes below are an append-only research
