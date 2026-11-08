@@ -14,7 +14,10 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from m05_axis_regmap import REQUIRED, find_header, format_svh, parse_registers
+from m05_axis_regmap import (
+    REQUIRED, find_header, find_generated_register_map, format_svh,
+    parse_registers, parse_control_verilog,
+)
 
 EXAMPLE = {
     "AP_CTRL": 0,
@@ -131,6 +134,40 @@ class M05RTLStallPrepTests(unittest.TestCase):
                 self.assertIn(required, runner)
         self.assertNotIn("program_hw_devices", runner)
         self.assertNotIn("rm -rf", runner)
+
+    def test_rtl_only_control_s_axi_parameter_fallback(self):
+        # package.output.format=rtl skips packaging a software driver.
+        # The generated Verilog itself is the register map authority.
+        values = {**EXAMPLE}
+        lines = ["module m05_rolling_replay_control_s_axi;", "localparam"]
+        for name, val in values.items():
+            raw = name if name in ("AP_CTRL", "AP_RETURN") else name + "_0"
+            lines.append(f"    ADDR_{raw} = 7'h{val:02x},")
+        lines.append("END = 1'b1;")
+        self.assertEqual(parse_control_verilog("\\n".join(lines)), EXAMPLE)
+
+    def test_rtl_fallback_is_used_when_no_driver_header(self):
+        with tempfile.TemporaryDirectory(prefix="m05_axi_rtl_") as td:
+            root = Path(td)
+            rtl = (root / "work/hls/syn/verilog/"
+                   "m05_rolling_replay_control_s_axi.v")
+            rtl.parent.mkdir(parents=True)
+            rtl.write_text("localparam\\n" + "\\n".join(
+                f"ADDR_{k if k in ('AP_CTRL', 'AP_RETURN') else k + '_0'}"
+                f" = 7'h{v:02x},"
+                for k, v in EXAMPLE.items()))
+            parsed, location = find_generated_register_map(root)
+            self.assertEqual(parsed, EXAMPLE)
+            self.assertEqual(location, rtl)
+
+    def test_rtl_fallback_refuses_missing_or_conflicting_map(self):
+        with self.assertRaisesRegex(ValueError, "unique offset"):
+            parse_control_verilog("localparam ADDR_AP_CTRL = 7'h00;")
+        with self.assertRaisesRegex(ValueError, "invalid RTL"):
+            parse_control_verilog("\\n".join(
+                f"ADDR_{k if k in ('AP_CTRL', 'AP_RETURN') else k+'_0'}"
+                f" = 7'h{(129 if k == 'TICKS_DATA' else v):02x},"
+                for k, v in EXAMPLE.items()))
 
     def test_native_regmap_does_not_require_vitis_installation(self):
         self.assertEqual(set(parse_registers(test_header())), set(REQUIRED))
