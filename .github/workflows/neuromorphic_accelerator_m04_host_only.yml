@@ -1,0 +1,41 @@
+name: Neuromorphic Accelerator v1 M04 native C++ numerical audit (NO BOARD)
+
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m04_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m04_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m04-host-lif:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain identity (PC only)
+        run: |
+          python3 --version
+          g++ --version
+          git rev-parse HEAD
+      - name: Compile Python source (PC only)
+        run: python3 -m compileall -q src scripts tests
+      - name: 22 M04 numerical/requirements methods / M02 reference (NO BOARD)
+        run: python3 -m unittest discover -s tests -p 'test_m04*.py' -v
+      - name: Accepted M03 M02 M01 regression suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+      - name: Source provenance hashes
+        run: |
+          sha256sum             hls/m04_lif_eval/m04_eval.hpp             hls/m04_lif_eval/m04_eval.cpp             hls/m04_lif_eval/m04_host_cli.cpp             tests/test_m04_eval.py             tests/test_m04_handoff.py             src/neuromorphic_accelerator_v1/m04_profile.py             src/neuromorphic_accelerator_v1/m02_dense_reference.py             src/neuromorphic_accelerator_v1/m02_event_reference.py

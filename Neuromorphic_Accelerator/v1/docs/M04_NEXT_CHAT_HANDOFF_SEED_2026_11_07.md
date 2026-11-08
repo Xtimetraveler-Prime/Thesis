@@ -1,3 +1,5 @@
+> **M04.5 UPDATE (2026-11-07 local, later than this original handoff):** This document began as an M04 start-chat seed and retains historical M04-not-started language below. Current status is **M04 IN PROGRESS, UNMERGED** on `agent/neuromorphic-accelerator-v1-m04-hls-audit`. M04.1–M04.3 host tests were user-reported verified. M04.4 Vitis synthesis NOT RUN. **M04.5 requirements/source-only preflight DONE, new verification pending.** Read [M04.5 K26 requirements and exact-domain handoff](M04_5_ENGINE_REQUIREMENTS_AND_M05_HANDOFF.md), [M04 test explanations](M04_TESTS_EXPLAINED.md), [M04 no-board verification](M04_PC_ONLY_VERIFICATION.md) and [current roadmap](../roadmap.md). M04 **not closed, not accepted and not merged**; physical board work not authorized. The original text below is frozen for provenance and must not be read as current branch status.
+
 # AUTHORITATIVE NEXT-CHAT HANDOFF SEED — Neuromorphic Accelerator v1, start M04
 
 **Prepared:** 2026-11-07 (America/Denver; CI may display 2026-11-08 UTC). **Status:** M01, M02 and M03 user-accepted in their explicitly PC-only scopes. The user authorized closing M03 and merging PR #77 into main. **Next milestone: M04 — HLS evaluation-engine audit/reuse feasibility; NOT STARTED.** Before new development confirm PR #77 really merged and obtain its actual main merge commit; do not guess a final SHA.
@@ -88,3 +90,10 @@ Do not run archived Loihi physical scripts. Once M04 branch has new source, prov
 ## 5. DIRECT REQUEST TO NEXT CHAT INSTANCE
 
 Begin M04.1 on a **new development branch from merged main**, by inspecting the v3 HLS source/interface and testbench, documenting differences against accepted M02 LIF reference and how an event-driven streaming update boundary could be verified. Continue into numerical difference table and host-only functional proof as far as possible without needing operator input or new design decisions. Create M04 tests, M04_TESTS_EXPLAINED.md, operator PC verification runbook, and an updated roadmap, then leave a draft PR unmerged pending user verification/approval. **Do not** re-open M01–M03, change LIF semantics silently, execute real FPGA/JTAG, or claim unmeasured speedups.
+
+
+## Post-handoff M04 working-branch status (not part of original 2026-11-07 seed)
+
+M04 branch `agent/neuromorphic-accelerator-v1-m04-hls-audit` was created from accepted main merge SHA `2ceac0372ed6ec11fb09c764277e4532b4807e46`. **M04.1/M04.2 review and M04.3 bounded host C++ candidate are in development, not accepted/merged; M04.4 Vitis synthesis was NOT RUN.** Live working-branch references: [audit/difference matrix](M04_HLS_ENGINE_AUDIT.md), [M04_TESTS_EXPLAINED.md](M04_TESTS_EXPLAINED.md), [native PC-only verification](M04_PC_ONLY_VERIFICATION.md), [M04 test source](../tests/test_m04_eval.py), and [updated roadmap](../roadmap.md). Use the new M04 runbook rather than the seed's old `main` branch commands when verifying this development work. The seed's original historical status above describes the starting point, not acceptance of M04.
+
+**Working-branch CI checkpoint:** At commit `703ac994`, [M04 source-only CI run #42452694640](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42452694640) logged **13 M04 + 28 M03 + 21 M02 + 20 M01 tests PASS**. This is not a user-native run or physical validation and does not merge/accept M04.
