@@ -1,6 +1,6 @@
 # M05 — New streamed evaluation engine versus the historical v3 HLS engine
 
-**Status:** M05 development, host-native functional proof only. HLS synthesis, C/RTL co-simulation, Vivado route and physical KV260 are **NOT RUN**. The new HLS-oriented C++ is not a hardware performance result.
+**Status:** M05 development; three HLS-oriented C++ component tops with host-native functional proof only. HLS synthesis, C/RTL co-simulation, Vivado route and physical KV260 are **NOT RUN**. The new HLS-oriented C++ is not a hardware performance result.
 
 ## Actual source and provenance
 
@@ -35,7 +35,7 @@ New project-owned code:
 
 **Not reused:** v3 `step_compartment`, `decayed_state`, old current saturation, 24+24+16 state packing, refractory handling, strict spike threshold, core/axon/route command interface or host per-core service architecture. An unmodified v3 wrapper would *not* meet M02 reference behavior.
 
-**Not yet implemented:** AXI4-Stream hardware ready/valid and backpressure, bounded event FIFO, programmable long-delay buckets, on-chip neural memory read/write and hazards, 1K state-block/DDR residency, output packet delivery, PS/PL integration, and measurable throughput. The native queue shim is **unbounded std::queue** for functional tests; it cannot certify real AXIS behavior.
+**Not yet hardware-integrated/verified:** AXI4-Stream real ready/valid and backpressure; *physical* bounded event FIFO and programmable long-delay buckets; demonstrated on-chip neural RAM inference, read/write hazards and integrated ownership; 1K state-block/DDR residency; fanout router, output packet delivery, PS/PL integration, and measurable throughput. **New separate source-level PL candidates for state/config RAM and signed event accumulation are described below**, but these are not a connected system or Vitis-synthesized IP. The native queue shim is **unbounded std::queue** for functional tests; it cannot certify real AXIS behavior.
 
 ## HLS and scaling caveats
 
@@ -47,4 +47,16 @@ New project-owned code:
 
 ## Evidence and open gates
 
-Source-only CI passed **17 M05 and 91 accepted M01–M04** methods at code SHA `cd483fe5`, [workflow 42454758437](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42454758437). See [tests explained](M05_TESTS_EXPLAINED.md) and [local verification](M05_PC_ONLY_VERIFICATION.md). The staged [HLS config](../hls/m05_stream_eval/m05_hls_config.cfg) and [C simulation testbench](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) have **not** been run in Vitis. M05.1 is **host-proven but HLS-unverified**, M05.2 is **host-proven but lacks PL scheduler**, M05.3 and M05.4 are **OPEN**, and M05 remains an unmerged draft.
+Source-only CI passed **45 M05 and 91 accepted M01–M04 = 136 named methods**, plus three independent HLS vector bench **native** smokes at [workflow 42456476435](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42456476435), code commit `7cb863b6`. See [tests explained](M05_TESTS_EXPLAINED.md) and [local verification](M05_PC_ONLY_VERIFICATION.md). The staged [HLS config](../hls/m05_stream_eval/m05_hls_config.cfg) and [C simulation testbench](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) have **not** been run in Vitis. M05.1 is **host-proven but HLS-unverified**, M05.2 has a host-proven scheduler and separate HLS-oriented signed-accumulator **source only**, M05.3 has a tested stateful RAM **source candidate only**, and M05.4 genuine Vitis stages are **OPEN**, and M05 remains an unmerged draft.
+
+
+## Addendum: two new independent HLS-oriented physical subcomponents (current branch)
+
+The original comparison above focuses on the **arithmetic evaluator**. M05 now adds two more project-owned modules that v3 kept within its old whole-core memory banks/service logic:
+
+| Component | v3 behavior | New v1 behavior and deliberate constraints |
+| --- | --- | --- |
+| **Tick current ingress** | Axon/synapse expansion and accumulator rows inside `loihi_core_v2_tick`, coupled to old logical-core tables and old current-decay semantics. | [`m05_event_accumulator`](../hls/m05_accumulator/m05_accumulator.cpp): separate per-tick 1,024-neuron **signed i64 RAM candidate**, one W16 contribution per ADD, 4,096 **individual arrivals** maximum, current can cancel before exactly one final W16 neuron clamp. SEAL barrier is mandatory before READ; zero-valued deliveries count; bad tick, bad ID, early read, late add or 4,097th delivery latches sticky invalid-run status until CLEAR. No recurrent temporal FIFO/axon fanout or synchronized PL routing yet. |
+| **Canonical resident neuron storage** | 64-bit packed voltage/current/refractory state in explicit `ap_memory` per-core banks; old per-core time-step shell/wrapper writes back in place. | [`m05_stateful_service`](../hls/m05_stateful/m05_stateful.cpp): separate **1024-row** local membrane/config arrays with *requested* BRAM binding and INIT/STEP/READ/CLEAR. No old current/refractory fields. STEP reads stored old W16 voltage/params and uses actual M04/M02 arithmetic, writes once, rejects duplicate or backward per-neuron ticks; reset invalidates prior epoch. It does **not enforce global all-neuron/tick scheduling or prove an FPGA BRAM resource until Vitis runs**. |
+
+**Important gap:** the three new HLS-oriented tops are deliberately **independent**. No executable PL stream wiring currently connects accumulator sealed sums → neuron-evaluator requests → canonical state-store updates, and no PL event FIFO schedules next-tick/recurrent synaptic fanout. The accepted M02 whole-network parity is shown by the host scheduler and cross-reference tests, not by a full RTL accelerator. Real Vitis HLS Csim + synthesis and C/RTL co-sim must be completed for **each** top, followed by end-to-end RTL integration tests. [Exact three-top operator instructions](M05_HLS_OPERATOR_RUNBOOK.md), [new test explanations](M05_TESTS_EXPLAINED.md).
