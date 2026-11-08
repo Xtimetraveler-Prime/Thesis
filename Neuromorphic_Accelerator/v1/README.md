@@ -4,6 +4,9 @@
 
 ## Latest M05 genuine-tool gate and rolling-wheel follow-on
 
+**Rolling source synthesized successfully on operator PC, 2026-11-08:** Vitis HLS 2025.2 / K26, 10 ns requested, **8.244 ns HLS-estimated** period and **53 BRAM18K, 10,083 LUT, 8,459 FF, 2 DSP**. Genuine rolling CSim/synthesis PASS. Compared to eight-tick integrated top, rolling uses 21 fewer BRAM18K, but more LUT/FF. **RTL co-simulation for rolling has NOT yet been performed.** Unchanged synthesized rolling kernel source was retained while strengthening its HLS CSim testbench with full **64-tick independent dense oracle** plus late invalidation; now **74 M05 +91 previous = 165 native methods PASS**. [Results/limitations](docs/M05_ROLLING_WHEEL_DESIGN_2026_11_08.md). Next operator: `bash hls/m05_stream_eval/run_m05_offline_hls.sh --rolling --cosim` (cumulative, user physical hardware untouched).
+
+
 **Updated operator evidence, 2026-11-08:** Fourth integrated Verilog C/RTL report PASS (simulated latency 8463–16396 cycles, average 10572 cycles at 10ns). Fifth rolling HLS CSim also PASS on prior source. After this evidence the rolling source was optimized to initialize only admitted neuron IDs (`8 * neuron_count` temporal RAM entries per run rather than unconditional `8 * 1024`) and its HLS testbench gained three back-to-back differing-size runs. **The new rolling source needs fresh Vitis CSim**; next command is cumulative `bash hls/m05_stream_eval/run_m05_offline_hls.sh --rolling --synth`, which reruns CSim before synth. No rolling synthesized area/timing/RTL result exists yet. Original raw reports remain local.
 
 
