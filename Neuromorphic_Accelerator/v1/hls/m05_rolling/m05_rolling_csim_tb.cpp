@@ -90,10 +90,125 @@ static bool varying_network_sizes_across_runs() {
     return true;
 }
 
+// This genuine-Vitis-ready regression exercises the full 64-tick supported
+// horizon, multiple wheel wraps and signed recurrent event coalescing.
+// Golden values are computed by a SMALL INDEPENDENT dense-tick oracle in
+// the TESTBENCH ONLY (never compiled as a synthesis source).
+// It intentionally does not use m04_eval_one or the rolling scheduler.
+static bool dense_oracle_64_tick_mixed_network() {
+    const M05IntegratedNeuron params[2] = {
+        {-3, 1, 6, -2}, {0, 0, 4, 0}
+    };
+    const M05IntegratedSynapse edges[5] = {
+        {0, 0, 2, 8}, {0, 1, 5, 1}, {0, 1, -3, 1},
+        {1, 0, -4, 3}, {1, 1, 4, 8}
+    };
+    const M05IntegratedExternal events[10] = {
+        {0, 0, 7}, {0, 0, -2}, {0, 1, 4},
+        {7, 0, 6}, {8, 1, -1}, {15, 0, 12},
+        {16, 1, 4}, {32, 0, 7}, {55, 1, 4}, {63, 0, 0}
+    };
+    hls::stream<M05IntegratedNeuron> ns;
+    hls::stream<M05IntegratedSynapse> ss;
+    hls::stream<M05IntegratedExternal> es;
+    hls::stream<M05IntegratedTraceEntry> trace;
+    for (std::uint32_t i = 0; i < 2; ++i) ns.write(params[i]);
+    for (std::uint32_t i = 0; i < 5; ++i) ss.write(edges[i]);
+    for (std::uint32_t i = 0; i < 10; ++i) es.write(events[i]);
+    if (m05_rolling_replay(ns, ss, es, trace, 2, 5, 10, 64, 1, 2) !=
+        M05_ROLL_OK) return false;
+
+    std::int32_t v[2] = {-3, 0};
+    std::uint8_t spike_at[64][2] = {};
+    for (std::uint32_t tick = 0; tick < 64; ++tick) {
+        std::int64_t arrivals[2] = {0, 0};
+        std::uint8_t touched[2] = {0, 0};
+        std::uint32_t count = 0;
+        // Deliberately scan ALL external records and edges, independent of
+        // the device's streaming lookahead and adjacency list/wheel.
+        for (std::uint32_t j = 0; j < 10; ++j) {
+            if (events[j].tick == tick) {
+                arrivals[events[j].neuron_id] += events[j].current;
+                touched[events[j].neuron_id] = 1;
+                ++count;
+            }
+        }
+        for (std::uint32_t j = 0; j < 5; ++j) {
+            const M05IntegratedSynapse edge = edges[j];
+            if (tick >= edge.delay &&
+                spike_at[tick - static_cast<std::uint32_t>(edge.delay)]
+                        [edge.pre] != 0) {
+                arrivals[edge.post] += edge.weight;
+                touched[edge.post] = 1;
+                ++count;
+            }
+        }
+        for (std::uint32_t neuron = 0; neuron < 2; ++neuron) {
+            const std::uint8_t evaluated =
+                (v[neuron] != 0 || params[neuron].bias != 0 ||
+                 touched[neuron] != 0) ? 1 : 0;
+            std::uint8_t spike = 0;
+            if (evaluated) {
+                // Independent signed truncation toward zero.
+                const std::int64_t product = std::int64_t(v[neuron]);
+                const std::int64_t leak = product < 0
+                    ? -((-product) / 2) : product / 2;
+                std::int64_t candidate = leak +
+                    std::int64_t(params[neuron].bias) + arrivals[neuron];
+                if (candidate < -32768) candidate = -32768;
+                if (candidate > 32767) candidate = 32767;
+                spike = candidate >= params[neuron].threshold ? 1 : 0;
+                v[neuron] = spike ? params[neuron].reset_voltage :
+                    static_cast<std::int32_t>(candidate);
+            }
+            spike_at[tick][neuron] = spike;
+            if (trace.empty()) return false;
+            const M05IntegratedTraceEntry result = trace.read();
+            if (result.tick != tick || result.neuron_id != neuron ||
+                result.voltage != v[neuron] ||
+                result.spike != spike || result.evaluated != evaluated ||
+                result.delivered_count != count) {
+                std::cerr << "M05 rolling dense-oracle mismatch tick="
+                          << tick << " neuron=" << neuron << "\\n";
+                return false;
+            }
+        }
+    }
+    return trace.empty();
+}
+
+// Bad external order is only detected when the lookahead is consumed.
+// Earlier speculative AXIS rows can exist; they MUST be rejected by any
+// real receiver when final status != M05_ROLL_OK.
+static bool late_bad_external_invalidates_prefix() {
+    hls::stream<M05IntegratedNeuron> ns;
+    hls::stream<M05IntegratedSynapse> ss;
+    hls::stream<M05IntegratedExternal> es;
+    hls::stream<M05IntegratedTraceEntry> trace;
+    ns.write({0, 0, 5, 0});
+    es.write({0, 0, 0});
+    es.write({3, 0, 5});
+    es.write({1, 0, 1}); // out-of-order behind the lookahead tick
+    const std::uint32_t status =
+        m05_rolling_replay(ns, ss, es, trace, 1, 0, 3, 8, 1, 1);
+    if (status != M05_ROLL_BAD_EXTERNAL) return false;
+    for (std::uint32_t tick = 0; tick < 3; ++tick) {
+        if (trace.empty()) return false;
+        const M05IntegratedTraceEntry x = trace.read();
+        if (x.tick != tick || x.neuron_id != 0 ||
+            x.voltage != 0 || x.spike != 0 ||
+            x.evaluated != (tick == 0 ? 1 : 0) ||
+            x.delivered_count != (tick == 0 ? 1u : 0u)) return false;
+    }
+    return trace.empty();
+}
+
 int main() {
     if (!wheel_wrap_recurrent() ||
+        !dense_oracle_64_tick_mixed_network() ||
         !varying_network_sizes_across_runs() ||
         !later_overflow_invalidates_partial_stream() ||
+        !late_bad_external_invalidates_prefix() ||
         !wheel_wrap_recurrent()) {
         std::cerr << "FAIL: M05 rolling wheel temporal CSim vectors\n";
         return 1;
