@@ -5,6 +5,7 @@
 #   bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --synth
 #   bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --cosim
 #   bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --impl
+#   bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --cosim
 # Modes are cumulative; no reusing/deleting any old evidence.
 set -euo pipefail
 
@@ -16,12 +17,12 @@ MODE="csim"
 SEEN_MODE=0
 SEEN_KERNEL=0
 usage() {
-    echo "Usage: bash $0 [--stream|--stateful] [--csim|--synth|--cosim|--impl]"
+    echo "Usage: bash $0 [--stream|--stateful|--accumulator] [--csim|--synth|--cosim|--impl]"
     echo "Default: --stream --csim. All steps are offline and create new evidence."
 }
 for arg in "$@"; do
     case "$arg" in
-        --stream|--stateful)
+        --stream|--stateful|--accumulator)
             if (( SEEN_KERNEL != 0 )); then
                 echo "ERROR: specify only one kernel" >&2; exit 2
             fi
@@ -46,6 +47,9 @@ done
 if [[ "$KERNEL" == "stateful" ]]; then
     CONFIG="$ROOT/hls/m05_stateful/m05_stateful_hls_config.cfg"
     TOP="m05_stateful_service"
+elif [[ "$KERNEL" == "accumulator" ]]; then
+    CONFIG="$ROOT/hls/m05_accumulator/m05_accum_hls_config.cfg"
+    TOP="m05_event_accumulator"
 else
     CONFIG="$ROOT/hls/m05_stream_eval/m05_hls_config.cfg"
     TOP="m05_stream_eval"
@@ -97,6 +101,10 @@ sha256sum \
     hls/m05_stateful/m05_stateful.cpp \
     hls/m05_stateful/m05_stateful_csim_tb.cpp \
     hls/m05_stateful/m05_stateful_hls_config.cfg \
+    hls/m05_accumulator/m05_accumulator.hpp \
+    hls/m05_accumulator/m05_accumulator.cpp \
+    hls/m05_accumulator/m05_accum_csim_tb.cpp \
+    hls/m05_accumulator/m05_accum_hls_config.cfg \
     hls/m05_stream_eval/run_m05_offline_hls.sh \
     > "$OUT/source_sha256.txt"
 # A nonzero tool status still preserves original logs and an explicit failure.
