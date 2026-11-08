@@ -82,13 +82,74 @@ def find_header(impl_root: Path) -> Path:
     return sorted(next(iter(parsed.values())))[0]
 
 
+def parse_control_verilog(text: str) -> dict[str, int]:
+    """Fallback when package.output.format=rtl emits NO software driver.
+
+    Parses Vitis-generated RTL's localparam ADDR_X_..., never hard-codes the
+    register map. Return and arguments may have _DATA_0 suffixes.
+    """
+    addresses: dict[str, int] = {}
+    candidates: dict[str, list[int]] = {}
+    for match in re.finditer(
+        r"\\bADDR_([A-Z0-9_]+)\\s*=\\s*([0-9]+)'[hH]([0-9a-fA-F]+)",
+        text
+    ):
+        raw, _, number = match.groups()
+        address = int(number, 16)
+        names = (raw, raw.removesuffix("_0"))
+        for name in names:
+            if name in REQUIRED:
+                candidates.setdefault(name, []).append(address)
+    for name in REQUIRED:
+        variants = candidates.get(name, [])
+        if not variants or len(set(variants)) != 1:
+            raise ValueError("control_s_axi RTL lacks unique offset for " + name)
+        addresses[name] = variants[0]
+    if len(set(addresses.values())) != len(addresses):
+        raise ValueError("generated RTL register offsets collide")
+    if addresses["AP_CTRL"] != 0 or any(
+        a >= 128 or a % 4 for a in addresses.values()
+    ):
+        raise ValueError("invalid RTL 7-bit AXI-Lite address map")
+    return addresses
+
+
+def find_generated_register_map(impl_root: Path) -> tuple[dict[str, int], Path]:
+    """Prefer generated driver; fall back to control_s_axi RTL in RTL-only flow."""
+    try:
+        header = find_header(impl_root)
+    except ValueError as exc:
+        if "missing" not in str(exc) and "found HLS headers" not in str(exc):
+            raise
+        header = None
+    if header is not None:
+        return parse_registers(header.read_text(encoding="utf-8")), header
+    paths = sorted(impl_root.resolve(strict=True).glob(
+        "work/**/m05_rolling_replay_control_s_axi.v"
+    ))
+    if not paths:
+        raise ValueError("neither Vitis driver header nor generated "
+                         "control_s_axi RTL exists in implementation evidence")
+    maps = {}
+    for path in paths:
+        try:
+            mapping = parse_control_verilog(path.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        maps.setdefault(tuple(sorted(mapping.items())), []).append(path)
+    if len(maps) != 1:
+        raise ValueError("missing/ambiguous generated RTL control address map")
+    k = next(iter(maps))
+    return dict(k), maps[k][0]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--impl-evidence", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    header = find_header(args.impl_evidence)
-    contents = format_svh(parse_registers(header.read_text(encoding="utf-8")))
+    mapping, header = find_generated_register_map(args.impl_evidence)
+    contents = format_svh(mapping)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as out:
         out.write(contents)
