@@ -43,7 +43,10 @@ int main() {
             es.write(x);
         }
     }
-    // Reject unconsumed fields instead of silently ignoring malformed framing.\n    std::string extra;\n    if (std::cin >> extra) return 2;\n    std::uint32_t result = m05_integrated_replay(
+    // Reject unconsumed fields instead of silently ignoring malformed framing.
+    std::string extra;
+    if (std::cin >> extra) return 2;
+    std::uint32_t result = m05_integrated_replay(
         ns, ss, es, out, n, s, e, t, dnum, dden);
     const std::uint32_t rows = result == M05_INT_OK ? n * t : 0;
     std::cout << result << " " << rows << "\n";
