@@ -173,6 +173,39 @@ class M05RollingNativeTests(unittest.TestCase):
         self.assertEqual(self.run_case(net, a, 12), self.run_case(net, b, 12))
         self.compare_m02_m03(net, a, 12)
 
+    def test_64_tick_mixed_signed_recurrence_against_independent_references(self):
+        # Same complete-horizon stimulus as the actual HLS CSim/RTL bench.
+        # Its 128 trace rows are checked against all accepted M02/M03 oracles.
+        net = Network(
+            (Neuron(initial_v=-3, bias=1, threshold=6, reset_v=-2),
+             Neuron(initial_v=0, bias=0, threshold=4, reset_v=0)),
+            (Synapse(0, 0, 2, 8), Synapse(0, 1, 5, 1),
+             Synapse(0, 1, -3, 1), Synapse(1, 0, -4, 3),
+             Synapse(1, 1, 4, 8)),
+            decay_num=1, decay_den=2, state_bits=16)
+        events = (
+            InputCurrent(0, 0, 7), InputCurrent(0, 0, -2),
+            InputCurrent(0, 1, 4), InputCurrent(7, 0, 6),
+            InputCurrent(8, 1, -1), InputCurrent(15, 0, 12),
+            InputCurrent(16, 1, 4), InputCurrent(32, 0, 7),
+            InputCurrent(55, 1, 4), InputCurrent(63, 0, 0),
+        )
+        actual = self.compare_m02_m03(net, events, 64)
+        self.assertEqual(len(actual), 128)
+        self.assertEqual(actual[-2][0], 63)
+        self.assertEqual(actual[-2][4], 1)  # final-tick ZERO touch
+        self.assertEqual(actual[-1][3], 1)  # last-tick recurrent spike
+
+    def test_maximum_1024_resident_ids_and_sparse_edge_boundary(self):
+        net = Network(tuple(Neuron(threshold=5) for _ in range(1024)),
+                      (Synapse(1023, 0, 5, 1),), state_bits=16)
+        rows = self.compare_m02_m03(net,
+                                    (InputCurrent(0, 1023, 5),), 2)
+        self.assertEqual(len(rows), 2048)
+        self.assertEqual(rows[1023][3], 1)
+        self.assertEqual(rows[1024][3], 1)  # tick 1, ID 0 recurrence
+        self.assertEqual(rows[1024][5], 1)
+
     def test_seeded_longer_recurrent_network_full_oracle_parity(self):
         for seed in range(12):
             with self.subTest(seed=seed):
