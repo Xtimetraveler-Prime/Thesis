@@ -1,6 +1,6 @@
 #include "m05_integrated.hpp"
 #include <cstdint>
-#include <iostream>
+#include <iostream>\n#include <string>
 
 // Test adapter only. Input frames:
 // N S E T DECAY_NUM DECAY_DEN
@@ -43,7 +43,7 @@ int main() {
             es.write(x);
         }
     }
-    std::uint32_t result = m05_integrated_replay(
+    // Reject unconsumed fields instead of silently ignoring malformed framing.\n    std::string extra;\n    if (std::cin >> extra) return 2;\n    std::uint32_t result = m05_integrated_replay(
         ns, ss, es, out, n, s, e, t, dnum, dden);
     const std::uint32_t rows = result == M05_INT_OK ? n * t : 0;
     std::cout << result << " " << rows << "\n";
