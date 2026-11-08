@@ -1,5 +1,7 @@
 # M05 — Tests explained (native stream candidate + PC event scheduling)
 
+**CURRENT 2026-11-08 STATUS:** Three standalone IPs have real operator-run Vitis CSim, HLS synthesis and XSim cosim PASS. The fourth integrated finite-horizon candidate has **12 new native network tests** and a **native CSim bench PASS**, but has **NOT** been evaluated with genuine Vitis or RTL. **60 new M05 methods + 91 accepted earlier methods = 151 native test methods PASS**; M05 remains OPEN. The original failures/old host-only verification counts in historical sections below are provenance notes, not current gate results.
+
 **Status:** M05 IN PROGRESS, not user-accepted. M05 has **60 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py) and [12 integrated finite-horizon network tests](../tests/test_m05_integrated.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **151 named methods total**. Four separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
 
 ## Test setup and methodology
