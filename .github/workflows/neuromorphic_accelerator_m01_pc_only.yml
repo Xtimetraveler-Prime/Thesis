@@ -78,6 +78,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: m01-pc-only-modeled-traffic
-          path: \${{ runner.temp }}/m01_two_localities_pc_only.json
+          path: ${{ runner.temp }}/m01_two_localities_pc_only.json
           if-no-files-found: error
           retention-days: 30
