@@ -1,6 +1,6 @@
-# CURRENT Neuromorphic Accelerator v1 Handoff — M02 Independent LIF Reference
+# M02 ACCEPTED HANDOFF — Continue active development in M03
 
-**Updated:** 2026-11-07 local / 2026-11-08 UTC. **Active task:** M02 PC-only neural reference; source development on a fresh branch; NOT YET USER-ACCEPTED. **First read this file plus ../roadmap.md and M02_PROVISIONAL_LIF_CONTRACT.md before making changes.**
+**Updated:** 2026-11-07 local / 2026-11-08 UTC. **Active task:** M02 PC-only reference is **USER-ACCEPTED**, next milestone **M03** must start on a fresh branch after merging M02; this file is a preserved M02-to-M03 handoff. **First read this file plus ../roadmap.md and M02_PROVISIONAL_LIF_CONTRACT.md before making changes.**
 
 ## Thesis and integration history
 
@@ -8,7 +8,7 @@ Repo: Xtimetraveler-Prime/Thesis. New first-generation program: Neuromorphic_Acc
 
 - The original Loihi-inspired Loihi_Digital_Twin/v1,v2,v3 trees stay intact; v3 frozen, original six-session A/B physical sequence canceled after **1 new accepted A**, old P10 optimization deferred. Original signatures/physical evidence immutable, never a new v1 hardware result. Official MNIST TEST sealed. Older v3 project handoff is historical, not active v1 instruction.
 - User requested merging scaffold/roadmap PR #73/#74 and M01 PR #75; all merged to main. M01 merge commit 196ccfdb8fc77b3eaf37f41f9a5f939f47a4e0b2. M01 COMPLETE **PC-only** after user-reported native PASS and approval of configurable **block-based virtual neuron state residency**, retaining individual/hybrid controls and treating synaptic placement separately. Only analytical traffic counts, no actual DDR. Detailed 20-test explanation: M01_TESTS_EXPLAINED.md. M01 user-local original JSON SHA not provided; do not invent one.
-- **Active M02 branch:** agent/neuromorphic-accelerator-v1-m02-lif-reference, based on merged M01 main. M02 must remain draft until user local PC verification and approval of the provisional functional contract. M03–M09 pending.
+- **Active M02 branch:** agent/neuromorphic-accelerator-v1-m02-lif-reference, based on merged M01 main. M02 native tests **user-reported PASS** and first LIF numeric contract **explicitly user-approved for the time being**; M02 may now be merged as requested. M03–M09 pending. User-local SHA receipts not supplied; do not invent them.
 
 ## What M02 newly implements (source, NOT hardware)
 
@@ -49,7 +49,7 @@ Then follow docs/M02_PC_ONLY_VERIFICATION.md: unique original timestamped report
 
 ## Pending decisions / next milestone gate
 
-- **M02:** user runs native tests and reviews numerical contract (precision/rounding, bias, delays, separate synaptic-current state, reset/refractory). Do not declare M02 COMPLETE until native PASS and explicit mathematical choice; CI cannot approve the thesis's neural definition.
+- **M02 CLOSED:** user reports native PASS and accepts first precise LIF contract with disclosed exclusions. Treat it as revision 1 for comparisons, not a guarantee of Loihi equivalence. **NEXT M03:** derive oracle-backed signed work/event traces, reproducible sparse graph families, and independent virtual-state vs synaptic traffic modeled under matched comparator conditions.
 - **M03:** freeze reproducible workloads, event/fanout trace contracts and PC-only traffic instrumentation after M02. HLS reuse and PL scheduling in M04/M05.
 - **M01 memory direction remains reversible:** block-based residency initially, neuron-granular/hybrid control mandatory; new M02 reference does not implement caching, DDR, pages, physical scheduling or locality.
 - **Prior art:** YANA hot-neuron scheduling/lazy update must be credited; SENECA time multiplex and HiAER hierarchy as well. No originality claim for LIF or cache rules.
