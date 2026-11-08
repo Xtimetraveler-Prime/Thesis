@@ -23,6 +23,8 @@ CONFIGS = {
     "stream": ("m05_stream_eval/m05_hls_config.cfg", "m05_stream_eval"),
     "stateful": ("m05_stateful/m05_stateful_hls_config.cfg", "m05_stateful_service"),
     "accumulator": ("m05_accumulator/m05_accum_hls_config.cfg", "m05_event_accumulator"),
+    "integrated": ("m05_integrated/m05_integrated_hls_config.cfg",
+                   "m05_integrated_replay"),
 }
 
 STUB = r"""#!/usr/bin/env python3
@@ -145,7 +147,7 @@ class M05RealWorldPathRegressionTests(unittest.TestCase):
                     self.assertIn("STUB_ONLY PASS", run.stdout)
                     self.assertIn("M05 " + kernel + " csim exit code: 0", run.stdout)
             outputs = list((t / "Thesis_Evidence").glob("neuromorphic_v1_m05_*"))
-            self.assertEqual(len(outputs), 3)
+            self.assertEqual(len(outputs), len(CONFIGS))
             for folder in outputs:
                 self.assertEqual((folder / "result.txt").read_text().strip(),
                                  "exit_status=0")
