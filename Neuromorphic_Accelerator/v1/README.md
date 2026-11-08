@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Architecture Research (PLANNING)
 
-**Status: M01 COMPLETE / USER-ACCEPTED (PC-only), M02 ACTIVE / PROVISIONAL NEURAL REFERENCE (CI validation underway; independent user numerical-contract approval pending).** No physical microarchitecture, LIF engine, RTL/bitstream, KV260 measurement or claim of accelerated performance has been accepted. This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
+**Status: M01 and M02 COMPLETE / USER-ACCEPTED (PC-only); next M03 reproducible workloads and modeled traffic.** No physical microarchitecture, LIF engine, RTL/bitstream, KV260 measurement or claim of accelerated performance has been accepted. This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
 
 ## Motivation and questions
 
@@ -31,7 +31,7 @@ Initial architecture brainstorming: [`docs/ARCHITECTURE_DESIGN_QUESTIONS.md`](do
 
 ## Next step (planning, NOT a hardware implementation)
 
-M01's approved provisional memory-placement baseline and tests are documented. **M02 PC-only dense and queued synaptic-delivery LIF reference now exists**; see the [provisional numerical contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md), [21-test explanation](docs/M02_TESTS_EXPLAINED.md), [local native verification](docs/M02_PC_ONLY_VERIFICATION.md), and [current next-chat handoff](docs/M02_NEXT_CHAT_HANDOFF.md). M02 is **not yet accepted**, and no event-sparse hardware engine or physical model has been validated. **Do not interpret modeled state-access transactions as timed SNN inference.** The next independent M02 step is to specify and implement a dense scalar LIF and event-order reference before selecting a streaming HLS/RTL interface. See [dedicated current v1 handoff](docs/M01_NEXT_CHAT_HANDOFF.md) when available. A minimal on-chip-versus-DDR and timestep-versus-event-driven control matrix should be planned before writing hardware.
+M01's approved provisional memory-placement baseline and tests are documented. **M02's initial v1 numerical and event-order contract is user-accepted as the current reference**, with dense and queued synaptic-delivery implementations; see the [provisional numerical contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md), [21-test explanation](docs/M02_TESTS_EXPLAINED.md), [local native verification](docs/M02_PC_ONLY_VERIFICATION.md), and [current next-chat handoff](docs/M02_NEXT_CHAT_HANDOFF.md). M02 is **accepted in its PC-only neural scope**, but no event-sparse hardware engine, physical DDR model or KV260 run has been validated. **Do not interpret modeled state-access transactions as timed SNN inference.** The next independent M03 step is to generate deterministic input/network workloads, extract oracle-backed event traces and compare memory-placement traffic under declared equal-work conditions before selecting HLS/RTL. See the [M02-to-M03 handoff](docs/M02_NEXT_CHAT_HANDOFF.md) for preserved historical context. A minimal on-chip-versus-DDR and timestep-versus-event-driven control matrix should be planned before writing hardware.
 
 ## Repository / workflow
 
