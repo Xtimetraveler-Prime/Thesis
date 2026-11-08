@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Development and Experimental Roadmap
 
-**Status:** PROPOSED / M01 NOT STARTED. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
+**Status:** M01 ACTIVE (PC-only candidate model and tests; **NOT yet accepted**, pending operator native verification and provisional architecture choice); M02–M09 PLANNED. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
 
 ## 0. Purpose and research thesis
 
@@ -18,7 +18,7 @@
 
 | Milestone | Purpose | Depends on | Exit / status |
 | --- | --- | --- | --- |
-| **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **PLANNED** — architecture/cost review; no physical hardware. |
+| **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **ACTIVE / PC-ONLY CANDIDATE** — modeled results and native CI; user PC verification/selection PENDING, no physical hardware. |
 | **M02 — Independent LIF and event-order reference contract** | Define exact numerical/spike semantics and immutable independent oracle; verify sparse equivalence. | M01 interface assumptions | **PLANNED** — functional semantics gate. |
 | **M03 — Workloads, traffic model and measurement contract** | Trace-driven DDR/cache model, sparsity/locality generators and 4-way comparison rules. | M01 + M02 | **PLANNED** — reproducible experiment specification. |
 | **M04 — v3 HLS neuron-engine reuse feasibility** | Audit arithmetic versus dispatch/controller coupling; decide extract/adapt/new engine from evidence. | M02 + M03 | **PLANNED** — documented engineering decision. |
@@ -31,6 +31,8 @@
 **Gate discipline:** Each milestone is a distinct branch / draft PR and user-review checkpoint. Parent milestone code is not silently declared accepted from CI; local hardware claims require separate operator-run genuine implementation and independent physical review. No milestones below are complete yet. Changes to architecture, neural arithmetic or measurement boundaries require reapproval and new versioned artifacts rather than rewriting signed data.
 
 ## M01 — Virtualization architecture trade study (START HERE)
+
+**2026-11-07/08 progress (not signoff):** Candidate A/B/C byte-layout and residency contracts, standard-library deterministic [traffic model](src/neuromorphic_accelerator_v1/m01_residency.py), [cluster/dispersed CLI](scripts/m01_explore.py), [24-cell sweep](scripts/m01_sweep.py), 20 native [negative/fairness tests](tests/) and **no-board GitHub Actions** added on the M01 branch. Read the [options/actual PC-only source-run results](docs/M01_ARCHITECTURE_OPTIONS.md) and [exact operator PC runbook](docs/M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md). **No LIF semantics, spike events, DDR timing, physical hardware performance or true neuron state layout measured.** Final M01 acceptance is blocked on source/PC verification, and a user-approved *provisional* architectural direction. M02 is still not begun.
 
 **Research target:** decide which *residency/transfer granularity* is useful; do not prematurely assume the neuron group is a Loihi-like core. This is a proposal to **compare established architectural choices**, not claim invention of neuron caching, time-multiplexing or hierarchical memory.
 
