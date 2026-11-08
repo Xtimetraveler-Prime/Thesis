@@ -1,6 +1,7 @@
 #include "m05_integrated.hpp"
 #include <cstdint>
-#include <iostream>\n#include <string>
+#include <iostream>
+#include <string>
 
 // Test adapter only. Input frames:
 // N S E T DECAY_NUM DECAY_DEN
