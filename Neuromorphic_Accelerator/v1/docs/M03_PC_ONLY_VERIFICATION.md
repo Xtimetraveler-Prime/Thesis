@@ -1,8 +1,8 @@
 # M03 — Native PC original evidence runbook (NO BOARD)
 
-**M03 status:** ACTIVE / NOT USER ACCEPTED. This executes only Python standard-library synthetic workloads and cache/traffic models; **no KV260, JTAG, Vivado/Vitis, PS DDR, MNIST TEST, real timing, actual DDR bandwidth, power or energy**.
+**M03 status:** COMPLETE / USER-ACCEPTED (PC-only scope). This remains the **repeatable archival verification runbook**; user reports test PASS, but individual user-local report hashes were not furnished. This executes only Python standard-library synthetic workloads and cache/traffic models; **no KV260, JTAG, Vivado/Vitis, PS DDR, MNIST TEST, real timing, actual DDR bandwidth, power or energy**.
 
-## 1. Fetch the new branch and verify source
+## 1. Fetch accepted M03 from main and verify source
 
 In Ubuntu VS Code terminal:
 
@@ -10,8 +10,8 @@ In Ubuntu VS Code terminal:
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch agent/neuromorphic-accelerator-v1-m03-workloads-traffic
-git pull --ff-only origin agent/neuromorphic-accelerator-v1-m03-workloads-traffic
+git switch main
+git pull --ff-only origin main
 
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
 python3 --version
@@ -124,4 +124,4 @@ Review [M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md](M03_WORKLOAD_AND_MEASUREMENT_C
 
 M03 deliberately separates model knobs: N, active K, fanout, input pulses/tick, seed, neuron-ID locality, state-cache bytes, block size, synaptic record bytes and onchip capacity. The four-way rows are *analytical scenarios*; actual matched FPGA timesteps vs events, memory transfers, physical resource use, timer boundaries, coldboots, buffer ownership and power sensors remain M04–M09 hardware matters. A synthetic workload is not a trained accuracy benchmark.
 
-To close M03, report (1) native test summaries, (2) branch HEAD commit SHA, (3) both original JSON SHA256s if possible, and (4) whether you accept the **experimental and future physical measurement scope** or want any adjustment to planned comparisons. No JTAG, ELF, FPGA or DDR action is necessary or authorized.
+M03 was accepted on user-reported native PASS and approval of its PC-only experimental scope. For optional repeat verification, report (1) native test summaries, (2) main HEAD commit SHA, and (3) both original JSON SHA256s if generated. **Next: M04 HLS reuse investigation, not physical board operations**; see [handoff seed](M04_NEXT_CHAT_HANDOFF_SEED_2026_11_07.md). No JTAG, ELF, FPGA or DDR action is necessary or authorized.
