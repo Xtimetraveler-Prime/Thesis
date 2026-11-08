@@ -1,6 +1,6 @@
-# CURRENT Neuromorphic Accelerator v1 — M03 PC-only Research Handoff
+# ARCHIVED M03 RESEARCH HANDOFF — CURRENT: M04_NEXT_CHAT_HANDOFF_SEED_2026_11_07.md
 
-**Date:** 2026-11-07 local / Nov 8 UTC. **Current milestone: M03 ACTIVE / NOT USER-ACCEPTED**. Read this file, ../roadmap.md, M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md and M03_PC_ONLY_VERIFICATION.md first. Old Loihi v3 next-run JTAG handoffs are HISTORICAL, not instructions for accelerator v1.
+**Superseded by [authoritative M04 seed](M04_NEXT_CHAT_HANDOFF_SEED_2026_11_07.md):** M03 was user-accepted after all native tests passed, and PR #77 is authorized for merge into main. This document preserves historical details from its active-development phase. **Original date:** 2026-11-07 local / Nov 8 UTC; **historical status at its creation:** M03 ACTIVE. Read this file, ../roadmap.md, M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md and M03_PC_ONLY_VERIFICATION.md first. Old Loihi v3 next-run JTAG handoffs are HISTORICAL, not instructions for accelerator v1.
 
 ## History, program, Git
 
@@ -50,7 +50,7 @@ Follow docs/M03_PC_ONLY_VERIFICATION.md for TWO unique original no-overwrite JSO
 
 ## Pending gates and future M04
 
-M03 remains ACTIVE until user reports 28+21+20 native PASS and approves the analytical four-way control and *future* physical measurement contract. Full-onchip capacity comparison exists only when N×S fits. State and synapse placement still independent future architecture axes. Default record bytes, AXI burst sizes, cache tag/control and computing costs hypothetical. No real-trained benchmark results, measured clock domains, physical DDR latency, resource area, energy or hardware FIFO stalls.
+**M03 user gates SATISFIED:** User reports 28+21+20 native PASS and explicitly authorizes M03 closure/merge. Future physical measurement details still require fresh operator design and safety approval. Full-onchip capacity comparison exists only when N×S fits. State and synapse placement still independent future architecture axes. Default record bytes, AXI burst sizes, cache tag/control and computing costs hypothetical. No real-trained benchmark results, measured clock domains, physical DDR latency, resource area, energy or hardware FIFO stalls.
 
 After user acceptance/merge, M04 can audit v3 self-authored HLS arithmetic vs old Loihi-style logical-core dispatch, specify a minimal streaming input/output LIF packet, and compare reuse/refactor/new designs with real resource/timing gates. Preserve M02 numerical trace compatibility. Cite YANA, SENECA, HiAER and prior time multiplex/hot-neuron work; do not copy source RTL/software without licensing/provenance review.
 
