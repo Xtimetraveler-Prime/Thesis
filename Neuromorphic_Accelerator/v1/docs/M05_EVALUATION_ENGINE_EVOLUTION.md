@@ -123,6 +123,17 @@ provenance and signal assertions; **new strengthened direct RTL XSim run
 NOT YET PERFORMED**. Both the earlier failed syntax attempt and this first
 passed output-stall run remain distinct evidence entries.
 
+### M05.6 input-stall coverage miss; M05.7 separates the genuine-proof baseline (2026-11-08)
+
+**Operator's new genuine XSim result:** `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T205357Z_221064`, `exit_status=1`. Strict RAM-init staging successfully copied **11 exact generated .dat files** with SHA256 provenance; no previous missing-RAM warning. Actual generated RTL `xvlog` and `xelab` PASS; XSim ran to **12170 ns** but stopped at **`Fatal: RTL_STRESS_FAIL no meaningful incoming AXIS backpressure`** (bench line 345). This happens after the existing 24-row output/status assertions; **there is no reported spike, membrane-voltage, trace-order or routed timing fault**. The 2-neuron, 1-edge, 1-event source contains too few prestart packets to force a measured `TVALID && !TREADY` inbound stall. XSim itself may print `exit 0` after SystemVerilog `$fatal`; the runner was correct to mark the run FAILED due to absent required final PASS marker.
+
+**Design review and regression-preserving response:**
+- Return the original `tb_m05_rolling_axis_stress.sv` to Git blob SHA `c2831bc2953b41066ac4ba83afb75fdeda13c15a`, the exact original **real XSim PASS** source (24 rows, 188 output stalls). Do **not** retroactively mark the earlier output-only verified test failed.
+- Create **separate** `tb_m05_rolling_axis_ingress_stress.sv`: 64 input-neuron packets, 12 ticks, **768 golden trace rows**, 1 delay-8 recurrent edge, 1 external event, 300 prestart cycles, explicit input VALID/TDATA hold checks, **>=10 real inbound stalls required**, original output TREADY stall monitor retained. This is a **NEW testbench**, so its RTL result is **PENDING**.
+- New runner optional `--ingress` selects the separate simulator module, keeps per-test mode plus SHA256 manifest in fresh `~/Thesis_Evidence`, fails on `Fatal: RTL_STRESS_FAIL` even when XSim exits zero, and keeps the 11 generated .dat asset gate for both test modes.
+- The previously established **signed32 evaluation kernel** `m05_rolling.cpp` (Git blob `e5443aa87dcc8819ee8aa680b6ca105facc1aced`), HLS CSim, XSim C/RTL post-check and genuine 6.503 ns post-route 35-BRAM OOC proof are **unchanged**; changes involve only testbenches and verification tooling.
+- [M05.7 runbook](M05_INGRESS_BACKPRESSURE_GATE_2026_11_08.md) contains failure triage, reproducible old-vs-new tests and commands. If 64 inputs still do not stall, inspect actual Vitis-generated regslice/FIFO depth and READY waveform. Don't silently reduce the required 10-cycle input stall threshold, alter HLS kernel to force a test PASS, or infer a hardware issue from a test-coverage miss.
+
 ## F. Next controlled experiments / acceptance gates
 
 1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
