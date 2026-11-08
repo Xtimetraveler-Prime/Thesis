@@ -144,7 +144,7 @@ class M05RTLStallPrepTests(unittest.TestCase):
             raw = name if name in ("AP_CTRL", "AP_RETURN") else name + "_0"
             lines.append(f"    ADDR_{raw} = 7'h{val:02x},")
         lines.append("END = 1'b1;")
-        self.assertEqual(parse_control_verilog("\\n".join(lines)), EXAMPLE)
+        self.assertEqual(parse_control_verilog("\n".join(lines)), EXAMPLE)
 
     def test_rtl_fallback_is_used_when_no_driver_header(self):
         with tempfile.TemporaryDirectory(prefix="m05_axi_rtl_") as td:
@@ -152,7 +152,7 @@ class M05RTLStallPrepTests(unittest.TestCase):
             rtl = (root / "work/hls/syn/verilog/"
                    "m05_rolling_replay_control_s_axi.v")
             rtl.parent.mkdir(parents=True)
-            rtl.write_text("localparam\\n" + "\\n".join(
+            rtl.write_text("localparam\\n" + "\n".join(
                 f"ADDR_{k if k in ('AP_CTRL', 'AP_RETURN') else k + '_0'}"
                 f" = 7'h{v:02x},"
                 for k, v in EXAMPLE.items()))
@@ -164,7 +164,7 @@ class M05RTLStallPrepTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unique offset"):
             parse_control_verilog("localparam ADDR_AP_CTRL = 7'h00;")
         with self.assertRaisesRegex(ValueError, "invalid RTL"):
-            parse_control_verilog("\\n".join(
+            parse_control_verilog("\n".join(
                 f"ADDR_{k if k in ('AP_CTRL', 'AP_RETURN') else k+'_0'}"
                 f" = 7'h{(129 if k == 'TICKS_DATA' else v):02x},"
                 for k, v in EXAMPLE.items()))
