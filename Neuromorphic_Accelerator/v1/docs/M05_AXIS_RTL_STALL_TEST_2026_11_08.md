@@ -2,6 +2,16 @@
 
 **Status:** harness and local prep tests committed; **genuine direct Verilog XSim test has NOT yet been run on the operator's Vivado 2025.2 workstation**. This does NOT claim that the current HLS C/RTL co-simulation already tested intentional stalls. No KV260, JTAG, PS/DDR, Vivado block-design edits or device programming.
 
+## First operator-run failure, diagnosed (2026-11-08)
+
+The first invocation of `bash scripts/run_m05_rolling_rtl_stress.sh "$ROLL_IMPL"` checked out at `c6ac13e114037db513c21af82175595ef540244b` produced evidence `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T203112Z_209004` with `exit_status=1`. The generated AXI-Lite register map was parsed successfully from the **actual Vitis driver header**, and all HLS-generated Verilog files parsed. **The NEW testbench itself did not compile**:
+
+```text
+ERROR: [VRFC 10-4982] syntax error near '"trace=24; stalled_output_cycles=%0d; ingress_gap_cycles=%0d;' [tb_m05_rolling_axis_stress.sv:305]
+```
+
+Root cause: a `$display` call had **three adjacent string literals** on separate lines instead of one SystemVerilog format string. Repaired to one literal, and added a source-only native regression to prevent reintroduction. This event is **not a failure of the previously routed rolling engine**; the simulation did not reach `xelab` or `xsim`. **Please re-pull branch and rerun the exact offline stress command**, allowing the script to produce a fresh evidence folder. The repair is not a genuine RTL PASS until new `xvlog`, `xelab`, and `xsim` logs verify it. Leave failed evidence untouched.
+
 ## Why this gate is now appropriate
 
 The evaluation engine has completed every preceding numerical / feasibility milestone on the target K26 `xck26-sfvc784-2LV-c`:
