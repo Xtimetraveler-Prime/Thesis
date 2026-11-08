@@ -82,6 +82,18 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m01*.py' -q
       - name: M05.10 controller demonstration (SCRIPTED host, NOT board)
         run: python3 scripts/m05_controller_native_demo.py
+      - name: M05.11 standalone RTL bridge simulation (Icarus, NOT Vivado or DMA)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          iverilog -g2012 -s tb_m05_11_packetizer -o "$RUNNER_TEMP/m05_11_packetizer" \
+            rtl/m05_11/m05_trace_dma_packetizer.v rtl/m05_11/tb_m05_11_packetizer.sv
+          vvp "$RUNNER_TEMP/m05_11_packetizer" | tee "$RUNNER_TEMP/m05_11_packetizer.log"
+          grep -Fq "PASS: M05.11 RTL packetizer" "$RUNNER_TEMP/m05_11_packetizer.log"
+          iverilog -g2012 -s tb_m05_11_ingress -o "$RUNNER_TEMP/m05_11_ingress" \
+            rtl/m05_11/m05_ingress_dma_unpad.v rtl/m05_11/tb_m05_11_ingress.sv
+          vvp "$RUNNER_TEMP/m05_11_ingress" | tee "$RUNNER_TEMP/m05_11_ingress.log"
+          grep -Fq "PASS: M05.11 RTL ingress" "$RUNNER_TEMP/m05_11_ingress.log"
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
@@ -125,6 +137,13 @@ jobs:
             hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv \
             scripts/m05_rtl_multi_run_replay.py \
             tests/test_m05_rtl_multi_run_replay.py \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/tb_m05_11_packetizer.sv \
+            rtl/m05_11/tb_m05_11_ingress.sv \
+            src/neuromorphic_accelerator_v1/m05_dma_frame.py \
+            tests/test_m05_dma_frame.py \
+            scripts/run_m05_11_bridge_xsim.sh \
             src/neuromorphic_accelerator_v1/m05_execution_controller.py \
             src/neuromorphic_accelerator_v1/m05_execution_sim.py \
             src/neuromorphic_accelerator_v1/m05_execution_abi.py \
