@@ -1,6 +1,8 @@
-# Neuromorphic Accelerator v1 — CURRENT M01 Next-Chat Handoff
+# ARCHIVED M01 handoff — consult M02_NEXT_CHAT_HANDOFF.md for current development
 
-**Last updated:** 2026-11-07 local / November 8 UTC. **Current task:** M01 CLOSEOUT accepted, begin separate M02 reference milestone. **Authoritative live instructions for NEW accelerator project; old Loihi digital twin handoffs are historical and must not become active tasks.**
+**Superseded after approved M01 merge:** M01 closed and merged into main as PR #75, commit 196ccfdb8fc77b3eaf37f41f9a5f939f47a4e0b2. New M02 PC-only neural reference is in branch agent/neuromorphic-accelerator-v1-m02-lif-reference. Consult [M02_NEXT_CHAT_HANDOFF.md](M02_NEXT_CHAT_HANDOFF.md) before any development. No FPGA activity authorized.
+
+**Original historical M01 status:** 2026-11-07 local / November 8 UTC. **Current task:** M01 CLOSEOUT accepted, begin separate M02 reference milestone. **Authoritative live instructions for NEW accelerator project; old Loihi digital twin handoffs are historical and must not become active tasks.**
 
 ## Research direction and immutable history
 
