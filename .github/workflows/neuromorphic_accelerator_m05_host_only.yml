@@ -1,0 +1,47 @@
+name: Neuromorphic Accelerator v1 M05 stream and event replay (NO BOARD)
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m05_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m05_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m05-host-stream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native compiler and source version
+        run: |
+          python3 --version
+          g++ --version
+          git rev-parse HEAD
+      - name: Python syntax (no hardware)
+        run: python3 -m compileall -q src scripts tests
+      - name: M05 actual native C++ streaming kernel and host scheduler
+        run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
+      - name: Accepted M04 M03 M02 M01 regression suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+      - name: Source SHA256 (host code, not bitstream)
+        run: |
+          sha256sum \
+            hls/m05_stream_eval/m05_stream.hpp \
+            hls/m05_stream_eval/m05_stream.cpp \
+            hls/m05_stream_eval/m05_stream_host_cli.cpp \
+            src/neuromorphic_accelerator_v1/m05_host_runtime.py \
+            tests/test_m05_stream.py \
+            hls/m04_lif_eval/m04_eval.cpp
