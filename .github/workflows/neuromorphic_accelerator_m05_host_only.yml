@@ -56,6 +56,15 @@ jobs:
             hls/m05_accumulator/m05_accum_csim_tb.cpp \
             -o "$RUNNER_TEMP/m05_accumulator_tb_host"
           "$RUNNER_TEMP/m05_accumulator_tb_host"
+      - name: Integrated finite-horizon PL candidate Csim bench compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_integrated/m05_integrated.cpp \
+            hls/m05_integrated/m05_integrated_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_integrated_tb_host"
+          "$RUNNER_TEMP/m05_integrated_tb_host"
       - name: Accepted M04 M03 M02 M01 regression suites
         run: |
           python3 -m unittest discover -s tests -p 'test_m04*.py' -q
@@ -82,5 +91,11 @@ jobs:
             hls/m05_stateful/m05_stateful.cpp \
             hls/m05_stateful/m05_stateful_hls_config.cfg \
             hls/m05_stream_eval/m05_hls_config.cfg \
+            hls/m05_integrated/m05_integrated.hpp \
+            hls/m05_integrated/m05_integrated.cpp \
+            hls/m05_integrated/m05_integrated_host_cli.cpp \
+            hls/m05_integrated/m05_integrated_csim_tb.cpp \
+            hls/m05_integrated/m05_integrated_hls_config.cfg \
+            tests/test_m05_integrated.py \
             hls/m05_stream_eval/run_m05_offline_hls.sh \
             hls/m04_lif_eval/m04_eval.cpp
