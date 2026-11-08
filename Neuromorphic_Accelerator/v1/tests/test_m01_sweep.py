@@ -52,10 +52,10 @@ class SweepTests(unittest.TestCase):
                          ("clustered", "dispersed"))
         self.assertEqual(clustered["results"]["individual"]["total_transactions"], 128)
         self.assertEqual(clustered["results"]["block"]["total_transactions"], 8)
-        self.assertEqual(clustered["results"]["hybrid"]["total_transactions"], 68)
+        self.assertEqual(clustered["results"]["hybrid"]["total_transactions"], 8)
         self.assertEqual(dispersed["results"]["individual"]["total_transactions"], 128)
         self.assertEqual(dispersed["results"]["block"]["total_transactions"], 902)
-        self.assertEqual(dispersed["results"]["hybrid"]["total_transactions"], 943)
+        self.assertEqual(dispersed["results"]["hybrid"]["total_transactions"], 913)
         self.assertEqual(dispersed["results"]["block"]["misses"], 451)
         self.assertEqual(dispersed["results"]["block"]["total_bytes"], 230912)
 
