@@ -110,6 +110,10 @@ jobs:
             tests/test_m05_trace_commit.py \
             tests/test_m05_hls_evidence_audit.py \
             scripts/m05_hls_evidence_audit.py \
+            tests/test_m05_axis_rtl_prep.py \
+            scripts/m05_axis_regmap.py \
+            scripts/run_m05_rolling_rtl_stress.sh \
+            hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv \
             src/neuromorphic_accelerator_v1/m05_trace_commit.py \
             hls/m05_rolling/m05_rolling.hpp \
             hls/m05_rolling/m05_rolling.cpp \
