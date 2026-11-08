@@ -35,6 +35,28 @@ python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 
 Expected: **17 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 108 named unittest methods**, all PASS. One M05 method loops over 12 deterministic recurrent-network subcases. Native C++ compilation or malformed replies fail; no external GPU, MNIST TEST, Vitis, Vivado or KV260 is needed.
 
+## 2a. Optional native-only smoke of the separate HLS Csim testbench
+
+This compiles the staged HLS vector testbench with `g++`, **not Vitis HLS**. It is an extra testbench-consistency gate, not additional PL proof.
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+mkdir -p "$HOME/Thesis_Evidence"
+# Use a new uniquely named output path; do not reuse original test binaries.
+SMOKE_DIR="$(mktemp -d "$HOME/Thesis_Evidence/m05_hls_tb_native_XXXXXXXX")"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \\
+  -Wno-unknown-pragmas \\
+  hls/m04_lif_eval/m04_eval.cpp \\
+  hls/m05_stream_eval/m05_stream.cpp \\
+  hls/m05_stream_eval/m05_hls_csim_tb.cpp \\
+  -o "$SMOKE_DIR/m05_hls_tb_host"
+"$SMOKE_DIR/m05_hls_tb_host"
+sha256sum "$SMOKE_DIR/m05_hls_tb_host" \\
+  hls/m05_stream_eval/m05_hls_csim_tb.cpp
+```
+
+Expected: `PASS: M05 isolated stream C simulation oracle vectors` **from a native host executable**, not from Vitis HLS. Preserve any output artifacts; do not execute old v3 hardware scripts.
+
 ## 3. Optional immutable original PC evidence
 
 Run **once per new directory**; do not reuse or overwrite any prior evidence or report. This stores native/CI-independent logs, source commit and hashes outside the repository.
