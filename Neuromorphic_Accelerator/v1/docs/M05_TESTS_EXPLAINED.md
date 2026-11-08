@@ -1,6 +1,6 @@
 # M05 — Tests explained (native stream candidate + PC event scheduling)
 
-**Status:** M05 IN PROGRESS, not user-accepted. Actual source [test_m05_stream.py](../tests/test_m05_stream.py) contains **17 named unittest methods**, with 12 seeded recurrent-network subcases inside one method. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **108 named tests total**.
+**Status:** M05 IN PROGRESS, not user-accepted. M05 has **45 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) and [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **136 named methods total**. Three separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
 
 ## Test setup and methodology
 
@@ -28,7 +28,7 @@
 | `test_missing_host_binary_rejected_without_fake_pass` | Missing native binary fails rather than silently executing Python-only arithmetic. |
 | `test_tick_exceeding_u64_rejected_before_any_large_replay` | Horizon outside 64-bit tick metadata rejected before costly/unbounded work. |
 
-**Observed CI:** initial M05 compile **failed** on `-Werror=unused-label` in the HLS top; removed label without changing behavior. Tightened an invalid u32-denominator fixture. [Run 42454758437](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42454758437) at `cd483fe5` logged **17 M05 PASS, 22 M04 PASS, 28 M03 PASS, 21 M02 PASS, 20 M01 PASS**. Documentation/source additions require final HEAD CI recheck.
+**Observed CI:** initial M05 compile **failed** on `-Werror=unused-label` in the HLS top; removed label without changing behavior. Tightened an invalid u32-denominator fixture. [Run 42454758437](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42454758437) at `cd483fe5` logged **17 M05 PASS, 22 M04 PASS, 28 M03 PASS, 21 M02 PASS, 20 M01 PASS**. HLS source/documentation additions require final HEAD CI recheck.
 
 **What these tests do NOT establish:** HLS synthesis, C/RTL co-sim, actual AXIS backpressure, real bounded event FIFO or future queue, on-chip state memory ownership/RAW hazards, DDR/AXI traffic, microarchitectural II/latency, routed clock, physical FPGA performance, energy or Loihi/YANA equivalence. [HLS Csim vectors](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) are **unexecuted** Vitis inputs; include no fake HLS PASS. M05 operator native testing and user approval remain pending. See [M05 verification](M05_PC_ONLY_VERIFICATION.md) and [v3 comparison](M05_ENGINE_V3_COMPARISON.md).
 
@@ -36,3 +36,54 @@
 ## Additional independent native Csim-testbench smoke gate (not a unittest method)
 
 The M05 workflow now also compiles [`m05_hls_csim_tb.cpp`](../hls/m05_stream_eval/m05_hls_csim_tb.cpp) against the *same* C++ M05 kernel/M04 step via native `g++`, runs it, and requires the testbench's fixed scalar fixtures to return PASS. This confirms the staged Vitis testbench **itself** is internally consistent under the host-only stream shim. It does **not** add an 18th unittest method, call Vitis, prove AXIS ready/valid, achieve II=1, or demonstrate C/RTL parity. **Genuine Vitis HLS Csim/synthesis/C-RTL remain NOT RUN.**
+
+
+## M05.3 — 12 additional named tests for the persistent 1,024-row state memory candidate
+
+**Source:** [`test_m05_stateful.py`](../tests/test_m05_stateful.py), actual [C++ stateful HLS top](../hls/m05_stateful/m05_stateful.cpp), [text CLI](../hls/m05_stateful/m05_stateful_host_cli.cpp), and [separate HLS Csim vectors](../hls/m05_stateful/m05_stateful_csim_tb.cpp). C++ `static` voltage/bias/threshold/reset arrays and last-tick tags persist across successive function invocations in one process. Memory `BIND_STORAGE` requests BRAM; **native g++ does not establish physical BRAM inference**. The top rejects invalid/duplicate/backward ticks without changing stored state; it does not enforce global tick barrier or external event queue safety.
+
+| Exact new method | Mechanism and required output |
+| --- | --- |
+| `test_init_read_and_clear_invalidate_without_leaking_old_data` | CLEAR → READ rejects uninitialized; INIT voltage=-11, READ exact; CLEAR then READ rejected, never stale state. |
+| `test_negative_decay_inclusive_spike_and_reset` | INIT -3, update with 1/2 gives -1, next input +6 crosses inclusive threshold and resets -2. |
+| `test_duplicate_tick_rejected_no_state_write` | First tick4 update accepted; second tick4 returns duplicate status6/zero; READ confirms prior committed voltage. |
+| `test_stale_tick_rejected_and_gap_is_allowed_if_scheduler_proves_skip` | Tick9 accepted, tick3 rejects as stale status7, tick11 later accepted; skip legality is still external scheduler responsibility. |
+| `test_invalid_init_and_invalid_step_no_state_update` | Out-of-W16 init, invalid threshold/reset and invalid denominators return error4; later READ verifies no write. |
+| `test_duplicate_initialization_rejected_unless_cleared` | INIT twice gives status5; CLEAR permits a fresh INIT epoch. |
+| `test_invalid_opcode_and_id_fail_closed` | Unknown command, zero/oversized network, or out-of-range neuron ID rejected with zero state/spike. |
+| `test_two_neurons_can_advance_in_different_dispatch_order` | Two independent neuron rows processed in non-ID order; spike/reset and negative voltage preserved, demonstrating no old core scan. |
+| `test_1024_neuron_physical_capacity_and_independent_state` | INIT all 1,024 row IDs with distinct voltages, READ nonadjacent IDs for independence; this is C++ storage, not BRAM proof. |
+| `test_saturation_must_follow_exact_64bit_aggregate` | i64 max/min input triggers one W16 clamp and inclusive spike/reset; no early event-wise clipping. |
+| `test_m02_dense_and_event_traces_match_stateful_ram_across_ticks` | **8 deterministic networks**, five neurons each, 13 signed/delayed recurrent edges and 25 currents; all 8×5 update outputs and spikes match BOTH accepted M02 oracles. |
+| `test_malformed_or_unrepresentable_cli_inputs_rejected` | Missing, extra, negative-count, non-integer or unrepresentable fields exit 2 without misleading partial output. |
+
+## M05.2 — 11 additional named tests for the tick-sealed signed-aggregate PL candidate
+
+**Source:** [`test_m05_accumulator.py`](../tests/test_m05_accumulator.py), actual [C++ accumulator](../hls/m05_accumulator/m05_accumulator.cpp), [text CLI](../hls/m05_accumulator/m05_accum_host_cli.cpp), and [HLS Csim vectors](../hls/m05_accumulator/m05_accum_csim_tb.cpp). The one-tick store has 1,024 logical ID slots, signed i64 exact sums, a **SEAL barrier**, 4,096 individual W16 contributions/tick, and **sticky-invalid no-readout on error**. There is **no physical future-delay FIFO or router** yet.
+
+| Exact new method | Mechanism and required output |
+| --- | --- |
+| `test_signed_cancellation_sealed_aggregate_matches_exact_sum` | +32767,-32768,+6 → exact +5, delivered flag1 for ID1; no current for ID0; read only after SEAL. |
+| `test_4096_signed_contributions_success_including_zero` | 4,096 W16 signed values, including cancellations, accepted; exact -2048 and count 4096 on final read. |
+| `test_4097th_signed_contribution_fails_closed_without_readout` | 4,097th W16 event rejects status5 and latches invalid; SEAL/READ reject status10 until explicit CLEAR. |
+| `test_invalid_w16_current_sticky_failure_and_rearm` | Current +32768 outside W16 rejects and locks readout; CLEAR plus new tick allows -32768 exactly. |
+| `test_duplicate_begin_or_unknown_opcode_invalidates_current_tick` | Second BEGIN or illegal opcode sets sticky failure; all later work rejected until CLEAR. |
+| `test_read_before_seal_is_failure_not_partial_current` | Reading accumulated current while tick is open produces status7, then sticky status10; never exposes partial sum. |
+| `test_sealed_tick_rejects_late_add_and_refuses_earlier_sum` | Valid READ succeeds after SEAL; subsequent ADD causes phase error9, then READ refuses previously valid data. |
+| `test_wrong_tick_or_neuron_id_or_network_size_fail_closed` | Old tick, ID>=count, or mismatched count rejects, prevents corrupted cross-neuron/current routing. |
+| `test_multiple_ticks_reset_touch_without_modifying_old_sum` | New tick clears touched flags; zero-attendance neuron reports zero even if previous tick held a nonzero signed aggregate. |
+| `test_m02_recurrent_delivery_aggregate_across_seeded_networks` | **6 seeded recurrent networks**, six ticks each; external and delayed synapses enumerated using accepted M02 spike rows, then every sealed (tick,ID) sum/touched/count checked against independent enumeration. This validates aggregation, **not** future event routing in PL. |
+| `test_malformed_transport_rejected_without_partial_results` | Host CLI missing/extra/invalid values cause parse error without partial output. |
+
+## Five HLS config/offline runner tests (source and shell static checks ONLY)
+
+**Source:** [`test_m05_hls_setup.py`](../tests/test_m05_hls_setup.py). Methods:
+- `test_three_isolated_k26_configs_have_documented_2025_2_keys`: compare **all three** configs to documented `part=xck26-sfvc784-2LV-c`, `clock=10ns`, 12% uncertainty, `flow_target=vivado` and **`syn.output.format=rtl`**; reject old invalid `package.output.format`.
+- `test_configs_reference_real_sources_and_independent_benches`: ensure every `syn.file`/`tb.file` in all 3 configs exists in current checkout and `csim.clean=true`.
+- `test_offline_runner_bash_syntax_help_and_bad_flags`: `bash -n`, offline script `--help`, and invalid/duplicate option rejection before running Vitis.
+- `test_offline_runner_never_invokes_board_or_old_v3_scripts`: static blocklist of JTAG/HW manager commands and no destructive `rm -rf`; original evidence folder/new run and failure trap required.
+- `test_three_tops_are_distinct_and_syn_top_always_matches`: verify top signatures, persistent-state BRAM hints, accumulator overflow control, and script top selection.
+
+**Observed source-only CI:** [M05 run 42456476435](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42456476435), source commit `7cb863b6`: **45 M05 tests PASS**, previous **91 tests PASS**, and **three separate HLS vector testbenches compiled/run with native g++ PASS**. Initial new accumulator test failed because a Python expected-row index was off by one; fixed and reverified, with no accumulator arithmetic change.
+
+**Not validated:** actual 2025.2 HLS Csim/synthesis, RTL equivalence, inferred BRAM/URAM, achieved II/latency/Fmax, AXIS framing/backpressure, on-chip temporal FIFO/synaptic fanout, integrated global tick barrier, PS/AXI/DDR interface, physical K26 or overall speedup. Do not accept M05 as complete based only on native results. **Exact operator HLS stages and required original logs:** [M05_HLS_OPERATOR_RUNBOOK.md](M05_HLS_OPERATOR_RUNBOOK.md). M05 remains OPEN and unmerged pending user verification.
