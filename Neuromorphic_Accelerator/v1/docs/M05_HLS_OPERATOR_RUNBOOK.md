@@ -63,7 +63,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-Expected source-only count **60 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 150 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
+Expected source-only count **60 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 151 named unittest methods**; there are additional randomized subcases. Four staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
 
 ## B. Load Vitis 2025.2 tools (example; adjust INSTALL_ROOT)
 
