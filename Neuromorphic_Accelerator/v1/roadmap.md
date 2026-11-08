@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Development and Experimental Roadmap
 
-**Status:** PROPOSED / M01 NOT STARTED. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
+**Status:** **M01 COMPLETE / USER-ACCEPTED 2026-11-07 local (PC-ONLY architecture/model scope)**; M02–M09 PLANNED. This acceptance concerns the analytical memory-residency trade study and verified software tests, **not** any FPGA speed, LIF correctness, or physical DDR measurements. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
 
 ## 0. Purpose and research thesis
 
@@ -18,7 +18,7 @@
 
 | Milestone | Purpose | Depends on | Exit / status |
 | --- | --- | --- | --- |
-| **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **PLANNED** — architecture/cost review; no physical hardware. |
+| **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **COMPLETE / USER-ACCEPTED** — user-reported 20 native tests PASS, branch CI PASS, provisional block baseline approved; NO FPGA neural/timing results. |
 | **M02 — Independent LIF and event-order reference contract** | Define exact numerical/spike semantics and immutable independent oracle; verify sparse equivalence. | M01 interface assumptions | **PLANNED** — functional semantics gate. |
 | **M03 — Workloads, traffic model and measurement contract** | Trace-driven DDR/cache model, sparsity/locality generators and 4-way comparison rules. | M01 + M02 | **PLANNED** — reproducible experiment specification. |
 | **M04 — v3 HLS neuron-engine reuse feasibility** | Audit arithmetic versus dispatch/controller coupling; decide extract/adapt/new engine from evidence. | M02 + M03 | **PLANNED** — documented engineering decision. |
@@ -31,6 +31,8 @@
 **Gate discipline:** Each milestone is a distinct branch / draft PR and user-review checkpoint. Parent milestone code is not silently declared accepted from CI; local hardware claims require separate operator-run genuine implementation and independent physical review. No milestones below are complete yet. Changes to architecture, neural arithmetic or measurement boundaries require reapproval and new versioned artifacts rather than rewriting signed data.
 
 ## M01 — Virtualization architecture trade study (START HERE)
+
+**2026-11-07/08 accepted M01 scope:** Candidate A/B/C byte-layout and residency contracts, standard-library deterministic [traffic model](src/neuromorphic_accelerator_v1/m01_residency.py), [cluster/dispersed CLI](scripts/m01_explore.py), [24-cell sweep](scripts/m01_sweep.py), 20 native [negative/fairness tests](tests/) and **no-board GitHub Actions** added on the M01 branch. Read the [options/actual PC-only source-run results](docs/M01_ARCHITECTURE_OPTIONS.md) and [exact operator PC runbook](docs/M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md). **No LIF semantics, spike events, DDR timing, physical hardware performance or true neuron state layout measured.** **Acceptance obtained:** the user reports native tests PASS and explicitly approves the direction. **Configurable block/group residency is the initial provisional implementation baseline**, with individual-neuron and hybrid controls retained. Neuron-state and synaptic-connectivity placement remain separate design axes. No user-local raw output or SHA256 hash was supplied, so neither is invented; M01 acceptance relies on user-reported native PASS plus source CI and the approved reversible choice. The exact 20 tests and CI workflow are explained in [M01_TESTS_EXPLAINED.md](docs/M01_TESTS_EXPLAINED.md). **M02 must begin on its own branch after this M01 merge.**
 
 **Research target:** decide which *residency/transfer granularity* is useful; do not prematurely assume the neuron group is a Loihi-like core. This is a proposal to **compare established architectural choices**, not claim invention of neuron caching, time-multiplexing or hierarchical memory.
 
@@ -59,6 +61,8 @@
 - **No board run / no speedup claim.** M01 passes only after documented user review of mapping and numerical implications.
 
 ## M02 — Independent LIF / event-order reference (REQUIRED)
+
+**M01 EXIT GATE PASSED:** user-approved provisional configurable block-state residency, individual/hybrid comparison controls, synaptic placement kept separate. This completes **M01 PC-only research**, not a neural/FPGA architecture freeze. The new M02 reference arithmetic and event semantics require their own independent testing and review.
 
 **Decision:** A **new, small software reference IS REQUIRED** even though v1 is not a Loihi digital twin. Its purpose is independent functional correctness and fair workload equivalence, *not* fidelity to Loihi silicon. v3's verified arithmetic/oracles are reusable **test vectors and design knowledge**, but copying the v3 executor as the only expected-result source risks a common-mode bug.
 
@@ -187,19 +191,19 @@
 
 ## 4. Development workflow, file structure and non-destructive first commands
 
-**Version root:** `Neuromorphic_Accelerator/v1/`. Present scaffold: `README.md`, this `roadmap.md`, `docs/ARCHITECTURE_DESIGN_QUESTIONS.md`; no v1 `src/`, `tests/`, `hls/`, `rtl/`, or `vivado/` exists yet. Create those deliberately when each milestone needs them, and maintain a separate test/trace namespace from frozen `Loihi_Digital_Twin/v3/`.
+**Version root:** `Neuromorphic_Accelerator/v1/`. M01 introduced a standard-library **PC-only state traffic model** in `src/neuromorphic_accelerator_v1/`, `tests/`, `scripts/` and `docs/M01_*`. No v1 LIF reference, HLS/RTL or physical Vivado board implementation exists yet. Keep these explicitly separate from frozen `Loihi_Digital_Twin/v3/`.
 
-PC local checkout of the **roadmap development branch** (until merged with explicit user approval):
+PC checkout after user-authorized M01 merge to main:
 
 ```bash
 cd ~/Git/Thesis
 git status --short
 git fetch origin
-git switch agent/neuromorphic-accelerator-v1-roadmap
-git pull --ff-only origin agent/neuromorphic-accelerator-v1-roadmap
+git switch main
+git pull --ff-only origin main
 ls -l Neuromorphic_Accelerator/v1/
 sed -n '1,120p' Neuromorphic_Accelerator/v1/roadmap.md
-git diff --check origin/agent/neuromorphic-accelerator-v1-scaffold...HEAD
+git status --short
 ```
 
 **Milestone branch discipline:** create new branch based on latest accepted integration branch; independent PC tests before CI; give exact local tests and physical verification commands after each code change. Keep new actual source/ELF/bitstream/raw evidence outside repository and `/tmp`, under an immutable timestamped path such as `$HOME/Thesis_Evidence/`. Never silently reuse accepted v3 evidence as a new accelerator run. FPGA JTAG, Linux halt, PL programming, DDR overwrites and boot ownership require **new session-specific operator authorizations**, and a physical power-cycle after **every** JTAG attempt; no physical execution is part of this roadmap creation.

@@ -1,0 +1,105 @@
+name: Neuromorphic Accelerator v1 M01 state-residency modeling (NO BOARD)
+
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m01_pc_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m01_pc_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m01-no-board:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python syntax check (no hardware)
+        run: |
+          python3 --version
+          python3 -m compileall -q src scripts tests
+
+      - name: Independent deterministic native unittest regressions (no hardware)
+        run: |
+          python3 -m unittest discover -s tests -p "test_m01*.py" -v
+
+      - name: Full default clustered/dispersed trace model and source-scope audit
+        run: |
+          set -euo pipefail
+          python3 scripts/m01_explore.py \
+            --locality both --seed 1 \
+            --out "$RUNNER_TEMP/m01_two_localities_pc_only.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "m01_two_localities_pc_only.json"
+          report = json.loads(p.read_text())
+          assert report["experiment"] == "M01_COLD_STATE_RESIDENCY_PC_ONLY"
+          assert set(report["studies"]) == {"clustered", "dispersed"}
+          for locality, study in report["studies"].items():
+              assert study["measurement_status"] == "PC_ONLY_TRAFFIC_ACCOUNTING_NOT_HARDWARE_MEASURED"
+              assert study["illustrative_timing_assumptions"] is None
+              assert study["trace"]["requests"] == 512
+              for approach, counters in study["results"].items():
+                  assert counters["resident_hits"] + counters["misses"] == 512
+                  assert counters["allocated_resident_bytes"] <= study["config"]["resident_budget_bytes"]
+                  assert "hypothetical_serial_memory_ns" not in counters
+                  print(
+                    f"M01_MODEL locality={locality} approach={approach} "
+                    f"read_bytes={counters['read_bytes']} write_bytes={counters['write_bytes']} "
+                    f"transactions={counters['total_transactions']} "
+                    f"misses={counters['misses']} "
+                    f"evictions={counters['evictions']}"
+                  )
+          print("M01_TWO_LOCALITIES_PC_ONLY_SOURCE_AND_ACCOUNTING_PASS=1")
+          PY
+
+      - name: Reproducible capacity x block-size x locality sweep (no board)
+        run: |
+          set -euo pipefail
+          python3 scripts/m01_sweep.py \
+            --out "$RUNNER_TEMP/m01_capacity_block_locality_pc_only.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "m01_capacity_block_locality_pc_only.json"
+          result = json.loads(p.read_text())
+          assert result["schema"] == "m01-capacity-granularity-sweep-v1"
+          assert result["status"] == "PC_ONLY_ANALYTICAL_TRAFFIC_NOT_REAL_DDR_OR_SNN"
+          assert len(result["grid"]) == 24
+          for entry in result["grid"]:
+              for row in entry["results"].values():
+                  assert row["resident_hits"] + row["misses"] == 512
+                  assert row["allocated_resident_bytes"] <= entry["resident_budget_bytes"]
+          print("M01_3_CAPACITY_4_GROUPSIZE_2_LOCALITY_PC_ONLY_SWEEP_PASS=1")
+          PY
+
+      - name: Deliberate no-overwrite regression and parameter rejection
+        run: |
+          set -euo pipefail
+          if python3 scripts/m01_explore.py --out "$RUNNER_TEMP/m01_two_localities_pc_only.json" >/dev/null 2>&1; then
+            echo "FAIL: existing original report was overwritten"; exit 1
+          fi
+          if python3 scripts/m01_explore.py --block-neurons 3 >/dev/null 2>&1; then
+            echo "FAIL: invalid group segmentation was accepted"; exit 1
+          fi
+          echo "M01_NO_OVERWRITE_AND_INVALID_CONFIGURATION_REJECT_PASS=1"
+
+      - name: Preserve PC-only reproducible traffic accounting artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m01-pc-only-modeled-traffic
+          path: |
+            ${{ runner.temp }}/m01_two_localities_pc_only.json
+            ${{ runner.temp }}/m01_capacity_block_locality_pc_only.json
+          if-no-files-found: error
+          retention-days: 30

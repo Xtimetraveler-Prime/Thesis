@@ -2,7 +2,7 @@
 
 **Status:** Discussion prompts and candidate experiments, not a frozen spec, implementation, thesis novelty claim or proven performance result. Discuss and choose before creating new code or hardware. Keep the original LIF reference independently verifiable.
 
-**Development sequence:** The [proposed M01–M09 v1 roadmap](../roadmap.md) controls milestone admission, independent neural reference, HLS reuse, scheduler/DDR implementation and final measured experiments. This file remains an **unfrozen question list**; cite YANA/SENECA/HiAER as prior art for known concepts.
+**Development sequence:** The [proposed M01–M09 v1 roadmap](../roadmap.md) controls milestone admission, independent neural reference, HLS reuse, scheduler/DDR implementation and final measured experiments. This file remains an **unfrozen question list**; cite YANA/SENECA/HiAER as prior art for known concepts. **Current M01 evidence is PC-only**: see [three architecture mappings and modelled counts](M01_ARCHITECTURE_OPTIONS.md), [reproducible user verification](M01_PC_ONLY_REPRODUCIBILITY_RUNBOOK.md), and the [new-program handoff](M01_NEXT_CHAT_HANDOFF.md). No scheduling, LIF semantics or physical state layout is frozen by those tools.
 
 ## A. What is virtualized?
 
