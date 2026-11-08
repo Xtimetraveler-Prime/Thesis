@@ -1,6 +1,6 @@
 # M04 — Tests explained (source audit + host C++ proof; NO BOARD)
 
-**Status:** M04 in progress, not accepted. This document describes **the exact test methods implemented** in [`test_m04_eval.py`](../tests/test_m04_eval.py) and observed audit/smoke activities, not a synthesized FPGA test. There are **12 M04 Python unittest methods**, including **16 seeded cross-tick randomized network subcases**. The M01 (20), M02 (21), M03 (28) test suites are retained, not reimplemented. Completion and independently run pass/fail evidence must be recorded from CI and the user's native run separately; never infer either from source code.
+**Status:** M04 in progress, not accepted. This document describes **the exact test methods implemented** in [`test_m04_eval.py`](../tests/test_m04_eval.py) and observed audit/smoke activities, not a synthesized FPGA test. There are **13 M04 Python unittest methods**, including **16 seeded cross-tick randomized network subcases**. The M01 (20), M02 (21), M03 (28) test suites are retained, not reimplemented. Completion and independently run pass/fail evidence must be recorded from CI and the user's native run separately; never infer either from source code.
 
 ## M04.1 and M04.2 review procedures (not test methods)
 
@@ -14,7 +14,7 @@ The M04 suite uses Python standard library to invoke an installed C++17 compiler
 neuron_id neuron_count tick old_voltage aggregate_current bias threshold reset_voltage state_bits decay_num decay_den
 ```
 
-Each output is `neuron_id tick status next_voltage spike`. The test asserts response count and ID/tick echo for every case. Status 0 means valid; 1 invalid neuron ID/empty count, 2 invalid W, 4 invalid numerical/state parameters; error response has zero voltage and spike. Invalid inputs must not mutate a persistent state (the function has none). The request consumes the **already summed** signed current; this CLI does not implement routing or a real event FIFO.
+Each output is `neuron_id tick status next_voltage spike`. The test asserts response count and ID/tick echo for every case. Status 0 means valid; 1 invalid neuron ID/empty count, 2 invalid W, 4 invalid numerical/state parameters; error response has zero voltage and spike. Invalid inputs must not mutate a persistent state (the function has none). The request consumes the **already summed** signed current; this CLI does not implement routing or a real event FIFO. The host CLI explicitly exits code 2 on malformed or unrepresentable decimal input, instead of silently wrapping or truncating outside its documented u32/i64 fields.
 
 The two real prior independent oracles are [`m02_dense_reference.py`](../src/neuromorphic_accelerator_v1/m02_dense_reference.py) and [`m02_event_reference.py`](../src/neuromorphic_accelerator_v1/m02_event_reference.py), sharing only validated `m02_types`. The network tests first assert the two oracles agree and then generate one C++ request per neuron/tick from the oracle's *preceding* voltage/spike row, external events and independently enumerated delayed synaptic deliveries. C++ replies are checked against the **entire expected voltage and spike row**, not merely the final number of spikes. These assertions avoid relying solely on a compiler's agreement with itself.
 
@@ -31,12 +31,13 @@ The two real prior independent oracles are [`m02_dense_reference.py`](../src/neu
 | `test_invalid_state_threshold_and_reset_fail_closed` | Out-of-range old voltage/bias/reset, nonpositive/too-large threshold, reset>=threshold | Each status 4, zero state/spike |
 | `test_identical_old_state_is_tick_independent` | Same mathematical request at ticks 0,1,9999999 | Identical result each time; tick is metadata and no persistent hidden core state |
 | `test_delayed_self_loop_and_parallel_signed_edges` | One-neuron recurrent self-edges delay 1 inhibitory, delay 2 excitatory, external ticks 0 and 2 | Both M02 oracles and all 6 ticks of C++ output agree; tick 0 fires, tick 1 voltage -1, no same-tick feedback |
+| `test_host_protocol_rejects_unrepresentable_or_malformed_fields` | Host-only CLI parses one row with out-of-range u32 decay/ID, i64 current, missing fields or trailing tokens | Process exits nonzero (2) and emits no silent result; confirms explicit bounded transport rejection, **not** that future hardware/scheduler checks it |
 | `test_randomized_networks_match_two_m02_oracles_all_ticks` | 4 widths × 4 deterministic seeds, each 5 neurons, 14 parallel/recurrent/signed edges, 35 possibly duplicate/unsorted currents over 8 ticks, decay ratio 0..10/10 | 16 entire `8x5` full-voltage/spike comparisons and independent dense/event exact parity |
 
 ## What has been run vs what remains
 
 - **Observed here before remote CI:** native `g++` C++17 compilation of the isolated candidate and CLI with strict warning flags **PASS**, plus several manually hand-calculated host CLI queries (negative division, equality threshold, positive/negative huge currents and invalid flags) **PASS**. These are local *developer smoke checks*, **not** operator-source/commit-pinned verification and do not establish the 12-method Python suite PASS.
-- **M04 full suite:** 12 test methods and 16 random subcases above are submitted for CI and local operator reproduction. Mark verified only after actual run results are inspected. The operator run commands and new evidence directory are in [M04_PC_ONLY_VERIFICATION.md](M04_PC_ONLY_VERIFICATION.md).
+- **M04 full suite:** 13 test methods and 16 random subcases above are submitted for CI and local operator reproduction. Mark verified only after actual run results are inspected. The operator run commands and new evidence directory are in [M04_PC_ONLY_VERIFICATION.md](M04_PC_ONLY_VERIFICATION.md).
 - **Regressions:** accepted 28 M03 + 21 M02 + 20 M01 methods should be run unchanged, but until the new branch CI/independent run results are checked they are *previously accepted*, not newly certified.
 - **M04.4:** no Vitis HLS/Vivado tools in this agent environment; HLS C simulation, synthesis, C/RTL cosimulation, routed timing, PL DDR transfers, A53/PS control, JTAG, power and physical correctness **NOT RUN**.
 
