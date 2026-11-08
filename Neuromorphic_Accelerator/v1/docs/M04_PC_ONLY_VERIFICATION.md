@@ -32,7 +32,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-The new M04 suite contains **12 unittest methods** and 16 seeded network subcases; prior suites contain **28+21+20** methods. An installed `g++` or `c++` is required; the test compiles from the checked-out **actual branch source**, with `-Wall -Wextra -Werror -pedantic`. A failure to compile is a failure, **not** a skip. A test method may contain multiple assertions/subcases. Independent user PC PASS is separate from GitHub Actions PASS.
+The new M04 suite contains **13 unittest methods** and 16 seeded network subcases; prior suites contain **28+21+20** methods. An installed `g++` or `c++` is required; the test compiles from the checked-out **actual branch source**, with `-Wall -Wextra -Werror -pedantic`. A failure to compile is a failure, **not** a skip. A test method may contain multiple assertions/subcases. Independent user PC PASS is separate from GitHub Actions PASS.
 
 ## 3. Original immutable external evidence for your session
 
