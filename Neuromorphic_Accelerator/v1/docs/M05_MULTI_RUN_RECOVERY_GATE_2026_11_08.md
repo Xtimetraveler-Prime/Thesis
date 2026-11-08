@@ -1,3 +1,5 @@
+> **UPDATED ACTUAL HARDWARE VERDICT (2026-11-08):** M05.9 real operator direct generated-Verilog XSim **PASSED**: evidence `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T213048Z_241401`, git checkout `b8f841ff9585a0e2c479a0eba3578c5fb8a0a1a0`, `exit_status=0`. Two separate `ap_start` calls on SAME RTL instance, with no reset pulse: run0 produced **8 trace rows**, status4, **0 committed**; run1 produced **20 valid rows**, status0, **20 committed**; t8 wheel clean; **213 TREADY trace stall cycles**. Eleven authentic generated RAM init images staged. The old document body below contains pre-run PENDING notes as *historical planning*, superseded by this original result. Next stage [M05.10 execution-controller detailed design](M05_EXECUTION_CONTROLLER_DESIGN_2026_11_08.md) implements a HOST-ONLY nonblocking transport protocol model and exact ABI, **not** a real board controller.
+>
 # M05.9 — Two consecutive direct RTL executions, error recovery and state isolation
 
 **State at development checkout (2026-11-08):** Source-only two-run XSim testbench
