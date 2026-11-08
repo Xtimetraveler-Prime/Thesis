@@ -28,7 +28,7 @@ jobs:
           git rev-parse HEAD
       - name: Python syntax (no hardware)
         run: python3 -m compileall -q src scripts tests
-      - name: M05 native C++ streaming, bounded local-state and host scheduler methods
+      - name: M05 native C++ stream, state-store, accumulator and host scheduler methods
         run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
       - name: HLS Csim vector testbench native-only compile/smoke (NOT Vitis)
         run: |
@@ -48,6 +48,14 @@ jobs:
             hls/m05_stateful/m05_stateful_csim_tb.cpp \
             -o "$RUNNER_TEMP/m05_stateful_tb_host"
           "$RUNNER_TEMP/m05_stateful_tb_host"
+      - name: Tick-sealed signed accumulator HLS vectors compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m05_accumulator/m05_accumulator.cpp \
+            hls/m05_accumulator/m05_accum_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_accumulator_tb_host"
+          "$RUNNER_TEMP/m05_accumulator_tb_host"
       - name: Accepted M04 M03 M02 M01 regression suites
         run: |
           python3 -m unittest discover -s tests -p 'test_m04*.py' -q
@@ -64,6 +72,10 @@ jobs:
             tests/test_m05_stream.py \
             tests/test_m05_stateful.py \
             tests/test_m05_hls_setup.py \
+            tests/test_m05_accumulator.py \
+            hls/m05_accumulator/m05_accumulator.hpp \
+            hls/m05_accumulator/m05_accumulator.cpp \
+            hls/m05_accumulator/m05_accum_hls_config.cfg \
             hls/m05_stateful/m05_stateful.hpp \
             hls/m05_stateful/m05_stateful.cpp \
             hls/m05_stateful/m05_stateful_hls_config.cfg \
