@@ -41,10 +41,10 @@ The future storage is **aggregate+touch+count buckets**, *not* an individual-eve
 - [`m05_integrated.cpp`](../hls/m05_integrated/m05_integrated.cpp) — HLS-oriented resident memory, graph fanout, temporal bucket scheduler, exact M04 neuron step, trace commit.
 - [`m05_integrated_host_cli.cpp`](../hls/m05_integrated/m05_integrated_host_cli.cpp) — native **test-only** strict framed payloads; not a physical host/AXI driver.
 - [`m05_integrated_csim_tb.cpp`](../hls/m05_integrated/m05_integrated_csim_tb.cpp) — HLS testbench: recurrent self-edge trace, 4097 zero-event overflow, recovery to clean run.
-- [`test_m05_integrated.py`](../tests/test_m05_integrated.py) — **11 named methods**: native-compilation, bias wakeup, canceling/zero touches, self/parallel/delay semantics, negative leak + threshold equality, 4096 exact W16 terms, 4097 external overflow, 4097 recurrent overflow, invalid horizons/ranges, malformed config/events, 16 seeded recurrent networks over 8 ticks with complete M02 dense/event and M03 sparse parity.
+- [`test_m05_integrated.py`](../tests/test_m05_integrated.py) — **12 named methods**: native-compilation, bias wakeup, canceling/zero touches, self/parallel/delay semantics, negative leak + threshold equality, 4096 exact W16 terms, 4097 external overflow, 4097 recurrent overflow, invalid horizons/ranges, malformed config/events, 16 seeded recurrent networks over 8 ticks with complete M02 dense/event and M03 sparse parity.
 - [`m05_integrated_hls_config.cfg`](../hls/m05_integrated/m05_integrated_hls_config.cfg) — fourth standalone K26 target with 10ns requested clock, 12% uncertainty and RTL.
 - [`run_m05_offline_hls.sh`](../hls/m05_stream_eval/run_m05_offline_hls.sh) — new `--integrated` selection; same new-only evidence directory and absolute-source-config hash protections as the other three tops.
-- CI runs **59 named M05 methods** total, 91 accepted M01–M04 regressions, and native compiles all four CSim vector benches. **Native PASS is not Vitis CSim/C-RTL PASS.**
+- CI runs **60 named M05 methods** total, 91 accepted M01–M04 regressions, and native compiles all four CSim vector benches. **Native PASS is not Vitis CSim/C-RTL PASS.**
 
 ## Next real HLS gate (operator's Vitis 2025.2 machine)
 
