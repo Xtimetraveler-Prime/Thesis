@@ -107,6 +107,8 @@ jobs:
             hls/m05_integrated/m05_integrated_hls_config.cfg \
             tests/test_m05_integrated.py \
             tests/test_m05_rolling.py \
+            tests/test_m05_trace_commit.py \
+            src/neuromorphic_accelerator_v1/m05_trace_commit.py \
             hls/m05_rolling/m05_rolling.hpp \
             hls/m05_rolling/m05_rolling.cpp \
             hls/m05_rolling/m05_rolling_host_cli.cpp \
