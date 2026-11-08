@@ -16,6 +16,8 @@ CONFIGS = {
                  "m05_stateful_service"),
     "accumulator": (HLS / "m05_accumulator/m05_accum_hls_config.cfg",
                     "m05_event_accumulator"),
+    "integrated": (HLS / "m05_integrated/m05_integrated_hls_config.cfg",
+                   "m05_integrated_replay"),
 }
 
 
@@ -68,6 +70,7 @@ class M05HLSSetupTests(unittest.TestCase):
         self.assertEqual(help_run.returncode, 0)
         self.assertIn("--stateful", help_run.stdout)
         self.assertIn("--accumulator", help_run.stdout)
+        self.assertIn("--integrated", help_run.stdout)
         self.assertIn("--cosim", help_run.stdout)
         for flags in (["--bad"], ["--stream", "--stateful"],
                       ["--cosim", "--synth"]):
@@ -103,6 +106,9 @@ class M05HLSSetupTests(unittest.TestCase):
         source_acc = (HLS / "m05_accumulator/m05_accumulator.cpp").read_text()
         self.assertIn("m05_event_accumulator(", source_acc)
         self.assertIn("M05_ACC_EVENT_OVERFLOW", source_acc)
+        source_integrated = (HLS / "m05_integrated/m05_integrated.cpp").read_text()
+        self.assertIn("m05_integrated_replay(", source_integrated)
+        self.assertIn("M05_INT_DELIVERY_OVERFLOW", source_integrated)
         runner = RUNNER.read_text()
         for _, top in CONFIGS.values():
             self.assertIn(f'TOP="{top}"', runner)
