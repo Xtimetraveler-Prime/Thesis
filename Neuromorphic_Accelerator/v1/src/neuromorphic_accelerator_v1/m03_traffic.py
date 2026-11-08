@@ -16,7 +16,6 @@ NOT hardware AXI/DMA pointer timing, metadata or burst alignment.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-import math
 
 from .m01_residency import StudyConfig, simulate
 from .m02_dense_reference import evaluate_dense
@@ -193,6 +192,18 @@ def compare_workload(workload: Workload, config: ComparisonConfig) -> dict:
             "sparse_state_ids_by_tick": [list(row) for row in sparse.evaluated_ids_by_tick],
             "event_destinations_by_tick": [list(row) for row in sparse.destinations_by_tick],
             "visited_synapses_by_tick": list(sparse.traversed_synapses_by_tick),
+            "delivered_events_by_tick": list(sparse.deliveries_by_tick),
+            "pending_future_deliveries_by_tick": list(sparse.pending_future_deliveries_by_tick),
+            "peak_pending_deliveries_pc_model": sparse.peak_pending_deliveries,
+            "touched_state_groups_by_tick": [
+                len({neuron // config.block_neurons for neuron in group})
+                for group in sparse.evaluated_ids_by_tick
+            ],
+            "unique_state_groups_touched_over_run": len({
+                neuron // config.block_neurons
+                for neuron in sparse_accesses
+            }),
+            "unique_state_neurons_touched_over_run": len(set(sparse_accesses)),
         },
         "control_design": {
             "neuron_step_comparison": "dense N*T vs exact M02 zero-state idle elimination",
@@ -207,7 +218,8 @@ def compare_workload(workload: Workload, config: ComparisonConfig) -> dict:
             "excluded": [
                 "DDR actual burst latency/bank conflicts/pointer lookup",
                 "cache tag RAM, controller LUT/FF, DMA descriptor and PS work",
-                "queue occupancy and arbitration stalls", "compute/transfer overlap",
+                "actual FPGA queue occupancy, FIFO backpressure and arbitration stalls",
+                "compute/transfer overlap",
                 "real KV260 throughput or timing", "energy and power",
                 "SNN classification accuracy and unseen application generalization",
             ],
