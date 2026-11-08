@@ -18,6 +18,8 @@ CONFIGS = {
                     "m05_event_accumulator"),
     "integrated": (HLS / "m05_integrated/m05_integrated_hls_config.cfg",
                    "m05_integrated_replay"),
+    "rolling": (HLS / "m05_rolling/m05_rolling_hls_config.cfg",
+                "m05_rolling_replay"),
 }
 
 
@@ -71,6 +73,7 @@ class M05HLSSetupTests(unittest.TestCase):
         self.assertIn("--stateful", help_run.stdout)
         self.assertIn("--accumulator", help_run.stdout)
         self.assertIn("--integrated", help_run.stdout)
+        self.assertIn("--rolling", help_run.stdout)
         self.assertIn("--cosim", help_run.stdout)
         for flags in (["--bad"], ["--stream", "--stateful"],
                       ["--cosim", "--synth"]):
@@ -109,6 +112,9 @@ class M05HLSSetupTests(unittest.TestCase):
         source_integrated = (HLS / "m05_integrated/m05_integrated.cpp").read_text()
         self.assertIn("m05_integrated_replay(", source_integrated)
         self.assertIn("M05_INT_DELIVERY_OVERFLOW", source_integrated)
+        source_rolling = (HLS / "m05_rolling/m05_rolling.cpp").read_text()
+        self.assertIn("m05_rolling_replay(", source_rolling)
+        self.assertIn("M05_ROLL_DELIVERY_OVERFLOW", source_rolling)
         runner = RUNNER.read_text()
         for _, top in CONFIGS.values():
             self.assertIn(f'TOP="{top}"', runner)
