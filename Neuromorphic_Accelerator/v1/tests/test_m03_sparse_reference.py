@@ -80,6 +80,18 @@ class SparseEquivalenceTests(unittest.TestCase):
         self.assertEqual(s.trace, evaluate_dense(net, (), ticks=12))
         self.assertEqual(sum(map(len, s.trace.spike_rows)), 0)
 
+    def test_pending_delivery_backlog_is_accounted_not_hardware_fifo(self):
+        net = Network((Neuron(threshold=5), Neuron(threshold=5)),
+                      (Synapse(0, 1, 5, 2),), state_bits=8)
+        external = (InputCurrent(0, 0, 5), InputCurrent(3, 1, 1))
+        sparse = evaluate_exact_sparse(net, external, ticks=4)
+        self.assertEqual(sparse.trace, evaluate_dense(net, external, ticks=4))
+        self.assertEqual(sparse.deliveries_by_tick, (1, 0, 1, 1))
+        # Two future external currents initially pending. The tick-0
+        # spike creates one tick-2 synaptic delivery, so count stays 2.
+        self.assertEqual(sparse.pending_future_deliveries_by_tick, (2, 2, 1, 0))
+        self.assertEqual(sparse.peak_pending_deliveries, 2)
+
     def test_seeded_random_general_m02_contract_differential(self):
         rng = random.Random(19850519)
         for case in range(65):
