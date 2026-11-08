@@ -1,3 +1,5 @@
+> **NEXT-INSTANCE POINTER:** The concise authoritative [M05.11c next-chat handoff seed](M05_11C_NEXT_CHAT_HANDOFF_SEED_2026_11_08.md) records the exact outstanding operator XSim gate, mandatory real raw-frame replay, existing passed evidence, and contingent M05.12 steps. This engineering record below remains the detailed test specification; the integration has **not** yet been reported as genuine Vivado PASS.
+
 # M05.11c — Real generated HLS evaluation engine + AXI-Lite stream shell
 
 **2026-11-08 · Active research branch:** `agent/neuromorphic-accelerator-v1-m05-sparse-onchip` · **PR:** #79 DRAFT, not merged · **Stage:** first **full RTL boundary** exercise of the original signed32 HLS top with four new stream adapters and the new transport command bank.
