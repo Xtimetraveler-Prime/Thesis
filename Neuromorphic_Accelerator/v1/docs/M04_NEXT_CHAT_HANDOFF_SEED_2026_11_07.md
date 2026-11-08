@@ -88,3 +88,8 @@ Do not run archived Loihi physical scripts. Once M04 branch has new source, prov
 ## 5. DIRECT REQUEST TO NEXT CHAT INSTANCE
 
 Begin M04.1 on a **new development branch from merged main**, by inspecting the v3 HLS source/interface and testbench, documenting differences against accepted M02 LIF reference and how an event-driven streaming update boundary could be verified. Continue into numerical difference table and host-only functional proof as far as possible without needing operator input or new design decisions. Create M04 tests, M04_TESTS_EXPLAINED.md, operator PC verification runbook, and an updated roadmap, then leave a draft PR unmerged pending user verification/approval. **Do not** re-open M01–M03, change LIF semantics silently, execute real FPGA/JTAG, or claim unmeasured speedups.
+
+
+## Post-handoff M04 working-branch status (not part of original 2026-11-07 seed)
+
+M04 branch `agent/neuromorphic-accelerator-v1-m04-hls-audit` was created from accepted main merge SHA `2ceac0372ed6ec11fb09c764277e4532b4807e46`. **M04.1/M04.2 review and M04.3 bounded host C++ candidate are in development, not accepted/merged; M04.4 Vitis synthesis was NOT RUN.** Live working-branch references: [audit/difference matrix](M04_HLS_ENGINE_AUDIT.md), [M04_TESTS_EXPLAINED.md](M04_TESTS_EXPLAINED.md), [native PC-only verification](M04_PC_ONLY_VERIFICATION.md), [M04 test source](../tests/test_m04_eval.py), and [updated roadmap](../roadmap.md). Use the new M04 runbook rather than the seed's old `main` branch commands when verifying this development work. The seed's original historical status above describes the starting point, not acceptance of M04.
