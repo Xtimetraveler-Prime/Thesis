@@ -171,7 +171,7 @@ class M05RTLStallPrepTests(unittest.TestCase):
     def test_runner_routes_independent_scenarios_and_treats_fatal_as_failure(self):
         runner = (ROOT / "scripts/run_m05_rolling_rtl_stress.sh").read_text()
         self.assertIn("MODE=\"output\"", runner)
-        self.assertIn('if [[ "$2" != "--ingress" ]]', runner)
+        self.assertIn('if [[ "$2" != "--ingress" && "$2" != "--late-error" ]]', runner)
         self.assertIn("tb_m05_rolling_axis_ingress_stress.sv", runner)
         self.assertIn("tb_m05_rolling_axis_stress.sv", runner)
         self.assertIn('TOP_MODULE="tb_m05_rolling_axis_ingress_stress"', runner)
