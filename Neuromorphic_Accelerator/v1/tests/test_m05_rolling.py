@@ -206,6 +206,39 @@ class M05RollingNativeTests(unittest.TestCase):
         self.assertEqual(rows[1024][3], 1)  # tick 1, ID 0 recurrence
         self.assertEqual(rows[1024][5], 1)
 
+    def test_signed32_wheel_extreme_positive_and_negative_external(self):
+        # For 4096 legal W16 events, sums are +134213632 and -134217728.
+        # The physical i32 aggregate must preserve all individual additions
+        # before M04's ONE final signed-W16 neuron saturation.
+        net = Network((Neuron(threshold=5),), state_bits=16)
+        events = (
+            (InputCurrent(0, 0, 32767),) * 4096
+            + (InputCurrent(8, 0, -32768),) * 4096
+        )
+        rows = self.compare_m02_m03(net, events, 9)
+        self.assertEqual(rows[0][3], 1)
+        self.assertEqual(rows[0][5], 4096)
+        self.assertEqual(rows[8][2], -32768)
+        self.assertEqual(rows[8][3], 0)
+        self.assertEqual(rows[8][5], 4096)
+
+    def test_signed32_wheel_extreme_delayed_recurrent_alias(self):
+        # Four thousand ninety-six parallel synapses deliver at t+8,
+        # exactly when the same wheel slot is reused and must have been
+        # cleared before fanout. The aggregate reaches the negative bound.
+        net = Network(
+            (Neuron(threshold=5), Neuron(threshold=5)),
+            (Synapse(0, 1, -32768, 8),) * 4096,
+            state_bits=16,
+        )
+        rows = self.compare_m02_m03(
+            net, (InputCurrent(0, 0, 5),), 9
+        )
+        self.assertEqual(rows[0][3], 1)
+        self.assertEqual(rows[8 * 2 + 1][2], -32768)
+        self.assertEqual(rows[8 * 2 + 1][4], 1)
+        self.assertEqual(rows[8 * 2 + 1][5], 4096)
+
     def test_seeded_longer_recurrent_network_full_oracle_parity(self):
         for seed in range(12):
             with self.subTest(seed=seed):
