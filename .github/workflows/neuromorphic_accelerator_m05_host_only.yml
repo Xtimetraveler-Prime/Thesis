@@ -80,6 +80,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m03*.py' -q
           python3 -m unittest discover -s tests -p 'test_m02*.py' -q
           python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+      - name: M05.10 controller demonstration (SCRIPTED host, NOT board)
+        run: python3 scripts/m05_controller_native_demo.py
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
