@@ -62,6 +62,7 @@ git status --porcelain=v1 > "$OUT/working_tree_status.txt"
 printf '%s\n' "xck26-sfvc784-2LV-c" > "$OUT/part.txt"
 sha256sum "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv" \
     "$ROOT/scripts/m05_axis_regmap.py" \
+    "$ROOT/scripts/m05_rtl_meminit.py" \
     "$ROOT/scripts/run_m05_rolling_rtl_stress.sh" \
     "$ROOT/hls/m05_rolling/m05_rolling.cpp" > "$OUT/stress_source_sha256.txt"
 finish() {
@@ -76,6 +77,13 @@ trap finish EXIT
 
 python3 scripts/m05_axis_regmap.py --impl-evidence "$IMPL" \
     --output "$OUT/m05_rolling_regmap.svh" | tee "$OUT/01_regmap.log"
+
+# The original direct XSim proof passed, but emitted warnings about
+# generated $readmemh(... .dat) files absent from the simulator cwd.
+# This new gate requires the exact original Vitis-generated files. If none
+# were retained, STOP; never inject fake memory contents or suppress warning.
+python3 scripts/m05_rtl_meminit.py --impl-evidence "$IMPL" \
+    --output-directory "$OUT" | tee "$OUT/01_ram_init.log"
 
 mapfile -t VERILOG_FILES < <(find "$SYN_RTL" -maxdepth 1 -type f \
     \( -name '*.v' -o -name '*.sv' \) -print | sort)
@@ -106,4 +114,10 @@ grep -Fq "PASS: M05 REAL RTL AXIS stall stress" "$OUT/04_xsim.log" || {
     echo "ERROR: XSim ended without RTL handshake PASS marker" >&2
     exit 1
 }
+# Any warning about missing RAM init assets invalidates the strengthened
+# initialized-memory gate, even if XSim emits its old PASS marker.
+if grep -Eiq 'cannot be opened for reading|failed to open.*\\.dat|no such file.*\\.dat' "$OUT/04_xsim.log"; then
+    echo "ERROR: XSim reported missing RTL memory .dat initialization files" >&2
+    exit 1
+fi
 echo "PASS: Direct generated RTL AXI stall stress; no board operations."
