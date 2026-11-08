@@ -215,15 +215,27 @@ module tb_m05_11c_real_hls_shell;
                 reg [31:0] expected_count;
                 reg [63:0] wanted_session;
                 reg [31:0] wanted_status;
+                reg [255:0] replay_word;
                 if(dma_trace_keep !== 32'hffffffff)
                     $fatal(1,"M05_11C_FAIL invalid TKEEP");
                 wanted_session=(run_epoch==0 ? SID_SUCCESS : SID_FAILURE);
                 wanted_status=(run_epoch==0 ? 0 : 4);
-                // Log ACTUAL accepted 256b DMA TDATA, not reconstructed
-                // expected oracle rows. The postcheck replays these raw
-                // handshakes through the existing host DMA frame decoder.
+                // Log actual handshake TDATA semantic lanes. The HLS C
+                // struct has 16 unspecified padding bits at [159:144],
+                // which XSim MAY represent as X rather than a byte value.
+                // Normalize ONLY that proven nonsemantic padding to zero
+                // for a reversible portable host-byte transcript. Never
+                // replace an unknown value in a SEMANTIC lane with zero.
+                replay_word = dma_trace_data;
+                if (!dma_trace_last) begin
+                    if ($isunknown({dma_trace_data[255:160],
+                                    dma_trace_data[143:0]}))
+                        $fatal(1,"M05_11C_FAIL unknown semantic trace bits");
+                    replay_word[159:144] = 16'd0;
+                end else if ($isunknown(dma_trace_data))
+                    $fatal(1,"M05_11C_FAIL unknown footer bits");
                 $display("M05_11C_DMA run=%0d data=%064h last=%0d keep=%08h",
-                         run_epoch, dma_trace_data, dma_trace_last,
+                         run_epoch, replay_word, dma_trace_last,
                          dma_trace_keep);
                 if(dma_trace_last) begin
                     if(frame_footers!=0 || dma_trace_data[255:192]!==MAGIC ||
