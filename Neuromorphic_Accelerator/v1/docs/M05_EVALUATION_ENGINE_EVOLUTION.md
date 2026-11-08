@@ -237,6 +237,20 @@ M05.9 direct XSim outcome is **NOT YET VERIFIED** and should never be
 reported as pass merely because host CI succeeds. All old testbench
 proofs/evidence are preserved. [M05.9 operator runbook](M05_MULTI_RUN_RECOVERY_GATE_2026_11_08.md).
 
+### M05.9 verified same-instance RTL restart / recovery (2026-11-08)
+
+**Operator's genuine XSim run** at `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T213048Z_241401`, git checkout `b8f841ff9585a0e2c479a0eba3578c5fb8a0a1a0`, `exit_status=0`, mode `multi-run`. Eleven original RAM init .dat files staged, actual Vitis-generated Verilog compiled and elaborated. One DUT instance with **no ap_rst_n reset pulse between invocations**: run0 emits 8 provisional rows then returns **status4** (host commits 0); run1 starts with independent synapse-free network, emits **20 correct rows** then returns **status0** (host commits 20); no leaked pending tick8 recurrence, **213 trace TREADY stall cycles**. The native read-only replay confirms exact 0+20 publication. This is direct XSim kernel-state isolation, **not** physical DMA or PS control-plane recovery.
+
+### M05.10 new PS-side execution-controller foundation (2026-11-08)
+
+With the signed32 HLS evaluation kernel intentionally **UNCHANGED**, we have begun moving control responsibility from local RTL testbench scripts to a reusable host-side controller.
+
+Implemented `m05_execution_controller.py`: immutable validated run packets; 1..1024 neurons, <=4096 synapses, 1..64 ticks, signed-W16 inputs, 1..8 delay, sorted external input; independent nonblocking feed methods for neuron, synapse, external AXI streams; continuous output trace drain concurrent with completion polling; **status0 + exact frame + all input delivered + transport-certified quiescence** required before accepting rows. On nonzero final status, unknown/contradictory status, malformed trace, timeout, or transport failure, all provisional trace is discarded and controller becomes **FAULTED until explicit verified recovery**. Reuses original `RollingTraceCommitGate` unchanged.
+
+Implemented `m05_execution_sim.py`: deterministic bounded fake 3-input/1-output transport, stalls, early completion before final output drain, missing output, error/timeout and explicit fake reset; **not actual Vivado or DMA**. `m05_execution_abi.py`: logical 128/192/128/192-bit packet packing based on previously verified direct RTL bit offsets (including synapse 4-byte alignment padding and trace 2-byte padding). Native tests in `test_m05_execution_controller.py` and `test_m05_execution_abi.py` total **28 new tests** (185 M05 + 91 accepted M01–M04 = 276 total), plus a clearly labelled `SIMULATED` controller demo. New [canonical controller design and development document](M05_EXECUTION_CONTROLLER_DESIGN_2026_11_08.md) thoroughly records the state machine, ports, admission, completion race, timeout and explicit error recovery policy, payload ABI and hardware milestones.
+
+**Engineering blocker before actual PS/PL integration:** generated HLS top exposes plain AXIS TDATA/TVALID/TREADY with **no TLAST packet framing**. A stock packet-oriented S2MM DMA path cannot be assumed to finish without a selected/tested explicit-length bridge, TLAST wrapper or alternative FIFO protocol that handles both complete successful traces and **arbitrarily truncated failed runs**. M05.11 must independently design/verify that bridge, actual AXI-Lite addresses, PS reset/flush, MMIO and 3 H2C +1 C2H streams. **No physical controller, board integration or new RTL timing verification exists for M05.10; native green CI ≠ hardware success.**
+
 ## F. Next controlled experiments / acceptance gates
 
 1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
