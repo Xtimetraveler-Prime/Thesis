@@ -33,7 +33,7 @@ python3 -m unittest discover -s tests -p 'test_m02*.py' -q
 python3 -m unittest discover -s tests -p 'test_m01*.py' -q
 ```
 
-Expected: **45 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 136 named unittest methods**, all PASS. Seeded recurrent-network methods include 12 streaming, 8 state-memory and 6 accumulator test subcases; these do not increase the number of named methods. Native C++ compilation or malformed replies fail; no external GPU, MNIST TEST, Vitis, Vivado or KV260 is needed.
+Expected: **48 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 139 named unittest methods**, all PASS. Seeded recurrent-network methods include 12 streaming, 8 state-memory and 6 accumulator test subcases; these do not increase the number of named methods. Native C++ compilation or malformed replies fail; no external GPU, MNIST TEST, Vitis, Vivado or KV260 is needed.
 
 ## 2a. Optional native-only smoke of the separate HLS Csim testbench
 
@@ -86,6 +86,8 @@ sha256sum \
   tests/test_m05_stateful.py \
   tests/test_m05_accumulator.py \
   tests/test_m05_hls_setup.py \
+  tests/test_m05_hls_path_regression.py \
+  hls/m05_stream_eval/prepare_hls_config.py \
   hls/m05_stateful/m05_stateful.hpp \
   hls/m05_stateful/m05_stateful.cpp \
   hls/m05_stateful/m05_stateful_csim_tb.cpp \
@@ -119,6 +121,16 @@ git status --short
 ```
 
 If a test fails, **preserve the failed original evidence unchanged** and start a *new* evidence directory for a rerun. CI source checkout and operator-native PC results are separate evidence.
+
+### HLS path regression (after the operator's first failed Vitis runs)
+
+The first three **genuine** 2025.2 Csim calls all failed before compilation due to **missing source/testbench paths** after Vitis changed directory to the external evidence folder. This is fixed by generating an absolute-path `hls_effective_config.cfg` for each new run, and switching to non-deprecated `package.output.format=rtl`. Check the three dedicated host-only path tests:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_m05_hls_path_regression.py' -v
+```
+
+All three must pass locally. They simulate Vitis' CWD changes using a **STUB**, not actual HLS, so the next step is to rerun true Csim. Preserve the original failed logs unchanged; see [failure analysis](M05_HLS_CSIM_FAILURE_2026_11_08.md) and [operator runbook](M05_HLS_OPERATOR_RUNBOOK.md).
 
 ## 4. Genuine offline Vitis HLS verification for THREE independent tops — not JTAG
 
