@@ -2,6 +2,8 @@
 
 **Status:** Discussion prompts and candidate experiments, not a frozen spec, implementation, thesis novelty claim or proven performance result. Discuss and choose before creating new code or hardware. Keep the original LIF reference independently verifiable.
 
+**Development sequence:** The [proposed M01–M09 v1 roadmap](../roadmap.md) controls milestone admission, independent neural reference, HLS reuse, scheduler/DDR implementation and final measured experiments. This file remains an **unfrozen question list**; cite YANA/SENECA/HiAER as prior art for known concepts.
+
 ## A. What is virtualized?
 
 1. **Individual neuron states:** small variable-size work items; potentially sparse DDR/cache accesses and many random transactions. Does this become transaction-latency limited?

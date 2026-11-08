@@ -2,7 +2,7 @@
 
 This top-level directory houses the **new, independently versioned research program** arising from the Loihi-inspired FPGA digital-twin work. The umbrella name `Neuromorphic_Accelerator` is provisional and deliberately broad enough to include architectural exploration, virtualization experiments, and hardware/software co-design even if a strict accelerator is not the eventual final contribution.
 
-- [`v1/`](v1/) — **first-generation new architecture**, currently in design and experimental-planning phase; not `Loihi_Digital_Twin/v4`.
+- [`v1/`](v1/) — **first-generation new architecture**, currently in design and experimental-planning phase; not `Loihi_Digital_Twin/v4`. See the [v1 development roadmap](v1/roadmap.md) and [open architecture design questions](v1/docs/ARCHITECTURE_DESIGN_QUESTIONS.md).
 - [Previous verified Loihi-inspired work](../Loihi_Digital_Twin/v3/) — preserved historical results, implementation and independently accepted physical evidence; it is **not** moved or renamed.
 - [Root research questions and potential contributions](../README.md).
 - [Research literature and novelty boundary](../LitReview.md).
