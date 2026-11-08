@@ -72,7 +72,7 @@ class M05ExecutionControllerTests(unittest.TestCase):
         ))
         fake = ScriptedTransport((
             ScriptedRun(zero_rows(3, 4), receive_stride=5,
-                        input_capacity=1),
+                        input_capacity=1, input_consume_stride=4),
         ))
         report = ExecutionController(fake).execute(p)
         self.assertTrue(report.result.accepted)
