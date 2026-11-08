@@ -173,6 +173,13 @@ class M05IntegratedNativeTests(unittest.TestCase):
         self.run_case(Network((Neuron(),), state_bits=16),
                       (InputCurrent(0, 0, 32768),), 2, expected_status=4)
 
+    def test_native_wrapper_rejects_extra_unframed_fields(self):
+        proc = subprocess.run([self.bin], input="1 0 0 1 1 1\\n"
+                              "0 0 5 0\\nextra\\n",
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.stdout, "")
+
     def test_seeded_networks_full_trace_and_sparse_schedule(self):
         for seed in range(16):
             with self.subTest(seed=seed):
