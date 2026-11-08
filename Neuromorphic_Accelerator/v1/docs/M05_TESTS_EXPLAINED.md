@@ -1,3 +1,32 @@
+## CURRENT M05.11c test explanation — 14 synthetic host methods; real generated-HLS XSim not yet run (2026-11-08)
+
+**Primary handoff:** [M05.11c current next-chat seed](M05_11C_NEXT_CHAT_HANDOFF_SEED_2026_11_08.md); detailed [generated HLS + AXI-Lite shell contract](M05_11C_REAL_HLS_STREAM_SHELL_INTEGRATION_2026_11_08.md).
+
+The actual committed tests are in ../tests/test_m05_11c_hls_shell.py. They construct a **synthetic text transcript** with two runs using build_fake_dma_packet_for_test and pass it to scripts/m05_11c_replay.py. They **do not invoke real Vivado XSim**, no matter that the log strings resemble the future simulator. The helper constructs success: 12 ticks ×2 neurons = 24 rows, status0, 24 committed; late error: 4 ticks ×2 =8 provisional rows, status4, **zero committed**. Footer/session/TLAST bytes are checked through the existing accept_dma_frame and RollingTraceCommitGate. The HLS-neuron source is not executed by these Python tests.
+
+| Actual test method | Check / invalid case |
+| --- | --- |
+| test_full_synthetic_raw_dma_transcript | Entire two-run positive transcript decodes to exactly (24 committed, 0 committed). |
+| test_missing_tlast_is_rejected | Remove footer TLAST independently from run0/run1; refuse both. |
+| test_wrong_session_footer_is_rejected | Change failure-run session to success ID; refuse stale/wrong provenance. |
+| test_failed_run_must_not_commit_partial_rows | Fake committing 8 invalid provisional rows; reject atomicity violation. |
+| test_missing_duplicate_or_early_final_rejected | Delete, duplicate or reorder simulator final marker; reject. |
+| test_wrong_tkeep_and_trace_padding_rejected | Corrupt TKEEP and forbidden transport high-bit padding; reject. |
+| test_deleted_or_extra_256bit_handshake_is_rejected | Drop or repeat one accepted 256-bit transfer; reject. |
+| test_recurrent_spike_and_raw_hls_word_are_checked | Flip neural trace bit for tick8 neuron1; reject altered recurrent output. |
+| test_wrong_status_in_raw_terminal_beat_is_rejected | Change the successful run's terminal status; reject. |
+| test_missing_sim_pass_or_fatal_is_rejected | Missing or duplicate PASS, or injected Fatal; reject. |
+| test_cli_reads_only_and_never_mutates_logs | CLI processes a temporary simulated log and leaves the exact original bytes unchanged. |
+| test_cli_missing_real_log_fails_closed | Missing input log causes nonzero CLI failure and explicit error. |
+| test_operator_script_uses_real_hls_source_and_ram_assets | Static script inspection requires correct HLS RTL/part/ROM and RAM-init staging/decoder instructions and absence of Vitis synthesis or board programming. |
+| test_sv_connects_two_real_axi_banks_without_modifying_hls | Static SV source inspection checks genuine HLS instance, shell instance, two sessions, status4 and backpressure/TLAST hookups. |
+
+**Other native regressions:** M05's full pattern includes **231** named methods and M01–M04 includes **91** (total **322**) at original source commit 7834632180d44a5179e2609e6c1cefde15c851eb; all five workflow checks PASS at that commit. Check CI again at latest branch HEAD after documentation updates. Do not recast this count as 322 independent FPGA tests.
+
+**Remaining genuine test (still PENDING):** In a shell with **Vivado 2025.2** loaded, run scripts/run_m05_11c_hls_shell_xsim.sh with the original genuine K26 rolling --impl evidence directory. This compiles **actual prior-generated HLS Verilog**, existing shell components, authentic RAM init and the two-session SV bench. The wrapper requires the real XSim PASS marker, exact status/session/TLAST/row counts and source fingerprints; scripts/m05_11c_replay.py then checks the **actual XSim-logged** accepted 256-bit words. Independently inspect its result.txt, 04_xsim.log and 05_dma_frame_replay.log before claiming M05.11c RTL PASS. A genuine XSim result is still not a physical DMA/DDR/PS or routed timing result.
+
+---
+
 > **M05.11c LATEST (2026-11-08):** Owner **genuine Vivado 2025.2 M05.11b AXI4-Lite controller XSim PASS** `exit_status=0` on checkout `90c31f05a40603914fed507b7f9507220df4d932`; original `~/Thesis_Evidence/neuromorphic_v1_m05_11_axil_20261108T230817Z_HFWBlw`, actual AW/W stagger, R/B backpressure, START/FINISH/ACK, FAULT + verified reset. **M05.11c developed (NOT YET operator XSim verified):** real original Vitis-generated signed32 `m05_rolling_replay` Verilog plus current `m05_11_stream_shell` in one full RTL testbench with **two separate AXI-Lite banks**, 3 padded 256-bit input shims, one 256-bit S2MM-facing TLAST footer. Test two consecutive runs: valid 2-neuron/12-tick recurrent inference must stream **24 rows+1 footer**, hardware status0, COMMIT 24; deliberately unsorted external ticks 0,4,3 must stream **8 provisional+1 footer**, actual HLS status4, REJECT all, custom FAULT (no ACK). Output TREADY 1/7 cycles, exact row semantics and footer counts/session IDs. New `scripts/run_m05_11c_hls_shell_xsim.sh` reuses immutable K26 --impl HLS RTL source + RAM init and regenerates actual HLS regmap, no resynthesis/board. `scripts/m05_11c_replay.py` replays **actual simulator-captured 256-bit handshake words** (16 undefined C padding bits explicitly normalized) through native `accept_dma_frame` and `RollingTraceCommitGate`; independent **14 synthetic native tests**. 231 named M05+91 M01–M04 =322 native tests; **no physical DMA/PS/DDR or new routed clock result**. [Full M05.11c engineering/verification runbook](M05_11C_REAL_HLS_STREAM_SHELL_INTEGRATION_2026_11_08.md); [M05.11b verified register protocol](M05_11B_AXIL_SESSION_CONTROL_2026_11_08.md); [canonical evaluation-engine evolution](M05_EVALUATION_ENGINE_EVOLUTION.md). M05 OPEN; PR #79 DRAFT UNMERGED; no physical board actions.
 >
 
