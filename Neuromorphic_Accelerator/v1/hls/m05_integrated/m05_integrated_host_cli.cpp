@@ -46,7 +46,7 @@ int main() {
     }
     // Reject unconsumed fields instead of silently ignoring malformed framing.
     std::string extra;
-    if (std::cin >> extra) return 2;
+    if (shape && (std::cin >> extra)) return 2;
     std::uint32_t result = m05_integrated_replay(
         ns, ss, es, out, n, s, e, t, dnum, dden);
     const std::uint32_t rows = result == M05_INT_OK ? n * t : 0;
