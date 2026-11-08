@@ -25,6 +25,7 @@ class ScriptedRun:
     output_stride: int = 1
     receive_stride: int = 3
     input_capacity: int = 1
+    input_consume_stride: int = 1
     quiescent_delay: int = 0
     completion_before_output_drained: bool = True
     never_complete: bool = False
@@ -34,7 +35,8 @@ class ScriptedRun:
             raise ValueError("fake RTL rows must be a tuple")
         if self.status not in range(7) or type(self.status) is not int:
             raise ValueError("script status must be 0..6")
-        for name in ("output_stride", "receive_stride", "input_capacity"):
+        for name in ("output_stride", "receive_stride", "input_capacity",
+                     "input_consume_stride"):
             if type(getattr(self, name)) is not int or getattr(self, name) < 1:
                 raise ValueError(f"{name} must be positive")
         if type(self.quiescent_delay) is not int or self.quiescent_delay < 0:
@@ -135,10 +137,11 @@ class ScriptedTransport(ExecutionTransport):
             raise RuntimeError("no fake transaction")
         self.clock += 1
         # Consume one queued ingress transfer per port per service iteration.
-        for port, q in self.queues.items():
-            if q:
-                q.popleft()
-                self.counters[port] += 1
+        if self.clock % self.active.input_consume_stride == 0:
+            for port, q in self.queues.items():
+                if q:
+                    q.popleft()
+                    self.counters[port] += 1
         if self._all_ingress_retired() and self.generated < len(self.active.rows):
             if self.clock % self.active.output_stride == 0:
                 if len(self.sink) < 1:
