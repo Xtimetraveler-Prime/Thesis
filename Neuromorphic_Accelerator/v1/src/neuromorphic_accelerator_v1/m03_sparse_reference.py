@@ -28,6 +28,9 @@ class SparseResult:
     fired_ids_by_tick: tuple[tuple[int, ...], ...]
     traversed_synapses_by_tick: tuple[int, ...]
     fanout_per_firing_by_tick: tuple[tuple[tuple[int, int], ...], ...]
+    deliveries_by_tick: tuple[int, ...]
+    pending_future_deliveries_by_tick: tuple[int, ...]
+    peak_pending_deliveries: int
 
     @property
     def evaluation_count(self) -> int:
@@ -59,11 +62,18 @@ def evaluate_exact_sparse(
     target_rows = []
     edge_rows = []
     fanout_rows = []
+    delivery_rows = []
+    pending_rows = []
+    pending_count = sum(len(v) for v in scheduled.values())
+    peak_pending = pending_count
 
     for t in range(ticks):
         incoming = [0] * n
         targets: set[int] = set()
-        for destination, current in scheduled.pop(t, ()):
+        arrivals = scheduled.pop(t, ())
+        pending_count -= len(arrivals)
+        delivery_rows.append(len(arrivals))
+        for destination, current in arrivals:
             incoming[destination] += current
             # Conservative even if currents sum to zero or weight == 0.
             targets.add(destination)
@@ -103,6 +113,7 @@ def evaluate_exact_sparse(
                 delivery_tick = t + delay
                 if delivery_tick < ticks:
                     scheduled[delivery_tick].append((destination, weight))
+                    pending_count += 1
 
         rows.append(tuple(values))  # verification copy, NOT measured hardware
         spikes.append(fired_row)
@@ -110,6 +121,10 @@ def evaluate_exact_sparse(
         target_rows.append(tuple(sorted(targets)))
         edge_rows.append(visited)
         fanout_rows.append(tuple(grouped))
+        if pending_count < 0:
+            raise AssertionError("negative scheduled delivery count")
+        pending_rows.append(pending_count)
+        peak_pending = max(peak_pending, pending_count)
 
     return SparseResult(
         trace=ReferenceTrace(tuple(rows), tuple(spikes)),
@@ -118,4 +133,7 @@ def evaluate_exact_sparse(
         fired_ids_by_tick=tuple(spikes),
         traversed_synapses_by_tick=tuple(edge_rows),
         fanout_per_firing_by_tick=tuple(fanout_rows),
+        deliveries_by_tick=tuple(delivery_rows),
+        pending_future_deliveries_by_tick=tuple(pending_rows),
+        peak_pending_deliveries=peak_pending,
     )
