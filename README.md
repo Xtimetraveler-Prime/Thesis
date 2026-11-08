@@ -1,6 +1,6 @@
 # Thesis — Virtualized Neuromorphic Computing on FPGA
 
-**Current thesis direction (2026-11-07):** Study the costs, benefits, and limits of **DDR-backed virtualization** in sparse/event-driven FPGA spiking neural network (SNN) inference. We are preserving the verified LIF neuron dynamics and logical-to-physical virtualization learned from our Loihi-inspired v3 digital twin, while **removing Loihi-specific architectural constraints** for a future **v4 accelerator**. The KV260 remains the current research board. No v4 architecture, implementation or benchmark has yet been accepted.
+**Current thesis direction (2026-11-07):** Study the costs, benefits, and limits of **DDR-backed virtualization** in sparse/event-driven FPGA spiking neural network (SNN) inference. We are preserving the verified LIF neuron dynamics and logical-to-physical virtualization learned from our Loihi-inspired v3 digital twin, while **removing Loihi-specific architectural constraints** for the new **`Neuromorphic_Accelerator/v1`** research program. The KV260 remains the current research board. The new v1 has a documentation scaffold only: no architecture, implementation or benchmark has yet been accepted.
 
 ## Central research questions
 
@@ -23,13 +23,14 @@ The central research challenge is not merely whether hardware can time-multiplex
 - **v1 — preserved validated baseline** under [`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/), with completed [M1–M13 milestones](Loihi_Digital_Twin/v1/MILESTONES.md).
 - **v2 — preserved accepted Loihi-inspired manycore architecture** under [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/).
 - **v3 — FROZEN research and physical-evidence baseline** under [`Loihi_Digital_Twin/v3/`](Loihi_Digital_Twin/v3/): original trained LIF MNIST source, DDR-backed 27-logical-core/1,010-neuron SNN execution, original all-1,024-image neural verification and real KV260 A53 service measurements; also a separately verified smaller 42-neuron Track A. These unequal workload measurements do **not** establish matched-network acceleration. The planned six independent A/B sessions stopped after **one new accepted A session (1/6)**; the five remaining physical sessions were **canceled, not executed**. The former v3 future milestones were canceled or archived, with **P10 a final, optional, DEFERRED bounded optimization milestone**, not authorized for execution. Existing physical receipts and exact checksums remain immutable; official MNIST TEST remains sealed. Read the [authoritative frozen v3 roadmap](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md) and [current handoff](Loihi_Digital_Twin/v3/docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md) rather than interpreting old 'NEXT' sections as live instructions.
-- **v4 — design/planning NEXT; NOT implemented.** A separate version root and branch should be created only after the v4 architecture, reference neuron semantics, measurement contract, and validation plan are agreed.
+- **Neuromorphic Accelerator v1 — NEW, independently versioned research program.** [`Neuromorphic_Accelerator/v1/`](Neuromorphic_Accelerator/v1/) is a first-generation design workspace, **not** a continuation called `Loihi_Digital_Twin/v4`. The existing scaffold contains initial architecture decisions to examine; no v1 RTL, engine, bitstream or FPGA evidence exists yet.
 
-**What v3 established:** independent software–hardware LIF numerical validation, FPGA/PS orchestration and DDR virtual-context movement on real hardware. **What it did not establish:** a Loihi silicon-exact replica, true fully asynchronous physics, protected DDR/XMPU context backups, all six new A/B physical sessions, matched A/B workloads or timing boundaries, pure-PL acceleration, power/energy savings, or v4 performance.
+**What v3 established:** independent software–hardware LIF numerical validation, FPGA/PS orchestration and DDR virtual-context movement on real hardware. **What it did not establish:** a Loihi silicon-exact replica, true fully asynchronous physics, protected DDR/XMPU context backups, all six new A/B physical sessions, matched A/B workloads or timing boundaries, pure-PL acceleration, power/energy savings, or new-accelerator performance.
 
 ## Repository structure and working workflow
 
-- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) — preserved versioned v1/v2/v3 architectures and future v4 home.
+- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) — **frozen historical** v1/v2/v3 architecture and evidence (not the new project's home).
+- [`Neuromorphic_Accelerator/`](Neuromorphic_Accelerator/) — **new top-level umbrella** for independent accelerator and virtualization research; first generation [`v1/`](Neuromorphic_Accelerator/v1/) and its [open design questions](Neuromorphic_Accelerator/v1/docs/ARCHITECTURE_DESIGN_QUESTIONS.md).
 - [`applications/`](applications/) — application workloads, including [MNIST baseline](applications/mnist_baseline/).
 - [`LitReview.md`](LitReview.md) — existing research notes and new event-driven/virtualization prior art.
 - [`EXPERIMENTS.md`](EXPERIMENTS.md), [`AUDIT.md`](AUDIT.md) — historical experiments and audit evidence.
@@ -51,7 +52,7 @@ PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
   tests/test_p08_b45_perf_full1024_independent_cli.py
 ```
 
-For new research, branch from freshly updated `main`, keep evidence under `$HOME/Thesis_Evidence/` outside the checkout, run relevant native tests and no-board CI, record original source/ELF/bitstream SHAs and separate physical acceptance, and merge only with express approval. **Do not launch any old KV260 JTAG runner from an archived runbook without a newly reviewed, session-specific destructive-risk authorization**; power-cycle the board after any JTAG attempt and never resume halted Linux.
+For new `Neuromorphic_Accelerator/v1` research, branch from freshly updated `main`, keep evidence under `$HOME/Thesis_Evidence/` outside the checkout, run relevant native tests and no-board CI, record original source/ELF/bitstream SHAs and separate physical acceptance, and merge only with express approval. **Do not launch any old KV260 JTAG runner from an archived runbook without a newly reviewed, session-specific destructive-risk authorization**; power-cycle the board after any JTAG attempt and never resume halted Linux.
 
 ## Preserved FPGA-v1 regression
 
