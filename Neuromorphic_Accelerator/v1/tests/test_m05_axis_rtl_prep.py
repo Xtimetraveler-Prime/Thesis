@@ -124,6 +124,21 @@ class M05RTLStallPrepTests(unittest.TestCase):
         self.assertIn("cycle_count % 11 == 0", tb)
         self.assertNotIn("force dut", tb)  # normal AXIS pins only
 
+    def test_no_adjacent_format_string_literals_in_xvlog_stressbench(self):
+        # Regression for operator's real 2026-11-08 xvlog failure VRFC
+        # 10-4982 at line 305: SystemVerilog doesn't implicitly join
+        # adjacent quoted strings across whitespace/newlines like C/C++.
+        # A single $display format literal is accepted by this syntax gate.
+        tb = (ROOT / "hls/m05_rolling/rtl_stress/"
+              "tb_m05_rolling_axis_stress.sv").read_text()
+        self.assertNotRegex(
+            tb, r'\$display\(\s*"[^"\n]*"\s*\n\s*"',
+            "SystemVerilog $display has adjacent quoted format literals",
+        )
+        self.assertEqual(
+            tb.count('PASS: M05 REAL RTL AXIS stall stress'), 1
+        )
+
     def test_safe_runner_uses_unique_evidence_and_source_identity_check(self):
         runner = (ROOT / "scripts/run_m05_rolling_rtl_stress.sh").read_text()
         for required in ("mkdir \"$OUT\"", "source_sha256.txt",
