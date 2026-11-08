@@ -1,5 +1,33 @@
 # Loihi Digital Twin v3 Development Roadmap
 
+## AUTHORITATIVE PIVOT / v3 DEVELOPMENT STOP — 2026-11-07
+
+**Decision:** Research-advisor discussion redirects the thesis from strict Loihi-inspired architectural replication toward a future **v4 sparsity-aware, DDR-backed virtualized LIF inference accelerator**. The preserved novelty candidate is a controlled study of virtualization cost and sparse/event-driven recovery: network size, spike/connectivity sparsity, **active-context locality**, on-chip context residency/cache policy, DDR traffic, PS/PL scheduler overhead, throughput and resource efficiency. Time-multiplexed neurons and off-chip state are established prior art; no claim of first-ever virtualization, performance superiority, equal workload, identical Loihi silicon, or protected DDR.
+
+**v3 is FROZEN AS A RESEARCH BASELINE, not deleted or retroactively declared fully complete.** Earlier actually accepted neural, physical, A53 latency and integrity evidence remains authoritative at its original exact signed SHA, including 27-virtual-core / 1010-neuron original B_AUTH_ONCE V2 independent 1024 PASS and one new 42-neuron A2.1 full1024 Session01 acceptance. The v3 six-new-session counterbalanced A B / B A / A B preregistration is **DISCONTINUED AFTER ACCEPTED SLOT 01 (1/6)**. Slots 02:B, 03:B, 04:A, 05:A, 06:B **NOT RUN** and **CANCELED**, not failed, passed, or counted as physical data. No new paired AB/BA/AB conclusions or matched-workload speedup. Previous standalone physical A/B runs remain separately accepted but are not new six-study sessions. The Session01 original ledger SHA256 is `ceb17077b99bb5f4bfc346ad7147cb6df65aedd73f1940c25c32f3c8ce007bec`; A actual CNTFRQ 99,999,001 Hz and 1,023-image ordinary median 35.67722641549189 ms. Source: [operator-reported accepted session and exact immutable hashes](docs/P08_B46_4B_SESSION01_REAL1024_A_FIRST_PAIR_OPERATOR_ACCEPTANCE_2026_11_05.md).
+
+**Why pivot:** v3 proved correct LIF/neural semantics, physical single-engine execution and substantial PS/PL/DDR virtualization overhead; further cross-size latency comparisons are low priority because A and B execute unequal networks and different scheduler/reset work. Exploratory low-risk optimizations may be informative, but extensive v3 performance engineering would duplicate v4's planned architectural redesign. v3 will not keep Loihi restrictions as an optimization target. v4 should retain independently verified LIF semantics (explicitly define any numerical changes) and **DDR-backed virtualization**, but consider sparse event worklists, hardware-resident per-event scheduling, on-chip working-set caches, locality-aware virtual-core organization and controlled resident-vs-DDR comparisons.
+
+**Project questions to pursue in v4:**
+
+> How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?
+
+> How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?
+
+**Prior art to review:** YANA (Pachideh et al., 2026 preprint / 2025 conference citation), SENECA (Tang et al., 2023), HiAER-Spike (Frank et al., 2026), Ansari & Wielgosz (2026 preprint), and NIR (Pedersen et al., 2024). Root `LitReview.md` will retain full references.
+
+**Remaining v3 phase decisions (supersede historical "ACTIVE" / "PLANNED" text below):**
+
+| Former v3 scope | New disposition |
+| --- | --- |
+| P04 extra engine, P05 remaining observability/hardening, P06/P07 unfinished validation expansions | **CANCELED for v3**; retain completed and accepted submilestones; only reconsider on a separately scoped v4 project. |
+| P08 additional performance/power/energy and P08-B4.6 six-new-session AB/BA/AB study | **CANCELED** beyond the genuinely accepted records; Session01 remains 1/6, Session02–06 never executed. No energy measurements implied. |
+| P09 historical full thesis comparison/closure as originally planned | **CANCELED in its historical form**; later thesis writing may cite frozen v3 results, but no remaining v3 deliverables from this phase. |
+| P10 — Deferred bounded v3 optimization | **DEFERRED, last possible v3 milestone**; only activate upon a distinct future user decision, with short timebox and independent validation. |
+
+**Workflow rule:** no further v3 physical/JTAG testing, source changes or automatic optimization from this roadmap without explicit new operator request. Do not run Session02 using the preserved historical B runbooks. Prior signed reports, accepted SHA-pinned assets, original official MNIST TEST seal and physical risk constraints remain unchanged. Reinitialize v4 planning from `main` after approved integration; **no v4 RTL implementation yet**. The history below remains for provenance; any older 'NEXT', 'ACTIVE', or 'PLANNED' entries are historical and superseded by this notice.
+
+---
 ## P08-B4.6.4b FIRST NEW AB/BA/AB PHYSICAL SESSION ACCEPTED — 01:A ORIGINAL REBUILT A2.1 (2026-11-05 local / 2026-11-06 UTC)
 
 **Authoritative latest user-reported physical result: NEW Session01 A accepted, 1 of 6.** Real separately rebuilt 42-neuron / 26 dispatch A2.1 exact 1024 original TRAIN-derived validation images, original independent P07 1024 packed neural + 26x42 selected trace and genuine A53 timing: independent verifier PASS, real original physical runner \`script_exit_status=0\`. Original new capture: \`/home/dna/Thesis_Evidence/p08_b46_s01_A_20261106T052149Z/\`. New physical independent JSON SHA256 \`26e9cfbc9b6485313d89e72f80ec578498539c902838140940f1027da4038eb0\`; raw output SHA manifest SHA \`8c5e1b05775bbcaf087b55203569da949abfe16ebc3d46d0b98035002a3a6440\`. Separate PC independent *rereview of same capture* \`/home/dna/Thesis_Evidence/p08_b46_s01_A_rereview_20261106T052539Z.json\` **same** JSON SHA \`26e9cf...\` — **NOT a second boot**. Real CNTFRQ 99999001Hz, 1023 ordinary-image A53 median 35.67722641549189ms.
@@ -3048,12 +3076,12 @@ A passing developer-side test does not by itself close a hardware/software miles
 | P01 | Define board-local architecture, ownership, and v3 contract | Complete |
 | P02 | Move non-resident logical contexts into K26 DDR | Complete |
 | P03 | Build autonomous PS-resident scheduling/routing/barrier runtime | Complete |
-| P04 | Add multi-engine parallel logical-core execution | Deferred |
-| P05 | Build board-local regression, observability, and data-path hardening | In progress (P05.2; P05.1 accepted) |
-| P06 | Audit and freeze an exact published MNIST benchmark | In progress (Track A accepted; Track B gated by P08-A) |
-| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | In progress (A1/A2 accepted; A3 validation pending) |
-| P08 | Characterize latency, throughput, power, and energy | Planned |
-| P09 | Final source-backed comparison and v3 closure | Planned |
+| P04 | Add multi-engine parallel logical-core execution | **CANCELED for v3** (formerly deferred) |
+| P05 | Build board-local regression, observability, and data-path hardening | **FROZEN / remaining work canceled**; accepted parts preserved |
+| P06 | Audit and freeze an exact published MNIST benchmark | **FROZEN / remaining work canceled**; accepted parts preserved |
+| P07 | Execute the frozen benchmark end-to-end primarily on KV260 | **FROZEN / remaining work canceled**; accepted real hardware proof preserved |
+| P08 | Characterize latency, throughput, power, and energy | **FROZEN / further characterization canceled**; do not infer power/energy |
+| P09 | Final source-backed comparison and v3 closure | **CANCELED** (historical concept; future thesis writing uses frozen results) |
 
 ---
 
@@ -5603,7 +5631,7 @@ bottlenecks are measured.
 
 # P09 — Thesis comparison and closure
 
-**Status:** PLANNED.
+**Status:** **CANCELED (2026-11-07 pivot)**. Historical goals below preserved as context, NOT active requirements; the accepted v3 evidence is frozen and unfinished energy/official TEST/extra comparisons must not be presented as completed.
 
 First close the complete **Track A evidence
 chain** (published-method scope, independently
@@ -5657,3 +5685,17 @@ These are intentionally not prerequisites for the initial v3 roadmap unless late
 - real-time sensor/event input;
 - multi-board scaling;
 - physically asynchronous FPGA circuitry.
+
+---
+
+# P10 — Deferred, bounded v3 optimization (FINAL v3 milestone; NOT STARTED)
+
+**Status: DEFERRED — not authorized.** This is the **last possible v3 milestone**, reserved for a later explicit user decision. No v3 optimization work, build, or destructive physical verification is active now. The priority is v4 architecture planning.
+
+**Purpose:** If advisor/user later find one short, evidence-driven v3 optimization worthwhile, make a minimal baseline-preserving improvement without changing the Loihi-inspired model, hiding integrity controls, reusing old evidence as a new run, or expanding into a new accelerator architecture. Prioritize measured bottlenecks such as redundant DDR transfers, excessive context switches or A53 orchestration; investigate one or two low-risk changes only.
+
+**Future entry gate:** (1) user explicitly reactivates P10 and sets a strict timebox and stopping criterion; (2) establish a known signed baseline and untouched prior evidence; (3) profile the current bottleneck with existing accepted counters/latency first; (4) approve each change and its no-board tests; (5) separately authorize any individual board/JTAG attempt with fresh artifacts, new evidence folder, recovery/power-cycle and independent neural verification.
+
+**Potential deliverable if resumed:** measured before/after ORIGINAL matched workload and explicitly identical timer boundaries, new independent neural/trace integrity PASS, exact build/source/ELF/bitstream/report SHA and disclosed tradeoffs. No promised speedup. Any major redesign of PS/PL scheduling, sparse event engine, neural state cache or fixed-point semantics should be developed as v4, not P10.
+
+**Exit:** either one or two completed and independently checked small optimizations, or a documented negative result / stop under timebox; archive the result without overwriting v3 history. Do not schedule a return date or treat this deferred milestone as a v4 dependency.
