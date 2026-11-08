@@ -30,6 +30,15 @@ jobs:
         run: python3 -m compileall -q src scripts tests
       - name: M05 actual native C++ streaming kernel and host scheduler
         run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
+      - name: HLS Csim vector testbench native-only compile/smoke (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_stream_eval/m05_stream.cpp \
+            hls/m05_stream_eval/m05_hls_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_hls_tb_host"
+          "$RUNNER_TEMP/m05_hls_tb_host"
       - name: Accepted M04 M03 M02 M01 regression suites
         run: |
           python3 -m unittest discover -s tests -p 'test_m04*.py' -q
