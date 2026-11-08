@@ -1,3 +1,5 @@
+> **LATEST VERIFIED RESULT:** The signed32 rolling kernel has since passed **genuine K26 Vitis 2025.2 CSim, synthesis AND XSim C/RTL cosim**; previous statements below that genuine i32 cosim was pending are historical pre-result snapshots. XSim at source commit `07913bbf925e5cd1ffc0d84dd6f9d5b4c2ee519a`: 10/10 transactions, latency 265/6328/17225 cycles min/avg/max, interval 285/6869/17248, total 63463 testbench cycles, final postcheck PASS/exit0. HLS synth signed32 **39 BRAM18K** vs signed64 **53**, current_U **16** vs **30**. [Canonical optimization evolution ledger](M05_EVALUATION_ENGINE_EVOLUTION.md); no board or backpressure RTL proof.
+>
 # M05 rolling temporal wheel — provably exact signed-32 current storage
 
 **Status:** new candidate source and native tests PASS; **GENUINE VITIS 2025.2 CSim, synthesis, and RTL co-simulation for this i32 change are NOT YET RUN**. The previously synthesized and operator-co-simulated i64 version is preserved in Git history at commit `03c3fbc5f8866c44510ff67d2cce8151988fa4d7`. Both are within draft/unmerged PR #79 and the same existing M05 research branch. No board/JTAG/DDR changes.
