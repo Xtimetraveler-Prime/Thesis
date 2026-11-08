@@ -54,7 +54,7 @@ The 24 scenarios are **modeled combinations**, not 24 physical runs or independe
 
 ## 4. What CI ran in addition to the 20 unit tests
 
-GitHub workflow: `../../../../.github/workflows/neuromorphic_accelerator_m01_pc_only.yml` (path is repository-relative when viewed in Git).
+GitHub workflow: `../../../.github/workflows/neuromorphic_accelerator_m01_pc_only.yml` (path is repository-relative when viewed in Git).
 
 1. **Python compilation:** `python3 -m compileall -q src scripts tests` checks source syntax.
 2. **Native regression suite:** `python3 -m unittest discover -s tests -p "test_m01*.py" -v` runs all 20 committed tests without pytest, Vivado, Vitis, access to the KV260, or external packages.
