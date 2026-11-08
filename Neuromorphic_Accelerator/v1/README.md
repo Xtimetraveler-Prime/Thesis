@@ -2,6 +2,22 @@
 
 **Status: M01–M04 COMPLETE in approved scopes (M04 merged PR #78); M05 OPEN on unmerged draft PR #79. Three independent HLS IP candidates have passed real operator-run Vitis 2025.2 CSim, synthesis, and XSim C/RTL cosimulation. A NEW fourth finite-horizon integrated PL-oriented event scheduler is native-tested but NOT YET genuine-Vitis verified.** No deployed/placed/routed/physical KV260 result or accelerated inference claim is accepted. This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
 
+## Latest M05 genuine-tool gate and rolling-wheel follow-on
+
+The operator independently verified all **four** previously developed HLS tops (three standalone components, and the integrated 8-tick recurrence engine) in actual Vitis 2025.2 HLS CSim, synthesis and XSim C/RTL cosimulation; **the integrated fourth top PASS is now established**. Its HLS estimated resource use is 74 BRAM18K, 5,914 LUT, 3,122 FF and 6 DSP at 8.002ns estimated period; physical routing and end-to-end throughput are still unknown.
+
+A separate [fifth rolling-wheel top](hls/m05_rolling/m05_rolling.cpp) is now built and **native-verified only**. It reuses eight temporal BRAM-candidate aggregate buckets across up to 64 logical ticks, with delays 1–8, sorted external events, positive-delay self/parallel recurrence and 4096 signed W16 arrivals/tick. **Late errors invalidate all earlier streamed trace rows** and the consumer must drain streams before final `ap_done`; status must be checked before accepting results. M05 currently has **72 new +91 earlier =163 named native regression tests PASS**, plus five native-compiled CSim vector benches. [Full limits and evidence metadata](docs/M05_ROLLING_WHEEL_DESIGN_2026_11_08.md). No physical board operations, no routed timing, PR #79 draft/unmerged.
+
+Next, after updating your VS Code branch and sourcing Vitis 2025.2:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m05*.py' -v # expect 72
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --rolling --csim
+```
+
+Only after genuine rolling CSim PASS proceed to rolling synthesis and cosim. Original Vitis evidence stays in `~/Thesis_Evidence/`, not Git.
+
 ## New fourth M05 candidate — integrated finite-horizon hardware scheduler (native-tested)
 
 Unlike the three earlier independently genuine-Vitis-verified IPs, the new [`m05_integrated_replay`](hls/m05_integrated/m05_integrated.cpp) combines neuron state, signed event aggregation, positive-delay self/parallel recurrence, and every tick's LIF computation into **one HLS-oriented PL top**. Bounded first run: up to **1,024 resident W16 neurons, 4,096 graph edges, 4,096 individual contributions/tick and eight ticks**; signed i64 summation and global tick barriers are preserved. It buffers output until the complete run succeeds, so overflows cannot publish partial traces. It relies on **one** accepted `m04_eval_one` datapath rather than joining all three standalone cores and duplicating the divider.
