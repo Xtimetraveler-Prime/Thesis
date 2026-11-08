@@ -105,10 +105,6 @@ jobs:
           iverilog -g2012 -s m05_11_stream_shell \
             -o "$RUNNER_TEMP/m05_11_shell_elab" \
             rtl/m05_11/m05_11_axil_session_controller.v \
-            rtl/m05_11/m05_11_axil_session_controller.v \
-            rtl/m05_11/m05_11_stream_shell.v \
-            rtl/m05_11/tb_m05_11_axil_controller.sv \
-            scripts/run_m05_11_axil_xsim.sh \
             rtl/m05_11/m05_trace_dma_packetizer.v \
             rtl/m05_11/m05_ingress_dma_unpad.v \
             rtl/m05_11/m05_11_stream_shell.v
@@ -155,6 +151,10 @@ jobs:
             hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv \
             scripts/m05_rtl_multi_run_replay.py \
             tests/test_m05_rtl_multi_run_replay.py \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_11_stream_shell.v \
+            rtl/m05_11/tb_m05_11_axil_controller.sv \
+            scripts/run_m05_11_axil_xsim.sh \
             rtl/m05_11/m05_trace_dma_packetizer.v \
             rtl/m05_11/m05_ingress_dma_unpad.v \
             rtl/m05_11/tb_m05_11_packetizer.sv \
