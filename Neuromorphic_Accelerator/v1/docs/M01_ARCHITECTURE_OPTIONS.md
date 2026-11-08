@@ -99,14 +99,14 @@ Do **not** interpret 24 sweep cells as 24 physical KV260 experiments or as 24 in
 - **LRU, cachelines and memory paging** are established computer architecture concepts; neither the principle nor these three categories are claimed as invented here.
 - This study's Python source and synthetic traffic accounting were newly authored for the project, using no copied third-party HDL or software. Review any future upstream YANA/other software or RTL implementation license independently before reuse. Full bibliography: [root `LitReview.md`](../../../LitReview.md).
 
-## 6. M01 acceptance checklist (not yet closed)
+## 6. M01 acceptance checklist — CLOSED (2026-11-07 local, PC-only)
 
 - [x] Candidate A/B/C mappings, memory state, ownership and memory budget explicitly documented.
 - [x] Reproducible **no-board** synthetic read/write/transfer accounting, no implicit hardware timing.
 - [x] Negative/fairness tests for budget conservation, deterministic location controls, dirty writeback, pin prefetch, invalid segmentation and exclusive-create outputs.
 - [x] 24-cell capacity/granularity/locality synthetic sweep CLI and native GitHub Actions job.
-- [ ] User runs native PC tests and reviews original generated SHA-pinned JSON; reports output/SHAs.
-- [ ] User reviews whether B is a sensible *provisional* implementation baseline and whether state and synapses should be jointly or separately virtualized.
-- [ ] M02 contract draft formally chooses exact state tuple, LIF time semantics and supported network scope. **No code/hardware launch is authorized by M01.**
+- [x] User reports **native M01 tests PASS**; GitHub branch CI PASS. User-local report SHA256s were **not** supplied, so none is claimed. Detailed test methods: [M01_TESTS_EXPLAINED.md](M01_TESTS_EXPLAINED.md).
+- [x] User explicitly approved **configurable B/group-based residency as provisional implementation baseline**, while keeping individual and hybrid controls. State and synaptic connectivity remain separate placement axes; no detailed synaptic-storage design has been approved.
+- [x] M02 neural time/precision contract recognized as **separate future work**, NOT falsely included in M01. **No FPGA/HLS or physical hardware launch is authorized by M01**.
 
-M01's important output is an **architecture and experiment choice with stated risks**. It must not be marked accepted solely because the analytic code passes its own self-tests. The next distinct milestone is the independent M02 neural reference, subject to user verification.
+**M01 is accepted in its strictly PC-only architecture-trade-study scope**, based on passing source CI, user-reported native PASS, and user-approved provisional direction. This does NOT validate timing, LIF correctness, original output hashes, DDR bandwidth, or physical FPGA execution. The next distinct milestone is the independent M02 neural reference, subject to its own verification.
