@@ -48,8 +48,51 @@ static bool later_overflow_invalidates_partial_stream() {
     return prefix.tick == 0 && prefix.spike == 1 && trace.empty();
 }
 
+// The top keeps BRAM statically across ap_start calls. A smaller logical run
+// must not expose rows from the larger run; a subsequent larger run must
+// initialize its newly active rows before they become observable.
+static bool varying_network_sizes_across_runs() {
+    for (std::uint32_t epoch = 0; epoch < 3; ++epoch) {
+        hls::stream<M05IntegratedNeuron> ns;
+        hls::stream<M05IntegratedSynapse> ss;
+        hls::stream<M05IntegratedExternal> es;
+        hls::stream<M05IntegratedTraceEntry> trace;
+        const std::uint32_t count = epoch == 1 ? 1 : 2;
+        ns.write({0, 0, 5, 0});
+        if (count == 2) ns.write({0, 0, 5, 0});
+        if (epoch == 0) {
+            ss.write({1, 1, 5, 8});
+            es.write({0, 1, 5});
+        } else {
+            es.write({0, 0, 0}); // zero delivery must still wake ID 0
+        }
+        const std::uint32_t status = m05_rolling_replay(
+            ns, ss, es, trace, count, epoch == 0 ? 1 : 0,
+            1, 11, 1, 1);
+        if (status != M05_ROLL_OK) return false;
+        for (std::uint32_t t = 0; t < 11; ++t) {
+            for (std::uint32_t i = 0; i < count; ++i) {
+                if (trace.empty()) return false;
+                const M05IntegratedTraceEntry x = trace.read();
+                const std::uint8_t spike =
+                    (epoch == 0 && i == 1 && (t == 0 || t == 8)) ? 1 : 0;
+                const std::uint8_t evaluated =
+                    epoch == 0 ? spike : (t == 0 && i == 0 ? 1 : 0);
+                const std::uint32_t delivered =
+                    t == 0 || (epoch == 0 && t == 8) ? 1 : 0;
+                if (x.tick != t || x.neuron_id != i || x.voltage != 0 ||
+                    x.spike != spike || x.evaluated != evaluated ||
+                    x.delivered_count != delivered) return false;
+            }
+        }
+        if (!trace.empty()) return false;
+    }
+    return true;
+}
+
 int main() {
     if (!wheel_wrap_recurrent() ||
+        !varying_network_sizes_across_runs() ||
         !later_overflow_invalidates_partial_stream() ||
         !wheel_wrap_recurrent()) {
         std::cerr << "FAIL: M05 rolling wheel temporal CSim vectors\n";
