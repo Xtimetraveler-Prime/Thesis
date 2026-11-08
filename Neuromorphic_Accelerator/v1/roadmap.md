@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Development and Experimental Roadmap
 
-**Status:** **M01 COMPLETE / USER-ACCEPTED 2026-11-07 local (PC-ONLY architecture/model scope)**; M02–M09 PLANNED. This acceptance concerns the analytical memory-residency trade study and verified software tests, **not** any FPGA speed, LIF correctness, or physical DDR measurements. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
+**Status:** **M01 COMPLETE / USER-ACCEPTED 2026-11-07 local (PC-ONLY architecture/model scope)**; **M02 ACTIVE (PROVISIONAL NEURAL REFERENCE; CI-only gate, USER/NUMERICAL REVIEW PENDING)**; M03–M09 PLANNED. This acceptance concerns the analytical memory-residency trade study and verified software tests, **not** any FPGA speed, LIF correctness, or physical DDR measurements. First independent generation in `Neuromorphic_Accelerator/v1/`; **not** `Loihi_Digital_Twin/v4`. Created after the 2026-11-07 research pivot and architecture discussion. This document is a **prospective technical plan**, not a claim of implemented modules, completed native tests, FPGA results, or novel inventions. No KV260 JTAG/DDR writes are authorized here.
 
 ## 0. Purpose and research thesis
 
@@ -19,7 +19,7 @@
 | Milestone | Purpose | Depends on | Exit / status |
 | --- | --- | --- | --- |
 | **M01 — Virtualization architecture trade study** | Compare neuron-granular, block-granular and hybrid placements; pick measurable baseline + alternatives. | New scaffold | **COMPLETE / USER-ACCEPTED** — user-reported 20 native tests PASS, branch CI PASS, provisional block baseline approved; NO FPGA neural/timing results. |
-| **M02 — Independent LIF and event-order reference contract** | Define exact numerical/spike semantics and immutable independent oracle; verify sparse equivalence. | M01 interface assumptions | **PLANNED** — functional semantics gate. |
+| **M02 — Independent LIF and event-order reference contract** | Define exact numerical/spike semantics and immutable independent oracle; verify sparse equivalence. | M01 interface assumptions | **ACTIVE / NOT ACCEPTED** — candidate dense/queued fixed-point references + no-board CI, pending user PC validation and contract approval. |
 | **M03 — Workloads, traffic model and measurement contract** | Trace-driven DDR/cache model, sparsity/locality generators and 4-way comparison rules. | M01 + M02 | **PLANNED** — reproducible experiment specification. |
 | **M04 — v3 HLS neuron-engine reuse feasibility** | Audit arithmetic versus dispatch/controller coupling; decide extract/adapt/new engine from evidence. | M02 + M03 | **PLANNED** — documented engineering decision. |
 | **M05 — Sparse event scheduling and on-chip accelerator prototype** | Implement independent event/worklist processing with bounded on-chip state; correct event/timestep behavior. | M02–M04 | **PLANNED** — software/RTL/HLS parity, no DDR dependency. |
@@ -62,7 +62,9 @@
 
 ## M02 — Independent LIF / event-order reference (REQUIRED)
 
-**M01 EXIT GATE PASSED:** user-approved provisional configurable block-state residency, individual/hybrid comparison controls, synaptic placement kept separate. This completes **M01 PC-only research**, not a neural/FPGA architecture freeze. The new M02 reference arithmetic and event semantics require their own independent testing and review.
+**2026-11-07/08 development progress (NOT acceptance):** Draft [exact numerical and timestamp contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md), [dense scalar independent oracle](src/neuromorphic_accelerator_v1/m02_dense_reference.py), [structurally separate event-bucket cross-check](src/neuromorphic_accelerator_v1/m02_event_reference.py), [strict shared input/network validation](src/neuromorphic_accelerator_v1/m02_types.py), curated absolute golden fixtures and seeded recurrent/delayed differential tests. A safe [PC-only 54-case report CLI](scripts/m02_reference_check.py) produces per-case source/trace hashes; [full 21-test explanation](docs/M02_TESTS_EXPLAINED.md) and [operator native verification runbook](docs/M02_PC_ONLY_VERIFICATION.md) explain gates. Neither model skips quiet-neuron updates; both use a deliberately simple *proposed* integer LIF contract, **not an approved v1 neural specification**, Loihi exact reproduction, or a hardware performance result. **Native user PASS and explicit numerical-contract approval are M02 closure requirements.**
+
+**M01 EXIT GATE PASSED:** user-approved provisional configurable block-state residency, individual/hybrid comparison controls, synaptic placement kept separate. This completes **M01 PC-only research**, not a neural/FPGA architecture freeze. The new M02 reference arithmetic and event semantics require their own independent testing and review, now underway in the separate M02 branch.
 
 **Decision:** A **new, small software reference IS REQUIRED** even though v1 is not a Loihi digital twin. Its purpose is independent functional correctness and fair workload equivalence, *not* fidelity to Loihi silicon. v3's verified arithmetic/oracles are reusable **test vectors and design knowledge**, but copying the v3 executor as the only expected-result source risks a common-mode bug.
 
