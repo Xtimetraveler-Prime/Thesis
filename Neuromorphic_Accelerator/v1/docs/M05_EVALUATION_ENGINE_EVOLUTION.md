@@ -188,6 +188,55 @@ unchanged signed32 evaluation source and previously verified physical
 OOC clock/resource estimates remain exactly as recorded above. M05 open,
 draft PR #79 unmerged. [M05.8 detailed runbook and commands](M05_LATE_ERROR_TRANSACTION_GATE_2026_11_08.md).
 
+### M05.8 verified late RTL error and host discard (operator, 2026-11-08)
+
+**Actual generated-Verilog XSim PASS** on unchanged signed32 rolling engine.
+Original immutable evidence folder
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T211756Z_234592`;
+real operator `--late-error` run, **`exit_status=0`** and real 2025.2
+`xvlog`/ `xelab`/ XSim passes. Authentic XI RAM `.dat` assets: 11 staged
+with SHA256; driver AXI-Lite map parsed. External input ticks **0,4,3**
+produced **eight provisional trace transfers** for tick0..3, with a valid
+tick0 neuron0 spike, then real final AXI-Lite status **4 BAD_EXTERNAL**.
+XSim verified **56 trace output stall cycles**, **436 ingress-valid gaps**,
+exactly eight ordered partial rows, **no tick4 row**. Original log contained:
+
+```text
+M05_RTL_FINAL status=4 provisional=8 committed=0
+PASS: M05 REAL RTL AXIS LATE-ERROR status=4 provisional=8 committed=0; output_stalls=56; ingress_gaps=436
+PASS: M05 RTL transactional replay: status=4, provisional=8, drained=8, committed=0, early_spike=1, all failure rows discarded
+```
+
+The last line is an **offline** parse-and-replay of actual XSim transcript
+through the already native-tested host `RollingTraceCommitGate`. This
+demonstrates transactional discard policy on real RTL outputs, but is
+**not a physically connected AXI DMA/PS driver**. Earlier 6.503ns routed OOC
+timing and input/output stall results are unaffected. No FPGA programming.
+
+### M05.9 subsequent-execution isolation gate (NEW, awaiting real XSim)
+
+New [`tb_m05_rolling_axis_multi_run.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv)
+runs the **same RTL instance without pulsing ap_rst_n between runs**:
+(1) late-error 2-neuron/12-tick network, status4 after **8 provisional
+rows**, zero commits, with a recurrent event pending for t8 when it fails;
+(2) fresh 2-neuron/**10-tick** network with **no synapses**, fresh t1/n1
+external stimulus. It must emit **20 valid rows**, only t1/n1 spikes and
+**tick8 remains completely silent**, proving the t8 pending event and old
+graph were correctly cleared, with real final status0. TREADY output stalls
+and real AXI-Lite completion are tested on both runs.
+
+The [`m05_rtl_multi_run_replay.py`](../scripts/m05_rtl_multi_run_replay.py)
+offline checker creates two distinct host `RollingTraceCommitGate` sessions,
+rejects reordered/missing/duplicated/malformed run markers, and insists
+run0 commits **0**, run1 commits **20** after status0. The runner selects
+`--multi-run`, reuses exactly the previously routed HLS IP without
+resynthesis and stages original tool-generated RAM assets; **15 new
+synthetic/native regression tests** cover status, framing, stale wheel, and
+source contract. **157 named M05 +91 M01–M04=248 native tests**. Real
+M05.9 direct XSim outcome is **NOT YET VERIFIED** and should never be
+reported as pass merely because host CI succeeds. All old testbench
+proofs/evidence are preserved. [M05.9 operator runbook](M05_MULTI_RUN_RECOVERY_GATE_2026_11_08.md).
+
 ## F. Next controlled experiments / acceptance gates
 
 1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
