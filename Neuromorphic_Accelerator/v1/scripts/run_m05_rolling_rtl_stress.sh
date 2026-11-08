@@ -10,19 +10,21 @@
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
-    echo "Usage: bash $0 <rolling --impl evidence dir> [--ingress|--late-error]" >&2
+    echo "Usage: bash $0 <rolling --impl evidence dir> [--ingress|--late-error|--multi-run]" >&2
     exit 2
 fi
 MODE="output"
 if [[ "$#" -eq 2 ]]; then
-    if [[ "$2" != "--ingress" && "$2" != "--late-error" ]]; then
-        echo "ERROR: second argument must be --ingress or --late-error" >&2
+    if [[ "$2" != "--ingress" && "$2" != "--late-error" && "$2" != "--multi-run" ]]; then
+        echo "ERROR: second argument must be --ingress, --late-error or --multi-run" >&2
         exit 2
     fi
     if [[ "$2" == "--ingress" ]]; then
         MODE="ingress"
-    else
+    elif [[ "$2" == "--late-error" ]]; then
         MODE="late-error"
+    else
+        MODE="multi-run"
     fi
 fi
 IMPL="$(realpath -e -- "$1")"
@@ -76,7 +78,9 @@ printf '%s\n' "xck26-sfvc784-2LV-c" > "$OUT/part.txt"
 sha256sum "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv" \
     "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_ingress_stress.sv" \
     "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv" \
+    "$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv" \
     "$ROOT/scripts/m05_rtl_transaction_replay.py" \
+    "$ROOT/scripts/m05_rtl_multi_run_replay.py" \
     "$ROOT/scripts/m05_axis_regmap.py" \
     "$ROOT/scripts/m05_rtl_meminit.py" \
     "$ROOT/scripts/run_m05_rolling_rtl_stress.sh" \
@@ -124,6 +128,12 @@ if [[ "$MODE" == "late-error" ]]; then
     SNAPSHOT="m05_rolling_axis_late_error_snapshot"
     PASS_MARKER="PASS: M05 REAL RTL AXIS LATE-ERROR"
 fi
+if [[ "$MODE" == "multi-run" ]]; then
+    TOP_SV="$ROOT/hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv"
+    TOP_MODULE="tb_m05_rolling_axis_multi_run"
+    SNAPSHOT="m05_rolling_axis_multi_run_snapshot"
+    PASS_MARKER="PASS: M05 REAL RTL AXIS MULTI-RUN"
+fi
 # Compile in a unique evidence-local cwd so no xsim.dir or .jou is deposited
 # in the user's Git worktree or an earlier Vitis proof directory.
 cd "$OUT"
@@ -159,6 +169,12 @@ if [[ "$MODE" == "late-error" ]]; then
     # Replay the *actual* XSim provisional trace through the existing Python
     # host gate. A nonzero final AXI-Lite status must DISCARD all 8 prior rows.
     python3 "$ROOT/scripts/m05_rtl_transaction_replay.py" \
+        --xsim-log "$OUT/04_xsim.log" 2>&1 | tee "$OUT/05_trace_commit.log"
+fi
+if [[ "$MODE" == "multi-run" ]]; then
+    # Two ap_start commands on one generated-RTL instance: failed run
+    # staged 8 rows but exposed none; following OK run published 20 rows.
+    python3 "$ROOT/scripts/m05_rtl_multi_run_replay.py" \
         --xsim-log "$OUT/04_xsim.log" 2>&1 | tee "$OUT/05_trace_commit.log"
 fi
 echo "PASS: Direct generated RTL AXI $MODE stall stress; no board operations."
