@@ -1,3 +1,5 @@
+> **REAL GATE PASS reported by operator on 2026-11-08:** The new 64-neuron `--ingress` direct Verilog XSim completed `exit_status=0`, evidence `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T210506Z_227783`. 11 original Vitis `.dat` images staged, 768 accepted trace records, 312 neuron input stalled cycles (283 BEFORE start), 7573 trace output stalled cycles, status0. No observed synapse/external port stalls. Older failing smaller test is retained as historic coverage miss; newer test **passed** and now closes directed neuron-input interface coverage. The next M05.8 test intentionally triggers nonzero hardware return after provisional rows; [new late-error runbook](M05_LATE_ERROR_TRANSACTION_GATE_2026_11_08.md). [Canonical engine ledger](M05_EVALUATION_ENGINE_EVOLUTION.md). No PS/DMA or board inference.
+>
 # M05.7 — input-side backpressure with a separate 64-neuron RTL scenario
 
 **Status:** New native-verified test harness and documentation; genuine direct
