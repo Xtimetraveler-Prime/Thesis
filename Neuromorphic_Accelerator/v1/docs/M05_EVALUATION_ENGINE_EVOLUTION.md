@@ -137,8 +137,9 @@ passed output-stall run remain distinct evidence entries.
 ### M05.7 verified bidirectional directed AXIS stall gate (2026-11-08)
 
 Operator ran the **64-neuron direct generated-Verilog XSim ingress** scenario,
-source checkout `809f6f7aa2add553708e93e9741b69e28b2d263c` (or its
-identical bench SHA), evidence directory
+operator's pasted output did not include `commit.txt` (source checkout
+must be read from the original evidence folder before asserting exact
+checkout SHA), evidence directory
 `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T210506Z_227783`,
 `exit_status=0`, `stress_mode=ingress`. Genuine Vitis HLS 2025.2
 generated RTL: `xvlog` PASS, `xelab` PASS, `xsim` **PASS**.
@@ -150,7 +151,7 @@ INFO: M05 ingress prestart accepted N/S/E=2/1/1; stalls N/S/E=283/0/0; pending n
 PASS: M05 REAL RTL AXIS INGRESS stall stress N=64 E=1 S=1 T=12; trace=768; stalled_output_cycles=7573;ingress_gap_cycles=16762; input_stalls N/S/E=312/0/0; final_status=0
 ```
 
-The two-synapse/single-event baseline is unchanged and earlier output test
+The one-synapse/single-event baseline is unchanged and earlier output test
 also PASS (24/24 rows, 188 output stalls). Current new hardware evidence
 therefore demonstrates **actual neuron-side READY backpressure plus trace
 output READY backpressure under one directed workload**, with 768 exact
