@@ -144,6 +144,26 @@ class M04NativeEvaluationTests(unittest.TestCase):
         self.assertIn((0, 0), trace.emitted_spikes)
         self.assertEqual(trace.voltage_rows[1], (-1,))  # delayed inhibitory arrival
 
+    def test_host_protocol_rejects_unrepresentable_or_malformed_fields(self):
+        # These values are legal in the unbounded M02 Python arithmetic domain,
+        # but not representable by the deliberately bounded M04 host interface.
+        good = list(self.req())
+        bad = []
+        for index, value in ((9, 1 << 32), (10, 1 << 32),
+                             (4, 1 << 63), (4, -(1 << 63) - 1),
+                             (0, 1 << 32)):
+            row = good.copy()
+            row[index] = value
+            bad.append(" ".join(map(str, row)) + "\n")
+        bad.append(" ".join(map(str, good[:-1])) + "\n")  # missing denominator
+        bad.append(" ".join(map(str, good)) + " trailing_token\n")
+        for raw in bad:
+            with self.subTest(raw=raw):
+                result = subprocess.run([self.binary], input=raw,
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+
     def test_randomized_networks_match_two_m02_oracles_all_ticks(self):
         for bits in (4, 8, 16, 32):
             for seed in (3, 19, 71, 101):
