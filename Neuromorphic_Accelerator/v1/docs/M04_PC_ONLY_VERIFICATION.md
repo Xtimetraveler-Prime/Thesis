@@ -1,6 +1,6 @@
 # M04 — Native PC verification runbook (no board, no synthesis)
 
-**Status:** M04.1–M04.3 audit/host candidate previously user-native verified; **M04.5 requirements and nine new host checks added**. Parent M04 remains **OPEN**, not closed/merged. This runbook is for re-verification at the new commit. No JTAG, PL programming, A53 halt, DDR writes, Vitis HLS or Vivado are required. Run these commands in your Ubuntu VS Code terminal, using `~/Git/Thesis` as in prior milestones. Do **not** change or run historical v3 physical scripts.
+**Status:** M04.1–M04.3 audit/host candidate previously user-native verified; **M04.5 requirements and nine new host checks added**. Parent M04 was subsequently authorized for source/host closure and merge by the user. This runbook is for re-verification at the new commit. No JTAG, PL programming, A53 halt, DDR writes, Vitis HLS or Vivado are required. Run these commands in your Ubuntu VS Code terminal, using `~/Git/Thesis` as in prior milestones. Do **not** change or run historical v3 physical scripts.
 
 ## 1. Checkout exact M04 branch and inspect sources
 
