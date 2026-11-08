@@ -317,6 +317,10 @@ module tb_m05_rolling_axis_ingress_stress;
         // observed in the first successful 12-tick RTL output-stall test.
         enable_feeds = 1;
         repeat (300) @(negedge ap_clk);
+        $display("INFO: M05 ingress prestart accepted N/S/E=%0d/%0d/%0d; stalls N/S/E=%0d/%0d/%0d; pending neurons_TVALID=%b neurons_TREADY=%b",
+                 neurons_sent, synapses_sent, external_sent,
+                 neuron_stall_cycles, synapse_stall_cycles,
+                 external_stall_cycles, neurons_TVALID, neurons_TREADY);
 
         // Register offsets are parsed from Vitis-generated *_hw.h, not
         // assumed from memory or a hard-coded prior tool version.
@@ -348,7 +352,10 @@ module tb_m05_rolling_axis_ingress_stress;
             $fatal(1, "RTL_STRESS_FAIL no deliberate input TVALID gaps");
         if (neuron_stall_cycles + synapse_stall_cycles +
             external_stall_cycles < 10)
-            $fatal(1, "RTL_STRESS_FAIL no meaningful incoming AXIS backpressure");
+            $fatal(1, "RTL_STRESS_FAIL no meaningful incoming AXIS backpressure: N/S/E stalls=%0d/%0d/%0d, accepted=%0d/%0d/%0d",
+                   neuron_stall_cycles, synapse_stall_cycles,
+                   external_stall_cycles, neurons_sent, synapses_sent,
+                   external_sent);
         repeat (25) @(negedge ap_clk);
         if (trace_received != EXPECTED_ROWS)
             $fatal(1, "RTL_STRESS_FAIL extra trace rows after completion");
