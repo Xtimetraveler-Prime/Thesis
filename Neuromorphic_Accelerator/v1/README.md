@@ -27,6 +27,8 @@ No mandate for fixed virtual cores, group size, neuron-to-group mapping, neuron/
 
 Initial architecture brainstorming: [`docs/ARCHITECTURE_DESIGN_QUESTIONS.md`](docs/ARCHITECTURE_DESIGN_QUESTIONS.md).
 
+**Development milestone plan:** [`roadmap.md`](roadmap.md) — M01–M09 stage gates covering virtual neuron/group/hybrid trade studies, independent LIF oracle, workloads/traffic, existing HLS reuse, event scheduling engine, DDR virtualization, policy variants, KV260 validation and final quantitative characterization. M01 has **not** started.
+
 ## Next step (planning, NOT implementation)
 
 Specify a reference LIF and event-order contract; prototype a trace-driven latency/DDR-traffic cost model for sparse virtual-neuron working sets; then compare candidate state-storage and grouping/scheduling strategies before selecting hardware interfaces. A minimal on-chip-versus-DDR and timestep-versus-event-driven control matrix should be planned before writing hardware.
