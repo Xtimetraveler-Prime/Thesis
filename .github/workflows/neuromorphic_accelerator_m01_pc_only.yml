@@ -63,6 +63,26 @@ jobs:
           print("M01_TWO_LOCALITIES_PC_ONLY_SOURCE_AND_ACCOUNTING_PASS=1")
           PY
 
+      - name: Reproducible capacity x block-size x locality sweep (no board)
+        run: |
+          set -euo pipefail
+          python3 scripts/m01_sweep.py \
+            --out "$RUNNER_TEMP/m01_capacity_block_locality_pc_only.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "m01_capacity_block_locality_pc_only.json"
+          result = json.loads(p.read_text())
+          assert result["schema"] == "m01-capacity-granularity-sweep-v1"
+          assert result["status"] == "PC_ONLY_ANALYTICAL_TRAFFIC_NOT_REAL_DDR_OR_SNN"
+          assert len(result["grid"]) == 24
+          for entry in result["grid"]:
+              for row in entry["results"].values():
+                  assert row["resident_hits"] + row["misses"] == 512
+                  assert row["allocated_resident_bytes"] <= entry["resident_budget_bytes"]
+          print("M01_3_CAPACITY_4_GROUPSIZE_2_LOCALITY_PC_ONLY_SWEEP_PASS=1")
+          PY
+
       - name: Deliberate no-overwrite regression and parameter rejection
         run: |
           set -euo pipefail
@@ -78,6 +98,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: m01-pc-only-modeled-traffic
-          path: ${{ runner.temp }}/m01_two_localities_pc_only.json
+          path: |
+            ${{ runner.temp }}/m01_two_localities_pc_only.json
+            ${{ runner.temp }}/m01_capacity_block_locality_pc_only.json
           if-no-files-found: error
           retention-days: 30
