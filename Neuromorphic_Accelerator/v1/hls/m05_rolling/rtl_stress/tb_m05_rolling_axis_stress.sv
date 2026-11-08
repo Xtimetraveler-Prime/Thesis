@@ -301,9 +301,10 @@ module tb_m05_rolling_axis_stress;
         repeat (25) @(negedge ap_clk);
         if (trace_received != 24)
             $fatal(1, "RTL_STRESS_FAIL extra trace rows after completion");
-        $display("PASS: M05 REAL RTL AXIS stall stress N=2 E=1 S=1 T=12; "
-                 "trace=24; stalled_output_cycles=%0d; ingress_gap_cycles=%0d; "
-                 "input_stalls N/S/E=%0d/%0d/%0d; final_status=0",
+        // SystemVerilog does not concatenate adjacent string literals
+        // merely by writing them on consecutive source lines. Use one
+        // continuous format string accepted by Vivado 2025.2 xvlog.
+        $display("PASS: M05 REAL RTL AXIS stall stress N=2 E=1 S=1 T=12; trace=24; stalled_output_cycles=%0d; ingress_gap_cycles=%0d; input_stalls N/S/E=%0d/%0d/%0d; final_status=0",
                  trace_stall_cycles, ingress_gap_cycles,
                  neuron_stall_cycles, synapse_stall_cycles, external_stall_cycles);
         $finish;
