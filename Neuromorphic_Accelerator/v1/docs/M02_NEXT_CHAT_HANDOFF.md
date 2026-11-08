@@ -1,6 +1,8 @@
-# M02 ACCEPTED HANDOFF — Continue active development in M03
+# ARCHIVED M02 ACCEPTANCE HANDOFF — Current research: M03_NEXT_CHAT_HANDOFF.md
 
-**Updated:** 2026-11-07 local / 2026-11-08 UTC. **Active task:** M02 PC-only reference is **USER-ACCEPTED**, next milestone **M03** must start on a fresh branch after merging M02; this file is a preserved M02-to-M03 handoff. **First read this file plus ../roadmap.md and M02_PROVISIONAL_LIF_CONTRACT.md before making changes.**
+**Superseded for active development:** M03 now has independent PC-only workload, oracle-parity and analytical traffic implementations on branch agent/neuromorphic-accelerator-v1-m03-workloads-traffic. Read [M03_NEXT_CHAT_HANDOFF.md](M03_NEXT_CHAT_HANDOFF.md) first for current status; M02 remains accepted source baseline.
+
+**Original M02 handoff date:** 2026-11-07 local / 2026-11-08 UTC. **Active task:** M02 PC-only reference is **USER-ACCEPTED**, next milestone **M03** must start on a fresh branch after merging M02; this file is a preserved M02-to-M03 handoff. **First read this file plus ../roadmap.md and M02_PROVISIONAL_LIF_CONTRACT.md before making changes.**
 
 ## Thesis and integration history
 
