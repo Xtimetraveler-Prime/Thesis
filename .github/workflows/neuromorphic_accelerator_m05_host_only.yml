@@ -123,6 +123,12 @@ jobs:
             hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv \
             scripts/m05_rtl_multi_run_replay.py \
             tests/test_m05_rtl_multi_run_replay.py \
+            src/neuromorphic_accelerator_v1/m05_execution_controller.py \
+            src/neuromorphic_accelerator_v1/m05_execution_sim.py \
+            src/neuromorphic_accelerator_v1/m05_execution_abi.py \
+            tests/test_m05_execution_controller.py \
+            tests/test_m05_execution_abi.py \
+            scripts/m05_controller_native_demo.py \
             src/neuromorphic_accelerator_v1/m05_trace_commit.py \
             hls/m05_rolling/m05_rolling.hpp \
             hls/m05_rolling/m05_rolling.cpp \
