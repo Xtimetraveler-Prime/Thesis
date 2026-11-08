@@ -28,7 +28,7 @@ jobs:
           git rev-parse HEAD
       - name: Python syntax (no hardware)
         run: python3 -m compileall -q src scripts tests
-      - name: M05 actual native C++ streaming kernel and host scheduler
+      - name: M05 native C++ streaming, bounded local-state and host scheduler methods
         run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
       - name: HLS Csim vector testbench native-only compile/smoke (NOT Vitis)
         run: |
@@ -39,6 +39,15 @@ jobs:
             hls/m05_stream_eval/m05_hls_csim_tb.cpp \
             -o "$RUNNER_TEMP/m05_hls_tb_host"
           "$RUNNER_TEMP/m05_hls_tb_host"
+      - name: Stateful BRAM-candidate Csim bench compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_stateful/m05_stateful.cpp \
+            hls/m05_stateful/m05_stateful_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_stateful_tb_host"
+          "$RUNNER_TEMP/m05_stateful_tb_host"
       - name: Accepted M04 M03 M02 M01 regression suites
         run: |
           python3 -m unittest discover -s tests -p 'test_m04*.py' -q
@@ -53,4 +62,11 @@ jobs:
             hls/m05_stream_eval/m05_stream_host_cli.cpp \
             src/neuromorphic_accelerator_v1/m05_host_runtime.py \
             tests/test_m05_stream.py \
+            tests/test_m05_stateful.py \
+            tests/test_m05_hls_setup.py \
+            hls/m05_stateful/m05_stateful.hpp \
+            hls/m05_stateful/m05_stateful.cpp \
+            hls/m05_stateful/m05_stateful_hls_config.cfg \
+            hls/m05_stream_eval/m05_hls_config.cfg \
+            hls/m05_stream_eval/run_m05_offline_hls.sh \
             hls/m04_lif_eval/m04_eval.cpp
