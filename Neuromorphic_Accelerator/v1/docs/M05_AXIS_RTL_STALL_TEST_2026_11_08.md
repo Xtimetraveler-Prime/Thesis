@@ -1,3 +1,5 @@
+> **M05.7 follow-up:** The 2-neuron direct output case passed real XSim earlier, but the later strict input-stall experiment on 2026-11-08 failed *only its inbound stall coverage assertion*, after successfully staging 11 genuine generated RAM images. Keep the prior output test immutable. The new independent `tb_m05_rolling_axis_ingress_stress.sv` uses 64 neurons/12 ticks (768 rows) and 300 prestart feeder cycles to seek actual ingress stalls. Select it via `bash scripts/run_m05_rolling_rtl_stress.sh "$ROLL_IMPL" --ingress` with the same routed kernel and new evidence folder; genuine 64-neuron XSim result PENDING. [M05.7 complete runbook](M05_INGRESS_BACKPRESSURE_GATE_2026_11_08.md). No board.
+>
 # M05.6 — Direct RTL ready/valid and output trace stall test (operator gate)
 
 **Status:** harness and local prep tests committed; **genuine direct Verilog XSim test has NOT yet been run on the operator's Vivado 2025.2 workstation**. This does NOT claim that the current HLS C/RTL co-simulation already tested intentional stalls. No KV260, JTAG, PS/DDR, Vivado block-design edits or device programming.
