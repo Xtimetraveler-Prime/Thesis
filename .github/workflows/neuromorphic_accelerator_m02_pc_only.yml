@@ -1,0 +1,50 @@
+name: Neuromorphic Accelerator v1 M02 independent LIF neural oracle (NO BOARD)
+
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m02_pc_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m02_pc_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m02-no-board:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: Neuromorphic_Accelerator/v1
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile neural reference without device toolchain
+        run: python3 -m compileall -q src scripts tests
+      - name: Run hard-expected and random cross-implementation LIF tests
+        run: python3 -m unittest discover -s tests -p "test_m02*.py" -v
+      - name: Preserve isolated M01 acceptance regression boundary
+        run: python3 -m unittest discover -s tests -p "test_m01*.py" -q
+      - name: Inspect no-board neural provenance and negative scope
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0,"src")
+          from neuromorphic_accelerator_v1.m02_types import Network,Neuron,InputCurrent,SCHEMA
+          from neuromorphic_accelerator_v1.m02_dense_reference import evaluate_dense
+          from neuromorphic_accelerator_v1.m02_event_reference import evaluate_events
+          net=Network((Neuron(threshold=5),),state_bits=8,decay_num=1,decay_den=2)
+          inp=(InputCurrent(0,0,3),InputCurrent(1,0,4),InputCurrent(2,0,2))
+          dense=evaluate_dense(net,inp,ticks=4)
+          queue=evaluate_events(net,inp,ticks=4)
+          assert dense==queue
+          assert dense.voltage_rows==((3,),(0,),(2,),(1,))
+          assert dense.emitted_spikes==((1,0),)
+          print("M02_SCHEMA="+SCHEMA)
+          print("M02_INDEPENDENT_NEURAL_HARD_GOLDEN_AND_EVENT_QUEUE_PASS=1")
+          print("M02_CPU_ONLY_NO_HLS_NO_JTAG_NO_BOARD=1")
+          PY
