@@ -151,6 +151,8 @@ class M05RTLStallPrepTests(unittest.TestCase):
         self.assertIn("expected_id = trace_received % NUM_NEURONS;", tb)
         self.assertIn("wait(trace_received == EXPECTED_ROWS);", tb)
         self.assertIn("repeat (300) @(negedge ap_clk);", tb)
+        self.assertIn("INFO: M05 ingress prestart accepted N/S/E=", tb)
+        self.assertIn("N/S/E stalls=%0d/%0d/%0d, accepted=", tb)
         self.assertIn("PASS: M05 REAL RTL AXIS INGRESS stall stress", tb)
         for part in (
             "stalled_neurons_prior", "stalled_synapses_prior",
