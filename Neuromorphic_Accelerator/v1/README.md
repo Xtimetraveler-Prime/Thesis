@@ -1,6 +1,22 @@
 # Neuromorphic Accelerator v1 — Architecture Research
 
-**Status: M01–M04 COMPLETE in approved scopes (M04 merged PR #78); M05 IN PROGRESS on unmerged draft PR #79 with three host-tested HLS-oriented C++ subcomponents (streamed LIF update, signed tick accumulation and local state RAM) plus PC sparse scheduling; real Vitis synthesis/FPGA execution NOT RUN.** No synthesized PL engine, on-chip hardware scheduler, DDR/RTL/bitstream, KV260 measurement or claim of accelerated performance has been accepted. This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
+**Status: M01–M04 COMPLETE in approved scopes (M04 merged PR #78); M05 OPEN on unmerged draft PR #79. Three independent HLS IP candidates have passed real operator-run Vitis 2025.2 CSim, synthesis, and XSim C/RTL cosimulation. A NEW fourth finite-horizon integrated PL-oriented event scheduler is native-tested but NOT YET genuine-Vitis verified.** No deployed/placed/routed/physical KV260 result or accelerated inference claim is accepted. This is a **new first-generation project**, not v4 of the Loihi twin. The umbrella `Neuromorphic_Accelerator` allows investigation beyond any one fixed accelerator microarchitecture.
+
+## New fourth M05 candidate — integrated finite-horizon hardware scheduler (native-tested)
+
+Unlike the three earlier independently genuine-Vitis-verified IPs, the new [`m05_integrated_replay`](hls/m05_integrated/m05_integrated.cpp) combines neuron state, signed event aggregation, positive-delay self/parallel recurrence, and every tick's LIF computation into **one HLS-oriented PL top**. Bounded first run: up to **1,024 resident W16 neurons, 4,096 graph edges, 4,096 individual contributions/tick and eight ticks**; signed i64 summation and global tick barriers are preserved. It buffers output until the complete run succeeds, so overflows cannot publish partial traces. It relies on **one** accepted `m04_eval_one` datapath rather than joining all three standalone cores and duplicating the divider.
+
+**Current evidence:** 12 new [integrated full-trace M02/M03 oracle tests](tests/test_m05_integrated.py) and native Csim bench PASS in CI; **NO genuine Vitis CSim, RTL synthesis, XSim cosim or placed/routed evidence for this NEW integrated top**. [Architectural contract and limitations](docs/M05_INTEGRATED_FINITE_HORIZON_DESIGN.md). [Fourth-top Vitis commands](docs/M05_HLS_OPERATOR_RUNBOOK.md). Source branch remains draft PR #79, M05 OPEN and UNMERGED; continuous rolling future scheduling, live backpressure and physical board deployment remain unimplemented.
+
+To validate the fourth top on the Vitis 2025.2 workstation after pulling the branch:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m05*.py' -v  # expect 60
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --integrated --csim
+```
+
+Stop on any real Vitis error, preserve original logs in `~/Thesis_Evidence/` outside Git and share them before progressing to `--integrated --synth` and then `--integrated --cosim`.
 
 ## Motivation and questions
 
@@ -48,7 +64,7 @@ Root documentation is [`../../README.md`](../../README.md) and source survey is 
 **Verified M04 no-board CI evidence:** 22 M04 methods and 69 regressions PASS on the final accepted M04 branch, then user-authorized merge PR #78. **Current M05 host CI:** [45 M05 methods plus 91 regressions PASS, three HLS benches compiled natively](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42456476435). M05 user-native verification and explicit merge authorization are pending. No physical operation.
 
 
-## M05 hardware-facing subcomponents staged for Vitis (NOT synthesized)
+## M05 hardware-facing components: 3 real standalone HLS passes; fourth integrated candidate awaiting HLS
 
 The three independent, project-owned HLS-oriented C++ tops are [per-neuron stream evaluator](hls/m05_stream_eval/m05_stream.cpp), [signed tick accumulator](hls/m05_accumulator/m05_accumulator.cpp) and [bounded persistent state memory](hls/m05_stateful/m05_stateful.cpp). A single [no-board Vitis operator script](hls/m05_stream_eval/run_m05_offline_hls.sh) supports `--stream`, `--accumulator` and `--stateful` with cumulative `--csim`, `--synth`, `--cosim` or `--impl` stages. [Exact commands and files to return](docs/M05_HLS_OPERATOR_RUNBOOK.md). These are isolated candidate tops, **not a connected PL accelerator**: actual future-delay FIFO/router, backpressure, global tick barriers, on-chip cache-block mapping and whole-network RTL trace verification remain M05 work. User-native M05 evidence and explicit merge authorization are pending. No physical KV260 programming is authorized.
 
