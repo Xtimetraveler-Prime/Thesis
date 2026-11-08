@@ -1,6 +1,6 @@
 # M05 — Tests explained (native stream candidate + PC event scheduling)
 
-**Status:** M05 IN PROGRESS, not user-accepted. M05 has **48 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) and [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **139 named methods total**. Three separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
+**Status:** M05 IN PROGRESS, not user-accepted. M05 has **59 named PC-native unittest methods** across [17 streaming/scheduler](../tests/test_m05_stream.py), [12 persistent state memory](../tests/test_m05_stateful.py), [11 signed tick accumulator](../tests/test_m05_accumulator.py) [5 HLS setup/runner safety](../tests/test_m05_hls_setup.py) [3 Vitis-workdir path regressions](../tests/test_m05_hls_path_regression.py) and [11 integrated finite-horizon network tests](../tests/test_m05_integrated.py); additional seeded cross-tick subcases are counted within methods. Accepted regressions: M04 **22**, M03 **28**, M02 **21**, M01 **20**, for **150 named methods total**. Four separate checked-in HLS Csim vector benches are also compiled and executed NATIVELY by CI, not in Vitis.
 
 ## Test setup and methodology
 
@@ -101,3 +101,24 @@ The M05 workflow now also compiles [`m05_hls_csim_tb.cpp`](../hls/m05_stream_eva
 - `test_offline_runner_three_kernels_survive_vitis_chdir_with_stub`: run the **actual no-board runner** three times against an **explicitly fake Vitis executable** that changes CWD into each external evidence directory, validates the effective config, and checks that original logs/config hashes/result files are produced. **Stubbed tool output is NOT genuine Vitis CSim.**
 
 The existing five HLS setup tests now assert the corrected `package.output.format=rtl` and `relative_roots=file/../..` (template), plus runner use of the generated effective config, instead of enforcing the deprecated key. Prior 45 M05 tests unchanged; new count **48 M05**, accepted regressions **91**, total **139** named host tests. Real successful Vitis Csim/synthesis/C-RTL evidence is still **NOT RECEIVED**; rerun the three actual CSim steps per [updated operator instructions](M05_HLS_OPERATOR_RUNBOOK.md) and review the original outputs before proceeding.
+
+
+## NEW M05 integrated finite-horizon scheduler — 11 native whole-network methods
+
+[Design details and safety boundary](M05_INTEGRATED_FINITE_HORIZON_DESIGN.md). Actual C++ [integrated top](../hls/m05_integrated/m05_integrated.cpp) owns 1,024 neuron states, a resident 4,096-edge adjacency graph, eight future-tick signed i64 aggregate+touch+delivery-count buckets and all neural steps in a **single** call. No Python logical-tick service. The CSim vectors in [m05_integrated_csim_tb.cpp](../hls/m05_integrated/m05_integrated_csim_tb.cpp) exercise self recurrence, over-capacity no-output, and a subsequent clean run; compiled natively by CI. **Neither these new tests nor the prior genuine real Vitis results for the three different tops establish integrated HLS or RTL PASS.**
+
+| Exact new method | What is independently checked |
+| --- | --- |
+| `test_native_csim_vectors` | Compile and execute the separate integrated HLS CSim vector source natively |
+| `test_exact_zero_bias_wakeup_with_no_external_events` | Bias wakeups and exact zero/biasless idle skips across all ticks |
+| `test_unsorted_zero_and_canceling_deliveries_remain_touched` | Input order independence; zero and signed canceling terms count as touched |
+| `test_recurrent_self_parallel_edges_and_future_delays` | Self, parallel, negative edge weights, positive delays, delayed graph fanout |
+| `test_negative_decay_rounding_and_threshold_equality` | Truncate-toward-zero leak and inclusive threshold/reset |
+| `test_all_4096_signed_deliveries_are_exact_and_admitted` | Full signed W16 admission count with exact i64 pre-clamp aggregate |
+| `test_4097_external_deliveries_fail_before_any_trace` | External over-capacity status with no output |
+| `test_4097_recurrent_deliveries_fail_before_any_trace` | Future-bucket recurrent overflow causes entire trace to be suppressed |
+| `test_horizon_and_shape_validation_no_publication` | Reject 0/9 ticks, zero neurons, invalid unsigned decay ratio |
+| `test_invalid_neuron_synapse_and_external_fail_closed` | Invalid threshold/delay/tick/W16 reject without output |
+| `test_seeded_networks_full_trace_and_sparse_schedule` | 16 seeded recurrent networks, 8 ticks each; every voltage, spike, touched worklist and arrival count compared against independent M02 dense, event, and M03 sparse |
+
+**Count now:** 59 M05 named PC-only methods + 91 M01–M04 = **150 native methods**, plus four native-compiled CSim vector benches. **NEXT REAL TOOL GATE:** new fourth `--integrated --csim`, then `--synth`, then `--cosim`, preserving full original Vitis evidence outside Git.
