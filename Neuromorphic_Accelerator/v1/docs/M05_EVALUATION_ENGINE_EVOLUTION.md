@@ -94,6 +94,35 @@ This demonstrates a technically credible **routed neuromorphic evaluation-engine
 
 **Fix:** keep the verified `m05_rolling.cpp` kernel, original implementation evidence and AXI register map unchanged; rewrite the one `$display` to contain one format literal in `hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv`; add native regression `test_no_adjacent_format_string_literals_in_xvlog_stressbench`. The repaired source must be retested by actual `xvlog → xelab → xsim` on operator's machine before M05.6 can be declared PASS. Native/static CI is NOT proof the simulator can elaborate the generated IP. Preserve both old failure and future new evidence directories.
 
+### M05.6 completed directed output-backpressure RTL test (2026-11-08)
+
+Operator reran the direct generated-Verilog testbench with the repaired format
+string, using **unchanged** signed32 HLS source previously verified by routed
+out-of-context implementation. Original test evidence
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T203635Z_212333`
+ended **`exit_status=0`**: `xvlog` analyzed generated HDL and bench,
+`xelab` built `m05_rolling_axis_stress_snapshot`, and XSim verified the
+exact **24-row** trace for a two-neuron/12-tick delay-8 recurrence. Actual
+`trace_TREADY` stalls: **188 cycles**, verified stable VALID/TDATA and
+order, final status 0. The test inserted **1,162 input-valid gap cycles**
+but recorded **N/S/E input stall cycles 0/0/0**; therefore this is direct
+**output** AXIS-backpressure proof only, not full duplex or randomized stall
+coverage. The result is simulated RTL, not physical PS/PL/DMA timing.
+
+**Caveat exposed by this real run:** XSim printed warnings that Vitis
+generated `./m05_rolling_replay_*.dat` initialization files could not be
+opened from the new simulator working directory. These did not make the 24-row
+test fail but may leave RAM uninitialized in wider workloads. Follow-on source
+development added `scripts/m05_rtl_meminit.py` to stage only original
+tool-generated RAM images from the existing `--impl` evidence, preserving
+original source SHA256 and failing closed on missing/conflicting assets. No
+dummy `.dat` contents are permitted. The new stressbench primes input VALID
+before start and checks stable incoming TVALID/TDATA under genuine TREADY
+stalls, requiring >=10 input-stall cycles. Native regressions cover asset
+provenance and signal assertions; **new strengthened direct RTL XSim run
+NOT YET PERFORMED**. Both the earlier failed syntax attempt and this first
+passed output-stall run remain distinct evidence entries.
+
 ## F. Next controlled experiments / acceptance gates
 
 1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
