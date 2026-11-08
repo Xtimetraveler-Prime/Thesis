@@ -16,7 +16,6 @@ std::uint32_t m05_stream_eval(
         return M05_BATCH_TOO_LARGE;
     }
 
-run_batch:
     for (std::uint32_t i = 0; i < request_count; ++i) {
 #pragma HLS PIPELINE II=1
         const M04Request request = requests.read();
