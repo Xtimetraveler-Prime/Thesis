@@ -155,6 +155,8 @@ jobs:
             rtl/m05_11/m05_11_stream_shell.v \
             rtl/m05_11/tb_m05_11_axil_controller.sv \
             scripts/run_m05_11_axil_xsim.sh \
+            src/neuromorphic_accelerator_v1/m05_11_mmio.py \
+            tests/test_m05_11_mmio.py \
             rtl/m05_11/m05_trace_dma_packetizer.v \
             rtl/m05_11/m05_ingress_dma_unpad.v \
             rtl/m05_11/tb_m05_11_packetizer.sv \
