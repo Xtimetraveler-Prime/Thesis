@@ -1,0 +1,152 @@
+# M05 Vitis HLS 2025.2 offline operator verification (KV260/K26, NO BOARD)
+
+**Current scope:** Three independent, project-owned **HLS-oriented C++ candidate IPs** in `Neuromorphic_Accelerator/v1/hls/`: `m05_stream_eval` (stateless per-neuron update), `m05_stateful_service` (persistent 1,024-row neural state/config memory with exact-once per-ID/tick guard), and `m05_event_accumulator` (signed i64 per-neuron coalescing, 4,096 individual contributions/tick with SEALED readout and sticky overflow). They are **not yet joined into a complete PL scheduler**, and no genuine Vitis HLS Csim, synthesis, RTL cosim or physical KV260 action has yet been run by this project assistant.
+
+This runbook uses Vitis HLS **2025.2** and K26 part **`xck26-sfvc784-2LV-c`** with a **10 ns requested clock, 12% uncertainty**. These are goals, not achieved timing/area. Original source and reports live in new exclusive-create directories under `$HOME/Thesis_Evidence`, never tracked/overwritten in Git. Do NOT run old v3 JTAG/DDR scripts. No Vivado Hardware Manager/device programming here.
+
+## A. Prepare VS Code Ubuntu terminal
+
+```bash
+cd ~/Git/Thesis
+git status --short                   # check for uncommitted work; preserve it
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m05-sparse-onchip || \
+  git switch --track origin/agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git rev-parse HEAD
+cd Neuromorphic_Accelerator/v1
+
+python3 --version
+g++ --version
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m05*.py' -v
+python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+```
+
+Expected source-only count **45 M05 + 22 M04 + 28 M03 + 21 M02 + 20 M01 = 136 named unittest methods**; there are additional randomized subcases. Three staged Vitis bench files are also compiled and executed **natively** by CI, but that is not Vitis Csim or C/RTL evidence.
+
+## B. Load Vitis 2025.2 tools (example; adjust INSTALL_ROOT)
+
+Find your real `settings64.sh` using your system's Vitis installation location. Do **not** copy the placeholder literally:
+
+```bash
+# EXAMPLE if your installation is /tools/Xilinx/Vitis/2025.2:
+source /tools/Xilinx/Vitis/2025.2/settings64.sh
+
+# Verify commands are actually available in THIS terminal
+command -v vitis-run
+command -v v++
+vitis-run --version
+v++ --version
+echo "$XILINX_VITIS"
+pwd  # should end in Neuromorphic_Accelerator/v1
+```
+
+If Vitis is installed at `/opt/Xilinx/Vitis/2025.2`, change the source path accordingly. `vivado -version` is optional; no board access is needed. If either Vitis executable is missing, stop, share your tool path/version output, and do not claim an HLS PASS.
+
+## C. Phase 1 — **Genuine** Vitis C simulation, one independent top at a time
+
+The repository script performs **real** `vitis-run --mode hls --csim`, checks Vitis 2025.2/part/source config, and writes originals to a newly created `$HOME/Thesis_Evidence` folder. It **does not** silently run a Python substitute.
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+export HLS_PART=xck26-sfvc784-2LV-c
+
+# C++ stateless neuron evaluator: M02 correctness + AXIS candidate
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --csim
+
+# Persistent on-chip 1K neuron state/config store candidate
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --csim
+
+# Exact signed event accumulator and seal/overflow contract
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --csim
+```
+
+**Stop if a command exits nonzero.** Keep its original evidence folder, including `01_csim.log`, `result.txt`, `source_sha256.txt`, `tool_version.txt` and `commit.txt`. Share that failure before continuing. All 3 Csim results should show the individual testbench PASS and tool process success; a native `g++` PASS is insufficient.
+
+For the first review, sending only the outputs from these **three Csim commands** is ideal. Actual synthesis may expose interface and arithmetic restrictions that we must resolve.
+
+## D. Phase 2 — HLS synthesis (only after Csim passes)
+
+Each command creates a **fresh** evidence folder, reruns its C simulation and then executes the AMD documented `v++ -c --mode hls` flow.
+
+```bash
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --synth
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --synth
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --synth
+```
+
+**Required assessment (each top separately):** report actual **estimated clock period, requested 10ns, achieved loop II, min/max latency, LUTs, FFs, DSPs, BRAM_18K/BRAM_36K, URAM** and complete tool warning/error list. A `PIPELINE II=1` pragma is *only a directive*. For stateful/accumulator tops, confirm that RAM binding actually inferred BRAM rather than treating the entire array as registers or eliminating it. If synthesis fails, capture the error and do **not** assume the design meets M05. No LUT/throughput speedup claims should be made from C++ test times.
+
+## E. Phase 3 — C/RTL co-simulation (only after successful synthesis)
+
+Commands each rerun Csim and synthesis in a new evidence folder and then execute **`vitis-run --mode hls --cosim`**:
+
+```bash
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --cosim
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --cosim
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --cosim
+```
+
+Require all expected response values, correct order, invalid/duplicate handling and no unexpected deadlock. **Check both testbench PASS and actual RTL cosimulation summary PASS**; the testbench itself can pass natively while the RTL sim fails. If the HLS interface protocol introduces TLAST/framing, wide struct packing, ap_ctrl_hs start/done or backpressure limitations, capture original wave/log and revise source; do not silently waive those issues.
+
+## F. Optional Phase 4 — Offline OOC Vivado implementation
+
+This is **NOT** board programming, and **NOT** integrated system-level routed timing. Only after C/RTL co-sim success, if you choose to evaluate single-IP place/route:
+
+```bash
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stream --impl
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --stateful --impl
+bash hls/m05_stream_eval/run_m05_offline_hls.sh --accumulator --impl
+```
+
+Each `--impl` run independently repeats Csim, synthesis and C/RTL cosim first. Report **OOC WNS, target clock, resource utilization, tool version/part** separately from HLS estimates, and always label them "isolated IP OOC", **not a complete accelerator or physical KV260 result**.
+
+## G. Evidence collection and how to share results
+
+Every command prints a new directory like:
+`$HOME/Thesis_Evidence/neuromorphic_v1_m05_stream_csim_YYYYMMDDTHHMMSSZ_PID`
+
+To list your original runs:
+
+```bash
+find "$HOME/Thesis_Evidence" -maxdepth 1 -type d \
+  -name 'neuromorphic_v1_m05_*' -print | sort
+```
+
+Pick a single folder of interest and **substitute its actual path** (do not guess it):
+
+```bash
+export M05_RUN="$HOME/Thesis_Evidence/PASTE_ACTUAL_FOLDER_NAME_HERE"
+cat "$M05_RUN/commit.txt"
+cat "$M05_RUN/top.txt"
+cat "$M05_RUN/part.txt"
+cat "$M05_RUN/tool_version.txt"
+cat "$M05_RUN/mode.txt"
+cat "$M05_RUN/result.txt"
+cat "$M05_RUN/report_paths.txt"
+cat "$M05_RUN/report_sha256.txt"
+cat "$M05_RUN/log_sha256.txt"
+find "$M05_RUN" -type f \( -name '*_csynth.rpt' \
+  -o -name '*cosim*.rpt' -o -name 'syn_report*.xml' \) -print
+```
+
+**Send:** the terminal summary and any **complete original** `01_csim.log`, `02_csynth.log`, `03_cosim.log`, or `04_ooc_impl.log` actually produced. For completed synthesis, share the complete `*_csynth.rpt` (or its actual report filename) and `report_paths.txt`. For errors, paste the first error **plus preceding warnings and source/line context**, not only the last `ERROR:` line. Include the `commit.txt` and `source_sha256.txt` so we can confirm exactly which source was tested. You can upload selected logs/report files; entire build directories/bitstreams are unnecessary.
+
+**Safety:** do not give me private credentials or machine-specific tokens, and do not perform JTAG or DDR writes. Retain failed evidence unchanged and rerun in a new directory after any source correction.
+
+## H. Honest gate interpretation and next engineering choices
+
+Passing all three independent HLS cores at Csim/csynth/cosim would **advance M05.1 and the standalone subcomponents of M05.2/M05.3/M05.4**. It would **not yet close M05** because there is currently no integrated PL event router/positive-delay scheduling FIFO/ready-valid backpressure test between the three cores, no end-to-end hardware tick barrier, and no physical state-cache residency controller. The *host* scheduler continues to provide those semantics today.
+
+Next system-level work must integrate the three components and enforce exactly-once evaluation, zero/bias/nonzero-voltage wakeups, all delayed self/parallel synapses, full W16 current coalescing, 4,096 cap with sticky invalid-run handling, and no partial publication on overflow. Only a **full end-to-end** simulation against accepted M02 traces and a reproducible hardware-resource/performance report can satisfy final M05. Until then, **M05 stays OPEN / draft PR #79 UNMERGED**. Physical KV260 deployment requires separate explicit authorization.
+
+### Official 2025.2 tool basis
+
+- AMD UG1399 `vitis-run --mode hls --csim`, `v++ -c --mode hls`, `vitis-run --mode hls --cosim`, and `--impl`: https://docs.amd.com/r/2025.2-English/ug1399-vitis-hls/vitis-v-and-vitis-run-Commands
+- 2025.2 HLS config keys/flow: https://docs.amd.com/r/2025.2-English/ug1399-vitis-hls/HLS-Config-File-Commands
+- HLS internal RAM binding: https://docs.amd.com/r/2025.2-English/ug1399-vitis-hls/pragma-HLS-bind_storage
+- AXIS stream interface semantics: https://docs.amd.com/r/2025.2-English/ug1399-vitis-hls/Interfaces-for-Vitis-Kernel-Flow
