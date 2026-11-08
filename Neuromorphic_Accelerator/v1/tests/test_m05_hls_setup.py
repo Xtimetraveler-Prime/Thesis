@@ -14,6 +14,8 @@ CONFIGS = {
                "m05_stream_eval"),
     "stateful": (HLS / "m05_stateful/m05_stateful_hls_config.cfg",
                  "m05_stateful_service"),
+    "accumulator": (HLS / "m05_accumulator/m05_accum_hls_config.cfg",
+                    "m05_event_accumulator"),
 }
 
 
@@ -33,7 +35,7 @@ def parse_config(path):
 
 
 class M05HLSSetupTests(unittest.TestCase):
-    def test_two_isolated_k26_configs_have_documented_2025_2_keys(self):
+    def test_three_isolated_k26_configs_have_documented_2025_2_keys(self):
         for name, (path, top) in CONFIGS.items():
             with self.subTest(kernel=name):
                 data = parse_config(path)
@@ -64,6 +66,7 @@ class M05HLSSetupTests(unittest.TestCase):
                                   capture_output=True, text=True)
         self.assertEqual(help_run.returncode, 0)
         self.assertIn("--stateful", help_run.stdout)
+        self.assertIn("--accumulator", help_run.stdout)
         self.assertIn("--cosim", help_run.stdout)
         for flags in (["--bad"], ["--stream", "--stateful"],
                       ["--cosim", "--synth"]):
@@ -85,7 +88,7 @@ class M05HLSSetupTests(unittest.TestCase):
         self.assertIn("trap finish EXIT", text)
         self.assertIn("result.txt", text)
 
-    def test_two_tops_are_distinct_and_syn_top_always_matches(self):
+    def test_three_tops_are_distinct_and_syn_top_always_matches(self):
         source_stream = (HLS / "m05_stream_eval/m05_stream.cpp").read_text()
         source_state = (HLS / "m05_stateful/m05_stateful.cpp").read_text()
         self.assertIn("m05_stream_eval(", source_stream)
@@ -93,6 +96,9 @@ class M05HLSSetupTests(unittest.TestCase):
         self.assertIn("m05_stateful_service(", source_state)
         self.assertIn("BIND_STORAGE variable=voltages", source_state)
         self.assertIn("M05_MEM_DUPLICATE_TICK", source_state)
+        source_acc = (HLS / "m05_accumulator/m05_accumulator.cpp").read_text()
+        self.assertIn("m05_event_accumulator(", source_acc)
+        self.assertIn("M05_ACC_EVENT_OVERFLOW", source_acc)
         runner = RUNNER.read_text()
         for _, top in CONFIGS.values():
             self.assertIn(f'TOP="{top}"', runner)
