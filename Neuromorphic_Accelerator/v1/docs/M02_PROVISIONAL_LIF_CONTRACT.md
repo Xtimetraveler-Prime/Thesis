@@ -1,6 +1,6 @@
 # M02 — PROVISIONAL Independent LIF / Event-Order Contract
 
-**Status:** Draft v1 functional contract, **not** Loihi 1/2 semantics, v3 bitwise compatibility or a final FPGA hardware interface. No HLS/RTL, bitstream, physical KV260 evidence or neural-network classification result. This contract is proposed to unblock separate independent functional implementations; **user review is required before M02 acceptance/freeze**.
+**Status:** **USER-ACCEPTED INITIAL v1 LIF FUNCTIONAL REFERENCE, revision 1 (2026-11-07 local)**, still deliberately minimal and versioned so future experiments may propose explicit revisions. **Not** Loihi 1/2 semantics, v3 bitwise compatibility, YANA numerical fidelity or an FPGA hardware interface. No HLS/RTL, bitstream, physical KV260 evidence or neural-network classification result. This contract is proposed to unblock separate independent functional implementations; **User reports all M02 native tests PASS and explicitly approves this model as the reference for the time being; M02 PC-only milestone accepted.** Future neural-behavior changes must be tracked as deliberate contract revisions with new signed fixtures and comparison scope.
 
 ## Why a new reference?
 
@@ -60,4 +60,4 @@ Let stored `v_i(-1) = initial_i`. For each logical tick `t = 0,...,T-1`, indepen
 
 The LIF model is standard neuroscience/computing prior art; this project's code will independently implement a **specified mathematical rule** and neither claim original neuron equations nor reproduce YANA's specific five-stage pipeline or hot-neuron FIFO. YANA/Pachideh et al. (https://arxiv.org/abs/2604.03432) is an event-driven influence; SENECA (https://doi.org/10.3389/fnins.2023.1187252) and HiAER-Spike (https://doi.org/10.1038/s44335-026-00062-8) are relevant broader precedent. No third-party source code is copied.
 
-**Acceptance gate:** Native independent PC verification of hard-coded fixtures and differential sparse/dense parity; exact source commit SHA; user review of this provisional mathematical contract before calling M02 complete. No physical FPGA/JTAG work is authorized by any test here.
+**Acceptance:** User reports native M02 tests PASS and accepts this **revision-1 mathematical contract as the current software reference**. CI passed 21 M02 / 20 M01 tests including signed exact trace golden, dense/event parity and 54-case report. No user-local original report SHA was supplied, and no real FPGA/JTAG behavior is implied. No physical FPGA/JTAG work is authorized by any test here.
