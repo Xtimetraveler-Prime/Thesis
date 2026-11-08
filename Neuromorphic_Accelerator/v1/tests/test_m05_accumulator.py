@@ -212,7 +212,7 @@ class M05AccumulatorNativeTests(unittest.TestCase):
                     commands.append(self.cmd(5, count=n, tick=t))
                 rows = self.run_cmds(commands)
                 for position, current, touched, count in expected:
-                    self.assertEqual(rows[position - 1][2:],
+                    self.assertEqual(rows[position][2:],
                                      (0, current, touched, count))
 
     def test_malformed_transport_rejected_without_partial_results(self):
