@@ -1,3 +1,5 @@
+> **NEW VERIFIED HARDWARE BASELINE, 2026-11-08:** The **signed32 rolling HLS kernel itself** now has real Vitis 2025.2 CSim, HLS synthesis and Verilog XSim C/RTL co-sim **PASS**, 10/10 transactions at source commit `07913bbf925e5cd1ffc0d84dd6f9d5b4c2ee519a`. That verification tests the mathematical/event scheduler (not live AXIS READY stalls). The host-only transactional receiver is still CPU-only with no real AXI-Lite completion/interrupt or DMA link. [Evaluation-engine optimization ledger](M05_EVALUATION_ENGINE_EVOLUTION.md). Next offline OOC Vivado implementation, then an independent RTL TREADY/TVALID stress test.
+>
 # M05.5 — Host-side transactional trace receiver (NO BOARD)
 
 **Status (2026-11-08):** Native-only proof-of-contract added to the M05 development branch; no actual DMA, AXIS ready/valid testing, AXI-Lite driver, hardware interrupts, real transaction-aware output FIFO, or KV260 operations. PR #79 remains **DRAFT / UNMERGED**; M05 remains OPEN.
