@@ -61,17 +61,23 @@ std::uint32_t m05_rolling_replay(
 #pragma HLS BIND_STORAGE variable=tick_voltage type=ram_2p impl=bram
 #pragma HLS BIND_STORAGE variable=tick_spike type=ram_2p impl=bram
 
-    // Fresh logical run every invocation; no dependence on initial FPGA
-    // BRAM contents. The 8 slots are reusable for t=8,16,..., unlike a
-    // whole-horizon time-indexed array.
+    // Fresh logical run every invocation; no reliance on power-on BRAM
+    // contents. Reset only the *admitted* neuron IDs. ID >= neuron_count
+    // cannot be accessed in this run: all external destinations, synapse
+    // endpoints and worklist traversal are individually range checked.
+    // When a later run admits MORE neurons, its larger initialization
+    // footprint cleans those previously inaccessible RAM rows as well.
+    // This avoids 8*1024 unconditional current/touch clears for tiny runs.
+    // Do not remove the per-tick wheel-slot clear below: the t+8 alias
+    // must be released before scheduling recurrent spikes with delay==8.
     for (std::uint32_t slot = 0; slot < M05_ROLLING_SLOTS; ++slot) {
         delivery_count[slot] = 0;
-        for (std::uint32_t i = 0; i < M05_INT_MAX_NEURONS; ++i) {
+        for (std::uint32_t i = 0; i < neuron_count; ++i) {
             current[slot][i] = 0;
             touched[slot][i] = 0;
         }
     }
-    for (std::uint32_t i = 0; i < M05_INT_MAX_NEURONS; ++i) {
+    for (std::uint32_t i = 0; i < neuron_count; ++i) {
         head[i] = -1;
     }
     for (std::uint32_t i = 0; i < neuron_count; ++i) {
