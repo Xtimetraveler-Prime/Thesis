@@ -1,3 +1,5 @@
+> **SUPERSEDING RESULT AFTER PRIOR HEADER FIX (2026-11-09):** The owner-run `xvlog` now passed authentic AMD SmartConnect compilation: 56 real vendor RTL sources + 5 authentic headers, both M06 TBs. It then failed at `xelab` with VRFC 10-2989: XPM `glbl` undeclared. The revised runner now includes installed Vivado `glbl.v` and `work.glbl` as a SECOND elaboration root in both snapshots, plus source SHA evidence. NEW real Icarus RTL paging+independent M02 signed16 neural arithmetic PASS on 32 neurons ×4 ticks /1 resident block. This historical handoff remains useful for original port contracts; use [LATEST glbl/neural gate](M06_GLBL_AND_PAGED_NEURAL_PARITY_2026_11_09.md) for commands. Original vendor XSim behavioral transaction result remains NOT YET RUN after glbl fix.
+
 # M06 — original AMD SmartConnect compiler include fix + paged RTL XSim handoff
 
 **2026-11-09 · M06 IN PROGRESS · draft PR #80 UNMERGED · NO BOARD.**
