@@ -124,6 +124,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m05_12d2*.py' -v
       - name: M05.12d.2c PS PSU parameter discovery parser (SYNTHETIC, NO Vivado/DDR)
         run: python3 -m unittest discover -s tests -p 'test_m05_12d2c*.py' -v
+      - name: M05.12d.2d PS pin enablement audit (SYNTHETIC, NO Vivado/DDR)
+        run: python3 -m unittest discover -s tests -p 'test_m05_12d2d*.py' -v
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
@@ -217,4 +219,8 @@ jobs:
             scripts/m05_12d2c_ps_properties.tcl \
             scripts/m05_12d2c_ps_properties_audit.py \
             scripts/run_m05_12d2c_ps_properties.sh \
-            tests/test_m05_12d2c_ps_properties.py
+            tests/test_m05_12d2c_ps_properties.py \
+            scripts/m05_12d2d_ps_enablement.tcl \
+            scripts/m05_12d2d_ps_enablement_audit.py \
+            scripts/run_m05_12d2d_ps_enablement.sh \
+            tests/test_m05_12d2d_ps_enablement.py
