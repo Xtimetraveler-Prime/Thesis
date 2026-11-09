@@ -418,7 +418,17 @@ foreach {bank interface} {
         puts $addrfile "SLAVE|$bank|$interface|NO_BD_SEGMENT_YET"
     } else {
         foreach segment $candidates {
-            puts $addrfile "SLAVE|$bank|$interface|[get_property PATH $segment]"
+            # Genuine owner Vivado 2025.2 exposed all six bd_addr_seg
+            # objects, but their PATH property read back EMPTY here.
+            # UG835 get_bd_addr_segs returns the segment object itself,
+            # whose Tcl string representation is the canonical segment
+            # path (e.g. /dma_neurons/S_AXI_LITE/Reg). Do not fabricate
+            # a path, guess base addresses, or mislabel the object missing.
+            set observed [string trim $segment]
+            if {$observed eq "" || ![string match "/$bank/*" $observed]} {
+                error "actual BD address segment object path not anchored to $bank/$interface: '$observed'"
+            }
+            puts $addrfile "SLAVE|$bank|$interface|$observed"
         }
     }
 }
