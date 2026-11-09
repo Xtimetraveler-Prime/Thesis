@@ -67,9 +67,17 @@ def main() -> int:
         # Runner first creates its NEW evidence output directory. No writes
         # inside original XSim, original HLS or previously accepted D3 proofs.
         parent = a.output.parent.resolve(strict=True)
-        if (not parent.name.startswith("neuromorphic_v1_m05_12d3_hls_connected_")
+        # Both M05.12d.3 source-attested offline integration runners use
+        # this same genuine HLS gate, but allocate DIFFERENT fresh evidence
+        # directories. Never permit the original accepted contract/XSim/RTL
+        # folders or a report name other than 01_hls_preflight.txt.
+        allowed_prefixes = (
+            "neuromorphic_v1_m05_12d3_hls_connected_",
+            "neuromorphic_v1_m05_12d3_native_axis_",
+        )
+        if (not any(parent.name.startswith(prefix) for prefix in allowed_prefixes)
                 or a.output.name != "01_hls_preflight.txt"):
-            raise ValueError("preflight output must be in a NEW HLS connected evidence folder")
+            raise ValueError("preflight output must be in a NEW authorized M05.12d.3 integration evidence folder")
         with a.output.open("x", encoding="utf-8") as f:
             f.write("PASS|ORIGINAL_SIGNED32_HLS_SOURCE_RTL_REGMAP_MATCH\n")
             f.write(f"RTL_DIRECTORY|{rtl}\n")
