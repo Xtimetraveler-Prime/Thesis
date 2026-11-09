@@ -86,29 +86,30 @@ foreach {bank endpoint expected_space} {
     if {[llength $ocm_reverse] != 1 || "$ocm_reverse" ne "$hp0_ocm"} {
         error "excluded OCM master not linked to authentic HP0 OCM slave"
     }
-    # Genuine owner 2025.2 run mapped HP0 DDR_LOW (2 GiB at zero) and
-    # successfully EXCLUDED OCM, then this old check falsely required both
-    # objects in the PLAIN query. Excluded segments have their own query.
-    # AMD UG835 distinguishes -addressed (accessible) and -excluded. Prove
-    # exactly one accessible DDR and exactly one excluded OCM; additionally
-    # reject any unexpected entries in the ordinary space listing. That
-    # ordinary list is allowed to OMIT the excluded OCM object.
-    set addressed [get_bd_addr_segs -addressed -quiet -of_objects $dma_space]
+    # Genuine owner 2025.2 /dma_neurons/Data_MM2S readback at 674a8adc:
+    # ADDRESSED={} even though PLAIN={SEG_ps_HP0_DDR_LOW}, and
+    # EXCLUDED={SEG_ps_HP0_LPS_OCM}. This is exactly the earlier PS
+    # six-control-space issue: the -addressed filter is NOT a reliable
+    # membership query for a master address-space object in this Vivado.
+    # Keep it for DIAGNOSTICS only; never use it as a PASS/FAIL gate.
+    # Fail closed on real (unfiltered) membership, authentic slave reverse
+    # linkage, 32-bit offset/range, and the separate OCM exclusion readback.
+    set addressed_diagnostic [get_bd_addr_segs -addressed -quiet -of_objects $dma_space]
     set all_masters [get_bd_addr_segs -quiet -of_objects $dma_space]
-    puts "M05_D3_DMA_HP0_SEGMENT_SET_QUERY|$bank|SPACE=$dma_space|ADDRESSED=$addressed|EXCLUDED=$excluded|PLAIN=$all_masters|DDR=$ddr_master|OCM=$ocm_master"
-    if {[llength $addressed] != 1 || [lindex $addressed 0] ne "$ddr_master"} {
-        error "DMA $bank accessible segments are not EXACTLY the authentic HP0 DDR_LOW master"
-    }
+    puts "M05_D3_DMA_HP0_SEGMENT_SET_QUERY|$bank|SPACE=$dma_space|ADDRESSED_DIAGNOSTIC_ONLY=$addressed_diagnostic|EXCLUDED=$excluded|PLAIN=$all_masters|DDR=$ddr_master|OCM=$ocm_master"
     if {[llength $excluded] != 1 || [lindex $excluded 0] ne "$ocm_master"} {
         error "DMA $bank excluded segments are not EXACTLY the authentic HP0 OCM master"
     }
     if {[llength $all_masters] < 1 || [llength $all_masters] > 2 ||
         [lsearch -exact $all_masters $ddr_master] < 0} {
-        error "DMA $bank plain master listing lost DDR or has unexpected count; inspect ADDRESSED/EXCLUDED diagnostic"
+        error "DMA $bank genuine unfiltered address-space listing does not include verified DDR master or contains unexpected count"
     }
     foreach candidate $all_masters {
         if {$candidate ne "$ddr_master" && $candidate ne "$ocm_master"} {
             error "DMA $bank has an unexpected plain master segment $candidate"
+        }
+        if {$candidate eq "$ocm_master" && [lsearch -exact $excluded $candidate] < 0} {
+            error "DMA $bank OCM appeared in plain space without being genuinely excluded"
         }
     }
     puts "M05_D3_DMA_HP0_DDR_READBACK|$bank|$dma_space|$ddr_master|OFFSET=$ddr_offset|RANGE=$ddr_range"
