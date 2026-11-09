@@ -23,7 +23,8 @@ from m05_12d1_axis_graph_audit import (
 
 def synthetic_report():
     lines = [f"META|part|{PART}", f"META|vlnv|{VLNV}",
-             f"META|scope|{SCOPE}", f"CELL|shell|{SHELL_MODULE}"]
+             f"META|scope|{SCOPE}", "META|source_mgmt_mode|All",
+             f"CELL|shell|{SHELL_MODULE}"]
     for name, role in ROLES.items():
         lines.append(f"CELL|{name}|{role}")
         lines.extend(f"CFG|{name}|{key}|{value}"
@@ -61,6 +62,9 @@ class M0512D1AxisGraphTests(unittest.TestCase):
             src.replace("META|part|", "META|other|", 1),
             src.replace(f"META|vlnv|{VLNV}", "META|vlnv|DMA:6.0", 1),
             src.replace(f"META|scope|{SCOPE}", "META|scope|ON_BOARD", 1),
+            src.replace("META|source_mgmt_mode|All",
+                        "META|source_mgmt_mode|DisplayOnly", 1),
+            src.replace("META|source_mgmt_mode|All\n", "", 1),
             src.replace("CELL|shell|m05_12d_axis_shell_ref\n", "", 1),
             src + "LINK|rogue|shell/S_AXIS_NEURONS|net_5\n",
             src[:-1],
@@ -159,6 +163,8 @@ class M0512D1AxisGraphTests(unittest.TestCase):
             'error "M05.12d.1 RTL module reference requires automatic compile order"',
             tcl
         )
+        self.assertIn('META|source_mgmt_mode|$source_mode', tcl)
+        self.assertIn('M05_12D1_SOURCE_MGMT_MODE=$source_mode', tcl)
         for manual in ("source_mgmt_mode DisplayOnly",
                        "source_mgmt_mode None",
                        "reorder_files", "set_property source_mgmt_mode Manual"):

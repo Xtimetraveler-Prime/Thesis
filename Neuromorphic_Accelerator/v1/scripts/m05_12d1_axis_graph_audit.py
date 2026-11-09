@@ -31,7 +31,7 @@ def verify_axis_graph_report(report: str) -> int:
         values = line.split("|")
         if len(values) == 3 and values[0] == "META":
             _, name, value = values
-            if name not in ("part", "vlnv", "scope") or name in meta:
+            if name not in ("part", "vlnv", "scope", "source_mgmt_mode") or name in meta:
                 raise ValueError(f"invalid or duplicate metadata line {i}")
             meta[name] = value
         elif len(values) == 3 and values[0] == "CELL":
@@ -56,7 +56,7 @@ def verify_axis_graph_report(report: str) -> int:
             links[source] = (destination, net)
         else:
             raise ValueError(f"invalid, malformed or unknown graph line {i}")
-    if meta != {"part": PART, "vlnv": VLNV, "scope": SCOPE}:
+    if meta != {"part": PART, "vlnv": VLNV, "scope": SCOPE, "source_mgmt_mode": "All"}:
         raise ValueError("wrong part, IP version or unconnected scope boundary")
     wanted = {**ROLES, "shell": SHELL_MODULE}
     if cells != wanted:

@@ -32,13 +32,15 @@ foreach file {
 }
 update_compile_order -fileset sources_1
 # Fail before creating the BD if compile-order mode has changed unexpectedly.
-if {[string trim [get_property source_mgmt_mode [current_project]]] ne "All"} {
+set source_mode [string trim [get_property source_mgmt_mode [current_project]]]
+if {$source_mode ne "All"} {
     error "M05.12d.1 RTL module reference requires automatic compile order"
 }
+puts "M05_12D1_SOURCE_MGMT_MODE=$source_mode"
 create_bd_design m05_12d1_pl_stream_only
 set refcell [create_bd_cell -type module -reference m05_12d_axis_shell_ref shell]
 if {[llength $refcell] != 1} {error "RTL module reference failed"}
-set report [list "META|part|$part" "META|vlnv|$vlnv" "META|scope|CONNECTED_PL_AXIS_ONLY_NO_HLS_PS_DDR" "CELL|shell|m05_12d_axis_shell_ref"]
+set report [list "META|part|$part" "META|vlnv|$vlnv" "META|scope|CONNECTED_PL_AXIS_ONLY_NO_HLS_PS_DDR" "META|source_mgmt_mode|$source_mode" "CELL|shell|m05_12d_axis_shell_ref"]
 foreach {name role} {
     dma_neurons MM2S dma_synapses MM2S dma_external MM2S dma_trace S2MM
 } {
