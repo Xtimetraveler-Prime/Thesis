@@ -51,48 +51,49 @@ python3 scripts/m06_generate_original_mem_sc_bfm.py \
   --original "$D3" --headers "$HEADER" \
   --output "$OUT/tb_m06_original_mem_sc_vendor.sv" \
   2>&1 | tee "$OUT/01_authentic_bfm.log"
-python3 - "$D3" "$PORTS" "$OUT" <<'PY'
+python3 scripts/m06_vendor_compile_plan.py \
+  --original "$D3" --report "$PORTS" \
+  --output "$OUT/02_original_vendor_compile_plan.json" \
+  2>&1 | tee "$OUT/02_compile_plan.log"
+python3 - "$OUT/02_original_vendor_compile_plan.json" "$OUT" <<'PY'
+import json
 from pathlib import Path
 import sys
-orig,report,out=(Path(x).resolve() for x in sys.argv[1:])
-design="m05_12d3_real_signed32_hls_six_control_address_candidate_mem_sc_0"
-raw=[line.split("|",1)[1] for line in report.read_text().splitlines()
-     if line.startswith("SIM_SOURCE|")]
-if len(raw)!=186:
-    raise SystemExit("ERROR: not the original 186-file Vivado compile order")
-chosen=[]
-for name in raw:
-    p=Path(name)
-    if not p.is_absolute() or not p.is_relative_to(orig):
-        continue
-    mem=f"/{design}/" in str(p)
-    shared=("/ipshared/" in str(p) and p.name.startswith(
-        ("sc_","axi_register_slice_v2_1","proc_sys_reset_v5_0")))
-    if not (mem or shared) or p.suffix.lower() not in (".v",".sv",".vhd",".vh",".svh"):
-        continue
-    if not p.is_file():
-        raise SystemExit("ERROR: missing original compile source: "+str(p))
-    chosen.append(p)
-if len(chosen)<50 or len(chosen)!=len(set(chosen)):
-    raise SystemExit(f"ERROR: original mem_sc subgraph incomplete or repeated ({len(chosen)})")
-if not any(p.name==design+".sv" for p in chosen) or not any(p.name=="bd_13bd.v" for p in chosen):
-    raise SystemExit("ERROR: original vendor top and nested BD missing")
-(out/"original_selected_sources.txt").write_text(
-    "\n".join(map(str,chosen))+"\n")
-(out/"verilog_sources.txt").write_text(
-    "\n".join(map(str,(p for p in chosen if p.suffix in (".sv",".v"))))+"\n")
-(out/"vhdl_sources.txt").write_text(
-    "\n".join(map(str,(p for p in chosen if p.suffix==".vhd")))+"\n")
-(out/"include_dirs.txt").write_text(
-    "\n".join(map(str,dict.fromkeys(p.parent for p in chosen)))+"\n")
-print(f"M06 vendor source selection: {len(chosen)} original AMD files; "
-      "not regenerated, not copied into Git, no board.")
+manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+out = Path(sys.argv[2])
+for name, key in (
+    ("verilog_sources.txt", "verilog_files"),
+    ("vhdl_sources.txt", "vhdl_files"),
+    ("include_dirs.txt", "include_directories"),
+):
+    (out / name).write_text("\n".join(manifest[key])+"\n", encoding="utf-8")
+print("M06 compiler source/include plan: ",
+      len(manifest["verilog_files"]), "Verilog modules,",
+      len(manifest["vhdl_files"]), "VHDL modules,",
+      len(manifest["original_include_files"]), "original included headers,",
+      len(manifest["include_directories"]), "original include paths")
 PY
 mapfile -t VLOG < "$OUT/verilog_sources.txt"
 mapfile -t VHDL < "$OUT/vhdl_sources.txt"
 mapfile -t INC < "$OUT/include_dirs.txt"
 FLAGS=()
-for dir in "${INC[@]}"; do FLAGS+=(-i "$dir"); done
+for dir in "${INC[@]}"; do
+  [[ -d "$dir" ]] || { echo "ERROR: Original include directory missing: $dir" >&2; exit 2; }
+  FLAGS+=(-i "$dir")
+done
+# Direct regression guard against the owner's xvlog VRFC 10-3195 error.
+python3 - "$OUT/02_original_vendor_compile_plan.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+header = Path(data["axi_infrastructure_header"])
+if header.name != "axi_infrastructure_v1_1_0.vh":
+    raise SystemExit("ERROR: authentic infrastructure header name changed")
+if not header.is_file() or str(header.parent) not in data["include_directories"]:
+    raise SystemExit("ERROR: authentic infrastructure header not on xvlog -i path")
+print("M06 AUTHENTIC AMD AXI INFRASTRUCTURE .vh INCLUDED (not fabricated)")
+PY
 cd "$OUT"
 if (( ${#VHDL[@]} > 0 )); then
   xvhdl -2008 "${VHDL[@]}" 2>&1 | tee "$OUT/02_xvhdl.log"
