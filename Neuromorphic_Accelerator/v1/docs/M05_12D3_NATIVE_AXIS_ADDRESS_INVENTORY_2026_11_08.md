@@ -1,3 +1,90 @@
+# 2026-11-09 UTC — SAME M05.12d.3: genuine native-AXIS and six-bank Vivado inventory ACCEPTED; next explicit address map + full BD validation (OFFLINE owner trial)
+
+**Milestone management:** Continue the existing **single M05.12d.3**, no new M05.x or D3.x milestone. Continue PR #79 DRAFT/UNMERGED. No physical FPGA, Linux /dev/mem, DDR ownership, JTAG, device programming, bitstream or performance/timing proof.
+
+## Newly ACCEPTED original owner evidence
+
+Owner provided `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_native_axis_20261109T043302Z_KCWN0u`, checkout `d25d35c1a9b3a68b0970ddf5035ea20bfaa8d1d2`, **`result.txt exit_status=0`**, genuine original 2025.2 Vivado HLS preflight PASS, actual FOUR inferred native AXI4-Stream interface nets with all 24 original 128/192-bit TDATA/TVALID/TREADY pin widths/directions; original four DMA-facing 256-bit AXIS, seven PS control links to six distinct slaves, five DMA/PS memory links, 16 clocks and eight correct resets. No old BD 41-1306 scalar-interface override warnings reappeared. Genuine independent graph audit PASS.
+
+**Crucial new six address-segment evidence:** real owner read-only Vivado report, independently audited PASS, lists exactly `/dma_neurons/S_AXI_LITE/Reg`, `/dma_synapses/S_AXI_LITE/Reg`, `/dma_external/S_AXI_LITE/Reg`, `/dma_trace/S_AXI_LITE/Reg`, `/shell/s_axi/reg0`, `/hls/s_axi_control/reg0`, and real PS control master space `/ps/Data`. Its address status remained `NOT_RUN` — these were real discovered **unassigned** slave segment objects, NOT decoded PS address ranges. All previous evidence retained, including earlier failed owner trials and the now-accepted original signed32 Vitis HLS contract `neuromorphic_v1_m05_12d3_real_hls_contract_20261109T035628Z_pPZ6na`.
+
+## Single next development increment: six real explicitly mapped AXI4-Lite apertures, and true Vivado validation attempt
+
+Only the NEW **separate** candidate `scripts/m05_12d3_address_validate_candidate.tcl` and `scripts/run_m05_12d3_address_validate_candidate.sh` perform these steps. The already-PASS native grouped AXIS Tcl/runner, original signed32 C++/generated RTL and original owner evidence are unchanged.
+
+The owner must explicitly supply an OFFLINE-ONLY six-line plan, e.g. repository-tracked `scripts/m05_12d3_control_apertures_candidate.txt`, NOT an OS MMIO entitlement:
+
+| Slave | Explicit proposed PS base | Size | Actual authentic slave segment |
+| --- | --- | --- | --- |
+| DMA neurons MM2S | 0xA0000000 | 64KiB | `/dma_neurons/S_AXI_LITE/Reg` |
+| DMA synapses MM2S | 0xA0010000 | 64KiB | `/dma_synapses/S_AXI_LITE/Reg` |
+| DMA external MM2S | 0xA0020000 | 64KiB | `/dma_external/S_AXI_LITE/Reg` |
+| DMA trace S2MM | 0xA0030000 | 64KiB | `/dma_trace/S_AXI_LITE/Reg` |
+| M05 session shell | 0xA0040000 | 64KiB | `/shell/s_axi/reg0` |
+| Original Vitis neural HLS | 0xA0050000 | 64KiB | `/hls/s_axi_control/reg0` |
+
+This range selection is **an explicit offline candidate based on AMD UG835 examples**, NOT a claim that 0xA0000000 is an OS-permitted reservation on the real K26. Any future Linux/device-driver physical allocation requires owner hardware-side memory/resource proof separately. The `src/neuromorphic_accelerator_v1/m05_12d2_control_map.py` remains a pure proposed-plan validator and does not silently assign any address; new `m05_12d3_address_validate_audit.py` imports its immutable aperture constraints, checks six original HLS Vitis-register offsets including 0x40, and rejects zero, overlap, unexpected bank, misaligned/power-of-two/range failures before Vivado.
+
+The new Tcl reuses **the entire original verified HLS/PS/PL graph topology**, authentic HLS Verilog from the accepted original source contract, 12 native stream handshakes through four real AXI interfaces, the six control endpoints, 16 clock and 8 reset pins, and the true PS reset inverter. It preserves the original graph report `02_native_axis_graph.txt` and read-only six-object inventory `05_read_only_address_inventory.txt` for their preexisting independent auditor. **Only after** that, for each of six true Vivado slave segments the Tcl calls `assign_bd_address` with the *explicit* input file's offset/range and *specific* PS master space `/ps/Data` — without `-force`, guessing, or automatically assigning other addresses. It checks the actual returned mapped master segment against a fresh `get_bd_addr_segs -of_objects` slave→master readback and reverse master→slave reference, checks unique PS `/ps/Data/...` name, and reads back actual Vivado `OFFSET` and `RANGE` properties, refusing any mismatch. Actual evidence goes into `06_real_ps_control_address_readback.txt` and is checked independently against the original plan; no fake mapping passes.
+
+Finally, it calls the *actual* `validate_bd_design -force` and records one exact result in `07_full_bd_validation.txt`. **Full validation may genuinely fail** (e.g., unassigned separate DMA memory-master/PS DDR-related segments, clock/protocol propagation, or missing width adapter). If it does, owner trial overall **EXIT1**, with previous six successful mapping records and graph audit still available. This is NOT an address assignment bug unless those records themselves fail; never mark full BD accepted on a partial mapping PASS. Even a full BD validation PASS is NOT yet generated SmartConnect 256→128 width-adapter output product proof, bitstream proof, DDR buffers or physical timing.
+
+Fresh runner writes `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_addr_validate_<UTC>_XXXXXX` with source hashes, commit/worktree status, explicit plan path, original HLS contract identity, plan-only admission, original HLS preflight, real Vivado transcript, original 4/7/5/4-net readback, old read-only six address-segment inventory, newly assigned exact PS mappings, exact validation outcome, original graph audit and independent address audit. All previously accepted evidence remains untouched.
+
+**Authoritative tool references:** AMD Vivado 2025.2 UG835 `assign_bd_address` takes `-target_address_space`, `-offset`, `-range`, and specific slave segment objects; `validate_bd_design -force` runs full design validation (not just `-steps addressing`). `get_bd_addr_segs` maps slave↔master references and UG912 defines `OFFSET`/`RANGE` on returned master segments. Source links: https://docs.amd.com/r/en-US/Vivado-Design-Suite-Tcl-Command-Reference-Guide-UG835/assign_bd_address and https://docs.amd.com/r/en-US/Vivado-Design-Suite-Tcl-Command-Reference-Guide-UG835/validate_bd_design and https://docs.amd.com/r/en-US/ug912-vivado-properties/BD_ADDR_SEG
+
+## Owner VS Code terminal verification commands
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git rev-parse HEAD
+git status --short
+
+cd Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m05_12d3*.py' -v
+python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+bash -n scripts/run_m05_12d3_address_validate_candidate.sh
+
+# Previously accepted original HLS source contract (DO NOT rerun it)
+export AUTH_HLS="$HOME/Thesis_Evidence/neuromorphic_v1_m05_12d3_real_hls_contract_20261109T035628Z_pPZ6na"
+export CTRL_PLAN="$PWD/scripts/m05_12d3_control_apertures_candidate.txt"
+cat "$AUTH_HLS/result.txt"
+
+# Safe, host-only plan admission, no Vivado/physical hardware
+python3 scripts/m05_12d3_address_validate_audit.py --plan "$CTRL_PLAN" --plan-only
+
+# Must source REAL Vivado 2025.2 (actual settings64.sh path) in this terminal
+vivado -version
+# Offline real Vivado explicit six-bank mapping + full validation EXPERIMENT:
+bash scripts/run_m05_12d3_address_validate_candidate.sh "$AUTH_HLS" "$CTRL_PLAN"
+
+# A unique output folder is created even when REAL BD validation fails.
+export ADDR_D3="$(ls -dt "$HOME"/Thesis_Evidence/neuromorphic_v1_m05_12d3_addr_validate_* | head -n 1)"
+echo "New owner address/BD trial: $ADDR_D3"
+cat "$ADDR_D3/result.txt"
+cat "$ADDR_D3/commit.txt"
+cat "$ADDR_D3/working_tree_status.txt"
+cat "$ADDR_D3/00_offline_plan_admission.log" 2>/dev/null || true
+cat "$ADDR_D3/01_hls_preflight.log" 2>/dev/null || true
+cat "$ADDR_D3/02_native_axis_graph.txt" 2>/dev/null || true
+cat "$ADDR_D3/05_read_only_address_inventory.txt" 2>/dev/null || true
+cat "$ADDR_D3/06_real_ps_control_address_readback.txt" 2>/dev/null || true
+cat "$ADDR_D3/07_full_bd_validation.txt" 2>/dev/null || true
+cat "$ADDR_D3/04_independent_original_graph_audit.log" 2>/dev/null || true
+cat "$ADDR_D3/08_independent_address_validation_audit.log" 2>/dev/null || true
+tail -n 200 "$ADDR_D3/03_vivado.log" 2>/dev/null || true
+cat "$ADDR_D3/source_sha256.txt"
+```
+
+If result is EXIT1 from a real Vivado command, **keep evidence intact**; original Vivado log and both independent audits will identify whether the failure was map assignment/readback or whole-BD validation. No fabricated successful acceptance. This is one ongoing M05.12d.3 effort; no separate milestone names created.
+
+---
+
 > **2026-11-09 UTC — ORIGINAL OWNER native grouped-AXIS Vivado graph successfully ran; combined result EXIT1 only because read-only address inventory used empty `PATH` property (CORRECTED in source):** Owner fresh `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_native_axis_20261109T042636Z_NzIAw5` at `0d271faba545c8ede78a7da9936bc16b2c2df3c7` recorded original preflight PASS, actual **four native inferred grouped AXI4-Stream interface LINKs**, 24 original underlying pin width/direction readbacks, seven PS-control + five DMA-memory + four 256-bit DMA AXIS links, 16 clock/8 reset endpoints, real `PASS: M05.12d.3 genuine HLS grouped native AXIS connected`. No new `BD 41-1306` since the shell no longer connects individual AXIS signal pins. But **`result.txt exit_status=1`** because the separate address-inventory/independent audit produced `SLAVE|dma_neurons|dma_neurons/S_AXI_LITE|` and equivalents **for all six**, even though `get_bd_addr_segs -of_objects` found six Vivado segment objects; `get_property PATH $segment` returned the empty string. The PS master space reported correctly `/ps/Data`. Existing independent audit correctly rejected the empty names. AMD UG835 `get_bd_addr_segs` documents returning segment objects (which render canonical `/cell/interface/Reg` names in Tcl). **New source fix:** record the actual returned `segment` object directly as its canonical Tcl name (after checking real cell namespace), *not* the missing `PATH` property; require full original AXI interface ownership in the independent auditor, reject empty/foreign names. Two new host tests reproduce the six blank owner records, show they fail, and verify synthetic correctly scoped object names without claiming PS assignment. Original EXIT1 and all previously accepted proof folders untouched. **A fresh run of the SAME owner command below is mandatory** to prove a full result exit0, six actual segment paths, real audit PASS. No new PS address, BD validation, converter, PS/DDR, or physical board claim.
 
 # M05.12d.3 — Native AXI4-Stream Interface Normalization + Six-Bank Address Inventory
