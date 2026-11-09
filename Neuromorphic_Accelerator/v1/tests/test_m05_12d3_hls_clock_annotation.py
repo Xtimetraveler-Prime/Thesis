@@ -105,7 +105,7 @@ class M0512D3ClockAnnotationTests(unittest.TestCase):
         self.assertIn("if {[file normalize $source] eq [file normalize [file join $rtl_dir m05_rolling_replay.v]]}", tcl)
         self.assertIn("add_files -norecurse $annotated_top", tcl)
         self.assertIn("M05_D3_HLS_CLK_PS_ACTUAL", tcl)
-        self.assertIn("CONFIG.FREQ_HZ [require_pin ps/pl_clk0]", tcl)
+        self.assertIn("CONFIG.FREQ_HZ [get_bd_pins -quiet ps/pl_clk0]", tcl)
         self.assertIn("CONFIG.ASSOCIATED_BUSIF", tcl)
         self.assertIn("get_bd_intf_pins -quiet hls/s_axi_control", tcl)
         self.assertIn("validate_bd_design -force", tcl)
