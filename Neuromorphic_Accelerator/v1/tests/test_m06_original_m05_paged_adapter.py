@@ -160,7 +160,11 @@ class OriginalM05PagedNativeTests(unittest.TestCase):
         net,ev=self.make_net(414,n=256,ticks=12)
         one=self.check_network(net,ev,12,slots=1)
         eight=self.check_network(net,ev,12,slots=8)
-        self.assertGreater(one[2],eight[2])
+        # A sequential full-network sweep through 16 pages gives a fully
+        # associative 8-slot LRU no hits across tick boundaries: all 16
+        # distinct pages are touched before any is revisited. This is an
+        # important non-local workload, NOT evidence the 8-slot LRU is broken.
+        self.assertEqual(one[2],eight[2])
         self.assertGreater(one[3],eight[3])
         # All admitted pages are dirty and must eventually reach canonical
         # memory even if the 8-slot cache postpones their writebacks.
