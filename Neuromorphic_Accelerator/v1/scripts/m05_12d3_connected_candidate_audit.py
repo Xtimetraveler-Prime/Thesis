@@ -61,8 +61,13 @@ RESET_PER = {"shell/rst_n"} | {f"{dma}/axi_resetn" for dma in DMA}
 RESET = RESET_INT | RESET_PER
 # Clock and AXI DMA pin sets match genuine PG021 and the owner observed
 # missing separate AXIS clock pin, which is specific to AXI VDMA (PG020).
-RESETFEED = {"ps/pl_resetn0", "pl_reset/ext_reset_in"}
-RESETCFG = {"C_EXT_RESET_HIGH": "0"}
+RESETFEED = {"ps/pl_resetn0", "reset_inv/Op1", "reset_inv/Res", "pl_reset/ext_reset_in"}
+RESETDIR = {
+    "ps/pl_resetn0": "O", "reset_inv/Op1": "I",
+    "reset_inv/Res": "O", "pl_reset/ext_reset_in": "I",
+}
+RESETCFG = {"C_EXT_RESET_HIGH": "1"}
+RESETINV = {"C_OPERATION": "not", "C_SIZE": "1"}
 PSCFG = {"PSU__MAXIGP0__DATA_WIDTH": "128", "PSU__SAXIGP2__DATA_WIDTH": "128"}
 
 
@@ -75,17 +80,24 @@ def _unique(table: dict, key, value, allowed: set, kind: str) -> None:
 def audit_connected_candidate(report: str) -> dict[str, int]:
     if type(report) is not str or not report.endswith("\n") or len(report) > 50000:
         raise ValueError("incomplete or oversized graph evidence")
-    meta, dma, links, clocks, resets, pscfg, resetfeed, resetcfg = {}, {}, {}, {}, {}, {}, {}, {}
+    meta, dma, links, clocks, resets, pscfg = {}, {}, {}, {}, {}, {}
+    resetfeed, resetdir, resetcfg, resetinv = {}, {}, {}, {}
     for lineno, line in enumerate(report.splitlines(), 1):
         fields = line.split("|")
         kind = fields[0]
-        if kind in ("META", "PSCFG", "RESETCFG") and len(fields) == 3:
+        if kind in ("META", "PSCFG", "RESETCFG", "RESETINV", "RESETDIR") and len(fields) == 3:
             _, key, value = fields
-            expected = {"META": META, "PSCFG": PSCFG, "RESETCFG": RESETCFG}[kind]
+            expected = {
+                "META": META, "PSCFG": PSCFG, "RESETCFG": RESETCFG,
+                "RESETINV": RESETINV, "RESETDIR": RESETDIR,
+            }[kind]
             if value != expected.get(key):
                 raise ValueError(f"unexpected {kind} value at line {lineno}")
-            _unique({"META": meta, "PSCFG": pscfg, "RESETCFG": resetcfg}[kind],
-                    key, value, set(expected), kind)
+            destination = {
+                "META": meta, "PSCFG": pscfg, "RESETCFG": resetcfg,
+                "RESETINV": resetinv, "RESETDIR": resetdir,
+            }[kind]
+            _unique(destination, key, value, set(expected), kind)
         elif kind == "DMA" and len(fields) == 6:
             _, name, role, axis, addr, length = fields
             if role != DMA.get(name) or (axis, addr, length) != ("256", "32", "24"):
@@ -110,7 +122,9 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
         ("LINK", links, LINKS), ("CLK", clocks, CLOCK),
         ("RESET", resets, RESET), ("PSCFG", pscfg, set(PSCFG)),
         ("RESETFEED", resetfeed, RESETFEED),
+        ("RESETDIR", resetdir, set(RESETDIR)),
         ("RESETCFG", resetcfg, set(RESETCFG)),
+        ("RESETINV", resetinv, set(RESETINV)),
     ):
         if set(actual) != required:
             missing = sorted(required - set(actual))
@@ -126,10 +140,14 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
         raise ValueError("all DMA/shell reset pins do not share a peripheral reset net")
     if next(iter({resets[k] for k in RESET_INT})) == next(iter({resets[k] for k in RESET_PER})):
         raise ValueError("processor-reset interconnect/peripheral domains must remain distinguished")
-    if len(set(resetfeed.values())) != 1:
-        raise ValueError("active-low PS pl_resetn0 is not on ext_reset_in input net")
-    if next(iter(resetfeed.values())) in set(resets.values()):
-        raise ValueError("active-low PS reset source and generated reset net aliased")
+    if resetfeed["ps/pl_resetn0"] != resetfeed["reset_inv/Op1"]:
+        raise ValueError("PS active-low reset is not connected to NOT inverter input")
+    if resetfeed["reset_inv/Res"] != resetfeed["pl_reset/ext_reset_in"]:
+        raise ValueError("NOT inverter output is not connected to Processor System Reset")
+    if len(set(resetfeed.values())) != 2:
+        raise ValueError("reset inversion requires two distinct actual Vivado nets")
+    if set(resetfeed.values()) & set(resets.values()):
+        raise ValueError("PS reset/inverter inputs and generated reset net aliased")
     if next(iter(clocks.values())) in set(resets.values()) | set(resetfeed.values()):
         raise ValueError("clock and reset unexpectedly same net")
     return {
@@ -139,6 +157,7 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
         "clock_consumers": len(CLOCK),
         "reset_consumers": len(RESET),
         "reset_input_pins": len(RESETFEED),
+        "reset_inversion_stages": 1,
     }
 
 

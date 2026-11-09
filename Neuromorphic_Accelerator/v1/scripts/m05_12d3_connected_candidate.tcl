@@ -11,13 +11,14 @@ set ps_vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5
 set dma_vlnv xilinx.com:ip:axi_dma:7.1
 set sc_vlnv xilinx.com:ip:smartconnect:1.0
 set rst_vlnv xilinx.com:ip:proc_sys_reset:5.0
+set inv_vlnv xilinx.com:ip:util_vector_logic:2.0
 set const_vlnv xilinx.com:ip:xlconstant:1.1
 create_project -in_memory -part $part
 set_property source_mgmt_mode All [current_project]
 if {[string trim [get_property source_mgmt_mode [current_project]]] ne "All"} {
     error "M05.12d.3 requires automatic RTL module reference management"
 }
-foreach vlnv [list $ps_vlnv $dma_vlnv $sc_vlnv $rst_vlnv $const_vlnv] {
+foreach vlnv [list $ps_vlnv $dma_vlnv $sc_vlnv $rst_vlnv $inv_vlnv $const_vlnv] {
     if {[llength [get_ipdefs -all -quiet $vlnv]] != 1} {
         error "offline K26 Vivado IP missing: $vlnv"
     }
@@ -79,14 +80,26 @@ foreach {cell si mi} {ctrl_sc 1 5 mem_sc 4 1} {
     }
 }
 set reset [create_bd_cell -type ip -vlnv $rst_vlnv pl_reset]
-# PS pl_resetn0 is active LOW. The proc_sys_reset external-reset input
-# must be configured to interpret the same polarity, not left on a default.
+# Genuine 2025.2 owner D3 proved that proc_sys_reset CONFIG.C_EXT_RESET_HIGH
+# is READ-ONLY (BD 41-737). NEVER write it. Read the actual IP polarity and
+# fail closed if it does not match the expected active-HIGH external input.
+# PS pl_resetn0 is active LOW: invert at a genuine 1-bit vector logic IP.
 if {[lsearch -exact [list_property $reset] CONFIG.C_EXT_RESET_HIGH] < 0} {
-    error "proc_sys_reset has no CONFIG.C_EXT_RESET_HIGH: investigate installed IP"
+    error "proc_sys_reset C_EXT_RESET_HIGH not available (do not guess reset polarity)"
 }
-set_property CONFIG.C_EXT_RESET_HIGH 0 $reset
-if {[string trim [get_property CONFIG.C_EXT_RESET_HIGH $reset]] ne "0"} {
-    error "proc_sys_reset external reset polarity readback not active-low"
+set ps_reset_ext_high [string trim [get_property CONFIG.C_EXT_RESET_HIGH $reset]]
+if {$ps_reset_ext_high ne "1"} {
+    error "proc_sys_reset read-only C_EXT_RESET_HIGH='$ps_reset_ext_high'; expected 1. Investigate before connecting PS reset"
+}
+set inv [create_bd_cell -type ip -vlnv $inv_vlnv reset_inv]
+set_property -dict [list CONFIG.C_OPERATION not CONFIG.C_SIZE 1] $inv
+foreach {key expected} {
+    CONFIG.C_OPERATION not
+    CONFIG.C_SIZE 1
+} {
+    if {[string trim [get_property $key $inv]] ne $expected} {
+        error "1-bit reset inverter property $key does not match '$expected'"
+    }
 }
 set high [create_bd_cell -type ip -vlnv $const_vlnv logic_one]
 set low [create_bd_cell -type ip -vlnv $const_vlnv logic_zero]
@@ -215,17 +228,41 @@ foreach name $clocks {
     if {[llength $nets] != 1} {error "clock not actually net-connected: $name"}
     lappend report "CLK|$name|[get_property NAME $nets]"
 }
-connect_bd_net [require_pin ps/pl_resetn0] [require_pin pl_reset/ext_reset_in]
-# Independently report this actual active-low input net, not just the
-# parameter. A future auditor requires both endpoints on the SAME net.
-foreach name {ps/pl_resetn0 pl_reset/ext_reset_in} {
-    set nets [get_bd_nets -of_objects [require_pin $name]]
-    if {[llength $nets] != 1} {
-        error "proc_sys_reset active-low external reset net not connected: $name"
+# Make an explicit active-low → active-high reset inversion, rather than
+# incorrectly writing the read-only Processor System Reset polarity parameter.
+connect_bd_net [require_pin ps/pl_resetn0] [require_pin reset_inv/Op1]
+connect_bd_net [require_pin reset_inv/Res] [require_pin pl_reset/ext_reset_in]
+foreach {name expected_dir} {
+    ps/pl_resetn0 O
+    reset_inv/Op1 I
+    reset_inv/Res O
+    pl_reset/ext_reset_in I
+} {
+    set pin [require_pin $name]
+    set actual_dir [string toupper [string trim [get_property DIR $pin]]]
+    if {$actual_dir ne $expected_dir} {
+        error "wrong reset inverter connection direction $name='$actual_dir' expected $expected_dir"
     }
+    set nets [get_bd_nets -of_objects $pin]
+    if {[llength $nets] != 1} {
+        error "reset inverter segment missing actual Vivado net $name"
+    }
+    lappend report "RESETDIR|$name|$actual_dir"
     lappend report "RESETFEED|$name|[get_property NAME $nets]"
 }
-lappend report "RESETCFG|C_EXT_RESET_HIGH|[get_property CONFIG.C_EXT_RESET_HIGH $reset]"
+# Two *separate* nets are required: PS resetn→inverter, inverter→reset IP.
+set resetn_net [get_property NAME [get_bd_nets -of_objects [require_pin ps/pl_resetn0]]]
+set inverter_input_net [get_property NAME [get_bd_nets -of_objects [require_pin reset_inv/Op1]]]
+set inverted_net [get_property NAME [get_bd_nets -of_objects [require_pin reset_inv/Res]]]
+set external_net [get_property NAME [get_bd_nets -of_objects [require_pin pl_reset/ext_reset_in]]]
+if {$resetn_net ne $inverter_input_net || $inverted_net ne $external_net ||
+    $resetn_net eq $inverted_net} {
+    error "PS active-low to processor-reset active-high inverter nets are not distinct and paired"
+}
+lappend report "RESETCFG|C_EXT_RESET_HIGH|$ps_reset_ext_high"
+foreach key {CONFIG.C_OPERATION CONFIG.C_SIZE} {
+    lappend report "RESETINV|[string range $key 7 end]|[get_property $key $inv]"
+}
 connect_bd_net [require_pin logic_one/dout] [require_pin pl_reset/dcm_locked]
 connect_bd_net [require_pin logic_zero/dout] [require_pin pl_reset/aux_reset_in] \
     [require_pin pl_reset/mb_debug_sys_rst]

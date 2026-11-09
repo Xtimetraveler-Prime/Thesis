@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from m05_12d3_connected_candidate_audit import (
     META, DMA, STREAM, CONTROL, MEMORY, CLOCK, RESET, RESET_INT,
-    RESET_PER, RESETFEED, RESETCFG, PSCFG, audit_connected_candidate,
+    RESET_PER, RESETFEED, RESETDIR, RESETCFG, RESETINV, PSCFG,
+    audit_connected_candidate,
 )
 
 
@@ -30,9 +31,14 @@ def transcript() -> str:
         net = "int_reset_net" if pin in RESET_INT else "per_reset_net"
         rows.append(f"RESET|{pin}|{net}")
     for pin in sorted(RESETFEED):
-        rows.append(f"RESETFEED|{pin}|ps_resetn_net")
+        net = "ps_resetn_net" if pin in ("ps/pl_resetn0", "reset_inv/Op1") else "inverted_reset_net"
+        rows.append(f"RESETFEED|{pin}|{net}")
+    for pin, direction in RESETDIR.items():
+        rows.append(f"RESETDIR|{pin}|{direction}")
     for key, value in RESETCFG.items():
         rows.append(f"RESETCFG|{key}|{value}")
+    for key, value in RESETINV.items():
+        rows.append(f"RESETINV|{key}|{value}")
     for key, value in PSCFG.items():
         rows.append(f"PSCFG|{key}|{value}")
     return "\n".join(rows) + "\n"
@@ -44,7 +50,7 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
         self.assertEqual(facts, {
             "stream_links": 4, "control_links": 6, "memory_links": 5,
             "clock_consumers": 15, "reset_consumers": 7,
-            "reset_input_pins": 2,
+            "reset_input_pins": 4, "reset_inversion_stages": 1,
         })
 
     def test_sixth_hls_control_is_not_faked_and_addresses_unassigned(self):
@@ -121,15 +127,30 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
         self.assertNotIn("dma_neurons/m_axis_mm2s_aclk", CLOCK)
         self.assertNotIn("dma_trace/s_axis_s2mm_aclk", CLOCK)
         self.assertEqual(len(CLOCK), 15)
-        self.assertIn("set_property CONFIG.C_EXT_RESET_HIGH 0 $reset", src)
+        self.assertNotIn("set_property CONFIG.C_EXT_RESET_HIGH", src)
         self.assertIn("get_property CONFIG.C_EXT_RESET_HIGH $reset", src)
+        self.assertIn("set_property -dict [list CONFIG.C_OPERATION not CONFIG.C_SIZE 1] $inv", src)
+        self.assertIn("connect_bd_net [require_pin ps/pl_resetn0] [require_pin reset_inv/Op1]", src)
+        self.assertIn("connect_bd_net [require_pin reset_inv/Res] [require_pin pl_reset/ext_reset_in]", src)
+        self.assertIn('lappend report "RESETINV|', src)
+        self.assertIn('lappend report "RESETDIR|', src)
         self.assertIn('lappend report "RESETCFG|C_EXT_RESET_HIGH|', src)
-        self.assertEqual(audit_connected_candidate(transcript())["reset_input_pins"], 2)
+        self.assertEqual(audit_connected_candidate(transcript())["reset_input_pins"], 4)
         for invalid in (
-            transcript().replace("RESETCFG|C_EXT_RESET_HIGH|0",
-                                 "RESETCFG|C_EXT_RESET_HIGH|1", 1),
-            transcript().replace("RESETFEED|pl_reset/ext_reset_in|ps_resetn_net",
-                                 "RESETFEED|pl_reset/ext_reset_in|wrong_reset_net", 1),
+            transcript().replace("RESETCFG|C_EXT_RESET_HIGH|1",
+                                 "RESETCFG|C_EXT_RESET_HIGH|0", 1),
+            transcript().replace("RESETINV|C_OPERATION|not",
+                                 "RESETINV|C_OPERATION|and", 1),
+            transcript().replace("RESETINV|C_SIZE|1",
+                                 "RESETINV|C_SIZE|2", 1),
+            transcript().replace("RESETDIR|reset_inv/Res|O",
+                                 "RESETDIR|reset_inv/Res|I", 1),
+            transcript().replace("RESETFEED|pl_reset/ext_reset_in|inverted_reset_net",
+                                 "RESETFEED|pl_reset/ext_reset_in|ps_resetn_net", 1),
+            transcript().replace("RESETFEED|reset_inv/Op1|ps_resetn_net",
+                                 "RESETFEED|reset_inv/Op1|inverted_reset_net", 1),
+            transcript().replace("RESETFEED|reset_inv/Res|inverted_reset_net",
+                                 "RESETFEED|reset_inv/Res|ps_resetn_net", 1),
             transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net",
                                  "RESETFEED|ps/pl_resetn0|pl_clk_net", 1),
             transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net\n", "", 1),
@@ -195,6 +216,7 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
             "create_project -in_memory", "source_mgmt_mode All",
             "xilinx.com:ip:smartconnect:1.0",
             "xilinx.com:ip:proc_sys_reset:5.0",
+            "xilinx.com:ip:util_vector_logic:2.0",
             "xilinx.com:ip:axi_dma:7.1",
             "m05_12d_axis_shell_ref", "CONFIG.PSU__USE__M_AXI_GP0 1",
             "CONFIG.PSU__USE__S_AXI_GP2 1", "CONFIG.NUM_SI 4 CONFIG.NUM_MI 1",
