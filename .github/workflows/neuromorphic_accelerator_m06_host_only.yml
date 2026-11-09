@@ -160,6 +160,22 @@ jobs:
             "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
           grep -Fq "M06_PAGED_BLOCK_FAULT_QUARANTINE_RTL_PASS" \
             "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+      - name: M02 dense neural parity through ONE-slot signed16 RTL paging (NO VENDOR/DDR)
+        run: |
+          python3 scripts/m06_generate_paged_lif16_vectors.py \
+            --output "$RUNNER_TEMP/m06_lif16_vectors.vh"
+          iverilog -g2012 -I "$RUNNER_TEMP" -s tb_m06_paged_lif16 \
+            -o "$RUNNER_TEMP/m06_paged_lif16" \
+            rtl/m06/m06_lif16_neuron_step.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv \
+            rtl/m06/tb_m06_paged_lif16.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_paged_lif16" \
+            | tee "$RUNNER_TEMP/m06_paged_lif16.log"
+          grep -Fq "M06_PAGED_LIF16_M02_RTL_PARITY_PASS" \
+            "$RUNNER_TEMP/m06_paged_lif16.log"
+          grep -Fq "M06_PAGED_LIF16_FAULT_QUARANTINE_PASS" \
+            "$RUNNER_TEMP/m06_paged_lif16.log"
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
