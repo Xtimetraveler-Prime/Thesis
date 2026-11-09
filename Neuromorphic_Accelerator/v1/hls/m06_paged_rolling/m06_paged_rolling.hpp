@@ -7,7 +7,11 @@
 // M04 arithmetic and per-run speculative output status rules.
 // Crucially there is NO full on-chip working voltage array. Every working
 // voltage comes from a 16B canonical record in an 8x256B on-chip page cache.
-// canonical_words is a real m_axi memory master with logical byte offsets,
+// canonical_read_words and canonical_write_words are separate m_axi masters
+// to match the ORIGINAL SmartConnect S00 READ and S03 WRITE port ROLES.
+// They MUST be mapped to the SAME independently owned physical canonical
+// region; 32-bit HLS to 256-bit SI width adaptation remains unverified.
+// Each master uses logical byte offsets,
 // NOT an approved PS physical address or a memory safety/ownership grant.
 // The canonical buffer must expose 16,384 x 32-bit words = 64KiB for the
 // configured 4,096 logical-state address aperture. AXI-Lite selects an aligned
@@ -52,7 +56,8 @@ std::uint32_t m06_paged_rolling_replay(
     hls::stream<M05IntegratedExternal> &external_events,
     hls::stream<M05IntegratedTraceEntry> &trace,
     hls::stream<M06PageMetrics> &metrics,
-    std::uint32_t *canonical_words,
+    std::uint32_t *canonical_read_words,
+    std::uint32_t *canonical_write_words,
     std::uint32_t neuron_count,
     std::uint32_t synapse_count,
     std::uint32_t external_count,
