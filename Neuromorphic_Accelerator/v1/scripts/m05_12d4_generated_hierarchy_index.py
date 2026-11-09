@@ -17,6 +17,15 @@ from m05_12d4_readonly_bd_audit import PREFIX, verify_original_and_inventory
 
 def token_hints(warnings: list[dict], paths: list[tuple[str, Path, str]]) -> list[dict]:
     """Use only distinct internal instance/pin identifiers, never mere m05 count."""
+    # Read each authenticated generated file once, even when dozens of
+    # warnings share the same internal adapter names. No writes to .gen.
+    source_text = []
+    for rel, file, digest in paths:
+        try:
+            body = file.read_text(encoding="utf-8", errors="replace")
+        except OSError as err:
+            raise ValueError(f"generated file cannot be inspected: {rel}: {err}") from err
+        source_text.append((rel, digest, body))
     out = []
     for warning in warnings:
         if warning["id"] != "BD 41-2384":
@@ -35,12 +44,8 @@ def token_hints(warnings: list[dict], paths: list[tuple[str, Path, str]]) -> lis
         tokens = sorted(set(tokens))
         witnesses = []
         if tokens:
-            for rel, file, digest in paths:
-                try:
-                    text = file.read_text(encoding="utf-8", errors="replace")
-                except OSError as err:
-                    raise ValueError(f"generated file cannot be inspected: {rel}: {err}") from err
-                found = [token for token in tokens if token in text]
+            for rel, digest, body in source_text:
+                found = [token for token in tokens if token in body]
                 if not found:
                     continue
                 lower = rel.lower()
