@@ -233,7 +233,12 @@ class BlockCache:
             raise ResidencyError("overlapping/double page-transfer service")
         self._transfer_active = True
         try:
-            return getattr(self.store, method)(*args, **kwargs)
+            reply = getattr(self.store, method)(*args, **kwargs)
+            if method in ("read_block", "write_block") and (
+                    type(reply) is not tuple or
+                    len(reply) != (3 if method == "read_block" else 2)):
+                raise ResidencyError("invalid backing transfer acknowledgment tuple")
+            return reply
         except (NoOwnership, ResidencyError):
             self._poisoned = True
             raise
