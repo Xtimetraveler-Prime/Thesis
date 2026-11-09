@@ -7,6 +7,7 @@ implementation. Do not infer real HLS ports/registers from a Python model.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 from pathlib import Path
 import re
@@ -59,11 +60,65 @@ for _name, _width, _direction in (
     )
 
 MODULE_START = re.compile(r"\bmodule\s+m05_rolling_replay\s*\(", re.M)
+# Actual Vitis HLS 2025.2 uses parameterized ranges, e.g.
+#   input [C_S_AXI_CONTROL_ADDR_WIDTH - 1:0] s_axi_control_AWADDR;
+# with parameters C_S_AXI_CONTROL_ADDR_WIDTH=7 and
+# C_S_AXI_CONTROL_WSTRB_WIDTH=(32 / 8).
 PORT_DECL = re.compile(
     r"^\s*(input|output)\s+(?:(?:wire|reg|logic|signed|unsigned)\s+)*"
-    r"(?:\[\s*(\d+)\s*:\s*(\d+)\s*\]\s*)?"
+    r"(?:\[\s*([^:\]\n]+)\s*:\s*([^\]\n]+)\s*\]\s*)?"
     r"([a-zA-Z_]\w*)\s*[,;)]", re.M
 )
+PARAM_DECL = re.compile(
+    r"^\s*parameter\s+([a-zA-Z_]\w*)\s*=\s*([^;]+);", re.M
+)
+
+
+def _constant_expression(expr: str, parameters: dict[str, str],
+                         stack: frozenset[str] = frozenset()) -> int:
+    """Resolve only bounded integer arithmetic, never eval arbitrary Verilog.
+
+    Supports integer literals, known parameter names, parentheses, unary +/-,
+    plus, minus, multiply and exact integral division. Anything else fails.
+    """
+    try:
+        tree = ast.parse(expr.strip(), mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"invalid Verilog width expression: {expr!r}") from exc
+
+    def visit(node: ast.AST, active: frozenset[str]) -> int:
+        if isinstance(node, ast.Expression):
+            return visit(node.body, active)
+        if isinstance(node, ast.Constant) and type(node.value) is int:
+            result = node.value
+        elif isinstance(node, ast.Name):
+            if node.id not in parameters or node.id in active:
+                raise ValueError(f"undefined/cyclic Verilog width parameter {node.id}")
+            return _constant_expression(parameters[node.id], parameters,
+                                        active | frozenset((node.id,)))
+        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            operand = visit(node.operand, active)
+            result = operand if isinstance(node.op, ast.UAdd) else -operand
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, (
+                ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            left, right = visit(node.left, active), visit(node.right, active)
+            if isinstance(node.op, ast.Add):
+                result = left + right
+            elif isinstance(node.op, ast.Sub):
+                result = left - right
+            elif isinstance(node.op, ast.Mult):
+                result = left * right
+            else:
+                if right == 0 or left % right:
+                    raise ValueError("nonintegral/zero-divisor Verilog width parameter")
+                result = left // right
+        else:
+            raise ValueError(f"unsupported Verilog width expression: {expr!r}")
+        if not -65536 <= result <= 65536:
+            raise ValueError("unreasonable Verilog width expression value")
+        return result
+
+    return visit(tree, stack)
 
 
 def sha256(path: Path) -> str:
@@ -75,7 +130,7 @@ def sha256(path: Path) -> str:
 
 
 def parse_top_ports(source: str) -> dict[str, tuple[str, int]]:
-    """Extract actual HLS top port declarations, rejecting ambiguity."""
+    """Resolve actual HLS top pin directions and parameterized widths."""
     starts = list(MODULE_START.finditer(source))
     if len(starts) != 1:
         raise ValueError("exactly one generated m05_rolling_replay top required")
@@ -84,15 +139,42 @@ def parse_top_ports(source: str) -> dict[str, tuple[str, int]]:
     if end is None:
         raise ValueError("HLS top missing endmodule")
     body = body[:end.start()]
+    header = re.match(
+        r"module\s+m05_rolling_replay\s*\((.*?)\)\s*;",
+        body, re.S
+    )
+    if header is None:
+        raise ValueError("malformed HLS top port list")
+    listed = []
+    for item in header.group(1).split(","):
+        name = re.search(r"([a-zA-Z_]\w*)\s*$", item.strip())
+        if name is None:
+            raise ValueError("malformed HLS top pin name")
+        listed.append(name.group(1))
+    if len(set(listed)) != len(listed):
+        raise ValueError("duplicate names in HLS top port list")
+    params: dict[str, str] = {}
+    for match in PARAM_DECL.finditer(body):
+        name, expr = match.groups()
+        if name in params:
+            raise ValueError(f"duplicate generated Verilog parameter {name}")
+        params[name] = expr
     found: dict[str, tuple[str, int]] = {}
     for match in PORT_DECL.finditer(body):
         direction, msb, lsb, name = match.groups()
-        width = 1 if msb is None else abs(int(msb) - int(lsb)) + 1
+        if msb is None:
+            width = 1
+        else:
+            high = _constant_expression(msb, params)
+            low = _constant_expression(lsb, params)
+            width = abs(high - low) + 1
+            if width > 65536:
+                raise ValueError("unreasonable generated HLS bus width")
         if name in found:
             raise ValueError(f"duplicate RTL port declaration {name}")
         found[name] = direction, width
-    if not found:
-        raise ValueError("no Verilog port declarations parsed")
+    if not found or set(listed) != set(found):
+        raise ValueError("HLS port list does not match declared top-level pins")
     return found
 
 
