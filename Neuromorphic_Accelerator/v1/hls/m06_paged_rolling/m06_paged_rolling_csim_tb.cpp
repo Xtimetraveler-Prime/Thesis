@@ -26,7 +26,7 @@ static bool wheel_and_high_address() {
             const bool spike=(i==0 && t%8==0);
             if (x.tick!=t || x.neuron_id!=i || x.voltage!=0 ||
                 x.spike!=spike || x.evaluated!=spike ||
-                x.delivered_count!=(spike?1u:0u)) return false;
+                x.delivered_count!=((t%8==0)?1u:0u)) return false;
         }
     }
     if (!out.empty()) return false;
