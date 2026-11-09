@@ -3,6 +3,7 @@
 #include "m06_paged_adapter.hpp"
 #include <cstdint>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 
 int main() {
@@ -52,6 +53,12 @@ int main() {
         c.read_bytes << " " << c.written_bytes << " " <<
         c.m05_stream_calls << " " << c.evaluated << " " <<
         c.spike_count << "\n";
-    // Never call error status a successful truncated trace.
+    // Independent TEST-ONLY byte snapshot. The cache implementation is
+    // responsible for flushing dirty rows before the adapter returns.
+    // Hex is NOT a physical DDR or AXI memory dump.
+    std::cout << "STATE " << std::hex << std::setfill('0');
+    for (const std::uint8_t byte : got.canonical_after_flush)
+        std::cout << std::setw(2) << static_cast<unsigned>(byte);
+    std::cout << "\n";
     return 0;
 }
