@@ -27,6 +27,8 @@ jobs:
           python3 --version
       - name: Python syntax for the whole v1 source tree
         run: python3 -m compileall -q src scripts tests
+      - name: M06 original vendor Vivado owner runner Bash syntax only (NO VIVADO)
+        run: bash -n scripts/run_m06_original_mem_sc_port_contract.sh
       - name: M06 canonical-state block residency POSITIVE AND NEGATIVE source-only tests
         run: python3 -m unittest discover -s tests -p 'test_m06*.py' -v
       - name: Inherited accepted M01/M02/M03/M04/M05 source regressions
