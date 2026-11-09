@@ -1,9 +1,9 @@
 # M05.12d.3 — NEXT genuine HLS source attached to accepted PS/PL topology.
 # Separate candidate file: no mutation of earlier accepted 15-link evidence.
 # Source is exact owner-attested Vitis 2025.2 neural RTL, never a mock.
-# This candidate connects real PS→PL control, DMA→PS memory, AXIS,
-# clocks and resets. Original HLS generated RTL is NOT in Git, so real
-# HLS native stream/control attachment and validated addresses remain OPEN.
+# The real signed32 HLS RTL remains outside Git and is loaded only from
+# owner-authenticated evidence; this trial attempts the actual HLS connection.
+# It does NOT yet assign addresses or validate a complete system.
 # NO physical PS/DDR/FPGA, bitstream, hardware server, or board automation.
 if {[llength $argv] != 3} {error "usage: <v1-root> <report-path> <authenticated-HLS-RTL-directory>"}
 set root [lindex $argv 0]
@@ -83,8 +83,8 @@ set hls [create_bd_cell -type module -reference m05_rolling_replay hls]
 if {[llength $hls] != 1} {error "authentic Vitis generated HLS Module Reference unavailable"}
 set ctrl [create_bd_cell -type ip -vlnv $sc_vlnv ctrl_sc]
 set mem [create_bd_cell -type ip -vlnv $sc_vlnv mem_sc]
-# Five *real* control slave banks (four DMA+shell). The sixth is native
-# generated HLS control; cannot invent this without original generated IP.
+# Keep all five previously verified AXI-Lite bank identities and expose
+# the real generated HLS module's control as independent sixth AXI-Lite bank.
 set_property -dict [list CONFIG.NUM_SI 1 CONFIG.NUM_MI 6] $ctrl
 set_property -dict [list CONFIG.NUM_SI 4 CONFIG.NUM_MI 1] $mem
 foreach {cell si mi} {ctrl_sc 1 6 mem_sc 4 1} {
@@ -255,8 +255,8 @@ if {[llength $hls_axi] != 1 ||
 }
 lappend report "HLSINTF|s_axi_control|SLAVE"
 
-# Processor AXI master reaches four DMA AXI-Lite controls AND the M05 shell.
-# The HLS AXI4-Lite control port does not exist in Git and is NOT fabricated.
+# Processor AXI master reaches four DMA controls, unchanged shell,
+# and real HLS/s_axi_control. No fake interface is instantiated.
 link_axis_or_axi ps/M_AXI_HPM0_FPD ctrl_sc/S00_AXI
 foreach {index sink} {
     0 dma_neurons/S_AXI_LITE
