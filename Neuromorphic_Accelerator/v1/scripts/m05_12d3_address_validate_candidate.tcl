@@ -3,7 +3,8 @@
 # Source is exact owner-attested Vitis 2025.2 neural RTL, never a mock.
 # The real signed32 HLS RTL remains outside Git and is loaded only from
 # owner-authenticated evidence; this trial attempts the actual HLS connection.
-# It does NOT yet assign addresses or validate a complete system.
+# This NEW offline trial attempts explicit real PS control address assignment
+# and full BD validation, but neither is accepted until owner Vivado proof.
 # NO physical PS/DDR/FPGA, bitstream, hardware server, or board automation.
 if {[llength $argv] != 7} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report> <read-only-six-segment-inventory>"}
 set root [lindex $argv 0]
