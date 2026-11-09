@@ -18,6 +18,7 @@ from .m02_types import InputCurrent, Network, ReferenceTrace
 from .m06_axi_transport import AXIModelImage
 from .m06_block_residency import BlockCache, CanonicalImage, Geometry, NoOwnership, ResidencyError
 from .m06_paged_replay import PagedRun, replay_with_paging
+from .m06_continuous_paging import PagedContinuousSession
 
 
 class EpochError(ResidencyError):
@@ -78,6 +79,43 @@ class ShadowEpoch:
         try:
             result = replay_with_paging(network, frozen_events, ticks=ticks,
                                         cache=self.cache)
+        except (ValueError, ResidencyError, PermissionError):
+            self._status = "FAILED_REQUIRES_ABORT"
+            raise
+        self._actual = result
+        self._status = "RAN_UNCOMMITTED"
+        return result
+
+    def run_windowed(self, network: Network, events: Iterable[InputCurrent], *,
+                     total_ticks: int, window_end_ticks: Iterable[int]) -> PagedRun:
+        """Execute ONE speculative epoch through multiple <=64-tick windows.
+
+        Same separate shadow region is used throughout. No shared physical
+        DDR or independently restartable FPGA session is implied.
+        """
+        if self._status != "PREPARED":
+            raise EpochError("epoch run must start from PREPARED only")
+        frozen_events = tuple(events)
+        try:
+            window_ends = tuple(window_end_ticks)
+            if (not window_ends or type(window_ends[-1]) is not int or
+                    window_ends[-1] != total_ticks):
+                raise ValueError("window plan must terminate at total_ticks")
+            session = PagedContinuousSession(
+                network, frozen_events, total_ticks=total_ticks,
+                cache=self.cache)
+            for end in window_ends:
+                session.run_window(end)
+            session.finalize()
+            result = PagedRun(
+                trace=session.trace,
+                evaluated_ids_by_tick=session.evaluated_ids_by_tick,
+                touched_ids_by_tick=session.touched_ids_by_tick,
+                deliveries_by_tick=session.deliveries_by_tick,
+                fanout_edges_by_tick=session.fanout_edges_by_tick,
+                cache_counters=session.counters,
+                emitted_spikes=sum(len(x) for x in session.trace.spike_rows),
+            )
         except (ValueError, ResidencyError, PermissionError):
             self._status = "FAILED_REQUIRES_ABORT"
             raise
