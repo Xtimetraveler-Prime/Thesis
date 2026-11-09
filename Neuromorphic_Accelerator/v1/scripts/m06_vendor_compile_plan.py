@@ -57,7 +57,8 @@ def plan(original: Path, report_text: str) -> dict:
         name = p.name
         mem = f"/{MEM_SC}/" in p.as_posix()
         shared = "/ipshared/" in p.as_posix() and name.startswith(
-            ("sc_", "axi_register_slice_v2_1", "proc_sys_reset_v5_0"))
+            ("sc_", "axi_register_slice_v2_1", "axi_infrastructure_v1_1",
+             "util_vector_logic_v2_0", "xlconstant_v1_1", "proc_sys_reset_v5_0"))
         if mem or shared:
             chosen.append(p)
     if len(chosen) < 40 or len(chosen) != len(set(chosen)):
