@@ -1,3 +1,5 @@
+> **ACTUAL NATIVE CI RESULT / NO NEW VIVADO:** **CI VERIFIED at source+documentation commit `e49c8ed18f5206d887175588c6e05d5523459a4b`:** all five GitHub Actions workflows **SUCCESS**. [M05 workflow 42541636739](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42541636739) exercised **267 named M05 methods**: first Python discovery executed 266 PASS and **one Icarus-dependent SKIP** before Icarus was installed; then a mandatory post-install step compiled the exact RTL shell wrapper with Icarus and reran all eight M05.12d.1 tests, including the previously skipped elaboration (**8/8 PASS**). Prior accepted M01–M04 methods **22+28+21+20=91 PASS**. Therefore all **358 distinct named native methods have passed at least once**; none of these CI tests is genuine Vivado IP Integrator connected-net verification, which is still pending local operator evidence. Original M05.12d.1 Vivado four-net graph runner remains PENDING operator and cannot be accepted from CI alone.
+
 # M05.12d.1 — Genuine Vivado offline four-DMA to M05.11 shell AXI4-Stream connectivity
 
 **2026-11-08 local / 2026-11-09 UTC · Active M05 branch · Draft PR #79 · NO BOARD**
