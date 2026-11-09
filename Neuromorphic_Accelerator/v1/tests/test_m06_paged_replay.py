@@ -128,6 +128,46 @@ class PagedReplaySourceTests(unittest.TestCase):
         self.assertEqual(actual.deliveries_by_tick, (5, 5, 2))
         self.assertEqual(actual.touched_ids_by_tick[2], (1,))
 
+    def test_persistent_last_tick_watermarks_survive_dirty_eviction_restore(self):
+        net = Network(neurons=tuple(
+            Neuron(bias=1 if i in (0, 31) else 0,
+                   threshold=100, reset_v=0) for i in range(32)))
+        g = Geometry(logical_neurons=32, bytes_per_neuron=16,
+                     neurons_per_block=16, resident_budget_bytes=256,
+                     max_model_transfer_bytes=256)
+        store = new_canonical_neuron_image(net, g, owner="EMULATED")
+        cache = BlockCache(store, owner="EMULATED")
+        result = replay_with_paging(net, (), ticks=8, cache=cache)
+        self.assertEqual(result.trace, evaluate_dense(net, (), ticks=8))
+        self.assertGreater(cache.counters.dirty_evictions, 8)
+        final = store.snapshot(owner="EMULATED")
+        for idx in range(32):
+            row = final[idx*16:(idx+1)*16]
+            self.assertEqual(int.from_bytes(row[:2], "little", signed=True),
+                             8 if idx in (0, 31) else 0)
+            self.assertEqual(int.from_bytes(row[2:6], "little"),
+                             8 if idx in (0, 31) else 0)
+            self.assertEqual(row[6:], bytes(10))
+
+    def test_future_timestamp_from_faulty_page_rejected_and_poisoned(self):
+        net = Network(neurons=tuple(
+            Neuron(bias=1 if i == 0 else 0) for i in range(16)))
+        g = Geometry(logical_neurons=16, bytes_per_neuron=16,
+                     neurons_per_block=16, resident_budget_bytes=256,
+                     max_model_transfer_bytes=256)
+        class BadTimestampImage(CanonicalImage):
+            def read_block(self, page, *, owner):
+                data, version, tx = super().read_block(page, owner=owner)
+                bad = bytearray(data)
+                bad[2:6] = (9).to_bytes(4, "little")
+                return bytes(bad), version, tx
+        store = BadTimestampImage(g, emulated_owner="EMULATED")
+        cache = BlockCache(store, owner="EMULATED")
+        with self.assertRaisesRegex(ResidencyError, "future last-update"):
+            replay_with_paging(net, (), ticks=1, cache=cache)
+        self.assertTrue(cache.poisoned)
+        self.assertEqual(store.snapshot(owner="EMULATED"), bytes(256))
+
     def test_repeat_seeded_hybrid_locality_churn_but_same_neural_trace(self):
         net, evs = seeded_network(seed=107, n=16, ticks=24)
         a, _, ca = run(net, evs, 24, slots=1)
