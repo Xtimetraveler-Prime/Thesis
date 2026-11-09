@@ -174,9 +174,13 @@ def verify_original_evidence(xsim_evidence: Path, source_cpp: Path
     # writing, copying or backfilling the immutable original Vitis artifact.
     ram_names = referenced_init_files(rtl)
     available: dict[str, set[str]] = {name: set() for name in ram_names}
-    for asset in (impl / "work").rglob("*.dat"):
+    work_root = (impl / "work").resolve(strict=True)
+    for asset in work_root.rglob("*.dat"):
         if asset.name in available:
-            available[asset.name].add(sha256(asset))
+            resolved = asset.resolve(strict=True)
+            if not resolved.is_relative_to(work_root) or not resolved.is_file():
+                raise ValueError("original Vitis RAM asset escapes work tree")
+            available[asset.name].add(sha256(resolved))
     if any(len(values) != 1 for values in available.values()):
         raise ValueError("missing or conflicting original Vitis RAM .dat assets")
     addresses, reg_source = find_generated_register_map(impl)
@@ -220,6 +224,14 @@ def attest(xsim_evidence: Path, source_cpp: Path) -> str:
     return "\n".join(lines) + "\n"
 
 
+def require_new_evidence_output(report: Path) -> None:
+    """Never create a report inside an accepted original artifact directory."""
+    parent = report.parent.resolve(strict=True)
+    if (not parent.name.startswith("neuromorphic_v1_m05_12d3_real_hls_contract_")
+            or report.name != "01_original_hls_contract.txt"):
+        raise ValueError("report must be in a NEW D3 contract evidence directory")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--xsim-evidence", type=Path, required=True)
@@ -227,6 +239,7 @@ def main() -> int:
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     try:
+        require_new_evidence_output(args.report)
         contents = attest(args.xsim_evidence, args.source)
         with args.report.open("x", encoding="utf-8") as f:
             f.write(contents)
