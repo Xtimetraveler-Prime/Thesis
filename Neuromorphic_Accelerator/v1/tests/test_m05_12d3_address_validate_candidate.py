@@ -227,6 +227,60 @@ class M0512D3AddressValidateTests(unittest.TestCase):
         self.assertEqual(subprocess.run(["bash", "-n", str(RUNNER)],
                          capture_output=True).returncode, 0)
 
+    def test_owner_2025_2_assign_printed_but_empty_return_must_use_real_readback(self):
+        # Owner source e.g. "Slave segment '/dma_neurons/S_AXI_LITE/Reg'
+        # is being assigned ..." followed by previous Tcl false-negative
+        # from '[llength $created] != 1'. The message alone is NOT proof
+        # of successful decoding. Require actual mapped objects/values.
+        tcl = TCL.read_text()
+        self.assertIn(
+            "set created [assign_bd_address -target_address_space $control_space",
+            tcl)
+        self.assertNotIn("if {[llength $created] != 1}", tcl)
+        self.assertIn(
+            "set masters [get_bd_addr_segs -addressing -quiet -of_objects $slave]",
+            tcl)
+        self.assertIn(
+            "set ps_mappings [get_bd_addr_segs -addressed -quiet -of_objects $control_space]",
+            tcl)
+        self.assertIn(
+            "if {[lsearch -exact $ps_mappings $master] < 0}", tcl)
+        self.assertIn(
+            "set reverse [get_bd_addr_segs -quiet -of_objects $master]", tcl)
+        self.assertIn(
+            "if {[llength $masters] != 1}", tcl)
+        self.assertIn(
+            "if {[llength $created] != 0 && [lsearch -exact $created $master] < 0}",
+            tcl)
+        self.assertIn(
+            'puts $af "READBACK|$bank|$slave|$master|$rb_base|$rb_range"',
+            tcl)
+        self.assertNotIn(
+            'puts $af "READBACK|$bank|$slave|$master|[format {0x%08X} $wanted_base]',
+            tcl)
+        self.assertLess(
+            tcl.index("set rb_base [string trim [get_property OFFSET $master]]"),
+            tcl.index('puts $af "READBACK|$bank|$slave|$master|$rb_base|$rb_range"'))
+        self.assertLess(
+            tcl.index('get_bd_addr_segs -addressing -quiet -of_objects $slave'),
+            tcl.index('assign_bd_address -target_address_space $control_space'))
+        self.assertIn("if {[llength $mapped_before] != 0}", tcl)
+
+    def test_unverified_requested_offset_does_not_count_as_vivado_readback(self):
+        good = mapped_fixture()
+        plan = parse_plan(good_plan())
+        # The auditor must refuse fabricated output values that disagree with
+        # user-supplied plan, regardless of whether the Tcl assignment returned.
+        self.assertEqual(audit_six_assignments(good, plan)["master_mappings"], 6)
+        for old, replacement in (
+            ("|0xA0000000|", "|0xA0001000|"),
+            ("|0x00010000\n", "|0x00002000\n"),
+            ("/ps/Data/SEG_dma_neurons_Reg", "/ps/DDR/SEG_dma_neurons_Reg"),
+        ):
+            with self.subTest(mutation=replacement):
+                with self.assertRaises(ValueError):
+                    audit_six_assignments(good.replace(old, replacement, 1), plan)
+
     def test_preflight_accepts_new_same_milestone_folder_only_and_never_overwrites(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
