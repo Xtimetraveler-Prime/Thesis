@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from m05_12d3_real_hls_contract import (
     PORTS, PART, TOP, parse_top_ports, verify_top_contract,
-    verify_original_evidence, attest,
+    verify_original_evidence, attest, require_new_evidence_output,
 )
 
 
@@ -139,6 +139,20 @@ class M0512D3RealHLSContractTests(unittest.TestCase):
         result = subprocess.run(["bash", "-n", str(path)],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            prior = root / "neuromorphic_v1_m05_11c_real_hls_ACCEPTED"
+            prior.mkdir()
+            new = root / "neuromorphic_v1_m05_12d3_real_hls_contract_UTC_ABC"
+            new.mkdir()
+            name = "01_original_hls_contract.txt"
+            with self.assertRaisesRegex(ValueError, "NEW D3"):
+                require_new_evidence_output(prior / name)
+            require_new_evidence_output(new / name)
+            with self.assertRaisesRegex(ValueError, "NEW D3"):
+                require_new_evidence_output(new / "result.txt")
+            self.assertEqual(list(new.iterdir()), [])
+            self.assertEqual(list(prior.iterdir()), [])
 
     def test_no_original_engine_or_prior_d3_graph_mutation(self):
         accepted = (
