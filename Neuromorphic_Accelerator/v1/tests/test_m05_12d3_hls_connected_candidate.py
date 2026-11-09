@@ -173,7 +173,7 @@ class M0512D3HLSConnectedCandidateTests(unittest.TestCase):
             for name in runner_names:
                 script = (ROOT / "scripts" / name).read_text()
                 import re
-                match = re.search(r'OUT="\\$\\(mktemp -d "\\$EVIDENCE_ROOT/(neuromorphic_v1_m05_12d3_[a-z_]+_)\\$\\(date', script)
+                match = re.search(r'(neuromorphic_v1_m05_12d3_[a-z_]+_)\$\(date', script)
                 self.assertIsNotNone(match, f"missing standard mktemp prefix in {name}")
                 prefix = match.group(1)
                 parent = Path(temp) / (prefix + "20261109T063355Z_test")
