@@ -38,6 +38,26 @@ class M05D3IPOutputTrialTests(unittest.TestCase):
         self.assertLess(t.index("save_bd_design"),t.index("generate_target all $actual_bd"))
         with self.assertRaises(ValueError):derive(original.replace("create_project -in_memory -part $part","create_project wrong"))
 
+    def test_owner_2025_2_saved_bd_full_path_lookup_no_glob_regression(self):
+        # Real 2026-11-09 owner log at 7d107de... SAVED the .bd in this
+        # project but get_files -quiet *.bd failed before generation.
+        # UG835 generate_target examples require a real get_files object
+        # retrieved by absolute BD path. This is NOT a synthetic Vivado PASS.
+        block = PRODUCT_BLOCK
+        self.assertIn("set bd_name m05_12d3_real_signed32_hls_six_control_address_candidate", block)
+        self.assertIn("set expected_bd_path [file normalize [file join $output_project_dir", block)
+        self.assertIn('"${bd_name}.bd"]]', block)
+        self.assertIn("set actual_bd [get_files -quiet $expected_bd_path]", block)
+        self.assertIn("M05_D3_IP_OUTPUT_BD_LOOKUP|EXPECTED=$expected_bd_path|FILE_EXISTS=", block)
+        self.assertIn("VIVADO_OBJECT_COUNT=[llength $actual_bd]", block)
+        self.assertIn('if {![file isfile $expected_bd_path]}', block)
+        self.assertIn('if {[llength $actual_bd] != 1}', block)
+        self.assertIn('if {[file normalize [lindex $actual_bd 0]] ne $expected_bd_path}', block)
+        self.assertIn("generate_target all $actual_bd", block)
+        self.assertNotIn("get_files -quiet *.bd", block.split('set bd_name m05_12d3_real_signed32_hls_six_control_address_candidate')[1])
+        self.assertLess(block.index("M05_D3_IP_OUTPUT_BD_LOOKUP"),
+                        block.index("generate_target all $actual_bd"))
+
     def test_staging_preserves_owner_baseline_and_rejects_overwrite(self):
         with tempfile.TemporaryDirectory() as temp:
             p=Path(temp);dest=p/"trial.tcl";m=p/"manifest.txt"

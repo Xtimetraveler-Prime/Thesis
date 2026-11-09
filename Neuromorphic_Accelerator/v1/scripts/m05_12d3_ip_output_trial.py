@@ -9,9 +9,24 @@ from m05_12d3_dma_memory_trial import derive as derive_dma
 PRODUCT_BLOCK = r"""
 # NEW offline project flow only. Do not synthesize, write a bitstream or use HW.
 save_bd_design
-set actual_bd [get_files -quiet *.bd]
-if {[llength $actual_bd] != 1 || ![file isfile [lindex $actual_bd 0]]} {
-    error "expected genuine saved file-backed .bd for output products"
+# Owner's genuine 2025.2 run at 7d107de... SAVED the real .bd file
+# successfully but 'get_files -quiet *.bd' selected no valid unique
+# project file. AMD UG835 generate_target specifically demonstrates a
+# FULL absolute .bd project file path to get_files. Use the exact expected
+# file under this FRESH evidence-local project; never a wildcard or a
+# guessed/hand-written BD object.
+set bd_name m05_12d3_real_signed32_hls_six_control_address_candidate
+set expected_bd_path [file normalize [file join $output_project_dir m05_d3_output_products.srcs sources_1 bd $bd_name "${bd_name}.bd"]]
+set actual_bd [get_files -quiet $expected_bd_path]
+puts "M05_D3_IP_OUTPUT_BD_LOOKUP|EXPECTED=$expected_bd_path|FILE_EXISTS=[file isfile $expected_bd_path]|VIVADO_OBJECT_COUNT=[llength $actual_bd]|VIVADO_OBJECTS=$actual_bd"
+if {![file isfile $expected_bd_path]} {
+    error "expected exact evidence-local saved block-design FILE was not created: $expected_bd_path"
+}
+if {[llength $actual_bd] != 1} {
+    error "real saved block-design file is present but Vivado get_files FULL-PATH lookup did not return exactly one file object"
+}
+if {[file normalize [lindex $actual_bd 0]] ne $expected_bd_path} {
+    error "Vivado returned unexpected BD object path rather than the real evidence-local saved .bd"
 }
 set real_xpr [file join $output_project_dir m05_d3_output_products.xpr]
 if {![file isfile $real_xpr]} {
