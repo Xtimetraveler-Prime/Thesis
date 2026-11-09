@@ -54,11 +54,15 @@ CLOCK = {
 for dma in DMA:
     CLOCK.add(f"{dma}/s_axi_lite_aclk")
 for dma in ("dma_neurons", "dma_synapses", "dma_external"):
-    CLOCK.update({f"{dma}/m_axi_mm2s_aclk", f"{dma}/m_axis_mm2s_aclk"})
-CLOCK.update({"dma_trace/m_axi_s2mm_aclk", "dma_trace/s_axis_s2mm_aclk"})
+    CLOCK.add(f"{dma}/m_axi_mm2s_aclk")
+CLOCK.add("dma_trace/m_axi_s2mm_aclk")
 RESET_INT = {"ctrl_sc/aresetn", "mem_sc/aresetn"}
 RESET_PER = {"shell/rst_n"} | {f"{dma}/axi_resetn" for dma in DMA}
 RESET = RESET_INT | RESET_PER
+# Clock and AXI DMA pin sets match genuine PG021 and the owner observed
+# missing separate AXIS clock pin, which is specific to AXI VDMA (PG020).
+RESETFEED = {"ps/pl_resetn0", "pl_reset/ext_reset_in"}
+RESETCFG = {"C_EXT_RESET_HIGH": "0"}
 PSCFG = {"PSU__MAXIGP0__DATA_WIDTH": "128", "PSU__SAXIGP2__DATA_WIDTH": "128"}
 
 
@@ -71,17 +75,17 @@ def _unique(table: dict, key, value, allowed: set, kind: str) -> None:
 def audit_connected_candidate(report: str) -> dict[str, int]:
     if type(report) is not str or not report.endswith("\n") or len(report) > 50000:
         raise ValueError("incomplete or oversized graph evidence")
-    meta, dma, links, clocks, resets, pscfg = {}, {}, {}, {}, {}, {}
+    meta, dma, links, clocks, resets, pscfg, resetfeed, resetcfg = {}, {}, {}, {}, {}, {}, {}, {}
     for lineno, line in enumerate(report.splitlines(), 1):
         fields = line.split("|")
         kind = fields[0]
-        if kind in ("META", "PSCFG") and len(fields) == 3:
+        if kind in ("META", "PSCFG", "RESETCFG") and len(fields) == 3:
             _, key, value = fields
-            expected = META if kind == "META" else PSCFG
+            expected = {"META": META, "PSCFG": PSCFG, "RESETCFG": RESETCFG}[kind]
             if value != expected.get(key):
                 raise ValueError(f"unexpected {kind} value at line {lineno}")
-            _unique(meta if kind == "META" else pscfg, key, value,
-                    set(expected), kind)
+            _unique({"META": meta, "PSCFG": pscfg, "RESETCFG": resetcfg}[kind],
+                    key, value, set(expected), kind)
         elif kind == "DMA" and len(fields) == 6:
             _, name, role, axis, addr, length = fields
             if role != DMA.get(name) or (axis, addr, length) != ("256", "32", "24"):
@@ -92,18 +96,21 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
             if not net.strip() or len(net) > 180 or any(c.isspace() for c in net):
                 raise ValueError(f"invalid interface net at line {lineno}")
             _unique(links, (src, dst), net, LINKS, kind)
-        elif kind in ("CLK", "RESET") and len(fields) == 3:
+        elif kind in ("CLK", "RESET", "RESETFEED") and len(fields) == 3:
             _, pin, net = fields
             if not net.strip() or len(net) > 180 or any(c.isspace() for c in net):
                 raise ValueError(f"bad net at line {lineno}")
-            allowed = CLOCK if kind == "CLK" else RESET
-            _unique(clocks if kind == "CLK" else resets, pin, net, allowed, kind)
+            allowed = {"CLK": CLOCK, "RESET": RESET, "RESETFEED": RESETFEED}[kind]
+            destination = {"CLK": clocks, "RESET": resets, "RESETFEED": resetfeed}[kind]
+            _unique(destination, pin, net, allowed, kind)
         else:
             raise ValueError(f"unexpected graph record at line {lineno}")
     for kind, actual, required in (
         ("META", meta, set(META)), ("DMA", dma, set(DMA)),
         ("LINK", links, LINKS), ("CLK", clocks, CLOCK),
         ("RESET", resets, RESET), ("PSCFG", pscfg, set(PSCFG)),
+        ("RESETFEED", resetfeed, RESETFEED),
+        ("RESETCFG", resetcfg, set(RESETCFG)),
     ):
         if set(actual) != required:
             missing = sorted(required - set(actual))
@@ -119,7 +126,11 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
         raise ValueError("all DMA/shell reset pins do not share a peripheral reset net")
     if next(iter({resets[k] for k in RESET_INT})) == next(iter({resets[k] for k in RESET_PER})):
         raise ValueError("processor-reset interconnect/peripheral domains must remain distinguished")
-    if next(iter(clocks.values())) in set(resets.values()):
+    if len(set(resetfeed.values())) != 1:
+        raise ValueError("active-low PS pl_resetn0 is not on ext_reset_in input net")
+    if next(iter(resetfeed.values())) in set(resets.values()):
+        raise ValueError("active-low PS reset source and generated reset net aliased")
+    if next(iter(clocks.values())) in set(resets.values()) | set(resetfeed.values()):
         raise ValueError("clock and reset unexpectedly same net")
     return {
         "stream_links": len(STREAM),
@@ -127,6 +138,7 @@ def audit_connected_candidate(report: str) -> dict[str, int]:
         "memory_links": len(MEMORY),
         "clock_consumers": len(CLOCK),
         "reset_consumers": len(RESET),
+        "reset_input_pins": len(RESETFEED),
     }
 
 

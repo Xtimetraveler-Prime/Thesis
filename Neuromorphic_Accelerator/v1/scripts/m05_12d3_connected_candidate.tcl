@@ -79,6 +79,15 @@ foreach {cell si mi} {ctrl_sc 1 5 mem_sc 4 1} {
     }
 }
 set reset [create_bd_cell -type ip -vlnv $rst_vlnv pl_reset]
+# PS pl_resetn0 is active LOW. The proc_sys_reset external-reset input
+# must be configured to interpret the same polarity, not left on a default.
+if {[lsearch -exact [list_property $reset] CONFIG.C_EXT_RESET_HIGH] < 0} {
+    error "proc_sys_reset has no CONFIG.C_EXT_RESET_HIGH: investigate installed IP"
+}
+set_property CONFIG.C_EXT_RESET_HIGH 0 $reset
+if {[string trim [get_property CONFIG.C_EXT_RESET_HIGH $reset]] ne "0"} {
+    error "proc_sys_reset external reset polarity readback not active-low"
+}
 set high [create_bd_cell -type ip -vlnv $const_vlnv logic_one]
 set low [create_bd_cell -type ip -vlnv $const_vlnv logic_zero]
 set_property -dict [list CONFIG.CONST_VAL 1 CONFIG.CONST_WIDTH 1] $high
@@ -189,10 +198,15 @@ foreach name $dma_names {
     lappend clocks "$name/s_axi_lite_aclk"
     lappend reset_pins "$name/axi_resetn"
 }
+# AMD AXI DMA PG021: m_axi_mm2s_aclk clocks both MM2S AXI-MM and
+# M_AXIS_MM2S; m_axi_s2mm_aclk clocks S2MM AXI-MM and S_AXIS_S2MM.
+# Separate *m_axis_mm2s_aclk/s_axis_s2mm_aclk* pins are AXI VDMA,
+# not these tested AXI DMA v7.1 instances. Genuine owner D3 failure:
+# absent dma_neurons/m_axis_mm2s_aclk (2026-11-09 03:02 UTC).
 foreach name {dma_neurons dma_synapses dma_external} {
-    lappend clocks "$name/m_axi_mm2s_aclk" "$name/m_axis_mm2s_aclk"
+    lappend clocks "$name/m_axi_mm2s_aclk"
 }
-lappend clocks "dma_trace/m_axi_s2mm_aclk" "dma_trace/s_axis_s2mm_aclk"
+lappend clocks "dma_trace/m_axi_s2mm_aclk"
 set cpins {}
 foreach name $clocks {lappend cpins [require_pin $name]}
 connect_bd_net {*}$cpins
@@ -202,6 +216,16 @@ foreach name $clocks {
     lappend report "CLK|$name|[get_property NAME $nets]"
 }
 connect_bd_net [require_pin ps/pl_resetn0] [require_pin pl_reset/ext_reset_in]
+# Independently report this actual active-low input net, not just the
+# parameter. A future auditor requires both endpoints on the SAME net.
+foreach name {ps/pl_resetn0 pl_reset/ext_reset_in} {
+    set nets [get_bd_nets -of_objects [require_pin $name]]
+    if {[llength $nets] != 1} {
+        error "proc_sys_reset active-low external reset net not connected: $name"
+    }
+    lappend report "RESETFEED|$name|[get_property NAME $nets]"
+}
+lappend report "RESETCFG|C_EXT_RESET_HIGH|[get_property CONFIG.C_EXT_RESET_HIGH $reset]"
 connect_bd_net [require_pin logic_one/dout] [require_pin pl_reset/dcm_locked]
 connect_bd_net [require_pin logic_zero/dout] [require_pin pl_reset/aux_reset_in] \
     [require_pin pl_reset/mb_debug_sys_rst]

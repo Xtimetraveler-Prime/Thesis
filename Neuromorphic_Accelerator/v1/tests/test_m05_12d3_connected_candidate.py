@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from m05_12d3_connected_candidate_audit import (
     META, DMA, STREAM, CONTROL, MEMORY, CLOCK, RESET, RESET_INT,
-    RESET_PER, PSCFG, audit_connected_candidate,
+    RESET_PER, RESETFEED, RESETCFG, PSCFG, audit_connected_candidate,
 )
 
 
@@ -29,6 +29,10 @@ def transcript() -> str:
     for pin in sorted(RESET):
         net = "int_reset_net" if pin in RESET_INT else "per_reset_net"
         rows.append(f"RESET|{pin}|{net}")
+    for pin in sorted(RESETFEED):
+        rows.append(f"RESETFEED|{pin}|ps_resetn_net")
+    for key, value in RESETCFG.items():
+        rows.append(f"RESETCFG|{key}|{value}")
     for key, value in PSCFG.items():
         rows.append(f"PSCFG|{key}|{value}")
     return "\n".join(rows) + "\n"
@@ -39,7 +43,8 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
         facts = audit_connected_candidate(transcript())
         self.assertEqual(facts, {
             "stream_links": 4, "control_links": 6, "memory_links": 5,
-            "clock_consumers": 19, "reset_consumers": 7,
+            "clock_consumers": 15, "reset_consumers": 7,
+            "reset_input_pins": 2,
         })
 
     def test_sixth_hls_control_is_not_faked_and_addresses_unassigned(self):
@@ -100,6 +105,38 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             audit_connected_candidate(src.replace("RESET|ctrl_sc/aresetn|int_reset_net",
                                                  "RESET|ctrl_sc/aresetn|per_reset_net"))
+
+    def test_owner_d3_missing_axis_clock_regression_and_reset_polarity(self):
+        # Original Vivado source failed on absent DMA scalar pin
+        # dma_neurons/m_axis_mm2s_aclk. PG021 uses m_axi_mm2s_aclk
+        # for both memory and stream; separate AXIS clocks are AXI VDMA.
+        src = (ROOT / "scripts/m05_12d3_connected_candidate.tcl").read_text()
+        auditor = (ROOT / "scripts/m05_12d3_connected_candidate_audit.py").read_text()
+        self.assertIn('lappend clocks "$name/m_axi_mm2s_aclk"', src)
+        self.assertIn('lappend clocks "dma_trace/m_axi_s2mm_aclk"', src)
+        self.assertNotIn('lappend clocks "$name/m_axis_mm2s_aclk"', src)
+        self.assertNotIn('lappend clocks "dma_trace/s_axis_s2mm_aclk"', src)
+        self.assertNotIn('CLOCK.add(f"{dma}/m_axis_mm2s_aclk")', auditor)
+        self.assertNotIn('CLOCK.add("dma_trace/s_axis_s2mm_aclk")', auditor)
+        self.assertNotIn("dma_neurons/m_axis_mm2s_aclk", CLOCK)
+        self.assertNotIn("dma_trace/s_axis_s2mm_aclk", CLOCK)
+        self.assertEqual(len(CLOCK), 15)
+        self.assertIn("set_property CONFIG.C_EXT_RESET_HIGH 0 $reset", src)
+        self.assertIn("get_property CONFIG.C_EXT_RESET_HIGH $reset", src)
+        self.assertIn('lappend report "RESETCFG|C_EXT_RESET_HIGH|', src)
+        self.assertEqual(audit_connected_candidate(transcript())["reset_input_pins"], 2)
+        for invalid in (
+            transcript().replace("RESETCFG|C_EXT_RESET_HIGH|0",
+                                 "RESETCFG|C_EXT_RESET_HIGH|1", 1),
+            transcript().replace("RESETFEED|pl_reset/ext_reset_in|ps_resetn_net",
+                                 "RESETFEED|pl_reset/ext_reset_in|wrong_reset_net", 1),
+            transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net",
+                                 "RESETFEED|ps/pl_resetn0|pl_clk_net", 1),
+            transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net\\n", "", 1),
+        ):
+            with self.subTest(invalid=invalid[-100:]):
+                with self.assertRaises(ValueError):
+                    audit_connected_candidate(invalid)
 
     def test_proven_owner_dma_width_part_and_vlnv_values_enforced(self):
         src = transcript()
