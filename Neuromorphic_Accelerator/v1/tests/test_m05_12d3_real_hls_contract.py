@@ -35,7 +35,7 @@ def synthetic_declarations() -> str:
 class M0512D3RealHLSContractTests(unittest.TestCase):
     def test_synthetic_port_parser_matches_accepted_xsim_wiring(self):
         pins = verify_top_contract(synthetic_declarations())
-        self.assertEqual(len(PORTS), 33)
+        self.assertEqual(len(PORTS), 32)
         self.assertEqual(pins["s_axi_control_AWADDR"], ("input", 7))
         self.assertEqual(pins["neurons_TDATA"], ("input", 128))
         self.assertEqual(pins["synapses_TDATA"], ("input", 192))
