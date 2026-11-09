@@ -32,7 +32,7 @@ sha256sum \
   "$ROOT/scripts/m05_12d3_hls_connected_preflight.py" \
   "$ROOT/scripts/m05_12d3_native_axis_candidate.tcl" \
   "$ROOT/scripts/m05_12d3_native_axis_candidate_audit.py" \
-  "$ROOT/scripts/run_m05_12d3_hls_connected_candidate.sh" \
+  "$ROOT/scripts/run_m05_12d3_native_axis_candidate.sh" \
   "$ROOT/rtl/m05_12/m05_12d_axis_shell_ref.v" \
   "$ROOT/rtl/m05_11/m05_11_stream_shell.v" \
   > "$OUT/source_sha256.txt"
