@@ -48,7 +48,7 @@ def parse_plan(source: str) -> ProposedControlMap:
         if len(fields) != 4 or fields[:2] != ["BANK", bank]:
             raise ValueError("wrong or reordered six original control banks")
         base, size = map(parse_hex, fields[2:])
-        if size & (size - 1) or base % size:
+        if size <= 0 or (size & (size - 1)) or base % size:
             raise ValueError("Vivado candidate aperture must be power-of-two aligned")
         items.append(ProposedAperture(bank, base, size))
     return ProposedControlMap(tuple(items))
