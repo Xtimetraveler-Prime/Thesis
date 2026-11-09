@@ -119,6 +119,9 @@ jobs:
             rtl/m05_12/m05_12d_axis_shell_ref.v
           python3 -m unittest discover -s tests \
             -p 'test_m05_12d1_axis_graph.py' -v
+      - name: M05.12d.2 PS catalog parser and proposed MMIO map (synthetic host only, NO Vivado)
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m05_12d2*.py' -v
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
@@ -202,4 +205,10 @@ jobs:
             scripts/run_m05_12d1_axis_graph.sh \
             rtl/m05_12/m05_12d_axis_shell_ref.v \
             tests/test_m05_12d1_axis_graph.py \
-            tests/test_m05_12_dma_candidate.py
+            tests/test_m05_12_dma_candidate.py \
+            scripts/m05_12d2a_ps_inventory.tcl \
+            scripts/m05_12d2a_ps_inventory_audit.py \
+            scripts/run_m05_12d2a_ps_inventory.sh \
+            tests/test_m05_12d2a_ps_inventory.py \
+            src/neuromorphic_accelerator_v1/m05_12d2_control_map.py \
+            tests/test_m05_12d2_control_map.py
