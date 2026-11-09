@@ -108,6 +108,17 @@ jobs:
             rtl/m05_11/m05_trace_dma_packetizer.v \
             rtl/m05_11/m05_ingress_dma_unpad.v \
             rtl/m05_11/m05_11_stream_shell.v
+      - name: M05.12d.1 shell module reference Icarus elaboration (NO Vivado/BOARD)
+        run: |
+          iverilog -g2012 -s m05_12d_axis_shell_ref \
+            -o "$RUNNER_TEMP/m05_12d1_axis_shell_ref" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/m05_11_stream_shell.v \
+            rtl/m05_12/m05_12d_axis_shell_ref.v
+          python3 -m unittest discover -s tests \
+            -p 'test_m05_12d1_axis_graph.py' -v
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
@@ -181,4 +192,14 @@ jobs:
             hls/m05_rolling/m05_rolling_csim_tb.cpp \
             hls/m05_rolling/m05_rolling_hls_config.cfg \
             hls/m05_stream_eval/run_m05_offline_hls.sh \
-            hls/m04_lif_eval/m04_eval.cpp
+            hls/m04_lif_eval/m04_eval.cpp \
+            src/neuromorphic_accelerator_v1/m05_12_dma_contract.py \
+            scripts/m05_12_dma_candidate.tcl \
+            scripts/m05_12_dma_candidate_audit.py \
+            scripts/run_m05_12_dma_candidate.sh \
+            scripts/m05_12d1_axis_graph.tcl \
+            scripts/m05_12d1_axis_graph_audit.py \
+            scripts/run_m05_12d1_axis_graph.sh \
+            rtl/m05_12/m05_12d_axis_shell_ref.v \
+            tests/test_m05_12d1_axis_graph.py \
+            tests/test_m05_12_dma_candidate.py
