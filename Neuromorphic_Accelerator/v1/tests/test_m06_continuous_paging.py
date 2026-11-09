@@ -169,7 +169,7 @@ class ContinuousPagedSessionTests(unittest.TestCase):
                 PagedContinuousSession(
                     n, ev, total_ticks=ticks,
                     cache=BlockCache(source, owner="MODEL"))
-        self.assertEqual(source.snapshot(owner="MODEL"), bytes(64))
+        self.assertEqual(source.snapshot(owner="MODEL"), bytes(source.geometry.image_bytes))
 
     def test_4097_external_cannot_enter_initial_scheduler(self):
         net = Network(neurons=(Neuron(), Neuron()))
