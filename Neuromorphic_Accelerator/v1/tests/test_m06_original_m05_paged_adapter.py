@@ -161,7 +161,11 @@ class OriginalM05PagedNativeTests(unittest.TestCase):
         one=self.check_network(net,ev,12,slots=1)
         eight=self.check_network(net,ev,12,slots=8)
         self.assertGreater(one[2],eight[2])
-        self.assertGreater(one[4],eight[4])
+        self.assertGreater(one[3],eight[3])
+        # All admitted pages are dirty and must eventually reach canonical
+        # memory even if the 8-slot cache postpones their writebacks.
+        # Identical completed dirty-writeback counts are thus legal.
+        self.assertGreaterEqual(one[4],eight[4])
         self.assertGreater(eight[2],8)
         self.assertGreater(one[3],20)
 
