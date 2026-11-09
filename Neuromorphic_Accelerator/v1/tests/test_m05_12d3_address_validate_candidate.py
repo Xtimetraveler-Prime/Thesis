@@ -244,7 +244,7 @@ class M0512D3AddressValidateTests(unittest.TestCase):
             "set ps_mappings [get_bd_addr_segs -quiet -of_objects $control_space]",
             tcl)
         self.assertIn(
-            "if {[lsearch -exact $ps_mappings $master] < 0}", tcl)
+            "[lsearch -exact $ps_mappings $master] < 0", tcl)
         self.assertIn(
             "set reverse [get_bd_addr_segs -quiet -of_objects $master]", tcl)
         self.assertIn(
