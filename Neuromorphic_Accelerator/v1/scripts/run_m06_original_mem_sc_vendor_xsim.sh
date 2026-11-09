@@ -264,4 +264,4 @@ for pattern in "M06_ORIGINAL_VENDOR_4096_RANGE_PASS" \
     exit 1
   }
 done
-echo "PASS: all FIVE original AMD SmartConnect XSim stages incl 4096-neuron 64KiB canonical high-page bound, no real M05 HLS RTL connection, no actual DDR/board."
+echo "PASS: all FIVE original AMD SmartConnect XSim stages incl 4096-neuron 64KiB canonical high-page bound. NO original M05 HLS RTL instantiated; NO actual DDR/board."
