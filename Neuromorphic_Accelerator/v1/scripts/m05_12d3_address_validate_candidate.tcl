@@ -531,9 +531,17 @@ foreach {bank interface} {
     if {[llength $created] != 0 && [lsearch -exact $created $master] < 0} {
         error "assign_bd_address result disagrees with actual mapped PS segment for $bank"
     }
-    set ps_mappings [get_bd_addr_segs -addressed -quiet -of_objects $control_space]
-    if {[lsearch -exact $ps_mappings $master] < 0} {
-        error "slave $bank is not actually addressed in the required PS /ps/Data space"
+    # Owner Vivado 2025.2 confirmed a master for the slave after
+    # assign_bd_address, but this old check failed: '-addressed' is a
+    # filtered discovery query, NOT the canonical master-space membership
+    # enumeration. UG912 BD_ADDR_SEG explicitly documents that the *plain*
+    # get_bd_addr_segs -of_objects [get_bd_addr_spaces ...] lists master
+    # segments belonging to that master address space. Check that list.
+    set ps_mappings [get_bd_addr_segs -quiet -of_objects $control_space]
+    puts "ADDR_D3_SPACE_QUERY|$bank|PS_SPACE=$control_space|SLAVE=$slave|ADDRESSING_MASTER=$master|PS_SEGMENTS=$ps_mappings"
+    if {[llength $ps_mappings] == 0 ||
+        [lsearch -exact $ps_mappings $master] < 0} {
+        error "PS control $bank master not found in actual unfiltered /ps/Data space: requested=$master actual=$ps_mappings"
     }
     set reverse [get_bd_addr_segs -quiet -of_objects $master]
     if {[llength $reverse] != 1 || [lindex $reverse 0] ne "$slave"} {
