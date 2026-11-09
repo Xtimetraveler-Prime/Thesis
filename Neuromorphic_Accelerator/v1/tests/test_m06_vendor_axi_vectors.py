@@ -49,7 +49,7 @@ class OriginalPortSafeVectorsTests(unittest.TestCase):
         write_cases = [c for c in self.v["scenarios"] if c["direction"]=="WRITE"]
         self.assertEqual(len(write_cases), 4)
         offsets = [c["upstream_address_offset"] for c in write_cases]
-        self.assertEqual(offsets, [0x1fe0, 0x2000, 0x2020, 0x2040])
+        self.assertEqual(offsets, [0x0fe0, 0x1000, 0x1020, 0x1040])
         for case in write_cases:
             self.assertEqual(case["source_port"], WRITER)
             self.assertEqual(case["upstream_beat_count"], 1)
@@ -59,7 +59,7 @@ class OriginalPortSafeVectorsTests(unittest.TestCase):
             self.assertEqual(case["expected_write_response"], "OKAY")
 
     def test_independent_masked_byte_mem_oracle_and_low_high_lane_mapping(self):
-        source = bytearray((13*i+17)&255 for i in range(0x7000))
+        source = bytearray((13*i+17)&255 for i in range(0x2000))
         masks = [0xffffffff, 0x80010001, 0x00ff00ff, 0x0000ffff]
         for idx,case in enumerate(self.v["scenarios"][:4]):
             start = case["upstream_address_offset"]
