@@ -56,6 +56,58 @@ class OriginalVendorHeaderTests(unittest.TestCase):
             self.assertTrue(wrapper["port_header_only_not_elaborated"])
             self.assertEqual(value["vendor_functional_axi"],"NOT_EXECUTED")
 
+    def test_original_verilog1995_non_ansi_declarations_visible_in_module_body(self):
+        text = """
+// module FAKE (input [999:0] S00_AXI_rdata); inside COMMENT
+module sample_mem_sc_0_0 (
+    aclk, aresetn, S00_AXI_araddr, S00_AXI_rdata,
+    S03_AXI_wdata, M00_AXI_wdata, M00_AXI_rdata
+);
+  input wire aclk;
+  input aresetn;
+  input [31:0] S00_AXI_araddr;
+  output reg [255:0] S00_AXI_rdata;
+  input wire [255:0] S03_AXI_wdata;
+  output [127:0] M00_AXI_wdata;
+  input [127:0] M00_AXI_rdata;
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as d:
+            original, report, _ = fixture(Path(d), body=text)
+            result = inspect(original, report)
+            self.assertEqual(result["status"], "MODULE_HEADERS_FOUND_NOT_COMPILED")
+            self.assertEqual(result["wrappers_with_ansi_axi_ports"], 1)
+            instance = result["wrapper_candidates"][0]
+            self.assertEqual(instance["declaration_style"], "NON_ANSI")
+            ports = {p["name"]: p for p in instance["ansi_axi_ports"]}
+            self.assertEqual(len(ports), 5)
+            self.assertEqual(ports["S00_AXI_araddr"]["packed_width"], 32)
+            self.assertEqual(ports["S00_AXI_rdata"]["direction"], "output")
+            self.assertEqual(ports["S00_AXI_rdata"]["packed_width"], 256)
+            self.assertEqual(ports["S03_AXI_wdata"]["packed_width"], 256)
+            self.assertEqual(ports["M00_AXI_wdata"]["packed_width"], 128)
+            self.assertEqual(ports["M00_AXI_rdata"]["packed_width"], 128)
+            self.assertFalse(result["vendor_functional_axi"] == "PASS")
+
+    def test_parameterized_original_header_preserves_unresolved_width(self):
+        text = """
+module sample_mem_sc_0_0 #(parameter DATA_W=256) (
+   input wire [DATA_W-1:0] S00_AXI_rdata,
+   output wire [127:0] M00_AXI_wdata,
+   input aclk
+);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as d:
+            original, report, _ = fixture(Path(d), body=text)
+            result = inspect(original, report)
+            self.assertEqual(result["wrappers_with_ansi_axi_ports"], 1)
+            found = {x["name"]: x for x in result["wrapper_candidates"][0]["ansi_axi_ports"]}
+            self.assertIsNone(found["S00_AXI_rdata"]["packed_width"])
+            self.assertEqual(found["S00_AXI_rdata"]["width_status"],
+                             "UNRESOLVED_PARAMETER_EXPRESSION")
+            self.assertEqual(found["M00_AXI_wdata"]["packed_width"], 128)
+
     def test_original_report_rejects_other_xpr_and_missing_completion(self):
         with tempfile.TemporaryDirectory() as d:
             orig,report,vendor=fixture(Path(d))
