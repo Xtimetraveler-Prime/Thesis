@@ -203,7 +203,7 @@ class M0512D3AddressValidateTests(unittest.TestCase):
         for required in (
             "assign_bd_address -target_address_space $control_space",
             "-offset $base_text -range $length_text $slave",
-            "get_bd_addr_segs -quiet -of_objects $slave",
+            "get_bd_addr_segs -addressing -quiet -of_objects $slave",
             "get_bd_addr_segs -quiet -of_objects $master",
             "get_property OFFSET $master", "get_property RANGE $master",
             "validate_bd_design -force",
