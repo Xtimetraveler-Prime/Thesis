@@ -112,7 +112,7 @@ def main() -> int:
             raise ValueError("new immutable D4 protocol gate model report path required")
         risk = review(a.original_d3, a.d4_inventory, a.d4_bd)
         log = a.vivado_log.read_text()
-        if log.count(SUCCESS) != 1 or "ERROR:" in log:
+        if sum(line.strip() == SUCCESS for line in log.splitlines()) != 1 or "ERROR:" in log:
             raise ValueError("original read-only Vivado simulation model discovery failed")
         result = inspect(a.model_report.read_text(), a.original_d3)
         result["original_d3"] = str(a.original_d3.resolve())
