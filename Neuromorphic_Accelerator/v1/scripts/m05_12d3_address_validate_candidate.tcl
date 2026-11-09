@@ -544,6 +544,7 @@ foreach {bank interface} {
         error "PS control $bank master not found in actual unfiltered /ps/Data space: requested=$master actual=$ps_mappings"
     }
     set reverse [get_bd_addr_segs -quiet -of_objects $master]
+    puts "ADDR_D3_REVERSE_QUERY|$bank|PS_MASTER=$master|REFERENCED_SLAVES=$reverse"
     if {[llength $reverse] != 1 || [lindex $reverse 0] ne "$slave"} {
         error "master reverse mapping does not resolve authentic control slave $slave"
     }
@@ -551,6 +552,7 @@ foreach {bank interface} {
     # the requested plan. Compare first; serialize verified properties second.
     set rb_base [string trim [get_property OFFSET $master]]
     set rb_range [string trim [get_property RANGE $master]]
+    puts "ADDR_D3_PROP_QUERY|$bank|PS_MASTER=$master|ACTUAL_OFFSET=$rb_base|ACTUAL_RANGE=$rb_range"
     if {![regexp {^0x[0-9A-Fa-f]+$} $rb_base] ||
         ![regexp {^0x[0-9A-Fa-f]+$} $rb_range]} {
         error "actual Vivado master segment OFFSET/RANGE missing or non-hex for $bank"
