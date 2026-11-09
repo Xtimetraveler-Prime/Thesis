@@ -38,6 +38,9 @@
 
 ## Next M05.12d.3 integrated development plan — within the SAME milestone (not new submilestones)
 
+> **HISTORICAL / SUPERSEDED AS NEXT-TASK INSTRUCTIONS:** This earlier D3 implementation plan is retained to preserve engineering rationale and correction history. Its specified genuine generated-IP D3 trial has now PASSED at original source `fc17906e95c727d9091a443e2082fe00c95d4e0c`. **Current new-chat task is D4.1 in the linked M05.12d.4 plan above**, not the old 'inspect initial HLS module' task below.
+
+
 **Start from the accepted genuine D3 BD graph, not a fresh architecture.** Preserve `scripts/m05_12d3_connected_candidate.tcl`, its audit/runner, original RTL, existing net proofs, and every immutable owner evidence directory.
 
 1. **Authenticate original signed32 HLS generated RTL and inspect *real* interfaces.** The generated `m05_rolling_replay` Verilog is **not checked into Git**. Use the previously accepted genuine M05.11c `~/Thesis_Evidence/neuromorphic_v1_m05_11c_real_hls_20261109T000446Z_keEFQy/source_impl_evidence.txt` to locate the actual prior `neuromorphic_v1_m05_rolling_impl_*` artifact; follow existing `scripts/run_m05_11c_hls_shell_xsim.sh` gates: exact K26/top `m05_rolling_replay`, `exit_status=0`, frozen signed32 HLS source SHA256, original `work/hls/syn/verilog/m05_rolling_replay.v` and companion generated Verilog, genuine HLS control register mapping from `scripts/m05_axis_regmap.py`/vendor generated files. No guessed `ap_start`, `ap_done`, `ap_return`, AXI4-Lite register offsets or 128/192-bit AXIS port names; no fake HLS IP and no rewriting generated RTL.
