@@ -241,7 +241,7 @@ class M0512D3AddressValidateTests(unittest.TestCase):
             "set masters [get_bd_addr_segs -addressing -quiet -of_objects $slave]",
             tcl)
         self.assertIn(
-            "set ps_mappings [get_bd_addr_segs -addressed -quiet -of_objects $control_space]",
+            "set ps_mappings [get_bd_addr_segs -quiet -of_objects $control_space]",
             tcl)
         self.assertIn(
             "if {[lsearch -exact $ps_mappings $master] < 0}", tcl)
@@ -265,6 +265,39 @@ class M0512D3AddressValidateTests(unittest.TestCase):
             tcl.index('get_bd_addr_segs -addressing -quiet -of_objects $slave'),
             tcl.index('assign_bd_address -target_address_space $control_space'))
         self.assertIn("if {[llength $mapped_before] != 0}", tcl)
+
+    def test_owner_second_failure_requires_real_ps_master_space_not_filtered_addressed(self):
+        # Owner Vivado 2025.2 produced ONE -addressing master for the
+        # original dma_neurons slave, but '-addressed -of_objects /ps/Data'
+        # did not report that same master object. UG912 BD_ADDR_SEG
+        # documents the plain space->master segment relation. This
+        # guards against accidentally reintroducing filtered -addressed.
+        tcl = TCL.read_text()
+        self.assertNotIn(
+            "get_bd_addr_segs -addressed -quiet -of_objects $control_space",
+            tcl)
+        self.assertIn(
+            "set masters [get_bd_addr_segs -addressing -quiet -of_objects $slave]",
+            tcl)
+        self.assertIn(
+            "set ps_mappings [get_bd_addr_segs -quiet -of_objects $control_space]",
+            tcl)
+        self.assertIn(
+            "if {[llength $ps_mappings] == 0 ||", tcl)
+        self.assertIn(
+            "[lsearch -exact $ps_mappings $master] < 0", tcl)
+        self.assertIn(
+            'puts "ADDR_D3_SPACE_QUERY|$bank|PS_SPACE=$control_space|', tcl)
+        self.assertIn(
+            'puts "ADDR_D3_REVERSE_QUERY|$bank|PS_MASTER=$master|', tcl)
+        self.assertIn(
+            'puts "ADDR_D3_PROP_QUERY|$bank|PS_MASTER=$master|', tcl)
+        self.assertLess(
+            tcl.index("set ps_mappings [get_bd_addr_segs -quiet -of_objects $control_space]"),
+            tcl.index("set reverse [get_bd_addr_segs -quiet -of_objects $master]"))
+        self.assertLess(
+            tcl.index("set reverse [get_bd_addr_segs -quiet -of_objects $master]"),
+            tcl.index("set rb_base [string trim [get_property OFFSET $master]]"))
 
     def test_unverified_requested_offset_does_not_count_as_vivado_readback(self):
         good = mapped_fixture()
