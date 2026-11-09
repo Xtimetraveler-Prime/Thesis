@@ -76,7 +76,7 @@ foreach {dma dma_if shell_if} {
     if {[llength $members] != 2} {error "$dma AXIS net is not point-to-point"}
     lappend report "LINK|$dma/$dma_if|shell/$shell_if|$a"
 }
-# Intentionally no validate_bd_design: many essential interfaces NOT wired.
+# Deliberately skip full block-design validation: memory, control, clock and HLS remain open.
 # This is actual four AXIS NET connectivity only, not a runnable system.
 set f [open $report_path w]
 foreach line $report {puts $f $line}
