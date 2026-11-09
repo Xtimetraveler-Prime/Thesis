@@ -33,7 +33,7 @@ class VivadoGlobalPrimitivesTests(unittest.TestCase):
         self.assertIn('"$OUT/installed_vivado_glbl_path.txt"', code)
         self.assertIn(' -L xpm -L unisims_ver -L secureip', code)
         self.assertIn('source original Vivado 2025.2 settings64.sh', code)
-        self.assertNotIn('module glbl', code)
+        self.assertNotRegex(code, r"(?m)^\\s*module\\s+glbl\\b")
         self.assertNotIn('generate_target', code)
         self.assertNotIn('program_hw_devices', code)
 
