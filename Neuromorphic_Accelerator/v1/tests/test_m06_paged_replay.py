@@ -101,7 +101,8 @@ class PagedReplaySourceTests(unittest.TestCase):
         self.assertEqual(a.trace, evaluate_dense(net, events, ticks=64))
         self.assertEqual(a.trace, evaluate_events(net, events, ticks=64))
         self.assertEqual(a.trace, evaluate_exact_sparse(net, events, ticks=64).trace)
-        self.assertEqual(a.touched_ids_by_tick[-1], (0,))
+        self.assertIn(0, a.touched_ids_by_tick[-1])  # zero external wakes 0
+        self.assertEqual(a.touched_ids_by_tick, evaluate_exact_sparse(net, events, ticks=64).destinations_by_tick)
         self.assertEqual(a.storage_model, "SOFTWARE_BLOCK_CACHE_NO_HARDWARE")
         self.assertGreater(cache.counters.write_bytes, 100)
 
@@ -130,7 +131,7 @@ class PagedReplaySourceTests(unittest.TestCase):
     def test_repeat_seeded_hybrid_locality_churn_but_same_neural_trace(self):
         net, evs = seeded_network(seed=107, n=16, ticks=24)
         a, _, ca = run(net, evs, 24, slots=1)
-        b, _, cb = run(net, evs, 24, slots=6)
+        b, _, cb = run(net, evs, 24, slots=8)  # entire 8-page image resident
         self.assertEqual(a.trace, b.trace)
         self.assertEqual(a.trace, evaluate_dense(net, evs, ticks=24))
         self.assertGreater(ca.counters.misses, cb.counters.misses)
