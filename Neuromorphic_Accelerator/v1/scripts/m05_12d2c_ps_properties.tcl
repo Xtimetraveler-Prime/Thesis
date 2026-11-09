@@ -17,7 +17,7 @@ create_bd_design m05_12d2c_ps_property_catalog
 set ps [create_bd_cell -type ip -vlnv $vlnv ps_catalog]
 if {[llength $ps] != 1} {error "PS catalog IP creation failed"}
 set keys {}
-foreach prop [lsort -dictionary [list_property $ps]] {
+foreach prop [lsort [list_property $ps]] {
     if {![regexp {^CONFIG\.(PSU__USE__|PSU__CRL_APB__PL0_REF_CTRL__|PSU__FPGA_PL0_ENABLE|PSU__MAXIGP|PSU__SAXIGP)} $prop]} {
         continue
     }
