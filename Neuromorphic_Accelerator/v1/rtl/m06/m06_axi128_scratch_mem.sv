@@ -4,12 +4,15 @@
 // a synthesizable memory controller. For future original mem_sc/M00_AXI
 // transaction BFM attachment. Exactly one READ and one WRITE outstanding
 // independently; INCR 16-byte beats, AW/AR len <=31, no 4KiB crossing,
-// 8192-byte synthetic address region, deterministic READY stalls.
+// 8192-byte default synthetic address region (optional 65536-byte full
+// canonical 4096x16B region), deterministic READY stalls.
 //
 // WSTRB byte lanes are written ONLY on accepted W handshakes.
 // A failed write response does NOT imply page atomicity. The protocol
 // oracle must quarantine partially updated pages after errors.
-module m06_axi128_scratch_mem (
+module m06_axi128_scratch_mem #(
+    parameter integer SCRATCH_BYTES = 8192
+) (
     input  wire          aclk,
     input  wire          aresetn,
     input  wire [48:0]   s_axi_awaddr,
@@ -40,7 +43,6 @@ module m06_axi128_scratch_mem (
     input  wire          inject_next_b_slverr,
     input  wire          inject_next_r_slverr
 );
-    localparam integer SCRATCH_BYTES = 8192;
     reg [7:0] mem [0:SCRATCH_BYTES-1];
     reg [31:0] cycles;
     reg wr_active;
@@ -85,7 +87,7 @@ module m06_axi128_scratch_mem (
             loaded_word = 128'd0;
             if ({1'b0,address} + 50'd16 <= SCRATCH_BYTES) begin
                 for (n=0; n<16; n=n+1)
-                    loaded_word[8*n +: 8] = mem[address[12:0]+n];
+                    loaded_word[8*n +: 8] = mem[address[15:0]+n];
             end
         end
     endfunction
@@ -133,7 +135,7 @@ module m06_axi128_scratch_mem (
                     (s_axi_wlast == (wr_beats_left == 9'd1))) begin
                     for (lane=0; lane<16; lane=lane+1) begin
                         if (s_axi_wstrb[lane])
-                            mem[wr_address[12:0]+lane] <=
+                            mem[wr_address[15:0]+lane] <=
                                 s_axi_wdata[8*lane +: 8];
                     end
                 end
