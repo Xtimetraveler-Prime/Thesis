@@ -104,6 +104,10 @@ python3 scripts/m06_generate_original_vendor_lru8_bfm.py \
   --original "$D3" --headers "$HEADER" \
   --output "$OUT/tb_m06_original_vendor_lru8.sv" \
   2>&1 | tee "$OUT/01e_lru8_bfm.log"
+python3 scripts/m06_generate_original_vendor_4096_bfm.py \
+  --original "$D3" --headers "$HEADER" \
+  --output "$OUT/tb_m06_original_vendor_4096.sv" \
+  2>&1 | tee "$OUT/01f_4096_bfm.log"
 python3 scripts/m06_vendor_compile_plan.py \
   --original "$D3" --report "$PORTS" \
   --output "$OUT/02_original_vendor_compile_plan.json" \
@@ -162,6 +166,7 @@ xvlog --relax -sv "${FLAGS[@]}" -i "$OUT" "${VLOG[@]}" \
   "$ROOT/rtl/m06/m06_axi256_multislot_transfer.sv" \
   "$OUT/tb_m06_original_vendor_neural_paged.sv" \
   "$OUT/tb_m06_original_vendor_lru8.sv" \
+  "$OUT/tb_m06_original_vendor_4096.sv" \
   "$GLBL" \
   2>&1 | tee "$OUT/03_xvlog.log"
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
@@ -238,4 +243,25 @@ for pattern in "M06_ORIGINAL_VENDOR_LRU8_RTL_PASS" \
     exit 1
   }
 done
-echo "PASS: all FOUR original AMD SmartConnect XSim stages (basic, one-slot paging, neural parity, eight-slot LRU). NO original M05 HLS RTL instantiated; NO physical DDR/board."
+# Stage 5: address the FULL 4096-neuron 64KiB canonical image in
+# original AMD SmartConnect from scratch, with both bounded AXI roles:
+# block255 is the highest legal page and block256 is invalid. Scratch
+# BFM parameter ONLY; original 2025.2 IP and prior evidence immutable.
+xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
+  work.tb_m06_original_vendor_4096 work.glbl \
+  -s m06_original_vendor_4096_snapshot \
+  2>&1 | tee "$OUT/12_4096_xelab.log"
+timeout --signal=TERM 360s xsim m06_original_vendor_4096_snapshot -R \
+  --onfinish quit 2>&1 | tee "$OUT/13_4096_xsim.log"
+if grep -Eq 'M06_VENDOR_4096_FAIL|FATAL_ERROR|Fatal: ' "$OUT/13_4096_xsim.log"; then
+  echo "ERROR: original vendor 4096-neuron canonical address simulation failed" >&2
+  exit 1
+fi
+for pattern in "M06_ORIGINAL_VENDOR_4096_RANGE_PASS" \
+               "M06_ORIGINAL_VENDOR_4096_OUT_OF_RANGE_QUARANTINE_PASS"; do
+  grep -Fq "$pattern" "$OUT/13_4096_xsim.log" || {
+    echo "ERROR: full 4096-neuron canonical original-vendor marker missing: $pattern" >&2
+    exit 1
+  }
+done
+echo "PASS: all FIVE original AMD SmartConnect XSim stages incl 4096-neuron 64KiB canonical high-page bound, no real M05 HLS RTL connection, no actual DDR/board."
