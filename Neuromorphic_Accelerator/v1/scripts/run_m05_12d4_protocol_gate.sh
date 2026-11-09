@@ -46,6 +46,7 @@ SOURCES=(
   "$ROOT/scripts/m05_12d4_axi_byte_oracle.py"
   "$ROOT/scripts/m05_12d4_vendor_sim_feasibility.tcl"
   "$ROOT/scripts/m05_12d4_vendor_sim_readback_audit.py"
+  "$ROOT/scripts/m05_12d4_exit_audit.py"
   "$ROOT/scripts/run_m05_12d4_protocol_gate.sh"
   "$ORIGINAL/03_vivado.log"
   "$ORIGINAL/07_full_bd_validation.txt"
@@ -117,5 +118,15 @@ if [[ "$post_rc" -ne 3 ]] || ! cmp -s "$OUT/02_original_axi_risk.json" "$OUT/07_
   echo "ERROR: post-query 382-file original evidence changed or risk review failed" >&2
   exit 2
 fi
-echo "M05 D4.2 ORIGINAL WARNING REVIEW and D4.3 VENDOR MODEL DISCOVERY COMPLETE; AXI functional protocol still BLOCKED"
+set +e
+python3 "$ROOT/scripts/m05_12d4_exit_audit.py" \
+  --evidence "$OUT" --output "$OUT/09_m05_exit_audit.json" \
+  2>&1 | tee "$OUT/09_m05_exit_audit.log"
+exit_audit_rc=$?
+set -e
+if [[ "$exit_audit_rc" -ne 3 ]]; then
+  echo "ERROR: evidence-based M05 exit truth table inconsistent with original owner reports" >&2
+  exit 2
+fi
+echo "M05 D4.2 original warning review + D4.3 simulator feasibility + D4.4 exit audit COMPLETE; AXI FUNCTIONAL PROTOCOL BLOCKED, M05 OPEN, M06 NOT STARTED"
 exit 3
