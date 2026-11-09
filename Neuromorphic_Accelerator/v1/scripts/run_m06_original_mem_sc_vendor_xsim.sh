@@ -51,6 +51,10 @@ python3 scripts/m06_generate_original_mem_sc_bfm.py \
   --original "$D3" --headers "$HEADER" \
   --output "$OUT/tb_m06_original_mem_sc_vendor.sv" \
   2>&1 | tee "$OUT/01_authentic_bfm.log"
+python3 scripts/m06_generate_original_paged_vendor_bfm.py \
+  --original "$D3" --headers "$HEADER" \
+  --output "$OUT/tb_m06_original_vendor_paged.sv" \
+  2>&1 | tee "$OUT/01b_authentic_paged_bfm.log"
 python3 scripts/m06_vendor_compile_plan.py \
   --original "$D3" --report "$PORTS" \
   --output "$OUT/02_original_vendor_compile_plan.json" \
@@ -100,7 +104,10 @@ if (( ${#VHDL[@]} > 0 )); then
 fi
 xvlog --relax -sv "${FLAGS[@]}" "${VLOG[@]}" \
   "$ROOT/rtl/m06/m06_axi128_scratch_mem.sv" \
+  "$ROOT/rtl/m06/m06_residency_control_fsm.sv" \
+  "$ROOT/rtl/m06/m06_axi256_block_transfer.sv" \
   "$OUT/tb_m06_original_mem_sc_vendor.sv" \
+  "$OUT/tb_m06_original_vendor_paged.sv" \
   2>&1 | tee "$OUT/03_xvlog.log"
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
   work.tb_m06_original_mem_sc_vendor -s m06_original_vendor_snapshot \
@@ -115,4 +122,23 @@ grep -Fq 'M06_ORIGINAL_SMARTCONNECT_VENDOR_XSIM_PASS' "$OUT/05_xsim.log" || {
   echo "ERROR: genuine vendor scoreboard PASS marker missing" >&2
   exit 1
 }
-echo "PASS: exact AMD original SmartConnect S03 write → M00/128b → S00-S02 reads. NO DDR/BOARD."
+# Stage 2: SAME authenticated original AMD IP, now driven by the
+# synthesis-oriented one-slot 256B RTL page manager + AXI block mover.
+# The earlier byte-exact port test must already PASS before this stage.
+xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
+  work.tb_m06_original_vendor_paged -s m06_original_paged_vendor_snapshot \
+  2>&1 | tee "$OUT/06_paged_xelab.log"
+timeout --signal=TERM 360s xsim m06_original_paged_vendor_snapshot -R \
+  --onfinish quit 2>&1 | tee "$OUT/07_paged_xsim.log"
+if grep -Eq 'M06_ORIGINAL_PAGED_FAIL|FATAL_ERROR|Fatal: ' "$OUT/07_paged_xsim.log"; then
+  echo "ERROR: real vendor paged memory simulation reported a fatal failure" >&2
+  exit 1
+fi
+for pattern in "M06_ORIGINAL_VENDOR_PAGED_RTL_PASS" \
+               "M06_ORIGINAL_VENDOR_PAGED_FAULT_QUARANTINE_PASS"; do
+  grep -Fq "$pattern" "$OUT/07_paged_xsim.log" || {
+    echo "ERROR: required actual original vendor paged XSim marker missing: $pattern" >&2
+    exit 1
+  }
+done
+echo "PASS: ORIGINAL AMD SmartConnect basic byte integrity AND 256B RTL page evict/reload/quarantine XSim in synthetic scratch; NO real DDR/BOARD."
