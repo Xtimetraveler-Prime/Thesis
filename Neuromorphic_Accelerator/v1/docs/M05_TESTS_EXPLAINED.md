@@ -1,3 +1,9 @@
+## M05.12d.3 original Vivado missing DMA stream clock and reset-polarity fix (same milestone)
+
+Actual owner **FAIL** `neuromorphic_v1_m05_12d3_connected_20261109T030211Z_GQaGvt`, checkout `98aca677f357f27e1b15cf94f6321f249c6c50f9`, `exit_status=1`: native K26 Vivado Tcl stops **before graph report** at non-existent `dma_neurons/m_axis_mm2s_aclk`. It had confused separate AXI VDMA stream clocks with AXI DMA v7.1. AMD PG021 says the proper `m_axi_mm2s_aclk` clocks memory+stream and `m_axi_s2mm_aclk` clocks memory+stream, so corrected exact required clock entries **19→15** (not ignored). Added auditable active-low PS→Processor System Reset external reset parameter `CONFIG.C_EXT_RESET_HIGH=0`, exact net membership `ps/pl_resetn0` / `pl_reset/ext_reset_in`, with fail-closed `RESETCFG` and `RESETFEED` frames. **One new native test method `test_owner_d3_missing_axis_clock_regression_and_reset_polarity`**, including wrong/missing reset framing and bogus VDMA clock assertions; total D3 synthetic methods 9. First CI false-negative newline-escaping fixture fixed. All native-only tests remain NOT real Vivado proof. [Same D3 engineering runbook](M05_12D3_CONNECTED_PS_PL_CANDIDATE_2026_11_08.md).
+
+---
+
 ## M05.12d.3 unified PS/PL connected offline candidate — new test coverage (8 native methods)
 
 Prior M05.12d.2d original owner K26 Vivado readback **PASS**: `neuromorphic_v1_m05_12d2d_ps_enablement_20261109T023754Z_ak6kLz`, checkout `176ba0e99f500a391d7c00459b7e357a813e0e07`, exit0, HPM0_FPD MASTER + HP0_FPD SLAVE actual enabled 128-bit AXI pins, HPM0_LPD MASTER, clocks/reset and independent Python audit PASS. No PS DDR/board.
