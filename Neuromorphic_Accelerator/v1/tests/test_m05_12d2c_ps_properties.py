@@ -122,6 +122,44 @@ class M0512D2CPSPropertyTests(unittest.TestCase):
                 src.replace("PROP|PSU__USE__IRQ0|MA==",
                             "PROP|PSU__USE__IRQ0|AAo=", 1))
 
+    def test_owner_d2c_ascii_sort_regression_stm_precedes_s_axi(self):
+        # Owner original 2026-11-09 D2c report (57 properties) was valid
+        # Tcl 'lsort' but rejected by the old Python sorted(key=str.lower).
+        # This smaller fixture includes real observed keys/defaults only;
+        # it is NOT a replacement for the original Vivado report.
+        observed = {
+            "PSU__USE__STM": "0",
+            "PSU__USE__S_AXI_ACE": "0",
+            "PSU__USE__S_AXI_ACP": "0",
+            "PSU__USE__S_AXI_GP0": "0",
+            "PSU__USE__M_AXI_GP2": "1",
+            "PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ": "100",
+            "PSU__FPGA_PL0_ENABLE": "1",
+        }
+        raw = fixture(observed)
+        self.assertLess(raw.index("PROP|PSU__USE__STM|"),
+                        raw.index("PROP|PSU__USE__S_AXI_ACE|"))
+        self.assertEqual(verify_ps_property_report(raw)["property_count"], 7)
+        self.assertEqual(
+            verify_ps_property_report(raw)["target_values"]["PSU__USE__M_AXI_GP2"], "1"
+        )
+        self.assertEqual(
+            verify_ps_property_report(raw)["target_values"]["PSU__USE__S_AXI_GP0"], "0"
+        )
+        lines = raw.splitlines(keepends=True)
+        stm = next(i for i, row in enumerate(lines)
+                   if row.startswith("PROP|PSU__USE__STM|"))
+        s_axi = next(i for i, row in enumerate(lines)
+                     if row.startswith("PROP|PSU__USE__S_AXI_ACE|"))
+        lines[stm], lines[s_axi] = lines[s_axi], lines[stm]
+        with self.assertRaisesRegex(ValueError, "not sorted"):
+            verify_ps_property_report("".join(lines))
+        code = (ROOT / "scripts/m05_12d2c_ps_properties_audit.py").read_text()
+        self.assertIn("sorted(values)", code)
+        self.assertNotIn("sorted(values, key=str.lower)", code)
+        tcl = (ROOT / "scripts/m05_12d2c_ps_properties.tcl").read_text()
+        self.assertIn("foreach prop [lsort [list_property $ps]]", tcl)
+
     def test_cli_requires_original_report_and_never_modifies_it(self):
         script = ROOT / "scripts/m05_12d2c_ps_properties_audit.py"
         with tempfile.TemporaryDirectory(prefix="m05_12d2c_") as temp:

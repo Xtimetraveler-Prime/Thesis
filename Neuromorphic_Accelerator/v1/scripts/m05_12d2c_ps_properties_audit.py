@@ -77,7 +77,10 @@ def verify_ps_property_report(raw: str) -> dict[str, object]:
         raise ValueError("wrong K26/PS IP/scope/source management/property count")
     if len(values) < 1 or len(values) > 1024 or set(targets) != set(TARGETS):
         raise ValueError("missing or oversized PS property catalog/target coverage")
-    if list(values) != sorted(values, key=str.lower):
+    # Match Tcl's default "lsort" (case-sensitive/code-point ordering).
+    # "PSU__USE__STM" precedes "PSU__USE__S_AXI_ACE" in the original
+    # owner Vivado 2025.2 report. casefold/lower would wrongly reverse them.
+    if list(values) != sorted(values):
         raise ValueError("property records not sorted as the original Tcl contract")
     for key, enabled in targets.items():
         if enabled != int(key in values):
