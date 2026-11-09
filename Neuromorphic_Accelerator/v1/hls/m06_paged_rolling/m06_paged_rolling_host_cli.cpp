@@ -43,7 +43,7 @@ int main() {
     std::string extra;
     if (std::cin>>extra) return 2;
     const std::uint32_t status = m06_paged_rolling_replay(
-        ns,ss,es,trace,stats,canonical.data(),n,s,e,ticks,num,den,
+        ns,ss,es,trace,stats,canonical.data(),canonical.data(),n,s,e,ticks,num,den,
         slots,base);
     const std::uint32_t count = (status==M06_PAGE_OK) ? n*ticks : 0;
     std::cout << status << " " << count << "\n";
