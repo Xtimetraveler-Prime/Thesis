@@ -54,6 +54,27 @@ class ShadowEpochTests(unittest.TestCase):
         self.assertEqual(canonical.version(0, owner="MODEL"), 1)
         self.assertEqual(canonical.version(1, owner="MODEL"), 1)
 
+    def test_full_16byte_state_epoch_commits_watermarks_only_after_oracle(self):
+        net = sample()
+        g = Geometry(logical_neurons=32, bytes_per_neuron=16,
+                     neurons_per_block=16, resident_budget_bytes=256,
+                     max_model_transfer_bytes=256)
+        canonical = CanonicalImage(g, emulated_owner="MODEL",
+                                   initial=bytes(g.image_bytes))
+        epoch = ShadowEpoch(canonical, owner="MODEL", epoch_id="state16")
+        epoch.run(net, (), ticks=3)
+        self.assertEqual(canonical.snapshot(owner="MODEL"), bytes(g.image_bytes))
+        epoch.verify_against_independent_m02(net, (), ticks=3)
+        receipt = epoch.commit()
+        self.assertEqual(receipt.changed_pages, (0, 1))
+        final = canonical.snapshot(owner="MODEL")
+        for i in range(32):
+            record = final[16*i:16*(i+1)]
+            expected = 3 if i in (0, 31) else 0
+            self.assertEqual(int.from_bytes(record[:2], "little", signed=True), expected)
+            self.assertEqual(int.from_bytes(record[2:6], "little"), expected)
+        self.assertEqual(receipt.status, "SOFTWARE_COMMITTED_NOT_PHYSICAL_DDR")
+
     def test_aborted_neural_replay_never_mutates_initial_canonical_state(self):
         net, canonical = baseline()
         old = canonical.snapshot(owner="MODEL")
