@@ -39,10 +39,23 @@ def plan(original: Path, report_text: str) -> dict:
         # parsed. Only paths under this EXACT D3 can enter the plan.
         if not file.is_absolute() or not file.is_relative_to(original):
             continue
-        if file.suffix.lower() not in SUPPORTED:
+        suffix = file.suffix.lower()
+        if suffix not in SUPPORTED:
             continue
-        # Authentication includes actual existence. Never resolve to an
-        # outside symlink or allow a generated vendor file to be replaced.
+        # Some of the 186 whole-project entries refer to unrelated HLS,
+        # PS or testbench files. Only selected original memory RTL and ALL
+        # original header paths affect this isolated vendor-IP compile.
+        # Do not block M06 because an UNUSED whole-project file is absent.
+        if suffix in RTL_SUFFIX:
+            mem = f"/{MEM_SC}/" in file.as_posix()
+            shared = "/ipshared/" in file.as_posix() and file.name.startswith(
+                ("sc_", "axi_register_slice_v2_1",
+                 "axi_infrastructure_v1_1", "util_vector_logic_v2_0",
+                 "xlconstant_v1_1", "proc_sys_reset_v5_0"))
+            if not mem and not shared:
+                continue
+        # Authentication includes actual existence. Never follow an
+        # escaped symlink into another source tree.
         if not file.is_file() or not file.resolve().is_relative_to(original):
             raise ValueError("missing or escaped original simulation source: "+name)
         paths.append(file)
