@@ -104,8 +104,10 @@ class OriginalProtocolGateTests(unittest.TestCase):
                 "13_file_backed_project/FAKE.xpr")
             with self.assertRaisesRegex(ValueError, "saved project"):
                 inspect(invalid, Path(d))
+            other = Path(d) / "other"
+            other.mkdir()
             with self.assertRaisesRegex(ValueError, "saved project"):
-                inspect(good, Path(d) / "other")
+                inspect(good, other)
 
     def test_original_provenance_required_for_risk_decision(self):
         with tempfile.TemporaryDirectory() as d:
