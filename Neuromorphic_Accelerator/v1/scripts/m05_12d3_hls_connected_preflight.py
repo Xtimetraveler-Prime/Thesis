@@ -59,10 +59,15 @@ def preflight(contract: Path, cpp: Path) -> Path:
 def require_new_preflight_output(output: Path) -> None:
     """Allow only a fresh current-stage artifact, never accepted evidence."""
     parent = output.parent.resolve(strict=True)
+    # Central allowlist: keep in sync with mktemp prefixes of ALL safe
+    # D3 runners. Only fresh 01_hls_preflight.txt under those dirs is valid.
     allowed_prefixes = (
         "neuromorphic_v1_m05_12d3_hls_connected_",
         "neuromorphic_v1_m05_12d3_native_axis_",
         "neuromorphic_v1_m05_12d3_addr_validate_",
+        # Every NEW D3 integration runner must be listed here BEFORE a
+        # physical-owner Vivado retry; otherwise preflight aborts first.
+        "neuromorphic_v1_m05_12d3_dma_memory_",
     )
     if (not parent.is_dir()
             or not any(parent.name.startswith(prefix) for prefix in allowed_prefixes)

@@ -158,6 +158,38 @@ class M0512D3HLSConnectedCandidateTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 preflight(artifact, cpp)
 
+
+    def test_preflight_output_allowlist_tracks_every_d3_integration_runner(self):
+        from m05_12d3_hls_connected_preflight import require_new_preflight_output
+        # Regression for real 2026-11-09 operator exit2 before any Vivado
+        # call: new DMA runner introduced mktemp prefix without registering it.
+        runner_names = (
+            "run_m05_12d3_hls_connected_candidate.sh",
+            "run_m05_12d3_native_axis_candidate.sh",
+            "run_m05_12d3_address_validate_candidate.sh",
+            "run_m05_12d3_dma_memory_candidate.sh",
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            for name in runner_names:
+                script = (ROOT / "scripts" / name).read_text()
+                import re
+                match = re.search(r'OUT="\\$\\(mktemp -d "\\$EVIDENCE_ROOT/(neuromorphic_v1_m05_12d3_[a-z_]+_)\\$\\(date', script)
+                self.assertIsNotNone(match, f"missing standard mktemp prefix in {name}")
+                prefix = match.group(1)
+                parent = Path(temp) / (prefix + "20261109T063355Z_test")
+                parent.mkdir()
+                target = parent / "01_hls_preflight.txt"
+                require_new_preflight_output(target)
+                target.write_text("do not overwrite original evidence")
+                with self.assertRaises(ValueError):
+                    require_new_preflight_output(target)
+                with self.assertRaises(ValueError):
+                    require_new_preflight_output(parent / "other_evidence.txt")
+            unknown = Path(temp) / "neuromorphic_v1_m05_12d3_unknown_20261109T000000Z_test"
+            unknown.mkdir()
+            with self.assertRaises(ValueError):
+                require_new_preflight_output(unknown / "01_hls_preflight.txt")
+
     def test_new_runner_unique_evidence_and_no_hardware_actions(self):
         sh = ROOT / "scripts/run_m05_12d3_hls_connected_candidate.sh"
         tcl = ROOT / "scripts/m05_12d3_hls_connected_candidate.tcl"
