@@ -63,9 +63,62 @@ def raw_log() -> str:
     return "\n".join(transcript) + "\n"
 
 
+def raw_log_with_xsim_row_diagnostics() -> str:
+    """Synthetic DMA log with ROW diagnostics in actual observed XSim order."""
+    result = []
+    rows = {0: iter(expected_rows(0)), 1: iter(expected_rows(1))}
+    for line in raw_log().splitlines():
+        result.append(line)
+        if line.startswith("M05_11C_DMA ") and "last=0" in line:
+            run = int(line.split("run=", 1)[1].split()[0])
+            row = next(rows[run])
+            result.append(
+                f"M05_11C_ROW run={run} tick={row.tick} "
+                f"neuron={row.neuron_id} voltage={row.voltage} "
+                f"spike={row.spike} evaluated={row.evaluated} "
+                f"delivered={row.delivered_count}"
+            )
+    return "\n".join(result) + "\n"
+
+
 class M0511CRealHLSBoundaryTests(unittest.TestCase):
     def test_full_synthetic_raw_dma_transcript(self):
         self.assertEqual(replay_real_xsim_log(raw_log()), (24, 0))
+
+    def test_observed_xsim_row_diagnostics_match_raw_dma_words(self):
+        # Original owner XSim log used exactly this DMA/ROW/FINAL ordering.
+        self.assertEqual(replay_real_xsim_log(raw_log_with_xsim_row_diagnostics()),
+                         (24, 0))
+
+    def test_corrupt_missing_duplicate_and_misordered_row_diagnostic_rejected(self):
+        src = raw_log_with_xsim_row_diagnostics()
+        row = next(line for line in src.splitlines()
+                   if line.startswith("M05_11C_ROW run=0 "))
+        corrupted = row.replace("spike=1", "spike=0")
+        for bad in (
+            src.replace(row, corrupted, 1),
+            src.replace(row + "\n", "", 1),
+            src.replace(row, row + "\n" + row, 1),
+            src.replace(row, row.replace("run=0", "run=1"), 1),
+        ):
+            with self.subTest(bad=bad[:150]):
+                with self.assertRaises(ValueError):
+                    replay_real_xsim_log(bad)
+
+    def test_row_diagnostic_after_footer_and_unknown_marker_rejected(self):
+        src = raw_log_with_xsim_row_diagnostics()
+        row = next(line for line in src.splitlines()
+                   if line.startswith("M05_11C_ROW run=0 "))
+        footer = next(line for line in src.splitlines()
+                      if line.startswith("M05_11C_DMA run=0")
+                      and "last=1" in line)
+        for bad in (
+            src.replace(row + "\n", "", 1).replace(footer, footer + "\n" + row, 1),
+            src.replace(row, row.replace("M05_11C_ROW", "M05_11C_UNRECOGNIZED"), 1),
+        ):
+            with self.subTest(bad=bad[-150:]):
+                with self.assertRaises(ValueError):
+                    replay_real_xsim_log(bad)
 
     def test_missing_tlast_is_rejected(self):
         src = raw_log()

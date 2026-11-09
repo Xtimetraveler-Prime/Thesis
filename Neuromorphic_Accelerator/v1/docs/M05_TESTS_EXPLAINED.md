@@ -1,3 +1,19 @@
+## 2026-11-08 M05.11c original operator XSim postcheck failure, strict parser repair
+
+The original genuine Vivado 2025.2 *integrated* generated-HLS+shell testbench did **PASS**, with 24 status0 rows committed, then 8 status4 rows rejected, 148 output stalls, and correct TLAST footers. However the original overall `result.txt` recorded **exit_status=1**: `m05_11c_replay.py` rejected the SV bench's **legitimate** `M05_11C_ROW` diagnostic lines as unknown. Preserve operator folder `neuromorphic_v1_m05_11c_real_hls_20261108T235448Z_NzKhyY` (checkout `60c48fe32eed4adb28ba10e7c822fbed63abc3d0`). Full acceptance remains **PENDING owner rerun**. [Detailed failure and original proof boundary](M05_11C_FIRST_XSIM_POSTCHECK_FAILURE_2026_11_08.md).
+
+**Three new M05.11c native synthetic regression methods (not real XSim):**
+
+| Actual test method | Required behavior |
+| --- | --- |
+| `test_observed_xsim_row_diagnostics_match_raw_dma_words` | Parse 24+8 interleaved `DMA`/`ROW` marker pairs and verify each diagnostic against trace fields decoded from its preceding accepted 256-bit word; commits remain 24+0. |
+| `test_corrupt_missing_duplicate_and_misordered_row_diagnostic_rejected` | Reject a corrupted spike, missing/duplicate row diagnostic or incorrect run ID. |
+| `test_row_diagnostic_after_footer_and_unknown_marker_rejected` | Reject misplaced row diagnostics and unknown tagged records; do not weaken failure-on-unrecognized-marker contract. |
+
+Existing 14 methods retained; **17 M05.11c methods expected**, **234 M05+91 earlier=325 named native methods expected** once the new CI verifies them. The kernel, RTL shims, SV bench, 1/7 `TREADY` test, source hashes and original failed evidence are unchanged. No new Vivado PASS is claimed by this fix.
+
+---
+
 ## CURRENT M05.11c test explanation — 14 synthetic host methods; real generated-HLS XSim not yet run (2026-11-08)
 
 **Primary handoff:** [M05.11c current next-chat seed](M05_11C_NEXT_CHAT_HANDOFF_SEED_2026_11_08.md); detailed [generated HLS + AXI-Lite shell contract](M05_11C_REAL_HLS_STREAM_SHELL_INTEGRATION_2026_11_08.md).

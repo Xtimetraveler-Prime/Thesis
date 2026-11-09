@@ -17,10 +17,15 @@ sys.path.insert(0, str(ROOT / "src"))
 from neuromorphic_accelerator_v1.m05_dma_frame import (
     accept_dma_frame, DMAFrameError,
 )
+from neuromorphic_accelerator_v1.m05_execution_abi import decode_trace
 
 DMA = re.compile(
     r"^M05_11C_DMA run=([01]) data=([0-9a-fA-F]{64}) "
     r"last=([01]) keep=([0-9a-fA-F]{8})$"
+)
+ROW = re.compile(
+    r"^M05_11C_ROW run=([01]) tick=(\d+) neuron=(\d+) "
+    r"voltage=(-?\d+) spike=([01]) evaluated=([01]) delivered=(\d+)$"
 )
 FINAL = re.compile(
     r"^M05_11C_FINAL run=([01]) status=(\d+) rows=(\d+) "
@@ -42,6 +47,7 @@ def replay_real_xsim_log(log: str) -> tuple[int, int]:
     last_seen = [False, False]
     final_count = [0, 0]
     commit_count = [0, 0]
+    row_marker_count = [0, 0]
     phase = 0
     pass_seen = 0
     for line in log.splitlines():
@@ -57,6 +63,23 @@ def replay_real_xsim_log(log: str) -> tuple[int, int]:
             if int(last):
                 last_seen[run] = True
             continue
+        m = ROW.fullmatch(line)
+        if m:
+            run = int(m.group(1))
+            marker = tuple(map(int, m.groups()[1:]))
+            index = row_marker_count[run]
+            if (run != phase or last_seen[run]
+                    or len(packets[run]) != 32 * (index + 1)):
+                raise ValueError("missing/duplicate/out-of-order XSim ROW diagnostic")
+            actual = decode_trace(bytes(packets[run][-32:-8]))
+            actual_fields = (
+                actual.tick, actual.neuron_id, actual.voltage,
+                actual.spike, actual.evaluated, actual.delivered_count,
+            )
+            if marker != actual_fields:
+                raise ValueError("XSim ROW diagnostic disagrees with actual DMA TDATA")
+            row_marker_count[run] += 1
+            continue
         m = FINAL.fullmatch(line)
         if m:
             run, status, rows, committed, sid = m.groups()
@@ -69,6 +92,11 @@ def replay_real_xsim_log(log: str) -> tuple[int, int]:
                     or committed != EXPECTED_COMMITS[run]
                     or int(sid, 16) != SESSION_IDS[run]):
                 raise ValueError("missing/incorrect real hardware footer status/count")
+            # XSim emits one ROW diagnostic after each neural DMA beat.
+            # Synthetic host transcripts without ROW markers remain supported.
+            # If any exist, require ALL rows rather than ignoring partial logs.
+            if row_marker_count[run] not in (0, rows):
+                raise ValueError("incomplete XSim ROW diagnostic coverage")
             # The footer must be the LAST beat in the packet.
             if len(packets[run]) != 32 * (rows + 1):
                 raise ValueError("wrong 256-bit DMA beat count before footer")
