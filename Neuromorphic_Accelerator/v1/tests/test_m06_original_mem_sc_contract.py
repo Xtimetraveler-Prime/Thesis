@@ -41,12 +41,23 @@ def synthetic_fixture(folder: Path):
         "MEM_IP_PROPERTY|CONFIG.NUM_MI|1",
     ]
     for name, width in ENDPOINTS.items():
+        if name == "ps/S_AXI_HP0_FPD":
+            props = dict(READ_WRITE_MODE="READ_WRITE", ADDR_WIDTH="49",
+                         ID_WIDTH="6", MAX_BURST_LENGTH="32", HAS_BURST="1",
+                         AWUSER_WIDTH="1", ARUSER_WIDTH="1")
+        elif name == "mem_sc/M00_AXI":
+            props = dict(READ_WRITE_MODE="READ_WRITE", ADDR_WIDTH="49",
+                         ID_WIDTH="0", MAX_BURST_LENGTH="32", HAS_BURST="1")
+        else:
+            props = dict(READ_WRITE_MODE=("WRITE_ONLY" if "S03" in name else "READ_ONLY"),
+                         ADDR_WIDTH="32", ID_WIDTH="0",
+                         MAX_BURST_LENGTH="16", HAS_BURST="0")
         rows.extend([
             f"ENDPOINT|{name}",
             f"ENDPOINT_PROPERTY|{name}|CONFIG.DATA_WIDTH|{width}",
             f"ENDPOINT_PROPERTY|{name}|CONFIG.PROTOCOL|AXI4",
-            f"ENDPOINT_PROPERTY|{name}|CONFIG.ID_WIDTH|16",
-        ])
+        ] + [f"ENDPOINT_PROPERTY|{name}|CONFIG.{k}|{v}"
+             for k, v in props.items()])
     rows.extend([
         "CLOCK_RESET_PORT|mem_sc/aclk|PRESENT",
         "CLOCK_RESET_PORT|mem_sc/aresetn|PRESENT",
@@ -77,6 +88,35 @@ class M06OriginalVivadoProbeTests(unittest.TestCase):
             self.assertEqual(result["memory_mi_width_bits"], 128)
             self.assertEqual(result["functional_vendor_axi_result"], "NOT_EXECUTED")
             self.assertEqual(result["axi_transfer_correctness"], "NOT_PROVEN")
+
+    def test_vivado_echo_of_tcl_puts_is_not_counted_as_actual_completion(self):
+        with tempfile.TemporaryDirectory() as d:
+            orig, report, log = synthetic_fixture(Path(d))
+            log.write_text(
+                '# puts "M06_EXACT_ORIGINAL_MEM_SC_PORTS_CAPTURED|READ_ONLY_NO_XSIM_NO_BOARD"\n'
+                + MARKER + "\n")
+            result = inspect(orig, report, log)
+            self.assertEqual(result["observed_si_modes"]["S03"], "WRITE_ONLY")
+            self.assertEqual(result["read_ports"], ["S00", "S01", "S02"])
+            self.assertEqual(result["original_si_has_burst_property"], 0)
+
+    def test_wrong_original_read_write_role_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            orig, report, log = synthetic_fixture(Path(d))
+            report.write_text(report.read_text().replace(
+                "ENDPOINT_PROPERTY|mem_sc/S03_AXI|CONFIG.READ_WRITE_MODE|WRITE_ONLY",
+                "ENDPOINT_PROPERTY|mem_sc/S03_AXI|CONFIG.READ_WRITE_MODE|READ_WRITE"))
+            with self.assertRaisesRegex(ValueError, "contradicts actual owner readback"):
+                inspect(orig, report, log)
+
+    def test_wrong_original_burst_property_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            orig, report, log = synthetic_fixture(Path(d))
+            report.write_text(report.read_text().replace(
+                "ENDPOINT_PROPERTY|mem_sc/S01_AXI|CONFIG.HAS_BURST|0",
+                "ENDPOINT_PROPERTY|mem_sc/S01_AXI|CONFIG.HAS_BURST|1"))
+            with self.assertRaisesRegex(ValueError, "contradicts actual owner readback"):
+                inspect(orig, report, log)
 
     def test_wrong_mem_sc_data_width_rejected(self):
         with tempfile.TemporaryDirectory() as d:
