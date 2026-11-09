@@ -11,6 +11,9 @@ Only the small/nonzero membership bitmap, static neuron CONFIG, and a future
 delivery queue remain on-chip *conceptually*. Synapse adjacency is currently
 on-chip: paged synapses are a future M06 design decision. The full trace is
 a TEST-ONLY observer copy excluded from cache transfer counters.
+Every invocation begins at logical tick 0 from independently verified
+canonical M02 initial state: continuing an already-committed prior epoch,
+including carried recurrent events, is future M06 work.
 
 No physical DDR/AXI/PS/FPGA behavior, throughput or true hardware memory
 capacity is established by executing Python.
@@ -184,7 +187,7 @@ def replay_with_paging(net: Network, inputs: Iterable[InputCurrent], *,
             delivery_rows.append(len(deliveries))
             fanout_rows.append(fanout)
         cache.flush()  # All dirty state must reach canonical software image.
-    except (ResidencyError, PermissionError):
+    except (ValueError, ResidencyError, PermissionError):
         cache._poisoned = True  # sticky quarantine; no implicit retry/rollback
         raise
     return PagedRun(
