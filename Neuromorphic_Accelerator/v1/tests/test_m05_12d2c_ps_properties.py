@@ -98,7 +98,7 @@ class M0512D2CPSPropertyTests(unittest.TestCase):
             src.replace(row, row * 2, 1),
             src.replace(row, "PROP|PSU__USE__M_AXI_GP0|not_base64!\n", 1),
             src.replace(row, "PROP|PCW_USE_M_AXI_GP0|MA==\n", 1),
-            src.replace(row, "PROP|PSU__USE__M_AXI_GP0|MEE=\n", 1),
+            src.replace(row, "PROP|PSU__USE__M_AXI_GP0|MA==AA\n", 1),
             src.replace(row, "PROP|PSU__USE__M_AXI_GP0|MA=\n", 1),
             src.replace(row, "", 1),
             src + "PROP|PSU__USE__S_AXI_GP999|MA==\n",
@@ -112,8 +112,11 @@ class M0512D2CPSPropertyTests(unittest.TestCase):
         first = "PROP|PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ|MTAw\n"
         second = "PROP|PSU__USE__IRQ0|MA==\n"
         with self.assertRaises(ValueError):
-            verify_ps_property_report(src.replace(first, second, 1).replace(
-                second, first, 1))
+            verify_ps_property_report(
+                src.replace(first, "SWAP_SENTINEL\n", 1)
+                   .replace(second, first, 1)
+                   .replace("SWAP_SENTINEL\n", second, 1)
+            )
         with self.assertRaises(ValueError):
             verify_ps_property_report(
                 src.replace("PROP|PSU__USE__IRQ0|MA==",
