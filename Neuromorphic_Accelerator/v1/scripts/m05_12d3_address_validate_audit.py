@@ -123,12 +123,22 @@ def audit_validation(source: str) -> bool:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--plan", type=Path, required=True)
-    p.add_argument("--mapped", type=Path, required=True)
-    p.add_argument("--validation", type=Path, required=True)
-    p.add_argument("--hls-original-contract", type=Path, required=True)
+    p.add_argument("--plan-only", action="store_true")
+    p.add_argument("--mapped", type=Path)
+    p.add_argument("--validation", type=Path)
+    p.add_argument("--hls-original-contract", type=Path)
     args = p.parse_args()
     try:
         plan = parse_plan(args.plan.read_text(encoding="utf-8"))
+        if args.plan_only:
+            if any((args.mapped, args.validation, args.hls_original_contract)):
+                raise ValueError("plan-only cannot claim actual Vivado output")
+            print("PASS: M05.12d.3 explicit six-bank offline control plan safely admitted "
+                  "(NO VIVADO ADDRESS ASSIGNMENT OR OS MMIO)")
+            return 0
+        if any(x is None for x in
+               (args.mapped, args.validation, args.hls_original_contract)):
+            raise ValueError("real mapping audit requires actual HLS, map and validation evidence")
         audit_original_hls_registers(
             args.hls_original_contract.read_text(encoding="utf-8"), plan)
         result = audit_six_assignments(
