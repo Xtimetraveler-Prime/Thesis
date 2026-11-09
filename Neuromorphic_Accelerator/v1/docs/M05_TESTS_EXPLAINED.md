@@ -1,3 +1,21 @@
+## 2026-11-08 / 2026-11-09 UTC — genuine M05.12d.2a accepted, new M05.12d.2c strict PSV property inventory
+
+**OWNER ORIGINAL genuine Vivado D2a ACCEPTED:** `neuromorphic_v1_m05_12d2a_ps_inventory_20261109T013033Z_oCd1O9`, source `c7dfffb351db3e5779384161a7b45d5968ef95c6`, `exit_status=0`, v3.5 Zynq UltraScale+ PS default (no preset/DDR). Master HPM0_LPD default enabled1; **none of 9 potential HP/HPC/LPD/ACE DDR slave default pins active**; `pl_clk0` and `pl_resetn0` output pins present, other selected clocks/IRQ absent by default. Independently audited `ps_to_pl_master_defaults=1`, `pl_to_ps_slave_defaults=0`, `pin_defaults=2`. Nine old guessed `PCW_*` property keys unavailable (do not infer silicon absence).
+
+**NEW D2c `tests/test_m05_12d2c_ps_properties.py`: 8 native methods, entirely synthetic (NOT genuine IP).** Test coverage:
+- `test_genuine_output_schema_can_report_available_psu_keys`: valid synthetic PSU defaults and proper target count.
+- `test_empty_config_value_is_an_explicit_default_not_absence`: empty readback represented safely, not mislabeled missing.
+- `test_wrong_target_presence_missing_duplicate_and_extra_rejected`: contradictions, missing, duplicate or unknown targets fail closed.
+- `test_wrong_part_ip_mode_scope_property_count_rejected`: reject corrupted part, VLNV, source mode, claimed board preset or count.
+- `test_property_format_duplicate_unsorted_noncanonical_and_unknown_rejected`: reject malformed/noncanonical encoding, duplicate/unknown properties.
+- `test_sorted_property_list_and_raw_escaping_are_strict`: list order and control-character values must be valid.
+- `test_cli_requires_original_report_and_never_modifies_it`: strict independent parser, read-only, fails missing original file.
+- `test_no_board_no_ps_changes_and_true_config_property_discovery`: only in-memory Vivado default IP + readback; no PS/DDR writes, board or bitstream; shell runner syntax/arg safety.
+
+D2c PS keys are NOT physically verified in native CI and must be run in operator Vivado. [Current D2c runbook](M05_12D2C_PS_PROPERTY_DISCOVERY_2026_11_08.md).
+
+---
+
 > **M05.12d.2 VERIFIED HOST TEST RESULTS:** **NATIVE VERIFICATION VERIFIED at implementation+doc commit `338b1406da363a2ae33f14868143a750aa68debf`:** all five GitHub Actions workflows **SUCCESS**, including [M05 workflow 42545536913](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42545536913). **282 named M05 methods** were discovered (281 PASS + one early pre-install Icarus SKIP, later mandatory `iverilog` and 9/9 original D1 module-ref tests PASS); **91 M01–M04 methods PASS** (22+28+21+20). Thus all **373 distinct native methods PASS at least once**, including 14/14 brand-new D2a/D2b tests and exact source fingerprints. Native CI uses synthetic PS catalogs; **NO genuine M05.12d.2a Vivado PS IP run has been provided**, so the PS inventory gate remains PENDING. D2b pure-host admission is native verified only. Original genuine D1 partial four-AXIS net PASS remains accepted. The 14 new precise D2 host tests and accepted owner D1 genuine Vivado status are documented below; do not relabel synthetic PS inventory as actual K26 IP evidence.
 
 ## 2026-11-08 local / 2026-11-09 UTC — M05.12d.1 owner Vivado PASS and M05.12d.2a/b new synthetic tests
