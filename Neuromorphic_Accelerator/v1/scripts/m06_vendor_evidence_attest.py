@@ -60,7 +60,7 @@ def verify(archive: Path) -> dict:
         len(plan.get("original_include_files",()))!=5):
         raise ValueError("original 186-entry Vivado source plan contradicted")
     for name in ("04_xelab.log","06_paged_xelab.log"):
-        if "xelab v2025.2" not in files[name]:
+        if "Vivado Simulator v2025.2" not in files[name]:
             raise ValueError("genuine installed 2025.2 elaboration log missing")
         if re.search(r"ERROR:|FATAL",files[name],re.I):
             raise ValueError("original elaboration had tool errors")
