@@ -74,19 +74,14 @@ foreach {bank endpoint expected_space} {
     }
     # OCM is NOT authorized for DMA: exclude rather than map it accessible.
     exclude_bd_addr_seg -target_address_space $dma_space $hp0_ocm
-    set ocm_matches {}
-    foreach candidate [get_bd_addr_segs -addressing -quiet -of_objects $hp0_ocm] {
-        if {[string match [format "%s/*" $dma_space] "$candidate"]} {
-            lappend ocm_matches $candidate
-        }
-    }
+    # Query the EXCLUDED master segment directly in this exact DMA space.
+    # Using plain -addressing on the slave can omit excluded segments;
+    # AMD UG835 documents -excluded -of_objects <master address space>.
     set excluded [get_bd_addr_segs -excluded -quiet -of_objects $dma_space]
-    if {[llength $ocm_matches] != 1 ||
-        [lsearch -exact $excluded [lindex $ocm_matches 0]] < 0 ||
-        [lsearch -exact $excluded $ddr_master] >= 0} {
-        error "DMA $bank genuine OCM exclusion and DDR inclusion not proven"
+    if {[llength $excluded] != 1 || [lsearch -exact $excluded $ddr_master] >= 0} {
+        error "DMA $bank must have exactly one excluded OCM master and nonexcluded DDR"
     }
-    set ocm_master [lindex $ocm_matches 0]
+    set ocm_master [lindex $excluded 0]
     set ocm_reverse [get_bd_addr_segs -quiet -of_objects $ocm_master]
     if {[llength $ocm_reverse] != 1 || "$ocm_reverse" ne "$hp0_ocm"} {
         error "excluded OCM master not linked to authentic HP0 OCM slave"
