@@ -131,6 +131,10 @@ jobs:
           from m06_generate_original_vendor_lru8_bfm import render_lru8
           (out/"m06_VENDOR_LRU8_SYNTAX_ONLY.sv").write_text(
               render_lru8(metadata))
+          from m06_generate_original_vendor_4096_bfm import (
+              render_full_canonical)
+          (out/"m06_VENDOR_4096_SYNTAX_ONLY.sv").write_text(
+              render_full_canonical(metadata))
           declarations=["module "+MODULE+" (aclk, aresetn, "+
                         ", ".join(ports.keys())+");",
                         "input wire aclk;", "input wire aresetn;"]
@@ -170,7 +174,13 @@ jobs:
             rtl/m06/m06_axi128_scratch_mem.sv \
             rtl/m06/m06_residency_lru8.sv \
             rtl/m06/m06_axi256_multislot_transfer.sv
-          echo "M06 FOUR original-wrapper HDL TBs SYNTAX PASS with FAKE NOT-RUN DUT; REAL AMD XSIM STAGES C/D PENDING"
+          iverilog -g2012 -tnull -s tb_m06_original_vendor_4096 \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_4096_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv
+          echo "M06 FIVE original-wrapper HDL TBs SYNTAX PASS with FAKE NOT-RUN DUT; REAL AMD XSIM STAGE E PENDING"
       - name: Integrated 256-byte RTL block mover and residency FSM with independent AXI memory BFM
         run: |
           iverilog -g2012 -s tb_m06_residency_axi_block_bridge \
