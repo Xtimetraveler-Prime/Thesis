@@ -121,6 +121,9 @@ jobs:
           metadata=[{"name":n,"direction":dw[0],"packed_width":dw[1]}
                     for n,dw in ports.items()]
           (out/"m06_vendor_bfm_syntax_only.sv").write_text(render(metadata))
+          from m06_generate_original_paged_vendor_bfm import render_paged
+          (out/"m06_VENDOR_PAGED_BFM_SYNTAX_ONLY.sv").write_text(
+              render_paged(metadata))
           declarations=["module "+MODULE+" (aclk, aresetn, "+
                         ", ".join(ports.keys())+");",
                         "input wire aclk;", "input wire aresetn;"]
@@ -137,7 +140,13 @@ jobs:
             "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
             "$RUNNER_TEMP/m06_vendor_bfm_syntax_only.sv" \
             rtl/m06/m06_axi128_scratch_mem.sv
-          echo "M06 original-wrapper TB HDL SYNTAX PASS only; REAL VENDOR XSIM PENDING"
+          iverilog -g2012 -tnull -s tb_m06_original_vendor_paged \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_PAGED_BFM_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv
+          echo "M06 original-wrapper AND paged-controller TB HDL SYNTAX PASS only; REAL VENDOR XSIM PENDING"
       - name: Integrated 256-byte RTL block mover and residency FSM with independent AXI memory BFM
         run: |
           iverilog -g2012 -s tb_m06_residency_axi_block_bridge \
