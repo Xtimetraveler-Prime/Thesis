@@ -1,3 +1,21 @@
+## M05.12d.3 unified PS/PL connected offline candidate — new test coverage (8 native methods)
+
+Prior M05.12d.2d original owner K26 Vivado readback **PASS**: `neuromorphic_v1_m05_12d2d_ps_enablement_20261109T023754Z_ak6kLz`, checkout `176ba0e99f500a391d7c00459b7e357a813e0e07`, exit0, HPM0_FPD MASTER + HP0_FPD SLAVE actual enabled 128-bit AXI pins, HPM0_LPD MASTER, clocks/reset and independent Python audit PASS. No PS DDR/board.
+
+**NEW M05.12d.3** one *combined* milestone and only one native-test + owner offline Vivado gate, no new D3 micro-milestone numbers. Eight synthetic tests in `tests/test_m05_12d3_connected_candidate.py`:
+- `test_exact_stream_control_memory_and_clock_reset_graph`: exact 4 AXIS streams, 6 AXI-control links, 5 AXI memory links, 19 named common clock consumers, 7 separate interconnect vs peripheral resets.
+- `test_sixth_hls_control_is_not_faked_and_addresses_unassigned`: explicit real HLS IP absent, no invented native AXI-Lite control or assigned PS addresses, no full BD validation, no generated width-adapter proof.
+- `test_wrong_or_missing_axilite_and_memory_fabric_links_rejected`: no swapped/missing/duplicate partial PS→5-bank control→4 DMA data net and trace-stream links.
+- `test_wrong_net_uniqueness_and_clock_reset_grouping_rejected`: unique physical Vivado AXI nets and correctly grouped shared clock and distinct resets.
+- `test_proven_owner_dma_width_part_and_vlnv_values_enforced`: K26 PS3.5, four DMA256/addr32/length24, PS128, exact partial scope.
+- `test_missing_truncated_unknown_duplicate_records_fail_closed`: strict complete native report schema.
+- `test_python_cli_is_read_only_and_rejects_missing_evidence`: independent checker produces PASS only for a complete report, preserves raw evidence.
+- `test_offline_shell_dma_ps_smartconnect_real_link_readback_and_safety`: source build actually uses in-memory PS, 4 DMA+shell, both SmartConnect, Processor System Reset, real interface/net object inspection, no device/JTAG/DDR/bitstream or fake validation; bash syntax/options fail closed.
+
+This is native synthetic testing only; owner original offline Vivado run must still prove real IP Integrator connections. **D3 remains OPEN after partial graph gate until full generated signed32 HLS native control, 6-bank AXI-Lite memory map, true 256→128 conversion, clock metadata and full BD validation.** [D3 single authoritative doc](M05_12D3_CONNECTED_PS_PL_CANDIDATE_2026_11_08.md).
+
+---
+
 > **LATEST D2d HOST REGRESSION RESULT VERIFIED:** **M05.12d.2d NATIVE CI VERIFIED at source + D2d engineering commit `abb86685aa030ecbdf1cfa3798b9c96a6bb35af2`:** five GitHub Actions workflows **SUCCESS**, including [M05 host stream run 42550140636](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42550140636). The M05 job discovered **299 named test methods**: 298 initially PASS + one optional Icarus preinstall SKIP, followed by mandatory installed Icarus wrapper compilation and 9/9 D1 test rerun PASS. **All eight new D2d synthetic native methods PASS**, including in separate mandatory D2d stage. M01–M04 **91 PASS** (22+28+21+20), hence **390 distinct native methods PASS at least once**. This is **NOT genuine D2d Vivado PS interface activation**; owner D2d scratch Vivado run remains PENDING. Original owner D2c 57-properties/14-targeted-keys audit PASS is genuinely accepted. Owner must still run actual in-memory Vivado port enablement to establish M_AXI_HPM0_FPD/S_AXI_HP0_FPD true AXI pins. No PS/DDR/board.
 
 ## 2026-11-08 / 2026-11-09 UTC — original owner M05.12d.2c accepted and new M05.12d.2d port-enable native tests
