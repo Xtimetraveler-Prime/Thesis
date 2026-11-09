@@ -60,7 +60,9 @@ def inspect(original: Path, report: Path, vivado_log: Path) -> dict:
         props = seen[endpoint]
         if props.get("CONFIG.DATA_WIDTH") != str(expected):
             raise ValueError(f"original AXI width contradicts expected {endpoint}")
-    for required in ("CLOCK_RESET_PORT|mem_sc/aclk|PRESENT",
+    for required in ("MEM_IP_PROPERTY|CONFIG.NUM_SI|4",
+                     "MEM_IP_PROPERTY|CONFIG.NUM_MI|1",
+                     "CLOCK_RESET_PORT|mem_sc/aclk|PRESENT",
                      "CLOCK_RESET_PORT|mem_sc/aresetn|PRESENT",
                      "SIMULATOR_FUNCTIONAL_TRIAL|NOT_EXECUTED",
                      "GENERATE_TARGET|NOT_EXECUTED",
