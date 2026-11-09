@@ -160,7 +160,7 @@ class AXIContractTests(unittest.TestCase):
         s.inject_axi_fault_once(AXIFault("READ", "READY_TIMEOUT", 0, 0))
         with self.assertRaisesRegex(AXIModelError, "stalled beyond"):
             c.read(0)
-        self.assertEqual(s.handshakes["D_R"], 0)
+        self.assertEqual(s.handshakes.get("D_R", 0), 0)
         self.assertTrue(c.poisoned)
         self.assertEqual(s.snapshot(owner="MODEL"), bytes(range(64)))
 
