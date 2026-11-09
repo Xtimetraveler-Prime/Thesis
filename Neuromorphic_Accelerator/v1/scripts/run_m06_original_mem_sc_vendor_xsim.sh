@@ -32,14 +32,26 @@ if [[ -z "${XILINX_VIVADO:-}" ]]; then
   echo "ERROR: XILINX_VIVADO unset; source original Vivado 2025.2 settings64.sh" >&2
   exit 2
 fi
-GLBL="$(realpath -e -- "$XILINX_VIVADO/data/verilog/src/glbl.v")" || {
-  echo "ERROR: standard 2025.2 Vivado global primitive glbl.v missing" >&2
+# Canonicalize the installation root BEFORE resolving its glbl.v.
+# The user may source Vivado through a symlink (or a trailing slash); the
+# previous comparison mixed resolved GLBL with unresolved XILINX_VIVADO
+# and falsely rejected a genuine installed file after test -f succeeded.
+VIVADO_ROOT="$(realpath -e -- "$XILINX_VIVADO")" || {
+  echo "ERROR: Vivado installation root does not exist: $XILINX_VIVADO" >&2
   exit 2
 }
-case "$GLBL" in
-  "$XILINX_VIVADO"/data/verilog/src/glbl.v) ;;
-  *) echo "ERROR: original installed XSim glbl path unexpected" >&2; exit 2 ;;
-esac
+GLBL_SOURCE="$VIVADO_ROOT/data/verilog/src/glbl.v"
+if [[ ! -f "$GLBL_SOURCE" ]]; then
+  echo "ERROR: standard Vivado global primitive glbl.v missing: $GLBL_SOURCE" >&2
+  exit 2
+fi
+GLBL="$(realpath -e -- "$GLBL_SOURCE")" || {
+  echo "ERROR: standard Vivado glbl.v is not readable" >&2
+  exit 2
+}
+# glbl.v may itself be a valid symlink into Vivado's installed files.
+# Source provenance is protected by its SHA256 and module declaration;
+# no fragile comparison against the unnormalized environment variable.
 grep -Eq '^[[:space:]]*module[[:space:]]+glbl([[:space:](;]|$)' "$GLBL" || {
   echo "ERROR: installed Vivado glbl.v does not declare module glbl" >&2
   exit 2
