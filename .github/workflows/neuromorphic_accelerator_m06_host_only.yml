@@ -1,0 +1,43 @@
+name: Neuromorphic Accelerator v1 M06 canonical state residency (NO BOARD)
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m06_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m06_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m06-host-residency:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source identity and Python version (NO Vivado/FPGA)
+        run: |
+          git rev-parse HEAD
+          python3 --version
+      - name: Python syntax for the whole v1 source tree
+        run: python3 -m compileall -q src scripts tests
+      - name: M06 canonical-state block residency POSITIVE AND NEGATIVE source-only tests
+        run: python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+      - name: Inherited accepted M01/M02/M03/M04/M05 source regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+      - name: M06 evidence boundary
+        run: |
+          grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
+          grep -Fq 'NOT_AUTHORIZED' src/neuromorphic_accelerator_v1/m06_block_residency.py
+          echo 'SOURCE-ONLY M06 initial residency proof: no physical DDR/AXI/bitstream/Vivado run'
