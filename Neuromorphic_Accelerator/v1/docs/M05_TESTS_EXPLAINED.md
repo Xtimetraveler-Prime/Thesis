@@ -10,7 +10,7 @@ The original genuine Vivado 2025.2 *integrated* generated-HLS+shell testbench di
 | `test_corrupt_missing_duplicate_and_misordered_row_diagnostic_rejected` | Reject a corrupted spike, missing/duplicate row diagnostic or incorrect run ID. |
 | `test_row_diagnostic_after_footer_and_unknown_marker_rejected` | Reject misplaced row diagnostics and unknown tagged records; do not weaken failure-on-unrecognized-marker contract. |
 
-Existing 14 methods retained; **17 M05.11c methods expected**, **234 M05+91 earlier=325 named native methods expected** once the new CI verifies them. The kernel, RTL shims, SV bench, 1/7 `TREADY` test, source hashes and original failed evidence are unchanged. No new Vivado PASS is claimed by this fix.
+Existing 14 methods retained; **17 M05.11c methods VERIFIED in native CI**, **234 M05+91 earlier=325 named native methods PASS** at repair source commit `6b5fa76f589d37e103752cf173cc74d0a7355aca`. [M05 workflow 42537892857](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42537892857) reports `Ran 234 tests ... OK`, including all three new tests; M01–M04 workflows also PASS. Genuine post-fix integrated XSim remains pending. The kernel, RTL shims, SV bench, 1/7 `TREADY` test, source hashes and original failed evidence are unchanged. No new Vivado PASS is claimed by this fix.
 
 ---
 

@@ -15,6 +15,10 @@
 - The uploaded transcript's 34 DMA words were independently decoded offline: the 32 recorded ROW diagnostics match the corresponding neural fields; both footer magic/status/count/session values match the expected contract. This independent inspection is not a replacement for the committed Python replay on the operator's intact `04_xsim.log`.
 - Leave original `hls/m05_rolling/m05_rolling.cpp`, Vitis-generated Verilog, transport shell, 1-in-7 `TREADY`, testbench neural oracle, and original evidence folder unchanged.
 
+## Verified post-fix native regression (not Vivado)
+
+At repair source commit `6b5fa76f589d37e103752cf173cc74d0a7355aca`, [M05 no-board workflow run 42537892857](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42537892857) completed **SUCCESS**. Its original job log reports `Ran 234 tests ... OK`; all three new ROW-diagnostic tests are explicitly `ok`. M04/M03/M02/M01 workflow jobs also report SUCCESS, with 22+28+21+20=91 accepted-method regressions, for **325/325 native method PASS**. These are native/synthetic tests and previous standalone RTL smoke work, not a fresh generated-HLS integrated Vivado XSim rerun.
+
 ## Required post-fix operator acceptance (still PENDING)
 
 Use the original authenticated implementation and a newly unique evidence folder:
