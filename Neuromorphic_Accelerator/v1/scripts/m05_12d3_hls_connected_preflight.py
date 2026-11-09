@@ -68,6 +68,7 @@ def require_new_preflight_output(output: Path) -> None:
         # Every NEW D3 integration runner must be listed here BEFORE a
         # physical-owner Vivado retry; otherwise preflight aborts first.
         "neuromorphic_v1_m05_12d3_dma_memory_",
+        "neuromorphic_v1_m05_12d3_ip_output_",
     )
     if (not parent.is_dir()
             or not any(parent.name.startswith(prefix) for prefix in allowed_prefixes)

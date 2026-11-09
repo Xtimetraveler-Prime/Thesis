@@ -17,7 +17,7 @@ def fixture(tmp):
     evidence.mkdir(); prj=evidence/"13_file_backed_project";prj.mkdir()
     xpr=prj/"m05_d3_output_products.xpr";xpr.write_text("SYNTHETIC NOT VIVADO")
     bd=prj/"m05_d3_output_products.srcs/bd/m05_12d3_real_signed32_hls_six_control_address_candidate.bd"
-    bd.parent.mkdir();bd.write_text("SYNTHETIC NOT VIVADO")
+    bd.parent.mkdir(parents=True);bd.write_text("SYNTHETIC NOT VIVADO")
     out=prj/"m05_d3_output_products.gen/sources_1/ip/mem_sc_0/mem_sc_0.v"
     out.parent.mkdir(parents=True);out.write_text("SYNTHETIC NOT VIVADO")
     report="\n".join([SCOPE,"PROJECT|"+str(xpr),"BD|"+str(bd)]+[f"WIDTH|{p}|{v}" for p,v in WIDTHS]+TAIL)+"\n"

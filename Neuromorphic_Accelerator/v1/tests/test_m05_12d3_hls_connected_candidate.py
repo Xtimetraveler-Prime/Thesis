@@ -168,6 +168,7 @@ class M0512D3HLSConnectedCandidateTests(unittest.TestCase):
             "run_m05_12d3_native_axis_candidate.sh",
             "run_m05_12d3_address_validate_candidate.sh",
             "run_m05_12d3_dma_memory_candidate.sh",
+            "run_m05_12d3_ip_output_candidate.sh",
         )
         with tempfile.TemporaryDirectory() as temp:
             for name in runner_names:
