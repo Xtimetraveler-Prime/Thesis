@@ -1,3 +1,47 @@
+## 2026-11-08 20:11 local / 2026-11-09 03:11 UTC — second genuine D3 Vivado error and corrected IP reset wiring
+
+**Original failed owner evidence:** `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_connected_20261109T031117Z_FhjxdG`, checkout `6bc10b3b3a2170a017d79fb7ffae0078da93f0f2`, original `result.txt exit_status=1`. K26 Vivado 2025.2 created the PS/RTL shell + two SmartConnect + `proc_sys_reset` cells, then **`CRITICAL WARNING: [BD 41-737] Cannot set the parameter C_EXT_RESET_HIGH on /pl_reset. It is read-only.`** and `proc_sys_reset external reset polarity readback not active-low`. No `01_connected_graph.txt` and no `03_independent_audit.log` were created. This is a first-error reset parameter mismatch, not proof of defective neural RTL or the previous missing DMA clock bug. Keep the original evidence immutable.
+
+**Architectural diagnosis and correction:** PS `pl_resetn0` output is *active-low*. Vivado 2025.2's Processor System Reset `CONFIG.C_EXT_RESET_HIGH` cannot be set on this IP. If read-only default is high polarity (`1`) as indicated by the failure to read back `0`, the correct configuration is an explicit active-low→active-high **NOT gate**, not modifying the read-only PS reset parameter. This is a K26 in-memory BD only. Official [AMD Processor System Reset PG164](https://docs.amd.com/api/khub/documents/5VcEWg~hYG0gT~7WNDt64g/content) documents active-high/low dependent on external-reset generic, while [AMD Utility Vector Logic DS913](https://docs.amd.com/api/khub/documents/PNkhLUH7WYBuEnDM0sLk0Q/content) explicitly supports `C_OPERATION=not`, `C_SIZE=1`, `Op1`, `Res` for inversion.
+
+Revised `scripts/m05_12d3_connected_candidate.tcl` **does not write `CONFIG.C_EXT_RESET_HIGH`**. It requires property presence and actual read-only `1` before wiring, instantiates genuine 1-bit `xilinx.com:ip:util_vector_logic:2.0`, writes ONLY the new scratch inverter's `C_OPERATION=not` and `C_SIZE=1`, verifies both readbacks, connects `ps/pl_resetn0→reset_inv/Op1`, then `reset_inv/Res→pl_reset/ext_reset_in`. It verifies and reports pin `DIR` outputs/inputs `O,I,O,I` and **two distinct, paired actual BD nets**. Tcl report now includes `RESETCFG|C_EXT_RESET_HIGH|1` (actual read-only PS reset IP), `RESETINV|C_OPERATION|not`, `RESETINV|C_SIZE|1`, four `RESETDIR` records and four `RESETFEED` records (two net pairs). The independent auditor enforces those exact fields, distinguishes both reset segments and checks they cannot alias the PL clock or generated reset nets; no malformed/missing/swapped records can pass.
+
+The first original D3 failed owner run `neuromorphic_v1_m05_12d3_connected_20261109T030211Z_GQaGvt` (exit1, wrong AXI VDMA clock names) also remains immutable. Correct PG021 AXI DMA v7.1 clocks (**15** actual participants, no separate stream clocks), 15 exact AXI/AXIS pair links, seven generated reset consumers, 128-bit PS and 256-bit DMA documented configs remain enforced. This repair touches **no original HLS signed32 kernel, generated RTL or M05 shell**.
+
+**Native regression:** Updated `test_owner_d3_missing_axis_clock_regression_and_reset_polarity` now requires **no read-only `set_property` write**, actual inverter IP v2.0 and two scalar reset net connections in source, plus exact 1-bit NOT parameters, actual read-only reset-input polarity `1`, correct four directions, two distinct reset nets, and negative tests for missing/swapped/incorrect fields. Other eight D3 synthetic methods remain unchanged in scope. Host GitHub Actions can only validate source/schema; **no native CI proves actual Vivado IP pins or real working reset until owner's next original run**.
+
+**Fresh owner offline retry (same D3 milestone, no new submilestone):**
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git rev-parse HEAD
+git status --short
+cd Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m05_12d3*.py' -v
+python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+# Vivado 2025.2 sourced in the terminal before this step; no board required.
+bash -n scripts/run_m05_12d3_connected_candidate.sh
+bash scripts/run_m05_12d3_connected_candidate.sh
+export PS_GRAPH="$(ls -dt "$HOME"/Thesis_Evidence/neuromorphic_v1_m05_12d3_connected_* | head -n 1)"
+echo "$PS_GRAPH"
+cat "$PS_GRAPH/result.txt"
+cat "$PS_GRAPH/commit.txt"
+cat "$PS_GRAPH/working_tree_status.txt"
+cat "$PS_GRAPH/01_connected_graph.txt" 2>/dev/null || true
+tail -n 240 "$PS_GRAPH/02_vivado.log"
+cat "$PS_GRAPH/03_independent_audit.log" 2>/dev/null || true
+cat "$PS_GRAPH/source_sha256.txt"
+```
+
+**Accept the *partial* original graph gate ONLY if** a brand-new `result.txt exit_status=0`, exact existing original Vivado D3 PASS marker, independent strict D3 PASS, 15 actual AXI/AXIS links, 15 common PL clock participant nets, 7 separate reset consumers, 4 actual reset-inverter endpoint directions and two distinct paired reset-input nets, `CONFIG.C_EXT_RESET_HIGH=1` read-only, and verified inverter `C_OPERATION=not`/`C_SIZE=1`. Then continue work on real generated signed32 HLS control and streams, address map, clock frequency association, width conversion, original 2025.2 `xlconstant` deprecation warning and full BD validation **inside the same D3 milestone**. No physical PS/DDR/board/bitstream proof and no permission for physical operations.
+
+---
+
 ## Genuine owner offline D3 failure, precise clock/reset repair (2026-11-09 03:02 UTC)
 
 The original user run `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_connected_20261109T030211Z_GQaGvt`, checkout `98aca677f357f27e1b15cf94f6321f249c6c50f9` exited **1**, and its genuine `02_vivado.log` ended with `missing actual Vivado scalar pin dma_neurons/m_axis_mm2s_aclk`. Script created real PS, two SmartConnect, Processor System Reset, DMA×4 and shell; it attempted to gather clock pins **before** writing the graph report and independent audit. Therefore `01_connected_graph.txt` and `03_independent_audit.log` are absent, and original evidence must remain failed and immutable. The Vivado clock metadata warning `IP_Flow 19-11770` and `xlconstant` future-deprecation warnings are distinct nonfatal findings still to resolve in complete D3.
