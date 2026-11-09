@@ -62,6 +62,7 @@ def require_new_preflight_output(output: Path) -> None:
     allowed_prefixes = (
         "neuromorphic_v1_m05_12d3_hls_connected_",
         "neuromorphic_v1_m05_12d3_native_axis_",
+        "neuromorphic_v1_m05_12d3_addr_validate_",
     )
     if (not parent.is_dir()
             or not any(parent.name.startswith(prefix) for prefix in allowed_prefixes)
