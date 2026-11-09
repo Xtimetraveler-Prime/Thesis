@@ -1,3 +1,5 @@
+> **LATEST M05.12d.1 INCIDENT:** [Vivado Module Reference failure root cause, focused fix and new operator check](M05_12D1_FIRST_MODULE_REF_FAILURE_2026_11_08.md). First real D1 Vivado failed exit_status1 in manual source compile order. Script now sets `source_mgmt_mode All`, verifies actual source-mode=All and independently checks report metadata. Genuine new D1 Vivado PASS still pending; previous M05.12c passes remain accepted. M05 open, PR #79 draft, no hardware.
+
 > **NEW AUTHORITY:** [M05.12d.1 focused handoff](M05_12D1_NEXT_CHAT_HANDOFF_2026_11_08.md). M05.12c genuine offline four-IP config PASS with four nonfatal read-only property warnings and fix. M05.12d.1 native implementation in progress/genuine Vivado pending. Historical previous handoff below is superseded. M05 open, PR #79 draft/unmerged; no physical authorization.
 
 > **CURRENT M05.12 HANDOFF (2026-11-08 local):** Follow [new M05.12 focused handoff](M05_12_NEXT_CHAT_HANDOFF_2026_11_08.md). M05.12b original real Vivado catalog PASS; M05.12c four-IP configurable AXI DMA proof pending real Vivado user run. Prior M05.11c is accepted offline. M05 open, PR #79 draft/unmerged, no hardware authorization.

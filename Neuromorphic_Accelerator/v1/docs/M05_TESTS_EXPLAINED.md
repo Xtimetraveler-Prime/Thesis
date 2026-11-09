@@ -1,3 +1,13 @@
+## 2026-11-08 / 2026-11-09 UTC — first genuine M05.12d.1 Vivado module-ref failure and strict source-mode regression
+
+Original operator M05.12d.1 evidence `~/Thesis_Evidence/neuromorphic_v1_m05_12d1_axis_graph_20261109T005602Z_nTb0oa`, checkout `eea1a56f6486365e22211f525c1d5eaecfc5fea0`, **exit_status=1**. Vivado reports `filemgmt 56-176` + `56-587`: manual compile-order mode makes `m05_12d_axis_shell_ref` unavailable for `create_bd_cell -type module -reference`, followed by BD 41-1690 and BD 5-7. No four AXIS connections nor independent audit executed. Existing M05.12c passed configuration is a separate previously accepted gate.
+
+**New native method:** `test_auto_source_management_before_module_reference_regression` proves the Tcl sets AMD-required `source_mgmt_mode All` immediately after scratch project creation, before `add_files` and `update_compile_order`; asserts two readback guards, no manual override, and actual source mode printed into report. Existing `test_config_provenance_duplicate_unknown_and_partial_rejected` now additionally rejects `DisplayOnly` or missing `source_mgmt_mode` in strict synthetic report; positive tests include `META|source_mgmt_mode|All`. **This is a native static/synthetic gate, not a true post-fix Vivado PASS.** [Full incident](M05_12D1_FIRST_MODULE_REF_FAILURE_2026_11_08.md).
+
+All original evidence preserved, new user local Vivado rerun pending. Full M05.12d.1 partial PL graph remains OPEN.
+
+---
+
 > **M05.12d.1 NATIVE CI VERIFIED:** **CI VERIFIED at source+documentation commit `e49c8ed18f5206d887175588c6e05d5523459a4b`:** all five GitHub Actions workflows **SUCCESS**. [M05 workflow 42541636739](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42541636739) exercised **267 named M05 methods**: first Python discovery executed 266 PASS and **one Icarus-dependent SKIP** before Icarus was installed; then a mandatory post-install step compiled the exact RTL shell wrapper with Icarus and reran all eight M05.12d.1 tests, including the previously skipped elaboration (**8/8 PASS**). Prior accepted M01–M04 methods **22+28+21+20=91 PASS**. Therefore all **358 distinct named native methods have passed at least once**; none of these CI tests is genuine Vivado IP Integrator connected-net verification, which is still pending local operator evidence. The exact eight new M05.12d.1 tests and the extra M05.12c read-only property regression are explained below. Do not conflate CI with original Vivado stream-net proof.
 
 ## 2026-11-08 local / 2026-11-09 UTC: M05.12c four DMA real Vivado PASS; M05.12d.1 new host tests
