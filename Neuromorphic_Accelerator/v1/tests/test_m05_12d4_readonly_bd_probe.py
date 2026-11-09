@@ -146,7 +146,7 @@ class D4ReadonlyBDTests(unittest.TestCase):
             "M05_D4_READ_ONLY_BD_PROPERTIES_PASS",
             "get_property $prop $pin", "CONFIG.NUM_SI", "CONFIG.NUM_MI"):
             self.assertIn(expected, script)
-        self.assertEqual(script.count("generate_target"), 1)  # comment only
+        self.assertEqual(script.count("generate_target"), 0)  # no IP regeneration
         for forbidden in ("save_bd_design", "create_bd_cell", "connect_bd_intf_net",
                           "assign_bd_address", "launch_runs", "synth_design",
                           "write_bitstream", "open_hw_target", "program_hw_devices",
