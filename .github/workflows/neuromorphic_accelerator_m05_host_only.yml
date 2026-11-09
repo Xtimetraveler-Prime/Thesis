@@ -126,6 +126,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_m05_12d2c*.py' -v
       - name: M05.12d.2d PS pin enablement audit (SYNTHETIC, NO Vivado/DDR)
         run: python3 -m unittest discover -s tests -p 'test_m05_12d2d*.py' -v
+      - name: M05.12d.3 PS/PL integrated graph audit (SYNTHETIC, NO Vivado or DDR)
+        run: python3 -m unittest discover -s tests -p 'test_m05_12d3*.py' -v
       - name: Source SHA256 (host code, not bitstream)
         run: |
           sha256sum \
@@ -223,4 +225,8 @@ jobs:
             scripts/m05_12d2d_ps_enablement.tcl \
             scripts/m05_12d2d_ps_enablement_audit.py \
             scripts/run_m05_12d2d_ps_enablement.sh \
-            tests/test_m05_12d2d_ps_enablement.py
+            tests/test_m05_12d2d_ps_enablement.py \
+            scripts/m05_12d3_connected_candidate.tcl \
+            scripts/m05_12d3_connected_candidate_audit.py \
+            scripts/run_m05_12d3_connected_candidate.sh \
+            tests/test_m05_12d3_connected_candidate.py
