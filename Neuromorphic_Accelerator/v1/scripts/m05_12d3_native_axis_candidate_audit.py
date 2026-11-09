@@ -258,8 +258,16 @@ def audit_address_inventory(source: str) -> dict[str, int]:
                 raise ValueError("wrong original control slave in address inventory")
             if not value or value.isspace() or len(value) > 260:
                 raise ValueError("invalid address slave segment path")
-            if value != "NO_BD_SEGMENT_YET" and not value.startswith("/" + bank + "/"):
-                raise ValueError("address segment belongs to wrong control slave")
+            # Vivado returns canonical bd_addr_seg object identity as
+            # /<cell>/<actual AXI4-Lite interface>/<segment>. A matching
+            # bank name alone is insufficient to prove which port owns it.
+            full_interface = "/" + intf + "/"
+            if value != "NO_BD_SEGMENT_YET" and (
+                not value.startswith(full_interface)
+                or not value[len(full_interface):].strip()
+                or any(c.isspace() for c in value)
+            ):
+                raise ValueError("address segment belongs to wrong control slave interface")
             actual.setdefault(bank, []).append(value)
         elif len(f) == 3 and f[0] == "SPACE":
             if f[1] != "ps/M_AXI_HPM0_FPD" or not f[2] or len(f[2]) > 260:
