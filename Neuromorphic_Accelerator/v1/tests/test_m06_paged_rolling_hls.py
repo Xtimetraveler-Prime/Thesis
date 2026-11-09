@@ -95,7 +95,7 @@ class M06PagedHLSNativeTests(unittest.TestCase):
         self.assertEqual(len(trace),count)
         return status,trace,lines[1+count:]
 
-    def test_case(self,net,events,ticks,slots,base=0):
+    def compare_case(self,net,events,ticks,slots,base=0):
         dense=evaluate_dense(net,events,ticks=ticks)
         sparse=evaluate_exact_sparse(net,events,ticks=ticks)
         self.assertEqual(dense,sparse.trace)
@@ -147,29 +147,29 @@ class M06PagedHLSNativeTests(unittest.TestCase):
 
     def test_two_page_single_slot_parity_and_state(self):
         net,ev=self.fixture(101,32,16)
-        x=self.test_case(net,ev,16,slots=1)
+        x=self.compare_case(net,ev,16,slots=1)
         self.assertGreater(x[3],10)
 
     def test_eight_slot_large_capacity_pressure(self):
         net,ev=self.fixture(454,256,12)
-        one=self.test_case(net,ev,12,slots=1)
-        eight=self.test_case(net,ev,12,slots=8)
+        one=self.compare_case(net,ev,12,slots=1)
+        eight=self.compare_case(net,ev,12,slots=8)
         self.assertGreater(one[3],eight[3])
         self.assertEqual(one[6],eight[6])
 
     def test_sixty_four_tick_recurrence_across_eight_wheel_wraps(self):
         net,ev=self.fixture(21,32,64)
-        self.test_case(net,ev,64,slots=1)
+        self.compare_case(net,ev,64,slots=1)
 
     def test_last_1024_neurons_of_full_4096_canonical_space(self):
         net,ev=self.fixture(99,1024,3)
-        x=self.test_case(net,ev,3,slots=8,base=3072)
+        x=self.compare_case(net,ev,3,slots=8,base=3072)
         self.assertGreater(x[2],16)
 
     def test_high_address_small_tile_with_unmodified_neighbor_guard(self):
         net,ev=self.fixture(34,32,16)
-        self.test_case(net,ev,16,slots=1,base=4048)
-        self.test_case(net,ev,16,slots=8,base=2048)
+        self.compare_case(net,ev,16,slots=1,base=4048)
+        self.compare_case(net,ev,16,slots=8,base=2048)
 
     def test_zero_and_canceling_deliveries_exact(self):
         neurons=tuple(Neuron(threshold=30000) for _ in range(32))
@@ -181,7 +181,7 @@ class M06PagedHLSNativeTests(unittest.TestCase):
             InputCurrent(2,16,0),
         ),key=lambda e:e.tick))
         net=Network(neurons,edges,decay_num=1,decay_den=2,state_bits=16)
-        self.test_case(net,events,20,slots=1,base=3072)
+        self.compare_case(net,events,20,slots=1,base=3072)
 
     def test_out_of_range_address_and_slot_counts_fail_before_state_write(self):
         net,ev=self.fixture(77,32,4)
