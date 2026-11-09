@@ -34,8 +34,12 @@ def inspect(original: Path, report: Path, vivado_log: Path) -> dict:
         raise ValueError("missing or malformed real Vivado port report")
     if lines.count("RESULT|ORIGINAL_PORTS_CAPTURED_FOR_ONE_VENDOR_FUNCTIONAL_XSIM_TRIAL") != 1:
         raise ValueError("original Vivado query did not finish cleanly")
-    if log.count("M06_EXACT_ORIGINAL_MEM_SC_PORTS_CAPTURED|READ_ONLY_NO_XSIM_NO_BOARD") != 1:
-        raise ValueError("real tool stdout missing final original-Vivado marker")
+    # Vivado 2025.2 echoes Tcl source lines as commented '# puts ...',
+    # so a raw substring count double-counts the SUCCESS token. Authenticate
+    # the *actual standalone stdout line*, NOT the echo of a Tcl instruction.
+    marker = "M06_EXACT_ORIGINAL_MEM_SC_PORTS_CAPTURED|READ_ONLY_NO_XSIM_NO_BOARD"
+    if sum(line.strip() == marker for line in log.splitlines()) != 1:
+        raise ValueError("real tool stdout missing unique executed Vivado completion marker")
     expected_xpr = original / "13_file_backed_project/m05_d3_output_products.xpr"
     expected_bd = (original / "13_file_backed_project/m05_d3_output_products.srcs"
                    / "sources_1/bd" / BD / f"{BD}.bd")
@@ -60,6 +64,43 @@ def inspect(original: Path, report: Path, vivado_log: Path) -> dict:
         props = seen[endpoint]
         if props.get("CONFIG.DATA_WIDTH") != str(expected):
             raise ValueError(f"original AXI width contradicts expected {endpoint}")
+    # Observed ORIGINAL D3 properties, not four generic full-duplex SI.
+    for index in range(4):
+        name = f"mem_sc/S{index:02d}_AXI"
+        props = seen[name]
+        expected_mode = "WRITE_ONLY" if index == 3 else "READ_ONLY"
+        expected_values = {
+            "CONFIG.PROTOCOL": "AXI4",
+            "CONFIG.READ_WRITE_MODE": expected_mode,
+            "CONFIG.ADDR_WIDTH": "32",
+            "CONFIG.ID_WIDTH": "0",
+            "CONFIG.MAX_BURST_LENGTH": "16",
+            "CONFIG.HAS_BURST": "0",
+        }
+        for key, value in expected_values.items():
+            if props.get(key) != value:
+                raise ValueError(
+                    f"original {name} {key} contradicts actual owner readback: {value}")
+    mem_out = seen["mem_sc/M00_AXI"]
+    for key, value in {
+        "CONFIG.READ_WRITE_MODE": "READ_WRITE",
+        "CONFIG.ADDR_WIDTH": "49",
+        "CONFIG.ID_WIDTH": "0",
+        "CONFIG.MAX_BURST_LENGTH": "32",
+        "CONFIG.HAS_BURST": "1",
+    }.items():
+        if mem_out.get(key) != value:
+            raise ValueError(f"original mem_sc/M00 {key} unexpected: {value}")
+    ps = seen["ps/S_AXI_HP0_FPD"]
+    for key, value in {
+        "CONFIG.READ_WRITE_MODE": "READ_WRITE",
+        "CONFIG.ADDR_WIDTH": "49",
+        "CONFIG.ID_WIDTH": "6",
+        "CONFIG.AWUSER_WIDTH": "1",
+        "CONFIG.ARUSER_WIDTH": "1",
+    }.items():
+        if ps.get(key) != value:
+            raise ValueError(f"original PS HP0 {key} unexpected: {value}")
     for required in ("MEM_IP_PROPERTY|CONFIG.NUM_SI|4",
                      "MEM_IP_PROPERTY|CONFIG.NUM_MI|1",
                      "CLOCK_RESET_PORT|mem_sc/aclk|PRESENT",
@@ -82,12 +123,19 @@ def inspect(original: Path, report: Path, vivado_log: Path) -> dict:
     mem_sources = [row[len("MEM_PROJECT_SOURCE|"):] for row in lines
                    if row.startswith("MEM_PROJECT_SOURCE|")]
 
-    # Generated IP HDL declaration discovery is a NEXT functional-test
-    # preparation aid only. A simulation compile list or source module is
-    # NOT proof that vendor RTL can be elaborated or passes AXI traffic.
+    # Scan only project-reported original memory-IP paths, not a full
+    # recursive filesystem walk. This makes retrospective re-audit of an
+    # existing owner capture cheap and avoids unrelated original files.
+    # This is optional module-header discovery, NOT RTL elaboration/proof.
     candidates = []
     root = original / "13_file_backed_project"
-    for filename in sorted(root.rglob("*mem_sc*")):
+    candidate_paths = list(dict.fromkeys(sim_files + mem_sources))
+    for source_name in candidate_paths:
+        filename = Path(source_name)
+        if not filename.is_absolute() or not filename.is_relative_to(root):
+            continue
+        if "mem_sc" not in filename.as_posix().lower():
+            continue
         if not filename.is_file() or filename.suffix.lower() not in (".v", ".sv"):
             continue
         if filename.stat().st_size > SOURCE_LIMIT:
@@ -114,10 +162,19 @@ def inspect(original: Path, report: Path, vivado_log: Path) -> dict:
         "memory_mi": 1,
         "memory_si_width_bits": 256,
         "memory_mi_width_bits": 128,
+        "observed_si_modes": {f"S{i:02d}": ("WRITE_ONLY" if i == 3 else "READ_ONLY")
+                              for i in range(4)},
+        "original_si_max_burst_property": 16,
+        "original_si_has_burst_property": 0,
+        "original_mi_max_burst_property": 32,
+        "has_burst_zero_needs_real_rtl_port_interpretation": True,
+        "read_ports": ["S00", "S01", "S02"],
+        "write_ports": ["S03"],
         "source_compile_query": sim_meta[0],
         "source_compile_count": len(sim_files),
         "sim_mem_source_count": sum("mem_sc" in x.lower() for x in sim_files),
         "original_project_mem_source_count": len(mem_sources),
+        "scan_policy": "BOUNDED_LISTED_ORIGINAL_SOURCES_ONLY_NO_RECURSIVE_WALK",
         "candidate_module_declarations": candidates[:30],
         "total_candidate_module_declarations": len(candidates),
         "functional_vendor_axi_result": "NOT_EXECUTED",
