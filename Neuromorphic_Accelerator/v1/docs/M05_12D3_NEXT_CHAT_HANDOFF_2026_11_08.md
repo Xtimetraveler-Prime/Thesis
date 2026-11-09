@@ -1,0 +1,98 @@
+# AUTHORITATIVE HANDOFF SEED — Accelerator v1 M05.12d.3 after genuine connected PS/PL graph PASS
+
+**2026-11-08 local / 2026-11-09 UTC** · This file updates ONLY the original M05.11c seed's *project-specific state, actual evidence, next task and copy-paste commands*. The established development/explanation workflow in §7 is carried forward **verbatim** from `docs/M05_11C_NEXT_CHAT_HANDOFF_SEED_2026_11_08.md`, except the final obsolete immediate-question sentence (replaced with the current D3 task). Safety/scientific-integrity constraints are preserved unchanged below.
+
+## 1. Repository, authoritative branch and milestone state
+
+**Project:** `Xtimetraveler-Prime/Thesis/Neuromorphic_Accelerator/v1/` — **NOT** the separate Loihi digital twin. **Branch:** `agent/neuromorphic-accelerator-v1-m05-sparse-onchip`. **PR #79:** open, DRAFT, **UNMERGED**. M01–M04 accepted; M05 OPEN. **Accepted owner Vivado source commit:** `8385daf1973b94945f9266b8090a52fe83507684`. The current branch head may advance with documentation-only commits. New work stays within **one M05.12d.3** milestone; the user explicitly requested **no micro-milestone sprawl**.
+
+**Environment:** user Ubuntu VS Code clone `~/Git/Thesis`, K26 `xck26-sfvc784-2LV-c`, Vivado and Vitis HLS **2025.2** sourced locally; genuine original immutable evidence under `~/Thesis_Evidence/`. The assistant has GitHub connector but no user computer/Vivado/physical K26 board. Only host-native/CI and user-approved *offline in-memory* Vivado allowed. No physical device/PS boot/JTAG/DDR/bitstream approval, and never merge PR #79 without owner approval.
+
+## 2. Exact latest genuine owner proof — what passed and did NOT pass
+
+**Accepted full original D3 partial-graph gate:** `~/Thesis_Evidence/neuromorphic_v1_m05_12d3_connected_20261109T032316Z_WQjAyg` on source `8385daf1973b94945f9266b8090a52fe83507684`. Genuine `result.txt exit_status=0`, actual K26 Vivado 2025.2 source PASS `PASS: M05.12d.3 offline PS/PL four-DMA control/memory/stream/clock graph (PARTIAL: NO HLS/ADDR/DDR)`, and strict independent `PASS: M05.12d.3 independent partial PS/PL graph audit`. **PASS as offline connectivity only.**
+
+Raw `01_connected_graph.txt` proves **four independent 256-bit AXI DMA v7.1 streams↔shell**, **six AXI control links from PS `M_AXI_HPM0_FPD` through 1:5 SmartConnect to the four DMA AXI4-Lite controls + shell**, **five AXI memory links from four 256-bit AXI DMA memory masters through 4:1 SmartConnect to PS `S_AXI_HP0_FPD` (128-bit)**. Thus **15 distinct actual Vivado point-to-point AXI/AXIS link objects**. It also proves all **15 specific PL clock pins share `ps_pl_clk0` net**, and **seven reset consumers** share separate interconnect/peripheral reset outputs. Genuine 1-bit `util_vector_logic:2.0` inverter **`not` size 1** connects PS active-low `pl_resetn0` through two real, distinct, correctly paired BD nets to `proc_sys_reset` read-only external reset polarity **`C_EXT_RESET_HIGH=1`**, with four direction readbacks. PS AXI 128-bit width properties read back. All 15 raw links and strict audit counts are in the owner report.
+
+**Explicit unavailable proofs in the owner's own META:** `hls_control=MISSING_GENERATED_RTL`; `address_map=NOT_ASSIGNED`; `full_bd_validation=NOT_RUN`; `data_width_conversion=SMARTCONNECT_CANDIDATE_NOT_GENERATED`. So this is **not** a finished D3 system; no native HLS coupling, sixth AXI-Lite slave, DDR address decode, width converter generated, full BD validation, PS Linux, physical board, bitstream, energy/speedup or actual on-board inference.
+
+**Nonfatal warnings retained for same D3:** shell `clk` lacks `FREQ_HZ` (IP_Flow 19-11770). Vivado 2025.2 advises inline HDL replacement for old `util_vector_logic:2.0` and `xlconstant:1.1` (BD 5-1043); do not automatically change currently proven reset behavior.
+
+**Previous failed first D3 owner evidence preserved untouched:** `neuromorphic_v1_m05_12d3_connected_20261109T030211Z_GQaGvt` exit1 (incorrect VDMA-only stream clock name), `neuromorphic_v1_m05_12d3_connected_20261109T031117Z_FhjxdG` exit1 (attempt to write readonly `CONFIG.C_EXT_RESET_HIGH`). Current PASS is a new independent directory; never retroactively reclassify failures as PASS.
+
+**Earlier accepted gates (not to rerun just to claim progress):** original M05.11c genuine signed32 HLS generated Verilog + shell XSim success/status0 and late-error/status4, exact 256-bit raw frame audit (`neuromorphic_v1_m05_11c_real_hls_20261109T000446Z_keEFQy`); genuine M05.12b DMA IP catalog, M05.12c four DMA configuration, M05.12d.1 four AXIS nets, M05.12d.2a default PS ports, M05.12d.2c real PS property catalog 57/14, M05.12d.2d HPM/HP0 128-bit interface actual pin enablement. **399 distinct prior native tests passed on source `8385daf...`**: 308 named M05, 91 M01–M04; one optional pre-Icarus skip was rerun to PASS in mandatory installed-Icarus step. Verify five CI workflows again after *new development*.
+
+## 3. Actual files to inspect before changing anything
+
+- [Single authoritative M05.12d.3 engineering runbook](M05_12D3_CONNECTED_PS_PL_CANDIDATE_2026_11_08.md), [roadmap](../roadmap.md) and [tests explained](M05_TESTS_EXPLAINED.md).
+- `scripts/m05_12d3_connected_candidate.tcl`, `scripts/run_m05_12d3_connected_candidate.sh`, `scripts/m05_12d3_connected_candidate_audit.py`, `tests/test_m05_12d3_connected_candidate.py`.
+- Unchanged `rtl/m05_11/m05_11_stream_shell.v`, `rtl/m05_12/m05_12d_axis_shell_ref.v`, three stream/trace shims, original `hls/m05_rolling/m05_rolling.cpp`; **do not touch source signed32 HLS kernel or generated RTL**.
+- Authenticated original generated HLS reference: `scripts/run_m05_11c_hls_shell_xsim.sh`, `scripts/m05_axis_regmap.py`, `scripts/m05_rtl_meminit.py`, `docs/M05_11C_REAL_HLS_STREAM_SHELL_INTEGRATION_2026_11_08.md`. The genuine HLS generated `m05_rolling_replay.v` and companions live **outside Git** under the original passed `neuromorphic_v1_m05_rolling_impl_*` artifact; retrieve the actual path from accepted M05.11c `source_impl_evidence.txt`, do not guess.
+- `src/neuromorphic_accelerator_v1/m05_12d2_control_map.py`: six independent 4KiB-aligned proposal *only*, **not** Vivado-decoded addresses or HLS native register map. Also review `docs/M05_11_PS_PL_TRANSPORT_ARCHITECTURE_2026_11_08.md` for DMA/PS quiescence and TLAST/error semantics.
+
+## 4. FIRST TASK — continue engineering inside M05.12d.3 (graph already accepted)
+
+**Start from the accepted genuine D3 BD graph, not a fresh architecture.** Preserve `scripts/m05_12d3_connected_candidate.tcl`, its audit/runner, original RTL, existing net proofs, and every immutable owner evidence directory.
+
+1. **Authenticate original signed32 HLS generated RTL and inspect *real* interfaces.** The generated `m05_rolling_replay` Verilog is **not checked into Git**. Use the previously accepted genuine M05.11c `~/Thesis_Evidence/neuromorphic_v1_m05_11c_real_hls_20261109T000446Z_keEFQy/source_impl_evidence.txt` to locate the actual prior `neuromorphic_v1_m05_rolling_impl_*` artifact; follow existing `scripts/run_m05_11c_hls_shell_xsim.sh` gates: exact K26/top `m05_rolling_replay`, `exit_status=0`, frozen signed32 HLS source SHA256, original `work/hls/syn/verilog/m05_rolling_replay.v` and companion generated Verilog, genuine HLS control register mapping from `scripts/m05_axis_regmap.py`/vendor generated files. No guessed `ap_start`, `ap_done`, `ap_return`, AXI4-Lite register offsets or 128/192-bit AXIS port names; no fake HLS IP and no rewriting generated RTL.
+2. **Extend the exact connected BD to include the real HLS module, preserving 4 DMA ↔ shell AXIS nets.** Wire shell's inferred 128/192-bit native HLS AXIS ports to the genuine Vitis-generated kernel interfaces with reviewed clock/reset, add **sixth independent PS-controlled AXI4-Lite bank** for native HLS, verify all five old control bank net identities and exact new link/roles. Require no silent width padding between native HLS and its shell: 256-bit framing belongs only at the DMA boundary.
+3. **Resolve existing BD integration gaps with genuine operator Vivado proof:** define and read back six disjoint 4KiB-aligned *actual* control address segments (use `src/neuromorphic_accelerator_v1/m05_12d2_control_map.py` only as a proposal/validation contract); record required PS DDR address segments only when legitimately exposed/configured, never assume physical DDR from a HP0 interface pin; verify 256→128 SmartConnect conversion from generated IP outputs/BD validation rather than from mere connection; fix shell clock `FREQ_HZ`/associated bus interfaces and evaluate recommended 2025.2 `inline_hdl:ilvector_logic`/`ilconstant` replacements without changing the approved reset polarity or source HLS semantics.
+4. **Implement fail-closed integration verification and independent evidence.** Native code/audit/negative tests first, then single fresh offline Vivado+XSim evidence run (if actually possible); insist on full BD validation, real IP output and address readbacks before calling D3 complete. Stop and preserve failures when Vivado cannot resolve PS DDR/clock/IP constraints. Hold physical FPGA/JTAG/PS/DDR, PS Linux buffers and driver transactions for separate user approval. Continue one M05.12d.3 milestone and existing draft PR #79.
+
+The immediate *next coding task* in a new chat is to **inspect and provenance-verify the real generated HLS module and its control/AXIS port contract, then develop safe integration of that actual module into the existing D3 block design**. Do not ask the owner to rerun the already accepted partial graph merely to begin source development. Do not invent a K26 PS board preset or DDR mapping.
+
+
+
+**Do not first ask whether the user already ran the D3 candidate:** their original PASS is fully present above. Start *actual source development*, native tests, documentation and CI. Genuine source-affecting Vivado verification still belongs with the owner, based on a fresh unique evidence dir when necessary.
+
+## 5. Safe Ubuntu VS Code operator commands (no actual board access)
+
+**For the new instance to include after each code change; do not execute on a simulated owner's machine:**
+
+~~~bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m05-sparse-onchip
+git rev-parse HEAD
+git status --short
+cd Neuromorphic_Accelerator/v1
+
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m05_12d3*.py' -v
+python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+
+# Run genuine Vivado 2025.2 ONLY after sourcing its local settings64.sh.
+# This is the PREVIOUSLY ACCEPTED PARTIAL GRAPH, not a full D3 test:
+bash -n scripts/run_m05_12d3_connected_candidate.sh
+# No reason to repeat the accepted D3 graph simply to start source work.
+# After changing scripts, operator can run a NEW unique offline proof:
+# bash scripts/run_m05_12d3_connected_candidate.sh
+~~~
+
+**Original accepted latest D3 report already exists** at the directory in §2; do not overwrite it. For any NEW stage, create a new unique `~/Thesis_Evidence` folder with original `result.txt`, `commit.txt`, `working_tree_status.txt`, `source_sha256.txt`, actual Vivado logs/required readbacks and independent audit. Give the owner exact copy-paste retrieval commands for the specific new runner, never invent Vivado pass results.
+
+## 6. Next engineering and what is NOT yet authorized
+
+**Safety:** Do not program FPGA, run JTAG/XSDB, halt A53, reflash a device or write PS/Linux-owned DDR based on this handoff. Any later physical tests require user authorization, memory ownership and provenance checks, fresh immutable evidence and power-cycle after JTAG attempts. Never import/execute old frozen v3 JTAG scripts.
+
+**Scientific integrity:** M02 is the accepted numerical truth, M03 is only a PC-only analytical traffic comparator, and M05.11c is an offline real-generated-RTL transport gate. Credit YANA/SENECA/HiAER where architectural ideas overlap. Do not claim real hardware speedup, Loihi-equivalent silicon, power saving or guaranteed synthesizability of an entire system from isolated simulation.
+
+**Current D3-specific deliverables:** genuine generated signed32 HLS coupled to shell; native HLS AXI4-Lite as independent sixth bank; complete real nonoverlapping six-bank address readback; HLS register schema and PS control semantics; proper clock `FREQ_HZ` and AXI association; actual SmartConnect 256→128-bit generation/validation; complete offline BD validation and input/output/error simulation. Full system performance, physical DDR transactions and K26 programming require separate later authorization and evidence. Do not conflate offline IP Integrator connectivity with a functioning neural accelerator.
+
+## 7. Continuing engineering and explanation-doc workflow
+
+For every independently testable new M05.x increment:
+- write the design/evidence doc and update the dated engineering ledger;
+- update docs/M05_TESTS_EXPLAINED.md with actual test names, vectors, expected pass/fail paths, native versus simulator versus physical result, correction history and negative cases;
+- update docs/M05_PC_ONLY_VERIFICATION.md or a new stage-specific runbook for exact operator commands;
+- run available native tests + all M01–M04 regressions, and verify five GitHub Actions workflows at current source HEAD;
+- preserve source SHA and generated evidence SHA, do not silently overwrite original files or reset a failed-run gate;
+- update roadmap with ONLY achieved results; leave PR #79 draft/unmerged until user verification and explicit authorization.
+
+**Immediate task for the next instance (project-context replacement only):** Genuine offline D3 partial graph is ALREADY ACCEPTED with exact user evidence above; do not rerun it as a precondition for development. Inspect the previously accepted genuine signed32 HLS implementation artifact and prove its original native AXI4-Lite/AXIS interface schema. Then begin connected HLS IP integration + 6-bank control mapping within the same M05.12d.3 milestone, with native CI, independent owner offline gates and no board. Preserve all workflow bullets above unchanged.
