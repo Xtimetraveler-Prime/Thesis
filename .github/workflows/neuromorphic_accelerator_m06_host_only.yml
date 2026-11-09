@@ -96,6 +96,16 @@ jobs:
           timeout 15s vvp "$RUNNER_TEMP/m06_axi128_scratch"             | tee "$RUNNER_TEMP/m06_axi128_scratch.log"
           grep -Fq "M06_AXI128_SCRATCH_STANDALONE_PASS"             "$RUNNER_TEMP/m06_axi128_scratch.log"
           grep -Fq "NO_VENDOR_XSIM_NO_DDR"             "$RUNNER_TEMP/m06_axi128_scratch.log"
+      - name: One-slot RTL residency controller fill/dirty-evict/quarantine Icarus simulation (NO DMA/DDR)
+        run: |
+          iverilog -g2012 -s tb_m06_residency_control_fsm \
+            -o "$RUNNER_TEMP/m06_residency_fsm" \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/tb_m06_residency_control_fsm.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_residency_fsm" \
+            | tee "$RUNNER_TEMP/m06_residency_fsm.log"
+          grep -Fq "M06_RESIDENCY_FSM_RTL_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
+          grep -Fq "M06_RESIDENCY_FSM_DIRTY_WB_QUARANTINE_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
