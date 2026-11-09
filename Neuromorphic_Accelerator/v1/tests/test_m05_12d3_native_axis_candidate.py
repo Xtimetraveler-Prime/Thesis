@@ -15,6 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from m05_12d3_hls_connected_preflight import require_new_preflight_output
 from m05_12d3_native_axis_candidate_audit import (
     META, DMA, LINKS, CLOCK, RESET, RESET_INT, RESETFEED, RESETDIR,
     RESETCFG, RESETINV, PSCFG, STREAM, CONTROL, MEMORY, NATIVE_INTF,
@@ -56,6 +57,32 @@ def address_fixture() -> str:
 
 
 class M0512D3NativeAXISCandidateTests(unittest.TestCase):
+    def test_preflight_accepts_only_fresh_original_integration_and_native_axis_paths(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            accepted = root / "neuromorphic_v1_m05_12d3_real_hls_contract_accepted"
+            accepted.mkdir()
+            previous = root / "neuromorphic_v1_m05_12d3_hls_connected_accepted"
+            previous.mkdir()
+            native = root / "neuromorphic_v1_m05_12d3_native_axis_new"
+            native.mkdir()
+            path = native / "01_hls_preflight.txt"
+            require_new_preflight_output(path)
+            require_new_preflight_output(previous / "01_hls_preflight.txt")
+            for bad in (
+                accepted / "01_hls_preflight.txt",
+                root / "01_hls_preflight.txt",
+                native / "result.txt",
+                native / "source_sha256.txt",
+            ):
+                with self.subTest(path=bad):
+                    with self.assertRaises(ValueError):
+                        require_new_preflight_output(bad)
+            path.write_text("original owner trial - never overwrite")
+            with self.assertRaises(ValueError):
+                require_new_preflight_output(path)
+            self.assertEqual(path.read_text(), "original owner trial - never overwrite")
+
     def test_grouped_real_axis_expected_contract(self):
         facts = audit_connected_candidate(graph_fixture())
         self.assertEqual(facts["stream_links"], 4)
