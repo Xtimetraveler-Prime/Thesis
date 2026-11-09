@@ -17,7 +17,7 @@ static bool wheel_and_high_address() {
     ss.write({0,0,5,8});
     es.write({0,0,5});
     const std::uint32_t status=m06_paged_rolling_replay(
-        ns,ss,es,out,metrics,memory.data(),16,1,1,20,1,1,1,4080);
+        ns,ss,es,out,metrics,memory.data(),memory.data(),16,1,1,20,1,1,1,4080);
     if (status!=M06_PAGE_OK || metrics.empty()) return false;
     for (std::uint32_t t=0;t<20;++t) {
         for (std::uint32_t i=0;i<16;++i) {
@@ -55,7 +55,7 @@ static bool dirty_evict_then_delayed_replay() {
     es.write({0,0,5});
     es.write({1,16,5});
     const std::uint32_t status=m06_paged_rolling_replay(
-        ns,ss,es,out,metrics,memory.data(),32,1,2,12,1,1,1,0);
+        ns,ss,es,out,metrics,memory.data(),memory.data(),32,1,2,12,1,1,1,0);
     if (status!=M06_PAGE_OK || metrics.empty()) return false;
     std::uint32_t spikes=0;
     for (std::uint32_t t=0;t<12;++t) {
@@ -86,10 +86,10 @@ static bool invalid_geometry_never_writes() {
     hls::stream<M06PageMetrics> metrics;
     std::vector<std::uint32_t> mem(
         M06_PAGED_MAX_LOGICAL_NEURONS*M06_PAGED_RECORD_WORDS,0xa5a5a5a5u);
-    if (m06_paged_rolling_replay(ns,ss,es,out,metrics,mem.data(),
+    if (m06_paged_rolling_replay(ns,ss,es,out,metrics,mem.data(),mem.data(),
         16,0,0,1,1,1,0,4080)!=M06_PAGE_BAD_SHAPE)
         return false;
-    if (m06_paged_rolling_replay(ns,ss,es,out,metrics,mem.data(),
+    if (m06_paged_rolling_replay(ns,ss,es,out,metrics,mem.data(),mem.data(),
         32,0,0,1,1,1,8,4080)!=M06_PAGE_BAD_SHAPE)
         return false;
     return out.empty() && metrics.empty() &&
