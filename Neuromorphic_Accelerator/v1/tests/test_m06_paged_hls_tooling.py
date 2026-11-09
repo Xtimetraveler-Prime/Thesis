@@ -33,7 +33,7 @@ def synthetic_module() -> str:
         "metrics_TREADY":"input",
     })
     header="module m06_paged_rolling_replay ("+", ".join(required)+");"
-    declaration=["parameter integer BUS_WIDTH = 32;"]
+    declaration=["parameter BUS_WIDTH = 32;"]
     for name,direction in required.items():
         if name.endswith(("ADDR","RDATA","WDATA","TDATA")):
             decl=f"  {direction} wire [BUS_WIDTH-1:0] {name};"
