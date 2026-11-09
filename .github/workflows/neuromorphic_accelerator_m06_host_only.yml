@@ -150,9 +150,10 @@ jobs:
             rtl/m06/m06_axi128_scratch_mem.sv \
             rtl/m06/m06_residency_control_fsm.sv \
             rtl/m06/m06_axi256_block_transfer.sv
+          mkdir -p "$RUNNER_TEMP/m06_vendor_syntax_only"
           python3 scripts/m06_generate_paged_lif16_vectors.py \
-            --output "$RUNNER_TEMP/m06_lif16_vectors.vh"
-          iverilog -g2012 -tnull -I "$RUNNER_TEMP" \
+            --output "$RUNNER_TEMP/m06_vendor_syntax_only/m06_lif16_vectors.vh"
+          iverilog -g2012 -tnull -I "$RUNNER_TEMP/m06_vendor_syntax_only" \
             -s tb_m06_original_vendor_neural_paged \
             "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
             "$RUNNER_TEMP/m06_VENDOR_NEURAL_PAGED_SYNTAX_ONLY.sv" \
