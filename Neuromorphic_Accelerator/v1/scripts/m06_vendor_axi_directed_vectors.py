@@ -73,7 +73,7 @@ def vector_suite() -> dict:
     # (AXI4 4KiB rule); two individual legal INCR bursts are required.
     b = plan_aligned_incr(0x0fe0, 96, max_bytes=96, axid=0)
     scenarios.append({
-        "scenario": "unaltered_preexisting_memory_at_4k_split",
+        "scenario": "4k_split_read_after_si0_masked_write",
         "transaction": "READ_SPLIT",
         "si_index": 0,
         "planned_address_offsets": [item.address for item in b],
