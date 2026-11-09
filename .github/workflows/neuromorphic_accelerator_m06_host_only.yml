@@ -88,6 +88,14 @@ jobs:
           path: ${{ runner.temp }}/m06_original_port_safe_bfm_inputs.json
           if-no-files-found: error
           retention-days: 30
+      - name: Independent RTL simulation of 128-bit scratch-memory target (NO VENDOR IP)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          iverilog -g2012 -s tb_m06_axi128_scratch_mem             -o "$RUNNER_TEMP/m06_axi128_scratch"             rtl/m06/m06_axi128_scratch_mem.sv             rtl/m06/tb_m06_axi128_scratch_mem.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_axi128_scratch"             | tee "$RUNNER_TEMP/m06_axi128_scratch.log"
+          grep -Fq "M06_AXI128_SCRATCH_STANDALONE_PASS"             "$RUNNER_TEMP/m06_axi128_scratch.log"
+          grep -Fq "NO_VENDOR_XSIM_NO_DDR"             "$RUNNER_TEMP/m06_axi128_scratch.log"
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
