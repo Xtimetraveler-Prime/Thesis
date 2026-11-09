@@ -132,7 +132,7 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
                                  "RESETFEED|pl_reset/ext_reset_in|wrong_reset_net", 1),
             transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net",
                                  "RESETFEED|ps/pl_resetn0|pl_clk_net", 1),
-            transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net\\n", "", 1),
+            transcript().replace("RESETFEED|ps/pl_resetn0|ps_resetn_net\n", "", 1),
         ):
             with self.subTest(invalid=invalid[-100:]):
                 with self.assertRaises(ValueError):
