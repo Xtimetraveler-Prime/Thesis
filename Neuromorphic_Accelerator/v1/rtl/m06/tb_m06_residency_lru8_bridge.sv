@@ -50,7 +50,7 @@ module tb_m06_residency_lru8_bridge;
   reg [31:0] byte_mask=32'h80010001;
 
   m06_residency_lru8 #(.MAX_WAIT_CYCLES(32'd128)) controller (
-    .aclk(clk),.aresetn(resetn),
+    .clk(clk),.resetn(resetn),
     .req_valid(req_valid),.req_ready(req_ready),
     .req_block(req_block),.req_is_write(req_write),
     .rsp_valid(rsp_valid),.rsp_ready(rsp_ready),
@@ -59,8 +59,7 @@ module tb_m06_residency_lru8_bridge;
     .dma_is_writeback(dma_is_writeback),.dma_block(dma_block),
     .dma_slot(dma_slot),
     .dma_done(dma_done),.dma_error(dma_error),
-    .poisoned(poisoned),.resident_valid(resident_valid),
-    .resident_block(resident_block),.resident_dirty(resident_dirty),
+    .poisoned(poisoned),
     .accesses(accesses),.hits(hits),.misses(misses),
     .evictions(evictions),
     .acknowledged_writebacks(acknowledged_writebacks),
