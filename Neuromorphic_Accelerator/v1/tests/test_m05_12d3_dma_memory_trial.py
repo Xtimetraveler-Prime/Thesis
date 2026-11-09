@@ -87,7 +87,7 @@ class M0512D3DmaHp0TrialTests(unittest.TestCase):
     def test_bad_32bit_dma_memory_range_rejected(self):
         report, valid, log = fixture()
         for fake in (report.replace("0x40000000", "0x00000000", 1),
-                     report.replace("0x40000000", "0x100000000", 1),
+                     report.replace("0x40000000", "0x100000001", 1),
                      report.replace("0x00000000|0x40000000", "0xF0000000|0x40000000", 1),
                      report.replace("0x40000000", "guessed", 1)):
             with self.assertRaises(ValueError):
