@@ -74,6 +74,19 @@ class M06OriginalVendorCompilePlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"unique"):
                 plan(orig,bad)
 
+    def test_unrelated_missing_original_project_file_not_required_for_isolated_mem_sc(self):
+        with tempfile.TemporaryDirectory() as d:
+            orig, report, header, infrastructure, other = synthetic_sources(Path(d))
+            original_unrelated = orig / "13_file_backed_project/unrelated_neural_HLS.v"
+            # The old runner incorrectly required *every* full-project
+            # source to exist even when not used by isolated vendor mem_sc.
+            amended = report.replace(
+                "/outside-original-compile-order/unrelated_0.v",
+                str(original_unrelated))
+            result = plan(orig, amended)
+            self.assertEqual(result["vivado_original_source_count"], 186)
+            self.assertNotIn(str(original_unrelated), result["verilog_files"])
+
     def test_selected_dependencies_are_original_only(self):
         with tempfile.TemporaryDirectory() as d:
             orig,report,header,infrastructure,other=synthetic_sources(Path(d))
