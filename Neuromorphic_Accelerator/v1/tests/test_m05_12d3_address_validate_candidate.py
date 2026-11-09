@@ -299,6 +299,31 @@ class M0512D3AddressValidateTests(unittest.TestCase):
             tcl.index("set reverse [get_bd_addr_segs -quiet -of_objects $master]"),
             tcl.index("set rb_base [string trim [get_property OFFSET $master]]"))
 
+    def test_owner_bd_41_758_unused_lpd_port_is_disabled_not_fake_clocked(self):
+        # Genuine original owner run 20261109T052908Z_QSqea3: six authentic
+        # mapped control banks + independent audit PASS, but whole BD FAIL
+        # due to an enabled, unconnected LPD AXI master clock.
+        # This tests only the *source guard*. A new genuine owner Vivado run
+        # must still demonstrate the actual IP port disappearance/BD result.
+        tcl = TCL.read_text()
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP2 1", tcl)
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP2 0", tcl)
+        self.assertIn("get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD", tcl)
+        self.assertIn("get_bd_pins -quiet ps/maxihpm0_lpd_aclk", tcl)
+        self.assertIn("M05_D3_UNUSED_LPD_DISABLED|", tcl)
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP0 1", tcl)
+        self.assertIn("CONFIG.PSU__USE__S_AXI_GP2 1", tcl)
+        self.assertIn("M_AXI_HPM0_FPD MASTER S_AXI_HP0_FPD SLAVE", tcl)
+        self.assertNotIn('lappend clocks "ps/maxihpm0_lpd_aclk"', tcl)
+        self.assertLess(
+            tcl.index("CONFIG.PSU__USE__M_AXI_GP2 0"),
+            tcl.index("get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD"))
+        self.assertLess(
+            tcl.index("get_bd_pins -quiet ps/maxihpm0_lpd_aclk"),
+            tcl.index("validate_bd_design -force"))
+        self.assertIn("if {$vrc} {", tcl)
+        self.assertIn('puts $vf "VALIDATION|FAIL|FULL_BD_VALIDATE_FORCE"', tcl)
+
     def test_unverified_requested_offset_does_not_count_as_vivado_readback(self):
         good = mapped_fixture()
         plan = parse_plan(good_plan())

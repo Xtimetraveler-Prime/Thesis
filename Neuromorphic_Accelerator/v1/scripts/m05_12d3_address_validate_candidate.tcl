@@ -58,6 +58,7 @@ set ps [create_bd_cell -type ip -vlnv $ps_vlnv ps]
 if {[llength $ps] != 1} {error "Zynq PS IP not instantiated"}
 foreach {prop expected} {
     CONFIG.PSU__USE__M_AXI_GP0 0
+    CONFIG.PSU__USE__M_AXI_GP2 1
     CONFIG.PSU__USE__S_AXI_GP2 0
 } {
     if {[string trim [get_property $prop $ps]] ne "$expected"} {
@@ -65,9 +66,11 @@ foreach {prop expected} {
     }
 }
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 1 \
+                         CONFIG.PSU__USE__M_AXI_GP2 0 \
                          CONFIG.PSU__USE__S_AXI_GP2 1] $ps
 foreach {prop expected} {
     CONFIG.PSU__USE__M_AXI_GP0 1
+    CONFIG.PSU__USE__M_AXI_GP2 0
     CONFIG.PSU__USE__S_AXI_GP2 1
     CONFIG.PSU__MAXIGP0__DATA_WIDTH 128
     CONFIG.PSU__SAXIGP2__DATA_WIDTH 128
@@ -76,6 +79,18 @@ foreach {prop expected} {
         error "PS property $prop did not read back '$expected'"
     }
 }
+# Genuine owner Vivado 2025.2 full BD failed with BD 41-758 on
+# /ps/maxihpm0_lpd_aclk and BD 41-2670 on the unused LPD master
+# address path. Earlier D2d discovery intentionally preserved the default
+# M_AXI_HPM0_LPD, but THIS separate six-bank candidate has NO LPD sink.
+# Disable only this unused PS->PL AXI master on this scratch PS IP.
+# Do not bypass clock validation by wiring an undestined live AXI port.
+# The active FPD control master and HP0 DMA slave must remain intact.
+if {[llength [get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD]] != 0 ||
+    [llength [get_bd_pins -quiet ps/maxihpm0_lpd_aclk]] != 0} {
+    error "unused LPD PS master/clock still present after disabling PSU__USE__M_AXI_GP2; do not treat BD clock error as resolved"
+}
+puts "M05_D3_UNUSED_LPD_DISABLED|PSU__USE__M_AXI_GP2=[get_property CONFIG.PSU__USE__M_AXI_GP2 $ps]|FPD_AND_HP0_PRESERVED"
 foreach {name mode} {M_AXI_HPM0_FPD MASTER S_AXI_HP0_FPD SLAVE} {
     set pin [get_bd_intf_pins -quiet "ps/$name"]
     if {[llength $pin] != 1 || [string toupper [get_property MODE $pin]] ne $mode} {
