@@ -43,6 +43,27 @@ class M0512D3DmaHp0TrialTests(unittest.TestCase):
         self.assertEqual(generated.replace(MEMORY_TCL, "", 1).replace(
             "!= 9", "!= 8", 1).replace("set dma_memory_path [lindex $argv 8]\n", "", 1), original)
 
+    def test_owner_excluded_ocm_not_required_in_plain_segment_query(self):
+        # Owner at ab802733... observed successful genuine Vivado mapping
+        # of DDR_LOW at 0x0 [2G] and successful OCM exclusion, but previous
+        # assertion demanded BOTH appear in unfiltered master-space list.
+        # The AMD 2025.2 -addressed and -excluded queries are the authority.
+        source = MEMORY_TCL
+        self.assertIn("get_bd_addr_segs -addressed -quiet -of_objects $dma_space", source)
+        self.assertIn("get_bd_addr_segs -excluded -quiet -of_objects $dma_space", source)
+        self.assertIn("M05_D3_DMA_HP0_SEGMENT_SET_QUERY|$bank", source)
+        self.assertIn('[llength $addressed] != 1', source)
+        self.assertIn('[llength $excluded] != 1', source)
+        self.assertIn('[lindex $addressed 0] ne "$ddr_master"', source)
+        self.assertIn('[lindex $excluded 0] ne "$ocm_master"', source)
+        self.assertIn('if {$candidate ne "$ddr_master" && $candidate ne "$ocm_master"}', source)
+        self.assertNotIn('[llength $all_masters] != 2', source)
+        # Diagnostic reports all 3 views before a potential assertion FAIL;
+        # no fabricated Vivado PASS is permitted by static regression.
+        self.assertLess(source.index("M05_D3_DMA_HP0_SEGMENT_SET_QUERY"),
+                        source.index("DMA $bank accessible segments"))
+        self.assertIn('lsearch -exact $all_masters $ddr_master', source)
+
     def test_staging_creates_original_derived_sha_and_refuses_overwrites(self):
         with tempfile.TemporaryDirectory() as temp:
             d = Path(temp)

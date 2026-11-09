@@ -86,11 +86,30 @@ foreach {bank endpoint expected_space} {
     if {[llength $ocm_reverse] != 1 || "$ocm_reverse" ne "$hp0_ocm"} {
         error "excluded OCM master not linked to authentic HP0 OCM slave"
     }
+    # Genuine owner 2025.2 run mapped HP0 DDR_LOW (2 GiB at zero) and
+    # successfully EXCLUDED OCM, then this old check falsely required both
+    # objects in the PLAIN query. Excluded segments have their own query.
+    # AMD UG835 distinguishes -addressed (accessible) and -excluded. Prove
+    # exactly one accessible DDR and exactly one excluded OCM; additionally
+    # reject any unexpected entries in the ordinary space listing. That
+    # ordinary list is allowed to OMIT the excluded OCM object.
+    set addressed [get_bd_addr_segs -addressed -quiet -of_objects $dma_space]
     set all_masters [get_bd_addr_segs -quiet -of_objects $dma_space]
-    if {[llength $all_masters] != 2 ||
-        [lsearch -exact $all_masters $ddr_master] < 0 ||
-        [lsearch -exact $all_masters $ocm_master] < 0} {
-        error "DMA $bank has unexpected master segments beyond DDR and excluded OCM"
+    puts "M05_D3_DMA_HP0_SEGMENT_SET_QUERY|$bank|SPACE=$dma_space|ADDRESSED=$addressed|EXCLUDED=$excluded|PLAIN=$all_masters|DDR=$ddr_master|OCM=$ocm_master"
+    if {[llength $addressed] != 1 || [lindex $addressed 0] ne "$ddr_master"} {
+        error "DMA $bank accessible segments are not EXACTLY the authentic HP0 DDR_LOW master"
+    }
+    if {[llength $excluded] != 1 || [lindex $excluded 0] ne "$ocm_master"} {
+        error "DMA $bank excluded segments are not EXACTLY the authentic HP0 OCM master"
+    }
+    if {[llength $all_masters] < 1 || [llength $all_masters] > 2 ||
+        [lsearch -exact $all_masters $ddr_master] < 0} {
+        error "DMA $bank plain master listing lost DDR or has unexpected count; inspect ADDRESSED/EXCLUDED diagnostic"
+    }
+    foreach candidate $all_masters {
+        if {$candidate ne "$ddr_master" && $candidate ne "$ocm_master"} {
+            error "DMA $bank has an unexpected plain master segment $candidate"
+        }
     }
     puts "M05_D3_DMA_HP0_DDR_READBACK|$bank|$dma_space|$ddr_master|OFFSET=$ddr_offset|RANGE=$ddr_range"
     puts "M05_D3_DMA_HP0_OCM_EXCLUDED|$bank|$dma_space|$ocm_master"
