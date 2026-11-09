@@ -229,6 +229,73 @@ class M06BlockResidencyTests(unittest.TestCase):
                          (16, 4))
         self.assertEqual(store.snapshot(owner="TEST_ONLY")[:4], b"\x01\x02\x03\x04")
 
+    def test_backing_short_page_malformed_version_tx_and_tuple_poison(self):
+        cfg = geometry()
+        for shape in ("short", "bad_version", "bad_tx", "bad_tuple"):
+            class BrokenRead(CanonicalImage):
+                def read_block(self, page, *, owner):
+                    result = super().read_block(page, owner=owner)
+                    if shape == "short":
+                        return result[0][:-1], result[1], result[2]
+                    if shape == "bad_version":
+                        return result[0], True, result[2]
+                    if shape == "bad_tx":
+                        return result[0], result[1], 0
+                    return (result[0],)
+            store = BrokenRead(cfg, emulated_owner="TEST_ONLY")
+            cache = BlockCache(store, owner="TEST_ONLY")
+            with self.subTest(shape=shape), self.assertRaises(ResidencyError):
+                cache.read(0)
+            self.assertTrue(cache.poisoned)
+            self.assertEqual(cache.resident_pages, ())
+            self.assertEqual(cache.counters.accesses, 0)
+
+    def test_bad_backing_flush_ack_can_never_mark_dirty_page_clean(self):
+        cfg = geometry()
+        for mode in ("wrong_version", "zero_tx", "short_tuple"):
+            class BrokenAck(CanonicalImage):
+                def write_block(self, page, data, *, expected_version, owner):
+                    version, tx = super().write_block(
+                        page, data, expected_version=expected_version, owner=owner)
+                    if mode == "wrong_version":
+                        return expected_version, tx
+                    if mode == "zero_tx":
+                        return version, 0
+                    return (version,)
+            store = BrokenAck(cfg, emulated_owner="TEST_ONLY")
+            cache = BlockCache(store, owner="TEST_ONLY")
+            cache.write(0, b"\xfa\xce")
+            with self.subTest(mode=mode), self.assertRaises(ResidencyError):
+                cache.flush()
+            self.assertTrue(cache.poisoned)
+            self.assertEqual(cache.dirty_pages, (0,))
+
+    def test_bad_eviction_ack_retains_resident_dirty_page(self):
+        class BrokenAck(CanonicalImage):
+            def write_block(self, page, data, *, expected_version, owner):
+                ver, tx = super().write_block(
+                    page, data, expected_version=expected_version, owner=owner)
+                return ver, True
+        cfg = geometry(resident_budget_bytes=4)
+        store = BrokenAck(cfg, emulated_owner="TEST_ONLY")
+        cache = BlockCache(store, owner="TEST_ONLY")
+        cache.write(0, b"\x11\x22")
+        with self.assertRaisesRegex(ResidencyError, "dirty-eviction acknowledgment"):
+            cache.read(2)
+        self.assertTrue(cache.poisoned)
+        self.assertEqual(cache.dirty_pages, (0,))
+        self.assertEqual(cache.resident_pages, (0,))
+
+    def test_malformed_store_value_error_converted_to_poisoned_contract_error(self):
+        class BrokenRead(CanonicalImage):
+            def read_block(self, page, *, owner):
+                raise ValueError("corrupt bus length")
+        store = BrokenRead(geometry(), emulated_owner="TEST_ONLY")
+        cache = BlockCache(store, owner="TEST_ONLY")
+        with self.assertRaisesRegex(ResidencyError, "malformed backing transfer"):
+            cache.read(0)
+        self.assertTrue(cache.poisoned)
+
     def test_exact_m02_dense_oracle_state_preserved_across_repeated_page_churn(self):
         network = Network(
             neurons=tuple(
