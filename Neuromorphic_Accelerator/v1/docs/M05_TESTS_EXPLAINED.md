@@ -1,3 +1,24 @@
+## 2026-11-08 local / 2026-11-09 UTC: M05.12c four DMA real Vivado PASS; M05.12d.1 new host tests
+
+**M05.12c original operator Vivado configuration accepted:** `~/Thesis_Evidence/neuromorphic_v1_m05_12c_dma_candidate_20261109T003049Z_y5AEce` on source `0ea2178c71023250150609a2983a67bbd6c84ef2`, `exit_status=0`, four AXI DMA 7.1 K26 IPs all 256b stream/AXI-MM, length24, SG0, directional MM2S×3 and S2MM×1 and strict independent audit PASS. The original Vivado log contains four `BD 41-737` critical warnings for writing **read-only async property**. Source now only READS/REQUIRES the value0, and adds **one native regression method**: `test_read_only_clock_property_is_checked_not_written`. Do not erase original warnings or call this a full connected BD.
+
+**M05.12d.1 new `tests/test_m05_12d1_axis_graph.py`: 8 native methods, synthetic graph reports / actual source inspection; NOT Vivado.** One Icarus elaboration method skips in the *pre-install* Python suite when Icarus absent; the modified M05 CI then installs Icarus and explicitly compiles the new shell-wrapper after the standalone RTL tests. New native coverage:
+
+| Exact test method | Purpose |
+| --- | --- |
+| `test_four_connected_point_to_point_links_synthetic` | Accept exact 3→shell and shell→1 reported AXIS links in a synthetic transcript. |
+| `test_wrong_link_or_missing_trace_link_fail_closed` | Reject missing, duplicate, cross-wired trace and shared net aliases. |
+| `test_config_provenance_duplicate_unknown_and_partial_rejected` | Reject wrong SG, part/version/scope, missing/duplicate IP/shell and incomplete report. |
+| `test_wrapper_exactly_maps_existing_shell_ports` | Require exact 54 original shell ports mapped 1:1 by the new RTL wrapper. |
+| `test_wrapper_has_all_axi_stream_byte_qualifiers` | All 4 AXIS groups must carry 256-bit TDATA, 32-bit TKEEP, TLAST, TVALID, TREADY and interface annotations. |
+| `test_wrapper_native_icarus_elaboration_without_hls` | Icarus structural compile of new wrapper with actual, unchanged M05.11 RTL when installed; CI installs Icarus in a later mandatory stage. |
+| `test_audit_cli_is_read_only_and_fails_if_missing` | Original synthetic transcript unchanged by audit, missing file fails closed. |
+| `test_no_board_runner_and_actual_bd_net_proof_requirements` | Require in-memory Vivado RTL Module Reference, four real `connect_bd_intf_net`/net adjacency checks, unique evidence, forbid board, full BD, bitstream and DDR actions. |
+
+**Provenance:** The previously documented **258 M05+91 other=349 named native tests** at M05.12c source `c5fa13f433c9b0746892a71b029dc3ef9889eccb`. Following one clock-warning regression plus eight d1 methods, expect **267 M05 named tests** and **91 previous** = **358 named methods** once CI verifies. Note any skipped Icarus method in the preinstall Python run separately, and require the new mandatory post-install wrapper compile stage. No real Vivado four-DMA connected-graph result has been provided; its operator command is in [M05.12d.1 runbook](M05_12D1_OFFLINE_PL_AXIS_GRAPH_2026_11_08.md).
+
+---
+
 > **LATEST M05.12c TEST RESULT:** **Native CI independently VERIFIED at M05.12c implementation commit `c5fa13f433c9b0746892a71b029dc3ef9889eccb`:** [M05 workflow 42540072916](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42540072916) original job log explicitly records all seven new M05.12c tests `ok`, **258 M05 methods PASS**. The four previous workflows M01–M04 all PASS (20+21+28+22=91), giving **349/349 named native methods PASS**. These are host-side regression/synthetic report tests and prior standalone RTL smoke, **not Vivado evidence for the new four-IP customization**. Real M05.12c Vivado readback remains PENDING user. Complete explanation of seven exact new native tests is provided below; their mocked IP reports are not physical RTL data. Original operator M05.12b catalog-only Vivado PASS recorded separately.
 
 ## 2026-11-08 local — M05.12b owner Vivado catalog PASS and new M05.12c synthetic native tests
