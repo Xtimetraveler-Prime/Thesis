@@ -1,3 +1,5 @@
+> **POST-INCIDENT CLOSURE (2026-11-08 local / 2026-11-09 UTC):** Preserve the original failed evidence below unchanged. The owner re-ran the corrected complete genuine generated-HLS+shell XSim and independent replay on `bf20f33aa07df2b187bfb837ee5ba2a946cb7098`: new evidence `~/Thesis_Evidence/neuromorphic_v1_m05_11c_real_hls_20261109T000446Z_keEFQy` has **exit_status=0**, integrated RTL PASS and raw-word replay PASS, 24+0 committed. M05.11c offline gate now **ACCEPTED**; this incident record remains an audit of the earlier parser bug. [M05.12 forward plan](M05_12_DMA_ADMISSION_AND_IP_CATALOG_2026_11_08.md).
+
 # M05.11c first owner integrated XSim: parser-stage failure and corrective action (2026-11-08)
 
 ## Immutable original operator evidence — DO NOT REWRITE

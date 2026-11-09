@@ -1,3 +1,42 @@
+## 2026-11-08 owner M05.11c integrated XSim ACCEPTED; M05.12 new native test inventory
+
+**Original operator evidence:** `~/Thesis_Evidence/neuromorphic_v1_m05_11c_real_hls_20261109T000446Z_keEFQy`, checkout `bf20f33aa07df2b187bfb837ee5ba2a946cb7098`, `result.txt exit_status=0`, genuine Vivado 2025.2 `04_xsim.log` RTL PASS, independent `05_dma_frame_replay.log` PASS; success run 24/24 committed, late status4 failure run 8 provisional/0 committed, correct footer/TLAST and 148 output/HLS stalled cycles. The original failed postcheck evidence remains exit_status=1 and is NOT overwritten. This gate is verified **OFFLINE ORIGINAL HLS RTL plus transport shell only**; no real DMA/PS/DDR/physical route.
+
+### M05.12a — 15 NEW SYNTHETIC HOST-ONLY methods
+
+Source: `tests/test_m05_12_dma_contract.py`; design: `src/neuromorphic_accelerator_v1/m05_12_dma_contract.py`. Native GitHub Actions **PASS 15 methods** and all 249 M05 tests at `9577fc9b8f98b1d7a2c5f5334de8ba914fe4fdd7`; earlier 91 methods PASS; 340 total. Does **not** instantiate AXI DMA IP or run PS DDR/cache.
+
+| Exact native method | What is tested / invalid path |
+| --- | --- |
+| `test_exact_packed_buffers_s2mm_worst_case_and_source_counts` | 32B padded 2-neuron/one-synapse/event sources, 25-beat capacity, full session ID. |
+| `test_zero_count_mm2s_skipped_not_zero_length_submitted` | Empty synapse/event inputs have no DMA submission. |
+| `test_receive_capacity_includes_terminal_footer` | 1024×64 trace requires 2,097,184 bytes; insufficient 21-bit length rejected. |
+| `test_length_width_does_not_silently_split_stream_into_early_tlast` | 14-bit cap rejected for 1024 neurons; no unverified fragmented MM2S. |
+| `test_unsupported_ip_mode_width_or_identity_fail_closed` | Invalid bit-width, 128b streams, SG/micro, bad session IDs denied. |
+| `test_receive_must_be_armed_before_start_and_sticky_fault` | START before S2MM arm is FAULT, cannot silently reuse. |
+| `test_receive_buffer_ownership_before_arm` | Refuse to arm RX without declared device ownership. |
+| `test_positive_success_uses_actual_packet_and_full_input_completion` | Full MM2S completion + status0 + 25-beat packet produces 24 committed rows, one-use ledger. |
+| `test_duplicate_mm2s_and_false_dma_or_cache_proof_are_sticky` | Reject duplicate, short, missing input TLAST, stale cache proof or zero-length port. |
+| `test_hls_completion_must_be_latched_before_footer` | HLS status must be valid and latched before FINISH. |
+| `test_success_rejects_missing_mm2s_completion` | Do not accept nominal status0 with outstanding input DMA. |
+| `test_fail_closed_on_missing_tlast_cache_invalidity_or_write_fence` | RX TLAST, cache invalidate, byte length, write drain, quiescence and completion are all required. |
+| `test_status4_partial_frame_never_commits_and_requires_reset` | Late error drains 8 provisional rows, commits0, leaves sticky FAULT. |
+| `test_wrong_session_or_truncated_success_never_published` | Reject wrong footer session, missing terminal data or oversized trailing data. |
+| `test_explicit_abort_is_sticky_and_no_auto_recovery` | Timeout requires explicit full-system verified recovery; no silent restart. |
+
+### M05.12b — 2 NEW SOURCE-ONLY IP-probe safety methods (not real Vivado)
+
+Source: `tests/test_m05_12_ip_catalog.py`.
+
+| Exact native method | What is tested / invalid path |
+| --- | --- |
+| `test_bash_syntax_help_and_invalid_argument_do_not_need_vivado` | Runner syntax, --help and bad-flag rejection without Vivado or any device. |
+| `test_probe_is_catalog_only_with_no_hw_or_persistent_bd_actions` | Tcl is in-memory catalog only; rejects references to launch/synthesis, bitstreams, HW manager, opening a project, and other prohibited actions. |
+
+**Evidence boundary:** even if all 17 new tests pass, there is no actual Vivado 2025.2 AXI DMA catalog run (operator still required), actual four-direction system block diagram, two PS MMIO bases, DDR cache coherency, physical DMA completion or routed timing. [Full M05.12 development/verification spec](M05_12_DMA_ADMISSION_AND_IP_CATALOG_2026_11_08.md).
+
+---
+
 ## 2026-11-08 M05.11c original operator XSim postcheck failure, strict parser repair
 
 The original genuine Vivado 2025.2 *integrated* generated-HLS+shell testbench did **PASS**, with 24 status0 rows committed, then 8 status4 rows rejected, 148 output stalls, and correct TLAST footers. However the original overall `result.txt` recorded **exit_status=1**: `m05_11c_replay.py` rejected the SV bench's **legitimate** `M05_11C_ROW` diagnostic lines as unknown. Preserve operator folder `neuromorphic_v1_m05_11c_real_hls_20261108T235448Z_NzKhyY` (checkout `60c48fe32eed4adb28ba10e7c822fbed63abc3d0`). Full acceptance remains **PENDING owner rerun**. [Detailed failure and original proof boundary](M05_11C_FIRST_XSIM_POSTCHECK_FAILURE_2026_11_08.md).
