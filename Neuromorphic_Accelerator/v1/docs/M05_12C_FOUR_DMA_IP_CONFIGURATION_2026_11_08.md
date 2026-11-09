@@ -1,3 +1,5 @@
+> **NATIVE CI VERIFIED, VIVADO M05.12c STILL PENDING:** **Native CI independently VERIFIED at M05.12c implementation commit `c5fa13f433c9b0746892a71b029dc3ef9889eccb`:** [M05 workflow 42540072916](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42540072916) original job log explicitly records all seven new M05.12c tests `ok`, **258 M05 methods PASS**. The four previous workflows M01–M04 all PASS (20+21+28+22=91), giving **349/349 named native methods PASS**. These are host-side regression/synthetic report tests and prior standalone RTL smoke, **not Vivado evidence for the new four-IP customization**. Real M05.12c Vivado readback remains PENDING user.
+
 # M05.12c — Four-direction AXI DMA v7.1 offline IP customization gate
 
 **2026-11-08 local / 2026-11-09 UTC · Active M05 branch, draft PR #79, NO HARDWARE**
