@@ -34,6 +34,7 @@ sha256sum \
   "$ROOT/scripts/m05_12d3_real_hls_contract.py" \
   "$ROOT/scripts/m05_12d3_hls_connected_preflight.py" \
   "$ROOT/scripts/m05_12d3_address_validate_candidate.tcl" \
+  "$ROOT/scripts/m05_12d3_hls_clock_annotation.py" \
   "$ROOT/scripts/m05_12d3_address_validate_audit.py" \
   "$ROOT/scripts/run_m05_12d3_address_validate_candidate.sh" \
   "$ROOT/scripts/m05_12d3_native_axis_candidate_audit.py" \
@@ -51,6 +52,16 @@ if [[ -z "$RTL_DIR" || ! -f "$RTL_DIR/m05_rolling_replay.v" ]]; then
   echo "ERROR: actual authenticated original Vitis HLS RTL missing" >&2
   exit 1
 fi
+# Create only a DERIVED annotation-only clock-interface top inside fresh
+# owner evidence. The original source remains SHA-authenticated and untouched.
+# This is not an HLS resynthesis, neural RTL patch, or physical clock.
+HLS_ANNOTATED_TOP="$OUT/09_hls_clock_annotated_top.v"
+python3 "$ROOT/scripts/m05_12d3_hls_clock_annotation.py" \
+  --original-top "$RTL_DIR/m05_rolling_replay.v" \
+  --derived-top "$HLS_ANNOTATED_TOP" \
+  --manifest "$OUT/09_hls_clock_annotation_manifest.txt" \
+  --frequency-hz 96968727 2>&1 | tee "$OUT/09_hls_clock_annotation_stage.log"
+sha256sum "$HLS_ANNOTATED_TOP" >> "$OUT/source_sha256.txt"
 cd "$OUT"
 # Validation may legitimately fail even after all six address ranges passed.
 # Always preserve genuine stdout, partial graph/inventory and validation state
@@ -60,7 +71,7 @@ vivado -mode batch -nojournal -nolog \
   -source "$ROOT/scripts/m05_12d3_address_validate_candidate.tcl" \
   -tclargs "$ROOT" "$OUT/02_native_axis_graph.txt" "$RTL_DIR" "$PLAN" \
   "$OUT/06_real_ps_control_address_readback.txt" "$OUT/07_full_bd_validation.txt" \
-  "$OUT/05_read_only_address_inventory.txt" \
+  "$OUT/05_read_only_address_inventory.txt" "$HLS_ANNOTATED_TOP" \
   2>&1 | tee "$OUT/03_vivado.log"
 vivado_rc="${PIPESTATUS[0]}"
 set -e

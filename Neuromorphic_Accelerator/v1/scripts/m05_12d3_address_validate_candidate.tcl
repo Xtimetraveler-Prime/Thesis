@@ -6,7 +6,7 @@
 # This NEW offline trial attempts explicit real PS control address assignment
 # and full BD validation, but neither is accepted until owner Vivado proof.
 # NO physical PS/DDR/FPGA, bitstream, hardware server, or board automation.
-if {[llength $argv] != 7} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report> <read-only-six-segment-inventory>"}
+if {[llength $argv] != 8} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report> <read-only-six-segment-inventory> <DERIVED-METADATA-ONLY-HLS-TOP>"}
 set root [lindex $argv 0]
 set report_path [lindex $argv 1]
 set rtl_dir [lindex $argv 2]
@@ -14,6 +14,10 @@ set plan_path [lindex $argv 3]
 set mapped_path [lindex $argv 4]
 set validation_path [lindex $argv 5]
 set inventory_path [lindex $argv 6]
+set annotated_top [lindex $argv 7]
+if {![file isfile $annotated_top] || [file normalize $annotated_top] eq [file normalize [file join $rtl_dir m05_rolling_replay.v]]} {
+    error "require fresh clock-metadata-only staged HLS top; original generated Vitis RTL must remain read-only"
+}
 if {![file isdirectory $rtl_dir] || ![file exists [file join $rtl_dir m05_rolling_replay.v]]} {
     error "M05.12d.3 needs genuine Vitis generated RTL top directory"
 }
@@ -49,9 +53,16 @@ foreach file {
 set hls_sources [concat [glob -nocomplain -directory $rtl_dir *.v] \
                         [glob -nocomplain -directory $rtl_dir *.sv]]
 if {[llength $hls_sources] < 2} {error "no actual generated HLS Verilog siblings"}
+# Use every ORIGINAL authenticated HLS sibling unchanged. Only replace the
+# Vivado-facing HLS top with a separately archived attribute-only derivative.
+# Do not add the original and annotated top simultaneously (duplicate module).
 foreach source [lsort $hls_sources] {
+    if {[file normalize $source] eq [file normalize [file join $rtl_dir m05_rolling_replay.v]]} {
+        continue
+    }
     add_files -norecurse $source
 }
+add_files -norecurse $annotated_top
 update_compile_order -fileset sources_1
 create_bd_design m05_12d3_real_signed32_hls_six_control_address_candidate
 set ps [create_bd_cell -type ip -vlnv $ps_vlnv ps]
@@ -97,10 +108,37 @@ foreach {name mode} {M_AXI_HPM0_FPD MASTER S_AXI_HP0_FPD SLAVE} {
         error "PS real AXI port $name not present in correct $mode mode"
     }
 }
+# Current genuine owner validation log: PS downstream BD clock is 96,968,727
+# Hz, whereas the unannotated HLS Module Reference inferred 100,000,000 Hz,
+# causing five BD 41-237 errors and BD 41-967 unassociated HLS interfaces.
+# Require the *real offline configured PS clock pin* match the explicit
+# annotation trial. Never relabel the PS as 100MHz or claim hardware timing.
+set ps_pl0_hz [string trim [get_property CONFIG.FREQ_HZ [get_bd_pins -quiet ps/pl_clk0]]]
+puts "M05_D3_HLS_CLK_PS_ACTUAL|ps/pl_clk0|FREQ_HZ=$ps_pl0_hz"
+if {$ps_pl0_hz ne "96968727"} {
+    error "owner-observed PS pl_clk0 offline frequency changed ($ps_pl0_hz); regenerate truthful HLS clock metadata, do not force 100MHz"
+}
 set shell [create_bd_cell -type module -reference m05_12d_axis_shell_ref shell]
 if {[llength $shell] != 1} {error "original shell module reference unavailable"}
 set hls [create_bd_cell -type module -reference m05_rolling_replay hls]
 if {[llength $hls] != 1} {error "authentic Vitis generated HLS Module Reference unavailable"}
+# AMD UG994: the clock must explicitly declare ASSOCIATED_BUSIF for ALL five
+# native HLS AXI interfaces. Read back Vivado inference; never set read-only
+# CONFIG.FREQ_HZ directly on the resulting BD_INTF_PIN objects.
+set hls_clock [get_bd_pins -quiet hls/ap_clk]
+foreach key {CONFIG.ASSOCIATED_BUSIF CONFIG.ASSOCIATED_RESET CONFIG.FREQ_HZ} {
+    if {[lsearch -exact [list_property $hls_clock] $key] < 0} {
+        error "HLS metadata-only ap_clk did not expose $key in genuine Vivado Module Reference"
+    }
+}
+set hls_busif [string trim [get_property CONFIG.ASSOCIATED_BUSIF $hls_clock]]
+set hls_reset [string trim [get_property CONFIG.ASSOCIATED_RESET $hls_clock]]
+set hls_hz [string trim [get_property CONFIG.FREQ_HZ $hls_clock]]
+puts "M05_D3_HLS_CLK_BIND|ap_clk|ASSOCIATED_BUSIF=$hls_busif|ASSOCIATED_RESET=$hls_reset|FREQ_HZ=$hls_hz"
+if {[lsort [split $hls_busif ":"]] ne [lsort {neurons synapses external_events trace s_axi_control}] ||
+    $hls_reset ne "ap_rst_n" || $hls_hz ne $ps_pl0_hz} {
+    error "genuine HLS clock inference failed to bind all five native interfaces at actual PS PL0 frequency"
+}
 set ctrl [create_bd_cell -type ip -vlnv $sc_vlnv ctrl_sc]
 set mem [create_bd_cell -type ip -vlnv $sc_vlnv mem_sc]
 # Keep all five previously verified AXI-Lite bank identities and expose
