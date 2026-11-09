@@ -29,7 +29,7 @@ if {[llength $actual_bd] != 1 || [file normalize [lindex $actual_bd 0]] ne $bd} 
     error "original saved .bd is not one exact project file"
 }
 open_bd_design [lindex $actual_bd 0]
-set f [open $report x]
+set f [open $report {WRONLY CREAT EXCL}]
 puts $f "META|scope|M05_D4_1B_ORIGINAL_READ_ONLY_2025_2_BD_AXI_PROPERTIES"
 puts $f "PROJECT|$xpr"
 puts $f "BD|$bd"
