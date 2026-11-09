@@ -121,8 +121,9 @@ jobs:
           metadata=[{"name":n,"direction":dw[0],"packed_width":dw[1]}
                     for n,dw in ports.items()]
           (out/"m06_vendor_bfm_syntax_only.sv").write_text(render(metadata))
-          declarations=["module "+MODULE+" ("+
-                        ", ".join(ports.keys())+");"]
+          declarations=["module "+MODULE+" (aclk, aresetn, "+
+                        ", ".join(ports.keys())+");",
+                        "input wire aclk;", "input wire aresetn;"]
           for name,(direction,width) in ports.items():
               dimensions=f"[{width-1}:0] " if width>1 else ""
               declarations.append(f"{direction} wire {dimensions}{name};")
