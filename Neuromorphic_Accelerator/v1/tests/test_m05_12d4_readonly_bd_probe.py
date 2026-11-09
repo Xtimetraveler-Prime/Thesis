@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from m05_12d4_readonly_bd_audit import (
     CELLS, ENDPOINTS, PAIRS, PROPS, SCOPE, SUCCESS, TAIL, WIDTHS,
-    parse, verify_original_and_inventory,
+    parse, verify_original_and_inventory, witnessed_ocm_exclusion,
 )
 from m05_12d4_generated_hierarchy_index import token_hints
 
@@ -105,6 +105,32 @@ class D4ReadonlyBDTests(unittest.TestCase):
             self.assertEqual(diff[0]["classification"],
                              "UNRESOLVED_NEEDS_AXI_FIELD_PROOF")
             self.assertIn("BLOCKED", parsed["protocol_integrity"])
+
+    def test_ocm_1629_only_classifies_with_original_four_exclusions(self):
+        synthetic = [{
+            "id": "BD 41-1629", "line": 774,
+            "message": "Slave segment </ps/SAXIGP2/HP0_LPS_OCM> is excluded from all addressing paths.",
+        }]
+        dma = {"dma_ocm_excluded": 4, "dma_ddr_low_mapped": 4}
+        genuine_marker_shape = (
+            "PASS: M05.12d.3 four authentic DDR_LOW address mappings and "
+            "four excluded OCM segments independently audited "
+            "{'dma_ddr_low_mapped': 4, 'dma_ocm_excluded': 4} SYNTHETIC ONLY")
+        observed = witnessed_ocm_exclusion(synthetic, dma, genuine_marker_shape)
+        self.assertEqual(observed["original_log_line"], 774)
+        self.assertEqual(observed["classification"],
+                         "DOCUMENTED_INTENTIONAL_OCM_EXCLUSION_ONLY")
+        self.assertEqual(observed["axi_payload_semantics"],
+                         "NOT_IMPLIED_BY_OCM_EXCLUSION")
+        for warnings, summary, log in (
+            (synthetic + synthetic, dma, genuine_marker_shape),
+            (synthetic, {"dma_ocm_excluded": 3, "dma_ddr_low_mapped": 4}, genuine_marker_shape),
+            (synthetic, dma, "SYNTHETIC but no original independent PASS"),
+            ([dict(synthetic[0], message="OCM unrelated warning")], dma, genuine_marker_shape),
+        ):
+            with self.subTest(warnings=warnings, summary=summary), self.assertRaises(ValueError):
+                witnessed_ocm_exclusion(warnings, summary, log)
+
 
     def test_missing_original_d3_or_d4_attestation_rejected(self):
         with tempfile.TemporaryDirectory() as d:
