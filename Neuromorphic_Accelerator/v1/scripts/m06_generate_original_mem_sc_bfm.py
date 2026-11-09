@@ -20,7 +20,7 @@ SIM_PATH=SUBDIR+"/sim/"+MODULE+".sv"
 BD_PATH=SUBDIR+"/bd_0/sim/bd_13bd.v"
 SIM_SHA="0ec8a01dfc7c23825a8d5c8934c7f26dc5b92b924be88d51addd9e76555b8e12"
 BD_SHA="c3d7c5021f532aae29c860a63fb92da9529dac489f87a74267b9af82472444f3"
-REPORT_SHA="3c85a47ad2230efd730d30a07739c18ca00690b"
+REPORT_SHA="3c85a47ad2230efd730d30a07739c18ca00690b1a1e6ed7ad998fc6e39fd76d0"
 
 READ=dict(araddr=32,arlen=8,arsize=3,arburst=2,arlock=1,
           arcache=4,arprot=3,arqos=4,arvalid=1,arready=1,
