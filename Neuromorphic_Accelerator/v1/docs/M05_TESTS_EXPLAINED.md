@@ -1,3 +1,23 @@
+## 2026-11-08 local — M05.12b owner Vivado catalog PASS and new M05.12c synthetic native tests
+
+**M05.12b genuine operator-owned Vivado discovery ACCEPTED:** `~/Thesis_Evidence/neuromorphic_v1_m05_12_ip_catalog_20261109T001921Z_4ZocHi`, checkout `1dc439c9e06e8580008857db52ccba63d25965ca`, original result `exit_status=0`, actual K26 IP `xilinx.com:ip:axi_dma:7.1`. Defaults are SG1, both directions, 32bit stream/memory, length14 and addr32. No actual PS/DDR or configured 256b IP was verified by this earlier catalog run.
+
+**M05.12c new `tests/test_m05_12_dma_candidate.py`: seven independent SYNTHETIC NATIVE tests.** They do not invoke Vivado, accept raw connector evidence, configure an actual DMA core, access a board, or demonstrate PS/PL operation.
+
+| Actual method | Exact positive/negative test |
+| --- | --- |
+| `test_complete_four_direction_256b_24bit_direct_candidate` | Synthetic report admits exactly MM2S ×3 and S2MM ×1 with requested strict settings and direction pins. |
+| `test_wrong_width_length_mode_or_address_rejected` | Reject wrong AXIS/memory width, length14, SG enabled, disabled MM2S direction, alternate address width, micro/DRE/CDC changes. |
+| `test_direction_pins_missing_wrong_or_duplicate_rejected` | Reject missing/duplicate/direction-mismatched AXI4-Stream/AXI-MM pins. |
+| `test_provenance_missing_extra_duplicate_or_reordered_rejected` | Reject missing/duplicate cell, wrong IP/part, unexpected physical scope marker, missing source fields, extra/partial report. |
+| `test_cli_read_only_valid_and_missing_report_failure` | Separate Python CLI reads fixtures without modifying original content and fails on missing report. |
+| `test_runner_syntax_help_bad_arg_and_evidence_contract` | Bash `-n`, `--help`, invalid option, original evidence path/manifest/proof layout. |
+| `test_offline_tcl_has_strict_readback_and_no_hardware_actions` | Require in-memory K26/Vivado IP configuration+readback and forbid connected BD, hardware, implementation or core changes. |
+
+**Current status:** M05.12c source and tests committed, native CI to be assessed at its source commit. Genuine four-IP configuration readback **PENDING operator**; [M05.12c specification and runbook](M05_12C_FOUR_DMA_IP_CONFIGURATION_2026_11_08.md). The previous 251 M05+91 M01–M04=342 PASS were before these seven tests; expected 258 M05 +91=349 only once CI confirms. Do NOT conflate synthetic text transcript tests with actual Vivado 2025.2 proof.
+
+---
+
 > **LATEST CI VERIFICATION (2026-11-08 local):** **Current source+documentation commit `c3632f81cdf6f35fec6bdccc419044644ddefbd3` has all FIVE CI workflows PASS:** [M05 run 42539252472](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42539252472) original job log reports **251 M05 native tests PASS**, including both new M05.12b source-only IP probe safety tests; M01–M04 report **20+21+28+22=91 PASS**, for **342 named native PASS**. The M05.12b *real Vivado catalogue run is not yet done*; no actual AXI DMA IP/PS/DDR integration or board verification is claimed. All 17 M05.12 native test method names and their exact positive/negative meanings are explained below; these are **host/synthetic or static** only. Genuine M05.11c XSim acceptance and the earlier failed evidence are recorded separately below.
 
 ## 2026-11-08 owner M05.11c integrated XSim ACCEPTED; M05.12 new native test inventory
