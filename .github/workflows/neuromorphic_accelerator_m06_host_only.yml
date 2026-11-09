@@ -64,6 +64,30 @@ jobs:
           path: ${{ runner.temp }}/m06_matched.json
           if-no-files-found: error
           retention-days: 30
+      - name: Generate original S03-write and S00-S02-read vendor-BFM INPUT vectors only
+        run: |
+          python3 scripts/m06_vendor_axi_directed_vectors.py --output "$RUNNER_TEMP/m06_original_port_safe_bfm_inputs.json"
+          python3 - "$RUNNER_TEMP/m06_original_port_safe_bfm_inputs.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as fp:
+              value=json.load(fp)
+          assert value["scenario_count"] == 9
+          assert value["original_port_role_contract"] == {
+              "S00": "READ_ONLY", "S01": "READ_ONLY",
+              "S02": "READ_ONLY", "S03": "WRITE_ONLY"}
+          assert value["vendor_smartconnect_executed"] is False
+          assert value["true_vendor_axi_result"] == "NOT_EXECUTED"
+          assert all(c["source_port"] == "S03" for c in value["scenarios"]
+                     if c["direction"] == "WRITE")
+          print("PASS M06 ORIGINAL-PORT ROLE SAFE BFM INPUTS ONLY; NO VENDOR XSIM")
+          PY
+      - name: Preserve independent model-only original AXI port role stimuli
+        uses: actions/upload-artifact@v4
+        with:
+          name: m06-source-only-original-port-role-bfm-inputs
+          path: ${{ runner.temp }}/m06_original_port_safe_bfm_inputs.json
+          if-no-files-found: error
+          retention-days: 30
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
