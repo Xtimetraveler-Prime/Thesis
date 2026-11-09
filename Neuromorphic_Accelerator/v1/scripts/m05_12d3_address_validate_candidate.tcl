@@ -5,13 +5,14 @@
 # owner-authenticated evidence; this trial attempts the actual HLS connection.
 # It does NOT yet assign addresses or validate a complete system.
 # NO physical PS/DDR/FPGA, bitstream, hardware server, or board automation.
-if {[llength $argv] != 6} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report>"}
+if {[llength $argv] != 7} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report>"}
 set root [lindex $argv 0]
 set report_path [lindex $argv 1]
 set rtl_dir [lindex $argv 2]
 set plan_path [lindex $argv 3]
 set mapped_path [lindex $argv 4]
 set validation_path [lindex $argv 5]
+set inventory_path [lindex $argv 6]
 if {![file isdirectory $rtl_dir] || ![file exists [file join $rtl_dir m05_rolling_replay.v]]} {
     error "M05.12d.3 needs genuine Vitis generated RTL top directory"
 }
@@ -401,6 +402,48 @@ foreach {key expected} {
 } {
     lappend report "PSCFG|[string range $key 7 end]|[get_property $key $ps]"
 }
+# DISCOVERY ONLY: never assign a fabricated PS base or decode here.
+# Record original Vivado 2025.2 exposed address spaces and six actual slave
+# address-segment containers. This guides later explicit address mapping.
+# No new register segment can be invented. No missing segment may be silently invented.
+set addrfile [open $inventory_path w]
+puts $addrfile "META|scope|OFFLINE_READ_ONLY_VIVADO_ADDRESS_INVENTORY_NOT_DECODE_PROOF"
+foreach {bank interface} {
+    dma_neurons dma_neurons/S_AXI_LITE
+    dma_synapses dma_synapses/S_AXI_LITE
+    dma_external dma_external/S_AXI_LITE
+    dma_trace dma_trace/S_AXI_LITE
+    shell shell/s_axi
+    hls hls/s_axi_control
+} {
+    set candidates [get_bd_addr_segs -quiet -of_objects [require_intf $interface]]
+    if {[llength $candidates] == 0} {
+        puts $addrfile "SLAVE|$bank|$interface|NO_BD_SEGMENT_YET"
+    } else {
+        foreach segment $candidates {
+            # Genuine owner Vivado 2025.2 exposed all six bd_addr_seg
+            # objects, but their PATH property read back EMPTY here.
+            # UG835 get_bd_addr_segs returns the segment object itself,
+            # whose Tcl string representation is the canonical segment
+            # path (e.g. /dma_neurons/S_AXI_LITE/Reg). Do not fabricate
+            # a path, guess base addresses, or mislabel the object missing.
+            set observed [string trim $segment]
+            if {$observed eq "" || ![string match "/$bank/*" $observed]} {
+                error "actual BD address segment object path not anchored to $bank/$interface: '$observed'"
+            }
+            puts $addrfile "SLAVE|$bank|$interface|$observed"
+        }
+    }
+}
+set spaces [get_bd_addr_spaces -quiet -of_objects [require_intf ps/M_AXI_HPM0_FPD]]
+if {[llength $spaces] == 0} {puts $addrfile "SPACE|ps/M_AXI_HPM0_FPD|NO_BD_SPACE_YET"}
+foreach space $spaces {
+    puts $addrfile "SPACE|ps/M_AXI_HPM0_FPD|[get_property PATH $space]"
+}
+puts $addrfile "META|address_assignment|NOT_RUN"
+puts $addrfile "META|physical_ddr|NOT_AUTHORIZED"
+close $addrfile
+
 # Preserve the previously owner-PASS real HLS native-grouped physical Vivado
 # graph as a separately audited artifact before attempting ANY address changes.
 set graphfile [open $report_path w]
