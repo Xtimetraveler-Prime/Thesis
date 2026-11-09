@@ -141,6 +141,29 @@ class M0512D1AxisGraphTests(unittest.TestCase):
             self.assertNotEqual(err.returncode, 0)
             self.assertIn("ERROR: M05.12d.1", err.stderr)
 
+    def test_auto_source_management_before_module_reference_regression(self):
+        # Real owner Vivado 2025.2 failure eea1a56: filemgmt 56-176,
+        # 56-587 and BD 41-1690. UG994 requires source_mgmt_mode All.
+        tcl = (ROOT / "scripts/m05_12d1_axis_graph.tcl").read_text()
+        required = "set_property source_mgmt_mode All [current_project]"
+        self.assertEqual(tcl.count(required), 1)
+        self.assertLess(tcl.index("create_project -in_memory"), tcl.index(required))
+        self.assertLess(tcl.index(required), tcl.index("add_files -norecurse"))
+        self.assertLess(tcl.index(required), tcl.index("update_compile_order -fileset sources_1"))
+        self.assertLess(tcl.index("update_compile_order -fileset sources_1"),
+                        tcl.index("create_bd_cell -type module -reference"))
+        self.assertEqual(
+            tcl.count('get_property source_mgmt_mode [current_project]'), 2
+        )
+        self.assertIn(
+            'error "M05.12d.1 RTL module reference requires automatic compile order"',
+            tcl
+        )
+        for manual in ("source_mgmt_mode DisplayOnly",
+                       "source_mgmt_mode None",
+                       "reorder_files", "set_property source_mgmt_mode Manual"):
+            self.assertNotIn(manual, tcl)
+
     def test_no_board_runner_and_actual_bd_net_proof_requirements(self):
         bash = ROOT / "scripts/run_m05_12d1_axis_graph.sh"
         check = subprocess.run(["bash", "-n", str(bash)],

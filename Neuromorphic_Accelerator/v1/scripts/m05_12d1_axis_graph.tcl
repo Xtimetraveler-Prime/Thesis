@@ -9,6 +9,13 @@ set report_path [lindex $argv 1]
 set part xck26-sfvc784-2LV-c
 set vlnv xilinx.com:ip:axi_dma:7.1
 create_project -in_memory -part $part
+# AMD UG994 requires automatic source management for RTL Module References.
+# An in-memory Vivado project may otherwise use MANUAL compile order, which
+# causes filemgmt 56-176 / 56-587 and BD 41-1690 on create_bd_cell.
+set_property source_mgmt_mode All [current_project]
+if {[string trim [get_property source_mgmt_mode [current_project]]] ne "All"} {
+    error "M05.12d.1 cannot enable automatic source management before adding RTL"
+}
 if {[llength [get_ipdefs -all -quiet $vlnv]] != 1} {
     error "K26 Vivado IP AXI DMA v7.1 not available"
 }
@@ -24,6 +31,10 @@ foreach file {
     add_files -norecurse $src
 }
 update_compile_order -fileset sources_1
+# Fail before creating the BD if compile-order mode has changed unexpectedly.
+if {[string trim [get_property source_mgmt_mode [current_project]]] ne "All"} {
+    error "M05.12d.1 RTL module reference requires automatic compile order"
+}
 create_bd_design m05_12d1_pl_stream_only
 set refcell [create_bd_cell -type module -reference m05_12d_axis_shell_ref shell]
 if {[llength $refcell] != 1} {error "RTL module reference failed"}
