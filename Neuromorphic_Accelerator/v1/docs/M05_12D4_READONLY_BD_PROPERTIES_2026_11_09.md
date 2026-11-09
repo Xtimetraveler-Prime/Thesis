@@ -1,3 +1,5 @@
+> **OWNER D4.1b ORIGINAL VIVADO GENUINELY RUN AND LIMITED GATE PASSED, 2026-11-09 UTC:** Owner supplied actual original folder ~/Thesis_Evidence/neuromorphic_v1_m05_12d4_readonly_bd_20261109T154700Z_yG0IsT, source SHA 541cc1742c3d20493af381999366d94cf0cfa4a3, result exit3, 23 original interfaces and 11 pair-nets independently checked, 382 original generated files/118 mem_sc confirmed; documented intentional original OCM exclusion 1, remaining 63 BD warnings UNRESOLVED. This earlier runbook's old D4.1b PENDING language is now historical. The **NEW single follow-up owner D4.2–D4.4 verification and complete commands** are [here](M05_12D4_PROTOCOL_GATE_2026_11_09.md). No source-only or model-file listing can prove genuine vendor downsize functionality. M05 OPEN, M06 NOT STARTED.
+
 # M05.12d.4 D4.1b — original Vivado 2025.2 read-only SmartConnect endpoint proof
 
 **2026-11-09 UTC — source/staging complete, genuine owner D4.1b run PENDING.** Current research branch, draft PR #79, M05 OPEN, M06 NOT STARTED. Preserve all original evidence, failed and passed.
