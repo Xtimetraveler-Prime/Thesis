@@ -9,7 +9,7 @@ create_bd_design m05_12c_unconnected_candidate
 set result [list "META|part|$part" "META|vlnv|$vlnv" "META|scope|UNCONNECTED_OFFLINE_CANDIDATE_NO_PS_DDR"]
 foreach {name role} {dma_neurons MM2S dma_synapses MM2S dma_external MM2S dma_trace S2MM} {
     set cell [create_bd_cell -type ip -vlnv $vlnv $name]
-    set cfg [list CONFIG.c_include_sg 0 CONFIG.c_sg_length_width 24 CONFIG.c_addr_width 32 CONFIG.c_prmry_is_aclk_async 0 CONFIG.c_micro_dma 0 CONFIG.c_include_mm2s_dre 0 CONFIG.c_include_s2mm_dre 0]
+    set cfg [list CONFIG.c_include_sg 0 CONFIG.c_sg_length_width 24 CONFIG.c_addr_width 32 CONFIG.c_micro_dma 0 CONFIG.c_include_mm2s_dre 0 CONFIG.c_include_s2mm_dre 0]
     if {$role eq "MM2S"} {
         set cfg [concat $cfg [list CONFIG.c_include_mm2s 1 CONFIG.c_include_s2mm 0 CONFIG.c_m_axi_mm2s_data_width 256 CONFIG.c_m_axis_mm2s_tdata_width 256]]
     } else {
@@ -17,7 +17,10 @@ foreach {name role} {dma_neurons MM2S dma_synapses MM2S dma_external MM2S dma_tr
     }
     set_property -dict $cfg $cell
     lappend result "CELL|$name|$role"
-    foreach {key wanted} $cfg {
+    # c_prmry_is_aclk_async is READ-ONLY in Vivado 2025.2 AXI DMA v7.1.
+    # Do not set it: original owner run emitted four BD 41-737 CRITICAL WARNINGs.
+    # Still require and record its ACTUAL value 0; never waive async check.
+    foreach {key wanted} [concat $cfg [list CONFIG.c_prmry_is_aclk_async 0]] {
         if {[lsearch -exact [list_property $cell] $key] < 0} {error "$name missing IP property $key"}
         set actual [string trim [get_property $key $cell]]
         if {$actual ne "$wanted"} {error "$name IP readback $key=$actual expected=$wanted"}

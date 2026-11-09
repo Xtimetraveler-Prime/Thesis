@@ -125,6 +125,19 @@ class M0512DMACandidateTests(unittest.TestCase):
                 continue  # These are in Tcl, not runner.
             self.assertIn(term, src)
 
+    def test_read_only_clock_property_is_checked_not_written(self):
+        # Original real Vivado 2025.2 run returned BD 41-737 (read-only).
+        # A successful readback=0 remains a strict requirement.
+        tcl = (ROOT / "scripts/m05_12_dma_candidate.tcl").read_text()
+        cfg_line = next(line for line in tcl.splitlines()
+                        if line.strip().startswith("set cfg [list "))
+        self.assertNotIn("CONFIG.c_prmry_is_aclk_async", cfg_line)
+        self.assertIn(
+            "foreach {key wanted} [concat $cfg [list CONFIG.c_prmry_is_aclk_async 0]]",
+            tcl,
+        )
+        self.assertIn("readback $key", tcl)
+
     def test_offline_tcl_has_strict_readback_and_no_hardware_actions(self):
         shell = (ROOT / "scripts/run_m05_12_dma_candidate.sh").read_text()
         tcl = (ROOT / "scripts/m05_12_dma_candidate.tcl").read_text()
