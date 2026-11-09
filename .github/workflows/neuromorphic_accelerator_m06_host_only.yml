@@ -36,6 +36,32 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m03*.py' -q
           python3 -m unittest discover -s tests -p 'test_m04*.py' -q
           python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+      - name: Matched locality x block x budget neural model sweep (NO VENDOR AXI)
+        run: |
+          python3 scripts/m06_matched_source_study.py --output "$RUNNER_TEMP/m06_matched.json"
+          python3 - "$RUNNER_TEMP/m06_matched.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as fp:
+              data = json.load(fp)
+          assert data["schema_rows"] == 12
+          assert data["model_only"] is True
+          assert data["physical_board"] == "NOT_AUTHORIZED"
+          for row in data["rows"]:
+              assert row["independent_m02_neural_oracle"] == "PASS_SOURCE_ONLY"
+              assert row["vendor_smartconnect"] == "NOT_SIMULATED"
+              print("M06_MODEL_ONLY",
+                    row["group_neurons"], row["resident_budget_bytes"],
+                    row["locality"], "bytes=", row["source_only_model_transfer_bytes"],
+                    "tx=", row["source_only_model_transactions"],
+                    "spikes=", row["neural_spikes"])
+          PY
+      - name: Preserve reproducible source-only traffic grid artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m06-model-only-matched-locality-grid
+          path: ${{ runner.temp }}/m06_matched.json
+          if-no-files-found: error
+          retention-days: 30
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
