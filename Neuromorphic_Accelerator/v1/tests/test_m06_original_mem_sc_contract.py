@@ -120,11 +120,12 @@ class M06OriginalVivadoProbeTests(unittest.TestCase):
     def test_malformed_sim_compile_order_not_promoted_to_pass(self):
         with tempfile.TemporaryDirectory() as d:
             orig, report, log = synthetic_fixture(Path(d))
-            report.write_text(report.read_text().replace(
+            original = report.read_text()
+            report.write_text(original.replace(
                 "SIM_QUERY|OK|2", "SIM_QUERY|OK|3"))
             with self.assertRaisesRegex(ValueError, "file count"):
                 inspect(orig, report, log)
-            report.write_text(report.read_text().replace(
+            report.write_text(original.replace(
                 "SIM_QUERY|OK|2", "SIM_QUERY|ERROR|not compiled"))
             result = inspect(orig, report, log)
             self.assertEqual(result["source_compile_count"], 2)
