@@ -2,6 +2,11 @@
 
 This independent prototype runs M02 rev1 neural math using the exact M06
 BlockCache rather than keeping working voltages in a resident Python array.
+For records >=6 bytes, fields [0:2] hold signed16 voltage and [2:6]
+hold the last completed logical tick + 1 (zero = never evaluated); a
+future watermark is rejected. Records of 2..5 bytes retain voltage-only
+compatibility with the initial M06 source baseline.
+
 Only the small/nonzero membership bitmap, static neuron CONFIG, and a future
 delivery queue remain on-chip *conceptually*. Synapse adjacency is currently
 on-chip: paged synapses are a future M06 design decision. The full trace is
@@ -136,6 +141,13 @@ def replay_with_paging(net: Network, inputs: Iterable[InputCurrent], *,
                 # The only *runtime* voltage source is page-loaded state.
                 record = cache.read(neuron)
                 prev = int.from_bytes(record[:2], "little", signed=True)
+                if len(record) >= 6:
+                    last_completed = int.from_bytes(record[2:6], "little")
+                    # 0 means never evaluated in this logical epoch, and
+                    # t+1 represents the last completed update at tick t.
+                    # The cache must preserve this watermark over eviction.
+                    if last_completed > t:
+                        raise ResidencyError("future last-update tick in paged neuron state")
                 cell = net.neurons[neuron]
                 product = prev * net.decay_num
                 decayed = ((abs(product) // net.decay_den)
@@ -145,8 +157,12 @@ def replay_with_paging(net: Network, inputs: Iterable[InputCurrent], *,
                 if value >= cell.threshold:
                     spikes.append(neuron)
                     value = cell.reset_v
-                cache.write(neuron, value.to_bytes(2, "little", signed=True)
-                            + record[2:])
+                new_record = value.to_bytes(2, "little", signed=True)
+                if len(record) >= 6:
+                    new_record += (t + 1).to_bytes(4, "little") + record[6:]
+                else:
+                    new_record += record[2:]
+                cache.write(neuron, new_record)
                 if value != 0:
                     next_nonzero.add(neuron)
                 observer_voltage[neuron] = value
