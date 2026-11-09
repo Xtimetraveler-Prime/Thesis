@@ -27,7 +27,8 @@ static_assert(M05_ROLL_MAX_CURRENT <=
 // ownership/base address is a SEPARATE platform contract; no host per tick.
 static std::uint32_t m06_ensure_page(
     std::uint32_t block, std::uint32_t usable,
-    std::uint32_t *canonical_words,
+    std::uint32_t *canonical_read_words,
+    std::uint32_t *canonical_write_words,
     std::uint32_t data[M06_PAGED_MAX_SLOTS][M06_PAGED_PAGE_WORDS],
     std::uint8_t valid[M06_PAGED_MAX_SLOTS],
     std::uint8_t dirty[M06_PAGED_MAX_SLOTS],
@@ -58,13 +59,13 @@ static std::uint32_t m06_ensure_page(
         ++metrics.page_evictions;
         if (dirty[victim]) {
             for (std::uint32_t w=0;w<M06_PAGED_PAGE_WORDS;++w)
-                canonical_words[tag[victim]*M06_PAGED_PAGE_WORDS+w]=data[victim][w];
+                canonical_write_words[tag[victim]*M06_PAGED_PAGE_WORDS+w]=data[victim][w];
             dirty[victim]=0;
             ++metrics.dirty_writebacks;
         }
     }
     for (std::uint32_t w=0;w<M06_PAGED_PAGE_WORDS;++w)
-        data[victim][w]=canonical_words[block*M06_PAGED_PAGE_WORDS+w];
+        data[victim][w]=canonical_read_words[block*M06_PAGED_PAGE_WORDS+w];
     valid[victim]=1;
     dirty[victim]=0;
     tag[victim]=block;
@@ -84,7 +85,8 @@ std::uint32_t m06_paged_rolling_replay(
     hls::stream<M05IntegratedExternal> &external_events,
     hls::stream<M05IntegratedTraceEntry> &trace,
     hls::stream<M06PageMetrics> &metrics,
-    std::uint32_t *canonical_words,
+    std::uint32_t *canonical_read_words,
+    std::uint32_t *canonical_write_words,
     std::uint32_t neuron_count,
     std::uint32_t synapse_count,
     std::uint32_t external_count,
@@ -98,8 +100,10 @@ std::uint32_t m06_paged_rolling_replay(
 #pragma HLS INTERFACE axis port=external_events
 #pragma HLS INTERFACE axis port=trace
 #pragma HLS INTERFACE axis port=metrics
-#pragma HLS INTERFACE m_axi port=canonical_words offset=slave bundle=gmem depth=16384
-#pragma HLS INTERFACE s_axilite port=canonical_words bundle=control
+#pragma HLS INTERFACE m_axi port=canonical_read_words offset=slave bundle=gmem_read depth=16384 max_read_burst_length=16
+#pragma HLS INTERFACE m_axi port=canonical_write_words offset=slave bundle=gmem_write depth=16384 max_write_burst_length=16
+#pragma HLS INTERFACE s_axilite port=canonical_read_words bundle=control
+#pragma HLS INTERFACE s_axilite port=canonical_write_words bundle=control
 #pragma HLS INTERFACE s_axilite port=neuron_count bundle=control
 #pragma HLS INTERFACE s_axilite port=synapse_count bundle=control
 #pragma HLS INTERFACE s_axilite port=external_count bundle=control
@@ -194,10 +198,10 @@ std::uint32_t m06_paged_rolling_replay(
         // The upper 16b of word0 are reserved, and word1 is tick+1.
         // The other words are reserved and initialized to zero.
         const std::uint32_t word=(canonical_first_neuron+i)*4u;
-        canonical_words[word+0]=static_cast<std::uint16_t>(p.initial_voltage);
-        canonical_words[word+1]=0;
-        canonical_words[word+2]=0;
-        canonical_words[word+3]=0;
+        canonical_write_words[word+0]=static_cast<std::uint16_t>(p.initial_voltage);
+        canonical_write_words[word+1]=0;
+        canonical_write_words[word+2]=0;
+        canonical_write_words[word+3]=0;
         bias[i] = static_cast<std::int16_t>(p.bias);
         threshold[i] = static_cast<std::int16_t>(p.threshold);
         reset[i] = static_cast<std::int16_t>(p.reset_voltage);
@@ -263,7 +267,7 @@ std::uint32_t m06_paged_rolling_replay(
                 const std::uint32_t pg=global/16u;
                 const std::uint32_t row=(global%16u)*4u;
                 const std::uint32_t pslot=m06_ensure_page(
-                    pg,resident_slots,canonical_words,page_words,
+                    pg,resident_slots,canonical_read_words,canonical_write_words,page_words,
                     page_valid,page_dirty,page_tag,page_age,
                     page_clock,page_metrics);
                 if (page_words[pslot][row+1]>t)
@@ -336,7 +340,7 @@ std::uint32_t m06_paged_rolling_replay(
             // page cache; no duplicated full-network voltage RAM exists.
             const std::uint32_t global=canonical_first_neuron+i;
             const std::uint32_t pslot=m06_ensure_page(
-                global/16u,resident_slots,canonical_words,page_words,
+                global/16u,resident_slots,canonical_read_words,canonical_write_words,page_words,
                 page_valid,page_dirty,page_tag,page_age,
                 page_clock,page_metrics);
             out.voltage = m06_sign16(
@@ -352,7 +356,7 @@ std::uint32_t m06_paged_rolling_replay(
     for (std::uint32_t ps=0;ps<resident_slots;++ps) {
         if (!page_valid[ps] || !page_dirty[ps]) continue;
         for (std::uint32_t w=0;w<M06_PAGED_PAGE_WORDS;++w)
-            canonical_words[page_tag[ps]*M06_PAGED_PAGE_WORDS+w]=
+            canonical_write_words[page_tag[ps]*M06_PAGED_PAGE_WORDS+w]=
                 page_words[ps][w];
         page_dirty[ps]=0;
         ++page_metrics.dirty_writebacks;
