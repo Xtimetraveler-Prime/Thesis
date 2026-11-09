@@ -162,6 +162,40 @@ class M0512D3NativeAXISCandidateTests(unittest.TestCase):
         status = audit_address_inventory(example)
         self.assertEqual(status["slave_segments_exposed"], 1)
 
+    def test_owner_six_segment_empty_path_property_regression(self):
+        # Actual owner Vivado 2025.2 found six segment objects but
+        # get_property PATH recorded six empty strings, not missing objects.
+        # The old inventory must FAIL; using actual object path handles is
+        # required to pass a schema with all six independent slave regions.
+        original = address_fixture()
+        failed_inventory = original.replace("NO_BD_SEGMENT_YET", "")
+        with self.assertRaisesRegex(ValueError, "invalid address slave segment path"):
+            audit_address_inventory(failed_inventory)
+        # Only synthetic strings for host tests; ORIGINAL Vivado evidence
+        # must supply its own object identities in a fresh rerun.
+        mapped = original
+        for bank, intf in SLAVE_INTERFACES.items():
+            mapped = mapped.replace(
+                f"SLAVE|{bank}|{intf}|NO_BD_SEGMENT_YET",
+                f"SLAVE|{bank}|{intf}|/{intf}/Reg"
+            )
+        audit = audit_address_inventory(mapped)
+        self.assertEqual(audit["control_slave_banks_inventoried"], 6)
+        self.assertEqual(audit["slave_segments_exposed"], 6)
+        self.assertEqual(audit["assigned"], 0)
+
+    def test_vivado_tcl_records_real_segment_object_not_empty_path_property(self):
+        tcl = (ROOT / "scripts/m05_12d3_native_axis_candidate.tcl").read_text()
+        self.assertIn("set candidates [get_bd_addr_segs -quiet -of_objects", tcl)
+        self.assertIn("set observed [string trim $segment]", tcl)
+        self.assertIn('puts $addrfile "SLAVE|$bank|$interface|$observed"', tcl)
+        self.assertNotIn("[get_property PATH $segment]", tcl)
+        self.assertIn('![string match "/$bank/*" $observed]', tcl)
+        # The existing, immutable failed owner report still records exit 1.
+        # This next-stage parser source NEVER changes original HLS/Vivado.
+        old = (ROOT / "scripts/m05_12d3_hls_connected_candidate.tcl").read_text()
+        self.assertIn("link_hls_native", old)
+
     def test_readonly_address_inventory_rejects_fabricated_mappings(self):
         good = address_fixture()
         row = "SLAVE|hls|hls/s_axi_control|NO_BD_SEGMENT_YET\n"
@@ -170,6 +204,8 @@ class M0512D3NativeAXISCandidateTests(unittest.TestCase):
             good.replace(row, row * 2, 1),
             good.replace(row, "SLAVE|hls|shell/s_axi|NO_BD_SEGMENT_YET\n", 1),
             good.replace(row, "SLAVE|hls|hls/s_axi_control|/dma_trace/S_AXI_LITE/Reg\n", 1),
+            good.replace(row, "SLAVE|hls|hls/s_axi_control|/hls/s_axi_fake/Reg\n", 1),
+            good.replace(row, "SLAVE|hls|hls/s_axi_control|/hls/s_axi_control/Reg bad\n", 1),
             good.replace("META|address_assignment|NOT_RUN",
                          "META|address_assignment|ASSIGNED", 1),
             good.replace("META|physical_ddr|NOT_AUTHORIZED",
