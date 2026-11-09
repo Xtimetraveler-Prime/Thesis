@@ -22,8 +22,10 @@ vivado -version | grep -q '2025.2' || {
   exit 2
 }
 ROOT_EVIDENCE="$HOME/Thesis_Evidence"
-if [[ -n "$M05_EVIDENCE_ROOT" ]]; then
-  ROOT_EVIDENCE="$M05_EVIDENCE_ROOT"
+if [[ -v M05_EVIDENCE_ROOT ]]; then
+  if [[ -n "$M05_EVIDENCE_ROOT" ]]; then
+    ROOT_EVIDENCE="$M05_EVIDENCE_ROOT"
+  fi
 fi
 mkdir -p "$ROOT_EVIDENCE"
 OUT="$(mktemp -d "$ROOT_EVIDENCE/neuromorphic_v1_m05_12_ip_catalog_$(date -u +%Y%m%dT%H%M%SZ)_XXXXXX")"
