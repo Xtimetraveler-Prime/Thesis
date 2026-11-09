@@ -48,7 +48,7 @@ def review(original: Path, d4old: Path, d4bd: Path) -> dict:
     reportpath = old / "03_bd_interface_properties.txt"
     auditpath = old / "06_independent_bd_audit.json"
     vendor_log = logpath.read_text()
-    if vendor_log.count(SUCCESS) != 1 or "ERROR:" in vendor_log:
+    if sum(line.strip() == SUCCESS for line in vendor_log.splitlines()) != 1 or "ERROR:" in vendor_log:
         raise ValueError("D4.1b genuine Vivado original property query did not complete")
     parsed = parse(reportpath.read_text(), original)
     audit = json.loads(auditpath.read_text())
