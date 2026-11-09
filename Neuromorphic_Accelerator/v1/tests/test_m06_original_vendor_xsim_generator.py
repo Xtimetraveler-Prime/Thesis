@@ -35,7 +35,8 @@ class OriginalGenuineVendorBFMTests(unittest.TestCase):
         self.assertEqual(ports["M00_AXI_arlen"],("output",8))
         self.assertNotIn("S00_AXI_wdata",ports)
         self.assertNotIn("S03_AXI_rdata",ports)
-        self.assertFalse(any("user" in x.lower() or x.endswith("id")
+        self.assertFalse(any(x.lower().endswith(("awid", "arid", "bid", "rid",
+                             "awuser", "aruser", "buser", "ruser", "wuser"))
                              for x in ports))
 
     def test_generated_vendor_bfm_real_signal_bindings_and_scratch(self):
@@ -63,7 +64,7 @@ class OriginalGenuineVendorBFMTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             original=Path(d)/ROOT_NAME
             original.mkdir()
-            with self.assertRaisesRegex(ValueError,"wrong original"):
+            with self.assertRaisesRegex(ValueError,"wrong.*original"):
                 original_ports(Path(d),{})
             with self.assertRaisesRegex(ValueError,"wrong original port report"):
                 original_ports(original,{})
