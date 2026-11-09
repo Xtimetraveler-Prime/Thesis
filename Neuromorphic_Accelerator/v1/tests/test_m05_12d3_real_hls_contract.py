@@ -32,6 +32,41 @@ def synthetic_declarations() -> str:
     return "".join(lines)
 
 
+
+def observed_vitis_2025_2_declarations() -> str:
+    """Owner's ORIGINAL HLS top declaration syntax (2026-11-09 failed gate).
+
+    Actual 2025.2 source has non-ANSI port names, plain numeric native
+    AXIS ranges, and parameterized AXI4-Lite address/data/strobe widths.
+    These lines are a host parser regression fixture, NOT replacement RTL.
+    """
+    source = synthetic_declarations()
+    source = source.replace("  input wire unused;\n", "  input wire unused;\n")
+    prefix = (
+        "parameter C_S_AXI_CONTROL_DATA_WIDTH = 32;\n"
+        "parameter C_S_AXI_CONTROL_ADDR_WIDTH = 7;\n"
+        "parameter C_S_AXI_DATA_WIDTH = 32;\n"
+        "parameter C_S_AXI_CONTROL_WSTRB_WIDTH = (32 / 8);\n"
+        "parameter C_S_AXI_WSTRB_WIDTH = (32 / 8);\n"
+    )
+    source = source.replace("  input wire ap_clk;", prefix + "input ap_clk;")
+    for name, width_param in (
+        ("s_axi_control_AWADDR", "C_S_AXI_CONTROL_ADDR_WIDTH"),
+        ("s_axi_control_ARADDR", "C_S_AXI_CONTROL_ADDR_WIDTH"),
+        ("s_axi_control_WDATA", "C_S_AXI_CONTROL_DATA_WIDTH"),
+        ("s_axi_control_RDATA", "C_S_AXI_CONTROL_DATA_WIDTH"),
+        ("s_axi_control_WSTRB", "C_S_AXI_CONTROL_WSTRB_WIDTH"),
+    ):
+        direction = PORTS[name][0]
+        width = PORTS[name][1]
+        source = source.replace(
+            f"  {direction} wire [{width - 1}:0] {name};",
+            f"{direction}  [{width_param} - 1:0] {name};"
+        )
+    return source
+
+
+
 class M0512D3RealHLSContractTests(unittest.TestCase):
     def test_synthetic_port_parser_matches_accepted_xsim_wiring(self):
         pins = verify_top_contract(synthetic_declarations())
@@ -93,6 +128,63 @@ class M0512D3RealHLSContractTests(unittest.TestCase):
             "  input wire [191:0] trace_TDATA,\n"
             "  output wire trace_TREADY);\nendmodule\n"
         )["trace_TDATA"], ("input", 192))
+
+    def test_owner_observed_vitis_2025_2_parameterized_axi_lite_pins(self):
+        # Real 2025.2 top uses C_S_AXI_CONTROL_*_WIDTH expressions.
+        source = observed_vitis_2025_2_declarations()
+        ports = verify_top_contract(source)
+        self.assertEqual(ports["s_axi_control_AWADDR"], ("input", 7))
+        self.assertEqual(ports["s_axi_control_ARADDR"], ("input", 7))
+        self.assertEqual(ports["s_axi_control_WDATA"], ("input", 32))
+        self.assertEqual(ports["s_axi_control_RDATA"], ("output", 32))
+        self.assertEqual(ports["s_axi_control_WSTRB"], ("input", 4))
+        self.assertEqual(ports["synapses_TDATA"], ("input", 192))
+        self.assertEqual(ports["trace_TDATA"], ("output", 192))
+
+    def test_parameterized_width_mismatch_not_silently_accepted(self):
+        source = observed_vitis_2025_2_declarations()
+        for original, wrong in (
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = 8"),
+            ("C_S_AXI_CONTROL_DATA_WIDTH = 32",
+             "C_S_AXI_CONTROL_DATA_WIDTH = 64"),
+            ("C_S_AXI_CONTROL_WSTRB_WIDTH = (32 / 8)",
+             "C_S_AXI_CONTROL_WSTRB_WIDTH = (64 / 8)"),
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = 0"),
+        ):
+            with self.subTest(mutation=wrong):
+                with self.assertRaises(ValueError):
+                    verify_top_contract(source.replace(original, wrong, 1))
+
+    def test_reject_unknown_duplicate_cyclic_and_unsafe_vitis_parameters(self):
+        source = observed_vitis_2025_2_declarations()
+        for original, wrong in (
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = UNKNOWN_AXI_WIDTH"),
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = C_S_AXI_CONTROL_ADDR_WIDTH"),
+            ("C_S_AXI_CONTROL_WSTRB_WIDTH = (32 / 8)",
+             "C_S_AXI_CONTROL_WSTRB_WIDTH = (32 / 0)"),
+            ("C_S_AXI_CONTROL_WSTRB_WIDTH = (32 / 8)",
+             "C_S_AXI_CONTROL_WSTRB_WIDTH = (33 / 8)"),
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = __import__('os').system('true')"),
+            ("C_S_AXI_CONTROL_ADDR_WIDTH = 7",
+             "C_S_AXI_CONTROL_ADDR_WIDTH = 7;\nparameter C_S_AXI_CONTROL_ADDR_WIDTH = 7"),
+        ):
+            with self.subTest(wrong=wrong):
+                with self.assertRaises(ValueError):
+                    verify_top_contract(source.replace(original, wrong, 1))
+
+    def test_reject_missing_or_duplicated_hls_header_port(self):
+        source = observed_vitis_2025_2_declarations()
+        with self.assertRaises(ValueError):
+            verify_top_contract(source.replace("  s_axi_control_AWADDR,\n", "", 1))
+        with self.assertRaises(ValueError):
+            verify_top_contract(source.replace("  s_axi_control_AWADDR,\n",
+                                               "  s_axi_control_AWADDR,\n"
+                                               "  s_axi_control_AWADDR,\n", 1))
 
     def test_refuses_unaccepted_or_missing_real_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
