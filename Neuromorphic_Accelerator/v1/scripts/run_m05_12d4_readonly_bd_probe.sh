@@ -42,6 +42,8 @@ sha256sum \
   "$ROOT/scripts/m05_12d4_generated_hierarchy_index.py" \
   "$ROOT/scripts/run_m05_12d4_readonly_bd_probe.sh" \
   "$ORIGINAL/03_vivado.log" \
+  "$ORIGINAL/11_dma_hp0_memory_readback.txt" \
+  "$ORIGINAL/12_independent_dma_hp0_memory_audit.log" \
   "$ORIGINAL/16_ip_output_sha256_manifest.txt" \
   "$ORIGINAL/13_file_backed_project/m05_d3_output_products.xpr" \
   "$ORIGINAL/13_file_backed_project/m05_d3_output_products.srcs/sources_1/bd/m05_12d3_real_signed32_hls_six_control_address_candidate/m05_12d3_real_signed32_hls_six_control_address_candidate.bd" \
@@ -75,6 +77,8 @@ sha256sum \
   "$ROOT/scripts/m05_12d4_generated_hierarchy_index.py" \
   "$ROOT/scripts/run_m05_12d4_readonly_bd_probe.sh" \
   "$ORIGINAL/03_vivado.log" \
+  "$ORIGINAL/11_dma_hp0_memory_readback.txt" \
+  "$ORIGINAL/12_independent_dma_hp0_memory_audit.log" \
   "$ORIGINAL/16_ip_output_sha256_manifest.txt" \
   "$ORIGINAL/13_file_backed_project/m05_d3_output_products.xpr" \
   "$ORIGINAL/13_file_backed_project/m05_d3_output_products.srcs/sources_1/bd/m05_12d3_real_signed32_hls_six_control_address_candidate/m05_12d3_real_signed32_hls_six_control_address_candidate.bd" \
