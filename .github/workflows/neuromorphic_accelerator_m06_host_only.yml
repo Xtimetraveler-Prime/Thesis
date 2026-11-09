@@ -27,8 +27,10 @@ jobs:
           python3 --version
       - name: Python syntax for the whole v1 source tree
         run: python3 -m compileall -q src scripts tests
-      - name: M06 original vendor Vivado owner runner Bash syntax only (NO VIVADO)
-        run: bash -n scripts/run_m06_original_mem_sc_port_contract.sh
+      - name: M06 original vendor Vivado owner scripts Bash syntax only (NO VIVADO)
+        run: |
+          bash -n scripts/run_m06_original_mem_sc_port_contract.sh
+          bash -n scripts/run_m06_original_mem_sc_vendor_xsim.sh
       - name: M06 canonical-state block residency POSITIVE AND NEGATIVE source-only tests
         run: python3 -m unittest discover -s tests -p 'test_m06*.py' -v
       - name: Inherited accepted M01/M02/M03/M04/M05 source regressions
@@ -106,6 +108,35 @@ jobs:
             | tee "$RUNNER_TEMP/m06_residency_fsm.log"
           grep -Fq "M06_RESIDENCY_FSM_RTL_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
           grep -Fq "M06_RESIDENCY_FSM_DIRTY_WB_QUARANTINE_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
+      - name: XSim original 96-pin TB Icarus SYNTAX CHECK against FAKE stub ONLY (DO NOT RUN)
+        run: |
+          python3 - "$RUNNER_TEMP" <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,'scripts')
+          from m06_generate_original_mem_sc_bfm import (
+              MODULE, required_ports, render)
+          out=Path(sys.argv[1])
+          ports=required_ports()
+          metadata=[{"name":n,"direction":dw[0],"packed_width":dw[1]}
+                    for n,dw in ports.items()]
+          (out/"m06_vendor_bfm_syntax_only.sv").write_text(render(metadata))
+          declarations=["module "+MODULE+" ("+
+                        ", ".join(ports.keys())+");"]
+          for name,(direction,width) in ports.items():
+              dimensions=f"[{width-1}:0] " if width>1 else ""
+              declarations.append(f"{direction} wire {dimensions}{name};")
+          declarations.append("endmodule")
+          (out/"m06_FAKE_STUB_SYNTAX_ONLY.sv").write_text(
+              "\n".join(declarations)+"\n")
+          print("M06 ORIGINAL ABI SIMULATION TB GENERATED FOR SYNTAX ONLY; "
+                "STUB IS NOT THE REAL AMD IP AND MUST NEVER BE SIMULATED")
+          PY
+          iverilog -g2012 -tnull -s tb_m06_original_mem_sc_vendor \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_vendor_bfm_syntax_only.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv
+          echo "M06 original-wrapper TB HDL SYNTAX PASS only; REAL VENDOR XSIM PENDING"
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
