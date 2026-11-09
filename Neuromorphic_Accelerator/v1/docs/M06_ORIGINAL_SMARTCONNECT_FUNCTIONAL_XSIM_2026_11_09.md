@@ -1,3 +1,5 @@
+> **IMPORTANT SUPERSEDING UPDATE 2026-11-09:** The original owner XSim run failed at `xvlog` because our simulator runner excluded the genuine vendor `axi_infrastructure_v1_1_0.vh` include directory, NOT because of a broken memory transaction. A new compile plan includes all headers from original 186 Vivado source paths and the required infrastructure RTL, and the runner now checks TWO genuine vendor XSim snapshots: direct original SmartConnect byte integrity, then real RTL residency controller + 8x256b AXI block mover + original SmartConnect. **Use NEW owner commands in [M06 AMD include + paged vendor integration handoff](M06_AXI_HEADER_AND_PAGED_VENDOR_HANDOFF_2026_11_09.md)** rather than the original invocation below. No genuine vendor functional PASS yet; old sections below are historical.
+
 # M06 — authentic original AMD SmartConnect functional XSim gate
 
 **Developed 2026-11-09, M06 draft PR #80, ORIGINAL IP NOT YET EXECUTED.**
