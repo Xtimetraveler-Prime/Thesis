@@ -90,6 +90,16 @@ python3 scripts/m06_generate_original_paged_vendor_bfm.py \
   --original "$D3" --headers "$HEADER" \
   --output "$OUT/tb_m06_original_vendor_paged.sv" \
   2>&1 | tee "$OUT/01b_authentic_paged_bfm.log"
+# M02 independent dense reference generates the neural values/expected
+# spike and voltage trace. This only supplies a test oracle/current stream,
+# not the unchanged M05 HLS streaming engine itself.
+python3 scripts/m06_generate_paged_lif16_vectors.py \
+  --output "$OUT/m06_lif16_vectors.vh" \
+  2>&1 | tee "$OUT/01c_neural_reference.log"
+python3 scripts/m06_generate_original_vendor_neural_paged_bfm.py \
+  --original "$D3" --headers "$HEADER" \
+  --output "$OUT/tb_m06_original_vendor_neural_paged.sv" \
+  2>&1 | tee "$OUT/01d_neural_paged_bfm.log"
 python3 scripts/m06_vendor_compile_plan.py \
   --original "$D3" --report "$PORTS" \
   --output "$OUT/02_original_vendor_compile_plan.json" \
@@ -137,12 +147,14 @@ cd "$OUT"
 if (( ${#VHDL[@]} > 0 )); then
   xvhdl -2008 "${VHDL[@]}" 2>&1 | tee "$OUT/02_xvhdl.log"
 fi
-xvlog --relax -sv "${FLAGS[@]}" "${VLOG[@]}" \
+xvlog --relax -sv "${FLAGS[@]}" -i "$OUT" "${VLOG[@]}" \
   "$ROOT/rtl/m06/m06_axi128_scratch_mem.sv" \
   "$ROOT/rtl/m06/m06_residency_control_fsm.sv" \
   "$ROOT/rtl/m06/m06_axi256_block_transfer.sv" \
   "$OUT/tb_m06_original_mem_sc_vendor.sv" \
   "$OUT/tb_m06_original_vendor_paged.sv" \
+  "$ROOT/rtl/m06/m06_lif16_neuron_step.sv" \
+  "$OUT/tb_m06_original_vendor_neural_paged.sv" \
   "$GLBL" \
   2>&1 | tee "$OUT/03_xvlog.log"
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
@@ -179,4 +191,24 @@ for pattern in "M06_ORIGINAL_VENDOR_PAGED_RTL_PASS" \
     exit 1
   }
 done
-echo "PASS: ORIGINAL AMD SmartConnect basic byte integrity AND 256B RTL page evict/reload/quarantine XSim in synthetic scratch; NO real DDR/BOARD."
+# Stage 3: ACTUAL AMD SmartConnect + same RTL page-control data path
+# + M02 LIF arithmetic in RTL. This checks numerical state preservation
+# across vendor AXI writeback/reload, NOT acceptance of original M05 HLS IP.
+xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
+  work.tb_m06_original_vendor_neural_paged work.glbl \
+  -s m06_original_vendor_neural_paged_snapshot \
+  2>&1 | tee "$OUT/08_neural_paged_xelab.log"
+timeout --signal=TERM 360s xsim m06_original_vendor_neural_paged_snapshot -R \
+  --onfinish quit 2>&1 | tee "$OUT/09_neural_paged_xsim.log"
+if grep -Eq 'M06_VENDOR_NEURAL_FAIL|FATAL_ERROR|Fatal: ' "$OUT/09_neural_paged_xsim.log"; then
+  echo "ERROR: original vendor neural-paged RTL simulation reported failure" >&2
+  exit 1
+fi
+for pattern in "M06_ORIGINAL_VENDOR_NEURAL_PAGED_M02_PARITY_PASS" \
+               "M06_ORIGINAL_VENDOR_NEURAL_PAGED_FAULT_PASS"; do
+  grep -Fq "$pattern" "$OUT/09_neural_paged_xsim.log" || {
+    echo "ERROR: genuine original vendor neural-paged XSim marker missing: $pattern" >&2
+    exit 1
+  }
+done
+echo "PASS: all THREE original AMD SmartConnect XSim stages, including 32-neuron M02 LIF parity through RTL paging. NO original M05 HLS RTL instantiated; NO physical DDR/board."
