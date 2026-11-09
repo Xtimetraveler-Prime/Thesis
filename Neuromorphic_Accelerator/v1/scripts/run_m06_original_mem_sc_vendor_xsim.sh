@@ -100,6 +100,10 @@ python3 scripts/m06_generate_original_vendor_neural_paged_bfm.py \
   --original "$D3" --headers "$HEADER" \
   --output "$OUT/tb_m06_original_vendor_neural_paged.sv" \
   2>&1 | tee "$OUT/01d_neural_paged_bfm.log"
+python3 scripts/m06_generate_original_vendor_lru8_bfm.py \
+  --original "$D3" --headers "$HEADER" \
+  --output "$OUT/tb_m06_original_vendor_lru8.sv" \
+  2>&1 | tee "$OUT/01e_lru8_bfm.log"
 python3 scripts/m06_vendor_compile_plan.py \
   --original "$D3" --report "$PORTS" \
   --output "$OUT/02_original_vendor_compile_plan.json" \
@@ -154,7 +158,10 @@ xvlog --relax -sv "${FLAGS[@]}" -i "$OUT" "${VLOG[@]}" \
   "$OUT/tb_m06_original_mem_sc_vendor.sv" \
   "$OUT/tb_m06_original_vendor_paged.sv" \
   "$ROOT/rtl/m06/m06_lif16_neuron_step.sv" \
+  "$ROOT/rtl/m06/m06_residency_lru8.sv" \
+  "$ROOT/rtl/m06/m06_axi256_multislot_transfer.sv" \
   "$OUT/tb_m06_original_vendor_neural_paged.sv" \
+  "$OUT/tb_m06_original_vendor_lru8.sv" \
   "$GLBL" \
   2>&1 | tee "$OUT/03_xvlog.log"
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
@@ -211,4 +218,24 @@ for pattern in "M06_ORIGINAL_VENDOR_NEURAL_PAGED_M02_PARITY_PASS" \
     exit 1
   }
 done
-echo "PASS: all THREE original AMD SmartConnect XSim stages, including 32-neuron M02 LIF parity through RTL paging. NO original M05 HLS RTL instantiated; NO physical DDR/board."
+# Stage 4: Same real original AMD SmartConnect, now through the full
+# eight-slot/2048B RTL LRU physical state-cache candidate with page9+
+# eviction and observed dirty writeback/reload. NOT a neural HLS run.
+xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
+  work.tb_m06_original_vendor_lru8 work.glbl \
+  -s m06_original_vendor_lru8_snapshot \
+  2>&1 | tee "$OUT/10_lru8_xelab.log"
+timeout --signal=TERM 360s xsim m06_original_vendor_lru8_snapshot -R \
+  --onfinish quit 2>&1 | tee "$OUT/11_lru8_xsim.log"
+if grep -Eq 'M06_VENDOR_LRU8_FAIL|FATAL_ERROR|Fatal: ' "$OUT/11_lru8_xsim.log"; then
+  echo "ERROR: original vendor LRU8 RTL simulation reported a fatal failure" >&2
+  exit 1
+fi
+for pattern in "M06_ORIGINAL_VENDOR_LRU8_RTL_PASS" \
+               "M06_ORIGINAL_VENDOR_LRU8_FAULT_PASS"; do
+  grep -Fq "$pattern" "$OUT/11_lru8_xsim.log" || {
+    echo "ERROR: genuine original vendor eight-slot XSim marker missing: $pattern" >&2
+    exit 1
+  }
+done
+echo "PASS: all FOUR original AMD SmartConnect XSim stages (basic, one-slot paging, neural parity, eight-slot LRU). NO original M05 HLS RTL instantiated; NO physical DDR/board."
