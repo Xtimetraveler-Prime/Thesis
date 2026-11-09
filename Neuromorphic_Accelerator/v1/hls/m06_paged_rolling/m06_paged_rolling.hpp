@@ -10,7 +10,8 @@
 // canonical_words is a real m_axi memory master with logical byte offsets,
 // NOT an approved PS physical address or a memory safety/ownership grant.
 // The canonical buffer must expose 16,384 x 32-bit words = 64KiB for the
-// configured 4,096 logical-state address aperture. A single invocation
+// configured 4,096 logical-state address aperture. AXI-Lite selects an aligned
+// 16-neuron canonical_first_neuron for each bounded, contiguous tile. A single invocation
 // still admits at most the ACCEPTED M05 1,024 neurons/64 ticks.
 constexpr std::uint32_t M06_PAGED_MAX_LOGICAL_NEURONS = 4096;
 constexpr std::uint32_t M06_PAGED_RECORD_WORDS = 4;   // 16-byte state record
@@ -58,4 +59,5 @@ std::uint32_t m06_paged_rolling_replay(
     std::uint32_t ticks,
     std::uint32_t decay_num,
     std::uint32_t decay_den,
-    std::uint32_t resident_slots);
+    std::uint32_t resident_slots,
+    std::uint32_t canonical_first_neuron);
