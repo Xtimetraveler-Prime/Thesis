@@ -5,7 +5,7 @@
 # owner-authenticated evidence; this trial attempts the actual HLS connection.
 # It does NOT yet assign addresses or validate a complete system.
 # NO physical PS/DDR/FPGA, bitstream, hardware server, or board automation.
-if {[llength $argv] != 7} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report>"}
+if {[llength $argv] != 7} {error "usage: <v1-root> <graph-report> <original-HLS-RTL-directory> <explicit-proposed-map> <address-readback-report> <validation-report> <read-only-six-segment-inventory>"}
 set root [lindex $argv 0]
 set report_path [lindex $argv 1]
 set rtl_dir [lindex $argv 2]
