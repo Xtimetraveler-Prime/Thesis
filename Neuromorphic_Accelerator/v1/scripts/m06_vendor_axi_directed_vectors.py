@@ -25,7 +25,7 @@ from neuromorphic_accelerator_v1.m06_axi_transport import (
 )
 
 SCHEMA = "m06-original-role-safe-axi-bfm-stimulus-v2-NOT_EXECUTED"
-MEMORY_BYTES = 0x7000
+MEMORY_BYTES = 0x2000  # Must match rtl/m06/m06_axi128_scratch_mem.sv
 WRITER = "S03"
 READERS = ("S00", "S01", "S02")
 PORT_ROLES = {**{port: "READ_ONLY" for port in READERS},
@@ -99,7 +99,9 @@ def vector_suite(port_report: str | None = None) -> dict:
         provenance = validate_original_report(port_report)
     image = bytearray((13*i + 17) & 0xff for i in range(MEMORY_BYTES))
     cases = []
-    write_offsets = (0x1fe0, 0x2000, 0x2020, 0x2040)
+    write_offsets = (0x0fe0, 0x1000, 0x1020, 0x1040)
+    if any(at < 0 or at + UPSTREAM_BYTES > MEMORY_BYTES for at in write_offsets):
+        raise AssertionError('BFM stimulus exceeds 8KiB scratch RTL address space')
     write_masks = (0xffffffff, 0x80010001, 0x00ff00ff, 0x0000ffff)
     # All four WRITE transactions MUST originate from original S03.
     for idx, (at, mask) in enumerate(zip(write_offsets, write_masks)):
