@@ -166,7 +166,7 @@ class M0512D3ConnectedCandidateTests(unittest.TestCase):
             "connect_bd_intf_net", "connect_bd_net",
             "ps/M_AXI_HPM0_FPD ctrl_sc/S00_AXI",
             "mem_sc/M00_AXI ps/S_AXI_HP0_FPD",
-            "ctrl_sc/M04_AXI", "shell/s_axi",
+            'format "ctrl_sc/M%02d_AXI" $index', "4 shell/s_axi",
             "pl_reset/peripheral_aresetn", "pl_reset/interconnect_aresetn",
             "get_bd_nets -of_objects",
             "META|hls_control|MISSING_GENERATED_RTL",
