@@ -1,3 +1,5 @@
+> **CURRENT D2d AUTHORITATIVE HANDOFF:** [M05.12d.2d focused handoff](M05_12D2D_NEXT_CHAT_HANDOFF_2026_11_08.md). D2c original owner PS property discovery now genuinely accepted 57 /14 with exit0; new scratch PS HPM0_FPD+HP0_FPD enablement Tcl+strict audit+native tests developed, **owner Vivado D2d still pending**. No board. M05 open, PR #79 draft/unmerged. Historical next gates below superseded.
+
 > **NEW CURRENT D2c AUDITOR FIX HANDOFF:** [M05.12d.2c authoritative handoff](M05_12D2C_NEXT_CHAT_HANDOFF_2026_11_08.md) and [genuine original failure report/repair](M05_12D2C_FIRST_AUDIT_SORT_FAILURE_2026_11_08.md). Owner Vivado correctly discovered 57 PSU properties but first run overall exit1 due to Python sorting mismatch, now fixed; fresh Vivado proof PENDING. M05 OPEN, PR #79 DRAFT/unmerged.
 
 > **CURRENT AUTHORITY:** [M05.12d.2c current handoff](M05_12D2C_NEXT_CHAT_HANDOFF_2026_11_08.md). Genuine owner D2a default PS catalog PASS `neuromorphic_v1_m05_12d2a_ps_inventory_20261109T013033Z_oCd1O9`; D2c read-only PSU property discovery developed/native tested, genuine Vivado PENDING. D2b six-bank host-only model accepted. M05 open PR #79 draft and no hardware.

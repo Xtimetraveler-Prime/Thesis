@@ -1,3 +1,21 @@
+## 2026-11-08 / 2026-11-09 UTC — original owner M05.12d.2c accepted and new M05.12d.2d port-enable native tests
+
+**Owner original D2c PASS:** `neuromorphic_v1_m05_12d2c_ps_properties_20261109T020828Z_0qmobg`, checkout `29fa415c6b495042a2cedeba86aa837da43fd98d`, `exit_status=0`; genuine Vivado 2025.2 default PS v3.5 57 relevant CONFIG properties, all 14 targets present and independent audit PASS. All `PSU__USE__S_AXI_GP0..6=0` by default, `M_AXI_GP0=0`, `M_AXI_GP2=1`; no physical DDR/PS config. Earlier D2c Python lsort mismatch first failed folder kept immutable.
+
+**New M05.12d.2d** `tests/test_m05_12d2d_ps_enablement.py`: **8 additional native host-only methods**:
+- `test_full_synthetic_two_interface_activation_schema`: accepts exact synthetic original default, PS property readbacks, actual two AXI pin modes and clock/width details.
+- `test_wrong_part_vlnv_or_claimed_scope_denied`: reject wrong K26 part, PS IP version, source mode or unsupported physical DDR status.
+- `test_config_default_and_postwrite_require_distinct_truthful_values`: wrong original IP defaults, newly enabled bits or missing original LPD enable fail closed.
+- `test_actual_aximm_interface_pins_and_direction_required`: readbacks alone cannot pass when FPD/HP0 AXI pins absent or mode inverted.
+- `test_pin_clock_reset_width_and_frequency_guards`: reject missing/wrong clock/reset pins, invalid AXI widths and impossible/nonfinite clock parameter values.
+- `test_duplicate_partial_extra_and_truncated_report_denied`: fail missing/duplicate/unknown/truncated original evidence.
+- `test_independent_audit_cli_read_only_and_fail_closed`: CLI succeeds on valid report without mutation and fails missing evidence.
+- `test_source_is_offline_config_only_and_runner_fails_safe`: ensure scratch in-memory IP only, precisely two intended CONFIG enable writes, no board/JTAG/DDR/bitstream/address/connected BD operations, bash syntax/help/invalid CLI safety.
+
+**Native tests are synthetic** and prove ONLY static/report validation, never genuine Vivado PS pin presence; the owner must still run the offline D2d original tool and supply full actual evidence. [Current D2d runbook](M05_12D2D_PS_PORT_ENABLEMENT_2026_11_08.md). Expect M05 native methods **291+8=299** and **91 M01–M04**, total **390 distinct**, only AFTER exact current-commit CI confirms.
+
+---
+
 > **D2c REAL VIVADO INITIAL AUDITOR SORT ERROR, NOW REGRESSION COVERED:** **2026-11-08 18:51 local / 2026-11-09 01:51 UTC — M05.12d.2c ORIGINAL OWNER VIVADO PROPERTY DISCOVERY SUCCEEDED; INDEPENDENT AUDIT FAILED (NOT YET ACCEPTED):** Original immutable evidence `~/Thesis_Evidence/neuromorphic_v1_m05_12d2c_ps_properties_20261109T015151Z_BNn7SH`, checkout `b2ad947c952b515acec3c061df2e04d6ddc3aba8`, **`result.txt exit_status=1`**. Genuine Vivado 2025.2 `zynq_ultra_ps_e:3.5` on K26 correctly produced `01_ps_properties.txt` with **57 named properties**, all **14 tracked candidate keys present**, and original Tcl emitted its exact discovery PASS marker. Python auditor erroneously demanded `sorted(values, key=str.lower)` while Tcl actually emitted `lsort` (case-sensitive ASCII). In original report `PSU__USE__STM` precedes `PSU__USE__S_AXI_ACE` — valid under Tcl order, invalid under Python lowercase order. Original independent audit printed `property records not sorted as the original Tcl contract`; **NO other failure identified**. Focused fix uses `sorted(values)` to match Tcl, preserving strict ordering/duplicate/malformed-value checks, and adds actual-owner-key regression with reversed-order negative case. Original evidence remains exit1 and unmodified; **fresh real Vivado runner exit0 plus independent PASS still required**. Actual discovered default values include `PSU__USE__M_AXI_GP2=1`, `M_AXI_GP0=0`, `M_AXI_GP1=0`, `S_AXI_GP0..6=0`, `IRQ0=0`, `FABRIC__RST=1`, `PL0_REF_CTRL__FREQMHZ=100`, `FPGA_PL0_ENABLE=1`; these are an UNCONFIGURED IP catalog only, not PS/DDR enablement or actual PL clock measurement. M05 OPEN; PR #79 DRAFT/unmerged; no hardware.
 
  New test `test_owner_d2c_ascii_sort_regression_stm_precedes_s_axi`; total M05 native methods increases **290→291** (M01–M04 stay91). Genuine fresh D2c run remains pending and original evidence `exit_status=1`. [Incident details](M05_12D2C_FIRST_AUDIT_SORT_FAILURE_2026_11_08.md).
