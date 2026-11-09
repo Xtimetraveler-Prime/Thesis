@@ -17,6 +17,7 @@ from m05_axis_regmap import (
     find_generated_register_map,
     parse_control_verilog,
 )
+from m05_rtl_meminit import referenced_init_files
 
 PART = "xck26-sfvc784-2LV-c"
 TOP = "m05_rolling_replay"
@@ -145,6 +146,15 @@ def verify_original_evidence(xsim_evidence: Path, source_cpp: Path
         raise ValueError("missing/ambiguous frozen signed32 HLS source hash")
     if entries[0] != actual_hash:
         raise ValueError("signed32 HLS source changed from ORIGINAL implementation")
+    # M05.11c's accepted XSim runner recorded this HLS source hash too.
+    # Require the independently retained XSim manifest to agree with --impl.
+    xsim_hashes = []
+    for row in (xsim / "source_sha256.txt").read_text().splitlines():
+        bits = row.split()
+        if len(bits) >= 2 and Path(bits[1]).name == "m05_rolling.cpp":
+            xsim_hashes.append(bits[0])
+    if len(xsim_hashes) != 1 or xsim_hashes[0] != actual_hash:
+        raise ValueError("M05.11c signed32 source hash disagrees with original HLS")
     rtl = impl / "work/hls/syn/verilog"
     top = rtl / (TOP + ".v")
     if not top.is_file():
@@ -153,6 +163,22 @@ def verify_original_evidence(xsim_evidence: Path, source_cpp: Path
     rtl_files = sorted((*rtl.glob("*.v"), *rtl.glob("*.sv")))
     if len(rtl_files) < 2 or any(not p.is_file() for p in rtl_files):
         raise ValueError("original generated sibling RTL missing")
+    # The accepted XSim runner preserved the exact set of tool RTL source
+    # paths it compiled. The names must still match, not merely the top.
+    xsim_rtl = (xsim / "generated_rtl_files.txt").read_text().splitlines()
+    if len(set(xsim_rtl)) != len(xsim_rtl) or not xsim_rtl:
+        raise ValueError("M05.11c original generated RTL file manifest invalid")
+    if {str(p.resolve()) for p in rtl_files} != set(xsim_rtl):
+        raise ValueError("original M05.11c compiled RTL file set differs")
+    # Retain evidence that all tool-generated RAM init assets exist, without
+    # writing, copying or backfilling the immutable original Vitis artifact.
+    ram_names = referenced_init_files(rtl)
+    available: dict[str, set[str]] = {name: set() for name in ram_names}
+    for asset in (impl / "work").rglob("*.dat"):
+        if asset.name in available:
+            available[asset.name].add(sha256(asset))
+    if any(len(values) != 1 for values in available.values()):
+        raise ValueError("missing or conflicting original Vitis RAM .dat assets")
     addresses, reg_source = find_generated_register_map(impl)
     # If vendor also emitted control_s_axi, require EXACT consistency with
     # any generated driver header. Never assume offsets from a testbench.
