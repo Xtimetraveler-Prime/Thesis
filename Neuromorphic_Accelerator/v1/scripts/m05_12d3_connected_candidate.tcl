@@ -184,14 +184,6 @@ link_axis_or_axi mem_sc/M00_AXI ps/S_AXI_HP0_FPD
 # One PL clock domain for this candidate, with a synchronized reset IP.
 # Verify actual scalar BD net memberships; a pin readback alone is not enough.
 set clocks {ps/pl_clk0 ps/maxihpm0_fpd_aclk ps/saxihp0_fpd_aclk ctrl_sc/aclk mem_sc/aclk pl_reset/slowest_sync_clk shell/clk}
-set resets {pl_reset/interconnect_aresetn ctrl_sc/aresetn mem_sc/aresetn}
-set peripheral_resets {pl_reset/peripheral_aresetn shell/rst_n}
-foreach name $dma_names {
-    lappend clocks "$name/s_axi_lite_aclk"
-    lappend clocks "$name/axi_resetn"
-}
-# Distinguish clock from reset names; remove AXI DMA reset from clock group.
-set clocks {ps/pl_clk0 ps/maxihpm0_fpd_aclk ps/saxihp0_fpd_aclk ctrl_sc/aclk mem_sc/aclk pl_reset/slowest_sync_clk shell/clk}
 set reset_pins {pl_reset/peripheral_aresetn shell/rst_n}
 foreach name $dma_names {
     lappend clocks "$name/s_axi_lite_aclk"
