@@ -36,7 +36,7 @@ class M0512D2ControlMapTests(unittest.TestCase):
         self.assertEqual(c.proposed_register_address("dma_trace", "LENGTH"),
                          0xB0003058)
         self.assertEqual(c.proposed_register_address("shell", "VERSION"),
-                         0xB0005038)
+                         0xB0004038)
         self.assertNotEqual(c.aperture("shell").base, c.aperture("hls").base)
 
     def test_no_missing_extra_duplicate_or_wrong_bank_admission(self):
