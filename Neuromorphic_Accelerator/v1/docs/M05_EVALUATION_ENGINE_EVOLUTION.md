@@ -1,0 +1,293 @@
+# M05 evaluation-engine evolution — hardware-verified optimization ledger
+
+**Maintainer contract:** append a new row whenever the scheduler, LIF arithmetic, memory layout, admission limit, kernel I/O contract, or testbench changes. Tie each observation to **the exact Git commit and local Vitis evidence directory**, keep raw logs outside Git in `~/Thesis_Evidence`, and distinguish native/CSim/synthesis/XSim/OOC/place-and-route/board proof. This is the canonical evaluation-engine historical record; the roadmap is a condensed milestone status. No dates/result lines should silently overwrite earlier measurements.
+
+**Last updated:** 2026-11-08. **Branch:** `agent/neuromorphic-accelerator-v1-m05-sparse-onchip`, draft PR #79, UNMERGED. K26 device `xck26-sfvc784-2LV-c`, Vitis HLS 2025.2, 10 ns requested clock. All HLS source snapshots except the newest documentation/audit script are preserved as commits in this branch; historic `Loihi_Digital_Twin/v3` stays frozen.
+
+## A. Why the engine evolved
+
+| Phase | Architectural decision | New capability | Quantified limitation / tradeoff |
+| --- | --- | --- | --- |
+| Standalone M05 components | Independent streaming scalar LIF, stateful 1,024-neuron RAM service, signed event accumulator | Proved reusable neuron math, storage inference and event admission in separate synthesizeable interfaces | **Not** a fused neural engine or a sum-of-area resource claim |
+| Fused finite-horizon `m05_integrated_replay` | One HLS top loads neurons and synapses, schedules positive-delay recurrent events, advances logical ticks autonomously and **doesn't emit until entire run succeeds** | 1–8 ticks, max 1024 neurons / 4096 edges / 4096 deliveries/tick, direct M04 exact LIF semantics | Full eight-tick temporal current memory and eight-tick trace memory retained per call; `ap_start` resets on each run; generated logic is not physically validated |
+| Rolling signed-i64 `m05_rolling_replay` | Replace per-run trace buffer with per-tick scratch/output; reuse 8 temporal wheel slots `t % 8`; ordered external ingress | Up to **64 ticks** per run at constant future-current memory size; full sparse/touch/count semantics | New **delay 1–8 only**, sorted input precondition; earlier tick rows become provisional until final status, requiring host to drain concurrently and discard all on late failure |
+| Scoped wheel initialization | Initialize only `8 × neuron_count` active temporal cells instead of unconditional `8 × 1024`; test 2→1→2 successive runs | Reduces initial memory-clear work for small networks | Allocated BRAM width and depth unchanged; actual speedup unmeasured, and HLS loop schedule/top-level II remain variable |
+| Signed-i32 current wheel | Prove 4096 arrivals/tick of signed W16 terms fit exact signed28 range; store wheel in **signed32** but retain signed64 M04 request semantics | Halves current-wheel physical bits; exact +134213632 / −134217728 legal extremes passed native **and actual C/RTL cosim** | 14 BRAM18K block reduction observed; no absolute runtime speedup established; any larger future delivery bound/term width invalidates proof |
+| M05.5 host trace commit gate | Stage and validate streamed tick rows, expose to caller only after `ap_done` and final status==0, abort on error/timeout | Fail-closed publication at **host model** level; 65,536 max rows; model stall/rollback tests | CPU-only; not a synthesized AXIS sink, DMA, PS interface, RTL `TREADY` stall proof or actual hardware reset/retry |
+| Evidence audit & comparison discipline (new) | Parse local Vitis reports, retain exact commit/source/testbench hashes, display synthesis/XSim separately | Reproducible comparisons and explicit warnings for changed testbenches | No new RTL optimization; user still must run real Vitis/physical tools; parsing a text report is not independent timing verification |
+
+## B. Direct HLS top-level comparison (not physical utilization)
+
+All values below are from **real operator-run Vitis 2025.2 HLS synthesis** on K26. The estimate is a reported HLS clock-period estimate, **not** placed-and-routed actual clock.
+
+| Version | Verified source Git commit | Max ticks | Max recurrent delay | BRAM18K | LUT | FF | DSP | Estimated clock period |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fused i64 finite-horizon | `6850593a7416e1b6d4e8185e58925c157237098b` (source as integrated HLS evidence; verify original `commit.txt`) | 8 | Any positive; beyond horizon dropped | **74** | **5,914** | **3,122** | **6** | **8.002 ns** |
+| Rolling signed-i64, scoped initialization | `984f5baf45ce771e94e1e8b2947e1ef27ccc6d58` (synthesis) / `03c3fbc5f8866c44510ff67d2cce8151988fa4d7` (C/RTL, identical rolling kernel source) | 64 | 8 | **53** | **10,083** | **8,459** | **2** | **8.244 ns** |
+| Rolling signed-i32, same LIF semantics | `827f719778472da39ffa294b431ee848fe360529` (synthesis) / `07913bbf925e5cd1ffc0d84dd6f9d5b4c2ee519a` (C/RTL, identical rolling kernel source) | 64 | 8 | **39** | **9,956** | **8,346** | **2** | **8.256 ns** |
+
+**Important commit-provenance qualification:** the original **integrated synthesis `commit.txt` was not pasted with its full report** into this conversation; the entry identifies a known early integrated-source commit, but it is **not guaranteed to be the exact original synthesized checkout** until the operator reads `commit.txt`. The two rolling synth and cosim commits are directly supplied in operator reports, and the `m05_rolling.cpp` Git blob SHA was verified unchanged between each pair. Do not claim that any report used a different SHA than its `commit.txt`.
+
+**Resource changes:**
+- Fused→rolling i64: **−21 BRAM18K (74→53)**, **+4,169 LUT (5,914→10,083)**, **+5,337 FF (3,122→8,459)**, **−4 DSP (6→2)**. The architectures have different run-length/delay constraints, so this is a Pareto comparison, not proof of universally superior throughput or features.
+- Rolling i64→rolling i32: **−14 BRAM18K (53→39, −26.4%)**. All 14 blocks came from `current_U` changing **30→16 BRAM18K** (8,192 words ×64→×32 bits); LUT **10,083→9,956** (−127), FF **8,459→8,346** (−113), DSP **2 unchanged**. Estimated clock **8.244→8.256 ns (+0.012 ns)**, both below the 10 ns requested target.
+- Fused→i32 rolling: **−35 BRAM18K (74→39, −47.3%)**, with the known increase in LUT/FF, shorter supported maximum delay and provisional output tradeoff.
+
+## C. Genuine XSim C/RTL transaction reports
+
+These report **whole-testbench transaction latencies**. They differ in network sizes, event counts and transaction count. **Never divide or compare averages as a per-neuron or per-tick speedup.** The C/RTL report is not physical board throughput. All runs used the nominal 10 ns simulated clock.
+
+| Top/version | C/RTL evidence provenance | Testbench transactions | Latency min/avg/max (cycles) | Interval min/avg/max (cycles) | Testbench total (cycles) | Verified |
+| --- | --- | ---: | --- | --- | ---: | --- |
+| Fused i64 8-tick | `~/Thesis_Evidence/neuromorphic_v1_m05_integrated_cosim_20261108T164737Z_86835` | Unconfirmed individual count; report has cumulative transactions | 8463 / 10572 / 16396 | 8489 / 11300 / 16416 | 42363 | Verilog PASS, post-check PASS |
+| Rolling i64 | Operator-supplied successful cosim at `03c3fbc5f8866c44510ff67d2cce8151988fa4d7` | **8** | 265 / 3616 / 16492 | 285 / 3919 / 16512 | 29077 | Verilog PASS, 8/8 post-check PASS |
+| Rolling i32 | `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_cosim_20261108T194952Z_176120`, commit `07913bbf925e5cd1ffc0d84dd6f9d5b4c2ee519a` | **10** | **265 / 6328 / 17225** | **285 / 6869 / 17248** | **63463** | Verilog PASS, 10/10 post-check PASS |
+
+The **i32 rolling** testbench additionally covers a full 64-tick independently calculated dense trace; 4096 × +32767 events at one tick; 4096 × −32768 at another; 4096 delayed recurrent parallel synapses; 2→1→2 network-size restart; late overflow/ordering errors. Hence the larger average is **not evidence** the arithmetic optimization slowed the engine.
+
+## D. Evidence locations and reproducible local audit
+
+Raw Vitis reports, timestamps, CSim/synthesis/XSim stage logs and original hashes remain exclusively in operator-local `~/Thesis_Evidence`, **not the repository**:
+
+- Integrated CSim: `neuromorphic_v1_m05_integrated_csim_20261108T161418Z_84650`
+- Integrated synthesis: `neuromorphic_v1_m05_integrated_synth_20261108T164348Z_85611`
+- Integrated XSim C/RTL: `neuromorphic_v1_m05_integrated_cosim_20261108T164737Z_86835`
+- Rolling i64 synth: use original `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_synth_*` directory with commit `984f5baf45ce771e94e1e8b2947e1ef27ccc6d58` (do not assume latest wildcard picks an old version).
+- Rolling i32 synth: `neuromorphic_v1_m05_rolling_synth_20261108T193909Z_169727`
+- Rolling i32 cosim: `neuromorphic_v1_m05_rolling_cosim_20261108T194952Z_176120`
+- Rolling i64 cosim: operator's earlier evidence folder, inspect original `commit.txt` for identity.
+
+New Python audit: [`scripts/m05_hls_evidence_audit.py`](../scripts/m05_hls_evidence_audit.py). It accepts **one or more original rolling synth/cosim evidence directories**, rejects explicit nonzero exit status, wrong top/target, malformed report, or XSim Pass without matching finish log, and displays source/TB hashes when present. It does **not** modify original logs and includes **11 synthetic-fixture tests** to protect the parser.
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 scripts/m05_hls_evidence_audit.py --markdown --evidence \
+  "$HOME/Thesis_Evidence/neuromorphic_v1_m05_rolling_synth_20261108T193909Z_169727" \
+  "$HOME/Thesis_Evidence/neuromorphic_v1_m05_rolling_cosim_20261108T194952Z_176120"
+```
+
+If both original `source_sha256.txt` manifests are present, compare testbench hashes to decide whether per-case HLS co-sim timing comparisons are remotely meaningful. Even identical testbench code hashes do NOT prove identical datasets or injected stalls unless workload manifests and seeds are also fixed.
+
+## E. Genuine post-route OOC feasibility — 2026-11-08
+
+**New operator result received after the i32 C/RTL PASS: actual offline Vivado 2025.2 out-of-context implementation PASS.** This is the first **placed-and-routed hardware-design estimate** in the M05 evaluation-engine evolution, NOT a result measured on a physical FPGA.
+
+- **Original evidence:** `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_impl_20261108T200432Z_186026`, checkout commit **`334ca0ee78c2651019d72101f23f253b62396aed`**, `exit_status=0`. The `m05_rolling.cpp` kernel remains identical to the earlier i32 HLS/XSim-verified source. `--rolling --impl` ran cumulative genuine CSim, HLS synthesis, XSim and Vivado implementation; only the **impl and routed summary** were quoted in this operator reply, so don't manufacture any unquoted per-stage results.
+- Vivado `export_impl.rpt`: **required 10.000 ns**, **achieved after place-and-route 6.503 ns**, **WNS +3.497081 ns**, **WHS +0.055000 ns**, **TPWS 0.000000 ns**, **0 unrouted nets**. `CP achieved post-synthesis: 4.963 ns`; route-induced change is expected and **not a physical throughput figure**.
+- **Post-implementation resources:** **6,257 LUT, 6,887 FF, 35 BRAM, 2 DSP, 0 URAM, 162 SRL, 1,215 CLB**. This area is a different compilation stage and shouldn't be presented as though it were the HLS 9,956 LUT / 8,346 FF / 39 BRAM estimate. The achieved utilization reports were for the K26 stand-alone **out-of-context** HLS IP; the PS, clocks/reset, shell, interconnect, DMA, DDR, and board constraints are not incorporated.
+- Tool reported **zero critical warnings/errors** and failfast design metrics **all OK**, with 2 other warnings not enumerated in the pasted log. Actual routed path-detail and timing summary files exist under `work/hls/impl/verilog/report/` and `work/hls/impl/verilog/project.runs/impl_1/`; inspect them before claiming all specific interface paths are constrained.
+
+### Synthesis-vs-placement results for the SAME optimized i32 rolling kernel
+
+| Gate | Clock metric | LUT | FF | BRAM18K | DSP |
+|---|---|---:|---:|---:|---:|
+| Vitis HLS synthesis estimate | 8.256 ns estimated | 9,956 | 8,346 | 39 | 2 |
+| Vivado OOC **routed** implementation | **6.503 ns achieved** (10 ns required) | **6,257** | **6,887** | **35** | **2** |
+
+### Interpretation and next gate
+
+This demonstrates a technically credible **routed neuromorphic evaluation-engine IP** on the target FPGA family with useful resource headroom. It does **not** establish a viable PS/AXI integration, physical input stream feed, sustained throughput, or reliable backpressure. The next new test must drive actual synthesized Verilog **`trace_TREADY` stalls** and **input `TVALID` gaps**, asserting data/VALID stability and complete handshake-ordered trace. The verified kernel will not be edited for this gate. A dedicated offline XSim testbench/launcher is located at [`rtl_stress/tb_m05_rolling_axis_stress.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv) and [`scripts/run_m05_rolling_rtl_stress.sh`](../scripts/run_m05_rolling_rtl_stress.sh); **Genuine direct RTL stress result PENDING operator execution**, not equivalent to prior Vitis HLS co-sim.
+
+### M05.6 first genuine direct XSim attempt — testbench compilation failure (2026-11-08)
+
+**Operator attempted direct generated-RTL AXIS stall test** using known routed kernel evidence `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_impl_20261108T200432Z_186026`, testbench checkout `c6ac13e114037db513c21af82175595ef540244b`, new evidence `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T203112Z_209004`: `exit_status=1`. Tool successfully derived *real generated IP* AXI-Lite offsets from `work/hls/.autopilot/db/driver/src/xm05_rolling_replay_hw.h`, and `xvlog` analyzed all generated Verilog. **Xvlog rejected the NEW SystemVerilog testbench at line 305**, `[VRFC 10-4982] syntax error near '"trace=24; ...' `. Cause: two adjacent `$display` format strings were written on consecutive lines as C-style implicit concatenation, which is not valid SystemVerilog syntax. **No XSim elaboration or RTL handshake simulation occurred**; this is NOT a DUT algorithm, routed timing or AXIS ready/valid failure.
+
+**Fix:** keep the verified `m05_rolling.cpp` kernel, original implementation evidence and AXI register map unchanged; rewrite the one `$display` to contain one format literal in `hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv`; add native regression `test_no_adjacent_format_string_literals_in_xvlog_stressbench`. The repaired source must be retested by actual `xvlog → xelab → xsim` on operator's machine before M05.6 can be declared PASS. Native/static CI is NOT proof the simulator can elaborate the generated IP. Preserve both old failure and future new evidence directories.
+
+### M05.6 completed directed output-backpressure RTL test (2026-11-08)
+
+Operator reran the direct generated-Verilog testbench with the repaired format
+string, using **unchanged** signed32 HLS source previously verified by routed
+out-of-context implementation. Original test evidence
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T203635Z_212333`
+ended **`exit_status=0`**: `xvlog` analyzed generated HDL and bench,
+`xelab` built `m05_rolling_axis_stress_snapshot`, and XSim verified the
+exact **24-row** trace for a two-neuron/12-tick delay-8 recurrence. Actual
+`trace_TREADY` stalls: **188 cycles**, verified stable VALID/TDATA and
+order, final status 0. The test inserted **1,162 input-valid gap cycles**
+but recorded **N/S/E input stall cycles 0/0/0**; therefore this is direct
+**output** AXIS-backpressure proof only, not full duplex or randomized stall
+coverage. The result is simulated RTL, not physical PS/PL/DMA timing.
+
+**Caveat exposed by this real run:** XSim printed warnings that Vitis
+generated `./m05_rolling_replay_*.dat` initialization files could not be
+opened from the new simulator working directory. These did not make the 24-row
+test fail but may leave RAM uninitialized in wider workloads. Follow-on source
+development added `scripts/m05_rtl_meminit.py` to stage only original
+tool-generated RAM images from the existing `--impl` evidence, preserving
+original source SHA256 and failing closed on missing/conflicting assets. No
+dummy `.dat` contents are permitted. The new stressbench primes input VALID
+before start and checks stable incoming TVALID/TDATA under genuine TREADY
+stalls, requiring >=10 input-stall cycles. Native regressions cover asset
+provenance and signal assertions; **new strengthened direct RTL XSim run
+NOT YET PERFORMED**. Both the earlier failed syntax attempt and this first
+passed output-stall run remain distinct evidence entries.
+
+### M05.6 input-stall coverage miss; M05.7 separates the genuine-proof baseline (2026-11-08)
+
+**Operator's new genuine XSim result:** `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T205357Z_221064`, `exit_status=1`. Strict RAM-init staging successfully copied **11 exact generated .dat files** with SHA256 provenance; no previous missing-RAM warning. Actual generated RTL `xvlog` and `xelab` PASS; XSim ran to **12170 ns** but stopped at **`Fatal: RTL_STRESS_FAIL no meaningful incoming AXIS backpressure`** (bench line 345). This happens after the existing 24-row output/status assertions; **there is no reported spike, membrane-voltage, trace-order or routed timing fault**. The 2-neuron, 1-edge, 1-event source contains too few prestart packets to force a measured `TVALID && !TREADY` inbound stall. XSim itself may print `exit 0` after SystemVerilog `$fatal`; the runner was correct to mark the run FAILED due to absent required final PASS marker.
+
+**Design review and regression-preserving response:**
+- Return the original `tb_m05_rolling_axis_stress.sv` to Git blob SHA `c2831bc2953b41066ac4ba83afb75fdeda13c15a`, the exact original **real XSim PASS** source (24 rows, 188 output stalls). Do **not** retroactively mark the earlier output-only verified test failed.
+- Create **separate** `tb_m05_rolling_axis_ingress_stress.sv`: 64 input-neuron packets, 12 ticks, **768 golden trace rows**, 1 delay-8 recurrent edge, 1 external event, 300 prestart cycles, explicit input VALID/TDATA hold checks, **>=10 real inbound stalls required**, original output TREADY stall monitor retained. This is a **NEW testbench**, so its RTL result is **PENDING**.
+- New runner optional `--ingress` selects the separate simulator module, keeps per-test mode plus SHA256 manifest in fresh `~/Thesis_Evidence`, fails on `Fatal: RTL_STRESS_FAIL` even when XSim exits zero, and keeps the 11 generated .dat asset gate for both test modes.
+- The previously established **signed32 evaluation kernel** `m05_rolling.cpp` (Git blob `e5443aa87dcc8819ee8aa680b6ca105facc1aced`), HLS CSim, XSim C/RTL post-check and genuine 6.503 ns post-route 35-BRAM OOC proof are **unchanged**; changes involve only testbenches and verification tooling.
+- [M05.7 runbook](M05_INGRESS_BACKPRESSURE_GATE_2026_11_08.md) contains failure triage, reproducible old-vs-new tests and commands. If 64 inputs still do not stall, inspect actual Vitis-generated regslice/FIFO depth and READY waveform. Don't silently reduce the required 10-cycle input stall threshold, alter HLS kernel to force a test PASS, or infer a hardware issue from a test-coverage miss.
+
+### M05.7 verified bidirectional directed AXIS stall gate (2026-11-08)
+
+Operator ran the **64-neuron direct generated-Verilog XSim ingress** scenario,
+operator's pasted output did not include `commit.txt` (source checkout
+must be read from the original evidence folder before asserting exact
+checkout SHA), evidence directory
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T210506Z_227783`,
+`exit_status=0`, `stress_mode=ingress`. Genuine Vitis HLS 2025.2
+generated RTL: `xvlog` PASS, `xelab` PASS, `xsim` **PASS**.
+The 11 genuine RAM-init `.dat` files were staged with checksum manifest
+(no missing-file warnings). Exact XSim output:
+
+```text
+INFO: M05 ingress prestart accepted N/S/E=2/1/1; stalls N/S/E=283/0/0; pending neurons_TVALID=1 neurons_TREADY=0
+PASS: M05 REAL RTL AXIS INGRESS stall stress N=64 E=1 S=1 T=12; trace=768; stalled_output_cycles=7573;ingress_gap_cycles=16762; input_stalls N/S/E=312/0/0; final_status=0
+```
+
+The one-synapse/single-event baseline is unchanged and earlier output test
+also PASS (24/24 rows, 188 output stalls). Current new hardware evidence
+therefore demonstrates **actual neuron-side READY backpressure plus trace
+output READY backpressure under one directed workload**, with 768 exact
+ordered output records and final status 0. The synapse and external ports
+each only supplied one packet and did **not** experience measured input
+stall: do NOT infer saturation of those independent channels. Simulated
+handshake counts are neither physical device throughput nor a speedup
+against the eight-tick integrated kernel.
+
+### M05.8 next verification — late-error transactional RTL discard (pending)
+
+With input/output directed stalls confirmed, the next failure-mode risk
+is **prematurely committing speculative trace** before completion. The
+kernel streams tick0..3 even if tick4 detects an invalid late external
+event: three external packets (tick0/+5→neuron0, tick4/+5→neuron0,
+then OUT-OF-ORDER tick3/+5→neuron0) trigger
+`M05_ROLL_BAD_EXTERNAL=4` only after 4×2 = **8 valid provisional rows**
+(including a real t0 neuron0 spike). New separately compiled direct
+generated-RTL testbench:
+[`tb_m05_rolling_axis_late_error.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv).
+A new `--late-error` selector in
+[`run_m05_rolling_rtl_stress.sh`](../scripts/run_m05_rolling_rtl_stress.sh)
+reuses unchanged prior genuine 6.503 ns routed OOC HLS IP. It asserts
+ordered partial trace, output TREADY stalls, final AXI-Lite status4 and
+no extra records. A separate
+[`m05_rtl_transaction_replay.py`](../scripts/m05_rtl_transaction_replay.py)
+parses the new run's **actual** XSim provisional beat transcript into
+existing native `RollingTraceCommitGate`, verifies **0 accepted rows**
+after status4, and saves `05_trace_commit.log`.
+
+**This new M05.8 generated-RTL XSim case is NOT YET operator verified.**
+The native replay tests rely on SYNTHETIC logs, not a real kernel. The
+unchanged signed32 evaluation source and previously verified physical
+OOC clock/resource estimates remain exactly as recorded above. M05 open,
+draft PR #79 unmerged. [M05.8 detailed runbook and commands](M05_LATE_ERROR_TRANSACTION_GATE_2026_11_08.md).
+
+### M05.8 verified late RTL error and host discard (operator, 2026-11-08)
+
+**Actual generated-Verilog XSim PASS** on unchanged signed32 rolling engine.
+Original immutable evidence folder
+`~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T211756Z_234592`;
+real operator `--late-error` run, **`exit_status=0`** and real 2025.2
+`xvlog`/ `xelab`/ XSim passes. Authentic XI RAM `.dat` assets: 11 staged
+with SHA256; driver AXI-Lite map parsed. External input ticks **0,4,3**
+produced **eight provisional trace transfers** for tick0..3, with a valid
+tick0 neuron0 spike, then real final AXI-Lite status **4 BAD_EXTERNAL**.
+XSim verified **56 trace output stall cycles**, **436 ingress-valid gaps**,
+exactly eight ordered partial rows, **no tick4 row**. Original log contained:
+
+```text
+M05_RTL_FINAL status=4 provisional=8 committed=0
+PASS: M05 REAL RTL AXIS LATE-ERROR status=4 provisional=8 committed=0; output_stalls=56; ingress_gaps=436
+PASS: M05 RTL transactional replay: status=4, provisional=8, drained=8, committed=0, early_spike=1, all failure rows discarded
+```
+
+The last line is an **offline** parse-and-replay of actual XSim transcript
+through the already native-tested host `RollingTraceCommitGate`. This
+demonstrates transactional discard policy on real RTL outputs, but is
+**not a physically connected AXI DMA/PS driver**. Earlier 6.503ns routed OOC
+timing and input/output stall results are unaffected. No FPGA programming.
+
+### M05.9 subsequent-execution isolation gate (NEW, awaiting real XSim)
+
+New [`tb_m05_rolling_axis_multi_run.sv`](../hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv)
+runs the **same RTL instance without pulsing ap_rst_n between runs**:
+(1) late-error 2-neuron/12-tick network, status4 after **8 provisional
+rows**, zero commits, with a recurrent event pending for t8 when it fails;
+(2) fresh 2-neuron/**10-tick** network with **no synapses**, fresh t1/n1
+external stimulus. It must emit **20 valid rows**, only t1/n1 spikes and
+**tick8 remains completely silent**, proving the t8 pending event and old
+graph were correctly cleared, with real final status0. TREADY output stalls
+and real AXI-Lite completion are tested on both runs.
+
+The [`m05_rtl_multi_run_replay.py`](../scripts/m05_rtl_multi_run_replay.py)
+offline checker creates two distinct host `RollingTraceCommitGate` sessions,
+rejects reordered/missing/duplicated/malformed run markers, and insists
+run0 commits **0**, run1 commits **20** after status0. The runner selects
+`--multi-run`, reuses exactly the previously routed HLS IP without
+resynthesis and stages original tool-generated RAM assets; **15 new
+synthetic/native regression tests** cover status, framing, stale wheel, and
+source contract. **157 named M05 +91 M01–M04=248 native tests**. Real
+M05.9 direct XSim outcome is **NOT YET VERIFIED** and should never be
+reported as pass merely because host CI succeeds. All old testbench
+proofs/evidence are preserved. [M05.9 operator runbook](M05_MULTI_RUN_RECOVERY_GATE_2026_11_08.md).
+
+### M05.9 verified same-instance RTL restart / recovery (2026-11-08)
+
+**Operator's genuine XSim run** at `~/Thesis_Evidence/neuromorphic_v1_m05_rolling_axis_rtl_20261108T213048Z_241401`, git checkout `b8f841ff9585a0e2c479a0eba3578c5fb8a0a1a0`, `exit_status=0`, mode `multi-run`. Eleven original RAM init .dat files staged, actual Vitis-generated Verilog compiled and elaborated. One DUT instance with **no ap_rst_n reset pulse between invocations**: run0 emits 8 provisional rows then returns **status4** (host commits 0); run1 starts with independent synapse-free network, emits **20 correct rows** then returns **status0** (host commits 20); no leaked pending tick8 recurrence, **213 trace TREADY stall cycles**. The native read-only replay confirms exact 0+20 publication. This is direct XSim kernel-state isolation, **not** physical DMA or PS control-plane recovery.
+
+### M05.10 new PS-side execution-controller foundation (2026-11-08)
+
+With the signed32 HLS evaluation kernel intentionally **UNCHANGED**, we have begun moving control responsibility from local RTL testbench scripts to a reusable host-side controller.
+
+Implemented `m05_execution_controller.py`: immutable validated run packets; 1..1024 neurons, <=4096 synapses, 1..64 ticks, signed-W16 inputs, 1..8 delay, sorted external input; independent nonblocking feed methods for neuron, synapse, external AXI streams; continuous output trace drain concurrent with completion polling; **status0 + exact frame + all input delivered + transport-certified quiescence** required before accepting rows. On nonzero final status, unknown/contradictory status, malformed trace, timeout, or transport failure, all provisional trace is discarded and controller becomes **FAULTED until explicit verified recovery**. Reuses original `RollingTraceCommitGate` unchanged.
+
+Implemented `m05_execution_sim.py`: deterministic bounded fake 3-input/1-output transport, stalls, early completion before final output drain, missing output, error/timeout and explicit fake reset; **not actual Vivado or DMA**. `m05_execution_abi.py`: logical 128/192/128/192-bit packet packing based on previously verified direct RTL bit offsets (including synapse 4-byte alignment padding and trace 2-byte padding). Native tests in `test_m05_execution_controller.py` and `test_m05_execution_abi.py` total **28 new tests** (185 M05 + 91 accepted M01–M04 = 276 total), plus a clearly labelled `SIMULATED` controller demo. New [canonical controller design and development document](M05_EXECUTION_CONTROLLER_DESIGN_2026_11_08.md) thoroughly records the state machine, ports, admission, completion race, timeout and explicit error recovery policy, payload ABI and hardware milestones.
+
+**Engineering blocker before actual PS/PL integration:** generated HLS top exposes plain AXIS TDATA/TVALID/TREADY with **no TLAST packet framing**. A stock packet-oriented S2MM DMA path cannot be assumed to finish without a selected/tested explicit-length bridge, TLAST wrapper or alternative FIFO protocol that handles both complete successful traces and **arbitrarily truncated failed runs**. M05.11 must independently design/verify that bridge, actual AXI-Lite addresses, PS reset/flush, MMIO and 3 H2C +1 C2H streams. **No physical controller, board integration or new RTL timing verification exists for M05.10; native green CI ≠ hardware success.**
+
+### M05.11a first standalone PS/PL stream bridge (2026-11-08)
+
+The **original optimized signed32 evaluation engine is UNCHANGED**, and its earlier genuine Vitis csynth, C/RTL co-sim, **6.503 ns Vivado OOC routed**, input+output TREADY, late-error/host discard and same-instance multi-run results remain separate accepted evidence. The newly developed *communication transport* is not an HLS optimization or a new HLS performance estimate.
+
+**Question 1 / ingress+egress:** proposed **3 independently managed 256-bit MM2S input streams plus 1 independently managed 256-bit S2MM trace stream**. A new synthesizable parameterized unpad adapter validates fixed 32-byte MM2S records and strips padding into existing HLS 128-bit neuron/external or 192-bit synapse TDATA; zero-count inputs require no DMA descriptor. One 192→256-bit trace adapter preserves the exact low 24-byte HLS data.
+
+**Question 2 / no TLAST:** original HLS AXIS has no TLAST. Standalone trace packetizer emits one final **32-byte footer with TLAST=1 on EVERY finished invocation** (including 0-row failures), after all real trace rows without TLAST. Footer records **64-bit session ID, observed 32-bit HLS status, actual 32-bit trace beat count and 64-bit magic**; status0 with a short frame is marked invalid, overproduction faults closed. Host synthetic validator cross-checks packet length, exact DMA transferred bytes/TLAST/quiescence, footer against independently supplied HLS status and session, and reuses unchanged `RollingTraceCommitGate` to accept only exact full successful traces. Maximum S2MM buffer for full admitted 1024×64 trace is **2,097,184 B** (all rows plus footer, each 32 B). AMD PG021 S2MM documentation, not a guess, motivates TLAST and non-Micro available-length receive semantics.
+
+**Question 3 / start/finalize/recovery:** PS must arm S2MM *before HLS ap_start*, then operate 3 input MM2S paths and trace drain concurrently. PS polls actual generated AXI-Lite ap_done/return; after HLS is terminal, PS writes a **future MMIO** finish/status handshake to packetizer, whose footer TLAST terminates S2MM even for late status4/early status1..6. Host verifies true DMA completion, byte count, status, exact packet framing and a quiescent fence before commit; any error, timeout, stale descriptor or stale session ID requires discard and verified cross-interface reset/flush. **Future MMIO command bridge and physical DMA are not implemented.**
+
+New files `rtl/m05_11/m05_trace_dma_packetizer.v`, `m05_ingress_dma_unpad.v`, two self-checking SystemVerilog standalone benches, `m05_dma_frame.py`, `tests/test_m05_dma_frame.py` and safe offline Vivado XSim runner. On GitHub Actions run **42528838308** at commit `5fa649ddd354e5c36351148af16629a9bccd2227`, **203 M05 native tests PASS** (185 prior + 18 new), and **Icarus Verilog independently compiled and simulated both new RTL benches PASS**: packetizer success/zero-error/truncated-success, 12 output stalls, sticky overflow; ingress 128/192 unpad, 7 input stalls, exact last, zero count, malformed last quarantine. These are **genuine open-source RTL simulations, NOT YET operator Vivado XSim, not HLS kernel RTL integration, not a PS DMA transfer**. First next owner gate is `bash scripts/run_m05_11_bridge_xsim.sh` with Vivado 2025.2 sourced and new immutable evidence. [Detailed three-question design/implementation and vendor references](M05_11_PS_PL_TRANSPORT_ARCHITECTURE_2026_11_08.md). M05 OPEN, PR #79 DRAFT/UNMERGED, no physical board actions.
+
+### M05.11a real Vivado XSim PASS; M05.11b new two-bus command/MMIO design (2026-11-08)
+
+**Owner's actual M05.11a bridge verification accepted:** Original unchanged record `~/Thesis_Evidence/neuromorphic_v1_m05_11_bridge_20261108T224957Z_AQzMlG`, at checkout `b3385619b81bc43ee69a082a2f5c8af258e03696`, `exit_status=0`; genuine Vivado 2025.2 `xvlog`, `xelab` and `xsim` both PASS. Trace 192→256-bit packetizer tested 3 TLAST terminal scenarios, 12 output stall cycles and overproduction fault. 256→128/192-bit ingress tested exact TLAST, no-input case, seven input stall cycles and malformed-early-TLAST quarantine. `XSIM 43-3431` warned about inherited `LIBRARY_PATH`, but snapshots and simulations completed. **This is standalone RTL verification of transport shims, NOT actual K26 DMA or full PS/PL routed timing.** Their source SHA256 and original logs remain untouched in operator's evidence.
+
+**Next M05.11b source development on same draft branch, verified only by native/Icarus until operator XSim:** Added full 32-bit AXI4-Lite session slave `m05_11_axil_session_controller.v` and structural composition `m05_11_stream_shell.v` (3 independent padded 256b ingress-to-original-HLS and trace-to-256b TLAST footer). New *custom* bridge register offsets 0x00 COMMAND, 0x04 STATE, 0x08/0x0c SESSION_ID, 0x10 TRACE_EXPECTED, 0x14/0x18/0x1c per-port ingress counts, 0x20 FINAL_STATUS, 0x24..0x30 per-port observed counts, 0x34 flags, 0x38 version; **not the original Vitis-generated HLS AXI-Lite map**. Independent AW/W buffering, held B/R responses through backpressure, WSTRB, one-shot START, held FINISH until trace packetizer is ready, nonzero-status quarantine, success ACK only after external DMA certification. Added typed Python `M0511BridgeRegisters` client, separate `WordRegisterIO` abstraction (NOT live PS mmap), plus 14 host-only register tests and native simulated AXI-Lite testbench; standalone Vivado XSim runner creates new exclusive original evidence. Existing `m05_rolling.cpp` and original signed32 6.503 ns OOC implementation **untouched**.
+
+**Progression and outstanding verification:** M05.11b Icarus AXI bus test PASSED and structural four-bridge shell elaborated in native CI after correcting a CI-only malformed filelist (first CI failure was not DUT simulation); final latest-CI and genuine user Vivado XSim must be recorded separately. M05.11c must independently connect the **actual** Vitis-generated HLS Verilog and the proposed stream shell and verify real backpressure/terminal status; M05.12 then implements real PS/DMA MMIO, DDR descriptors and reset/quiescence. Do not claim full integration or a new routed clock. [Canonical session-control register/runbook](M05_11B_AXIL_SESSION_CONTROL_2026_11_08.md) + [full three-question PS/PL transport ADR](M05_11_PS_PL_TRANSPORT_ARCHITECTURE_2026_11_08.md). M05 OPEN, PR #79 DRAFT/UNMERGED.
+
+### M05.11b owner-confirmed control-plane XSim PASS (2026-11-08)
+
+**Genuine user Vivado 2025.2 XSim**, original immutable evidence `~/Thesis_Evidence/neuromorphic_v1_m05_11_axil_20261108T230817Z_HFWBlw`, tested git commit `90c31f05a40603914fed507b7f9507220df4d932`. `exit_status=0`, original unmodified SHA256 source evidence. Actual `xvlog`/`xelab` compiled genuine `m05_11_axil_session_controller.v` + `tb_m05_11_axil_controller.sv`, real XSim PASS: `PASS: M05.11b AXI-Lite separated AW/W, persistent R/B backpressure, session START/FINISH/ACK, failure quarantine and clean restart`. Test simulation ended at 2,730 ns. An inherited `LIBRARY_PATH` warning was nonfatal. This verifies **standalone AXI-Lite control RTL only**, not the physical PS, DMA engine or HLS+transport joint connection.
+
+### M05.11c first generated-HLS-plus-transport integration (2026-11-08; NEW PENDING)
+
+Implemented additive [`tb_m05_11c_real_hls_shell.sv`](../rtl/m05_11/tb_m05_11c_real_hls_shell.sv): instantiate **unchanged actual** `m05_rolling_replay` Vitis-generated signed32 Verilog plus `m05_11_stream_shell`, three 256-bit MM2S-like inputs, trace footer/TLAST 256-bit egress, and **two distinct AXI-Lite banks** (the Vitis HLS driver-generated addresses vs custom `0x00..0x38` transport bank). One clock and no reset between two sessions. Real neural success: 2 neurons, synapse 0→1/+5/delay8, tick0 input, 12 ticks, **24 rows** including tick8 recurrent spike, real HLS status0, single SID-specific TLAST footer, custom COMPLETE/ACK. Next session real external input order 0,4,3 leads hardware status4 after **8 provisional rows**, single second SID-specific TLAST footer, custom sticky FAULT with ACK/restart rejected, **0 committed**. Output TREADY stalled 6/7 cycles, HLS-level backpressure also checked. This is a NEW test candidate, not evidence until XSim is run.
+
+Implemented [`run_m05_11c_hls_shell_xsim.sh`](../scripts/run_m05_11c_hls_shell_xsim.sh), requiring exactly original successful K26 `--impl` snapshot and original signed32 HLS SHA, copying its authentic generated RAM .dat files, regenerating driver-based HLS address header, compiling its actual `syn/verilog` sources PLUS new shell, writing new immutable logs in a distinct evidence directory, rejecting missing RAM/failed XSim. New [`m05_11c_replay.py`](../scripts/m05_11c_replay.py) parses **actual handshake-captured 256-bit trace packet words**, after explicit normalizing only undefined 16-bit C padding, through existing `accept_dma_frame` and `RollingTraceCommitGate`; must see 24+1 and 8+1 DMA-facing handshakes, precise status0/status4, TLAST, session ID, row data and 24+0 committed. **14 native/synthetic source and parser tests** ensure replay rejects corrupt/duplicate/missing/status/extra cases, but **do not demonstrate real generated RTL**. M05 Python methods **231**, plus 91 M01–M04 = **322** accepted native tests.
+
+**Optimization boundary:** No changes to the engine's signed32 arithmetic/wheel/HLS source, its true numerical timing, or the original Vivado OOC 6.503 ns/35 BRAM result. The new adapter is extra hardware **area/latency not yet synthesized or routed**. Real Vivado 2025.2 M05.11c XSim remains **PENDING**. Even after a new successful integration XSim, actual AMD AXI DMA/PS DDR/cache/CDC/IRQ, real address map, reset/flush and physical K26 timing remain separately unverified. [Complete M05.11c detailed operator runbook/evidence contract](M05_11C_REAL_HLS_STREAM_SHELL_INTEGRATION_2026_11_08.md). M05 OPEN, PR #79 DRAFT/UNMERGED, no physical board operations.
+
+## F. Next controlled experiments / acceptance gates
+
+1. **ACHIEVED:** i32 rolling engine genuine CSim, HLS synthesis, C/RTL XSim and **Vivado OOC place-and-route** at required 10 ns, achieved 6.503ns. All observed results have documented exact commits/versions and operator-original evidence paths; the evaluation kernel remains unchanged.
+2. **CURRENT USER GATE (experimental):** directly compile the generated HLS RTL and [dedicated handshake stress test](M05_AXIS_RTL_STALL_TEST_2026_11_08.md) in Vivado 2025.2 XSim. The new native test prep tools/bench are not yet a real RTL PASS. Force `trace_TREADY` stalls, input `TVALID` gaps, verify stable payload and ordering under stalls and final status after concurrent draining. Preserve new original `Thesis_Evidence` logs even on failure.
+3. **NEXT:** expand direct RTL backpressure to multiple seeds, multiple logical runs and malformed/late-error packets; then design a full PS/PL DMA/AXI-Lite concurrent output drain using the native [transactional receiver](M05_TRACE_COMMIT_GATE_2026_11_08.md), including timeout recovery.
+4. **LATER:** continuous state-preserving event scheduling beyond 64 ticks, >8 synaptic delay support, and controlled same-workload latency/throughput benchmarks. Require owner acceptance before merging M05 or programming physical FPGA.
+
+**Safety and provenance:** no branch merge, no physical JTAG programming or PS/DDR operations, no invented latencies. **All original evidence folders including older v2 physical logs are preserved unchanged.**

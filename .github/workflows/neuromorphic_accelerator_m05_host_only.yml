@@ -1,0 +1,232 @@
+name: Neuromorphic Accelerator v1 M05 stream and event replay (NO BOARD)
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m05_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m05_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m05-host-stream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native compiler and source version
+        run: |
+          python3 --version
+          g++ --version
+          git rev-parse HEAD
+      - name: Python syntax (no hardware)
+        run: python3 -m compileall -q src scripts tests
+      - name: M05 native stream, state, accumulator, and Vitis workdir-path regression
+        run: python3 -m unittest discover -s tests -p 'test_m05*.py' -v
+      - name: HLS Csim vector testbench native-only compile/smoke (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_stream_eval/m05_stream.cpp \
+            hls/m05_stream_eval/m05_hls_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_hls_tb_host"
+          "$RUNNER_TEMP/m05_hls_tb_host"
+      - name: Stateful BRAM-candidate Csim bench compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_stateful/m05_stateful.cpp \
+            hls/m05_stateful/m05_stateful_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_stateful_tb_host"
+          "$RUNNER_TEMP/m05_stateful_tb_host"
+      - name: Tick-sealed signed accumulator HLS vectors compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m05_accumulator/m05_accumulator.cpp \
+            hls/m05_accumulator/m05_accum_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_accumulator_tb_host"
+          "$RUNNER_TEMP/m05_accumulator_tb_host"
+      - name: Integrated finite-horizon PL candidate Csim bench compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_integrated/m05_integrated.cpp \
+            hls/m05_integrated/m05_integrated_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_integrated_tb_host"
+          "$RUNNER_TEMP/m05_integrated_tb_host"
+      - name: Rolling 8-slot temporal wheel HLS Csim bench compiled natively (NOT Vitis)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            -Wno-unknown-pragmas \
+            hls/m04_lif_eval/m04_eval.cpp \
+            hls/m05_rolling/m05_rolling.cpp \
+            hls/m05_rolling/m05_rolling_csim_tb.cpp \
+            -o "$RUNNER_TEMP/m05_rolling_tb_host"
+          "$RUNNER_TEMP/m05_rolling_tb_host"
+      - name: Accepted M04 M03 M02 M01 regression suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+      - name: M05.10 controller demonstration (SCRIPTED host, NOT board)
+        run: python3 scripts/m05_controller_native_demo.py
+      - name: M05.11 standalone RTL bridge simulation (Icarus, NOT Vivado or DMA)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          iverilog -g2012 -s tb_m05_11_packetizer -o "$RUNNER_TEMP/m05_11_packetizer" \
+            rtl/m05_11/m05_trace_dma_packetizer.v rtl/m05_11/tb_m05_11_packetizer.sv
+          vvp "$RUNNER_TEMP/m05_11_packetizer" | tee "$RUNNER_TEMP/m05_11_packetizer.log"
+          grep -Fq "PASS: M05.11 RTL packetizer" "$RUNNER_TEMP/m05_11_packetizer.log"
+          iverilog -g2012 -s tb_m05_11_ingress -o "$RUNNER_TEMP/m05_11_ingress" \
+            rtl/m05_11/m05_ingress_dma_unpad.v rtl/m05_11/tb_m05_11_ingress.sv
+          vvp "$RUNNER_TEMP/m05_11_ingress" | tee "$RUNNER_TEMP/m05_11_ingress.log"
+          grep -Fq "PASS: M05.11 RTL ingress" "$RUNNER_TEMP/m05_11_ingress.log"
+      - name: M05.11b standalone AXI-Lite RTL (Icarus only, NOT Vivado or PS)
+        run: |
+          iverilog -g2012 -s tb_m05_11_axil_controller \
+            -o "$RUNNER_TEMP/m05_11_axil" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/tb_m05_11_axil_controller.sv
+          timeout 15s vvp "$RUNNER_TEMP/m05_11_axil" | tee "$RUNNER_TEMP/m05_11_axil.log"
+          grep -Fq "PASS: M05.11b AXI-Lite" "$RUNNER_TEMP/m05_11_axil.log"
+          iverilog -g2012 -s m05_11_stream_shell \
+            -o "$RUNNER_TEMP/m05_11_shell_elab" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/m05_11_stream_shell.v
+      - name: M05.12d.1 shell module reference Icarus elaboration (NO Vivado/BOARD)
+        run: |
+          iverilog -g2012 -s m05_12d_axis_shell_ref \
+            -o "$RUNNER_TEMP/m05_12d1_axis_shell_ref" \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/m05_11_stream_shell.v \
+            rtl/m05_12/m05_12d_axis_shell_ref.v
+          python3 -m unittest discover -s tests \
+            -p 'test_m05_12d1_axis_graph.py' -v
+      - name: M05.12d.2 PS catalog parser and proposed MMIO map (synthetic host only, NO Vivado)
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m05_12d2*.py' -v
+      - name: M05.12d.2c PS PSU parameter discovery parser (SYNTHETIC, NO Vivado/DDR)
+        run: python3 -m unittest discover -s tests -p 'test_m05_12d2c*.py' -v
+      - name: M05.12d.2d PS pin enablement audit (SYNTHETIC, NO Vivado/DDR)
+        run: python3 -m unittest discover -s tests -p 'test_m05_12d2d*.py' -v
+      - name: M05.12d.3 PS/PL integrated graph audit (SYNTHETIC, NO Vivado or DDR)
+        run: python3 -m unittest discover -s tests -p 'test_m05_12d3*.py' -v
+      - name: Source SHA256 (host code, not bitstream)
+        run: |
+          sha256sum \
+            hls/m05_stream_eval/m05_stream.hpp \
+            hls/m05_stream_eval/m05_stream.cpp \
+            hls/m05_stream_eval/m05_stream_host_cli.cpp \
+            src/neuromorphic_accelerator_v1/m05_host_runtime.py \
+            tests/test_m05_stream.py \
+            tests/test_m05_stateful.py \
+            tests/test_m05_hls_setup.py \
+            tests/test_m05_hls_path_regression.py \
+            hls/m05_stream_eval/prepare_hls_config.py \
+            tests/test_m05_accumulator.py \
+            hls/m05_accumulator/m05_accumulator.hpp \
+            hls/m05_accumulator/m05_accumulator.cpp \
+            hls/m05_accumulator/m05_accum_hls_config.cfg \
+            hls/m05_stateful/m05_stateful.hpp \
+            hls/m05_stateful/m05_stateful.cpp \
+            hls/m05_stateful/m05_stateful_hls_config.cfg \
+            hls/m05_stream_eval/m05_hls_config.cfg \
+            hls/m05_integrated/m05_integrated.hpp \
+            hls/m05_integrated/m05_integrated.cpp \
+            hls/m05_integrated/m05_integrated_host_cli.cpp \
+            hls/m05_integrated/m05_integrated_csim_tb.cpp \
+            hls/m05_integrated/m05_integrated_hls_config.cfg \
+            tests/test_m05_integrated.py \
+            tests/test_m05_rolling.py \
+            tests/test_m05_trace_commit.py \
+            tests/test_m05_hls_evidence_audit.py \
+            scripts/m05_hls_evidence_audit.py \
+            tests/test_m05_axis_rtl_prep.py \
+            scripts/m05_axis_regmap.py \
+            scripts/m05_rtl_meminit.py \
+            tests/test_m05_rtl_meminit.py \
+            scripts/run_m05_rolling_rtl_stress.sh \
+            hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_stress.sv \
+            hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_ingress_stress.sv \
+            hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_late_error.sv \
+            scripts/m05_rtl_transaction_replay.py \
+            tests/test_m05_rtl_transaction_replay.py \
+            hls/m05_rolling/rtl_stress/tb_m05_rolling_axis_multi_run.sv \
+            scripts/m05_rtl_multi_run_replay.py \
+            tests/test_m05_rtl_multi_run_replay.py \
+            rtl/m05_11/m05_11_axil_session_controller.v \
+            rtl/m05_11/m05_11_stream_shell.v \
+            rtl/m05_11/tb_m05_11_axil_controller.sv \
+            scripts/run_m05_11_axil_xsim.sh \
+            rtl/m05_11/tb_m05_11c_real_hls_shell.sv \
+            scripts/run_m05_11c_hls_shell_xsim.sh \
+            scripts/m05_11c_replay.py \
+            tests/test_m05_11c_hls_shell.py \
+            src/neuromorphic_accelerator_v1/m05_11_mmio.py \
+            tests/test_m05_11_mmio.py \
+            rtl/m05_11/m05_trace_dma_packetizer.v \
+            rtl/m05_11/m05_ingress_dma_unpad.v \
+            rtl/m05_11/tb_m05_11_packetizer.sv \
+            rtl/m05_11/tb_m05_11_ingress.sv \
+            src/neuromorphic_accelerator_v1/m05_dma_frame.py \
+            tests/test_m05_dma_frame.py \
+            scripts/run_m05_11_bridge_xsim.sh \
+            src/neuromorphic_accelerator_v1/m05_execution_controller.py \
+            src/neuromorphic_accelerator_v1/m05_execution_sim.py \
+            src/neuromorphic_accelerator_v1/m05_execution_abi.py \
+            tests/test_m05_execution_controller.py \
+            tests/test_m05_execution_abi.py \
+            scripts/m05_controller_native_demo.py \
+            src/neuromorphic_accelerator_v1/m05_trace_commit.py \
+            hls/m05_rolling/m05_rolling.hpp \
+            hls/m05_rolling/m05_rolling.cpp \
+            hls/m05_rolling/m05_rolling_host_cli.cpp \
+            hls/m05_rolling/m05_rolling_csim_tb.cpp \
+            hls/m05_rolling/m05_rolling_hls_config.cfg \
+            hls/m05_stream_eval/run_m05_offline_hls.sh \
+            hls/m04_lif_eval/m04_eval.cpp \
+            src/neuromorphic_accelerator_v1/m05_12_dma_contract.py \
+            scripts/m05_12_dma_candidate.tcl \
+            scripts/m05_12_dma_candidate_audit.py \
+            scripts/run_m05_12_dma_candidate.sh \
+            scripts/m05_12d1_axis_graph.tcl \
+            scripts/m05_12d1_axis_graph_audit.py \
+            scripts/run_m05_12d1_axis_graph.sh \
+            rtl/m05_12/m05_12d_axis_shell_ref.v \
+            tests/test_m05_12d1_axis_graph.py \
+            tests/test_m05_12_dma_candidate.py \
+            scripts/m05_12d2a_ps_inventory.tcl \
+            scripts/m05_12d2a_ps_inventory_audit.py \
+            scripts/run_m05_12d2a_ps_inventory.sh \
+            tests/test_m05_12d2a_ps_inventory.py \
+            src/neuromorphic_accelerator_v1/m05_12d2_control_map.py \
+            tests/test_m05_12d2_control_map.py \
+            scripts/m05_12d2c_ps_properties.tcl \
+            scripts/m05_12d2c_ps_properties_audit.py \
+            scripts/run_m05_12d2c_ps_properties.sh \
+            tests/test_m05_12d2c_ps_properties.py \
+            scripts/m05_12d2d_ps_enablement.tcl \
+            scripts/m05_12d2d_ps_enablement_audit.py \
+            scripts/run_m05_12d2d_ps_enablement.sh \
+            tests/test_m05_12d2d_ps_enablement.py \
+            scripts/m05_12d3_connected_candidate.tcl \
+            scripts/m05_12d3_connected_candidate_audit.py \
+            scripts/run_m05_12d3_connected_candidate.sh \
+            tests/test_m05_12d3_connected_candidate.py
