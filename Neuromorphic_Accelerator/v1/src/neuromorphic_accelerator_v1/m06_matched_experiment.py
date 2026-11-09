@@ -74,9 +74,16 @@ def source_only_sweep() -> dict:
                     raise AssertionError("role-isomorphic neural work changed")
                 if cache.poisoned or image.uncertain_pages:
                     raise AssertionError("unexpected software AXI canonical state quarantine")
+                # Independent final-state check includes per-neuron
+                # persisted last-update watermarks (t+1), not only voltage.
+                # Each predeclared role is evaluated on every one of 8 ticks;
+                # all other silent neurons retain the initial zero stamp.
+                active_ids = set(ids)
                 expected_final = b"".join(
-                    int(v).to_bytes(2, "little", signed=True) + bytes(STATE_BYTES-2)
-                    for v in result.trace.voltage_rows[-1])
+                    int(v).to_bytes(2, "little", signed=True)
+                    + ((TICK_COUNT if i in active_ids else 0).to_bytes(4, "little"))
+                    + bytes(STATE_BYTES-6)
+                    for i, v in enumerate(result.trace.voltage_rows[-1]))
                 if image.snapshot(owner="SYNTHETIC_ONLY") != expected_final:
                     raise AssertionError("paged final canonical image differs from oracle")
                 counters = asdict(cache.counters)
