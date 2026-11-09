@@ -505,41 +505,52 @@ foreach {bank interface} {
         error "missing/ambiguous real original Vivado control slave address segment for $bank"
     }
     set slave [lindex $source 0]
-    # Avoid silently remapping a previously assigned master segment.
-    set mapped_before [get_bd_addr_segs -quiet -of_objects $slave]
+    # Vivado 2025.2 owner evidence: assign_bd_address printed the genuine
+    # assignment action but returned an empty Tcl value. An empty returned
+    # value by itself does NOT prove success or failure; query the *actual*
+    # master address-space objects and read back the reverse relationship.
+    # Use the documented -addressing/-addressed filters (UG835).
+    set mapped_before [get_bd_addr_segs -addressing -quiet -of_objects $slave]
     if {[llength $mapped_before] != 0} {
         error "control slave $slave already mapped; refusing to overwrite any address"
     }
     set created [assign_bd_address -target_address_space $control_space \
                      -offset $base_text -range $length_text $slave]
-    if {[llength $created] != 1} {
-        error "Vivado failed explicit operator-proposed PS assignment of real slave $slave"
-    }
-    # Require actual readback, including forward+reverse relation of master
-    # and slave, not merely trusting the Tcl assign_bd_address return value.
-    set masters [get_bd_addr_segs -quiet -of_objects $slave]
-    if {[llength $masters] != 1 || [string trim $masters] ne [string trim $created]} {
-        error "unexpected master-segment relationship after assigning $slave"
+    # DO NOT require the return value to have exactly one element:
+    # owner 2025.2 returned "" after printing the assignment message.
+    # Instead require exactly one NEW genuine master segment.
+    set masters [get_bd_addr_segs -addressing -quiet -of_objects $slave]
+    if {[llength $masters] != 1} {
+        error "PS mapping for $bank NOT established: expected exactly one mapped master segment, got [llength $masters]; assign_bd_address return='$created'"
     }
     set master [lindex $masters 0]
     if {![string match "/ps/Data/*" "$master"]} {
-        error "assigned $bank into wrong master namespace: $master"
+        error "assigned $bank into wrong PS address-space namespace: $master"
+    }
+    if {[llength $created] != 0 && [lsearch -exact $created $master] < 0} {
+        error "assign_bd_address result disagrees with actual mapped PS segment for $bank"
+    }
+    set ps_mappings [get_bd_addr_segs -addressed -quiet -of_objects $control_space]
+    if {[lsearch -exact $ps_mappings $master] < 0} {
+        error "slave $bank is not actually addressed in the required PS /ps/Data space"
     }
     set reverse [get_bd_addr_segs -quiet -of_objects $master]
     if {[llength $reverse] != 1 || [lindex $reverse 0] ne "$slave"} {
         error "master reverse mapping does not resolve authentic control slave $slave"
     }
-    set rb_base [get_property OFFSET $master]
-    set rb_range [get_property RANGE $master]
+    # Evidence MUST contain the REAL readback properties, not a reprint of
+    # the requested plan. Compare first; serialize verified properties second.
+    set rb_base [string trim [get_property OFFSET $master]]
+    set rb_range [string trim [get_property RANGE $master]]
     if {![regexp {^0x[0-9A-Fa-f]+$} $rb_base] ||
         ![regexp {^0x[0-9A-Fa-f]+$} $rb_range]} {
-        error "actual Vivado master segment OFFSET/RANGE missing for $bank"
+        error "actual Vivado master segment OFFSET/RANGE missing or non-hex for $bank"
     }
     if {[expr {$rb_base + 0}] != $wanted_base ||
         [expr {$rb_range + 0}] != $wanted_range} {
         error "actual Vivado master segment OFFSET/RANGE differs from original explicit offline plan for $bank"
     }
-    puts $af "READBACK|$bank|$slave|$master|[format {0x%08X} $wanted_base]|[format {0x%08X} $wanted_range]"
+    puts $af "READBACK|$bank|$slave|$master|$rb_base|$rb_range"
     flush $af
     incr index
 }
