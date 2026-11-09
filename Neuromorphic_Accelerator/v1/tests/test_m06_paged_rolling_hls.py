@@ -31,6 +31,7 @@ class M06PagedHLSNativeTests(unittest.TestCase):
         folder=Path(cls.temp.name)
         cls.new=str(folder/"m06_paged_rolling")
         cls.original=str(folder/"m05_accepted_rolling")
+        cls.csim=str(folder/"m06_hls_native_csim")
         flags=[compiler,"-std=c++17","-O2","-Wall","-Wextra","-Werror",
                "-pedantic","-Wno-unknown-pragmas"]
         base=ROOT/"hls/m04_lif_eval/m04_eval.cpp"
@@ -39,6 +40,9 @@ class M06PagedHLSNativeTests(unittest.TestCase):
               ROOT/"hls/m06_paged_rolling/m06_paged_rolling_host_cli.cpp"],cls.new),
             ([base,ROOT/"hls/m05_rolling/m05_rolling.cpp",
               ROOT/"hls/m05_rolling/m05_rolling_host_cli.cpp"],cls.original),
+            ([base,ROOT/"hls/m06_paged_rolling/m06_paged_rolling.cpp",
+              ROOT/"hls/m06_paged_rolling/m06_paged_rolling_csim_tb.cpp"],
+             cls.csim),
         )
         for sources,target in runs:
             p=subprocess.run(flags+[*(str(x) for x in sources),"-o",target],
@@ -144,6 +148,11 @@ class M06PagedHLSNativeTests(unittest.TestCase):
             self.assertEqual(row[2:4],b"\x00\x00")
             self.assertEqual(row[8:],bytes(8))
         return numbers
+
+    def test_same_source_native_vitis_hls_csim_testbench(self):
+        p=subprocess.run([self.csim],capture_output=True,text=True,timeout=60)
+        self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn("M06_PAGED_ROLLING_HLS_CSIM_PASS",p.stdout)
 
     def test_two_page_single_slot_parity_and_state(self):
         net,ev=self.fixture(101,32,16)
