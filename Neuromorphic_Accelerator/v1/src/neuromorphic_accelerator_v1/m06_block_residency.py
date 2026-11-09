@@ -237,6 +237,9 @@ class BlockCache:
         except (NoOwnership, ResidencyError):
             self._poisoned = True
             raise
+        except (TypeError, ValueError) as exc:
+            self._poisoned = True
+            raise ResidencyError("malformed backing transfer metadata") from exc
         finally:
             self._transfer_active = False
 
@@ -247,9 +250,10 @@ class BlockCache:
             record = self._resident[page]
             # Fail closed on unexpected canonical-image mutation even if the
             # block is resident (stale cache-hit exposure is unacceptable).
-            if self._io("version", page, owner=self.owner) != record.canonical_version:
+            observed = self._io("version", page, owner=self.owner)
+            if type(observed) is not int or observed != record.canonical_version:
                 self._poisoned = True
-                raise ResidencyError("stale resident block, external canonical edit")
+                raise ResidencyError("stale or malformed canonical page generation on cache hit")
             self.counters.hits += 1
             self._resident.move_to_end(page)
         else:
@@ -259,6 +263,11 @@ class BlockCache:
                     version, transactions = self._io(
                         "write_block", victim, bytes(record.data),
                         expected_version=record.canonical_version, owner=self.owner)
+                    if (type(version) is not int or
+                            version != record.canonical_version + 1 or
+                            type(transactions) is not int or transactions < 1):
+                        self._poisoned = True
+                        raise ResidencyError("invalid backing-store dirty-eviction acknowledgment")
                     record.canonical_version = version
                     record.dirty = False
                     self.counters.dirty_evictions += 1
@@ -267,6 +276,11 @@ class BlockCache:
                 del self._resident[victim]
                 self.counters.evictions += 1
             data, version, transactions = self._io("read_block", page, owner=self.owner)
+            if (type(data) is not bytes or len(data) != self.geometry.page_bytes or
+                    type(version) is not int or version < 0 or
+                    type(transactions) is not int or transactions < 1):
+                self._poisoned = True
+                raise ResidencyError("invalid backing-store page width, generation or read acknowledgment")
             self._resident[page] = ResidentBlock(bytearray(data), version)
             self.counters.misses += 1
             self.counters.read_bytes += self.geometry.page_bytes
@@ -296,13 +310,18 @@ class BlockCache:
         for page in list(self._resident):
             record = self._resident[page]
             # No silent clean if the canonical image was replaced externally.
-            if self._io("version", page, owner=self.owner) != record.canonical_version:
+            observed = self._io("version", page, owner=self.owner)
+            if type(observed) is not int or observed != record.canonical_version:
                 self._poisoned = True
-                raise ResidencyError("stale block before dirty flush")
+                raise ResidencyError("stale or malformed version before dirty flush")
             if record.dirty:
                 version, tx = self._io("write_block", page, bytes(record.data),
                                        expected_version=record.canonical_version,
                                        owner=self.owner)
+                if (type(version) is not int or version != record.canonical_version+1 or
+                        type(tx) is not int or tx < 1):
+                    self._poisoned = True
+                    raise ResidencyError("invalid backing-store flush acknowledgment")
                 record.canonical_version = version
                 record.dirty = False
                 self.counters.write_bytes += self.geometry.page_bytes
