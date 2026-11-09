@@ -23,6 +23,27 @@ xvlog -version 2>&1 | grep -q '2025.2' || {
   echo "ERROR: must use Vivado 2025.2 original simulation libraries" >&2
   exit 2
 }
+# Original owner XSim 2026-11-09 progressed through all vendor RTL
+# xvlog sources but XPM xpm_cdc.sv references a GLOBAL Verilog module
+# 'glbl'. -L unisims_ver/xpm does NOT itself instantiate work.glbl.
+# Compile the installed Vivado glbl.v and specify work.glbl as the
+# second elaboration root for BOTH independent XSim snapshots.
+if [[ -z "${XILINX_VIVADO:-}" ]]; then
+  echo "ERROR: XILINX_VIVADO unset; source original Vivado 2025.2 settings64.sh" >&2
+  exit 2
+fi
+GLBL="$(realpath -e -- "$XILINX_VIVADO/data/verilog/src/glbl.v")" || {
+  echo "ERROR: standard 2025.2 Vivado global primitive glbl.v missing" >&2
+  exit 2
+}
+case "$GLBL" in
+  "$XILINX_VIVADO"/data/verilog/src/glbl.v) ;;
+  *) echo "ERROR: original installed XSim glbl path unexpected" >&2; exit 2 ;;
+esac
+grep -Eq '^[[:space:]]*module[[:space:]]+glbl([[:space:](;]|$)' "$GLBL" || {
+  echo "ERROR: installed Vivado glbl.v does not declare module glbl" >&2
+  exit 2
+}
 SIM_TOP="$D3/13_file_backed_project/m05_d3_output_products.gen/sources_1/bd/m05_12d3_real_signed32_hls_six_control_address_candidate/ip/m05_12d3_real_signed32_hls_six_control_address_candidate_mem_sc_0/sim/m05_12d3_real_signed32_hls_six_control_address_candidate_mem_sc_0.sv"
 BD_SUB="$D3/13_file_backed_project/m05_d3_output_products.gen/sources_1/bd/m05_12d3_real_signed32_hls_six_control_address_candidate/ip/m05_12d3_real_signed32_hls_six_control_address_candidate_mem_sc_0/bd_0/sim/bd_13bd.v"
 mkdir -p "$HOME/Thesis_Evidence"
@@ -46,6 +67,8 @@ cd "$ROOT"
 git rev-parse HEAD > "$OUT/commit.txt"
 git status --porcelain=v1 > "$OUT/worktree_status.txt"
 sha256sum "$SIM_TOP" "$BD_SUB" > "$OUT/sha_before.txt"
+sha256sum "$GLBL" > "$OUT/installed_vivado_glbl_sha256.txt"
+printf '%s\n' "$GLBL" > "$OUT/installed_vivado_glbl_path.txt"
 printf '%s\n' "$D3" > "$OUT/original_directory.txt"
 python3 scripts/m06_generate_original_mem_sc_bfm.py \
   --original "$D3" --headers "$HEADER" \
@@ -108,9 +131,11 @@ xvlog --relax -sv "${FLAGS[@]}" "${VLOG[@]}" \
   "$ROOT/rtl/m06/m06_axi256_block_transfer.sv" \
   "$OUT/tb_m06_original_mem_sc_vendor.sv" \
   "$OUT/tb_m06_original_vendor_paged.sv" \
+  "$GLBL" \
   2>&1 | tee "$OUT/03_xvlog.log"
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
-  work.tb_m06_original_mem_sc_vendor -s m06_original_vendor_snapshot \
+  work.tb_m06_original_mem_sc_vendor work.glbl \
+  -s m06_original_vendor_snapshot \
   2>&1 | tee "$OUT/04_xelab.log"
 timeout --signal=TERM 360s xsim m06_original_vendor_snapshot -R \
   --onfinish quit 2>&1 | tee "$OUT/05_xsim.log"
@@ -126,7 +151,8 @@ grep -Fq 'M06_ORIGINAL_SMARTCONNECT_VENDOR_XSIM_PASS' "$OUT/05_xsim.log" || {
 # synthesis-oriented one-slot 256B RTL page manager + AXI block mover.
 # The earlier byte-exact port test must already PASS before this stage.
 xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
-  work.tb_m06_original_vendor_paged -s m06_original_paged_vendor_snapshot \
+  work.tb_m06_original_vendor_paged work.glbl \
+  -s m06_original_paged_vendor_snapshot \
   2>&1 | tee "$OUT/06_paged_xelab.log"
 timeout --signal=TERM 360s xsim m06_original_paged_vendor_snapshot -R \
   --onfinish quit 2>&1 | tee "$OUT/07_paged_xsim.log"
