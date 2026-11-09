@@ -121,7 +121,7 @@ class M0512D3RealHLSContractTests(unittest.TestCase):
         python = (ROOT / "scripts/m05_12d3_real_hls_contract.py").read_text()
         for required in (
             "source_impl_evidence.txt", "source_sha256.txt",
-            "m05_rolling_replay_control_s_axi.v", "find_generated_register_map",
+            'TOP + "_control_s_axi.v"', "find_generated_register_map",
             "parse_control_verilog", "sha256", "ORIGINAL_SIGNED32",
             "NOT_AUTHORIZED", "PORTS",
         ):
