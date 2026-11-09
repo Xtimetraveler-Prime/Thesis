@@ -95,10 +95,16 @@ class ShadowEpoch:
             if expected != self._actual.trace:
                 raise EpochError("independent M02 trace differs from paged inference")
             new_shadow = self.shadow.snapshot(owner=self.owner)
+            rowbytes = self.canonical.geometry.bytes_per_neuron
+            stamp = [0] * len(net.neurons)
+            for tick, evaluated in enumerate(self._actual.evaluated_ids_by_tick):
+                for neuron in evaluated:
+                    stamp[neuron] = tick + 1
             expected_bytes = b"".join(
                 voltage.to_bytes(2, "little", signed=True)
-                + bytes(self.canonical.geometry.bytes_per_neuron - 2)
-                for voltage in expected.voltage_rows[-1])
+                + ((stamp[i].to_bytes(4, "little") + bytes(rowbytes-6))
+                   if rowbytes >= 6 else bytes(rowbytes-2))
+                for i, voltage in enumerate(expected.voltage_rows[-1]))
             if new_shadow != expected_bytes:
                 raise EpochError("shadow canonical bytes differ from expected M02 final voltages")
         except (ValueError, ResidencyError, PermissionError):
