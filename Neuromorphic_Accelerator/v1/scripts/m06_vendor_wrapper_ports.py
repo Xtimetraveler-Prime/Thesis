@@ -16,6 +16,8 @@ from pathlib import Path
 import re
 import sys
 
+from m06_verilog_port_decls import module_port_contracts
+
 D3_NAME = "neuromorphic_v1_m05_12d3_ip_output_20261109T073025Z_y05CSJ"
 SOURCE_MAX_BYTES = 2_000_000
 MODULE_LIMIT = 200
@@ -63,31 +65,21 @@ def inspect(original: Path, captured_report: Path) -> dict:
     skipped = 0
     for path in candidates:
         body = path.read_text(encoding="utf-8", errors="replace")
-        found = list(MODULE_RE.finditer(body))
-        for match in found[:MODULE_LIMIT]:
-            name = match.group(1)
-            header = match.group(2)
-            if "mem_sc" not in name.lower() and not re.search(
-                    r"\b(?:S0[0-3]|M00)_AXI_", header, re.I):
+        found = module_port_contracts(body)
+        for parsed in found[:MODULE_LIMIT]:
+            name = parsed["module"]
+            axi_ports = parsed["axi_ports"]
+            if "mem_sc" not in name.lower() and not axi_ports:
                 continue
-            ports = []
-            for m in PORT_RE.finditer(header):
-                direction, msb, lsb, port = m.groups()
-                ports.append({
-                    "direction": direction.lower(),
-                    "name": port,
-                    "packed_width": (abs(int(msb)-int(lsb))+1
-                                     if msb is not None else 1),
-                })
-            axi_ports = [port for port in ports if re.search(
-                r"\b(?:s0[0-3]|m00)_axi_", port["name"], re.I)]
             wrappers.append({
                 "module": name,
                 "source_relative_to_original": str(path.relative_to(original)),
                 "source_sha256": hashlib.sha256(body.encode()).hexdigest(),
-                "ansi_port_count": len(ports),
+                "declaration_style": parsed["declaration_style"],
+                "ansi_port_count": len(axi_ports) + len(parsed["other_ports"]),
                 "axi_port_count": len(axi_ports),
                 "ansi_axi_ports": axi_ports[:260],
+                "other_ports": parsed["other_ports"][:40],
                 "port_header_only_not_elaborated": True,
                 "source_file_is_original_read_only": True,
             })
@@ -102,6 +94,8 @@ def inspect(original: Path, captured_report: Path) -> dict:
         "wrapper_candidates": wrappers[:30],
         "wrapper_candidate_count": len(wrappers),
         "wrappers_with_ansi_axi_ports": usable,
+        "non_ansi_compatible_parser": True,
+        "ports_are_unelaborated_declarations_only": True,
         "module_scan_limit_truncated_modules": skipped,
         "status": ("MODULE_HEADERS_FOUND_NOT_COMPILED" if usable
                    else "MODEL_HEADER_UNAVAILABLE_NO_GUESSED_WRAPPER"),
