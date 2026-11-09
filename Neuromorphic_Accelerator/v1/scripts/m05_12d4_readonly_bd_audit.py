@@ -14,6 +14,7 @@ import re
 import sys
 
 from m05_12d4_warning_inventory import inspect_original, parse_warnings
+from m05_12d3_dma_memory_audit import check as check_original_dma
 
 PREFIX = "neuromorphic_v1_m05_12d4_readonly_bd_"
 OLD_PREFIX = "neuromorphic_v1_m05_12d4_warning_inventory_"
@@ -149,6 +150,22 @@ def parse(report: str, root: Path) -> dict:
     }
 
 
+def witnessed_ocm_exclusion(warnings: list[dict], dma: dict, audit_log: str) -> dict:
+    """Classify ONLY the explicitly known OCM exclusion, never AXI payload loss."""
+    matching = [r for r in warnings if r["id"] == "BD 41-1629"]
+    if len(matching) != 1:
+        raise ValueError("exactly one original OCM-excluded warning required for bounded classification")
+    msg = matching[0]["message"]
+    if (msg.strip() != "Slave segment </ps/SAXIGP2/HP0_LPS_OCM> is excluded from all addressing paths."
+            or dma.get("dma_ocm_excluded") != 4 or dma.get("dma_ddr_low_mapped") != 4
+            or "PASS: M05.12d.3 four authentic DDR_LOW address mappings and four excluded OCM segments independently audited" not in audit_log):
+        raise ValueError("original full-D3 OCM warning lacks exact independent exclusion witness")
+    return {"original_log_line": matching[0]["line"], "warning_id": "BD 41-1629",
+            "classification": "DOCUMENTED_INTENTIONAL_OCM_EXCLUSION_ONLY",
+            "reason": "original D3 independent four-OCM exclusion audit and full-BD validation",
+            "axi_payload_semantics": "NOT_IMPLIED_BY_OCM_EXCLUSION"}
+
+
 def verify_original_and_inventory(original: Path, previous: Path) -> dict:
     orig = inspect_original(original)
     d4 = previous.resolve(strict=True)
@@ -159,6 +176,23 @@ def verify_original_and_inventory(original: Path, previous: Path) -> dict:
     prior = json.loads(d4.read_text())
     if prior != orig or len(prior["warnings"]) != 64:
         raise ValueError("prior original D4 inventory differs from unchanged original 2025.2 D3")
+    root = original.resolve(strict=True)
+    dma_readback = root / "11_dma_hp0_memory_readback.txt"
+    dma_audit_log = root / "12_independent_dma_hp0_memory_audit.log"
+    if (not dma_readback.is_file() or not dma_audit_log.is_file()
+            or dma_readback.is_symlink() or dma_audit_log.is_symlink()):
+        raise ValueError("original D3 DMA/OCM independent evidence missing")
+    dma = check_original_dma(
+        dma_readback.read_text(),
+        (root / "07_full_bd_validation.txt").read_text(),
+        (root / "03_vivado.log").read_text(),
+    )
+    orig["documented_ocm_exclusion"] = witnessed_ocm_exclusion(
+        orig["warnings"], dma, dma_audit_log.read_text())
+    orig["original_dma_ocm_evidence_sha256"] = {
+        "11_dma_hp0_memory_readback.txt": hashlib.sha256(dma_readback.read_bytes()).hexdigest(),
+        "12_independent_dma_hp0_memory_audit.log": hashlib.sha256(dma_audit_log.read_bytes()).hexdigest(),
+    }
     return orig
 
 
@@ -174,6 +208,9 @@ def run(original: Path, previous: Path, report: Path, log: Path, output: Path) -
     details = parse(report.read_text(), original)
     details["original_d3_sha256"] = original_dict["original_file_sha256"]
     details["original_warning_occurrences"] = len(original_dict["warnings"])
+    details["documented_ocm_exclusion"] = original_dict["documented_ocm_exclusion"]
+    details["original_dma_ocm_evidence_sha256"] = original_dict["original_dma_ocm_evidence_sha256"]
+    details["warning_classifications"] = {"documented_intentional_ocm": 1, "unresolved": 63}
     details["read_only_vivado_log_sha256"] = hashlib.sha256(log.read_bytes()).hexdigest()
     with output.open("x", encoding="utf-8") as fp:
         json.dump(details, fp, indent=2, sort_keys=True)
