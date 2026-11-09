@@ -401,8 +401,8 @@ foreach {key expected} {
 }
 # DISCOVERY ONLY: never assign a fabricated PS base or decode here.
 # Record original Vivado 2025.2 exposed address spaces and six actual slave
-# address-segment containers. This guides the later explicit assign_bd_address
-# step. No missing segment may be silently invented.
+# address-segment containers. This guides later explicit address mapping.
+# No new register segment can be invented. No missing segment may be silently invented.
 set addrfile [open $inventory_path w]
 puts $addrfile "META|scope|OFFLINE_READ_ONLY_VIVADO_ADDRESS_INVENTORY_NOT_DECODE_PROOF"
 foreach {bank interface} {
