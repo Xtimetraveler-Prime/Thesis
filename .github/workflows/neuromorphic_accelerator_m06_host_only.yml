@@ -138,6 +138,19 @@ jobs:
             "$RUNNER_TEMP/m06_vendor_bfm_syntax_only.sv" \
             rtl/m06/m06_axi128_scratch_mem.sv
           echo "M06 original-wrapper TB HDL SYNTAX PASS only; REAL VENDOR XSIM PENDING"
+      - name: Integrated 256-byte RTL block mover and residency FSM with independent AXI memory BFM
+        run: |
+          iverilog -g2012 -s tb_m06_residency_axi_block_bridge \
+            -o "$RUNNER_TEMP/m06_residency_axi_block_bridge" \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv \
+            rtl/m06/tb_m06_residency_axi_block_bridge.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_residency_axi_block_bridge" \
+            | tee "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+          grep -Fq "M06_PAGED_BLOCK_AXIBRIDGE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+          grep -Fq "M06_PAGED_BLOCK_FAULT_QUARANTINE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
       - name: M06 evidence boundary
         run: |
           grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
