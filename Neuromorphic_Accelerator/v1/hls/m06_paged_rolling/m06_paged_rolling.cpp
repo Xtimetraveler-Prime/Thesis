@@ -27,7 +27,7 @@ static_assert(M05_ROLL_MAX_CURRENT <=
 // ownership/base address is a SEPARATE platform contract; no host per tick.
 static std::uint32_t m06_ensure_page(
     std::uint32_t block, std::uint32_t usable,
-    std::uint32_t *canonical_read_words,
+    const std::uint32_t *canonical_read_words,
     std::uint32_t *canonical_write_words,
     std::uint32_t data[M06_PAGED_MAX_SLOTS][M06_PAGED_PAGE_WORDS],
     std::uint8_t valid[M06_PAGED_MAX_SLOTS],
@@ -85,7 +85,7 @@ std::uint32_t m06_paged_rolling_replay(
     hls::stream<M05IntegratedExternal> &external_events,
     hls::stream<M05IntegratedTraceEntry> &trace,
     hls::stream<M06PageMetrics> &metrics,
-    std::uint32_t *canonical_read_words,
+    const std::uint32_t *canonical_read_words,
     std::uint32_t *canonical_write_words,
     std::uint32_t neuron_count,
     std::uint32_t synapse_count,
