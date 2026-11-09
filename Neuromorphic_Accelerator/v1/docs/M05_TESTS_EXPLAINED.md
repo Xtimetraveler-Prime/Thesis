@@ -1,3 +1,29 @@
+## 2026-11-08 local / 2026-11-09 UTC — M05.12d.1 owner Vivado PASS and M05.12d.2a/b new synthetic tests
+
+**Accepted original D1 owner run:** `neuromorphic_v1_m05_12d1_axis_graph_20261109T011233Z_Qjt8oT`, source `c702d1712e153aa283c55f1e35c079738ea1c50e`, **exit0**, real Vivado source_mgmt_mode All, four correctly directed/point-to-point connected DMA↔shell 256b AXIS nets and independent Python graph audit PASS. Still no physical PS/HLS/DDR/clock wiring. Original unresolved `IP_Flow 19-11770` missing `clk FREQ_HZ` warning and inferred ASSOCIATED_BUSIF only neuron stream must be reviewed in full connected design.
+
+**New M05.12d.2a `tests/test_m05_12d2a_ps_inventory.py`: seven synthetic PS IP-catalog tests (not Vivado).** Exact methods:
+- `test_fully_disabled_default_catalog_is_discovery_not_integration` — accepts complete default-disabled PS port inventory without mislabeling it as usable connected ports.
+- `test_enabled_directional_ports_count_not_assumed_from_defaults` — positive synthetic HPM master/HP slave/PS output clock readback.
+- `test_wrong_direction_or_enabled_field_is_rejected` — rejects direction inversion and non-binary active bits.
+- `test_missing_duplicate_extra_wrong_vlnv_or_preset_is_rejected` — rejects missing/duplicated/extra IP fields, wrong VLNV, hypothetical physical/preset scope and truncated text.
+- `test_properties_can_be_observed_but_absence_not_assumed_enabled` — available property observations do not imply actual PS interface enablement.
+- `test_cli_is_read_only_and_missing_report_fails_closed` — strict stand-alone audit fail-closed and read-only behavior.
+- `test_safe_offline_runner_and_no_configuration_side_effects` — bash syntax/help/arg and read-only Tcl no-board safety.
+
+**New M05.12d.2b `tests/test_m05_12d2_control_map.py`: seven synthetic host-only address-map tests.** Exact methods:
+- `test_six_independent_apertures_and_directional_dma_offsets` — six distinct control banks, MM2S vs S2MM length and shell version offsets.
+- `test_no_missing_extra_duplicate_or_wrong_bank_admission` — reject missing/duplicate/unknown banks.
+- `test_overlap_and_touching_regions` — reject overlap but allow exact 4KiB-aligned adjacent windows.
+- `test_alignment_length_rejection_and_40_bit_bound` — check 4KiB alignment, 4KiB–1MiB supported control aperture, PS 40bit arithmetic overflow.
+- `test_bools_and_non_ints_cannot_be_accepted_as_addresses` — reject bool/coerced non-integer bases and lengths.
+- `test_read_only_immutable_and_unknown_register_refusal` — immutable plan, unknown HLS generated offset and wrong-direction DMA registers cannot be guessed.
+- `test_no_default_addresses_or_hardware_mmio_backend` — no physical memory, driver or default address assignment.
+
+**Total new 14 D2 named native methods**; all new D2 source, actual synthetic test outcomes and source hashes are versioned in the existing M05 GitHub workflow. Genuine local Vivado `zynq_ultra_ps_e` default inventory is STILL PENDING operator. [Full D2 implementation and local commands](M05_12D2_PS_INVENTORY_AND_CONTROL_APERTURES_2026_11_08.md). The previously verified D1 stable CI had **268 M05 +91 earlier=359** unique methods (one Icarus preinstall skip later explicitly passed). Expected new total **282 M05 +91=373** only after corresponding full native CI passes; no PS/DDR was exercised.
+
+---
+
 > **M05.12d.1 REPAIR TEST COUNT VERIFIED:** **POST-REPAIR CI PASSED (2026-11-08 local / 2026-11-09 UTC):** source and incident-doc commit `7f982c39a38197fda576a6acf5dd38d8734f12fe` has all **five GitHub Actions workflows SUCCESS**; actual [M05 run 42543219964](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/42543219964) job log includes `test_auto_source_management_before_module_reference_regression ... ok`, source-mode bad/missing-report negative tests, and **268 M05 named methods** (267 PASS + one pre-install Icarus skip, then mandatory Icarus installation/recompile and **9/9 D1 methods PASS**, including the formerly skipped elaboration). M01–M04 22+28+21+20 =91 PASS; **359 distinct native methods passed at least once**. This verifies Python/RTL host logic only; **genuine post-fix M05.12d.1 Vivado graph still PENDING**. Original `neuromorphic_v1_m05_12d1_axis_graph_20261109T005602Z_nTb0oa` stays `exit_status=1` and immutable. One new source-mode regression increases M05 named-method inventory from 267 to 268; M01–M04 remain91. Source mode is also strictly required in independent synthetic report negative tests; these are NOT genuine Vivado module-reference resolution tests.
 
 ## 2026-11-08 / 2026-11-09 UTC — first genuine M05.12d.1 Vivado module-ref failure and strict source-mode regression
