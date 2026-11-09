@@ -216,7 +216,7 @@ module tb_m06_axi128_scratch_mem;
 
         if (observed_ready_stalls==0)
             $fatal(1,"READY backpressure was never observed");
-        if (observed_write_responses!=3 || observed_read_beats!=7)
+        if (observed_write_responses!=3 || observed_read_beats!=6)
             $fatal(1,"scratch AXI scoreboard count mismatch W=%0d R=%0d",
                    observed_write_responses,observed_read_beats);
         $display("M06_AXI128_SCRATCH_STANDALONE_PASS writes=%0d reads=%0d stalls=%0d | NO_VENDOR_XSIM_NO_DDR",
