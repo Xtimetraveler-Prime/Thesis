@@ -56,7 +56,7 @@ std::uint32_t m06_paged_rolling_replay(
     hls::stream<M05IntegratedExternal> &external_events,
     hls::stream<M05IntegratedTraceEntry> &trace,
     hls::stream<M06PageMetrics> &metrics,
-    std::uint32_t *canonical_read_words,
+    const std::uint32_t *canonical_read_words,
     std::uint32_t *canonical_write_words,
     std::uint32_t neuron_count,
     std::uint32_t synapse_count,
