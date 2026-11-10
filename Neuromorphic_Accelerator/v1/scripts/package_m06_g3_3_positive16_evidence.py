@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package exactly one original-owner G3.3 positive16 evidence ZIP on PASS/FAIL.
+"""Package one immutable original-owner G3.3/G4 evidence ZIP on PASS/FAIL.
 
 Only a known allowlist of generated logs, candidate TBs and SHA manifests;
 never copies original proprietary AMD/Vitis RTL, .xci or init payload bytes.
@@ -24,10 +24,12 @@ NAMES = (
     "03_control_map.log", "03_real_hls_axilite_control_map.json",
     "03_generation.log", "03_positive16_generation.log",
     "03_independent_m02_m03_vectors.log", "03_m02_m03_parity_generation.log",
+    "03_g4_first_b_fault_generation.log",
     "04_xvhdl.log", "05_xvlog.log", "06_xelab.log", "07_xsim.log",
     "tb_m06_g3_3_actual_hls_original_amd_idle.sv",
     "tb_m06_g3_3_actual_hls_original_amd_positive16.sv",
     "tb_m06_g3_3_actual_hls_original_amd_parity32.sv",
+    "tb_m06_g4_actual_hls_original_amd_first_b_slverr.sv",
     "m06_g3_3_m02_m03_owner_vectors.svh",
     "generated_hls_link_tb_sha256.txt",
     "source_before_sha256.txt", "source_after_sha256.txt",
@@ -57,7 +59,7 @@ def package(evidence: Path | None, invocation: Path | None, output: Path) -> Non
                 else:
                     print("NOT GENERATED:", name)
         else:
-            print("No new positive16 evidence directory was created.")
+            print("No new owner evidence directory was created.")
         if invocation is not None and invocation.is_file() and not invocation.is_symlink():
             archive.write(invocation, arcname="08_operator_invocation_console.log")
         else:
@@ -71,15 +73,16 @@ def package(evidence: Path | None, invocation: Path | None, output: Path) -> Non
 
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode",choices=("positive16","m02_m03_parity"),default="positive16")
+    parser.add_argument("--mode",choices=("positive16","m02_m03_parity","g4_first_b_slverr"),default="positive16")
     parser.add_argument("--link",default=os.environ.get("LINK", ""))
     parser.add_argument("--invocation-log",default=os.environ.get("INVOCATION_LOG", ""))
     parser.add_argument("--output",type=Path,default=None)
     args=parser.parse_args()
     timestamp=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    prefix=("M06_G3_3_M02_M03_PARITY_HLS_AMD_REVIEW_"
-            if args.mode=="m02_m03_parity"
-            else "M06_G3_3_POSITIVE16_HLS_AMD_REVIEW_")
+    prefix=({"positive16":"M06_G3_3_POSITIVE16_HLS_AMD_REVIEW_",
+             "m02_m03_parity":"M06_G3_3_M02_M03_PARITY_HLS_AMD_REVIEW_",
+             "g4_first_b_slverr":"M06_G4_FIRST_B_SLVERR_HLS_AMD_REVIEW_"}
+            [args.mode])
     output=args.output or (Path.home()/"Thesis_Evidence"/
         (prefix+timestamp+".zip"))
     folder=Path(args.link) if args.link else None
