@@ -1,6 +1,6 @@
 # Documentation cleanup review — November 10, 2026
 
-**Status: draft documentation-only proposal.** This change must remain unmerged until explicitly approved. M01–M06 acceptance status, source code, Vivado evidence and archived research history are unchanged.
+**Status: APPROVED AND MERGED.** Documentation cleanup PR #81 merged into main on 2026-11-10 (merge commit 5f6c73068542238b87d74e0e9f9bffff6202ed01). This is a documentation-only change: M01–M06 acceptance, source code, Vivado evidence and archived research history remain unchanged. The [new M07 next-chat handoff](M07_NEXT_CHAT_HANDOFF_2026_11_10.md) is the starting point for future development.
 
 ## What changed
 
