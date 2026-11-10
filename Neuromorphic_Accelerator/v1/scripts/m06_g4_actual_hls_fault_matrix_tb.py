@@ -73,6 +73,14 @@ assign raw_ram_bready = M00_AXI_bready && !hold_first_b;""")
         src=replace_once(src,
             ".s_axi_bready(M00_AXI_bready),",
             ".s_axi_bready(raw_ram_bready),")
+    # In these two NEW G4 experiments HLS trace/metrics feed a REAL
+    # synthesizable quarantine FIFO instead of testbench-only counters.
+    src=replace_once(src,
+        "assign h_trace_TREADY = 1'b1; // sink ready while idle",
+        "// Original HLS trace sink now attached to gated output quarantine")
+    src=replace_once(src,
+        "assign h_metrics_TREADY = 1'b1; // sink ready while idle",
+        "// Original HLS metrics sink now attached to gated output quarantine")
     offsets={key:"7'h"+format(control["register_offsets"][key],"02x")
              for key in (*REQUIRED,"AP_CTRL")}
     prefix=src
@@ -89,6 +97,30 @@ READ_TAIL=r"""
 reg g4_epoch_begin=0, g4_done=0;
 wire g4_active,g4_commit,g4_poison;
 wire [15:0] g4_outstanding;
+// Genuine synthesizable precommit HLS output staging, not TB counters.
+wire q_trace_valid, q_metrics_valid;
+wire q_trace_ready=1'b1, q_metrics_ready=1'b1;
+wire [191:0] q_trace_data;
+wire [255:0] q_metrics_data;
+wire q_quarantined,q_protocol_fault,q_published_done;
+wire [31:0] q_buffered_count,q_published_count;
+m06_g4_output_quarantine #(.MAX_TRACE(16)) output_quarantine (
+    .aclk(clk),.aresetn(resetn),
+    .epoch_begin(g4_epoch_begin),.expected_trace_count(32'd16),
+    .commit_valid(g4_commit),.poisoned(g4_poison),
+    .s_trace_tdata(h_trace_TDATA),.s_trace_tvalid(h_trace_TVALID),
+    .s_trace_tready(h_trace_TREADY),
+    .s_metrics_tdata(h_metrics_TDATA),.s_metrics_tvalid(h_metrics_TVALID),
+    .s_metrics_tready(h_metrics_TREADY),
+    .m_trace_tdata(q_trace_data),.m_trace_tvalid(q_trace_valid),
+    .m_trace_tready(q_trace_ready),
+    .m_metrics_tdata(q_metrics_data),.m_metrics_tvalid(q_metrics_valid),
+    .m_metrics_tready(q_metrics_ready),
+    .quarantined(q_quarantined),.protocol_fault(q_protocol_fault),
+    .published_done(q_published_done),
+    .buffered_trace_count(q_buffered_count),
+    .published_trace_count(q_published_count)
+);
 integer first_ram_ar=0, ram_r_slverr=0, hls_r_slverr=0;
 integer provisional_trace=0, published_trace=0, fault_polls=0;
 reg first_ar_seen=0;
@@ -115,6 +147,8 @@ always @(posedge clk) if(resetn) begin
         hls_r_slverr=hls_r_slverr+1;
     if(h_trace_TVALID && h_trace_TREADY)
         provisional_trace=provisional_trace+1;
+    if(q_trace_valid && q_trace_ready)
+        published_trace=published_trace+1;
     if(g4_commit) begin
         published_trace=provisional_trace;
         $fatal(1,"M06_G4_FAIL READ_ERROR_FALSE_COMMIT");
@@ -171,6 +205,30 @@ STALL_TAIL=r"""
 reg g4_epoch_begin=0, g4_done=0;
 wire g4_active,g4_commit,g4_poison;
 wire [15:0] g4_outstanding;
+// Genuine synthesizable precommit HLS output staging, not TB counters.
+wire q_trace_valid, q_metrics_valid;
+wire q_trace_ready=1'b1, q_metrics_ready=1'b1;
+wire [191:0] q_trace_data;
+wire [255:0] q_metrics_data;
+wire q_quarantined,q_protocol_fault,q_published_done;
+wire [31:0] q_buffered_count,q_published_count;
+m06_g4_output_quarantine #(.MAX_TRACE(16)) output_quarantine (
+    .aclk(clk),.aresetn(resetn),
+    .epoch_begin(g4_epoch_begin),.expected_trace_count(32'd16),
+    .commit_valid(g4_commit),.poisoned(g4_poison),
+    .s_trace_tdata(h_trace_TDATA),.s_trace_tvalid(h_trace_TVALID),
+    .s_trace_tready(h_trace_TREADY),
+    .s_metrics_tdata(h_metrics_TDATA),.s_metrics_tvalid(h_metrics_TVALID),
+    .s_metrics_tready(h_metrics_TREADY),
+    .m_trace_tdata(q_trace_data),.m_trace_tvalid(q_trace_valid),
+    .m_trace_tready(q_trace_ready),
+    .m_metrics_tdata(q_metrics_data),.m_metrics_tvalid(q_metrics_valid),
+    .m_metrics_tready(q_metrics_ready),
+    .quarantined(q_quarantined),.protocol_fault(q_protocol_fault),
+    .published_done(q_published_done),
+    .buffered_trace_count(q_buffered_count),
+    .published_trace_count(q_published_count)
+);
 integer first_ram_aw=0, raw_ram_b_seen=0, hls_b_seen=0;
 integer provisional_trace=0, published_trace=0, fault_polls=0;
 reg first_aw_seen=0;
@@ -196,6 +254,8 @@ always @(posedge clk) if(resetn) begin
         hls_b_seen=hls_b_seen+1;
     if(h_trace_TVALID && h_trace_TREADY)
         provisional_trace=provisional_trace+1;
+    if(q_trace_valid && q_trace_ready)
+        published_trace=published_trace+1;
     if(g4_commit) begin
         published_trace=provisional_trace;
         $fatal(1,"M06_G4_FAIL STALLED_B_FALSE_COMMIT");
