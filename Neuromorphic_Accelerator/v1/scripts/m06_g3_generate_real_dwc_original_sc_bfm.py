@@ -81,6 +81,118 @@ def exact_dwc_abi(sc: str, required: dict) -> dict:
     return expected
 
 
+
+def passive_axi_probe() -> str:
+    """Observe genuine handshakes and stalled responses; drive NO AXI signals."""
+    reads = [("RD_SI32", "m06_g3_read_dwc_s_axi"),
+             ("RD_MI256_SC_S00", "S00_AXI"),
+             ("SC_M00_RAM128", "M00_AXI")]
+    writes = [("WR_SI32", "m06_g3_write_dwc_s_axi"),
+              ("WR_MI256_SC_S03", "S03_AXI"),
+              ("SC_M00_RAM128", "M00_AXI")]
+    lines = ["// PASSIVE, bounded. M00 and RAM S_AXI are THE SAME nets.",
+             "integer axi_probe_printed=0, axi_probe_first_decerr=0;",
+             "integer axi_probe_quiet=0;"]
+    counters = []
+    def trace(kind, stage, fields, args):
+        fmt = f"M06_G3_AXI_TRACE kind={kind} stage={stage} t=%0t " + fields
+        return ('if (axi_probe_printed < 512) $display("' + fmt + '", ' +
+                ", ".join(["$time"] + args) + ');')
+    lines.append("always @(posedge clk) if (resetn) begin")
+    for stage, prefix in reads + writes:
+        channels = ("AR", "R") if stage.startswith("RD_") else (
+            ("AW", "W", "B") if stage.startswith("WR_") else ("AR", "R", "AW", "W", "B"))
+        for channel in channels:
+            counter = f"axi_{stage}_{channel}"
+            counters.append(counter)
+            valid, ready = prefix + "_" + channel.lower() + "valid", prefix + "_" + channel.lower() + "ready"
+            fields, args = "", []
+            if channel in ("AR", "AW"):
+                stem = prefix + "_" + channel.lower()
+                fields = "addr=%h len=%0d size=%0d burst=%b"
+                args = [stem + x for x in ("addr", "len", "size", "burst")]
+                if stage != "SC_M00_RAM128":
+                    fields += " cache=%b"
+                    args.append(stem + "cache")
+                else:
+                    fields += " cache=NA"
+                if stage.endswith("SI32"):
+                    fields += " id=%b"
+                    args.append(stem + "id")
+                else:
+                    fields += " id=NA"
+            elif channel == "W":
+                fields, args = "data=%h strb=%h last=%b", [
+                    prefix + "_wdata", prefix + "_wstrb", prefix + "_wlast"]
+            else:
+                fields, args = "resp=%b" + (" last=%b data=%h" if channel == "R" else ""), [
+                    prefix + "_" + channel.lower() + "resp"]
+                if channel == "R":
+                    args.extend((prefix + "_rlast", prefix + "_rdata"))
+            lines.extend((
+                f"  if ({valid} && {ready}) begin",
+                f"    {counter}={counter}+1;",
+                "    " + trace(channel + ("_HS" if channel in ("R", "B") else ""),
+                              stage, fields, args),
+                "    axi_probe_printed=axi_probe_printed+1;",
+                "  end"))
+    lines.append("end")
+    # Declarations are module-scope, even if they occur after an always block.
+    lines.extend("integer " + counter + "=0;" for counter in counters)
+    responses = [(label, prefix, "R") for label, prefix in reads] + [
+        (label, prefix, "B") for label, prefix in writes]
+    lines.extend(f"reg axi_seen_{label}_{kind}=0;" for label,prefix,kind in responses)
+    lines.append("always @(negedge clk) if (resetn) begin")
+    for stage, prefix, kind in responses:
+        seen = f"axi_seen_{stage}_{kind}"
+        p = prefix + "_" + kind.lower()
+        fields = "resp=%b ready=%b" + (" last=%b data=%h" if kind == "R" else "")
+        args = [p + "resp", p + "ready"]
+        if kind == "R":
+            args.extend((p + "last", p + "data"))
+            if stage == "SC_M00_RAM128":
+                fields += " ram_bad=%b"
+                args.append("ram.rd_bad_request")
+            else:
+                fields += " ram_bad=NA"
+        lines.extend((
+            f"  if ({p}valid === 1'b1 && !{seen}) begin",
+            f"    {seen}=1;",
+            "    " + trace(kind + "_OBS", stage, fields, args),
+            "    axi_probe_printed=axi_probe_printed+1;",
+            f"    if ({p}resp === 2'b11 && !axi_probe_first_decerr) begin",
+            "      axi_probe_first_decerr=1;",
+            f'      $display("M06_G3_AXI_FIRST_DECERR kind={kind}_OBS stage={stage} t=%0t resp=%b ready=%b", $time, {p}resp, {p}ready);',
+            "    end",
+            "  end",
+            f"  if ({p}valid !== 1'b1) {seen}=0;"))
+    lines.append("end")
+    fmt = "M06_G3_AXI_PROBE_SUMMARY " + " ".join(x + "=%0d" for x in counters) + " printed=%0d first_decerr=%0d"
+    lines.extend((
+        "task automatic axi_probe_summary;",
+        "begin",
+        '  $display("' + fmt + '",',
+        "    " + ", ".join(counters + ["axi_probe_printed", "axi_probe_first_decerr"]) + ");",
+        "end",
+        "endtask"))
+    # Local inactivity watchdog supplements, never replaces, the 2ms global one.
+    lines.extend((
+        "always @(posedge clk) if (resetn) begin",
+        "  if ((m06_g3_read_dwc_s_axi_arvalid && m06_g3_read_dwc_s_axi_arready) ||",
+        "      (m06_g3_read_dwc_s_axi_rvalid && m06_g3_read_dwc_s_axi_rready) ||",
+        "      (m06_g3_write_dwc_s_axi_awvalid && m06_g3_write_dwc_s_axi_awready) ||",
+        "      (m06_g3_write_dwc_s_axi_wvalid && m06_g3_write_dwc_s_axi_wready) ||",
+        "      (m06_g3_write_dwc_s_axi_bvalid && m06_g3_write_dwc_s_axi_bready))",
+        "    axi_probe_quiet<=0;",
+        "  else axi_probe_quiet<=axi_probe_quiet+1;",
+        "  if (axi_probe_quiet==1000) begin",
+        "    axi_probe_summary();",
+        '    $fatal(1,"M06_G3_REAL_DWC_SC_FAIL LOCAL_AXI_INACTIVITY_WATCHDOG");',
+        "  end",
+        "end"))
+    return "\n".join(lines) + "\n"
+
+
 def render(dwc_readback: dict, vendor: list[dict]) -> str:
     required = required_ports()
     actual = {p["name"]: (p["direction"], p["packed_width"]) for p in vendor}
@@ -160,6 +272,7 @@ def render(dwc_readback: dict, vendor: list[dict]) -> str:
         ",\n".join(f" .s_axi_{signal}(M00_AXI_{signal})" for signal in MEMORY)+
         ",\n .inject_next_b_slverr(1'b0), .inject_next_r_slverr(1'b0)\n);"
     )
+    lines.append(passive_axi_probe())
     lines.append("""
 reg [7:0] expected [0:65535];
 integer k, byte_lane;
@@ -203,9 +316,11 @@ task automatic write32(input integer address, input [31:0] payload,
         @(posedge clk);
         while(m06_g3_write_dwc_s_axi_bvalid !== 1'b1) @(posedge clk);
         if(m06_g3_write_dwc_s_axi_bresp !== 2'b00 ||
-           m06_g3_write_dwc_s_axi_bid !== 1'b0)
+           m06_g3_write_dwc_s_axi_bid !== 1'b0) begin
+            axi_probe_summary();
             $fatal(1,"M06_G3_REAL_DWC_SC_FAIL WRITE_B addr=%h response=%b",
                    address,m06_g3_write_dwc_s_axi_bresp);
+        end
         repeat(2) @(posedge clk);
         if(m06_g3_write_dwc_s_axi_bvalid !== 1'b1)
             $fatal(1,"M06_G3_REAL_DWC_SC_FAIL WRITE_B STALL");
@@ -237,10 +352,12 @@ task automatic read32(input integer address);
         if(m06_g3_read_dwc_s_axi_rdata !== desired ||
            m06_g3_read_dwc_s_axi_rresp !== 2'b00 ||
            m06_g3_read_dwc_s_axi_rid !== 1'b0 ||
-           m06_g3_read_dwc_s_axi_rlast !== 1'b1)
+           m06_g3_read_dwc_s_axi_rlast !== 1'b1) begin
+            axi_probe_summary();
             $fatal(1,"M06_G3_REAL_DWC_SC_FAIL READ32 at=%h got=%h wanted=%h resp=%b",
                    address,m06_g3_read_dwc_s_axi_rdata,desired,
                    m06_g3_read_dwc_s_axi_rresp);
+        end
         repeat(2) begin
             @(posedge clk);
             if(m06_g3_read_dwc_s_axi_rvalid !== 1'b1 ||
@@ -279,6 +396,7 @@ initial begin
        m00_ar<10 || m00_w<3 || m00_r<10)
         $fatal(1,"M06_G3_REAL_DWC_SC_FAIL COUNTS writes=%0d reads=%0d m00aw=%0d w=%0d b=%0d ar=%0d r=%0d",
                write_ok,read_ok,m00_aw,m00_w,m00_b,m00_ar,m00_r);
+    axi_probe_summary();
     $display("M06_G3_REAL_DWC_ORIGINAL_SC_32TO256_XSIM_PASS write=%0d read=%0d m00_w=%0d m00_r=%0d high_byte=65535 shared_64k=1 NO_HLS_NO_BOARD_NO_DDR",
              write_ok,read_ok,m00_w,m00_r);
     $finish;
