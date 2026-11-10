@@ -64,7 +64,6 @@ foreach pair $devices {
     }
     set_property -dict $property_dict $ip
     # Read AFTER customization; a silent IP parameter reset is a failure.
-    puts $fw "ip\t$ipname"
     foreach {key value} $required {
         set actual [get_property $key $ip]
         puts $fw "$ipname.$key\t$actual"
