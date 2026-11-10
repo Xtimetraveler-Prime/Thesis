@@ -29,6 +29,7 @@ REQUIRED = {
     "CONFIG.FIFO_MODE": "0",
 }
 SOURCE_NAMES = ("scripts/m06_g3_generate_amd_dwc.tcl",
+                "scripts/m06_g3_xci_path.tcl",
                 "scripts/run_m06_g3_amd_dwc_ip.sh")
 
 
@@ -92,6 +93,16 @@ def audit(folder: Path, *, pre_finalize: bool = False) -> dict:
     for path in generated:
         if not path.resolve().is_relative_to(folder) or not path.is_file():
             raise ValueError("generated IP escaped fresh owner evidence directory")
+    # This exact fresh-project XCI layout is what the vendor Tcl now uses
+    # instead of the empty get_files -of_objects $ip query. No broad
+    # search can substitute an old or original D3 source customization.
+    for ip in IPS:
+        required_xci = (project / "m06_g3_amd_dwc.srcs" / "sources_1" /
+                        "ip" / ip / (ip + ".xci")).resolve()
+        if required_xci not in generated or not required_xci.is_file():
+            raise ValueError("exact fresh-project AMD XCI path missing: " + ip)
+        if readback.get(ip + ".xci_source_path") != str(required_xci):
+            raise ValueError("AMD XCI path readback differs from original generated file: " + ip)
     scripts = _sha_manifest((folder / "source_before_sha256.txt").read_text())
     if set(scripts) != set(SOURCE_NAMES):
         raise ValueError("G3 exact generator source provenance missing")
