@@ -29,12 +29,14 @@ SOURCE_FILES=(
     "scripts/m06_g3_2_connected_evidence_audit.py",
     "scripts/m06_g3_3_stage_actual_hls_dat.py",
     "scripts/m06_g3_3_hls_control_map.py",
+    "scripts/m06_g3_3_active_axilite_tb.py",
     "scripts/m06_g3_merge_vendor_sources.py",
     "scripts/m06_g3_real_amd_compile_order_audit.py",
     "rtl/m06/m06_axi64_to32_guards.sv",
     "rtl/m06/m06_axi128_scratch_mem.sv",
 )
 SUCCESS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS"
+ACTIVE_PASS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_AXILITE_BAD_GEOMETRY_XSIM_PASS"
 
 def _sha_lines(files: list[Path]) -> str:
     return "".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+str(p)+"\n"
@@ -55,7 +57,9 @@ def _run(label: str,command: list[str],out: Path,*,cwd: Path=ROOT,
         raise ValueError(label+" actual original-tool exit="+str(p.returncode))
 
 def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
-        exported: Path,inventory: Path) -> Path:
+        exported: Path,inventory: Path,*,mode: str="invalid_geometry") -> Path:
+    if mode not in ("idle","invalid_geometry"):
+        raise ValueError("unsupported actual-HLS connected mode")
     args=(hls,d3,ports,headers,dwc,exported,inventory)
     hls,d3,ports,headers,dwc,exported,inventory=[
         path.expanduser().resolve(strict=True) for path in args]
@@ -108,7 +112,7 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
     home=Path.home()/"Thesis_Evidence"
     home.mkdir(parents=True,exist_ok=True)
     out=Path(tempfile.mkdtemp(
-        prefix="m06_g3_3_actual_hls_idle_xsim_",dir=str(home)))
+        prefix="m06_g3_3_actual_hls_"+mode+"_xsim_",dir=str(home)))
     tracked=(out/"source_before_sha256.txt")
     tracked.write_text(_sha_lines(original_sources))
     (out/"hls_sources_before_sha256.txt").write_text(_sha_lines(original_hls))
@@ -168,6 +172,12 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         dat_manifest=json.loads((out/"03_hls_original_dat_manifest.json").read_text())
         dat_sources=[Path(row["source"]) for row in dat_manifest["files"]]
         (out/"hls_dat_sources_before_sha256.txt").write_text(_sha_lines(dat_sources))
+        if mode=="invalid_geometry":
+            _run("03_control_map.log",
+                 [sys.executable,str(ROOT/"scripts/m06_g3_3_hls_control_map.py"),
+                  "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
+                  "--hls-verilog",str(rtl),
+                  "--output",str(out/"03_real_hls_axilite_control_map.json")],out)
         _run("03_generation.log",
              [sys.executable,str(ROOT/"scripts/m06_g3_3_generate_actual_hls_idle_tb.py"),
               "--inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
@@ -175,7 +185,16 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
               "--original-d3",str(d3),"--original-headers",str(headers),
               "--original-dwc",str(dwc),
               "--output",str(out/"tb_m06_g3_3_actual_hls_original_amd_idle.sv")],out)
-        tb=out/"tb_m06_g3_3_actual_hls_original_amd_idle.sv"
+        idle_tb=out/"tb_m06_g3_3_actual_hls_original_amd_idle.sv"
+        tb=idle_tb
+        if mode=="invalid_geometry":
+            tb=out/"tb_m06_g3_3_actual_hls_original_amd_active.sv"
+            _run("03_active_control_generation.log",
+                 [sys.executable,str(ROOT/"scripts/m06_g3_3_active_axilite_tb.py"),
+                  "--idle-tb",str(idle_tb),
+                  "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
+                  "--control-map",str(out/"03_real_hls_axilite_control_map.json"),
+                  "--output",str(tb)],out)
         (out/"generated_hls_link_tb_sha256.txt").write_text(_sha_lines([tb]))
         if plan["vhdl_files"]:
             _run("04_xvhdl.log",["xvhdl","-2008",*plan["vhdl_files"]],out,cwd=out)
@@ -192,21 +211,24 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         compile_log=(out/"05_xvlog.log").read_text(errors="replace")
         if re.search(r"WARNING: \[VRFC 10-(?:2938|3380)\].*tb_m06_g3_3_actual_hls",compile_log):
             raise ValueError("generated HLS binding has implicit or forward-declared nets")
+        top="tb_m06_g3_3_actual_hls_original_amd_"+(
+            "active" if mode=="invalid_geometry" else "idle")
+        snapshot="m06_g3_3_actual_hls_original_amd_"+(
+            "active" if mode=="invalid_geometry" else "idle")+"_snapshot"
         _run("06_xelab.log",["xelab","--relax","-debug","typical",
                              "-L","xpm","-L","unisims_ver","-L","secureip",
-                             "work.tb_m06_g3_3_actual_hls_original_amd_idle",
-                             "work.glbl","-s",
-                             "m06_g3_3_actual_hls_original_amd_idle_snapshot"],out,cwd=out)
-        _run("07_xsim.log",["xsim",
-                            "m06_g3_3_actual_hls_original_amd_idle_snapshot",
+                             "work."+top,"work.glbl","-s",snapshot],out,cwd=out)
+        _run("07_xsim.log",["xsim",snapshot,
                             "-R","--onfinish","quit"],out,cwd=out,timeout=300)
         xsim=(out/"07_xsim.log").read_text(errors="replace")
-        if xsim.count(SUCCESS)!=1 or re.search(
-            r"M06_G3_3_HLS_LINK_IDLE_FAIL|FATAL_ERROR|Fatal: |\$fatal"
-            r"|WARNING: File .*\.dat referenced",xsim
+        required_marker=ACTIVE_PASS if mode=="invalid_geometry" else SUCCESS
+        if xsim.count(required_marker)!=1 or re.search(
+            r"M06_G3_3_HLS_LINK_IDLE_FAIL|M06_G3_3_HLS_ACTIVE_FAIL"
+            r"|FATAL_ERROR|Fatal: |\$fatal|WARNING: File .*\.dat referenced",xsim
         ):
-            raise ValueError("genuine original AMD HLS XSim lacked single clean IDLE PASS marker")
-        print("M06_G3_3_1_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_ACCEPTED_LINKAGE_ONLY NO_NEURAL_NO_DDR_NO_BOARD")
+            raise ValueError("real HLS/AMD XSim missing clean mode-specific PASS")
+        print("M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_XSIM_PASS mode="+mode+
+              " NO_NEURAL_PARITY_NO_DDR_NO_BOARD")
         result=0
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as error:
         print("M06_G3_3_1_OWNER_REAL_XSIM_FAILED:",error,file=sys.stderr)
@@ -243,10 +265,12 @@ def main() -> int:
     for name in ("hls-cosim","original-d3","original-report","original-headers",
                  "original-dwc","amd-export","accepted-inventory"):
         ap.add_argument("--"+name,required=True,type=Path)
+    ap.add_argument("--mode",choices=("idle","invalid_geometry"),
+                    default="invalid_geometry")
     a=ap.parse_args()
     try:
         run(a.hls_cosim,a.original_d3,a.original_report,a.original_headers,
-            a.original_dwc,a.amd_export,a.accepted_inventory)
+            a.original_dwc,a.amd_export,a.accepted_inventory,mode=a.mode)
     except (OSError,ValueError,subprocess.SubprocessError) as error:
         print("M06_G3_3_1_OWNER_PRECHECK_OR_XSIM_FAILURE:",error,file=sys.stderr)
         return 2
