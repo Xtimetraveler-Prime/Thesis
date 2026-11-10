@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M06 G3: official AMD XSim simulation source export, NOT simulation.
+# M06 G3: genuine AMD XSim source compile-order capture, NOT simulation.
 # Reuse saved real AMD 2025.2 dual-DWC scratch project READ ONLY.
 # No original D3 edits; no physical DDR/JTAG/board/bitstream.
 set -euo pipefail
@@ -35,6 +35,8 @@ finish() {
   trap - EXIT
   cd "$ROOT" || rc=3
   sha256sum scripts/m06_g3_export_real_dwc_xsim.tcl \
+    scripts/m06_g3_real_amd_compile_order_audit.py \
+    scripts/m06_g3_capture_dwc_ports.py \
     scripts/run_m06_g3_amd_xsim_export.sh > "$OUT/source_after_sha256.txt" || rc=3
   cmp -s "$OUT/source_before_sha256.txt" "$OUT/source_after_sha256.txt" || {
     echo "FATAL: G3 XSim export script mutated during owner run" >&2
@@ -46,8 +48,8 @@ finish() {
     rc=3
   }
   printf 'exit_status=%s\n' "$rc" > "$OUT/result.txt"
-  echo "M06 G3 original AMD DWC XSim EXPORT evidence: $OUT"
-  echo "M06 G3 AMD XSim source export exit: $rc"
+  echo "M06 G3 original AMD DWC compile-order evidence: $OUT"
+  echo "M06 G3 AMD compile-order capture exit: $rc"
   exit "$rc"
 }
 trap finish EXIT
@@ -56,25 +58,28 @@ git status --porcelain=v1 > "$OUT/worktree_status.txt"
 printf '%s\n' "$VERSION" > "$OUT/vivado_version.txt"
 printf '%s\n' "$DW" > "$OUT/original_width_ip_folder.txt"
 sha256sum scripts/m06_g3_export_real_dwc_xsim.tcl \
+  scripts/m06_g3_real_amd_compile_order_audit.py \
+  scripts/m06_g3_capture_dwc_ports.py \
   scripts/run_m06_g3_amd_xsim_export.sh > "$OUT/source_before_sha256.txt"
 sha256sum -c "$DW/04_real_amd_dwc_xci_sha256.txt" \
   > "$OUT/00_owner_xci_before_check.txt" 2>&1
 vivado -mode batch -notrace \
   -source "$ROOT/scripts/m06_g3_export_real_dwc_xsim.tcl" \
   -tclargs "$DW" "$OUT" 2>&1 | tee "$OUT/01_vivado_export.log"
-grep -Fq "M06_G3_REAL_AMD_DWC_XSIM_SOURCES_EXPORTED_NOT_CONNECTED_NOT_SIMULATED" \
+grep -Fq "M06_G3_REAL_AMD_DWC_SIM_COMPILE_ORDER_RECORDED_NOT_CONNECTED_NOT_SIMULATED" \
   "$OUT/01_vivado_export.log" || {
-    echo "ERROR: real Vivado official XSim export marker absent" >&2
-    exit 1
-  }
-find "$OUT/exported_xsim_scripts" -type f -name '*.sh' \
-  | sort > "$OUT/03_official_amd_xsim_script_paths.txt"
-if [[ $(wc -l < "$OUT/03_official_amd_xsim_script_paths.txt") -lt 2 ]]; then
-  echo "ERROR: fewer than two real AMD converter standalone xsim scripts" >&2
+  echo "ERROR: genuine Vivado AMD simulation compile-order marker missing" >&2
   exit 1
-fi
-grep -Fq 'm06_g3_read_dwc' "$OUT/03_official_amd_xsim_script_paths.txt"
-grep -Fq 'm06_g3_write_dwc' "$OUT/03_official_amd_xsim_script_paths.txt"
+}
+test -s "$OUT/02_genuine_dwc_sim_compile_order.tsv" || {
+  echo "ERROR: original AMD compile-order listing missing" >&2
+  exit 1
+}
+python3 "$ROOT/scripts/m06_g3_real_amd_compile_order_audit.py" \
+  --compile-order "$OUT/02_genuine_dwc_sim_compile_order.tsv" \
+  --owner-dwc "$DW" \
+  --output "$OUT/06_amd_sim_compile_order_audit.json" \
+  --paths-output "$OUT/03_real_amd_sim_source_paths.txt"
 python3 "$ROOT/scripts/m06_g3_capture_dwc_ports.py" \
   --owner-dwc "$DW" --output "$OUT/04_real_amd_dwc_port_headers.json"
-echo "M06 G3 REAL AMD simulation scripts EXPORTED ONLY; no vendor XSim/connected HLS/board run"
+echo "M06 G3 original AMD simulation sources MEASURED, no export scripts, no vendor XSim, no HLS link"
