@@ -29,6 +29,7 @@ finish() {
   trap - EXIT
   cd "$ROOT" || rc=3
   sha256sum scripts/m06_g3_generate_amd_dwc.tcl \
+    scripts/m06_g3_xci_path.tcl \
     scripts/run_m06_g3_amd_dwc_ip.sh > "$OUT/source_after_sha256.txt" || rc=3
   cmp -s "$OUT/source_before_sha256.txt" "$OUT/source_after_sha256.txt" || {
     echo "FATAL: G3 generator source mutated during original Vivado run" >&2
@@ -56,6 +57,7 @@ git rev-parse HEAD > "$OUT/commit.txt"
 git status --porcelain=v1 > "$OUT/worktree_status.txt"
 printf '%s\n' "$VERSION" > "$OUT/vivado_version.txt"
 sha256sum scripts/m06_g3_generate_amd_dwc.tcl \
+  scripts/m06_g3_xci_path.tcl \
   scripts/run_m06_g3_amd_dwc_ip.sh > "$OUT/source_before_sha256.txt"
 
 # All generated products are outside the repository in a NEW unique folder.
