@@ -39,6 +39,7 @@ SOURCE_FILES=(
     "scripts/m06_g4_actual_hls_write_fault_tb.py",
     "scripts/m06_g4_actual_hls_fault_matrix_tb.py",
     "rtl/m06/m06_g4_epoch_commit_gate.sv",
+    "rtl/m06/m06_g4_output_quarantine.sv",
     "scripts/m06_g3_merge_vendor_sources.py",
     "scripts/m06_g3_real_amd_compile_order_audit.py",
     "rtl/m06/m06_axi64_to32_guards.sv",
@@ -266,6 +267,8 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                             str(ROOT/"rtl/m06/m06_axi128_scratch_mem.sv"),
                             *([str(ROOT/"rtl/m06/m06_g4_epoch_commit_gate.sv")]
                               if mode in ("g4_first_b_slverr","g4_first_r_slverr","g4_stalled_b") else []),
+                            *([str(ROOT/"rtl/m06/m06_g4_output_quarantine.sv")]
+                              if mode in ("g4_first_r_slverr","g4_stalled_b") else []),
                             str(tb),str(glbl)],out,cwd=out)
         compile_log=(out/"05_xvlog.log").read_text(errors="replace")
         if re.search(r"WARNING: \[VRFC 10-(?:2938|3380)\].*tb_m06_g3_3_actual_hls",compile_log):
