@@ -109,6 +109,44 @@ class Positive16OwnerZipTests(unittest.TestCase):
                               z.namelist())
                 self.assertNotIn("private_vendor_ip.v",z.namelist())
 
+    def test_g4_remaining_read_and_stall_immutable_first_owner_zips(self):
+        for mode in ("g4_first_r_slverr","g4_stalled_b"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                folder=root/("m06_g3_3_actual_hls_"+mode+"_xsim_FIRST")
+                folder.mkdir()
+                (folder/"result.txt").write_text("exit_status=1\n")
+                filename="tb_m06_g4_actual_hls_original_amd_"+(
+                    "first_r_slverr" if mode=="g4_first_r_slverr"
+                    else "stalled_b")+".sv"
+                (folder/filename).write_text("SOURCE-ONLY TESTBENCH\n")
+                (folder/("03_"+mode+"_generation.log")).write_text("FIRST ERROR\n")
+                (folder/"ORIGINAL_AMD_PROPRIETARY.v").write_text("NO ZIP\n")
+                inv=root/"console.log"
+                inv.write_text("FIRST OWNER ERROR\n")
+                output=root/"evidence.zip"
+                p=subprocess.run([
+                    sys.executable,
+                    str(ROOT/"scripts/package_m06_g3_3_positive16_evidence.py"),
+                    "--mode",mode,"--link",str(folder),
+                    "--invocation-log",str(inv),"--output",str(output)],
+                    capture_output=True,text=True,timeout=15)
+                self.assertEqual(p.returncode,0,p.stdout+p.stderr)
+                with ZipFile(output) as z:
+                    self.assertEqual(z.read("result.txt"),b"exit_status=1\n")
+                    self.assertIn(filename,z.namelist())
+                    self.assertIn("03_"+mode+"_generation.log",z.namelist())
+                    self.assertEqual(z.read("08_operator_invocation_console.log"),
+                                     b"FIRST OWNER ERROR\n")
+                    self.assertNotIn("ORIGINAL_AMD_PROPRIETARY.v",z.namelist())
+                again=subprocess.run([
+                    sys.executable,
+                    str(ROOT/"scripts/package_m06_g3_3_positive16_evidence.py"),
+                    "--mode",mode,"--link",str(folder),"--output",str(output)],
+                    capture_output=True,text=True,timeout=15)
+                self.assertEqual(again.returncode,2)
+                self.assertIn("overwrite",again.stderr)
+
     def test_allowlist_rejects_source_payload_extensions(self):
         self.assertIn("03_positive16_generation.log",NAMES)
         self.assertIn("tb_m06_g3_3_actual_hls_original_amd_positive16.sv",NAMES)
