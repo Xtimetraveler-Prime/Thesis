@@ -170,18 +170,18 @@ class M06AMDDualConverterEvidenceSyntheticTests(unittest.TestCase):
             script=Path(temp)/"test_real_locator_synthetic.tcl"
             locator=ROOT/"scripts/m06_g3_xci_path.tcl"
             script.write_text(
-                "source {"+str(locator)+"}\\n"
-                "set base {"+str(root)+"}\\n"
+                "source {"+str(locator)+"}\n"
+                "set base {"+str(root)+"}\n"
                 "set expected [file join $base m06_g3_amd_dwc.srcs "
-                    "sources_1 ip m06_g3_read_dwc m06_g3_read_dwc.xci]\\n"
+                    "sources_1 ip m06_g3_read_dwc m06_g3_read_dwc.xci]\n"
                 "if {[m06_g3_xci_path $base m06_g3_read_dwc] ne "
-                    "[file normalize $expected]} {exit 10}\\n"
-                "if {![catch {m06_g3_xci_path $base m06_g3_wrong_dwc}]} {exit 11}\\n"
+                    "[file normalize $expected]} {exit 10}\n"
+                "if {![catch {m06_g3_xci_path $base m06_g3_wrong_dwc}]} {exit 11}\n"
                 "set wrong [file join $base m06_g3_amd_dwc.srcs "
-                    "sources_1 ip m06_g3_write_dwc m06_g3_write_dwc.xci]\\n"
-                "file delete $wrong\\n"
-                "if {![catch {m06_g3_xci_path $base m06_g3_write_dwc}]} {exit 12}\\n"
-                "puts M06_G3_SYNTHETIC_REAL_XCI_PATH_PASS\\n")
+                    "sources_1 ip m06_g3_write_dwc m06_g3_write_dwc.xci]\n"
+                "file delete $wrong\n"
+                "if {![catch {m06_g3_xci_path $base m06_g3_write_dwc}]} {exit 12}\n"
+                "puts M06_G3_SYNTHETIC_REAL_XCI_PATH_PASS\n")
             run=subprocess.run(["tclsh",str(script)],capture_output=True,text=True,
                                timeout=15)
             self.assertEqual(run.returncode,0,run.stderr)
