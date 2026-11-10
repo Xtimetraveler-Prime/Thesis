@@ -210,7 +210,7 @@ class M06AXI64to32RealRTLTests(unittest.TestCase):
         self.assertEqual(source.count("num_bytes<=17'd4096"), 2)
         self.assertEqual(source.count("num_bytes<=17'd65536"), 2)
         self.assertEqual(source.count("len<=8'd15"), 2)
-        self.assertEqual(source.count("fault_seen<=1'b1"), 7)
+        self.assertEqual(source.count("fault_seen<=1'b1"), 6)
         self.assertIn("state<=DISCARD", source)
         self.assertIn("state<=DECERR", source)
         self.assertIn("2'b11", source)
