@@ -55,6 +55,14 @@ class M06ActualMeasuredDWCAndOriginalSmartConnectBFMTests(unittest.TestCase):
                          ["m_axi_rdata"]["width_bits"],256)
         self.assertEqual(DWC["instances"]["m06_g3_write_dwc"]["pins"]
                          ["s_axi_wstrb"]["width_bits"],4)
+        self.assertEqual(DWC["instances"]["m06_g3_read_dwc"]["pins"]
+                         ["s_axi_araddr"]["direction"],"input")
+        self.assertEqual(DWC["instances"]["m06_g3_read_dwc"]["pins"]
+                         ["m_axi_araddr"]["direction"],"output")
+        self.assertEqual(DWC["instances"]["m06_g3_write_dwc"]["pins"]
+                         ["s_axi_wdata"]["direction"],"input")
+        self.assertEqual(DWC["instances"]["m06_g3_write_dwc"]["pins"]
+                         ["m_axi_wdata"]["direction"],"output")
 
     def test_generated_testbench_requires_real_both_vendor_ip_and_shared_memory(self):
         src=render(DWC,VENDOR)
