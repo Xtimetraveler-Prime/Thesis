@@ -18,7 +18,9 @@ unacknowledged. A nonzero HLS status, premature done, orphan B, overlapping
 read, write-response fault or illegal re-start quarantines that simulated
 canonical epoch. A configurable MAX_EPOCH_CYCLES watchdog additionally
 poisons a lost-acknowledgment/no-ap_done epoch without assuming HLS returns.
-This bound is a source-only safety parameter, NOT a physical performance figure. A sticky poison blocks re-use until explicit reset and
+This bound is a source-only safety parameter, NOT a physical performance figure.
+A registered post-ap_done settling cycle prevents a same-clock original
+AXI guard fault latch from transiently publishing a commit token. A sticky poison blocks re-use until explicit reset and
 external image discard/restore. No raw AMD RTL or original HLS is modified.
 
 The source-only test checks clean completion and nine negative/guard cases,
