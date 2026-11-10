@@ -74,17 +74,7 @@ class M06G3AMDExporterContractTests(unittest.TestCase):
         if shutil.which("tclsh"):
             # This is a syntax COMPLETE check only; vendor commands aren't
             # invoked and no original owner project is opened.
-            syntax='''set f [open [lindex $argv 0] r]
-set s [read $f]
-close $f
-if {![info complete $s]} {exit 3}
-puts M06_G3_TCL_SYNTAX_COMPLETE
-'''
-            run=subprocess.run(["tclsh"],input=syntax, text=True,capture_output=True,
-                               timeout=10,
-                               env=None)
-            # With no argv, tclsh cannot open the required file.
-            # Use the explicit file path as argv in the next assertion.
+            # Check Tcl brace completeness without executing Vivado commands.
             script=ROOT/"scripts/m06_g3_export_real_dwc_xsim.tcl"
             code='''set f [open {'''+str(script)+'''} r]
 set s [read $f]
