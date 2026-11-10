@@ -91,9 +91,6 @@ class M06RealHLSActiveAXILiteTests(unittest.TestCase):
             self.assertNotIn("M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS",actual)
             # A different *measured* AP_RETURN offset must flow through,
             # never be hardcoded to 0x10 in the generated testbench.
-            lines[6]=" ADDR_CANONICAL_READ_WORDS_DATA_0 = 7'h18,"
-            lines[2]=" ADDR_AP_CTRL = 7'h00,"
-            lines[6]=lines[6]
             changed=file.read_text().replace("ADDR_AP_RETURN = 7'h10",
                                               "ADDR_AP_RETURN = 7'h14")
             file.write_text(changed)
