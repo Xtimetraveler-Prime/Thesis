@@ -290,7 +290,7 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         (out/"result.txt").write_text("exit_status="+str(result)+"\n")
         print("M06_G3_3_1_OWNER_EVIDENCE",out,"exit="+str(result),flush=True)
     if result!=0:
-        raise ValueError("G3.3.1 actual HLS/AMD IDLE XSim failed; preserve first evidence")
+        raise ValueError("G3.3 original HLS/AMD "+mode+" XSim failed; preserve first evidence")
     return out
 
 def main() -> int:
