@@ -112,6 +112,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m06_g4_epoch_commit_gate.py' -v
           # G4 original HLS/AMD connected write fault bench: only port/syntax in CI.
           python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_write_fault_tb.py' -v
+          # G4 read/B-timeout original AMD+HLS source-only pin compile, NO fake functional run.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_fault_matrix_tb.py' -v
           python3 -m unittest discover -s tests -p 'test_m06_g3_generate_real_dwc_original_sc_bfm.py' -v
           iverilog -g2012 -s tb_m06_axi128_scratch_mem             -o "$RUNNER_TEMP/m06_axi128_scratch"             rtl/m06/m06_axi128_scratch_mem.sv             rtl/m06/tb_m06_axi128_scratch_mem.sv
           timeout 15s vvp "$RUNNER_TEMP/m06_axi128_scratch"             | tee "$RUNNER_TEMP/m06_axi128_scratch.log"
