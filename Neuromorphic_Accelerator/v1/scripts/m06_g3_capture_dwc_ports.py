@@ -63,6 +63,40 @@ def parse_module(verilog: str, name: str) -> dict[str, tuple[str,int]]:
     return pins
 
 
+# Actual converter-side widths; verify from real generated simulation wrapper,
+# never assume the XCI parameter readback guarantees every signal connection.
+EXPECTED = {
+    "READ_ONLY": {
+        "s_axi_araddr": ("input",32),
+        "s_axi_arvalid": ("input",1),
+        "s_axi_arready": ("output",1),
+        "s_axi_rdata": ("output",32),
+        "m_axi_araddr": ("output",32),
+        "m_axi_rdata": ("input",256),
+        "m_axi_rresp": ("input",2),
+    },
+    "WRITE_ONLY": {
+        "s_axi_awaddr": ("input",32),
+        "s_axi_wdata": ("input",32),
+        "s_axi_wstrb": ("input",4),
+        "s_axi_bresp": ("output",2),
+        "m_axi_awaddr": ("output",32),
+        "m_axi_wdata": ("output",256),
+        "m_axi_wstrb": ("output",32),
+        "m_axi_bresp": ("input",2),
+    },
+}
+
+
+def verify_role_pins(pins: dict[str,tuple[str,int]], role: str) -> None:
+    if role not in EXPECTED:
+        raise ValueError("unrecognized original AMD DWC role")
+    lower={k.lower():v for k,v in pins.items()}
+    for name,wanted in EXPECTED[role].items():
+        if lower.get(name)!=wanted:
+            raise ValueError("actual original AMD DWC role/pin/width mismatch: "+name)
+
+
 def capture(dw: Path) -> dict:
     owner=audit_owner(dw)
     dw=dw.resolve(strict=True)
@@ -80,6 +114,7 @@ def capture(dw: Path) -> dict:
         path=choices[0]
         text=path.read_text(errors="replace")
         pins=parse_module(text,ip)
+        verify_role_pins(pins,role)
         entries[ip]={
             "role":role,
             "original_sim_wrapper":str(path),
