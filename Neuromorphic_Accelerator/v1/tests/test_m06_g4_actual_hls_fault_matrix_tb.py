@@ -75,6 +75,30 @@ class G4ReadErrorAndWithheldBOriginalAMDSyntaxTests(unittest.TestCase):
         self.assertNotIn("force write_guard_fault",s)
         self.assertNotIn("force h_m_axi_gmem_write_BRESP",s)
 
+    def test_stalled_b_completes_on_fault_controller_not_on_blocked_hls_input(self):
+        # The uploaded genuine first-failure XSim reached watchdog poison
+        # but hit its 30us global timeout because fork..join waited forever
+        # for original HLS neuron_TREADY while the first memory B was held.
+        _,_,_,idle,inv,ctrl=make()
+        s=g4_fault_tb(idle,inv,ctrl,"g4_stalled_b")
+        self.assertIn("fork : g4_stalled_b_concurrent",s)
+        self.assertIn("begin : neuron_producer",s)
+        self.assertIn("begin : fault_controller",s)
+        self.assertIn("neuron_source_finished=1'b1",s)
+        self.assertIn("fault_controller_finished=1'b1",s)
+        self.assertIn("    join_any",s)
+        self.assertNotIn("    join\n    repeat(10)",s)
+        self.assertIn("wait(fault_controller_finished===1'b1)",s)
+        self.assertIn("disable g4_stalled_b_concurrent;",s)
+        self.assertIn("h_neurons_TVALID=0;",s)
+        self.assertIn("M06_G4_STALLED_B_OWNER_CONTROLLER_FINISHED",s)
+        self.assertIn("fault_controller_finished!==1'b1",s)
+        self.assertIn("M06_G4_FAIL STALLED_B_GLOBAL_WATCHDOG",s)
+        # Neither the previously accepted original read-error case nor
+        # the real HLS/AMD interface is changed by this negative-only edit.
+        read=g4_fault_tb(idle,inv,ctrl,"g4_first_r_slverr")
+        self.assertNotIn("g4_stalled_b_concurrent",read)
+
     def test_original_hls_pin_map_identity_and_independent_modes(self):
         _,_,_,idle,inv,ctrl=make()
         for mode in MODES:
