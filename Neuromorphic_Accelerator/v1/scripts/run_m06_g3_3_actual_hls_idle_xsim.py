@@ -299,8 +299,14 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         _run("06_xelab.log",["xelab","--relax","-debug","typical",
                              "-L","xpm","-L","unisims_ver","-L","secureip",
                              "work."+top,"work.glbl","-s",snapshot],out,cwd=out)
+        # Missing-B deliberately deadlocks original HLS waiting for memory,
+        # so keep a shorter real-wall watchdog PLUS the SV's explicit
+        # 1024-cycle deterministic failure gate and 30us simulated watchdog.
+        # Preserve the FIRST actual xsim log verbatim on host timeout.
+        xsim_timeout=90 if mode=="g4_stalled_b" else 300
         _run("07_xsim.log",["xsim",snapshot,
-                            "-R","--onfinish","quit"],out,cwd=out,timeout=300)
+                            "-R","--onfinish","quit"],out,cwd=out,
+             timeout=xsim_timeout)
         xsim=(out/"07_xsim.log").read_text(errors="replace")
         required_marker={"idle":SUCCESS,"invalid_geometry":ACTIVE_PASS,
                          "positive16":POSITIVE_PASS,"m02_m03_parity":PARITY_PASS,
