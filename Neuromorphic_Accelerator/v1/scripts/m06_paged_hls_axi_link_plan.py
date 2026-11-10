@@ -67,6 +67,10 @@ def plan(port: dict) -> dict:
             "hls_bundle": expected_prefix[:-1],
             "generated_hls_data_width": width,
             "generated_hls_address_width": address,
+            "original_smartconnect_address_width": 32,
+            "address_guard_or_translation_required": address != 32,
+            "address_mapping_status": ("HLS_HIGH_BITS_MUST_BE_BOUNDED_BEFORE_32BIT_ORIGINAL_SI"
+                                       if address != 32 else "ADDRESS_WIDTH_ONLY_COMPATIBLE_NOT_CONNECTED"),
             "original_smartconnect_slave": "S00" if key == "read_axi_master" else "S03",
             "original_smartconnect_data_width": 256,
             "required_width_adapter": converter,
@@ -80,6 +84,7 @@ def plan(port: dict) -> dict:
         "generated_top_sha256": sha,
         "source_digest_subset": {k: digests[k] for k in SOURCES},
         "original_smartconnect_upstream_width_bits": 256,
+        "original_smartconnect_upstream_address_width_bits": 32,
         "original_smartconnect_downstream_width_bits": 128,
         "canonical_memory_bytes": 65536,
         "canonical_16byte_records": 4096,
@@ -91,6 +96,7 @@ def plan(port: dict) -> dict:
         "paths": paths,
         "hard_gates": [
             "HLS_generated_RTL_CRTL_cosim_with_real_AXIM_models",
+            "HLS_64bit_address_to_original_32bit_S00_S03_mapping_with_bounds",
             "original_AMD_SmartConnect_Stage_E_4096_boundary_and_quarantine",
             "genuine_generated_HLS_to_original_S00_S03_binding_and_width_converters",
             "read_after_dirty_write_B_response_fence_across_separate_masters",
