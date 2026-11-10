@@ -1,6 +1,9 @@
-# M06 G3: probe REAL saved AMD dual-DWC IP simulation source dependencies.
-# Read-only project. Export only standalone xsim scripts into a NEW evidence
-# directory; NEVER execute those scripts here and NEVER edit original D3.
+# M06 G3: query REAL saved AMD dual-DWC IP SIMULATION SOURCE DEPENDENCIES.
+# Genuine owner Vivado 2025.2 returned an authoritative, ordered 13-file
+# list for the read converter, but its separate export simulation operation
+# failed internally with "expected boolean value but got empty string".
+# Record only the successful get_files -compile_order result for BOTH IPs.
+# Open the project READ ONLY. Never mutate original XCI, run XSim or use JTAG.
 # Tclargs: <saved successful DWC evidence folder> <new export evidence folder>
 if {[llength $argv] != 2} {
     error "M06 G3 requires real DWC owner folder and new export folder"
@@ -19,8 +22,6 @@ set xpr [file join $dw "new_scratch_project" "m06_g3_amd_dwc.xpr"]
 if {![file isfile $xpr]} {
     error "original success evidence has no scratch Vivado project"
 }
-set exportroot [file join $out "exported_xsim_scripts"]
-file mkdir $exportroot
 # AMD UG835 open_project -read_only prevents saving changes to existing XCI.
 open_project -read_only $xpr
 if {[get_property PART [current_project]] ne "xck26-sfvc784-2LV-c"} {
@@ -45,28 +46,52 @@ foreach row $roles {
             error "saved original AMD converter parameter changed: $name $property"
         }
     }
-    # After successful generate_target all, compile_order queries are
-    # meaningful even though premature get_files -of_objects $ip was
-    # empty immediately after create_ip in the first failed owner run.
+    # AMD UG835: this exact original query succeeded on the user's
+    # first real read-only 2025.2 run. The separate Vivado export command
+    # then crashed with an empty-Boolean internal error. Do NOT invoke it.
     set files [get_files -compile_order sources -used_in simulation -of_objects $ip]
+    if {[llength $files] < 2} {
+        close $fp
+        error "genuine AMD simulation compile-order is missing or incomplete: $name"
+    }
+    set project_root [file normalize [file join $dw "new_scratch_project"]]
+    set wrapper_found 0
+    set headers_found 0
+    set seen {}
     puts $fp "ip_name\t$name"
     puts $fp "ip_mode\t$role"
     puts $fp "ip_sim_file_count\t[llength $files]"
     foreach f $files {
         set fname [file normalize $f]
-        if {![file exists $fname]} {
+        if {![file isfile $fname] || [file size $fname] <= 0} {
             close $fp
-            error "original AMD simulation dependency missing: $fname"
+            error "original AMD simulation dependency missing/empty: $fname"
         }
+        if {[string first "${project_root}/" $fname] != 0} {
+            close $fp
+            error "AMD simulation source escaped authenticated scratch project: $fname"
+        }
+        if {[lsearch -exact $seen $fname] >= 0} {
+            close $fp
+            error "duplicate AMD simulation source path: $fname"
+        }
+        lappend seen $fname
         set typ [get_property FILE_TYPE $f]
+        if {$typ ni {"Verilog" "SystemVerilog" "VHDL" "Verilog Header"}} {
+            close $fp
+            error "unknown AMD source type: $name $typ"
+        }
+        if {[file tail $fname] eq "${name}.v" && $typ eq "Verilog"} {
+            set wrapper_found 1
+        }
+        if {$typ eq "Verilog Header"} {set headers_found 1}
         puts $fp "$name\t$typ\t$fname"
     }
+    if {!$wrapper_found || !$headers_found} {
+        close $fp
+        error "original AMD SIM wrapper or required header absent: $name"
+    }
     flush $fp
-    # Official Vivado standalone XSim compile/elaboration source manifest.
-    # Writes only into new OUT, not to the accepted original owner project.
-    export_simulation -simulator xsim -of_objects $ip \
-        -directory [file join $exportroot $name] \
-        -absolute_path -force
 }
 puts $fp "original_amd_smartconnect_linked\tFALSE"
 puts $fp "generated_hls_linked\tFALSE"
@@ -74,4 +99,4 @@ puts $fp "vendor_converter_xsim_run\tFALSE"
 puts $fp "m06_complete\tFALSE"
 close $fp
 close_project
-puts "M06_G3_REAL_AMD_DWC_XSIM_SOURCES_EXPORTED_NOT_CONNECTED_NOT_SIMULATED"
+puts "M06_G3_REAL_AMD_DWC_SIM_COMPILE_ORDER_RECORDED_NOT_CONNECTED_NOT_SIMULATED"
