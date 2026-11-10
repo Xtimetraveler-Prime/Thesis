@@ -242,7 +242,8 @@ class M07DirectFetchPolicyTests(unittest.TestCase):
             self.assertEqual(data["schema"], "m07-cache-policy-comparison-v1")
             self.assertTrue(data["role_isomorphic_checked"])
             self.assertFalse(data["physical_hardware_measured"])
-            self.assertEqual(len(data["results"]), 4)
+            self.assertEqual(set(data["results"]), {"clustered", "dispersed"})
+            self.assertEqual(sum(len(policies) for policies in data["results"].values()), 4)
 
 
 if __name__ == "__main__":
