@@ -1,68 +1,71 @@
-> **Latest v1 neuromorphic accelerator milestone status (2026-11-10): M01–M06 COMPLETE at individually approved, explicitly bounded scopes.** M06 was verified using five distinct genuine original-HLS+AMD Vivado 2025.2 XSim PASS owner archives: original neural/state parity across one-slot eviction, write/read AXI faults, stalled write-response watchdog poison, and external simulated 64KiB image discard/restore followed by gated clean 16-trace/1-metrics output. [M06 acceptance evidence and nonclaims](Neuromorphic_Accelerator/v1/docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md); [current M01–M09 roadmap](Neuromorphic_Accelerator/v1/roadmap.md). **M06 is offline simulation-scoped; no physical PS DDR, KV260 deployment, real DMA/latency, automatic crash-atomic rollback or board execution.** M07 planned and M08 physical measurement remains separately gated.
-
 # Thesis — Virtualized Neuromorphic Computing on FPGA
 
-**Current thesis direction (2026-11-07):** Study the costs, benefits, and limits of **DDR-backed virtualization** in sparse/event-driven FPGA spiking neural network (SNN) inference. We are preserving the verified LIF neuron dynamics and logical-to-physical virtualization learned from our Loihi-inspired v3 digital twin, while **removing Loihi-specific architectural constraints** for the new **`Neuromorphic_Accelerator/v1`** research program. The KV260 remains the current research board. **M01 is accepted as a PC-only memory-residency trade study** and **M02 as the current independently verified v1 LIF software reference**; **M03 is user-accepted in its PC-only scope**, with reproducible role-isomorphic synthetic networks and modeled state/synaptic traffic. **M04 is NEXT**, a new-branch inspection of the existing v3 HLS LIF engine; it has not started. There is still **no new FPGA HLS/RTL accelerator, bitstream, board performance result or trained-model benchmark**.
+Research question: **What does virtualizing neural state cost on an FPGA, and when can event sparsity and locality reduce that cost?**
 
-## Central research questions
+The current research program is [Neuromorphic Accelerator v1](Neuromorphic_Accelerator/v1/), an independently versioned FPGA-targeted spiking neural network (SNN) design. It builds on lessons from the frozen Loihi-inspired digital twin, **without inheriting its fixed 27-core structure or requiring Loihi silicon fidelity**. The AMD Kria KV260/K26 is the intended physical evaluation platform.
 
-> **1. How much performance must we sacrifice to virtualize a larger network, and how much of that cost can sparsity-aware execution recover?**
+## Research goals
 
-> **2. How do DDR-backed virtualization and event-driven sparsity interact to determine the performance, scalability, and hardware efficiency of FPGA-based spiking neural network accelerators?**
+The two central questions are:
 
-The central research challenge is not merely whether hardware can time-multiplex neurons—that is established prior art—but **when virtualizing neuron/context state in external memory is worthwhile, how sparse activity interacts with context locality, and which working-set policies recover memory and scheduling overhead**.
+1. How much performance is sacrificed to virtualize a larger neural network, and how much of that cost can sparsity-aware execution recover?
+2. How do DDR-backed virtualization and event-driven sparsity interact to determine FPGA SNN performance, scaling and hardware efficiency?
 
-## Potential thesis contributions (hypotheses, NOT demonstrated results)
+The proposed research contribution is a **controlled characterization**, not a claim to have invented time-multiplexed neurons, caching or sparse scheduling. Compare identical neural workloads and numerics under a four-way experimental design:
 
-1. **Controlled characterization of virtualization cost.** Measure end-to-end inference latency, throughput, effective synaptic work, DDR bytes/transactions, context swaps and stalls, on-chip resource consumption, network-size scaling, activity/connectivity sparsity, and **active-context locality**. Determine how virtualization cost changes with on-chip resident capacity, rather than treating all sparsity distributions as equivalent.
-2. **Sparsity-aware virtual-context scheduling and caching.** Design and test one or more activity-/locality-aware policies against explicit simple baselines (e.g., fixed order or no cache); quantify cache hits, context transfers, scheduler stalls, and inference correctness. A performance win is a hypothesis to test, not a presumed outcome.
-3. **A verified, resource-constrained virtualized SNN inference accelerator.** Reuse and independently verify the LIF reference semantics while relaxing Loihi implementation restrictions. Establish fair on-chip/DDR and timestep/event-driven controls at network sizes that fit all configurations, then study DDR-backed scaling beyond on-chip capacity. Compare with external FPGA accelerators only when network, numeric precision, dataset and measurement boundary are disclosed; do not claim unmatched speed, energy, or power without measurement.
+| Execution strategy | On-chip state | DDR-backed state |
+| --- | --- | --- |
+| Timestep-driven | Control A | Control C |
+| Event-driven | Control B | Control D |
 
-**Candidate experimental matrix:** timestep-driven/on-chip, event-driven/on-chip, timestep-driven/DDR, and event-driven/DDR. This is a planning framework, not four existing RTL builds. Investigate access locality at fixed event count, and distinguish per-engine, transfer, scheduler and true end-to-end timing. Relevant prior work includes YANA, SENECA, HiAER-Spike, time-multiplexed FPGA SNN accelerators, NIR, and NeuroBench; see the [preserved and extended literature review](LitReview.md). Time-multiplexing, virtual neurons, and off-chip synaptic storage are not novel in themselves.
+Evaluate virtualization penalty, sparsity benefit and their interaction while varying **active-context locality independently of event count**. Record end-to-end latency, throughput, on-chip resources, transferred bytes, context/cache misses, evictions, scheduler stalls, and verified neural outputs. Compare competing accelerators only with matched datasets, numerical precision, workload, resource and measurement boundaries; a negative result is scientifically useful.
 
-## Status and versioned history
+Starting points: [research roadmap](Neuromorphic_Accelerator/v1/roadmap.md) · [literature review and prior art](LitReview.md) · [workload and measurement contract](Neuromorphic_Accelerator/v1/docs/M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md).
 
-- **v1 — preserved validated baseline** under [`Loihi_Digital_Twin/v1/`](Loihi_Digital_Twin/v1/), with completed [M1–M13 milestones](Loihi_Digital_Twin/v1/MILESTONES.md).
-- **v2 — preserved accepted Loihi-inspired manycore architecture** under [`Loihi_Digital_Twin/v2/`](Loihi_Digital_Twin/v2/).
-- **v3 — FROZEN research and physical-evidence baseline** under [`Loihi_Digital_Twin/v3/`](Loihi_Digital_Twin/v3/): original trained LIF MNIST source, DDR-backed 27-logical-core/1,010-neuron SNN execution, original all-1,024-image neural verification and real KV260 A53 service measurements; also a separately verified smaller 42-neuron Track A. These unequal workload measurements do **not** establish matched-network acceleration. The planned six independent A/B sessions stopped after **one new accepted A session (1/6)**; the five remaining physical sessions were **canceled, not executed**. The former v3 future milestones were canceled or archived, with **P10 a final, optional, DEFERRED bounded optimization milestone**, not authorized for execution. Existing physical receipts and exact checksums remain immutable; official MNIST TEST remains sealed. Read the [authoritative frozen v3 roadmap](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md) and [current handoff](Loihi_Digital_Twin/v3/docs/P08_B_NEXT_CHAT_HANDOFF_SEED_2026_11_05.md) rather than interpreting old 'NEXT' sections as live instructions.
-- **Neuromorphic Accelerator v1 — NEW, independently versioned research program.** [`Neuromorphic_Accelerator/v1/`](Neuromorphic_Accelerator/v1/) is a first-generation design workspace, **not** a continuation called `Loihi_Digital_Twin/v4`. The accepted M01 block-based state residency is a **provisional baseline** retaining neuron/hybrid controls, M02's initial integer LIF neural reference is approved, and M03 is an **unaccepted PC-only** workload/model study; no v1 HLS/RTL engine, bitstream or FPGA performance evidence exists yet. The [M01–M09 roadmap](Neuromorphic_Accelerator/v1/roadmap.md) documents M01/M02 acceptance, current [accepted M03 workload and measurement assumptions](Neuromorphic_Accelerator/v1/docs/M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md), the [M04 authoritative handoff seed](Neuromorphic_Accelerator/v1/docs/M04_NEXT_CHAT_HANDOFF_SEED_2026_11_07.md), and future HLS reuse, sparse scheduling, DDR residency, matched physical controls and quantitative characterization.
+## Current status — November 10, 2026
 
-**What v3 established:** independent software–hardware LIF numerical validation, FPGA/PS orchestration and DDR virtual-context movement on real hardware. **What it did not establish:** a Loihi silicon-exact replica, true fully asynchronous physics, protected DDR/XMPU context backups, all six new A/B physical sessions, matched A/B workloads or timing boundaries, pure-PL acceleration, power/energy savings, or new-accelerator performance.
+**M01–M06 are complete at their individually approved, bounded scopes. M07 is the next planned development milestone; M08 is reserved for separately authorized physical evaluation and M09 for analysis.**
 
-## Repository structure and working workflow
+| Work | Accepted scope |
+| --- | --- |
+| M01–M03 | PC-only residency design alternatives, independent LIF/event semantics, matched workloads and analytical traffic accounting |
+| M04 | Audit of existing HLS arithmetic and bounded host reuse feasibility; no synthesis was required for M04 closure |
+| M05 | Offline FPGA-targeted signed32 on-chip event engine and genuine integrated HLS/RTL simulation; [acceptance review](Neuromorphic_Accelerator/v1/docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
+| M06 | Original Vitis HLS and AMD interconnect **genuine Vivado simulation**, including paged one-slot neural/state parity, AXI read/write errors, missing-response timeout, and explicit recovery of a **64 KiB simulation-owned memory image**; [acceptance review](Neuromorphic_Accelerator/v1/docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
 
-- [`Loihi_Digital_Twin/`](Loihi_Digital_Twin/) — **frozen historical** v1/v2/v3 architecture and evidence (not the new project's home).
-- [`Neuromorphic_Accelerator/`](Neuromorphic_Accelerator/) — **new top-level umbrella** for independent accelerator and virtualization research; first generation [`v1/`](Neuromorphic_Accelerator/v1/) and its [open design questions](Neuromorphic_Accelerator/v1/docs/ARCHITECTURE_DESIGN_QUESTIONS.md).
-- [`applications/`](applications/) — application workloads, including [MNIST baseline](applications/mnist_baseline/).
-- [`LitReview.md`](LitReview.md) — existing research notes and new event-driven/virtualization prior art.
-- [`EXPERIMENTS.md`](EXPERIMENTS.md), [`AUDIT.md`](AUDIT.md) — historical experiments and audit evidence.
-- [`Neuromorphic Digital Twin`](Neuromorphic%20Digital%20Twin) — historical compatibility symlink to v1; don't rename.
+**Boundary:** M06 is a connected offline RTL/simulated-memory result, **not a physical PS DDR transfer, deployed KV260 accelerator, measured FPGA latency or automatic crash-atomic rollback**. No hardware speedup, DDR bandwidth, energy, or full-system timing has been demonstrated for this new program. Previous prototype metrics must not be relabeled as new v1 physical measurements.
 
-**Local PC (VS Code Ubuntu):**
+## Repository map and historical context
 
-```bash
-cd ~/Git/Thesis
-git status --short
-git fetch origin
-git switch main
-git pull --ff-only origin main
-source ~/Git/Thesis/.venv-p08/bin/activate
-cd ~/Git/Thesis/Loihi_Digital_Twin/v3
-PYTHONPATH="$PWD/scripts:$PWD/src" python3 -m pytest -q -rs \
-  tests/test_p08_b46_4b_six_session_plan.py \
-  tests/test_p08_b46_4b_session_receipt.py \
-  tests/test_p08_b45_perf_full1024_independent_cli.py
-```
+| Location | Purpose |
+| --- | --- |
+| [Neuromorphic_Accelerator/v1](Neuromorphic_Accelerator/v1/) | **Active new research program**: source, RTL, HLS, models, tests and current roadmap |
+| [Loihi_Digital_Twin/v1](Loihi_Digital_Twin/v1/) | Preserved first validated twin and [M1–M13 milestones](Loihi_Digital_Twin/v1/MILESTONES.md) |
+| [Loihi_Digital_Twin/v2](Loihi_Digital_Twin/v2/) | Preserved accepted Loihi-inspired manycore architecture |
+| [Loihi_Digital_Twin/v3](Loihi_Digital_Twin/v3/) | **Frozen** original FPGA/PS-based experimental baseline; [authoritative historical roadmap](Loihi_Digital_Twin/v3/LOIHI_TWIN_ROADMAP.md) |
+| [applications](applications/) | Application workloads, including [MNIST baseline](applications/mnist_baseline/) |
+| [LitReview.md](LitReview.md), [EXPERIMENTS.md](EXPERIMENTS.md), [AUDIT.md](AUDIT.md) | Literature, archived experiment records and audit context |
 
-For new `Neuromorphic_Accelerator/v1` research, branch from freshly updated `main`, keep evidence under `$HOME/Thesis_Evidence/` outside the checkout, run relevant native tests and no-board CI, record original source/ELF/bitstream SHAs and separate physical acceptance, and merge only with express approval. **Do not launch any old KV260 JTAG runner from an archived runbook without a newly reviewed, session-specific destructive-risk authorization**; power-cycle the board after any JTAG attempt and never resume halted Linux.
+The v3 project established Loihi-inspired integer LIF validation, 27 logical cores and 1,010 neurons with historical DDR-based orchestration, separately from a smaller 42-neuron track. **Different-size workloads are not a matched accelerator performance comparison.** Historical full-1,024-image neural checks and A53 service measurements must not be mistaken for pure-PL acceleration. Only one of six planned new A/B physical sessions was accepted; the remaining five were **canceled**, not performed. The optional v3 P10 optimization remains **deferred**, and the official MNIST TEST split is still **sealed**.
 
-## Preserved FPGA-v1 regression
+Preserve the prior implementation, evidence hashes and v3 intellectual lineage, but do not automatically import old firmware, exact logical-core partitions, or a claim of a Loihi silicon-accurate or fully asynchronous twin. An existing compatibility symlink, 'Neuromorphic Digital Twin', points to the historical v1 and should not be renamed.
 
-From `Loihi_Digital_Twin/v1/`:
+## Working safely
 
-```bash
+Create a new branch from current main for a development milestone or document cleanup; run relevant host regressions, inspect no-board CI and preserve original vendor-generated results under **~/Thesis_Evidence/**, outside Git. Merge only after user acceptance. The [v1 README](Neuromorphic_Accelerator/v1/README.md) provides current commands and evidence rules.
+
+**Real hardware is a separate approval gate:** JTAG, Linux halt, fabric programming, boot ownership or physical DDR writes require session-specific operator approval, isolation/preflight and a mandatory physical power cycle after each JTAG attempt; never resume halted Linux. Do not run archived v3 JTAG instructions as if they were automatically authorized.
+
+For the historical first-generation digital twin, the preserved verification command from its directory is:
+
+~~~bash
+cd ~/Git/Thesis/Loihi_Digital_Twin/v1
 python -m pip install -e ".[dev,compare]"
 python -m pytest -q
-```
+~~~
 
-The historical v1 suite intentionally uses `python -m pytest` (not bare `pytest`) because one preserved test imports project-root `examples/` helpers. Generated caches, package metadata and outputs are excluded from source control.
+Use 'python -m pytest' rather than bare 'pytest' because the old suite imports project-root examples.
+
+## Finding the detailed original history
+
+This README is a navigation page, not the experiment ledger. [The roadmap](Neuromorphic_Accelerator/v1/roadmap.md), its milestone acceptance documents and the immutable ZIPs contain current evidence. **No experimental record was deleted during documentation cleanup:** the complete original README, v1 README and long chronological roadmap remain in [the pre-cleanup main revision](https://github.com/Xtimetraveler-Prime/Thesis/tree/33916fffd4f5935aac9ec060a0e62d92977b3c05). See [cleanup provenance](Neuromorphic_Accelerator/v1/docs/REPOSITORY_DOCS_CLEANUP_2026_11_10.md).
