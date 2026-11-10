@@ -116,6 +116,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_fault_matrix_tb.py' -v
           # G4 actual synthesizable bounded precommit trace/metrics spool: standalone functional Icarus.
           python3 -m unittest discover -s tests -p 'test_m06_g4_output_quarantine.py' -v
+          # G4 original HLS+AMD first R error, owner-scrub+reset and guarded clean replay: fake-stub syntax ONLY.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_recovery_tb.py' -v
           python3 -m unittest discover -s tests -p 'test_m06_g3_generate_real_dwc_original_sc_bfm.py' -v
           iverilog -g2012 -s tb_m06_axi128_scratch_mem             -o "$RUNNER_TEMP/m06_axi128_scratch"             rtl/m06/m06_axi128_scratch_mem.sv             rtl/m06/tb_m06_axi128_scratch_mem.sv
           timeout 15s vvp "$RUNNER_TEMP/m06_axi128_scratch"             | tee "$RUNNER_TEMP/m06_axi128_scratch.log"
