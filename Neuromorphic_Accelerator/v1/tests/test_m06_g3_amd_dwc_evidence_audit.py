@@ -128,7 +128,7 @@ class M06AMDDualConverterEvidenceSyntheticTests(unittest.TestCase):
                 audit(out)
         with tempfile.TemporaryDirectory() as temp:
             out=fixture(Path(temp))
-            (out/"new_scratch_project/m06_g3_write_dwc.xci").write_text("CHANGED\n")
+            (out/"new_scratch_project/m06_g3_amd_dwc.srcs/sources_1/ip/m06_g3_write_dwc/m06_g3_write_dwc.xci").write_text("CHANGED\n")
             with self.assertRaisesRegex(ValueError,"digests altered"):
                 audit(out)
 
