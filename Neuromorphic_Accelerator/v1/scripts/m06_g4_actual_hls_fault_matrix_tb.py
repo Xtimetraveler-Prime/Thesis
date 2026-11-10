@@ -231,8 +231,15 @@ m06_g4_output_quarantine #(.MAX_TRACE(16)) output_quarantine (
 );
 integer first_ram_aw=0, raw_ram_b_seen=0, hls_b_seen=0;
 integer provisional_trace=0, published_trace=0, fault_polls=0;
+integer sim_heartbeat=0;
+reg premature_poison=0;
 reg first_aw_seen=0;
-localparam integer TEST_EPOCH_TIMEOUT=10000;
+// Watchdog threshold is strictly TESTBENCH CONFIGURATION, not an estimate
+// of hardware latency. 1024 cycles lets the original connected 16-neuron
+// first-write transaction appear, then verifies a missing B with a bounded
+// run, instead of spending minutes polling an already-quarantined epoch.
+localparam integer TEST_EPOCH_TIMEOUT=1024;
+localparam integer MAX_POLL_WINDOWS=80;
 m06_g4_epoch_commit_gate #(.MAX_EPOCH_CYCLES(TEST_EPOCH_TIMEOUT)) epoch_gate (
     .aclk(clk),.aresetn(resetn),
     .epoch_begin(g4_epoch_begin),.ap_done(g4_done),.ap_return(observed_status),
@@ -244,12 +251,25 @@ m06_g4_epoch_commit_gate #(.MAX_EPOCH_CYCLES(TEST_EPOCH_TIMEOUT)) epoch_gate (
     .poisoned(g4_poison),.outstanding_writes(g4_outstanding)
 );
 always @(posedge clk) if(resetn) begin
+    sim_heartbeat=sim_heartbeat+1;
+    // Fail closed if a different error poisoned the epoch before timeout:
+    // this experiment must demonstrate the WATCHDOG as the root cause.
+    if(g4_active && g4_poison && epoch_gate.epoch_cycles<TEST_EPOCH_TIMEOUT)
+        premature_poison<=1'b1;
+    if(sim_heartbeat%256==0)
+        $display("M06_G4_STALLED_B_PROGRESS t=%0t epoch_cycles=%0d active=%b poison=%b firstAW=%0d rawB=%0d hlsB=%0d qFault=%b",
+                 $time,epoch_gate.epoch_cycles,g4_active,g4_poison,
+                 first_ram_aw,raw_ram_b_seen,hls_b_seen,q_protocol_fault);
     if(M00_AXI_awvalid && M00_AXI_awready && !first_aw_seen) begin
         first_aw_seen<=1;
         first_ram_aw=first_ram_aw+1;
+        $display("M06_G4_STALLED_B_FIRST_ACTUAL_AMD_AW t=%0t", $time);
     end
-    if(raw_ram_bvalid && !M00_AXI_bvalid && hold_first_b)
+    if(raw_ram_bvalid && !M00_AXI_bvalid && hold_first_b) begin
+        if(raw_ram_b_seen==0)
+            $display("M06_G4_STALLED_B_REAL_RAM_B_HELD t=%0t", $time);
         raw_ram_b_seen=raw_ram_b_seen+1;
+    end
     if(h_m_axi_gmem_write_BVALID && h_m_axi_gmem_write_BREADY)
         hls_b_seen=hls_b_seen+1;
     if(h_trace_TVALID && h_trace_TREADY)
@@ -284,19 +304,23 @@ initial begin
             write_reg(@AP_CTRL@,32'd1);
             while((g4_poison!==1'b1 || raw_ram_b_seen<1 ||
                    epoch_gate.epoch_cycles<TEST_EPOCH_TIMEOUT) &&
-                  fault_polls<4000) begin
+                  fault_polls<MAX_POLL_WINDOWS) begin
                 repeat(20) @(negedge clk);
                 fault_polls=fault_polls+1;
             end
         end
     join
     repeat(10) @(negedge clk);
+    if(fault_polls>=MAX_POLL_WINDOWS)
+        $fatal(1,"M06_G4_FAIL STALLED_B_BOUNDED_POLL_TIMEOUT time=%0t cycles=%0d rawB=%0d hlsB=%0d",
+               $time,epoch_gate.epoch_cycles,raw_ram_b_seen,hls_b_seen);
     if(first_ram_aw!==1 || raw_ram_b_seen<1 ||
        hls_b_seen!==0 || raw_ram_bvalid!==1'b1 ||
        M00_AXI_bvalid!==1'b0 || g4_poison!==1'b1 ||
        epoch_gate.epoch_cycles<TEST_EPOCH_TIMEOUT ||
        g4_commit!==1'b0 || published_trace!==0 ||
-       ctrl_b_count!==13)
+       q_quarantined!==1'b1 || q_protocol_fault!==1'b0 ||
+       premature_poison!==1'b0 || ctrl_b_count!==13)
         $fatal(1,"M06_G4_FAIL STALLED_WRITE_B_NOT_QUARANTINED firstAW=%0d RAM_B=%0d HLS_B=%0d POISON=%b CYCLES=%0d",
                first_ram_aw,raw_ram_b_seen,hls_b_seen,g4_poison,
                epoch_gate.epoch_cycles);
@@ -306,7 +330,9 @@ initial begin
     $finish;
 end
 initial begin
-    #20000000;
+    // This is well beyond MAX_POLL_WINDOWS*20 clocks but far smaller than
+    // the prior 20-ms watchdog that could exceed 300 seconds of wall time.
+    #30000;
     $fatal(1,"M06_G4_FAIL STALLED_B_GLOBAL_WATCHDOG");
 end
 endmodule
