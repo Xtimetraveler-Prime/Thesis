@@ -86,15 +86,6 @@ def metrics_reference(sparse) -> dict[str,int]:
         values["dirty_writebacks"]+=1
     return values
 
-def oracle():
-    net,dense,_=fixture()
-    events=(
-        # existing fixture internal exact current sequence; preserve order
-        # instead of reconstructing events from pre-summed deliveries
-        # which would lose cancellation and delivery-count semantics
-        )
-    return net,dense
-
 def fixture_oracles():
     from neuromorphic_accelerator_v1.m02_types import InputCurrent
     # Event stream is explicitly the original 17-event independent fixture,
@@ -148,10 +139,10 @@ def vectors() -> str:
         fires=set(dense.spike_rows[t])
         for i in range(NEURONS):
             idx=t*NEURONS+i
-            lines.append(
-                f"  oracle_trace[{idx}] = 192'h"+
-                f"{pack_trace(t,i,dense.voltage_rows[t][i],i in fires,"
-                f"i in evaluations,sparse.deliveries_by_tick[t]):048x};")
+            trace_word=pack_trace(t,i,dense.voltage_rows[t][i],
+                                  i in fires,i in evaluations,
+                                  sparse.deliveries_by_tick[t])
+            lines.append(f"  oracle_trace[{idx}] = 192'h{trace_word:048x};")
             if i in evaluations:
                 last_evaluated[i]=t+1
     for i,v in enumerate(dense.voltage_rows[-1]):
