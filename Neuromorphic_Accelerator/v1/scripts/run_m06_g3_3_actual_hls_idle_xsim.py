@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Owner G3.3.1 genuine generated HLS + ORIGINAL AMD XSim IDLE-LINK gate.
+"""Owner G3.3 genuine generated HLS + original AMD offline XSim gates.
 
-Only compiler/elaboration and reset/idle smoke. NO neural start/inference,
-comparison vs M02/M03, physical FPGA/DDR, JTAG, or M07. Original Vitis/AMD
-source files are read-only, SHA-attested pre/post and never copied into Git.
+Modes: accepted idle and invalid geometry, plus prospective positive16 smoke.
+Positive16 is NOT full independent M02/M03 neural parity, fault acceptance,
+physical DDR, JTAG, or M07. Original Vitis/AMD sources remain read-only,
+SHA-attested before and after; source-only CI never substitutes vendor IP.
 """
 from __future__ import annotations
 import argparse
@@ -30,6 +31,7 @@ SOURCE_FILES=(
     "scripts/m06_g3_3_stage_actual_hls_dat.py",
     "scripts/m06_g3_3_hls_control_map.py",
     "scripts/m06_g3_3_active_axilite_tb.py",
+    "scripts/m06_g3_3_positive16_axilite_tb.py",
     "scripts/m06_g3_merge_vendor_sources.py",
     "scripts/m06_g3_real_amd_compile_order_audit.py",
     "rtl/m06/m06_axi64_to32_guards.sv",
@@ -37,6 +39,7 @@ SOURCE_FILES=(
 )
 SUCCESS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS"
 ACTIVE_PASS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_AXILITE_BAD_GEOMETRY_XSIM_PASS"
+POSITIVE_PASS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_POSITIVE16_XSIM_PASS"
 
 def _sha_lines(files: list[Path]) -> str:
     return "".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+str(p)+"\n"
@@ -58,7 +61,7 @@ def _run(label: str,command: list[str],out: Path,*,cwd: Path=ROOT,
 
 def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         exported: Path,inventory: Path,*,mode: str="invalid_geometry") -> Path:
-    if mode not in ("idle","invalid_geometry"):
+    if mode not in ("idle","invalid_geometry","positive16"):
         raise ValueError("unsupported actual-HLS connected mode")
     args=(hls,d3,ports,headers,dwc,exported,inventory)
     hls,d3,ports,headers,dwc,exported,inventory=[
@@ -172,7 +175,7 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         dat_manifest=json.loads((out/"03_hls_original_dat_manifest.json").read_text())
         dat_sources=[Path(row["source"]) for row in dat_manifest["files"]]
         (out/"hls_dat_sources_before_sha256.txt").write_text(_sha_lines(dat_sources))
-        if mode=="invalid_geometry":
+        if mode in ("invalid_geometry","positive16"):
             _run("03_control_map.log",
                  [sys.executable,str(ROOT/"scripts/m06_g3_3_hls_control_map.py"),
                   "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
@@ -195,6 +198,14 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                   "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
                   "--control-map",str(out/"03_real_hls_axilite_control_map.json"),
                   "--output",str(tb)],out)
+        elif mode=="positive16":
+            tb=out/"tb_m06_g3_3_actual_hls_original_amd_positive16.sv"
+            _run("03_positive16_generation.log",
+                 [sys.executable,str(ROOT/"scripts/m06_g3_3_positive16_axilite_tb.py"),
+                  "--idle-tb",str(idle_tb),
+                  "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
+                  "--control-map",str(out/"03_real_hls_axilite_control_map.json"),
+                  "--output",str(tb)],out)
         (out/"generated_hls_link_tb_sha256.txt").write_text(_sha_lines([tb]))
         if plan["vhdl_files"]:
             _run("04_xvhdl.log",["xvhdl","-2008",*plan["vhdl_files"]],out,cwd=out)
@@ -211,20 +222,22 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         compile_log=(out/"05_xvlog.log").read_text(errors="replace")
         if re.search(r"WARNING: \[VRFC 10-(?:2938|3380)\].*tb_m06_g3_3_actual_hls",compile_log):
             raise ValueError("generated HLS binding has implicit or forward-declared nets")
-        top="tb_m06_g3_3_actual_hls_original_amd_"+(
-            "active" if mode=="invalid_geometry" else "idle")
-        snapshot="m06_g3_3_actual_hls_original_amd_"+(
-            "active" if mode=="invalid_geometry" else "idle")+"_snapshot"
+        suffix={"idle":"idle","invalid_geometry":"active",
+                "positive16":"positive16"}[mode]
+        top="tb_m06_g3_3_actual_hls_original_amd_"+suffix
+        snapshot="m06_g3_3_actual_hls_original_amd_"+suffix+"_snapshot"
         _run("06_xelab.log",["xelab","--relax","-debug","typical",
                              "-L","xpm","-L","unisims_ver","-L","secureip",
                              "work."+top,"work.glbl","-s",snapshot],out,cwd=out)
         _run("07_xsim.log",["xsim",snapshot,
                             "-R","--onfinish","quit"],out,cwd=out,timeout=300)
         xsim=(out/"07_xsim.log").read_text(errors="replace")
-        required_marker=ACTIVE_PASS if mode=="invalid_geometry" else SUCCESS
+        required_marker={"idle":SUCCESS,"invalid_geometry":ACTIVE_PASS,
+                         "positive16":POSITIVE_PASS}[mode]
         if xsim.count(required_marker)!=1 or re.search(
             r"M06_G3_3_HLS_LINK_IDLE_FAIL|M06_G3_3_HLS_ACTIVE_FAIL"
-            r"|FATAL_ERROR|Fatal: |\$fatal|WARNING: File .*\.dat referenced",xsim
+            r"|M06_G3_3_HLS_POSITIVE_FAIL|FATAL_ERROR|Fatal: |\$fatal"
+            r"|WARNING: File .*\.dat referenced",xsim
         ):
             raise ValueError("real HLS/AMD XSim missing clean mode-specific PASS")
         print("M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_XSIM_PASS mode="+mode+
@@ -265,7 +278,7 @@ def main() -> int:
     for name in ("hls-cosim","original-d3","original-report","original-headers",
                  "original-dwc","amd-export","accepted-inventory"):
         ap.add_argument("--"+name,required=True,type=Path)
-    ap.add_argument("--mode",choices=("idle","invalid_geometry"),
+    ap.add_argument("--mode",choices=("idle","invalid_geometry","positive16"),
                     default="invalid_geometry")
     a=ap.parse_args()
     try:
