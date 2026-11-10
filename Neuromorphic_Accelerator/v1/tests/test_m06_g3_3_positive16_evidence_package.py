@@ -66,9 +66,9 @@ class Positive16OwnerZipTests(unittest.TestCase):
             root=Path(tmp)
             folder=root/"m06_g3_3_actual_hls_m02_m03_parity_xsim_first"
             folder.mkdir()
-            (folder/"result.txt").write_text("exit_status=1\\n")
-            (folder/"03_independent_m02_m03_vectors.log").write_text("ORACLE READY\\n")
-            (folder/"m06_g3_3_m02_m03_owner_vectors.svh").write_text("// GENERATED VECTOR\\n")
+            (folder/"result.txt").write_text("exit_status=1\n")
+            (folder/"03_independent_m02_m03_vectors.log").write_text("ORACLE READY\n")
+            (folder/"m06_g3_3_m02_m03_owner_vectors.svh").write_text("// GENERATED VECTOR\n")
             output=root/"parity.zip"
             p=subprocess.run([
                 sys.executable,str(ROOT/"scripts/package_m06_g3_3_positive16_evidence.py"),
@@ -78,9 +78,9 @@ class Positive16OwnerZipTests(unittest.TestCase):
             self.assertEqual(p.returncode,0,p.stderr)
             self.assertIn("UPLOAD EXACTLY THIS ZIP:",p.stdout)
             with ZipFile(output) as z:
-                self.assertEqual(z.read("result.txt"),b"exit_status=1\\n")
+                self.assertEqual(z.read("result.txt"),b"exit_status=1\n")
                 self.assertEqual(z.read("m06_g3_3_m02_m03_owner_vectors.svh"),
-                                 b"// GENERATED VECTOR\\n")
+                                 b"// GENERATED VECTOR\n")
 
     def test_allowlist_rejects_source_payload_extensions(self):
         self.assertIn("03_positive16_generation.log",NAMES)
