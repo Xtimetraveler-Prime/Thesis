@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
-**Current status: M01–M06 COMPLETE in their separately accepted scopes (November 10, 2026). M07 is next; M08 and M09 are planned.** **New-chat development entry:** [M07 handoff / workflow and first steps](docs/M07_NEXT_CHAT_HANDOFF_2026_11_10.md). The active project is an independently versioned SNN/FPGA research effort, not Loihi Digital Twin v4. This document records **current decisions and future gates** rather than daily engineering logs. The complete original milestone journal is preserved in [Git at the pre-cleanup revision](https://github.com/Xtimetraveler-Prime/Thesis/blob/33916fffd4f5935aac9ec060a0e62d92977b3c05/Neuromorphic_Accelerator/v1/roadmap.md); experiment-specific evidence remains in linked acceptance reports and under the owner's immutable local evidence directory.
+**Current status: M01–M06 COMPLETE in their separately accepted scopes (November 10, 2026). M07 is IN PROGRESS (M07.1 first source-only cache-policy baselines on a separate unmerged branch); M08 and M09 are planned.** **New-chat development entry:** [M07 handoff / workflow and first steps](docs/M07_NEXT_CHAT_HANDOFF_2026_11_10.md). The active project is an independently versioned SNN/FPGA research effort, not Loihi Digital Twin v4. This document records **current decisions and future gates** rather than daily engineering logs. The complete original milestone journal is preserved in [Git at the pre-cleanup revision](https://github.com/Xtimetraveler-Prime/Thesis/blob/33916fffd4f5935aac9ec060a0e62d92977b3c05/Neuromorphic_Accelerator/v1/roadmap.md); experiment-specific evidence remains in linked acceptance reports and under the owner's immutable local evidence directory.
 
 ## 1. Research question and experimental contract
 
@@ -31,7 +31,7 @@ Initially use the same numerical contract, network, input stream, clock/compute 
 | **M04 — Existing engine audit** | Determine arithmetic reuse and hardware interface requirements | **COMPLETE (host/audit scope).** V3 HLS reuse decision and bounded host candidate; no M04 synthesis required. [Audit](docs/M04_HLS_ENGINE_AUDIT.md) |
 | **M05 — Sparse/on-chip engine prototype** | Signed32 rolling event processing, HLS/RTL stream and control integration | **COMPLETE (offline FPGA-targeted scope, PR #79 merged).** [Accepted original toolchain evidence](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | **M06 — State residency and fault containment** | Paged canonical memory, original HLS+AMD AXI interconnect, dirty eviction, numerical parity and quarantine/restore | **COMPLETE (offline connected original-RTL simulation, PR #80 merged).** [Five-archive original XSim acceptance review](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md). **No physical PS DDR** |
-| **M07 — Policies and ablations** | Fair cache/no-cache, scheduling and locality experiments | **NEXT / PLANNED.** Build baselines, isolate causal variables, require independent parity |
+| **M07 — Policies and ablations** | Fair cache/no-cache, scheduling and locality experiments | **IN PROGRESS / NOT ACCEPTED.** M07.1 direct-fetch versus inherited M06 LRU Python baseline, independent M02/M03/M06 parity tests and source-only artifact/CI added on development branch. Matched four-way controls, ablations and owner acceptance remain open |
 | **M08 — Physical KV260 benchmarking** | Carefully authorized integration, genuine DDR, full-system timing/resources, repeatability | **PLANNED, separately gated.** No JTAG or physical DDR approval implicit here |
 | **M09 — Analysis and research closeout** | Virtualization/sparsity interaction, negative results, prior-art comparison and thesis plots | **PLANNED** after reproducible M08 evidence |
 
@@ -81,6 +81,14 @@ Five original Vivado 2025.2 archived experiments are accepted: G3.3 32 neurons �
 4. **Instrumentation and neural checks.** Capture cache hits/misses, burst/byte counts, page movements, B-before-AR fences, outstanding requests, queue stalls and complete run duration under a clearly identified *simulated or physical* timing boundary. Cross-check with M03 abstract traffic and M02 neural oracle. Make failures and unmeasured quantities visible.
 
 **Acceptance:** reproducible policy implementation, per-policy counters, independently matching neural outputs and honest matched ablations. A null or slower policy result is acceptable; no claimed speedup is required.
+
+### M07.1 — initial implementation on separate branch (November 10, 2026; not accepted)
+
+Development branch `agent/neuromorphic-accelerator-v1-m07-cache-baselines` was created from the then-current main HEAD `a33c717f4101e248dd56637e5188682872fe83c6`. First deliverable is **host-only direct-fetch state residency versus the existing M06 LRU** on the exact M06 signed16 paged replay, using M03 role-isomorphic generated networks and M02 independent dense/queued plus M03 safe-sparse references. Direct fetch holds one emulated page for a paired neuron read/write, commits its dirty full-page write through M06, and invalidates it before the next evaluation. This makes it a scientifically interpretable no-inter-evaluation-reuse baseline while retaining M06's ownership/version/fault checks. Neither M02 numerics nor accepted M05/M06 HLS/RTL is changed.
+
+Added `src/neuromorphic_accelerator_v1/m07_policy_baseline.py`, `tests/test_m07_policy_baseline.py`, `scripts/m07_cache_baseline.py`, `docs/M07_TESTS_EXPLAINED.md`, `docs/M07_PC_ONLY_VERIFICATION.md` and `.github/workflows/neuromorphic_accelerator_m07_host_only.yml`. Model traffic uses M06 full-block bytes and `ceil(page_bytes/max_model_transfer_bytes)` transfers. M06 hit/miss counts are per **read or write** (two calls per neural evaluation); direct invalidations are **not** capacity evictions. Synapse DDR traffic and hardware queue/AXI/service timing are unmodeled and reported as missing, not zero. Four-way fair control integration, larger sweeps and one optional scheduler remain separate uncompleted M07 work packages; no physical or original vendor-tool claim follows from this work.
+
+**Acceptance remains OPEN** pending exact-head CI review, owner replication, subsequent M07 deliverables, and explicit approval. Consult the test ledger for verification status and limitations.
 
 ## 5. M08 — Physical KV260 implementation and measurement
 
