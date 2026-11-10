@@ -1,7 +1,7 @@
 # M07 next-chat handoff — Neuromorphic Accelerator v1
 **Prepared November 10, 2026 — after M06 acceptance and documentation cleanup**
 
-This is the current continuation handoff, **not** a direction to rerun completed experiments. In a new chat, start by reading the [v1 README](../README.md), [M01–M09 roadmap](../roadmap.md), [M05 acceptance](M05_ACCEPTANCE_REVIEW_2026_11_09.md), [M06 acceptance](M06_ACCEPTANCE_REVIEW_2026_11_10.md), and [M03 measurement contract](M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md). Historical M05/M06 runbooks may still show obsolete OPEN statuses; the accepted reviews and current roadmap supersede them. Verify the documentation-cleanup PR #81 is merged before creating the M07 branch.
+This is the current continuation handoff, **not** a direction to rerun completed experiments. In a new chat, start by reading the [v1 README](../README.md), [M01–M09 roadmap](../roadmap.md), [M05 acceptance](M05_ACCEPTANCE_REVIEW_2026_11_09.md), [M06 acceptance](M06_ACCEPTANCE_REVIEW_2026_11_10.md), and [M03 measurement contract](M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md). Historical M05/M06 runbooks may still show obsolete OPEN statuses; the accepted reviews and current roadmap supersede them. Documentation-cleanup PR #81 merged into main on 2026-11-10 (merge commit 5f6c73068542238b87d74e0e9f9bffff6202ed01). Verify the **current main HEAD**, including any documentation-only post-merge commits, before creating an M07 branch.
 
 ## 1. Repository and research orientation
 
