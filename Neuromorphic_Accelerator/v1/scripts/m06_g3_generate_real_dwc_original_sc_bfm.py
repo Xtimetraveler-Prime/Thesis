@@ -48,6 +48,36 @@ def _bit_decl(width: int) -> str:
     return f"[{width-1}:0] " if width > 1 else ""
 
 
+def exact_dwc_abi(sc: str, required: dict) -> dict:
+    """Fully reconstruct measured 36/42-pin AMD DWC SI+MI wrapper contract.
+
+    This is checked against independently parsed, SHA-audited original
+    Vivado SIM headers; NEVER used to replace real vendor RTL.
+    """
+    if sc not in ("S00", "S03"):
+        raise ValueError("unsupported original read/write SI role")
+    source={k[len(sc+"_AXI_"):]:v for k,v in required.items()
+            if k.startswith(sc+"_AXI_")}
+    expected={}
+    for field,(sc_direction,sc_width) in source.items():
+        converter_direction="output" if sc_direction=="input" else "input"
+        expected["m_axi_"+field]={
+            "direction":converter_direction,"width_bits":sc_width}
+        upstream_width=32 if field in ("rdata","wdata") else (
+            4 if field=="wstrb" else sc_width)
+        expected["s_axi_"+field]={
+            "direction":converter_direction,"width_bits":upstream_width}
+    prefix="ar" if sc=="S00" else "aw"
+    expected["m_axi_"+prefix+"region"]={"direction":"output","width_bits":4}
+    expected["s_axi_"+prefix+"region"]={"direction":"input","width_bits":4}
+    expected["s_axi_"+prefix+"id"]={"direction":"input","width_bits":1}
+    expected["s_axi_"+("rid" if sc=="S00" else "bid")]={
+        "direction":"output","width_bits":1}
+    for pin in ("aclk","aresetn"):
+        expected["s_axi_"+pin]={"direction":"input","width_bits":1}
+    return expected
+
+
 def render(dwc_readback: dict, vendor: list[dict]) -> str:
     required = required_ports()
     actual = {p["name"]: (p["direction"], p["packed_width"]) for p in vendor}
@@ -81,6 +111,14 @@ def render(dwc_readback: dict, vendor: list[dict]) -> str:
         if row["role"] != ("READ_ONLY" if sc=="S00" else "WRITE_ONLY"):
             raise ValueError("wrong real AMD width converter mode")
         ports = row["pins"]
+        if ports != exact_dwc_abi(sc,required):
+            missing=set(exact_dwc_abi(sc,required))-set(ports)
+            extra=set(ports)-set(exact_dwc_abi(sc,required))
+            wrong={k for k in set(ports)&set(exact_dwc_abi(sc,required))
+                   if ports[k]!=exact_dwc_abi(sc,required)[k]}
+            raise ValueError("actual ORIGINAL AMD DWC SIM 36/42-pin ABI drift: "
+                             +f"missing={sorted(missing)} extra={sorted(extra)} "
+                             +f"wrong={sorted(wrong)}")
         port_map = []
         for signal, props in sorted(ports.items()):
             d,w = props["direction"],props["width_bits"]
