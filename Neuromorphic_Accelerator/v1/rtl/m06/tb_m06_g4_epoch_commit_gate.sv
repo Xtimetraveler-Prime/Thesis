@@ -59,6 +59,9 @@ initial begin
         $fatal(1,"M06_G4_GATE_FAIL ACK");
     ar=1; step(); ar=0;
     done_test(32'd0);
+    if(commit!==0)
+        $fatal(1,"M06_G4_GATE_FAIL EARLY_COMMIT_ON_AP_DONE");
+    step(); // post-HLS completion guard fault settling cycle
     if(active!==0 || commit!==1 || poison!==0)
         $fatal(1,"M06_G4_GATE_FAIL CLEAN_COMMIT");
 
@@ -79,6 +82,17 @@ initial begin
     done_test(32'd0);
     if(commit!==0 || poison!==1)
         $fatal(1,"M06_G4_GATE_FAIL READ_FAULT_QUARANTINE");
+
+    reset_test();
+    start_test();
+    done_test(32'd0);
+    // Registered guard fault arrives at the edge immediately after ap_done.
+    // The commit token must NEVER pulse high for even one cycle.
+    if(commit!==0)
+        $fatal(1,"M06_G4_GATE_FAIL EARLY_FAULT_COMMIT");
+    write_fault=1; step(); write_fault=0;
+    if(commit!==0 || poison!==1)
+        $fatal(1,"M06_G4_GATE_FAIL LATE_REGISTERED_GUARD_FAULT");
 
     reset_test();
     start_test();
