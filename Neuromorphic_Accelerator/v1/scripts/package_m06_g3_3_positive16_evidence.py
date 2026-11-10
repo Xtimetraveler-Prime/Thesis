@@ -27,6 +27,7 @@ NAMES = (
     "03_g4_first_b_fault_generation.log",
     "03_g4_first_r_slverr_generation.log",
     "03_g4_stalled_b_generation.log",
+    "03_g4_discard_restore_generation.log",
     "04_xvhdl.log", "05_xvlog.log", "06_xelab.log", "07_xsim.log",
     "tb_m06_g3_3_actual_hls_original_amd_idle.sv",
     "tb_m06_g3_3_actual_hls_original_amd_positive16.sv",
@@ -34,6 +35,7 @@ NAMES = (
     "tb_m06_g4_actual_hls_original_amd_first_b_slverr.sv",
     "tb_m06_g4_actual_hls_original_amd_first_r_slverr.sv",
     "tb_m06_g4_actual_hls_original_amd_stalled_b.sv",
+    "tb_m06_g4_actual_hls_original_amd_discard_restore.sv",
     "m06_g3_3_m02_m03_owner_vectors.svh",
     "generated_hls_link_tb_sha256.txt",
     "source_before_sha256.txt", "source_after_sha256.txt",
@@ -77,7 +79,7 @@ def package(evidence: Path | None, invocation: Path | None, output: Path) -> Non
 
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode",choices=("positive16","m02_m03_parity","g4_first_b_slverr","g4_first_r_slverr","g4_stalled_b"),default="positive16")
+    parser.add_argument("--mode",choices=("positive16","m02_m03_parity","g4_first_b_slverr","g4_first_r_slverr","g4_stalled_b","g4_discard_restore"),default="positive16")
     parser.add_argument("--link",default=os.environ.get("LINK", ""))
     parser.add_argument("--invocation-log",default=os.environ.get("INVOCATION_LOG", ""))
     parser.add_argument("--output",type=Path,default=None)
@@ -87,7 +89,8 @@ def main() -> int:
              "m02_m03_parity":"M06_G3_3_M02_M03_PARITY_HLS_AMD_REVIEW_",
              "g4_first_b_slverr":"M06_G4_FIRST_B_SLVERR_HLS_AMD_REVIEW_",
              "g4_first_r_slverr":"M06_G4_FIRST_R_SLVERR_HLS_AMD_REVIEW_",
-             "g4_stalled_b":"M06_G4_STALLED_B_HLS_AMD_REVIEW_"}
+             "g4_stalled_b":"M06_G4_STALLED_B_HLS_AMD_REVIEW_",
+             "g4_discard_restore":"M06_G4_DISCARD_RESTORE_HLS_AMD_REVIEW_"}
             [args.mode])
     output=args.output or (Path.home()/"Thesis_Evidence"/
         (prefix+timestamp+".zip"))
