@@ -33,6 +33,13 @@ class G4ReadErrorAndWithheldBOriginalAMDSyntaxTests(unittest.TestCase):
         self.assertIn("read_guard_fault!==1'b1",s)
         self.assertIn("g4_poison!==1'b1",s)
         self.assertIn("g4_commit!==1'b0",s)
+        self.assertIn("m06_g4_output_quarantine #(.MAX_TRACE(16))",s)
+        self.assertIn(".s_trace_tdata(h_trace_TDATA)",s)
+        self.assertIn(".s_metrics_tdata(h_metrics_TDATA)",s)
+        self.assertIn(".poisoned(g4_poison)",s)
+        self.assertIn("if(q_trace_valid && q_trace_ready)",s)
+        self.assertNotIn("assign h_trace_TREADY = 1'b1",s)
+        self.assertNotIn("assign h_metrics_TREADY = 1'b1",s)
         self.assertIn("M06_G4_ACTUAL_HLS_AMD_FIRST_R_SLVERR_QUARANTINE_XSIM_PASS",s)
         self.assertNotIn("force read_guard_fault",s)
         self.assertNotIn("force M00_AXI_rresp",s)
@@ -50,6 +57,9 @@ class G4ReadErrorAndWithheldBOriginalAMDSyntaxTests(unittest.TestCase):
         self.assertIn(".s_axi_bresp(raw_ram_bresp)",s)
         self.assertIn("epoch_gate.epoch_cycles<TEST_EPOCH_TIMEOUT",s)
         self.assertIn("hls_b_seen!==0",s)
+        self.assertIn("m06_g4_output_quarantine #(.MAX_TRACE(16))",s)
+        self.assertIn(".m_trace_tvalid(q_trace_valid)",s)
+        self.assertIn("if(q_trace_valid && q_trace_ready)",s)
         self.assertIn("M06_G4_ACTUAL_HLS_AMD_STALLED_B_WATCHDOG_QUARANTINE_XSIM_PASS",s)
         self.assertNotIn("force write_guard_fault",s)
         self.assertNotIn("force h_m_axi_gmem_write_BRESP",s)
@@ -105,6 +115,7 @@ class G4ReadErrorAndWithheldBOriginalAMDSyntaxTests(unittest.TestCase):
                      str(ROOT/"rtl/m06/m06_axi64_to32_guards.sv"),
                      str(ROOT/"rtl/m06/m06_axi128_scratch_mem.sv"),
                      str(ROOT/"rtl/m06/m06_g4_epoch_commit_gate.sv"),
+                     str(ROOT/"rtl/m06/m06_g4_output_quarantine.sv"),
                      str(tb)],
                     capture_output=True,text=True,timeout=30)
                 self.assertEqual(p.returncode,0,
