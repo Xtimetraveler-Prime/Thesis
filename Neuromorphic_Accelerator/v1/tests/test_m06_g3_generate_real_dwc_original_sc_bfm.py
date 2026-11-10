@@ -96,6 +96,26 @@ class M06ActualMeasuredDWCAndOriginalSmartConnectBFMTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"mode"):
             render(fake,VENDOR)
 
+    def test_connected_owner_runner_bash_and_authentic_source_boundaries(self):
+        runner=ROOT/"scripts/run_m06_g3_real_dwc_original_sc_xsim.sh"
+        script=runner.read_text()
+        self.assertIn("m06_g3_merge_vendor_sources.py",script)
+        self.assertIn("m06_g3_generate_real_dwc_original_sc_bfm.py",script)
+        self.assertIn("m06_g3_amd_dwc_evidence_audit.py",script)
+        self.assertIn("m06_g3_real_amd_compile_order_audit.py",script)
+        self.assertIn("m06_vendor_compile_plan.py",script)
+        self.assertIn("m06_g3_real_dwc_original_sc_snapshot",script)
+        self.assertIn("work.glbl",script)
+        self.assertIn("sha256sum",script)
+        self.assertIn("M06_G3_REAL_DWC_ORIGINAL_SC_32TO256_XSIM_PASS",script)
+        self.assertNotIn("program_hw_devices",script)
+        self.assertNotIn("write_bitstream",script)
+        self.assertNotIn("vitis-run",script)
+        self.assertNotIn("export_simulation",script)
+        check=subprocess.run(["bash","-n",str(runner)],capture_output=True,
+                             text=True,timeout=15)
+        self.assertEqual(check.returncode,0,check.stderr)
+
     def test_generated_bench_syntax_against_FAKE_stubs_only_no_simulation(self):
         if not shutil.which("iverilog"):
             self.skipTest("Icarus not installed; original AMD test belongs on owner XSim")
