@@ -35,9 +35,9 @@ class M06AXI32To256OracleTests(unittest.TestCase):
         self.assertEqual(p[0]["lane_index"],7)
         self.assertEqual(p[0]["byte_mask_32"],0b0101<<28)
         m.complete_write(ident=2)
-        self.assertEqual(m.read(0x11C),0xA545A567)
-        self.assertEqual(m.read(0x118),0xA5A5A5A5)
-        self.assertEqual(m.read(0x120),0xA5A5A5A5)
+        self.assertEqual(m.read(0x11C),[0xA523A567])
+        self.assertEqual(m.read(0x118),[0xA5A5A5A5])
+        self.assertEqual(m.read(0x120),[0xA5A5A5A5])
 
     def test_last_legal_neuron_address_65535_and_reload(self):
         m=AXI32CanonicalImage()
@@ -53,8 +53,8 @@ class M06AXI32To256OracleTests(unittest.TestCase):
             self.assertEqual(read,
               [((base+ofs+4*i)^0xA54B6C03)&0xFFFFFFFF for i in range(16)])
         self.assertEqual(m.written_word_count,64)
-        self.assertEqual(m.read(0xFFFC),0xFFFC ^ 0xA54B6C03)
-        self.assertEqual(m.read(0xFEFC),0xA5A5A5A5)
+        self.assertEqual(m.read(0xFFFC),[0xFFFC ^ 0xA54B6C03])
+        self.assertEqual(m.read(0xFEFC),[0xA5A5A5A5])
         self.assertEqual(len(m.digest()),64)
 
     def test_negative_out_of_range_4kb_crossing_unaligned_and_bad_shape(self):
