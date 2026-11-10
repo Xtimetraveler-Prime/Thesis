@@ -39,6 +39,9 @@ def fixture(base: Path) -> Path:
         rows.append(ip+".CONFIG.READ_WRITE_MODE\t"+role)
         for key, val in REQUIRED.items():
             rows.append(ip+"."+key+"\t"+val)
+        xci_expected = (out / "new_scratch_project" / "m06_g3_amd_dwc.srcs" /
+                        "sources_1" / "ip" / ip / (ip+".xci"))
+        rows.append(ip+".xci_source_path\t"+str(xci_expected))
     # The real tool prints one "ip" row per generated IP, but the audit
     # disallows duplicate keys. A unique row is enough for this fixture:
     rows = [row for row in rows if not row.startswith("ip\t")]
@@ -54,7 +57,9 @@ def fixture(base: Path) -> Path:
     project.mkdir()
     xci = []
     for ip in IPS:
-        path = project / (ip+".xci")
+        path = (project / "m06_g3_amd_dwc.srcs" / "sources_1" /
+                "ip" / ip / (ip+".xci"))
+        path.parent.mkdir(parents=True)
         path.write_text("SYNTHETIC DATA, NOT AMD VIVADO IP\n")
         xci.append(path)
     sources = []
@@ -118,7 +123,7 @@ class M06AMDDualConverterEvidenceSyntheticTests(unittest.TestCase):
     def test_negative_missing_xci_or_modified_xci_digest(self):
         with tempfile.TemporaryDirectory() as temp:
             out=fixture(Path(temp))
-            (out/"new_scratch_project/m06_g3_write_dwc.xci").unlink()
+            (out/"new_scratch_project/m06_g3_amd_dwc.srcs/sources_1/ip/m06_g3_write_dwc/m06_g3_write_dwc.xci").unlink()
             with self.assertRaisesRegex(ValueError,"exactly two"):
                 audit(out)
         with tempfile.TemporaryDirectory() as temp:
@@ -145,6 +150,43 @@ class M06AMDDualConverterEvidenceSyntheticTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"error or critical warning"):
                 audit(out)
 
+    def test_negative_xci_readback_cannot_point_to_old_original_d3(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out=fixture(Path(temp))
+            p=out/"02_amd_dwc_configuration.tsv"
+            original=(out/"new_scratch_project/m06_g3_amd_dwc.srcs/sources_1/"
+                      "ip/m06_g3_read_dwc/m06_g3_read_dwc.xci")
+            p.write_text(p.read_text().replace(
+                str(original), str(out/"OLD_UNTRUSTED_D3.xci")))
+            with self.assertRaisesRegex(ValueError, "XCI path readback"):
+                audit(out)
+
+    def test_pure_tcl_locator_rejects_missing_and_wrong_instance_without_vivado(self):
+        if not shutil.which("tclsh"):
+            self.skipTest("tclsh unavailable")
+        with tempfile.TemporaryDirectory() as temp:
+            out=fixture(Path(temp))
+            root=out/"new_scratch_project"
+            script=Path(temp)/"test_real_locator_synthetic.tcl"
+            locator=ROOT/"scripts/m06_g3_xci_path.tcl"
+            script.write_text(
+                "source {"+str(locator)+"}\\n"
+                "set base {"+str(root)+"}\\n"
+                "set expected [file join $base m06_g3_amd_dwc.srcs "
+                    "sources_1 ip m06_g3_read_dwc m06_g3_read_dwc.xci]\\n"
+                "if {[m06_g3_xci_path $base m06_g3_read_dwc] ne "
+                    "[file normalize $expected]} {exit 10}\\n"
+                "if {![catch {m06_g3_xci_path $base m06_g3_wrong_dwc}]} {exit 11}\\n"
+                "set wrong [file join $base m06_g3_amd_dwc.srcs "
+                    "sources_1 ip m06_g3_write_dwc m06_g3_write_dwc.xci]\\n"
+                "file delete $wrong\\n"
+                "if {![catch {m06_g3_xci_path $base m06_g3_write_dwc}]} {exit 12}\\n"
+                "puts M06_G3_SYNTHETIC_REAL_XCI_PATH_PASS\\n")
+            run=subprocess.run(["tclsh",str(script)],capture_output=True,text=True,
+                               timeout=15)
+            self.assertEqual(run.returncode,0,run.stderr)
+            self.assertIn("M06_G3_SYNTHETIC_REAL_XCI_PATH_PASS",run.stdout)
+
     def test_negative_run_status_cannot_claim_connected(self):
         with tempfile.TemporaryDirectory() as temp:
             out=fixture(Path(temp))
@@ -166,9 +208,7 @@ class M06AMDDualConverterEvidenceSyntheticTests(unittest.TestCase):
         self.assertEqual(result.returncode,0,result.stderr)
         # Tcl's info complete checks brace nesting; NOT Tcl execution.
         if shutil.which("tclsh"):
-            program = ("set f [open [lindex $argv 0] r]\n"
-                       "set t [read $f]\nclose $f\n"
-                       "if {![info complete $t]} {exit 3}\n")
+
             check=subprocess.run(["tclsh",str(ROOT/"scripts/m06_g3_generate_amd_dwc.tcl")],
               capture_output=True,text=True,timeout=15)
             # This is an actual tclsh execution, which must reject
