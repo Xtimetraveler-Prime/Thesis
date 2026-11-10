@@ -63,13 +63,15 @@ def lanes():
 class M06G3InputGateSyntheticTests(unittest.TestCase):
     def run_gate(self,root:Path,portplan=None,stage=None):
         repo,hls,vendor=fixture(root)
-        with patch("m06_g3_original_link_inputs.hls_ports",return_value={
-            "generated_top_sha256":"a"*64,"generated_rtl_count":37}), \
-             patch("m06_g3_original_link_inputs.width_plan",
-                   return_value=lanes() if portplan is None else portplan), \
-             patch("m06_g3_original_link_inputs.vendor_stages",
-                   return_value=stages(vendor) if stage is None else stage):
-            return repo,hls,vendor,lambda:verify(hls,vendor,repo)
+        def do():
+            with patch("m06_g3_original_link_inputs.hls_ports",return_value={
+                "generated_top_sha256":"a"*64,"generated_rtl_count":37}), \
+                 patch("m06_g3_original_link_inputs.width_plan",
+                       return_value=lanes() if portplan is None else portplan), \
+                 patch("m06_g3_original_link_inputs.vendor_stages",
+                       return_value=stages(vendor) if stage is None else stage):
+                return verify(hls,vendor,repo)
+        return repo,hls,vendor,do
 
     def test_positive_valid_synthetic_metadata_not_an_integration_claim(self):
         with tempfile.TemporaryDirectory() as d:
