@@ -41,7 +41,7 @@ def generate(idle: str, inventory: dict, control: dict) -> str:
     prefix=prefix.replace(old_top, "module "+NAME+";")
     prefix=prefix.replace("reg resetn=0;","reg resetn=0;\nreg inject_first_b=1'b1;")
     prefix=prefix.replace(PREFIX_FAIL,
-       'if(1\\'b0) $fatal(1,"M06_G4_FAIL GUARD_MONITOR_DISABLED");')
+       "// G4 injected AXI response faults checked by epoch supervisor below.")
     prefix=prefix.replace(
         ".inject_next_b_slverr(1'b0), .inject_next_r_slverr(1'b0)",
         ".inject_next_b_slverr(inject_first_b), .inject_next_r_slverr(1'b0)")
