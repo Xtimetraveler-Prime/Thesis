@@ -38,8 +38,8 @@ static bool wheel_and_high_address() {
                 std::cerr<<"M06_HLS_CSIM_DIAG high_offset trace_mismatch tick="
                          <<t<<" neuron="<<i<<" got_tick="<<x.tick
                          <<" got_id="<<x.neuron_id<<" got_v="<<x.voltage
-                         <<" got_spike="<<x.spike<<" expected_spike="<<spike
-                         <<" got_evaluated="<<x.evaluated
+                         <<" got_spike="<<static_cast<unsigned>(x.spike)<<" expected_spike="<<spike
+                         <<" got_evaluated="<<static_cast<unsigned>(x.evaluated)
                          <<" got_delivered="<<x.delivered_count<<"\n";
                 return false;
             }
@@ -114,8 +114,8 @@ static bool dirty_evict_then_delayed_replay() {
                 std::cerr<<"M06_HLS_CSIM_DIAG dirty_evict trace_mismatch tick="
                          <<t<<" neuron="<<i<<" got_tick="<<x.tick
                          <<" got_id="<<x.neuron_id<<" got_v="<<x.voltage
-                         <<" got_spike="<<x.spike<<" expected_spike="<<spike
-                         <<" got_evaluated="<<x.evaluated<<"\n";
+                         <<" got_spike="<<static_cast<unsigned>(x.spike)<<" expected_spike="<<spike
+                         <<" got_evaluated="<<static_cast<unsigned>(x.evaluated)<<"\n";
                 return false;
             }
             spikes+=x.spike;
