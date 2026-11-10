@@ -1,3 +1,5 @@
+> **SUPERSEDED/ACCEPTED 2026-11-10:** The first genuine original-HLS/AMD G4 write-B SLVERR test PASSED in genuine Vivado 2025.2. Owner ZIP M06_G4_FIRST_B_SLVERR_HLS_AMD_REVIEW_20261110T171436Z.zip SHA256 11c2960d6a130e530ccfde345c42828e42626936e523a77f7b35bacffc87eaca, tested commit e3a690f6b92dd1ae878a4e327abf158a45586a56, result exit_status=0, original XSim marker at 3900 ns, all original HLS/AMD/dat and local SHA before-after matched, two original XCI checks OK. This old owner command is HISTORY, DO NOT RERUN. Current remaining G4 work is docs/M06_G4_REMAINING_CONNECTED_OWNER_GATES_2026_11_10.md. No G4/M06 closeout or physical DDR/FPGA claim.
+
 # M06 existing G4 — genuine original-HLS/AMD first write-B SLVERR owner gate
 
 2026-11-10 UTC. No new submilestone. PR #80 stays DRAFT, no M07/merge.
