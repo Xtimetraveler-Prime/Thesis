@@ -22,6 +22,7 @@ def valid_files(mode: str) -> dict[str,str]:
     evidence={
         "result.txt":"exit_status=0\n",
         "commit.txt":"b"*40+"\n",
+        "generated_hls_link_tb_sha256.txt":"c"*64+"  /synthetic/owner/tb.sv\n",
         tb:"// SYNTHETIC PRIVATE TB ONLY\n",
         gen:"M06_G4_GENERATION SOURCE_ONLY_NO_VENDOR_XSIM\n",
         "original_xci_after_sha_check.txt":
