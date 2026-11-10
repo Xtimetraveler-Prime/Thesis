@@ -1,4 +1,4 @@
-# M06 existing G4 — original-HLS/AMD read error, missing B, quarantine and explicit restore
+> **IMPORTANT CURRENT STATUS (2026-11-10): original owner first R SLVERR has PASSED and is ACCEPTED; first stalled-B run FAILED by 300s wall-time timeout, with genuine original source/hash provenance intact. Do NOT rerun accepted first-R/first-B. The old THREE-MODE owner command lower in this document is now historical and MUST NOT be executed. The CURRENT two pending experiments are a CHANGED, bounded, instrumented g4_stalled_b then g4_discard_restore ONLY if stalled B passes. See docs/M06_G4_READ_ACCEPTED_STALLED_B_DIAGNOSTIC_2026_11_10.md. G4/M06 remain OPEN, no milestone subdivisions/merge/M07.\n\n# M06 existing G4 — original-HLS/AMD read error, missing B, quarantine and explicit restore
 
 2026-11-10 UTC. No new milestone subdivisions. Keep M06 OPEN, PR #80 DRAFT/UNMERGED, no M07/board/JTAG/PS DDR.
 
