@@ -169,7 +169,7 @@ if timeout --signal=TERM 600s xsim m06_g3_real_dwc_original_sc_snapshot \
 else
   sim_rc=$?
 fi
-python3 scripts/m06_g3_axi_trace_audit.py \
+python3 "$ROOT/scripts/m06_g3_axi_trace_audit.py" \
   --xsim-log "$OUT/07_xsim.log" \
   --trace-output "$OUT/08_axi_handshake_trace.log" \
   --summary-output "$OUT/09_axi_probe_summary.json"
