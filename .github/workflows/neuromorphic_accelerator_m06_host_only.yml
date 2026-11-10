@@ -1,0 +1,259 @@
+name: Neuromorphic Accelerator v1 M06 canonical state residency (NO BOARD)
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m06_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m06_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m06-host-residency:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source identity and Python version (NO Vivado/FPGA)
+        run: |
+          git rev-parse HEAD
+          python3 --version
+      - name: Python syntax for the whole v1 source tree
+        run: python3 -m compileall -q src scripts tests
+      - name: M06 original vendor Vivado owner scripts Bash syntax only (NO VIVADO)
+        run: |
+          bash -n scripts/run_m06_original_mem_sc_port_contract.sh
+          bash -n scripts/run_m06_original_mem_sc_vendor_xsim.sh
+      - name: M06 canonical-state block residency POSITIVE AND NEGATIVE source-only tests
+        run: python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+      - name: Inherited accepted M01/M02/M03/M04/M05 source regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m01*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m04*.py' -q
+          python3 -m unittest discover -s tests -p 'test_m05*.py' -q
+      - name: Matched locality x block x budget neural model sweep (NO VENDOR AXI)
+        run: |
+          python3 scripts/m06_matched_source_study.py --output "$RUNNER_TEMP/m06_matched.json"
+          python3 - "$RUNNER_TEMP/m06_matched.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as fp:
+              data = json.load(fp)
+          assert data["schema_rows"] == 12
+          assert data["model_only"] is True
+          assert data["physical_board"] == "NOT_AUTHORIZED"
+          for row in data["rows"]:
+              assert row["independent_m02_neural_oracle"] == "PASS_SOURCE_ONLY"
+              assert row["vendor_smartconnect"] == "NOT_SIMULATED"
+              print("M06_MODEL_ONLY",
+                    row["group_neurons"], row["resident_budget_bytes"],
+                    row["locality"], "bytes=", row["source_only_model_transfer_bytes"],
+                    "tx=", row["source_only_model_transactions"],
+                    "spikes=", row["neural_spikes"])
+          PY
+      - name: Preserve reproducible source-only traffic grid artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m06-model-only-matched-locality-grid
+          path: ${{ runner.temp }}/m06_matched.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Generate original S03-write and S00-S02-read vendor-BFM INPUT vectors only
+        run: |
+          python3 scripts/m06_vendor_axi_directed_vectors.py --output "$RUNNER_TEMP/m06_original_port_safe_bfm_inputs.json"
+          python3 - "$RUNNER_TEMP/m06_original_port_safe_bfm_inputs.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as fp:
+              value=json.load(fp)
+          assert value["scenario_count"] == 9
+          assert value["original_port_role_contract"] == {
+              "S00": "READ_ONLY", "S01": "READ_ONLY",
+              "S02": "READ_ONLY", "S03": "WRITE_ONLY"}
+          assert value["vendor_smartconnect_executed"] is False
+          assert value["true_vendor_axi_result"] == "NOT_EXECUTED"
+          assert all(c["source_port"] == "S03" for c in value["scenarios"]
+                     if c["direction"] == "WRITE")
+          print("PASS M06 ORIGINAL-PORT ROLE SAFE BFM INPUTS ONLY; NO VENDOR XSIM")
+          PY
+      - name: Preserve independent model-only original AXI port role stimuli
+        uses: actions/upload-artifact@v4
+        with:
+          name: m06-source-only-original-port-role-bfm-inputs
+          path: ${{ runner.temp }}/m06_original_port_safe_bfm_inputs.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Independent RTL simulation of 128-bit scratch-memory target (NO VENDOR IP)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          # HARD G3 gate: Python test skipped before apt; re-run after
+          # installing actual Icarus so RTL is compiled and simulated.
+          python3 -m unittest discover -s tests -p 'test_m06_axi64_to32_guards.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_axi128_scratch_narrow.py' -v
+          # G3.3.1 compile-only fake-stub syntax exercise: real guards, NEVER fake functional XSim.
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_actual_hls_idle_link.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_stage_actual_hls_dat.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_hls_control_map.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_active_axilite_tb.py' -v
+          # G3.3 prospective positive tile: syntax-only against fake stubs, never vvp.
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_positive16_axilite_tb.py' -v
+          # G3.3 source-only REAL independent M02/M03 fixture + fake-stub syntax, NO vendor XSim.
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_m02_m03_owner_vectors.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_g3_3_m02_m03_parity_tb.py' -v
+          # G4 fail-closed completion/poison RTL actually simulated in Icarus (NO vendor/DDR).
+          python3 -m unittest discover -s tests -p 'test_m06_g4_epoch_commit_gate.py' -v
+          # G4 original HLS/AMD connected write fault bench: only port/syntax in CI.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_write_fault_tb.py' -v
+          # G4 read/B-timeout original AMD+HLS source-only pin compile, NO fake functional run.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_fault_matrix_tb.py' -v
+          # G4 actual synthesizable bounded precommit trace/metrics spool: standalone functional Icarus.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_output_quarantine.py' -v
+          # G4 original HLS+AMD first R error, owner-scrub+reset and guarded clean replay: fake-stub syntax ONLY.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_actual_hls_recovery_tb.py' -v
+          # Fail-closed evidence-audit regression, source-only synthetic logs are NOT vendor XSim.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_owner_zip_audit.py' -v
+          # M06 final original-owner evidence boundary: no closure without distinct passing stalled-B ZIP.
+          python3 -m unittest discover -s tests -p 'test_m06_g4_complete_evidence_gate.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06_g3_generate_real_dwc_original_sc_bfm.py' -v
+          iverilog -g2012 -s tb_m06_axi128_scratch_mem             -o "$RUNNER_TEMP/m06_axi128_scratch"             rtl/m06/m06_axi128_scratch_mem.sv             rtl/m06/tb_m06_axi128_scratch_mem.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_axi128_scratch"             | tee "$RUNNER_TEMP/m06_axi128_scratch.log"
+          grep -Fq "M06_AXI128_SCRATCH_STANDALONE_PASS"             "$RUNNER_TEMP/m06_axi128_scratch.log"
+          grep -Fq "NO_VENDOR_XSIM_NO_DDR"             "$RUNNER_TEMP/m06_axi128_scratch.log"
+      - name: One-slot RTL residency controller fill/dirty-evict/quarantine Icarus simulation (NO DMA/DDR)
+        run: |
+          iverilog -g2012 -s tb_m06_residency_control_fsm \
+            -o "$RUNNER_TEMP/m06_residency_fsm" \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/tb_m06_residency_control_fsm.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_residency_fsm" \
+            | tee "$RUNNER_TEMP/m06_residency_fsm.log"
+          grep -Fq "M06_RESIDENCY_FSM_RTL_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
+          grep -Fq "M06_RESIDENCY_FSM_DIRTY_WB_QUARANTINE_PASS" "$RUNNER_TEMP/m06_residency_fsm.log"
+      - name: XSim original 96-pin TB Icarus SYNTAX CHECK against FAKE stub ONLY (DO NOT RUN)
+        run: |
+          python3 - "$RUNNER_TEMP" <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,'scripts')
+          from m06_generate_original_mem_sc_bfm import (
+              MODULE, required_ports, render)
+          out=Path(sys.argv[1])
+          ports=required_ports()
+          metadata=[{"name":n,"direction":dw[0],"packed_width":dw[1]}
+                    for n,dw in ports.items()]
+          (out/"m06_vendor_bfm_syntax_only.sv").write_text(render(metadata))
+          from m06_generate_original_paged_vendor_bfm import render_paged
+          (out/"m06_VENDOR_PAGED_BFM_SYNTAX_ONLY.sv").write_text(
+              render_paged(metadata))
+          from m06_generate_original_vendor_neural_paged_bfm import (
+              render_neural_paged)
+          (out/"m06_VENDOR_NEURAL_PAGED_SYNTAX_ONLY.sv").write_text(
+              render_neural_paged(metadata))
+          from m06_generate_original_vendor_lru8_bfm import render_lru8
+          (out/"m06_VENDOR_LRU8_SYNTAX_ONLY.sv").write_text(
+              render_lru8(metadata))
+          from m06_generate_original_vendor_4096_bfm import (
+              render_full_canonical)
+          (out/"m06_VENDOR_4096_SYNTAX_ONLY.sv").write_text(
+              render_full_canonical(metadata))
+          declarations=["module "+MODULE+" (aclk, aresetn, "+
+                        ", ".join(ports.keys())+");",
+                        "input wire aclk;", "input wire aresetn;"]
+          for name,(direction,width) in ports.items():
+              dimensions=f"[{width-1}:0] " if width>1 else ""
+              declarations.append(f"{direction} wire {dimensions}{name};")
+          declarations.append("endmodule")
+          (out/"m06_FAKE_STUB_SYNTAX_ONLY.sv").write_text(
+              "\n".join(declarations)+"\n")
+          print("M06 ORIGINAL ABI SIMULATION TB GENERATED FOR SYNTAX ONLY; "
+                "STUB IS NOT THE REAL AMD IP AND MUST NEVER BE SIMULATED")
+          PY
+          iverilog -g2012 -tnull -s tb_m06_original_mem_sc_vendor \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_vendor_bfm_syntax_only.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv
+          iverilog -g2012 -tnull -s tb_m06_original_vendor_paged \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_PAGED_BFM_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv
+          mkdir -p "$RUNNER_TEMP/m06_vendor_syntax_only"
+          python3 scripts/m06_generate_paged_lif16_vectors.py \
+            --output "$RUNNER_TEMP/m06_vendor_syntax_only/m06_lif16_vectors.vh"
+          iverilog -g2012 -tnull -I "$RUNNER_TEMP/m06_vendor_syntax_only" \
+            -s tb_m06_original_vendor_neural_paged \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_NEURAL_PAGED_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv \
+            rtl/m06/m06_lif16_neuron_step.sv
+          iverilog -g2012 -tnull -s tb_m06_original_vendor_lru8 \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_LRU8_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_lru8.sv \
+            rtl/m06/m06_axi256_multislot_transfer.sv
+          iverilog -g2012 -tnull -s tb_m06_original_vendor_4096 \
+            "$RUNNER_TEMP/m06_FAKE_STUB_SYNTAX_ONLY.sv" \
+            "$RUNNER_TEMP/m06_VENDOR_4096_SYNTAX_ONLY.sv" \
+            rtl/m06/m06_axi128_scratch_mem.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv
+          echo "M06 FIVE original-wrapper HDL TBs SYNTAX PASS with FAKE NOT-RUN DUT; REAL AMD XSIM STAGE E PENDING"
+      - name: Integrated 256-byte RTL block mover and residency FSM with independent AXI memory BFM
+        run: |
+          iverilog -g2012 -s tb_m06_residency_axi_block_bridge \
+            -o "$RUNNER_TEMP/m06_residency_axi_block_bridge" \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv \
+            rtl/m06/tb_m06_residency_axi_block_bridge.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_residency_axi_block_bridge" \
+            | tee "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+          grep -Fq "M06_PAGED_BLOCK_AXIBRIDGE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+          grep -Fq "M06_PAGED_BLOCK_FAULT_QUARANTINE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_axi_block_bridge.log"
+      - name: M02 dense neural parity through ONE-slot signed16 RTL paging (NO VENDOR/DDR)
+        run: |
+          python3 scripts/m06_generate_paged_lif16_vectors.py \
+            --output "$RUNNER_TEMP/m06_lif16_vectors.vh"
+          iverilog -g2012 -I "$RUNNER_TEMP" -s tb_m06_paged_lif16 \
+            -o "$RUNNER_TEMP/m06_paged_lif16" \
+            rtl/m06/m06_lif16_neuron_step.sv \
+            rtl/m06/m06_residency_control_fsm.sv \
+            rtl/m06/m06_axi256_block_transfer.sv \
+            rtl/m06/tb_m06_paged_lif16.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_paged_lif16" \
+            | tee "$RUNNER_TEMP/m06_paged_lif16.log"
+          grep -Fq "M06_PAGED_LIF16_M02_RTL_PARITY_PASS" \
+            "$RUNNER_TEMP/m06_paged_lif16.log"
+          grep -Fq "M06_PAGED_LIF16_FAULT_QUARANTINE_PASS" \
+            "$RUNNER_TEMP/m06_paged_lif16.log"
+      - name: 8-slot 2048-byte RTL LRU plus AXI data mover, ninth-page eviction and recovery
+        run: |
+          iverilog -g2012 -s tb_m06_residency_lru8_bridge \
+            -o "$RUNNER_TEMP/m06_residency_lru8_bridge" \
+            rtl/m06/m06_residency_lru8.sv \
+            rtl/m06/m06_axi256_multislot_transfer.sv \
+            rtl/m06/tb_m06_residency_lru8_bridge.sv
+          timeout 15s vvp "$RUNNER_TEMP/m06_residency_lru8_bridge" \
+            | tee "$RUNNER_TEMP/m06_residency_lru8_bridge.log"
+          grep -Fq "M06_LRU8_AXIBRIDGE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_lru8_bridge.log"
+          grep -Fq "M06_LRU8_FAULT_QUARANTINE_RTL_PASS" \
+            "$RUNNER_TEMP/m06_residency_lru8_bridge.log"
+      - name: M06 evidence boundary
+        run: |
+          grep -Fq 'no physical address, DMA, PS' src/neuromorphic_accelerator_v1/m06_block_residency.py
+          grep -Fq 'NOT_AUTHORIZED' src/neuromorphic_accelerator_v1/m06_block_residency.py
+          echo 'SOURCE-ONLY M06 initial residency proof: no physical DDR/AXI/bitstream/Vivado run'

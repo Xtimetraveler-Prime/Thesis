@@ -1,3 +1,5 @@
+> **Accepted milestone update 2026-11-10:** Neuromorphic Accelerator v1 M01–M06 are complete at their separately bounded scopes. M06 completed after five independent genuine original-HLS+AMD Vivado 2025.2 XSim owner evidence ZIPs with 32x4 M02/M03 one-slot residency neural/state parity, write/read SLVERR quarantine, missing B timeout, external 64KiB scratch owner restore and clean postcommit replay. [Formal M06 acceptance and limitations](v1/docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md); [v1 roadmap](v1/roadmap.md). This is NOT actual PS DDR, board execution, performance measurement or physical crash-atomic rollback. M07 is next/planned; actual board validation remains separately gated.
+
 # Neuromorphic Accelerator — Research Workspace
 
 This top-level directory houses the **new, independently versioned research program** arising from the Loihi-inspired FPGA digital-twin work. The umbrella name `Neuromorphic_Accelerator` is provisional and deliberately broad enough to include architectural exploration, virtualization experiments, and hardware/software co-design even if a strict accelerator is not the eventual final contribution.
