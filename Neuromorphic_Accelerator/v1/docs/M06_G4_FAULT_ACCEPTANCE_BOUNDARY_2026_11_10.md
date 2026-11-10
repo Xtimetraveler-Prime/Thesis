@@ -1,3 +1,5 @@
+> **STATUS UPDATE 2026-11-10:** Independent original-HLS/AMD G3.3 M02/M03 neural/state parity is now genuinely accepted (first owner ZIP SHA256 c3c9c6c1b21989b11f2d632b306981b10261aa1c6aedd8e54f7cd1c88ed4eb6c). G4 remains OPEN. Beyond standalone source tests, first genuine original-HLS/AMD B-SLVERR quarantine trial is source-ready but UNVERIFIED; current owner runbook docs/M06_G4_REAL_HLS_AMD_FIRST_B_SLVERR_OWNER_GATE_2026_11_10.md. Prior statements that G3.3 parity was pending below are historical, not the current state. No physical DDR/board or atomic rollback claim.
+
 # M06 — existing G4 fault/quarantine acceptance boundary (2026-11-10)
 
 This is work WITHIN G4, not a new submilestone. PR #80 stays draft/unmerged.
