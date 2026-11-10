@@ -136,6 +136,10 @@ end
 endmodule
 """
     output+=active.replace("RETURN_ADDR","7'h"+format(control["ap_return"],"02x"))
+    output=output.replace(
+        "module tb_m06_g3_3_actual_hls_original_amd_idle;",
+        "module tb_m06_g3_3_actual_hls_original_amd_active;"
+    )
     if "M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS" in output:
         raise ValueError("active HLS TB contains an obsolete IDLE PASS")
     return output
