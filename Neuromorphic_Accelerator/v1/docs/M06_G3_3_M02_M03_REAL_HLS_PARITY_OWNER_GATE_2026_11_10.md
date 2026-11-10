@@ -1,3 +1,5 @@
+> **SUPERSEDED OWNER RUN STATUS — ACCEPTED 2026-11-10.** The original M02/M03 32x4 G3.3 owner experiment documented below PASSED in genuine Vivado 2025.2. The first accepted ZIP SHA256 is c3c9c6c1b21989b11f2d632b306981b10261aa1c6aedd8e54f7cd1c88ed4eb6c; tested commit bd52a31cbf6ef10a6a02749e772172b81527c54a; result exit_status=0 and real owner XSim original-HLS/AMD M02/M03 trace/state parity marker at 496930ns. DO NOT rerun accepted trial. Current work is **existing G4**, instructions in docs/M06_G4_REAL_HLS_AMD_FIRST_B_SLVERR_OWNER_GATE_2026_11_10.md. The historical one-run script below is retained for reproducibility and is NOT the next trial.
+
 # M06 G3.3 — genuine original-HLS/AMD independent M02/M03 parity owner gate
 
 2026-11-10 UTC. This is within EXISTING G3.3, not a new sub-milestone.
