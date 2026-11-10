@@ -49,7 +49,7 @@ class M06G3AMDExporterContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"exactly one"):
             parse_module(header("READ_ONLY")+header("READ_ONLY"),name)
         with self.assertRaisesRegex(ValueError,"named pins"):
-            parse_module(header("READ_ONLY").replace("s_axi_arready,","s_axi_UNDECLARED,"),name)
+            parse_module(header("READ_ONLY").replace("output wire s_axi_arready", "wire s_axi_arready"),name)
         with self.assertRaisesRegex(ValueError,"top"):
             parse_module(header("READ_ONLY"),"unexpected_name")
 
