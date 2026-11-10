@@ -22,6 +22,8 @@ class M06G4EpochAcceptanceGateTests(unittest.TestCase):
         self.assertIn("read_ar_fire",rtl)
         self.assertIn("ap_return!=32'd0",rtl)
         self.assertIn("next_outstanding!=16'd0",rtl)
+        self.assertIn("MAX_EPOCH_CYCLES",rtl)
+        self.assertIn("timed_out",rtl)
         self.assertIn("commit_valid<=1'b0",rtl)
         self.assertIn("poisoned<=1'b1",rtl)
         self.assertNotIn("program_hw_devices",rtl)
@@ -32,7 +34,7 @@ class M06G4EpochAcceptanceGateTests(unittest.TestCase):
         for scenario in ("CLEAN_COMMIT","BAD_RETURN","POISON_REUSE",
                          "READ_FAULT_QUARANTINE","UNACKED_WRITE",
                          "READ_BEFORE_B","SAME_CYCLE_WRITE_FAULT_DONE",
-                         "B_UNDERFLOW","SPURIOUS_DONE","WATCHDOG"):
+                         "B_UNDERFLOW","SPURIOUS_DONE","LOST_ACK_WATCHDOG","WATCHDOG"):
             self.assertIn("M06_G4_GATE_FAIL "+scenario,bench)
         self.assertIn(MARKER,bench)
         self.assertIn("NO_DDR_NO_BOARD NO_VENDOR_XSIM",bench)
