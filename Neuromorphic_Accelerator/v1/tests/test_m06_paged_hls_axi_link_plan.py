@@ -53,6 +53,11 @@ class M06HLSPortLinkPlanSyntheticTests(unittest.TestCase):
         self.assertEqual([x["original_smartconnect_slave"] for x in report["paths"]],
                          ["S00", "S03"])
         self.assertTrue(all(x["required_width_adapter"] for x in report["paths"]))
+        self.assertEqual(report["original_smartconnect_upstream_address_width_bits"], 32)
+        self.assertTrue(all(p["address_guard_or_translation_required"] for p in report["paths"]))
+        self.assertTrue(all(p["address_mapping_status"] ==
+            "HLS_HIGH_BITS_MUST_BE_BOUNDED_BEFORE_32BIT_ORIGINAL_SI"
+            for p in report["paths"]))
         self.assertEqual(report["canonical_memory_bytes"], 65536)
         self.assertEqual(report["canonical_last_legal_page"], 255)
         self.assertIn("B_response_fence", " ".join(report["hard_gates"]))
