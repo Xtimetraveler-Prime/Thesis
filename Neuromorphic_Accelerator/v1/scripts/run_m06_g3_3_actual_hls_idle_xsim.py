@@ -2,9 +2,10 @@
 """Owner G3.3 genuine generated HLS + original AMD offline XSim gates.
 
 Modes: accepted idle and invalid geometry, accepted positive16 smoke,
-plus prospective independent M02/M03 parity32 simulation. This last mode
-is NOT accepted until a genuine owner Vivado 2025.2 run. No fault acceptance,
-physical DDR, JTAG, or M07. Original Vitis/AMD sources remain read-only,
+accepted independent M02/M03 parity32 owner gate, plus prospective EXISTING
+G4 genuine connected first write-B SLVERR propagation/quarantine mode.
+G4 cannot be called accepted before a new owner Vivado 2025.2 run.
+No rollback, physical DDR, JTAG, or M07. Original Vitis/AMD sources remain read-only,
 SHA-attested before and after; source-only CI never substitutes vendor IP.
 """
 from __future__ import annotations
@@ -35,6 +36,8 @@ SOURCE_FILES=(
     "scripts/m06_g3_3_positive16_axilite_tb.py",
     "scripts/m06_g3_3_m02_m03_owner_vectors.py",
     "scripts/m06_g3_3_m02_m03_parity_tb.py",
+    "scripts/m06_g4_actual_hls_write_fault_tb.py",
+    "rtl/m06/m06_g4_epoch_commit_gate.sv",
     "scripts/m06_g3_merge_vendor_sources.py",
     "scripts/m06_g3_real_amd_compile_order_audit.py",
     "rtl/m06/m06_axi64_to32_guards.sv",
@@ -44,6 +47,7 @@ SUCCESS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS"
 ACTIVE_PASS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_AXILITE_BAD_GEOMETRY_XSIM_PASS"
 POSITIVE_PASS="M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_POSITIVE16_XSIM_PASS"
 PARITY_PASS="M06_G3_3_ACTUAL_HLS_AMD_M02_M03_TRACE_STATE_PARITY_XSIM_PASS"
+G4_B_PASS="M06_G4_ACTUAL_HLS_AMD_FIRST_B_SLVERR_QUARANTINE_XSIM_PASS"
 
 def _sha_lines(files: list[Path]) -> str:
     return "".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+str(p)+"\n"
@@ -65,7 +69,7 @@ def _run(label: str,command: list[str],out: Path,*,cwd: Path=ROOT,
 
 def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         exported: Path,inventory: Path,*,mode: str="invalid_geometry") -> Path:
-    if mode not in ("idle","invalid_geometry","positive16","m02_m03_parity"):
+    if mode not in ("idle","invalid_geometry","positive16","m02_m03_parity","g4_first_b_slverr"):
         raise ValueError("unsupported actual-HLS connected mode")
     args=(hls,d3,ports,headers,dwc,exported,inventory)
     hls,d3,ports,headers,dwc,exported,inventory=[
@@ -179,7 +183,7 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
         dat_manifest=json.loads((out/"03_hls_original_dat_manifest.json").read_text())
         dat_sources=[Path(row["source"]) for row in dat_manifest["files"]]
         (out/"hls_dat_sources_before_sha256.txt").write_text(_sha_lines(dat_sources))
-        if mode in ("invalid_geometry","positive16","m02_m03_parity"):
+        if mode in ("invalid_geometry","positive16","m02_m03_parity","g4_first_b_slverr"):
             _run("03_control_map.log",
                  [sys.executable,str(ROOT/"scripts/m06_g3_3_hls_control_map.py"),
                   "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
@@ -222,6 +226,15 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                   "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
                   "--control-map",str(out/"03_real_hls_axilite_control_map.json"),
                   "--output",str(tb)],out)
+        elif mode=="g4_first_b_slverr":
+            tb=out/"tb_m06_g4_actual_hls_original_amd_first_b_slverr.sv"
+            _run("03_g4_first_b_fault_generation.log",
+                 [sys.executable,
+                  str(ROOT/"scripts/m06_g4_actual_hls_write_fault_tb.py"),
+                  "--idle-tb",str(idle_tb),
+                  "--accepted-inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
+                  "--control-map",str(out/"03_real_hls_axilite_control_map.json"),
+                  "--output",str(tb)],out)
         testbench_files=[tb]
         if mode=="m02_m03_parity":
             testbench_files.append(vectors)
@@ -237,14 +250,21 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                             *plan["verilog_files"],*map(str,original_hls),
                             str(ROOT/"rtl/m06/m06_axi64_to32_guards.sv"),
                             str(ROOT/"rtl/m06/m06_axi128_scratch_mem.sv"),
+                            *([str(ROOT/"rtl/m06/m06_g4_epoch_commit_gate.sv")]
+                              if mode=="g4_first_b_slverr" else []),
                             str(tb),str(glbl)],out,cwd=out)
         compile_log=(out/"05_xvlog.log").read_text(errors="replace")
         if re.search(r"WARNING: \[VRFC 10-(?:2938|3380)\].*tb_m06_g3_3_actual_hls",compile_log):
             raise ValueError("generated HLS binding has implicit or forward-declared nets")
         suffix={"idle":"idle","invalid_geometry":"active",
-                "positive16":"positive16","m02_m03_parity":"parity32"}[mode]
-        top="tb_m06_g3_3_actual_hls_original_amd_"+suffix
-        snapshot="m06_g3_3_actual_hls_original_amd_"+suffix+"_snapshot"
+                "positive16":"positive16","m02_m03_parity":"parity32",
+                "g4_first_b_slverr":"first_b_slverr"}[mode]
+        top=("tb_m06_g4_actual_hls_original_amd_"+suffix
+             if mode=="g4_first_b_slverr" else
+             "tb_m06_g3_3_actual_hls_original_amd_"+suffix)
+        snapshot=("m06_g4_actual_hls_original_amd_"+suffix+"_snapshot"
+                  if mode=="g4_first_b_slverr" else
+                  "m06_g3_3_actual_hls_original_amd_"+suffix+"_snapshot")
         _run("06_xelab.log",["xelab","--relax","-debug","typical",
                              "-L","xpm","-L","unisims_ver","-L","secureip",
                              "work."+top,"work.glbl","-s",snapshot],out,cwd=out)
@@ -252,16 +272,21 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                             "-R","--onfinish","quit"],out,cwd=out,timeout=300)
         xsim=(out/"07_xsim.log").read_text(errors="replace")
         required_marker={"idle":SUCCESS,"invalid_geometry":ACTIVE_PASS,
-                         "positive16":POSITIVE_PASS,"m02_m03_parity":PARITY_PASS}[mode]
+                         "positive16":POSITIVE_PASS,"m02_m03_parity":PARITY_PASS,
+                         "g4_first_b_slverr":G4_B_PASS}[mode]
         if xsim.count(required_marker)!=1 or re.search(
             r"M06_G3_3_HLS_LINK_IDLE_FAIL|M06_G3_3_HLS_ACTIVE_FAIL"
-            r"|M06_G3_3_HLS_POSITIVE_FAIL|M06_G3_3_PARITY_FAIL"
+            r"|M06_G3_3_HLS_POSITIVE_FAIL|M06_G3_3_PARITY_FAIL|M06_G4_FAIL"
             r"|FATAL_ERROR|Fatal: |\$fatal"
             r"|WARNING: File .*\.dat referenced",xsim
         ):
             raise ValueError("real HLS/AMD XSim missing clean mode-specific PASS")
-        print("M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_XSIM_PASS mode="+mode+
-              " NO_NEURAL_PARITY_NO_DDR_NO_BOARD")
+        label=("M06_G4_CONNECTED_FIRST_FAULT_PROPAGATION_XSIM_PASS"
+               if mode=="g4_first_b_slverr"
+               else ("M06_G3_3_INDEPENDENT_NEURAL_PARITY_XSIM_PASS"
+                     if mode=="m02_m03_parity"
+                     else "M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_XSIM_PASS"))
+        print(label+" mode="+mode+" NO_REAL_DDR_NO_BOARD")
         result=0
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as error:
         print("M06_G3_3_1_OWNER_REAL_XSIM_FAILED:",error,file=sys.stderr)
@@ -298,7 +323,7 @@ def main() -> int:
     for name in ("hls-cosim","original-d3","original-report","original-headers",
                  "original-dwc","amd-export","accepted-inventory"):
         ap.add_argument("--"+name,required=True,type=Path)
-    ap.add_argument("--mode",choices=("idle","invalid_geometry","positive16","m02_m03_parity"),
+    ap.add_argument("--mode",choices=("idle","invalid_geometry","positive16","m02_m03_parity","g4_first_b_slverr"),
                     default="invalid_geometry")
     a=ap.parse_args()
     try:
