@@ -99,7 +99,7 @@ def passive_axi_probe() -> str:
         return ('if (axi_probe_printed < 512) $display("' + fmt + '", ' +
                 ", ".join(["$time"] + args) + ');')
     lines.append("always @(posedge clk) if (resetn) begin")
-    for stage, prefix in reads + writes:
+    for stage, prefix in reads + writes[:-1]:  # M00 is one shared RAM link
         channels = ("AR", "R") if stage.startswith("RD_") else (
             ("AW", "W", "B") if stage.startswith("WR_") else ("AR", "R", "AW", "W", "B"))
         for channel in channels:
