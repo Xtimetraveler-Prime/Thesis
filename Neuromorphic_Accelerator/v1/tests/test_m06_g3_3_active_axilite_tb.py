@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import shutil
+import hashlib
 import subprocess
 import tempfile
 import unittest
@@ -15,6 +16,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 sys.path.insert(0,str(ROOT/"tests"))
 from m06_g3_3_active_axilite_tb import active_tb
+from m06_g3_3_hls_control_map import control_map,CONTROL
 from m06_g3_3_generate_actual_hls_idle_tb import render,TOP
 from m06_generate_original_mem_sc_bfm import MODULE, required_ports
 from test_m06_g3_3_actual_hls_idle_link import fixtures,stub
@@ -56,6 +58,51 @@ class M06RealHLSActiveAXILiteTests(unittest.TestCase):
         *_,idle,inv,ctrl=contract()
         idle=idle.replace("wire h_s_axi_control_AWVALID;","wire wrong;")
         with self.assertRaisesRegex(ValueError,"declaration changed"):active_tb(idle,inv,ctrl)
+    def test_grouped_generated_control_map_feeds_actual_hls_active_tb(self):
+        # Regression for the exact G3.3 original-owner failure:
+        # control_s_axi.v uses ONE comma-separated localparam statement.
+        pins,dwc,vendor,idle,inv,_=contract()
+        with tempfile.TemporaryDirectory() as tmp:
+            rtl=Path(tmp)/"work/hls/syn/verilog"
+            rtl.mkdir(parents=True)
+            file=rtl/CONTROL
+            names=[
+                "AP_CTRL","GIE","IER","ISR","AP_RETURN",
+                "CANONICAL_READ_WORDS_DATA_0","CANONICAL_READ_WORDS_DATA_1",
+                "NEURON_COUNT_DATA_0","SYNAPSE_COUNT_DATA_0","TICKS_DATA_0",
+                "DECAY_NUM_DATA_0","DECAY_DEN_DATA_0",
+            ]
+            offsets=[0,4,8,12,16,24,28,32,36,40,44,48]
+            lines=["module original_style_fixture;","localparam"]
+            lines.extend(
+                " ADDR_"+name+" = 7'h"+format(addr,"02x")+
+                ("," if i!=len(names)-1 else ";")
+                for i,(name,addr) in enumerate(zip(names,offsets))
+            )
+            file.write_text("\n".join(lines+["endmodule"])+"\n")
+            inventory={"hls_rtl_file_inventory":[
+                {"name":CONTROL,"sha256":hashlib.sha256(file.read_bytes()).hexdigest()}
+            ]}
+            parsed=control_map(inventory,rtl)
+            self.assertEqual(parsed["ap_return"],16)
+            actual=active_tb(idle,inv,parsed)
+            self.assertIn("read_reg(7'h10,observed_status)",actual)
+            self.assertIn("write_start();",actual)
+            self.assertNotIn("M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS",actual)
+            # A different *measured* AP_RETURN offset must flow through,
+            # never be hardcoded to 0x10 in the generated testbench.
+            lines[6]=" ADDR_CANONICAL_READ_WORDS_DATA_0 = 7'h18,"
+            lines[2]=" ADDR_AP_CTRL = 7'h00,"
+            lines[6]=lines[6]
+            changed=file.read_text().replace("ADDR_AP_RETURN = 7'h10",
+                                              "ADDR_AP_RETURN = 7'h14")
+            file.write_text(changed)
+            inventory["hls_rtl_file_inventory"][0]["sha256"]=hashlib.sha256(file.read_bytes()).hexdigest()
+            parsed=control_map(inventory,rtl)
+            self.assertEqual(parsed["ap_return"],20)
+            self.assertIn("read_reg(7'h14,observed_status)",
+                          active_tb(idle,inv,parsed))
+
     def test_compile_only_with_real_guard_and_ram_and_fake_ip_stubs(self):
         if not shutil.which("iverilog"):
             self.skipTest("requires Icarus, explicitly rerun after apt in M06 CI")
