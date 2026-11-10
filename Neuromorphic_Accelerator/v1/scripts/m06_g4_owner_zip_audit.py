@@ -33,7 +33,7 @@ GATES = {
         "M06_G4_ACTUAL_HLS_AMD_FAULT_DISCARD_RESTORE_CLEAN_COMMIT_XSIM_PASS",
         "tb_m06_g4_actual_hls_original_amd_discard_restore.sv",
         "03_g4_discard_restore_generation.log",
-        20),
+        19),
 }
 INTEGRITY = (
     ("source_before_sha256.txt","source_after_sha256.txt"),
