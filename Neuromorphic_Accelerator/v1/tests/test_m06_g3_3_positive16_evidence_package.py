@@ -82,6 +82,33 @@ class Positive16OwnerZipTests(unittest.TestCase):
                 self.assertEqual(z.read("m06_g3_3_m02_m03_owner_vectors.svh"),
                                  b"// GENERATED VECTOR\n")
 
+    def test_g4_first_b_slverr_zip_preserves_error_and_generated_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            folder=root/"m06_g3_3_actual_hls_g4_first_b_slverr_xsim_first"
+            folder.mkdir()
+            (folder/"result.txt").write_text("exit_status=1\n")
+            (folder/"03_g4_first_b_fault_generation.log").write_text(
+                "FIRST FAULT-GENERATOR ERROR\n")
+            (folder/"tb_m06_g4_actual_hls_original_amd_first_b_slverr.sv").write_text(
+                "LOCAL TB ONLY\n")
+            (folder/"private_vendor_ip.v").write_text("NEVER PACKAGE\n")
+            output=root/"G4_FIRST.zip"
+            p=subprocess.run([
+                sys.executable,str(ROOT/"scripts/package_m06_g3_3_positive16_evidence.py"),
+                "--mode","g4_first_b_slverr","--link",str(folder),
+                "--output",str(output)
+            ],capture_output=True,text=True,timeout=15)
+            self.assertEqual(p.returncode,0,p.stderr)
+            with ZipFile(output) as z:
+                self.assertEqual(z.read("result.txt"),b"exit_status=1\n")
+                self.assertEqual(
+                    z.read("03_g4_first_b_fault_generation.log"),
+                    b"FIRST FAULT-GENERATOR ERROR\n")
+                self.assertIn("tb_m06_g4_actual_hls_original_amd_first_b_slverr.sv",
+                              z.namelist())
+                self.assertNotIn("private_vendor_ip.v",z.namelist())
+
     def test_allowlist_rejects_source_payload_extensions(self):
         self.assertIn("03_positive16_generation.log",NAMES)
         self.assertIn("tb_m06_g3_3_actual_hls_original_amd_positive16.sv",NAMES)
