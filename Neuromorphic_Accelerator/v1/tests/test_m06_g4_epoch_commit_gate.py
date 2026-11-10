@@ -25,7 +25,7 @@ class M06G4EpochAcceptanceGateTests(unittest.TestCase):
         self.assertIn("commit_valid<=1'b0",rtl)
         self.assertIn("poisoned<=1'b1",rtl)
         self.assertNotIn("program_hw_devices",rtl)
-        self.assertNotIn("physical DDR",rtl)
+        self.assertIn("Does NOT implement hardware-atomic physical DDR",rtl)
 
     def test_every_negative_case_in_independent_rtl_bench(self):
         bench=TB.read_text()
