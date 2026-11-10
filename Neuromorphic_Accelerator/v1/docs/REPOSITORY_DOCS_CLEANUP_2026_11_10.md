@@ -37,6 +37,7 @@ git show 33916fffd4f5935aac9ec060a0e62d92977b3c05:Neuromorphic_Accelerator/v1/ro
 ## Preserved source-of-truth references
 
 - [Current M01–M09 milestone status and future acceptance gates](../roadmap.md).
+- [Authoritative new-chat M07 handoff: research context, accepted M05/M06 evidence, GitHub branch/CI/owner workflow and first implementation steps](M07_NEXT_CHAT_HANDOFF_2026_11_10.md).
 - [M01 architecture choices and reversible baseline](M01_ARCHITECTURE_OPTIONS.md).
 - [M02 reference numerical contract](M02_PROVISIONAL_LIF_CONTRACT.md).
 - [M03 matched workload and traffic contract](M03_WORKLOAD_AND_MEASUREMENT_CONTRACT.md).
