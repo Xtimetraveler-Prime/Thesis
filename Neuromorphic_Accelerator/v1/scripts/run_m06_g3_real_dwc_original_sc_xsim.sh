@@ -53,6 +53,7 @@ finish() {
   cd "$ROOT" || rc=3
   sha256sum scripts/m06_g3_generate_real_dwc_original_sc_bfm.py \
     scripts/m06_g3_merge_vendor_sources.py \
+    scripts/m06_g3_axi_trace_audit.py \
     scripts/run_m06_g3_real_dwc_original_sc_xsim.sh \
     rtl/m06/m06_axi128_scratch_mem.sv > "$OUT/source_after_sha256.txt" || rc=3
   cmp -s "$OUT/source_before_sha256.txt" "$OUT/source_after_sha256.txt" || {
@@ -93,6 +94,7 @@ printf '%s\n' "$DW" > "$OUT/original_dwc_folder.txt"
 printf '%s\n' "$EX" > "$OUT/original_dwc_compile_order_folder.txt"
 sha256sum scripts/m06_g3_generate_real_dwc_original_sc_bfm.py \
   scripts/m06_g3_merge_vendor_sources.py \
+  scripts/m06_g3_axi_trace_audit.py \
   scripts/run_m06_g3_real_dwc_original_sc_xsim.sh \
   rtl/m06/m06_axi128_scratch_mem.sv > "$OUT/source_before_sha256.txt"
 
@@ -160,8 +162,21 @@ xelab --relax -debug typical -L xpm -L unisims_ver -L secureip \
   work.tb_m06_g3_real_dwc_original_sc work.glbl \
   -s m06_g3_real_dwc_original_sc_snapshot \
   2>&1 | tee "$OUT/06_xelab.log"
-timeout --signal=TERM 600s xsim m06_g3_real_dwc_original_sc_snapshot \
-  -R --onfinish quit 2>&1 | tee "$OUT/07_xsim.log"
+# Genuine XSim may exit 0 after $fatal. Preserve logs on either status.
+if timeout --signal=TERM 600s xsim m06_g3_real_dwc_original_sc_snapshot \
+  -R --onfinish quit 2>&1 | tee "$OUT/07_xsim.log"; then
+  sim_rc=0
+else
+  sim_rc=$?
+fi
+python3 scripts/m06_g3_axi_trace_audit.py \
+  --xsim-log "$OUT/07_xsim.log" \
+  --trace-output "$OUT/08_axi_handshake_trace.log" \
+  --summary-output "$OUT/09_axi_probe_summary.json"
+if (( sim_rc != 0 )); then
+  echo "ERROR: genuine XSim nonzero exit: $sim_rc" >&2
+  exit 1
+fi
 if grep -Eq "M06_G3_REAL_DWC_SC_FAIL|FATAL_ERROR|Fatal: " "$OUT/07_xsim.log"; then
   echo "ERROR: actual original AMD connected converter/smartconnect RTL failure" >&2
   exit 1
