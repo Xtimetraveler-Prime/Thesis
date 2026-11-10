@@ -147,6 +147,31 @@ class Positive16OwnerZipTests(unittest.TestCase):
                 self.assertEqual(again.returncode,2)
                 self.assertIn("overwrite",again.stderr)
 
+    def test_g4_discard_restore_first_fail_owner_zip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            folder=root/"m06_g3_3_actual_hls_g4_discard_restore_xsim_first"
+            folder.mkdir()
+            (folder/"result.txt").write_text("exit_status=1\n")
+            name="tb_m06_g4_actual_hls_original_amd_discard_restore.sv"
+            (folder/name).write_text("LOCAL RTL TB\n")
+            (folder/"03_g4_discard_restore_generation.log").write_text(
+                "FIRST OWNER GENERATED RESTORE BENCH\n")
+            (folder/"PRIVATE_GENUINE_HLS_IP.v").write_text("NEVER PACKAGE\n")
+            out=root/"G4_RESTORE.zip"
+            p=subprocess.run([
+                sys.executable,
+                str(ROOT/"scripts/package_m06_g3_3_positive16_evidence.py"),
+                "--mode","g4_discard_restore","--link",str(folder),
+                "--output",str(out)
+            ],capture_output=True,text=True,timeout=15)
+            self.assertEqual(p.returncode,0,p.stderr+p.stdout)
+            with ZipFile(out) as z:
+                self.assertIn(name,z.namelist())
+                self.assertIn("03_g4_discard_restore_generation.log",z.namelist())
+                self.assertNotIn("PRIVATE_GENUINE_HLS_IP.v",z.namelist())
+                self.assertEqual(z.read("result.txt"),b"exit_status=1\n")
+
     def test_allowlist_rejects_source_payload_extensions(self):
         self.assertIn("03_positive16_generation.log",NAMES)
         self.assertIn("tb_m06_g3_3_actual_hls_original_amd_positive16.sv",NAMES)
