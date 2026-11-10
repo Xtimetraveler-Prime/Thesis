@@ -1,0 +1,70 @@
+"""The ONE-ZIP original-owner packager must preserve first PASS or FAIL."""
+from __future__ import annotations
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from zipfile import ZipFile
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/"scripts"))
+from package_m06_g3_3_positive16_evidence import NAMES,package
+
+class Positive16OwnerZipTests(unittest.TestCase):
+    def test_first_pass_and_proprietary_content_exclusion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            folder=root/"m06_g3_3_actual_hls_positive16_xsim_first"
+            folder.mkdir()
+            (folder/"result.txt").write_text("exit_status=0\n")
+            (folder/"07_xsim.log").write_text("genuine original vendor log\n")
+            (folder/"m06_g3_3_proprietary_generated_hls.v").write_text("DO_NOT_PACKAGE")
+            (folder/"m06_g3_amd_original.xci").write_text("DO_NOT_PACKAGE")
+            invocation=root/"console.log"
+            invocation.write_text("FIRST OWNER INVOCATION\n")
+            output=root/"positive.zip"
+            package(folder,invocation,output)
+            with ZipFile(output) as z:
+                self.assertEqual(set(z.namelist()),{
+                    "result.txt","07_xsim.log",
+                    "08_operator_invocation_console.log","operator_evidence_path.txt"})
+                self.assertEqual(z.read("result.txt"),b"exit_status=0\n")
+                self.assertEqual(z.read("operator_evidence_path.txt"),
+                                 (str(folder)+"\n").encode())
+            with self.assertRaisesRegex(ValueError,"overwrite"):
+                package(folder,invocation,output)
+
+    def test_first_fail_after_parser_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            folder=root/"m06_g3_3_actual_hls_positive16_xsim_first"
+            folder.mkdir()
+            (folder/"result.txt").write_text("exit_status=1\n")
+            (folder/"03_control_map.log").write_text("FIRST ERROR\n")
+            output=root/"failure.zip"
+            package(folder,None,output)
+            with ZipFile(output) as z:
+                self.assertEqual(z.read("03_control_map.log"),b"FIRST ERROR\n")
+                self.assertEqual(z.read("result.txt"),b"exit_status=1\n")
+                self.assertNotIn("07_xsim.log",z.namelist())
+
+    def test_pre_evidence_failure_still_uploadable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            invocation=root/"inv.log"
+            invocation.write_text("cannot find accepted HLS folder\n")
+            output=root/"failure.zip"
+            package(None,invocation,output)
+            with ZipFile(output) as z:
+                self.assertEqual(set(z.namelist()),{
+                    "08_operator_invocation_console.log","operator_evidence_path.txt"})
+                self.assertEqual(z.read("operator_evidence_path.txt"),b"NOT_CREATED\n")
+
+    def test_allowlist_rejects_source_payload_extensions(self):
+        self.assertIn("03_positive16_generation.log",NAMES)
+        self.assertIn("tb_m06_g3_3_actual_hls_original_amd_positive16.sv",NAMES)
+        self.assertTrue(all(not n.endswith((".v",".xci",".dat",".vh"))
+                            for n in NAMES))
+
+if __name__=="__main__":
+    unittest.main()
