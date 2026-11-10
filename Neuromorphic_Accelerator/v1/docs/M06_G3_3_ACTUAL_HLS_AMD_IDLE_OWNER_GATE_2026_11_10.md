@@ -1,3 +1,48 @@
+# LATEST M06 G3.3 active HLS original-AMD integration (2026-11-10 UTC)
+
+**MILESTONE STRUCTURE:** Only **G3.3 actual generated-HLS/AMD functional integration** and **G4 independent neural state/fault validation** remain. Do not invent further accepted sub-milestones. M06 OPEN, PR #80 DRAFT/UNMERGED, no board/JTAG/PS DDR/bitstream/M07.
+
+## Genuine owner idle evidence accepted at its proper scope
+
+Owner ZIP M06_G3_3_ACTUAL_HLS_AMD_IDLE_REVIEW_20261110T063826Z.zip, actual tested commit 6c1a02bd18a21aaa02543137d34a6da573e8505d, actual owner folder ~/Thesis_Evidence/m06_g3_3_actual_hls_idle_xsim_6td5tawk, result.txt exit_status=0, genuine original Vivado 2025.2 xvhdl/xvlog/xelab/xsim PASS. This instantiated **40 ACTUAL Vitis-generated HLS Verilog files and the 125-port HLS top**, two original AMD 32→256 converter SIM modules, ORIGINAL D3 AMD SmartConnect, actual bounded synthesizable candidate 64→32 address guards, one 64KiB simulated RAM, and a reset/idle BFM. Original source pre/post SHA matched (8 local, 40 HLS, 67 vendor) and two original converter XCI SHA checks OK. Owner PASS marker: M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_PASS 40_REAL_HLS_RTL 2_REAL_AMD_DWC ORIGINAL_SC 64K_SCRATCH GUARDS_CONNECTED NO_START_NO_NEURAL_NO_DDR_NO_BOARD.
+
+**WARNING CAVEAT:** Original 05_xvlog.log contained 8 premature implicit HLS sideband declarations (VRFC 10-2938) + 11 guard wires used before declaration (VRFC 10-3380); genuine 07_xsim.log produced 82 missing generated HLS memory-initialization .dat warnings. These DO NOT undo the accepted reset/idle-only PASS, but mean zero neural-initialization or processing claims are permitted from that run. Do not rerun unchanged accepted idle experiment. Original G1/G2/G3.2 remain accepted and unmodified.
+
+## Latest source development toward functional G3.3
+
+1. scripts/m06_g3_3_generate_actual_hls_idle_tb.py now declares all HLS and guard nets BEFORE any use, removing 19 self-caused implicit/forward-reference warnings.
+2. scripts/m06_g3_3_stage_actual_hls_dat.py scans genuine 40 HLS generated Verilog modules for real `$readmemh/$readmemb` .dat references and stages ONLY original bytes from already accepted owner HLS work/hls/syn or work/hls/sim locations into a NEW XSim working folder; emits exact source/staged SHA manifest, rejects missing/ambiguous/unsafe init files rather than fabricating default RAM contents. The owner runner rejects missing .dat warnings after XSim and compares original HLS .dat SHA pre/post.
+3. scripts/m06_g3_3_hls_control_map.py SHA-attests original generated `m06_paged_rolling_replay_control_s_axi.v`, reads exact AXI-Lite AP_CTRL/AP_RETURN register constants instead of assuming addresses.
+4. scripts/m06_g3_3_active_axilite_tb.py converts the previously attested real-HLS/original AMD idle TB into a small ACTIVE AXI-Lite protocol experiment, using the same genuine HLS/DWC/SmartConnect/guards/RAM. It issues AP_START with intentionally bad shape (default neuron_count=0), checks real AP_DONE and M06_PAGE_BAD_SHAPE=1 return through generated AXI-Lite, and rejects unexpected canonical M_AXI or trace/metrics outputs. This proves active-HLS controller linkage on genuine hardware SIM models IF OWNER XSIm PASSES, but is NOT successful neural inference, G3.3 complete or G4.
+5. scripts/run_m06_g3_3_actual_hls_idle_xsim.py now accepts `--mode invalid_geometry` (default), stages/audits original .dat, parses real HLS control map, builds real HLS ACTIVE TB and runs genuine 2025.2 XSim in a new output folder. It accepts exactly one mode-specific PASS marker, rejects XSim fatal/FAIL/missing data, hashes 40 HLS RTL, original .dat, 67 vendor and local sources, checks AMD XCI.
+6. New Python tests test_m06_g3_3_stage_actual_hls_dat.py, test_m06_g3_3_hls_control_map.py and test_m06_g3_3_active_axilite_tb.py include positives/negatives, true Icarus compile-only with fake stubs and genuine candidate guard/RAM RTL. Fake stubs are NEVER functionally simulated or offered as AMD proof.
+
+**Important:** None of these new source changes has yet passed owner *genuine original Vivado 2025.2 active* XSim. The previous source CI runs 266 discovered Python tests and M01–M06 green. Do not treat source CI as actual active XSim.
+
+## Owner next gate: EXACT ONE original Vivado G3.3 ACTIVE control run
+
+From v1 working directory, source the original Vivado 2025.2 settings64.sh, then reuse the *accepted* original HLS/G1, D3/G2, DWC, DWC export, and G3.3 inventory paths. Follow copy-paste commands in the accompanying ChatGPT response; do NOT regenerate originals. The command is:
+
+    python3 scripts/run_m06_g3_3_actual_hls_idle_xsim.py \
+      --mode invalid_geometry \
+      --hls-cosim "$HLS" --original-d3 "$D3" \
+      --original-report "$PORTS/02_original_mem_sc_ports.txt" \
+      --original-headers "$PORTS/08_mem_sc_wrapper_headers_nonansi_fixed.json" \
+      --original-dwc "$DW" --amd-export "$EX" \
+      --accepted-inventory "$INV"
+
+A genuine pass requires result.txt exit_status=0, *no* fabricated .dat and exact output line:
+
+    M06_G3_3_ACTUAL_HLS_ORIGINAL_AMD_AXILITE_BAD_GEOMETRY_XSIM_PASS AP_DONE=1 STATUS=1 NO_CANONICAL_AXI_NO_NEURAL_PARITY_NO_BOARD
+
+If missing .dat or original control map is not readable, this owner run correctly FAILS and preserves exactly why. Return ONE ZIP with **all existing** runner output: 01–07 tool logs, 03_hls_original_dat_stage.log, 03_hls_original_dat_manifest.json, 03_control_map.log, 03_real_hls_axilite_control_map.json, 03_active_control_generation.log, 03_generated/actual TBs and their SHA, before/after source/HLS/HLS-dat/vendor SHA, XCI attestations, pass/fail markers, 08_operator_invocation_console.log. No proprietary original AMD HDL, XCI, or original HLS RTL copied into ZIP; only nonvendor generated BFM TB. If fail, retain FIRST run, don't rerun without addressing actual failure.
+
+## After genuine ACTIVE acceptance
+
+Complete actual positive HLS AXI-Stream neural stimulus with independent M02/M03 trace and canonical 16B state comparisons and write B-before-read AR ordering. Then G4 fault/eviction and quarantine; M06 closeout still requires review. Keep one clean G3.3 integration gate and one G4 gate, not many new milestone labels.
+
+---
+
 # M06 G3.3.1 — Actual HLS + original AMD connected IDLE XSim owner gate (2026-11-10)
 
 **Status:** Original genuine AMD G3.2 connected 10-read/3-write BFM PASS remains ACCEPTED; G3.3 prior read-only actual HLS inventory from user ZIP M06_G3_3_REAL_HLS_INVENTORY_REVIEW_20261110T061549Z.zip **PASS**, `result.txt=exit_status=0`, at original commit 98980a4545b836d90db7bfba3c6574dae9c13489. This is not an error: worktree `??` logs/evidence are untracked, not failed tests, and `g3_3_complete=false` is the correct strict acceptance boundary. Do not delete prior evidence or rerun G1/G2/G3.2/inventory.
