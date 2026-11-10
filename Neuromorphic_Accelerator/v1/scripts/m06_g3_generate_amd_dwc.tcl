@@ -9,6 +9,9 @@ set out [file normalize [lindex $argv 0]]
 if {![file isdirectory $out]} {
     error "G3 evidence directory does not exist"
 }
+# Safe pure-Tcl path resolver: use the actual new project .xci file,
+# NOT get_files -of_objects $ip (empty in owner's real Vivado run).
+source [file join [file dirname [file normalize [info script]]] "m06_g3_xci_path.tcl"]
 set tool_version [version -short]
 if {![string match "*2025.2*" $tool_version]} {
     error "G3 requires original Vivado 2025.2, got $tool_version"
@@ -73,11 +76,15 @@ foreach pair $devices {
         }
     }
     flush $fw
-    set ip_xci [get_files -quiet -of_objects $ip]
-    if {[llength $ip_xci] == 0} {
-        close $fw
-        error "AMD genuine IP XCI file list is missing: $ipname"
-    }
+    # The owner's real Vivado 2025.2 run created the IP object and
+    # accepted every property, but get_files -of_objects $ip returned
+    # an empty list. The XCI customization is a FILE under this NEW
+    # project's .srcs/sources_1/ip/<instance>/<instance>.xci tree;
+    # verify that actual nonempty file, never silently trust a missing
+    # Tcl IP->file relationship or search the original immutable D3.
+    set ip_xci [m06_g3_xci_path $prj $ipname]
+    puts $fw "$ipname.xci_source_path\t$ip_xci"
+    flush $fw
     generate_target all $ip
     export_ip_user_files -of_objects $ip -no_script -force
     # The output products contain the original Vivado simulation model,
