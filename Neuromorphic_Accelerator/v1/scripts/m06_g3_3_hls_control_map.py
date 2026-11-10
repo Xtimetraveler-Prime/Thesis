@@ -37,6 +37,7 @@ def declared_offsets(verilog: str) -> dict[str,int]:
     source=COMMENT.sub("",verilog)
     groups=list(PARAMETER_GROUP.finditer(source))
     regs:dict[str,int]={}
+    addr_bits_seen=False
     for group in groups:
         for part in group.group(1).split(","):
             term=part.strip()
@@ -55,6 +56,9 @@ def declared_offsets(verilog: str) -> dict[str,int]:
                 # in the SAME grouped localparam list as ADDR_AP_CTRL and
                 # the other real register offsets. This is width metadata,
                 # NOT a register address and must NOT be parsed as one.
+                if addr_bits_seen:
+                    raise ValueError("duplicate original HLS AXI-Lite ADDR_BITS metadata")
+                addr_bits_seen=True
                 bits=int(term.split("=",1)[1].strip())
                 if bits!=7:
                     raise ValueError("unexpected original HLS AXI-Lite ADDR_BITS: "+
