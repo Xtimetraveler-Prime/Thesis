@@ -10,7 +10,7 @@ reg [31:0] ap_return=0;
 reg read_fault=0,write_fault=0,aw=0,b=0,ar=0;
 wire active,commit,poison;
 wire [15:0] outstanding;
-m06_g4_epoch_commit_gate dut(
+m06_g4_epoch_commit_gate #(.MAX_EPOCH_CYCLES(12)) dut(
   .aclk(clk),.aresetn(resetn),.epoch_begin(epoch_begin),
   .ap_done(ap_done),.ap_return(ap_return),
   .read_guard_fault(read_fault),.write_guard_fault(write_fault),
@@ -111,6 +111,14 @@ initial begin
     ap_done=1; step(); ap_done=0;
     if(commit!==0 || poison!==1)
         $fatal(1,"M06_G4_GATE_FAIL SPURIOUS_DONE");
+
+    reset_test();
+    start_test();
+    // A lost AXI response can stall the genuine HLS ap_done forever.
+    // Timeout must poison without relying on any HLS return or guard fault.
+    repeat(16) step();
+    if(commit!==0 || poison!==1 || active!==1)
+        $fatal(1,"M06_G4_GATE_FAIL LOST_ACK_WATCHDOG");
 
     $display("M06_G4_EPOCH_COMMIT_FAULT_QUARANTINE_RTL_PASS NO_DDR_NO_BOARD NO_VENDOR_XSIM");
     $finish;
