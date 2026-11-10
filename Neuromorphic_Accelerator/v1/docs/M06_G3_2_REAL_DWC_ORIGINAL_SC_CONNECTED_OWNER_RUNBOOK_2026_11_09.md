@@ -1,3 +1,38 @@
+> **LATEST SOURCE-ONLY G3.2 DECERR DIAGNOSTIC INCREMENT — OWNER XSim PENDING (2026-11-09):** The first actual original AMD connected Vivado 2025.2 run still FAILED (first address 0, RRESP=11, no established origin). The original `ARSIZE=2` first 32-bit read, restrictive simulation-only 128-bit RAM, BOTH original AMD width converters, original D3 SmartConnect and all accepted G1/G2 evidence are UNCHANGED. Newly generated **passive** bounded AR/R/AW/W/B probes observe 32-bit SI, 256-bit converter MI/original S00/S03, and original 128-bit M00/RAM (M00/RAM is ONE shared physical interface); first R/B VALID is observed even if READY=0, before the existing $fatal. Monitors report ARADDR/ARSIZE/ARLEN/ARBURST/cache/ID where present, response/last/data, accepted handshake counters, and RAM `rd_bad_request`, with one first-DECERR-sighting marker. `scripts/m06_g3_axi_trace_audit.py` extracts `08_axi_handshake_trace.log` and `09_axi_probe_summary.json` from genuine `07_xsim.log` on success OR failure; `root_cause_proven=false` until manual original-model evidence review. Positive/negative synthetic source regressions added. This does **not** fix G3.2, and no original vendor/owner XSim has been run against this increment yet. **NEXT:** ONE fresh owner XSim diagnostic, ONE ZIP with raw logs/trace/summary and preserved SHA attestations; **do not alter RAM/functionality until that result is examined.** G3.3/G4 remain OPEN. PR #80 DRAFT/UNMERGED; no physical board/DDR/JTAG or M07.
+
+## Current G3.2 follow-up: passive DECERR tracing (owner-only)
+
+**Diagnostic ONLY**: on unchanged first `read32('h0000)`, the source emits `M06_G3_AXI_TRACE` per accepted AR/R/AW/W/B handshake, plus `R_OBS/B_OBS` on first VALID even when READY=0. `M06_G3_AXI_FIRST_DECERR` means *first observed error*, not guaranteed generating component. The owner runner stores all trace lines in `08_axi_handshake_trace.log` and a conservative, non-acceptance parser summary in `09_axi_probe_summary.json`; in FAIL cases, no positive acceptance marker is expected. Original failed owner run under `~/Thesis_Evidence/m06_g3_real_dwc_original_sc_xsim_20261110T044432Z_1FrIEZ` stays immutable. New runs use a fresh directory.
+
+Copy-paste after current branch pull, from `~/Git/Thesis/Neuromorphic_Accelerator/v1`:
+
+```bash
+python3 -m compileall -q src scripts tests
+bash -n scripts/run_m06_g3_real_dwc_original_sc_xsim.sh
+python3 -m unittest discover -s tests -p 'test_m06_g3_axi_probe.py' -v
+python3 -m unittest discover -s tests -p 'test_m06_g3_generate_real_dwc_original_sc_bfm.py' -v
+python3 -m unittest discover -s tests -p 'test_m06_g3_merge_vendor_sources.py' -v
+python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+source "$HOME/Vivado/2025.2/Vivado/settings64.sh"
+xvlog -version
+export D3="$HOME/Thesis_Evidence/neuromorphic_v1_m05_12d3_ip_output_20261109T073025Z_y05CSJ"
+export PORTS="$HOME/Thesis_Evidence/m06_vendor_xsim_port_contract_20261109T181345Z_f4X4Of"
+export DW="$HOME/Thesis_Evidence/m06_g3_real_amd_dwc_20261110T032341Z_YUDRD3"
+export EX="$(find "$HOME/Thesis_Evidence" -maxdepth 1 -type d -name 'm06_g3_amd_sim_export_*' | sort | tail -n 1)"
+test "$(cat "$EX/result.txt")" = 'exit_status=0' || { echo 'Original genuine AMD DWC source evidence not accepted'; exit 2; }
+bash scripts/run_m06_g3_real_dwc_original_sc_xsim.sh "$D3" \
+  "$PORTS/02_original_mem_sc_ports.txt" \
+  "$PORTS/08_mem_sc_wrapper_headers_nonansi_fixed.json" "$DW" "$EX"
+echo "G3.2 diagnosis exit: $?"
+export LINK="$(find "$HOME/Thesis_Evidence" -maxdepth 1 -type d -name 'm06_g3_real_dwc_original_sc_xsim_*' | sort | tail -n 1)"
+echo "G3.2 diagnosis files: $LINK"
+cat "$LINK/result.txt" "$LINK/commit.txt"
+test -f "$LINK/08_axi_handshake_trace.log" && tail -n 80 "$LINK/08_axi_handshake_trace.log"
+test -f "$LINK/09_axi_probe_summary.json" && cat "$LINK/09_axi_probe_summary.json"
+```
+
+Use the SINGLE ZIP packager specified in `M06_G3_2_DECERR_DIAGNOSIS_NEXT_CHAT_HANDOFF_2026_11_09.md` §5. It explicitly includes generated BFM, compilation logs, 08/09 probes, before/after vendor and source SHA, original provenance directories, result and commit. It accepts missing files if any stage fails before producing them; send only the one resulting `~/Thesis_Evidence/M06_G3_2_DEBUG_REVIEW_*.zip`. Do not upload AMD proprietary HDL/XCI and do not rerun unchanged accepted G1/G2.
+
 > **CURRENT AFTER OWNER RUN 2026-11-09 21:45 MST — THE G3.2 TEST BELOW ACTUALLY FAILED.** The user ran the exact owner genuine Vivado/XSim command at 286e2257044d63a29ce745eab9fea2f1eaa27aca, submitted the full M06_G3_REAL_DWC_SC_XSIM_REVIEW_20261110T044546Z.zip. Original vivado xvhdl/xvlog/xelab complete successfully but FIRST read 0x0 returns AXI DECERR=11 (RDATA0 versus expected 0x382b1e11) 755ns; result.txt=exit_status=1. Original vendor and local source SHA manifests MATCH. This does not disprove G1/G2 or genuine converter-generation component passes; it blocks G3.2 acceptance. **Do NOT follow the old unconditional rerun commands below on unchanged source**. FIRST next action: instrument valid/ready AR/R across converter SI, MI/SC S00, SC M00, RAM, determine narrow ARSIZE versus strict M00 scratch size4 source and trace DECERR origin. See [NEW AUTHORITATIVE diagnostic fix plan, latest owner paths, exact tests and one-ZIP packaging](M06_G3_2_DECERR_DIAGNOSIS_NEXT_CHAT_HANDOFF_2026_11_09.md). No implementation change has yet been made. No original AMD IP edits or board.
 
 # M06 G3.2 owner trial: REAL AMD width converters + ORIGINAL SmartConnect shared 64KiB XSim
