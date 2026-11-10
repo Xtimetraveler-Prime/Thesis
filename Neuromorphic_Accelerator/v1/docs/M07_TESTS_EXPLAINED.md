@@ -36,7 +36,14 @@ All M07 test methods are in `tests/test_m07_policy_baseline.py`. Levels: **Pytho
 - `python3 -m unittest discover -s tests -v`: broader host suite. Optional Icarus tests should be recorded as skips if tools are missing, never converted into claimed passes.
 - Root GitHub workflow `neuromorphic_accelerator_m07_host_only.yml`: same host gates plus immutable CI-generated model JSON artifact. Inherited M06 GitHub workflow continues independently testing its local Icarus RTL and syntax-only vendor stubs. Neither workflow runs Vivado/Vitis 2025.2 or a board.
 
-**Current outcome:** consult the exact HEAD and workflow jobs; source files and CI configuration by themselves are NOT evidence of a passing test. Record actual results, failures, skips and source SHA before milestone acceptance.
+**Observed M07.1 GitHub Actions evidence (source-only):**
+
+- First M07 workflow at `dc5d00b597b0ada15db1c619f48a279ffffe12f3`, run **42916491858**, FAILED: 7/8 M07 unit tests passed; the report-schema test incorrectly asserted `len(results)==4` although four actual cases are nested under **two** locality keys. This was a test-assertion bug, not a neural mismatch. The failed attempt remains in Actions history; do not erase it.
+- Commit `f18433dd80482ac03514b91d775b0cf393781b5b` corrected only the assertion to require the two locality keys and **four policy leaf cases**. Source-only M07 push run **42916600964** and draft-PR run **42916608860** both PASSED. M07 push log: **8/8 M07**, **21/21 M02**, **28/28 M03**, and **324 M06 methods (312 passed, 12 skipped)**. The optional Icarus skips are NOT counted as local RTL passes; the separate inherited M06 GitHub workflow installs Icarus and performed its admitted standalone RTL checks successfully.
+- The exact `f18433dd...` source workflow produced a model-only artifact and reported fixed N32 synthetic state transfers: **clustered direct=10,496 bytes vs LRU=256 bytes; dispersed direct=10,496 bytes vs LRU=10,496 bytes**. These values are **full-block software state model traffic**, not DDR bus timing, hardware throughput, speedup, or synapse traffic. The four neural traces and independent role inputs matched as required.
+- The M01–M07 no-board workflows **all succeeded** for the tested `f18433dd...` HEAD on both push and draft PR. Later documentation-only commits, if any, need a fresh latest-head status check; this historic SHA-bound observation remains intact.
+
+M07 is still NOT accepted. Owner Linux VS Code replication, remaining fairness/ablation work packages, final evidence review and explicit merge approval are outstanding.
 
 ## 3. What remains for M07
 
