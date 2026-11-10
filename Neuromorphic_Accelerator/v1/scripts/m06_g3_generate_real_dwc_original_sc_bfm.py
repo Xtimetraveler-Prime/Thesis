@@ -103,7 +103,7 @@ def render(dwc_readback: dict, vendor: list[dict]) -> str:
                 if target not in required:
                     if suffix not in ("arregion","awregion") or d!="output" or w!=4:
                         raise ValueError("unresolved AMD width-converter MI AXI port: "+signal)
-                    port_map.append(f".{signal}() // unused REGION output")
+                    port_map.append(f".{signal}()")
                 else:
                     original_direction, original_width = required[target]
                     if w!=original_width or d==original_direction:
@@ -234,8 +234,8 @@ initial begin
     write32('hff00,32'hdeadbeef,4'b1111);
     read32('hff00);
     read32('hfffc);
-    if(write_ok!==3 || read_ok!==9 || m00_aw<3 || m00_b<3 ||
-       m00_ar<9 || m00_w<3 || m00_r<9)
+    if(write_ok!==3 || read_ok!==10 || m00_aw<3 || m00_b<3 ||
+       m00_ar<10 || m00_w<3 || m00_r<10)
         $fatal(1,"M06_G3_REAL_DWC_SC_FAIL COUNTS writes=%0d reads=%0d m00aw=%0d w=%0d b=%0d ar=%0d r=%0d",
                write_ok,read_ok,m00_aw,m00_w,m00_b,m00_ar,m00_r);
     $display("M06_G3_REAL_DWC_ORIGINAL_SC_32TO256_XSIM_PASS write=%0d read=%0d m00_w=%0d m00_r=%0d high_byte=65535 shared_64k=1 NO_HLS_NO_BOARD_NO_DDR",
