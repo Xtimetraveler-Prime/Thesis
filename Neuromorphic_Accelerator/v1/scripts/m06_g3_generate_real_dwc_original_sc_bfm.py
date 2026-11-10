@@ -65,8 +65,11 @@ def exact_dwc_abi(sc: str, required: dict) -> dict:
             "direction":converter_direction,"width_bits":sc_width}
         upstream_width=32 if field in ("rdata","wdata") else (
             4 if field=="wstrb" else sc_width)
+        # The converter SI is a SLAVE: its declaration direction
+        # matches the original SmartConnect SI (also a SLAVE).
+        # The converter MI is a MASTER and must point the other way.
         expected["s_axi_"+field]={
-            "direction":converter_direction,"width_bits":upstream_width}
+            "direction":sc_direction,"width_bits":upstream_width}
     prefix="ar" if sc=="S00" else "aw"
     expected["m_axi_"+prefix+"region"]={"direction":"output","width_bits":4}
     expected["s_axi_"+prefix+"region"]={"direction":"input","width_bits":4}
