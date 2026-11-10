@@ -153,6 +153,17 @@ def render(pins: dict, dwc: dict, vendor: list[dict]) -> str:
             lines.append("assign "+name+" = "+str(width)+"'d0;")
     lines.append(MODULE+" sc_dut (\n    .aclk(clk), .aresetn(resetn),\n"+
         ",\n".join("    ."+p["name"]+"("+p["name"]+")" for p in vendor)+"\n);")
+    # Declare EVERY HLS/guard net before first use by any DWC or assign.
+    # The first genuine XSim idle owner log exposed 8 implicit HLS sideband
+    # nets and 11 forward guard signal declarations: eliminate both.
+    for name,(_,width) in sorted(pins.items()):
+        if name not in ("ap_clk","ap_rst_n"):
+            lines.append("wire "+_decl(width)+"h_"+name+";")
+    for bundle in ("gmem_read","gmem_write"):
+        for suffix,source in ROUTE_TO_HLS[bundle].items():
+            hprefix="rd_s" if bundle=="gmem_read" else "wr_s"
+            width=pins["m_axi_"+bundle+"_"+suffix][1]
+            lines.append("wire "+_decl(width)+source+";")
     # Exact original AMD SI/MI port bindings and mandatory guard insertion.
     declared=set()
     for ip,sc in ROLE:
@@ -193,10 +204,6 @@ def render(pins: dict, dwc: dict, vendor: list[dict]) -> str:
         lines.append(ip+" "+ip+"_dut (\n"+",\n".join(port_map)+"\n);")
     # The REAL HLS top is connected for all 125 pins, including inactive
     # masters and stream/control pins; absent signals are never left floating.
-    for name,(direction,width) in sorted(pins.items()):
-        if name in ("ap_clk","ap_rst_n"):
-            continue
-        lines.append("wire "+_decl(width)+"h_"+name+";")
     for bundle in ("gmem_read","gmem_write"):
         for suffix,source in ROUTE_TO_HLS[bundle].items():
             lines.append("assign "+_h(bundle,suffix)+" = "+source+";")
@@ -225,23 +232,7 @@ def render(pins: dict, dwc: dict, vendor: list[dict]) -> str:
     lines.append(TOP+" hls_dut (\n"+",\n".join(ports)+"\n);")
     # READ address guard. The RD DWC SI is driven by guard m_*, while R
     # responses flow back through it to the actual generated HLS core.
-    for prefix, names in (("rd_s",READ_SIDE),("wr_s",WRITE_SIDE)):
-        for signal in names:
-            if prefix=="rd_s":
-                suffix=signal.lower()
-                width=32 if signal in ("RDATA",) else 64 if signal=="ARADDR" else (
-                    8 if signal=="ARLEN" else 3 if signal=="ARSIZE" else
-                    2 if signal in ("ARBURST","RRESP") else 1)
-            else:
-                width=64 if signal=="AWADDR" else 32 if signal=="WDATA" else (
-                    8 if signal=="AWLEN" else 4 if signal=="WSTRB" else
-                    3 if signal=="AWSIZE" else
-                    2 if signal in ("AWBURST","BRESP") else 1)
-            net=prefix+"_"+signal.lower()
-            # Only s-side outputs of guards require their own net; requests
-            # come directly from HLS pins and are not duplicated.
-            if signal in ROUTE_TO_HLS["gmem_read" if prefix=="rd_s" else "gmem_write"]:
-                lines.append("wire "+_decl(width)+net+";")
+    # Guard return-path wires were predeclared above before their first use.
     for prefix,names in (("g_rd",("arid","araddr","arlen","arsize","arburst",
                                  "arvalid","rready")),
                          ("g_wr",("awid","awaddr","awlen","awsize","awburst",
