@@ -102,6 +102,14 @@ std::uint32_t m06_paged_rolling_replay(
 #pragma HLS INTERFACE axis port=metrics
 #pragma HLS INTERFACE m_axi port=canonical_read_words offset=slave bundle=gmem_read depth=16384 max_read_burst_length=16
 #pragma HLS INTERFACE m_axi port=canonical_write_words offset=slave bundle=gmem_write depth=16384 max_write_burst_length=16
+    // These SEPARATE AXI masters are intentionally mapped to ONE canonical
+    // 64KiB physical scratch image. Without explicit alias metadata, Vitis
+    // may treat them as independent memories during C/RTL instrumentation,
+    // and read-after-write dependency checking is unavailable. AMD UG1399
+    // requires two distinct bundles, equal depth and slave/direct offsets.
+    // This describes aliasing; it is NOT an AXI B-response/AR coherency fence
+    // and does NOT prove the original SmartConnect physical connection.
+#pragma HLS ALIAS ports=canonical_read_words,canonical_write_words distance=0
 #pragma HLS INTERFACE s_axilite port=canonical_read_words bundle=control
 #pragma HLS INTERFACE s_axilite port=canonical_write_words bundle=control
 #pragma HLS INTERFACE s_axilite port=neuron_count bundle=control
