@@ -27,6 +27,8 @@ SOURCE_FILES=(
     "scripts/m06_g3_3_generate_actual_hls_idle_tb.py",
     "scripts/m06_g3_3_hls_inventory.py",
     "scripts/m06_g3_2_connected_evidence_audit.py",
+    "scripts/m06_g3_3_stage_actual_hls_dat.py",
+    "scripts/m06_g3_3_hls_control_map.py",
     "scripts/m06_g3_merge_vendor_sources.py",
     "scripts/m06_g3_real_amd_compile_order_audit.py",
     "rtl/m06/m06_axi64_to32_guards.sv",
@@ -124,6 +126,7 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
     (out/"00_accepted_hls_interface_inventory.json").write_text(
         json.dumps(inv,indent=2,sort_keys=True)+"\n")
     vendor_files=[]
+    dat_sources=[]
     result=1
     try:
         _run("01_reaudit_dwc_owner.log",
@@ -156,6 +159,15 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
             "\n".join(map(str,original_hls))+"\n")
         (out/"include_dirs.txt").write_text(
             "\n".join(plan["include_directories"])+"\n")
+        _run("03_hls_original_dat_stage.log",
+             [sys.executable,str(ROOT/"scripts/m06_g3_3_stage_actual_hls_dat.py"),
+              "--hls-owner",str(hls),
+              "--rtl-sources",str(out/"hls_sources.txt"),
+              "--output-dir",str(out),
+              "--manifest",str(out/"03_hls_original_dat_manifest.json")],out)
+        dat_manifest=json.loads((out/"03_hls_original_dat_manifest.json").read_text())
+        dat_sources=[Path(row["source"]) for row in dat_manifest["files"]]
+        (out/"hls_dat_sources_before_sha256.txt").write_text(_sha_lines(dat_sources))
         _run("03_generation.log",
              [sys.executable,str(ROOT/"scripts/m06_g3_3_generate_actual_hls_idle_tb.py"),
               "--inventory",str(inventory/"01_g3_3_hls_interface_inventory.json"),
@@ -177,6 +189,9 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                             str(ROOT/"rtl/m06/m06_axi64_to32_guards.sv"),
                             str(ROOT/"rtl/m06/m06_axi128_scratch_mem.sv"),
                             str(tb),str(glbl)],out,cwd=out)
+        compile_log=(out/"05_xvlog.log").read_text(errors="replace")
+        if re.search(r"WARNING: \[VRFC 10-(?:2938|3380)\].*tb_m06_g3_3_actual_hls",compile_log):
+            raise ValueError("generated HLS binding has implicit or forward-declared nets")
         _run("06_xelab.log",["xelab","--relax","-debug","typical",
                              "-L","xpm","-L","unisims_ver","-L","secureip",
                              "work.tb_m06_g3_3_actual_hls_original_amd_idle",
@@ -187,7 +202,8 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
                             "-R","--onfinish","quit"],out,cwd=out,timeout=300)
         xsim=(out/"07_xsim.log").read_text(errors="replace")
         if xsim.count(SUCCESS)!=1 or re.search(
-            r"M06_G3_3_HLS_LINK_IDLE_FAIL|FATAL_ERROR|Fatal: |\$fatal",xsim
+            r"M06_G3_3_HLS_LINK_IDLE_FAIL|FATAL_ERROR|Fatal: |\$fatal"
+            r"|WARNING: File .*\.dat referenced",xsim
         ):
             raise ValueError("genuine original AMD HLS XSim lacked single clean IDLE PASS marker")
         print("M06_G3_3_1_ACTUAL_HLS_ORIGINAL_AMD_IDLE_XSIM_ACCEPTED_LINKAGE_ONLY NO_NEURAL_NO_DDR_NO_BOARD")
@@ -199,9 +215,11 @@ def run(hls: Path,d3: Path,ports: Path,headers: Path,dwc: Path,
     finally:
         (out/"source_after_sha256.txt").write_text(_sha_lines(original_sources))
         (out/"hls_sources_after_sha256.txt").write_text(_sha_lines(original_hls))
+        if dat_sources:
+            (out/"hls_dat_sources_after_sha256.txt").write_text(_sha_lines(dat_sources))
         if vendor_files:
             (out/"vendor_sha_after.txt").write_text(_sha_lines(vendor_files))
-        for name in ("source","hls_sources","vendor"):
+        for name in ("source","hls_sources","hls_dat_sources","vendor"):
             before=out/(name+"_before_sha256.txt")
             after=out/(name+"_after_sha256.txt")
             if before.is_file() and (not after.is_file() or
