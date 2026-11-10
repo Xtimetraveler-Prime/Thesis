@@ -13,11 +13,52 @@ import re
 import sys
 
 CONTROL="m06_paged_rolling_replay_control_s_axi.v"
-DEFINITION=re.compile(
-    r"\b(?:parameter|localparam)\s+(?:\[[^\]]+\]\s*)?"
-    r"ADDR_([A-Za-z0-9_]+)\s*=\s*(?:7|8|32)'h([0-9a-fA-F]+)\s*;",
-    re.M,
+# Vitis HLS uses EITHER separate declarations with ';' or a grouped
+# "localparam\n ADDR_AP_CTRL = 7'h00,\n ADDR_GIE = 7'h04, ..." list.
+# The initial G3.3 owner active run failed BEFORE XSim because we assumed
+# every individual ADDR_* had its own "localparam" and semicolon. Do not
+# replace measured register addresses with guessed fixed offsets.
+COMMENT=re.compile(r"/\*.*?\*/|//[^\n]*",re.S)
+PARAMETER_GROUP=re.compile(r"\b(?:localparam|parameter)\b([^;]*);",re.S)
+ADDR_ENTRY=re.compile(
+    r"(?:\b(?:signed|integer)\s+)?(?:\[[^\]]+\]\s*)?"
+    r"ADDR_([A-Za-z0-9_]+)\s*=\s*(\d+)\s*'\s*[hH]\s*([0-9a-fA-F_]+)\s*",
+    re.S,
 )
+
+
+def declared_offsets(verilog: str) -> dict[str,int]:
+    """Parse only actual literal ADDR_* parameter assignments (fail closed).
+
+    Strip comments, then tokenize individual + comma-grouped *parameter*
+    statements, not arbitrary 'ADDR_*' strings elsewhere in case statements.
+    Duplicate symbols, unsupported bases and malformed literals are rejected.
+    """
+    source=COMMENT.sub("",verilog)
+    groups=list(PARAMETER_GROUP.finditer(source))
+    regs:dict[str,int]={}
+    for group in groups:
+        for part in group.group(1).split(","):
+            term=part.strip()
+            match=ADDR_ENTRY.fullmatch(term)
+            if match:
+                name,width,bits=match.groups()
+                width=int(width)
+                value=int(bits.replace("_",""),16)
+                if width not in (7,8,32) or value >= (1<<width):
+                    raise ValueError("unsupported generated AXI-Lite constant width: "+name)
+                if name in regs or not 0<=value<128 or value%4:
+                    raise ValueError("duplicated/nonaligned/out-of-range HLS register: "+name)
+                regs[name]=value
+            elif re.search(r"\bADDR_[A-Za-z0-9_]+\b",term):
+                raise ValueError("unrecognized HLS address parameter expression: "+
+                                 term[:80])
+    if len(regs)<10:
+        raise ValueError(
+            "cannot parse generated HLS control-register address constants "
+            f"(found {len(regs)} ADDR_* from {len(groups)} parameter statements)"
+        )
+    return regs
 
 
 def control_map(inventory: dict, hls_directory: Path) -> dict:
@@ -37,15 +78,7 @@ def control_map(inventory: dict, hls_directory: Path) -> dict:
     if digest!=records[0]["sha256"]:
         raise ValueError("original HLS AXI-Lite control module SHA drift")
     source=path.read_text(errors="replace")
-    pairs=DEFINITION.findall(source)
-    if len(pairs)<10:
-        raise ValueError("cannot parse generated HLS control-register address constants")
-    regs={}
-    for name,hexval in pairs:
-        value=int(hexval,16)
-        if name in regs or not 0<=value<128 or value%4:
-            raise ValueError("duplicated/nonaligned/out-of-range HLS register: "+name)
-        regs[name]=value
+    regs=declared_offsets(source)
     if regs.get("AP_CTRL")!=0:
         raise ValueError("generated HLS control ap_ctrl offset not zero")
     returns=[(k,v) for k,v in regs.items() if k in ("AP_RETURN","AP_RETURN_0")]
