@@ -10,6 +10,7 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 | --- | --- |
 | Research questions and project lineage | [Thesis overview](../../README.md) |
 | Milestones, next experiment and acceptance criteria | [M01–M09 roadmap](roadmap.md) |
+| **New chat / M07 development handoff** | **[M07 next-chat handoff](docs/M07_NEXT_CHAT_HANDOFF_2026_11_10.md)** — current implementation context, branch/CI rules, evidence limits and first development steps |
 | M05 signed32 on-chip engine verification | [M05 acceptance review](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | M06 original HLS+AMD paging/fault/recovery evidence | [M06 acceptance review](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
 | Exact LIF semantics and event ordering | [M02 reference contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md) |
