@@ -50,6 +50,15 @@ def declared_offsets(verilog: str) -> dict[str,int]:
                 if name in regs or not 0<=value<128 or value%4:
                     raise ValueError("duplicated/nonaligned/out-of-range HLS register: "+name)
                 regs[name]=value
+            elif re.fullmatch(r"ADDR_BITS\s*=\s*\d+",term):
+                # Actual Vitis 2025.2 control_s_axi.v places ADDR_BITS = 7
+                # in the SAME grouped localparam list as ADDR_AP_CTRL and
+                # the other real register offsets. This is width metadata,
+                # NOT a register address and must NOT be parsed as one.
+                bits=int(term.split("=",1)[1].strip())
+                if bits!=7:
+                    raise ValueError("unexpected original HLS AXI-Lite ADDR_BITS: "+
+                                     str(bits))
             elif re.search(r"\bADDR_[A-Za-z0-9_]+\b",term):
                 raise ValueError("unrecognized HLS address parameter expression: "+
                                  term[:80])
