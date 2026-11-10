@@ -233,6 +233,8 @@ integer first_ram_aw=0, raw_ram_b_seen=0, hls_b_seen=0;
 integer provisional_trace=0, published_trace=0, fault_polls=0;
 integer sim_heartbeat=0;
 reg premature_poison=0;
+reg fault_controller_finished=0;
+reg neuron_source_finished=0;
 reg first_aw_seen=0;
 // Watchdog threshold is strictly TESTBENCH CONFIGURATION, not an estimate
 // of hardware latency. 1024 cycles lets the original connected 16-neuron
@@ -284,9 +286,17 @@ end
 initial begin
     repeat(12) @(negedge clk); resetn=1;
     repeat(30) @(negedge clk);
-    fork
-        feed_neurons();
-        begin
+    // A missing B response may permanently backpressure original HLS
+    // neurons_TREADY. NEVER use fork..join here: waiting for every input
+    // neuron to be consumed would deadlock this *negative* experiment.
+    // The fault controller is the required completion; the producer is
+    // canceled only AFTER actual held-B/timeout evidence is obtained.
+    fork : g4_stalled_b_concurrent
+        begin : neuron_producer
+            feed_neurons();
+            neuron_source_finished=1'b1;
+        end
+        begin : fault_controller
             write_reg(@CANONICAL_READ_WORDS_DATA_0@,32'd0);
             write_reg(@CANONICAL_READ_WORDS_DATA_1@,32'd0);
             write_reg(@CANONICAL_WRITE_WORDS_DATA_0@,32'd0);
@@ -308,13 +318,24 @@ initial begin
                 repeat(20) @(negedge clk);
                 fault_polls=fault_polls+1;
             end
+            fault_controller_finished=1'b1;
         end
-    join
+    join_any
+    // If the producer happens to finish first, wait for controller.
+    // If it remains blocked on genuine HLS TREADY, don't mistake that
+    // expected backpressure for the failed fault-watchdog result.
+    if(fault_controller_finished!==1'b1)
+        wait(fault_controller_finished===1'b1);
+    disable g4_stalled_b_concurrent;
+    @(negedge clk); h_neurons_TVALID=0;
+    $display("M06_G4_STALLED_B_OWNER_CONTROLLER_FINISHED t=%0t sourceFinished=%b polls=%0d",
+             $time,neuron_source_finished,fault_polls);
     repeat(10) @(negedge clk);
     if(fault_polls>=MAX_POLL_WINDOWS)
         $fatal(1,"M06_G4_FAIL STALLED_B_BOUNDED_POLL_TIMEOUT time=%0t cycles=%0d rawB=%0d hlsB=%0d",
                $time,epoch_gate.epoch_cycles,raw_ram_b_seen,hls_b_seen);
-    if(first_ram_aw!==1 || raw_ram_b_seen<1 ||
+    if(fault_controller_finished!==1'b1 ||
+       first_ram_aw!==1 || raw_ram_b_seen<1 ||
        hls_b_seen!==0 || raw_ram_bvalid!==1'b1 ||
        M00_AXI_bvalid!==1'b0 || g4_poison!==1'b1 ||
        epoch_gate.epoch_cycles<TEST_EPOCH_TIMEOUT ||
