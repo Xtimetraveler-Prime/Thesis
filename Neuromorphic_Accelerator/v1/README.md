@@ -74,7 +74,7 @@ For each future milestone, maintain an 'MXX_TESTS_EXPLAINED.md' explaining actua
 
 ## Next: M07 and later physical validation
 
-**M07 — scheduling/cache variants and controlled ablations:** build a simple no-cache or fixed-residency baseline, a simple FIFO/LRU-class policy, and optionally one activity/locality-aware scheduler; measure matched timestep/on-chip, event/on-chip, timestep/DDR-style and event/DDR-style configurations with **identical network and neural semantics**. Vary context locality independently of total spikes and report counters/negative results. See [full M07 acceptance criteria](roadmap.md#m07--schedulingcache-policy-variants-and-ablation-controls).
+**M07 — scheduling/cache variants and controlled ablations:** build a simple no-cache or fixed-residency baseline, a simple FIFO/LRU-class policy, and optionally one activity/locality-aware scheduler; measure matched timestep/on-chip, event/on-chip, timestep/DDR-style and event/DDR-style configurations with **identical network and neural semantics**. Vary context locality independently of total spikes and report counters/negative results. See [full M07 acceptance criteria](roadmap.md#4-m07--schedulingcache-policy-variants-and-ablation-controls).
 
 **M08** (after new operator authorization): physical KV260 integration, resource/timing closure and true DDR/end-to-end measurements. **M09:** quantitative virtualization penalty, sparsity benefit, locality and interaction analysis with uncertainty and reproduced raw captures.
 
