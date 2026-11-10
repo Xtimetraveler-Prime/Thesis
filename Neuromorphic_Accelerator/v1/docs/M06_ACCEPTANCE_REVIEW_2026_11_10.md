@@ -2,8 +2,13 @@
 
 **Decision: COMPLETE under the user-authorized, OFFLINE, bounded simulation-backed residency scope.**
 This review supersedes older G3.3/G4 in-progress runbooks and status notes.
-M06 remains the original milestone; no new subdivisions. PR #80 is
-eligible for merging after CI checks. No M07 changes are included.
+M06 remains the original milestone; no new subdivisions. PR #80 was merged into main after all six final branch CI workflows passed.
+GitHub merge commit: 9542789cdbe61449a84828a6340ed1f90237e825. No M07 changes are included.
+
+**Final repository state:** PR #80 MERGED into main on 2026-11-10.
+Merge commit 9542789cdbe61449a84828a6340ed1f90237e825;
+accepted source HEAD e569a40d48dce5d805109cc1b955cd27ac420be3.
+No original owner ZIP was modified or rerun after merge.
 
 ## Accepted contract — what M06 does and does NOT demonstrate
 
