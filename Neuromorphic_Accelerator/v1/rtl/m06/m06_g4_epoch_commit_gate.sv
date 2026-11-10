@@ -26,6 +26,9 @@ module m06_g4_epoch_commit_gate #(
     output reg [15:0]   outstanding_writes
 );
     reg [31:0] epoch_cycles;
+    // Register one quiet cycle after ap_done before exposing commit token.
+    // Original guard fault_seen is registered on the AXI response edge.
+    reg settling_commit;
     wire timed_out=epoch_active &&
                    (epoch_cycles>=MAX_EPOCH_CYCLES);
     wire overflow = write_aw_fire && !write_b_fire &&
@@ -46,11 +49,12 @@ module m06_g4_epoch_commit_gate #(
             poisoned<=1'b0;
             outstanding_writes<=16'd0;
             epoch_cycles<=32'd0;
+            settling_commit<=1'b0;
         end else if (epoch_begin) begin
             // A fault/quarantined image cannot be reused by simply starting
             // another HLS kernel invocation. Require explicit RESET and an
             // external canonical-image discard/restore contract.
-            if (epoch_active || poisoned || ap_done ||
+            if (epoch_active || settling_commit || poisoned || ap_done ||
                 read_guard_fault || write_guard_fault) begin
                 poisoned<=1'b1;
                 commit_valid<=1'b0;
@@ -59,6 +63,7 @@ module m06_g4_epoch_commit_gate #(
                 commit_valid<=1'b0;
                 outstanding_writes<=16'd0;
                 epoch_cycles<=32'd0;
+                settling_commit<=1'b0;
             end
         end else begin
             if (read_guard_fault || write_guard_fault) begin
@@ -81,9 +86,23 @@ module m06_g4_epoch_commit_gate #(
                         next_outstanding!=16'd0) begin
                         poisoned<=1'b1;
                         commit_valid<=1'b0;
+                        settling_commit<=1'b0;
                     end else begin
-                        commit_valid<=1'b1;
+                        // NOT an immediate commit: allow registered guard
+                        // RRESP/BRESP faults on this same edge to settle.
+                        settling_commit<=1'b1;
+                        commit_valid<=1'b0;
                     end
+                end
+            end else if (settling_commit) begin
+                settling_commit<=1'b0;
+                if (read_guard_fault || write_guard_fault || poisoned ||
+                    ap_done || write_aw_fire || write_b_fire || read_ar_fire ||
+                    outstanding_writes!=16'd0) begin
+                    poisoned<=1'b1;
+                    commit_valid<=1'b0;
+                end else begin
+                    commit_valid<=1'b1;
                 end
             end else if (ap_done || write_aw_fire || write_b_fire ||
                          read_ar_fire) begin
