@@ -1,0 +1,119 @@
+# M06 existing G4: original AMD/HLS discard-restore accepted; stalled-B evidence still missing
+
+**2026-11-10. G4/M06 remain OPEN, PR #80 DRAFT/UNMERGED.** No new submilestone, M07, hardware/PS DDR, or automatic DDR-rollback claim.
+
+## Genuine original Vivado 2025.2 discard/restore owner PASS
+
+Uploaded ZIP: M06_G4_DISCARD_RESTORE_HLS_AMD_REVIEW_20261110T182012Z.zip
+SHA256: fa981f6dc18e750b863a81ffec1db8a0359b85f80fb7b178d197f1128dfa78af
+Tested commit: 2997547d54df140c83181618c98c1bcb26745936
+Original owner directory: ~/Thesis_Evidence/m06_g3_3_actual_hls_g4_discard_restore_xsim_0hgpkg28
+result.txt: exit_status=0. Genuine original xvhdl/xvlog/xelab/xsim all rc0.
+Original XSim at 51970 ns emitted:
+M06_G4_ACTUAL_HLS_AMD_FAULT_DISCARD_RESTORE_CLEAN_COMMIT_XSIM_PASS
+FIRST_R_SLVERR_POISON NO_FAILED_TRACE_RELEASE EXPLICIT_64K_IMAGE_RESTORE
+HLS_AP_DONE_STATUS0 CLEAN_16_TRACE_1_METRICS POSTCOMMIT_ONLY
+NO_AUTO_ROLLBACK_NO_DDR_NO_BOARD
+
+The original AMD/HLS simulated read SLVERR caused registered read guard
+fault, poisoned independent epoch supervisor, blocked original HLS output.
+The TESTBENCH OWNER then reset HLS/AMD/guard and explicitly restored ALL
+65536 bytes of a known canonical scratch image. A second original HLS
+16-neuron one-tick execution reached genuine AXI-Lite AP_DONE with
+AP_RETURN=0. Actual synthesizable bounded trace/metrics quarantine RTL
+released exactly 16 checked six-field trace rows and one metrics record,
+only after the external supervisor committed, with canonical byte checks.
+NO physical DDR rollback/FPGA/production reset+commit wiring is proven.
+
+SHA before/after identical for 19 local sources, 40 original generated
+Vitis RTL files, 14 original HLS initialization .dat files and 67 original
+AMD HDL sources. Both original read and write DWC XCI SHA checks passed.
+xvhdl/xvlog warning-free; xelab retained EXACTLY four previously known
+environment/optional-port warnings (LIBRARY_PATH, mb_reset, 2 x aclk2x),
+not silently waived. Original owner ZIP is immutable.
+
+## Previously verified genuine original-owner gates
+
+- G3.3 M02/M03 independent 32-neuron x4-tick full neural+state parity:
+  ZIP M06_G3_3_M02_M03_PARITY_HLS_AMD_REVIEW_20261110T165556Z.zip;
+  SHA256 c3c9c6c1b21989b11f2d632b306981b10261aa1c6aedd8e54f7cd1c88ed4eb6c.
+- G4 first write B SLVERR, real original AMD/HLS propagation, poison,
+  no commit: ZIP M06_G4_FIRST_B_SLVERR_HLS_AMD_REVIEW_20261110T171436Z.zip;
+  SHA256 11c2960d6a130e530ccfde345c42828e42626936e523a77f7b35bacffc87eaca.
+- G4 first read R SLVERR, real original AMD/HLS propagation, poison,
+  no commit: ZIP M06_G4_FIRST_R_SLVERR_HLS_AMD_REVIEW_20261110T174333Z.zip;
+  SHA256 55039df7443c0c0d6aba73d88d9eb80461a403684a46cf31ff0e736225a22d70.
+- G4 explicit owner reset+64KiB image restoration+clean 16x1 original
+  HLS replay and postcommit trace/metrics release: ZIP above (PASS).
+
+## ONE blocking acceptance artifact: corrected stalled-B owner PASS ZIP
+
+Owner runbook instructed g4_stalled_b BEFORE g4_discard_restore, and
+to stop after any failed mode. This later restore PASS suggests the
+operator may also have a successful stalled-B result, but it does NOT
+independently prove that experiment. Only the two ORIGINAL FAILED
+stalled-B first-attempt ZIPs were uploaded earlier:
+M06_G4_STALLED_B_HLS_AMD_REVIEW_20261110T174933Z.zip
+   owner exit_status=1; 300s wall-clock xsim timeout;
+M06_G4_STALLED_B_HLS_AMD_REVIEW_20261110T180625Z.zip
+   owner exit_status=1; verified real held memory B/1024-cycle poison,
+   then 30us testbench global watchdog due to fork..join producer wait.
+
+Both are preserved immutable and MUST NOT count as successful owner
+acceptance. The corrected subsequent G4 fork..join_any owner PASS
+archive has NOT BEEN PROVIDED in this conversation. DO NOT claim
+a milestone PASS, close G4/M06, or merge PR #80 until it is audited.
+No need to rerun a successful owner experiment: locate the existing ZIP.
+
+## Owner: find original previously generated PASS ZIP without rerunning XSim
+
+From VS Code terminal, in Neuromorphic_Accelerator/v1:
+
+~~~bash
+for f in "$HOME"/Thesis_Evidence/M06_G4_STALLED_B_HLS_AMD_REVIEW_*.zip; do
+  test -f "$f" || continue
+  if python3 scripts/m06_g4_owner_zip_audit.py \
+     --mode g4_stalled_b --zip "$f"; then
+    echo "UPLOAD THIS ORIGINAL PASSED ZIP: $f"
+  fi
+done
+~~~
+
+If no ZIP passes, find an already successful original owner evidence
+directory WITHOUT running Vivado again:
+
+~~~bash
+for d in "$HOME"/Thesis_Evidence/m06_g3_3_actual_hls_g4_stalled_b_xsim_*; do
+  test -d "$d" || continue
+  test -f "$d/result.txt" || continue
+  if test "$(cat "$d/result.txt")" = "exit_status=0"; then
+    echo "EXISTING GENUINE STALLED-B OWNER PASS DIR: $d"
+    cat "$d/commit.txt"
+    tail -n 40 "$d/07_xsim.log"
+  fi
+done
+~~~
+
+If a successful ORIGINAL owner dir exists, but the ZIP was never
+created, locate its matching unmodified original invocation console
+log and use the existing strict packager to package the original result;
+see the file names generated by the runbook. Do not invent logs or
+rerun accepted source/IP unchanged.
+
+## Technical closeout gate: no missing evidence waiver
+
+The new read-only file scripts/m06_g4_complete_evidence_gate.py requires
+FIVE independent original owner PASS ZIPs: the exact SHA-accepted G3.3
+parity archive plus original G4 first B, first R, PASSED stalled B,
+and passed discard/restore. It checks exact mode markers, true owner
+status, original AMD/DWC XCI, per-experiment original source
+before/after hashes and CROSS-EXPERIMENT original-HLS/dat/AMD identity.
+A missing/failed original stalled-B ZIP is rejected even though
+the later discard/restore succeeded.
+
+M06 may be closed and PR #80 merged ONLY after independent artifact
+review confirms the missing distinct passing original stalled-B gate
+and all remaining offline M06 scope deliverables. Physical FPGA/DDR,
+synthesis timing/resources, production control-plane wiring and
+automatic crash-atomic rollback remain NOT proven; physical evaluation
+is reserved for the later M08 gate.
