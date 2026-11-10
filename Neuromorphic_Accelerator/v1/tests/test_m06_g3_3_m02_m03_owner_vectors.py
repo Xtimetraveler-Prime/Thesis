@@ -5,6 +5,7 @@ import sys
 import subprocess
 import tempfile
 import unittest
+import re
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
@@ -64,11 +65,29 @@ class OriginalHLSDenseSparseVectorsTests(unittest.TestCase):
     def test_independent_stream_and_every_trace_and_final_record_emitted(self):
         s=vectors()
         self.assertEqual(s,vectors())
-        self.assertEqual(s.count("oracle_neurons["),NEURONS+1)
-        self.assertEqual(s.count("oracle_synapses["),5+1)
-        self.assertEqual(s.count("oracle_external["),17+1)
-        self.assertEqual(s.count("oracle_trace["),NEURONS*TICKS+1)
-        self.assertEqual(s.count("oracle_final_row["),NEURONS+1)
+        # The generator declares unpacked arrays as "oracle_x [0:N-1]"
+        # (space before '['), while assignments use "oracle_x[i]".
+        # Check each declaration separately and verify every assigned index:
+        # a raw substring count incorrectly expects an extra declaration hit.
+        for name, bits, count in (
+            ("oracle_neurons", 128, NEURONS),
+            ("oracle_synapses", 192, 5),
+            ("oracle_external", 128, 17),
+            ("oracle_trace", 192, NEURONS*TICKS),
+            ("oracle_final_row", 128, NEURONS),
+        ):
+            self.assertIn(
+                f"reg [{bits-1}:0] {name} [0:{count-1}];", s
+            )
+            actual_indices = [
+                int(index) for index in re.findall(
+                    rf"(?m)^  {name}\[(\d+)\] = {bits}'h[0-9a-f]+;$", s
+                )
+            ]
+            self.assertEqual(
+                actual_indices, list(range(count)),
+                f"{name} must have exactly one value for every index"
+            )
         self.assertIn("oracle_metrics = 256'h",s)
         self.assertIn("M02 dense + M02 event + M03 sparse",s)
         self.assertNotIn("$finish",s)
