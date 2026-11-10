@@ -75,4 +75,6 @@ if [[ $(wc -l < "$OUT/03_official_amd_xsim_script_paths.txt") -lt 2 ]]; then
 fi
 grep -Fq 'm06_g3_read_dwc' "$OUT/03_official_amd_xsim_script_paths.txt"
 grep -Fq 'm06_g3_write_dwc' "$OUT/03_official_amd_xsim_script_paths.txt"
+python3 "$ROOT/scripts/m06_g3_capture_dwc_ports.py" \
+  --owner-dwc "$DW" --output "$OUT/04_real_amd_dwc_port_headers.json"
 echo "M06 G3 REAL AMD simulation scripts EXPORTED ONLY; no vendor XSim/connected HLS/board run"
