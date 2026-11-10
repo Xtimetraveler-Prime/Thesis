@@ -107,7 +107,7 @@ def validate_inventory(inv: dict, generated_rtl: Path) -> dict:
                 raise ValueError("G3.3 HLS master pin mismatch: "+full)
     for bundle,inputs in SOURCE_SUFFIXES.items():
         for name in inputs:
-            if pins.get(_h(bundle,name),(None,None))[0]!="input":
+            if pins.get(_h(bundle,name)[2:],(None,None))[0]!="input":
                 raise ValueError("HLS master response pin missing: "+_h(bundle,name))
     for name in ("ap_clk","ap_rst_n"):
         if pins.get(name)!=("input",1):
