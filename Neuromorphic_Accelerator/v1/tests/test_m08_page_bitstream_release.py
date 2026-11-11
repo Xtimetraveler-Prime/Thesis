@@ -134,7 +134,21 @@ class M08BitstreamReleaseTests(unittest.TestCase):
         for name in SOURCES:
             self.assertEqual(sh.count('"' + name + '"'),1)
         self.assertEqual(len(SOURCES),14)
-        self.assertEqual(len(MARKERS),2)
+        self.assertEqual(len(MARKERS),3)
+        self.assertIn("M08_PAGE_RELEASE_CHECKPOINT_TOP_VALIDATED=m08_page_ps_wrapper", MARKERS)
+        # The original owner native failure opened the routed checkpoint
+        # successfully but the script compared current_design NAME to HDL
+        # top, falsely rejecting the netlist display name.
+        self.assertIn("get_property -quiet TOP [current_design]", t)
+        self.assertIn("get_property NAME [current_design]", t)
+        self.assertIn("META|top|$top_module", t)
+        self.assertIn("META|design_display_name|$design_name", t)
+        self.assertNotIn(
+            'if {[get_property NAME [current_design]] ne "m08_page_ps_wrapper"}',
+            t,
+        )
+        self.assertIn("verified_routed_hdl_top",audit)
+        self.assertIn("design_display_name",audit)
 
     @unittest.skipUnless(shutil.which("bash"),"bash unavailable")
     def test_runner_syntax(self):
@@ -152,6 +166,75 @@ class M08BitstreamReleaseTests(unittest.TestCase):
         p=subprocess.run(["tclsh"],input=code,capture_output=True,text=True)
         self.assertEqual(p.returncode,0,p.stderr)
         self.assertIn("M08_RELEASE_TCL_PARSE_ONLY_NOT_VIVADO",p.stdout)
+
+    @unittest.skipUnless(shutil.which("tclsh"), "tclsh unavailable")
+    def test_top_property_not_design_display_name_with_tcl_mock(self):
+        """Fake Vivado: NAME=netlist_1 must NOT be mistaken for HDL TOP.
+
+        Tcl-only mock is a regression of the original owner 2026-11-11
+        checkpoint-open guard failure, never a native Vivado/bitstream pass.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            d=Path(td)
+            checkpoint=d/"10_m08_page_post_route.dcp"
+            checkpoint.write_text("FAKE DCP -- TCL MOCK ONLY")
+            # Only allow a mock execution as far as get_clocks. No
+            # write_bitstream, timing, DRC, or hardware commands are run.
+            for top, accepted in (
+                ("m08_page_ps_wrapper",True),
+                ("not_the_signed16_page",False),
+                ("",False),
+            ):
+                with self.subTest(HDL_TOP=top):
+                    code = (
+                        "set argv [list {" + str(checkpoint) + "} {" +
+                        str(d) + "}]\\n"
+                        "set ::fake_top {" + top + "}\\n"
+                        "proc version {args} {return 2025.2}\\n"
+                        "proc open_checkpoint {args} {}\\n"
+                        "proc current_project {} {return MOCK_K26_PROJECT}\\n"
+                        "proc current_design {} {return MOCK_NETLIST_DESIGN}\\n"
+                        'proc get_property {args} {\\n'
+                        '  if {[llength $args] == 3} {set key [lindex $args 1]} '
+                        'else {set key [lindex $args 0]}\\n'
+                        '  switch -- $key {\\n'
+                        '    PART {return xck26-sfvc784-2LV-c}\\n'
+                        '    NAME {return netlist_1}\\n'
+                        '    TOP {return $::fake_top}\\n'
+                        '    default {error "unexpected property $key"}\\n'
+                        '  }\\n'
+                        '}\\n'
+                        'proc get_clocks {args} {\\n'
+                        '  puts "M08_TOP_MOCK_ACCEPTED_AFTER_NAME_NETLIST_1"\\n'
+                        '  exit 0\\n'
+                        '}\\n'
+                        'if {[catch {source {' + str(TCL) + '}} err]} {\\n'
+                        '  if {[string match "*unexpected routed PS/page TOP*" $err]} {\\n'
+                        '    puts "M08_TOP_MOCK_REJECTED:$err"\\n'
+                        '    exit 0\\n'
+                        '  }\\n'
+                        '  puts stderr $err\\n'
+                        '  exit 8\\n'
+                        '}\\n'
+                        'error "fake Tcl did not reach guarded clock query"\\n'
+                    ).replace("\\\\n", "\\n")
+                    proc=subprocess.run(["tclsh"],input=code,text=True,
+                                        capture_output=True,timeout=30)
+                    self.assertEqual(proc.returncode,0,
+                                     proc.stdout+"\\n"+proc.stderr)
+                    if accepted:
+                        self.assertIn(
+                            "M08_TOP_MOCK_ACCEPTED_AFTER_NAME_NETLIST_1",
+                            proc.stdout,
+                        )
+                        self.assertIn(
+                            "M08_PAGE_RELEASE_CHECKPOINT_TOP_VALIDATED=m08_page_ps_wrapper",
+                            proc.stdout,
+                        )
+                        self.assertNotIn("M08_TOP_MOCK_REJECTED",proc.stdout)
+                    else:
+                        self.assertIn("M08_TOP_MOCK_REJECTED:",proc.stdout)
+                        self.assertNotIn("M08_TOP_MOCK_ACCEPTED",proc.stdout)
 
     def test_synthetic_route_release_gate_mutation_rejection(self):
         with tempfile.TemporaryDirectory() as td:
