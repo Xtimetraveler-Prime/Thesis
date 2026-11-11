@@ -107,7 +107,7 @@ GitHub Actions workflow `Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy an
 
 **Measurement and traffic units:** M06 Python `BlockCache` and `DirectFetchCache` method-level hits/misses (2 calls per evaluated neuron), full canonical page reads/writes and `ceil(page_bytes/max_model_transfer_bytes)` model transfer chunks. M03 separate precontiguous synapse reads/transactions are **analytical** and not issued by the M06 replay. Dense timestep/state movement is driven by M02 oracle voltages, not a second implemented timestep neural RTL. Each of the 18 configurations holds 2 locality × 2 policy × 4 logical modes = **288 model rows**. `event_state_bytes_saved_by_lru` is signed **direct minus LRU bytes**; `lru_event_state_locality_penalty_bytes` is signed **dispersed minus clustered bytes**. Negative/null values are meaningful and not suppressed or called speedups. Physical bytes, service cycles and hardware area are explicitly `null`.
 
-### M07.3 tests (each is Python source/host-only)
+### M07.3 tests (each is Python source/host-only; includes separate YANA-count-only boundary)
 
 | Test | Fixture / sequence | Expected evidence and failure case |
 | --- | --- | --- |
@@ -118,6 +118,7 @@ GitHub Actions workflow `Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy an
 | `test_bad_geometry_seeds_resource_assumptions_are_rejected` | Nondivisible blocks/budgets, invalid bool/zero/duplicate/unsorted seeds, cache not below on-chip/image budget, wrong watermark width, invalid fanout and invalid transfer bounds. | Clear `ValueError` before an apparently fair dataset is created; no implicit alignment or capacity padding. |
 | `test_neural_work_mutation_does_not_pass_locality_equivalence` | Deliberately corrupt the dispersed oracle spike count in a mocked M03 pair result. | Source sweep rejects mismatched neural work instead of publishing policy gains. This is a synthetic negative, not a corrupted real hardware capture. |
 | `test_input_identity_mutation_is_rejected_across_cache_geometries` | Deliberately mutate clustered input SHA for the second geometry of one seed. | Fail rather than treat different input/mapping as a policy ablation. |
+| `test_yana_published_1024_neuron_capacity_overlap_is_not_hardware_equivalence` | YANA-paper neuron-count-only partial overlap: local M02/M06 source N1024, K16, T4, signed16, 256 B cache, 8/16-neuron blocks, 2 role layouts. | 32 logical model rows, 16KiB state image, full-onchip 2048 B comparator UNAVAILABLE for both policies; exact M02/M03 parity and no hardware/latency/YANA equivalence claims. |
 | `test_cli_is_byte_reproducible_refuses_overwrite_and_proves_source_identity` | Two equivalent CLI runs with distinct temp output names plus attempted overwrite of first; source hashes across 11 files. | Identical JSON content byte-for-byte, second output created, overwrite rejected, source SHA and prior-art link present, no physical timing claim. |
 
 **Prior art:** reference the new M07 comparability ledger for YANA, SENECA, HiAER-Spike. Shared event-driven ideas and on-chip residency analogies are NOT matched neural numerics, state layout, hardware service interval or energy. The default grid's N128 workload is not YANA's published KR260 test configuration. No YANA code was used.
