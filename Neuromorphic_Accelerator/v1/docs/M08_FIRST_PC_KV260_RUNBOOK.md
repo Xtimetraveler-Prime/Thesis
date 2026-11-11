@@ -2,6 +2,24 @@
 
 > **CURRENT 2026-11-11:** **M08.2a OFFLINE IDENTITY PS→PL BLOCK-DESIGN ACCEPTED**, after five immutable failures, sixth genuine Vivado 2025.2 `validate_bd_design` PASS, and seventh original independent auditor receipt PASS `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T074810Z_XlzGwf`. The seventh audit JSON's SHA matches the seventh `05_evidence_sha256.txt` entry; the readback/export digests match the previously reviewed sixth originals. [Accepted scoped review](M08_2_IDENTITY_BD_SCOPED_ACCEPTANCE_2026_11_11.md). **Do not rerun or modify the seven original M08.2 evidence folders for this already-accepted gate.** The broader M08.2b routed neural/DDR design remains OPEN; `0xa0000000` is a design-level aperture, NOT an authenticated Linux address. **M08.3.1 safe read-only DMA/Linux readiness source development started; see [board-local DMA observation runbook](M08_3_DMA_READINESS_RUNBOOK.md).** Do not infer any physical implementation, bitstream, MMIO, DDR ownership or neural inference from offline BD validation.
 
+### M08.2b.1 current source-only signed16 one-page hardware checkpoint (NO board commands)
+
+The previously accepted M08.2a genuine Vivado identity BD is frozen. The **new** M08.2b.1 `rtl/m08/m08_host_staged_page_bank.sv` is a first-party **256-byte** host-load/compute state page for 16 M06 signed16 neuron records. It is deliberately not Loihi's full-context signed24 VIO memory system. Its first-party Icarus testbench requires complete host readback coverage before dispatch, complete dirty readback before host save, and checks the actual M06 signed16 neuron-step lane. [Engineering and physical integration roadmap](M08_2B_1_SIGNED16_HOST_STAGING_RTL_2026_11_11.md).
+
+**Run on the Linux development PC from the exact pulled branch HEAD, not on the KV260 board:**
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+command -v iverilog
+command -v vvp
+python3 -m unittest discover -s tests -p 'test_m08_host_staged_page_rtl.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -v
+~~~
+
+If Icarus is unavailable, **do not count the skipped HDL test as a PASS**. The original GitHub Actions M08/M05/M06 first attempts encountered Ubuntu apt/DNS resolution failures while installing Icarus and consequently did not run the HDL tests; [exact vendor-run-independent failure ledger and direct Icarus compile](M08_TESTS_EXPLAINED.md). No owner physical deployment or additional native Vivado project has been requested for this source checkpoint. The next genuine K26 integration step will be a separately reviewed PS AXI4-Lite write/read adapter and new native BD, not a re-run or alteration of old original evidence.
+
 ### Historical failures — optional read-only inspection, no reruns
 
 ~~~bash
