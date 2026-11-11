@@ -52,3 +52,22 @@ Owner independently sourced Vivado/Vitis 2025.2 but used real `/usr/bin/iverilog
 **Narrow correction, not an accepted physical result:** `tb_m08_host_staged_page_bank.sv` now drives compute read/write requests until an explicit ACK is observed, bounded by **eight clock edges**; checks received data on the ACK edge, fails fast on poison/idle, and emits separate `M08_PAGE_COMPUTE_READ_REJECTED`, `M08_PAGE_COMPUTE_BAD_DATA`, `M08_PAGE_COMPUTE_READ_TIMEOUT`, `M08_PAGE_COMPUTE_WRITE_REJECTED`, or `M08_PAGE_COMPUTE_WRITE_TIMEOUT` diagnostics (including DUT request/phase/armed/memory values where useful). The Python source regression requires these conditions to be present. This change intentionally does **not** relax expected signed16 voltage/page byte values, ignore a corrupt read, accept an unknown ACK, or change the M08.2b.1 RTL or accepted M06 lane.
 
 **Next acceptance:** Owner must rerun the **exact new HEAD** using original direct `iverilog -g2012 -s tb_m08_host_staged_page_bank` compile and `vvp` (not a mocked source test). A passing run must print all expected positive and negative markers. If it fails, preserve the new precise fatal line; that discriminates an actual compute-port/arbitration failure from testbench timing. The CI infrastructure has independently shown intermittent apt/DNS failures when trying to install Icarus; GitHub queued status is **not** an RTL PASS. Do not proceed to PS AXI4-Lite/Vivado placement/board operation until this particular test passes.
+
+## Root cause established from owner second genuine Icarus run (2026-11-11)
+
+**Second owner-original Icarus failure (supersedes the earlier ambiguous error):** `FATAL: rtl/m08/tb_m08_host_staged_page_bank.sv:167: M08_PAGE_COMPUTE_BAD_DATA actual=00000000 expected=55550004 word=0 phase=3` at time `2686000`, inside `compute_read`. The request was **acknowledged** while the page was in state `RUNNING`; the correct first word had already passed full host readback. That makes an absent ACK or a slow testbench handshake the **wrong** explanation.
+
+**Definitive first-party RTL defect:** the original `m08_host_staged_page_bank.sv` RUNNING branch wrote:
+~~~systemverilog
+if (compute_write)
+    for (i=0;i<4;i=i+1)
+        if (compute_wstrb[i])
+            words[compute_word][8*i +: 8] <= compute_wdata[8*i +: 8];
+else compute_rdata <= words[compute_word];
+compute_ack <= 1'b1;
+~~~
+In Verilog the `else` pairs with the **nearest unmatched inner if (`compute_wstrb[i]`)**, not `if (compute_write)`. Therefore `compute_write=0` skips the entire `if` statement, never assigns `compute_rdata`, but still produces `compute_ack`. `compute_rdata` remains reset-zero. This directly accounts for the owner-observed `ack=1, actual=0` read at phase 3.
+
+**Narrow source repair:** add explicit `begin/end` blocks to the outer `if (compute_write)`, the for-loop/body, and its correct outer `else`. No change to M06 signed16 arithmetic, expected data, memory layout, byte strobe, ownership policy, or hardware claim. The RTL testbench now reads word 0, word 1, word 63 and word 0 again; checks the signed16 result is written with only low two strobes; then reads word 0 **and** word 1 from the compute port after the write. The Python test additionally requires the explicit outer begin/else pattern to prevent the dangling-else regression.
+
+**Verification boundary:** source review identifies and repairs the logic error, but **actual post-fix Icarus execution is still required** before the M08.2b.1 HDL gate may close. GitHub Actions runner package-install access has been unreliable; queued CI is neither PASS nor proof of RTL. Owner should pull the new exact SHA, run the same direct `iverilog`/`vvp` command, retain outputs, and then run targeted M08 and inherited tests. No vendor BD, routed implementation, bitstream, Linux MMIO, physical DDR or KV260 execution is implied.
