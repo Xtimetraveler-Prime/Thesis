@@ -137,7 +137,7 @@ probe fan_pwm_sysfs sh -c '
   fi
 '
 probe packaging_tools sh -c '
-  for cmd in dtc bootgen python3 xmutil fpgautil; do
+  for cmd in dtc python3 xmutil fpgautil; do
     command -v "$cmd" || :
   done
   if command -v dtc >/dev/null 2>&1; then dtc --version; fi
