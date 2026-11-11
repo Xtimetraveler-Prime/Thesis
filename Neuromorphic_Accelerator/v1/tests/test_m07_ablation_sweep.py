@@ -201,6 +201,40 @@ class M07AblationTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, "input mapping"):
                 run_ablation(plan(resident_budgets_bytes=(128,)))
 
+    def test_yana_published_1024_neuron_capacity_overlap_is_not_hardware_equivalence(self):
+        # YANA arXiv:2604.03432v1 reports 2^10 neurons per core, but this
+        # exercises only the SAME LOGICAL COUNT in our M02/M03/M06 software.
+        # 16 KiB canonical state cannot fit our declared 2048 B onchip gate.
+        p = AblationPlan(
+            neuron_count=1024, active_roles=16, ticks=4,
+            fanout_per_active=2, external_events_per_tick=4,
+            seeds=(17,), block_sizes_neurons=(8, 16),
+            resident_budgets_bytes=(256,),
+            onchip_state_capacity_bytes=2048,
+        )
+        result = run_ablation(p)
+        self.assertEqual(result["num_parameter_combinations"], 2)
+        self.assertEqual(result["num_policy_locality_four_way_rows"], 32)
+        self.assertFalse(result["performance_or_yana_equivalence_claim"])
+        self.assertFalse(result["physical_hardware_measured"])
+        for row in result["rows"]:
+            self.assertEqual(row["resident_budget_bytes"], 256)
+            self.assertEqual(row["page_bytes"]*row["resident_slots"], 256)
+            self.assertEqual(
+                row["localities"]["clustered"]["work"],
+                row["localities"]["dispersed"]["work"])
+            for loc in ("clustered", "dispersed"):
+                for policy in ("direct", "lru"):
+                    four = row["localities"][loc]["controls"][policy]
+                    self.assertFalse(four["timestep/onchip"]["available"])
+                    self.assertFalse(four["event/onchip"]["available"])
+                    self.assertIsNone(
+                        four["timestep/onchip"]["state_transfer_bytes"])
+                    self.assertTrue(four["event/ddr"]["available"])
+                    self.assertTrue(four["event/ddr"]["functional_parity_verified"])
+                    self.assertIsNone(four["event/ddr"]["service_cycles"])
+                    self.assertIsNone(four["event/ddr"]["physical_ddr_bytes"])
+
     def test_cli_is_byte_reproducible_refuses_overwrite_and_proves_source_identity(self):
         cmd = [sys.executable, str(ROOT / "scripts/m07_ablation.py"),
                "--neurons", "32", "--active-roles", "8", "--ticks", "6",
