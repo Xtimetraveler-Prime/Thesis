@@ -42,3 +42,35 @@ No owner board measurements are available yet; that absence should be shown as *
 The first genuinely useful owner deliverable is a **PC-host** preflight receipt with the original M06 ZIP digest matches and, if the board boots, a **separate board-local** receipt. Capture a serial boot log if the KV260 never reaches a usable Linux shell. These observations determine whether to pursue the current on-device Linux/driver path or a recovery/isolated boot plan.
 
 Physical M08 acceptance requires future separately documented tests: signed neural trace parity, fail-closed fault behavior, actual DDR read/write and W-before-R ordering, real FIFO/backpressure, timing boundaries, routed utilization, and repeatable independent runs. A synthetic CI fixture must never be used for that acceptance.
+
+## M08.2 standalone PL identity — preliminary original RTL (NOT yet a PS/PL bitstream)
+
+**Modules:** `rtl/m08/m08_axil_readonly_identity.v`, `rtl/m08/tb_m08_axil_readonly_identity.sv`, `src/neuromorphic_accelerator_v1/m08_identity_client.py`. Tests: `tests/test_m08_identity_rtl.py` and `tests/test_m08_identity_client.py`.
+
+Why this step: before deploying the original M05/M06 compute/DDR paths, a **side-effect-free** PL identity slave can distinguish “the PS can read my actual PL address decode” from “a Vivado bitstream was accepted” or “the neural engine ran.” It never constructs a user-space `/dev/mem` mapping or generates any DMA transaction. It is an independently developed local-first-party Verilog candidate; not a sourced original AMD/HLS model or a physical K26 project.
+
+**Register map** (32-bit little-endian AXI4-Lite word offsets; must later be assigned an independently audited, non-overlapping PS address):
+| Offset | Read result | Write behavior |
+| --- | --- | --- |
+| 0x00 | `0x4D303831` ASCII "M081" | SLVERR |
+| 0x04 | `0x00010000` protocol version v1.0 | SLVERR |
+| 0x08 | `0x00000000` this slave has **no DMA/master capability** | SLVERR |
+| 0x0c | zero reserved | SLVERR |
+| 0x10–0x1c | four 32-bit parameterized BUILD_ID words, default all zero | SLVERR |
+| others / unaligned | `RDATA=0`, AXI4-Lite DECERR | SLVERR |
+
+On any accepted AW/W pair, including AW before W or W before AW, exactly one SLVERR B reply is generated and held under BREADY backpressure. No register write side effect exists. Read response and data stay stable while RREADY is low. Reset drops pending half-writes/outputs. Unknown read offsets do **not** alias a control register. The four build ID words must be set from a real verified deployment build later; zero defaults prohibit a false “this bitstream is certified” conclusion.
+
+**Host client:** `inspect_identity(adapter)` takes a caller-supplied `read32(offset)` interface, never allocates MMIO or chooses a physical address. It reads the entire map twice, rejects unknown magic/protocol/unknown capabilities, changed reads and a zero build tag by default. Even a consistent nonzero build tag returns `actual_bitstream_sha_verified=false`, `physically_attested=false`, `dma_buffer_owner_verified=false`. Only the independently SHA-verified routed bitstream and external board/driver evidence can change those downstream claims.
+
+| New test | Scope | Expectation |
+| --- | --- | --- |
+| `test_identity_module_has_no_dma_or_writable_effects` | Local static structural check | Separate read-only RTL has no AXI master and returns errors for every write/unknown read address. |
+| `test_real_iverilog_protocol_reset_and_backpressure` | **Real Icarus iverilog/vvp simulation** of new RTL and independent TB | Thirteen exact read cases (including fault addresses), three rejected AW/W ordering cases, stable R/B backpressure, reset drops stale AW, no DMA. A single `M08_AXIL_IDENTITY_STANDALONE_ICARUS_PASS` marker, zero compile warnings. Requires `iverilog` and `vvp` locally; M08 Actions CI installs them and demands actual PASS. |
+| `test_requires_two_stable_passes_and_nonzero_build_tag` | Mock read32 transport, no OS MMIO | Two identical snapshots, exact map/protocol, unsigned32 bounds and nonzero build tag. All physical attestation flags remain false. |
+| `test_reject_unknown_magic_version_caps_reserved_and_unprovisioned_tag` | Mock unknown and malformed register maps | Fail closed instead of guessing software/RTL compatibility; optional zero tag explicitly remains untrusted. |
+| `test_reject_unstable_response_or_bad_integer_range` | Inconsistent/invalid read values | Refuse stale or corrupted MMIO data before any device command. |
+| `test_read_failure_has_no_write_operation` | Adapter raises OSError | Throw tagged protocol error; never issue a write. |
+| `test_readonly_client_has_no_devmem_backend` | Source API inspection | There is no direct /dev/mem mmap nor outbound MMIO writes in this module. |
+
+**Acceptance boundary:** Icarus PASS shows this *standalone first-party slave* is self-consistent. It is NOT an actual KV260 PS-PL MMIO test, a real AXI interconnect/SmartConnect simulation, a PS Linux memory driver, routed timing closure, or on-chip/DDR neural inference. The next hardware-required step is to add this probe to an actual observed KV260 project, provide an independently verified real FPGA address map, program the verified built bitstream, and read it via a known kernel-approved MMIO interface. No fabricated base address is specified here.
