@@ -172,3 +172,23 @@ New `tests/test_m08_host_page_ownership.py` exercises: three logical software-ba
 The M08.2a PS→read-only identity BD was genuinely validated in Vivado, but it did not allow writable page loading or signed16 neural state access. M08.2b.1 adds `rtl/m08/m08_host_staged_page_bank.sv` (64×32-bit, 256 bytes, 16 M06 neuron records). The **real RTL** is tested by `rtl/m08/tb_m08_host_staged_page_bank.sv` / `tests/test_m08_host_staged_page_rtl.py` with Icarus, alongside original `rtl/m06/m06_lif16_neuron_step.sv`. The positive test fills/reads all 64 words, runs a signed16 voltage update with partial strobes, reads **all 64** updated dirty-state words (separate hardware bitmap), acknowledges host save, and safely loads a new logical page. Negative tests exercise partial fill, fully loaded-but-not-read-back false completion, dirty save without full dirty readback, dirty eviction, host/compute conflict, wrong page tag and sticky external fault.
 
 The test uses source-level host signals and an independent testbench backing word; `host_readback_verified` and `host_save_done` are **externally asserted**, so the RTL does not prove actual host readback or durable backing storage. Real AXI4-Lite backpressure, PS clock/reset, 32-bit PS access, full HLS state updates, synthesized timing, board programming, Linux MMIO and physical DDR remain **unverified** until later original vendor/owner evidence. [Implementation and next native test gates](M08_2B_1_SIGNED16_HOST_STAGING_RTL_2026_11_11.md).
+
+## M08.2b.1 GitHub Actions infrastructure fault (2026-11-11)
+
+The first new one-page staging RTL workflow attempt on source SHA `d49a7dbbeb842c195ad8fc593b08ee13bd205cd6` did **not** reach Icarus: GitHub Actions M08 run **43050505833** failed in the step **“Install local Icarus for the standalone M08 PL identity RTL”** with `Temporary failure resolving 'security.ubuntu.com'` and `E: Failed to fetch ... iverilog_12.0-3_amd64v3.deb` (apt exit 100). This is an **external apt/DNS outage**, not a Verilog syntax error or failed HDL assertion. Separate inherited M05 run **43050506104** and M06 run **43050506045** failed for the **same** package-download reason; M01–M04 and M07 source CI on that SHA succeeded. The history is preserved in the original GitHub Actions logs. A re-run of the original M08 failed job was requested for infra diagnosis; later exact-HEAD CI still needs independent verification.
+
+**Consequence:** neither original failed attempt nor a source-only regression can be presented as a new clocked RTL PASS. On a developer PC with `iverilog` and `vvp` already present, run the explicit standalone Icarus compile/sim below (the Python test will SKIP if no Icarus exists). A complete acceptance requires actual runtime marker output and subsequently 8/8 final-SHA Actions when package fetching becomes available again. Do **not** suppress the RTL job, downgrade the Icarus requirement, silently accept skipped tests or misstate a runner DNS fault as an FPGA design failure.
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+command -v iverilog
+command -v vvp
+TMP="$(mktemp -d)"
+iverilog -g2012 -s tb_m08_host_staged_page_bank -o "$TMP/m08_page.vvp" \
+    rtl/m08/m08_host_staged_page_bank.sv \
+    rtl/m06/m06_lif16_neuron_step.sv \
+    rtl/m08/tb_m08_host_staged_page_bank.sv
+vvp "$TMP/m08_page.vvp"
+python3 -m unittest discover -s tests -p 'test_m08_host_staged_page_rtl.py' -v
+# Preserve TMP or remove only this new disposable compile scratch folder.
+~~~
