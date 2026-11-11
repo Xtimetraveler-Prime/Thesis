@@ -29,11 +29,6 @@ set version [version -short]
 if {![string match "2025.2*" $version]} {
     error "M08 requires genuine Vivado 2025.2, got '$version'"
 }
-foreach vlnv [list $ps_vlnv $sc_vlnv $rst_vlnv $inv_vlnv $const_vlnv] {
-    if {[llength [get_ipdefs -all -quiet $vlnv]] != 1} {
-        error "M08 genuine AMD Vivado IP not available: $vlnv"
-    }
-}
 set project_dir [file join $evidence project]
 if {[file exists $project_dir]} {
     error "M08 will not overwrite any existing Vivado project"
@@ -42,6 +37,13 @@ create_project m08_identity_ps $project_dir -part $expected_part
 set_property source_mgmt_mode All [current_project]
 if {[get_property PART [current_project]] ne $expected_part} {
     error "M08 K26 Vivado part mismatch"
+}
+# Vivado 2025.2 get_ipdefs requires an open project. Preserve the strict
+# first-party AMD IP check, but run it only after create_project succeeds.
+foreach vlnv [list $ps_vlnv $sc_vlnv $rst_vlnv $inv_vlnv $const_vlnv] {
+    if {[llength [get_ipdefs -all -quiet $vlnv]] != 1} {
+        error "M08 genuine AMD Vivado IP not available: $vlnv"
+    }
 }
 add_files -norecurse $source
 update_compile_order -fileset sources_1
