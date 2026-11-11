@@ -106,6 +106,10 @@ class M08PageNativeBDCandidateTests(unittest.TestCase):
                         tcl.index("CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100"))
         self.assertLess(tcl.index("validate_bd_design -force"),
                         tcl.index("M08_PAGE_BD_DISTINCT_ID_AND_PAGE_4K_ADDRESS_SEGMENTS=1"))
+        # Vivado get_property NAME returns only "S_AXI"/"reg0" for each
+        # cell; original report must preserve full cell-qualified paths.
+        self.assertIn('"SLAVE_IDENTITY|$slave|[lindex $slave_segments 0]"', tcl)
+        self.assertIn('"SLAVE_PAGE|$page_slave|[lindex $page_segments 0]"', tcl)
         self.assertIn("module m08_ps_page_safe_shell", shell)
         self.assertIn("ENABLE_COMPUTE(1'b0)", shell)
         self.assertIn("parameter ENABLE_COMPUTE = 1'b1", adapter)
