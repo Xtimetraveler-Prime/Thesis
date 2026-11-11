@@ -1,4 +1,4 @@
-name: Neuromorphic Accelerator v1 M07.1 cache-policy baselines (NO BOARD)
+name: Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy and matched controls (NO BOARD)
 on:
   push:
     paths:
@@ -33,6 +33,36 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m02*.py' -v
           python3 -m unittest discover -s tests -p 'test_m03*.py' -v
           python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+      - name: Full v1 discovery regression (includes M05/M06 import-order safety)
+        run: python3 -m unittest discover -s tests -v
+      - name: M07.2 matched 2-locality x 2-policy x 4-control report (NO BOARD)
+        run: |
+          python3 scripts/m07_four_way.py --output "$RUNNER_TEMP/m07_four_way_source_only.json"
+          python3 - "$RUNNER_TEMP/m07_four_way_source_only.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              report=json.load(f)
+          assert report["matched_neural_work_confirmed"] is True
+          assert report["physical_hardware_measured"] is False
+          for locality in ("clustered","dispersed"):
+              for policy in ("direct","lru"):
+                  case=report["results_by_locality"][locality]
+                  assert case["vendor_hls_amd_executed"] is False
+                  controls=case["controls_by_policy"][policy]
+                  assert set(controls)=={"timestep/onchip","event/onchip",
+                                        "timestep/ddr","event/ddr"}
+                  for mode in controls:
+                      assert controls[mode]["functional_parity_verified"]
+                      assert controls[mode]["model_timing_cycles"] is None
+                  assert controls["event/ddr"]["state_execution_source"]=="M06_PAGED_EXACT_LIF"
+                  assert controls["timestep/ddr"]["state_execution_source"]=="M02_ORACLE_GUIDED_STATE_MOVEMENT"
+                  print("M07_2_MODEL_ONLY", locality, policy,
+                        "event_state_bytes=",
+                        controls["event/ddr"]["state_read_bytes"]+
+                        controls["event/ddr"]["state_write_bytes"],
+                        "synapse_analytic_bytes=",
+                        controls["event/ddr"]["synapse_read_bytes_m03_estimate"])
+          PY
       - name: Synthetic 4-case locality x policy report (NOT AXI OR PHYSICAL DDR)
         run: |
           python3 scripts/m07_cache_baseline.py --output "$RUNNER_TEMP/m07_cache_baseline_source_only.json"
@@ -53,10 +83,12 @@ jobs:
               print("M07_SOURCE_ONLY",loc,"direct_bytes",direct["state_transfer_bytes"],
                     "lru_bytes",lru["state_transfer_bytes"])
           PY
-      - name: Preserve source-only M07 policy artifact (NOT HARDWARE EVIDENCE)
+      - name: Preserve source-only M07.1/M07.2 models (NOT HARDWARE EVIDENCE)
         uses: actions/upload-artifact@v4
         with:
-          name: m07-1-model-only-direct-vs-lru
-          path: ${{ runner.temp }}/m07_cache_baseline_source_only.json
+          name: m07-2-model-only-matched-four-way
+          path: |
+            ${{ runner.temp }}/m07_cache_baseline_source_only.json
+            ${{ runner.temp }}/m07_four_way_source_only.json
           if-no-files-found: error
           retention-days: 30
