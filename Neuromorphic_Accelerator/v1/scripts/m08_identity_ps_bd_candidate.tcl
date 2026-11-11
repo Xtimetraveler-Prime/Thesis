@@ -157,7 +157,7 @@ set lines [list \
     "META|ps_linux_memory_driver|NOT_CONNECTED" \
     "META|physical_ddr|NOT_ACCESSED" \
     "META|physical_kv260|NOT_PROGRAMMED"]
-set o [open $report "x"]
+set o [open $report {WRONLY CREAT EXCL}]
 puts $o [join $lines "\n"]
 close $o
 puts "M08_IDENTITY_GENUINE_VIVADO_BD_VALIDATED_NO_BITSTREAM_NO_BOARD"
