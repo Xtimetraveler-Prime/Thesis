@@ -53,7 +53,7 @@ A successful capture prints `M08_READONLY_CAPTURE_RECORDED_NOT_BOARD_ACCEPTANCE`
 uname -a
 cat /etc/os-release
 cat /proc/cmdline
-tr '\\000' '\\n' < /proc/device-tree/model
+tr '\000' '\n' < /proc/device-tree/model
 cat /proc/meminfo | head -40
 ls -ld /sys/class/fpga_manager 2>/dev/null || true
 ~~~
