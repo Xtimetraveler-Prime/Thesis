@@ -79,9 +79,11 @@ class M08BDCandidateTests(unittest.TestCase):
         self.assertEqual(proc.returncode,0,proc.stderr)
 
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
-    def test_unused_lpd_is_disabled_with_readback_before_bd_wiring(self):
+    def test_unused_lpd_and_ps_clock_readbacks_before_bd_wiring(self):
         # The owner's genuine Vivado log reported BD 41-2670 and 41-758
         # from M_AXI_HPM0_LPD/maxihpm0_lpd_aclk despite FPD HPM0 wiring.
+        # The next genuine run emitted BD 41-237/238, as PS PL0 delivered
+        # 96968727 Hz while first-party AXI metadata declared 100000000 Hz.
         # Tcl mocks model only parameter negotiation and rejection, not
         # genuine AMD IP initialization or validate_bd_design.
         script=ROOT/"scripts/m08_identity_ps_bd_candidate.tcl"
@@ -90,10 +92,11 @@ class M08BDCandidateTests(unittest.TestCase):
 set argv [list {__ROOT__} {__EVIDENCE__}]
 set ::project_open 0
 set ::refuse_disable __REFUSE_DISABLE__
+set ::actual_ps_clock_hz __PS_CLOCK_HZ__
 set ::ip_checks 0
 set ::lpd_interface_lookups 0
 set ::lpd_clock_lookups 0
-array set ::pscfg {CONFIG.PSU__USE__M_AXI_GP0 0 CONFIG.PSU__USE__M_AXI_GP2 1 CONFIG.PSU__MAXIGP0__DATA_WIDTH 128}
+array set ::pscfg {CONFIG.PSU__USE__M_AXI_GP0 0 CONFIG.PSU__USE__M_AXI_GP2 1 CONFIG.PSU__FPGA_PL0_ENABLE 0 CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 96.968727 CONFIG.PSU__MAXIGP0__DATA_WIDTH 128}
 proc version {opt} {return 2025.2}
 proc create_project {args} {set ::project_open 1}
 proc current_project {} {return mocked_project}
@@ -110,6 +113,9 @@ proc set_property {args} {
 proc get_property {name obj} {
     if {$name eq "PART"} {return xck26-sfvc784-2LV-c}
     if {$name eq "MODE" && $obj eq "ps/M_AXI_HPM0_FPD"} {return MASTER}
+    if {$name eq "CONFIG.FREQ_HZ" && $obj eq "ps/pl_clk0"} {
+        return $::actual_ps_clock_hz
+    }
     if {[info exists ::pscfg($name)]} {return $::pscfg($name)}
     error "unexpected property $name"
 }
@@ -132,6 +138,7 @@ proc get_bd_intf_pins {args} {
 }
 proc get_bd_pins {args} {
     set name [lindex $args end]
+    if {$name eq "ps/pl_clk0"} {return [list $name]}
     if {$name eq "ps/maxihpm0_lpd_aclk"} {
         incr ::lpd_clock_lookups
         if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP2) eq "1"} {return [list $name]}
@@ -143,6 +150,9 @@ proc create_bd_cell {args} {
         if {$::ip_checks != 5 ||
             $::pscfg(CONFIG.PSU__USE__M_AXI_GP0) ne "1" ||
             $::pscfg(CONFIG.PSU__USE__M_AXI_GP2) ne "0" ||
+            $::pscfg(CONFIG.PSU__FPGA_PL0_ENABLE) ne "1" ||
+            $::pscfg(CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ) ne "100" ||
+            $::actual_ps_clock_hz != 100000000 ||
             $::lpd_interface_lookups != 1 ||
             $::lpd_clock_lookups != 1} {
             error "missing explicit PS-only-FPD guard or probe"
@@ -158,13 +168,17 @@ if {[catch {source {__SCRIPT__}} err]} {
 }
 error "Tcl missed identity-cell stop"
 """
-            for refuse_disable in (False,True):
-                with self.subTest(refuse_disable=refuse_disable):
+            cases=((False,100000000), (True,100000000),
+                   (False,96968727))
+            for refuse_disable, clock_hz in cases:
+                with self.subTest(refuse_disable=refuse_disable,
+                                  actual_ps_clock_hz=clock_hz):
                     t=(harness.replace("__ROOT__",str(ROOT))
                               .replace("__EVIDENCE__",td)
                               .replace("__SCRIPT__",str(script))
                               .replace("__REFUSE_DISABLE__",
-                                       "1" if refuse_disable else "0"))
+                                       "1" if refuse_disable else "0")
+                              .replace("__PS_CLOCK_HZ__",str(clock_hz)))
                     proc=subprocess.run(["tclsh"],input=t,
                                         capture_output=True,text=True)
                     if refuse_disable:
@@ -172,10 +186,32 @@ error "Tcl missed identity-cell stop"
                         self.assertIn(
                             "M08 unused PS HPM0 LPD master could not be disabled",
                             proc.stderr)
+                    elif clock_hz != 100000000:
+                        self.assertNotEqual(proc.returncode,0)
+                        self.assertIn(
+                            "M08 PS PL0 actual FREQ_HZ mismatch:",proc.stderr)
+                        self.assertIn("96968727",proc.stderr)
+                        self.assertNotIn(
+                            "M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS",proc.stdout)
                     else:
                         self.assertEqual(proc.returncode,0,proc.stdout+proc.stderr)
                         self.assertIn(
+                            "M08_GENUINE_PS_PL0_CLOCK_HZ=100000000",proc.stdout)
+                        self.assertIn(
                             "M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS",proc.stdout)
+
+    def test_explicit_ps_pl0_clock_request_preserves_fpd_only_topology(self):
+        tcl=(ROOT/"scripts/m08_identity_ps_bd_candidate.tcl").read_text()
+        # Based on the accepted Loihi v2 P03/P04/P05/P08 PS clock setup;
+        # no broad board preset or physical DDR is imported.
+        self.assertIn("CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100",tcl)
+        self.assertIn("CONFIG.PSU__FPGA_PL0_ENABLE 1",tcl)
+        self.assertIn("get_property CONFIG.FREQ_HZ [pin_required ps/pl_clk0]",tcl)
+        self.assertIn("M08 PS PL0 actual FREQ_HZ mismatch:",tcl)
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP0 1",tcl)
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP2 0",tcl)
+        self.assertNotIn("apply_board_preset",tcl)
+        self.assertNotIn("write_bitstream",tcl)
 
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
     def test_ip_catalog_query_occurs_only_after_open_project(self):
