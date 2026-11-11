@@ -217,7 +217,7 @@ class M08BitstreamReleaseTests(unittest.TestCase):
                         '  exit 8\\n'
                         '}\\n'
                         'error "fake Tcl did not reach guarded clock query"\\n'
-                    ).replace("\\\\n", "\\n")
+                    ).replace("\\n", "\n")
                     proc=subprocess.run(["tclsh"],input=code,text=True,
                                         capture_output=True,timeout=30)
                     self.assertEqual(proc.returncode,0,
