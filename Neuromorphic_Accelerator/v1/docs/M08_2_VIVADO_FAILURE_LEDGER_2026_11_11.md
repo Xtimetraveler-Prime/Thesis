@@ -1,0 +1,39 @@
+# M08.2 — genuine owner Vivado 2025.2 failure ledger and fifth-run corrective work
+
+**Updated:** 2026-11-11 America/Denver. **Scope:** isolated **offline** KV260 PS FPD HPM0 → one AMD SmartConnect → first-party read-only AXI4-Lite identity slave. Not Loihi v2 hardware, bitstream, Linux MMIO, DDR, DMA, neural inference or a completed physical M08.2 integration gate. All original owner evidence folders are immutable and never overwritten by the runner.
+
+## 1. Chronological original vendor evidence
+
+| Original owner run | Original evidence directory under `/home/dna/Thesis_Evidence/M08/` | First demonstrated failure / progress | Disposition |
+| --- | --- | --- | --- |
+| 1 — 2026-11-10 22:56 MST | `m08_2_identity_bd_20261111T055614Z_B7OyfZ` | `[Common 17-53]` `get_ipdefs` before opening a project. | Exit 1. Corrected Tcl: create project and check part before all five AMD IP catalog lookups. |
+| 2 — 2026-11-10 23:22 MST | `m08_2_identity_bd_20261111T062256Z_MakfLD` | Real project/IP/AXI inference/one `0xA0000000 [4K]` identity aperture reached; `[BD 41-2670]` incomplete unused `M_AXI_HPM0_LPD` path and first fatal `[BD 41-758]` unclocked `maxihpm0_lpd_aclk`. | Exit 1. Explicitly disabled unused `CONFIG.PSU__USE__M_AXI_GP2`, retained FPD HPM0, guarded both interface and clock. |
+| 3 — 2026-11-10 23:35 MST | `m08_2_identity_bd_20261111T063515Z_xsLGAr` | Previous LPD failure absent; `validate_bd_design` raised SmartConnect critical clock warning and `[BD 41-237]`/`[BD 41-238]`: fixed RTL clock `100000000` vs real PS `96968727` Hz. | Exit 1. Requested 100 MHz `CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ`, verified actual PS pin; request alone insufficient. |
+| 4 — 2026-11-10 23:47 MST | `m08_2_identity_bd_20261111T064757Z_DFdwwi` | Request read back as 100 MHz, but PS `pl_clk0` actual pin still `96968727` Hz. Early fail-closed check triggered **before** identity/SmartConnect creation or BD validation. | Exit 1. Consulted accepted real routed Loihi P03/P04/P05/P08; added real KV260 `BOARD_PART` and `apply_bd_automation ... apply_board_preset "1"` **before** FPD-only/clock overrides. |
+| 5 — 2026-11-11 00:01 MST | `m08_2_identity_bd_20261111T070108Z_rjtaLq` | Genuine KV260 board part `xilinx.com:kv260_som:part0:1.4` selected; PS board preset successfully applied. **Actual** `ps/pl_clk0=99999001` Hz (999 Hz below 100 MHz); previous `96968727` mismatch substantially resolved. Old Tcl required exact 100000000 and threw early at line 122. | Exit 1. **No `validate_bd_design` on this fifth run.** Source change below must receive one new actual vendor test. |
+
+All **five** `result.txt` reported `exit_status=1`. On each original run where uploaded, the four-file `source_sha256_before.txt` and `source_sha256_after.txt` matched exactly; the owner independently verified the fourth and newer runs with `sha256sum -c`. The fifth manifest identifies original `scripts/m08_identity_ps_bd_candidate.tcl` SHA-256 `0f789a11f7b248ee4263231b1eb4c7d535bf74e57630a38a1180aee754d6146c`, original `rtl/m08/m08_axil_readonly_identity.v` SHA-256 `2262a606115f559bdab1614a79e6d42e791e81861a988726a40923904e31f876`. These are **historical**, not hashes for subsequent fixed source.
+
+## 2. Source precedence and how Loihi helped
+
+The accepted, separately routed **Loihi Digital Twin v2** K26 projects in `Loihi_Digital_Twin/v2/vivado/create_p03_impl_project.tcl`, `create_p04_impl_project.tcl`, `create_p05_impl_project.tcl`, and `create_p08_impl_project.tcl` select the KV260 SOM board part, apply the genuine AMD PS board preset, then configure `PSU__FPGA_PL0_ENABLE` and `PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100`. This **directly motivated** run-5's improvement to 99,999,001 Hz; it does **not** validate M08's AXI identity BD or import Loihi's HLS, physical packet routing, XPM memories or DDR access.
+
+AMD UG994 also distinguishes **output** clock frequency metadata, for which `FREQ_HZ` is needed, from **input** clock metadata (e.g. the M08 peripheral's `aclk`), which need not declare a fixed `FREQ_HZ`. See `https://docs.amd.com/r/en-US/ug994-vivado-ip-subsystems/Common-Internal-Bus-Interfaces` and `https://docs.amd.com/r/2022.1-English/ug994-vivado-ip-subsystems/Inferring-Control-Signals-in-a-RTL-Module`. `99,999,001` is Vivado **BD pin metadata**, not an oscilloscope measurement or routed timing.
+
+## 3. Sixth-run correction: bounded deviation PLUS real frequency propagation
+
+The fifth run fails only because our additional M08 pre-BD guard insists on **exactly** 100,000,000 Hz. A 999 Hz deviation is about **9.99 ppm**, not the 3,031,273 Hz discrepancy of the pre-board-preset failure.
+
+- Preserve the board part and AMD PS board-preset sequence, disable PS FPD HPM1 and LPD HPM0; require only FPD HPM0.
+- Preserve requested `100000000` Hz, permit actual PS PL0 only within `±1000` Hz. This narrow evidence-driven ceiling **rejects 96,968,727 Hz** and larger deviations, and is not a blanket tolerance for arbitrary clocks.
+- Remove `FREQ_HZ 100000000` from the **RTL input clock attribute only**, keeping `ASSOCIATED_BUSIF S_AXI`, `ASSOCIATED_RESET aresetn`, AXI4-Lite inference, side-effect-free reads and write SLVERR behavior unchanged. IP Integrator must determine the input frequency from the authoritative PS output, rather than facing contradictory hard-coded metadata.
+- After **genuine** `validate_bd_design -force`, **fail** if the actual PS `pl_clk0`, `identity/aclk`, `identity/S_AXI` and `ctrl_sc/M00_AXI` frequency metadata disagree. This is a physical topology/clock *configuration* check, not implementation timing.
+- Add `META|actual_clock_hz|...` to the genuine report, retain `META|requested_clock_hz|100000000`, and independently audit both the numeric bounded deviation and the genuine log's original PS/AXI propagation confirmations. Source-only tests must use clearly labeled synthetic fixtures and negative cases.
+
+**Current gate (until owner run):** vendor BD validation **FAILED/OPEN**. The source correction is a hypothesis tested without AMD IP/board; acceptance requires a **fresh sixth** owner-run original Vivado 2025.2 folder with `exit_status=0`, no errors/critical warnings, saved/exported BD, address/clock report and independent audit. New failures must be diagnosed from the **first** original message. Retain all five original folders.
+
+## 4. Verification and stop conditions
+
+From the existing M08 branch `agent/neuromorphic-accelerator-v1-m08-kv260-bringup`, after pulling exact-head source: run targeted `python3 -m unittest discover -s tests -p 'test_m08*.py' -v`, inherited `test_m07*.py`, full `python3 -m unittest discover -s tests -v`, `bash -n scripts/run_m08_identity_bd.sh`; confirm **eight M01–M08 GitHub Actions workflows SUCCESS on the same final SHA**. One owner new local `bash scripts/run_m08_identity_bd.sh` after `source /home/dna/Vivado/2025.2/Vivado/settings64.sh`. Inspect the new evidence directory only (never overwrite originals), `result.txt`, source SHA manifests, raw `01_vivado_identity_bd.log`, and if emitted: `02_vivado_identity_bd_readback.txt`, `03_identity_bd_export.tcl`, `04_m08_identity_independent_audit.json`.
+
+**Stop:** Do **not** produce a bitstream, XSA, PS MMIO, JTAG programming, DMA, real DDR access or neural/physical performance inference based on source tests or an unvalidated BD. Keep PR #83 open, draft and unmerged until owner evidence is reviewed.
