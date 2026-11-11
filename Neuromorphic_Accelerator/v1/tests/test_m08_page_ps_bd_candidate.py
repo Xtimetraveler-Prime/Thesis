@@ -125,6 +125,10 @@ class M08PageNativeBDCandidateTests(unittest.TestCase):
         # Verify a real Verilog-2001 .v wrapper is the ONLY added page top,
         # while accepting .sv child page-bank/adapter HDL below it.
         self.assertEqual(SHELL.suffix, ".v")
+        # Wrapper .v requirement applies to the *module-ref top only*:
+        # testbenches remain .sv and must never be glob-renamed as .v.
+        self.assertTrue((ROOT / "rtl/m08/tb_m08_ps_page_safe_shell.sv").is_file())
+        self.assertFalse((ROOT / "rtl/m08/tb_m08_ps_page_safe_shell.v").exists())
         self.assertFalse((ROOT / "rtl/m08/m08_ps_page_safe_shell.sv").exists())
         self.assertIn("rtl/m08/m08_ps_page_safe_shell.v", tcl)
         self.assertIn("rtl/m08/m08_ps_page_safe_shell.v", runner)
