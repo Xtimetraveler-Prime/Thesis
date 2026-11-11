@@ -139,6 +139,8 @@ jobs:
           assert data["physical_ddr_bytes"] is None
           assert len(data["source_sha256"])==10
           assert data["microtrace"]["models"]["activity_history"]["misses"] < data["microtrace"]["models"]["lru"]["misses"]
+          assert data["counterexample"]["models"]["activity_history"]["misses"] > data["counterexample"]["models"]["lru"]["misses"]
+          assert data["counterexample"]["identical_final_canonical_bytes"] is True
           outcomes=data["witnessed_outcomes"]
           assert sum(outcomes[key] for key in
                      ("history_lower_model_bytes","history_equal_model_bytes",
