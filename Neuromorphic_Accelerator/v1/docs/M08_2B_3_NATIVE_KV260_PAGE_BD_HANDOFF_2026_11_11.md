@@ -1,6 +1,21 @@
 # M08.2b.3 — genuine native KV260 PS→two-slave safe-page Vivado BD
 
-**Engineering status November 11, 2026:** New first-party *source* candidate, exclusive native-Vivado runner, independent original-evidence auditor and targeted negative tests implemented. **The owner has not run this new native PS→page BD on Vivado yet.** The original owner-accepted M08.2a identity-only native offline BD remains accepted, but it does **not** prove these new connections. The owner independently confirmed the previous M08.2b.2 AXI-Lite adapter's Icarus simulation and regressions PASS; M08.2b.2 is accepted in **source scope only**.
+**Engineering status November 11, 2026:** New first-party *source* candidate, exclusive native-Vivado runner, independent original-evidence auditor and targeted negative tests implemented. **The owner has performed one original native Vivado run; it FAILED at the unsupported .sv module-reference top before BD validation. A fresh post-fix run is required.** The original owner-accepted M08.2a identity-only native offline BD remains accepted, but it does **not** prove these new connections. The owner independently confirmed the previous M08.2b.2 AXI-Lite adapter's Icarus simulation and regressions PASS; M08.2b.2 is accepted in **source scope only**.
+
+## First original native Vivado attempt: module-reference top-file type rejection
+
+**Original owner attempt 1 (2026-11-11 10:10 local; preserved unchanged):**
+`/home/dna/Thesis_Evidence/M08/m08_2b_3_page_bd_20261111T171034Z_8UoMK5`, `result.txt=exit_status=1`. The owner provided the original terminal's extracted `01_vivado_page_bd.log` lines: actual installed KV260 board part `xilinx.com:kv260_som:part0:1.4`, applied PS preset, PS PL0 `99999001` Hz, deviation `999` Hz, and `WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.` The **first fatal** was:
+```text
+ERROR: [filemgmt 56-195] Reference 'm08_ps_page_safe_shell' contains top file '.../m08_ps_page_safe_shell.sv' of type SystemVerilog. This type is not allowed as the top file in the reference.
+ERROR: [BD 41-1690] Unable to resolve module-source based on inputs: m08_ps_page_safe_shell
+ERROR: [Common 17-39] 'create_bd_cell' failed due to earlier errors.
+```
+The owner also checked all **seven source SHA rows** against the checkout and all passed. Thus the run advanced through **accepted PS preset/clock boundary** but did **not** add the page cell or run `validate_bd_design -force`. No address map/export/independent-audit completion, routed bitstream or board transaction is established. AMD Vivado UG994 expressly limits IP Integrator **module-reference top-level definitions** to Verilog or VHDL (SystemVerilog source files can still be present as underlying children); see AMD `UG994 — Limitations of the Module Reference Feature`.
+
+**Narrow source correction, preserving the accepted memory protocol:** change the **outermost** `m08_ps_page_safe_shell` definition from `.sv` to strict Verilog-2001 `.v` with the same 21 Vivado AXI/clock/reset annotations and the same `ENABLE_COMPUTE=0` tie-off. Retain the child `m08_axil_page_control.sv` and `m08_host_staged_page_bank.sv` unchanged; do not convert their state arithmetic or alter AXI transactions. Remove the former `.sv` top to avoid a duplicate module name. Update the new Tcl four-source list, both runner SHA manifests, the auditor's exact source manifest/report path, the safe-shell testbench's source list and the operator commands. A regression now demands `.v` as the module-reference top and explicitly rejects the rejected `.sv` file.
+
+**Verification gate:** source tests and CI at the new SHA must run first, followed by **one fresh** native Vivado run in a **new exclusive directory**. This is a strongly evidence-supported correction to the specific vendor fatal, **not yet a proven actual Vivado BD pass**. Any subsequent error must be evaluated from its own new original log; preserve this first original failed folder exactly.
 
 ## Purpose, design and inheritance
 
