@@ -134,9 +134,13 @@ def review_reports(folder: Path) -> dict:
     nets = re.findall(
         r"m08_page_ps_i/ctrl_sc/inst/[A-Za-z0-9_./]+", detail
     )
-    if len(nets) != 15 or any(
+    # Vivado states "15 net(s)" but the human-readable summary lists
+    # only fourteen full net names in this original report, ending with
+    # a period. Keep both facts distinct; do NOT invent a fifteenth path.
+    nets = [net.rstrip(".") for net in nets]
+    if len(nets) not in (14, 15) or any(
         not net.endswith("mi_handler_m_sc_areset_pipe") for net in nets
-    ) or len(set(nets)) != 15:
+    ) or len(set(nets)) != len(nets):
         raise ValueError("unexpected SmartConnect RTSTAT-10 net origin")
     if "Checks found: 0" not in methodology or (
         "Design State : Fully Routed" not in methodology
@@ -161,6 +165,7 @@ def review_reports(folder: Path) -> dict:
         "drc_clean": False,
         "drc_warning": EXPECTED_WARNING,
         "drc_warning_nets": 15,
+        "drc_named_nets_in_report": len(nets),
         "drc_warning_origin": "SmartConnect internal reset pipeline ONLY",
         "methodology_violations": 0,
         "contains_m08_compute_engine": False,
