@@ -18,6 +18,9 @@ if {[file exists $report] || [file exists $design_export]} {
 }
 set expected_part xck26-sfvc784-2LV-c
 set requested_clock_hz 100000000
+# About 10 ppm: accepts 99,999,001 Hz observed on the real KV260 preset,
+# but still rejects the prior 96,968,727 Hz without a board preset.
+set maximum_clock_deviation_hz 1000
 set ps_vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5
 set sc_vlnv xilinx.com:ip:smartconnect:1.0
 set rst_vlnv xilinx.com:ip:proc_sys_reset:5.0
@@ -116,14 +119,20 @@ if {![string is double -strict $requested_ps_mhz] ||
     abs(double($requested_ps_mhz) - 100.0) > 0.000001} {
     error "M08 PS PL0 requested 100 MHz frequency was not accepted: '$requested_ps_mhz'"
 }
-# Check the actual source clock pin metadata before wiring the 100 MHz AXI
-# slave; merely requesting 100 MHz does not prove a compatible generated clock.
+# A request of 100 MHz does not guarantee exactly 100,000,000 Hz:
+# genuine KV260 board-preset Vivado 2025.2 emitted 99,999,001 Hz.
+# Limit the source deviation to 1,000 Hz (~10 ppm); NEVER relabel a
+# 96,968,727 Hz default as nominal 100 MHz, and never forge FREQ_HZ.
 set ps_clock_hz [string trim [get_property CONFIG.FREQ_HZ [pin_required ps/pl_clk0]]]
-if {![string is wideinteger -strict $ps_clock_hz] ||
-    [expr {$ps_clock_hz+0}] != $requested_clock_hz} {
-    error "M08 PS PL0 actual FREQ_HZ mismatch: expected $requested_clock_hz got '$ps_clock_hz'"
+if {![string is wideinteger -strict $ps_clock_hz]} {
+    error "M08 PS PL0 actual FREQ_HZ is not a valid integer: '$ps_clock_hz'"
+}
+set actual_clock_deviation_hz [expr {abs(($ps_clock_hz+0) - $requested_clock_hz)}]
+if {$actual_clock_deviation_hz > $maximum_clock_deviation_hz} {
+    error "M08 PS PL0 actual FREQ_HZ outside 1000 Hz budget: expected $requested_clock_hz got '$ps_clock_hz'"
 }
 puts "M08_GENUINE_PS_PL0_CLOCK_HZ=$ps_clock_hz"
+puts "M08_PS_PL0_CLOCK_DEVIATION_HZ=$actual_clock_deviation_hz"
 if {[llength [get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD]] != 0 ||
     [llength [get_bd_pins -quiet ps/maxihpm0_lpd_aclk]] != 0} {
     error "M08 unused PS HPM0 LPD interface/clock remains exposed"
@@ -185,6 +194,18 @@ if {[llength $space] != 1 || [llength $slave_segments] != 1} {
 # Vivado owns address selection; no fabricated physical Linux mmap base here.
 assign_bd_address -target_address_space $space [lindex $slave_segments 0]
 validate_bd_design -force
+# Do not accept a nominal-clock request alone: after genuine BD
+# parameter propagation the PS, AXI slave clock, S_AXI and SmartConnect
+# output must all report the SAME actual generated frequency.
+foreach endpoint [list [pin_required ps/pl_clk0] [pin_required identity/aclk] \
+                       [intf_required identity/S_AXI] [intf_required ctrl_sc/M00_AXI]] {
+    set propagated_hz [string trim [get_property CONFIG.FREQ_HZ $endpoint]]
+    if {![string is wideinteger -strict $propagated_hz] ||
+        [expr {$propagated_hz+0}] != [expr {$ps_clock_hz+0}]} {
+        error "M08 validated BD clock propagation disagrees with PS pl_clk0: $endpoint FREQ_HZ='$propagated_hz' expected '$ps_clock_hz'"
+    }
+}
+puts "M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=$ps_clock_hz"
 save_bd_design
 write_bd_tcl -force $design_export
 
@@ -212,6 +233,7 @@ set lines [list \
     "META|part|$expected_part" \
     "META|vivado_version|$version" \
     "META|requested_clock_hz|$requested_clock_hz" \
+    "META|actual_clock_hz|$ps_clock_hz" \
     "META|identity_source|rtl/m08/m08_axil_readonly_identity.v" \
     "MASTER|[get_property NAME $master]|$space" \
     "SLAVE|[get_property NAME $slave]|[get_property NAME $target]" \
