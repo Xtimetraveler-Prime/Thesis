@@ -75,7 +75,7 @@ class M08PathAReadOnlyTests(unittest.TestCase):
                 "#!/usr/bin/env bash\n"
                 "cat >/dev/null\n"
                 "echo M08_PATH_A_LINUX_READ_ONLY_BEGIN\n"
-                "echo M08_PROBE_BEGIN\\|model | sed 's/\\\\\\\\|/|/'\n"
+                "echo 'M08_PROBE_BEGIN|model'\n"
                 "echo 'Kria K26'\n"
                 "echo 'M08_PROBE_END|model|rc=0'\n"
                 "echo M08_PATH_A_LINUX_READ_ONLY_END_NO_FPGA_CHANGES\n"
