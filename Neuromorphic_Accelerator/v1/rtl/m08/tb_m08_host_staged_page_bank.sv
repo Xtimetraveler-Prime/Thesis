@@ -200,11 +200,11 @@ module tb_m08_host_staged_page_bank;
         // operates on a correctly packed state byte pair.
         start_compute(32'd7);
         compute_read(6'd0,32'h55550004);
-        lif_previous=16'sd4;
+        lif_previous=$signed(compute_rdata[15:0]);
         #1;
         if(lif_invalid || lif_spike || lif_next!==16'sd6)
             $fatal(1,"M08_PAGE_M06_SIGNED16_LANE_MISMATCH");
-        compute_write_word(6'd0,32'h00000006,4'b0011);
+        compute_write_word(6'd0,{16'd0,lif_next},4'b0011);
         finish_compute();
         read_word(6'd0,32'h55550006);
         copied_backing=host_rdata; // actual simulated host readback
