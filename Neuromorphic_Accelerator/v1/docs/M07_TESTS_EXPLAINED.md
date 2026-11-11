@@ -83,3 +83,14 @@ No modification of accepted M02 golden behavior, M05 HLS, M06 RTL, M06 original 
 | `test_cli_exclusive_artifact_and_capacity_flag` | Run source CLI twice with same filename in temporary output dir. | First run JSON with correct scopes and physical flags false; second returns failure and initial bytes unchanged. |
 
 **Evidence level:** M07.2 Python and M02/M03/M06 source-only neural/model checks. New milestone-local `iverilog` or genuine original HLS/AMD simulation is NOT claimed because M07.2 changes no synthesizable RTL, HLS top or vendor interconnect. Previous accepted M05/M06 original toolchain archives remain frozen. Later scheduling/queue service-time experiments require separately declared model and actual RTL/toolchain boundary.
+
+## 6. Actual GitHub Actions verification receipt for M07.2 code (November 10 local / November 11 UTC)
+
+GitHub Actions workflow `Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy and matched controls (NO BOARD)`, run **42954242034**, examined at source HEAD **`d61244ff0da6fa83eec4e69c4b096d1f2bd8b635`**, completed **SUCCESS**. Genuine GitHub-hosted Python (not mocked success or expected-only assertion):
+
+- `compileall` PASS. M07 targeted **16 tests PASS** (8 M07.1 + 8 M07.2); M02 **21 PASS**; M03 **28 PASS**; M06 **325 tests, 12 optional skips, no failures**.
+- Crucially the **full shared-process v1 `unittest discover` ran 862 tests in 18.641 seconds; `OK (skipped=13)`**, resolving the owner's first combined-suite `prepare_hls_config` wrong-module failure. Skipped tests do not count as RTL functional passes. The separate inherited M06 no-board workflow remains the Icarus RTL gate.
+- Model-only M07.2 output for **N128/K16/fanout4/rate6/T16**, 8-neuron (128B) blocks, four slots (512B), full-onchip capacity 2048B, 16B state record: clustered direct event-DDR-style **55,552 state bytes**, LRU **512**; dispersed direct **55,552**, LRU **55,552**. Timestep-DDR-style direct **524,288 state bytes**, LRU **65,536**, both localities. Event-DDR-style M03 *analytical* synapse-read estimate was **2,240 bytes** across all four locality/policy pairings. These are **source-model byte totals**, not transferred PS DDR/actual AXI values or measured service time. Both on-chip comparator rows were available *under this declaration*.
+- Reports are CI-retained `m07-2-model-only-matched-four-way` with both M07.1 and M07.2 JSONs. GitHub CI evidence is separate from any owner-local JSON receipt. No HLS, original AMD SmartConnect XSim or physical board was executed.
+
+**Acceptance caveat:** source and branch checks are not sufficient for M07 complete acceptance. Owner independently reruns local full suite and reports its result; broader ablations/batch/scheduling and queue/service-time instrumentation remain ahead. Retain the owner's first failed local transcript and initial M07.1 test assertion failure as historical unsuccessful attempts; do not overwrite evidence.
