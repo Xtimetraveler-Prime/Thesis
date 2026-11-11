@@ -46,6 +46,14 @@ New first-party `rtl/m08/m08_axil_readonly_identity.v` implements only a **32-bi
 
 This small read-only peripheral is the first hardware candidate we can honestly develop without local AMD Vivado/board. **Next milestone step requires the operator's actual Vivado IP/BD project and device evidence** before connecting the PS master, assigning a physical MMIO aperture, generating a real bitstream or programming the board.
 
+## 2026-11-10 owner evidence update and first native Vivado trial
+
+The owner's original PC report was independently inspected: **5/5 accepted M06 ZIP SHA matches**, FTDI 0403:6011 present, source checkout at the prior M08 head, original Loihi evidence and Vivado logs untracked and preserved, and Vivado/Vitis 2025.2 **not on that shell's PATH**. Separately, owner confirms normal KV260 Linux boot and standard post-boot `sudo xmutil unloadapp`. This replaces the original tentative boot-failure concern: UART recovery remains a fallback, not the default path. The Loihi v2 acceptance sources establish a real prior routed P08 K26 physical host-paged result and state/trace conformance, but their bitstreams and signed24 Loihi model are **not** reusable as accepted M08 signed16 HLS/DDRx accelerators. [Exact receipt digest and scope crosswalk](M08_1_OWNER_EVIDENCE_AND_LOIHI_REUSE_2026_11_10.md).
+
+**M08.1b source extension:** board-local readonly `xmutil listapps/boardid/bootfw_status/platformstats` are now allowed and independently audited as local **observations only**. `xmutil unloadapp`, `loadapp`, `bootfw_update` remain disallowed **in the inventory tool**, but the operator may use their previously established `sudo xmutil unloadapp` procedure outside the tool while archiving app state before/after.
+
+**M08.2 PS→PL identity integration trial is source-complete, vendor validation OPEN:** local genuine-Vivado `scripts/m08_identity_ps_bd_candidate.tcl` and `scripts/run_m08_identity_bd.sh` attempt a new K26/Zynq PS HPM0 FPD/SmartConnect/read-only-PL-identity block design, with explicitly checked reset polarity, auto-assigned reportable AXI address aperture, real `validate_bd_design`, exported `.tcl` and no routed implementation or bitstream. `m08_identity_bd_audit.py` gates immutable original source SHA before/after, genuine local Vivado status and first-party report with **null physical claims**. A synthetically constructed auditor test demonstrates report validation only; real Vivado success remains **NOT ESTABLISHED** until the owner runs it on their PC and shares the original evidence folder. [Exact commands](M08_FIRST_PC_KV260_RUNBOOK.md).
+
 ## Current explicit M08 blockers (before physical work)
 
 1. No connected live KV260 accessible from GitHub Actions or this research runtime. **Physical status unknown**, not PASS/FAIL.
