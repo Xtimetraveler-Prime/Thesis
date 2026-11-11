@@ -78,6 +78,53 @@ class M08BDCandidateTests(unittest.TestCase):
             capture_output=True,text=True)
         self.assertEqual(proc.returncode,0,proc.stderr)
 
+    @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
+    def test_ip_catalog_query_occurs_only_after_open_project(self):
+        # Regression for the owner's actual Vivado 2025.2 Common 17-53
+        # failure. Mock only the pre-add_files Tcl boundary: real Vivado IP
+        # discovery and BD validation STILL require the separate owner run.
+        with tempfile.TemporaryDirectory() as td:
+            script=ROOT/"scripts/m08_identity_ps_bd_candidate.tcl"
+            harness=r"""
+set argv [list {__ROOT__} {__EVIDENCE__}]
+set ::project_open 0
+set ::ip_checks 0
+proc version {flag} {return 2025.2}
+proc create_project {args} {set ::project_open 1}
+proc current_project {} {return mocked_project}
+proc set_property {args} {}
+proc get_property {name obj} {
+    if {$name eq "PART"} {return xck26-sfvc784-2LV-c}
+    error "unexpected property $name"
+}
+proc get_ipdefs {args} {
+    if {!$::project_open} {
+        error "No open project. Please create or open a project before executing this command."
+    }
+    incr ::ip_checks
+    return [list mocked_amd_ip]
+}
+proc add_files {args} {
+    if {$::ip_checks != 5} {
+        error "expected all five AMD IP lookups before source addition"
+    }
+    puts M08_MOCK_PROJECT_BEFORE_CATALOG_PASS
+    exit 0
+}
+if {[catch {source {__SCRIPT__}} err]} {
+    puts stderr "M08_TCL_BOUNDARY_ERROR: $err"
+    exit 9
+}
+error "script skipped the add_files guard"
+"""
+            harness=(harness.replace("__ROOT__",str(ROOT))
+                           .replace("__EVIDENCE__",td)
+                           .replace("__SCRIPT__",str(script)))
+            proc=subprocess.run(["tclsh"],input=harness,
+                                capture_output=True,text=True)
+            self.assertEqual(proc.returncode,0,proc.stdout+proc.stderr)
+            self.assertIn("M08_MOCK_PROJECT_BEFORE_CATALOG_PASS",proc.stdout)
+
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl parser unavailable")
     def test_tcl_grammar_balanced_without_loading_vendor_ip(self):
         p=ROOT/"scripts/m08_identity_ps_bd_candidate.tcl"
