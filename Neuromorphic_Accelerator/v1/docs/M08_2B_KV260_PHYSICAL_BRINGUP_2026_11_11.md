@@ -2,6 +2,8 @@
 
 **Status 2026-11-11:** Real Vivado 2025.2 first-party **OFFLINE .bit GENERATED AND SHA-AUDITED**. The next operator action is **READ-ONLY LIVE BOARD/JTAG INVENTORY**. **No physical KV260 program, Linux MMIO, signed16 compute, DDR or DMA operation is yet evidenced.** Keep the owner original routed project, checkpoint and bitstream release directories immutable.
 
+> **LATEST OPERATOR RESULT — 2026-11-11 13:29 local:** The requested PC-side **physical JTAG inventory was already performed and PASSED**. Original user files `03_jtag_inventory.txt` and `04_jtag_console.log` show a single Vivado 2025.2 hardware target `localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA`, programmable FPGA **`xck26_0|xck26`** and a separate **`arm_dap_1|arm_dap`**. Only benign `open_hw`/`close_hw` deprecations; no programming. **DO NOT REPEAT the JTAG inventory steps appearing below**, unless the cable/board changes. Do not redo driver installation or Vivado hw_server troubleshooting. The operator **cannot copy/paste into PuTTY**: Linux serial commands must be short and entered one at a time; long scripts/sha checks belong on the PC. **Authoritative immediate plan and next-chat handoff:** [reuse accepted Loihi loader + missing board/fan gate](M08_2B_PHYSICAL_DEPLOYMENT_PLAN_LOIHI_REUSE_2026_11_11.md) and [M08 next-chat seed](M08_NEXT_CHAT_HANDOFF_2026_11_11.md). The original next-step *JTAG* block below is retained as a historical reproducibility recipe, **not a request for another run**.
+
 ## Original offline bitstream acceptance — owner-generated, independently cross-checked
 
 Original owner offline release folder:
