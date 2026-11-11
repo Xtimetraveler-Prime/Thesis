@@ -12,7 +12,7 @@ set source_names [list \
     rtl/m08/m08_axil_readonly_identity.v \
     rtl/m08/m08_host_staged_page_bank.sv \
     rtl/m08/m08_axil_page_control.sv \
-    rtl/m08/m08_ps_page_safe_shell.sv]
+    rtl/m08/m08_ps_page_safe_shell.v]
 foreach name $source_names {
     if {![file isfile [file join $root $name]]} {
         error "M08 page BD missing first-party source '$name'"
@@ -276,7 +276,7 @@ set lines [list \
     "META|ps_preset|YES" \
     "META|requested_clock_hz|$requested_clock_hz" \
     "META|actual_clock_hz|$ps_clock_hz" \
-    "META|page_source|rtl/m08/m08_ps_page_safe_shell.sv" \
+    "META|page_source|rtl/m08/m08_ps_page_safe_shell.v" \
     "META|compute_enabled|NO" \
     "MASTER|[get_property NAME $master]|$space" \
     "SLAVE_IDENTITY|$slave|[lindex $slave_segments 0]" \
