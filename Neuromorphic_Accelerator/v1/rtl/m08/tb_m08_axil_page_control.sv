@@ -19,6 +19,11 @@ module tb_m08_axil_page_control;
   wire compute_ack,dispatch_accept,page_poisoned;
   wire [31:0] compute_rdata;
   integer i;
+  integer dispatch_pulses=0;
+  always @(posedge clk) begin
+    if(!resetn) dispatch_pulses<=0;
+    else if(dispatch_accept) dispatch_pulses<=dispatch_pulses+1;
+  end
   reg [31:0] seen;
   m08_axil_page_control dut(
     .aclk(clk),.aresetn(resetn),
@@ -108,7 +113,7 @@ module tb_m08_axil_page_control;
     #1;if(!arready)$fatal(1,"M08_AXIL_AR_NOT_READY addr=%h",address);
     @(posedge clk);@(negedge clk);arvalid=0;
     cycles=0;
-    while(!rvalid && cycles<32) begin @(negedge clk);cycles=cycles+1;end
+    while(!rvalid && cycles<160) begin @(negedge clk);cycles=cycles+1;end
     if(!rvalid || rresp!==expected_resp || rdata!==expected_data)
       $fatal(1,"M08_AXIL_R_BAD addr=%h actual=%h expected=%h resp=%b want=%b phase=%d",
              address,rdata,expected_data,rresp,expected_resp,dut.bank_phase);
@@ -150,8 +155,14 @@ module tb_m08_axil_page_control;
   begin
     axi_write(12'h010,logical,4'hf,0,2'b00);
     axi_write(12'h014,32'h4,4'hf,1,2'b00);
-    if(!dut.bank_compute_busy || dut.bank_phase!==3'd3)
+    if(!dut.bank_compute_busy || dut.bank_phase!==3'd3 ||
+       dispatch_pulses<1)
       $fatal(1,"M08_AXIL_DISPATCH_MISSING");
+    // The AXI slave must reject page traffic while the compute side
+    // owns it, WITHOUT forwarding a dangerous bank host request.
+    axi_read(12'h100,32'd0,2'b10);
+    if(page_poisoned || dut.bank_phase!==3'd3)
+      $fatal(1,"M08_AXIL_READ_DURING_COMPUTE_POISONED");
     @(negedge clk);compute_req=1;compute_write=0;compute_word=0;
     @(posedge clk);#1;
     if(!compute_ack || compute_rdata!==32'h55550004)
@@ -218,6 +229,22 @@ module tb_m08_axil_page_control;
     axi_read(12'h00c,32'h0000000d,2'b00);
     axi_read(12'h100,0,2'b10);
     $display("M08_AXIL_UNVERIFIED_LOAD_POISONED_PASS");
+
+    // Simulate a permanently unresponsive page port. The AXI-Lite
+    // request MUST receive a bounded SLVERR; later writes are blocked
+    // until external reset, not indefinitely pending on a dead backend.
+    reset_all();
+    axi_write(12'h010,32'd13,4'hf,0,2'b00);
+    axi_write(12'h014,32'h1,4'hf,1,2'b00);
+    axi_write(12'h100,32'h12345678,4'hf,2,2'b00);
+    force dut.bank_host_ack = 1'b0;
+    axi_read(12'h100,32'd0,2'b10);
+    release dut.bank_host_ack;
+    if(!page_poisoned)
+      $fatal(1,"M08_AXIL_BRIDGE_TIMEOUT_NOT_STICKY");
+    axi_read(12'h00c,32'h00000181,2'b00);
+    axi_write(12'h010,32'd15,4'hf,2,2'b10);
+    $display("M08_AXIL_NO_ACK_TIMEOUT_QUARANTINE_PASS");
     $display("M08_AXIL_STANDALONE_NO_K26_NO_DDR_NO_DMA_PASS");
     $finish;
   end
