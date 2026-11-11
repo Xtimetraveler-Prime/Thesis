@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1
 
-**Status (November 10, 2026): M01–M06 accepted at explicitly bounded scopes. M07 is next.** This is the active, independently versioned SNN/FPGA research program—not Loihi Digital Twin v4.
+**Status (November 10, 2026): M01–M07 complete in explicitly bounded scopes. M07 covers source-only policy, locality, batching and synthetic service models, NOT measured FPGA speed; physical M08 remains separately gated.** This is the active, independently versioned SNN/FPGA research program—not Loihi Digital Twin v4.
 
 The goal is to determine the tradeoffs among **neural-state virtualization, sparse event execution, cache locality and FPGA resource limits**. The reference neural behavior is a separately checked signed-integer LIF model. The accelerator must preserve that reference while scaling logical neurons beyond the bounded resident working set.
 
@@ -10,7 +10,7 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 | --- | --- |
 | Research questions and project lineage | [Thesis overview](../../README.md) |
 | Milestones, next experiment and acceptance criteria | [M01–M09 roadmap](roadmap.md) |
-| **New chat / M07 development handoff** | **[M07 next-chat handoff](docs/M07_NEXT_CHAT_HANDOFF_2026_11_10.md)** — current implementation context, branch/CI rules, evidence limits and first development steps |
+| **M07 source-only acceptance and reproducibility** | [M07 acceptance review](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md), [test explanations](docs/M07_TESTS_EXPLAINED.md), [owner commands](docs/M07_PC_ONLY_VERIFICATION.md), [prior-art register](docs/M07_PRIOR_ART_CONFIGURATION_COMPARISON.md) |
 | M05 signed32 on-chip engine verification | [M05 acceptance review](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | M06 original HLS+AMD paging/fault/recovery evidence | [M06 acceptance review](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
 | Exact LIF semantics and event ordering | [M02 reference contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md) |
@@ -26,6 +26,8 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 4. **Virtualized state.** M06 models a canonical **64 KiB scratch-backed image** with bounded resident slots, page fills, dirty evictions and actual original HLS AXI reads/writes through original AMD SmartConnect/width converters **in offline simulation**.
 5. **Fault/commit boundaries.** M06 guard RTL detects original AXI read/write error responses, a watchdog poisons epochs with missing acknowledgment, and a bounded trace/metrics quarantine releases output only after successful completion. A separate verified recovery test uses an **explicit testbench-owner reset and entire simulated image rewrite**; it is not automatic hardware rollback.
 
+6. **M07 policy and synthetic-service closeout.** M07.1–M07.5 add direct vs LRU, four-way logical M03 controls, fixed-byte-budget locality sweeps, one experimental causal history eviction candidate, and source-only queue/event-batching/synapse-record sensitivity. All final neural traces match accepted M02/M03. Completed M06 **software** state transfers are modeled using explicit assumed cycle costs and bounded FIFO backpressure, not observed AXI/DDR timing, measured performance or resource-matched FPGA implementation. [M07 scope-limited acceptance](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md).
+
 ### What has been verified
 
 | Milestone | Accepted result | Evidence |
@@ -36,6 +38,7 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 | M04 | HLS engine numerical/interface reuse audit and bounded host candidate; no M04 synthesis required | [M04 audit](docs/M04_HLS_ENGINE_AUDIT.md) |
 | M05 | Offline signed32 on-chip inference and original integrated HLS/RTL simulation | [M05 accepted evidence](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | M06 | Five original Vivado 2025.2 HLS+AMD owner PASS archives: G3.3 32 neurons ×4 ticks/one-slot neural and state parity; G4 write/read SLVERR, held-B watchdog, and simulated restore plus clean 16-trace/1-metrics postcommit publication | [M06 accepted evidence, SHAs and nonclaims](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
+| M07 | PC-only cache policy and locality/capacity/batching ablations, source-traced M06 synchronous service and explicitly assumed FIFO/queue timing; physical metrics unmeasured | [M07 scope-limited acceptance](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md) |
 
 **Important scope limit:** Real vendor *simulation* is not a programmed board. **No actual PS DDR-backed inference, physical KV260/JTAG run, real DMA transfer/latency, deployed overall resource/timing/energy measurement, automatic crash-atomic rollback or measured acceleration is established by M06.** The simulation's 1024-cycle watchdog is a directed test threshold, not a measured DDR service deadline. M08 has separately gated physical tests.
 
