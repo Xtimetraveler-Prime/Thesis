@@ -18,6 +18,8 @@ MARKERS=(
     "M08_ONE_SLOT_HOST_PAGE_SIGNED16_STAGING_PASS",
     "M08_ONE_SLOT_DIRTY_EVICTION_DENIED",
     "M08_ONE_SLOT_PARTIAL_FILL_DENIED",
+    "M08_ONE_SLOT_FAKE_LOAD_READBACK_DENIED",
+    "M08_ONE_SLOT_FAKE_DIRTY_SAVE_DENIED",
     "M08_ONE_SLOT_HOST_COMPUTE_CONFLICT_DENIED",
     "M08_ONE_SLOT_SOURCE_ONLY_NO_AXI_NO_DMA_NO_BITSTREAM_PASS",
 )
@@ -29,6 +31,10 @@ class M08HostStagedPageRTLTests(unittest.TestCase):
         self.assertIn("module m08_host_staged_page_bank",source)
         self.assertIn("reg [31:0] words [0:63]",source)
         self.assertIn("reg [255:0] loaded_bytes",source)
+        self.assertIn("reg [63:0] load_readback_words",source)
+        self.assertIn("reg [63:0] dirty_readback_words",source)
+        self.assertIn("(&load_readback_words)",source)
+        self.assertIn("if (&dirty_readback_words)",source)
         self.assertIn("host_readback_verified",source)
         self.assertIn("host_save_done",source)
         self.assertIn("compute_fault",source)
