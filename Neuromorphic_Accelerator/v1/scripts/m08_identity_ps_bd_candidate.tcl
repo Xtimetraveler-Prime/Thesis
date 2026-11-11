@@ -64,14 +64,36 @@ set ps [create_bd_cell -type ip -vlnv $ps_vlnv ps]
 # The PS default exposed M_AXI_HPM0_LPD in the owner's genuine 2025.2
 # run; its unconnected maxihpm0_lpd_aclk blocked validate_bd_design.
 # Select ONLY FPD HPM0 for this identity-only PS->PL address path.
+# The accepted Loihi Digital Twin P03/P04/P05/P08 K26 Tcl explicitly set
+# PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100.  Our third genuine M08 run
+# otherwise generated 96968727 Hz, while the AXI4-Lite RTL declares 100 MHz.
+# Do NOT import the Loihi board preset/DDR configuration into this probe.
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 1 \
-                         CONFIG.PSU__USE__M_AXI_GP2 0] $ps
+                         CONFIG.PSU__USE__M_AXI_GP2 0 \
+                         CONFIG.PSU__FPGA_PL0_ENABLE 1 \
+                         CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100] $ps
 if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP0 $ps]] ne "1"} {
     error "M08 PS HPM0 FPD master could not be enabled"
 }
 if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP2 $ps]] ne "0"} {
     error "M08 unused PS HPM0 LPD master could not be disabled"
 }
+if {[string trim [get_property CONFIG.PSU__FPGA_PL0_ENABLE $ps]] ne "1"} {
+    error "M08 PS PL0 clock output could not be enabled"
+}
+set requested_ps_mhz [string trim [get_property CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ $ps]]
+if {![string is double -strict $requested_ps_mhz] ||
+    abs(double($requested_ps_mhz) - 100.0) > 0.000001} {
+    error "M08 PS PL0 requested 100 MHz frequency was not accepted: '$requested_ps_mhz'"
+}
+# Check the actual source clock pin metadata before wiring the 100 MHz AXI
+# slave; merely requesting 100 MHz does not prove a compatible generated clock.
+set ps_clock_hz [string trim [get_property CONFIG.FREQ_HZ [pin_required ps/pl_clk0]]]
+if {![string is wideinteger -strict $ps_clock_hz] ||
+    [expr {$ps_clock_hz+0}] != $requested_clock_hz} {
+    error "M08 PS PL0 actual FREQ_HZ mismatch: expected $requested_clock_hz got '$ps_clock_hz'"
+}
+puts "M08_GENUINE_PS_PL0_CLOCK_HZ=$ps_clock_hz"
 if {[llength [get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD]] != 0 ||
     [llength [get_bd_pins -quiet ps/maxihpm0_lpd_aclk]] != 0} {
     error "M08 unused PS HPM0 LPD interface/clock remains exposed"
