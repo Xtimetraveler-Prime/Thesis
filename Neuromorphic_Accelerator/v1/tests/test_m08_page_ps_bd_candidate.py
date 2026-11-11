@@ -279,7 +279,7 @@ error "Tcl did not reach mocked first source add"
                 str(rtl / "m08_host_staged_page_bank.sv"),
                 str(rtl / "m08_axil_page_control.sv"),
                 str(rtl / "m08_ps_page_safe_shell.v"),
-                str(rtl / "tb_m08_ps_page_safe_shell.v"),
+                str(rtl / "tb_m08_ps_page_safe_shell.sv"),
             ]
             p = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
             self.assertEqual(p.returncode, 0, p.stdout + "\\n" + p.stderr)
