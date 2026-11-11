@@ -5,6 +5,10 @@
 > **LATEST OPERATOR RESULT — 2026-11-11 13:29 local:** The requested PC-side **physical JTAG inventory was already performed and PASSED**. Original user files `03_jtag_inventory.txt` and `04_jtag_console.log` show a single Vivado 2025.2 hardware target `localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA`, programmable FPGA **`xck26_0|xck26`** and a separate **`arm_dap_1|arm_dap`**. Only benign `open_hw`/`close_hw` deprecations; no programming. **DO NOT REPEAT the JTAG inventory steps appearing below**, unless the cable/board changes. Do not redo driver installation or Vivado hw_server troubleshooting. The operator **cannot copy/paste into PuTTY**: Linux serial commands must be short and entered one at a time; long scripts/sha checks belong on the PC. **Authoritative immediate plan and next-chat handoff:** [reuse accepted Loihi loader + missing board/fan gate](M08_2B_PHYSICAL_DEPLOYMENT_PLAN_LOIHI_REUSE_2026_11_11.md) and [M08 next-chat seed](M08_NEXT_CHAT_HANDOFF_2026_11_11.md). The original next-step *JTAG* block below is retained as a historical reproducibility recipe, **not a request for another run**.
 
 ## Original offline bitstream acceptance — owner-generated, independently cross-checked
+**NEW source-only physical loader update, not a board operation:** The exact K26-target SHA-guarded one-shot Tcl and PC wrapper are now present, but physically BLOCKED pending actual boot, active PL, fan-control, independent cooling and owner authorization. See [guarded programming and PS access boundary](M08_2B_GUARDED_PROGRAMMING_AND_ACCESS_GATE_2026_11_11.md). The JTAG-only inventory section further below remains HISTORICAL and should not be re-executed absent a changed cable/board. No M08 physical AXI readback or FPGA programming has occurred.
+
+
+
 
 Original owner offline release folder:
 `/home/dna/Thesis_Evidence/M08/m08_2b_bitstream_20261111T200505Z_nnHihq`.
