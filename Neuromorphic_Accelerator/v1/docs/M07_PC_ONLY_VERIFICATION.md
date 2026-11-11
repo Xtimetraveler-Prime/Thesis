@@ -95,6 +95,22 @@ python3 scripts/m07_ablation.py --neurons 32 --active-roles 8 --ticks 6 --seeds 
 sha256sum "$OUT"
 ~~~
 
+### YANA-count-only partial configuration overlap (do not compare performance)
+
+This **optional** experiment deliberately matches only the YANA paper's **1,024 logical neurons per core capacity parameter**. Our signed16 M02 4-tick input, 16KiB canonical state, 256B bytearray cache, off-chip-style state paging and *unavailable* full-on-chip controls are **not** YANA's fixed-point/LUT leak, KR260 placed-and-routed core, resource utilization or hardware latency. The result is HOST ONLY; see `docs/M07_PRIOR_ART_CONFIGURATION_COMPARISON.md` entry `M07.3-YANA-COUNT-ONLY`.
+
+~~~bash
+OUT="$HOME/Thesis_Evidence/M07/m07_3_yana_count_only_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_ablation.py \
+  --neurons 1024 --active-roles 16 --ticks 4 \
+  --fanout 2 --events-per-tick 4 --seeds 17 \
+  --blocks 8,16 --budgets 256 --onchip-capacity-bytes 2048 \
+  --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+Check `num_parameter_combinations=2`, `num_policy_locality_four_way_rows=32`, both full-onchip controls unavailable, and `performance_or_yana_equivalence_claim=false`. This test does NOT execute YANA itself or any FPGA/Vivado/Vitis/JTAG operation.
+
 Optional read-only CI inspection:
 
 ~~~bash
