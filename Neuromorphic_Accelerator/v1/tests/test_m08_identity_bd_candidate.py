@@ -85,11 +85,11 @@ class M08BDCandidateTests(unittest.TestCase):
         # single Vivado operation. Running the actual script under tclsh
         # would only test its initial argument guard and miss the body.
         text=(
-            "set fd [open {"+str(p)+"} r]\\n"
-            "set body [read $fd]\\n"
-            "close $fd\\n"
-            "if {![info complete $body]} {puts stderr INCOMPLETE_TCL; exit 2}\\n"
-            "puts TCL_GRAMMAR_COMPLETE\\n"
+            "set fd [open {"+str(p)+"} r]\n"
+            "set body [read $fd]\n"
+            "close $fd\n"
+            "if {![info complete $body]} {puts stderr INCOMPLETE_TCL; exit 2}\n"
+            "puts TCL_GRAMMAR_COMPLETE\n"
         )
         proc=subprocess.run(["tclsh"],input=text,
                              capture_output=True,text=True)
