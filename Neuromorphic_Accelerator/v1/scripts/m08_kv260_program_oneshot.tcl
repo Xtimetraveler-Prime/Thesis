@@ -10,6 +10,30 @@ if {![info exists ::env(M08_ALLOW_PROGRAM)] || $::env(M08_ALLOW_PROGRAM) ne "YES
 if {![info exists ::env(M08_APPROVED_MODE)] || $::env(M08_APPROVED_MODE) ne "ISOLATED_JTAG"} {
     error "M08_APPROVED_MODE=ISOLATED_JTAG required; never overwrite Linux-managed PL"
 }
+# Direct Tcl execution must pass the same evidence gate as the shell wrapper.
+if {![info exists ::env(M08_BOARD_REVIEW_FILE)] ||
+    ![file isfile $::env(M08_BOARD_REVIEW_FILE)] ||
+    [file size $::env(M08_BOARD_REVIEW_FILE)] == 0} {
+    error "M08 requires a nonempty owner board/fan/PL review file"
+}
+set review_f [open $::env(M08_BOARD_REVIEW_FILE) r]
+set review_lines [split [read $review_f] "\n"]
+close $review_f
+foreach required {
+    mode=ISOLATED_JTAG
+    linux_pl_ownership=NONE_CONFIRMED
+    fan_cooling=INDEPENDENT_VERIFIED
+    active_pl_replacement=APPROVED
+    operator_authorization=YES
+} {
+    set count 0
+    foreach line $review_lines {
+        if {[string trim $line] eq $required} { incr count }
+    }
+    if {$count != 1} {
+        error "M08 missing/duplicate owner board safety gate: $required"
+    }
+}
 if {![string match "2025.2*" [version -short]]} {
     error "M08 requires genuine Vivado 2025.2"
 }
