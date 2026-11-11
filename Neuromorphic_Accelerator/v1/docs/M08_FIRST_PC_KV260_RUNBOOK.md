@@ -1,5 +1,22 @@
 # M08.1 — first PC and KV260 evidence session (read-only)
 
+> **IMPORTANT 2026-11-10 LOCAL VIVADO FAILURE — DO NOT RERUN THE IDENTITY BD YET.** The owner has already sourced Vivado 2025.2 successfully and executed `bash scripts/run_m08_identity_bd.sh` once. It exited **1** with fresh immutable evidence at `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. The exact original `01_vivado_identity_bd.log` has **not yet been reviewed**. The `vitis_hls: command not found` from the same terminal is a distinct environment observation; this identity-BD wrapper does not call Vitis HLS. **Next action: review/package the existing failure log and status**, do not rerun this script or guess the Tcl bug. See the [authoritative next-chat repair handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md). Later trial commands below are **historical/conditional** until diagnosis and a reviewed source correction.
+
+### Existing failure — read-only inspection, no new Vivado run
+
+~~~bash
+D="/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ"
+ls -lah "$D"
+cat "$D/result.txt"
+grep -nE 'ERROR:|CRITICAL WARNING:|invalid command|wrong # args|couldn.t read|couldn.t find|M08_' "$D/01_vivado_identity_bd.log" | head -80 || true
+tail -n 140 "$D/01_vivado_identity_bd.log"
+cat "$D/source_sha256_before.txt"
+cat "$D/source_sha256_after.txt"
+~~~
+
+Preserve the whole folder, including any partial `project/`. Do not delete or overwrite. If sharing, attach the original `01_vivado_identity_bd.log`, `result.txt` and source SHA files (or use the archive recipe in the handoff). Vivado v2025.2 SW build 6299465 and IP build 6300035 were observed **working as commands**, which is sufficient for the current first-failure triage. The toolchain-not-on-PATH instructions in §B are historical, not the current blocker.
+
+
 **Research phase:** actual KV260 hardware integration starts after accepted M05/M06 offline simulation and M07 software experiments. Physical activity is owner-authorized for M08, but this first observation uses **NO JTAG programming, memory writes, boot firmware updates or DMA**. The development tool cannot operate the owner's local KV260; these are exact commands to run locally when convenient.
 
 ## A. Refresh and run Linux VS Code PC verification
@@ -66,7 +83,7 @@ tr '\\000' '\\n' < /proc/device-tree/model
 
 ### Genuine local Vivado source environment and M08.2 PS→PL identity trial
 
-The only next required workstation build is a **real** Vivado K26 block-design validation for the read-only identity peripheral (not a bitstream and not the full SNN):
+**Historical trial instructions, NOT a request to rerun now:** the owner has already performed this isolated Vivado K26 block-design validation attempt and it failed at exit1. Review the immutable first log using the commands at the top. **Only after an evidence-supported correction and fresh CI** should a new local Vivado attempt use the commands below to create a *new* evidence directory. The earlier run did not produce an accepted bitstream or full SNN:
 
 ~~~bash
 # Run on development PC. Source the real settings64.sh installation path.
