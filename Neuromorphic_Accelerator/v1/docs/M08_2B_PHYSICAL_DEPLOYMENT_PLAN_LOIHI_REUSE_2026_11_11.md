@@ -2,6 +2,9 @@
 
 **Status: 2026-11-11, after owner-uploaded ORIGINAL JTAG evidence.** This is one consolidated **M08.2b** physical deployment goal, not another series of numbered micro-milestones. The operator cannot paste text into PuTTY: **keep any commands typed on the serial console short**, and put all long commands, scripts and SHA verifications on the Linux development PC using VS Code terminal.
 
+**Later board evidence changes the decision order (2026-11-11):** Owner confirmed Linux boots Ubuntu 24.04.2, **k26-starter-kits active in slot 0** and **fancontrol active/fans spinning**. Therefore an isolated JTAG transition is not justified and the current M08 bitstream MUST NOT be used to replace active fan base PL. The owner chose **Path A first**. Read [current Linux-managed read-only discovery and fan-preserving build contract](M08_2B_PATH_A_LINUX_MANAGED_DISCOVERY_2026_11_11.md); newer live evidence supersedes historical "Linux unknown" steps below. The old Loihi programming Tcl remains source-tested but still unused. Check actual dfx-mgr.service rather than mistaking dfx-mgrd process name for service.
+
+
 ## Decision in one paragraph
 
 **The JTAG connection problem is solved. Do not repeat cable/driver/server troubleshooting.** Owner-supplied original `03_jtag_inventory.txt` and `04_jtag_console.log` independently prove Vivado 2025.2 connected to `localhost:3121`, opened exactly **one** hardware target `localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA`, and enumerated `xck26_0|xck26` plus `arm_dap_1|arm_dap`, then closed normally. The K26 programmable FPGA is **`xck26_0`**, not the ARM DAP. Only harmless `open_hw`/`close_hw` **deprecation** warnings occurred. This was read-only enumeration, **not programming or PS clock/MMIO evidence**.
