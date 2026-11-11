@@ -36,7 +36,7 @@ class M07AblationTests(unittest.TestCase):
         report = run_ablation(plan())
         self.assertEqual(report["schema"], "m07-residency-locality-ablation-v1")
         self.assertTrue(report["physical_hardware_measured"] is False)
-        self.assertFalse(report["performance_or_ynana_equivalence_claim"])
+        self.assertFalse(report["performance_or_yana_equivalence_claim"])
         self.assertEqual(report["num_parameter_combinations"], 4)
         self.assertEqual(report["num_policy_locality_four_way_rows"], 64)
         per_budget = {}
