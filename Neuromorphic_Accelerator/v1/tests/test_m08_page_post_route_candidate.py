@@ -34,6 +34,8 @@ def fake_evidence(folder: Path) -> None:
     (folder / "source_sha256_after.txt").write_text(manifest)
     (folder / "01_vivado_impl.log").write_text(
         "# ARTIFICIAL TEST FIXTURE, NOT A VIVADO LOG\n"
+        + "M08_GENUINE_PS_PL0_CLOCK_HZ=99999001\n"
+        + "M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=99999001\n"
         + "\n".join(MARKERS) + "\n")
     (folder / "02_vivado_page_bd_readback.txt").write_text("\n".join((
         "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD",
