@@ -121,6 +121,45 @@ gh pr view 82 --json isDraft,state,headRefOid,statusCheckRollup
 
 The source-only experiment intentionally does **not** model event batching, queue service time, B-before-AR cycle latency, external synapse transfer issued by the pager, or FPGA cache-tag area. Preserve `M07.3` as in-progress until owner verification and additional acceptance gates. Previously accepted original M05/M06 Vitis 2025.2 archives and M06 XSim owner gates must not be rerun without a separate technical reason.
 
+### M07.4 single causal activity-history policy pilot (NO BOARD, NO VITIS)
+
+Pull the existing M07 branch with `git status --short; git fetch origin; git switch agent/neuromorphic-accelerator-v1-m07-cache-baselines; git pull --ff-only origin agent/neuromorphic-accelerator-v1-m07-cache-baselines` from `~/Git/Thesis`. Do not discard uncommitted local changes.
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+git rev-parse HEAD
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m07_activity_history.py' -v
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -p 'test_m02*.py' -v
+python3 -m unittest discover -s tests -p 'test_m03*.py' -v
+python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+python3 -m unittest discover -s tests -v
+~~~
+
+Source-only M07.4 JSON (2 fixed synthetic seeds × 4 block/budget pairs × 2 localities × 3 history depths = **48 matched comparisons**):
+
+~~~bash
+mkdir -p "$HOME/Thesis_Evidence/M07"
+OUT="$HOME/Thesis_Evidence/M07/m07_4_history_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_activity_pilot.py --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+The source report uses exclusive creation and includes SHA256 hashes of 10 source/CLI files. Verify `geometry_seed_cases=8`, `policy_history_comparisons=48`, `lookahead=false`, `reordered_deliveries=false`, and `service_cycles=null`. Check both non-neural access-pattern controls: a hot-page reuse scenario in which history beats LRU **and** an obsolete-hot-page counterexample in which LRU beats history. Both must produce identical modeled canonical end state. The M03 neural fixtures independently match M02 dense/queued and M03 sparse exactly; the non-neural controls are *not* neural inference tests.
+
+A quick one-seed/two-geometry report for inspecting details:
+
+~~~bash
+OUT="$HOME/Thesis_Evidence/M07/m07_4_small_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_activity_pilot.py --neurons 32 --active-roles 8 \
+  --ticks 6 --seeds 17 --geometries 2:64,4:128 \
+  --history-depths 2,8 --onchip-capacity-bytes 1024 --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+**Interpretation caution:** `state_bytes_saved_vs_lru` is the signed **software canonical-state byte count difference**, not time saved. Additional history SRAM and victim-scan hardware/controller cycles are **uncosted**, so it is invalid to infer resource-matched throughput, energy or area. The separately described YANA hot-neuron FIFO/pipeline is not implemented or executed. Before an M07 hardware-service-time conclusion, we will need **owner-authorized evidence** about actual M06 B-before-AR/AXI service timing, queue depths, and implementation costs; not required for the current source-only causal pilot. Do not rerun original M06 Vivado/Vitis vendor gates or touch JTAG/physical DDR without separate authorization.
+
 ### Preserve a new model-only artifact
 
 ~~~bash
