@@ -5,7 +5,7 @@
 // Register offsets:
 // 0x000 magic 0x4D303850 ('M08P'), 0x004 version 0x00020002
 // 0x008 capability=1 (one 256B host-staged page; NO DMA/engine)
-// 0x00C status {24'b0,host_busy,compute_busy,dirty,valid,poisoned,phase}
+// 0x00C status {23'b0,bridge_fault,host_busy,compute_busy,dirty,valid,poisoned,phase}
 // 0x010 selected logical ID (write FULL WSTRB=F)
 // 0x014 command (write FULL WSTRB=F; 1=begin,2=commit,4=dispatch,8=save)
 // 0x018 resident logical ID, 0x01C loaded bytes (0..256)
