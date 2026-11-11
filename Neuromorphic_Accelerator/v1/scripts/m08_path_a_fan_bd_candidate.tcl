@@ -32,22 +32,8 @@ source $baseline
 set ps [get_bd_cells -quiet ps]
 if {[llength $ps] != 1} { error "M08 Path A missing unique accepted PS BD cell" }
 set baseline_report [file join $evidence 02_vivado_page_bd_readback.txt]
-if {![file isfile $baseline_report]} {
-    error "M08 Path A original validated BD report missing"
-}
-set rf [open $baseline_report r]
-set baseline_text [read $rf]
-close $rf
-foreach marker {
-    META|validated_bd|YES
-    META|compute_enabled|NO
-    META|physical_kv260|NOT_PROGRAMMED
-    M08_PAGE_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD
-} {
-    if {[string first $marker $baseline_text] < 0} {
-        error "M08 Path A baseline report missing $marker"
-    }
-}
+source [file join $root scripts m08_path_a_baseline_report_gate.tcl]
+m08_path_a_check_baseline_readback $baseline_report
 # AMD Kria K26 base firmware: PS TTC0 wave-out channel 2 routes through EMIO
 # to HD pin HDA20 = physical A12, with LVCMOS33 and low slew/drive.
 # Preserve the canonical PS->two-slave AXI interfaces. Do NOT reinterpret
