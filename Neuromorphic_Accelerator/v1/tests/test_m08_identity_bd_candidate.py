@@ -17,7 +17,7 @@ sys.path.insert(0,str(ROOT/"scripts"))
 from m08_identity_bd_audit import audit_evidence, FILES, MARKER, SCOPE
 
 
-def stub_receipt(folder:Path)->None:
+def stub_receipt(folder:Path,actual_clock_hz:int=99_999_001)->None:
     folder.mkdir()
     rows="".join(
         f"{hashlib.sha256((ROOT/name).read_bytes()).hexdigest()}  {name}\n"
@@ -26,12 +26,16 @@ def stub_receipt(folder:Path)->None:
     (folder/"source_sha256_after.txt").write_text(rows)
     (folder/"result.txt").write_text("exit_status=0\n")
     (folder/"01_vivado_identity_bd.log").write_text(
-        "SYNTHETIC TEST FIXTURE NOT ORIGINAL VIVADO\n"+MARKER+"\n")
+        "SYNTHETIC TEST FIXTURE NOT ORIGINAL VIVADO\n"
+        f"M08_GENUINE_PS_PL0_CLOCK_HZ={actual_clock_hz}\n"
+        f"M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ={actual_clock_hz}\n"
+        +MARKER+"\n")
     (folder/"02_vivado_identity_bd_readback.txt").write_text("\n".join((
         "META|scope|"+SCOPE,
         "META|part|xck26-sfvc784-2LV-c",
         "META|vivado_version|2025.2",
         "META|requested_clock_hz|100000000",
+        f"META|actual_clock_hz|{actual_clock_hz}",
         "META|identity_source|rtl/m08/m08_axil_readonly_identity.v",
         "MASTER|ps/M_AXI_HPM0_FPD|/ps/Data",
         "SLAVE|identity/S_AXI|identity/S_AXI/Reg",
@@ -63,6 +67,10 @@ class M08BDCandidateTests(unittest.TestCase):
             self.assertIn(keyword,tcl)
         self.assertIn("X_INTERFACE_INFO",rtl)
         self.assertIn("PROTOCOL AXI4LITE",rtl)
+        # The module consumes an incoming PS-generated clock: it must not
+        # hardcode an output-clock frequency on its input pin.
+        self.assertNotIn("FREQ_HZ 100000000",rtl)
+        self.assertIn("ASSOCIATED_BUSIF S_AXI",rtl)
         self.assertNotIn("program_hw_devices",tcl)
         self.assertNotIn("connect_hw_server",tcl)
         self.assertNotIn("write_bitstream",tcl)
@@ -182,7 +190,7 @@ proc create_bd_cell {args} {
             $::pscfg(CONFIG.PSU__USE__M_AXI_GP2) ne "0" ||
             $::pscfg(CONFIG.PSU__FPGA_PL0_ENABLE) ne "1" ||
             $::pscfg(CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ) ne "100" ||
-            $::actual_ps_clock_hz != 100000000 ||
+            abs($::actual_ps_clock_hz - 100000000) > 1000 ||
             $::lpd_interface_lookups != 1 ||
             $::lpd_clock_lookups != 1} {
             error "missing explicit PS-only-FPD guard or probe"
@@ -198,8 +206,9 @@ if {[catch {source {__SCRIPT__}} err]} {
 }
 error "Tcl missed identity-cell stop"
 """
-            cases=((False,100000000,True), (True,100000000,True),
-                   (False,96968727,True), (False,100000000,False))
+            cases=((False,99999001,True), (False,100000000,True),
+                   (True,100000000,True), (False,96968727,True),
+                   (False,99998999,True), (False,100000000,False))
             for refuse_disable, clock_hz, board_found in cases:
                 with self.subTest(refuse_disable=refuse_disable,
                                   actual_ps_clock_hz=clock_hz,
@@ -224,17 +233,21 @@ error "Tcl missed identity-cell stop"
                         self.assertIn(
                             "M08 unused PS HPM0 LPD master could not be disabled",
                             proc.stderr)
-                    elif clock_hz != 100000000:
+                    elif abs(clock_hz-100000000)>1000:
                         self.assertNotEqual(proc.returncode,0)
                         self.assertIn(
-                            "M08 PS PL0 actual FREQ_HZ mismatch:",proc.stderr)
-                        self.assertIn("96968727",proc.stderr)
+                            "M08 PS PL0 actual FREQ_HZ outside 1000 Hz budget:",
+                            proc.stderr)
+                        self.assertIn(str(clock_hz),proc.stderr)
                         self.assertNotIn(
                             "M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS",proc.stdout)
                     else:
                         self.assertEqual(proc.returncode,0,proc.stdout+proc.stderr)
                         self.assertIn(
-                            "M08_GENUINE_PS_PL0_CLOCK_HZ=100000000",proc.stdout)
+                            f"M08_GENUINE_PS_PL0_CLOCK_HZ={clock_hz}",proc.stdout)
+                        self.assertIn(
+                            f"M08_PS_PL0_CLOCK_DEVIATION_HZ={abs(clock_hz-100000000)}",
+                            proc.stdout)
                         self.assertIn(
                             "M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS",proc.stdout)
 
@@ -246,7 +259,11 @@ error "Tcl missed identity-cell stop"
         self.assertIn("CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100",tcl)
         self.assertIn("CONFIG.PSU__FPGA_PL0_ENABLE 1",tcl)
         self.assertIn("get_property CONFIG.FREQ_HZ [pin_required ps/pl_clk0]",tcl)
-        self.assertIn("M08 PS PL0 actual FREQ_HZ mismatch:",tcl)
+        self.assertIn("M08 PS PL0 actual FREQ_HZ outside 1000 Hz budget:",tcl)
+        self.assertIn("set maximum_clock_deviation_hz 1000",tcl)
+        self.assertIn("M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=",tcl)
+        self.assertIn("get_property CONFIG.FREQ_HZ $endpoint",tcl)
+        self.assertIn('"META|actual_clock_hz|$ps_clock_hz"',tcl)
         self.assertIn("CONFIG.PSU__USE__M_AXI_GP0 1",tcl)
         self.assertIn("CONFIG.PSU__USE__M_AXI_GP2 0",tcl)
         self.assertIn("CONFIG.PSU__USE__M_AXI_GP1 0",tcl)
@@ -340,9 +357,38 @@ error "script skipped the add_files guard"
                 report["status"],
                 "ORIGINAL_OWNER_VIVADO_BD_VALIDATION_EVIDENCE_CONSISTENT")
             self.assertEqual(report["ps_axi_aperture_offset"],"0xa0000000")
+            self.assertEqual(report["actual_clock_hz"],99_999_001)
+            self.assertEqual(report["actual_clock_deviation_hz"],999)
+            self.assertEqual(report["requested_clock_hz"],100_000_000)
             self.assertFalse(report["physical_mmio_performed"])
             self.assertFalse(report["bitstream_programmed"])
             self.assertFalse(report["neural_inference_verified"])
+
+    def test_reject_outside_clock_budget_or_missing_propagation_evidence(self):
+        for bad_clock in (99_998_999,100_001_001,96_968_727,-1,0):
+            with self.subTest(actual_clock_hz=bad_clock):
+                with tempfile.TemporaryDirectory() as td:
+                    folder=Path(td)/"fake"
+                    stub_receipt(folder,actual_clock_hz=bad_clock)
+                    with self.assertRaisesRegex(ValueError,"clock"):
+                        audit_evidence(folder,ROOT)
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)/"fake"
+            stub_receipt(folder)
+            proof=folder/"01_vivado_identity_bd.log"
+            proof.write_text(proof.read_text().replace(
+                "M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=99999001\\n",""))
+            with self.assertRaisesRegex(ValueError,"clock"):
+                audit_evidence(folder,ROOT)
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)/"fake"
+            stub_receipt(folder)
+            report=folder/"02_vivado_identity_bd_readback.txt"
+            report.write_text(report.read_text().replace(
+                "META|actual_clock_hz|99999001",
+                "META|actual_clock_hz|99999002"))
+            with self.assertRaisesRegex(ValueError,"clock"):
+                audit_evidence(folder,ROOT)
 
     def test_reject_bad_source_result_or_log(self):
         mutants=(
