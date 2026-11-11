@@ -61,9 +61,20 @@ proc intf_required {path} {
 }
 
 set ps [create_bd_cell -type ip -vlnv $ps_vlnv ps]
-set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 1] $ps
+# The PS default exposed M_AXI_HPM0_LPD in the owner's genuine 2025.2
+# run; its unconnected maxihpm0_lpd_aclk blocked validate_bd_design.
+# Select ONLY FPD HPM0 for this identity-only PS->PL address path.
+set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 1 \
+                         CONFIG.PSU__USE__M_AXI_GP2 0] $ps
 if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP0 $ps]] ne "1"} {
-    error "M08 PS master PL interface could not be enabled"
+    error "M08 PS HPM0 FPD master could not be enabled"
+}
+if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP2 $ps]] ne "0"} {
+    error "M08 unused PS HPM0 LPD master could not be disabled"
+}
+if {[llength [get_bd_intf_pins -quiet ps/M_AXI_HPM0_LPD]] != 0 ||
+    [llength [get_bd_pins -quiet ps/maxihpm0_lpd_aclk]] != 0} {
+    error "M08 unused PS HPM0 LPD interface/clock remains exposed"
 }
 if {[string trim [get_property CONFIG.PSU__MAXIGP0__DATA_WIDTH $ps]] ne "128"} {
     error "M08 expected proven K26 HPM0 FPD 128-bit master"
