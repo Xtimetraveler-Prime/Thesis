@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1
 
-**Status (November 10, 2026): M01–M07 complete in explicitly bounded scopes. M07 covers source-only policy, locality, batching and synthetic service models, NOT measured FPGA speed; physical M08 remains separately gated.** This is the active, independently versioned SNN/FPGA research program—not Loihi Digital Twin v4.
+**Status (November 10, 2026): M01–M07 complete in explicitly bounded scopes; M08 IN PROGRESS, beginning with read-only KV260/2025.2 toolchain and original-evidence inventory. No physical FPGA/DDR evidence yet.** This is the active, independently versioned SNN/FPGA research program—not Loihi Digital Twin v4.
 
 The goal is to determine the tradeoffs among **neural-state virtualization, sparse event execution, cache locality and FPGA resource limits**. The reference neural behavior is a separately checked signed-integer LIF model. The accelerator must preserve that reference while scaling logical neurons beyond the bounded resident working set.
 
@@ -10,7 +10,7 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 | --- | --- |
 | Research questions and project lineage | [Thesis overview](../../README.md) |
 | Milestones, next experiment and acceptance criteria | [M01–M09 roadmap](roadmap.md) |
-| **M07 source-only acceptance and reproducibility** | [M07 acceptance review](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md), [test explanations](docs/M07_TESTS_EXPLAINED.md), [owner commands](docs/M07_PC_ONLY_VERIFICATION.md), [prior-art register](docs/M07_PRIOR_ART_CONFIGURATION_COMPARISON.md) |
+| **M08 physical roadmap and first hardware entry** | [M08 phased plan](docs/M08_PHASED_HARDWARE_PLAN.md), [owner first PC/UART runbook](docs/M08_FIRST_PC_KV260_RUNBOOK.md), [M08 tests explained](docs/M08_TESTS_EXPLAINED.md); M07 acceptance preserved [here](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md) |
 | M05 signed32 on-chip engine verification | [M05 acceptance review](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | M06 original HLS+AMD paging/fault/recovery evidence | [M06 acceptance review](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
 | Exact LIF semantics and event ordering | [M02 reference contract](docs/M02_PROVISIONAL_LIF_CONTRACT.md) |
