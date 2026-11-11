@@ -143,6 +143,48 @@ def _source_microtrace() -> dict:
     }
 
 
+def _source_streaming_counterexample() -> dict:
+    """NON-NEURAL negative control: past hot page becomes permanently cold.
+
+    A frequency-biased cache can pin obsolete activity while the next two
+    pages alternate; accepted LRU adapts and retains both working pages.
+    This falsifies any universal improvement claim about history priority.
+    """
+    geom = Geometry(logical_neurons=12, bytes_per_neuron=16,
+                    neurons_per_block=2, resident_budget_bytes=64,
+                    max_model_transfer_bytes=32)
+    sequence = (0,) * 10 + (2, 4) * 5
+    final_bytes = None
+    rows = {}
+    for name in ("lru", "activity_history"):
+        image = CanonicalImage(geom, emulated_owner="M07_NEGATIVE")
+        cache = (BlockCache(image, owner="M07_NEGATIVE") if name == "lru"
+                 else ActivityHistoryCache(image, owner="M07_NEGATIVE",
+                                          history_depth=16))
+        for i, neuron in enumerate(sequence):
+            prior = cache.read(neuron)
+            cache.write(neuron, (i+1).to_bytes(2,"little") + prior[2:])
+        cache.flush()
+        if cache.poisoned or cache.dirty_pages:
+            raise AssertionError("counterexample invalid cache completion")
+        final = image.snapshot(owner="M07_NEGATIVE")
+        if final_bytes is None:
+            final_bytes = final
+        elif final != final_bytes:
+            raise AssertionError("counterexample policy changed canonical final state")
+        rows[name] = {
+            "misses": cache.counters.misses,
+            "state_bytes": cache.counters.read_bytes + cache.counters.write_bytes,
+        }
+    return {
+        "type": "NON_NEURAL_OBSOLETE_HOT_PAGE_NEGATIVE_CONTROL",
+        "neuron_ids": list(sequence),
+        "models": rows,
+        "identical_final_canonical_bytes": True,
+        "m02_neural_fixture": False,
+    }
+
+
 def run_activity_study(plan: ActivityStudyPlan) -> dict:
     """Same M02/M03 reference checked by unchanged M07.1 run_policy.
 
@@ -156,6 +198,10 @@ def run_activity_study(plan: ActivityStudyPlan) -> dict:
     if not (pilot["models"]["activity_history"]["misses"]
             < pilot["models"]["lru"]["misses"]):
         raise AssertionError("directed hot-page positive control did not distinguish policy")
+    counterexample = _source_streaming_counterexample()
+    if not (counterexample["models"]["activity_history"]["misses"]
+            > counterexample["models"]["lru"]["misses"]):
+        raise AssertionError("obsolete-hot-page negative control failed to expose policy cost")
 
     rows = []
     seed_hashes = {}
@@ -273,6 +319,7 @@ def run_activity_study(plan: ActivityStudyPlan) -> dict:
                 "IS NOT hardware speedup, energy, area or a confidence interval"),
         },
         "microtrace": pilot,
+        "counterexample": counterexample,
         "rows": rows,
         "neuron_execution_order": "unchanged M06 ascending neuron ID per logical tick",
         "activity_observation": "bounded history of completed read/write evaluations only",
