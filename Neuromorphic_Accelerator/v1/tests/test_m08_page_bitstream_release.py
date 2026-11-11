@@ -41,7 +41,7 @@ def make_fake_route(folder: Path) -> None:
         "There are 0 pins that are not constrained for maximum delay.\n"
         "All user specified timing constraints are met.\n"
         "0  Failing Endpoints\n"
-        " 5.469 0.000 0 4515 0.015 0.000 0 4515 3.500 0.000 0 1748\n"
+        " 0.123 0.000 0 4515 0.045 0.000 0 4515 3.500 0.000 0 1748\n"
         "| Unconstrained Path Table\n"
         "Path Group   From Clock  To Clock\n"
         "----------   ----------  --------\n"
