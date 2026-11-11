@@ -80,7 +80,11 @@ def audit_receipt(folder: Path) -> dict:
         elif archives.get("all_sha256_match") is not False:
             raise ValueError("nonchecked archives cannot be asserted verified")
     else:
-        if set(commands) != {"uname -a"} or set(
+        expected_board_commands = {
+            "uname -a", "xmutil listapps", "xmutil boardid",
+            "xmutil bootfw_status", "xmutil platformstats",
+        }
+        if set(commands) != expected_board_commands or set(
                 data.get("board_files",{}))!=set(BOARD_FILES):
             raise ValueError("board-local read-only capture incomplete/expanded")
         if data.get("accepted_original_archive_inventory",{}).get(
