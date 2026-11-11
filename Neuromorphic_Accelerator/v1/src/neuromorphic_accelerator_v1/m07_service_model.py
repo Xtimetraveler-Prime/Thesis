@@ -35,6 +35,7 @@ class ServiceAssumptions:
     """User-editable DIMENSIONLESS toy cycle costs; NOT device calibration."""
     fifo_depth_events: int = 4
     enqueue_batch_setup_cycles: int = 2
+    consumer_event_interval_cycles: int = 2
     neuron_compute_cycles: int = 3
     read_transfer_chunk_cycles: int = 5
     write_transfer_chunk_cycles: int = 7
@@ -73,12 +74,13 @@ class TraceImage(CanonicalImage):
 
 def _ingress_model(arrivals_by_tick: tuple[int, ...], *,
                    batch_width: int, config: ServiceAssumptions) -> dict:
-    """Serialized per-tick enqueue and dequeue; one abstract consumer/event/cycle.
+    """Serialized per-tick enqueue and dequeue with declared consumer interval.
 
     All due recurrent+external events are offered at the START of their
     logical tick (M03 oracle counts). Each enqueue accepts <=batch_width
-    events, then pays a declared setup delay before next enqueue. One event
-    exits FIFO per model cycle. No backlog crosses a logical tick. No AXI
+    events, then pays a declared setup delay before next enqueue. Consumer
+    removes one event every declared service interval. No backlog crosses a
+    logical tick. No AXI
     arbitration, compute overlap, or event-generation timestamps implied.
     """
     if type(batch_width) is not int or batch_width < 1 or batch_width > 4096:
@@ -95,6 +97,7 @@ def _ingress_model(arrivals_by_tick: tuple[int, ...], *,
             continue
         result["ticks_with_events"] += 1
         remain, occupancy, setup, consumed = arrivals, 0, 0, 0
+        consumer_cooldown = 0
         cycles = 0
         while remain or occupancy:
             if remain:
@@ -110,9 +113,12 @@ def _ingress_model(arrivals_by_tick: tuple[int, ...], *,
                     setup = config.enqueue_batch_setup_cycles - 1
             result["peak_occupancy_events"] = max(
                 result["peak_occupancy_events"], occupancy)
-            if occupancy:
+            if consumer_cooldown:
+                consumer_cooldown -= 1
+            elif occupancy:
                 occupancy -= 1
                 consumed += 1
+                consumer_cooldown = config.consumer_event_interval_cycles - 1
             cycles += 1
         if consumed != arrivals:
             raise AssertionError("queue model consumed a different number of events")
@@ -374,7 +380,7 @@ def run_service_sweep(plan: ServiceSweepPlan,
         "rows":rows,
         "model_assumption": (
             "event arrivals offered at start of each logical tick; FIFO "
-            "enqueues batch_width with setup delay and 1 event/cycle drain; "
+            "enqueues batch_width with setup delay and declared consumer interval; "
             "state blocks are synchronous completed M06 transfers; "
             "compute, queue and page-service costs ADDED serially, no overlap; "
             "write-B model completion before next read is IMPLIED by M06 "
