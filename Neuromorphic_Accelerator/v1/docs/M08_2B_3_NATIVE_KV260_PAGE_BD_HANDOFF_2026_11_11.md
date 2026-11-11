@@ -17,6 +17,12 @@ The owner also checked all **seven source SHA rows** against the checkout and al
 
 **Verification gate:** source tests and CI at the new SHA must run first, followed by **one fresh** native Vivado run in a **new exclusive directory**. This is a strongly evidence-supported correction to the specific vendor fatal, **not yet a proven actual Vivado BD pass**. Any subsequent error must be evaluated from its own new original log; preserve this first original failed folder exactly.
 
+### Independent CI correction: preserve the SystemVerilog *testbench* extension
+
+The first corrective source CI run at SHA `86e6519154058ba3d9d5e8d435c2be1b2caf6812` (GitHub M08 run `43066464001`, job `130682614347`) reached **real Icarus**, but failed `test_actual_safe_shell_axil_rejects_no_engine_dispatch` **before compilation**: the Python source list incorrectly named `tb_m08_ps_page_safe_shell.v`, which did not exist. This came from an overbroad filename replacement of `m08_ps_page_safe_shell.sv` that also matched the suffix of `tb_m08_ps_page_safe_shell.sv`. This CI failure does **not** contradict the native Vivado `.sv` module-reference diagnosis; it is a distinct test-invocation path error.
+
+**Correction:** Verilog **module-reference wrapper** is `m08_ps_page_safe_shell.v`; SystemVerilog **testbench** remains `tb_m08_ps_page_safe_shell.sv`. Restore the testbench source path in `tests/test_m08_page_ps_bd_candidate.py`, this runbook and test docs; regress both the required `.v` wrapper and preserved `.sv` testbench. All other AXI/page children remain unchanged. A **new exact-HEAD Icarus PASS** is required before another owner Vivado attempt; a passed static source check by itself is insufficient.
+
 ## Purpose, design and inheritance
 
 The accepted sixth/seventh M08.2a Vivado 2025.2 runs established real K26 part `xck26-sfvc784-2LV-c`, SOM board part `xilinx.com:kv260_som:part0:1.4`, **PS board preset applied before explicit clock/master overrides**, PL0 clock actual **99,999,001 Hz** from requested 100 MHz, and PS `M_AXI_HPM0_FPD`→SmartConnect→read-only `identity/S_AXI` with correct common reset/clock and a 4 KiB PS register region. Prior failure history is retained; do not reproduce legacy clock or unused-LPD mistakes. [Historical acceptance](M08_2_IDENTITY_BD_SCOPED_ACCEPTANCE_2026_11_11.md).
