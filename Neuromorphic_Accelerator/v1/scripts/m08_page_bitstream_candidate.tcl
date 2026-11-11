@@ -33,9 +33,17 @@ open_checkpoint $checkpoint
 if {[get_property PART [current_project]] ne "xck26-sfvc784-2LV-c"} {
     error "M08 rejected unexpected native K26 checkpoint PART"
 }
-if {[get_property NAME [current_design]] ne "m08_page_ps_wrapper"} {
-    error "M08 rejected unexpected routed PS/page top"
+# Vivado design object's NAME is an in-memory design label (often
+# netlist_1/impl_1), NOT the HDL top module. Check its TOP property instead.
+# This must fail closed if the original routed DCP has the wrong top.
+set design_name [string trim [get_property NAME [current_design]]]
+set top_module [string trim [get_property -quiet TOP [current_design]]]
+puts "M08_PAGE_RELEASE_CHECKPOINT_DESIGN_NAME=$design_name"
+puts "M08_PAGE_RELEASE_CHECKPOINT_TOP=$top_module"
+if {$top_module ne "m08_page_ps_wrapper"} {
+    error "M08 rejected unexpected routed PS/page TOP='$top_module' (design NAME='$design_name')"
 }
+puts "M08_PAGE_RELEASE_CHECKPOINT_TOP_VALIDATED=m08_page_ps_wrapper"
 set clocks [get_clocks -quiet]
 if {[llength $clocks] < 1} {
     error "M08 no original timing clocks after opening post-route checkpoint"
@@ -76,7 +84,8 @@ set o [open $metrics_file {WRONLY CREAT EXCL}]
 puts $o "META|scope|M08_GENUINE_LOCAL_KV260_PS_SAFE_PAGE_BITSTREAM_NO_BOARD"
 puts $o "META|vivado_version|[version -short]"
 puts $o "META|part|[get_property PART [current_project]]"
-puts $o "META|top|[get_property NAME [current_design]]"
+puts $o "META|top|$top_module"
+puts $o "META|design_display_name|$design_name"
 puts $o "META|wns_ns|$wns"
 puts $o "META|whs_ns|$whs"
 puts $o "META|clock_count|[llength $clocks]"
