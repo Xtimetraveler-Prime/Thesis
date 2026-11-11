@@ -87,8 +87,12 @@ def audit_evidence(folder:Path,root:Path)->dict:
     if length<32 or base%4 or length%4 or base+length>2**32:
         raise ValueError("Vivado assigned aperture not bounded/word aligned")
     log=(folder/"01_vivado_identity_bd.log").read_text(errors="replace")
-    if log.count(MARKER)!=1:
-        raise ValueError("genuine Vivado success marker missing or duplicated")
+    # Vivado -mode batch echoes the Tcl source command as a commented puts
+    # line AND prints the actual success marker as a separate output line.
+    # A substring count falsely rejects genuine validation. Require exactly
+    # one standalone output marker line; source echoes do not count.
+    if sum(line.strip()==MARKER for line in log.splitlines())!=1:
+        raise ValueError("genuine Vivado success output line missing or duplicated")
     # Real PS clock readback and the successful post-validation AXI
     # propagation check must corroborate the reported *actual* clock.
     for proof in (f"M08_GENUINE_PS_PL0_CLOCK_HZ={actual_clock_hz}",
