@@ -399,7 +399,7 @@ error "script skipped the add_files guard"
             stub_receipt(folder)
             log=folder/"01_vivado_identity_bd.log"
             body=log.read_text()
-            echoed=f'# puts "{MARKER}"\\n'
+            echoed=f'# puts "{MARKER}"\n'
             self.assertIn(MARKER,body)
             log.write_text(body.replace(MARKER,echoed+MARKER,1))
             report=audit_evidence(folder,ROOT)
@@ -411,7 +411,7 @@ error "script skipped the add_files guard"
             with self.assertRaisesRegex(ValueError,"success output line"):
                 audit_evidence(folder,ROOT)
             # Two genuine output lines remain disallowed, even with echo.
-            log.write_text(body.replace(MARKER,echoed+MARKER+"\\n"+MARKER,1))
+            log.write_text(body.replace(MARKER,echoed+MARKER+"\n"+MARKER,1))
             with self.assertRaisesRegex(ValueError,"success output line"):
                 audit_evidence(folder,ROOT)
 
