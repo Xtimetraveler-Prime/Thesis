@@ -86,7 +86,7 @@ The script checks genuine Vivado 2025.2, uses a fresh `$HOME/Thesis_Evidence/M08
 
 **Important:** The new Tcl was developed without running the actual local Vivado IP catalog. It is a **trial**, not an already validated block diagram; if Vivado rejects module-reference AXI inference, PS clock/reset wiring, exact address segment or a version-specific IP property, the appropriate next action is to inspect the original log and revise the candidate. Do not silently waive a vendor `ERROR` or `CRITICAL WARNING`, assume a 32-bit MMIO base address from source text, or program the existing Loihi v2 bitstream as an M08 design.
 
-## C. Check live KV260 status via UART (no programming)
+### UART fallback: only if the normally booting KV260 stops reaching Linux
 
 1. Use the actual KV260 power supply. Connect PC to carrier J4 USB UART/JTAG and check USB enumeration on Linux with `lsusb`, `ls -l /dev/serial/by-id/` and `dmesg | tail -60`. Multiple FTDI serial devices may be exposed: verify the serial port that actually emits Linux/FSBL logs, **don't assume every kit enumerates as ttyUSB1**.
 2. Use PuTTY, minicom or another serial tool on the identified port with **115200 baud, 8 data bits, no parity, one stop bit, hardware/software flow control disabled**. Record a *raw* UART boot log to a new file under `~/Thesis_Evidence/M08/`. A heartbeat LED or JTAG being visible does not prove Linux boot, PL programming or inference.
@@ -117,7 +117,7 @@ find "$HOME/Thesis_Evidence" -type f \( -name '*.xsa' -o -name '*.bit' -o -name 
 
 If you have an actual candidate `.xpr`, `.xsa`, full-system `.bit` or user-controlled DDR driver/device-tree source, record its exact path and hash. Do not equate a standalone Vitis HLS-generated RTL module or M05 PS/DMA *candidate Tcl* with a fully connected and routed KV260 hardware platform. **Missing artifacts are not failures of M07**; they are the honest M08.2 engineering starting point.
 
-### What to provide back to continue
+### What to provide back to continue M08.2
 
 The most useful first items are: the **host** `m08_readonly_inventory.json` and its audit result; whether the five M06 original archive SHAs match; the KV260 raw UART boot result (booting Linux or exact last line); the on-board `uname`/device-tree/OS readbacks if available; and whether Vivado 2025.2 can open any existing *full-system* K26 project/XSA. Paths and redacted logs are enough to begin; no need to upload large archive ZIPs unless the hash gate flags a mismatch. Please redact credentials, IPs or serial identifiers if sharing logs publicly.
 
