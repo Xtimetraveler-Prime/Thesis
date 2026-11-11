@@ -136,6 +136,7 @@ class M08PathAFanBD(unittest.TestCase):
             (directory / filename).write_text(manifest)
         (directory / "03_run_result.txt").write_text("vivado_exit_status=0\n")
         (directory / "01_vivado_fan_bd.log").write_text(
+            "M08_PATH_A_ORIGINAL_DUAL_AXI_REPORT_EXACT_SCOPE_OK\n"
             "M08_PAGE_GENUINE_VIVADO_BD_VALIDATED_NO_BITSTREAM_NO_BOARD\n"
             "M08_PATH_A_K26_FAN_BD_OFFLINE_VALIDATED_NO_BOARD_NO_BITSTREAM\n"
         )
@@ -144,6 +145,7 @@ class M08PathAFanBD(unittest.TestCase):
             "APERTURE_PAGE|/foo/page|0xA0001000|0x1000\n"
         )
         (directory / "02_vivado_page_bd_readback.txt").write_text(
+            "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD\n"
             "META|validated_bd|YES\nMETA|compute_enabled|NO\n"
             "META|physical_kv260|NOT_PROGRAMMED\n" + addresses
         )
