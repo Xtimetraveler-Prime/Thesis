@@ -29,7 +29,7 @@ Hardware work is authorized by the owner for M08, but **authorization is distinc
 ## Implementation order and deliberate stage boundaries
 
 1. **Now:** M08.1 host-only inventory code, SHA-pinned accepted original ZIP audit, read-only board-local Linux command capture, no-mem-ownership guards, tests/CI, plus the exact operator runbook.
-2. **Next (real local PC required):** audit current 2025.2 Vivado, installed AMD IP/board files, locally retained original M05/M06 generated HLS RTL and DAT, existing .bd/.xpr/.xsa; obtain truthful **originals-present** and actual K26 IP connection reports. Do not resynthesize accepted original cores just for an inventory.
+2. **Next (real local PC required):** audit current 2025.2 Vivado, installed AMD IP/board files, locally retained original M05/M06 generated HLS RTL and DAT, existing .bd/.xpr/.xsa; obtain truthful **originals-present** and actual K26 IP connection reports. A new **standalone read-only AXI4-Lite PL identity slave** (M08.2 preliminary RTL) is already source-created and Icarus-verifiable; it is NOT attached to a real BD, and its default build tag is zero. Do not resynthesize accepted original cores just for an inventory.
 3. **Then (physical KV260 or local Vivado required):** advance M08.2 actual BD and routed implementation from the observed original artifacts; build/verify Linux allocation mechanism. Never substitute M06 bytearray for hardware DDR.
 4. **Once the actual board boots, **run M08.1 board-local read-only inventory and bring host/board receipts back for a verified next-step integration decision. A halted or unavailable Linux is a *measured entry blocker*; capture UART/boot logs rather than assuming pre-existing image is repairable.
 
@@ -39,6 +39,12 @@ Hardware work is authorized by the owner for M08, but **authorization is distinc
 - Distinguish OS images: board can boot a Linux/PetaLinux/Ubuntu release with version-specific firmware requirements. Firmware mismatch is an engineering finding, not a mandate for automatic QSPI update. Record read-only `/proc/device-tree/model`, `/proc/cmdline`, `/etc/os-release`, `/proc/meminfo`.
 - Check known safe boot/recovery, source/bitstream signatures, independently mapped PS control register readback and board power cycle after invasive debug. For an already stalled boot, power-cycle under operator control and capture serial; do not resume a halted Linux image.
 - Keep `~/Thesis_Evidence/M08/` immutable and outside checkout; folders are unique per run and never overwritten; README and scripts must not insert accepted owner-original ZIPs into Git.
+
+## Preliminary M08.2 deliverable — safe identity-first RTL
+
+New first-party `rtl/m08/m08_axil_readonly_identity.v` implements only a **32-bit AXI4-Lite slave** with fixed magic/version/capability/build-tag words. It has **no memory master**, no DMA, no state writer and no neural processing. Every write returns SLVERR after correctly pairing decoupled AW and W, stable under BREADY backpressure; reads hold RDATA/RRESP under RREADY stalls, unmatched addresses DECERR, and reset drops stale partial transactions. Its dedicated first-party Icarus testbench covers all protocol edges. A separate host `m08_identity_client.py` requires a caller-supplied `read32(offset)`, reads twice for consistency, and **never constructs `/dev/mem` or infers a real bus address**. Zero default build-tag is explicitly *unprovisioned*. The identity register tells us that a future *actual* PS→PL register path works if wired and measured, not that any physical DDR interface works.
+
+This small read-only peripheral is the first hardware candidate we can honestly develop without local AMD Vivado/board. **Next milestone step requires the operator's actual Vivado IP/BD project and device evidence** before connecting the PS master, assigning a physical MMIO aperture, generating a real bitstream or programming the board.
 
 ## Current explicit M08 blockers (before physical work)
 
