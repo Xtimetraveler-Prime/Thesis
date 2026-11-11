@@ -130,6 +130,10 @@ class M08SourceEntryTests(unittest.TestCase):
                              originals=None,reader=reader,runner=runner)
         self.assertTrue(got["board_identity_observed"])
         self.assertTrue(got["board_linux_boot_observed"])
+        self.assertTrue(got["accelerator_inventory_observed"])
+        self.assertIn("xmutil listapps", got["commands"])
+        self.assertIn("xmutil boardid", got["commands"])
+        self.assertIn("xmutil bootfw_status", got["commands"])
         self.assertFalse(got["kv260_programmed_by_this_tool"])
         self.assertFalse(got["ready_for_physical_ddr"])
         self.assertEqual(got["accepted_original_archive_inventory"]["status"],
@@ -156,6 +160,12 @@ class M08SourceEntryTests(unittest.TestCase):
     def test_command_allowlist_and_board_device_file_allowlist(self):
         with self.assertRaises(ValueError):
             preflight._run(("sh","-c","touch /dev/mem"))
+        with self.assertRaises(ValueError):
+            preflight._run(("xmutil","unloadapp"))
+        with self.assertRaises(ValueError):
+            preflight._run(("xmutil","loadapp","legacy"))
+        with self.assertRaises(ValueError):
+            preflight._run(("xmutil","bootfw_update"))
         with self.assertRaises(ValueError):
             preflight._run(("vivado","-mode","batch"))
         with self.assertRaises(ValueError):
