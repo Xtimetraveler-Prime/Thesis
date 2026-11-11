@@ -1,4 +1,4 @@
-name: Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy and matched controls (NO BOARD)
+name: Neuromorphic Accelerator v1 M07.1-M07.3 source cache and locality studies (NO BOARD)
 on:
   push:
     paths:
@@ -63,6 +63,36 @@ jobs:
                         "synapse_analytic_bytes=",
                         controls["event/ddr"]["synapse_read_bytes_m03_estimate"])
           PY
+      - name: M07.3 full fixed-byte-budget x block-width x locality ablations (NO BOARD)
+        run: |
+          python3 scripts/m07_ablation.py --output "$RUNNER_TEMP/m07_3_source_only_ablation.json"
+          python3 - "$RUNNER_TEMP/m07_3_source_only_ablation.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              r=json.load(handle)
+          assert r["schema"]=="m07-residency-locality-ablation-v1"
+          assert r["num_parameter_combinations"]==18
+          assert r["num_policy_locality_four_way_rows"]==288
+          assert r["unique_workload_seeds"]==2
+          assert r["physical_hardware_measured"] is False
+          assert r["performance_or_yana_equivalence_claim"] is False
+          assert len(r["source_sha256"])>=10
+          assert len({a["seed"] for a in r["rows"]})==2
+          for row in r["rows"]:
+              assert row["resident_slots"]*row["page_bytes"]==row["resident_budget_bytes"]
+              c=row["localities"]["clustered"]
+              d=row["localities"]["dispersed"]
+              assert c["work"]==d["work"]
+              for layout in (c,d):
+                  for policy in ("direct","lru"):
+                      for mode in ("event/onchip","timestep/onchip","event/ddr","timestep/ddr"):
+                          m=layout["controls"][policy][mode]
+                          assert m["functional_parity_verified"] is True
+                          assert m["physical_ddr_bytes"] is None
+                          assert m["service_cycles"] is None
+          print("M07_3_GRID_MODEL_ONLY_PASS","configurations",len(r["rows"]),
+                "four_way_rows",r["num_policy_locality_four_way_rows"])
+          PY
       - name: Synthetic 4-case locality x policy report (NOT AXI OR PHYSICAL DDR)
         run: |
           python3 scripts/m07_cache_baseline.py --output "$RUNNER_TEMP/m07_cache_baseline_source_only.json"
@@ -83,12 +113,13 @@ jobs:
               print("M07_SOURCE_ONLY",loc,"direct_bytes",direct["state_transfer_bytes"],
                     "lru_bytes",lru["state_transfer_bytes"])
           PY
-      - name: Preserve source-only M07.1/M07.2 models (NOT HARDWARE EVIDENCE)
+      - name: Preserve M07.1-M07.3 synthetic source-only JSON (NOT HARDWARE EVIDENCE)
         uses: actions/upload-artifact@v4
         with:
-          name: m07-2-model-only-matched-four-way
+          name: m07-3-source-only-residency-locality
           path: |
             ${{ runner.temp }}/m07_cache_baseline_source_only.json
             ${{ runner.temp }}/m07_four_way_source_only.json
+            ${{ runner.temp }}/m07_3_source_only_ablation.json
           if-no-files-found: error
           retention-days: 30
