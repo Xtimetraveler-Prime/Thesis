@@ -1,0 +1,217 @@
+name: Neuromorphic Accelerator v1 M07.1-M07.5 source cache and causal activity pilot (NO BOARD)
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m07_host_only.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m07_host_only.yml"
+  workflow_dispatch:
+
+jobs:
+  m07-source-policy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pinned source provenance and Python syntax (NO VIVADO OR FPGA)
+        run: |
+          git rev-parse HEAD
+          python3 --version
+          python3 -m compileall -q src scripts tests
+      - name: Direct and M06 LRU policy parity, faults and negative protocol tests
+        run: python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+      - name: Independent accepted M02/M03/M06 source regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m02*.py' -v
+          python3 -m unittest discover -s tests -p 'test_m03*.py' -v
+          python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+      - name: Full v1 discovery regression (includes M05/M06 import-order safety)
+        run: python3 -m unittest discover -s tests -v
+      - name: M07.2 matched 2-locality x 2-policy x 4-control report (NO BOARD)
+        run: |
+          python3 scripts/m07_four_way.py --output "$RUNNER_TEMP/m07_four_way_source_only.json"
+          python3 - "$RUNNER_TEMP/m07_four_way_source_only.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              report=json.load(f)
+          assert report["matched_neural_work_confirmed"] is True
+          assert report["physical_hardware_measured"] is False
+          for locality in ("clustered","dispersed"):
+              for policy in ("direct","lru"):
+                  case=report["results_by_locality"][locality]
+                  assert case["vendor_hls_amd_executed"] is False
+                  controls=case["controls_by_policy"][policy]
+                  assert set(controls)=={"timestep/onchip","event/onchip",
+                                        "timestep/ddr","event/ddr"}
+                  for mode in controls:
+                      assert controls[mode]["functional_parity_verified"]
+                      assert controls[mode]["model_timing_cycles"] is None
+                  assert controls["event/ddr"]["state_execution_source"]=="M06_PAGED_EXACT_LIF"
+                  assert controls["timestep/ddr"]["state_execution_source"]=="M02_ORACLE_GUIDED_STATE_MOVEMENT"
+                  print("M07_2_MODEL_ONLY", locality, policy,
+                        "event_state_bytes=",
+                        controls["event/ddr"]["state_read_bytes"]+
+                        controls["event/ddr"]["state_write_bytes"],
+                        "synapse_analytic_bytes=",
+                        controls["event/ddr"]["synapse_read_bytes_m03_estimate"])
+          PY
+      - name: M07.3 full fixed-byte-budget x block-width x locality ablations (NO BOARD)
+        run: |
+          python3 scripts/m07_ablation.py --output "$RUNNER_TEMP/m07_3_source_only_ablation.json"
+          python3 - "$RUNNER_TEMP/m07_3_source_only_ablation.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              r=json.load(handle)
+          assert r["schema"]=="m07-residency-locality-ablation-v1"
+          assert r["num_parameter_combinations"]==18
+          assert r["num_policy_locality_four_way_rows"]==288
+          assert r["unique_workload_seeds"]==2
+          assert r["physical_hardware_measured"] is False
+          assert r["performance_or_yana_equivalence_claim"] is False
+          assert len(r["source_sha256"])>=10
+          assert len({a["seed"] for a in r["rows"]})==2
+          for row in r["rows"]:
+              assert row["resident_slots"]*row["page_bytes"]==row["resident_budget_bytes"]
+              c=row["localities"]["clustered"]
+              d=row["localities"]["dispersed"]
+              assert c["work"]==d["work"]
+              for layout in (c,d):
+                  for policy in ("direct","lru"):
+                      for mode in ("event/onchip","timestep/onchip","event/ddr","timestep/ddr"):
+                          m=layout["controls"][policy][mode]
+                          assert m["functional_parity_verified"] is True
+                          assert m["physical_ddr_bytes"] is None
+                          assert m["service_cycles"] is None
+          print("M07_3_GRID_MODEL_ONLY_PASS","configurations",len(r["rows"]),
+                "four_way_rows",r["num_policy_locality_four_way_rows"])
+          PY
+      - name: M07.3 YANA-count-only 1024-neuron capacity analog (NO YANA RTL)
+        run: |
+          python3 scripts/m07_ablation.py \
+            --neurons 1024 --active-roles 16 --ticks 4 \
+            --fanout 2 --events-per-tick 4 --seeds 17 \
+            --blocks 8,16 --budgets 256 --onchip-capacity-bytes 2048 \
+            --output "$RUNNER_TEMP/m07_3_yana_count_only_source_model.json"
+          python3 - "$RUNNER_TEMP/m07_3_yana_count_only_source_model.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding="utf-8") as f:
+              r=json.load(f)
+          assert r["plan"]["neuron_count"]==1024
+          assert r["num_parameter_combinations"]==2
+          assert r["num_policy_locality_four_way_rows"]==32
+          assert r["performance_or_yana_equivalence_claim"] is False
+          assert r["physical_hardware_measured"] is False
+          for case in r["rows"]:
+              assert case["localities"]["clustered"]["work"]==case["localities"]["dispersed"]["work"]
+              for loc in ("clustered","dispersed"):
+                  for policy in ("direct","lru"):
+                      rows=case["localities"][loc]["controls"][policy]
+                      assert rows["event/onchip"]["available"] is False
+                      assert rows["timestep/onchip"]["available"] is False
+                      assert rows["event/ddr"]["available"] is True
+                      assert rows["event/ddr"]["physical_ddr_bytes"] is None
+          print("M07_YANA_LOGICAL_NEURON_COUNT_ONLY_PASS",
+                "no_yana_hardware_or_neural_equivalence")
+          PY
+      - name: M07.4 causal activity history eviction vs LRU (NO RTL OR BOARD)
+        run: |
+          python3 scripts/m07_activity_pilot.py --output "$RUNNER_TEMP/m07_4_activity_history_source_model.json"
+          python3 - "$RUNNER_TEMP/m07_4_activity_history_source_model.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding="utf-8") as f:
+              data=json.load(f)
+          assert data["schema"]=="m07-activity-history-pilot-v1"
+          assert data["geometry_seed_cases"]==8
+          assert data["policy_history_comparisons"]==48
+          assert not data["actual_yana_implementation"]
+          assert not data["lookahead"]
+          assert not data["reordered_deliveries"]
+          assert not data["equal_total_fpga_resource_comparison"]
+          assert data["service_cycles"] is None
+          assert data["physical_ddr_bytes"] is None
+          assert len(data["source_sha256"])==10
+          assert data["microtrace"]["models"]["activity_history"]["misses"] < data["microtrace"]["models"]["lru"]["misses"]
+          assert data["counterexample"]["models"]["activity_history"]["misses"] > data["counterexample"]["models"]["lru"]["misses"]
+          assert data["counterexample"]["identical_final_canonical_bytes"] is True
+          outcomes=data["witnessed_outcomes"]
+          assert sum(outcomes[key] for key in
+                     ("history_lower_model_bytes","history_equal_model_bytes",
+                      "history_higher_model_bytes"))==48
+          for trial in data["rows"]:
+              assert trial["page_bytes"]*trial["resident_slots"]==trial["resident_budget_bytes"]
+              assert trial["localities"]["clustered"]["neural_work"]==trial["localities"]["dispersed"]["neural_work"]
+              for layout in trial["localities"].values():
+                  for depth in ("4","16","32"):
+                      candidate=layout["history"][depth]
+                      assert candidate["state_bytes_saved_vs_lru"]==layout["lru"]["state_bytes"]-candidate["state_bytes"]
+                      assert candidate["policy_observer"]["service_cycles"] is None
+          print("M07_4_CAUSAL_POLICY_MODEL_ONLY_PASS",
+                "comparisons",data["policy_history_comparisons"],
+                "outcomes",outcomes)
+          PY
+      - name: M07.5 bounded queue and serialized source-only service (NO VIVADO)
+        run: |
+          python3 scripts/m07_service_closeout.py --output "$RUNNER_TEMP/m07_5_source_only_service.json"
+          python3 - "$RUNNER_TEMP/m07_5_source_only_service.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding="utf-8") as f:
+              r=json.load(f)
+          assert r["schema"]=="m07-5-serialized-source-service-v1"
+          assert r["number_of_matched_cases"]==48
+          assert not r["actual_hardware_performance_measured"]
+          assert not r["physical_ddr_executed"]
+          assert len(r["source_sha256"])==10
+          for layout in r["rows"]:
+              for case in layout["cases"]:
+                  assert case["neural_and_final_canonical_parity"]
+                  assert case["actual_run_cycles"] is None
+                  assert case["actual_axi_fence_cycles"] is None
+                  assert case["transfers"]["actual_axi_b_before_ar_cycles"] is None
+                  assert case["transfers"]["actual_outstanding_axi_requests"] is None
+                  assert case["ingress_queue"]["arrivals"]==case["delivered_events"]
+                  assert case["ingress_queue"]["consumed"]==case["delivered_events"]
+                  assert case["transfers"]["state_read_bytes"]==case["cache_counters"]["read_bytes"]
+                  assert case["transfers"]["state_write_bytes"]==case["cache_counters"]["write_bytes"]
+          print("M07_5_SYNTHETIC_SERVICE_MODEL_PASS",r["number_of_matched_cases"])
+          PY
+      - name: Synthetic 4-case locality x policy report (NOT AXI OR PHYSICAL DDR)
+        run: |
+          python3 scripts/m07_cache_baseline.py --output "$RUNNER_TEMP/m07_cache_baseline_source_only.json"
+          python3 - "$RUNNER_TEMP/m07_cache_baseline_source_only.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              data=json.load(f)
+          assert data["role_isomorphic_checked"] is True
+          assert data["physical_hardware_measured"] is False
+          assert data["vendor_hls_amd_rtl_executed"] is False
+          for loc in ("clustered","dispersed"):
+              direct=data["results"][loc]["direct"]
+              lru=data["results"][loc]["lru"]
+              assert direct["canonical_trace_sha256"]==lru["canonical_trace_sha256"]
+              assert direct["state_cache_counters"]["misses"]==direct["evaluations"]
+              assert lru["state_transfer_bytes"]<=direct["state_transfer_bytes"]
+              assert direct["simulated_service_cycles"] is None
+              print("M07_SOURCE_ONLY",loc,"direct_bytes",direct["state_transfer_bytes"],
+                    "lru_bytes",lru["state_transfer_bytes"])
+          PY
+      - name: Preserve M07.1-M07.5 synthetic source-only JSON (NOT HARDWARE EVIDENCE)
+        uses: actions/upload-artifact@v4
+        with:
+          name: m07-5-source-only-policies-queue
+          path: |
+            ${{ runner.temp }}/m07_cache_baseline_source_only.json
+            ${{ runner.temp }}/m07_four_way_source_only.json
+            ${{ runner.temp }}/m07_3_source_only_ablation.json
+            ${{ runner.temp }}/m07_3_yana_count_only_source_model.json
+            ${{ runner.temp }}/m07_4_activity_history_source_model.json
+            ${{ runner.temp }}/m07_5_source_only_service.json
+          if-no-files-found: error
+          retention-days: 30

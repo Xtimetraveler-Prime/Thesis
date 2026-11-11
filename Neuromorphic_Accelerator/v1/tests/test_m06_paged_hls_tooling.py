@@ -4,6 +4,7 @@ Every Verilog snippet here is SYNTHETIC; no generated RTL/vendor simulation
 claim may arise from these port-contract parser tests.
 """
 from __future__ import annotations
+import importlib.util
 import subprocess
 import sys
 import tempfile
@@ -12,9 +13,20 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
-sys.path.insert(0,str(ROOT/"hls/m06_paged_rolling"))
 from m06_paged_hls_port_audit import parse_top,REQUIRED,RDP,WRP
-from prepare_hls_config import prepare
+
+# M05 and M06 both provide a module named prepare_hls_config.py, with
+# intentionally different ALLOWED_TOPS. In a full unittest discovery run,
+# Python's shared sys.modules cache may already hold the M05 implementation.
+# Load the M06 tool explicitly by its unique path, regardless of import order;
+# this tests the original M06 code rather than relaxing either tool's safety.
+_M06_CONFIG_PATH = ROOT / "hls/m06_paged_rolling/prepare_hls_config.py"
+_M06_SPEC = importlib.util.spec_from_file_location(
+    "m06_paged_rolling_config_isolated", _M06_CONFIG_PATH)
+assert _M06_SPEC is not None and _M06_SPEC.loader is not None
+_M06_CONFIG = importlib.util.module_from_spec(_M06_SPEC)
+_M06_SPEC.loader.exec_module(_M06_CONFIG)
+prepare = _M06_CONFIG.prepare
 
 
 def synthetic_module() -> str:
@@ -80,6 +92,22 @@ class M06RealHLSGenerationSafetyTests(unittest.TestCase):
             parse_top(base.replace("ap_clk,","ap_clk, ap_clk,"))
         with self.assertRaisesRegex(ValueError,"parameter"):
             parse_top(base.replace("BUS_WIDTH = 32;","BUS_WIDTH = BAD_PARAMETER;"))
+
+    def test_m06_config_loader_is_immune_to_m05_module_cache_collision(self):
+        # Reproduce the owner's full-suite import collision without replacing
+        # accepted M05/M06 config whitelist logic or invoking Vitis.
+        import importlib.util
+        m05 = ROOT / "hls/m05_stream_eval/prepare_hls_config.py"
+        spec = importlib.util.spec_from_file_location("m05_config_isolated", m05)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertNotIn("m06_paged_rolling_replay", module.ALLOWED_TOPS)
+        self.assertIn("m06_paged_rolling_replay", _M06_CONFIG.ALLOWED_TOPS)
+        self.assertEqual(Path(prepare.__code__.co_filename).resolve(),
+                         _M06_CONFIG_PATH.resolve())
+        self.assertNotEqual(module.prepare, prepare)
 
     def test_effective_vitis_configuration_is_abs_and_exclusive(self):
         template=ROOT/"hls/m06_paged_rolling/m06_paged_rolling_hls_config.cfg"
