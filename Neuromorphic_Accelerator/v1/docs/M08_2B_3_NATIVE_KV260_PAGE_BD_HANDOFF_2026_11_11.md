@@ -24,7 +24,7 @@ The new source candidate intentionally keeps the accepted identity peripheral **
 
 ### Safe compute boundary
 
-The accepted M08.2b.2 `m08_axil_page_control.sv` exposes an external compute port for *later* M06 signed16 integration. A PS-only design with this port tied idle but with DISPATCH enabled would enter `RUNNING` indefinitely. Therefore the new `m08_ps_page_safe_shell.sv` wraps the adapter with **`ENABLE_COMPUTE=0`** and ties compute request/write/done/fault inputs to 0; the adapter must return **SLVERR** on command `DISPATCH (4)` without entering `RUNNING`. The original adapter default `ENABLE_COMPUTE=1` remains available for its prior *standalone testbench* and future genuine compute integration. No unused compute input is exposed/floating in this BD. This is not an actual neural kernel or hardware inference test.
+The accepted M08.2b.2 `m08_axil_page_control.sv` exposes an external compute port for *later* M06 signed16 integration. A PS-only design with this port tied idle but with DISPATCH enabled would enter `RUNNING` indefinitely. Therefore the new `m08_ps_page_safe_shell.v` wraps the adapter with **`ENABLE_COMPUTE=0`** and ties compute request/write/done/fault inputs to 0; the adapter must return **SLVERR** on command `DISPATCH (4)` without entering `RUNNING`. The original adapter default `ENABLE_COMPUTE=1` remains available for its prior *standalone testbench* and future genuine compute integration. No unused compute input is exposed/floating in this BD. This is not an actual neural kernel or hardware inference test.
 
 ### Exact source components
 
@@ -33,11 +33,11 @@ The accepted M08.2b.2 `m08_axil_page_control.sv` exposes an external compute por
 | `rtl/m08/m08_axil_readonly_identity.v` | Previously vendor-proven first-party read-only identity, preserved in BD |
 | `rtl/m08/m08_host_staged_page_bank.sv` | 256-byte M06 signed16 state-page owner/arbitration |
 | `rtl/m08/m08_axil_page_control.sv` | New 32-bit PS AXI4-Lite slave, existing source-level bus acceptance |
-| `rtl/m08/m08_ps_page_safe_shell.sv` | Exposes one S_AXI/clock/reset interface; compute explicitly disabled at elaboration |
+| `rtl/m08/m08_ps_page_safe_shell.v` | Exposes one S_AXI/clock/reset interface; compute explicitly disabled at elaboration |
 | `scripts/m08_page_ps_bd_candidate.tcl` | Genuine Vivado 2025.2 board preset, FPD HPM0-only IP, two SmartConnect MIs, clock/reset, two address segments and validated Tcl export |
 | `scripts/run_m08_page_bd.sh` | Exclusive immutable owner-original evidence directory, native Vivado batch and source SHA before/after |
 | `scripts/m08_page_bd_audit.py` | Independently re-hashes current sources, verifies the native vendor result/log and distinct PS apertures and output export, rejects false physical claims |
-| `rtl/m08/tb_m08_ps_page_safe_shell.sv`, `tests/test_m08_page_ps_bd_candidate.py` | Safe-shell Icarus, Tcl grammar, project-before-catalog mock, source structure, independent synthetic-auditor negative tests. **Synthetic is not original Vivado proof.** |
+| `rtl/m08/tb_m08_ps_page_safe_shell.v`, `tests/test_m08_page_ps_bd_candidate.py` | Safe-shell Icarus, Tcl grammar, project-before-catalog mock, source structure, independent synthetic-auditor negative tests. **Synthetic is not original Vivado proof.** |
 
 ### Phase A — source verification on the development PC (no Vivado execution)
 
@@ -57,8 +57,8 @@ TMP="$(mktemp -d)"
 iverilog -g2012 -s tb_m08_ps_page_safe_shell -o "$TMP/m08_safe_page.vvp" \
     rtl/m08/m08_host_staged_page_bank.sv \
     rtl/m08/m08_axil_page_control.sv \
-    rtl/m08/m08_ps_page_safe_shell.sv \
-    rtl/m08/tb_m08_ps_page_safe_shell.sv
+    rtl/m08/m08_ps_page_safe_shell.v \
+    rtl/m08/tb_m08_ps_page_safe_shell.v
 vvp "$TMP/m08_safe_page.vvp"
 ~~~
 
