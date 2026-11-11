@@ -66,12 +66,23 @@ fi
 DIR="$(mktemp -d "$BASE/m08_2b_physical_program_$(date -u +%Y%m%dT%H%M%SZ)_XXXXXX")"
 printf 'M08_PROGRAM_EVIDENCE_DIR=%s\n' "$DIR"
 cp -- "$REVIEW" "$DIR/01_board_review.txt"
+# Program a newly copied, locally SHA-verified snapshot, NOT a mutable source
+# pathname.  Keep the owner ORIGINAL bitstream strictly untouched.
+cp -- "$BIT" "$DIR/05_m08_safe_page.bit"
+FROZEN_SHA="$(sha256sum -- "$DIR/05_m08_safe_page.bit" | cut -d ' ' -f1)"
+if [[ "$FROZEN_SHA" != "$EXPECTED" ]] ||
+   ! cmp -s -- "$REVIEW" "$DIR/01_board_review.txt"; then
+  echo "M08_PROGRAM_NOT_ACCEPTED_COPY_CHANGED preserve=$DIR" >&2
+  exit 2
+fi
+# Tcl must review the same immutable-evidence snapshot as the operator saw.
+export M08_BOARD_REVIEW_FILE="$DIR/01_board_review.txt"
 printf 'original_bitstream=%s\nsha256=%s\nbytes=7797831\n' "$BIT" "$ACTUAL" > "$DIR/00_input_identity.txt"
 printf 'source_head=%s\n' "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unavailable)" >> "$DIR/00_input_identity.txt"
 set +e
 vivado -mode batch -nojournal -nolog \
   -source "$HERE/m08_kv260_program_oneshot.tcl" \
-  -tclargs "$BIT" "$DIR/03_program_result.txt" \
+  -tclargs "$DIR/05_m08_safe_page.bit" "$DIR/03_program_result.txt" \
   > "$DIR/02_vivado_program.log" 2>&1
 RC=$?
 set -e
@@ -82,6 +93,7 @@ printf 'bitstream_sha256_after=%s\n' "$AFTER" >> "$DIR/04_run_status.txt"
   cd "$DIR"
   sha256sum -- 00_input_identity.txt 01_board_review.txt \
      02_vivado_program.log 04_run_status.txt > 05_evidence_sha256.txt
+  sha256sum -- 05_m08_safe_page.bit >> 05_evidence_sha256.txt
   if [[ -f 03_program_result.txt ]]; then
     sha256sum -- 03_program_result.txt >> 05_evidence_sha256.txt
   fi
