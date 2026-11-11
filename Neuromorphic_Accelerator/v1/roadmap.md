@@ -173,6 +173,10 @@ Measure true sample-to-output service latency, steady-state throughput and varia
 
 ### M08.2b.1 — physicalizable signed16 one-page host staging (2026-11-11; source stage)
 
+**Owner-source Icarus first-run blocker (2026-11-11):** direct `/usr/bin/iverilog` compiled new one-page RTL but `vvp` stopped at `M08_PAGE_COMPUTE_READ_FAILED` in first compute-port read at 2,686 ns (testbench line 158). This is a **genuine first-party RTL test failure** and **M08.2b.1 is not accepted**. The old assertion conflated missing ACK and wrong read data. Source testbench now waits for an explicit bounded compute ACK and provides separate request-rejection, ACK-timeout and data-mismatch diagnostics. No M08 signed16 hardware, PS AXI-Lite, placed/routed or board acceptance follows until owner reruns this exact updated source and the underlying cause is resolved. [Original owner error and corrected diagnostic test](docs/M08_2B_1_SIGNED16_HOST_STAGING_RTL_2026_11_11.md).
+
+
+
 Original K26 M08.2a identity-only BD proves PS FPD HPM0 → SmartConnect → first-party read-only slave with consistent PS/AXI clock metadata; it does **not** make M06 signed16 hardware deployable. Loihi v2 P08.4.3a/b **already physically** proved mutual exclusion and a page replacement, but its signed24 full-context VIO design is different. New `rtl/m08/m08_host_staged_page_bank.sv` implements a 256-byte (16 signed16 neurons ×16B each) *one-slot* 32-bit host-accessible page bank, explicitly distinct from Loihi's 10-bank full contexts. A first-party RTL testbench instantiates the accepted M06 signed16 arithmetic lane and verifies complete staged host write/readback, a limited single-neuron voltage update with byte-lane preservation, dirty save then safe page replacement, and sticky rejection of incomplete pages/dirty evictions/host-compute overlap/wrong ID/fault. A real PS AXI-Lite adapter, device-specific reset/clock and genuine Vivado implementation are **next**, not implicitly inherited from the existing identity BD. [M08.2b.1 implementation and ordered physical gates](docs/M08_2B_1_SIGNED16_HOST_STAGING_RTL_2026_11_11.md).
 
 ## 6. M09 — Quantitative study and thesis closeout
