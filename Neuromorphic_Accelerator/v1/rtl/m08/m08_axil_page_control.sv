@@ -17,7 +17,12 @@
 // Software must genuinely compare all 64 returned words before COMMIT;
 // must preserve the complete DIRTY readback before SAVE. Hardware
 // enforces read coverage but does not attest the software comparison.
-module m08_axil_page_control (
+// Physical PS-only wrapper sets ENABLE_COMPUTE=0 until a real engine
+// owns the compute port; the standalone adapter preserves its tested
+// default ENABLE_COMPUTE=1 debug-compute test path.
+module m08_axil_page_control #(
+    parameter ENABLE_COMPUTE = 1'b1
+) (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 aclk CLK", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME aclk, ASSOCIATED_BUSIF S_AXI, ASSOCIATED_RESET aresetn" *)
     input wire aclk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 aresetn RST", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME aresetn, POLARITY ACTIVE_LOW" *)
@@ -202,7 +207,8 @@ module m08_axil_page_control (
                             end else if((w_data_q==32'h1 &&
                                          (bank_phase==EMPTY || bank_phase==READY)) ||
                                         (w_data_q==32'h2 && bank_phase==LOADING) ||
-                                        (w_data_q==32'h4 && bank_phase==READY) ||
+                                        (w_data_q==32'h4 && bank_phase==READY &&
+                                         ENABLE_COMPUTE) ||
                                         (w_data_q==32'h8 && bank_phase==DIRTY)) begin
                                 op_cmd<=w_data_q[3:0];
                                 state<=ST_CMD_ISSUE;
