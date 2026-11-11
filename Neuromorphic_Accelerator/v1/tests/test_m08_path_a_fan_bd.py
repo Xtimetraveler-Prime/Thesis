@@ -61,6 +61,10 @@ class M08PathAFanBD(unittest.TestCase):
         ))
         self.assertIn("active_firmware_metadata",
                       (ROOT / "scripts/m08_kv260_path_a_readonly.sh").read_text())
+        self.assertIn("baseline_device_tree_overlay_dts",
+                      (ROOT / "scripts/m08_kv260_path_a_readonly.sh").read_text())
+        self.assertIn("M08_PATH_A_FAN_BD_INDEPENDENT_AUDIT_FAILED", wrapper)
+        self.assertIn("24_independent_audit_console.log", wrapper)
 
     @unittest.skipUnless(shutil.which("bash"), "bash unavailable")
     def test_bash_syntax(self):
@@ -188,6 +192,12 @@ class M08PathAFanBD(unittest.TestCase):
 
     def test_auditor_rejects_tampered_fan_pin_axi_aperture_and_vendor_error(self):
         for filename, old, new in (
+            ("02_vivado_page_bd_readback.txt",
+             "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD",
+             "M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD"),
+            ("01_vivado_fan_bd.log",
+             "M08_PATH_A_ORIGINAL_DUAL_AXI_REPORT_EXACT_SCOPE_OK",
+             "M08_PATH_A_ORIGINAL_DUAL_AXI_SCOPE_NOT_CHECKED"),
             ("21_m08_fan_pwm_a12.xdc", "PACKAGE_PIN A12", "PACKAGE_PIN B12"),
             ("02_vivado_page_bd_readback.txt", "0xA0001000", "0xA0002000"),
             ("20_m08_fan_bd_readback.txt",
