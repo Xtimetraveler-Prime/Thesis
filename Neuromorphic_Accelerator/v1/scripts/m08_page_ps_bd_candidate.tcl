@@ -279,8 +279,8 @@ set lines [list \
     "META|page_source|rtl/m08/m08_ps_page_safe_shell.sv" \
     "META|compute_enabled|NO" \
     "MASTER|[get_property NAME $master]|$space" \
-    "SLAVE_IDENTITY|[get_property NAME $slave]|[get_property NAME [lindex $slave_segments 0]]" \
-    "SLAVE_PAGE|[get_property NAME $page_slave]|[get_property NAME [lindex $page_segments 0]]" \
+    "SLAVE_IDENTITY|$slave|[lindex $slave_segments 0]" \
+    "SLAVE_PAGE|$page_slave|[lindex $page_segments 0]" \
     "APERTURE_IDENTITY|[join $identity_addr |]" \
     "APERTURE_PAGE|[join $page_addr |]" \
     "META|validated_bd|YES" \
