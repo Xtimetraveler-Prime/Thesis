@@ -156,6 +156,23 @@ def audit_evidence(folder: Path, root: Path) -> dict:
             raise ValueError("original Vivado export lacks native PS-to-page connection: " + term)
     if "assign_bd_address" not in exported:
         raise ValueError("original exported Vivado address map absent")
+    # Each required pair must coexist in a *real exported net connection*.
+    # Merely mentioning both objects somewhere in a Tcl file is not proof
+    # they were connected in the validated IP Integrator diagram.
+    flattened = re.sub(r"\\\\[ \\t]*\\n[ \\t]*", " ", exported)
+    connections = (
+        line for line in flattened.splitlines()
+        if line.lstrip().startswith("connect_bd_intf_net")
+    )
+    connected_lines = list(connections)
+    for lhs, rhs in (
+        ("ps/M_AXI_HPM0_FPD", "ctrl_sc/S00_AXI"),
+        ("ctrl_sc/M00_AXI", "identity/S_AXI"),
+        ("ctrl_sc/M01_AXI", "page/S_AXI"),
+    ):
+        if not any(lhs in line and rhs in line for line in connected_lines):
+            raise ValueError("actual exported PS AXI interface connection missing: "
+                             + lhs + "->" + rhs)
 
     return {
         "status": "ORIGINAL_OWNER_KV260_PS_TO_SAFE_PAGE_BD_EVIDENCE_CONSISTENT",
