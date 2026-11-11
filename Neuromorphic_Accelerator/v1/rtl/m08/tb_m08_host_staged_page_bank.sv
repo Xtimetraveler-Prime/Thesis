@@ -155,7 +155,10 @@ module tb_m08_host_staged_page_bank;
         @(negedge clk);compute_req=1;compute_write=0;compute_word=idx;
         @(posedge clk);#1;
         if(!compute_ack || compute_rdata!==expected)
-            $fatal(1,"M08_PAGE_COMPUTE_READ_FAILED");
+            $fatal(1,"M08_PAGE_COMPUTE_READ_FAILED ack=%b actual=%h expected=%h phase=%d poisoned=%b host_busy=%b compute_busy=%b compute_armed=%b host_req=%b host_ack=%b dispatch_req=%b compute_req=%b compute_write=%b",
+                compute_ack,compute_rdata,expected,phase,poisoned,
+                host_busy,compute_busy,dut.compute_armed,host_req,host_ack,
+                dispatch_req,compute_req,compute_write);
         @(negedge clk);compute_req=0;
     end
     endtask
