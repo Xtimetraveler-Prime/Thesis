@@ -42,6 +42,50 @@ sha256sum "$OUT"/m08_readonly_inventory.json "$OUT"/m08_readonly_audit.json
 
 A successful capture prints `M08_READONLY_CAPTURE_RECORDED_NOT_BOARD_ACCEPTANCE`; a successful receipt audit prints `M08_READONLY_RECEIPT_INTEGRITY_OK_NOT_HARDWARE_ACCEPTANCE`. **They do NOT print KV260 ready or physical DDR PASS.** The JSON includes local Vitis/Vivado tool command responses: if `vivado -version` says missing, first use your genuine installation's `settings64.sh` with the actual absolute path and repeat capture in a **new** directory. Do not create or modify a file named like one of the original M06 acceptance ZIPs.
 
+## C. Established KV260 Linux and xmutil boot flow (owner-confirmed)
+
+The owner confirms that the KV260 **boots Linux normally** and that the established Loihi-v2 routine is to unload the default accelerated application after boot. Do not redo a boot-failure recovery process without evidence of an actual problem. The accepted Loihi v2 `docs/P08_4_ACCEPTANCE.md` and `P08_4_3B_ACCEPTANCE.md` also establish a prior routed K26 host-paged core and **real** JTAG/VIO physical dispatch, but they do **NOT** validate the new M08 signed16 pager/DDR integration.
+
+From the **KV260 Linux shell**, preserve the active-app state before and after the user's usual operation:
+
+~~~bash
+sudo xmutil listapps
+
+# Established owner boot routine — unload only after examining listapps.
+sudo xmutil unloadapp
+
+sudo xmutil listapps
+uname -a
+cat /etc/os-release
+tr '\\000' '\\n' < /proc/device-tree/model
+~~~
+
+`xmutil unloadapp` is a platform application-unload operation that can remove the currently loaded PL accelerator. Do not confuse it with Linux shutdown, a bitstream programming success, physical DMA buffer allocation, or authorization to choose an arbitrary PS physical address. If the board-local inventory script is present, `python3 scripts/m08_capture_readonly.py --mode board-local --output-dir NEW_DIR` can collect `xmutil listapps`, `boardid`, `bootfw_status`, and `platformstats` without executing unload, load or firmware update. Run before/after unloading to preserve both observations if convenient; preserve new evidence folders and redact unique board identifiers when sharing raw logs.
+
+**Known report review:** the owner host capture SHA256 `2c4276c13e3adb21721b8b49e027aa94cbe1e51cf592d402272684bc518606e0` matched its independent receipt; all five original M06 archives matched. The host terminal saw USB FT4232H ID `0403:6011`, but `vivado` and `vitis_hls` were not on PATH. `git status` also showed untracked Loihi physical-evidence directories and Vivado logs; **do not clean or overwrite them**. See [owner evidence and Loihi reuse review](M08_1_OWNER_EVIDENCE_AND_LOIHI_REUSE_2026_11_10.md).
+
+### Genuine local Vivado source environment and M08.2 PS→PL identity trial
+
+The only next required workstation build is a **real** Vivado K26 block-design validation for the read-only identity peripheral (not a bitstream and not the full SNN):
+
+~~~bash
+# Run on development PC. Source the real settings64.sh installation path.
+# Example only, adjust to your already installed AMD tools:
+# source /tools/Xilinx/Vivado/2025.2/settings64.sh
+vivado -version
+vitis_hls -version
+
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+
+mkdir -p "$HOME/Thesis_Evidence/M08"
+bash scripts/run_m08_identity_bd.sh
+~~~
+
+The script checks genuine Vivado 2025.2, uses a fresh `$HOME/Thesis_Evidence/M08/m08_2_identity_bd_*_XXXXXX` folder and **never deletes** historical logs. It must preserve `result.txt`, `source_sha256_before.txt`, `source_sha256_after.txt`, `01_vivado_identity_bd.log`, `02_vivado_identity_bd_readback.txt`, `03_identity_bd_export.tcl` and `04_m08_identity_independent_audit.json` on success. A failure preserves the raw Vivado log and nonzero result; it must NOT be reported as a successful physical design. The required success text is `M08_IDENTITY_BD_GENUINE_LOCAL_VIVADO_VALIDATED_NOT_A_BITSTREAM_OR_FPGA_TEST`.
+
+**Important:** The new Tcl was developed without running the actual local Vivado IP catalog. It is a **trial**, not an already validated block diagram; if Vivado rejects module-reference AXI inference, PS clock/reset wiring, exact address segment or a version-specific IP property, the appropriate next action is to inspect the original log and revise the candidate. Do not silently waive a vendor `ERROR` or `CRITICAL WARNING`, assume a 32-bit MMIO base address from source text, or program the existing Loihi v2 bitstream as an M08 design.
+
 ## C. Check live KV260 status via UART (no programming)
 
 1. Use the actual KV260 power supply. Connect PC to carrier J4 USB UART/JTAG and check USB enumeration on Linux with `lsusb`, `ls -l /dev/serial/by-id/` and `dmesg | tail -60`. Multiple FTDI serial devices may be exposed: verify the serial port that actually emits Linux/FSBL logs, **don't assume every kit enumerates as ttyUSB1**.
