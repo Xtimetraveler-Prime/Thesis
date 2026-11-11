@@ -20,6 +20,30 @@ python3 -m unittest discover -s tests -v
 
 If Icarus is unavailable, **do not count the skipped HDL test as a PASS**. The original GitHub Actions M08/M05/M06 first attempts encountered Ubuntu apt/DNS resolution failures while installing Icarus and consequently did not run the HDL tests; [exact vendor-run-independent failure ledger and direct Icarus compile](M08_TESTS_EXPLAINED.md). No owner physical deployment or additional native Vivado project has been requested for this source checkpoint. The next genuine K26 integration step will be a separately reviewed PS AXI4-Lite write/read adapter and new native BD, not a re-run or alteration of old original evidence.
 
+### M08.2b.2 new first-party PS AXI4-Lite page adapter — PC SOURCE ONLY
+
+The owner has now independently confirmed the corrected M08.2b.1 page-bank standalone Icarus simulation passes. M08.2b.2 adds a **new** 32-bit AXI4-Lite S_AXI module, `rtl/m08/m08_axil_page_control.sv`, with 4 KiB internal decode, source-only register map, safe page access and watchdog. It is NOT connected to actual native KV260 PS/SmartConnect, and **no operator programming, Linux MMIO or DDR commands are authorized** by this new source. [Exact register and safety contract](M08_2B_2_AXIL_PAGE_CONTROL_HANDOFF_2026_11_11.md).
+
+From the Linux **development PC** after pulling the exact M08 branch and checking its HEAD:
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+command -v iverilog
+command -v vvp
+TMP="$(mktemp -d)"
+iverilog -g2012 -s tb_m08_axil_page_control -o "$TMP/m08_axil_page.vvp" \
+    rtl/m08/m08_axil_page_control.sv \
+    rtl/m08/m08_host_staged_page_bank.sv \
+    rtl/m08/tb_m08_axil_page_control.sv
+vvp "$TMP/m08_axil_page.vvp"
+python3 -m unittest discover -s tests -p 'test_m08_axil_page_control.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_host_staged_page_rtl.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -v
+~~~
+
+Require an actual **`M08_AXIL_STANDALONE_NO_K26_NO_DDR_NO_DMA_PASS`** marker and all negative markers, not just successful Python source checks. The next M08.2b.3 owner native Vivado project must be in a **fresh, exclusive evidence directory** with no changes to the seven immutable accepted M08.2a owner folders. The existing M08.2a original PS→identity evidence is not a new read/write page deployment.
+
 ### Historical failures — optional read-only inspection, no reruns
 
 ~~~bash
