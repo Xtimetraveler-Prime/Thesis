@@ -50,6 +50,12 @@ The owner confirmed **M08.2b.2** new AXI-Lite standalone Icarus simulation and f
 
 **Do not jump directly to Vivado/board programming.** First run source and Icarus on the PC with `python3 -m unittest discover -s tests -p 'test_m08_page_ps_bd_candidate.py' -v` and compile/run `tb_m08_ps_page_safe_shell.sv` as specified in the [new M08.2b.3 authoritative handoff](M08_2B_3_NATIVE_KV260_PAGE_BD_HANDOFF_2026_11_11.md). After source and same-HEAD CI (or a documented infrastructure-only alternative) are verified, use the handoff's `source /home/dna/Vivado/2025.2/Vivado/settings64.sh` and `bash scripts/run_m08_page_bd.sh` steps to create ONE new original, immutable offline Vivado BD folder. No JTAG, bitstream, Linux MMIO, kernel DMA, DDR or physical inference is called by that runner. Any native error is a separate original trial and must be recorded without rewriting prior accepted evidence.
 
+### M08.2b.4a — NEXT: offline native synth/route (not a bitstream)
+
+The owner has independently passed M08.2b.2 direct AXI Icarus and now original M08.2b.3 genuine Vivado BD acceptance: isolated `m08_2b_3_page_bd_20261111T172547Z_ZHe4WE`, exit0, audited original distinct identity `0xA0000000` and safe signed16 page `0xA0001000` 4KiB apertures, clock 99,999,001 Hz, and all original source/receipt SHA PASS. This accepts **offline BD only**, not physical program. [Original digest/acceptance](M08_2B_3_NATIVE_BD_ACCEPTANCE_REVIEW_2026_11_11.md).
+
+M08.2b.4a sources `scripts/m08_page_post_route_candidate.tcl`, `scripts/run_m08_page_post_route.sh`, `scripts/m08_page_post_route_audit.py` and targeted tests extend this same proven BD code into a brand-new K26 synthesized/routed project. **Run all source and exact-head CI first; then source Vivado 2025.2 and run `M08_ROUTE_JOBS=4 bash scripts/run_m08_page_post_route.sh` on PC** with a fresh original `~/Thesis_Evidence/M08` folder. This saves actual WNS/WHS, utilization, DRC, methodology, clock reports and original post-route DCP for independent audit. It does **NOT** generate a bitstream, program hardware, touch Linux MMIO or PS DDR. No root/sudo. [Complete owner commands, outputs and stop conditions](M08_2B_4A_POST_ROUTE_SOURCE_AND_OWNER_RUNBOOK_2026_11_11.md). Never rerun into the accepted M08.2a/M08.2b.3 historical evidence.
+
 ### Historical failures — optional read-only inspection, no reruns
 
 ~~~bash
