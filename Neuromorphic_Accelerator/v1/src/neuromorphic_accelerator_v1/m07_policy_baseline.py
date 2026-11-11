@@ -20,7 +20,7 @@ from .m03_workloads import Workload, canonicalize_trace
 from .m06_block_residency import BlockCache, Geometry, ResidencyError
 from .m06_paged_replay import new_canonical_neuron_image, replay_with_paging
 
-Policy = Literal["direct", "lru"]
+Policy = Literal["direct", "lru", "activity_history"]
 SOURCE_SCOPE = "M07_1_PC_ONLY_CANONICAL_BLOCK_POLICY_NO_VENDOR_NO_BOARD"
 
 
@@ -75,7 +75,8 @@ class DirectFetchCache(BlockCache):
         super().flush()
 
 
-def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy) -> dict:
+def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy,
+               history_depth: int = 16) -> dict:
     """Refuse traffic results unless independent M02/M03 neural checks pass.
 
     Each result starts with a fresh M02 canonical image and executes the
@@ -84,8 +85,10 @@ def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy) -> dic
     independently constructed from the M03 exact sparse eligibility trace.
     Model bytes/transactions are NOT observed DDR bus operations.
     """
-    if policy not in ("direct", "lru"):
-        raise ValueError("policy must be direct or lru")
+    if policy not in ("direct", "lru", "activity_history"):
+        raise ValueError("policy must be direct, lru or activity_history")
+    if policy != "activity_history" and history_depth != 16:
+        raise ValueError("history_depth only applies to activity_history policy")
     geometry.validate()
     if geometry.logical_neurons != len(workload.network.neurons):
         raise ValueError("policy geometry must match entire logical network")
@@ -102,8 +105,13 @@ def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy) -> dic
         raise AssertionError("M02/M03 neural oracle disagreement: refuse M07 traffic")
 
     image = new_canonical_neuron_image(net, geometry, owner="M07_EMULATED_ONLY")
-    cache = (DirectFetchCache(image, owner="M07_EMULATED_ONLY") if policy == "direct"
-             else BlockCache(image, owner="M07_EMULATED_ONLY"))
+    if policy == "activity_history":
+        from .m07_activity_cache import ActivityHistoryCache
+        cache = ActivityHistoryCache(
+            image, owner="M07_EMULATED_ONLY", history_depth=history_depth)
+    else:
+        cache = (DirectFetchCache(image, owner="M07_EMULATED_ONLY") if policy == "direct"
+                 else BlockCache(image, owner="M07_EMULATED_ONLY"))
     run = replay_with_paging(net, inputs, ticks=ticks, cache=cache)
     if (run.trace != dense or
             run.evaluated_ids_by_tick != sparse.evaluated_ids_by_tick or
@@ -148,7 +156,8 @@ def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy) -> dic
 
     return {
         "schema": "m07-cache-policy-baseline-v1",
-        "scope": SOURCE_SCOPE,
+        "scope": (SOURCE_SCOPE if policy != "activity_history"
+                  else "M07_4_CAUSAL_ACTIVITY_CACHE_SOURCE_ONLY_NOT_HARDWARE"),
         "policy": policy,
         "geometry": asdict(geometry),
         "workload_spec": asdict(workload.spec),
@@ -174,4 +183,6 @@ def run_policy(workload: Workload, geometry: Geometry, *, policy: Policy) -> dic
         "simulated_service_cycles": None,
         "physical_ddr_bytes": None,
         "measurement_status": "PC_ONLY_MODEL_NOT_RTL_OR_PHYSICAL_MEASUREMENT",
+        **({"activity_history_observer": cache.policy_observer()}
+           if policy == "activity_history" else {}),
     }
