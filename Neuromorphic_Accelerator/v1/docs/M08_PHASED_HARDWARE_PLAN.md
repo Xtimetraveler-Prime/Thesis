@@ -90,6 +90,10 @@ The owner actual Vivado 2025.2 `write_bitstream` succeeded from the exact previo
 
 **Physical deployment is not an unconditional JTAG write.** AMD K26/KV260 Linux starter-kit documentation indicates active app/base images may carry EMIO carrier fan control. New first-party **read-only** `scripts/m08_kv260_jtag_readonly_inventory.tcl` and **on-device read-only** `scripts/m08_kv260_linux_readonly_inventory.sh` capture live JTAG target/device(s), Linux/board identity, FPGA manager, `xmutil listapps`, and fan management **before** choosing a physical programming pathway. Nothing in these scripts calls `program_hw_devices`, `xmutil unloadapp`, `/dev/mem` or raw FPGA reset. The actual resident Linux image/PS clocks and safe MMIO binding remain unverified; production/board PS→PL readback and M06 compute/DMA remain OPEN. Keep this under ONE consolidated M08.2b milestone without additional numbered micro-milestones.
 
+## Latest physical handoff: JTAG already PASS, do not repeat
+
+Original owner Vivado 2025.2 **read-only JTAG** inventory has now identified **ONE** K26 hardware target (`localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA`) and devices **`xck26_0|xck26`** and **`arm_dap_1|arm_dap`**. The FPGA is `xck26_0`; no program operation was performed, but cable/driver/server and device detection are already proven. The owner cannot paste into PuTTY, so all lengthy commands should be PC/VS Code scripts; manual serial shell commands must be single short lines. **Use proven Loihi v2 P08.4.3b K26 Hardware Manager programming sequence only AFTER observing board Linux, active PL/fan management and PS/PL clock ownership.** M08 .bit has no Loihi `.ltx` or `vio_p08` interface, and a mapped 4KiB PS register segment is not by itself a Linux MMIO authorization. Full immediate [physical Loihi reuse plan](M08_2B_PHYSICAL_DEPLOYMENT_PLAN_LOIHI_REUSE_2026_11_11.md), and [canonical next-chat handoff](M08_NEXT_CHAT_HANDOFF_2026_11_11.md). Keep all original evidence immutable and do not retest basic JTAG.
+
 ## Ordered development / acceptance gates
 
 | Gate | Development and independent evidence | Stop condition |
