@@ -390,6 +390,31 @@ error "script skipped the add_files guard"
             with self.assertRaisesRegex(ValueError,"clock"):
                 audit_evidence(folder,ROOT)
 
+    def test_genuine_vivado_tcl_command_echo_is_not_success_marker(self):
+        # The owner's sixth actual log contains BOTH the echoed Tcl command
+        # and its one genuine printed success line; the earlier substring
+        # count rejected this validated BD even though exit_status=0.
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)/"fake"
+            stub_receipt(folder)
+            log=folder/"01_vivado_identity_bd.log"
+            body=log.read_text()
+            echoed=f'# puts "{MARKER}"\\n'
+            self.assertIn(MARKER,body)
+            log.write_text(body.replace(MARKER,echoed+MARKER,1))
+            report=audit_evidence(folder,ROOT)
+            self.assertEqual(
+                report["status"],
+                "ORIGINAL_OWNER_VIVADO_BD_VALIDATION_EVIDENCE_CONSISTENT")
+            # An echoed source command alone is not evidence of completion.
+            log.write_text(body.replace(MARKER,echoed,1))
+            with self.assertRaisesRegex(ValueError,"success output line"):
+                audit_evidence(folder,ROOT)
+            # Two genuine output lines remain disallowed, even with echo.
+            log.write_text(body.replace(MARKER,echoed+MARKER+"\\n"+MARKER,1))
+            with self.assertRaisesRegex(ValueError,"success output line"):
+                audit_evidence(folder,ROOT)
+
     def test_reject_bad_source_result_or_log(self):
         mutants=(
             ("result.txt","exit_status=1\n"),
