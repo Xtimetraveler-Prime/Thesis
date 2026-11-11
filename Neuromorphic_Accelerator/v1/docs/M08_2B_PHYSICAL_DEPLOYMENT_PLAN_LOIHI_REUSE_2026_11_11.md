@@ -24,6 +24,10 @@ Relevant references: Loihi v2 `docs/P08_4_3B_ACCEPTANCE.md`, `docs/P08_4_3B_PHYS
 AMD's official Vivado `program_hw_devices` and `open_hw_manager` Tcl guidance describes the same sequence. AMD's Kria starter-kit documentation also states 2022.1+ base PL images may route the carrier **fan control through TTC0/EMIO and a PL pin**; replacing that PL bitstream without the corresponding fan mapping can disable active fan control. **Do not issue the program command until the actual board image/cooling is known.** See `docs/M08_2B_KV260_PHYSICAL_BRINGUP_2026_11_11.md` for the cautious original hardware boundary.
 
 ## Practical ordered execution: one milestone, four acceptance checks
+**Source development update (2026-11-11):** The previously proposed one-shot loader now exists, source-only, as scripts/m08_kv260_program_oneshot.tcl and scripts/run_m08_kv260_program_oneshot.sh. Safety gating, exact digest/device selection, owner evidence archiving and pure Tcl mocks are documented at [guarded programming and PS access boundary](M08_2B_GUARDED_PROGRAMMING_AND_ACCESS_GATE_2026_11_11.md). **It has NOT been run on hardware and remains prohibited until original boot/PL/fan status is collected and isolated-JTAG conditions genuinely approved.** The owner-reported read-only JTAG inventory already passed and should not be repeated.
+
+
+
 
 ### A. Reuse accepted JTAG identity; collect only MISSING board boot/fan evidence
 
