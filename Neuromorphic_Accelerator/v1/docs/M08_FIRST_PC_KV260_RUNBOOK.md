@@ -62,6 +62,12 @@ The owner supplied authentic original route files from `m08_2b_4_route_20261111T
 
 **Next PC command sequence is in [one consolidated M08.2b bitstream and board handoff](M08_2B_BITSTREAM_AND_BOARD_HANDOFF_2026_11_11.md):** after exact-head CI/local tests, source original Vivado 2025.2, inspect the original DRC, set `M08_ROUTE_EVIDENCE_DIR` to the above full owner path and **intentionally** `M08_ACCEPT_RTSTAT10=YES`, then run `bash scripts/run_m08_page_bitstream.sh` to create ONE new exclusive `m08_2b_bitstream_*` owner evidence folder. New tools recompute original DCP and source hashes, recheck Vivado timing/DRC and only then write an **offline safe-page** .bit. The runner does NOT program the device and does not touch the existing M08.2a/.3/routed original folders. Verify the new original audit/receipt and the output .bit hash before any separate, operator-controlled physical FPGA action. The PS-only design explicitly has NO compute engine, DDR, DMA or Linux MMIO proof.
 
+### M08.2b — physical KV260 next: NO blind PL image replacement
+
+The owner original offline `write_bitstream` now PASSED and independent release audit confirms `05_m08_safe_page.bit` **7,797,831 bytes**, SHA `170da137f315a6f53c345c416808c5203e866b8772acb6b7e69265fe38d31bbf`, correct K26 routed DCP and HDL top, 0 setup/hold failures, and only inventoried SmartConnect RTSTAT-10 warning. **The board has not been programmed by these results**. [Original acceptance and exact operator physical commands](M08_2B_KV260_PHYSICAL_BRINGUP_2026_11_11.md).
+
+**First physical step is a read-only PC Vivado JTAG discovery and actual KV260 Linux/serial/fan/PL-manager inventory.** Run `scripts/m08_kv260_jtag_readonly_inventory.tcl` through Vivado 2025.2 on the development PC with the USB/JTAG connected, and if the KV260 boots Linux run `scripts/m08_kv260_linux_readonly_inventory.sh` on the KV260. Both scripts only enumerate/report. AMD notes that the Kria base PL image may provide active fan control via EMIO; this M08 .bit is not yet demonstrated to preserve it. **No `program_hw_devices` or `xmutil unloadapp` now** until actual board cooling, Linux driver/overlay and PS reset/clock ownership are reviewed. After a safe programming path is verified, PS→PL ID magic first and only then controlled page data readback. No raw Linux /dev/mem reads or unallocated DDR address assumptions.
+
 ### Historical failures — optional read-only inspection, no reruns
 
 ~~~bash
