@@ -23,6 +23,9 @@ Official sources:
 - AMD app package layout: https://docs.amd.com/r/en-US/ug1630-kria-som-apps-developer-ubuntu/Package-File-System-Unpacking
 - AMD dfx-mgr service name: https://xilinx.github.io/kria-apps-docs/faq/build/html/docs/faq.html
 
+**OWNER ORIGINAL SSH RESULT NOW RECEIVED (2026-11-11):** PC SSH ubuntu@10.42.0.135 worked. Original uploaded evidence has fpga0 operating, dfx-mgr.service ACTIVE, fancontrol ACTIVE, active overlay k26-starter-kits_image_1, K26 bit.bin/dtbo/shell.json catalog, and uio0..3 all axi-pmon, none M08. Ubuntu kernel on SSH is 6.8.0-1036-xilinx (newer than earlier serial). Owner receipt and actual rehashed files are documented at [M08.2b accepted Path A platform evidence and new fan BD source](M08_2B_PATH_A_OWNER_EVIDENCE_AND_FAN_BD_2026_11_11.md). The read-only inventory script now includes a focused installed shell.json and PWM/package probe. Source-only fan-preserving Vivado 2025.2 TTC0 wave-out channel2 to EMIO HDA20/A12 two-slave candidate also exists (native OWNER offline run pending). Do not unload current K26 starter-kit base.
+
+
 ## Immediate Path A discovery from the PC
 
 Only one SHORT PuTTY command is necessary to get the current board address:
