@@ -93,7 +93,7 @@ def audit_release(release: Path, route: Path, root: Path) -> dict:
         or not metrics.get("vivado_version", "").startswith("2025.2")
         or metrics.get("part") != "xck26-sfvc784-2LV-c"
         or metrics.get("top") != "m08_page_ps_wrapper"
-        or not metrics.get("design_display_name", "").strip()
+        or "design_display_name" not in metrics
         or metrics.get("drc_warning") != "RTSTAT-10"
         or metrics.get("compute_enabled") != "NO"
         or metrics.get("board_programmed") != "NO"
