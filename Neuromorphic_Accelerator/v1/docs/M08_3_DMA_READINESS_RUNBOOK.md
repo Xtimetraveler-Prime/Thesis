@@ -48,10 +48,8 @@ This is not a command for the PC or a request to open the board remotely. Use on
 ~~~bash
 cd ~/Thesis/Neuromorphic_Accelerator/v1
 mkdir -p "$HOME/Thesis_Evidence/M08"
-D="$(mktemp -d "$HOME/Thesis_Evidence/M08/m08_3_1_dma_observation_$(date -u +%Y%m%dT%H%M%SZ)_XXXXXX")"
-# The collector requires an ABSENT output directory; remove only this
-# empty directory we just created (NOT an historical evidence directory).
-rmdir "$D"
+# Tool creates this path exclusively; do not pre-create or delete it.
+D="$HOME/Thesis_Evidence/M08/m08_3_1_dma_observation_$(date -u +%Y%m%dT%H%M%SZ)_$_$RANDOM"
 python3 scripts/m08_3_dma_readonly.py --output-dir "$D"
 python3 scripts/m08_3_dma_readonly.py --audit-only --output-dir "$D"
 ls -lah "$D"
@@ -59,7 +57,7 @@ cat "$D/m08_3_dma_readiness.sha256"
 ( cd "$D" && sha256sum -c m08_3_dma_readiness.sha256 )
 ~~~
 
-The temporary `rmdir` only applies to the **just-created empty path**, never historical data. If checkout path differs, change only the initial `cd`. If board-local project sources are unavailable, do not fabricate capture output or transfer scripts without owner action; a safe alternate packaging workflow can be designed later.
+The collector creates the absent folder with restricted permissions and refuses to overwrite any existing path. **Never delete or rewrite historical evidence**. If checkout path differs, change only the initial `cd`. If board-local project sources are unavailable, do not fabricate capture output or transfer scripts without owner action; a safe alternate packaging workflow can be designed later.
 
 **The board-local capture itself is not an M08.3 DMA-ownership PASS.** It identifies questions for a later device-specific driver design. Preserve every original evidence folder and stop prior to any DDR access.
 
