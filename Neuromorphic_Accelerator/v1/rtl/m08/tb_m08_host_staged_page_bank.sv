@@ -28,6 +28,8 @@ module tb_m08_host_staged_page_bank;
     wire [31:0] page_logical;
     wire [8:0] loaded_byte_count;
     reg [31:0] copied_backing=0;
+    integer dirty_index;
+    integer negative_index;
     reg signed [15:0] lif_previous=0;
     wire signed [15:0] lif_next;
     wire lif_spike,lif_invalid;
@@ -206,6 +208,10 @@ module tb_m08_host_staged_page_bank;
         finish_compute();
         read_word(6'd0,32'h55550006);
         copied_backing=host_rdata; // actual simulated host readback
+        // The hardware gate tracks all 64 actual READ operations prior to
+        // accepting an externally confirmed durable backing save.
+        for(dirty_index=1;dirty_index<64;dirty_index=dirty_index+1)
+            read_word(dirty_index[5:0],32'h10200000+dirty_index);
         save_page();
         fill_page(32'd9,32'h11110009);
         if(copied_backing!==32'h55550006 || page_logical!==32'd9 ||
@@ -237,6 +243,34 @@ module tb_m08_host_staged_page_bank;
             $fatal(1,"M08_PAGE_INCOMPLETE_FILL_MUST_POISON");
         @(negedge clk);host_commit=0;host_readback_verified=0;
         $display("M08_ONE_SLOT_PARTIAL_FILL_DENIED");
+
+        // Even a full byte fill is not dispatchable until the host has
+        // ACTUALLY read every word back; a false host flag cannot bypass.
+        reset_dut();
+        begin_page(32'd11);
+        for(negative_index=0;negative_index<64;
+            negative_index=negative_index+1)
+            write_word(negative_index[5:0],
+                       32'h20000000+negative_index,4'hf);
+        @(negedge clk);host_commit=1;host_readback_verified=1;
+        @(posedge clk);#1;
+        if(!poisoned || page_valid)
+            $fatal(1,"M08_PAGE_FULL_LOAD_WITHOUT_READBACK_MUST_POISON");
+        @(negedge clk);host_commit=0;host_readback_verified=0;
+        $display("M08_ONE_SLOT_FAKE_LOAD_READBACK_DENIED");
+
+        // Save acknowledgement is rejected until all DIRTY words have
+        // been physically observed through the host port.
+        reset_dut();
+        fill_page(32'd12,32'h12000001);
+        start_compute(32'd12);
+        finish_compute();
+        @(negedge clk);host_save_done=1;
+        @(posedge clk);#1;
+        if(!poisoned || !host_error || page_valid)
+            $fatal(1,"M08_PAGE_UNREAD_DIRTY_SAVE_MUST_POISON");
+        @(negedge clk);host_save_done=0;
+        $display("M08_ONE_SLOT_FAKE_DIRTY_SAVE_DENIED");
 
         // The compute engine owns the memory until completion.
         reset_dut();
