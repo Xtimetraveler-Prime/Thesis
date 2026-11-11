@@ -230,12 +230,22 @@ module tb_m08_host_staged_page_bank;
         // A separate accepted M06 signed16 combinational arithmetic lane
         // operates on a correctly packed state byte pair.
         start_compute(32'd7);
+        // Regression for the original dangling-else defect: every READ
+        // must update compute_rdata, not merely pulse compute_ack.
+        // Exercise multiple nonzero word indices and then return to 0.
+        compute_read(6'd0,32'h55550004);
+        compute_read(6'd1,32'h10200001);
+        compute_read(6'd63,32'h1020003f);
         compute_read(6'd0,32'h55550004);
         lif_previous=$signed(compute_rdata[15:0]);
         #1;
         if(lif_invalid || lif_spike || lif_next!==16'sd6)
             $fatal(1,"M08_PAGE_M06_SIGNED16_LANE_MISMATCH");
         compute_write_word(6'd0,{16'd0,lif_next},4'b0011);
+        // Read-after-write on the COMPUTE port: preserve untouched
+        // upper bytes and change only the signed16 voltage field.
+        compute_read(6'd0,32'h55550006);
+        compute_read(6'd1,32'h10200001);
         finish_compute();
         read_word(6'd0,32'h55550006);
         copied_backing=host_rdata; // actual simulated host readback
