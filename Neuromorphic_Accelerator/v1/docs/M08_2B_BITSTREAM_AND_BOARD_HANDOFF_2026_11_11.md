@@ -25,6 +25,28 @@ The original `10_m08_page_post_route.dcp` SHA in the owner's receipt is `516ded0
 
 `tests/test_m08_page_bitstream_release.py` adds source safety, bash/Tcl syntax and synthetic tamper rejection for changed timing/clock/unconstrained/DRC/original SHA. It deliberately does NOT pretend to run Vivado or generate a real bitstream.
 
+## First original offline bitstream attempt — correct top-property check
+
+**Owner original attempt, 2026-11-11 12:46–12:47 local, failed with `exit_status=1` before DRC or bitstream.** The owner supplied original `01_release_preflight.json`, `02_vivado_bitstream.log`, and `result.txt`. Local independent rehash of these exact uploaded files:
+
+| Uploaded original | SHA256 |
+| --- | --- |
+| `result.txt` | `e93176b9cdf866ef0c78d24b2eae43327a3a79c44849a0a5e00140124cbfe5a6` |
+| `01_release_preflight.json` | `67821590a8594f7d45b42d90ae2214bd473b814faded1f2dce7f4fabe7bd7ecc` |
+| `02_vivado_bitstream.log` | `09f58bb5c6d6efaa3262d2d95c4257d82a786d15d4f572f2373e6785eedc44ba` |
+
+The **preflight PASSED**: original K26 route DCP SHA `516ded0b2b19352952810b8f2a82f15b9eca02b4757cf53c187d179d051c8673`, WNS +5.469 ns, WHS +0.015 ns, explicitly inventoried RTSTAT-10 SmartConnect reset-pipeline warning (15 total nets/14 named), and original route evidence SHA consistency. Vivado genuinely loaded the accepted routed DCP: its original log confirms K26 device, restored placement/routing, binary timing and constraints, and the original 2025.2 checkpoint. Then the **first error was our own source guard** in `scripts/m08_page_bitstream_candidate.tcl` line 36 (original failing revision):
+
+~~~tcl
+if {[get_property NAME [current_design]] ne "m08_page_ps_wrapper"} {
+    error "M08 rejected unexpected routed PS/page top"
+}
+~~~
+
+`NAME` is a Vivado in-memory design label (e.g. `netlist_1`), **not necessarily the RTL top module**. The original log does not echo the actual NAME returned, so do not assert it was definitively `netlist_1` in this specific run. AMD UG835/UG894 documentation and the XilinxTclStore `designutils/write_template.tcl` use `[get_property -quiet TOP [current_design]]` for the actual HDL top. The corrected source **keeps an exact fail-closed `TOP=m08_page_ps_wrapper` check**, logs both `NAME` and `TOP`, and writes `META|top` from TOP while separately writing `META|design_display_name`. The independent release auditor now requires the actual whole-line `M08_PAGE_RELEASE_CHECKPOINT_TOP_VALIDATED=m08_page_ps_wrapper` vendor marker and both distinct fields. It has **NOT** removed the K26 part guard, original SHA preflight, timing constraints or DRC checks; it has **NOT** waived RTSTAT-10.
+
+A targeted `tclsh` **MOCK** regression now simulates a display-name `netlist_1` plus correct HDL TOP (must advance to clock guard), wrong TOP (must stop), and empty TOP (must stop). This is not a native vendor validation. The first failed evidence folder path wasn't supplied in chat; preserve its entire `m08_2b_bitstream_*` directory unchanged. **Do not rerun inside it**, and do not overwrite the accepted `m08_2b_4_route_20261111T174620Z_9FLCz7` directory. A retry using a new source SHA and new folder is required before any `write_bitstream` or physical claims.
+
 ## Phase 1: development-PC source/CI gate (NO native Vivado required)
 
 ~~~bash
