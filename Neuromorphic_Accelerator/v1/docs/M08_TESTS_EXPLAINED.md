@@ -192,3 +192,11 @@ vvp "$TMP/m08_page.vvp"
 python3 -m unittest discover -s tests -p 'test_m08_host_staged_page_rtl.py' -v
 # Preserve TMP or remove only this new disposable compile scratch folder.
 ~~~
+
+## M08.2b.2 AXI4-Lite page adapter and bus-functional source tests
+
+The new `m08_axil_page_control.sv` instantiates the actual corrected M08.2b.1 256-byte signed16 page bank and exposes a PS-style **32-bit AXI4-Lite slave** with a **12-bit, 4 KiB** address aperture. Independent AW and W capture, B/R backpressure, no address alias, full-strobe control, partial-strobe neuron-page word writes, deliberate host/compute mutual exclusion, and a bounded backend-response watchdog are source responsibilities. Vivado AXI clock/reset interface metadata are provided but actual PS clock must be verified again. No AXI master or kernel DDR owner is created. [M08.2b.2 register map and stop conditions](M08_2B_2_AXIL_PAGE_CONTROL_HANDOFF_2026_11_11.md).
+
+`rtl/m08/tb_m08_axil_page_control.sv` uses a first-party synchronous AXI bus-functional model (no AMD PS, SmartConnect, actual kernel or DDR) and positive/negative command sequences: AW-first, W-first and same-clock AW/W; delayed BREADY/RREADY with stable responses; misaligned and unknown access; read-only writes; full/partial byte WSTRB; actual 64-word load and readback; one software/debug compute update; read rejection while compute owns the page; complete dirty readback and SAVE before new logical page; falsely asserted COMMIT/SAVE poisoning; and forced missing bank ACK with 64-cycle watchdog and sticky bridge quarantine. `tests/test_m08_axil_page_control.py` requires actual Icarus compilation and the seven unique success markers to establish a **source-only** test PASS. A skip or CI apt/DNS outage is **not** a pass.
+
+The owner already confirmed the previously fixed M08.2b.1 standalone Icarus and regressions passed locally. The new AXI test remains separate: its genuine post-commit Icarus and all current-HEAD M01–M08 results must be confirmed before accepting this new source stage. The native K26 PS→page BD/synthesis/route and any physical neural trace belong to later M08.2b.3/4 original-owner gates.
