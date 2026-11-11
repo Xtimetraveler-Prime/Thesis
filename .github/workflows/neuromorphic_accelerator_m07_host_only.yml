@@ -1,4 +1,4 @@
-name: Neuromorphic Accelerator v1 M07.1-M07.4 source cache and causal activity pilot (NO BOARD)
+name: Neuromorphic Accelerator v1 M07.1-M07.5 source cache and causal activity pilot (NO BOARD)
 on:
   push:
     paths:
@@ -157,6 +157,31 @@ jobs:
                 "comparisons",data["policy_history_comparisons"],
                 "outcomes",outcomes)
           PY
+      - name: M07.5 bounded queue and serialized source-only service (NO VIVADO)
+        run: |
+          python3 scripts/m07_service_closeout.py --output "$RUNNER_TEMP/m07_5_source_only_service.json"
+          python3 - "$RUNNER_TEMP/m07_5_source_only_service.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding="utf-8") as f:
+              r=json.load(f)
+          assert r["schema"]=="m07-5-serialized-source-service-v1"
+          assert r["number_of_matched_cases"]==48
+          assert not r["actual_hardware_performance_measured"]
+          assert not r["physical_ddr_executed"]
+          assert len(r["source_sha256"])==10
+          for layout in r["rows"]:
+              for case in layout["cases"]:
+                  assert case["neural_and_final_canonical_parity"]
+                  assert case["actual_run_cycles"] is None
+                  assert case["actual_axi_fence_cycles"] is None
+                  assert case["transfers"]["actual_axi_b_before_ar_cycles"] is None
+                  assert case["transfers"]["actual_outstanding_axi_requests"] is None
+                  assert case["ingress_queue"]["arrivals"]==case["delivered_events"]
+                  assert case["ingress_queue"]["consumed"]==case["delivered_events"]
+                  assert case["transfers"]["state_read_bytes"]==case["cache_counters"]["read_bytes"]
+                  assert case["transfers"]["state_write_bytes"]==case["cache_counters"]["write_bytes"]
+          print("M07_5_SYNTHETIC_SERVICE_MODEL_PASS",r["number_of_matched_cases"])
+          PY
       - name: Synthetic 4-case locality x policy report (NOT AXI OR PHYSICAL DDR)
         run: |
           python3 scripts/m07_cache_baseline.py --output "$RUNNER_TEMP/m07_cache_baseline_source_only.json"
@@ -177,15 +202,16 @@ jobs:
               print("M07_SOURCE_ONLY",loc,"direct_bytes",direct["state_transfer_bytes"],
                     "lru_bytes",lru["state_transfer_bytes"])
           PY
-      - name: Preserve M07.1-M07.4 synthetic source-only JSON (NOT HARDWARE EVIDENCE)
+      - name: Preserve M07.1-M07.5 synthetic source-only JSON (NOT HARDWARE EVIDENCE)
         uses: actions/upload-artifact@v4
         with:
-          name: m07-4-source-only-activity-residency
+          name: m07-5-source-only-policies-queue
           path: |
             ${{ runner.temp }}/m07_cache_baseline_source_only.json
             ${{ runner.temp }}/m07_four_way_source_only.json
             ${{ runner.temp }}/m07_3_source_only_ablation.json
             ${{ runner.temp }}/m07_3_yana_count_only_source_model.json
             ${{ runner.temp }}/m07_4_activity_history_source_model.json
+            ${{ runner.temp }}/m07_5_source_only_service.json
           if-no-files-found: error
           retention-days: 30
