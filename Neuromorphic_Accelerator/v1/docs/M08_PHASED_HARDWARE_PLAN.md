@@ -1,6 +1,10 @@
 # M08 — KV260 physical implementation and benchmarking plan
 **Initial design:** 2026-11-10. **Status:** M08.1 PC/board read-only inventory under development; real hardware has not been contacted by this GitHub-side development session.
 
+## Immediate M08.2 vendor gate failure, 2026-11-10 local
+
+The **first** genuine local Vivado 2025.2 identity PS→PL BD trial ran after the operator sourced both real AMD tool settings scripts, but returned `M08_VIVADO_BD_ORIGINAL_FAILED exit_status=1`. Genuine evidence was preserved in `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. No original `01_vivado_identity_bd.log` was provided to the developer yet. **Therefore root cause is UNKNOWN and a proposed Tcl fix is not justified yet.** Do not rerun the wrapper in this evidence-review phase. Inspect the original first failure and source provenance first, then propose the minimal supported correction, run source/CI checks and request one fresh genuine local run. Missing `vitis_hls` on the operator's PATH is separate from this identity-only `vivado` invocation. This failure does not weaken previously accepted M05/M06/Loihi evidence or imply KV260 boot failure. Current M08.2 vendor validation is **FAILED/OPEN**, no bitstream or DDR test occurred. The full repair workflow and first original read-only inspection commands are in [M08.2 next-chat failure handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md).
+
 ## Scope and research objectives
 
 Build a genuinely deployable, independently correct KV260 SNN pipeline that includes a bounded PS/PL host interface and, when proven safe, real kernel-owned physical DDR behind an AXI page-service path. Then compare *fully matched hardware* on-chip versus virtualized, timestep versus event-driven work where actual source/resident capacity permits. Separate device-only, PS/DMA orchestration and end-to-end timing; measure area, clock and variation. Negative outcomes are valid.
