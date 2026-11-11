@@ -79,6 +79,105 @@ class M08BDCandidateTests(unittest.TestCase):
         self.assertEqual(proc.returncode,0,proc.stderr)
 
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
+    def test_unused_lpd_is_disabled_with_readback_before_bd_wiring(self):
+        # The owner's genuine Vivado log reported BD 41-2670 and 41-758
+        # from M_AXI_HPM0_LPD/maxihpm0_lpd_aclk despite FPD HPM0 wiring.
+        # Tcl mocks model only parameter negotiation and rejection, not
+        # genuine AMD IP initialization or validate_bd_design.
+        script=ROOT/"scripts/m08_identity_ps_bd_candidate.tcl"
+        with tempfile.TemporaryDirectory() as td:
+            harness=r"""
+set argv [list {__ROOT__} {__EVIDENCE__}]
+set ::project_open 0
+set ::refuse_disable __REFUSE_DISABLE__
+set ::ip_checks 0
+set ::lpd_interface_lookups 0
+set ::lpd_clock_lookups 0
+array set ::pscfg {CONFIG.PSU__USE__M_AXI_GP0 0 CONFIG.PSU__USE__M_AXI_GP2 1 CONFIG.PSU__MAXIGP0__DATA_WIDTH 128}
+proc version {opt} {return 2025.2}
+proc create_project {args} {set ::project_open 1}
+proc current_project {} {return mocked_project}
+proc set_property {args} {
+    if {[lindex $args 0] eq "-dict"} {
+        foreach {key val} [lindex $args 1] {
+            if {$key eq "CONFIG.PSU__USE__M_AXI_GP2" && $::refuse_disable} {
+                continue
+            }
+            set ::pscfg($key) $val
+        }
+    }
+}
+proc get_property {name obj} {
+    if {$name eq "PART"} {return xck26-sfvc784-2LV-c}
+    if {$name eq "MODE" && $obj eq "ps/M_AXI_HPM0_FPD"} {return MASTER}
+    if {[info exists ::pscfg($name)]} {return $::pscfg($name)}
+    error "unexpected property $name"
+}
+proc get_ipdefs {args} {
+    if {!$::project_open} {error "No open project"}
+    incr ::ip_checks
+    return [list mocked_ip]
+}
+proc add_files {args} {}
+proc update_compile_order {args} {}
+proc create_bd_design {args} {}
+proc get_bd_intf_pins {args} {
+    set name [lindex $args end]
+    if {$name eq "ps/M_AXI_HPM0_FPD"} {return [list $name]}
+    if {$name eq "ps/M_AXI_HPM0_LPD"} {
+        incr ::lpd_interface_lookups
+        if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP2) eq "1"} {return [list $name]}
+    }
+    return {}
+}
+proc get_bd_pins {args} {
+    set name [lindex $args end]
+    if {$name eq "ps/maxihpm0_lpd_aclk"} {
+        incr ::lpd_clock_lookups
+        if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP2) eq "1"} {return [list $name]}
+    }
+    return {}
+}
+proc create_bd_cell {args} {
+    if {[lsearch -exact $args "-reference"] >= 0} {
+        if {$::ip_checks != 5 ||
+            $::pscfg(CONFIG.PSU__USE__M_AXI_GP0) ne "1" ||
+            $::pscfg(CONFIG.PSU__USE__M_AXI_GP2) ne "0" ||
+            $::lpd_interface_lookups != 1 ||
+            $::lpd_clock_lookups != 1} {
+            error "missing explicit PS-only-FPD guard or probe"
+        }
+        puts M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS
+        exit 0
+    }
+    return ps
+}
+if {[catch {source {__SCRIPT__}} err]} {
+    puts stderr "M08_TCL_LPD_BOUNDARY_ERROR: $err"
+    exit 9
+}
+error "Tcl missed identity-cell stop"
+"""
+            for refuse_disable in (False,True):
+                with self.subTest(refuse_disable=refuse_disable):
+                    t=(harness.replace("__ROOT__",str(ROOT))
+                              .replace("__EVIDENCE__",td)
+                              .replace("__SCRIPT__",str(script))
+                              .replace("__REFUSE_DISABLE__",
+                                       "1" if refuse_disable else "0"))
+                    proc=subprocess.run(["tclsh"],input=t,
+                                        capture_output=True,text=True)
+                    if refuse_disable:
+                        self.assertNotEqual(proc.returncode,0)
+                        self.assertIn(
+                            "M08 unused PS HPM0 LPD master could not be disabled",
+                            proc.stderr)
+                    else:
+                        self.assertEqual(proc.returncode,0,proc.stdout+proc.stderr)
+                        self.assertIn(
+                            "M08_MOCK_FPD_ONLY_LPD_DISABLED_PASS",proc.stdout)
+
+    @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
     def test_ip_catalog_query_occurs_only_after_open_project(self):
         # Regression for the owner's actual Vivado 2025.2 Common 17-53
         # failure. Mock only the pre-add_files Tcl boundary: real Vivado IP
