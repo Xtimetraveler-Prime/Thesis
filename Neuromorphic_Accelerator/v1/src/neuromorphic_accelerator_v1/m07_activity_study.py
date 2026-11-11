@@ -202,7 +202,8 @@ def run_activity_study(plan: ActivityStudyPlan) -> dict:
                 if seed in seed_hashes:
                     if seed_hashes[seed]["role_and_trace"] != ids:
                         raise AssertionError("geometry/locality changed canonical neural work")
-                    if seed_hashes[seed][locality] != witness["relabeled_input_sha256"]:
+                    if (locality in seed_hashes[seed] and
+                            seed_hashes[seed][locality] != witness["relabeled_input_sha256"]):
                         raise AssertionError("cache experiment changed original inputs")
                 else:
                     seed_hashes[seed] = {"role_and_trace": ids}
