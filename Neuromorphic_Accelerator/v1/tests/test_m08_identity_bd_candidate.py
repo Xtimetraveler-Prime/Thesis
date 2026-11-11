@@ -377,7 +377,7 @@ error "script skipped the add_files guard"
             stub_receipt(folder)
             proof=folder/"01_vivado_identity_bd.log"
             proof.write_text(proof.read_text().replace(
-                "M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=99999001\\n",""))
+                "M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=99999001",""))
             with self.assertRaisesRegex(ValueError,"clock"):
                 audit_evidence(folder,ROOT)
         with tempfile.TemporaryDirectory() as td:
