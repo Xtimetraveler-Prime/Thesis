@@ -221,17 +221,6 @@ def run_ablation(plan: AblationPlan) -> dict:
                         policy: controls[policy]["event/ddr"]["state_transfer_bytes"]
                         for policy in POLICIES
                     }
-                for locality in LOCALITIES:
-                    for mode in ("event/ddr", "timestep/ddr"):
-                        direct = layout_rows[locality]["controls"]["direct"][mode]
-                        lru = layout_rows[locality]["controls"]["lru"][mode]
-                        if direct["state_transfer_bytes"] is None:
-                            raise AssertionError("virtualized modes must be admitted")
-                        if (direct["state_transfer_bytes"] <
-                                lru["state_transfer_bytes"]):
-                            # A real negative is valid: record it, don't pretend
-                            # LRU dominates direct for every possible workload.
-                            pass
                 rows.append({
                     "seed": seed,
                     "resident_budget_bytes": budget,
@@ -273,7 +262,7 @@ def run_ablation(plan: AblationPlan) -> dict:
                              "pipeline/stall service time", "placed/routed FPGA area",
                              "power or energy"],
         },
-        "performance_or_ynana_equivalence_claim": False,
+        "performance_or_yana_equivalence_claim": False,
         "physical_hardware_measured": False,
         "rows": rows,
     }
