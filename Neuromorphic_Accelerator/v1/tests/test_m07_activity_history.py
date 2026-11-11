@@ -99,6 +99,19 @@ class M07ActivityHistoryPolicyTests(unittest.TestCase):
                 "non_lru_victim_choices"], 0)
         self.assertEqual(result["cache_slots"], 2)
 
+    def test_obsolete_hot_page_counterexample_is_worse_than_lru(self):
+        negative = pilot._source_streaming_counterexample()
+        self.assertEqual(
+            negative["type"],"NON_NEURAL_OBSOLETE_HOT_PAGE_NEGATIVE_CONTROL")
+        self.assertTrue(negative["identical_final_canonical_bytes"])
+        self.assertFalse(negative["m02_neural_fixture"])
+        self.assertGreater(
+            negative["models"]["activity_history"]["misses"],
+            negative["models"]["lru"]["misses"])
+        self.assertGreater(
+            negative["models"]["activity_history"]["state_bytes"],
+            negative["models"]["lru"]["state_bytes"])
+
     def test_strict_pair_guards_fail_closed_with_original_canonical_state(self):
         for kind in ("orphan", "second_read", "wrong_neuron", "incomplete_flush"):
             with self.subTest(kind=kind):
@@ -180,6 +193,8 @@ class M07ActivityHistoryPolicyTests(unittest.TestCase):
         report = run_activity_study(cfg)
         self.assertEqual(report["geometry_seed_cases"], 2)
         self.assertEqual(report["policy_history_comparisons"], 8)
+        self.assertGreater(report["counterexample"]["models"]["activity_history"]["misses"],
+                           report["counterexample"]["models"]["lru"]["misses"])
         self.assertFalse(report["lookahead"])
         self.assertFalse(report["reordered_deliveries"])
         self.assertFalse(report["extra_history_and_scan_metadata_fits_declared_state_budget"])
