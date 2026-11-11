@@ -2,6 +2,9 @@
 
 **2026-11-11. ONE consolidated M08.2b milestone. PR #83 remains DRAFT/UNMERGED. Source-only development; NO NEW physical FPGA programming has occurred.**
 
+**Latest live evidence supersedes UNKNOWN board wording below:** Ubuntu 24.04.2 boots, **k26-starter-kits is ACTIVE slot 0**, fancontrol is active and fans spin. No fan-control path has been validated in original M08 .bit. Owner chose **Path A Linux-managed approach**. The isolated-JTAG loader below is NOT presently authorized. See [M08.2b Path A discovery and fan-preserving requirements](M08_2B_PATH_A_LINUX_MANAGED_DISCOVERY_2026_11_11.md). Never create an isolated-mode approval file while current Linux/PL manager and fan use are present.
+
+
 ## Accepted boundaries and current safety STOP
 
 The owner already proved exactly ONE Vivado 2025.2 hardware target localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA and devices FPGA xck26_0|xck26 plus arm_dap_1|arm_dap. Do not repeat drivers, cable installation or read-only JTAG enumeration. Original JTAG inventory SHA256 c0ef6b6d1e5dd6f58fd042ddd630e86eeae6f3814b083558171530ff9badf4f9; JTAG console SHA256 1ead36f4d22dd80e369b09495afd9eb6a77df373fe14f23a6679bd4273ac7a1a.
