@@ -44,11 +44,11 @@ class M08HostStagedPageRTLTests(unittest.TestCase):
         # Prevent regression of the Verilog dangling-else bug that ACKed
         # compute reads without loading compute_rdata (actual=00000000).
         self.assertRegex(
-            source, r"if\\s*\\(compute_write\\)\\s*begin\\s+for\\s*\\(i=0;"
+            source, r"if\s*\(compute_write\)\s*begin\s+for\s*\(i=0;"
         )
         self.assertRegex(
             source,
-            r"end\\s+else\\s+begin\\s+compute_rdata\\s*<=\\s*words\\[compute_word\\];"
+            r"end\s+else\s+begin\s+compute_rdata\s*<=\s*words\[compute_word\];"
         )
         self.assertNotIn("m_axi_awaddr",source)
         self.assertNotIn("m_axi_araddr",source)
