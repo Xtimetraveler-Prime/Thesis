@@ -32,6 +32,7 @@ SOURCES = (
     "scripts/run_m08_page_bitstream.sh",
 )
 MARKERS = (
+    "M08_PAGE_RELEASE_CHECKPOINT_TOP_VALIDATED=m08_page_ps_wrapper",
     "M08_PAGE_RELEASE_CHECKPOINT_TIMING_AND_DRC_RECHECKED=1",
     "M08_PAGE_GENUINE_OFFLINE_BITSTREAM_EMITTED_NOT_PROGRAMMED",
 )
@@ -92,6 +93,7 @@ def audit_release(release: Path, route: Path, root: Path) -> dict:
         or not metrics.get("vivado_version", "").startswith("2025.2")
         or metrics.get("part") != "xck26-sfvc784-2LV-c"
         or metrics.get("top") != "m08_page_ps_wrapper"
+        or not metrics.get("design_display_name", "").strip()
         or metrics.get("drc_warning") != "RTSTAT-10"
         or metrics.get("compute_enabled") != "NO"
         or metrics.get("board_programmed") != "NO"
@@ -125,6 +127,8 @@ def audit_release(release: Path, route: Path, root: Path) -> dict:
         "original_timing_sha256": sha(release/"04_rechecked_timing.rpt"),
         "native_wns_ns": wns,
         "native_whs_ns": whs,
+        "verified_routed_hdl_top": metrics["top"],
+        "vivado_design_display_name": metrics["design_display_name"],
         "drc_warning_retained": "RTSTAT-10 SmartConnect internal reset pipeline",
         "compute_engine_connected": False,
         "physical_board_programmed": False,
