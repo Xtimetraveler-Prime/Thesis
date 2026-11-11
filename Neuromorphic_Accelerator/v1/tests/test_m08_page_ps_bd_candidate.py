@@ -231,6 +231,35 @@ error "Tcl did not reach mocked first source add"
             with self.assertRaisesRegex(ValueError, "SHA manifest"):
                 audit_evidence(folder, ROOT)
 
+    @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
+                         "Icarus Verilog required for real safe-shell RTL gate")
+    def test_actual_safe_shell_axil_rejects_no_engine_dispatch(self):
+        rtl = ROOT / "rtl/m08"
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "m08_safe_ps.vvp"
+            cmd = [
+                "iverilog", "-g2012", "-s", "tb_m08_ps_page_safe_shell",
+                "-o", str(out),
+                str(rtl / "m08_host_staged_page_bank.sv"),
+                str(rtl / "m08_axil_page_control.sv"),
+                str(rtl / "m08_ps_page_safe_shell.sv"),
+                str(rtl / "tb_m08_ps_page_safe_shell.sv"),
+            ]
+            p = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
+            self.assertEqual(p.returncode, 0, p.stdout + "\\n" + p.stderr)
+            self.assertEqual(p.stderr.strip(), "", "unreviewed safe-shell RTL compiler warning")
+            q = subprocess.run(["vvp", str(out)], capture_output=True,
+                               text=True, timeout=60)
+            self.assertEqual(q.returncode, 0, q.stdout + "\\n" + q.stderr)
+            self.assertEqual(q.stderr.strip(), "")
+            for marker in (
+                "M08_SAFE_SHELL_AXIL_FULL_PAGE_READBACK_PASS",
+                "M08_SAFE_SHELL_DISPATCH_DISABLED_NOT_STUCK_BUSY_PASS",
+                "M08_SAFE_SHELL_SOURCE_ONLY_NO_K26_NO_BITSTREAM_NO_DDR_PASS",
+            ):
+                self.assertEqual(q.stdout.count(marker), 1, q.stdout)
+
+
 
 if __name__ == "__main__":
     unittest.main()
