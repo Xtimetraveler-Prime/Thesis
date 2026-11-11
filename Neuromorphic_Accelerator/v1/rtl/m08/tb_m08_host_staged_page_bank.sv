@@ -150,27 +150,55 @@ module tb_m08_host_staged_page_bank;
     end
     endtask
 
+    // Compute interface uses an ACK handshake rather than an assumed
+    // one-edge latency. A missed ACK is a bounded protocol failure, never
+    // an accepted read. Check the actual read data on the ACK cycle.
     task automatic compute_read(input [5:0] idx,input [31:0] expected);
+        integer attempt;
+        reg got_ack;
     begin
         @(negedge clk);compute_req=1;compute_write=0;compute_word=idx;
-        @(posedge clk);#1;
-        if(!compute_ack || compute_rdata!==expected)
-            $fatal(1,"M08_PAGE_COMPUTE_READ_FAILED ack=%b actual=%h expected=%h phase=%d poisoned=%b host_busy=%b compute_busy=%b compute_armed=%b host_req=%b host_ack=%b dispatch_req=%b compute_req=%b compute_write=%b",
-                compute_ack,compute_rdata,expected,phase,poisoned,
-                host_busy,compute_busy,dut.compute_armed,host_req,host_ack,
-                dispatch_req,compute_req,compute_write);
+        got_ack=0;
+        for(attempt=0;attempt<8 && !got_ack;attempt=attempt+1) begin
+            @(posedge clk);#1;
+            if(compute_ack) begin
+                got_ack=1;
+                if(compute_rdata!==expected)
+                    $fatal(1,"M08_PAGE_COMPUTE_BAD_DATA actual=%h expected=%h word=%d phase=%d",
+                           compute_rdata,expected,idx,phase);
+            end else if(poisoned || !compute_busy)
+                $fatal(1,"M08_PAGE_COMPUTE_READ_REJECTED ack=%b actual=%h expected=%h phase=%d poisoned=%b host_busy=%b compute_busy=%b compute_armed=%b host_req=%b host_ack=%b dispatch_req=%b compute_req=%b compute_write=%b ram_word=%h",
+                    compute_ack,compute_rdata,expected,phase,poisoned,
+                    host_busy,compute_busy,dut.compute_armed,host_req,host_ack,
+                    dispatch_req,compute_req,compute_write,dut.words[idx]);
+        end
+        if(!got_ack)
+            $fatal(1,"M08_PAGE_COMPUTE_READ_TIMEOUT ack=%b actual=%h expected=%h phase=%d compute_armed=%b ram_word=%h",
+                   compute_ack,compute_rdata,expected,phase,dut.compute_armed,
+                   dut.words[idx]);
         @(negedge clk);compute_req=0;
     end
     endtask
 
     task automatic compute_write_word(input [5:0] idx,input [31:0] value,
                                       input [3:0] strobes);
+        integer attempt;
+        reg got_ack;
     begin
         @(negedge clk);compute_req=1;compute_write=1;compute_word=idx;
         compute_wdata=value;compute_wstrb=strobes;
-        @(posedge clk);#1;
-        if(!compute_ack || poisoned)
-            $fatal(1,"M08_PAGE_COMPUTE_WRITE_FAILED");
+        got_ack=0;
+        for(attempt=0;attempt<8 && !got_ack;attempt=attempt+1) begin
+            @(posedge clk);#1;
+            if(compute_ack && !poisoned)
+                got_ack=1;
+            else if(poisoned || !compute_busy)
+                $fatal(1,"M08_PAGE_COMPUTE_WRITE_REJECTED ack=%b phase=%d poisoned=%b compute_armed=%b",
+                       compute_ack,phase,poisoned,dut.compute_armed);
+        end
+        if(!got_ack)
+            $fatal(1,"M08_PAGE_COMPUTE_WRITE_TIMEOUT ack=%b phase=%d compute_armed=%b",
+                   compute_ack,phase,dut.compute_armed);
         @(negedge clk);compute_req=0;compute_write=0;
     end
     endtask
