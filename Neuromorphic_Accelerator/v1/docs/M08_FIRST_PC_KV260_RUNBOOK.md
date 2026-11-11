@@ -1,6 +1,6 @@
 # M08.1 — first PC and KV260 evidence session (read-only)
 
-> **IMPORTANT 2026-11-10 LOCAL VIVADO FAILURE — DO NOT RERUN THE IDENTITY BD YET.** The owner has already sourced Vivado 2025.2 successfully and executed `bash scripts/run_m08_identity_bd.sh` once. It exited **1** with fresh immutable evidence at `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. The exact original `01_vivado_identity_bd.log` has **not yet been reviewed**. The `vitis_hls: command not found` from the same terminal is a distinct environment observation; this identity-BD wrapper does not call Vitis HLS. **Next action: review/package the existing failure log and status**, do not rerun this script or guess the Tcl bug. See the [authoritative next-chat repair handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md). Later trial commands below are **historical/conditional** until diagnosis and a reviewed source correction.
+> **2026-11-10 M08.2 ORIGINAL FAILURE DIAGNOSED; NEW LOCAL VIVADO PROOF PENDING.** The first Vivado 2025.2 identity BD run returned `exit_status=1` with original evidence at `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. Uploaded raw log proves first fatal `ERROR: [Common 17-53] User Exception: No open project` during `get_ipdefs` before `create_project`; original before/after four-file source SHA manifests match. The M08 Tcl script now opens and verifies the K26 project *before* querying all five original AMD IPs, with a Tcl-only ordering regression. **Do not reuse or overwrite the original evidence folder.** Execute the fresh verification below **only after all eight GitHub workflows pass on corrected exact HEAD**. No bitstream/FPGA/DDR inference is established. `vitis_hls: command not found` is unrelated to this Vivado-only identity BD. See [diagnostic handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md).
 
 ### Existing failure — read-only inspection, no new Vivado run
 
@@ -14,7 +14,7 @@ cat "$D/source_sha256_before.txt"
 cat "$D/source_sha256_after.txt"
 ~~~
 
-Preserve the whole folder, including any partial `project/`. Do not delete or overwrite. If sharing, attach the original `01_vivado_identity_bd.log`, `result.txt` and source SHA files (or use the archive recipe in the handoff). Vivado v2025.2 SW build 6299465 and IP build 6300035 were observed **working as commands**, which is sufficient for the current first-failure triage. The toolchain-not-on-PATH instructions in §B are historical, not the current blocker.
+Preserve the whole folder, including any partial `project/`. Do not delete or overwrite. The original `01_vivado_identity_bd.log`, `result.txt` and before/after source SHA files have now been reviewed. Vivado v2025.2 SW build 6299465 and IP build 6300035 were genuinely invoked; the first missing-project error has been diagnosed and the isolated script ordering corrected. This is **not** yet a new genuine Vivado PASS. The toolchain-not-on-PATH instructions in §B are historical, not the current blocker.
 
 
 **Research phase:** actual KV260 hardware integration starts after accepted M05/M06 offline simulation and M07 software experiments. Physical activity is owner-authorized for M08, but this first observation uses **NO JTAG programming, memory writes, boot firmware updates or DMA**. The development tool cannot operate the owner's local KV260; these are exact commands to run locally when convenient.
@@ -83,25 +83,30 @@ tr '\\000' '\\n' < /proc/device-tree/model
 
 ### Genuine local Vivado source environment and M08.2 PS→PL identity trial
 
-**Historical trial instructions, NOT a request to rerun now:** the owner has already performed this isolated Vivado K26 block-design validation attempt and it failed at exit1. Review the immutable first log using the commands at the top. **Only after an evidence-supported correction and fresh CI** should a new local Vivado attempt use the commands below to create a *new* evidence directory. The earlier run did not produce an accepted bitstream or full SNN:
+**One new verification trial, conditional on all eight workflows GREEN at the new HEAD:** the original owner run failed with Common 17-53. The corrected Tcl opens the K26 project before `get_ipdefs`, without removing fail-closed IP/part checks. Review the immutable original log above if needed. Run the following on the **development PC** only after you have fetched the correction and confirmed green same-SHA CI. The runner creates a *different* evidence directory and does not build a bitstream or operate the KV260:
 
 ~~~bash
-# Run on development PC. Source the real settings64.sh installation path.
-# Example only, adjust to your already installed AMD tools:
-# source /tools/Xilinx/Vivado/2025.2/settings64.sh
-vivado -version
-vitis_hls -version
-
+# Run on the PC, not the KV260. Preserve untracked original local evidence.
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+git status --short
+git fetch origin
+git branch --show-current   # must be agent/neuromorphic-accelerator-v1-m08-kv260-bringup
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-kv260-bringup
+git rev-parse HEAD        # confirm SHA matches all eight successful PR workflow runs
+python3 -m compileall -q src scripts tests
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
-
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -v
+bash -n scripts/run_m08_identity_bd.sh
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+vivado -version           # requires genuine 2025.2; Vitis HLS is not used
 mkdir -p "$HOME/Thesis_Evidence/M08"
 bash scripts/run_m08_identity_bd.sh
 ~~~
 
 The script checks genuine Vivado 2025.2, uses a fresh `$HOME/Thesis_Evidence/M08/m08_2_identity_bd_*_XXXXXX` folder and **never deletes** historical logs. It must preserve `result.txt`, `source_sha256_before.txt`, `source_sha256_after.txt`, `01_vivado_identity_bd.log`, `02_vivado_identity_bd_readback.txt`, `03_identity_bd_export.tcl` and `04_m08_identity_independent_audit.json` on success. A failure preserves the raw Vivado log and nonzero result; it must NOT be reported as a successful physical design. The required success text is `M08_IDENTITY_BD_GENUINE_LOCAL_VIVADO_VALIDATED_NOT_A_BITSTREAM_OR_FPGA_TEST`.
 
-**Important:** The new Tcl was developed without running the actual local Vivado IP catalog. It is a **trial**, not an already validated block diagram; if Vivado rejects module-reference AXI inference, PS clock/reset wiring, exact address segment or a version-specific IP property, the appropriate next action is to inspect the original log and revise the candidate. Do not silently waive a vendor `ERROR` or `CRITICAL WARNING`, assume a 32-bit MMIO base address from source text, or program the existing Loihi v2 bitstream as an M08 design.
+**Important:** The corrected ordering has a mocked Tcl regression and source-only checks, but the corrected source has **not** yet been run against a genuine local Vivado IP catalog. It is a **trial**, not an already validated block diagram; if Vivado rejects module-reference AXI inference, PS clock/reset wiring, exact address segment or a version-specific IP property, the appropriate next action is to inspect the original log and revise the candidate. Do not silently waive a vendor `ERROR` or `CRITICAL WARNING`, assume a 32-bit MMIO base address from source text, or program the existing Loihi v2 bitstream as an M08 design.
 
 ### UART fallback: only if the normally booting KV260 stops reaching Linux
 
