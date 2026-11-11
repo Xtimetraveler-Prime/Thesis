@@ -211,7 +211,7 @@ class M07ActivityHistoryPolicyTests(unittest.TestCase):
         bad = (
             {"geometries": ((3,128),)},
             {"geometries": ((2,129),)},
-            {"geometries": ((2,32),)},
+            {"geometries": ((2,16),)},
             {"geometries": ((2,1024),)},
             {"geometries": ((2,64),(2,64))},
             {"geometries": ((4,128),(2,64))},
