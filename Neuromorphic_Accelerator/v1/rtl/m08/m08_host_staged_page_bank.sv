@@ -222,12 +222,20 @@ module m08_host_staged_page_bank (
                                 state <= FAILED;
                                 host_error <= 1'b1;
                             end else begin
-                                if (compute_write)
-                                    for (i=0;i<4;i=i+1)
-                                        if (compute_wstrb[i])
+                                // Explicit blocks are essential: without
+                                // them the "else" binds to the inner
+                                // if(compute_wstrb[i]), leaving READs
+                                // acknowledged with stale reset data.
+                                if (compute_write) begin
+                                    for (i=0;i<4;i=i+1) begin
+                                        if (compute_wstrb[i]) begin
                                             words[compute_word][8*i +: 8]
                                                 <= compute_wdata[8*i +: 8];
-                                else compute_rdata <= words[compute_word];
+                                        end
+                                    end
+                                end else begin
+                                    compute_rdata <= words[compute_word];
+                                end
                                 compute_ack <= 1'b1;
                             end
                         end else if (compute_done && !compute_ack &&
