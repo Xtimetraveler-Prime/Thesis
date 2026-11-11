@@ -93,6 +93,10 @@ module m08_axil_page_control (
     reg [31:0] op_data;
     reg [3:0] op_strb;
     reg [3:0] op_cmd;
+    // A failed bank handshake may not lock AXI forever. The bridge
+    // quarantines itself until external reset after a bounded timeout.
+    reg bridge_fault;
+    reg [7:0] host_wait_count;
 
     wire [2:0] bank_phase;
     wire bank_poisoned, bank_host_busy, bank_compute_busy;
@@ -106,11 +110,11 @@ module m08_axil_page_control (
     wire bank_commit=(state==ST_CMD_ISSUE && op_cmd==4'h2);
     wire bank_dispatch=(state==ST_CMD_ISSUE && op_cmd==4'h4);
     wire bank_save=(state==ST_CMD_ISSUE && op_cmd==4'h8);
-    wire [31:0] status_word={24'b0,bank_host_busy,bank_compute_busy,
-                              bank_page_dirty,bank_page_valid,
-                              bank_poisoned,bank_phase};
+    wire [31:0] status_word={23'b0,bridge_fault,bank_host_busy,
+                              bank_compute_busy,bank_page_dirty,
+                              bank_page_valid,bank_poisoned,bank_phase};
 
-    assign page_poisoned=bank_poisoned;
+    assign page_poisoned=bank_poisoned || bridge_fault;
     // A full write pair is reserved once either half has arrived.  A
     // read is not accepted until the write has been fully handled.
     assign s_axi_awready=aresetn && state==ST_IDLE && !aw_pending &&
@@ -149,6 +153,7 @@ module m08_axil_page_control (
             aw_pending<=0;w_pending<=0;ar_pending<=0;
             aw_addr_q<=0;ar_addr_q<=0;w_data_q<=0;w_strb_q<=0;
             selected_logical<=0;
+            bridge_fault<=0;host_wait_count<=0;
             op_write<=0;op_word<=0;op_data<=0;op_strb<=0;op_cmd<=0;
             s_axi_bresp<=OKAY;s_axi_bvalid<=0;
             s_axi_rresp<=OKAY;s_axi_rdata<=0;s_axi_rvalid<=0;
@@ -177,7 +182,10 @@ module m08_axil_page_control (
                     if(aw_pending && w_pending) begin
                         aw_pending<=0;
                         w_pending<=0;
-                        if(aw_addr_q[1:0]!=0) begin
+                        if(bridge_fault) begin
+                            s_axi_bresp<=SLVERR;
+                            s_axi_bvalid<=1;
+                        end else if(aw_addr_q[1:0]!=0) begin
                             s_axi_bresp<=DECERR;
                             s_axi_bvalid<=1;
                         end else if(aw_addr_q==12'h010) begin
@@ -233,8 +241,8 @@ module m08_axil_page_control (
                             s_axi_rdata<=0;
                             s_axi_rvalid<=1;
                         end else if(ar_addr_q[11:8]==4'h1) begin
-                            if(bank_phase==LOADING ||
-                               bank_phase==READY || bank_phase==DIRTY) begin
+                            if(!bridge_fault && (bank_phase==LOADING ||
+                               bank_phase==READY || bank_phase==DIRTY)) begin
                                 op_write<=0;
                                 op_word<=ar_addr_q[7:2];
                                 op_data<=0;
@@ -265,7 +273,10 @@ module m08_axil_page_control (
                         end
                     end
                 end
-                ST_HOST_ISSUE:state<=ST_HOST_WAIT;
+                ST_HOST_ISSUE:begin
+                    host_wait_count<=0;
+                    state<=ST_HOST_WAIT;
+                end
                 ST_HOST_WAIT:begin
                     if(bank_host_ack || bank_host_error || bank_poisoned) begin
                         state<=ST_IDLE;
@@ -279,7 +290,18 @@ module m08_axil_page_control (
                                           !bank_host_error)?OKAY:SLVERR;
                             s_axi_rvalid<=1;
                         end
-                    end
+                    end else if(host_wait_count==8'd63) begin
+                        bridge_fault<=1;
+                        state<=ST_IDLE;
+                        if(op_write) begin
+                            s_axi_bresp<=SLVERR;
+                            s_axi_bvalid<=1;
+                        end else begin
+                            s_axi_rdata<=0;
+                            s_axi_rresp<=SLVERR;
+                            s_axi_rvalid<=1;
+                        end
+                    end else host_wait_count<=host_wait_count+8'd1;
                 end
                 ST_CMD_ISSUE:state<=ST_CMD_WAIT;
                 ST_CMD_WAIT:begin
