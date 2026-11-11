@@ -17,6 +17,7 @@ SOURCE_FILES = (
     "rtl/m08/m08_ps_page_safe_shell.v",
     "scripts/m08_page_ps_bd_candidate.tcl",
     "scripts/m08_path_a_fan_bd_candidate.tcl",
+    "scripts/m08_path_a_baseline_report_gate.tcl",
     "scripts/m08_path_a_fan_bd_audit.py",
     "scripts/run_m08_path_a_fan_bd.sh",
 )
@@ -51,6 +52,8 @@ def audit(evidence: Path, source_root: Path) -> dict:
     require((evidence / "03_run_result.txt").read_text().strip()
             == "vivado_exit_status=0", "Vivado reported failure")
     log = (evidence / "01_vivado_fan_bd.log").read_text()
+    require("M08_PATH_A_ORIGINAL_DUAL_AXI_REPORT_EXACT_SCOPE_OK" in log,
+            "correct exact original scope gate did not execute")
     require("M08_PAGE_GENUINE_VIVADO_BD_VALIDATED_NO_BITSTREAM_NO_BOARD" in log,
             "original M08 real BD validation marker missing")
     require("M08_PATH_A_K26_FAN_BD_OFFLINE_VALIDATED_NO_BOARD_NO_BITSTREAM" in log,
@@ -63,6 +66,7 @@ def audit(evidence: Path, source_root: Path) -> dict:
         require(text.splitlines().count(f"{key}={value}") == 1,
                 f"missing/ambiguous {key}={value}")
     for token in (
+        "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD",
         "META|validated_bd|YES", "META|compute_enabled|NO",
         "META|physical_kv260|NOT_PROGRAMMED",
     ):
