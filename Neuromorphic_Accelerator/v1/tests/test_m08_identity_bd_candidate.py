@@ -93,15 +93,28 @@ set argv [list {__ROOT__} {__EVIDENCE__}]
 set ::project_open 0
 set ::refuse_disable __REFUSE_DISABLE__
 set ::actual_ps_clock_hz __PS_CLOCK_HZ__
+set ::board_found __BOARD_FOUND__
+set ::board_part ""
+set ::board_preset_applied 0
 set ::ip_checks 0
 set ::lpd_interface_lookups 0
 set ::lpd_clock_lookups 0
-array set ::pscfg {CONFIG.PSU__USE__M_AXI_GP0 0 CONFIG.PSU__USE__M_AXI_GP2 1 CONFIG.PSU__FPGA_PL0_ENABLE 0 CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 96.968727 CONFIG.PSU__MAXIGP0__DATA_WIDTH 128}
+array set ::pscfg {CONFIG.PSU__USE__M_AXI_GP0 0 CONFIG.PSU__USE__M_AXI_GP1 1 CONFIG.PSU__USE__M_AXI_GP2 1 CONFIG.PSU__FPGA_PL0_ENABLE 0 CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 96.968727 CONFIG.PSU__MAXIGP0__DATA_WIDTH 128}
 proc version {opt} {return 2025.2}
 proc create_project {args} {set ::project_open 1}
 proc current_project {} {return mocked_project}
+proc get_board_parts {args} {
+    if {$::board_found} {return [list xilinx.com:kv260_som:part0:1.4]}
+    return {}
+}
 proc set_property {args} {
+    if {[lindex $args 0] eq "BOARD_PART"} {
+        set ::board_part [lindex $args 1]
+    }
     if {[lindex $args 0] eq "-dict"} {
+        if {!$::board_preset_applied} {
+            error "M08 mock: board preset must be applied before PS overrides"
+        }
         foreach {key val} [lindex $args 1] {
             if {$key eq "CONFIG.PSU__USE__M_AXI_GP2" && $::refuse_disable} {
                 continue
@@ -112,6 +125,7 @@ proc set_property {args} {
 }
 proc get_property {name obj} {
     if {$name eq "PART"} {return xck26-sfvc784-2LV-c}
+    if {$name eq "BOARD_PART"} {return $::board_part}
     if {$name eq "MODE" && $obj eq "ps/M_AXI_HPM0_FPD"} {return MASTER}
     if {$name eq "CONFIG.FREQ_HZ" && $obj eq "ps/pl_clk0"} {
         return $::actual_ps_clock_hz
@@ -127,9 +141,19 @@ proc get_ipdefs {args} {
 proc add_files {args} {}
 proc update_compile_order {args} {}
 proc create_bd_design {args} {}
+proc apply_bd_automation {args} {
+    if {$::board_part eq ""} {error "M08 mock: no board part"}
+    if {[lsearch -exact $args "apply_board_preset \"1\""] < 0} {
+        error "M08 mock: KV260 PS board preset not requested"
+    }
+    set ::board_preset_applied 1
+}
 proc get_bd_intf_pins {args} {
     set name [lindex $args end]
     if {$name eq "ps/M_AXI_HPM0_FPD"} {return [list $name]}
+    if {$name eq "ps/M_AXI_HPM1_FPD"} {
+        if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP1) eq "1"} {return [list $name]}
+    }
     if {$name eq "ps/M_AXI_HPM0_LPD"} {
         incr ::lpd_interface_lookups
         if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP2) eq "1"} {return [list $name]}
@@ -139,6 +163,9 @@ proc get_bd_intf_pins {args} {
 proc get_bd_pins {args} {
     set name [lindex $args end]
     if {$name eq "ps/pl_clk0"} {return [list $name]}
+    if {$name eq "ps/maxihpm1_fpd_aclk"} {
+        if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP1) eq "1"} {return [list $name]}
+    }
     if {$name eq "ps/maxihpm0_lpd_aclk"} {
         incr ::lpd_clock_lookups
         if {$::pscfg(CONFIG.PSU__USE__M_AXI_GP2) eq "1"} {return [list $name]}
@@ -148,7 +175,10 @@ proc get_bd_pins {args} {
 proc create_bd_cell {args} {
     if {[lsearch -exact $args "-reference"] >= 0} {
         if {$::ip_checks != 5 ||
+            !$::board_preset_applied ||
+            $::board_part ne "xilinx.com:kv260_som:part0:1.4" ||
             $::pscfg(CONFIG.PSU__USE__M_AXI_GP0) ne "1" ||
+            $::pscfg(CONFIG.PSU__USE__M_AXI_GP1) ne "0" ||
             $::pscfg(CONFIG.PSU__USE__M_AXI_GP2) ne "0" ||
             $::pscfg(CONFIG.PSU__FPGA_PL0_ENABLE) ne "1" ||
             $::pscfg(CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ) ne "100" ||
@@ -168,20 +198,28 @@ if {[catch {source {__SCRIPT__}} err]} {
 }
 error "Tcl missed identity-cell stop"
 """
-            cases=((False,100000000), (True,100000000),
-                   (False,96968727))
-            for refuse_disable, clock_hz in cases:
+            cases=((False,100000000,True), (True,100000000,True),
+                   (False,96968727,True), (False,100000000,False))
+            for refuse_disable, clock_hz, board_found in cases:
                 with self.subTest(refuse_disable=refuse_disable,
-                                  actual_ps_clock_hz=clock_hz):
+                                  actual_ps_clock_hz=clock_hz,
+                                  board_found=board_found):
                     t=(harness.replace("__ROOT__",str(ROOT))
                               .replace("__EVIDENCE__",td)
                               .replace("__SCRIPT__",str(script))
                               .replace("__REFUSE_DISABLE__",
                                        "1" if refuse_disable else "0")
-                              .replace("__PS_CLOCK_HZ__",str(clock_hz)))
+                              .replace("__PS_CLOCK_HZ__",str(clock_hz))
+                              .replace("__BOARD_FOUND__",
+                                       "1" if board_found else "0"))
                     proc=subprocess.run(["tclsh"],input=t,
                                         capture_output=True,text=True)
-                    if refuse_disable:
+                    if not board_found:
+                        self.assertNotEqual(proc.returncode,0)
+                        self.assertIn(
+                            "M08 requires installed KV260 SOM board files",
+                            proc.stderr)
+                    elif refuse_disable:
                         self.assertNotEqual(proc.returncode,0)
                         self.assertIn(
                             "M08 unused PS HPM0 LPD master could not be disabled",
@@ -202,15 +240,23 @@ error "Tcl missed identity-cell stop"
 
     def test_explicit_ps_pl0_clock_request_preserves_fpd_only_topology(self):
         tcl=(ROOT/"scripts/m08_identity_ps_bd_candidate.tcl").read_text()
-        # Based on the accepted Loihi v2 P03/P04/P05/P08 PS clock setup;
-        # no broad board preset or physical DDR is imported.
+        # Based on accepted Loihi v2 P03/P04/P05/P08: select an actual
+        # KV260 board part and run the PS preset BEFORE explicit clock and
+        # FPD-only AXI selection; do not import the Loihi neural/DDR topology.
         self.assertIn("CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100",tcl)
         self.assertIn("CONFIG.PSU__FPGA_PL0_ENABLE 1",tcl)
         self.assertIn("get_property CONFIG.FREQ_HZ [pin_required ps/pl_clk0]",tcl)
         self.assertIn("M08 PS PL0 actual FREQ_HZ mismatch:",tcl)
         self.assertIn("CONFIG.PSU__USE__M_AXI_GP0 1",tcl)
         self.assertIn("CONFIG.PSU__USE__M_AXI_GP2 0",tcl)
-        self.assertNotIn("apply_board_preset",tcl)
+        self.assertIn("CONFIG.PSU__USE__M_AXI_GP1 0",tcl)
+        self.assertIn("get_board_parts -quiet xilinx.com:kv260_som:part0:*",tcl)
+        self.assertIn("set_property BOARD_PART $kv260_board_part [current_project]",tcl)
+        self.assertIn('apply_board_preset "1"',tcl)
+        self.assertLess(tcl.index("get_board_parts -quiet"),
+                        tcl.index("create_bd_design"))
+        self.assertLess(tcl.index("apply_bd_automation -rule"),
+                        tcl.index("CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100"))
         self.assertNotIn("write_bitstream",tcl)
 
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl interpreter unavailable")
@@ -227,9 +273,16 @@ set ::ip_checks 0
 proc version {flag} {return 2025.2}
 proc create_project {args} {set ::project_open 1}
 proc current_project {} {return mocked_project}
-proc set_property {args} {}
+set ::mock_board_part ""
+proc get_board_parts {args} {return [list xilinx.com:kv260_som:part0:1.4]}
+proc set_property {args} {
+    if {[lindex $args 0] eq "BOARD_PART"} {
+        set ::mock_board_part [lindex $args 1]
+    }
+}
 proc get_property {name obj} {
     if {$name eq "PART"} {return xck26-sfvc784-2LV-c}
+    if {$name eq "BOARD_PART"} {return $::mock_board_part}
     error "unexpected property $name"
 }
 proc get_ipdefs {args} {
