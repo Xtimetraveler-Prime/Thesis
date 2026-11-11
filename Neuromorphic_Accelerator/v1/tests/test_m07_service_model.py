@@ -103,11 +103,14 @@ class M07ServiceBoundaryTests(unittest.TestCase):
                 self.assertIsNone(b["resource_utilization"])
 
     def test_zero_event_queue_and_narrow_fifo_progress(self):
-        cfg=ServiceAssumptions(fifo_depth_events=1,enqueue_batch_setup_cycles=2)
+        cfg=ServiceAssumptions(
+            fifo_depth_events=2,enqueue_batch_setup_cycles=1,
+            consumer_event_interval_cycles=4)
         x=_ingress_model((0,8,0,1),batch_width=8,config=cfg)
         self.assertEqual(x["arrivals"],9)
         self.assertEqual(x["consumed"],9)
-        self.assertEqual(x["peak_occupancy_events"],1)
+        self.assertEqual(x["peak_occupancy_events"],2)
+        self.assertGreater(x["producer_full_stall_cycles"],0)
         self.assertGreaterEqual(x["queue_model_cycles"],9)
         self.assertLessEqual(x["peak_occupancy_events"],cfg.fifo_depth_events)
         self.assertEqual(x["ticks_with_events"],2)
