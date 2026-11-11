@@ -74,3 +74,33 @@ On any accepted AW/W pair, including AW before W or W before AW, exactly one SLV
 | `test_readonly_client_has_no_devmem_backend` | Source API inspection | There is no direct /dev/mem mmap nor outbound MMIO writes in this module. |
 
 **Acceptance boundary:** Icarus PASS shows this *standalone first-party slave* is self-consistent. It is NOT an actual KV260 PS-PL MMIO test, a real AXI interconnect/SmartConnect simulation, a PS Linux memory driver, routed timing closure, or on-chip/DDR neural inference. The next hardware-required step is to add this probe to an actual observed KV260 project, provide an independently verified real FPGA address map, program the verified built bitstream, and read it via a known kernel-approved MMIO interface. No fabricated base address is specified here.
+
+## M08.1b — owner evidence, Loihi-v2 reuse, and read-only xmutil state
+
+The owner first PC inventory (SHA256 `2c4276c13e3adb21721b8b49e027aa94cbe1e51cf592d402272684bc518606e0`) and independent audit agree; **all 5 M06 original ZIP hashes MATCH**. Host Vivado/Vitis commands were not found on that shell PATH, but are not asserted uninstalled. The host working tree is **dirty from untracked historical Loihi physical evidence and Vivado logs**. Preserve those files and work in exclusive M08 evidence folders. The user separately confirms normal KV260 Linux boot and the standard `sudo xmutil unloadapp` postboot routine; the original uploaded host inventory does not establish board-local Linux release/DT or prove an M08 bitstream.
+
+The Loihi v2 acceptance notes document a routed host-paged K26 design and a genuine JTAG/VIO physical neural conformance case on the *separate Loihi v2 system*. Those results are useful for procedure reuse, **not** transferable accelerator SHA/FPGA performance or signed16 M06 computational parity. See `M08_1_OWNER_EVIDENCE_AND_LOIHI_REUSE_2026_11_10.md`.
+
+`scripts/m08_capture_readonly.py --mode board-local` now allows only *read-only* `xmutil listapps`, `boardid`, `bootfw_status` and `platformstats`; it never calls `unloadapp` itself. Receipt auditor demands the same exact command set and rejects unsolicited `loadapp`, `unloadapp` and `bootfw_update` from an inventory script. The operator may still perform the existing authorized `sudo xmutil unloadapp` **outside this script**, logging app state before and after.
+
+## M08.2 — real Vivado K26 PS→PL read-only identity integration trial (NOT yet operator executed)
+
+**New candidate sources:** `scripts/m08_identity_ps_bd_candidate.tcl`, `scripts/run_m08_identity_bd.sh`, `scripts/m08_identity_bd_audit.py`, `tests/test_m08_identity_bd_candidate.py`. This is the first integration path between M08's verified standalone no-DMA AXI4-Lite slave and a Zynq UltraScale+ PS master. It follows the accepted **K26 PS HPM0 FPD 128-bit control interface, proc_sys_reset and explicit PS reset inversion** patterns documented by the M05.12d.3 original integration work, not a freely chosen physical DDR base address.
+
+The genuine operator Vivado candidate requires a real 2025.2 `xck26-sfvc784-2LV-c` part and exact AMD PS, SmartConnect, reset conditioner, inverter and constant IP versions. It creates a **new** project inside a unique `~/Thesis_Evidence/M08/m08_2_identity_bd_*_XXXXXX` folder, adds **only** the first-party read-only identity RTL, creates one PS `M_AXI_HPM0_FPD` → one SmartConnect → one `identity/S_AXI` path, connects the original PS PL clock/reset, lets genuine Vivado assign an address, validates the BD and exports a readback report. It **does not synthesize, implement, generate a bitstream/XSA, program JTAG, use xmutil or access physical DDR**. Module-reference AXI-Lite port inference, PS settings, address segment and native validation remain unproven until a real local trial is run.
+
+The wrapper generates SHA-256 of four current original source/script files **both before and after** the tool run, an original exit-status file, raw Vivado log and exported BD Tcl. The independent auditor demands exact source consistency, one success marker, no error/critical warning, a genuine bounded 32-bit assigned identity register aperture, correct PS/PL pin names and explicit `NOT_RUN/NOT_PROGRAMMED` physical fields. A failed run remains in the evidence directory and MUST NOT be relabeled a successful validation. The source-level unit test's positive synthetic fixture demonstrates **auditor behavior only, not a real vendor PASS**.
+
+| New test | Contract checked |
+| --- | --- |
+| `test_tcl_is_ps_to_readonly_id_only_not_software_ddr` | Exact K26/PS→SmartConnect→identity references; no JTAG or bitstream commands. |
+| `test_runner_has_valid_bash_syntax_without_running_vivado` | Bash syntax is valid, without executing vendor tools. |
+| `test_tcl_grammar_balanced_without_loading_vendor_ip` | A standalone Tcl interpreter reaches the mandatory argument guard; this does **not** validate Vivado commands. |
+| `test_fixture_checks_auditor_only_not_real_vivado` | Synthetic original-looking report exercises the independent auditor schema and explicit no-physical fields, not real Vivado. |
+| `test_reject_bad_source_result_or_log` | Failed exit status, altered before/after source, missing success marker or fake report are rejected. |
+| `test_reject_bad_address_and_false_physical_claims` | Invalid/overflowing/unwordaligned PS aperture and bitstream/DDR/programming claims fail. |
+| `test_cli_rejects_failed_evidence_without_creating_pass` | Refuses a failed original vendor report and never leaves an accepted audit file. |
+
+**Actual owner stage:** source your local 2025.2 `settings64.sh` and run `bash scripts/run_m08_identity_bd.sh`. The original report is mandatory for M08.2 validation and must be reviewed before an actual bitstream or Linux MMIO backend can be claimed. No physical inference acceptance is implied by a valid BD.
+
+**CI:** includes this entire source-only negative suite and first-party Icarus identity TB; it **does not** run Vivado 2025.2 or any hardware tool requiring local licensed vendor binaries/board connection.
