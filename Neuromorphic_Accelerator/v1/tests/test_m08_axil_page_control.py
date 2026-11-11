@@ -22,6 +22,7 @@ MARKERS=(
     "M08_AXIL_PREMATURE_SAVE_POISONED_PASS",
     "M08_AXIL_DIRTY_READBACK_SAVE_REPLACE_PASS",
     "M08_AXIL_UNVERIFIED_LOAD_POISONED_PASS",
+    "M08_AXIL_NO_ACK_TIMEOUT_QUARANTINE_PASS",
     "M08_AXIL_STANDALONE_NO_K26_NO_DDR_NO_DMA_PASS",
 )
 
@@ -46,6 +47,9 @@ class M08AXILPageControlTests(unittest.TestCase):
         self.assertIn("ST_CMD_WAIT",source)
         self.assertIn("bank_host_error",source)
         self.assertIn("bank_poisoned",source)
+        self.assertIn("bridge_fault",source)
+        self.assertIn("host_wait_count==8'd63",source)
+        self.assertIn("assign page_poisoned=bank_poisoned || bridge_fault",source)
         self.assertIn("bank_loaded_bytes",source)
         self.assertIn("w_strb_q!=4'hf",source)
         self.assertIn("w_strb_q!=0",source)
@@ -66,6 +70,11 @@ class M08AXILPageControlTests(unittest.TestCase):
         for operation in ("send_aw(","send_w(","axi_read(","axi_write(",
                           "run_compute(","stage("):
             self.assertIn(operation,bench)
+        self.assertIn("force dut.bank_host_ack = 1'b0",bench)
+        self.assertIn("M08_AXIL_READ_DURING_COMPUTE_POISONED",bench)
+        self.assertIn("M08_AXIL_BRIDGE_TIMEOUT_NOT_STICKY",bench)
+        self.assertIn("X_INTERFACE_INFO",source)
+        self.assertIn("ASSOCIATED_BUSIF S_AXI",source)
         for disallowed in ("m_axi_awaddr","m_axi_araddr","/dev/mem",
                            "axi_dma", "dma_alloc", "bitstream_program"):
             self.assertNotIn(disallowed,source)
