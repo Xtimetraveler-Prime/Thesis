@@ -41,6 +41,15 @@ class M08HostStagedPageRTLTests(unittest.TestCase):
         self.assertIn("dispatch_logical==page_logical",source)
         self.assertIn("state <= FAILED",source)
         self.assertIn("state <= DIRTY",source)
+        # Prevent regression of the Verilog dangling-else bug that ACKed
+        # compute reads without loading compute_rdata (actual=00000000).
+        self.assertRegex(
+            source, r"if\\s*\\(compute_write\\)\\s*begin\\s+for\\s*\\(i=0;"
+        )
+        self.assertRegex(
+            source,
+            r"end\\s+else\\s+begin\\s+compute_rdata\\s*<=\\s*words\\[compute_word\\];"
+        )
         self.assertNotIn("m_axi_awaddr",source)
         self.assertNotIn("m_axi_araddr",source)
         self.assertNotIn("$display(",source)
@@ -54,6 +63,9 @@ class M08HostStagedPageRTLTests(unittest.TestCase):
         self.assertIn("if(compute_ack)",tb)
         self.assertIn("if(compute_rdata!==expected)",tb)
         self.assertIn("dut.words[idx]",tb)
+        self.assertIn("compute_read(6'd1,32'h10200001);",tb)
+        self.assertIn("compute_read(6'd63,32'h1020003f);",tb)
+        self.assertIn("compute_read(6'd0,32'h55550006);",tb)
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "Icarus needed to execute genuine standalone RTL simulation")
