@@ -10,6 +10,9 @@
 **Current milestone:** **ONE consolidated M08.2b physical PS→PL state-page deployment and readback goal**. Avoid subdividing each step into new numbered sub-milestones.  
 **Current-date context:** 2026-11-11. Source branch HEAD changes as documentation is updated; **always inspect `git rev-parse HEAD` or PR #83 head SHA, and require M01–M08 workflows to be green on that same head**, without pretending queued CI passed.
 
+**LATEST OWNER LIVE BOARD OBSERVATION (2026-11-11; supersedes former UNKNOWN Linux state):** KV260 **DOES BOOT** Ubuntu 24.04.2 LTS, kernel 6.8.0-1035-xilinx. Genuine sudo xmutil listapps shows **k26-starter-kits ACTIVE (slot 0->0,) XRT_FLAT**, k24-starter-kits inactive. systemctl is-active fancontrol is **active**, fans visibly spin. systemctl is-active dfx-mgrd was **inactive**, but AMD documents the unit name **dfx-mgr.service**, to be checked instead. Owner independently verified accepted M08 .bit SHA on PC and reported source tests PASS. All 8 M01–M08 CI previously passed at 372410b4...; reverify latest source HEAD. **Do not issue sudo xmutil unloadapp or reuse the accepted .bit unmodified**: the original M08 PS→identity/page BD has no explicit valid TTC0-Clk2 EMIO fan route to K26 HDA20/A12. Owner chose **Path A Linux-managed deployment**, Path B only if safe and isolated. Implemented NEW source-only scripts/m08_kv260_path_a_readonly.sh, scripts/run_m08_path_a_readonly_pc.sh and tests/test_m08_path_a_readonly.py. [Authoritative Path A operator commands and fan/DT gate](M08_2B_PATH_A_LINUX_MANAGED_DISCOVERY_2026_11_11.md). First short PuTTY command: hostname -I, then PC VS Code launcher via SSH if available. No M08 program, Linux AXI, DDR or inference claimed.
+
+
 ## READ THIS FIRST — new original board evidence ALREADY received
 
 User uploaded:
