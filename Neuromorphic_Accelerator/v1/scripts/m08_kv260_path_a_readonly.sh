@@ -142,4 +142,20 @@ probe packaging_tools sh -c '
   done
   if command -v dtc >/dev/null 2>&1; then dtc --version; fi
 '
+# Inspect the installed baseline DT overlay as human-readable TEXT, not a
+# live DT change. A real .dtbo is required before designing the M08 overlay.
+probe baseline_device_tree_overlay_dts sh -c '
+  path=/lib/firmware/xilinx/k26-starter-kits/k26_starter_kits.dtbo
+  if [ ! -r "$path" ]; then
+    echo "M08_K26_BASELINE_DTBO_UNREADABLE"
+  elif ! command -v dtc >/dev/null 2>&1; then
+    echo "M08_DTC_UNAVAILABLE"
+  else
+    echo "M08_K26_BASELINE_DTBO_DTS_BEGIN"
+    dtc -q -I dtb -O dts "$path"
+    result=$?
+    echo "M08_K26_BASELINE_DTBO_DTS_END rc=$result"
+    exit "$result"
+  fi
+'
 echo "M08_PATH_A_LINUX_READ_ONLY_END_NO_FPGA_CHANGES"
