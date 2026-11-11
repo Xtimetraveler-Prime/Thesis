@@ -27,7 +27,12 @@ jobs:
           command -v vvp
       - name: Compile first-party M08 source
         run: python3 -m compileall -q src scripts tests
-      - name: M08 targeted read-only and negative-entry tests
+      - name: Confirm M08 PS/identity BD runner shell syntax (no vendor)
+        run: |
+          bash -n scripts/run_m08_identity_bd.sh
+          test -f scripts/m08_identity_ps_bd_candidate.tcl
+          test -f scripts/m08_identity_bd_audit.py
+      - name: M08 targeted read-only, identity and BD-negative tests
         run: python3 -m unittest discover -s tests -p 'test_m08*.py' -v
       - name: Inherited M07 source models
         run: python3 -m unittest discover -s tests -p 'test_m07*.py' -v
