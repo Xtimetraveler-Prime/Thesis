@@ -12,7 +12,11 @@ module m08_axil_readonly_identity #(
     parameter [31:0] BUILD_ID2 = 32'h00000000,
     parameter [31:0] BUILD_ID3 = 32'h00000000
 ) (
-    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 aclk CLK", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME aclk, ASSOCIATED_BUSIF S_AXI, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000" *)
+    // This is a clock INPUT, not a locally generated 100.000000 MHz clock.
+    // Let IP Integrator propagate the actual KV260 PS pl_clk0 frequency to
+    // both aclk and S_AXI; the PS requests 100 MHz but the genuine board
+    // preset generated 99,999,001 Hz. No logic/protocol change is involved.
+    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 aclk CLK", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME aclk, ASSOCIATED_BUSIF S_AXI, ASSOCIATED_RESET aresetn" *)
     input  wire        aclk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 aresetn RST", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME aresetn, POLARITY ACTIVE_LOW" *)
     input  wire        aresetn,
