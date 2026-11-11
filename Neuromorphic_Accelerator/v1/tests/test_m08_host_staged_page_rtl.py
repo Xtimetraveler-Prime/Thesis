@@ -45,7 +45,15 @@ class M08HostStagedPageRTLTests(unittest.TestCase):
         self.assertNotIn("m_axi_araddr",source)
         self.assertNotIn("$display(",source)
         self.assertNotIn("$fatal(",source)
-        self.assertIn("m06_lif16_neuron_step lane",TB.read_text())
+        tb=TB.read_text()
+        self.assertIn("m06_lif16_neuron_step lane",tb)
+        self.assertIn("M08_PAGE_COMPUTE_READ_TIMEOUT",tb)
+        self.assertIn("M08_PAGE_COMPUTE_READ_REJECTED",tb)
+        self.assertIn("M08_PAGE_COMPUTE_BAD_DATA",tb)
+        self.assertIn("M08_PAGE_COMPUTE_WRITE_TIMEOUT",tb)
+        self.assertIn("if(compute_ack)",tb)
+        self.assertIn("if(compute_rdata!==expected)",tb)
+        self.assertIn("dut.words[idx]",tb)
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "Icarus needed to execute genuine standalone RTL simulation")
