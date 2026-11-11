@@ -99,4 +99,47 @@ probe xmutil_listapps_noninteractive sh -c '
     echo "XMUTIL_REQUIRES_PRIVILEGE"
   fi
 '
+probe active_firmware_metadata sh -c '
+  for app in k26-starter-kits k24-starter-kits; do
+    base="/lib/firmware/xilinx/$app"
+    [ -d "$base" ] || continue
+    echo "FIRMWARE_APP=$app"
+    if [ -r "$base/shell.json" ]; then
+      echo "SHELL_JSON_BEGIN=$app"
+      cat "$base/shell.json"
+      echo "SHELL_JSON_END=$app"
+    fi
+    for p in "$base"/*.dtbo "$base"/*.bit.bin; do
+      [ -r "$p" ] || continue
+      sha256sum "$p"
+      if command -v file >/dev/null 2>&1; then file "$p"; fi
+    done
+  done
+  link=/etc/dfx-mgrd/default_firmware
+  if [ -e "$link" ] || [ -L "$link" ]; then
+    printf "DEFAULT_FIRMWARE="
+    readlink -f "$link" || :
+  fi
+'
+probe fan_pwm_sysfs sh -c '
+  for p in /sys/class/pwm/pwmchip*; do
+    [ -d "$p" ] || continue
+    echo "PWM_DEVICE=$p"
+    for f in "$p"/npwm "$p"/device/of_node/compatible; do
+      [ -r "$f" ] || continue
+      printf "%s=" "$f"
+      tr "\000" "\n" < "$f"
+    done
+  done
+  if [ -r /etc/fancontrol ]; then
+    echo "FANCONTROL_CONFIG_PRESENT"
+    cat /etc/fancontrol
+  fi
+'
+probe packaging_tools sh -c '
+  for cmd in dtc bootgen python3 xmutil fpgautil; do
+    command -v "$cmd" || :
+  done
+  if command -v dtc >/dev/null 2>&1; then dtc --version; fi
+'
 echo "M08_PATH_A_LINUX_READ_ONLY_END_NO_FPGA_CHANGES"
