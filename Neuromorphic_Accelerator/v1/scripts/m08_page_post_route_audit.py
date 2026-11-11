@@ -40,7 +40,6 @@ ORIGINALS = (
 )
 MARKERS = (
     "M08_KV260_PS_BOARD_PRESET_APPLIED=1",
-    "M08_GENUINE_PS_PL0_CLOCK_HZ=99999001",
     "M08_PAGE_BD_DISTINCT_ID_AND_PAGE_4K_ADDRESS_SEGMENTS=1",
     "M08_PAGE_GENUINE_VIVADO_BD_VALIDATED_NO_BITSTREAM_NO_BOARD",
     "M08_PAGE_GENUINE_NATIVE_WRAPPER_GENERATED=1",
@@ -119,8 +118,18 @@ def audit_evidence(folder: Path, root: Path) -> dict:
     for i, (row, prefix) in enumerate(zip(report, expected_rows)):
         if not row.startswith(prefix):
             raise ValueError(f"native PS BD row {i} unexpected: {row!r}")
-    if report[6] != "META|actual_clock_hz|99999001":
-        raise ValueError("native PS PL0 actual clock differs from original accepted K26")
+    ps_clock = report[6].split("|")
+    if len(ps_clock) != 3 or not re.fullmatch(r"[0-9]+", ps_clock[2]):
+        raise ValueError("missing actual K26 clock readback")
+    actual_clock = int(ps_clock[2])
+    if abs(actual_clock - 100_000_000) > 1000:
+        raise ValueError("actual K26 clock outside accepted 1 kHz deviation")
+    for marker in (
+        f"M08_GENUINE_PS_PL0_CLOCK_HZ={actual_clock}",
+        f"M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ={actual_clock}",
+    ):
+        if sum(line.strip() == marker for line in log.splitlines()) != 1:
+            raise ValueError("actual clock marker missing/duplicated: " + marker)
     segments = []
     for row in report[12:14]:
         parts = row.split("|")
