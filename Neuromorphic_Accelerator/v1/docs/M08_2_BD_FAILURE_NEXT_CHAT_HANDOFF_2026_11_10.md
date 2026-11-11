@@ -1,4 +1,7 @@
-# AUTHORITATIVE NEXT-CHAT HANDOFF — M08.2 first genuine local Vivado BD failed, diagnose before further development
+# AUTHORITATIVE NEXT-CHAT HANDOFF — M08.2 original Vivado failure preserved; diagnostic addendum
+
+> **Diagnostic addendum (2026-11-10 America/Denver, after owner upload).** The historical handoff below accurately records the state **before** the original log was available; its instructions to diagnose before changing source have now been fulfilled. The uploaded `01_vivado_identity_bd.log` shows genuine Vivado 2025.2 ending with `ERROR: [Common 17-53] User Exception: No open project` when first executing `get_ipdefs -all -quiet $vlnv` *before* `create_project`. `result.txt` says `exit_status=1` and the original four source SHA-256 hashes are identical in `source_sha256_before.txt`/`source_sha256_after.txt`. The narrow correction on this same M08 branch creates/verifies the K26 project before the exact same five-IP availability check. Added `test_ip_catalog_query_occurs_only_after_open_project` recreates that boundary with Tcl mocks; **this does not validate real IP Integrator**. After all eight updated same-SHA Actions pass, require **one separate new local Vivado** run in a newly auto-created evidence directory, with original failures retained. PR #83 remains draft/unmerged. No bitstream, physical FPGA, DDR or neural inference result is claimed.
+
 
 **Date:** 2026-11-10 America/Denver (owner terminal evidence folder UTC 2026-11-11 05:56:14).  
 **Scope:** M08.2 **diagnose and repair the first genuine Vivado 2025.2 PS→PL AXI4-Lite read-only identity BD trial**.  
