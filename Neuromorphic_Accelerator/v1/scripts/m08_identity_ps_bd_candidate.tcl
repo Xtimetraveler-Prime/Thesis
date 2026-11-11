@@ -38,6 +38,21 @@ set_property source_mgmt_mode All [current_project]
 if {[get_property PART [current_project]] ne $expected_part} {
     error "M08 K26 Vivado part mismatch"
 }
+# The accepted Loihi v2 P03/P04/P05/P08 K26 implementations select a
+# genuine KV260 SOM BOARD_PART before applying the PS board preset. Without
+# that preset, our fourth genuine M08 run still reported 96,968,727 Hz on
+# pl_clk0 despite a 100 MHz PS property request. Never invent board files
+# or silently fall back to a part-only PS configuration.
+set kv260_board_parts [get_board_parts -quiet xilinx.com:kv260_som:part0:*]
+if {[llength $kv260_board_parts] == 0} {
+    error "M08 requires installed KV260 SOM board files (xilinx.com:kv260_som:part0:*)"
+}
+set kv260_board_part [lindex [lsort -dictionary $kv260_board_parts] end]
+set_property BOARD_PART $kv260_board_part [current_project]
+if {[get_property BOARD_PART [current_project]] ne $kv260_board_part} {
+    error "M08 KV260 BOARD_PART selection was not accepted"
+}
+puts "M08_KV260_BOARD_PART=$kv260_board_part"
 # Vivado 2025.2 get_ipdefs requires an open project. Preserve the strict
 # first-party AMD IP check, but run it only after create_project succeeds.
 foreach vlnv [list $ps_vlnv $sc_vlnv $rst_vlnv $inv_vlnv $const_vlnv] {
@@ -61,14 +76,22 @@ proc intf_required {path} {
 }
 
 set ps [create_bd_cell -type ip -vlnv $ps_vlnv ps]
+# Reuse only the accepted Loihi PS board-initialization sequence, NOT its
+# host-paged neural architecture or physical/DDR access. Re-apply the exact
+# identity-only GP/clock configuration after the KV260 board preset.
+apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
+    -config {apply_board_preset "1"} $ps
+puts "M08_KV260_PS_BOARD_PRESET_APPLIED=1"
 # The PS default exposed M_AXI_HPM0_LPD in the owner's genuine 2025.2
 # run; its unconnected maxihpm0_lpd_aclk blocked validate_bd_design.
 # Select ONLY FPD HPM0 for this identity-only PS->PL address path.
 # The accepted Loihi Digital Twin P03/P04/P05/P08 K26 Tcl explicitly set
 # PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100.  Our third genuine M08 run
 # otherwise generated 96968727 Hz, while the AXI4-Lite RTL declares 100 MHz.
-# Do NOT import the Loihi board preset/DDR configuration into this probe.
+# The preset supplies actual KV260 PS reference-clock parameters. Disable
+# both other PS AXI masters; this probe keeps only its explicit FPD HPM0.
 set_property -dict [list CONFIG.PSU__USE__M_AXI_GP0 1 \
+                         CONFIG.PSU__USE__M_AXI_GP1 0 \
                          CONFIG.PSU__USE__M_AXI_GP2 0 \
                          CONFIG.PSU__FPGA_PL0_ENABLE 1 \
                          CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100] $ps
@@ -77,6 +100,13 @@ if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP0 $ps]] ne "1"} {
 }
 if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP2 $ps]] ne "0"} {
     error "M08 unused PS HPM0 LPD master could not be disabled"
+}
+if {[string trim [get_property CONFIG.PSU__USE__M_AXI_GP1 $ps]] ne "0"} {
+    error "M08 unused PS HPM1 FPD master could not be disabled"
+}
+if {[llength [get_bd_intf_pins -quiet ps/M_AXI_HPM1_FPD]] != 0 ||
+    [llength [get_bd_pins -quiet ps/maxihpm1_fpd_aclk]] != 0} {
+    error "M08 unused PS HPM1 FPD interface/clock remains exposed"
 }
 if {[string trim [get_property CONFIG.PSU__FPGA_PL0_ENABLE $ps]] ne "1"} {
     error "M08 PS PL0 clock output could not be enabled"
