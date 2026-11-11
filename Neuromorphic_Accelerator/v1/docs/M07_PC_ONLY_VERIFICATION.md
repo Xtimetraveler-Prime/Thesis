@@ -184,3 +184,38 @@ gh run view <RUN_ID> --log-failed
 Use GitHub Actions jobs from the exact HEAD, and record PASS/FAIL/SKIP. `gh` commands require the GitHub CLI and an authenticated session. If `gh` is unavailable, open the repository Actions and M07 draft PR checks in the GitHub web UI.
 
 **Verification boundaries:** Python M02/M03/M06/M07 host tests establish source correctness. Icarus `iverilog/vvp` establishes local standalone RTL behavior only. Any declaration-only fake-stub compile says nothing about functional AMD/HLS. Previous genuine Vivado/Vitis 2025.2 simulations are accepted as M05/M06 evidence and are not a new M07 result. Physical KV260, JTAG, PS halt, DDR writes, bitstream programming, and PS Linux memory ownership are not authorized.
+
+### M07.5 final source-only service + batching test (no FPGA)
+
+This closeout uses the ORIGINAL M06 synchronous bytearray/BlockCache page-service path and M02/M03 neural contract. It adds a passive trace of **completed** software read/write blocks and an explicitly ASSUMED queue/service cycle model. This is NOT an AXI waveform, actual write-B/AR delay, real queue occupancy or calibrated timing. In particular a modeled `source_order_write_then_read_guards` count is not the original hardware B-before-AR signal. It also independently compares model input batch width 1 versus 4 and hypothetical adjacency record width 4B versus 8B (actual M06 adjacency remains on chip). Additional costs (tag/queue metadata, real AXI, clock, overlap and board latency) are not measured.
+
+After pulling your branch and checking `git rev-parse HEAD`, from `v1`:
+
+~~~bash
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m07_service_model.py' -v
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -v
+mkdir -p "$HOME/Thesis_Evidence/M07"
+OUT="$HOME/Thesis_Evidence/M07/m07_5_service_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_service_closeout.py --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+Expected `number_of_matched_cases=48`, `actual_hardware_performance_measured=false` and `physical_ddr_executed=false`. Verify producer stalls with the saturated depth-2, four-cycle consumer interval negative test; the default fixture is allowed to show zero stalls. All complete-run cycles in this report are assumed **model** cycles, with defaults of FIFO depth 4, batch setup 2, consumer interval 2, LIF update 3, read chunk 5, write chunk 7, and write completion 2. The synthetic numbers are not ns without an independently measured FPGA clock/timing calibration.
+
+For M07 merged main verification, after merge:
+
+~~~bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch main
+git pull --ff-only origin main
+cd Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -v
+~~~
+
+Original M05/M06 HLS evidence is already accepted and does NOT need rerunning. Physical M08 KV260/JTAG/PS-DDR activity must be separately authorized and is not within this milestone.
