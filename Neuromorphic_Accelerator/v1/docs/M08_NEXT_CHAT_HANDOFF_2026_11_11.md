@@ -1,5 +1,9 @@
 # NEXT CHAT HANDOFF — Neuromorphic Accelerator v1, M08 physical KV260 deployment
 
+
+**MOST RECENT SOURCE-ONLY CONTINUATION (2026-11-11):** Reused the genuine Loihi P08.4.3b Hardware Manager programming sequence to implement first-party scripts/m08_kv260_program_oneshot.tcl and scripts/run_m08_kv260_program_oneshot.sh in THIS SAME branch, guarded by exact original M08 bitstream SHA/size, Vivado 2025.2, exact original target, unique xck26_0 (not ARM DAP), explicit isolated-JTAG approval and an actual reviewed boot/fan/PL state, and a new immutable-style owner evidence folder/ledger. Added pure Tcl source-mock regression tests in tests/test_m08_physical_programming.py and [new operator gate](M08_2B_GUARDED_PROGRAMMING_AND_ACCESS_GATE_2026_11_11.md). These are NOT vendor/physical passes. Live Linux boot, active PL/dfx-mgr/fan state remain UNKNOWN, so the loader MUST NOT be executed yet; no physical M08 programming, physical AXI identity or 64-word page proof exists. The source-only implementation supersedes the older instruction below to "build" the loader; after obtaining genuine state, review/authorize or choose an OS-managed path. Do not repeat already-successful JTAG enumeration. PR #83 stays draft/unmerged; recompute exact head/CI after source changes.
+
+
 **Current research branch:** `agent/neuromorphic-accelerator-v1-m08-kv260-bringup`  
 **Repository:** `Xtimetraveler-Prime/Thesis`, project root `Neuromorphic_Accelerator/v1`  
 **PR:** #83, **DRAFT, OPEN, UNMERGED**; user has **not authorized a merge**.  
