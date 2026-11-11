@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TCL = ROOT / "scripts/m08_path_a_fan_bd_candidate.tcl"
 RUN = ROOT / "scripts/run_m08_path_a_fan_bd.sh"
 AUDIT = ROOT / "scripts/m08_path_a_fan_bd_audit.py"
+GATE = ROOT / "scripts/m08_path_a_baseline_report_gate.tcl"
 
 _spec = importlib.util.spec_from_file_location("m08_path_a_fan_bd_audit", AUDIT)
 _module = importlib.util.module_from_spec(_spec)
@@ -28,7 +29,7 @@ class M08PathAFanBD(unittest.TestCase):
             if line.strip() and not line.lstrip().startswith("#")
         )
         for expected in (
-            "source $baseline", "validate_bd_design -force",
+            "source $baseline", "m08_path_a_check_baseline_readback $baseline_report", "validate_bd_design -force",
             "ps/emio_ttc0_wave_o", "CONFIG.PSU__TTC0__WAVEOUT__ENABLE",
             "CONFIG.PSU__TTC0__WAVEOUT__IO",
             "CONFIG.DIN_FROM 2 CONFIG.DIN_TO 2",
@@ -80,6 +81,49 @@ class M08PathAFanBD(unittest.TestCase):
                            text=True, timeout=20)
         self.assertEqual(p.returncode, 0, p.stdout+p.stderr)
         self.assertIn("M08_FAN_TCL_PARSE_ONLY_NO_HARDWARE", p.stdout)
+
+    @unittest.skipUnless(shutil.which("tclsh"), "Tcl unavailable")
+    def test_exact_baseline_scope_matches_real_report_and_rejects_old_bug(self):
+        """Runs the real Tcl gate with synthetic report strings, no Vivado."""
+        from tempfile import TemporaryDirectory
+
+        baseline = (
+            "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD\n"
+            "META|compute_enabled|NO\n"
+            "META|validated_bd|YES\n"
+            "META|routed_implementation|NOT_RUN\n"
+            "META|bitstream|NOT_GENERATED\n"
+            "META|linux_mmio|NOT_ACCESSED\n"
+            "META|physical_kv260|NOT_PROGRAMMED\n"
+            "APERTURE_IDENTITY|/ps/Data/id|0xA0000000|0x00001000\n"
+            "APERTURE_PAGE|/ps/Data/page|0xA0001000|0x00001000\n"
+        )
+        prefix = "META|scope|M08_GENUINE_LOCAL_KV260_PS_TO_IDENTITY_AND_SAFE_PAGE_BD"
+        for case, report, passes in (
+            ("valid_original_vendor_line", baseline, True),
+            ("old_missing_scope_prefix", baseline.replace(prefix, prefix[11:]), False),
+            ("duplicate_exact_scope", baseline + prefix + "\n", False),
+            ("missing_page", baseline.replace("APERTURE_PAGE|", "WRONG_PAGE|"), False),
+            ("false_partial_match", baseline.replace(prefix, "prefix" + prefix), False),
+        ):
+            with self.subTest(case=case), TemporaryDirectory() as d:
+                path = Path(d) / "report.txt"
+                path.write_text(report)
+                cmd = (
+                    f"source {{{GATE}}}\n"
+                    f"m08_path_a_check_baseline_readback {{{path}}}\n"
+                )
+                p = subprocess.run(["tclsh"], input=cmd, capture_output=True,
+                                   text=True, timeout=15)
+                if passes:
+                    self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+                    self.assertIn("M08_PATH_A_ORIGINAL_DUAL_AXI_REPORT_EXACT_SCOPE_OK",
+                                  p.stdout)
+                else:
+                    # Tclsh reading stdin can print a Tcl error while exiting 0.
+                    self.assertIn("M08 Path A", p.stderr + p.stdout)
+                    self.assertNotIn("M08_PATH_A_ORIGINAL_DUAL_AXI_REPORT_EXACT_SCOPE_OK",
+                                     p.stdout)
 
     def make_fixture(self, directory: Path) -> None:
         rows = [
