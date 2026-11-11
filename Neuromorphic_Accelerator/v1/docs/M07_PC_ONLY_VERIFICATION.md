@@ -1,6 +1,6 @@
 # M07 source-only verification runbook — November 10, 2026
 
-**Branch:** `agent/neuromorphic-accelerator-v1-m07-cache-baselines` created from actual `main` commit `a33c717f4101e248dd56637e5188682872fe83c6`. M07 remains in progress and MUST NOT be merged without owner review/approval.
+**M07 source-model status:** M07.1–M07.5 completed for acceptance review, with owner-requested PR #82 merge conditional on all exact-head no-board CI checks. The branch `agent/neuromorphic-accelerator-v1-m07-cache-baselines` began from accepted `main` commit `a33c717f4101e248dd56637e5188682872fe83c6`. The source-only commands below must not be mistaken for Vitis/Vivado/physical KV260 verification; after merge use the **main** instructions at the end.
 
 ## Linux VS Code terminal — NO hardware access
 
