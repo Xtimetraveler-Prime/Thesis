@@ -62,17 +62,32 @@ if (( RC != 0 )); then
   echo "M08_PATH_A_FAN_BD_NOT_ACCEPTED_NATIVE_FAILURE rc=$RC preserve=$DIR" >&2
   exit "$RC"
 fi
+# The original vendor log and EVERY available artifact must survive a later
+# independent-auditor failure. Never overwrite owner evidence or fake PASS.
+set +e
 python3 "$HERE/m08_path_a_fan_bd_audit.py" \
   --evidence "$DIR" --source-root "$ROOT" \
-  --output "$DIR/23_independent_fan_bd_audit.json"
+  --output "$DIR/23_independent_fan_bd_audit.json" \
+  > "$DIR/24_independent_audit_console.log" 2>&1
+AUDIT_RC=$?
+set -e
+printf 'independent_audit_exit_status=%d\n' "$AUDIT_RC" > "$DIR/25_audit_result.txt"
 (
   cd "$DIR"
-  sha256sum -- 00_source_sha256_before.txt 00_source_head.txt \
+  : > 30_evidence_sha256.txt
+  for item in 00_source_sha256_before.txt 00_source_head.txt \
     01_vivado_fan_bd.log 02_vivado_page_bd_readback.txt \
     03_page_bd_export.tcl 03_run_result.txt 04_source_sha256_after.txt \
     20_m08_fan_bd_readback.txt 21_m08_fan_pwm_a12.xdc \
     22_m08_fan_bd_export.tcl 23_independent_fan_bd_audit.json \
-    > 30_evidence_sha256.txt
+    24_independent_audit_console.log 25_audit_result.txt; do
+      if [[ -f "$item" ]]; then sha256sum -- "$item" >> 30_evidence_sha256.txt; fi
+  done
 )
+if (( AUDIT_RC != 0 )) ||
+   [[ ! -f "$DIR/23_independent_fan_bd_audit.json" ]]; then
+  echo "M08_PATH_A_FAN_BD_INDEPENDENT_AUDIT_FAILED preserve=$DIR" >&2
+  exit 3
+fi
 echo "M08_PATH_A_FAN_BD_OFFLINE_CANDIDATE_AUDITED_NOT_ROUTED_NOT_PROGRAMMED"
 echo "M08_PATH_A_FAN_BD_EVIDENCE_DIR=$DIR"
