@@ -2,6 +2,12 @@
 
 **Status 2026-11-11:** Implementation begun; **SOURCE-ONLY and BOARD-LOCAL READ-ONLY OBSERVATIONS**, NOT DDR ownership, M08.3 completion or DMA execution. [M08.2 accepted limited offline PS→PL identity BD](M08_2_IDENTITY_BD_SCOPED_ACCEPTANCE_2026_11_11.md) is a prerequisite, **not** a replacement for a real kernel driver.
 
+## Previously proven KV260 host memory ownership — do not reinvent it
+
+Loihi Digital Twin v2 **P08.4.3a/b** already establishes a **real K26 host-staged page memory access protocol**: host logical backing contexts, physical resident banks, mutually exclusive VIO/JTAG host bank writes and HLS compute, actual decoy page overwrite/readback, and physical one-dispatch neural result comparison. Loihi's accepted implementation is **not** Linux DMA memory ownership, but it is a proven precursor for M08's safe physical conformance. See [first-party crosswalk](M08_3_LOIHI_KV260_MEMORY_OWNERSHIP_REUSE_2026_11_11.md).
+
+A new `m08_host_page_ownership.py` source model now carries that proven sequencing into M08 without borrowing Loihi signed24 neural RTL. This does **not** access the real K26. **Recommended M08 physical order:** host-staged M06 signed16 conformance on a separately validated M08 shell, then Linux kernel-owned DMA/DDR integration only for configurations actually requiring the external physical buffer. Keep M08.2b full connected/routed design as a separate open prerequisite.
+
 ## Research boundary
 
 The standalone M08.2 identity slave is a **PL AXI-Lite slave** reached from the PS FPD HPM0 *master*. It has **no PL DMA master**; its 4 KiB `0xa0000000` address is a **Vivado candidate** only. It is not a kernel-owned DMA address or proof of Linux access.
