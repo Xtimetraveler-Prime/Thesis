@@ -49,6 +49,11 @@ module m08_host_staged_page_bank (
     reg [2:0] state;
     reg [31:0] words [0:63];
     reg [255:0] loaded_bytes;
+    // Hardware requires a real host read of every word AFTER the final
+    // write to that word, and every dirty word before save assertion.
+    // The host still owns comparison and off-page persistence.
+    reg [63:0] load_readback_words;
+    reg [63:0] dirty_readback_words;
     reg host_armed, compute_armed;
     integer i;
 
@@ -77,6 +82,8 @@ module m08_host_staged_page_bank (
         if (!resetn) begin
             state <= EMPTY;
             loaded_bytes <= 256'b0;
+            load_readback_words <= 64'b0;
+            dirty_readback_words <= 64'b0;
             loaded_count <= 9'd0;
             page_logical <= 32'd0;
             host_ack <= 1'b0;
@@ -120,6 +127,8 @@ module m08_host_staged_page_bank (
                         if (host_begin && !host_req) begin
                             page_logical <= host_begin_logical;
                             loaded_bytes <= 256'b0;
+                            load_readback_words <= 64'b0;
+                            dirty_readback_words <= 64'b0;
                             loaded_count <= 9'd0;
                             state <= LOADING;
                         end else if (host_req || host_commit ||
@@ -141,10 +150,12 @@ module m08_host_staged_page_bank (
                                     end
                                 end
                                 loaded_count <= loaded_count + new_byte_count;
+                                load_readback_words[host_word] <= 1'b0;
                                 host_ack <= 1'b1;
                             end else if (!host_write &&
                                          (&loaded_bytes[host_word*4 +: 4])) begin
                                 host_rdata <= words[host_word];
+                                load_readback_words[host_word] <= 1'b1;
                                 host_ack <= 1'b1;
                             end else begin
                                 state <= FAILED;
@@ -152,7 +163,8 @@ module m08_host_staged_page_bank (
                             end
                         end else if (host_commit && !host_ack &&
                                      !host_req) begin
-                            if ((&loaded_bytes) && host_readback_verified) begin
+                            if ((&loaded_bytes) && (&load_readback_words) &&
+                                host_readback_verified) begin
                                 state <= READY;
                             end else begin
                                 state <= FAILED;
@@ -180,6 +192,8 @@ module m08_host_staged_page_bank (
                             // compute or dirty update can be discarded.
                             page_logical <= host_begin_logical;
                             loaded_bytes <= 256'b0;
+                            load_readback_words <= 64'b0;
+                            dirty_readback_words <= 64'b0;
                             loaded_count <= 9'd0;
                             state <= LOADING;
                         end else if (dispatch_req && !host_busy) begin
@@ -218,6 +232,7 @@ module m08_host_staged_page_bank (
                             end
                         end else if (compute_done && !compute_ack &&
                                      !compute_req) begin
+                            dirty_readback_words <= 64'b0;
                             state <= DIRTY;
                         end
                     end
@@ -226,6 +241,7 @@ module m08_host_staged_page_bank (
                             host_armed <= 1'b0;
                             if (!host_write) begin
                                 host_rdata <= words[host_word];
+                                dirty_readback_words[host_word] <= 1'b1;
                                 host_ack <= 1'b1;
                             end else begin
                                 state <= FAILED;
@@ -233,8 +249,14 @@ module m08_host_staged_page_bank (
                             end
                         end else if (host_save_done && !host_ack &&
                                      !host_req) begin
-                            // Software asserts durable, checked save.
-                            state <= READY;
+                            if (&dirty_readback_words) begin
+                                // Host asserts durable, independently
+                                // verified save of all observed words.
+                                state <= READY;
+                            end else begin
+                                state <= FAILED;
+                                host_error <= 1'b1;
+                            end
                         end else if (host_begin || host_commit ||
                                      dispatch_req || compute_req ||
                                      compute_done) begin
