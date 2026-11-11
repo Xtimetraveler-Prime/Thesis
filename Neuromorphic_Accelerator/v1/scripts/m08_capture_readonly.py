@@ -36,6 +36,10 @@ def _run(argv: tuple[str, ...], *, cwd: Path | None = None,
         ("lsusb",),
         ("vivado", "-version"),
         ("vitis_hls", "-version"),
+        ("xmutil", "listapps"),
+        ("xmutil", "boardid"),
+        ("xmutil", "bootfw_status"),
+        ("xmutil", "platformstats"),
     }
     if argv not in permitted:
         raise ValueError("not an approved read-only inventory command")
@@ -131,7 +135,18 @@ def capture(mode: str, *, source_root: Path, originals: Path | None,
             "/etc/os-release", "/proc/version",
         ):
             result["board_files"][path] = reader(Path(path))
-        result["commands"]["uname -a"] = runner(("uname", "-a"))
+        for command in (
+            ("uname", "-a"),
+            ("xmutil", "listapps"),
+            ("xmutil", "boardid"),
+            ("xmutil", "bootfw_status"),
+            ("xmutil", "platformstats"),
+        ):
+            result["commands"][" ".join(command)] = runner(command)
+        # This is an observation, NOT unloadapp or firmware modification.
+        # Some OS images require sudo for xmutil; failures are preserved.
+        result["accelerator_inventory_observed"] = (
+            result["commands"]["xmutil listapps"]["status"] == "OK")
         model = result["board_files"]["/proc/device-tree/model"]
         result["board_identity_observed"] = (model["status"] == "OK"
                                             and "kv260" in model["text"].lower())
