@@ -81,15 +81,20 @@ class M08BDCandidateTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("tclsh"),"Tcl parser unavailable")
     def test_tcl_grammar_balanced_without_loading_vendor_ip(self):
         p=ROOT/"scripts/m08_identity_ps_bd_candidate.tcl"
-        script="set f [open [lindex $argv 0] r]; set t [read $f]; close $f; if {![info complete $t]} {exit 2}; puts TCL_GRAMMAR_COMPLETE"
-        proc=subprocess.run(["tclsh",str(p)],capture_output=True,text=True)
-        # Only the preflight argc guard should fire in standalone Tcl.
-        self.assertNotEqual(proc.returncode,0)
-        self.assertIn("usage:",proc.stderr)
-        proc=subprocess.run(
-            ["tclsh",str(ROOT/"scripts/m08_identity_ps_bd_candidate.tcl")],
-            input="",capture_output=True,text=True)
-        self.assertNotEqual(proc.returncode,0)
+        # Parse all Tcl braces/quote/command boundaries without executing a
+        # single Vivado operation. Running the actual script under tclsh
+        # would only test its initial argument guard and miss the body.
+        text=(
+            "set fd [open {"+str(p)+"} r]\\n"
+            "set body [read $fd]\\n"
+            "close $fd\\n"
+            "if {![info complete $body]} {puts stderr INCOMPLETE_TCL; exit 2}\\n"
+            "puts TCL_GRAMMAR_COMPLETE\\n"
+        )
+        proc=subprocess.run(["tclsh"],input=text,
+                             capture_output=True,text=True)
+        self.assertEqual(proc.returncode,0,proc.stderr)
+        self.assertIn("TCL_GRAMMAR_COMPLETE",proc.stdout)
 
     def test_fixture_checks_auditor_only_not_real_vivado(self):
         with tempfile.TemporaryDirectory() as td:
