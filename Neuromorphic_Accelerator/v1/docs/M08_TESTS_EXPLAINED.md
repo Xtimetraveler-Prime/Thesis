@@ -104,3 +104,11 @@ The wrapper generates SHA-256 of four current original source/script files **bot
 **Actual owner stage:** source your local 2025.2 `settings64.sh` and run `bash scripts/run_m08_identity_bd.sh`. The original report is mandatory for M08.2 validation and must be reviewed before an actual bitstream or Linux MMIO backend can be claimed. No physical inference acceptance is implied by a valid BD.
 
 **CI:** includes this entire source-only negative suite and first-party Icarus identity TB; it **does not** run Vivado 2025.2 or any hardware tool requiring local licensed vendor binaries/board connection.
+
+## New genuine original Vivado evidence — first FAILED offline BD invocation
+
+**Original owner run 2026-11-10 22:56 America/Denver:** `bash scripts/run_m08_identity_bd.sh` invoked real `vivado v2025.2` (SW 6299465, IP 6300035) and returned `M08_VIVADO_BD_ORIGINAL_FAILED exit_status=1`. Original evidence folder: `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. The preserved raw `01_vivado_identity_bd.log` and precise fatal Vivado/Tcl line have **not been provided**, so current failure root cause **UNKNOWN**. Missing `vitis_hls` command in this shell is not an established cause: the identity-BD wrapper does not invoke HLS. The script exits early on failed `vivado`, before the independent BD success auditor.
+
+**Scope reporting:** source-only M08 negative-fixture/RTL Icarus tests remain previously successful; they have not proven genuine IP Integrator output. Mark the genuine vendor gate **FAILED/OPEN**; do not call it a BD PASS, rerun or silently waive errors. This failure is *not* a neural inference or memory transaction fault, and no actual board JTAG, Linux MMIO, DDR or bitstream activity occurred in this offline trial.
+
+**Next exact test/proof sequence:** upload/inspect the original `01_vivado_identity_bd.log`, `result.txt` and before/after SHA files; identify first fatal vendor command/line; write the smallest focused corrective test/implementation on the same branch only when evidence supports it; run M08 targeted, inherited M07, full suite and eight same-SHA GitHub workflows; and require one separate new owner run with original evidence. See [M08.2 first failure handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md).
