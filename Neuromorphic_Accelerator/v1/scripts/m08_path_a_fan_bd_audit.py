@@ -17,6 +17,7 @@ SOURCE_FILES = (
     "rtl/m08/m08_ps_page_safe_shell.v",
     "scripts/m08_page_ps_bd_candidate.tcl",
     "scripts/m08_path_a_fan_bd_candidate.tcl",
+    "scripts/m08_path_a_fan_bd_audit.py",
     "scripts/run_m08_path_a_fan_bd.sh",
 )
 EXPECTED_FAN_XDC = (
