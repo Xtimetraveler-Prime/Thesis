@@ -103,6 +103,13 @@ class M08PageNativeBDCandidateTests(unittest.TestCase):
             self.assertIn(item, tcl)
         self.assertLess(tcl.index("create_project m08_page_ps"),
                         tcl.index("get_ipdefs -all"))
+        # File extension is a real vendor compatibility boundary, not a
+        # waiver of correct S_AXI clock/reset/compute-source validation.
+        self.assertIn("add_files -norecurse [file join $root $name]", tcl)
+        self.assertIn(
+            "create_bd_cell -type module -reference m08_ps_page_safe_shell",
+            tcl,
+        )
         self.assertLess(tcl.index("get_board_parts -quiet"),
                         tcl.index("create_bd_design m08_page_ps"))
         self.assertLess(tcl.index("apply_bd_automation -rule"),
@@ -113,6 +120,20 @@ class M08PageNativeBDCandidateTests(unittest.TestCase):
         # cell; original report must preserve full cell-qualified paths.
         self.assertIn('"SLAVE_IDENTITY|$slave|[lindex $slave_segments 0]"', tcl)
         self.assertIn('"SLAVE_PAGE|$page_slave|[lindex $page_segments 0]"', tcl)
+        # Original owner native Vivado 2025.2 ERROR [filemgmt 56-195]:
+        # IP Integrator disallows SystemVerilog top FILE for module refs.
+        # Verify a real Verilog-2001 .v wrapper is the ONLY added page top,
+        # while accepting .sv child page-bank/adapter HDL below it.
+        self.assertEqual(SHELL.suffix, ".v")
+        self.assertFalse((ROOT / "rtl/m08/m08_ps_page_safe_shell.sv").exists())
+        self.assertIn("rtl/m08/m08_ps_page_safe_shell.v", tcl)
+        self.assertIn("rtl/m08/m08_ps_page_safe_shell.v", runner)
+        self.assertIn("rtl/m08/m08_ps_page_safe_shell.v", FILES)
+        self.assertNotIn("rtl/m08/m08_ps_page_safe_shell.sv", tcl)
+        self.assertIn("module m08_ps_page_safe_shell (", shell)
+        self.assertNotIn("logic ", shell)
+        self.assertNotIn("always_ff", shell)
+        self.assertNotIn("typedef ", shell)
         self.assertIn("module m08_ps_page_safe_shell", shell)
         self.assertIn("ENABLE_COMPUTE(1'b0)", shell)
         self.assertIn("parameter ENABLE_COMPUTE = 1'b1", adapter)
