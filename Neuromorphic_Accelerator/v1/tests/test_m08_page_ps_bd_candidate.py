@@ -69,6 +69,9 @@ def synthetic_evidence(folder: Path):
             "ctrl_sc/M00_AXI", "ctrl_sc/M01_AXI",
             "identity/S_AXI", "page/S_AXI", "m08_ps_page_safe_shell",
             "assign_bd_address",
+            "connect_bd_intf_net -intf_net ps_M_AXI_HPM0_FPD [get_bd_intf_pins ps/M_AXI_HPM0_FPD] [get_bd_intf_pins ctrl_sc/S00_AXI]",
+            "connect_bd_intf_net -intf_net ctrl_sc_M00_AXI [get_bd_intf_pins ctrl_sc/M00_AXI] [get_bd_intf_pins identity/S_AXI]",
+            "connect_bd_intf_net -intf_net ctrl_sc_M01_AXI [get_bd_intf_pins ctrl_sc/M01_AXI] [get_bd_intf_pins page/S_AXI]",
         )) + "\n" + ("# DUMMY EXPORTED TEXT ONLY\n" * 35)
     )
 
@@ -221,6 +224,14 @@ error "Tcl did not reach mocked first source add"
                     with self.assertRaises(ValueError):
                         audit_evidence(folder, ROOT)
                     report.write_text(original)
+            exported = folder / "03_page_bd_export.tcl"
+            original_export = exported.read_text()
+            exported.write_text(original_export.replace(
+                "[get_bd_intf_pins page/S_AXI]",
+                "[get_bd_intf_pins identity/S_AXI]"))
+            with self.assertRaisesRegex(ValueError, "connection missing"):
+                audit_evidence(folder, ROOT)
+            exported.write_text(original_export)
             log = folder / "01_vivado_page_bd.log"
             original_log = log.read_text()
             log.write_text(original_log.replace("\n" + MARKER + "\n", "\n"))
