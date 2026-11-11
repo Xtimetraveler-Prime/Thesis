@@ -55,6 +55,56 @@ sha256sum "$OUT"
 
 With the default 2048 B full-onchip capacity and 16 B/record, a 256-neuron on-chip comparator is explicitly marked unavailable; the DDR-style source models continue. Check `docs/M07_TESTS_EXPLAINED.md` for per-test objectives and honest simulation boundaries.
 
+### M07.3 fixed-capacity / block-width / locality ablations (NO BOARD)
+
+After pulling the latest M07 branch, reproduce the exact CI model-only sweep on Linux. The default experiment is documented as `M07.3-GRID-A` in `docs/M07_PRIOR_ART_CONFIGURATION_COMPARISON.md`: 2 independent PC seeds × 3 resident byte budgets × 3 block widths × 2 locality maps × 2 policies × 4 logical controls. Neither YANA's original RTL nor a measured YANA/KV260 performance point is involved.
+
+~~~bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m07-cache-baselines
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m07-cache-baselines
+git rev-parse HEAD
+
+cd Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+python3 -m unittest discover -s tests -p 'test_m02*.py' -v
+python3 -m unittest discover -s tests -p 'test_m03*.py' -v
+python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+python3 -m unittest discover -s tests -v
+~~~
+
+Preserve **a new** unique JSON file and its SHA256 in the original evidence directory, NOT in the Git checkout. If another run starts in the exact same second, choose a different output name rather than overwriting.
+
+~~~bash
+mkdir -p "$HOME/Thesis_Evidence/M07"
+OUT="$HOME/Thesis_Evidence/M07/m07_3_grid_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_ablation.py --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+Expected default schema `m07-residency-locality-ablation-v1`, `num_parameter_combinations=18`, `num_policy_locality_four_way_rows=288`, and `physical_hardware_measured=false`. The JSON contains SHA256s of 11 actual Python source/CLI files, seeds, block/budget/slot settings and role-canonical neural hashes. Each exact per-mode counter is a **software page movement** or a **separately estimated M03 synapse access**, not an observed AXI transaction or FPGA runtime.
+
+For smaller one-seed reproduction before the complete grid:
+
+~~~bash
+OUT="$HOME/Thesis_Evidence/M07/m07_3_mini_$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 scripts/m07_ablation.py --neurons 32 --active-roles 8 --ticks 6 --seeds 17 --blocks 2,4 --budgets 128,256 --onchip-capacity-bytes 1024 --output "$OUT"
+sha256sum "$OUT"
+~~~
+
+Optional read-only CI inspection:
+
+~~~bash
+cd ~/Git/Thesis
+gh run list --branch agent/neuromorphic-accelerator-v1-m07-cache-baselines --limit 20
+gh pr view 82 --json isDraft,state,headRefOid,statusCheckRollup
+~~~
+
+The source-only experiment intentionally does **not** model event batching, queue service time, B-before-AR cycle latency, external synapse transfer issued by the pager, or FPGA cache-tag area. Preserve `M07.3` as in-progress until owner verification and additional acceptance gates. Previously accepted original M05/M06 Vitis 2025.2 archives and M06 XSim owner gates must not be rerun without a separate technical reason.
+
 ### Preserve a new model-only artifact
 
 ~~~bash
