@@ -159,7 +159,7 @@ def audit_evidence(folder: Path, root: Path) -> dict:
     # Each required pair must coexist in a *real exported net connection*.
     # Merely mentioning both objects somewhere in a Tcl file is not proof
     # they were connected in the validated IP Integrator diagram.
-    flattened = re.sub(r"\\\\[ \\t]*\\n[ \\t]*", " ", exported)
+    flattened = exported.replace(chr(92) + chr(10), " ")
     connections = (
         line for line in flattened.splitlines()
         if line.lstrip().startswith("connect_bd_intf_net")
