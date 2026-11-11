@@ -1,6 +1,6 @@
 # M07 tests explained — source-only cache-policy work
 
-**Status:** M07.1 and M07.2 source-only implementation on a separate development branch; **M07 NOT ACCEPTED**. This is a living test ledger. Last content update: 2026-11-10. Live CI results must be read from the exact branch HEAD, not inferred from checked-in files.
+**Status:** M07.1–M07.3 source-only work on a separate development branch; **M07 NOT ACCEPTED**. This is a living test ledger. Last content update: 2026-11-10. Live CI results must be read from the exact branch HEAD, not inferred from checked-in files.
 
 ## 1. Scope, reference hierarchy and counters
 
@@ -94,3 +94,34 @@ GitHub Actions workflow `Neuromorphic Accelerator v1 M07.1-M07.2 cache-policy an
 - Reports are CI-retained `m07-2-model-only-matched-four-way` with both M07.1 and M07.2 JSONs. GitHub CI evidence is separate from any owner-local JSON receipt. No HLS, original AMD SmartConnect XSim or physical board was executed.
 
 **Acceptance caveat:** source and branch checks are not sufficient for M07 complete acceptance. Owner independently reruns local full suite and reports its result; broader ablations/batch/scheduling and queue/service-time instrumentation remain ahead. Retain the owner's first failed local transcript and initial M07.1 test assertion failure as historical unsuccessful attempts; do not overwrite evidence.
+
+## 7. M07.3 fixed-byte residency/locality ablation methods — HOST ONLY
+
+**New source:** `src/neuromorphic_accelerator_v1/m07_ablation_sweep.py`; **CLI:** `scripts/m07_ablation.py`; **new tests:** `tests/test_m07_ablation_sweep.py`; **paper-attribution/comparability ledger:** `docs/M07_PRIOR_ART_CONFIGURATION_COMPARISON.md`.
+
+**Default frozen experiment M07.3-GRID-A:** N=128/K=16, fanout=3 per active role, 4 signed external events/tick, T=8, seeds (17,23), two M03 role-ID placements (clustered and dispersed), exact M02 signed16 integer dynamics, state row 16 B, full-on-chip capacity 2048 B, byte-budgets (128,256,512), blocks (2,4,8) neurons. For each (seed,budget,block), **slots = budget / (block × 16 B)**, requiring exact integral slot allocation. All declared cache budgets remain strictly below the full-onchip comparison capacity and canonical image size. Up to 256 B maximum model transfer bound, capped at the page width for canonical page transfers.
+
+**Why a byte-held sweep instead of slots-held:** comparing one 32-byte block to one 128-byte block with 'one slot' grants different absolute storage capacities. M07.3 fixes **resident bytes** for the block-size axis and derives a different slot count; separately sweeps budget in bytes at a fixed block size. This still does NOT equate tag/queue/controller area or clock speed; hardware resource matching is later work.
+
+**Fixed-work controls:** all active-role graph edges, weights, delays, timestamped pulses and state precision are deterministic and unchanged within one seed. Role-normalized M02 voltage/spike hashes and source input SHA are invariant across all cache geometry/policy combinations. Clustered/dispersed relocation may change raw neuron-ID traces, but must preserve canonical role trace, total spikes, evaluated neuron work, synaptic traversals and external event count. Distinct seeds are independent **synthetic fixtures**, not repeated board runs or identical stochastic graphs.
+
+**Measurement and traffic units:** M06 Python `BlockCache` and `DirectFetchCache` method-level hits/misses (2 calls per evaluated neuron), full canonical page reads/writes and `ceil(page_bytes/max_model_transfer_bytes)` model transfer chunks. M03 separate precontiguous synapse reads/transactions are **analytical** and not issued by the M06 replay. Dense timestep/state movement is driven by M02 oracle voltages, not a second implemented timestep neural RTL. Each of the 18 configurations holds 2 locality × 2 policy × 4 logical modes = **288 model rows**. `event_state_bytes_saved_by_lru` is signed **direct minus LRU bytes**; `lru_event_state_locality_penalty_bytes` is signed **dispersed minus clustered bytes**. Negative/null values are meaningful and not suppressed or called speedups. Physical bytes, service cycles and hardware area are explicitly `null`.
+
+### M07.3 tests (each is Python source/host-only)
+
+| Test | Fixture / sequence | Expected evidence and failure case |
+| --- | --- | --- |
+| `test_fixed_byte_budget_controls_blocks_slots_and_parity` | N32/K8/T6/seed17, 128/256 B budgets and 2/4 neurons per block, two localities, 2 policies ×4 controls. | Exactly 4 parameter cases and 64 model rows; byte budget=slots×page, same role neural work, source hashes differ across ID placement, all M02 parity and source/physical nonclaims; exact independent state/synapse byte accounting. |
+| `test_same_seed_traces_are_unchanged_across_geometries_and_seeds_separate` | Two PC seeds 17/23 over four budget/block settings each. | Each seed's canonical workload hash/trace SHA and per-layout relabeled network SHA invariant across geometry, while independent seeded workload hashes differ. No synthetic seed is a physical replication. |
+| `test_no_event_no_fanout_preserves_real_zero_transfer_control` | N32/T6, no external events and no outgoing synapses. | Exact sparse zero-event reference gives no neuron evaluations/page fills or analytical synapse reads; dense timestep still moves state. Zero is a valid true zero only when modeled work is actually absent. |
+| `test_unavailable_onchip_control_has_null_not_fake_zero_traffic` | N32×16B requires 512 B but on-chip capacity declared 256 B; virtual cache 128 B. | Both on-chip controls are unavailable with `state_transfer_bytes=None`, not a fake zero-cost baseline; virtualized options remain admitted. |
+| `test_bad_geometry_seeds_resource_assumptions_are_rejected` | Nondivisible blocks/budgets, invalid bool/zero/duplicate/unsorted seeds, cache not below on-chip/image budget, wrong watermark width, invalid fanout and invalid transfer bounds. | Clear `ValueError` before an apparently fair dataset is created; no implicit alignment or capacity padding. |
+| `test_neural_work_mutation_does_not_pass_locality_equivalence` | Deliberately corrupt the dispersed oracle spike count in a mocked M03 pair result. | Source sweep rejects mismatched neural work instead of publishing policy gains. This is a synthetic negative, not a corrupted real hardware capture. |
+| `test_input_identity_mutation_is_rejected_across_cache_geometries` | Deliberately mutate clustered input SHA for the second geometry of one seed. | Fail rather than treat different input/mapping as a policy ablation. |
+| `test_cli_is_byte_reproducible_refuses_overwrite_and_proves_source_identity` | Two equivalent CLI runs with distinct temp output names plus attempted overwrite of first; source hashes across 11 files. | Identical JSON content byte-for-byte, second output created, overwrite rejected, source SHA and prior-art link present, no physical timing claim. |
+
+**Prior art:** reference the new M07 comparability ledger for YANA, SENECA, HiAER-Spike. Shared event-driven ideas and on-chip residency analogies are NOT matched neural numerics, state layout, hardware service interval or energy. The default grid's N128 workload is not YANA's published KR260 test configuration. No YANA code was used.
+
+**Workflow admission:** the M07 GitHub Actions workflow runs targeted M07 tests plus inherited M02/M03/M06 and complete v1 discovery; it also executes the full default **18-combination model-only JSON** and checks capacity/paired neural invariance. The raw synthetic JSON artifact is labeled and retained as **CI source-model evidence**, not a real Vivado or board result. Actual HEAD pass/skip/fail information is to be entered from live CI; no M07 acceptance or merge from source CI alone.
+
+**Remaining M07 items:** additional requested mapping patterns and event batching must preserve ordered deliveries and exact M02; scheduling/cache study must disclose queue stalls, B-before-AR fences and service-time model or explain unavailable; at most one activity-aware candidate after evidence; final owner-local replication and explicit acceptance. No original vendor or physical board tests have been triggered by M07.3.
