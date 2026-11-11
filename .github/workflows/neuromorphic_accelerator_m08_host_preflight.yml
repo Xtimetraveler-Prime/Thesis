@@ -45,6 +45,21 @@ jobs:
           assert len(item["source_sha256"])==2
           print("M08_1_HOST_CAPTURE_ONLY_PASS_NEVER_PHYSICAL")
           PY
+      - name: Independently audit captured receipt; reject false physical claims
+        run: |
+          python3 scripts/m08_audit_readonly.py \
+            --capture-dir "$RUNNER_TEMP/m08_host_inventory" \
+            --output "$RUNNER_TEMP/m08_host_inventory/audit.json"
+          python3 - "$RUNNER_TEMP/m08_host_inventory/audit.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          evidence=json.loads(Path(sys.argv[1]).read_text())
+          assert evidence["status"]=="RECEIPT_HASH_AND_SCHEMA_OK"
+          assert evidence["physical_board_identity_authenticated"] is False
+          assert evidence["ready_for_physical_ddr"] is False
+          assert evidence["physical_run_verified"] is False
+          print("M08_1_RECEIPT_INTEGRITY_ONLY_NOT_HARDWARE_PASS")
+          PY
       - name: Preserve host-only provenance, NOT KV260 hardware evidence
         uses: actions/upload-artifact@v4
         with:
