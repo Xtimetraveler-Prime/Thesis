@@ -52,7 +52,7 @@ The accepted M08.2b.2 `m08_axil_page_control.sv` exposes an external compute por
 | `scripts/m08_page_ps_bd_candidate.tcl` | Genuine Vivado 2025.2 board preset, FPD HPM0-only IP, two SmartConnect MIs, clock/reset, two address segments and validated Tcl export |
 | `scripts/run_m08_page_bd.sh` | Exclusive immutable owner-original evidence directory, native Vivado batch and source SHA before/after |
 | `scripts/m08_page_bd_audit.py` | Independently re-hashes current sources, verifies the native vendor result/log and distinct PS apertures and output export, rejects false physical claims |
-| `rtl/m08/tb_m08_ps_page_safe_shell.v`, `tests/test_m08_page_ps_bd_candidate.py` | Safe-shell Icarus, Tcl grammar, project-before-catalog mock, source structure, independent synthetic-auditor negative tests. **Synthetic is not original Vivado proof.** |
+| `rtl/m08/tb_m08_ps_page_safe_shell.sv`, `tests/test_m08_page_ps_bd_candidate.py` | Safe-shell Icarus, Tcl grammar, project-before-catalog mock, source structure, independent synthetic-auditor negative tests. **Synthetic is not original Vivado proof.** |
 
 ### Phase A — source verification on the development PC (no Vivado execution)
 
@@ -73,7 +73,7 @@ iverilog -g2012 -s tb_m08_ps_page_safe_shell -o "$TMP/m08_safe_page.vvp" \
     rtl/m08/m08_host_staged_page_bank.sv \
     rtl/m08/m08_axil_page_control.sv \
     rtl/m08/m08_ps_page_safe_shell.v \
-    rtl/m08/tb_m08_ps_page_safe_shell.v
+    rtl/m08/tb_m08_ps_page_safe_shell.sv
 vvp "$TMP/m08_safe_page.vvp"
 ~~~
 
