@@ -18,7 +18,7 @@ from m08_page_bd_audit import FILES, MARKER, DISTINCT_MARKER, audit_evidence
 
 TCL = ROOT / "scripts/m08_page_ps_bd_candidate.tcl"
 RUNNER = ROOT / "scripts/run_m08_page_bd.sh"
-SHELL = ROOT / "rtl/m08/m08_ps_page_safe_shell.sv"
+SHELL = ROOT / "rtl/m08/m08_ps_page_safe_shell.v"
 ADAPTER = ROOT / "rtl/m08/m08_axil_page_control.sv"
 
 
@@ -40,7 +40,7 @@ def synthetic_evidence(folder: Path):
         "META|ps_preset|YES",
         "META|requested_clock_hz|100000000",
         "META|actual_clock_hz|99999001",
-        "META|page_source|rtl/m08/m08_ps_page_safe_shell.sv",
+        "META|page_source|rtl/m08/m08_ps_page_safe_shell.v",
         "META|compute_enabled|NO",
         "MASTER|M_AXI_HPM0_FPD|/ps/Data",
         "SLAVE_IDENTITY|identity/S_AXI|identity/S_AXI/reg0",
@@ -257,8 +257,8 @@ error "Tcl did not reach mocked first source add"
                 "-o", str(out),
                 str(rtl / "m08_host_staged_page_bank.sv"),
                 str(rtl / "m08_axil_page_control.sv"),
-                str(rtl / "m08_ps_page_safe_shell.sv"),
-                str(rtl / "tb_m08_ps_page_safe_shell.sv"),
+                str(rtl / "m08_ps_page_safe_shell.v"),
+                str(rtl / "tb_m08_ps_page_safe_shell.v"),
             ]
             p = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
             self.assertEqual(p.returncode, 0, p.stdout + "\\n" + p.stderr)
