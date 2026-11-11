@@ -71,7 +71,8 @@ def make_fake_route(folder: Path) -> None:
     )
     (folder/"07_drc_post_route.rpt").write_text(drc)
     (folder/"08_methodology_post_route.rpt").write_text(
-        "Design State : Fully Routed\nChecks found: 0\n")
+        "Design State : Fully Routed\nChecks found: 0\n"
+        "Report Methodology -- ARTIFICIAL FIXTURE NOT VIVADO\n")
     (folder/"06_utilization_post_route.rpt").write_text(
         "| CLB LUTs | 1957 |\n| CLB Registers | 1665 |\n"
         "| Block RAM Tile | 0 |\n| DSPs | 0 |\n"
