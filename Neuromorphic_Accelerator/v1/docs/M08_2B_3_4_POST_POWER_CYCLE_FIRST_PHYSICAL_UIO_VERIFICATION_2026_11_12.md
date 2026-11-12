@@ -1,4 +1,7 @@
 # M08.2b.3/.4 — Post-power-cycle physical UIO test and recovery runbook
+
+> **⚠️ STOP — SUPERSEDED BY ACTUAL FIRST IDENTITY HANG (2026-11-12).** The later owner-operated `--mode identity` experiment left Linux SSH and PuTTY unresponsive with genuine RCU stalls, followed by a forced power cycle. **DO NOT EXECUTE THIS DOCUMENT'S PHYSICAL IDENTITY (Part C) OR PHYSICAL PAGE (Part D) COMMANDS**, even with the old risk/authorization flags. The original M08 bitstream is quarantined for all physical MMIO; the repo source now hard-blocks those modes, but older already staged copies on the board are not protected. Post-reboot observed stock K26 image loaded successfully; do not reload M08 to retry. **NEW AUTHORITATIVE**: [First M08 identity RCU stall — original evidence, root-cause investigation and safe redesign plan](M08_2B_3_FIRST_IDENTITY_RCU_STALL_INCIDENT_AND_FIX_PLAN_2026_11_12.md). This file remains solely as historical original operator instructions/evidence, **not** a currently approved hardware test runbook.
+
 **Prepared 2026-11-12; PR #83 DRAFT/UNMERGED.** Physical MMIO has NOT been executed or accepted. Keep independent external cooling powered and PuTTY UART recovery available.
 
 ## Accepted original owner kernel-binding evidence
