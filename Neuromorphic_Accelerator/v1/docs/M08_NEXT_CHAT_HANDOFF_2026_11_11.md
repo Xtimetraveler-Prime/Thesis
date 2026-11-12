@@ -1,5 +1,8 @@
 # M08 NEXT CHAT — AUTHORITATIVE RESEARCH AND PHYSICAL-HARDWARE HANDOFF
 
+> **2026-11-12 D2 EVIDENCE-PARENT GUARD BUG FIXED:** Owner reported the original DCP SHA matched but normal `--evidence-base ~/Thesis_Evidence/M08` failed pre-Vivado with a false parent/child collision. Source now allows a fresh new forensic evidence sibling under that common parent and still rejects output inside original route. Added positive/negative regression. Re-run the same **PC-only** offline command after pull; no KV260, MMIO, or bitstream activity. See [D2 native plan](M08_D2_NATIVE_FAN_DCP_READONLY_FORENSIC_PLAN_2026_11_12.md).
+
+
 > **NEW D1 SOURCE OBSERVATION — PS/PL clock/AFI ownership not demonstrated:** The deployed M08 generic UIO overlay source carries firmware/resets/UIO windows but no `assigned-clocks`, `assigned-clock-rates`, `xlnx,afi-fpga`, or `config-afi` nodes, unlike AMD's example overlay. This is a **configuration evidence gap, not proven defect or evidence of past clock loss**; compare original stock vs M08 decompiled DTBOs and boot software ownership OFFLINE before contemplating any new bitstream. A new source test checks this absence, while actual native fan DCP review remains owner-pending. No old hardware MMIO or configuration changes.
 
 
