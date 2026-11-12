@@ -82,6 +82,8 @@ If bootgen/dtc fails, the owner should preserve the ORIGINAL tool stderr capture
 
 Return new 01_board_stdout.log and 04_evidence_sha256.txt. The added read-only section m08_kernel_mmio_binding_readiness reports available UIO binding/driver hints. It is ONLY discovery and does not authorize mmap or choose a UIO number.
 
+**LATER ORIGINAL OWNER FIRST-STAGE PACKAGE RESULT (2026-11-11):** User supplied original Bootgen 2025.2 log, PL_FLAT review JSON and dtbo decompile plus original SHA ledger; genuine PC conversion and original native dtbo compilation completed. Linux read-only capture reports uio_pdrv_genirq boot match and module loaded, but no M08 devices are bound. Current development has moved to a NEW separate, not-installed dual-UIO source candidate, with read-only live device-tree symbol gate. See [M08.2b generic-UIO predeployment review](M08_2B_PATH_A_GENERIC_UIO_PREDEPLOYMENT_2026_11_11.md). Historical staging instructions below need not be repeated; preserve the original first-stage folder and current k26-starter-kits live image.
+
 ## Next M08.2b gates (OPEN)
 
 1. Verify native owner bootgen/dtc outputs, DTBO fixups, PL_FLAT compatibility with exact Ubuntu 24.04.2 image and true kernel driver ownership for separate M08 AXI 4KiB windows.
