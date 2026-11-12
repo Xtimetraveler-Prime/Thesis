@@ -1,4 +1,7 @@
-# M08 D3.2B — next-chat development handoff and gated implementation roadmap
+# M08 D3.2 — protected PS–PL integration handoff and evidence gates
+
+> **Current organization (2026-11-12):** Use **M08 → D3 → D3.2** as the forward development milestone. The former B.1–B.5 below are ordered engineering workstreams and acceptance criteria, **not separate milestone achievements**. Keep legacy numbering for historical traceability only. Continue source work on stacked draft PR #86 and stop dependent firmware/native/hardware signoff until the owner PC evidence is independently reviewed. The initial inventory falsely assumed that every same-name review-only DTBO was the deployed original; repaired v2 inventory records differing bytes separately and makes no false boot authenticity claim. The original M08 bitstream remains quarantined, with no board, MMIO, PS or firmware operations authorized.
+
 **Research project:** `Xtimetraveler-Prime/Thesis` → `Neuromorphic_Accelerator/v1`  
 **Updated:** 2026-11-12, after owner's successful D3.2A PC validation  
 **Authority:** this document is the **current forward-looking M08 D3.2B handoff**. Earlier `M08_NEXT_CHAT_HANDOFF_2026_11_11.md` preserves incident history; do not mistake its older D2/D3 STOP notes for a prohibition on *offline source development*. All hardware STOP conditions remain in force.  
@@ -173,3 +176,9 @@ vvp "$TMP/liveness.vvp"
 - Project incident/master roadmap and native owner evidence are the **authoritative local context**; generic docs do not prove original board settings.
 
 **FINAL GATE AT HANDOFF:** D3.1 genuine native PS/no-AXI BD + D3.2A owner simulation **PASS**. D3.2B protected PS boot/AXI/LINUX integration and corrected image **OPEN/BLOCKED**. Original bitstream and all physical operations still **STOP/QUARANTINED**.
+
+## D3.2 development history — new source branch (2026-11-12)
+
+Created `agent/neuromorphic-accelerator-v1-m08-d3b-boot-ownership-audit` from this handoff commit `1a1495fe624027482f003a2bde10fd777de0e690`. Implemented only the FIRST B.1 deliverables: bounded offline PC artifact inventory, synthetic negative tests and [boot evidence matrix](M08_D3B_BOOT_PLATFORM_EVIDENCE_MATRIX_2026_11_12.md). **Owner PC inventory not yet executed**, no authentic boot XSA/PS-init/base DTB/firmware source accepted, no PS ATB4/AIB13/PL0/AFI proof. Proceed to B.2 only after owner validates B.1 receipt; unrelated tool-independent simulation may advance, but cannot satisfy PS hardware protection. Do not modify this original D3.2A handoff or claimed owner-native evidence outside the new feature branch; all previous STOP conditions remain unchanged.
+
+**First owner inventory attempt and fix:** PC scan initially rejected a same-basename DTBO in `m08_2b_path_a_uio_overlay_REVIEW_ONLY_tuzu33oo`. Earlier v1 scanner incorrectly assumed any file named `m08-v1-fan-page-uio-review.dtbo` must equal the deployed original's pinned SHA256. Corrected v2 scanner inventories the different-byte file without attributing deployment or boot use, preserves SHA-only historical matching, and covers the exact failure mode with synthetic negative tests. Owner re-run and authentic boot platform evidence remain pending. No additional D3.2B.x milestones should be created for this correction.
