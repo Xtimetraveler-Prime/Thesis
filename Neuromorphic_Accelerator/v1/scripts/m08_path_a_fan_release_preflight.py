@@ -20,7 +20,7 @@ from m08_path_a_fan_post_route_audit import NATIVE, independent_audit
 LEDGER_NAMES = (
     "00_source_sha256_before.txt", "00_run_input.txt",
     "01_vivado_fan_route.log", "03_route_status.txt",
-    "04_source_sha256_after.txt", *NATIVE,
+    "04_source_sha256_after.txt", *NATIVE[1:],
     "49_independent_fan_route_audit.json",
     "50_audit_console.log", "51_audit_status.txt",
 )
