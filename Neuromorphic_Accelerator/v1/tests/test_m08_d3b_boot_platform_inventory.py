@@ -1,4 +1,4 @@
-"""D3.2B.1 synthetic ONLY: bounded offline owner-PC provenance inventory."""
+"""M08 D3.2 synthetic ONLY: bounded offline owner-PC provenance inventory."""
 from __future__ import annotations
 
 from hashlib import sha256
@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/m08_d3b_boot_platform_inventory.py"
@@ -61,10 +62,62 @@ class TestD3B1Inventory(unittest.TestCase):
         with self.assertRaisesRegex(m.InventoryRejected, "EMPTY"):
             m.write_receipt(self.output, obj)
 
-    def test_pinned_original_dtb_mismatch_rejected_no_false_authentication(self):
-        (self.root / "k26_starter_kits.dtbo").write_bytes(b"impostor")
-        with self.assertRaisesRegex(m.InventoryRejected, "pinned original SHA256 mismatch"):
-            self.run_scan()
+    def test_review_only_same_name_dtbo_does_not_abort_or_claim_original(self):
+        # Regression for owner failure: an earlier review-only DTBO shares the
+        # deployed overlay basename, but must NOT be treated as deployed bytes.
+        path = (self.root / "m08_2b_path_a_uio_overlay_REVIEW_ONLY_tuzu33oo"
+                / "m08-v1-fan-page-uio-review"
+                / "m08-v1-fan-page-uio-review.dtbo")
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"review-only candidate, not the pinned deployed DTBO")
+        obj = self.run_scan()
+        record = next(c for c in obj["candidates"] if c["path"] == str(path))
+        self.assertTrue(record["historical_reference_filename_match"])
+        self.assertFalse(record["pinned_original_digest_match"])
+        self.assertEqual(record["historical_reference_comparison"],
+                         "SAME_BASENAME_DIFFERENT_SHA256_CANDIDATE_ONLY")
+        self.assertEqual(record["provenance"],
+                         "SAME_FILENAME_DIFFERENT_BYTES_NOT_AUTHENTICATED")
+        reference = obj["pinned_originals"]["m08-v1-fan-page-uio-review.dtbo"]
+        self.assertEqual(reference["status"],
+                         "REFERENCE_NOT_FOUND_SAME_NAME_DIFFERENT_BYTES")
+        self.assertEqual(reference["same_name_different_bytes_paths"], [str(path)])
+        self.assertEqual(reference["sha256_matching_paths"], [])
+        self.assertFalse(obj["hardware_mmio_authorized"])
+
+    def test_reference_sha_matching_is_byte_based_not_name_based(self):
+        first = self.root / "actual" / "k26_starter_kits.dtbo"
+        second = self.root / "older" / "k26_starter_kits.dtbo"
+        first.parent.mkdir()
+        second.parent.mkdir()
+        first.write_bytes(b"synthetic original")
+        second.write_bytes(b"older candidate")
+        expected = sha256(first.read_bytes()).hexdigest()
+        with patch.dict(m.PINNED, {"k26_starter_kits.dtbo": expected}):
+            obj = self.run_scan()
+        original = next(c for c in obj["candidates"] if c["path"] == str(first))
+        collision = next(c for c in obj["candidates"] if c["path"] == str(second))
+        self.assertTrue(original["pinned_original_digest_match"])
+        self.assertFalse(collision["pinned_original_digest_match"])
+        reference = obj["pinned_originals"]["k26_starter_kits.dtbo"]
+        self.assertEqual(reference["status"], "LOCAL_PATH_AND_SHA256_MATCH_NOT_BOOT_PROOF")
+        self.assertEqual(reference["sha256_matching_paths"], [str(first)])
+        self.assertEqual(reference["same_name_different_bytes_paths"], [str(second)])
+        self.assertFalse(reference["historical_deployment_or_boot_proven"])
+        self.assertEqual(obj["blocked_requirements"]["ATB4_boot_enable_response_timeout_clock"],
+                         "UNKNOWN_NOT_PROVEN")
+
+    def test_named_but_unhashable_reference_does_not_gain_provenance(self):
+        (self.root / "k26_starter_kits.dtbo").write_bytes(b"X" * 2048)
+        obj = self.run_scan(max_hash_bytes=1024)
+        candidate = next(c for c in obj["candidates"] if
+                         c["relative_path"] == "k26_starter_kits.dtbo")
+        self.assertIsNone(candidate["sha256"])
+        self.assertFalse(candidate["pinned_original_digest_match"])
+        self.assertEqual(candidate["historical_reference_comparison"],
+                         "UNHASHED_REFERENCE_NAME_NOT_VERIFIED")
+        self.assertEqual(obj["pinned_originals"]["k26_starter_kits.dtbo"]["status"],
+                         "REFERENCE_NOT_FOUND_NAME_ONLY_UNHASHED")
 
     def test_symlinked_files_and_directories_never_followed(self):
         source = self.root / "original.xsa"
