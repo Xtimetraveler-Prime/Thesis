@@ -79,6 +79,21 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
                 with self.assertRaisesRegex(m.ForensicRejected, "SHA mismatch"):
                     m.read_original_ledger(route)
 
+
+    def test_linux_overlay_does_not_independently_manage_pl0_or_afi(self):
+        """Document an unresolved deployment gap; NOT proof of runtime clock loss."""
+        overlay = (ROOT / "scripts/m08_path_a_stage_uio_overlay.py").read_text()
+        self.assertIn('DTS = """', overlay)
+        dts = overlay.split('DTS = """', 1)[1].split('"""', 1)[0]
+        self.assertIn("generic-uio", dts)
+        self.assertIn("firmware-name", dts)
+        self.assertNotIn("assigned-clocks", dts)
+        self.assertNotIn("assigned-clock-rates", dts)
+        self.assertNotIn("xlnx,afi-fpga", dts)
+        self.assertNotIn("config-afi", dts)
+        # The stock live device tree or PS firmware could still configure
+        # these elements. Do not infer a stopped clock from absent DTS words.
+
     def test_wrong_dcp_identity_cannot_be_accepted_with_rehashed_ledger(self):
         with tempfile.TemporaryDirectory() as d:
             route, _ = self.fake_original(Path(d))
