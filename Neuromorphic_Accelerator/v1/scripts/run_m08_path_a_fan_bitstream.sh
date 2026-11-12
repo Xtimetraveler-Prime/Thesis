@@ -66,13 +66,12 @@ with open(sys.argv[1], encoding="utf-8") as f:
 PY
 )"
   if [[ "$(sha256sum -- "$ROUTE/48_fan_post_route.dcp" | cut -d ' ' -f1)" != "$DCP_SHA" ]]; then
-    echo "M08_PATH_A_FAN_ROUTE_DCP_CHANGED_AFTER_PREFLIGHT preserve=$DIR" >&2
-    exit 3
-  fi
-  cp -- "$ROUTE/48_fan_post_route.dcp" "$DIR/48_fan_post_route.dcp"
-  COPY_SHA="$(sha256sum -- "$DIR/48_fan_post_route.dcp" | cut -d ' ' -f1)"
-  printf 'copied_dcp_sha256=%s\n' "$COPY_SHA" > "$DIR/04_copied_dcp_sha256.txt"
-  if [[ "$COPY_SHA" == "$DCP_SHA" ]]; then
+    printf 'M08 original routed DCP changed after successful preflight; native Vivado NOT attempted\n' > "$DIR/02_vivado_fan_bitstream.log"
+  else
+    cp -- "$ROUTE/48_fan_post_route.dcp" "$DIR/48_fan_post_route.dcp"
+    COPY_SHA="$(sha256sum -- "$DIR/48_fan_post_route.dcp" | cut -d ' ' -f1)"
+    printf 'copied_dcp_sha256=%s\n' "$COPY_SHA" > "$DIR/04_copied_dcp_sha256.txt"
+    if [[ "$COPY_SHA" == "$DCP_SHA" ]]; then
     set +e
     (
       cd "$DIR"
@@ -82,8 +81,9 @@ PY
     ) > "$DIR/02_vivado_fan_bitstream.log" 2>&1
     VIVADO_RC=$?
     set -e
-  else
-    printf 'M08 copied routed DCP SHA mismatch; native Vivado NOT attempted\n' > "$DIR/02_vivado_fan_bitstream.log"
+    else
+      printf 'M08 copied routed DCP SHA mismatch; native Vivado NOT attempted\n' > "$DIR/02_vivado_fan_bitstream.log"
+    fi
   fi
 else
   printf 'M08 original route preflight failed; native Vivado NOT attempted\n' > "$DIR/02_vivado_fan_bitstream.log"
