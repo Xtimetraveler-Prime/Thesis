@@ -63,6 +63,18 @@ def validate_root(path: Path, *, optional: bool = False) -> Path | None:
     return full
 
 
+def validate_owner_extra(path: Path) -> Path:
+    root = validate_root(path)
+    home = no_symlink_ancestors(Path.home())
+    require(root.is_relative_to(home), "extra-dir must be beneath owner PC HOME")
+    cursor = root
+    while cursor != home:
+        require(not cursor.is_mount(),
+                "extra-dir cannot be a mounted device or filesystem")
+        cursor = cursor.parent
+    return root
+
+
 def category(name: str) -> str | None:
     n = name.lower()
     if n.endswith(".xsa"):
@@ -287,7 +299,7 @@ def main() -> int:
                 "receipt output must be a new sibling under owner evidence base")
         roots = [("repository_v1", ROOT), ("owner_m08_evidence", base)]
         for i, folder in enumerate(args.extra_dir):
-            roots.append(("owner_extra_" + str(i + 1), folder))
+            roots.append(("owner_extra_" + str(i + 1), validate_owner_extra(folder)))
         scanned = inventory(roots, max_entries=args.max_entries,
                             max_depth=args.max_depth, exclude_dir=out)
         report, receipt = write_receipt(out, scanned)
