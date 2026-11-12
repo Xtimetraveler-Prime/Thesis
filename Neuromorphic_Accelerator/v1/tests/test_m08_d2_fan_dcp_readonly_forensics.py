@@ -36,6 +36,8 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
         self.assertIn("report_clock_interaction -file", active)
         self.assertIn("report_cdc -file", active)
         self.assertIn("report_exceptions -coverage -file", active)
+        self.assertIn("report_exceptions -ignored -file", active)
+        self.assertIn("report_exceptions -summary -file", active)
         self.assertIn("get_timing_paths -user_ignored -max_paths 30", active)
         self.assertIn("get_nets -hier -quiet", active)
         self.assertIn("mi_handler_m_sc_areset_pipe", active)
