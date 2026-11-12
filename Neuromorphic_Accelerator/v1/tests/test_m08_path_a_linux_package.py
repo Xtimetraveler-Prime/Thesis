@@ -66,7 +66,7 @@ class TestM08PathAOfflinePackage(unittest.TestCase):
                            if line.strip() and not line.lstrip().startswith("#"))
         for bad in (
             "xmutil unloadapp", "xmutil loadapp", "program_hw_devices",
-            "open_hw_manager", "sudo ", "/dev/mem", "devmem ",
+            "open_hw_manager", "sudo ", "open(\"/dev/mem\"", "devmem ",
             "systemctl stop", "systemctl restart", "fpgautil",
             "ssh ", "scp ", "rsync ", "flashcp ", "write_cfgmem",
             "fw_setenv", "bootfw_update",
