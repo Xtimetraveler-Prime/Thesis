@@ -29,6 +29,8 @@ foreach file {
     15_dcp_clock_interaction.rpt
     16_dcp_reset_net_inventory.txt
     17_dcp_cdc.rpt
+    18_dcp_exception_coverage.rpt
+    19_dcp_ignored_paths_inventory.txt
 } {
     if {[file exists [file join $evidence $file]]} {
         error "M08 D2 refuses to overwrite previously generated evidence file $file"
@@ -87,6 +89,41 @@ puts $net_file "runtime_pl_resetn0_released=UNKNOWN"
 puts $net_file "ps_atb_instance4_enabled=UNKNOWN"
 close $net_file
 
+# The original routed report showed a SAME-clock Partial False Path
+# classification; inspect exception coverage instead of silently accepting
+# all static WNS paths as covering the whole fabric. report_exceptions may
+# be unavailable on a native host; capture the failure, never claim PASS.
+set exception_status "UNAVAILABLE"
+if {[catch {report_exceptions -coverage -file [file join $evidence 18_dcp_exception_coverage.rpt]} exception_error]} {
+    set exception_reason [string map [list "\\n" " " "\\r" " "] $exception_error]
+    puts "M08_D2_EXCEPTION_COVERAGE_UNAVAILABLE=$exception_reason"
+} else {
+    set exception_status "GENERATED_REQUIRES_OWNER_REVIEW"
+}
+# get_timing_paths -user_ignored is a diagnostic *sample*, not an exhaustive
+# path audit. No timing constraints are changed or waived.
+set ignored_status "UNAVAILABLE"
+set ignored_count 0
+set ignored_output [open [file join $evidence 19_dcp_ignored_paths_inventory.txt] {WRONLY CREAT EXCL}]
+puts $ignored_output "schema=m08-d2-routed-ignored-timing-paths-sample-v1"
+puts $ignored_output "sample_max_paths=30"
+if {[catch {get_timing_paths -user_ignored -max_paths 30 -nworst 1} ignored_paths]} {
+    set ignored_reason [string map [list "\\n" " " "\\r" " "] $ignored_paths]
+    puts $ignored_output "status=UNAVAILABLE"
+    puts $ignored_output "error=$ignored_reason"
+} else {
+    set ignored_status "SAMPLED_NOT_EXHAUSTIVE"
+    set ignored_count [llength $ignored_paths]
+    puts $ignored_output "status=$ignored_status"
+    puts $ignored_output "sample_returned=$ignored_count"
+    foreach path_obj $ignored_paths {
+        puts $ignored_output "IGNORED_PATH|[get_property -quiet STARTPOINT_PIN $path_obj]|[get_property -quiet ENDPOINT_PIN $path_obj]"
+    }
+}
+puts $ignored_output "all_false_paths_reviewed=NO"
+puts $ignored_output "runtime_clock_reset_proven=NO"
+close $ignored_output
+
 # CDC report can fail in some tool/licensing contexts; preserve the exact
 # tool result and DO NOT relabel an unavailable report as a clean CDC pass.
 set cdc_status "NOT_RUN"
@@ -111,6 +148,10 @@ puts $f "wns_ns=$wns"
 puts $f "whs_ns=$whs"
 puts $f "reset_pipeline_net_matches=[llength $rst_net_objs]"
 puts $f "cdc_report=$cdc_status"
+puts $f "exception_coverage_report=$exception_status"
+puts $f "ignored_paths_diagnostic=$ignored_status"
+puts $f "ignored_paths_sample_count=$ignored_count"
+puts $f "timing_exceptions_signed_off=NO"
 puts $f "original_routed_dcp=YES"
 puts $f "no_source_or_owner_artifact_mutation=INTENDED"
 puts $f "live_clock_reset_or_atb_verified=NO"
