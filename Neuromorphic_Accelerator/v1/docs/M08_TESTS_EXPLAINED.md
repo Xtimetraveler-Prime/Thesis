@@ -1,5 +1,12 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b post-incident D0/D1/D2 first offline fault tests (2026-11-12)
+
+`tests/test_m08_ps_pl_stall_forensics.py` verifies original source-only PS HPM0→SmartConnect→dual slaves, exact common clock/reset connections, *unmeasured* constant-high `dcm_locked`, historical RTSTAT-10 warning, identity/page address map alignment, quarantined MMIO operator, and the page internal-only 64-cycle watchdog. Its optional Icarus test compiles the **actual first-party identity RTL** with `tb_m08_axil_identity_stall_forensics.sv` to exercise reset gating, held R/B-style AXI4-Lite timing (actual test exercises R only), reset during outstanding R, halted source clock, and a separate 64-cycle intentionally nonresponding slave model. Five unique markers are required; the last two indicate **EXPECTED NO RESPONSE**, not a successful hardware error/timeout. Simulation SKIPs if Icarus missing and must not be claimed PASS. Original PS/SmartConnect or vendor route, physical OS/board and AXI protection are not modeled. [Root-cause and verification details](M08_D0_D1_D2_PS_PL_AXI_STALL_SOURCE_REVIEW_2026_11_12.md).
+
+Run **PC only**: `python3 -m unittest discover -s tests -p 'test_m08_ps_pl_stall_forensics.py' -v` and the explicit Icarus compile/run in that review document, followed by all M08 and full test discovery. Do NOT run prior physical identity or page commands.
+
+
 ## CRITICAL (2026-11-12): live first identity RCU stall → global source quarantine
 
 The owner first identity-mode test via physical Linux UIO made the board unresponsive (SSH/serial), screenshot showed RCU stall/thread starvation, SSH exit 255. After power cycle stock firmware restored but old boot kernel journal/pstore not preserved. Hardware cause still UNKNOWN; M08 identity and page physical tests blocked. **Do NOT run old physical commands or original previously copied remote scripts**.
