@@ -138,52 +138,14 @@ def capture(candidate: Path, base: Path, board_script: Path, target: str = TARGE
     complete = (resultcode == 0 and
                 log.startswith('M08_PHYSICAL_PREFLIGHT_BEGIN_READ_ONLY\n') and
                 log.rstrip().endswith('M08_PHYSICAL_PREFLIGHT_END_NO_FPGA_CHANGES'))
-    # SSH exit 0 proves only transport completion, not the success of each
-    # separately recorded probe. In genuine owner evidence, sudo -n xmutil
-    # listapps returned rc=1, so authenticated inventory is STILL OPEN.
-    individual = {
-        name: int(code)
-        for name, code in re.findall(
-            r'^M08_GATE_PROBE_END\\|([a-z_]+)\\|rc=([0-9]+)
-        'ssh_exit_status': resultcode,
-        'source_sha256': sha256(script).hexdigest(),
-        'candidate_byte_hash_checked_on_pc':True,
-        'cooling_safe_during_reconfiguration':'NOT_VERIFIED',
-        'pl_flat_accepted_by_running_manager':'NOT_VERIFIED',
-        'm08_board_programmed':False,
-        'linux_overlay_installed':False,
-        'm08_kernel_binding_verified':False,
-        'm08_identity_readback_verified':False,
-        'rollback_verified':False,
-        'deployment_authorized':False,
-    }, sort_keys=True, indent=2)+'\n')
-    evidence_ledger(folder)
-    return folder, complete
-
-
-def main() -> int:
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--candidate-dir', type=Path, required=True)
-    parser.add_argument('--evidence-base', type=Path, required=True)
-    parser.add_argument('--ssh-target', default=TARGET)
-    args=parser.parse_args()
-    script=Path(__file__).with_name('m08_path_a_physical_gate_board_readonly.sh')
-    try:
-        folder, good=capture(args.candidate_dir,args.evidence_base,script,args.ssh_target)
-    except (PreflightRejected, ValueError, OSError, json.JSONDecodeError) as e:
-        print('M08_PHYSICAL_PREFLIGHT_REJECTED:',str(e),file=sys.stderr)
-        return 2
-    print('M08_PHYSICAL_PREFLIGHT_EVIDENCE_DIR='+str(folder))
-    print('M08_PHYSICAL_READONLY_CAPTURE_COMPLETE_NOT_DEPLOYMENT_APPROVAL' if good
-          else 'M08_PHYSICAL_READONLY_CAPTURE_INCOMPLETE_STOP')
-    return 0 if good else 3
-
-
-if __name__ == '__main__':
-    raise SystemExit(main())
-, log, re.M)
-    }
-    failed_probes = sorted(name for name, code in individual.items() if code != 0)
+    # Overall SSH exit 0 is NOT proof that every named probe succeeded.
+    individual = {}
+    for line in log.splitlines():
+        if line.startswith('M08_GATE_PROBE_END|'):
+            fields = line.split('|')
+            if len(fields) == 3 and fields[2].startswith('rc='):
+                individual[fields[1]] = int(fields[2][3:])
+    failed_probes = sorted(name for name, rc in individual.items() if rc != 0)
     stock_listing_verified = individual.get('xmutil_listapps') == 0
     status = ('READ_ONLY_CAPTURE_INCOMPLETE_STOP' if not complete else
               'READ_ONLY_BASELINE_CAPTURED_WITH_NONZERO_PROBES_FOR_REVIEW'
