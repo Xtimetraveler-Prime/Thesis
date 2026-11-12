@@ -100,6 +100,7 @@ module tb_m08_d3b_ps_linux_release_policy;
         begin
             @(negedge ps_clock);
             read_request=1;
+            #1; // let combinational abstract qualification settle after request
             if(read_grant!==1)
                 $fatal(1,"abstract one-shot grant unexpectedly refused");
             @(posedge ps_clock); #1;
