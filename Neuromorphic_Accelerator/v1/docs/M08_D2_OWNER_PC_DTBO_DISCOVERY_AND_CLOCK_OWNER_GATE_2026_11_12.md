@@ -144,3 +144,34 @@ Linux generic UIO driver
 https://github.com/torvalds/linux/blob/master/drivers/uio/uio_pdrv_genirq.c ;
 AMD UG1085 PS AXI Timeout Block instances
 https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Instances .
+
+## 2026-11-12 owner search result: stock DTBO not on PC
+
+The user ran the original M08 D2 locator over `~/Thesis_Evidence/M08` and `~/Git/Thesis`, finding **one exact SHA-verified original M08 UIO DTBO** at:
+
+`~/Thesis_Evidence/M08/m08_2b_path_a_uio_overlay_REVIEW_ONLY_oh3lt8_m/m08-v1-fan-page-uio-review/m08-v1-fan-page-uio-review.dtbo`
+
+The other file of the same basename in `m08_2b_path_a_uio_overlay_REVIEW_ONLY_tuzu33oo` SHA `81045b1ff03514c4312b8340ecfbdfcd771cc5a9b7902a2a9e45324642f652a1` is **NOT** the original failed-deployment overlay. `stock=[]` in those scanned roots. The follow-up broad `--search-root "$HOME"` exceeded the tool's 100000-file scan limit. Two subsequent targeted PC-only `find` searches returned **no stock DTBO**. This is not evidence that stock never existed; it means no accessible original stock copy was found in the checked PC locations. **Do not ask for hardware fetch or invent substitute stock firmware.**
+
+The PC-only locator now supports `--prepare --m08-only`: exactly one original SHA-matched M08 DTBO is required, while the stock DTBO remains **NOT COMPARED**. It decompiles only the archived owner original into a *new* evidence folder with `12_m08.dts`, `22_m08_dtc_stderr.txt`, `00_review.json`, `99_evidence_sha256.txt`, and does not populate `11_stock.dts`. The original file and board are untouched. Default `--prepare` still requires both originals.
+
+```bash
+cd /home/dna/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-kv260-bringup
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-kv260-bringup
+cd Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m08_d2_locate_offline_dtbos.py' -v
+
+python3 scripts/m08_d2_locate_and_decompile_owner_dtbos.py --prepare --m08-only
+# Replace with the exact new directory printed:
+OUT="/home/dna/Thesis_Evidence/M08/m08_d2_OWNER_DTBO_OFFLINE_..."
+cd "$OUT"
+sha256sum -c 99_evidence_sha256.txt
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 scripts/m08_d2_offline_ps_pl_contract_audit.py --deployed-m08-dts "$OUT/12_m08.dts"
+```
+
+**Potential next engineering evidence:** a desktop/offline original stock boot DTB, HSI-generated M08 DT configuration from a saved XSA, or already-captured original PS-side boot logs. AMD's `xlnx_rel_v2025.2` `device_tree.tcl` generates clocking and AFI fragments in qualifying designs; the exact original M08 manually authored overlay has no such fragments. We cannot decide whether this omission mattered without recovering configuration ownership. PC-only M08 decompile can independently confirm what was encoded in the actual failed-deployment overlay (versus the template), but does **not** prove PL0 stopped, AFI wrong, ATB disabled or the specific RCU failure mechanism.
+
+The root-cause investigation therefore remains D2 OPEN. D3–D5 and the original M08 bit.bin are still STOP/QUARANTINED.
