@@ -18,8 +18,10 @@ set evidence [file normalize [lindex $argv 1]]
 if {![file isdirectory $root] || ![file isdirectory $evidence]} {
     error "M08 D3A requires existing first-party root and new evidence directory"
 }
-if {[llength [glob -nocomplain -directory $evidence * .*]] != 0} {
-    error "M08 D3A evidence directory must be NEW and empty, never originals"
+foreach entry [glob -nocomplain -directory $evidence * .*] {
+    if {[file tail $entry] ni {. ..}} {
+        error "M08 D3A evidence directory must be NEW and empty, never originals"
+    }
 }
 if {![string match "2025.2*" [version -short]]} {
     error "M08 D3A requires genuine local Vivado 2025.2"
