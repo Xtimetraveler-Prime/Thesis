@@ -46,6 +46,7 @@ REQUIRED_REPORTS = (
     "14_dcp_clock_utilization.rpt",
     "15_dcp_clock_interaction.rpt",
     "16_dcp_reset_net_inventory.txt",
+    "19_dcp_ignored_paths_inventory.txt",
 )
 REQUIRED_ORIGINAL_LEDGER_ROWS = (
     "48_fan_post_route.dcp",
@@ -189,6 +190,7 @@ def execute(route: Path, base: Path) -> tuple[Path, bool]:
             "atb_config_verified": False,
             "firewall_isolation_verified": False,
             "hardware_safe_to_test": False,
+            "timing_exception_coverage_signed_off": False,
             "new_bitstream_generated": False,
         }
         (folder / "98_review.json").write_text(json.dumps(review, indent=2, sort_keys=True) + "\n")
