@@ -126,7 +126,7 @@ class OwnerPCD2DTBOLocatorTests(unittest.TestCase):
                 returncode = 0
                 stderr = "unresolved overlay fixups (synthetic)\\n"
             return Result()
-        with mock.patch.object(m.shutil, "which", return_value="/usr/bin/dtc"), \\
+        with mock.patch.object(m.shutil, "which", return_value="/usr/bin/dtc"), \
              mock.patch.object(m.subprocess, "run", side_effect=fake_dtc):
             folder, success = m.prepare(result, self.out, m08_only=True)
         self.assertTrue(success)
