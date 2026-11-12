@@ -1,5 +1,8 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+> Additional source-only test `test_linux_overlay_does_not_independently_manage_pl0_or_afi` records that the original first-party deployed UIO overlay DTS lacks explicit PL0 `assigned-clocks` / `assigned-clock-rates` and `xlnx,afi-fpga` / `config-afi`. This is an unresolved Linux/firmware ownership issue, NOT a claim that the original runtime PS clock or AFI was wrong. Do not fix it by guessing device-tree clock/AFI entries or running old physical reads.
+
+
 ## New M08 D2 original fan-routed DCP forensic test (2026-11-12)
 
 `tests/test_m08_d2_fan_dcp_readonly_forensics.py` is **PC-only source/mock**. It checks that new native `m08_d2_fan_dcp_readonly_forensics.tcl` only **opens** an original routed checkpoint, emits timing/DRC/clock/CDC/net inventory reports and contains no write_bitstream/JTAG/MMIO commands. It confirms original fan DCP SHA pin and accepted full-ledger SHA checking, rejects tampered/rehashed-wrong original DCP/DRC, rejects original evidence output collisions, exercises a local `tclsh` wrong-SHA vs right-SHA mock boundary, and tests fresh SHA-receipted success/failure evidence with a MOCK vendor process. These tests do **not** invoke real Vivado, load a KV260, prove PS-PL AXI or detect a physical clock/reset fault. A genuine owner-PC run with Vivado 2025.2 remains REQUIRED for original native report evidence. See [read-only vendor runbook and interpretation](M08_D2_NATIVE_FAN_DCP_READONLY_FORENSIC_PLAN_2026_11_12.md). A native report is still **not** a corrected or deployable image; original image MMIO stays quarantined.
