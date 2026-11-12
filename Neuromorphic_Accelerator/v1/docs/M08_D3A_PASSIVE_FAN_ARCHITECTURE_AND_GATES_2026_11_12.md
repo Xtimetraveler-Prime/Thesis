@@ -2,7 +2,7 @@
 
 **2026-11-12.** This is the first **D3 candidate source gate** after the M08 D0–D2 incident review. D3.1 is a new, independent KV260 Vivado 2025.2 **passive** block design. D3.2 is a later PS-side protected-AXI candidate. There is **no corrected protected bitstream**, **no stock firmware overwrite**, **no DTBO deployment**, and **no authorization to run hardware tests**.
 
-**Relationship to prior work:** D3.1 branch `agent/neuromorphic-accelerator-v1-m08-d3-failsafe-candidate` starts from the quarantined M08 incident branch `agent/neuromorphic-accelerator-v1-m08-kv260-bringup`. PR #83 and its original source/evidence are kept as-is, draft/unmerged. The original owner M08 `.bit.bin` SHA256 `a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b` is NEVER reusable for MMIO.
+**Relationship to prior work:** D3.1 branch `agent/neuromorphic-accelerator-v1-m08-d3-failsafe-candidate` starts from the quarantined M08 incident branch `agent/neuromorphic-accelerator-v1-m08-kv260-bringup`. Draft stacked PR #84 targets the original D2 incident branch; PR #83 and its original source/evidence are kept as-is, draft/unmerged. The original owner M08 `.bit.bin` SHA256 `a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b` is NEVER reusable for MMIO.
 
 ## 1. Design decomposition and reason
 
