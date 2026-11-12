@@ -50,6 +50,8 @@ Original user-uploaded Vivado log from the PC, exact original bytes SHA256 `a1d2
 
 Next owner action: pull the latest branch, rerun source tests; then call `bash scripts/run_m08_path_a_fan_bd.sh` from PC with Vivado 2025.2 sourced, creating a new evidence directory (never reuse prior failed folder). Also run `bash scripts/run_m08_path_a_readonly_pc.sh ubuntu@10.42.0.135` from PC for the new DTBO decompile evidence. If the vendor next stops at unavailable TTC PS property, preserve the genuine log for targeted adaptation; never assume Native PASS from source mocks. Keep current k26-starter-kits active.
 
+**LATEST RESULT AFTER THE PREVIOUS FAILED FAN BD TRIAL:** Owner reran genuine Vivado 2025.2 with fixed exact-scope Tcl. Native fan BD and original dual AXI windows VALIDATED: Vivado log 4f40262b7e272cfd6aeaf4eb2a7418e249ce744611b720abd98483ab06d01bc4, fan report 676adfa961e0dda2371f406b7567d8a5a3ccec2d2c018874efbc020a2203ecb5, audit 1e81a4a1d9d48a7986f950ff299ca48ea93a6ee01ce173776250e7534bc3439e, independently SHA-matched to uploaded owner ledger. Separate new offline synthesis and routing source is now available with no bitstream/board action. This section below was the previous stage; the [latest owner native BD acceptance and routed next stage](M08_2B_PATH_A_FAN_BD_ACCEPTED_AND_NATIVE_ROUTE_2026_11_11.md) is authoritative for next PC commands. Do not rewrite any old genuine evidence.
+
 ## New fan-preserving offline K26 source candidate
 
 Scripts:
