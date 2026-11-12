@@ -4,7 +4,7 @@
 Default operation: read-only scanning of known owner PC evidence/repository
 folders, exact filename+SHA256 identification. --prepare explicitly creates a
 NEW sibling evidence folder and decompiles matched copies with local dtc.
-No SSH/JTAG, FPGA manager, UIO, /dev/mem, clock/AFI register access, or board.
+No remote connection, FPGA manager, UIO mapping, register access or board activity.
 This can only compare saved DT overlays: not a failed-boot live DT/PS state.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ EXPECTED = {
         "1e998ffd5d33a05da3746df3603e65603e1628006bc878209a836cc9bd3c4ae1"),
     "m08": (
         "m08-v1-fan-page-uio-review.dtbo",
-        "2b7798053d10415ef528d4abbbdcb5251cd0dee4845c3288de2e75ed"),
+        "2b7798053d10415ef528d4abbbdcb5251cd0dee4845c3288de2a3ef7bd2e75ed"),
 }
 # K26 archival route/firmware and other large trees are not crawled.
 SKIP_DIRS = frozenset({
@@ -123,8 +123,6 @@ def prepare(inspection: dict, base: Path) -> tuple[Path, bool]:
     require(str(base.resolve()) not in ("/", "/boot", "/etc", "/dev",
                                        "/sys", "/proc", "/run"),
             "unsafe evidence output parent")
-    require(shutil.which("dtc") is not None,
-            "dtc is not installed on owner PC (sudo apt install device-tree-compiler)")
     selected = {}
     for key in EXPECTED:
         options = [x for x in inspection["matches"][key] if x["matches_original_sha256"]]
@@ -132,6 +130,8 @@ def prepare(inspection: dict, base: Path) -> tuple[Path, bool]:
                 "need exactly one original SHA-matched " + key
                 + " DTBO; narrow --search-root if duplicates")
         selected[key] = Path(options[0]["path"])
+    require(shutil.which("dtc") is not None,
+            "dtc is not installed on owner PC (sudo apt install device-tree-compiler)")
     folder = Path(tempfile.mkdtemp(prefix="m08_d2_OWNER_DTBO_OFFLINE_", dir=base.resolve()))
     records = {}
     all_ok = True
