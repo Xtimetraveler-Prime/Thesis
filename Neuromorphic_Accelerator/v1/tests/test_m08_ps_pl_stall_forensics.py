@@ -88,7 +88,7 @@ class M08PSPLStallForensics(unittest.TestCase):
         for name, address in (("m08-identity", "0xa0000000"),
                               ("m08-page", "0xa0001000")):
             self.assertIn('("' + name + '", 0x' + address[2:].upper(), overlay)
-            self.assertIn(address.upper().replace("0X", "0x"), incident.lower().replace("0x", "0x"))
+            self.assertIn(address, incident.lower())
         self.assertIn("RTSTAT-10", route)
         self.assertIn("mi_handler_m_sc_areset_pipe", route)
         self.assertIn("99,999,001", route)
