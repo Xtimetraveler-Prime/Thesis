@@ -1,5 +1,25 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b physical-deployment preflight: new 5-test read-only source suite (2026-11-11)
+
+`tests/test_m08_path_a_physical_preflight.py` adds FIVE PC-only synthetic checks: (1) Bash and Python syntax plus prohibited-mutation strings for the SSH board probe; (2) SHA ledger valid case and tampered/duplicate/traversal/symlink rejection; (3) malformed candidate and unauthorized board IP rejection **before SSH**; (4) a fake successful SSH subprocess verifying separate new evidence directory, markers, stdout/stderr/exit SHA receipt, and explicit `deployment_authorized=false`; (5) a synthetic failing SSH preserving original failure logs, nonzero exit and SHA receipt. Local 5/5 tests PASS; automated tests cannot prove physical fan cooling, Linux manager loading or actual register communication.
+
+New `scripts/run_m08_path_a_physical_preflight_pc.py` requires the corrected original candidate's actual bit.bin + DTBO binaries and SHA receipt on the owner's Linux PC, checks empty native DTC compile log and exact 4KiB map descriptions, streams `scripts/m08_path_a_physical_gate_board_readonly.sh` over SSH to `ubuntu@10.42.0.135`, and records only genuine **read-only** current fan/thermal/firmware-manager/firmware hash/overlay/UIO evidence into fresh exclusive `~/Thesis_Evidence/M08/m08_2b_physical_READONLY_*`. No PL programming, Linux firmware install, fancontrol, /dev/uio open, mmap, or memory write is authorized. See [physical cooling and rollback gate](M08_2B_PHYSICAL_DEPLOYMENT_COOLING_ROLLBACK_GATE_2026_11_11.md).
+
+PC local commands:
+
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+bash -n scripts/m08_path_a_physical_gate_board_readonly.sh
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_path_a_physical_preflight.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Require all eight M01–M08 CI workflows on the exact new final SHA. Actual **read-only SSH baseline** is an owner task, and independently powered cooling + verified rollback + explicit owner approval are HARD STOP gates before physical reconfiguration. No claim that a synthetic positive test equals physical KV260 operation.
+
+
 ## M08.2b latest: owner native DTC CLEAN and PS/page register protocol tests (2026-11-11)
 
 **New `test_m08_uio_identity_guard.py` (six synthetic source/mock tests):** metadata-only preflight CLI no opens/mmap; reject missing CLI/env consent, non-real root, wrong host/model, SHA mismatch, altered approval assertions and symlinked operator record; file-backed fake 4KiB read-only mapping validates correct selected `/dev/uioN` names without opening real devices, identity-before-page read ordering, zero BUILD_ID reporting and no writes; synthetic bad identity rejected. `scripts/m08_path_a_uio_identity_guard.py` default `--mode preflight --expected absent` remains the **only presently safe owner-facing mode**. Its future `--mode identity` is NOT authorized or run; requires independently verified physical reconfiguration, fan-gap cooling/rollback, active device-tree and driver ownership. An unmapped physical AXI read can still SIGBUS/hang Linux. No physical acceptance from mock tests.
