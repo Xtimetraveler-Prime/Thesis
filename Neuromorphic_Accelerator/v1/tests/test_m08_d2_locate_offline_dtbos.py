@@ -115,6 +115,30 @@ class OwnerPCD2DTBOLocatorTests(unittest.TestCase):
         for key, payload in self.bytes.items():
             self.assertEqual((self.src / m.EXPECTED[key][0]).read_bytes(), payload)
 
+    def test_m08_only_decompile_does_not_require_or_imply_stock_dtbo(self):
+        (self.src / m.EXPECTED["m08"][0]).write_bytes(self.bytes["m08"])
+        result = m.locate([self.root])
+        self.assertFalse(result["all_originals_located"])
+        def fake_dtc(argv, **kwargs):
+            target = Path(argv[argv.index("-o") + 1])
+            target.write_text("/dts-v1/;\\n" * 20)
+            class Result:
+                returncode = 0
+                stderr = "unresolved overlay fixups (synthetic)\\n"
+            return Result()
+        with mock.patch.object(m.shutil, "which", return_value="/usr/bin/dtc"), \\
+             mock.patch.object(m.subprocess, "run", side_effect=fake_dtc):
+            folder, success = m.prepare(result, self.out, m08_only=True)
+        self.assertTrue(success)
+        self.assertFalse((folder / "11_stock.dts").exists())
+        self.assertTrue((folder / "12_m08.dts").exists())
+        review = json.loads((folder / "00_review.json").read_text())
+        self.assertFalse(review["stock_dtbo_compared"])
+        self.assertEqual(review["status"],
+                         "ORIGINAL_M08_DTS_COPY_CREATED_STOCK_ABSENT_NO_BOARD")
+        self.assertFalse(review["runtime_clock_reset_hpm0_afi_or_atb_verified"])
+        self.assertFalse(review["hardware_retry_authorized"])
+
     def test_duplicate_sha_verified_originals_not_auto_selected(self):
         self.stage_fake_originals()
         nested = self.root / "duplicate"
