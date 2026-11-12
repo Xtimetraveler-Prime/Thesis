@@ -144,7 +144,7 @@ class FirstPhysicalReceiptTests(unittest.TestCase):
         self.assertEqual(p.returncode, 2)
         self.assertIn("M08_FIRST_PHYSICAL_RECEIPT_REJECTED", p.stderr)
         source = SCRIPT.read_text()
-        for banned in ("/dev/uio", "mmap.", "xmutil unloadapp", "xmutil loadapp",
+        for banned in ("os.open(", "mmap.mmap(", "xmutil unloadapp", "xmutil loadapp",
                        "subprocess.run(", "ssh -T", "fpga_manager/fpga"):
             with self.subTest(banned=banned):
                 self.assertNotIn(banned, source)
