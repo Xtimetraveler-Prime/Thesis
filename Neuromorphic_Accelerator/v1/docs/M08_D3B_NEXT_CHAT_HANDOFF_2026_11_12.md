@@ -173,3 +173,7 @@ vvp "$TMP/liveness.vvp"
 - Project incident/master roadmap and native owner evidence are the **authoritative local context**; generic docs do not prove original board settings.
 
 **FINAL GATE AT HANDOFF:** D3.1 genuine native PS/no-AXI BD + D3.2A owner simulation **PASS**. D3.2B protected PS boot/AXI/LINUX integration and corrected image **OPEN/BLOCKED**. Original bitstream and all physical operations still **STOP/QUARANTINED**.
+
+## D3.2B.1 execution addendum — new development branch (2026-11-12)
+
+Created `agent/neuromorphic-accelerator-v1-m08-d3b-boot-ownership-audit` from this handoff commit `1a1495fe624027482f003a2bde10fd777de0e690`. Implemented only the FIRST B.1 deliverables: bounded offline PC artifact inventory, synthetic negative tests and [boot evidence matrix](M08_D3B_BOOT_PLATFORM_EVIDENCE_MATRIX_2026_11_12.md). **Owner PC inventory not yet executed**, no authentic boot XSA/PS-init/base DTB/firmware source accepted, no PS ATB4/AIB13/PL0/AFI proof. Proceed to B.2 only after owner validates B.1 receipt; unrelated tool-independent simulation may advance, but cannot satisfy PS hardware protection. Do not modify this original D3.2A handoff or claimed owner-native evidence outside the new feature branch; all previous STOP conditions remain unchanged.
