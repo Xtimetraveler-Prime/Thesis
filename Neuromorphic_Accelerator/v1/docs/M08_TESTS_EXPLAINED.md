@@ -1,5 +1,23 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b.3/.4 post-power-cycle guarded physical UIO operator — 7 source-only tests (2026-11-12)
+
+New `scripts/m08_kv260_physical_uio_operator.py` is deployed as an ordinary owner-home Python source file only after an active M08 Linux manager slot is verified. It imports the existing `m08_identity_client` + `m08_uio_page_protocol`; it never programs PL, alters fancontrol, uses /dev/mem, or dispatches compute. It independently validates actual M08 bit.bin/DTBO/shell/stock recovery SHA, boot default, model/CPU, fancontrol/dfx-mgr status, FPGA manager/overlay, dynamically discovered UIO named map0 and exact char-device major/minor and Linux driver symlink. Modes: `preflight` no MMIO, `identity` guarded O_RDONLY/PROT_READ fixed-register reads and original SHA evidence, and `page` separately acknowledged native 32-bit MMIO writes via the proven `stage_and_compare` 64-word contract with fresh full readback, SHA check, COMMIT only after verification, and no DISPATCH.
+
+`tests/test_m08_physical_uio_operator.py` exercises seven **synthetic** checks: 64-word unique pattern, synthetic 4KiB memory mapping read/write in whole aligned uint32 stores and denial of unsafe offsets, SHA-pinned previous original identity receipt with tamper rejection, existing first-party protocol invoked with correct 64 words and gate, independent digest mismatch denial, non-KV260 CLI denial, and absence of firmware mutation/neural commands. All are source-only; only owner original live receipts can close physical PS AXI or page conformance. Note the physical UNIX `timeout` process can remain stuck in kernel D-state and UIO cannot display AXI BRESP/RRESP.
+
+PC local tests:
+~~~bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_physical_uio_operator.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+~~~
+
+Full operator power-cycle and physical command runbook: [M08.2b.3/.4 owner postboot physical identity and page](M08_2B_3_4_POST_POWER_CYCLE_FIRST_PHYSICAL_UIO_VERIFICATION_2026_11_12.md).
+
+
 ## M08.2b.3 exact live kernel driver binding gate — four additional PC-only tests
 
 `tests/test_m08_first_identity_binding_readonly.py` has four tests: Bash syntax and negative source policies (no /dev/uio, PL, fancontrol or firmware mutation); invalid SSH target denied before contacting a board; synthetic fake successful SSH run preserves exact 5-file SHA receipt and emits metadata-only pass; synthetic failed SSH run is marked failed and preserves stderr/exit code/receipt. The source pair `scripts/m08_kv260_identity_binding_readonly.sh` and `scripts/run_m08_identity_binding_readonly_pc.sh` will be used by the owner for the **next real read-only driver link** inspection, but CI cannot prove actual KV260 binding or safe AXI.
