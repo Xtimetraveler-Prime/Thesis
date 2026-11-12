@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M08.2b.3/.4 physical UIO: operator-gated identity and 256B round trip.
+"""M08.2b.3/.4 physical UIO: QUARANTINED after first AXI/RCU hang.
 
 A Linux MMIO read or write can SIGBUS/hang if AXI does not respond. No Linux
 UIO mmap can expose BRESP/RRESP. Do NOT run without independent cooling, serial
@@ -282,6 +282,18 @@ def save_original(path: Path, result: dict, mode: str) -> str:
     return sha256(payload).hexdigest()
 
 
+def reject_quarantined_mmio_mode(mode: str) -> None:
+    """Hard interlock after 2026-11-12 physical RCU stall.
+
+    No command-line flags or environment variables may bypass quarantine.
+    Requires a separately reviewed NEW hardware/software release and source
+    change before any direct MMIO is authorized. Metadata-only preflight stays.
+    """
+    demand(mode == "preflight",
+           "M08_IDENTITY_AND_PAGE_MMIO_QUARANTINED_AFTER_KV260_RCU_STALL;"
+           " do not rerun identity/page on the original bitstream")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("preflight", "identity", "page"), default="preflight")
@@ -293,6 +305,7 @@ def main() -> int:
     parser.add_argument("--output-file", type=Path)
     args = parser.parse_args()
     try:
+        reject_quarantined_mmio_mode(args.mode)  # BEFORE any hardware checks/accesses
         demand(os.geteuid() == 0, "authenticated root required on live KV260")
         check_live_platform()
         nodes = discover_uio()
