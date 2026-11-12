@@ -44,6 +44,9 @@ class M08D2PSFaultContainment(unittest.TestCase):
         self.assertIn("A downstream accepted AR may remain outstanding", tb)
         self.assertIn("NO CDC is implemented", tb)
         self.assertIn("PS_CLOCK_ABSENT_IS_UNPROTECTED_NEGATIVE", tb)
+        self.assertNotIn("m08_d2_abstract_ps_read_guard", original,
+                         "simulation-only guard must not enter the original Vivado BD")
+        self.assertIn("synthetic timed-out error was not held under R backpressure", tb)
         # This design intentionally never claims a new physical test.
         for forbidden in ("xmutil", "program_hw_devices", "/dev/mem",
                           "/dev/uio", "ssh ", "fpga_manager", "write_bitstream"):
