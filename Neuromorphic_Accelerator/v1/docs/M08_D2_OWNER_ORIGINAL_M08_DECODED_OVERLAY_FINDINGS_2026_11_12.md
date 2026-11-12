@@ -20,6 +20,21 @@ The available **text receipt** says the original binary was independently rehash
 
 AMD's FPGA Manager full-reconfiguration documentation includes a separate PS–PL configuration fragment with an AFI `config-afi` node, fabric clock `assigned-clocks`/`assigned-clock-rates`, then PL peripheral driver nodes with clock handles. AMD's 2025.2 device-tree generator similarly can derive these nodes from the hardware description. That does **not** establish these nodes were required for the user's stock boot environment; the still-missing base DTB and boot firmware may provide them. We have not read failure-time PS PL0 `CLKACT`, reset, HPM0 AFI or ATB4 state. No first-failing AXI transfer trace survived. Avoid declaring a verified root cause.
 
+**Second deployment-architecture question discovered:** M08's two `generic-uio`
+nodes are placed in a **separate `&amba` overlay fragment**, NOT as children
+under `&fpga_full`. The Linux FPGA-region binding describes safe sequencing
+(bridge disable → program → bridge enable → overlay accepted → *region child*
+devices populated). Its child-device ordering assurance cannot simply be
+extended to independent sibling `&amba` fragment nodes without checking
+the actual Linux/XRT/dfx-mgr overlay notifier ordering and dependencies.
+The downloaded original does NOT declare FPGA bridges for fail-closed MMIO
+isolation, and the `generic-uio` nodes lack `clocks` dependencies. These are
+**static topology/integration risk factors only**; do not assert that UIO
+was bound before program, that a race occurred, or that Linux ordering
+violated its contract. The original board did reach a first identity read.
+Ref: Linux FPGA region bindings:
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable/+/61b57d35396a4b4bcca9944644b24fc6015976b5/Documentation/devicetree/bindings/fpga/fpga-region.yaml
+
 **Additional important constraint:** Even if properly configured, the M08 original PL-clock-dependent SmartConnect and identity slaves can fail to respond if `pl_clk0` disappears. AMD's 2025 proposal for ZynqMP AXI Timeout Block driver describes timeout events as capable of hanging Linux, with finite protection: it is not proof that enabling a driver in a future overlay alone guarantees bounded recovery. The relevant PS-side ATB instance is 4 for `M_AXI_HPM0_FPD`, but that **does not imply** it was enabled at the failed M08 event. A corrected safe architecture must explicitly handle absent PL clock with upstream independent timeout/isolation and verified failure handling before physical read attempts.
 
 ## First-party added review/test work
