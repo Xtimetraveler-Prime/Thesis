@@ -188,4 +188,41 @@ probe m08_kernel_mmio_binding_readiness sh -c '
   done
   echo "M08_LINUX_ACCESSOR=NOT_YET_VALIDATED"
 '
+# Linux's *live* DT symbols and parent-bus cell counts must be inspected
+# before binding the separately assigned M08 identity/page PS AXI windows.
+# This is strictly READ ONLY: no overlay writes or kernel-module changes.
+probe m08_live_dt_amba_fpga_symbols sh -c '
+  base=/proc/device-tree
+  for symbol in amba fpga_full zynqmp_reset; do
+    key="$base/__symbols__/$symbol"
+    if [ ! -r "$key" ]; then
+      echo "M08_DT_SYMBOL_MISSING=$symbol"
+      continue
+    fi
+    target="$(tr "\000" "\n" < "$key" | head -n 1)"
+    printf "M08_DT_SYMBOL=%s|%s\n" "$symbol" "$target"
+    if [ -z "$target" ] || [ ! -d "$base$target" ]; then
+      echo "M08_DT_TARGET_NOT_FOUND=$symbol"
+      continue
+    fi
+    if [ -r "$base$target/compatible" ]; then
+      printf "M08_DT_COMPATIBLE=%s|" "$symbol"
+      tr "\000" "|" < "$base$target/compatible"
+      echo
+    fi
+    for prop in "#address-cells" "#size-cells" ranges; do
+      f="$base$target/$prop"
+      if [ -r "$f" ]; then
+        printf "M08_DT_PROPERTY=%s|%s|bytes=" "$symbol" "$prop"
+        wc -c < "$f"
+        if [ "$prop" != ranges ] && command -v od >/dev/null 2>&1; then
+          printf "M08_DT_CELL_HEX=%s|%s|" "$symbol" "$prop"
+          od -An -tx1 "$f" | tr -d " \n"
+          echo
+        fi
+      fi
+    done
+  done
+  echo "M08_DT_SYMBOL_INSPECTION_NO_OVERLAY_WRITE"
+'
 echo "M08_PATH_A_LINUX_READ_ONLY_END_NO_FPGA_CHANGES"
