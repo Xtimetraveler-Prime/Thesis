@@ -103,6 +103,21 @@ but cannot present a stock-vs-M08 **binary** comparison.
   Each M08 UIO node lacks even a `clocks` property in its own overlay.
   Linux PM and the stock board could still manage PL0 elsewhere. Do not
   equate `UIO node bound` with `PL0 running`.
+- **Concrete 2025.2 AMD generator behavior:** the public
+  `Xilinx/system-device-tree-xlnx` `xlnx_rel_v2025.2`
+  `device_tree/data/device_tree.tcl`, `gen_afi_node` implementation, generates
+  `xlnx,fclk` and `assigned-clocks`/`assigned-clock-rates` when
+  `CONFIG.C_PL_CLK0_BUF` is enabled, with the ZynqMP clock identifier
+  computed as **71 + clock index**; it generates `xlnx,afi-fpga` /
+  `config-afi` from PS AXI widths, including
+  `CONFIG.C_MAXIGP0_DATA_WIDTH` and `CONFIG.C_MAXIGP1_DATA_WIDTH`
+  combined into an AFI value at **index 14**. This makes the originally
+  manually authored M08 overlay's missing clock/AFI fragment a
+  *specific, plausible* runtime-configuration omission to compare against
+  stock/HSI-generated source — NOT a proven mismatch in the failed boot.
+  See:
+  https://github.com/Xilinx/system-device-tree-xlnx/blob/xlnx_rel_v2025.2/device_tree/data/device_tree.tcl
+  (`gen_afi_node`). **Do not copy those AFI values into M08 blindly.**
 - AMD's ZynqMP Linux FPGA Manager example shows `xlnx,fclk` with
   `assigned-clocks/assigned-clock-rates` and an `xlnx,afi-fpga` fragment
   during PS→PL reconfiguration. That is an **example**, not evidence
