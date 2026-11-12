@@ -35,6 +35,8 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
         self.assertIn("report_methodology -file", active)
         self.assertIn("report_clock_interaction -file", active)
         self.assertIn("report_cdc -file", active)
+        self.assertIn("report_exceptions -coverage -file", active)
+        self.assertIn("get_timing_paths -user_ignored -max_paths 30", active)
         self.assertIn("get_nets -hier -quiet", active)
         self.assertIn("mi_handler_m_sc_areset_pipe", active)
         self.assertIn("M08_D2_NATIVE_FAN_DCP_READONLY_INSPECTION_COMPLETED_NO_BOARD", active)
@@ -55,6 +57,7 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
         self.assertIn('cwd=folder', src)
         self.assertIn('tempfile.mkdtemp(prefix="m08_d2_fan_dcp_READONLY_"', src)
         self.assertIn("hardware_safe_to_test\": False", src)
+        self.assertIn("19_dcp_ignored_paths_inventory.txt", src)
         self.assertNotIn("shell=True", src)
 
     def fake_original(self, tmp: Path) -> tuple[Path, str]:
@@ -188,6 +191,7 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
             review = __import__("json").loads((evidence / "98_review.json").read_text())
             self.assertFalse(review["hardware_safe_to_test"])
             self.assertFalse(review["atb_config_verified"])
+            self.assertFalse(review["timing_exception_coverage_signed_off"])
             self.assertFalse(review["physical_axil_read_verified"])
             receipt = (evidence / "99_evidence_sha256.txt").read_text()
             self.assertIn("01_native_vivado.log", receipt)
