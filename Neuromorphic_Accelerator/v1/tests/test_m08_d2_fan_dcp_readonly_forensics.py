@@ -104,14 +104,30 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
 
     def test_output_path_cannot_overwrite_original_archive(self):
         with tempfile.TemporaryDirectory() as d:
-            route, _ = self.fake_original(Path(d))
+            parent = Path(d)
+            route, _ = self.fake_original(parent)
+            # Regression: accepted owner command uses the common parent
+            # ~/Thesis_Evidence/M08, and must create a NEW sibling of route.
+            evidence = m.make_evidence(parent, route)
+            self.assertTrue(evidence.is_dir())
+            self.assertEqual(evidence.parent, parent)
+            self.assertNotEqual(evidence, route)
+            self.assertFalse(route in evidence.parents)
+            self.assertTrue(evidence.name.startswith("m08_d2_fan_dcp_READONLY_"))
+            # A direct output inside the original route or the original
+            # directory itself MUST still be rejected.
             with self.assertRaisesRegex(m.ForensicRejected, "original route"):
                 m.make_evidence(route, route)
-            fresh = Path(d) / "fresh"
+            child = route / "unsafe_output"
+            child.mkdir()
+            with self.assertRaisesRegex(m.ForensicRejected, "original route"):
+                m.make_evidence(child, route)
+            # Independent, non-ancestral output bases remain supported.
+            fresh = parent / "fresh"
             fresh.mkdir()
             result = m.make_evidence(fresh, route)
             self.assertTrue(result.is_dir())
-            self.assertNotEqual(result, route)
+            self.assertEqual(result.parent, fresh)
 
     @unittest.skipUnless(shutil.which("tclsh"), "tclsh absent")
     def test_real_tcl_parser_sha_gate_without_any_vivado(self):
