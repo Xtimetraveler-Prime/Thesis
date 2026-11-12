@@ -1,5 +1,23 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b original physical image deployment receipt auditor (2026-11-11)
+
+`scripts/m08_verify_first_physical_receipt.py --archive ORIGINAL_FIRST_PHYSICAL_REVIEW.tar.gz` is a PC-only immutable-input checker. It verifies exact five-file original SHA receipt, rejects duplicate/traversing/link/unexpected tar entries, parses genuine operator console manager `PL_FLAT` registration, stock unload, M08 slot0 load, FPGA manager operating, overlay, services, post-load thermals and pre-load root-visible Linux resource inventory. It validates names AND exact bases/sizes of both UIO map0 records and preserves the prior four AXI performance-monitor UIO devices. It **does not** attempt to read physical registers or assert Linux MMIO or physical AXI correctness. It never assumes fixed UIO numbers in a future build.
+
+`tests/test_m08_first_physical_receipt.py` includes six synthetic tests: (1) valid standalone synthetic evidence accepted only as metadata; (2) tampering/incomplete SHA receipt rejected; (3) false load-success claim rejected even with a self-consistent ledger; (4) bad UIO address, size, missing page or false readback status rejected; (5) malicious tar path and symlink rejected; (6) missing archive rejected and host-only source API constraints. The fixture is NOT real KV260 evidence. The **real** owner-uploaded archive independently checked 5/5 cover entries and contains a separate ledger. See [original first deployment acceptance](M08_2B_KV260_FIRST_PHYSICAL_DEPLOYMENT_ACCEPTANCE_AND_REPRODUCIBLE_METHOD_2026_11_11.md).
+
+PC tests:
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_first_physical_receipt.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+M08 actual `dfx-mgr` managed image replacement and exact UIO metadata **accepted**; **NO physical register read or 256B page acceptance yet**. No UART log reviewed; no actual rollback measured. Keep M08 loaded; PR #83 remains draft and unmerged.
+
+
 ## M08.2b physical-deployment preflight: new 5-test read-only source suite (2026-11-11)
 
 `tests/test_m08_path_a_physical_preflight.py` adds FIVE PC-only synthetic checks: (1) Bash and Python syntax plus prohibited-mutation strings for the SSH board probe; (2) SHA ledger valid case and tampered/duplicate/traversal/symlink rejection; (3) malformed candidate and unauthorized board IP rejection **before SSH**; (4) a fake successful SSH subprocess verifying separate new evidence directory, markers, stdout/stderr/exit SHA receipt, and explicit `deployment_authorized=false`; (5) a synthetic failing SSH preserving original failure logs, nonzero exit and SHA receipt. Local 5/5 tests PASS; automated tests cannot prove physical fan cooling, Linux manager loading or actual register communication.
