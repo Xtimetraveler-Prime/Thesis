@@ -7,7 +7,7 @@
 Original owner routed evidence folder preserved on the PC:
 /home/dna/Thesis_Evidence/M08/m08_2b_path_a_fan_route_20261112T034949Z_utDrAG
 
-The owner provided 8 original files and 52_evidence_sha256.txt. All eight uploaded byte streams were independently rehashed; each matched its exact owner-ledger row. The owner ledger itself had independent SHA256:
+The owner provided seven ledger-covered native reports/audit files plus 52_evidence_sha256.txt (eight uploaded files total). All seven independently rehashed native files matched their exact owner-ledger rows; the owner ledger itself is not self-listed and was independently hashed separately. The owner ledger itself had independent SHA256:
 0aacf1e841ed05c3bbd099bfd65f39b369cc7e47368689f17a77414579b30938.
 
 Uploaded original exact SHA256 digests:
