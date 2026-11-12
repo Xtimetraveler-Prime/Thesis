@@ -79,7 +79,7 @@ class M08PhysicalPreflight(unittest.TestCase):
                 self.assertEqual(argv[-2:],[mod.TARGET,'bash -s'])
                 self.assertEqual(opts['check'],False)
                 self.assertIn(b'M08_PHYSICAL_PREFLIGHT_BEGIN_READ_ONLY',opts['stdin'].read())
-                opts['stdout'].write(b'M08_PHYSICAL_PREFLIGHT_BEGIN_READ_ONLY\nM08_GATE_PROBE_BEGIN|model\nKV260\nM08_GATE_PROBE_END|model|rc=0\nM08_PHYSICAL_PREFLIGHT_END_NO_FPGA_CHANGES\n')
+                opts['stdout'].write(b'M08_PHYSICAL_PREFLIGHT_BEGIN_READ_ONLY\nM08_GATE_PROBE_BEGIN|model\nKV260\nM08_GATE_PROBE_END|model|rc=0\nM08_GATE_PROBE_END|xmutil_listapps|rc=1\nM08_PHYSICAL_PREFLIGHT_END_NO_FPGA_CHANGES\n')
                 return subprocess.CompletedProcess(argv,0)
             with patch.object(mod,'validate_candidate',return_value={'fake_fixture':True}),\
                  patch.object(mod.subprocess,'run',side_effect=fake_run):
@@ -93,6 +93,11 @@ class M08PhysicalPreflight(unittest.TestCase):
             review=json.loads((out/'04_review.json').read_text())
             self.assertFalse(review['deployment_authorized'])
             self.assertFalse(review['m08_board_programmed'])
+            self.assertEqual(review['status'],
+                             'READ_ONLY_BASELINE_CAPTURED_WITH_NONZERO_PROBES_FOR_REVIEW')
+            self.assertEqual(review['individual_probe_exit_codes']['xmutil_listapps'], 1)
+            self.assertEqual(review['failed_individual_probes'], ['xmutil_listapps'])
+            self.assertFalse(review['authenticated_xmutil_inventory_verified'])
             self.assertEqual(review['cooling_safe_during_reconfiguration'],'NOT_VERIFIED')
 
     def test_failed_ssh_still_preserves_original_receipt(self):
