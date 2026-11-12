@@ -31,6 +31,14 @@ AMD PG293's **MI-side AXI Protocol Firewall** can detect missing ARREADY and del
   - https://docs.amd.com/r/en-US/pg293-axi-firewall/Timeout-Faults
   - https://docs.amd.com/r/en-US/pg293-axi-firewall/MI-Side-Mode-Block-Condition
 
+## Additional D1 risk discovered: dynamic DTBO does not explicitly configure PS PL0 clock or AFI
+
+**Source-observed, not physically proven:** the `DTS` string in `scripts/m08_path_a_stage_uio_overlay.py` declares `&fpga_full` firmware/reset and two `&amba` `generic-uio` regions, but contains **no** `assigned-clocks`, `assigned-clock-rates`, `xlnx,afi-fpga` or `config-afi` properties. The accepted source overlay thus does not, **by itself**, demonstrate control of the HPM0 AXI PS-to-PL interface formatting or enablement/rate of PL0 after manager-controlled image replacement. The earlier original fan-preserving BD configuration configures the PS IP **at synthesis time**; it does not establish that the Linux manager configured a live software-owned PS clock or AFI register after load.
+
+AMD's ZynqMP Linux FPGA Manager programming example explicitly includes a PS-PL configuration overlay fragment containing an `xlnx,afi-fpga` node plus a fabric-clock node with `assigned-clocks`/`assigned-clock-rates`. That example is not a universal deployment requirement; stock firmware/boot firmware or Linux clock/AFI drivers could establish the state in other ways. **Absence of these nodes is a serious audit gap, NOT evidence that the original M08 clock was stopped or AFI wrong.** Do **not** add assumed AFI values or blindly edit/install the original DTBO. First compare original, SHA-verified stock and M08 DTBO decompilations on the PC; consult the exact board BSP and Linux firmware-manager ownership model; independently review AFI width/format compatibility with the PS `128-bit` HPM0 and converted 32-bit AXI-Lite slaves. No current-stock clock reading can recover failed-image clock state.
+
+AMD deployment example: https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841847/Solution%2BZynqMP%2BPL%2BProgramming .
+
 ## Exact owner PC commands — no board connection or MMIO
 
 First run source-only targeted verification and broader regressions on the exact new commit:
