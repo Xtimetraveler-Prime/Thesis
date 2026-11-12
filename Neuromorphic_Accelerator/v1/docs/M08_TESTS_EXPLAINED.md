@@ -1,5 +1,19 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b.3 exact live kernel driver binding gate — four additional PC-only tests
+
+`tests/test_m08_first_identity_binding_readonly.py` has four tests: Bash syntax and negative source policies (no /dev/uio, PL, fancontrol or firmware mutation); invalid SSH target denied before contacting a board; synthetic fake successful SSH run preserves exact 5-file SHA receipt and emits metadata-only pass; synthetic failed SSH run is marked failed and preserves stderr/exit code/receipt. The source pair `scripts/m08_kv260_identity_binding_readonly.sh` and `scripts/run_m08_identity_binding_readonly_pc.sh` will be used by the owner for the **next real read-only driver link** inspection, but CI cannot prove actual KV260 binding or safe AXI.
+
+PC commands:
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+bash -n scripts/m08_kv260_identity_binding_readonly.sh
+bash -n scripts/run_m08_identity_binding_readonly_pc.sh
+python3 -m unittest discover -s tests -p 'test_m08_first_identity_binding_readonly.py' -v
+```
+First physical PL load already accepted; first PS AXI register read, state page and physical rollback still OPEN. See [next physical kernel binding gate](M08_2B_NEXT_PHYSICAL_IDENTITY_BINDING_GATE_2026_11_11.md).
+
+
 ## M08.2b original physical image deployment receipt auditor (2026-11-11)
 
 `scripts/m08_verify_first_physical_receipt.py --archive ORIGINAL_FIRST_PHYSICAL_REVIEW.tar.gz` is a PC-only immutable-input checker. It verifies exact five-file original SHA receipt, rejects duplicate/traversing/link/unexpected tar entries, parses genuine operator console manager `PL_FLAT` registration, stock unload, M08 slot0 load, FPGA manager operating, overlay, services, post-load thermals and pre-load root-visible Linux resource inventory. It validates names AND exact bases/sizes of both UIO map0 records and preserves the prior four AXI performance-monitor UIO devices. It **does not** attempt to read physical registers or assert Linux MMIO or physical AXI correctness. It never assumes fixed UIO numbers in a future build.
