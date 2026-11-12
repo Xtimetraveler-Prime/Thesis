@@ -33,6 +33,8 @@ Upstream references:
 
 The updated SSH probe reads ONLY live kernel device-tree /proc/device-tree/__symbols__/amba, fpga_full, zynqmp_reset targets and any explicit parent address/size cell properties; it does NOT write new overlays, modprobe, map device memory, load firmware or touch fan PWM. New Python candidate REQUIRES original full first-stage SHA ledger and all original files, the pinned converted .bit.bin hash, original successful PL_FLAT manifest, **NEW read-only SSH evidence receipt**, live amba/fpga_full/zynqmp_reset symbol references, generic UIO boot argument, and current driver+fan+fpga_manager availability.
 
+**HARD FAIL-CLOSED ADDITION:** The new read-only board probe must also read actual amba #address-cells and #size-cells as exactly TWO 32-bit big-endian cells each (hex 00000002), confirming that the four-cell 64-bit <address,size> reg in the proposed overlay matches the live bus schema. If either property is missing or differs, preserve genuine owner SSH evidence and DO NOT stage a 64-bit UIO mapping; investigate the actual live DT first. This is still not a guarantee that the new nodes would bind or function at runtime.
+
 Only on those checks does it create a FRESH PC-only REVIEW folder and a second *separate* uniquely named static Linux package candidate. It copies the existing SHA-verified bit.bin, never regenerates or changes hardware. Its DTBO includes the original FPGA full firmware-name and four zynqmp_reset references, plus a separate &amba overlay fragment with exactly two non-overlapping resources:
 - compatible = generic-uio; linux,uio-name = m08-identity; 64-bit reg = <0 0xA0000000 0 0x1000>.
 - compatible = generic-uio; linux,uio-name = m08-page; 64-bit reg = <0 0xA0001000 0 0x1000>.
