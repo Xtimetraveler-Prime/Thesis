@@ -1,5 +1,8 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
+**2026-11-12 D2 owner PC preflight fix:** The new offline fan-DCP runner initially rejected the standard `--evidence-base ~/Thesis_Evidence/M08` because it incorrectly disallowed an ancestor of the immutable original route. Owner's original fan DCP independently SHA-matched; the failure occurred before Vivado. Corrected guard permits new sibling evidence folders under the shared parent, but still refuses direct output into the route itself or its descendants. Added regression tests. The canonical PC-only commands remain unchanged. [Documented incident and fix](docs/M08_D2_NATIVE_FAN_DCP_READONLY_FORENSIC_PLAN_2026_11_12.md).
+
+
 **Additional D1 source gap (2026-11-12):** The actual M08 generic-UIO `DTS` source contains firmware/reset and UIO nodes but does **NOT** explicitly own `assigned-clocks`, `assigned-clock-rates`, `xlnx,afi-fpga`, or `config-afi`. AMD's ZynqMP Linux FPGA manager example includes PS-PL clock and AFI configuration nodes. This is a concrete missing **runtime ownership proof**, not evidence of actual clock loss or necessarily an incorrect overlay; stock boot/Linux could own settings. New source test freezes that fact. Before D3, compare genuine original stock-vs-M08 DTBO/bsp/PS AFI configuration offline; DO NOT write guessed registers or reload the old image. [Forensic plan](docs/M08_D2_NATIVE_FAN_DCP_READONLY_FORENSIC_PLAN_2026_11_12.md).
 
 
