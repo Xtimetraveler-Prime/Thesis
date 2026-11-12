@@ -97,6 +97,17 @@ def audit_contract(manifest_path: Path = MANIFEST) -> tuple[dict, str]:
                "is_ps_atb_configuration", "is_synthesizable_for_recovery",
            )),
            "D3B model must never be confused with actual PS protection")
+    clock = m.get("clock_diagnostic", {})
+    demand(clock.get("rtl") == "rtl/m08/m08_d3b_clock_liveness_probe.v"
+           and clock.get("tb") == "rtl/m08/tb_m08_d3b_clock_liveness_probe.sv"
+           and clock.get("type") == "TWO_CLOCK_SYNTHESIZABLE_BUT_NOT_INTEGRATED_DIAGNOSTIC"
+           and all(clock.get(k) is False for k in (
+               "ps_independent_monitor_clock_proven",
+               "ps_to_pl_axil_protected",
+               "synchronizer_cdc_native_verified",
+               "fan_cooling_native_verified",
+               "hardware_bitstream_integrated",
+           )), "unintegrated D3B clock monitor must NOT claim PS clock/ATB or physical proof")
     state = m.get("evidence_status", {})
     demand(state.get("D3A_OWNER_NATIVE_BD_SOURCE") == "ACCEPTED_WITH_LEGACY_SLICE_WARNING"
            and state.get("D3B_BOOT_ATB_AIB_CONFIG") == "NOT_SUPPLIED"
