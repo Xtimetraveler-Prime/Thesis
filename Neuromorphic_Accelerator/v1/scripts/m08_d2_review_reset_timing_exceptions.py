@@ -179,11 +179,11 @@ def inspect(folder: Path) -> dict:
                  "native closure report header/command mismatch " + name)
         ignored_rows = []
         for line in ignored_text.splitlines():
-            if re.match(r"^\\s*\\d+\\s+\\*", line):
+            if re.match(r"^\s*\d+\s+\*", line):
                 match = re.fullmatch(
-                    r"\\s*(\\d+)\\s+\\*\\s+\\*\\s+"
-                    r"\\[get_cells \\{syncstages_ff_reg\\[0\\]\\}\\]\\s+"
-                    r"false\\s+false\\s+Non-existent path\\s*", line)
+                    r"\s*(\d+)\s+\*\s+\*\s+"
+                    r"\[get_cells \{syncstages_ff_reg\[0\]\}\]\s+"
+                    r"false\s+false\s+Non-existent path\s*", line)
                 must(match is not None,
                      "unexpected ignored native timing exception or status")
                 ignored_rows.append(int(match.group(1)))
@@ -192,8 +192,8 @@ def inspect(folder: Path) -> dict:
         summary_rows = {}
         for line in summary_text.splitlines():
             row = re.fullmatch(
-                r"\\s*(False Path|Clock Groups|Multicycle Path|Max Delay DPO|"
-                r"Max Delay|Min Delay)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*", line)
+                r"\s*(False Path|Clock Groups|Multicycle Path|Max Delay DPO|"
+                r"Max Delay|Min Delay)\s+(\d+)\s+(\d+)\s+(\d+)\s*", line)
             if row:
                 label, constraints, setup, hold = row.groups()
                 must(label not in summary_rows,
