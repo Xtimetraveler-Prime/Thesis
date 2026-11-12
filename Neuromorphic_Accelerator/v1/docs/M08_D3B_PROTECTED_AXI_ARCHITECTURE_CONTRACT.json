@@ -1,0 +1,66 @@
+{
+  "schema": "m08-d3b-protected-axi-contract-v1",
+  "candidate_id": "m08-d3b-protected-axi-v1",
+  "phase": "D3.2A_ARCHITECTURE_AND_OFFLINE_POLICY_MODEL",
+  "target": "KV260_K26_VIVADO_2025_2",
+  "parent_candidate": "m08-d3a-passive-fan-v1",
+  "parent_d3a_native_evidence": {
+    "status": "ORIGINAL_OWNER_TEXTS_SHA_VERIFIED",
+    "sha256": {
+      "01_native_vivado.log": "5debf086f5ead1acbea506570440a2a21d71eff9b53f0394ab9d2a5dc04b46c4",
+      "output/10_d3a_passive_bd_readback.txt": "c0a4443fcf42ae9c95f8b8eb970511f7e07630722620cd83e115bb20fb9b9c76",
+      "output/11_d3a_passive_bd_export.tcl": "a2a1f94d5fcf93ca87e2dea54d00227f4ec62bfa9ef947d456dd190af8525b19",
+      "output/12_d3a_fan_a12.xdc": "7b5f25d14ed1b45ba4c858277d661ba61c0490957370c195218b65de30d899ff"
+    },
+    "native_vivado_bd_validated": true,
+    "native_routed_implementation": false,
+    "hardware_runtime_proven": false,
+    "vivado_advisory": "BD 5-1043: legacy xilinx.com:ip:xlslice:1.0 recommends inline_hdl:ilslice:1.0; migration must be tested."
+  },
+  "proposed_interconnect": {
+    "upstream": "APU_FPD_MAIN_SWITCH_TO_M_AXI_HPM0_FPD",
+    "upstream_ps_timeout_block": "FPD_ATB_INSTANCE_4",
+    "upstream_ps_isolation_block": "FPD_AIB_INSTANCE_13",
+    "downstream": "PL_SMARTCONNECT_TO_IDENTITY_AND_DISABLED_COMPUTE_PAGE",
+    "hpm0_width_bits_requested": 128,
+    "fan": "PS_TTC0_EMIO_WAVEOUT2_TO_KV260_A12",
+    "linux_exposure": "BLOCKED_UNTIL_BOOT_FIRMWARE_AND_FPGA_REGION_LIFECYCLE_PROVEN",
+    "max_first_diagnostic_reads": 1,
+    "first_fault_policy": "LATCH_AND_STOP_NO_RETRY_REQUIRE_INDEPENDENT_RESTART",
+    "physical_programming_authorized": false,
+    "physical_mmio_authorized": false
+  },
+  "protection_requirements": {
+    "ATB4_RESP_EN": "REQUIRES_BOOT_OWNERSHIP_AND_READBACK_PROOF",
+    "ATB4_RESP_TYPE": "SLVERR_REQUIRED_NOT_IMPLEMENTED",
+    "ATB4_TIMEOUT_PRESCALE": "REQUIRES_PINNED_UG1085_VERSION_AND_FPD_CLOCK",
+    "ATB4_ERROR_TELEMETRY": "REQUIRES_BOOT_KERNEL_PMU_ERROR_HANDLING",
+    "AIB13_ISOLATION": "REQUIRES_PSU_FPD_SPECIFIC_ACK_QUIESCENCE_PROOF",
+    "OUTSTANDING_AR_R_AW_W_B": "REQUIRES_PROTOCOL_CORRECT_DRAIN_ISOLATION_OR_INDEPENDENT_RESET",
+    "PL0_CLOCK_RESET": "REQUIRES_FIRMWARE_LINUX_OWNER_ACTUAL_BOOT_DT",
+    "FPD_HPM0_AFI_WIDTH": "REQUIRES_XSA_AND_BOOT_CONFIG_MATCH",
+    "UIO_ENUMERATION": "REQUIRES_FPGA_REGION_CHILD_VS_AMBA_REVIEW",
+    "FAN_CONTINUITY": "REQUIRES_INDEPENDENT_COOLING_AND_STOCK_ROLLBACK_EVIDENCE",
+    "LEGACY_XLSLICE": "REQUIRES_NATIVE_VIVADO_2025_2_REPLACEMENT_REVIEW"
+  },
+  "source_model": {
+    "rtl": "rtl/m08/tb_m08_d3b_ps_linux_release_policy.sv",
+    "semantics": "ABSTRACT_PS_CLOCKED_ADMISSION_POLICY_ONLY",
+    "can_prove_physical_timeout": false,
+    "can_prove_hardware_clock_alive": false,
+    "can_prove_software_qualified_status": false,
+    "is_ps_atb_configuration": false,
+    "is_synthesizable_for_recovery": false
+  },
+  "evidence_status": {
+    "D3A_OWNER_NATIVE_BD_SOURCE": "ACCEPTED_WITH_LEGACY_SLICE_WARNING",
+    "D3B_BOOT_ATB_AIB_CONFIG": "NOT_SUPPLIED",
+    "D3B_STOCK_BASE_DEVICE_TREE_OR_BOOT_FIRMWARE": "NOT_SUPPLIED",
+    "D3B_PROTECTED_BITSTREAM": "NOT_BUILT",
+    "D3B_PROTECTED_DTBO": "NOT_BUILT",
+    "D3B_NATIVE_HPM0_BUILD": "NOT_RUN",
+    "D3B_OWNER_HARDWARE_APPROVAL": false,
+    "original_m08_image_quarantined": true,
+    "stock_k26_left_untouched": true
+  }
+}
