@@ -111,8 +111,9 @@ class M08D2OriginalFanDCPForensics(unittest.TestCase):
             wrapper.write_text(
                 "proc version {flag} { return 2025.2 }\n"
                 "proc open_checkpoint {path} { error MOCK_REACHED_AFTER_SHA_CHECK }\n"
+                "set forensic_source [lindex $argv 0]\n"
                 "set argv [lrange $argv 1 end]\n"
-                "source [lindex $::argv 0]\n"
+                "source $forensic_source\n"
             )
             # Pass through argv where script is first; wrapper strips it.
             wrong = subprocess.run(
