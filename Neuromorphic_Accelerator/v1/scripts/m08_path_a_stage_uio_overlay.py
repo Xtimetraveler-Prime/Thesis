@@ -143,7 +143,11 @@ def validate_board(folder: Path) -> dict:
             "required live device-tree symbol missing: " + label)
     require("M08_DT_SYMBOL_INSPECTION_NO_OVERLAY_WRITE" in symbols,
             "original read-only DT symbol inspection incomplete")
-    # Presence of amba symbol supports syntax, not proof of actual mapping.
+    for prop in ("#address-cells", "#size-cells"):
+        require("M08_DT_CELL_HEX=amba|" + prop + "|00000002" in symbols,
+                "live AMBA bus is not independently verified as 2-cell address / size")
+    # Presence of amba symbol and 2-cell widths supports DT encoding,
+    # NOT successful driver bind or PS physical readback.
     # The generated overlay is NEVER authorized for installation here.
     return {
         "kernel_uio_driver": "uio_pdrv_genirq_LOADED",
