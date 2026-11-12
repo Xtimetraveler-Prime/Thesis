@@ -76,6 +76,36 @@ def populate(folder: Path) -> None:
         "runtime_clock_reset_proven=NO\n")
 
 
+
+def populate_native_closure(folder: Path) -> None:
+    """Synthetic native-shaped output; never call these real vendor reports."""
+    (folder / "20_dcp_fully_ignored_exceptions.rpt").write_text(
+        "Tool Version : Vivado v.2025.2\\n"
+        "Design            : m08_page_ps_wrapper\\n"
+        "Design State      : Routed\\n"
+        "Command: report_exceptions -ignored -file path\\n"
+        "Exceptions Report\\n"
+        + "".join(
+            f"{n}        *       *       "
+            "[get_cells {syncstages_ff_reg[0]}] "
+            "false false Non-existent path\\n"
+            for n in (49, 50, 51))
+        + "Native report footer extended for test\\n" * 5)
+    (folder / "21_dcp_exception_summary.rpt").write_text(
+        "Tool Version : Vivado v.2025.2\\n"
+        "Design            : m08_page_ps_wrapper\\n"
+        "Design State      : Routed\\n"
+        "Command: report_exceptions -summary -file path\\n"
+        "Exceptions Report\\n"
+        "False Path       29                  2                       2\\n"
+        "Clock Groups     0                   0                       0\\n"
+        "Multicycle Path  0                   0                       0\\n"
+        "Max Delay        0                   0                       0\\n"
+        "Max Delay DPO    0                   0                       0\\n"
+        "Min Delay        0                   0                       0\\n"
+        + "Native report footer extended for test\\n" * 3)
+
+
 class OriginalResetExceptionReviewTests(unittest.TestCase):
     def test_expected_vendor_shaped_evidence_classified_without_hardware_signoff(self):
         with tempfile.TemporaryDirectory() as d:
@@ -91,6 +121,54 @@ class OriginalResetExceptionReviewTests(unittest.TestCase):
             self.assertFalse(result["physical_hardware"]["new_image_approved_for_board"])
             self.assertFalse(result["ignored_timing_sample"]["all_paths_checked"])
             self.assertEqual(len(result["input_sha256"]), 4)
+
+    def test_closure_resolves_three_nonexistent_paths_without_signoff(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            populate(folder)
+            populate_native_closure(folder)
+            result = mod.inspect(folder)
+            closure = result["exception_coverage"]["native_ignored_exception_closure"]
+            self.assertEqual(closure["status"],
+                             "EXACTLY_THREE_NON_EXISTENT_FALSE_PATHS_CLASSIFIED")
+            self.assertEqual(closure["fully_ignored_positions"], [49, 50, 51])
+            self.assertEqual(
+                result["exception_coverage"]
+                ["fully_ignored_or_nonexistent_positions_not_yet_classified"], [])
+            self.assertEqual(len(result["input_sha256"]), 6)
+            self.assertFalse(closure["remaining_timing_exception_signoff"])
+            self.assertFalse(result["physical_hardware"]["runtime_pl0_verified"])
+
+    def test_only_one_new_report_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            populate(folder)
+            populate_native_closure(folder)
+            (folder / "21_dcp_exception_summary.rpt").unlink()
+            with self.assertRaisesRegex(mod.ReviewRejected, "incomplete native"):
+                mod.inspect(folder)
+
+    def test_new_ignored_exception_status_mismatch_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            populate(folder)
+            populate_native_closure(folder)
+            p = folder / "20_dcp_fully_ignored_exceptions.rpt"
+            p.write_text(p.read_text().replace("Non-existent path",
+                                               "Partially overridden", 1))
+            with self.assertRaisesRegex(mod.ReviewRejected, "unexpected ignored"):
+                mod.inspect(folder)
+
+    def test_new_exception_summary_drift_fails_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            populate(folder)
+            populate_native_closure(folder)
+            p = folder / "21_dcp_exception_summary.rpt"
+            p.write_text(p.read_text().replace(
+                "False Path       29", "False Path       30"))
+            with self.assertRaisesRegex(mod.ReviewRejected, "summary changed"):
+                mod.inspect(folder)
 
     def test_wrong_original_dcp_rejected(self):
         with tempfile.TemporaryDirectory() as d:
