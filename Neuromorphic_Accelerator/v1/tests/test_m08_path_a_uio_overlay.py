@@ -38,6 +38,8 @@ def synthetic_board() -> str:
          "M08_DT_SYMBOL=amba|/axi\n"
          "M08_DT_SYMBOL=fpga_full|/fpga-full\n"
          "M08_DT_SYMBOL=zynqmp_reset|/firmware/zynqmp-reset\n"
+         "M08_DT_CELL_HEX=amba|#address-cells|00000002\n"
+         "M08_DT_CELL_HEX=amba|#size-cells|00000002\n"
          "M08_DT_SYMBOL_INSPECTION_NO_OVERLAY_WRITE\n"),
     ]
     return "M08_PATH_A_LINUX_READ_ONLY_BEGIN\n" + "".join(
@@ -126,6 +128,8 @@ class TestM08PathADualUIO(unittest.TestCase):
             self.assertEqual(result["kernel_of_id"], "generic-uio")
             for old, new in (
                 ("M08_DT_SYMBOL=amba|/axi", "M08_DT_SYMBOL_MISSING=amba"),
+                ("M08_DT_CELL_HEX=amba|#address-cells|00000002",
+                 "M08_DT_CELL_HEX=amba|#address-cells|00000001"),
                 ("uio_pdrv_genirq.of_id=generic-uio", "wrong-boot-args"),
                 ("DRIVER_PRESENT=/sys/bus/platform/drivers/uio_pdrv_genirq",
                  "DRIVER_ABSENT=/sys/bus/platform/drivers/uio_pdrv_genirq"),
