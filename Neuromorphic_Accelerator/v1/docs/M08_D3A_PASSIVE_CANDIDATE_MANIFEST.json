@@ -1,0 +1,46 @@
+{
+  "schema": "m08-d3a-passive-fan-candidate-manifest-v1",
+  "candidate_id": "m08-d3a-passive-fan-v1",
+  "stage": "D3.1_SOURCE_ONLY",
+  "board": "KV260_K26",
+  "expected_part": "xck26-sfvc784-2LV-c",
+  "tool": "Vivado_2025.2_NATIVE_OWNER_PC_REQUIRED",
+  "build_script": "scripts/m08_d3a_passive_fan_bd_candidate.tcl",
+  "device_tree_overlay": "NOT_AUTHORED",
+  "programming_package": "NOT_AUTHORED",
+  "design": {
+    "ps_hpm0_fpd": "DISABLED",
+    "ps_hpm1_fpd": "DISABLED",
+    "ps_hpm0_lpd": "DISABLED",
+    "smartconnect": "ABSENT",
+    "identity_axi_slave": "ABSENT",
+    "page_axi_slave": "ABSENT",
+    "linux_uio_windows": 0,
+    "ps_pl0_clock_requested_hz": 100000000,
+    "ps_pl0_runtime_proven": false,
+    "fan_source": "PS_TTC0_EMIO_WAVEOUT_2",
+    "fan_pin": "A12",
+    "fan_iostandard": "LVCMOS33",
+    "fan_native_fan_continuity_proven": false
+  },
+  "hardware_safety": {
+    "original_m08_bitstream_quarantined": true,
+    "original_m08_bitstream_sha256": "a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b",
+    "stock_k26_remains_running": true,
+    "owner_hardware_programming_authorized": false,
+    "owner_mmio_authorized": false,
+    "D3_1_native_vivado_BD_validated": false,
+    "D3_1_implementation_routed": false,
+    "D3_1_bitstream_generated": false,
+    "D3_1_linux_firmware_installed": false
+  },
+  "D3_2_blocking_dependencies": {
+    "ps_atb4_fpd_boot_configuration": "UNKNOWN",
+    "ps_aib13_isolation_and_outstanding_drain": "UNKNOWN",
+    "boot_firmware_afi_128_bit_hpm0_ownership": "UNKNOWN",
+    "linux_pl0_clock_reset_owner": "UNKNOWN",
+    "fpga_region_uio_driver_population_order": "UNKNOWN",
+    "fan_continuity_during_manager_reconfiguration": "UNKNOWN",
+    "physical_read_error_response_validation": "NOT_AUTHORIZED"
+  }
+}
