@@ -60,12 +60,12 @@ def extract_literal_dts(src: str) -> str:
 
 def feature_matrix(dts: str) -> dict:
     return {
-        "assigned_clocks": bool(re.search(r"\\bassigned-clocks\\s*=", dts)),
-        "assigned_clock_rates": bool(re.search(r"\\bassigned-clock-rates\\s*=", dts)),
-        "pl_clock_consumer_clocks": bool(re.search(r"\\bclocks\\s*=", dts)),
-        "pl_clock_consumer_clock_names": bool(re.search(r"\\bclock-names\\s*=", dts)),
+        "assigned_clocks": bool(re.search(r"\bassigned-clocks\s*=", dts)),
+        "assigned_clock_rates": bool(re.search(r"\bassigned-clock-rates\s*=", dts)),
+        "pl_clock_consumer_clocks": bool(re.search(r"\bclocks\s*=", dts)),
+        "pl_clock_consumer_clock_names": bool(re.search(r"\bclock-names\s*=", dts)),
         "afi_fabric_config_node": '"xlnx,afi-fpga"' in dts,
-        "afi_programming_properties": bool(re.search(r"\\bconfig-afi\\s*=", dts)),
+        "afi_programming_properties": bool(re.search(r"\bconfig-afi\s*=", dts)),
     }
 
 
