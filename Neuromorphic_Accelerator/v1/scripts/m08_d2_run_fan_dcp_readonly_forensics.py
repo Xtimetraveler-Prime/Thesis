@@ -112,9 +112,12 @@ def make_evidence(base: Path, route: Path) -> Path:
     require(base.is_dir() and not base.is_symlink(),
             "existing safe owner evidence base required")
     resolved = base.resolve()
-    require(resolved != route.resolve() and resolved not in route.resolve().parents
-            and route.resolve() not in resolved.parents,
-            "forensic output must not be within original route/evidence input")
+    # The usual owner evidence base is the PARENT of the original route
+    # archive. Creating a NEW sibling directory there is safe; creating the
+    # output base inside the immutable original route directory is not.
+    original = route.resolve()
+    require(resolved != original and original not in resolved.parents,
+            "forensic output base must not be original route or a child of it")
     require(resolved != Path("/") and not str(resolved).startswith(
         ("/etc/", "/boot/", "/lib/", "/sys/", "/proc/", "/dev/", "/run/")),
         "forbidden forensic output location")
