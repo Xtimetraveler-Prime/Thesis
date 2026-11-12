@@ -1,5 +1,10 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08 D2 original owner native reports triage follow-up (2026-11-12)
+
+Seven actual owner Vivado 2025.2 fan-route reports were inspected manually (accepted DCP SHA `aea9bb...`; WNS +5.355ns/WHS +0.029ns, PL0 100MHz routed via PS8→BUFG_PS with 1,678 loads; persistent RTSTAT-10, 15 nets counted/14 explicitly listed; 20 routed pipeline name matches; same-clock Partial False Path; CDC output empty). This native source evidence still **DOES NOT show** failed-image Linux PL0 running, reset released, runtime AFI/ATB settings or AXI handshake. `scripts/m08_d2_triage_native_fan_reports.py` is a PC-only read-only report consistency check and prints SHA256 JSON with explicit unproven runtime fields; `tests/test_m08_d2_native_report_triage.py` covers *synthetic* passing/negative text fixtures, not another vendor run. The PC-only DCP Tcl now requests `report_exceptions -coverage` and samples `get_timing_paths -user_ignored -max_paths 30`; the additional 18/19 files are owner **pending**, never claim available. Synthetic source tests must not relabel their samples as genuine Vivado. See [full seven-file review](M08_D2_OWNER_NATIVE_FAN_DCP_REPORT_FINDINGS_2026_11_12.md).
+
+
 > Additional source-only test `test_linux_overlay_does_not_independently_manage_pl0_or_afi` records that the original first-party deployed UIO overlay DTS lacks explicit PL0 `assigned-clocks` / `assigned-clock-rates` and `xlnx,afi-fpga` / `config-afi`. This is an unresolved Linux/firmware ownership issue, NOT a claim that the original runtime PS clock or AFI was wrong. Do not fix it by guessing device-tree clock/AFI entries or running old physical reads.
 
 
