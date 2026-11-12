@@ -80,30 +80,30 @@ def populate(folder: Path) -> None:
 def populate_native_closure(folder: Path) -> None:
     """Synthetic native-shaped output; never call these real vendor reports."""
     (folder / "20_dcp_fully_ignored_exceptions.rpt").write_text(
-        "Tool Version : Vivado v.2025.2\\n"
-        "Design            : m08_page_ps_wrapper\\n"
-        "Design State      : Routed\\n"
-        "Command: report_exceptions -ignored -file path\\n"
-        "Exceptions Report\\n"
+        "Tool Version : Vivado v.2025.2\n"
+        "Design            : m08_page_ps_wrapper\n"
+        "Design State      : Routed\n"
+        "Command: report_exceptions -ignored -file path\n"
+        "Exceptions Report\n"
         + "".join(
             f"{n}        *       *       "
             "[get_cells {syncstages_ff_reg[0]}] "
-            "false false Non-existent path\\n"
+            "false false Non-existent path\n"
             for n in (49, 50, 51))
-        + "Native report footer extended for test\\n" * 5)
+        + "Native report footer extended for test\n" * 5)
     (folder / "21_dcp_exception_summary.rpt").write_text(
-        "Tool Version : Vivado v.2025.2\\n"
-        "Design            : m08_page_ps_wrapper\\n"
-        "Design State      : Routed\\n"
-        "Command: report_exceptions -summary -file path\\n"
-        "Exceptions Report\\n"
-        "False Path       29                  2                       2\\n"
-        "Clock Groups     0                   0                       0\\n"
-        "Multicycle Path  0                   0                       0\\n"
-        "Max Delay        0                   0                       0\\n"
-        "Max Delay DPO    0                   0                       0\\n"
-        "Min Delay        0                   0                       0\\n"
-        + "Native report footer extended for test\\n" * 3)
+        "Tool Version : Vivado v.2025.2\n"
+        "Design            : m08_page_ps_wrapper\n"
+        "Design State      : Routed\n"
+        "Command: report_exceptions -summary -file path\n"
+        "Exceptions Report\n"
+        "False Path       29                  2                       2\n"
+        "Clock Groups     0                   0                       0\n"
+        "Multicycle Path  0                   0                       0\n"
+        "Max Delay        0                   0                       0\n"
+        "Max Delay DPO    0                   0                       0\n"
+        "Min Delay        0                   0                       0\n"
+        + "Native report footer extended for test\n" * 3)
 
 
 class OriginalResetExceptionReviewTests(unittest.TestCase):
