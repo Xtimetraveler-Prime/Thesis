@@ -1,5 +1,9 @@
 # M08.2b Path A: native PL_FLAT staging accepted, dual-UIO OFFLINE candidate
 
+**HISTORICAL PRE-DTC-CORRECTION DOCUMENT:** Original owner native dual-UIO dtc returned success BUT emitted reg_format and avoid_default_addr_size warnings due to missing explicit 2/2 address/size cells in the overlay's AMBA fragment. The original review folder remains preserved and NOT warning-clean. The source has since been corrected to state &amba 2/2, reject ANY dtc compile warning, and validate decoded 2/2 cells. A new metadata-only UIO sysfs inspector was also added. For current evidence, native rerun boundary and next-chat instructions use [M08_2B_PATH_A_DTC_WARNING_AND_NEXT_CHAT_2026_11_11.md](M08_2B_PATH_A_DTC_WARNING_AND_NEXT_CHAT_2026_11_11.md) and [M08_NEXT_CHAT_HANDOFF_2026_11_11.md](M08_NEXT_CHAT_HANDOFF_2026_11_11.md). **No live programming or MMIO accepted.**
+
+
+
 2026-11-11 owner evidence, one consolidated M08.2b milestone. PR #83 DRAFT and unmerged. Absolutely no M08 physical programming, Linux firmware install, or PS AXI transfers.
 
 ## New genuine owner evidence received
