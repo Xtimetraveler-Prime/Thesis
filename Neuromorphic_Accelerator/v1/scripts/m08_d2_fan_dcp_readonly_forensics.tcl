@@ -31,6 +31,8 @@ foreach file {
     17_dcp_cdc.rpt
     18_dcp_exception_coverage.rpt
     19_dcp_ignored_paths_inventory.txt
+    20_dcp_fully_ignored_exceptions.rpt
+    21_dcp_exception_summary.rpt
 } {
     if {[file exists [file join $evidence $file]]} {
         error "M08 D2 refuses to overwrite previously generated evidence file $file"
@@ -100,6 +102,25 @@ if {[catch {report_exceptions -coverage -file [file join $evidence 18_dcp_except
 } else {
     set exception_status "GENERATED_REQUIRES_OWNER_REVIEW"
 }
+# Coverage 0% may be a non-existent path or a fully ignored exception;
+# do not reinterpret this as an AXI data-path timing violation.
+# -ignored lists *fully* ignored constraints; partially overridden scoped
+# exceptions require separate audit. Never waive or modify any constraint.
+set fully_ignored_status "UNAVAILABLE"
+if {[catch {report_exceptions -ignored -file [file join $evidence 20_dcp_fully_ignored_exceptions.rpt]} ignored_exception_error]} {
+    set ignored_exception_reason [string map [list "\n" " " "\r" " "] $ignored_exception_error]
+    puts "M08_D2_FULLY_IGNORED_EXCEPTIONS_UNAVAILABLE=$ignored_exception_reason"
+} else {
+    set fully_ignored_status "GENERATED_REQUIRES_OWNER_REVIEW"
+}
+set exception_summary_status "UNAVAILABLE"
+if {[catch {report_exceptions -summary -file [file join $evidence 21_dcp_exception_summary.rpt]} summary_error]} {
+    set summary_reason [string map [list "\n" " " "\r" " "] $summary_error]
+    puts "M08_D2_EXCEPTION_SUMMARY_UNAVAILABLE=$summary_reason"
+} else {
+    set exception_summary_status "GENERATED_REQUIRES_OWNER_REVIEW"
+}
+
 # get_timing_paths -user_ignored is a diagnostic *sample*, not an exhaustive
 # path audit. No timing constraints are changed or waived.
 set ignored_status "UNAVAILABLE"
@@ -150,6 +171,8 @@ puts $f "reset_pipeline_net_matches=[llength $rst_net_objs]"
 puts $f "cdc_report=$cdc_status"
 puts $f "exception_coverage_report=$exception_status"
 puts $f "ignored_paths_diagnostic=$ignored_status"
+puts $f "fully_ignored_exception_report=$fully_ignored_status"
+puts $f "exception_summary_report=$exception_summary_status"
 puts $f "ignored_paths_sample_count=$ignored_count"
 puts $f "timing_exceptions_signed_off=NO"
 puts $f "original_routed_dcp=YES"
