@@ -39,6 +39,20 @@ AMD's ZynqMP Linux FPGA Manager programming example explicitly includes a PS-PL 
 
 AMD deployment example: https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841847/Solution%2BZynqMP%2BPL%2BProgramming .
 
+## Correction: evidence-parent output validation (2026-11-12)
+
+The first source implementation incorrectly rejected the normal owner command
+`--evidence-base "$HOME/Thesis_Evidence/M08"` because that parent contains
+the original `m08_2b_path_a_fan_route_*` directory. It emitted
+`M08_D2_DCP_PREFLIGHT_REJECTED_NO_BOARD: forensic output must not be within original route/evidence input`
+**before invoking Vivado**. This is a first-party validation bug, **not**
+operator error or a bad checkpoint; the owner checked the original routed
+checkpoint SHA and it matched `aea9bb...`. The corrected guard accepts
+an original route's PARENT as evidence base and creates an exclusive
+`m08_d2_fan_dcp_READONLY_*` **sibling**, while rejecting the route
+directory itself and any descendants as output bases. The same PC-only
+command below remains canonical. No board or MMIO step follows.
+
 ## Exact owner PC commands — no board connection or MMIO
 
 First run source-only targeted verification and broader regressions on the exact new commit:
