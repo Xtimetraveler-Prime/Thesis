@@ -2,6 +2,14 @@
 
 **2026-11-12 • Research branch:** `agent/neuromorphic-accelerator-v1-m08-d3b-protected-axi-design`, based on the D3.1 source/native candidate branch, NOT on deployed firmware. **Status: D3.2 architecture and offline contract model started; D3.2 physical corrected image NOT BUILT/NOT AUTHORIZED.** Original M08 `.bit.bin` SHA `a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b` is still quarantined; stock KV260 remains unmodified.
 
+## 2026-11-12 owner verification and next-stage decision (local PC evidence)
+
+Owner independently reran the D3.2 source evidence checker against the immutable D3.1 native PC run directory and received `D3A_NATIVE_OWNER_FILES_SHA256_AND_SEMANTICS_ACCEPTED`, matching all four archived texts and the original SHA ledger `955677040227dd5eaef81e49421b6b4c56f2436ca829036d3836d217371043a1`. The checker returned `D3B_CONTRACT_CREATED_PROTECTED_AXI_HARDWARE_BLOCKED` and explicit FALSE values for ATB4, AIB13, clock/AFI and hardware MMIO readiness. Manifest SHA reported by the owner is `0bcd98e00c5f5aab64075d08fc97b71b0d4e05c032a1cfa563cd877873384824`; this hash applies to the unchanged architecture JSON, not the updated design review.
+
+The owner compiled and ran both D3.2 Icarus testbenches **twice** in the Linux terminal. The PS/Linux admission-policy model printed all five scenario markers plus `M08_D3B_OFFLINE_PS_LINUX_POLICY_ALL_PASS_NOT_HARDWARE_ATB_OR_MMIO_PROOF`; the genuine but unintegrated PL0 monitor printed all four scenario markers plus `M08_D3B_LIVENESS_GENUINE_RTL_ALL_PASS_NOT_PS_ATB_OR_PHYSICAL_CLOCK_PROOF`. All invocations ended with the expected `$finish`, without fatal. **This is owner-PC simulation acceptance for D3.2A only.** It cannot be upgraded to runtime PS ATB4/AIB13 protection, clock/fan continuity, actual PS boot configuration or a safe corrected image.
+
+**Next submilestone:** start [D3.2B authoritative next-chat handoff, evidence-first implementation gates and full development workflow](M08_D3B_NEXT_CHAT_HANDOFF_2026_11_12.md). Specifically start B.1 (read-only, bounded owner PC inventory and provenance report for original XSA/PS init/base DT/boot component versions), then conditional B.2 PS ATB4/AIB13+PL0/AFI ownership, B.3 full AXI fail/late-response test coverage, B.4 Linux region/fan/rollback design, and B.5 a **new native Vivado-only candidate** ONLY if upstream safety is independently proven. Open a fresh branch from the latest D3.2A handoff commit and keep draft PRs #83/#84/#85 unmerged. No physical hardware step authorized.
+
 ## 1. Accept D3.1 owner-native evidence, carefully scoped
 
 Original owner PC Vivado 2025.2 texts were supplied as exactly five separately uploaded files. The full *original binary Vivado project* was **not** uploaded; the exported Tcl/report/log provide native PS configuration provenance, not routed hardware evidence.
