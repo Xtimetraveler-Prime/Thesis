@@ -158,4 +158,34 @@ probe baseline_device_tree_overlay_dts sh -c '
     exit "$result"
   fi
 '
+# Which Linux driver (if any) could legally claim the new M08 MMIO
+# resources? Read driver registration only: NO modprobe, device open, mmap.
+probe m08_kernel_mmio_binding_readiness sh -c '
+  for driver in /sys/bus/platform/drivers/uio_pdrv_genirq /sys/bus/platform/drivers/generic-uio; do
+    if [ -d "$driver" ]; then
+      echo "DRIVER_PRESENT=$driver"
+      find "$driver" -mindepth 1 -maxdepth 1 -type l -print
+    else
+      echo "DRIVER_ABSENT=$driver"
+    fi
+  done
+  for f in /sys/module/uio_pdrv_genirq/parameters/of_id /sys/module/uio_pdrv_genirq/parameters/uio_pdrv_genirq_of_id; do
+    if [ -r "$f" ]; then
+      printf "DRIVER_OF_ID=%s:" "$f"
+      cat "$f"
+    fi
+  done
+  if command -v modinfo >/dev/null 2>&1; then
+    modinfo -F filename uio_pdrv_genirq 2>&1 || :
+  fi
+  if command -v lsmod >/dev/null 2>&1; then
+    lsmod | grep -E "^(uio|uio_pdrv_genirq|uio_dmem_genirq)" || :
+  fi
+  for path in /sys/class/uio/uio*; do
+    [ -d "$path" ] || continue
+    printf "EXISTING_UIO=%s:" "$path"
+    if [ -r "$path/name" ]; then cat "$path/name"; fi
+  done
+  echo "M08_LINUX_ACCESSOR=NOT_YET_VALIDATED"
+'
 echo "M08_PATH_A_LINUX_READ_ONLY_END_NO_FPGA_CHANGES"
