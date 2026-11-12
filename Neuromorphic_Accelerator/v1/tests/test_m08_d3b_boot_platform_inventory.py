@@ -119,6 +119,10 @@ class TestD3B1Inventory(unittest.TestCase):
         with self.assertRaisesRegex(m.InventoryRejected, "unbounded"):
             self.run_scan(max_entries=50001)
 
+    def test_extra_scan_root_cannot_read_outside_owner_home(self):
+        with self.assertRaisesRegex(m.InventoryRejected, "beneath owner PC HOME"):
+            m.validate_owner_extra(self.root)
+
     def test_output_must_not_touch_existing_evidence(self):
         existing = self.root / "m08_d3a_original.log"
         existing.write_text("immutable original artifact")
@@ -138,7 +142,7 @@ class TestD3B1Inventory(unittest.TestCase):
             self.assertNotIn(forbidden, text)
         self.assertIn("original_m08_image_quarantined", text)
         self.assertIn("hardware_mmio_authorized", text)
-        self.assertIn("first fault", "first fault")  # no live fault injected
+        self.assertIn("ATB4_boot_enable_response_timeout_clock", text)
 
 
 if __name__ == "__main__":
