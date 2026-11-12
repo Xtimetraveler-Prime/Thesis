@@ -59,7 +59,16 @@ printf 'preflight_exit_status=%d\n' "$PREFLIGHT_RC" > "$DIR/01_preflight_status.
 if (( PREFLIGHT_RC == 0 )); then
   # Original route folder remains read-only. Hash original first, copy,
   # independently hash/cmp new snapshot BEFORE opening native checkpoint.
-  DCP_SHA="$(sha256sum -- "$ROUTE/48_fan_post_route.dcp" | cut -d ' ' -f1)"
+  DCP_SHA="$(python3 - "$DIR/01_original_route_preflight.json" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    print(json.load(f)["original_route_dcp_sha256"])
+PY
+)"
+  if [[ "$(sha256sum -- "$ROUTE/48_fan_post_route.dcp" | cut -d ' ' -f1)" != "$DCP_SHA" ]]; then
+    echo "M08_PATH_A_FAN_ROUTE_DCP_CHANGED_AFTER_PREFLIGHT preserve=$DIR" >&2
+    exit 3
+  fi
   cp -- "$ROUTE/48_fan_post_route.dcp" "$DIR/48_fan_post_route.dcp"
   COPY_SHA="$(sha256sum -- "$DIR/48_fan_post_route.dcp" | cut -d ' ' -f1)"
   printf 'copied_dcp_sha256=%s\n' "$COPY_SHA" > "$DIR/04_copied_dcp_sha256.txt"
