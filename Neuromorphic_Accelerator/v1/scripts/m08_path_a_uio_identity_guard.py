@@ -164,6 +164,9 @@ def main() -> int:
         if args.mode == "preflight":
             result = preflight(args.sysfs_root, args.expected)
         else:
+            # HARD QUARANTINE after owner 2026-11-12 RCU stall on the first real
+            # physical read: old consent flags/JSON cannot authorize this image.
+            raise GuardRejected("M08_MMIO_QUARANTINED_AFTER_PHYSICAL_RCU_STALL")
             # No M08 live UIO mapping and no authorization exists today.
             require(args.expected == "present", "physical mode requires expected=present")
             info = approve_identity_mode(
