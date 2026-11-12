@@ -44,8 +44,15 @@ DTS = """/dts-v1/;
              <&zynqmp_reset 0x76>, <&zynqmp_reset 0x77>;
 };
 
-/* Real ZynqMP PS AMBA/AXI bus: do NOT fake a new address translation. */
+/*
+ * Original, live KV260 /axi is a simple-bus with exactly 2/2 cells.
+ * Explicitly restate its EXISTING encoding in the overlay fragment so dtc
+ * can validate both 16-byte reg properties without guessing 2/1 defaults.
+ * This is NOT a new bus or address translation.
+ */
 &amba {
+    #address-cells = <2>;
+    #size-cells = <2>;
     m08-identity@a0000000 {
         compatible = "generic-uio";
         linux,uio-name = "m08-identity";
@@ -190,6 +197,25 @@ def validate_package(folder: Path) -> dict:
     return review
 
 
+def verify_dtc_diagnostics(compile_log: str, decode_stderr: str) -> dict:
+    """Never suppress original compiler diagnostics or invent DT runtime proof.
+
+    Decompiling an unapplied DTBO may produce only the *documented*
+    unresolved zynqmp_reset phandle warning. Any other warning is fatal.
+    """
+    require(not compile_log.strip(),
+            "dtc compile emitted warnings/errors; review ORIGINAL tool log")
+    lines = [line.strip() for line in decode_stderr.splitlines() if line.strip()]
+    require(all(re.search(r"Warning \\(resets_property\\):.*Could not get phandle node", line)
+                for line in lines),
+            "dtc round-trip has unexpected warning/error (especially reg_format)")
+    return {
+        "compile_warnings": 0,
+        "decode_warnings": len(lines),
+        "decode_warning_scope": "UNRESOLVED_SYMBOLIC_RESET_PHANDLE_ONLY" if lines else "NONE",
+    }
+
+
 def validate_dtbo(text: str) -> dict:
     require(text.count('firmware-name = "' + STEM + '.bit.bin";') == 1,
             "compiled DTBO does not reference matching .bit.bin")
@@ -200,6 +226,11 @@ def validate_dtbo(text: str) -> dict:
                 "overlay missing fixup symbol " + symbol)
     require("resets = " in section[0],
             "FPGA region reset list absent")
+    # Both the stock-shaped fpga_full and the separate AMBA fragment
+    # must explicitly declare the 2/2 widths from the genuine live DT.
+    for prop in ("#address-cells = <0x02>;", "#size-cells = <0x02>;"):
+        require(section[0].count(prop) == 2,
+                "both FPGA/AMBA fragments must explicitly declare 2/2 bus cells")
     require(text.count('"generic-uio"') == 2,
             "exactly two Linux generic-uio bindings required")
     devices = {}
@@ -277,6 +308,7 @@ def stage_package(staged: Path, board: Path, outbase: Path) -> Path:
                 ["dtc", "-@", "-I", "dts", "-O", "dtb", "-o", str(dtbo), str(dts)],
                 cwd=folder, stdout=log, stderr=subprocess.STDOUT, check=False)
         require(proc.returncode == 0, "native DT compilation failed")
+        native_compile_log = (folder / "01_dtc_compile.log").read_text()
         result = subprocess.run(
             ["dtc", "-I", "dtb", "-O", "dts", str(dtbo)],
             cwd=folder, capture_output=True, text=True, check=False)
@@ -284,6 +316,7 @@ def stage_package(staged: Path, board: Path, outbase: Path) -> Path:
             result.stdout + "\n-- STDERR --\n" + result.stderr
         )
         require(result.returncode == 0, "native decompilation failed")
+        dtc_review = verify_dtc_diagnostics(native_compile_log, result.stderr)
         devices = validate_dtbo(result.stdout)
         review = {
             "schema": "m08-path-a-dual-uio-linux-overlay-v1",
@@ -294,6 +327,8 @@ def stage_package(staged: Path, board: Path, outbase: Path) -> Path:
             "bit_bin_sha256": sha(output),
             "dtbo_sha256": sha(dtbo),
             "identity_and_page": devices,
+            "dtc_diagnostics": dtc_review,
+            "compiler_reg_format_clean": True,
             "live_kernel_binding_verified": False,
             "active_pl_replaced": False,
             "kernel_resource_probes_verified": False,
