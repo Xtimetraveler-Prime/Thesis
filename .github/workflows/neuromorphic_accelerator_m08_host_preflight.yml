@@ -1,0 +1,80 @@
+name: Neuromorphic Accelerator v1 M08 read-only entry contract (NO BOARD)
+on:
+  push:
+    branches:
+      - 'agent/neuromorphic-accelerator-v1-m08-*'
+  pull_request:
+    paths:
+      - 'Neuromorphic_Accelerator/v1/**'
+      - '.github/workflows/neuromorphic_accelerator_m08_host_preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  m08-entry-host-only:
+    name: Verify M08 inventory and no-false-DDR safety gates (PC-ONLY)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install local Icarus for the standalone M08 PL identity RTL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          command -v iverilog
+          command -v vvp
+      - name: Compile first-party M08 source
+        run: python3 -m compileall -q src scripts tests
+      - name: Confirm M08 PS/identity BD runner shell syntax (no vendor)
+        run: |
+          bash -n scripts/run_m08_identity_bd.sh
+          test -f scripts/m08_identity_ps_bd_candidate.tcl
+          test -f scripts/m08_identity_bd_audit.py
+      - name: M08 targeted read-only, identity and BD-negative tests
+        run: python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+      - name: Inherited M07 source models
+        run: python3 -m unittest discover -s tests -p 'test_m07*.py' -v
+      - name: Full Python shared-import test discovery
+        run: python3 -m unittest discover -s tests -v
+      - name: Reproduce readonly PC capture (never a board pass)
+        run: |
+          python3 scripts/m08_capture_readonly.py \
+            --mode host --output-dir "$RUNNER_TEMP/m08_host_inventory"
+          python3 - "$RUNNER_TEMP/m08_host_inventory/m08_readonly_inventory.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          item=json.loads(Path(sys.argv[1]).read_text())
+          assert item["schema"]=="m08-kv260-readonly-entry-v1"
+          assert item["mode"]=="host"
+          assert item["ready_for_physical_ddr"] is False
+          assert item["physical_readiness"]["ready_to_dma"] is False
+          assert item["board_identity_observed"] is False
+          assert item["kv260_programmed_by_this_tool"] is False
+          assert item["physical_dma_issued_by_this_tool"] is False
+          assert len(item["source_sha256"])==2
+          print("M08_1_HOST_CAPTURE_ONLY_PASS_NEVER_PHYSICAL")
+          PY
+      - name: Independently audit captured receipt; reject false physical claims
+        run: |
+          python3 scripts/m08_audit_readonly.py \
+            --capture-dir "$RUNNER_TEMP/m08_host_inventory" \
+            --output "$RUNNER_TEMP/m08_host_inventory/audit.json"
+          python3 - "$RUNNER_TEMP/m08_host_inventory/audit.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          evidence=json.loads(Path(sys.argv[1]).read_text())
+          assert evidence["status"]=="RECEIPT_HASH_AND_SCHEMA_OK"
+          assert evidence["physical_board_identity_authenticated"] is False
+          assert evidence["ready_for_physical_ddr"] is False
+          assert evidence["physical_run_verified"] is False
+          print("M08_1_RECEIPT_INTEGRITY_ONLY_NOT_HARDWARE_PASS")
+          PY
+      - name: Preserve host-only provenance, NOT KV260 hardware evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m08-1-host-only-physical-not-run
+          path: ${{ runner.temp }}/m08_host_inventory/
+          if-no-files-found: error
+          retention-days: 30

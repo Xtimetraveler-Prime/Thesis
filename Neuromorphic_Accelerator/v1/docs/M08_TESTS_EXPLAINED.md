@@ -1,0 +1,389 @@
+# M08 tests explained — entry/read-only and hardware-readiness contracts
+
+## M08 D2 PS-clock-domain behavioral timeout simulation (2026-11-12)
+
+`rtl/m08/tb_m08_d2_ps_domain_timeout_contract.sv` contains one **simulation-only abstract PS-side** AXI-Lite *read* guard and seven-marker fault testbench. The guard uses a simulated 10ns PS clock independent of a 14ns **stoppable** PL clock. It models both missing downstream address acceptance and accepted AR with missing RVALID, returning **synthetic** SLVERR by the sixth PS cycle and latching fault poison that rejects any later AR. Good data response/backpressure works without poison; late R after a timed-out AR is ignored. The negative PS-clock-stopped test shows the proposed watchdog cannot operate without its independent clock. This model is **NOT synthesizable PS ATB**, does not instantiate real AMD PS/SmartConnect or implement CDC, and **DOES NOT drain or isolate accepted but outstanding downstream AR**. `tests/test_m08_d2_ps_domain_fault_containment.py` asserts original M08 quarantined source, model-only disclaimers and tests native Icarus `iverilog -g2012`/`vvp`. Missing Icarus is explicit SKIP, not proof. See [full gate, source provenance, tests and limitations](M08_D2_PS_PL_FAILURE_CONTAINMENT_DESIGN_REVIEW_2026_11_12.md). Original M08 bit.bin still QUARANTINED; no hardware correction, deployment or access done.
+
+
+## M08 D2 original owner deployed M08 UIO DTS evidence attestation (2026-11-12)
+
+`scripts/m08_d2_verify_original_m08_decoded_overlay.py --evidence-dir <owner PC original folder>` is a read-only validator of the **three genuine owner M08-only DTS outputs**. It compares JSON's original DTBO SHA, native `dtc` exit and owner rehash claims, and the actual 961-byte DTS SHA `772c6b0bb299d0bf0665cc79063a198d331dc9543249e5c62f7f0cff18d9aabe`. Validates exact symbolic FPGA region/reset/AMBA fixups, two original generic UIO nodes and no clock/AFI configuration in deployed overlay. Permits only the original single unresolved-reset-phandle warning, preserves `stock_dtbo_compared=false`, and **never claims original runtime clock/AFI/ATB4 or authorizes hardware**. `tests/test_m08_d2_verify_original_m08_decoded_overlay.py` uses **synthetic** strings with patched fixture SHA and rejection cases for DTS mutation, changed `dtc` warnings, counterfeit hardware approval, and symlink; these tests are not another native dtc run. [Exact original upload receipt hashes and owner commands](M08_D2_OWNER_ORIGINAL_M08_DECODED_OVERLAY_FINDINGS_2026_11_12.md).
+
+
+## M08 D2 owner PC original DTBO locator and optional offline decompile
+
+`scripts/m08_d2_locate_and_decompile_owner_dtbos.py` searches only owner-PC evidence and repository directory trees for **exact** original stock and failed M08 *dual-UIO* DTBO basenames, matches SHA256 constants from the original physical operator, skips symlinks, handles absent/drifted originals without inventing provenance, and outputs JSON without writing files. With explicit `--prepare`, requires one SHA-pinned match of each binary plus local `dtc`, decompiles only to a NEW exclusive owner-PC evidence directory, independently rehashes unchanged input, preserves dtc stderr, writes status JSON and receipt. It never invokes board/MMIO/SSH/JTAG/FPGA Manager. `tests/test_m08_d2_locate_offline_dtbos.py` uses **synthetic fake binaries and mocked dtc**, tests wrong hash, missing source, duplicate copies, symlink, unsafe platform rejection and prepared receipt; no fake test represents real original device tree ownership. When originals not on PC, do NOT request a board firmware copy as part of this D2 operation. [Original file identities and exact PC commands](M08_D2_OWNER_PC_DTBO_DISCOVERY_AND_CLOCK_OWNER_GATE_2026_11_12.md). All real hardware remains blocked under the incident quarantine.
+
+
+## M08 D2 native timing exception closure and PS/PL source ownership (2026-11-12)
+
+The owner supplied four native files from genuine PC Vivado 2025.2: `20_dcp_fully_ignored_exceptions.rpt` marks original zero%-coverage positions 49–51 **Non-existent path**, `21_dcp_exception_summary.rpt` counts 29 False Path constraints (2 setup/2 hold endpoints), `01_native_vivado.log` confirms actual read-only vendor completion, `10_dcp_identity.txt` pins exact original fan DCP/A12. Now `scripts/m08_d2_review_reset_timing_exceptions.py` optionally accepts both 20/21 in the same original owner report folder with strict SHA/identity/command/status/count checks; it fails closed on partial pairs or changed content. **Four-file historical report analysis remains valid, but cannot claim these entries classified.** New tests (same `test_m08_d2_reset_exception_review.py`) use synthetic report-shaped strings for both valid closure and negative failure paths; these source tests are not vendor original runs. New `scripts/m08_d2_offline_ps_pl_contract_audit.py` uses AST (not import) to inspect original M08 BD and dual-UIO DTS and optionally saved stock vs deployed M08 DTS text; `test_m08_d2_ps_pl_contract_audit.py` tests no false claim of live clock/AFI/ATB, no unsafe access and source drift refusal. Timing exceptions are **not** current leading RCU hypothesis; runtime PS PL0 clock/reset/HPM0 AFI and ATB4 protection remain UNKNOWN, so physical reads remain quarantined. [Evidence details and commands](M08_D2_ORIGINAL_EXCEPTION_CLOSURE_AND_PS_PL_RUNTIME_GAP_2026_11_12.md).
+
+
+## M08 D2 second native report review — methodology and reset exceptions
+
+The owner additionally supplied **actual native Vivado** `10_dcp_identity.txt`, `13_dcp_methodology.rpt`, `18_dcp_exception_coverage.rpt`, `19_dcp_ignored_paths_inventory.txt`. Native metadata confirms the same original fan DCP, report_methodology zero violations, 29 timing False Path exception coverage entries and 30 ignored path samples all ending at `xpm_cdc_async_rst` asynchronous reset clear pins (10 groups x 3 stages). Three cell-based exceptions have 0% coverage, which could reflect nonexistent/ineffective exceptions, NOT an ordinary setup/hold failure. New `scripts/m08_d2_review_reset_timing_exceptions.py --reports-dir ORIGINAL_OWNER_EVIDENCE` independently reads the four files, prints SHA plus counts and keeps runtime/hardware signoff FALSE. `tests/test_m08_d2_reset_exception_review.py` uses eight **synthetic** positive/negative fixtures; passing CI is NOT a second vendor native report. The optional new native Tcl `report_exceptions -ignored` and `-summary` probes were just added, remain pending genuine owner PC execution, and are never a bitstream release. [Second owner report findings](M08_D2_OWNER_EXCEPTION_AND_METHODOLOGY_FINDINGS_2026_11_12.md).
+
+
+## M08 D2 original owner native reports triage follow-up (2026-11-12)
+
+Seven actual owner Vivado 2025.2 fan-route reports were inspected manually (accepted DCP SHA `aea9bb...`; WNS +5.355ns/WHS +0.029ns, PL0 100MHz routed via PS8→BUFG_PS with 1,678 loads; persistent RTSTAT-10, 15 nets counted/14 explicitly listed; 20 routed pipeline name matches; same-clock Partial False Path; CDC output empty). This native source evidence still **DOES NOT show** failed-image Linux PL0 running, reset released, runtime AFI/ATB settings or AXI handshake. `scripts/m08_d2_triage_native_fan_reports.py` is a PC-only read-only report consistency check and prints SHA256 JSON with explicit unproven runtime fields; `tests/test_m08_d2_native_report_triage.py` covers *synthetic* passing/negative text fixtures, not another vendor run. The PC-only DCP Tcl now requests `report_exceptions -coverage` and samples `get_timing_paths -user_ignored -max_paths 30`; the additional 18/19 files are owner **pending**, never claim available. Synthetic source tests must not relabel their samples as genuine Vivado. See [full seven-file review](M08_D2_OWNER_NATIVE_FAN_DCP_REPORT_FINDINGS_2026_11_12.md).
+
+
+> Additional source-only test `test_linux_overlay_does_not_independently_manage_pl0_or_afi` records that the original first-party deployed UIO overlay DTS lacks explicit PL0 `assigned-clocks` / `assigned-clock-rates` and `xlnx,afi-fpga` / `config-afi`. This is an unresolved Linux/firmware ownership issue, NOT a claim that the original runtime PS clock or AFI was wrong. Do not fix it by guessing device-tree clock/AFI entries or running old physical reads.
+
+
+## New M08 D2 original fan-routed DCP forensic test (2026-11-12)
+
+`tests/test_m08_d2_fan_dcp_readonly_forensics.py` is **PC-only source/mock**. It checks that new native `m08_d2_fan_dcp_readonly_forensics.tcl` only **opens** an original routed checkpoint, emits timing/DRC/clock/CDC/net inventory reports and contains no write_bitstream/JTAG/MMIO commands. It confirms original fan DCP SHA pin and accepted full-ledger SHA checking, rejects tampered/rehashed-wrong original DCP/DRC, rejects original evidence output collisions, exercises a local `tclsh` wrong-SHA vs right-SHA mock boundary, and tests fresh SHA-receipted success/failure evidence with a MOCK vendor process. These tests do **not** invoke real Vivado, load a KV260, prove PS-PL AXI or detect a physical clock/reset fault. A genuine owner-PC run with Vivado 2025.2 remains REQUIRED for original native report evidence. See [read-only vendor runbook and interpretation](M08_D2_NATIVE_FAN_DCP_READONLY_FORENSIC_PLAN_2026_11_12.md). A native report is still **not** a corrected or deployable image; original image MMIO stays quarantined.
+
+
+## M08.2b post-incident D0/D1/D2 first offline fault tests (2026-11-12)
+
+`tests/test_m08_ps_pl_stall_forensics.py` verifies original source-only PS HPM0→SmartConnect→dual slaves, exact common clock/reset connections, *unmeasured* constant-high `dcm_locked`, historical RTSTAT-10 warning, identity/page address map alignment, quarantined MMIO operator, and the page internal-only 64-cycle watchdog. Its optional Icarus test compiles the **actual first-party identity RTL** with `tb_m08_axil_identity_stall_forensics.sv` to exercise reset gating, held R/B-style AXI4-Lite timing (actual test exercises R only), reset during outstanding R, halted source clock, and a separate 64-cycle intentionally nonresponding slave model. Five unique markers are required; the last two indicate **EXPECTED NO RESPONSE**, not a successful hardware error/timeout. Simulation SKIPs if Icarus missing and must not be claimed PASS. Original PS/SmartConnect or vendor route, physical OS/board and AXI protection are not modeled. [Root-cause and verification details](M08_D0_D1_D2_PS_PL_AXI_STALL_SOURCE_REVIEW_2026_11_12.md).
+
+Run **PC only**: `python3 -m unittest discover -s tests -p 'test_m08_ps_pl_stall_forensics.py' -v` and the explicit Icarus compile/run in that review document, followed by all M08 and full test discovery. Do NOT run prior physical identity or page commands.
+
+
+## CRITICAL (2026-11-12): live first identity RCU stall → global source quarantine
+
+The owner first identity-mode test via physical Linux UIO made the board unresponsive (SSH/serial), screenshot showed RCU stall/thread starvation, SSH exit 255. After power cycle stock firmware restored but old boot kernel journal/pstore not preserved. Hardware cause still UNKNOWN; M08 identity and page physical tests blocked. **Do NOT run old physical commands or original previously copied remote scripts**.
+
+The original operator `scripts/m08_kv260_physical_uio_operator.py` NOW has `reject_quarantined_mmio_mode` evaluated at the very start of `main()`, before any hardware checks or MMIO. Only `preflight` (no MMIO) is allowed; `identity` and `page` fail regardless of previous CLI flags and environment consent. The alternate legacy `scripts/m08_path_a_uio_identity_guard.py --mode identity` similarly hard rejects. `tests/test_m08_post_incident_mmio_quarantine.py` runs 4 source-only tests checking identity+page denial, bypass flags denial *before* live access, alternate guard denial, and strict source interlock. This prevents accidental reuse of the current broken firmware via the updated repository; it CANNOT retroactively disable older Python copies on the KV260.
+
+Full incident and offline-first fix plan: [M08.2b.3 owner first physical identity RCU stall](M08_2B_3_FIRST_IDENTITY_RCU_STALL_INCIDENT_AND_FIX_PLAN_2026_11_12.md). Existing `test_m08_physical_uio_operator.py` synthetic file-backed mapping unit tests remain a TRANSPORT experiment, NOT authority to retry physical UIO. DO NOT produce an automated workaround that suppresses/overrides quarantine.
+
+PC source verification:
+~~~bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_post_incident_mmio_quarantine.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+~~~
+
+
+## M08.2b.3/.4 post-power-cycle guarded physical UIO operator — 7 source-only tests (2026-11-12)
+
+New `scripts/m08_kv260_physical_uio_operator.py` is deployed as an ordinary owner-home Python source file only after an active M08 Linux manager slot is verified. It imports the existing `m08_identity_client` + `m08_uio_page_protocol`; it never programs PL, alters fancontrol, uses /dev/mem, or dispatches compute. It independently validates actual M08 bit.bin/DTBO/shell/stock recovery SHA, boot default, model/CPU, fancontrol/dfx-mgr status, FPGA manager/overlay, dynamically discovered UIO named map0 and exact char-device major/minor and Linux driver symlink. Modes: `preflight` no MMIO, `identity` guarded O_RDONLY/PROT_READ fixed-register reads and original SHA evidence, and `page` separately acknowledged native 32-bit MMIO writes via the proven `stage_and_compare` 64-word contract with fresh full readback, SHA check, COMMIT only after verification, and no DISPATCH.
+
+`tests/test_m08_physical_uio_operator.py` exercises seven **synthetic** checks: 64-word unique pattern, synthetic 4KiB memory mapping read/write in whole aligned uint32 stores and denial of unsafe offsets, SHA-pinned previous original identity receipt with tamper rejection, existing first-party protocol invoked with correct 64 words and gate, independent digest mismatch denial, non-KV260 CLI denial, and absence of firmware mutation/neural commands. All are source-only; only owner original live receipts can close physical PS AXI or page conformance. Note the physical UNIX `timeout` process can remain stuck in kernel D-state and UIO cannot display AXI BRESP/RRESP.
+
+PC local tests:
+~~~bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_physical_uio_operator.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+~~~
+
+Full operator power-cycle and physical command runbook: [M08.2b.3/.4 owner postboot physical identity and page](M08_2B_3_4_POST_POWER_CYCLE_FIRST_PHYSICAL_UIO_VERIFICATION_2026_11_12.md).
+
+
+## M08.2b.3 exact live kernel driver binding gate — four additional PC-only tests
+
+`tests/test_m08_first_identity_binding_readonly.py` has four tests: Bash syntax and negative source policies (no /dev/uio, PL, fancontrol or firmware mutation); invalid SSH target denied before contacting a board; synthetic fake successful SSH run preserves exact 5-file SHA receipt and emits metadata-only pass; synthetic failed SSH run is marked failed and preserves stderr/exit code/receipt. The source pair `scripts/m08_kv260_identity_binding_readonly.sh` and `scripts/run_m08_identity_binding_readonly_pc.sh` will be used by the owner for the **next real read-only driver link** inspection, but CI cannot prove actual KV260 binding or safe AXI.
+
+PC commands:
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+bash -n scripts/m08_kv260_identity_binding_readonly.sh
+bash -n scripts/run_m08_identity_binding_readonly_pc.sh
+python3 -m unittest discover -s tests -p 'test_m08_first_identity_binding_readonly.py' -v
+```
+First physical PL load already accepted; first PS AXI register read, state page and physical rollback still OPEN. See [next physical kernel binding gate](M08_2B_NEXT_PHYSICAL_IDENTITY_BINDING_GATE_2026_11_11.md).
+
+
+## M08.2b original physical image deployment receipt auditor (2026-11-11)
+
+`scripts/m08_verify_first_physical_receipt.py --archive ORIGINAL_FIRST_PHYSICAL_REVIEW.tar.gz` is a PC-only immutable-input checker. It verifies exact five-file original SHA receipt, rejects duplicate/traversing/link/unexpected tar entries, parses genuine operator console manager `PL_FLAT` registration, stock unload, M08 slot0 load, FPGA manager operating, overlay, services, post-load thermals and pre-load root-visible Linux resource inventory. It validates names AND exact bases/sizes of both UIO map0 records and preserves the prior four AXI performance-monitor UIO devices. It **does not** attempt to read physical registers or assert Linux MMIO or physical AXI correctness. It never assumes fixed UIO numbers in a future build.
+
+`tests/test_m08_first_physical_receipt.py` includes six synthetic tests: (1) valid standalone synthetic evidence accepted only as metadata; (2) tampering/incomplete SHA receipt rejected; (3) false load-success claim rejected even with a self-consistent ledger; (4) bad UIO address, size, missing page or false readback status rejected; (5) malicious tar path and symlink rejected; (6) missing archive rejected and host-only source API constraints. The fixture is NOT real KV260 evidence. The **real** owner-uploaded archive independently checked 5/5 cover entries and contains a separate ledger. See [original first deployment acceptance](M08_2B_KV260_FIRST_PHYSICAL_DEPLOYMENT_ACCEPTANCE_AND_REPRODUCIBLE_METHOD_2026_11_11.md).
+
+PC tests:
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_first_physical_receipt.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+M08 actual `dfx-mgr` managed image replacement and exact UIO metadata **accepted**; **NO physical register read or 256B page acceptance yet**. No UART log reviewed; no actual rollback measured. Keep M08 loaded; PR #83 remains draft and unmerged.
+
+
+## M08.2b physical-deployment preflight: new 5-test read-only source suite (2026-11-11)
+
+`tests/test_m08_path_a_physical_preflight.py` adds FIVE PC-only synthetic checks: (1) Bash and Python syntax plus prohibited-mutation strings for the SSH board probe; (2) SHA ledger valid case and tampered/duplicate/traversal/symlink rejection; (3) malformed candidate and unauthorized board IP rejection **before SSH**; (4) a fake successful SSH subprocess verifying separate new evidence directory, markers, stdout/stderr/exit SHA receipt, and explicit `deployment_authorized=false`; (5) a synthetic failing SSH preserving original failure logs, nonzero exit and SHA receipt. Local 5/5 tests PASS; automated tests cannot prove physical fan cooling, Linux manager loading or actual register communication.
+
+New `scripts/run_m08_path_a_physical_preflight_pc.py` requires the corrected original candidate's actual bit.bin + DTBO binaries and SHA receipt on the owner's Linux PC, checks empty native DTC compile log and exact 4KiB map descriptions, streams `scripts/m08_path_a_physical_gate_board_readonly.sh` over SSH to `ubuntu@10.42.0.135`, and records only genuine **read-only** current fan/thermal/firmware-manager/firmware hash/overlay/UIO evidence into fresh exclusive `~/Thesis_Evidence/M08/m08_2b_physical_READONLY_*`. No PL programming, Linux firmware install, fancontrol, /dev/uio open, mmap, or memory write is authorized. See [physical cooling and rollback gate](M08_2B_PHYSICAL_DEPLOYMENT_COOLING_ROLLBACK_GATE_2026_11_11.md).
+
+PC local commands:
+
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+bash -n scripts/m08_path_a_physical_gate_board_readonly.sh
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_path_a_physical_preflight.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Require all eight M01–M08 CI workflows on the exact new final SHA. Actual **read-only SSH baseline** is an owner task, and independently powered cooling + verified rollback + explicit owner approval are HARD STOP gates before physical reconfiguration. No claim that a synthetic positive test equals physical KV260 operation.
+
+
+## M08.2b latest: owner native DTC CLEAN and PS/page register protocol tests (2026-11-11)
+
+**New `test_m08_uio_identity_guard.py` (six synthetic source/mock tests):** metadata-only preflight CLI no opens/mmap; reject missing CLI/env consent, non-real root, wrong host/model, SHA mismatch, altered approval assertions and symlinked operator record; file-backed fake 4KiB read-only mapping validates correct selected `/dev/uioN` names without opening real devices, identity-before-page read ordering, zero BUILD_ID reporting and no writes; synthetic bad identity rejected. `scripts/m08_path_a_uio_identity_guard.py` default `--mode preflight --expected absent` remains the **only presently safe owner-facing mode**. Its future `--mode identity` is NOT authorized or run; requires independently verified physical reconfiguration, fan-gap cooling/rollback, active device-tree and driver ownership. An unmapped physical AXI read can still SIGBUS/hang Linux. No physical acceptance from mock tests.
+
+Run the new targeted source test on PC with `python3 -m unittest discover -s tests -p 'test_m08_uio_identity_guard.py' -v`, then M08 and full suites. After final source changes confirm exact-HEAD M01–M08 Actions again.
+
+
+Owner original uploaded archives independently SHA-verified: corrected native `dtc` compile log **empty**, both FPGA and AMBA child bus cell pairs **2/2**, exact two `generic-uio` 4KiB nodes and fixups. Decompiled log includes only the documented unresolved symbolic reset-phandle warning; real sysfs metadata expected M08 absent, four `axi-pmon` UIO nodes. This is no longer the earlier warning-bearing candidate; see [M08.2b native acceptance report](M08_2B_UIO_NATIVE_ACCEPTANCE_AND_NEXT_PHYSICAL_GATE_2026_11_11.md). Original binaries are NOT within uploaded tarballs, so their owner-ledger hashes were not independently byte checked here.
+
+`tests/test_m08_uio_page_protocol.py` uses **synthetic injected read32/write32 adapters** for the new `src/neuromorphic_accelerator_v1/m08_uio_page_protocol.py`: validates dual magic/version/capability, duplicated stable snapshot and empty page; exact 64 fully supplied uint32 values, selected logical ID/readback, BEGIN, complete 256-byte load count, 64 fresh returned words compared before COMMIT, READY/valid and resident ID. Negative tests withhold COMMIT on a corrupted word, wrong loaded-byte count, wrong state/identity, malformed vector/ID, missing write gate, injected read/write exceptions. No synthetic test observes AXI BRESP/RRESP, exercises /dev/uio, accesses actual K26 AXI, or verifies DISPATCH=SLVERR; normal UIO mmap does not provide AXI response metadata. The result explicitly reports `physical_ps_axi_verified=false`, and a zero default identity build tag remains **unprovisioned**, never cryptographic attestation.
+
+Owner PC commands from the M08 branch root (no board actions):
+
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_uio_page_protocol.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Run all M01–M08 Actions on the exact final commit; source tests are not physical verification. Do not repeat old read-only SSH/DTC or JTAG inventory without a reason. No FPGA/unload/loadapp, fan, raw physical memory, or Linux MMIO change authorized.
+
+
+**Status 2026-11-11:** M08.1 accepted host evidence; **M08.2a identity-only offline genuine Vivado BD is ACCEPTED** with sixth original native PASS and seventh corrected independent-auditor receipt, after five preserved failures. This is not M08.2b full routed accelerator or M08 physical acceptance. **M08.3.1** read-only DMA readiness source and no-DMA negative tests STARTED. Do not reinterpret CI fixture data as a captured physical KV260 observation. Genuine board runs and original vendor place-and-route require local operator evidence.
+
+## Scope and independent evidence
+
+M08.1 is intended to answer **what is actually available on the development PC and the KV260?**, before risking unowned PS DDR or programming a PL design that lacks a proven Linux driver.
+
+- `m08_entry.py`: immutable five-ZIP M06 acceptance SHA256 list from original M06 acceptance report, input-shape-only kernel DMA address guard, and a deliberately **never automatically ready** physical evidence checklist.
+- `m08_capture_readonly.py`: host or KV260-on-device Linux inventory. Every subprocess is a named read-only argv, never `shell=True`. No `sudo`, `/dev/mem`, `vivado -mode batch`, flash, FPGA programming, DMA, or DDR memory writes. Output is a unique operator-owned mode-0700 folder with JSON and SHA receipt.
+- `m08_receipt_audit.py` and `m08_audit_readonly.py`: independent SHA and schema/command-scope auditor. It detects file tampering and fake ready-to-DMA claims but **cannot cryptographically verify** that a board supplied an authentic boot log; owner observation/independent device and toolchain evidence remains necessary.
+- `docs/M08_PHASED_HARDWARE_PLAN.md`: exact next gates (Vivado BD build, kernel-owned buffer, physical neural parity, matched hardware benchmarks, performance evidence and M09 handoff).
+
+### Test-by-test meaning (host-only synthetic negative/positive fixtures)
+
+| Test | Input and method | PASS means / what it does NOT mean |
+| --- | --- | --- |
+| `test_readiness_is_nonclaim_even_when_all_self_reported` | Missing, malformed and complete operator-text evidence IDs | An empty list fails readiness; even a complete *self-report* requires independent audit. No fabricated physical PASS. |
+| `test_physical_dma_requires_kernel_owned_buffer_and_32bit_bound` | Valid 64B-aligned kernel API *claim*, then bare devmem, guessed allocator, invalid mask/bounds/alignment, booleans, negative/overflow cases | Only structural shape of declared DMA buffer is admitted. This is NOT a real allocation/driver proof, and `physical_allocation_verified=false` is mandatory. |
+| `test_archive_inventory_is_sha_strict_no_faked_owner_vivado_pass` | Empty evidence directory, wrong/duplicate/symlink files, and SHA mismatch | Five accepted original M06 ZIP names must each appear once and have **their independently published exact SHA256**, without copies or mutations. Synthetic files cannot be accepted as Vivado evidence. |
+| `test_host_capture_fake_safe_tools_does_not_claim_board` | Synthetic read-only command results from a PC environment | Records host source hashes/version observations and explicit no-board/DDR flags; a host OS cannot identify a live KV260. |
+| `test_board_local_observation_is_not_fpga_attestation` | Synthetic Linux DT model text (a positive name and missing-model negative) | Evidence is labeled *local OS observation*, not a bitstream/AXI/DDR proof even if a string says KV260. |
+| `test_exclusive_evidence_no_overwrite_or_invented_host_pass` | New output folder, SHA receipt, attempt to overwrite | Original evidence bytes are unchanged; no accepted pass is replaced by a later run. |
+| `test_command_allowlist_and_board_device_file_allowlist` | Unapproved shell/Vivado/physical memory operations | Fail closed before executing any nonallowlisted command or reading device memory. |
+| `test_real_cli_host_is_explicit_read_only_and_exclusive` | Genuine local read-only capture in CI's Ubuntu host, repeat same folder | Output is reproducible in structure with local timestamps/source SHA, no board PASS, and refusal to overwrite. CI runner is a workstation, NOT the KV260. |
+| `test_host_receipt_audits_only_integrity_not_real_board` | Source-only fake host capture + independent SHA256 verifier | SHA, command allowlist and false physical readiness flags are enforced; it does not authenticate identity of a real KV260. |
+| `test_board_local_receipt_never_authenticates_board_or_dma` | Synthetic DT payload + independent auditor | Even a board-local capture only proves receipt consistency. |
+| `test_modified_receipt_is_rejected_even_with_valid_json` | Change one JSON field, preserve original receipt | SHA256 mismatch must fail. |
+| `test_self_consistent_but_false_physical_or_extended_commands_rejected` | Regenerate valid SHA for fabricated DDR READY/board program, unauthorized command or fake archive state | Integrity alone cannot grant physical authority; auditor rejects fabricated status and unapproved captures. |
+| `test_cli_preserves_accepted_receipt_and_exclusive_output` | Audit output in a new file, attempted repeat | Independent JSON result is only integrity-pass and is never overwritten. |
+
+**CI:** `.github/workflows/neuromorphic_accelerator_m08_host_preflight.yml` runs `test_m08*.py`, inherited M07 and full v1 unittest discovery in a single process. It performs a real **host-only** inventory on Ubuntu GitHub Actions, validates the independent receipt and retains a marked `m08-1-host-only-physical-not-run` archive. No board, HLS synthesis, original AMD XSim, physical DMA or real DDR is exercised by CI.
+
+### Test sources vs real hardware acceptance
+
+The accepted M05 signed32 engine and accepted M06 signed16 pager differ in arithmetic width; they cannot automatically be compared as matched 4-way physical variants. M06's 64 KiB canonical memory is a simulated bytearray/RTL scratch, not Linux-owned DDR. The original AMD interconnect and historical M05 DMA memory graph do not supply a genuine kernel driver/bitstream. Before **any** physical latency/throughput figure, the exact original generated vendor sources, addresses, XSA/bitstream, DDR ownership, AXI transfer integrity and M02 independent neural reference must all be verified on target.
+
+No owner board measurements are available yet; that absence should be shown as **OPEN**, not hidden or represented by model-only counters.
+
+## Evidence acceptance strategy
+
+The first genuinely useful owner deliverable is a **PC-host** preflight receipt with the original M06 ZIP digest matches and, if the board boots, a **separate board-local** receipt. Capture a serial boot log if the KV260 never reaches a usable Linux shell. These observations determine whether to pursue the current on-device Linux/driver path or a recovery/isolated boot plan.
+
+Physical M08 acceptance requires future separately documented tests: signed neural trace parity, fail-closed fault behavior, actual DDR read/write and W-before-R ordering, real FIFO/backpressure, timing boundaries, routed utilization, and repeatable independent runs. A synthetic CI fixture must never be used for that acceptance.
+
+## M08.2 standalone PL identity — preliminary original RTL (NOT yet a PS/PL bitstream)
+
+**Modules:** `rtl/m08/m08_axil_readonly_identity.v`, `rtl/m08/tb_m08_axil_readonly_identity.sv`, `src/neuromorphic_accelerator_v1/m08_identity_client.py`. Tests: `tests/test_m08_identity_rtl.py` and `tests/test_m08_identity_client.py`.
+
+Why this step: before deploying the original M05/M06 compute/DDR paths, a **side-effect-free** PL identity slave can distinguish “the PS can read my actual PL address decode” from “a Vivado bitstream was accepted” or “the neural engine ran.” It never constructs a user-space `/dev/mem` mapping or generates any DMA transaction. It is an independently developed local-first-party Verilog candidate; not a sourced original AMD/HLS model or a physical K26 project.
+
+**Register map** (32-bit little-endian AXI4-Lite word offsets; must later be assigned an independently audited, non-overlapping PS address):
+| Offset | Read result | Write behavior |
+| --- | --- | --- |
+| 0x00 | `0x4D303831` ASCII "M081" | SLVERR |
+| 0x04 | `0x00010000` protocol version v1.0 | SLVERR |
+| 0x08 | `0x00000000` this slave has **no DMA/master capability** | SLVERR |
+| 0x0c | zero reserved | SLVERR |
+| 0x10–0x1c | four 32-bit parameterized BUILD_ID words, default all zero | SLVERR |
+| others / unaligned | `RDATA=0`, AXI4-Lite DECERR | SLVERR |
+
+On any accepted AW/W pair, including AW before W or W before AW, exactly one SLVERR B reply is generated and held under BREADY backpressure. No register write side effect exists. Read response and data stay stable while RREADY is low. Reset drops pending half-writes/outputs. Unknown read offsets do **not** alias a control register. The four build ID words must be set from a real verified deployment build later; zero defaults prohibit a false “this bitstream is certified” conclusion.
+
+**Host client:** `inspect_identity(adapter)` takes a caller-supplied `read32(offset)` interface, never allocates MMIO or chooses a physical address. It reads the entire map twice, rejects unknown magic/protocol/unknown capabilities, changed reads and a zero build tag by default. Even a consistent nonzero build tag returns `actual_bitstream_sha_verified=false`, `physically_attested=false`, `dma_buffer_owner_verified=false`. Only the independently SHA-verified routed bitstream and external board/driver evidence can change those downstream claims.
+
+| New test | Scope | Expectation |
+| --- | --- | --- |
+| `test_identity_module_has_no_dma_or_writable_effects` | Local static structural check | Separate read-only RTL has no AXI master and returns errors for every write/unknown read address. |
+| `test_real_iverilog_protocol_reset_and_backpressure` | **Real Icarus iverilog/vvp simulation** of new RTL and independent TB | Thirteen exact read cases (including fault addresses), three rejected AW/W ordering cases, stable R/B backpressure, reset drops stale AW, no DMA. A single `M08_AXIL_IDENTITY_STANDALONE_ICARUS_PASS` marker, zero compile warnings. Requires `iverilog` and `vvp` locally; M08 Actions CI installs them and demands actual PASS. |
+| `test_requires_two_stable_passes_and_nonzero_build_tag` | Mock read32 transport, no OS MMIO | Two identical snapshots, exact map/protocol, unsigned32 bounds and nonzero build tag. All physical attestation flags remain false. |
+| `test_reject_unknown_magic_version_caps_reserved_and_unprovisioned_tag` | Mock unknown and malformed register maps | Fail closed instead of guessing software/RTL compatibility; optional zero tag explicitly remains untrusted. |
+| `test_reject_unstable_response_or_bad_integer_range` | Inconsistent/invalid read values | Refuse stale or corrupted MMIO data before any device command. |
+| `test_read_failure_has_no_write_operation` | Adapter raises OSError | Throw tagged protocol error; never issue a write. |
+| `test_readonly_client_has_no_devmem_backend` | Source API inspection | There is no direct /dev/mem mmap nor outbound MMIO writes in this module. |
+
+**Acceptance boundary:** Icarus PASS shows this *standalone first-party slave* is self-consistent. It is NOT an actual KV260 PS-PL MMIO test, a real AXI interconnect/SmartConnect simulation, a PS Linux memory driver, routed timing closure, or on-chip/DDR neural inference. The next hardware-required step is to add this probe to an actual observed KV260 project, provide an independently verified real FPGA address map, program the verified built bitstream, and read it via a known kernel-approved MMIO interface. No fabricated base address is specified here.
+
+## M08.1b — owner evidence, Loihi-v2 reuse, and read-only xmutil state
+
+The owner first PC inventory (SHA256 `2c4276c13e3adb21721b8b49e027aa94cbe1e51cf592d402272684bc518606e0`) and independent audit agree; **all 5 M06 original ZIP hashes MATCH**. Host Vivado/Vitis commands were not found on that shell PATH, but are not asserted uninstalled. The host working tree is **dirty from untracked historical Loihi physical evidence and Vivado logs**. Preserve those files and work in exclusive M08 evidence folders. The user separately confirms normal KV260 Linux boot and the standard `sudo xmutil unloadapp` postboot routine; the original uploaded host inventory does not establish board-local Linux release/DT or prove an M08 bitstream.
+
+The Loihi v2 acceptance notes document a routed host-paged K26 design and a genuine JTAG/VIO physical neural conformance case on the *separate Loihi v2 system*. Those results are useful for procedure reuse, **not** transferable accelerator SHA/FPGA performance or signed16 M06 computational parity. See `M08_1_OWNER_EVIDENCE_AND_LOIHI_REUSE_2026_11_10.md`.
+
+`scripts/m08_capture_readonly.py --mode board-local` now allows only *read-only* `xmutil listapps`, `boardid`, `bootfw_status` and `platformstats`; it never calls `unloadapp` itself. Receipt auditor demands the same exact command set and rejects unsolicited `loadapp`, `unloadapp` and `bootfw_update` from an inventory script. The operator may still perform the existing authorized `sudo xmutil unloadapp` **outside this script**, logging app state before and after.
+
+## M08.2 — real Vivado K26 PS→PL read-only identity integration trial (NOT yet operator executed)
+
+**New candidate sources:** `scripts/m08_identity_ps_bd_candidate.tcl`, `scripts/run_m08_identity_bd.sh`, `scripts/m08_identity_bd_audit.py`, `tests/test_m08_identity_bd_candidate.py`. This is the first integration path between M08's verified standalone no-DMA AXI4-Lite slave and a Zynq UltraScale+ PS master. It follows the accepted **K26 PS HPM0 FPD 128-bit control interface, proc_sys_reset and explicit PS reset inversion** patterns documented by the M05.12d.3 original integration work, not a freely chosen physical DDR base address.
+
+The genuine operator Vivado candidate requires a real 2025.2 `xck26-sfvc784-2LV-c` part and exact AMD PS, SmartConnect, reset conditioner, inverter and constant IP versions. It creates a **new** project inside a unique `~/Thesis_Evidence/M08/m08_2_identity_bd_*_XXXXXX` folder, adds **only** the first-party read-only identity RTL, creates one PS `M_AXI_HPM0_FPD` → one SmartConnect → one `identity/S_AXI` path, connects the original PS PL clock/reset, lets genuine Vivado assign an address, validates the BD and exports a readback report. It **does not synthesize, implement, generate a bitstream/XSA, program JTAG, use xmutil or access physical DDR**. Module-reference AXI-Lite port inference, PS settings, address segment and native validation remain unproven until a real local trial is run.
+
+The wrapper generates SHA-256 of four current original source/script files **both before and after** the tool run, an original exit-status file, raw Vivado log and exported BD Tcl. The independent auditor demands exact source consistency, one success marker, no error/critical warning, a genuine bounded 32-bit assigned identity register aperture, correct PS/PL pin names and explicit `NOT_RUN/NOT_PROGRAMMED` physical fields. A failed run remains in the evidence directory and MUST NOT be relabeled a successful validation. The source-level unit test's positive synthetic fixture demonstrates **auditor behavior only, not a real vendor PASS**.
+
+| New test | Contract checked |
+| --- | --- |
+| `test_tcl_is_ps_to_readonly_id_only_not_software_ddr` | Exact K26/PS→SmartConnect→identity references; no JTAG or bitstream commands. |
+| `test_runner_has_valid_bash_syntax_without_running_vivado` | Bash syntax is valid, without executing vendor tools. |
+| `test_tcl_grammar_balanced_without_loading_vendor_ip` | A standalone Tcl interpreter reaches the mandatory argument guard; this does **not** validate Vivado commands. |
+| `test_fixture_checks_auditor_only_not_real_vivado` | Synthetic original-looking report exercises the independent auditor schema and explicit no-physical fields, not real Vivado. |
+| `test_reject_bad_source_result_or_log` | Failed exit status, altered before/after source, missing success marker or fake report are rejected. |
+| `test_reject_bad_address_and_false_physical_claims` | Invalid/overflowing/unwordaligned PS aperture and bitstream/DDR/programming claims fail. |
+| `test_cli_rejects_failed_evidence_without_creating_pass` | Refuses a failed original vendor report and never leaves an accepted audit file. |
+
+**Actual owner stage:** source your local 2025.2 `settings64.sh` and run `bash scripts/run_m08_identity_bd.sh`. The original report is mandatory for M08.2 validation and must be reviewed before an actual bitstream or Linux MMIO backend can be claimed. No physical inference acceptance is implied by a valid BD.
+
+**CI:** includes this entire source-only negative suite and first-party Icarus identity TB; it **does not** run Vivado 2025.2 or any hardware tool requiring local licensed vendor binaries/board connection.
+
+## New genuine original Vivado evidence — first FAILED offline BD invocation and diagnosed first error
+
+**Original owner run 2026-11-10 22:56 America/Denver:** `bash scripts/run_m08_identity_bd.sh` invoked real `vivado v2025.2` (SW 6299465, IP 6300035) and returned `M08_VIVADO_BD_ORIGINAL_FAILED exit_status=1`. Original evidence folder: `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T055614Z_B7OyfZ`. The owner subsequently uploaded the original `01_vivado_identity_bd.log`, `result.txt` and before/after SHA manifests. The first fatal diagnostic is `ERROR: [Common 17-53] User Exception: No open project` on `get_ipdefs -all -quiet $vlnv` before `create_project`. The two four-file SHA manifests match byte-for-byte. Root cause: IP catalog queried without project context, not evidence of defective identity RTL/AMD unsupported IP. The minimal fix places `create_project` and part readback before the strict five-IP catalog checks; **no IP check is removed**. Missing `vitis_hls` command in this shell is not an established cause: the identity-BD wrapper does not invoke HLS. The script exits early on failed `vivado`, before the independent BD success auditor.
+
+**Scope reporting:** source-only M08 negative-fixture/RTL Icarus tests remain previously successful; they have not proven genuine IP Integrator output. Mark the genuine vendor gate **FAILED/OPEN**; do not call it a BD PASS, rerun or silently waive errors. This failure is *not* a neural inference or memory transaction fault, and no actual board JTAG, Linux MMIO, DDR or bitstream activity occurred in this offline trial.
+
+**Regression:** `test_ip_catalog_query_occurs_only_after_open_project` runs the candidate under plain `tclsh` with mocked `get_ipdefs` refusing lookup before project creation, and a sentinel stopping before `add_files`. This reproduces the exact missing-project ordering boundary but is not a genuine Vivado test. **Next proof:** run M08 targeted, inherited M07, full suite and standalone Icarus where available; confirm all eight same-SHA GitHub workflows; then require exactly one **fresh** owner Vivado run preserving original and new evidence. Vendor outcome remains OPEN until raw new `result.txt`, log, report, export, SHA manifests and independent audit are reviewed. See [M08.2 first failure handoff](M08_2_BD_FAILURE_NEXT_CHAT_HANDOFF_2026_11_10.md).
+
+## Second genuine original Vivado failure — stray LPD master clock, NOT a valid BD
+
+**Second original local Vivado trial (2026-11-10 23:22:58 America/Denver; original folder `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T062256Z_MakfLD`)**: genuine 2025.2 created the project, found all five IPs, inferred `identity/S_AXI` (AXI4-Lite, 32-bit), connected the intended `ps/M_AXI_HPM0_FPD` path, and assigned `/identity/S_AXI/reg0` in `/ps/Data` at `0xA0000000`/4 KiB. `validate_bd_design -force` nevertheless returned `WARNING: [BD 41-2670]` incomplete `/ps/M_AXI_HPM0_LPD` path and **first fatal** `ERROR: [BD 41-758]` unclocked `/ps/maxihpm0_lpd_aclk`, followed by `[Common 17-39]`. `result.txt=exit_status=1`; all four source SHA rows match before/after. This confirms the prior get_ipdefs/project-ordering fix progressed, but **the second vendor run failed**. The narrow new correction explicitly configures `CONFIG.PSU__USE__M_AXI_GP0 1` and `CONFIG.PSU__USE__M_AXI_GP2 0`, verifies both readbacks and requires the unused LPD AXI interface/clock to disappear. A Tcl mock regression checks a successful and a refused-disable path; actual IP behavior remains subject to a **third fresh owner run, after all eight updated same-SHA workflows are green**. The two failed original directories must remain preserved; no bitstream/DDR/FPGA activity is claimed.
+
+| Added source-only regression | Exact contract |
+| --- | --- |
+| `test_unused_lpd_is_disabled_with_readback_before_bd_wiring` | Plain Tcl mock refuses GP2 disable in one negative case and allows it in a positive case. The code must enable FPD GP0, disable GP2 LPD, read back the value, and verify unused LPD interface/clock are absent before module BD construction. It does not model AMD IP Integrator, AXI timing, or a vendor success. |
+
+**Next evidence gate:** run updated 28→29 targeted M08 tests, inherited M07 and full discovery; confirm M01–M08 GitHub Actions success on the final commit SHA; then request **one new** owner original Vivado 2025.2 invocation via the existing runner, which automatically chooses a fresh directory. Require genuine log, project validation, BD report/export, exact hashes and independent audit; preserve both failures even if this new one also fails.
+
+## Third genuine local Vivado failure — PS clock metadata vs fixed 100 MHz AXI4-Lite
+
+**Third original owner Vivado failure (2026-11-10 23:35 America/Denver):** preserved under `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T063515Z_xsLGAr`. Genuine Vivado 2025.2 created the K26 project, inferred `identity/S_AXI` AXI4-Lite (32-bit, 100 MHz), disabled the previously unused LPD master, connected `M_AXI_HPM0_FPD`, and assigned the identity aperture `0xA0000000` (4 KiB) in `/ps/Data`. On `validate_bd_design -force`, the **first serious message** was SmartConnect **CRITICAL WARNING** about incompatible clocks, followed by **[BD 41-237]** `identity/S_AXI(100000000)` versus `ctrl_sc/M00_AXI(96968727)` and **[BD 41-238]** `identity/aclk(100000000)` versus `ps/pl_clk0(96968727)`; [Common 17-39] is the cascading validation failure. `result.txt=exit_status=1`; all four SHA-before/after records are byte-identical. No accepted readback/export/audit and no physical activity. The immediately preceding two failed folders remain preserved.
+
+**Loihi v2 precedent reviewed:** in `Loihi_Digital_Twin/v2/vivado/create_p03_impl_project.tcl`, `create_p04_impl_project.tcl`, `create_p05_impl_project.tcl`, and `create_p08_impl_project.tcl`, the accepted K26 designs explicitly set `CONFIG.PSU__FPGA_PL0_ENABLE {1}` and `CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100}` before wiring `pl_clk0` into the fabric. These were real routed physical shells, but **not** AXI4-Lite validation of M08 and not interchangeable signed16 hardware. The Loihi scripts also applied a KV260 board preset; the **current narrow M08 correction deliberately does NOT import that broader preset or DDR integration**. Instead it requests 100 MHz on the M08 PS and fails closed if the actual `ps/pl_clk0` pin `CONFIG.FREQ_HZ` differs from the 100,000,000 Hz RTL metadata. A plain-Tcl mocked negative regression covers the observed `96968727` case; it does NOT prove genuine Vivado IP generation. Require eight updated same-SHA source-only CI workflows, then one **fresh fourth** owner Vivado offline validation in a new exclusive evidence directory. Keep PR #83 draft/unmerged.
+
+**New regressions:** `test_unused_lpd_and_ps_clock_readbacks_before_bd_wiring` has three mocked Tcl scenarios: correctly disabled unused LPD plus 100,000,000 Hz PS pin (allowed to reach the identity-cell sentinel), an ignored LPD-disable request (must fail), and the **observed** 96,968,727 Hz PS clock (must fail with exact readback error). `test_explicit_ps_pl0_clock_request_preserves_fpd_only_topology` checks that the Tcl requests and checks the PS clock without importing Loihi's board preset or DDR settings. These test first-party source behavior **only**, not Vivado frequency synthesis, BD validation, implementation, or on-board PS/PL transactions. The existing strict independent auditor remains unchanged.
+
+## Fourth original Vivado failure — PS requested MHz is not generated PL0 Hz
+
+**Fourth original owner Vivado failure (2026-11-10 23:47:59 America/Denver):** genuine Vivado 2025.2 `result.txt=exit_status=1` in immutable `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T064757Z_DFdwwi`. Before/after four-file SHA records match, and the owner independently reported `sha256sum -c` PASS for each of the four sources. The Tcl successfully created the project and set `CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ 100`, but the exact fail-closed pin readback was **`M08 PS PL0 actual FREQ_HZ mismatch: expected 100000000 got '96968727'`** at Tcl line 92. This failed **before** AXI identity/SmartConnect creation or `validate_bd_design`; no clock DRC result, no readback/export/audit, no bitstream, JTAG, physical DDR or neural inference. The fourth run confirms requesting 100 MHz without applying a KV260 board preset is **insufficient**, not that a board preset definitely fixes it.
+
+**Evidence-guided corrective hypothesis from accepted Loihi history:** the independently routed `Loihi_Digital_Twin/v2/vivado/create_p03_impl_project.tcl`, `create_p04_impl_project.tcl`, `create_p05_impl_project.tcl` and `create_p08_impl_project.tcl` explicitly find the installed `xilinx.com:kv260_som:part0:*` board definition, select `BOARD_PART`, apply `apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1"}` and **then** request 100 MHz. M08 now reproduces that PS initialization sequence, with a fail-closed board-part availability/readback guard; after the preset it reasserts the **M08-only** FPD HPM0 AXI master, disables unused FPD HPM1/LPD HPM0 masters, requests 100 MHz, and verifies actual PL0 `CONFIG.FREQ_HZ`. This imports only PS initialization, not Loihi neural architecture or its PL/DDR datapath, and creates **no** physical DDR transaction. Mock Tcl tests cover missing board files, ordered preset, rejected GP2 disable, and original 96,968,727 Hz clock mismatch; these cannot prove real AMD output. **After eight same-new-SHA source workflows pass, require ONE fresh fifth local Vivado 2025.2 offline BD run with a NEW original evidence directory; preserve all four historical failed folders.** Keep PR #83 draft/unmerged.
+
+**New no-board regression:** the previous `test_unused_lpd_and_ps_clock_readbacks_before_bd_wiring` Tcl harness also requires an installed KV260 board definition and successful `BOARD_PART` readback, and verifies the PS board automation occurs **before** explicit FPD/clock overrides. The negative cases still reject 96,968,727 Hz and GP2-disable refusal. The static `test_explicit_ps_pl0_clock_request_preserves_fpd_only_topology` verifies KV260 board-part selection, preset ordering, GP1/GP2 disables and that no bitstream or boot-programming command was introduced. These synthetic tests cannot validate a genuine board preset, actual clocks, BD or hardware.
+
+## Fifth original Vivado failure — only 999 Hz below 100 MHz with genuine KV260 preset
+
+**First-party log and four original SHA manifests (2026-11-11 00:01 MST):** `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T070108Z_rjtaLq` exited `1` with **matching before/after source SHA records**. Genuine `M08_KV260_BOARD_PART=xilinx.com:kv260_som:part0:1.4`, `M08_KV260_PS_BOARD_PRESET_APPLIED=1` were followed by Tcl fail-closed `M08 PS PL0 actual FREQ_HZ mismatch: expected 100000000 got '99999001'`. The PS board preset reduced the observed deviation from 3,031,273 Hz to 999 Hz. The run did **not** reach `validate_bd_design`; thus no unobserved DRC PASS may be claimed. See [chronological five-failure ledger](M08_2_VIVADO_FAILURE_LEDGER_2026_11_11.md).
+
+**New source remedy:** retain nominal 100,000,000 Hz, bound actual PL0 to ±1000 Hz; remove fixed `FREQ_HZ 100000000` from only the identity RTL **clock input** attribute; preserve AXI/clock/reset association and all functional RTL; after `validate_bd_design`, demand that actual PS output, peripheral input, `identity/S_AXI`, and `ctrl_sc/M00_AXI` all have exactly the **same** Vivado-reported frequency. No DRC is suppressed. The candidate writes `META|actual_clock_hz|<Vivado readback>` and `META|requested_clock_hz|100000000`. The independent audit independently rejects out-of-budget, missing, forged or inconsistent clock readback and log propagation proofs.
+
+**Added source-only audit test:** `test_reject_outside_clock_budget_or_missing_propagation_evidence` runs synthetic negative fixtures for deviations >1000 Hz, missing AXI propagation marker, and modified actual report metadata. The existing Tcl mock `test_unused_lpd_and_ps_clock_readbacks_before_bd_wiring` now allows the **observed** 99999001 Hz and exact 100000000 Hz but rejects original 96968727 Hz and 99998999 Hz (<99,999,000). These prove fail-closed source controls **only**; they do not run genuine Vivado or measure any hardware clock. **Next gate:** green all eight latest-head M01–M08 workflows, then just ONE fresh original owner Vivado run in a new folder, preserving all five failures. Do not advance to bitstream, JTAG, PS MMIO, DDR or neural inference without real vendor evidence.
+
+## Sixth genuine Vivado offline BD validation PASS — independent audit Tcl-echo regression
+
+The owner-original 2026-11-11 00:23 MST Vivado 2025.2 `result.txt=exit_status=0` comes from `m08_2_identity_bd_20261111T072331Z_Bo1i5V` and is **not** a CI fixture. Genuine `validate_bd_design -force` succeeded; log confirmed `M08_GENUINE_PS_PL0_CLOCK_HZ=99999001`, `M08_PS_PL0_CLOCK_DEVIATION_HZ=999`, and `M08_GENUINE_AXI_CLOCK_PROPAGATION_MATCH_HZ=99999001`. Actual `02` report, `03` export and before/after four source SHA manifests were uploaded and externally inspected; no `ERROR:` or `CRITICAL WARNING:`. Review: [first original vendor BD PASS](M08_2_FIRST_GENUINE_BD_VALIDATION_REVIEW_2026_11_11.md).
+
+**New source-only auditing defect discovered:** genuine `vivado -mode batch` echoes `# puts "M08_IDENTITY_GENUINE_VIVADO_BD_VALIDATED_NO_BITSTREAM_NO_BOARD"` and then emits one actual output line. The previous auditor `log.count(MARKER)!=1` would reject this valid log as having two markers. The auditor now requires **exactly one line equal to the marker after whitespace stripping**, ignoring echoed Tcl commands. Added `test_genuine_vivado_tcl_command_echo_is_not_success_marker` for one echo plus one real marker PASS, echo-only FAIL, and duplicate real outputs FAIL. These are audit contract tests, not substitutes for full owner-original archive. An initial source CI run caught an escaped synthetic fixture newline bug, which was corrected before final CI acceptance. The previous exact-source SHA/audit hash requirements remain unchanged.
+
+**Next proof:** owner performs one **seventh** genuine offline BD wrapper run in a fresh unique folder (no bitstream/hardware); confirm all eight final-HEAD workflows first, then collect `04_m08_identity_independent_audit.json`, `05_evidence_sha256.txt` and wrapper completion marker. Do not edit the original sixth vendor-pass artifacts. The full M08.2 gate stays open solely for independent audit and source-consistent receipt.
+
+## Seventh genuine owner audit receipt and first M08.3.1 tests
+
+The seventh owner-original `/home/dna/Thesis_Evidence/M08/m08_2_identity_bd_20261111T074810Z_XlzGwf` returned `exit_status=0`. Its independent JSON status is `ORIGINAL_OWNER_VIVADO_BD_VALIDATION_EVIDENCE_CONSISTENT`, with requested 100,000,000 Hz, actual 99,999,001 Hz, one 4 KiB Vivado candidate aperture at `0xa0000000`, no routed/physical claims. The uploaded `04_m08_identity_independent_audit.json` SHA256 `27bd4689fbcab91a92ece3c0467ff1f66c3e3e2b4c6aef580b51c51934099d04` exactly matches the original `05` SHA receipt. This closes only **M08.2a offline identity BD**, not the broader M08.2b physical design. [Accepted evidence review](M08_2_IDENTITY_BD_SCOPED_ACCEPTANCE_2026_11_11.md).
+
+**New `tests/test_m08_dma_readiness.py`:** five source-only cases check (1) mocked Linux sysfs DMA heap + platform device are *observations* but never evidence of a bound DMA allocation; (2) exclusive fresh evidence and genuine SHA hash/independent audit; (3) rejects a rehashed false claim that the physical DMA buffer is ready; (4) refuses arbitrary files, symlink escapes, oversized files and excessive directory entries; and (5) read-only audit CLI with no `--root` override. No real kernel or driver is used in these tests. The new code always leaves `physical_dma_ready=false` pending true bound-device/allocator proof. [Board-local future read-only collection](M08_3_DMA_READINESS_RUNBOOK.md).
+
+## M08.3.2 Loihi-derived host paging protocol tests (source only)
+
+The successful first-party Loihi v2 P08.4.3a/b K26 evidence already demonstrates **actual host-owned bank replacement and HLS dispatch**, with exact host/compute arbitration and a physical 618-compartment/trace verification. This existing achievement motivated **M08.3.2** source development; the narrower M08 Linux DMA requirements remain separate. [Evidence crosswalk and physical boundaries](M08_3_LOIHI_KV260_MEMORY_OWNERSHIP_REUSE_2026_11_11.md).
+
+New `tests/test_m08_host_page_ownership.py` exercises: three logical software-backed pages over two resident slots; dirty-save before eviction and state persistence across replacement; host-versus-compute exclusion; logical-ID/slot alias rejection; readback mismatch → sticky poison; output/packet-not-drained poison; no early global barrier; and false kernel-DMA ownership claims rejected by receipts. Only software staging/counters are tested: **no physical M08 PL bank transaction, DDR, Vivado implementation or neural dispatch** is performed by this test.
+
+## M08.2b.1 single-slot signed16 staging RTL (first-party Icarus)
+
+The M08.2a PS→read-only identity BD was genuinely validated in Vivado, but it did not allow writable page loading or signed16 neural state access. M08.2b.1 adds `rtl/m08/m08_host_staged_page_bank.sv` (64×32-bit, 256 bytes, 16 M06 neuron records). The **real RTL** is tested by `rtl/m08/tb_m08_host_staged_page_bank.sv` / `tests/test_m08_host_staged_page_rtl.py` with Icarus, alongside original `rtl/m06/m06_lif16_neuron_step.sv`. The positive test fills/reads all 64 words, runs a signed16 voltage update with partial strobes, reads **all 64** updated dirty-state words (separate hardware bitmap), acknowledges host save, and safely loads a new logical page. Negative tests exercise partial fill, fully loaded-but-not-read-back false completion, dirty save without full dirty readback, dirty eviction, host/compute conflict, wrong page tag and sticky external fault.
+
+The test uses source-level host signals and an independent testbench backing word; `host_readback_verified` and `host_save_done` are **externally asserted**, so the RTL does not prove actual host readback or durable backing storage. Real AXI4-Lite backpressure, PS clock/reset, 32-bit PS access, full HLS state updates, synthesized timing, board programming, Linux MMIO and physical DDR remain **unverified** until later original vendor/owner evidence. [Implementation and next native test gates](M08_2B_1_SIGNED16_HOST_STAGING_RTL_2026_11_11.md).
+
+## M08.2b.1 GitHub Actions infrastructure fault (2026-11-11)
+
+The first new one-page staging RTL workflow attempt on source SHA `d49a7dbbeb842c195ad8fc593b08ee13bd205cd6` did **not** reach Icarus: GitHub Actions M08 run **43050505833** failed in the step **“Install local Icarus for the standalone M08 PL identity RTL”** with `Temporary failure resolving 'security.ubuntu.com'` and `E: Failed to fetch ... iverilog_12.0-3_amd64v3.deb` (apt exit 100). This is an **external apt/DNS outage**, not a Verilog syntax error or failed HDL assertion. Separate inherited M05 run **43050506104** and M06 run **43050506045** failed for the **same** package-download reason; M01–M04 and M07 source CI on that SHA succeeded. The history is preserved in the original GitHub Actions logs. A re-run of the original M08 failed job was requested for infra diagnosis; later exact-HEAD CI still needs independent verification.
+
+**Consequence:** neither original failed attempt nor a source-only regression can be presented as a new clocked RTL PASS. On a developer PC with `iverilog` and `vvp` already present, run the explicit standalone Icarus compile/sim below (the Python test will SKIP if no Icarus exists). A complete acceptance requires actual runtime marker output and subsequently 8/8 final-SHA Actions when package fetching becomes available again. Do **not** suppress the RTL job, downgrade the Icarus requirement, silently accept skipped tests or misstate a runner DNS fault as an FPGA design failure.
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+command -v iverilog
+command -v vvp
+TMP="$(mktemp -d)"
+iverilog -g2012 -s tb_m08_host_staged_page_bank -o "$TMP/m08_page.vvp" \
+    rtl/m08/m08_host_staged_page_bank.sv \
+    rtl/m06/m06_lif16_neuron_step.sv \
+    rtl/m08/tb_m08_host_staged_page_bank.sv
+vvp "$TMP/m08_page.vvp"
+python3 -m unittest discover -s tests -p 'test_m08_host_staged_page_rtl.py' -v
+# Preserve TMP or remove only this new disposable compile scratch folder.
+~~~
+
+## M08.2b.2 AXI4-Lite page adapter and bus-functional source tests
+
+The new `m08_axil_page_control.sv` instantiates the actual corrected M08.2b.1 256-byte signed16 page bank and exposes a PS-style **32-bit AXI4-Lite slave** with a **12-bit, 4 KiB** address aperture. Independent AW and W capture, B/R backpressure, no address alias, full-strobe control, partial-strobe neuron-page word writes, deliberate host/compute mutual exclusion, and a bounded backend-response watchdog are source responsibilities. Vivado AXI clock/reset interface metadata are provided but actual PS clock must be verified again. No AXI master or kernel DDR owner is created. [M08.2b.2 register map and stop conditions](M08_2B_2_AXIL_PAGE_CONTROL_HANDOFF_2026_11_11.md).
+
+`rtl/m08/tb_m08_axil_page_control.sv` uses a first-party synchronous AXI bus-functional model (no AMD PS, SmartConnect, actual kernel or DDR) and positive/negative command sequences: AW-first, W-first and same-clock AW/W; delayed BREADY/RREADY with stable responses; misaligned and unknown access; read-only writes; full/partial byte WSTRB; actual 64-word load and readback; one software/debug compute update; read rejection while compute owns the page; complete dirty readback and SAVE before new logical page; falsely asserted COMMIT/SAVE poisoning; and forced missing bank ACK with 64-cycle watchdog and sticky bridge quarantine. `tests/test_m08_axil_page_control.py` requires actual Icarus compilation and the seven unique success markers to establish a **source-only** test PASS. A skip or CI apt/DNS outage is **not** a pass.
+
+The owner already confirmed the previously fixed M08.2b.1 standalone Icarus and regressions passed locally. The new AXI test remains separate: its genuine post-commit Icarus and all current-HEAD M01–M08 results must be confirmed before accepting this new source stage. The native K26 PS→page BD/synthesis/route and any physical neural trace belong to later M08.2b.3/4 original-owner gates.
+
+## M08.2b.3 native K26 dual S_AXI page design: source, mock, and owner ORIGINAL evidence
+
+The owner confirmed the earlier M08.2b.2 AXI4-Lite adapter Icarus/regressions passed locally. That accepted **source-only** gate does not establish PS/PL connectivity. The next source `rtl/m08/m08_ps_page_safe_shell.v` deliberately wraps the adapter with `ENABLE_COMPUTE=0` and all compute inputs zero, preventing unsafe DISPATCH with no installed M06 engine. The first-party safe-shell Icarus test `rtl/m08/tb_m08_ps_page_safe_shell.sv` loads and reads a real 256-byte page over AXI, then requires DISPATCH to respond SLVERR without entering RUNNING. This is simulated first-party RTL, not the native FPGA clock/PS address map.
+
+`tests/test_m08_page_ps_bd_candidate.py` verifies the new candidate Tcl selects installed K26 board preset then FPD HPM0-only, actual-clock budget and SmartConnect 1×2; Tcl grammar and project-before-IP mock; safe shell source safety; bash runner syntax and seven exact SHA source entries; independently audited **SYNTHETIC FIXTURE** with a successful report including **two 4KiB non-overlapping PS-aperture rows**; negative overlap, unverified compute, stale/false clock and missing/duplicate exact printed output markers. **Synthetic fixture acceptance does not authenticate the vendor machine**; it tests only that the auditor fails closed. The actual first-party wrapper Icarus test additionally must report all three unique expected runtime markers, not SKIP.
+
+Real `scripts/run_m08_page_bd.sh` executes only on the operator PC with Vivado 2025.2, in a new exclusive owner evidence directory and without physical board programming. Genuine `validate_bd_design -force`, BOTH S_AXI clock propagation and native PS region assignment, original source SHA before/after, vendor log/readback/export and independent `m08_page_bd_audit.py` receipt are required. **Without those original files, M08.2b.3 remains open**. [Full runbook](M08_2B_3_NATIVE_KV260_PAGE_BD_HANDOFF_2026_11_11.md). No route, bitstream, kernel DDR or physical inference is implied.
+
+## M08.2b.3 genuine owner validation versus M08.2b.4a post-route source evidence
+
+The owner original **second** M08.2b.3 native Vivado run **PASSED** `validate_bd_design -force` and independent audit at `m08_2b_3_page_bd_20261111T172547Z_ZHe4WE`, with seven unchanged SHA entries, distinct 4 KiB identity/page PS windows and 99,999,001 Hz actual propagated PS clock. [Acceptance review and original digest inventory](M08_2B_3_NATIVE_BD_ACCEPTANCE_REVIEW_2026_11_11.md). This source/test stage was already GitHub 8/8 green, but no source-only mock test is used to replace the genuine vendor BD claim. It remains distinct from routed implementation.
+
+New `tests/test_m08_page_post_route_candidate.py` verifies that `m08_page_post_route_candidate.tcl` calls the **previously accepted original BD candidate** (not a speculative new board layout), generates Vivado top wrapper, runs `impl_1 -to_step route_design`, captures actual routed timing setup/hold, DRC, utilization, methodology, clocks and checkpoint, and contains **no write_bitstream**. It also parses bash/Tcl grammar and tests **SYNTHETIC** receipt mutation negatives for negative/unknown WNS/WHS, no clocks, overlapped PS addresses, missing/duplicated exact output markers, altered source SHA, missing physical checkpoint and unproved/false physical results. Synthetic results do not validate any actual K26 implementation. `m08_page_post_route_audit.py` can accept original genuine vendor files only if it finds exact ten-source SHA before/after, original full route/clock/data path evidence and reports, and nonnegative timing; it explicitly states **DRC and unconstrained-path review still required**. [Route-first native operator workflow](M08_2B_4A_POST_ROUTE_SOURCE_AND_OWNER_RUNBOOK_2026_11_11.md). No actual bitstream, physical page readback or DDR-owned DMA occurs in this stage.
+
+## Consolidated M08.2b routed-design acceptance and offline bitstream release tests
+
+Actual owner Vivado 2025.2 routed design `m08_2b_4_route_20261111T174620Z_9FLCz7` has **WNS +5.469ns/WHS +0.015ns**, no failing timing endpoints, zero unconstrained internal endpoints, zero methodology violations and one documented SmartConnect internal reset-pipe `RTSTAT-10` warning (15 nets counted, 14 printed names). Original owner independent audit and original artifact SHA receipt are consistent; the nine uploaded text files independently rehash exactly. [Original report and warning assessment](M08_2B_POST_ROUTE_ACCEPTANCE_AND_WARNINGS_2026_11_11.md). That is genuine native route evidence, distinct from any source-level synthetic test.
+
+New `tests/test_m08_page_bitstream_release.py` verifies the *source* gate: no Vivado/board programming/DDR operations in scripts; checkpoint-derived (not re-synthesized) `write_bitstream` ordering; mandatory original timing/DRC warnings and operator explicit acknowledgement; source manifest integrity; Tcl/bash syntax; and **SYNTHETIC** mutation negatives for reported WNS, unconstrained endpoints, unexpected DRC rule, methodology issue or tampered SHA. Synthetic fixtures NEVER prove a native bitstream exists. Real `scripts/m08_page_release_preflight.py` must rehash the owner original DCP and every original routed artifact, rerun the existing native route receipt auditor and verify source SHA before allowing `m08_page_bitstream_candidate.tcl` to invoke Vivado `open_checkpoint`, independently recheck clocks/setup/hold and that same RTSTAT-10 DRC, then write a new offline .bit. `scripts/m08_page_bitstream_audit.py` requires the original vendor markers and actual new .bit SHA and reports **NO BOARD PROGRAMMING**. New native .bit, PS MMIO and real signed16 inference remain **NOT VERIFIED** until separately observed. [Consolidated operator commands](M08_2B_BITSTREAM_AND_BOARD_HANDOFF_2026_11_11.md).
+
+## M08.2b — original routed checkpoint TOP versus Vivado design NAME correction
+
+First owner offline bitstream attempt (2026-11-11 12:46–12:47 local) passed the independent ORIGINAL route SHA/timing/RTSTAT-10 preflight and **actually opened the full 2025.2 routed K26 checkpoint** but failed **before `report_drc` or `write_bitstream`** because the release Tcl erroneously treated `get_property NAME [current_design]` as the top module name. AMD Tcl documentation distinguishes a Vivado design object's display NAME from its HDL `TOP` property. Original owner log did not include the rejected NAME value. New `m08_page_bitstream_candidate.tcl` checks `get_property -quiet TOP [current_design]` strictly against `m08_page_ps_wrapper`, logs both NAME/TOP, preserves K26 part/clock/setup/hold/RTSTAT-10 checks and writes `META|top` from TOP. `m08_page_bitstream_audit.py` requires the **actual printed** TOP-validated vendor marker and separately recorded design display NAME (the actual top is checked independently) and top metadata. `tests/test_m08_page_bitstream_release.py` now contains a genuine local `tclsh` **mock** that verifies NAME `netlist_1` with proper TOP succeeds past that guard, whereas wrong or missing TOP fails closed. Mock is not a vendor run. Next genuine owner Vivado retry must be in a NEW immutable evidence directory with source SHA checks and original receipts, not the old failed folder. [Original upload SHA ledger and full operator commands](M08_2B_BITSTREAM_AND_BOARD_HANDOFF_2026_11_11.md).
+
+## M08.2b genuine offline bitstream and read-only physical first-run evidence
+
+Owner uploaded genuine original offline bitstream-generation `result.txt=exit_status=0`, `02_vivado_bitstream.log`, rechecked DRC and timing, preflight JSON, native metrics, independent bitstream audit JSON and SHA ledger. The bitgen vendor log confirmed `Bitgen Completed Successfully`, original `.bit` SHA `170da137f315a6f53c345c416808c5203e866b8772acb6b7e69265fe38d31bbf` and size 7,797,831 bytes, routed original DCP SHA and WNS +5.469/WHS +0.015; six uploaded artifact files independently rehashed to match their SHA receipt. The `.bit` binary and original source SHA manifests were **not uploaded** and will be rechecked on the owner's PC before any programming. [Full accepted original evidence and first physical commands](M08_2B_KV260_PHYSICAL_BRINGUP_2026_11_11.md).
+
+New `tests/test_m08_physical_inventory.py` only checks **SOURCE/TEST DO-NO-HARM contracts** for a new first-party Vivado 2025.2 read-only JTAG target/device enumeration Tcl and a KV260 on-board Linux read-only boot/fan/fpga-manager/`xmutil listapps` evidence script. It includes Tcl `info complete`, pure Tcl mock of a unique cable vs missing/multiple target rejection, and bash syntax/forbidden hardware mutation checks. **These tests are NOT real JTAG, Linux, PL programming, PS AXI access or signed16 inference.** Native first physical inventory remains OWNER-PENDING and must be original/hashes-preserved. [Physical runbook](M08_2B_KV260_PHYSICAL_BRINGUP_2026_11_11.md).
