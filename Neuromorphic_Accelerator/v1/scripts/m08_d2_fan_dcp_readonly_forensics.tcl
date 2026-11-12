@@ -95,7 +95,7 @@ close $net_file
 # be unavailable on a native host; capture the failure, never claim PASS.
 set exception_status "UNAVAILABLE"
 if {[catch {report_exceptions -coverage -file [file join $evidence 18_dcp_exception_coverage.rpt]} exception_error]} {
-    set exception_reason [string map [list "\\n" " " "\\r" " "] $exception_error]
+    set exception_reason [string map [list "\n" " " "\r" " "] $exception_error]
     puts "M08_D2_EXCEPTION_COVERAGE_UNAVAILABLE=$exception_reason"
 } else {
     set exception_status "GENERATED_REQUIRES_OWNER_REVIEW"
@@ -108,7 +108,7 @@ set ignored_output [open [file join $evidence 19_dcp_ignored_paths_inventory.txt
 puts $ignored_output "schema=m08-d2-routed-ignored-timing-paths-sample-v1"
 puts $ignored_output "sample_max_paths=30"
 if {[catch {get_timing_paths -user_ignored -max_paths 30 -nworst 1} ignored_paths]} {
-    set ignored_reason [string map [list "\\n" " " "\\r" " "] $ignored_paths]
+    set ignored_reason [string map [list "\n" " " "\r" " "] $ignored_paths]
     puts $ignored_output "status=UNAVAILABLE"
     puts $ignored_output "error=$ignored_reason"
 } else {
