@@ -52,6 +52,31 @@ Vendor identifiers: UG1085 (2026-10-28 rev2.6) ATB instance 4 = FPD main interco
 
 `tests/test_m08_d3b_protected_axi_design.py` invokes real `iverilog`/`vvp` when installed, checks unique simulation pass markers, and runs synthetic native-receipt and manifest failure tests. Real Icarus simulation passing means **only model behavior** is verified.
 
+### Unintegrated two-clock PL0 liveness diagnostic
+
+We additionally designed real first-party, synthesizable **unintegrated** RTL
+`rtl/m08/m08_d3b_clock_liveness_probe.v`. A PL0-clocked heartbeat bit
+crosses a two-flop `ASYNC_REG` synchronizer and is checked by a **different
+monitor clock**. The output initially fails closed (`clock_observed_alive=0`);
+once transitions are observed it indicates activity, and if PL0 stops for
+`QUIET_LIMIT` monitor cycles it clears alive and latches
+`clock_failure_sticky`. The output **cannot be used as a hardware MMIO
+authorization**, because no proven independent PS-side monitor clock or
+qualified status-export path exists in the native K26 integration. Even if
+clock activity is observed, HPM0 AFI/reset, ATB4 and AIB13 would still be
+unproven. Native route/CDC verification, clock domain source and reset
+sequencing are **NOT RUN**.
+
+`rtl/m08/tb_m08_d3b_clock_liveness_probe.sv` runs genuine RTL in Icarus
+when available: PL running → observed transitions; PL stopped but monitor
+running → bounded loss of liveness and sticky fault; restored PL without
+full-monitor reset → still latched; **negative monitor-clock stoppage** →
+stale alive may remain high, proving this cannot replace a PS hardware
+ATB. `tests/test_m08_d3b_clock_liveness.py` independently compiles and
+checks these cases. No Vivado BD integration or `.bit` has been made.
+This monitor is a **diagnostic aid for D3.2**, not a solution to the owner's
+RCU stall or an alternative to independent PS protection.
+
 ## 4. D3.2 exit criteria before any new HPM0-enable Vivado design
 
 These are mandatory **new independently reviewable artifacts**, not values inferable from the D3.1 passive BD:
