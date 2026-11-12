@@ -149,6 +149,8 @@ def stage(release: Path, base: Path) -> Path:
     check_release(release)
     require(base.is_dir() and not base.is_symlink(), "trusted PC evidence parent required")
     safe = base.resolve()
+    require(safe != release.resolve() and release.resolve() not in safe.parents,
+            "refusing to create staging outputs within original owner release evidence")
     require(not (safe == Path("/lib") or safe == Path("/lib/firmware") or
                  safe == Path("/boot") or safe == Path("/etc") or
                  str(safe).startswith(("/lib/firmware/", "/boot/", "/etc/"))),
