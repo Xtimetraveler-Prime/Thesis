@@ -52,11 +52,13 @@ def synthetic_dtc() -> str:
     return (
         "/dts-v1/;\n"
         "/ { fragment@0 { __overlay__ {\n"
+        "#address-cells = <0x02>; #size-cells = <0x02>;\n"
         'firmware-name = "m08-v1-fan-page-uio-review.bit.bin";\n'
         "resets = <0xffffffff 0x74 0xffffffff 0x75 "
         "0xffffffff 0x76 0xffffffff 0x77>; };\n"
         "};\n"
         "fragment@1 { __overlay__ {\n"
+        "#address-cells = <0x02>; #size-cells = <0x02>;\n"
         "m08-identity@a0000000 {\n"
         'compatible = "generic-uio";\n'
         'linux,uio-name = "m08-identity";\n'
@@ -81,6 +83,8 @@ class TestM08PathADualUIO(unittest.TestCase):
     def test_two_exact_4k_windows_and_unique_uio_names(self):
         text = mod.DTS
         self.assertIn("&amba", text)
+        self.assertEqual(text.count("#address-cells = <2>;"), 2)
+        self.assertEqual(text.count("#size-cells = <2>;"), 2)
         self.assertIn("&fpga_full", text)
         self.assertIn("&zynqmp_reset", text)
         self.assertEqual(text.count('"generic-uio"'), 2)
@@ -92,6 +96,32 @@ class TestM08PathADualUIO(unittest.TestCase):
         self.assertIn("m08-v1-fan-page-uio-review.bit.bin", text)
         self.assertEqual(mod.SHELL, {"shell_type": "PL_FLAT", "num_slots": "1"})
         self.assertEqual(mod.validate_dtbo(synthetic_dtc())["m08-page"]["bytes"], 4096)
+
+
+    def test_native_dtc_logs_reject_prior_reg_format_warning(self):
+        """The owner-reported previous DTC warnings must fail the new gate."""
+        self.assertEqual(mod.verify_dtc_diagnostics("", "")["compile_warnings"], 0)
+        expected = "<stdout>: Warning (resets_property): /fragment@0/__overlay__:resets: Could not get phandle node for (cell 1)"
+        result = mod.verify_dtc_diagnostics("", expected)
+        self.assertEqual(result["decode_warnings"], 1)
+        for compiler, decoder in (
+            ("Warning (reg_format): property invalid length", ""),
+            ("Warning (avoid_default_addr_size): relying on default", expected),
+            ("Error: source parsing failed", ""),
+            ("", expected + "\n<stdout>: Warning (reg_format): bad 16-byte reg"),
+            ("", "<stdout>: Warning (unit_address_vs_reg): unexpected"),
+            ("", "Error: unknown DT phandle"),
+        ):
+            with self.subTest(compiler=compiler, decoder=decoder):
+                with self.assertRaises(ValueError):
+                    mod.verify_dtc_diagnostics(compiler, decoder)
+        old_dtc = synthetic_dtc().replace(
+            "fragment@1 { __overlay__ {\n"
+            "#address-cells = <0x02>; #size-cells = <0x02>;\n",
+            "fragment@1 { __overlay__ {\n"
+        )
+        with self.assertRaisesRegex(ValueError, "explicitly declare"):
+            mod.validate_dtbo(old_dtc)
 
     def test_synthetic_dtbo_rejects_wrong_address_name_dma_or_fixup(self):
         good = synthetic_dtc()
