@@ -175,6 +175,14 @@ module tb_m08_d2_ps_domain_timeout_contract;
                fault_sticky!==1 || fault_phase!==phase || m_arvalid!==0 ||
                m_rready!==0 || s_arready!==0)
                 $fatal(1,"timeout did not bound and poison PS-side model");
+            // RVALID/RRESP must remain unchanged if upstream cannot take the
+            // synthetic error yet. A Python-side timer is NOT this guarantee.
+            repeat(3) begin
+                @(posedge ps_clock); #1;
+                if(s_rvalid!==1 || s_rresp!==2'b10 || s_rdata!==0 ||
+                   fault_sticky!==1 || s_arready!==0 || m_arvalid!==0)
+                    $fatal(1,"synthetic timed-out error was not held under R backpressure");
+            end
         end
     endtask
     task drain_error_and_assert_poison;
