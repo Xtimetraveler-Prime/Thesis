@@ -1,5 +1,12 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
+## CURRENT M08.2b OWNER GATE — corrected native Linux UIO overlay ACCEPTED (2026-11-11)
+
+The owner uploaded corrected native DTC and read-only KV260 UIO sysfs archives. Independently SHA-matched all 3/3 included ledger-covered compiler/decompile/review files and 3/3 read-only metadata receipt files. **Compiler log is empty; 2/2 FPGA and AMBA cell declarations, both exact 4KiB generic-uio resources, 3 required symbolic fixups verified.** One expected decompile-only unresolved-reset phandle warning remains. DTBO SHA `2b7798053d10415ef528d4abbbdcb5251cd0dee4845c3288de2a3ef7bd2e75ed` and bit.bin SHA `a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b` are **ledger/review recorded only**, because binaries were not uploaded. Four existing `axi-pmon` UIO devices, no M08 mapping; SSH inspector exit 0, empty stderr. **Corrected OFFLINE dtc + PREDEPLOY metadata gate ACCEPTED; physical Linux binding and PS AXI remain OPEN.** See [new original evidence review and full hardware safety contract](docs/M08_2B_UIO_NATIVE_ACCEPTANCE_AND_NEXT_PHYSICAL_GATE_2026_11_11.md).
+
+New `src/neuromorphic_accelerator_v1/m08_uio_page_protocol.py` and `tests/test_m08_uio_page_protocol.py` implement and fault-test a software-only, externally injected 64x32-bit readback/compare-before-COMMIT contract; no /dev/uio mmap, PS physical bus, Linux overlay install, DISPATCH or FPGA program. **One M08.2b; PR #83 DRAFT/UNMERGED.** Physical deployment requires verified cooling *during the reconfiguration gap*, rollback, PL_FLAT support, kernel resource binding and explicit owner permission. Hardware identity/64-word readback, DDR/DMA, neural inference and benchmarks are **not measured**.
+
+
 ## CURRENT M08.2b STATUS — 2026-11-11: dual-UIO overlay DTC-warning remediation
 
 **AUTHORITATIVE CURRENT HANDOFF:** [M08_NEXT_CHAT_HANDOFF_2026_11_11.md](docs/M08_NEXT_CHAT_HANDOFF_2026_11_11.md).
