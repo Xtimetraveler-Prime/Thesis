@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """M08 D2: PC-only review of owner-original K26 fan-DCP timing exceptions.
 
-This analyzer reads FOUR existing vendor text reports. No Vivado, hardware,
+This analyzer reads FOUR original plus TWO optional closure vendor reports.
+No Vivado, hardware,
 JTAG, PL manager, AXI/MMIO, DCP mutation, or written outputs. Static routes
 are NOT physical proof of a running PL clock or protected PS-to-PL bus.
 """
@@ -153,6 +154,74 @@ def inspect(folder: Path) -> dict:
     must(len(groups) == 10 and all(stages == {0, 1, 2} for stages in groups.values()),
          "ignored paths not ten separate three-stage reset synchronizers")
 
+    # New native D2 closure evidence is optional for historical four-file
+    # evidence folders. A partial pair is NEVER silently accepted. All
+    # receipt SHA256 values are computed from actual native file bytes.
+    ignored_name = "20_dcp_fully_ignored_exceptions.rpt"
+    summary_name = "21_dcp_exception_summary.rpt"
+    has_ignored = (folder / ignored_name).exists() or (folder / ignored_name).is_symlink()
+    has_summary = (folder / summary_name).exists() or (folder / summary_name).is_symlink()
+    must(has_ignored == has_summary,
+         "incomplete native exception closure pair 20/21")
+    if has_ignored:
+        ignored_text, ignored_sha = read_input(folder, ignored_name)
+        summary_text, summary_sha = read_input(folder, summary_name)
+        receipts[ignored_name] = ignored_sha
+        receipts[summary_name] = summary_sha
+        for name, body, command in (
+            (ignored_name, ignored_text, "report_exceptions -ignored"),
+            (summary_name, summary_text, "report_exceptions -summary"),
+        ):
+            must("Vivado v.2025.2" in body and
+                 "Design State      : Routed" in body and
+                 "Design            : m08_page_ps_wrapper" in body and
+                 command in body,
+                 "native closure report header/command mismatch " + name)
+        ignored_rows = []
+        for line in ignored_text.splitlines():
+            if re.match(r"^\\s*\\d+\\s+\\*", line):
+                match = re.fullmatch(
+                    r"\\s*(\\d+)\\s+\\*\\s+\\*\\s+"
+                    r"\\[get_cells \\{syncstages_ff_reg\\[0\\]\\}\\]\\s+"
+                    r"false\\s+false\\s+Non-existent path\\s*", line)
+                must(match is not None,
+                     "unexpected ignored native timing exception or status")
+                ignored_rows.append(int(match.group(1)))
+        must(sorted(ignored_rows) == [49, 50, 51],
+             "ignored native exception positions/status changed")
+        summary_rows = {}
+        for line in summary_text.splitlines():
+            row = re.fullmatch(
+                r"\\s*(False Path|Clock Groups|Multicycle Path|Max Delay DPO|"
+                r"Max Delay|Min Delay)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*", line)
+            if row:
+                label, constraints, setup, hold = row.groups()
+                must(label not in summary_rows,
+                     "duplicate native exception summary category")
+                summary_rows[label] = [int(constraints), int(setup), int(hold)]
+        must(summary_rows == {
+            "False Path": [29, 2, 2],
+            "Clock Groups": [0, 0, 0],
+            "Multicycle Path": [0, 0, 0],
+            "Max Delay": [0, 0, 0],
+            "Max Delay DPO": [0, 0, 0],
+            "Min Delay": [0, 0, 0],
+        }, "native timing exception summary changed")
+        closure = {
+            "status": "EXACTLY_THREE_NON_EXISTENT_FALSE_PATHS_CLASSIFIED",
+            "fully_ignored_positions": ignored_rows,
+            "fully_ignored_reasons": ["Non-existent path"] * len(ignored_rows),
+            "exception_count": 29, "setup_endpoints_reported": 2,
+            "hold_endpoints_reported": 2,
+            "remaining_timing_exception_signoff": False,
+        }
+    else:
+        closure = {
+            "status": "NOT_PROVIDED_IN_HISTORICAL_FOUR_FILE_FOLDER",
+            "fully_ignored_positions": [],
+            "remaining_timing_exception_signoff": False,
+        }
+
     return {
         "schema": "m08-d2-native-reset-timing-exception-review-v1",
         "status": "ORIGINAL_ROUTED_RESET_EXCEPTIONS_CHARACTERIZED_RUNTIME_UNPROVEN",
@@ -167,7 +236,9 @@ def inspect(folder: Path) -> dict:
             "pin_exceptions_100_percent_three_endpoints": len(pins),
             "cell_entries": cells,
             "cell_entries_zero_percent": 3,
-            "fully_ignored_or_nonexistent_positions_not_yet_classified": [49, 50, 51],
+            "fully_ignored_or_nonexistent_positions_not_yet_classified": (
+                [] if has_ignored else [49, 50, 51]),
+            "native_ignored_exception_closure": closure,
             "coverage_not_timing_slack": True,
             "timing_exception_signoff": False,
         },
@@ -181,8 +252,10 @@ def inspect(folder: Path) -> dict:
             "reset_synchronizer_groups": sorted(groups),
         },
         "next_offline_evidence": [
-            "report_exceptions -ignored from same original DCP",
-            "report_exceptions -summary from same original DCP",
+            *([] if has_ignored else [
+                "report_exceptions -ignored from same original DCP",
+                "report_exceptions -summary from same original DCP",
+            ]),
             "source/stock Linux PS PL0 clock and AFI ownership audit",
         ],
         "physical_hardware": {
