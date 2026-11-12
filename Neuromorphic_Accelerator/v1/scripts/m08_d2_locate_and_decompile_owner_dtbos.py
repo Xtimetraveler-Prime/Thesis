@@ -117,14 +117,14 @@ def receipt(folder: Path) -> None:
     (folder / "99_evidence_sha256.txt").write_text("\n".join(rows) + "\n")
 
 
-def prepare(inspection: dict, base: Path) -> tuple[Path, bool]:
+def prepare(inspection: dict, base: Path, *, m08_only: bool = False) -> tuple[Path, bool]:
     require(base.is_dir() and not base.is_symlink(),
             "existing, non-symlinked owner PC evidence-base required")
     require(str(base.resolve()) not in ("/", "/boot", "/etc", "/dev",
                                        "/sys", "/proc", "/run"),
             "unsafe evidence output parent")
     selected = {}
-    for key in EXPECTED:
+    for key in (("m08",) if m08_only else tuple(EXPECTED)):
         options = [x for x in inspection["matches"][key] if x["matches_original_sha256"]]
         require(len(options) == 1,
                 "need exactly one original SHA-matched " + key
@@ -158,8 +158,11 @@ def prepare(inspection: dict, base: Path) -> tuple[Path, bool]:
         all_ok &= ok and records[key]["original_verified_again_after_dtc"]
     (folder / "00_review.json").write_text(json.dumps({
         "schema": "m08-d2-owner-pc-dtbo-decompile-v1",
-        "status": ("ORIGINAL_STOCK_AND_M08_DTS_COPIES_CREATED_NO_BOARD"
+        "status": (("ORIGINAL_M08_DTS_COPY_CREATED_STOCK_ABSENT_NO_BOARD"
+                    if m08_only else "ORIGINAL_STOCK_AND_M08_DTS_COPIES_CREATED_NO_BOARD")
                    if all_ok else "DECOMPILATION_FAILED_REVIEW_LOGS_NO_BOARD"),
+        "stock_dtbo_compared": not m08_only,
+        "m08_only": m08_only,
         "originals_unchanged": all(x["original_verified_again_after_dtc"]
                                    for x in records.values()),
         "files": records,
@@ -175,6 +178,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--search-root", type=Path, action="append",
                         help="Existing owner PC folder; repeat for multiple search roots")
+    parser.add_argument("--m08-only", action="store_true",
+                        help="Allow --prepare with only the SHA-verified original M08 DTBO, stock remains unknown")
     parser.add_argument("--prepare", action="store_true",
                         help="Use dtc to decompile two exact SHA-matched originals into NEW owner PC evidence")
     parser.add_argument("--evidence-base", type=Path,
@@ -186,10 +191,12 @@ def main() -> int:
         Path.home() / "Git" / "Thesis",
     ]
     try:
+        require(not args.m08_only or args.prepare, "--m08-only requires --prepare")
         result = locate(roots)
         print(json.dumps(result, indent=2, sort_keys=True))
         if args.prepare:
-            folder, accepted = prepare(result, args.evidence_base)
+            folder, accepted = prepare(result, args.evidence_base, m08_only=args.m08_only)
+
             print("M08_D2_OFFLINE_DTBO_EVIDENCE_DIR=" + str(folder))
             print("M08_D2_OFFLINE_DTBO_DECOMPILATION=" + (
                 "COMPLETE_NOT_RUNTIME_PROOF" if accepted else "FAILED_REVIEW_LOGS"))
