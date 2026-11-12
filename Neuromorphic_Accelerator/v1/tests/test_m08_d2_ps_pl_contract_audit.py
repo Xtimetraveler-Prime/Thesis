@@ -53,6 +53,13 @@ class M08D2PSPLStaticContractTests(unittest.TestCase):
             self.assertFalse(result["offline_comparators"]["stock"]["runtime_proof"])
             self.assertFalse(result["physical"]["hardware_retest_authorized"])
 
+    def test_assigned_clocks_is_not_a_consumer_clocks_property(self):
+        dts = "/dts-v1/; / { n { assigned-clocks = <0x1>; }; };"
+        feature = audit.feature_matrix(dts)
+        self.assertTrue(feature["assigned_clocks"])
+        self.assertFalse(feature["pl_clock_consumer_clocks"])
+        self.assertFalse(feature["afi_fabric_config_node"])
+
     def test_untrusted_symlink_comparator_refused(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)
