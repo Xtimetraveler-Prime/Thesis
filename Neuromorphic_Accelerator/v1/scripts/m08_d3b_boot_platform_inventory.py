@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D3.2B.1 bounded PC-filesystem provenance inventory; never a hardware gate.
+"""M08 D3.2 bounded PC-filesystem provenance inventory; never a hardware gate.
 
 Only walks explicitly bounded local directories; hashes candidate *regular*
 files without unpacking/running them. BOOT.BIN is listed as metadata only.
@@ -17,8 +17,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EVIDENCE_BASE = Path.home() / "Thesis_Evidence" / "M08"
-SCHEMA = "m08-d3b-b1-pc-boot-platform-inventory-v1"
-MARKER = "M08_D3B_B1_PC_INVENTORY_RECORDED_HARDWARE_BLOCKED"
+SCHEMA = "m08-d3b-boot-platform-inventory-v2"
+MARKER = "M08_D3_2_PC_INVENTORY_RECORDED_HARDWARE_BLOCKED"
 PINNED = {
     "k26_starter_kits.dtbo":
         "1e998ffd5d33a05da3746df3603e65603e1628006bc878209a836cc9bd3c4ae1",
@@ -189,12 +189,19 @@ def inventory(roots: list[tuple[str, Path]], *,
                 digest = None if metadata_only or skipped_large else sha_regular_file(path, st)
                 if skipped_large:
                     omitted_large_hashes += 1
+                # A filename is not provenance. Review-only overlays may
+                # legitimately reuse the deployed-image basename while
+                # differing in bytes. Inventory them, never promote them.
                 pin = PINNED.get(ent.name.lower())
-                if pin is not None and digest is not None:
-                    require(digest == pin,
-                            "pinned original SHA256 mismatch: " + str(path))
-                elif pin is not None:
-                    require(False, "pinned original not hashable: " + str(path))
+                if pin is None:
+                    comparison = "NOT_A_REFERENCE_FILENAME"
+                elif digest is None:
+                    comparison = "UNHASHED_REFERENCE_NAME_NOT_VERIFIED"
+                elif digest == pin:
+                    comparison = "SHA256_MATCH_HISTORICAL_REFERENCE_BYTES_ONLY"
+                else:
+                    comparison = "SAME_BASENAME_DIFFERENT_SHA256_CANDIDATE_ONLY"
+                matched = comparison == "SHA256_MATCH_HISTORICAL_REFERENCE_BYTES_ONLY"
                 candidates.append({
                     "root_label": label,
                     "path": str(path),
@@ -206,16 +213,47 @@ def inventory(roots: list[tuple[str, Path]], *,
                                     if metadata_only else
                                     "SKIPPED_SIZE_LIMIT" if skipped_large else
                                     "SHA256_STREAMED_REGULAR_FILE"),
-                    "pinned_original_digest_match": pin is not None,
-                    "provenance": ("PINNED_ORIGINAL_FILENAME_AND_BYTES_ONLY"
-                                   if pin is not None else
+                    "historical_reference_filename_match": pin is not None,
+                    "historical_reference_comparison": comparison,
+                    "pinned_original_digest_match": matched,
+                    "provenance": ("HISTORICAL_REFERENCE_BYTES_MATCH_NOT_DEPLOYMENT_PROOF"
+                                   if matched else
+                                   "SAME_FILENAME_DIFFERENT_BYTES_NOT_AUTHENTICATED"
+                                   if pin is not None and digest is not None else
+                                   "LOCAL_FILE_UNHASHED_UNATTESTED"
+                                   if digest is None else
                                    "LOCAL_FILE_PATH_AND_BYTES_ONLY_UNATTESTED"),
                     "boot_component_version": "UNKNOWN",
                     "deployed_or_applied": "UNKNOWN",
                     "ps_runtime_configuration_proven": False,
                 })
     candidates.sort(key=lambda row: (row["root_label"], row["relative_path"], row["path"]))
-    found = {Path(c["path"]).name.lower() for c in candidates}
+    references = {}
+    for name, reference_sha in PINNED.items():
+        named = [c for c in candidates if Path(c["path"]).name.lower() == name]
+        matched_paths = [c["path"] for c in named if c["pinned_original_digest_match"]]
+        distinct_paths = [c["path"] for c in named if
+                          c["historical_reference_comparison"] ==
+                          "SAME_BASENAME_DIFFERENT_SHA256_CANDIDATE_ONLY"]
+        unhashed_paths = [c["path"] for c in named if
+                          c["historical_reference_comparison"] ==
+                          "UNHASHED_REFERENCE_NAME_NOT_VERIFIED"]
+        if matched_paths:
+            status = "LOCAL_PATH_AND_SHA256_MATCH_NOT_BOOT_PROOF"
+        elif distinct_paths:
+            status = "REFERENCE_NOT_FOUND_SAME_NAME_DIFFERENT_BYTES"
+        elif unhashed_paths:
+            status = "REFERENCE_NOT_FOUND_NAME_ONLY_UNHASHED"
+        else:
+            status = "NOT_FOUND_IN_BOUNDED_SCAN_UNKNOWN"
+        references[name] = {
+            "expected_sha256": reference_sha,
+            "status": status,
+            "sha256_matching_paths": matched_paths,
+            "same_name_different_bytes_paths": distinct_paths,
+            "same_name_unhashed_paths": unhashed_paths,
+            "historical_deployment_or_boot_proven": False,
+        }
     return {
         "schema": SCHEMA,
         "status": "OFFLINE_PC_CANDIDATES_ONLY_NO_BOOT_OR_HARDWARE_PROOF",
@@ -227,12 +265,7 @@ def inventory(roots: list[tuple[str, Path]], *,
                      "symlinks_ignored": omitted_symlinks,
                      "size_limited_hashes": omitted_large_hashes},
         "candidates": candidates,
-        "pinned_originals": {
-            name: {"expected_sha256": digest,
-                   "status": ("LOCAL_PATH_AND_SHA256_MATCH_NOT_BOOT_PROOF"
-                              if name in found else "NOT_FOUND_IN_BOUNDED_SCAN_UNKNOWN")}
-            for name, digest in PINNED.items()
-        },
+        "pinned_originals": references,
         "evidence_semantics": {
             "xsa_or_ps_init_is_runtime_register_readback": False,
             "vivado_ps_preset_is_boot_firmware_owner_proof": False,
