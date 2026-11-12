@@ -1,5 +1,24 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08.2b latest: owner native DTC CLEAN and PS/page register protocol tests (2026-11-11)
+
+Owner original uploaded archives independently SHA-verified: corrected native `dtc` compile log **empty**, both FPGA and AMBA child bus cell pairs **2/2**, exact two `generic-uio` 4KiB nodes and fixups. Decompiled log includes only the documented unresolved symbolic reset-phandle warning; real sysfs metadata expected M08 absent, four `axi-pmon` UIO nodes. This is no longer the earlier warning-bearing candidate; see [M08.2b native acceptance report](M08_2B_UIO_NATIVE_ACCEPTANCE_AND_NEXT_PHYSICAL_GATE_2026_11_11.md). Original binaries are NOT within uploaded tarballs, so their owner-ledger hashes were not independently byte checked here.
+
+`tests/test_m08_uio_page_protocol.py` uses **synthetic injected read32/write32 adapters** for the new `src/neuromorphic_accelerator_v1/m08_uio_page_protocol.py`: validates dual magic/version/capability, duplicated stable snapshot and empty page; exact 64 fully supplied uint32 values, selected logical ID/readback, BEGIN, complete 256-byte load count, 64 fresh returned words compared before COMMIT, READY/valid and resident ID. Negative tests withhold COMMIT on a corrupted word, wrong loaded-byte count, wrong state/identity, malformed vector/ID, missing write gate, injected read/write exceptions. No synthetic test observes AXI BRESP/RRESP, exercises /dev/uio, accesses actual K26 AXI, or verifies DISPATCH=SLVERR; normal UIO mmap does not provide AXI response metadata. The result explicitly reports `physical_ps_axi_verified=false`, and a zero default identity build tag remains **unprovisioned**, never cryptographic attestation.
+
+Owner PC commands from the M08 branch root (no board actions):
+
+```bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_uio_page_protocol.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Run all M01–M08 Actions on the exact final commit; source tests are not physical verification. Do not repeat old read-only SSH/DTC or JTAG inventory without a reason. No FPGA/unload/loadapp, fan, raw physical memory, or Linux MMIO change authorized.
+
+
 **Status 2026-11-11:** M08.1 accepted host evidence; **M08.2a identity-only offline genuine Vivado BD is ACCEPTED** with sixth original native PASS and seventh corrected independent-auditor receipt, after five preserved failures. This is not M08.2b full routed accelerator or M08 physical acceptance. **M08.3.1** read-only DMA readiness source and no-DMA negative tests STARTED. Do not reinterpret CI fixture data as a captured physical KV260 observation. Genuine board runs and original vendor place-and-route require local operator evidence.
 
 ## Scope and independent evidence
