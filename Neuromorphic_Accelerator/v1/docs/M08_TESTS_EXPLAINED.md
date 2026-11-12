@@ -1,5 +1,23 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## CRITICAL (2026-11-12): live first identity RCU stall → global source quarantine
+
+The owner first identity-mode test via physical Linux UIO made the board unresponsive (SSH/serial), screenshot showed RCU stall/thread starvation, SSH exit 255. After power cycle stock firmware restored but old boot kernel journal/pstore not preserved. Hardware cause still UNKNOWN; M08 identity and page physical tests blocked. **Do NOT run old physical commands or original previously copied remote scripts**.
+
+The original operator `scripts/m08_kv260_physical_uio_operator.py` NOW has `reject_quarantined_mmio_mode` evaluated at the very start of `main()`, before any hardware checks or MMIO. Only `preflight` (no MMIO) is allowed; `identity` and `page` fail regardless of previous CLI flags and environment consent. The alternate legacy `scripts/m08_path_a_uio_identity_guard.py --mode identity` similarly hard rejects. `tests/test_m08_post_incident_mmio_quarantine.py` runs 4 source-only tests checking identity+page denial, bypass flags denial *before* live access, alternate guard denial, and strict source interlock. This prevents accidental reuse of the current broken firmware via the updated repository; it CANNOT retroactively disable older Python copies on the KV260.
+
+Full incident and offline-first fix plan: [M08.2b.3 owner first physical identity RCU stall](M08_2B_3_FIRST_IDENTITY_RCU_STALL_INCIDENT_AND_FIX_PLAN_2026_11_12.md). Existing `test_m08_physical_uio_operator.py` synthetic file-backed mapping unit tests remain a TRANSPORT experiment, NOT authority to retry physical UIO. DO NOT produce an automated workaround that suppresses/overrides quarantine.
+
+PC source verification:
+~~~bash
+cd /home/dna/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_post_incident_mmio_quarantine.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+~~~
+
+
 ## M08.2b.3/.4 post-power-cycle guarded physical UIO operator — 7 source-only tests (2026-11-12)
 
 New `scripts/m08_kv260_physical_uio_operator.py` is deployed as an ordinary owner-home Python source file only after an active M08 Linux manager slot is verified. It imports the existing `m08_identity_client` + `m08_uio_page_protocol`; it never programs PL, alters fancontrol, uses /dev/mem, or dispatches compute. It independently validates actual M08 bit.bin/DTBO/shell/stock recovery SHA, boot default, model/CPU, fancontrol/dfx-mgr status, FPGA manager/overlay, dynamically discovered UIO named map0 and exact char-device major/minor and Linux driver symlink. Modes: `preflight` no MMIO, `identity` guarded O_RDONLY/PROT_READ fixed-register reads and original SHA evidence, and `page` separately acknowledged native 32-bit MMIO writes via the proven `stage_and_compare` 64-word contract with fresh full readback, SHA check, COMMIT only after verification, and no DISPATCH.
