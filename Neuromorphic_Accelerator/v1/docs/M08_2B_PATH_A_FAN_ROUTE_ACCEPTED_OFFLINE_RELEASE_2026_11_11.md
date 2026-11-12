@@ -80,6 +80,8 @@ M08_PATH_A_NEW_OFFLINE_FAN_BITSTREAM_SHA_AUDITED_NOT_PROGRAMMED
 
 The output path is printed with M08_PATH_A_FAN_BITSTREAM_EVIDENCE_DIR. Preserve ORIGINAL source/route/bitstream evidence folders unchanged. On any failure, return only files that actually exist, particularly 01_preflight_console.log, 02_vivado_fan_bitstream.log, 03_fan_release_drc.rpt, 04_fan_release_timing.rpt, 07_audit_console.log and 08_evidence_sha256.txt. On success also supply 06_fan_bitstream_metrics.txt and 07_fan_bitstream_independent_audit.json; the large generated .bit may stay on the PC.
 
+**LATER VERIFIED OWNER RESULT (2026-11-11):** The offline fan-preserving M08 bitstream WAS generated and is accepted as genuine native Vivado-only source evidence, not physical programming: actual uploaded 05_m08_path_a_fan_page.bit SHA 2d749451f46fe0660a9e78081cb6c92920a608ba16c084f37d2e1ab32f3e8af8, exact 7,797,831 bytes, all eight uploaded ledger-listed artifacts independently verified, vendor and auditor PASS. This earlier section's 'not yet implemented' language is historical. See [current owner-accepted bitstream and Linux REVIEW-ONLY staging](M08_2B_PATH_A_BITSTREAM_ACCEPTED_LINUX_STAGING_2026_11_11.md). No physical fan, Ubuntu PL image, or M08 AXI has been touched.
+
 ## After new offline bitstream (NOT yet implemented/authorized)
 
 - Review genuine owner 2025.2 bitstream evidence and hardware fan pin against the running Ubuntu 24.04.2 K26 starter-kit overlay.
