@@ -206,7 +206,7 @@ def verify_dtc_diagnostics(compile_log: str, decode_stderr: str) -> dict:
     require(not compile_log.strip(),
             "dtc compile emitted warnings/errors; review ORIGINAL tool log")
     lines = [line.strip() for line in decode_stderr.splitlines() if line.strip()]
-    require(all(re.search(r"Warning \\(resets_property\\):.*Could not get phandle node", line)
+    require(all(re.search(r"Warning \(resets_property\):.*Could not get phandle node", line)
                 for line in lines),
             "dtc round-trip has unexpected warning/error (especially reg_format)")
     return {
