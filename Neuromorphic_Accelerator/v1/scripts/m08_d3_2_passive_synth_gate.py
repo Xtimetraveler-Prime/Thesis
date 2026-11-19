@@ -73,7 +73,10 @@ def source_gate(root: Path = ROOT) -> dict:
     require(spec is not None and spec.loader is not None, "missing D3A source gate")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    parent = module.verify_source(root)
+    try:
+        parent = module.verify_source(root)
+    except module.D3Rejected as exc:
+        raise SynthRejected("parent D3A source rejected: " + str(exc)) from exc
     require(parent["ps_to_pl_master_ports_exposed"] == 0
             and parent["physical_programming_allowed"] is False,
             "parent D3A image not a passive no-AXI source")
