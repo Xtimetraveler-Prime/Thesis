@@ -11,7 +11,7 @@ if ! command -v vivado >/dev/null 2>&1; then
     echo 'M08_D3C_STOP: source Vivado 2025.2 settings64.sh first' >&2
     exit 2
 fi
-if ! vivado -version | grep -Eq '^Vivado v2025\.2'; then
+if ! vivado -version | grep -Eq '^[Vv]ivado v2025\.2([[:space:]]|$)'; then
     echo 'M08_D3C_STOP: Vivado version not 2025.2' >&2
     exit 2
 fi
