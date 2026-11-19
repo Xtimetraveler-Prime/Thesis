@@ -37,7 +37,7 @@ class D3CJtagBramTests(unittest.TestCase):
             "ps_pl0_clock_request_hz": "100000000",
             "ps_pl0_runtime_clock_proven": "NO",
             "bram_map_base": "0xA0000000",
-            "bram_map_range": "0x00010000",
+            "bram_map_range": "0x00001000",
             "test_window_bytes": "4096",
             "fan_route": "TTC0_WAVEOUT2_TO_A12",
             "linux_management_compatibility": "NOT_PROVEN",
