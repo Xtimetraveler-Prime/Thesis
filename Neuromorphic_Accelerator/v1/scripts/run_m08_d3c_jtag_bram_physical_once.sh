@@ -32,7 +32,7 @@ if [[ "$USER" == root ]]; then
     echo 'M08_D3C_HW_STOP: do not run as root' >&2
     exit 2
 fi
-if [[ "$M08_D3C_ALLOW_PROGRAM" != YES ]]; then
+if [[ "${M08_D3C_ALLOW_PROGRAM:-}" != YES ]]; then
     echo 'M08_D3C_HW_STOP: export M08_D3C_ALLOW_PROGRAM=YES explicitly' >&2
     exit 2
 fi
@@ -55,7 +55,7 @@ printf 'vivado_physical_exit=%s\n' "$RC" > "$TEST/03_exit.txt"
     cd "$TEST"
     cp "$ROOT/scripts/m08_d3c_jtag_bram_readback_once.tcl" 00_executed_source.tcl
     if [[ "$RC" -eq 0 && -s 80_four_word_readback.txt ]] &&
-       grep -q 'result=FOUR_BRAMA_WORDS_WRITTEN_READ_AND_MATCHED' 80_four_word_readback.txt; then
+       grep -q 'result=FOUR_BRAM_WORDS_WRITTEN_READ_AND_MATCHED' 80_four_word_readback.txt; then
         sha256sum 00_executed_source.tcl 01_jtag_run.log 02_jtag_run.jou \
           03_exit.txt 80_four_word_readback.txt > 99_evidence_sha256.txt
         sha256sum -c 99_evidence_sha256.txt
