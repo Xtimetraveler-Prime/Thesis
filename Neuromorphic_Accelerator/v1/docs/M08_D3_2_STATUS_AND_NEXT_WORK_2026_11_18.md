@@ -1,6 +1,12 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
 
+## 2026-11-19 — Combined owner stock receipt accepted; live physical stock-only telemetry next
+
+Owner `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb`: original separate manual receipt `00_manual_xmutil_stdout.txt` and `01_review.json` verified by `sha256sum -c 99_evidence_sha256.txt`; status `STOCK_READONLY_FIVE_PROBES_PLUS_MANUAL_XMUTIL_REVIEW_ONLY`. Exact new passive image SHA `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547`; prior M08 app still installed and INACTIVE -1, stock k26 active 0->0. Confirmed no original automated six-probe acceptance, no physical image loaded, no stock rollback independently proven. In response to owner's request for another physical test, new bounded **stock-only live read-only** PC probe `scripts/m08_d3_2_stock_live_readonly_pc.py` (and no-board regression tests) collects 3 fresh SSH samples of manager, fancontrol, overlay and sensor readbacks; no sudo or board changes. This does not test new passive image and does not authorize any reconfiguration. Actual owner execution PENDING. Independent stock boot/PL manager compatibility remains blocker for new physical .bit load.
+
+
+
 ## 2026-11-19 — Operator authenticated read-only stock inventory
 
 Operator's password-authenticated `sudo xmutil listapps` confirmed `k26-starter-kits` XRT_FLAT active 0->0 and both original `m08-v1-fan-page-uio-review` PL_FLAT and `k24-starter-kits` XRT_FLAT inactive -1. The old M08 package remains installed and quarantined. The existing `sudo -n` preflight cannot authenticate on this board without a password, so do not change sudoers to weaken access control. New `scripts/m08_d3_2_manual_xmutil_receipt.py` correlates the original SHA-verifiable five-of-six baseline with a separate manually captured privileged *read-only* xmutil listing. No physical programming authorized; next owner SHA supplement is pending.
