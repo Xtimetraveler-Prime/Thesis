@@ -104,9 +104,12 @@ set hi [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one]
 set lo [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero]
 set_property -dict [list CONFIG.CONST_VAL 1 CONFIG.CONST_WIDTH 1] $hi
 set_property -dict [list CONFIG.CONST_VAL 0 CONFIG.CONST_WIDTH 1] $lo
-set_property -dict [list CONFIG.C_EXT_RESET_HIGH 0] $rst
+# C_EXT_RESET_HIGH is a derived/read-only property in Vivado 2025.2.
+# Verify its actual value AFTER PS pl_resetn0 is connected and BD validated.
 set_property -dict [list CONFIG.NUM_SI 1 CONFIG.NUM_MI 1] $sc
-set_property -dict [list CONFIG.DATA_WIDTH 32 CONFIG.MEM_DEPTH 1024 CONFIG.SINGLE_PORT_BRAM 1] $ctrl
+# MEM_DEPTH is derived/read-only in Vivado 2025.2; derive from the
+# 4 KiB address segment and check actual controller/BRAM geometry later.
+set_property -dict [list CONFIG.DATA_WIDTH 32 CONFIG.SINGLE_PORT_BRAM 1] $ctrl
 set_property -dict [list \
     CONFIG.Memory_Type Single_Port_RAM \
     CONFIG.Write_Width_A 32 \
@@ -153,6 +156,24 @@ if {[llength $space] != 1 || [llength $segment] != 1} {
 assign_bd_address -offset 0xA0000000 -range 0x00001000 \
     -target_address_space $space $segment
 validate_bd_design -force
+# Fail closed on the effective reset polarity. PS pl_resetn0 is active LOW.
+# A requested-but-rejected set_property is NOT evidence of correct polarity.
+set ext_reset_active_high [string trim [get_property CONFIG.C_EXT_RESET_HIGH $rst]]
+if {$ext_reset_active_high ne "0"} {
+    error "M08 D3C reset polarity not proved active-low: C_EXT_RESET_HIGH=$ext_reset_active_high"
+}
+# The controller depth and the physical BRAM dimensions are auto-derived by IPI.
+# Demand a 1024 x 32-bit memory (4 KiB) behind the exact 4 KiB AXI window.
+set ctrl_auto_depth [string trim [get_property CONFIG.MEM_DEPTH $ctrl]]
+set bram_depth_words [string trim [get_property CONFIG.Write_Depth_A $bram]]
+set bram_width_bits [string trim [get_property CONFIG.Write_Width_A $bram]]
+if {![string is integer -strict $ctrl_auto_depth] || $ctrl_auto_depth <= 0} {
+    error "M08 D3C AXI BRAM controller auto-depth missing/invalid: $ctrl_auto_depth"
+}
+if {$bram_depth_words ne "1024" || $bram_width_bits ne "32"} {
+    error "M08 D3C connected BRAM geometry not 1024x32: $bram_depth_words x $bram_width_bits"
+}
+puts "M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS ext_reset_active_high=$ext_reset_active_high controller_auto_depth=$ctrl_auto_depth bram_words=$bram_depth_words bram_width=$bram_width_bits"
 foreach iface {
     ps/M_AXI_HPM0_FPD ps/M_AXI_HPM1_FPD ps/M_AXI_HPM0_LPD
 } {
@@ -226,6 +247,10 @@ puts $f {ps_pl0_clock_request_hz=100000000}
 puts $f {ps_pl0_runtime_clock_proven=NO}
 puts $f {bram_map_base=0xA0000000}
 puts $f {bram_map_range=0x00001000}
+puts $f "ext_reset_active_high=$ext_reset_active_high"
+puts $f "bram_controller_derived_depth=$ctrl_auto_depth"
+puts $f "bram_depth_words=$bram_depth_words"
+puts $f "bram_width_bits=$bram_width_bits"
 puts $f {test_window_bytes=4096}
 puts $f {fan_route=TTC0_WAVEOUT2_TO_A12}
 puts $f {linux_management_compatibility=NOT_PROVEN}
