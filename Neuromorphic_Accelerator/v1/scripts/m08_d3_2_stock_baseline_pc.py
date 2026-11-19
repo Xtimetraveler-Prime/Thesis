@@ -109,7 +109,7 @@ def check_script() -> bytes:
     # The only elevated command permitted anywhere is the owner-observed
     # read-only xmutil inventory. No sudo shell, privilege changes, or manager writes.
     privileged = [line.strip() for line in active.splitlines()
-                  if re.search(r"\\bsudo\\b", line)]
+                  if re.search(r"\bsudo\b", line)]
     must(privileged == ["sudo -n xmutil listapps"],
          "sudo allowed for read-only xmutil listapps ONLY")
     must(src.count("probe ") == len(LABELS),
