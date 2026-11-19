@@ -95,7 +95,11 @@ def row_count(report: str, key: str) -> int:
     # Only use the exact table-row first count, not text elsewhere in reports.
     pattern = r"(?m)^\|\s*" + re.escape(key) + r"\s*\|\s*(\d+)\s*\|"
     matches = re.findall(pattern, report)
-    demand(len(matches) == 1, "missing/duplicate resource row: " + key)
+    # Vivado repeats CLB-register counts in its distribution table, and PS8
+    # in both Advanced and Primitives. Agreeing duplicates are legitimate;
+    # conflicting values must fail closed.
+    demand(bool(matches) and len(set(matches)) == 1,
+           "missing/conflicting resource rows: " + key)
     return int(matches[0])
 
 
