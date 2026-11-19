@@ -122,7 +122,7 @@ class PassiveUnreleasedBitgenTests(unittest.TestCase):
 
     def test_wrong_size_or_missing_success_marker_rejected(self):
         self.fixture()
-        self.mutate(m.REPORT, "bitstream_size_bytes=202500",
+        self.mutate(m.REPORT, "bitstream_size_bytes=240000",
                     "bitstream_size_bytes=1")
         with self.assertRaisesRegex(m.Rejected, "byte"):
             m.native_candidate(self.run, parent=self.stub)
