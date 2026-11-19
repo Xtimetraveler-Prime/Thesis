@@ -1,6 +1,10 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
 
+**2026-11-19 — M08 D3.2 PHYSICAL PASSIVE JTAG CONFIGURATION SUCCEEDED, POST-LOAD SSH TIMED OUT:** Owner confirmed 3/3 prior stock-only physical observations and separately verified PC stock firmware backup. On explicit owner authorization, genuine Vivado 2025.2 programmed new D3.2 passive bitstream SHA `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547` using one `program_hw_devices` after checking xck26_0 target. Log returned configuration startup HIGH, all completion markers and Vivado exit 0. Initial Tcl failed BEFORE programming on unset bit path; corrected Tcl succeeded. **Immediate SSH to KV260 10.42.0.135 timed out**; no UART/ICMP/kernel evidence yet. Owner reports fans worked. Distinguish FPGA JTAG programming success from post-load OS failure; not yet proven kernel hung, stock restore, manager-compatible image or Linux inference. Preserve `m08_d3_2_JTAG_k4ypVz92` logs and UART, then owner physical power-cycle/verify stock. Investigate unmanaged JTAG reconfiguration of dfx-mgr stock PL vs design PS/PL clock/EMIO mismatch or network fault, no new MMIO/historical HPM0 image. NEW passive image PHYSICALLY TESTED but NOT ACCEPTED for live Linux; old M08 stays QUARANTINED. M08→D3→D3.2.
+
+
+
 **2026-11-19 — M08 D3.2 COMBINED STOCK RECEIPT ACCEPTED; NON-MUTATING LIVE HARDWARE OBSERVATION PREPARED:** Owner authentic `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb` new SHA ledger verified. Combined status `STOCK_READONLY_FIVE_PROBES_PLUS_MANUAL_XMUTIL_REVIEW_ONLY`; stock K26 XRT_FLAT app active 0->0, prior/quarantined M08 PL_FLAT inactive -1, five good earlier sysfs probes, no automatic six-probe acceptance, new passive .bit not loaded. To make controlled physical progress without jeopardizing working Linux managed PL, add `scripts/m08_d3_2_stock_live_readonly_pc.py` for 3 bounded PC SSH snapshots of stock manager, fancontrol, overlay and temperature with separate SHA evidence, no root/board writes/MMIO/programming. Owner live physical evidence PENDING. Subsequent recovery/boot compatibility gate required BEFORE loading new passive image. M08→D3→D3.2.
 
 
