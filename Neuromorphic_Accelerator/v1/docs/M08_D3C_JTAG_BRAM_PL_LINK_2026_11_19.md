@@ -121,24 +121,24 @@ Source correction: remove the two forbidden writes, retain the PS active-low res
 
 ## 2026-11-19 next owner result — fully routed bitstream, constrained timing met, vendor JTAG warnings (NO BOARD)
 
-Owner candidate \`m08_d3c_jtag_link_A2SUrkhI\` was successfully generated with genuine Vivado 2025.2, the native log no longer reported the earlier rejected read-only property critical warnings, and all 10 SHA256 evidence artifacts were accepted. Owner pasted the original \`20_route_drc.rpt\` and timing summary without editing the evidence. **Timing closes** at 100 MHz PS PL0, WNS +5.907 ns, TNS 0, WHS +0.011 ns, THS 0, no failing setup/hold endpoints.
+Owner candidate `m08_d3c_jtag_link_A2SUrkhI` was successfully generated with genuine Vivado 2025.2, the native log no longer reported the earlier rejected read-only property critical warnings, and all 10 SHA256 evidence artifacts were accepted. Owner pasted the original `20_route_drc.rpt` and timing summary without editing the evidence. **Timing closes** at 100 MHz PS PL0, WNS +5.907 ns, TNS 0, WHS +0.011 ns, THS 0, no failing setup/hold endpoints.
 
-**Important:** Vivado DRC reported **seven actual Warning-level findings**, not zero checks. Original gate's \`Checks found: 0\` requirement was too strict for this vendor JTAG/debug transport design; it correctly blocked the build under the former gate but is not by itself evidence of a design error. All seven items were reviewed from the owner's pasted report:
-- 3× \`PDCN-1569\`: LUT equation pins in \`dbg_hub/inst/...\` (BSCAN/debug hub).
-- 1× \`REQP-1857\`: JTAG AXI \`rx_fifo_i\` RAMB18E2 WRITE_FIRST collision advisory.
-- 2× \`REQP-1858\`: JTAG AXI \`rd_cmd_fifo_i\`, \`wr_cmd_fifo_i\` RAMB36E2 WRITE_FIRST collision advisories.
-- 1× \`RTSTAT-10\`: 47 no-routable-load nets, reported visible sample of 15 paths all in \`dbg_hub/inst/...\` or \`m08_d3c_jtag_link_i/jtag_axi/inst/...\`. The report lists a sample, **not all 47 nets**; do not claim every unlisted net was examined.
+**Important:** Vivado DRC reported **seven actual Warning-level findings**, not zero checks. Original gate's `Checks found: 0` requirement was too strict for this vendor JTAG/debug transport design; it correctly blocked the build under the former gate but is not by itself evidence of a design error. All seven items were reviewed from the owner's pasted report:
+- 3× `PDCN-1569`: LUT equation pins in `dbg_hub/inst/...` (BSCAN/debug hub).
+- 1× `REQP-1857`: JTAG AXI `rx_fifo_i` RAMB18E2 WRITE_FIRST collision advisory.
+- 2× `REQP-1858`: JTAG AXI `rd_cmd_fifo_i`, `wr_cmd_fifo_i` RAMB36E2 WRITE_FIRST collision advisories.
+- 1× `RTSTAT-10`: 47 no-routable-load nets, reported visible sample of 15 paths all in `dbg_hub/inst/...` or `m08_d3c_jtag_link_i/jtag_axi/inst/...`. The report lists a sample, **not all 47 nets**; do not claim every unlisted net was examined.
 
 The revised independent gate checks that the full, **unchanged** native DRC report has exactly those seven codes/severities/counts/descriptions, all seven matching details, expected vendor locations and the specific observed net sample. Unexpected DRC warning types/counts/severities/locations, critical warnings, malformed reports, negative timing slack, failed endpoint count, false board assertions, and original SHA drift all still cause rejection. Negative regression tests cover altered warnings/paths/counts and negative slack. Passing this gate constitutes **offline candidate acceptance with explicitly documented vendor-IP warnings for this bounded diagnostic experiment only**, **not** a claim that these vendor core advisories cannot affect functional behavior or that JTAG has been proven on KV260.
 
 **Do not rerun native synthesis or change any original evidence.** In the owner PC (after pulling the updated branch), run:
-\`\`\`bash
+```bash
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
 RUN="$HOME/Thesis_Evidence/M08/m08_d3c_jtag_link_A2SUrkhI"
 (cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
 python3 -m unittest discover -s tests -p 'test_m08_d3c_jtag_bram_gate.py' -v
 python3 scripts/m08_d3c_jtag_bram_gate.py --run-dir "$RUN"
 sha256sum "$RUN/bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit"
-\`\`\`
+```
 
 If the gate accepts, independently review the original SHA, board/part, reset polarity and memory dimensions, timing, fan A12 route, plus UART/fan/recovery readiness before a **separately owner-authorized**, bounded one-shot physical JTAG BRAM write/read test. No hardware programming has been performed by the changes in this section. Original HPM0 image remains quarantined. A JTAG communication PASS validates one observed diagnostic sequence only and does **not** close the vendor-IP warnings, demonstrate Linux/PL clock independence, or prove neural inference.
