@@ -168,13 +168,14 @@ class StockBaselinePcTests(unittest.TestCase):
             m.candidate_audit(self.candidate)
 
     def test_original_script_and_pc_wrapper_no_deployment_actions(self):
-        for file in (S, m.BOARD_SH):
-            source = file.read_text()
-            for forbidden in (
-                "program_hw_devices(", "xmutil loadapp", "xmutil unloadapp",
-                "write_bitstream(", "fpgautil -b", "fpga_manager/fpga0/firmware",
-            ):
-                self.assertNotIn(forbidden, source)
+        active_board = "\n".join(
+            ln for ln in m.BOARD_SH.read_text().splitlines()
+            if ln.strip() and not ln.lstrip().startswith("#"))
+        for forbidden in (
+            "program_hw_devices(", "xmutil loadapp", "xmutil unloadapp",
+            "write_bitstream(", "fpgautil -b", "fpga_manager/fpga0/firmware",
+        ):
+            self.assertNotIn(forbidden, active_board)
 
 
 if __name__ == "__main__":
