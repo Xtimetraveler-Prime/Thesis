@@ -148,7 +148,7 @@ def create_receipt(original: Path, manual: Path, manual_exit: int, evidence_base
     app_review = audit_manual_xmutil(manual_bytes, manual_exit)
     require(evidence_base.is_dir() and not evidence_base.is_symlink(),
             "missing safe PC evidence base")
-    require(evidence_base.resolve() not in original.resolve().parents and
+    require(original.resolve() not in evidence_base.resolve().parents and
             evidence_base.resolve() != original.resolve(),
             "refuse original evidence as destination")
     result_folder = Path(tempfile.mkdtemp(prefix="m08_d3_2_xmutil_MANUAL_REVIEW_", dir=evidence_base))
