@@ -166,6 +166,25 @@ class PassiveSynthGateTests(unittest.TestCase):
         self.assertEqual(output.returncode, 0, output.stderr)
         self.assertEqual(output.stdout.strip(), "1")
 
+    def test_shell_owner_runner_syntax_and_only_fresh_pc_projects(self):
+        runner = ROOT / "scripts/run_m08_d3_2_passive_synth_pc.sh"
+        source = runner.read_text()
+        self.assertIn("set -euo pipefail", source)
+        self.assertIn("m08_d3_2_passive_synth_XXXXXXXX", source)
+        self.assertIn("m08_d3a_passive_fan_bd_candidate.tcl", source)
+        self.assertIn("m08_d3_2_passive_synth_only.tcl", source)
+        self.assertIn("99_evidence_sha256.txt", source)
+        self.assertEqual(source.count("vivado -mode batch"), 2)
+        for prohibited in ("launch_runs impl_1", "write_bitstream -",
+                           "program_hw_devices", "xmutil unloadapp",
+                           "/dev/mem", "/dev/uio", "git clean", "rm -rf"):
+            self.assertNotIn(prohibited, source)
+        if shutil.which("bash"):
+            actual = subprocess.run(["bash", "-n", str(runner)],
+                                    capture_output=True, text=True, timeout=10,
+                                    check=False)
+            self.assertEqual(actual.returncode, 0, actual.stderr)
+
     def test_gate_program_contains_no_hardware_or_vendor_calls(self):
         source = AUDIT.read_text()
         for forbidden in (
