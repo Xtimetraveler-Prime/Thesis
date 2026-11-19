@@ -18,7 +18,7 @@ if [[ ! -d "$BASE" || -L "$BASE" ]]; then
     exit 2
 fi
 if ! command -v vivado >/dev/null 2>&1 ||
-   ! vivado -version | grep -Eq '^Vivado v2025\.2'; then
+   ! vivado -version | grep -Eq '^[Vv]ivado v2025\.2([[:space:]]|$)'; then
     echo 'M08_D3C_HW_STOP: expected Vivado 2025.2 not active' >&2
     exit 2
 fi
