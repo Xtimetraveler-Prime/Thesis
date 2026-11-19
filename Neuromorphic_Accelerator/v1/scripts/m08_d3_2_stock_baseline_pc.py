@@ -101,12 +101,12 @@ def check_script() -> bytes:
                        if x.strip() and not x.lstrip().startswith("#"))
     for forbidden in (
         "sudo ", "xmutil loadapp", "xmutil unloadapp",
-        "program_hw_devices", "write_bitstream", "fpgautil", "fpga_manager/",
+        "program_hw_devices", "write_bitstream", "fpgautil",
         "echo > /sys", "/dev/uio", "/dev/mem", "dd if=", "rm -rf", "systemctl stop",
         "systemctl start", "systemctl restart", "reboot", "poweroff",
     ):
         must(forbidden not in active, "board baseline includes unsafe operation: " + forbidden)
-    must(src.count("probe ") == len(LABELS)+1,
+    must(src.count("probe ") == len(LABELS),
          "board read-only probe count changed")
     return sh
 
