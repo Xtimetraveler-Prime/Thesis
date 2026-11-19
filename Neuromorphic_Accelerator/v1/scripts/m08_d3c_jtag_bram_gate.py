@@ -116,6 +116,123 @@ def source(root=ROOT) -> dict:
         "hardware_readback_verified": False,
     }
 
+# This exact Vivado 2025.2 owner report profile is narrowly scoped to vendor
+# dbg_hub and JTAG-AXI IP. These are REAL DRC warnings, not zero DRC findings.
+# An unexpected code, count, severity, path or change of scope FAILS CLOSED.
+VENDOR_DRC_PROFILE = {
+    "PDCN-1569": (3, "LUT equation term check"),
+    "REQP-1857": (1, "RAMB18E2_writefirst_collision_advisory"),
+    "REQP-1858": (2, "RAMB36E2_writefirst_collision_advisory"),
+    "RTSTAT-10": (1, "No routable loads"),
+}
+
+
+def inspect_drc(drc: str) -> dict:
+    from collections import Counter
+
+    matches = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", drc)
+    require(len(matches) == 1, "native DRC missing/ambiguous Checks found summary")
+    count = int(matches[0])
+    require(count in (0, 7), f"native DRC has unreviewed finding count: {count}")
+    summary = re.findall(
+        r"(?m)^\|\s*([A-Z]+-\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(\d+)\s*\|\s*$",
+        drc,
+    )
+    rows = [(code, severity.strip(), desc.strip(), int(qty))
+            for code, severity, desc, qty in summary]
+    require(len(rows) == len({code for code, _, _, _ in rows}),
+            "native DRC has duplicate summary rules")
+    details = list(re.finditer(
+        r"(?m)^([A-Z]+-\d+)#(\d+)\s+(Warning|Critical Warning|Error)\s*$", drc
+    ))
+    if count == 0:
+        require(not rows and not details,
+                "native DRC zero findings inconsistent with detail/summary")
+        return {"drc_checks": 0, "vendor_drc_warnings": 0,
+                "drc_warning_profile": "ZERO"}
+
+    observed = {code: (qty, desc) for code, severity, desc, qty in rows
+                if severity == "Warning"}
+    require(len(rows) == 4 and observed == VENDOR_DRC_PROFILE,
+            "native DRC contains unreviewed rule, severity, count or description")
+    require(sum(qty for _, _, _, qty in rows) == 7 and len(details) == 7,
+            "native DRC detail count differs from warning summary")
+    per_code = Counter()
+    seen = set()
+    for index, match in enumerate(details):
+        code, number, severity = match.group(1), int(match.group(2)), match.group(3)
+        require(severity == "Warning" and code in VENDOR_DRC_PROFILE,
+                "native DRC contains new/elevated detail")
+        require((code, number) not in seen, "native DRC duplicate detail")
+        seen.add((code, number))
+        per_code[code] += 1
+        end = details[index + 1].start() if index + 1 < len(details) else len(drc)
+        body = drc[match.end():end]
+        require(body.count("Related violations: <none>") == 1,
+                "native DRC warning has unexpected related violations")
+        require(VENDOR_DRC_PROFILE[code][1] in body,
+                "native DRC detail description mismatch: " + code)
+        if code == "PDCN-1569":
+            require("cell dbg_hub/inst/" in body and
+                    "(pin dbg_hub/inst/" in body and
+                    "not included in the LUT equation" in body,
+                    "native DRC LUT advisory outside vendor debug hub")
+        elif code in ("REQP-1857", "REQP-1858"):
+            fifo_names = ("rx_fifo_i",) if code == "REQP-1857" else (
+                "rd_cmd_fifo_i", "wr_cmd_fifo_i"
+            )
+            prefix = "BRAM (m08_d3c_jtag_link_i/jtag_axi/inst/jtag_axi_engine_u/"
+            require(body.count(prefix) == 1 and
+                    any(prefix + fifo + "/" in body for fifo in fifo_names) and
+                    "SDP mode with WRITE_FIRST write-mode" in body and
+                    "address collisions" in body,
+                    "native DRC memory collision advisory outside vendor JTAG FIFO")
+        elif code == "RTSTAT-10":
+            require("47 net(s) have no routable loads" in body and
+                    "(the first 15 of 45 listed)" in body,
+                    "native DRC unused-load warning scope changed")
+            sample = re.search(
+                r"problem bus\(es\) and/or net\(s\) are (.*?)\s*"
+                r"\(the first 15 of 45 listed\)", body, flags=re.S
+            )
+            require(sample is not None, "native DRC unused-load sample missing")
+            paths = [p.strip() for p in sample.group(1).split(",") if p.strip()]
+            require(len(paths) == 15 and all(p.startswith((
+                "dbg_hub/inst/", "m08_d3c_jtag_link_i/jtag_axi/inst/"
+            )) for p in paths), "native DRC unused-load sample includes non-vendor logic")
+
+    require(all(per_code[code] == qty and
+                {n for k, n in seen if k == code} == set(range(1, qty + 1))
+                for code, (qty, _) in VENDOR_DRC_PROFILE.items()),
+            "native DRC duplicate or missing vendor warning")
+    return {"drc_checks": 7, "vendor_drc_warnings": 7,
+            "drc_warning_profile": "EXACT_REVIEWED_VENDOR_JTAG_PROFILE"}
+
+
+def inspect_timing(report: str) -> dict:
+    require("All user specified timing constraints are met." in report,
+            "native route timing does not affirm constrained timing closure")
+    lines = report.splitlines()
+    headers = [i for i, line in enumerate(lines)
+               if line.strip().startswith("WNS(ns)") and "WHS(ns)" in line]
+    require(len(headers) == 1 and headers[0] + 2 < len(lines),
+            "native route timing numeric summary missing/ambiguous")
+    vals = lines[headers[0] + 2].split()
+    require(len(vals) == 12, "native route timing summary malformed")
+    try:
+        wns, tns, whs, ths = (float(vals[i]) for i in (0, 1, 4, 5))
+        failing = (int(vals[i]) for i in (2, 6, 10))
+    except ValueError as exc:
+        raise Reject("native route timing summary nonnumeric") from exc
+    require(wns >= 0 and tns == 0 and whs >= 0 and ths == 0
+            and failing == (0, 0, 0),
+            "native route timing has negative slack or failing endpoints")
+    require(re.search(r"(?m)^\s*clk_pl_0\s+\{0\.000 5\.000\}\s+"
+                      r"10\.000\s+100\.000\s*$", report) is not None,
+            "native route timing missing 100 MHz PL0 constraint")
+    return {"wns_ns": wns, "tns_ns": tns, "whs_ns": whs, "ths_ns": ths}
+
+
 def native(folder: Path) -> dict:
     require(folder.is_dir() and not folder.is_symlink()
             and re.fullmatch(r"m08_d3c_jtag_link_[A-Za-z0-9]+", folder.name) is not None
@@ -190,9 +307,12 @@ def native(folder: Path) -> dict:
             f"first at 00_vivado.log:{first_number}: {first_text[:500]}"
         )
     drc = read_file(folder/"reports/20_route_drc.rpt", 3000000).decode(errors="replace")
-    require(re.search(r"Checks found:\s*0\b", drc) is not None,
-            "native DRC has findings, cannot claim offline ready")
+    drc_result = inspect_drc(drc)
+    timing = read_file(folder/"reports/21_route_timing.rpt", 3000000).decode(errors="replace")
+    timing_result = inspect_timing(timing)
     return {
+        **drc_result,
+        **timing_result,
         "status": "M08_D3C_NATIVE_OFFLINE_JTAG_BRAM_IMAGE_HASH_ACCEPTED_NO_BOARD",
         "candidate_path": str((folder/BIT_REL).resolve()),
         "candidate_sha256": digest,
