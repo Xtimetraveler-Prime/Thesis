@@ -79,8 +79,8 @@ def source(root=ROOT) -> dict:
     ):
         require(forbidden not in body, "offline native builder contains forbidden action: " + forbidden)
     # Hard-fail source that tries to force Vivado 2025.2 read-only derived fields.
-    require(re.search(r"set_property[^\\n]*CONFIG\\.C_EXT_RESET_HIGH", body) is None
-            and re.search(r"set_property[^\\n]*CONFIG\\.MEM_DEPTH", body) is None,
+    require(re.search(r"set_property[^\n]*CONFIG\.C_EXT_RESET_HIGH", body) is None
+            and re.search(r"set_property[^\n]*CONFIG\.MEM_DEPTH", body) is None,
             "native builder must not force read-only reset or BRAM depth")
     require(sum(x.startswith("write_bitstream -file $bit") for x in active) == 1,
             "offline native builder must generate one unreleased bitstream")
