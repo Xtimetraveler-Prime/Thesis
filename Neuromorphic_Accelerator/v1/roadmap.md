@@ -1,6 +1,10 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
 
+**2026-11-19 — M08 D3.2 SECOND PHYSICAL STAGE-0 EVIDENCE TRIAGED; EXACT READ-ONLY PRIVILEGE FIX:** Owner verified `m08_d3_2_stock_READONLY_oyz3sts9` SHA evidence; SSH exit 0, 5/6 probes rc 0; `installed_apps` rc 1 explicitly demanded root for `xmutil listapps`. Real stock board: KV260 revB, Ubuntu 24.04.2, 6.8.0-1036-xilinx, fpga_manager operating, dfx-mgr/fancontrol active, stock `k26-starter-kits_image_1`, sensor temps ~29.8–31.9C, UIO only axi-pmon, stock .bit.bin/.dtbo/shell hashes recorded. Fix `sudo -n xmutil listapps` uniquely allowlisted only for read-only apps inventory; fail closed if sudo unavailable or attempted broader use. Native new .bit remains UNRELEASED; earlier failed image QUARANTINED; no owner full stage-0 acceptance, no FPGA load, no proof of stock rollback under fault. M08→D3→D3.2.
+
+
+
 **2026-11-19 — M08 D3.2 KEY-BASED SSH ESTABLISHED, STOCK BASELINE STILL INCOMPLETE:** Owner reports adding a **public SSH authentication key** for the KV260 `ubuntu` account. A noninteractive `BatchMode=yes` SSH echo succeeded (`M08_SSH_AUTHENTICATION_OK`), resolving the previous `rp2nq3it` capture's SSH exit 255/password auth rejection. A later new owner capture `m08_d3_2_stock_READONLY_oyz3sts9` returned `STOCK_BOARD_READONLY_CAPTURE_INCOMPLETE_STOP` despite SSH echo success; latest capture logs not yet inspected, exact cause **UNKNOWN**. Preserve immutable evidence and inspect PC receipts, individual probe rc, remote output/stderr, not program the FPGA. Public key installation was user reported; key bytes/identity are not in repository. Original failed bitstream remains QUARANTINED; new passive `07af9e26...` still UNRELEASED. M08→D3→D3.2 physical load blocked.
 
 
