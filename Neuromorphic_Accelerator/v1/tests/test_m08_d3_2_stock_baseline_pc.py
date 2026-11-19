@@ -76,7 +76,7 @@ class StockBaselinePcTests(unittest.TestCase):
     def test_board_source_six_readonly_probes(self):
         sh = m.check_script()
         self.assertIn(b"sudo -n xmutil listapps", sh)
-        self.assertEqual(sh.count(b"sudo -n xmutil listapps"), 1)
+        self.assertEqual(sum(line.strip() == b"sudo -n xmutil listapps" for line in sh.splitlines()), 1)
         self.assertIn(b"cat /sys/class/fpga_manager/fpga0/state", sh)
         self.assertNotIn(b"xmutil loadapp", sh)
         self.assertNotIn(b"program_hw_devices", sh)
