@@ -112,7 +112,7 @@ try {
     }
     set fd [open $result {WRONLY CREAT EXCL}]
     puts $fd {schema=m08-d3c-jtag-bram-one-shot-readback-v1}
-    puts $fd {result=FOUR_BRAMA_WORDS_WRITTEN_READ_AND_MATCHED}
+    puts $fd {result=FOUR_BRAM_WORDS_WRITTEN_READ_AND_MATCHED}
     puts $fd "candidate_sha256=$digest"
     puts $fd "target=$target_path"
     puts $fd "device=[get_property NAME $fpga]"
