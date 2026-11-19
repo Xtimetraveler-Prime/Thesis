@@ -1,6 +1,12 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
 
+## M08 D3.2 live stock-only physical safety observation (2026-11-19)
+
+Owner 5/6+manual separate SHA receipt `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb` accepted review-only; no new image deployed. New `scripts/m08_d3_2_stock_live_readonly_pc.py` is guarded against altered manual receipt, wrong new passive/stock image SHA, wrong SSH target, unexpected stock overlay, inactive FPGA manager/fancontrol, missing or out-of-envelope sensor, failed SSH and board-side mutation. Performs exactly three default serial PC SSH reads to stock KV260 with fresh PC-only evidence and SHA. `tests/test_m08_d3_2_stock_live_readonly_pc.py` uses synthetic mock SSH only, no physical board; tests observation accepted and failures/replay and receipt tamper. Never runs sudo, changes fan speed or reconfigures FPGA. This tests only **stock runtime continuity**, not fan airflow independently or PS boot rollback/recovery or passive image loading.
+
+
+
 ## M08 D3.2 offline manual sudo xmutil receipt supplement (2026-11-19)
 
 Original stage-0 physical owner capture `oyz3sts9` had 5/6 successful probes; the sixth was `xmutil listapps` requiring root. Noninteractive `sudo -n` also requires a password on this board, so no sudoers loosening. Owner manually ran `ssh -t ... 'sudo xmutil listapps'`, obtaining stock K26 app active slot 0->0 and original quarantined M08 inactive slot -1. `scripts/m08_d3_2_manual_xmutil_receipt.py` is *offline-only*, independently audits original seven-file SHA receipt and exact 5/6 statuses/stock firmware digests, then separately correlates owner PC transcript and asserted exit code, creating a fresh PC SHA ledger. Status is REVIEW_ONLY, no hardware load claim. `tests/test_m08_d3_2_manual_xmutil_receipt.py` covers synthetic source tampering, wrong app/active slots, failed SSH, hash mismatch, duplicate/extra active app and false programming claims.
