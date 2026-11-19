@@ -71,7 +71,7 @@ class PassiveSynthGateTests(unittest.TestCase):
         path = self.root / d3a.CANDIDATE_TCL
         path.write_text(path.read_text().replace(
             "CONFIG.PSU__USE__M_AXI_GP0 0", "CONFIG.PSU__USE__M_AXI_GP0 1"))
-        with self.assertRaisesRegex(d3a.D3Rejected, "disable"):
+        with self.assertRaisesRegex(gate.SynthRejected, "disable"):
             gate.source_gate(self.root)
 
     def test_reject_removed_fan_pin_constraint(self):
