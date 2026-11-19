@@ -161,9 +161,20 @@ def native(folder: Path) -> dict:
     log = read_file(folder/"00_vivado.log", 12000000).decode(errors="replace")
     require("M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED" in log,
             "native Vivado success marker absent")
-    require(re.search(r"(?m)^ERROR:", log) is None and
-            re.search(r"(?m)^CRITICAL WARNING:", log) is None,
-            "native Vivado logs report error or critical warning")
+    # Report the actual failing diagnostic from the immutable native log.
+    # Bitgen's local "0 Warnings" summary does not erase earlier diagnostics.
+    fatal_lines = [
+        (number, line.strip())
+        for number, line in enumerate(log.splitlines(), start=1)
+        if re.match(r"^(?:ERROR:|CRITICAL WARNING:)", line)
+    ]
+    if fatal_lines:
+        first_number, first_text = fatal_lines[0]
+        raise Reject(
+            "native Vivado logs report error or critical warning; "
+            f"{len(fatal_lines)} fatal diagnostic line(s); "
+            f"first at 00_vivado.log:{first_number}: {first_text[:500]}"
+        )
     drc = read_file(folder/"reports/20_route_drc.rpt", 3000000).decode(errors="replace")
     require(re.search(r"Checks found:\s*0\b", drc) is not None,
             "native DRC has findings, cannot claim offline ready")
