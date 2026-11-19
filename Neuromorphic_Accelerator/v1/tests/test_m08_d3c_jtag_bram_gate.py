@@ -171,6 +171,19 @@ class D3CJtagBramTests(unittest.TestCase):
         self.assertIn("get_property CONFIG.Write_Width_A $bram", script)
         self.assertIn("M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS", script)
 
+    def test_source_gate_rejects_writes_to_readonly_vivado_properties(self):
+        original = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
+        shell = (ROOT / "scripts/run_m08_d3c_jtag_bram_pc.sh").read_text()
+        scripts = self.root / "scripts"
+        scripts.mkdir()
+        (scripts / "run_m08_d3c_jtag_bram_pc.sh").write_text(shell)
+        for forbidden in ("CONFIG.C_EXT_RESET_HIGH", "CONFIG.MEM_DEPTH"):
+            with self.subTest(forbidden=forbidden):
+                (scripts / "m08_d3c_jtag_bram_build.tcl").write_text(
+                    original + "\nset_property " + forbidden + " 0 $ctrl\n")
+                with self.assertRaisesRegex(g.Reject, "must not force read-only"):
+                    g.source(self.root)
+
     def test_native_reset_mismatch_rejected_even_with_rehashed_receipt(self):
         p = self.run / "reports/30_native_result.txt"
         p.write_text(p.read_text().replace("ext_reset_active_high=0",
