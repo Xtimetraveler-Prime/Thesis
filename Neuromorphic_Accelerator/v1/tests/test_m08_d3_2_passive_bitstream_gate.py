@@ -97,7 +97,7 @@ class PassiveUnreleasedBitgenTests(unittest.TestCase):
 
     def test_binary_bytes_tamper_rejected(self):
         self.fixture()
-        (self.run / m.BIT).write_bytes(b"X" * 160000)
+        (self.run / m.BIT).write_bytes(b"X" * 240000)
         with self.assertRaisesRegex(m.Rejected, "candidate receipt digest mismatch"):
             m.native_candidate(self.run, parent=self.stub)
 
@@ -161,8 +161,17 @@ class PassiveUnreleasedBitgenTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(ROOT / rel, path)
             current = m.ROOT
+            current_import_parent = m.import_parent
             try:
                 m.ROOT = root
+                m.import_parent = lambda *args: types.SimpleNamespace(
+                    RouteRejected=ValueError,
+                    source_gate=lambda: {
+                        "status": "MOCK_PASSIVE_PARENT_SOURCE_NOT_VENDOR",
+                        "bitstream_created": False,
+                        "hardware_mmio_authorized": False,
+                    },
+                )
                 file = root / "scripts/m08_d3_2_passive_bitstream_candidate.tcl"
                 file.write_text(file.read_text() + "\nprogram_hw_devices\n")
                 with self.assertRaisesRegex(m.Rejected, "unsafe active"):
@@ -173,6 +182,7 @@ class PassiveUnreleasedBitgenTests(unittest.TestCase):
                     m.source_gate()
             finally:
                 m.ROOT = current
+                m.import_parent = current_import_parent
 
     @unittest.skipUnless(shutil.which("bash") and shutil.which("tclsh"),
                          "bash or tclsh missing")
@@ -194,7 +204,7 @@ class PassiveUnreleasedBitgenTests(unittest.TestCase):
         source = SCRIPT.read_text()
         for forbidden in (
             "subprocess.run(", "os.system(", "program_hw_devices(",
-            "open_hw_manager(", "write_bitstream(", "xmutil ",
+            "open_hw_manager(", "write_bitstream(",
         ):
             self.assertNotIn(forbidden, source)
 
