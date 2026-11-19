@@ -1,4 +1,7 @@
-# M08 D3.2B — next-chat development handoff and gated implementation roadmap
+# M08 D3.2 — protected PS–PL integration handoff and evidence gates
+
+> **Current organization (2026-11-12):** Use **M08 → D3 → D3.2** as the forward development milestone. The former B.1–B.5 below are ordered engineering workstreams and acceptance criteria, **not separate milestone achievements**. Keep legacy numbering for historical traceability only. Continue source work on stacked draft PR #86 and stop dependent firmware/native/hardware signoff until the owner PC evidence is independently reviewed. The initial inventory falsely assumed that every same-name review-only DTBO was the deployed original; repaired v2 inventory records differing bytes separately and makes no false boot authenticity claim. The original M08 bitstream remains quarantined, with no board, MMIO, PS or firmware operations authorized.
+
 **Research project:** `Xtimetraveler-Prime/Thesis` → `Neuromorphic_Accelerator/v1`  
 **Updated:** 2026-11-12, after owner's successful D3.2A PC validation  
 **Authority:** this document is the **current forward-looking M08 D3.2B handoff**. Earlier `M08_NEXT_CHAT_HANDOFF_2026_11_11.md` preserves incident history; do not mistake its older D2/D3 STOP notes for a prohibition on *offline source development*. All hardware STOP conditions remain in force.  
@@ -173,3 +176,24 @@ vvp "$TMP/liveness.vvp"
 - Project incident/master roadmap and native owner evidence are the **authoritative local context**; generic docs do not prove original board settings.
 
 **FINAL GATE AT HANDOFF:** D3.1 genuine native PS/no-AXI BD + D3.2A owner simulation **PASS**. D3.2B protected PS boot/AXI/LINUX integration and corrected image **OPEN/BLOCKED**. Original bitstream and all physical operations still **STOP/QUARANTINED**.
+
+## D3.2 development history — new source branch (2026-11-12)
+
+Created `agent/neuromorphic-accelerator-v1-m08-d3b-boot-ownership-audit` from this handoff commit `1a1495fe624027482f003a2bde10fd777de0e690`. Implemented only the FIRST B.1 deliverables: bounded offline PC artifact inventory, synthetic negative tests and [boot evidence matrix](M08_D3B_BOOT_PLATFORM_EVIDENCE_MATRIX_2026_11_12.md). **Owner PC inventory not yet executed**, no authentic boot XSA/PS-init/base DTB/firmware source accepted, no PS ATB4/AIB13/PL0/AFI proof. Proceed to B.2 only after owner validates B.1 receipt; unrelated tool-independent simulation may advance, but cannot satisfy PS hardware protection. Do not modify this original D3.2A handoff or claimed owner-native evidence outside the new feature branch; all previous STOP conditions remain unchanged.
+
+**First owner inventory attempt and fix:** PC scan initially rejected a same-basename DTBO in `m08_2b_path_a_uio_overlay_REVIEW_ONLY_tuzu33oo`. Earlier v1 scanner incorrectly assumed any file named `m08-v1-fan-page-uio-review.dtbo` must equal the deployed original's pinned SHA256. Corrected v2 scanner inventories the different-byte file without attributing deployment or boot use, preserves SHA-only historical matching, and covers the exact failure mode with synthetic negative tests. Owner re-run and authentic boot platform evidence remain pending. No additional D3.2B.x milestones should be created for this correction.
+
+
+## 2026-11-18 D3.2 continuation — owner inventory receipt, abstract AXI and milestones
+
+**Active milestone:** M08 → D3 → D3.2. Treat prior D3.2B.1–B.5 as engineering/evidence workstreams rather than independently numbered milestones. [Consolidated live status and exact PC commands](M08_D3_2_STATUS_AND_NEXT_WORK_2026_11_18.md).
+
+Owner reports corrected v2 PC inventory in /home/dna/Thesis_Evidence/M08/m08_d3b_b1_inventory_Kcn9mCdA: 53 candidates, JSON receipt SHA check PASS, exact historical M08 overlay hash found once plus a different-byte same-basename candidate, original stock overlay absent from bounded scan. **The full owner-original 00_boot_platform_inventory.json and 99_evidence_sha256.txt bytes are not supplied in this conversation**, so 53 candidate contents and boot-stage versions remain unreviewed. Added offline read-only scripts/m08_d3b_boot_platform_receipt_review.py with synthetic negative tests for re-signed fake runtime claims, hash collisions, duplicate candidates and invalid receipts. Owner may run against his saved local folder, without touching hardware or copying all 53 originals.
+
+New rtl/m08/tb_m08_d3b_axi_fault_scoreboard.sv with tests/test_m08_d3b_axi_fault_scoreboard.py: genuine GitHub Icarus tests use a **PS-clock event-based ABSTRACT AR/R, AW/W/B model** with split writes, missing responses, synthetic SLVERR vs still-outstanding downstream, late R/B, orphan responses, concurrent outstanding, tracking cap and stopped PS/PL clocks. Passing abstract output **does not implement or validate** AMD ATB4, AIB13 ACK/transaction drain, genuine PS clock/AFI, Linux/driver/fan or physical hardware. No new Vivado candidate, bitstream, DTBO or board action.
+
+**Priority next:** owner independently run new receipt reviewer on saved 53-entry report and share source candidate list (or report) for targeted platform owner review; continue offline Linux/PS source contract as possible, with missing boot platform originals explicitly UNKNOWN. No speculative ATB register writes or live MMIO. Original M08 image remains QUARANTINED. Final-HEAD M01–M08 CI results recorded in draft PR #86, with no merge.
+
+## 2026-11-18 continuation: moving toward new passive (no HPM) native synthesis
+
+Owner independently verified the abstract full-AXI scoreboard and complete v2 53-candidate receipt review, finding no original XSA/psu_init/boot component sources. No actual PS ATB4/AIB13/AFI/PL0 or Linux driver/fan ownership was proven. New [D3.2 passive synthesis-only PC runbook](M08_D3_2_PASSIVE_SYNTHESIS_PC_RUNBOOK_2026_11_18.md) and scripts/m08_d3_2_passive_synth_only.tcl, run_m08_d3_2_passive_synth_pc.sh, m08_d3_2_passive_synth_gate.py plus tests can run only Vivado synth_1 against a **NEW** D3.1 no-PS-to-PL-AXI fan-only project on the owner's PC. No actual vendor synthesis/route/bitstream or physical hardware pass is claimed. After owner synth and independent reports, consider new **passive** route/DRC/timing as the next gated development. DO NOT use this unprotected passive scaffold to enable Linux AXI or bypass required upstream ATB4/AIB13 and boot/driver evidence. Original M08 image remains QUARANTINED; all physical activity requires separate owner authorization. Still M08→D3→D3.2, not new tiny milestones.

@@ -1,0 +1,11 @@
+{
+  "schema": "m08-d3-2-owner-physical-readiness-v1",
+  "candidate_bit_sha256": "07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547",
+  "independent_backup_fan_powered_and_airflow_observed": false,
+  "local_serial_console_connected_and_logging": false,
+  "owner_has_known_stock_boot_and_power_cycle_recovery": false,
+  "owner_has_checked_board_is_not_in_a_stalled_state": false,
+  "owner_authorizes_read_only_stock_baseline_only": false,
+  "owner_confirms_no_programming_in_this_step": false,
+  "manual_operator_notes": "Fill in observed fan power, known recovery source, UART access and current stock status BEFORE changing false to true. This template is not independent evidence and does NOT authorize programming."
+}
