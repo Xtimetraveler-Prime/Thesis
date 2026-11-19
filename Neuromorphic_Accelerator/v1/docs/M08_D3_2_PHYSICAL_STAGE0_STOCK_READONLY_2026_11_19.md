@@ -1,5 +1,15 @@
 # M08 D3.2 — Physical stage 0: stock-only, read-only KV260 baseline
 
+
+## 2026-11-19 SSH authentication update and second incomplete baseline
+
+The owner reports installing a **public SSH key in the KV260 `ubuntu` account** (via prior `ssh-copy-id` guidance; exact public key fingerprint, server-side `authorized_keys` contents and installation method not independently inspected). The owner independently verified PC → board **noninteractive key-based authentication** using `ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes ubuntu@10.42.0.135 'echo M08_SSH_AUTHENTICATION_OK'`, receiving `M08_SSH_AUTHENTICATION_OK`. **No private key material or passphrase belongs in this repository or evidence reports.**
+
+Earlier PC capture `m08_d3_2_stock_READONLY_rp2nq3it` had SHA receipt intact, SSH exit 255 and `Permission denied (publickey,password)`; expected probe markers absent, **none executed**. After key installation the owner retried the new stage-0 script with readiness flags manually set true; it created a **different PC evidence directory**, `m08_d3_2_stock_READONLY_oyz3sts9`, still returned `STOCK_BOARD_READONLY_CAPTURE_INCOMPLETE_STOP`, `board_programmed=false`, `no_bitstream_copied_to_board=true`. **Reason for the second failure is not yet known**. A simple SSH echo proves authentication, not that all six board probes succeed.
+
+**Next action is diagnostic only, no re-run or PL load:** On the PC, verify the new directory's `99_evidence_sha256.txt`, then inspect `06_readonly_review.json`, `05_ssh_exit_status.txt`, `04_board_stderr.log` and `M08_D3_2_PROBE_(BEGIN|END)` lines plus any failure output in `03_board_stdout.log`. If SSH exit 0 but individual probes fail, review exact `rc` and first error. A known potential incompatibility is that `xmutil listapps` is called as unprivileged `ubuntu`, whereas older owner scripts used `sudo -n xmutil listapps`; treat this only as a hypothesis until evidence arrives. Do not automatically loosen the access boundary or treat nonzero probe statuses as pass. No bitstream load is approved.
+
+
 **Date:** 2026-11-19. **User request:** try another physical run after owner-PC new passive bitstream generation. This document prepares a safe *first physical observation* of the **existing stock boot**. It is **NOT permission to reconfigure/program the FPGA, load an app, write registers, update boot/firmware, change fans, or access MMIO**.
 
 ## Candidate identity and previous incident
