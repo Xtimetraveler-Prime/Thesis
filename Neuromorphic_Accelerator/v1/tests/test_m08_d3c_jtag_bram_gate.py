@@ -42,6 +42,10 @@ class D3CJtagBramTests(unittest.TestCase):
             "ps_pl0_runtime_clock_proven": "NO",
             "bram_map_base": "0xA0000000",
             "bram_map_range": "0x00001000",
+            "ext_reset_active_high": "0",
+            "bram_controller_derived_depth": "1024",
+            "bram_depth_words": "1024",
+            "bram_width_bits": "32",
             "test_window_bytes": "4096",
             "fan_route": "TTC0_WAVEOUT2_TO_A12",
             "linux_management_compatibility": "NOT_PROVEN",
@@ -156,6 +160,36 @@ class D3CJtagBramTests(unittest.TestCase):
         self.assertFalse(result["readback_proven"])
         self.assertEqual(result["jtag_axi_bram_base"], "0xA0000000")
         self.assertEqual(result["candidate_bytes"], 131072)
+
+    def test_source_does_not_force_readonly_ip_properties(self):
+        script = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
+        self.assertNotRegex(script, r"set_property[^\\n]*CONFIG\\.C_EXT_RESET_HIGH")
+        self.assertNotRegex(script, r"set_property[^\\n]*CONFIG\\.MEM_DEPTH")
+        self.assertIn("get_property CONFIG.C_EXT_RESET_HIGH $rst", script)
+        self.assertIn("get_property CONFIG.MEM_DEPTH $ctrl", script)
+        self.assertIn("get_property CONFIG.Write_Depth_A $bram", script)
+        self.assertIn("get_property CONFIG.Write_Width_A $bram", script)
+        self.assertIn("M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS", script)
+
+    def test_native_reset_mismatch_rejected_even_with_rehashed_receipt(self):
+        p = self.run / "reports/30_native_result.txt"
+        p.write_text(p.read_text().replace("ext_reset_active_high=0",
+                                          "ext_reset_active_high=1"))
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, "native field: ext_reset_active_high"):
+            g.native(self.run)
+
+    def test_native_bram_auto_geometry_mismatch_rejected(self):
+        for field, bad in (("bram_depth_words=1024", "bram_depth_words=2048"),
+                           ("bram_width_bits=32", "bram_width_bits=16"),
+                           ("bram_controller_derived_depth=1024", "bram_controller_derived_depth=0")):
+            with self.subTest(field=field):
+                self.make_mock_native()
+                p = self.run / "reports/30_native_result.txt"
+                p.write_text(p.read_text().replace(field, bad))
+                self.refresh_ledger()
+                with self.assertRaises(g.Reject):
+                    g.native(self.run)
 
     def test_tampered_bit_without_receipt_rejected(self):
         self.candidate.write_bytes(self.candidate.read_bytes()[:-4] + b"FAIL")
