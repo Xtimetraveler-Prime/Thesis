@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # M08 D3.2 STOCK BASELINE on KV260, invoked by guarded OWNER-PC SSH capture.
-# READ ONLY. No root, no writes to board, no FPGA manager state changes,
+# READ ONLY. Only sudo -n xmutil listapps is root (read-only inventory). No board writes, no FPGA manager state changes,
 # no probing /dev/mem or /dev/uio, and NO bitstream loading/flash/JTAG.
 set -u
 printf 'M08_D3_2_STOCK_READONLY_BEGIN\n'
@@ -29,7 +29,7 @@ probe stock_pl_manager sh -c '
 '
 probe installed_apps sh -c '
   command -v xmutil >/dev/null 2>&1 || exit 4
-  xmutil listapps
+  sudo -n xmutil listapps
 '
 probe stock_firmware_files sh -c '
   dir=/lib/firmware/xilinx/k26-starter-kits
