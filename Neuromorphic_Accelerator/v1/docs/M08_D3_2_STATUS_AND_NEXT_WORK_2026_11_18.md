@@ -1,6 +1,12 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
 
+## 2026-11-19 — Operator authenticated read-only stock inventory
+
+Operator's password-authenticated `sudo xmutil listapps` confirmed `k26-starter-kits` XRT_FLAT active 0->0 and both original `m08-v1-fan-page-uio-review` PL_FLAT and `k24-starter-kits` XRT_FLAT inactive -1. The old M08 package remains installed and quarantined. The existing `sudo -n` preflight cannot authenticate on this board without a password, so do not change sudoers to weaken access control. New `scripts/m08_d3_2_manual_xmutil_receipt.py` correlates the original SHA-verifiable five-of-six baseline with a separate manually captured privileged *read-only* xmutil listing. No physical programming authorized; next owner SHA supplement is pending.
+
+
+
 ## 2026-11-19 installed_apps exact cause confirmed and narrow sudo read-only repair
 
 Actual owner 99-SHA verified `m08_d3_2_stock_READONLY_oyz3sts9` inspection showed SSH exit=0 and six complete boundary markers; `board_identity`, `stock_pl_manager`, `stock_firmware_files`, `sensors`, and `overlay_and_uio_names` exit=0. `installed_apps` alone exited 1: `xmutil should be called with root privileges. Please try again using 'sudo'.` Updated board script to use **only** `sudo -n xmutil listapps`; PC source gate enforces a unique allowlisted invocation with synthetic forbidden privilege variations. Stock manager/dfx/fan services active, stock k26-starter-kits overlay and original stock hashes captured, temp sensors ~29.8–31.9C; none of these means full rollback or independent cooling is proven. No physical .bit load, protected HPM0, FPGA manager mutations, or MMIO. New owner PC stage-0 run and source tests required.
