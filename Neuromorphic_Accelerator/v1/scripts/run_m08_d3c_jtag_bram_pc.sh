@@ -31,21 +31,14 @@ if [[ "$RC" -ne 0 ]]; then
     echo "M08_D3C_NATIVE_BUILD_FAILED_PC_ONLY: $RUN" >&2
     exit "$RC"
 fi
-FILES=(
-    00_vivado.log 01_vivado.jou 02_vivado_exit.txt
-    reports/10_fan_a12.xdc
-    reports/20_route_drc.rpt
-    reports/21_route_timing.rpt
-    reports/22_route_utilization.rpt
-    reports/23_route_clocks.rpt
-    reports/30_native_result.txt
-    bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit
-)
-for name in "$(printf '%s\n' "00_vivado.log" "01_vivado.jou" "02_vivado_exit.txt" \
+for name in "00_vivado.log" "01_vivado.jou" "02_vivado_exit.txt" \
     "reports/10_fan_a12.xdc" "reports/20_route_drc.rpt" "reports/21_route_timing.rpt" \
     "reports/22_route_utilization.rpt" "reports/23_route_clocks.rpt" \
-    "reports/30_native_result.txt" "bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit")"; do
-    : "$name"
+    "reports/30_native_result.txt" "bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit"; do
+    if [[ ! -s "$RUN/$name" || -L "$RUN/$name" ]]; then
+        echo "M08_D3C_MISSING_NATIVE_EVIDENCE: $RUN/$name" >&2
+        exit 3
+    fi
 done
 (
     cd "$RUN"
