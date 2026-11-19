@@ -93,19 +93,25 @@ def check_script() -> bytes:
     for required in (
         "M08_D3_2_STOCK_READONLY_BEGIN",
         "M08_D3_2_STOCK_READONLY_END_NO_PL_OR_KERNEL_CHANGES",
-        "xmutil listapps", "systemctl is-active dfx-mgr",
+        "sudo -n xmutil listapps", "systemctl is-active dfx-mgr",
         "systemctl is-active fancontrol", "fpga0/state",
     ):
         must(required in src, "board read-only source contract missing: " + required)
     active = "\n".join(x for x in src.splitlines()
                        if x.strip() and not x.lstrip().startswith("#"))
     for forbidden in (
-        "sudo ", "xmutil loadapp", "xmutil unloadapp",
+        "xmutil loadapp", "xmutil unloadapp",
         "program_hw_devices", "write_bitstream", "fpgautil",
         "echo > /sys", "/dev/uio", "/dev/mem", "dd if=", "rm -rf", "systemctl stop",
         "systemctl start", "systemctl restart", "reboot", "poweroff",
     ):
         must(forbidden not in active, "board baseline includes unsafe operation: " + forbidden)
+    # The only elevated command permitted anywhere is the owner-observed
+    # read-only xmutil inventory. No sudo shell, privilege changes, or manager writes.
+    privileged = [line.strip() for line in active.splitlines()
+                  if re.search(r"\\bsudo\\b", line)]
+    must(privileged == ["sudo -n xmutil listapps"],
+         "sudo allowed for read-only xmutil listapps ONLY")
     must(src.count("probe ") == len(LABELS),
          "board read-only probe count changed")
     return sh
@@ -141,8 +147,9 @@ def parse_capture(raw: bytes, exit_status: int) -> dict:
                              r"\|rc=(\d+)", ends[0])
         must(match is not None, "unparseable probe code: " + label)
         codes[label] = int(match.group(1))
-    must(exit_status == 0 and all(rc == 0 for rc in codes.values()),
-         "SSH/board read-only probe incomplete (no programming)")
+    failures = {k: v for k, v in codes.items() if v != 0}
+    must(exit_status == 0 and not failures,
+         "SSH/board read-only probe incomplete (no programming): " + repr(failures))
     # Stock runtime state is interpreted by a human, not guessed from one grep.
     return {
         "status": "STOCK_BOARD_READONLY_CAPTURE_COMPLETE_HUMAN_REVIEW_REQUIRED",
