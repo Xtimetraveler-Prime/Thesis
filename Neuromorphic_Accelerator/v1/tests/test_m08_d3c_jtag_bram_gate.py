@@ -209,23 +209,23 @@ class D3CJtagBramTests(unittest.TestCase):
         # prints zero warnings. Report a log line without modifying original data.
         p = self.run / "00_vivado.log"
         p.write_text(
-            "INFO: opening Vivado 2025.2\\n"
-            "CRITICAL WARNING: [BD 41-999] synthetic test-only clock issue\\n"
-            "8 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.\\n"
-            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\\n"
+            "INFO: opening Vivado 2025.2\n"
+            "CRITICAL WARNING: [BD 41-999] synthetic test-only clock issue\n"
+            "8 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.\n"
+            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\n"
         )
         self.refresh_ledger()
-        with self.assertRaisesRegex(g.Reject, r"00_vivado\\.log:2: CRITICAL WARNING"):
+        with self.assertRaisesRegex(g.Reject, r"00_vivado\.log:2: CRITICAL WARNING"):
             g.native(self.run)
 
     def test_native_log_error_line_still_rejected_with_location(self):
         p = self.run / "00_vivado.log"
         p.write_text(
-            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\\n"
-            "ERROR: [Common 17-999] synthetic test-only implementation error\\n"
+            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\n"
+            "ERROR: [Common 17-999] synthetic test-only implementation error\n"
         )
         self.refresh_ledger()
-        with self.assertRaisesRegex(g.Reject, r"00_vivado\\.log:2: ERROR:"):
+        with self.assertRaisesRegex(g.Reject, r"00_vivado\.log:2: ERROR:"):
             g.native(self.run)
 
     def test_nonzero_vivado_exit_rejected(self):
