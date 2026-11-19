@@ -98,7 +98,7 @@ set_property -dict [list CONFIG.CONST_VAL 1 CONFIG.CONST_WIDTH 1] $hi
 set_property -dict [list CONFIG.CONST_VAL 0 CONFIG.CONST_WIDTH 1] $lo
 set_property -dict [list CONFIG.C_EXT_RESET_HIGH 0] $rst
 set_property -dict [list CONFIG.NUM_SI 1 CONFIG.NUM_MI 1] $sc
-set_property -dict [list CONFIG.DATA_WIDTH 32 CONFIG.SINGLE_PORT_BRAM 1] $ctrl
+set_property -dict [list CONFIG.DATA_WIDTH 32 CONFIG.MEM_DEPTH 1024 CONFIG.SINGLE_PORT_BRAM 1] $ctrl
 set_property -dict [list \
     CONFIG.Memory_Type Single_Port_RAM \
     CONFIG.Write_Width_A 32 \
@@ -135,14 +135,14 @@ foreach sink {
     }
     connect_bd_net [get_bd_pins rst_pl0/peripheral_aresetn] [get_bd_pins $sink]
 }
-# 64 KiB AXI address window for a small BRAM. Only the lowest 4 KiB
-# is used in the initial smoke test; all JTAG readbacks are 32-bit aligned.
+# 4 KiB AXI address window matching the 1024 x 32-bit BRAM;
+# only the first sixteen bytes are used in this initial smoke test; all JTAG readbacks are 32-bit aligned.
 set space [get_bd_addr_spaces -quiet jtag_axi/Data]
 set segment [get_bd_addr_segs -quiet bram_ctrl/S_AXI/Mem0]
 if {[llength $space] != 1 || [llength $segment] != 1} {
     error "JTAG AXI address space or BRAM segment not found; no default fallback"
 }
-assign_bd_address -offset 0xA0000000 -range 0x00010000 \
+assign_bd_address -offset 0xA0000000 -range 0x00001000 \
     -target_address_space $space $segment
 validate_bd_design -force
 foreach iface {
@@ -215,7 +215,7 @@ puts $f {jtag_axi=ENABLED_PL}
 puts $f {ps_pl0_clock_request_hz=100000000}
 puts $f {ps_pl0_runtime_clock_proven=NO}
 puts $f {bram_map_base=0xA0000000}
-puts $f {bram_map_range=0x00010000}
+puts $f {bram_map_range=0x00001000}
 puts $f {test_window_bytes=4096}
 puts $f {fan_route=TTC0_WAVEOUT2_TO_A12}
 puts $f {linux_management_compatibility=NOT_PROVEN}
