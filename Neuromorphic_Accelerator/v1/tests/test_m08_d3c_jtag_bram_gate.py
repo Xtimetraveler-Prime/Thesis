@@ -110,12 +110,12 @@ class D3CJtagBramTests(unittest.TestCase):
             home = Path(tmp)
             run = home / "Thesis_Evidence" / "M08" / "m08_d3c_jtag_link_TEST01"
             run.mkdir(parents=True)
-            (run / "00_vivado.log").write_text("Vivado begins logging before Tcl\\n")
-            (run / "01_vivado.jou").write_text("journal\\n")
+            (run / "00_vivado.log").write_text("Vivado begins logging before Tcl\n")
+            (run / "01_vivado.jou").write_text("journal\n")
             harness = home / "preflight_only.tcl"
             harness.write_text(
-                "proc version {args} { return 2025.2 }\\n"
-                + prefix + "\\nputs PREFLIGHT_PASSED\\n")
+                "proc version {args} { return 2025.2 }\n"
+                + prefix + "\nputs PREFLIGHT_PASSED\n")
             env = os.environ.copy()
             env["HOME"] = str(home)
             def check(*args):
@@ -127,7 +127,7 @@ class D3CJtagBramTests(unittest.TestCase):
             extra_arg = check(str(run), "unexpected-extra-argv")
             self.assertNotEqual(extra_arg.returncode, 0)
             self.assertIn("usage:", extra_arg.stderr)
-            (run / "unexpected-file.txt").write_text("must reject\\n")
+            (run / "unexpected-file.txt").write_text("must reject\n")
             unsafe = check(str(run))
             self.assertNotEqual(unsafe.returncode, 0)
             self.assertIn("unexpected/unsafe content", unsafe.stderr)
