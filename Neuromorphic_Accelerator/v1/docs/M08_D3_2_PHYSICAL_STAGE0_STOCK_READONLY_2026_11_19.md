@@ -1,6 +1,14 @@
 # M08 D3.2 — Physical stage 0: stock-only, read-only KV260 baseline
 
 
+## 2026-11-19 second owner read-only evidence accepted in five scopes; exact privilege fault isolated
+
+Owner supplied all actual probe data and 99 SHA verified for `m08_d3_2_stock_READONLY_oyz3sts9`: SSH exit=0, stdout boundary markers present, **5/6** read-only probes rc=0. Only `installed_apps` rc=1, explicitly `xmutil should be called with root privileges. Please try again using 'sudo'.` Baseline correctly refused overall success. Other current observations: KV260 revB, Ubuntu 24.04.2 and kernel 6.8.0-1036-xilinx; FPGA manager `operating`, `dfx-mgr` and `fancontrol` `active`; `default_firmware=k26-starter-kits`; active overlay `k26-starter-kits_image_1`; only four `axi-pmon` UIO names and no M08 UIO entries. Sensor readbacks 31.350/31.909/29.803 Celsius at capture, not proof of physical fan or safe load. Stock file hashes on board: `k26_starter_kits.bit.bin` f9dfe95d14881a2768b2c0e6a36fc363635e8ae7882ecad9725d270490395d3e, `k26_starter_kits.dtbo` 1e998ffd5d33a05da3746df3603e65603e1628006bc878209a836cc9bd3c4ae1, `shell.json` 2967ccbc1f75c8d4accd1b6fecc11b16a32a5d7992e56c6eebceb99a3410f777. These represent **one observed stock deployment**, not an independently tested restore after a new PL fault.
+
+**Narrow correction:** Board script now uses `sudo -n xmutil listapps` ONLY for the unprivileged-account-rejected, read-only installed-apps inventory. This does not grant generic sudo to the other probes. PC gate asserts the exact unique privileged command; tests reject substituted loadapp, sudo shell and duplicated elevated operations. The `-n` option fails immediately without a pre-existing noninteractive sudo policy; **do not add passwordless sudo for unrelated operations**. Captured original evidence directories remain immutable. PC capture still requires original new passive .bit 99/98/96 receipts, manually verified independently powered backup fan, UART/known stock recovery, and unchanged pinned board target/host-key identity. Follow-on is a fresh stage-0 observation, NOT permission to load the FPGA.
+
+
+
 ## 2026-11-19 SSH authentication update and second incomplete baseline
 
 The owner reports installing a **public SSH key in the KV260 `ubuntu` account** (via prior `ssh-copy-id` guidance; exact public key fingerprint, server-side `authorized_keys` contents and installation method not independently inspected). The owner independently verified PC → board **noninteractive key-based authentication** using `ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes ubuntu@10.42.0.135 'echo M08_SSH_AUTHENTICATION_OK'`, receiving `M08_SSH_AUTHENTICATION_OK`. **No private key material or passphrase belongs in this repository or evidence reports.**
