@@ -1,6 +1,12 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
 
+## 2026-11-19 installed_apps exact cause confirmed and narrow sudo read-only repair
+
+Actual owner 99-SHA verified `m08_d3_2_stock_READONLY_oyz3sts9` inspection showed SSH exit=0 and six complete boundary markers; `board_identity`, `stock_pl_manager`, `stock_firmware_files`, `sensors`, and `overlay_and_uio_names` exit=0. `installed_apps` alone exited 1: `xmutil should be called with root privileges. Please try again using 'sudo'.` Updated board script to use **only** `sudo -n xmutil listapps`; PC source gate enforces a unique allowlisted invocation with synthetic forbidden privilege variations. Stock manager/dfx/fan services active, stock k26-starter-kits overlay and original stock hashes captured, temp sensors ~29.8–31.9C; none of these means full rollback or independent cooling is proven. No physical .bit load, protected HPM0, FPGA manager mutations, or MMIO. New owner PC stage-0 run and source tests required.
+
+
+
 ## 2026-11-19 KV260 SSH public key added; stock read-only capture still incomplete
 
 Owner reported adding a public SSH key to the KV260 `ubuntu` account. Noninteractive PC SSH `BatchMode=yes` and `StrictHostKeyChecking=yes` now returned `M08_SSH_AUTHENTICATION_OK`. The first owner stage-0 capture `m08_d3_2_stock_READONLY_rp2nq3it` failed SSH authentication (exit 255, permission denied). Owner reran the unmodified read-only baseline after key setup, producing `m08_d3_2_stock_READONLY_oyz3sts9`, which still reports `STOCK_BOARD_READONLY_CAPTURE_INCOMPLETE_STOP` but its individual error/probe evidence has **not yet been provided**. Do not conflate basic SSH auth success with probe acceptance; inspect existing second capture's `06_readonly_review.json`, exit, stdout and stderr before rerunning. No new image loaded; hardware release blocked. No public/private key bytes or fingerprint captured.
