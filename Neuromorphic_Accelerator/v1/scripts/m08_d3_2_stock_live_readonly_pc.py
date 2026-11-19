@@ -97,7 +97,7 @@ def source_gate() -> None:
 
 def parse_observation(raw: bytes, rc: int) -> dict:
     text = raw.decode("utf-8", "replace")
-    lines = text.splitlines()
+    lines = [line.strip() for line in text.splitlines()]
     must(rc == 0 and lines and lines[0] == BEGIN and lines[-1] == END,
          "SSH exit/boundary failure")
     for needed in (
