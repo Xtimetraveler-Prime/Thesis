@@ -204,6 +204,30 @@ class D3CJtagBramTests(unittest.TestCase):
         with self.assertRaisesRegex(g.Reject, "Vivado logs report"):
             g.native(self.run)
 
+    def test_native_log_diagnostic_prints_exact_line_but_never_accepts(self):
+        # Earlier critical warnings must block acceptance even if bitgen later
+        # prints zero warnings. Report a log line without modifying original data.
+        p = self.run / "00_vivado.log"
+        p.write_text(
+            "INFO: opening Vivado 2025.2\\n"
+            "CRITICAL WARNING: [BD 41-999] synthetic test-only clock issue\\n"
+            "8 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.\\n"
+            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\\n"
+        )
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, r"00_vivado\\.log:2: CRITICAL WARNING"):
+            g.native(self.run)
+
+    def test_native_log_error_line_still_rejected_with_location(self):
+        p = self.run / "00_vivado.log"
+        p.write_text(
+            "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\\n"
+            "ERROR: [Common 17-999] synthetic test-only implementation error\\n"
+        )
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, r"00_vivado\\.log:2: ERROR:"):
+            g.native(self.run)
+
     def test_nonzero_vivado_exit_rejected(self):
         p = self.run/"02_vivado_exit.txt"
         p.write_text("vivado_build_exit=1\n")
