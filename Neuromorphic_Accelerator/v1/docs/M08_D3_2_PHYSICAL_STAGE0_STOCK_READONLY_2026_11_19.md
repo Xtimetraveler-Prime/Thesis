@@ -1,6 +1,16 @@
 # M08 D3.2 — Physical stage 0: stock-only, read-only KV260 baseline
 
 
+## 2026-11-19 — Owner physical passive JTAG run happened; stock-only observations superseded by live result
+
+Following successful original owner `m08_d3_2_stock_LIVE_READONLY_3ogf7hsj` report (all 3 SSH exit zero, stock states present, temps ~30.49–32.53 C, SHA ledger accepted), owner explicitly authorized an actual experimental passive FPGA load, and confirmed PC-side hashed stock firmware backup. This is a **historical physical event**, not a change to stock-only script permissions.
+
+Genuine Vivado 2025.2 JTAG PC test folder `/home/dna/Thesis_Evidence/M08/m08_d3_2_JTAG_k4ypVz92`. Original Tcl command failed before load due to missing argument; corrected Tcl verified exact new D3.2 passive .bit hash `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547`, programmed `xck26_0|xck26`, returned `End of startup status: HIGH` and exit `0` with `M08_D3_2_JTAG_PROCEDURE_COMPLETE`. So **physical passive JTAG programming succeeded**. The driver/device debug-core info was not an error. Next SSH to stock address `10.42.0.135` timed out; cause not determined (network path, kernel stall, or PS/PL ownership conflicts), and serial observation is pending. Owner says fans worked. NO FPGA image failure inferred from this result; also NO accepted live Linux operation after programming.
+
+**After-test action:** owner wants to power cycle. Collect available PuTTY output and network-link observations first, then power cycle, verify new stock boot and archived logs if possible; no second JTAG reprogram until evidence review. Full context and first-pass hypotheses are recorded in `M08_D3_2_STATUS_AND_NEXT_WORK_2026_11_18.md`. Historical bitstream `a8ed0e4d...` stays quarantined; do not confuse it with this new passively loaded candidate. Original no-programming Stage 0 and source scripts remain preserved as source-stage records.
+
+
+
 ## 2026-11-19 — Manual supplement complete; proceed to passive **stock-only** live observation
 
 Owner PC manual review `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb` verified both SHA ledger entries and returned `STOCK_READONLY_FIVE_PROBES_PLUS_MANUAL_XMUTIL_REVIEW_ONLY`. Manual stock `k26-starter-kits` active `0->0`; old quarantined M08 installed/inactive `-1`; input stock baseline 5/6 with root-only inventory failure, captured with no board changes. This is evidence for an existing stock state, not automatic six-probe PASS, stock recovery test or physical release.
