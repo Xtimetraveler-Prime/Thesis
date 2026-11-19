@@ -8,6 +8,8 @@ import tempfile
 import unittest
 import subprocess
 import re
+import os
+import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -95,6 +97,50 @@ class D3CJtagBramTests(unittest.TestCase):
                     result = subprocess.run(("grep", "-Eq", patterns[0]),
                                             input=banner + "\n", text=True, capture_output=True)
                     self.assertEqual(result.returncode, 1, result.stderr)
+
+    def test_actual_tcl_preflight_accepts_vivado_log_journal_and_rejects_extra(self):
+        # Tclsh executes exactly the startup contract with a stub for Vivado's
+        # version command. This never compiles an FPGA design or accesses hardware.
+        if not shutil.which("tclsh"):
+            self.skipTest("tclsh not installed")
+        builder = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
+        prefix, separator, _ = builder.partition("set part xck26-sfvc784-2LV-c")
+        self.assertTrue(separator, "missing protected native preflight boundary")
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            run = home / "Thesis_Evidence" / "M08" / "m08_d3c_jtag_link_TEST01"
+            run.mkdir(parents=True)
+            (run / "00_vivado.log").write_text("Vivado begins logging before Tcl\\n")
+            (run / "01_vivado.jou").write_text("journal\\n")
+            harness = home / "preflight_only.tcl"
+            harness.write_text(
+                "proc version {args} { return 2025.2 }\\n"
+                + prefix + "\\nputs PREFLIGHT_PASSED\\n")
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            def check(*args):
+                return subprocess.run(("tclsh", str(harness), *args),
+                                      env=env, text=True, capture_output=True)
+            ok = check(str(run))
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+            self.assertIn("PREFLIGHT_PASSED", ok.stdout)
+            extra_arg = check(str(run), "unexpected-extra-argv")
+            self.assertNotEqual(extra_arg.returncode, 0)
+            self.assertIn("usage:", extra_arg.stderr)
+            (run / "unexpected-file.txt").write_text("must reject\\n")
+            unsafe = check(str(run))
+            self.assertNotEqual(unsafe.returncode, 0)
+            self.assertIn("unexpected/unsafe content", unsafe.stderr)
+
+    def test_native_launch_flags_before_tclargs(self):
+        runner = (ROOT / "scripts/run_m08_d3c_jtag_bram_pc.sh").read_text()
+        args = runner.index('-tclargs "$RUN"')
+        self.assertLess(runner.index('-log "$RUN/00_vivado.log"'), args)
+        self.assertLess(runner.index('-journal "$RUN/01_vivado.jou"'), args)
+        self.assertLess(runner.index('-source "$ROOT/scripts/m08_d3c_jtag_bram_build.tcl"'), args)
+        self.assertEqual(runner.count('-tclargs "$RUN"'), 1)
+        self.assertEqual(g.source()["status"],
+                         "M08_D3C_JTAG_BRAM_PC_SOURCE_ACCEPTED_NOT_BUILT")
 
     def test_source_parent_contract_and_source_no_board(self):
         result = g.source()
