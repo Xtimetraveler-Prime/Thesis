@@ -1,6 +1,33 @@
 # M08 D3.2 — Physical stage 0: stock-only, read-only KV260 baseline
 
 
+## 2026-11-19 — Manual sudo xmutil inventory; supplementary offline SHA receipt
+
+The owner successfully executed `ssh -t ubuntu@10.42.0.135 'sudo xmutil listapps'` and entered the KV260 user sudo password. The real table reported **k26-starter-kits XRT_FLAT active 0->0**, **m08-v1-fan-page-uio-review PL_FLAT inactive -1**, and **k24-starter-kits XRT_FLAT inactive -1**. The old M08 application is still installed/discoverable and remains QUARANTINED; an inactive image is not necessarily uninstalled. Passwordless `sudo -n xmutil listapps` fails with `sudo: a password is required`. Do not create a NOPASSWD sudo policy to appease the automated preflight.
+
+A new **offline-only PC** `scripts/m08_d3_2_manual_xmutil_receipt.py` verifies the *original immutable* `m08_d3_2_stock_READONLY_oyz3sts9` seven-file SHA receipt and its exact five-success, one-root-only-app-list-failure outcome. It correlates a separately captured successful operator `sudo xmutil listapps` transcript, pins new passive image and stock image hashes, and creates a fresh **separate** SHA evidence receipt. Original failed six-probe capture remains failed; supplementation never claims automatic probe success or physical programming authorization. The checker does not connect to the board, handle passwords, or perform hardware calls.
+
+### Owner PC: capture authenticated inventory to a new file (do not share passwords)
+
+    BASE="$HOME/Thesis_Evidence/M08"
+    XMUTIL="$BASE/m08_d3_2_manual_xmutil_$(date -u +%Y%m%dT%H%M%SZ).log"
+    ssh -tt ubuntu@10.42.0.135 'sudo xmutil listapps' 2>&1 | tee "$XMUTIL"
+    XMUTIL_RC=${PIPESTATUS[0]}
+    printf 'operator_xmutil_ssh_exit=%s\n' "$XMUTIL_RC"
+    test "$XMUTIL_RC" -eq 0 || { echo "STOP: xmutil invocation failed"; false; }
+
+Only when exit is zero, and after checking transcript contains NO secrets, run:
+
+    python3 scripts/m08_d3_2_manual_xmutil_receipt.py \
+      --original-baseline "$BASE/m08_d3_2_stock_READONLY_oyz3sts9" \
+      --manual-transcript "$XMUTIL" \
+      --manual-ssh-exit "$XMUTIL_RC" \
+      --evidence-base "$BASE"
+
+Expected `STOCK_READONLY_FIVE_PROBES_PLUS_MANUAL_XMUTIL_REVIEW_ONLY`. Verify new directory 99 SHA ledger with `sha256sum -c`. Never overwrite original receipts, and do not enter/store the sudo password outside the interactive terminal prompt. The supplement does NOT prove the stock rollback procedure, independent fan airflow, or Linux-managed PL image transition. New passive image SHA `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547` remains UNRELEASED; prior failing image remains QUARANTINED.
+
+
+
 ## 2026-11-19 second owner read-only evidence accepted in five scopes; exact privilege fault isolated
 
 Owner supplied all actual probe data and 99 SHA verified for `m08_d3_2_stock_READONLY_oyz3sts9`: SSH exit=0, stdout boundary markers present, **5/6** read-only probes rc=0. Only `installed_apps` rc=1, explicitly `xmutil should be called with root privileges. Please try again using 'sudo'.` Baseline correctly refused overall success. Other current observations: KV260 revB, Ubuntu 24.04.2 and kernel 6.8.0-1036-xilinx; FPGA manager `operating`, `dfx-mgr` and `fancontrol` `active`; `default_firmware=k26-starter-kits`; active overlay `k26-starter-kits_image_1`; only four `axi-pmon` UIO names and no M08 UIO entries. Sensor readbacks 31.350/31.909/29.803 Celsius at capture, not proof of physical fan or safe load. Stock file hashes on board: `k26_starter_kits.bit.bin` f9dfe95d14881a2768b2c0e6a36fc363635e8ae7882ecad9725d270490395d3e, `k26_starter_kits.dtbo` 1e998ffd5d33a05da3746df3603e65603e1628006bc878209a836cc9bd3c4ae1, `shell.json` 2967ccbc1f75c8d4accd1b6fecc11b16a32a5d7992e56c6eebceb99a3410f777. These represent **one observed stock deployment**, not an independently tested restore after a new PL fault.
