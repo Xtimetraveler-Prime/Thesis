@@ -52,10 +52,14 @@ def source(root=ROOT) -> dict:
         "ps/M_AXI_HPM0_FPD ps/M_AXI_HPM1_FPD ps/M_AXI_HPM0_LPD",
         "CONFIG.PSU__TTC0__WAVEOUT__IO EMIO",
         "CONFIG.DIN_FROM 2 CONFIG.DIN_TO 2",
-        "CONFIG.MEM_DEPTH 1024", "jtag_axi:1.2", "smartconnect:1.0",
+        "get_property CONFIG.MEM_DEPTH $ctrl", "jtag_axi:1.2", "smartconnect:1.0",
         "axi_bram_ctrl:4.1", "blk_mem_gen:8.4",
         "ps/pl_clk0", "ps/pl_resetn0",
         "rst_pl0/peripheral_aresetn",
+        "get_property CONFIG.C_EXT_RESET_HIGH $rst",
+        "get_property CONFIG.Write_Depth_A $bram",
+        "get_property CONFIG.Write_Width_A $bram",
+        "M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS",
         "connect_bd_intf_net [get_bd_intf_pins jtag_axi/M_AXI]",
         "connect_bd_intf_net [get_bd_intf_pins link_sc/M00_AXI]",
         "connect_bd_intf_net [get_bd_intf_pins bram_ctrl/BRAM_PORTA]",
@@ -74,6 +78,10 @@ def source(root=ROOT) -> dict:
         "write_cfgmem", "write_hw_platform", "write_device_image", "fpgautil",
     ):
         require(forbidden not in body, "offline native builder contains forbidden action: " + forbidden)
+    # Hard-fail source that tries to force Vivado 2025.2 read-only derived fields.
+    require(re.search(r"set_property[^\\n]*CONFIG\\.C_EXT_RESET_HIGH", body) is None
+            and re.search(r"set_property[^\\n]*CONFIG\\.MEM_DEPTH", body) is None,
+            "native builder must not force read-only reset or BRAM depth")
     require(sum(x.startswith("write_bitstream -file $bit") for x in active) == 1,
             "offline native builder must generate one unreleased bitstream")
     require(sum(x.startswith("launch_runs synth_1") for x in active) == 1
@@ -141,6 +149,9 @@ def native(folder: Path) -> dict:
         "jtag_axi": "ENABLED_PL",
         "bram_map_base": "0xA0000000",
         "bram_map_range": "0x00001000",
+        "ext_reset_active_high": "0",
+        "bram_depth_words": "1024",
+        "bram_width_bits": "32",
         "fan_route": "TTC0_WAVEOUT2_TO_A12",
         "ps_pl0_runtime_clock_proven": "NO",
         "linux_management_compatibility": "NOT_PROVEN",
@@ -149,6 +160,9 @@ def native(folder: Path) -> dict:
         "hardware_neural_execution_proven": "NO",
     }.items():
         require(data.get(k) == expected, "invalid native field: "+k)
+    ctrl_depth = data.get("bram_controller_derived_depth", "")
+    require(ctrl_depth.isdecimal() and int(ctrl_depth) > 0,
+            "invalid native controller-derived BRAM depth")
     require(data.get("board_part", "").startswith("xilinx.com:kv260_som:part0:")
             and data.get("vivado_version", "").startswith("2025.2"),
             "wrong native board/Vivado")
