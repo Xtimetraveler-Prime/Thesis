@@ -85,6 +85,18 @@ def source(root=ROOT) -> dict:
         require(word in runner, "native runner missing: " + word)
     for forbidden in ("program_hw_devices", "xmutil ", "sudo ", "ssh ", "scp ", "rm -rf"):
         require(forbidden not in runner, "offline shell runner unsafe: " + forbidden)
+    # Vivado passes all tokens after -tclargs to Tcl; log and journal flags
+    # MUST precede -tclargs, or Tcl receives extra argv and aborts.
+    require(runner.count('-tclargs "$RUN"') == 1
+            and runner.index('-log "$RUN/00_vivado.log"') <
+                runner.index('-tclargs "$RUN"')
+            and runner.index('-journal "$RUN/01_vivado.jou"') <
+                runner.index('-tclargs "$RUN"')
+            and runner.index('-source "$ROOT/scripts/m08_d3c_jtag_bram_build.tcl"') <
+                runner.index('-tclargs "$RUN"'),
+            "native Vivado options must precede the single -tclargs evidence directory")
+    require("set allowed_precreated {00_vivado.log 01_vivado.jou}" in script,
+            "native Tcl preflight must allow only the two vendor-generated files")
     return {
         "status": "M08_D3C_JTAG_BRAM_PC_SOURCE_ACCEPTED_NOT_BUILT",
         "builder_sha256": sha256(script.encode()).hexdigest(),
