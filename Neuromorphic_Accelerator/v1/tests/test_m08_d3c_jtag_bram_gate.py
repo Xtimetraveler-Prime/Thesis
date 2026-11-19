@@ -6,6 +6,8 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+import subprocess
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -70,6 +72,29 @@ class D3CJtagBramTests(unittest.TestCase):
         self.run.joinpath("99_evidence_sha256.txt").write_text(
             "".join(sha256((self.run/name).read_bytes()).hexdigest()+"  "+name+"\n"
                     for name in g.EXPECTED))
+
+    def test_vivado_version_banner_gate_matches_real_2025_2_and_rejects_other_versions(self):
+        # Vivado 2025.2 on Linux prints lowercase "vivado", not "Vivado".
+        # Test both scripts without invoking native Vivado or accessing JTAG.
+        good = ("vivado v2025.2 (64-bit)", "Vivado v2025.2 (64-bit)")
+        bad = ("vivado v2025.1 (64-bit)", "vivado v2025.20 (64-bit)",
+               "vivado v2026.1 (64-bit)", "not-vivado v2025.2 (64-bit)")
+        scripts = ("run_m08_d3c_jtag_bram_pc.sh",
+                   "run_m08_d3c_jtag_bram_physical_once.sh")
+        for script in scripts:
+            body = (ROOT / "scripts" / script).read_text()
+            patterns = re.findall(r"grep -Eq '([^']+)'", body)
+            self.assertEqual(len(patterns), 1, script)
+            for banner in good:
+                with self.subTest(script=script, banner=banner, expected="accept"):
+                    result = subprocess.run(("grep", "-Eq", patterns[0]),
+                                            input=banner + "\n", text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+            for banner in bad:
+                with self.subTest(script=script, banner=banner, expected="reject"):
+                    result = subprocess.run(("grep", "-Eq", patterns[0]),
+                                            input=banner + "\n", text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 1, result.stderr)
 
     def test_source_parent_contract_and_source_no_board(self):
         result = g.source()
