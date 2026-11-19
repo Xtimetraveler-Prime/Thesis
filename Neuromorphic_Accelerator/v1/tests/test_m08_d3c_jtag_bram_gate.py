@@ -61,7 +61,15 @@ class D3CJtagBramTests(unittest.TestCase):
             "02_vivado_exit.txt": b"vivado_build_exit=0\n",
             "reports/10_fan_a12.xdc": b"set_property PACKAGE_PIN A12 [get_ports {M08_FAN_PWM}]\n",
             "reports/20_route_drc.rpt": b"DRC Checks found: 0\n",
-            "reports/21_route_timing.rpt": b"timing report\n",
+            "reports/21_route_timing.rpt": (
+                b"Design Timing Summary\n"
+                b"WNS(ns) TNS(ns) TNS Failing Endpoints WHS(ns) THS(ns)\n"
+                b"------- ------- ------- ------- -------\n"
+                b"5.907 0.000 0 10918 0.011 0.000 0 10854 4.238 0.000 0 3932\n"
+                b"All user specified timing constraints are met.\n"
+                b"Clock Waveform(ns) Period(ns) Frequency(MHz)\n"
+                b"clk_pl_0 {0.000 5.000} 10.000 100.000\n"
+            ),
             "reports/22_route_utilization.rpt": b"utilization\n",
             "reports/23_route_clocks.rpt": b"clock report\n",
             "reports/30_native_result.txt": (
@@ -235,6 +243,96 @@ class D3CJtagBramTests(unittest.TestCase):
                                           "hardware_bitstream_programmed=YES"))
         self.refresh_ledger()
         with self.assertRaisesRegex(g.Reject, "hardware_bitstream_programmed"):
+            g.native(self.run)
+
+    @staticmethod
+    def known_vendor_drc() -> str:
+        # Synthetic profile modeled on owner's Vivado 2025.2 warning *categories*.
+        # This is not a copy of the native evidence.
+        lines = [
+            "Report DRC",
+            "Checks found: 7",
+            "| Rule | Severity | Description | Checks |",
+            "| PDCN-1569 | Warning | LUT equation term check | 3 |",
+            "| REQP-1857 | Warning | RAMB18E2_writefirst_collision_advisory | 1 |",
+            "| REQP-1858 | Warning | RAMB36E2_writefirst_collision_advisory | 2 |",
+            "| RTSTAT-10 | Warning | No routable loads | 1 |",
+        ]
+        for i in range(1, 4):
+            lines.extend([
+                f"PDCN-1569#{i} Warning",
+                "LUT equation term check",
+                f"Used pin of cell dbg_hub/inst/debug_lut_{i} "
+                f"(pin dbg_hub/inst/debug_lut_{i}/I0) is not included in the LUT equation",
+                "Related violations: <none>",
+            ])
+        for code, fifo in (("REQP-1857", "rx_fifo_i"),
+                           ("REQP-1858", "rd_cmd_fifo_i"),
+                           ("REQP-1858", "wr_cmd_fifo_i")):
+            number = 1 if fifo != "wr_cmd_fifo_i" else 2
+            lines.extend([
+                f"{code}#{number} Warning",
+                g.VENDOR_DRC_PROFILE[code][1],
+                f"Synchronous clocking is detected for BRAM "
+                f"(m08_d3c_jtag_link_i/jtag_axi/inst/jtag_axi_engine_u/"
+                f"{fifo}/inst_fifo_gen/ram) in SDP mode with WRITE_FIRST write-mode.",
+                "Both modes may exhibit address collisions.",
+                "Related violations: <none>",
+            ])
+        paths = [f"dbg_hub/inst/debug_net_{i}" for i in range(3)]
+        paths += [f"m08_d3c_jtag_link_i/jtag_axi/inst/engine_net_{i}"
+                  for i in range(12)]
+        lines.extend([
+            "RTSTAT-10#1 Warning",
+            "No routable loads",
+            "47 net(s) have no routable loads. The problem bus(es) and/or net(s) are "
+            + ",\n".join(paths),
+            "(the first 15 of 45 listed).",
+            "Related violations: <none>",
+        ])
+        return "\n".join(lines) + "\n"
+
+    def test_known_vendor_drc_profile_is_explicit_and_not_zero(self):
+        result = g.inspect_drc(self.known_vendor_drc())
+        self.assertEqual(result["drc_checks"], 7)
+        self.assertEqual(result["vendor_drc_warnings"], 7)
+        self.assertEqual(result["drc_warning_profile"],
+                         "EXACT_REVIEWED_VENDOR_JTAG_PROFILE")
+        p = self.run / "reports/20_route_drc.rpt"
+        p.write_text(self.known_vendor_drc())
+        self.refresh_ledger()
+        native = g.native(self.run)
+        self.assertEqual(native["vendor_drc_warnings"], 7)
+        self.assertFalse(native["physical_hardware_programmed"])
+        self.assertFalse(native["readback_proven"])
+        self.assertEqual(native["wns_ns"], 5.907)
+        self.assertEqual(native["whs_ns"], 0.011)
+
+    def test_drc_fails_closed_on_unknown_or_elevated_warnings(self):
+        initial = self.known_vendor_drc()
+        corruptions = (
+            ("new_warning_count", initial.replace("Checks found: 7", "Checks found: 8")),
+            ("new_rule", initial.replace("PDCN-1569", "PDCN-9999")),
+            ("critical", initial.replace("PDCN-1569 | Warning", "PDCN-1569 | Critical")),
+            ("user_lut", initial.replace("cell dbg_hub/inst/", "cell user_logic/")),
+            ("user_fifo", initial.replace("BRAM (m08_d3c_jtag_link_i/jtag_axi/inst/",
+                                          "BRAM (user_logic/")),
+            ("user_unrouted", initial.replace("dbg_hub/inst/debug_net_0",
+                                              "user_logic/unknown_net")),
+            ("extra_detail", initial + "PDCN-1569#4 Warning\nLUT equation term check\n"),
+            ("missing_detail", initial.replace("REQP-1858#2 Warning",
+                                               "REQP-1858#99 Warning")),
+        )
+        for label, drc in corruptions:
+            with self.subTest(case=label):
+                with self.assertRaises(g.Reject):
+                    g.inspect_drc(drc)
+
+    def test_native_timing_negative_slack_rejected_with_rehashed_receipt(self):
+        path = self.run / "reports/21_route_timing.rpt"
+        path.write_text(path.read_text().replace("5.907 0.000 0", "-0.011 0.050 2"))
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, "negative slack"):
             g.native(self.run)
 
     def test_nonzero_drc_refused_even_with_valid_receipt(self):
