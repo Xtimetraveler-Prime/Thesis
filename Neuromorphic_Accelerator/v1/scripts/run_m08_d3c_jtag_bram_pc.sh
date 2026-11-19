@@ -20,10 +20,10 @@ RUN="$(mktemp -d "$BASE/m08_d3c_jtag_link_XXXXXXXX")"
 echo "M08_D3C_FRESH_PC_EVIDENCE_DIR=$RUN"
 set +e
 vivado -mode batch \
-    -source "$ROOT/scripts/m08_d3c_jtag_bram_build.tcl" \
-    -tclargs "$RUN" \
     -log "$RUN/00_vivado.log" \
-    -journal "$RUN/01_vivado.jou"
+    -journal "$RUN/01_vivado.jou" \
+    -source "$ROOT/scripts/m08_d3c_jtag_bram_build.tcl" \
+    -tclargs "$RUN"
 RC=$?
 set -e
 printf 'vivado_build_exit=%s\n' "$RC" > "$RUN/02_vivado_exit.txt"
