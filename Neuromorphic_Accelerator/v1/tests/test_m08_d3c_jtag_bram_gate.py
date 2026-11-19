@@ -60,7 +60,7 @@ class D3CJtagBramTests(unittest.TestCase):
             "01_vivado.jou": b"source test\n",
             "02_vivado_exit.txt": b"vivado_build_exit=0\n",
             "reports/10_fan_a12.xdc": b"set_property PACKAGE_PIN A12 [get_ports {M08_FAN_PWM}]\n",
-            "reports/20_route_drc.rpt": b"DRC Checks found: 0\n",
+            "reports/20_route_drc.rpt": b"Checks found: 0\n",
             "reports/21_route_timing.rpt": (
                 b"Design Timing Summary\n"
                 b"WNS(ns) TNS(ns) TNS Failing Endpoints WHS(ns) THS(ns)\n"
