@@ -1,6 +1,10 @@
 # Neuromorphic Accelerator v1 — Research Roadmap (M01–M09)
 
 
+**2026-11-19 — M08 D3.2 MANUAL STOCK XMUTIL VERIFIED, NO PASSIVE LOAD:** Owner `ssh -t ubuntu@10.42.0.135 'sudo xmutil listapps'` succeeded using interactive KV260 sudo password: active `k26-starter-kits` XRT_FLAT slot `0->0`; inactive `m08-v1-fan-page-uio-review` PL_FLAT `-1` and `k24-starter-kits` `-1`. Previously unsuccessful `sudo -n` requires password; no sudoers modification recommended. Added offline PC-only `m08_d3_2_manual_xmutil_receipt.py` and synthetic negatives to produce separate SHA-correlated manual transcript supplement without retroactively accepting original 5/6 automated capture or mutating KV260. Original M08 remains installed/inactive/QUARANTINED; passive new bitstream UNRELEASED; firmware/boot recovery and manager-compatible load still unproven. M08→D3→D3.2.
+
+
+
 **2026-11-19 — M08 D3.2 SECOND PHYSICAL STAGE-0 EVIDENCE TRIAGED; EXACT READ-ONLY PRIVILEGE FIX:** Owner verified `m08_d3_2_stock_READONLY_oyz3sts9` SHA evidence; SSH exit 0, 5/6 probes rc 0; `installed_apps` rc 1 explicitly demanded root for `xmutil listapps`. Real stock board: KV260 revB, Ubuntu 24.04.2, 6.8.0-1036-xilinx, fpga_manager operating, dfx-mgr/fancontrol active, stock `k26-starter-kits_image_1`, sensor temps ~29.8–31.9C, UIO only axi-pmon, stock .bit.bin/.dtbo/shell hashes recorded. Fix `sudo -n xmutil listapps` uniquely allowlisted only for read-only apps inventory; fail closed if sudo unavailable or attempted broader use. Native new .bit remains UNRELEASED; earlier failed image QUARANTINED; no owner full stage-0 acceptance, no FPGA load, no proof of stock rollback under fault. M08→D3→D3.2.
 
 
