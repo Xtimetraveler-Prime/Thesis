@@ -163,8 +163,8 @@ class D3CJtagBramTests(unittest.TestCase):
 
     def test_source_does_not_force_readonly_ip_properties(self):
         script = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
-        self.assertNotRegex(script, r"set_property[^\\n]*CONFIG\\.C_EXT_RESET_HIGH")
-        self.assertNotRegex(script, r"set_property[^\\n]*CONFIG\\.MEM_DEPTH")
+        self.assertNotRegex(script, r"set_property[^\n]*CONFIG\.C_EXT_RESET_HIGH")
+        self.assertNotRegex(script, r"set_property[^\n]*CONFIG\.MEM_DEPTH")
         self.assertIn("get_property CONFIG.C_EXT_RESET_HIGH $rst", script)
         self.assertIn("get_property CONFIG.MEM_DEPTH $ctrl", script)
         self.assertIn("get_property CONFIG.Write_Depth_A $bram", script)
