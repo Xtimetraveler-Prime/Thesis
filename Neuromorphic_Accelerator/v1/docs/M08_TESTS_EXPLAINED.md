@@ -1,5 +1,11 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+
+## M08 D3.2 offline manual sudo xmutil receipt supplement (2026-11-19)
+
+Original stage-0 physical owner capture `oyz3sts9` had 5/6 successful probes; the sixth was `xmutil listapps` requiring root. Noninteractive `sudo -n` also requires a password on this board, so no sudoers loosening. Owner manually ran `ssh -t ... 'sudo xmutil listapps'`, obtaining stock K26 app active slot 0->0 and original quarantined M08 inactive slot -1. `scripts/m08_d3_2_manual_xmutil_receipt.py` is *offline-only*, independently audits original seven-file SHA receipt and exact 5/6 statuses/stock firmware digests, then separately correlates owner PC transcript and asserted exit code, creating a fresh PC SHA ledger. Status is REVIEW_ONLY, no hardware load claim. `tests/test_m08_d3_2_manual_xmutil_receipt.py` covers synthetic source tampering, wrong app/active slots, failed SSH, hash mismatch, duplicate/extra active app and false programming claims.
+
+
 ## M08 D3.2 stage-0 physical preparation, NO programming (2026-11-19)
 
 Owner's **genuine PC** `gKr8mQe6` bitstream candidate SHA `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547` (7,797,839 bytes), and 99/98/96 SHA receipts passed, auditor accepted OFFLINE-UNRELEASED status. Owner wishes a new physical test, has a backup fan; no independent live fan/stock firmware rollback yet. New `scripts/m08_d3_2_stock_board_baseline_readonly.sh` reads only model/stock image manager/stock hash/fan+thermal/overlay/UIO names (never MMIO or load). `scripts/m08_d3_2_stock_baseline_pc.py` refuses unless authentic new candidate receipts pass and a **false-by-default** manually verified operator readiness record confirms externally powered backup cooling, UART, stock recovery, board operating and permission for **read-only** baseline. It captures a new PC-side SHA ledger; no writes to board, no JTAG/DTBO/.bit.bin/PS MMIO. `tests/test_m08_d3_2_stock_baseline_pc.py` uses **mocked SSH only** and tests malformed/wrong target, false safety flags, incomplete probe/SSH, duplicate probe, new candidate digest pinning and evidence receipt. Native owner board baseline remains PENDING. [Read-only stage-0 runbook](M08_D3_2_PHYSICAL_STAGE0_STOCK_READONLY_2026_11_19.md); no physical image load authorized.
