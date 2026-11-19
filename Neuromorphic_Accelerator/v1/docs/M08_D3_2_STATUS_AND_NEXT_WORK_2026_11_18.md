@@ -1,5 +1,11 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
+
+## 2026-11-19 KV260 SSH public key added; stock read-only capture still incomplete
+
+Owner reported adding a public SSH key to the KV260 `ubuntu` account. Noninteractive PC SSH `BatchMode=yes` and `StrictHostKeyChecking=yes` now returned `M08_SSH_AUTHENTICATION_OK`. The first owner stage-0 capture `m08_d3_2_stock_READONLY_rp2nq3it` failed SSH authentication (exit 255, permission denied). Owner reran the unmodified read-only baseline after key setup, producing `m08_d3_2_stock_READONLY_oyz3sts9`, which still reports `STOCK_BOARD_READONLY_CAPTURE_INCOMPLETE_STOP` but its individual error/probe evidence has **not yet been provided**. Do not conflate basic SSH auth success with probe acceptance; inspect existing second capture's `06_readonly_review.json`, exit, stdout and stderr before rerunning. No new image loaded; hardware release blocked. No public/private key bytes or fingerprint captured.
+
+
 ## 2026-11-19 new offline passive image accepted and physical stage-0 stock review
 
 Owner's uploaded real native .bit receipt from `m08_d3_2_passive_synth_gKr8mQe6`: three evidence SHA ledgers accepted; image 7,797,839 bytes with exact SHA256 `07af9e26905fd72b4d6b5845cbb4e309ecbefa83745a7c371769648cd0bdd547`. Independent auditor status `M08_D3_2_UNRELEASED_PASSIVE_BITSTREAM_SHA_ACCEPTED_NO_BOARD`, fan A12, HPM0/HPM1/LPD disabled, no .bit.bin/DTBO, no board activity or cooling/stock recovery approval. In response to owner request to resume physical experiments, prepared [new stage-0 nonprogramming stock-only read-only capture](M08_D3_2_PHYSICAL_STAGE0_STOCK_READONLY_2026_11_19.md). Owner must personally confirm independently powered backup cooling, UART monitoring, known stock boot/forced-power-cycle recovery and a nonstalled board before any SSH snapshot. New PC gate verifies pinned new image and 99/98/96 receipts first, collects stock manager/fan/overlay/temperature plus original stock image hashes with no board writes. Original prior RCU/timer stall and unknown root cause still make bitstream loading a separate blocked decision; old image remains quarantined, no ATB4/AIB13/AFI claim. Stage-0 hardware observation is PENDING owner local run.
