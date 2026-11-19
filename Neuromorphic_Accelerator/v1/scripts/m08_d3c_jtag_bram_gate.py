@@ -221,7 +221,7 @@ def inspect_timing(report: str) -> dict:
     require(len(vals) == 12, "native route timing summary malformed")
     try:
         wns, tns, whs, ths = (float(vals[i]) for i in (0, 1, 4, 5))
-        failing = (int(vals[i]) for i in (2, 6, 10))
+        failing = tuple(int(vals[i]) for i in (2, 6, 10))
     except ValueError as exc:
         raise Reject("native route timing summary nonnumeric") from exc
     require(wns >= 0 and tns == 0 and whs >= 0 and ths == 0
