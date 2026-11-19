@@ -1,6 +1,29 @@
 # M08 D3.2 — Physical stage 0: stock-only, read-only KV260 baseline
 
 
+## 2026-11-19 — Manual supplement complete; proceed to passive **stock-only** live observation
+
+Owner PC manual review `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb` verified both SHA ledger entries and returned `STOCK_READONLY_FIVE_PROBES_PLUS_MANUAL_XMUTIL_REVIEW_ONLY`. Manual stock `k26-starter-kits` active `0->0`; old quarantined M08 installed/inactive `-1`; input stock baseline 5/6 with root-only inventory failure, captured with no board changes. This is evidence for an existing stock state, not automatic six-probe PASS, stock recovery test or physical release.
+
+**Next safe physical experiment:** `scripts/m08_d3_2_stock_live_readonly_pc.py` performs three independent, bounded, non-root PC→KV260 SSH samples of actual FPGA manager state, dfx-mgr/fancontrol services, active stock overlay and existing thermal sensor readbacks. The script runs on PC, streams a read-only Bash probe and stores new PC-only sample logs, inspection JSON and SHA receipts. It **never writes to board, changes fan duty, executes sudo, loads/unloads any application, programs JTAG or reads PS/PL registers.** Stops immediately if any sample is missing, stock overlay disappears, fancontrol inactive, FPGA manager not operating or thermal readouts invalid/out of expected monitoring envelope (<85°C, a diagnostic stop bound, **not** a safe operating limit). It must NOT be called a physical test of the new bitstream; the stock image stays loaded.
+
+From owner PC, while independent backup fan is powered and UART connected/logging:
+
+    cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+    python3 -m unittest discover -s tests -p 'test_m08_d3_2_stock_live_readonly_pc.py' -v
+    REVIEW="$HOME/Thesis_Evidence/M08/m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb"
+    python3 scripts/m08_d3_2_stock_live_readonly_pc.py \
+      --manual-review "$REVIEW" \
+      --evidence-base "$HOME/Thesis_Evidence/M08" \
+      --target ubuntu@10.42.0.135 \
+      --samples 3
+
+On a successful run, expected `STOCK_LIVE_READONLY_OBSERVED_NO_RECONFIGURATION`; preserve the new reported evidence folder. Verify `(cd "$EVIDENCE" && sha256sum -c 99_evidence_sha256.txt)`, then inspect `90_review.json` and sample stdout/stderr files. **Hardware programming remains unauthorized**, even if all samples pass.
+
+A subsequent **separate** recovery/boot-safety exercise must establish an independently available known-good stock restore (including medium/images, version/DTBO/manager ownership, procedure when SSH is lost, UART/power control, external cooling) and a compatible way to test a NEW Vivado PS-containing .bit without interrupting the running Linux-managed stock FPGA region unsafely. The historical M08 image remains quarantined. Do not simply JTAG over the Linux-managed design, do not re-use old one-shot scripts, and do not treat an offline .bit as an installable `xmutil` application.
+
+
+
 ## 2026-11-19 — Manual sudo xmutil inventory; supplementary offline SHA receipt
 
 The owner successfully executed `ssh -t ubuntu@10.42.0.135 'sudo xmutil listapps'` and entered the KV260 user sudo password. The real table reported **k26-starter-kits XRT_FLAT active 0->0**, **m08-v1-fan-page-uio-review PL_FLAT inactive -1**, and **k24-starter-kits XRT_FLAT inactive -1**. The old M08 application is still installed/discoverable and remains QUARANTINED; an inactive image is not necessarily uninstalled. Passwordless `sudo -n xmutil listapps` fails with `sudo: a password is required`. Do not create a NOPASSWD sudo policy to appease the automated preflight.
