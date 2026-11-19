@@ -153,8 +153,10 @@ foreach iface {
     }
 }
 set jtag_space [get_bd_addr_segs -quiet -of_objects $space]
-if {[llength $jtag_space] != 1 ||
-    [string toupper [get_property OFFSET [lindex $jtag_space 0]]] ne "0XA0000000"} {
+if {[llength $jtag_space] != 1} {error "JTAG mapped segment count must be exactly one"}
+set mapped_offset [get_property OFFSET [lindex $jtag_space 0]]
+if {[catch {expr {wide($mapped_offset)}} mapped_base] ||
+    $mapped_base != 2684354560} {
     error "Native mapped JTAG BRAM address is not exactly 0xA0000000"
 }
 save_bd_design
