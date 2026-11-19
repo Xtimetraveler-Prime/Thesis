@@ -59,6 +59,7 @@ class StockBaselinePcTests(unittest.TestCase):
         self.assertIn("-T", cmd)
         self.assertIn("StrictHostKeyChecking=yes", cmd)
         self.assertNotIn("sudo", cmd)
+        self.assertIn(b"sudo -n xmutil listapps", kwargs["input"])
         return CompletedProcess(cmd, 0, self.mock_stdout(), b"")
 
     def patch_candidate(self):
@@ -74,7 +75,8 @@ class StockBaselinePcTests(unittest.TestCase):
 
     def test_board_source_six_readonly_probes(self):
         sh = m.check_script()
-        self.assertIn(b"xmutil listapps", sh)
+        self.assertIn(b"sudo -n xmutil listapps", sh)
+        self.assertEqual(sh.count(b"sudo -n xmutil listapps"), 1)
         self.assertIn(b"cat /sys/class/fpga_manager/fpga0/state", sh)
         self.assertNotIn(b"xmutil loadapp", sh)
         self.assertNotIn(b"program_hw_devices", sh)
@@ -116,8 +118,22 @@ class StockBaselinePcTests(unittest.TestCase):
         self.assertFalse(out["stock_boot_verified"])
 
     def test_any_single_readonly_probe_error_is_rejected(self):
-        with self.assertRaisesRegex(m.BaselineRejected, "incomplete"):
+        with self.assertRaisesRegex(m.BaselineRejected, "installed_apps.*3"):
             m.parse_capture(self.mock_stdout(bad_rc_label="installed_apps"), 0)
+
+    def test_only_narrow_readonly_sudo_is_allowed(self):
+        import unittest.mock
+        original = m.BOARD_SH
+        with tempfile.TemporaryDirectory() as dirname:
+            bad = Path(dirname) / "bad.sh"
+            body = original.read_text()
+            for changed in ("sudo -n xmutil loadapp anything",
+                            "sudo -n sh -c 'xmutil listapps'",
+                            "sudo -n xmutil listapps\\nsudo -n xmutil listapps"):
+                bad.write_text(body.replace("sudo -n xmutil listapps", changed))
+                with unittest.mock.patch.object(m, "BOARD_SH", bad):
+                    with self.assertRaises(m.BaselineRejected):
+                        m.check_script()
 
     def test_wrong_exit_or_missing_boundary_rejected(self):
         with self.assertRaisesRegex(m.BaselineRejected, "incomplete"):
