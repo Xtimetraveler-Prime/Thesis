@@ -16,8 +16,16 @@ if {![regexp {^m08_d3c_jtag_link_[A-Za-z0-9]+$} [file tail $evidence]] ||
     ![file isdirectory $evidence] || [file type $evidence] ne "directory"} {
     error "M08 D3C requires new isolated owner PC evidence folder under M08"
 }
+# The Vivado process creates these two native output files before sourcing Tcl.
+# They are the ONLY permitted pre-created entries; reject everything else.
+set allowed_precreated {00_vivado.log 01_vivado.jou}
 foreach f [glob -nocomplain -directory $evidence * .*] {
-    if {[file tail $f] ni {. ..}} {error "M08 D3C evidence folder not empty"}
+    set leaf [file tail $f]
+    if {$leaf in {. ..}} {continue}
+    if {$leaf ni $allowed_precreated ||
+        [file type $f] ne "file" || ![file isfile $f]} {
+        error "M08 D3C evidence folder contains unexpected/unsafe content: $leaf"
+    }
 }
 set part xck26-sfvc784-2LV-c
 set project_dir [file join $evidence project]
