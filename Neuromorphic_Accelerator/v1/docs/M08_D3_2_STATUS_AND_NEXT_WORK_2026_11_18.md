@@ -1,5 +1,10 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
+## 2026-11-19 owner routed passive checkpoint and follow-up
+
+The owner uploaded the native routed report and SHA receipt checks for `m08_d3_2_passive_synth_77Ols9zt`: Vivado 2025.2 `route_design Complete!` 100%, default ruledeck DRC `Checks found: 0`, output A12, no exposed AXI, one PS8/OBUF/IOB and **zero LUTs/registers**. `WNS/TNS=NA`; the generic `All user specified timing constraints are met` phrase provides **no affirmative timing slack** with no clocked fabric paths. `clk_pl_0`/`clk_pl_1` nominal clock definitions do not establish enabled hardware clocks under Linux. New independent [route semantic receipt reviewer](M08_D3_2_PASSIVE_ROUTE_SEMANTIC_REVIEW_2026_11_19.md) verifies 98/99 ledgers, zero reported DRC findings, N/A-timing scope and resource/clock profile with fail-closed negatives; **owner execution of this new tool still pending**. Remain PC-only; independent fan cooling/stock rollback and PS boot protection are not proven and **new bitstream generation and hardware access remain forbidden**.
+
+
 ## Owner original passive synthesis acceptance and offline route work (2026-11-18)
 
 Owner uploaded passive synth gate JSON and native report from original `m08_d3_2_passive_synth_z6PIsrwZ`, reporting `synth_design Complete!` at 100%, HPM masters disabled, no identity/page/SmartConnect, fan A12 and no bitstream. Warning scan included unrelated installed board definitions, unconstrained/unconnected PS clock/reset outputs and unused TTC slice input bits. This supports **advancing to offline passive implementation** but is NOT evidence of acceptable route/DRC/timing or physical cooling.
