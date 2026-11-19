@@ -1,5 +1,11 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
+## 2026-11-18 owner Icarus acceptance and next physical-design step
+
+Owner's independently run full abstract AXI scoreboard printed all 11 expected markers and completed with $finish; owner also independently ran the new receipt reviewer against the 53-candidate PC inventory, obtaining SHA identity 5733da65c625ee25e98b7b3907e721a06b228b94a8301f2d866c5a17087de1ba, no original boot configuration evidence, one original M08 DTBO hash, one different-byte copy and absent stock DTBO. Four candidate classes: 1 BOOT_BUILD_RECIPE (conversion.bif), 3 DEVICE_TREE_BINARY, 4 DEVICE_TREE_SOURCE, 45 PLATFORM_LOG_OR_MANIFEST. **No original XSA, psu_init, genuine FSBL/PMUFW source in scanned candidates.** These are owner PC reports, not proof of which firmware executed.
+
+**New offline hardware preparation:** [passive synthesis-only runbook](M08_D3_2_PASSIVE_SYNTHESIS_PC_RUNBOOK_2026_11_18.md) introduces a **fresh owner-PC Vivado 2025.2 synth_1-only** candidate based on D3.1 HPM0/HPM1/LPD-disabled fan-only BD, strict source and native reports, shell runner and negative tests. The tool chain cannot produce bitstream, run implementation or touch hardware. Source CI and future native synth remain separate. **Genuine new synthesis has NOT YET been owner-run or accepted**. A passive no-MMIO bitstream may be considered only after separate native route/DRC/timing, fan/rollback validation and explicit owner authorization. Protected HPM0 image continues to require firmware/ATB4/AIB13/clock/AFI proof.
+
 **Branch:** agent/neuromorphic-accelerator-v1-m08-d3b-boot-ownership-audit (stacked draft PR #86 over #85, #84, #83). **Work class:** OFFLINE ONLY. The original M08 image remains QUARANTINED; no board operations, new deployable HPM0 design, firmware writes or register accesses are authorized.
 
 ## Current milestones
