@@ -1,9 +1,10 @@
-# M08 D3.D.2D — STAGED NEW M32E raw-event physical JTAG test. NO RELEASED BIT.
-# Tcl HARD STOP below before open_hw_manager; shell first-image reviewer
-# also always exits 2. No actual programming authorized in this phase.
-# Future independent owner image pin and cooling/UART/JTAG/recovery checks
-# required. Exactly one program statement; NO automatic programming retry.
-set RELEASED_SHA "UNREVIEWED_M08_D3D2D_NEW_IMAGE"
+# M08 D3.D.2D — FIRST independently owner-reviewed M32E v5 candidate.
+# Exactly one explicit owner-authorized JTAG program AFTER exact owner
+# image SHA/size, source, DRC, 100MHz timing and 12-file ledger are checked
+# in the shell. This Tcl independently rechecks SHA, JTAG target, and input
+# geometry. No second program or automatic retry; cooling/UART/recovery
+# preflight flags are mandatory. NO PS MMIO, DDR, HLS or flash writes.
+set RELEASED_SHA "f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab"
 if {![regexp {^[a-f0-9]{64}$} $RELEASED_SHA]} {
     error "D3.D.2D HARD STOP: first owner native image NOT RELEASED"
 }
@@ -29,7 +30,7 @@ set base [file normalize [file join $::env(HOME) Thesis_Evidence M08]]
 set native [file dirname [file dirname $bit]]
 set hw [file dirname $result]
 if {[file tail $bit] ne "m08_d3d2d_event_lif_jtag_UNRELEASED.bit" ||
-    ![regexp {^m08_d3d2d_event_[A-Za-z0-9]+$} [file tail $native]] ||
+    [file tail $native] ne "m08_d3d2d_event_DE6kQWvt" ||
     [file dirname $native] ne $base ||
     ![regexp {^m08_d3d2d_event_HW_[A-Za-z0-9]+$} [file tail $hw]] ||
     [file dirname $hw] ne $base ||
@@ -42,7 +43,7 @@ if {[file tail $bit] ne "m08_d3d2d_event_lif_jtag_UNRELEASED.bit" ||
 if {$digest ne $RELEASED_SHA || ![file isfile $bit] ||
     ![file isfile $source] || [file type $bit] ne "file" ||
     [file type $source] ne "file" ||
-    [file size $bit] < 100000 || [file size $source] > 9000 ||
+    [file size $bit] != 7797844 || [file size $source] > 9000 ||
     [file size $source] < 100} {
     error "D3.D.2D is NOT an independently approved owner bitstream"
 }
