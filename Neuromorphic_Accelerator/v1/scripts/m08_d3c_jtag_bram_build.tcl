@@ -3,6 +3,8 @@
 # No board access or application loading; NO PS-to-PL HPM0/HPM1/LPD masters.
 # Preserve PS TTC0 EMIO channel 2 -> A12 fan. PL clock is PS pl_clk0:
 # its continuity after Linux becomes unresponsive is NOT YET PROVEN.
+# r2 isolates only AXI reset via a 256-cycle PL fabric startup POR;
+# it does NOT initialize PS clocks and does NOT guarantee a working JTAG AXI bus.
 if {[llength $argv] != 1} {
     error "usage: m08_d3c_jtag_bram_build.tcl <new-empty-PC-evidence-folder>"
 }
@@ -33,6 +35,13 @@ set reports [file join $evidence reports]
 set candidate_dir [file join $evidence bitstream_candidate]
 file mkdir $reports $candidate_dir
 create_project m08_d3c_jtag_link $project_dir -part $part
+# Source-controlled fabric POR module copied into the original native evidence.
+set rtl [file normalize [file join [file dirname [info script]] .. rtl m08_d3c_fabric_por.v]]
+if {![file isfile $rtl]} {error "Missing bounded PL reset RTL"}
+set rtl_receipt [file join $reports 11_fabric_por.v]
+file copy $rtl $rtl_receipt
+add_files -fileset sources_1 -norecurse $rtl
+update_compile_order -fileset sources_1
 set parts [get_board_parts -quiet xilinx.com:kv260_som:part0:*]
 if {[llength $parts] == 0} {error "KV260 SOM board preset missing"}
 set_property BOARD_PART [lindex [lsort -dictionary $parts] end] [current_project]
@@ -43,8 +52,6 @@ foreach vlnv {
     xilinx.com:ip:smartconnect:1.0
     xilinx.com:ip:axi_bram_ctrl:4.1
     xilinx.com:ip:blk_mem_gen:8.4
-    xilinx.com:ip:proc_sys_reset:5.0
-    xilinx.com:ip:xlconstant:1.1
 } {
     if {[llength [get_ipdefs -all -quiet $vlnv]] != 1} {
         error "Required vendor IP not uniquely installed: $vlnv"
@@ -99,13 +106,13 @@ set jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi:1.2 jtag_axi]
 set sc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 link_sc]
 set ctrl [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 bram_ctrl]
 set bram [create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 bram]
-set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_pl0]
-set hi [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_one]
-set lo [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_zero]
-set_property -dict [list CONFIG.CONST_VAL 1 CONFIG.CONST_WIDTH 1] $hi
-set_property -dict [list CONFIG.CONST_VAL 0 CONFIG.CONST_WIDTH 1] $lo
-# C_EXT_RESET_HIGH is a derived/read-only property in Vivado 2025.2.
-# Verify its actual value AFTER PS pl_resetn0 is connected and BD validated.
+# Reset is generated only from PL clock after configuration.
+# No direct or indirect dependency on PS pl_resetn0 for JTAG/AXI reset.
+set por [create_bd_cell -type module -reference m08_d3c_fabric_por fabric_por]
+if {[llength [get_bd_pins -quiet fabric_por/clk]] != 1 ||
+    [llength [get_bd_pins -quiet fabric_por/aresetn]] != 1} {
+    error "Bounded fabric POR pins not found"
+}
 set_property -dict [list CONFIG.NUM_SI 1 CONFIG.NUM_MI 1] $sc
 # MEM_DEPTH is derived/read-only in Vivado 2025.2; derive from the
 # 4 KiB address segment and check actual controller/BRAM geometry later.
@@ -125,17 +132,13 @@ foreach sink {
     jtag_axi/aclk
     link_sc/aclk
     bram_ctrl/s_axi_aclk
-    rst_pl0/slowest_sync_clk
+    fabric_por/clk
 } {
     if {[llength [get_bd_pins -quiet $sink]] != 1} {
         error "Required clock sink absent: $sink"
     }
     connect_bd_net $clkin [get_bd_pins $sink]
 }
-connect_bd_net $reset_out [get_bd_pins rst_pl0/ext_reset_in]
-connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins rst_pl0/dcm_locked]
-connect_bd_net [get_bd_pins const_zero/dout] \
-    [get_bd_pins rst_pl0/aux_reset_in] [get_bd_pins rst_pl0/mb_debug_sys_rst]
 foreach sink {
     jtag_axi/aresetn
     link_sc/aresetn
@@ -144,7 +147,7 @@ foreach sink {
     if {[llength [get_bd_pins -quiet $sink]] != 1} {
         error "Required reset sink absent: $sink"
     }
-    connect_bd_net [get_bd_pins rst_pl0/peripheral_aresetn] [get_bd_pins $sink]
+    connect_bd_net [get_bd_pins fabric_por/aresetn] [get_bd_pins $sink]
 }
 # 4 KiB AXI address window matching the 1024 x 32-bit BRAM;
 # only the first sixteen bytes are used in this initial smoke test; all JTAG readbacks are 32-bit aligned.
@@ -156,11 +159,21 @@ if {[llength $space] != 1 || [llength $segment] != 1} {
 assign_bd_address -offset 0xA0000000 -range 0x00001000 \
     -target_address_space $space $segment
 validate_bd_design -force
-# Fail closed on the effective reset polarity. PS pl_resetn0 is active LOW.
-# A requested-but-rejected set_property is NOT evidence of correct polarity.
-set ext_reset_active_high [string trim [get_property CONFIG.C_EXT_RESET_HIGH $rst]]
-if {$ext_reset_active_high ne "0"} {
-    error "M08 D3C reset polarity not proved active-low: C_EXT_RESET_HIGH=$ext_reset_active_high"
+# Confirm every AXI reset is on only the fabric-generated POR output.
+# PS pl_resetn0 remains available on the PS IP but is not allowed to feed AXI.
+set por_reset_net [get_bd_nets -quiet -of_objects [get_bd_pins fabric_por/aresetn]]
+set ps_reset_net [get_bd_nets -quiet -of_objects $reset_out]
+if {[llength $por_reset_net] != 1} {
+    error "No uniquely connected fabric-POR AXI reset net"
+}
+foreach sink {jtag_axi/aresetn link_sc/aresetn bram_ctrl/s_axi_aresetn} {
+    set sink_net [get_bd_nets -quiet -of_objects [get_bd_pins $sink]]
+    if {[llength $sink_net] != 1 || $sink_net ne $por_reset_net} {
+        error "AXI reset sink not driven by fabric POR: $sink"
+    }
+}
+if {[llength $ps_reset_net] > 0 && $ps_reset_net eq $por_reset_net} {
+    error "PS pl_resetn0 cannot drive AXI fabric reset in r2"
 }
 # The controller depth and the physical BRAM dimensions are auto-derived by IPI.
 # Demand a 1024 x 32-bit memory (4 KiB) behind the exact 4 KiB AXI window.
@@ -173,7 +186,7 @@ if {![string is integer -strict $ctrl_auto_depth] || $ctrl_auto_depth <= 0} {
 if {$bram_depth_words ne "1024" || $bram_width_bits ne "32"} {
     error "M08 D3C connected BRAM geometry not 1024x32: $bram_depth_words x $bram_width_bits"
 }
-puts "M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS ext_reset_active_high=$ext_reset_active_high controller_auto_depth=$ctrl_auto_depth bram_words=$bram_depth_words bram_width=$bram_width_bits"
+puts "M08_D3C_NATIVE_FABRIC_POR_AND_BRAM_DERIVED_CHECK=PASS hold_cycles=256 controller_auto_depth=$ctrl_auto_depth bram_words=$bram_depth_words bram_width=$bram_width_bits"
 foreach iface {
     ps/M_AXI_HPM0_FPD ps/M_AXI_HPM1_FPD ps/M_AXI_HPM0_LPD
 } {
@@ -229,7 +242,7 @@ report_drc -file [file join $reports 20_route_drc.rpt]
 report_timing_summary -file [file join $reports 21_route_timing.rpt]
 report_utilization -file [file join $reports 22_route_utilization.rpt]
 report_clocks -file [file join $reports 23_route_clocks.rpt]
-set bit [file join $candidate_dir m08_d3c_jtag_bram_UNRELEASED.bit]
+set bit [file join $candidate_dir m08_d3c_jtag_bram_r2_UNRELEASED.bit]
 if {[file exists $bit]} {error "Refusing to overwrite JTAG link bitstream"}
 write_bitstream -file $bit
 if {![file isfile $bit] || [file size $bit] < 100000} {
@@ -237,7 +250,7 @@ if {![file isfile $bit] || [file size $bit] < 100000} {
 }
 set receipt [file join $reports 30_native_result.txt]
 set f [open $receipt {WRONLY CREAT EXCL}]
-puts $f {schema=m08-d3c-jtag-bram-offline-build-v1}
+puts $f {schema=m08-d3c-jtag-bram-offline-build-v2-fabric-por}
 puts $f "vivado_version=[version -short]"
 puts $f "part=[get_property PART [current_project]]"
 puts $f "board_part=[get_property BOARD_PART [current_project]]"
@@ -247,7 +260,10 @@ puts $f {ps_pl0_clock_request_hz=100000000}
 puts $f {ps_pl0_runtime_clock_proven=NO}
 puts $f {bram_map_base=0xA0000000}
 puts $f {bram_map_range=0x00001000}
-puts $f "ext_reset_active_high=$ext_reset_active_high"
+puts $f {reset_mode=FABRIC_POR_256_CYCLES}
+puts $f {ps_reset_dependency=NO}
+puts $f {ps_clock_dependency=YES}
+puts $f "fabric_por_rtl_sha256=[string tolower [lindex [exec sha256sum -- $rtl_receipt] 0]]"
 puts $f "bram_controller_derived_depth=$ctrl_auto_depth"
 puts $f "bram_depth_words=$bram_depth_words"
 puts $f "bram_width_bits=$bram_width_bits"
