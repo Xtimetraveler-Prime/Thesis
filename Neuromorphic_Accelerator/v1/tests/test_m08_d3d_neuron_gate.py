@@ -210,15 +210,24 @@ class D3DNeuronTests(unittest.TestCase):
                 "Both modes may exhibit address collisions.",
                 "Related violations: <none>",
             ))
-        sample = [f"dbg_hub/inst/debug_net_{i}" for i in range(3)]
-        sample += [f"{instance}/jtag_axi/inst/engine_net_{i}"
-                   for i in range(12)]
+        if instance == "m08_d3d_lif_jtag_i":
+            sample = list(g.d3c.D3D_RTSTAT10_REVIEWED_FIRST15)
+            count = "39 net(s) have no routable loads."
+            footer = "(the first 15 of 37 listed)."
+        else:
+            # The original D3.C physical receipt used a different count and
+            # its own vendor/debug hierarchy. Leave this original fixture.
+            sample = [f"dbg_hub/inst/debug_net_{i}" for i in range(3)]
+            sample += [f"{instance}/jtag_axi/inst/engine_net_{i}"
+                       for i in range(12)]
+            count = "47 net(s) have no routable loads."
+            footer = "(the first 15 of 45 listed)."
         lines.extend((
             "RTSTAT-10#1 Warning",
             "No routable loads",
-            "47 net(s) have no routable loads. The problem bus(es) and/or net(s) are "
+            count + " The problem bus(es) and/or net(s) are "
             + ",\n".join(sample),
-            "(the first 15 of 45 listed).",
+            footer,
             "Related violations: <none>",
         ))
         return "\n".join(lines) + "\n"
@@ -252,7 +261,7 @@ class D3DNeuronTests(unittest.TestCase):
                 "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rx_fifo_i",
                 "m08_d3d_lif_jtag_i/lif/neural_state_ram")),
             ("foreign_unrouted_sample", original.replace(
-                "dbg_hub/inst/debug_net_0", "m08_d3d_lif_jtag_i/lif/unsafe_net")),
+                "dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD1/ctl_reg_en_2[1]", "m08_d3d_lif_jtag_i/lif/unsafe_net")),
             ("foreign_design", original.replace(
                 "m08_d3d_lif_jtag_i/jtag_axi", "m08_other_i/jtag_axi")),
             ("unknown_rule", original.replace(
@@ -267,6 +276,49 @@ class D3DNeuronTests(unittest.TestCase):
                 with self.assertRaises(g.Reject):
                     g.native(self.run)
 
+    def test_d3d_owner_rtstat_counts_and_first15_paths_are_not_waived(self):
+        drc = self.run / "reports/20_route_drc.rpt"
+        original = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
+        self.assertIn("39 net(s) have no routable loads", original)
+        self.assertIn("(the first 15 of 37 listed)", original)
+        self.assertEqual(len(g.d3c.D3D_RTSTAT10_REVIEWED_FIRST15), 15)
+        self.assertEqual(g.d3c.inspect_drc(
+            original, design_instance="m08_d3d_lif_jtag_i"
+        )["vendor_drc_warnings"], 7)
+        # With the SAME reviewed vendor-prefix, a changed sample must fail;
+        # a prefix-only waiver would have mistakenly accepted it.
+        first = g.d3c.D3D_RTSTAT10_REVIEWED_FIRST15[0]
+        last = g.d3c.D3D_RTSTAT10_REVIEWED_FIRST15[-1]
+        cases = (
+            ("net_count", original.replace(
+                "39 net(s) have no routable loads",
+                "40 net(s) have no routable loads")),
+            ("listed_count", original.replace(
+                "(the first 15 of 37 listed)", "(the first 15 of 38 listed)")),
+            ("changed_known_debug_path", original.replace(
+                first, first + "_altered")),
+            ("changed_known_jtag_path", original.replace(
+                last, last + "_altered")),
+            ("reordered_known_jtag_path", original.replace(
+                last, g.d3c.D3D_RTSTAT10_REVIEWED_FIRST15[-2])),
+            ("neural_path", original.replace(
+                first, "m08_d3d_lif_jtag_i/lif/neuron_result")),
+        )
+        for title, corrupt in cases:
+            with self.subTest(case=title):
+                self.assertNotEqual(corrupt, original)
+                drc.write_text(corrupt)
+                self.refresh()
+                with self.assertRaises(g.Reject):
+                    g.native(self.run)
+        # Original exact report still passes all the strict gates.
+        drc.write_text(original)
+        self.refresh()
+        result = g.native(self.run)
+        self.assertEqual(result["status"],
+                         "M08_D3D_NATIVE_NEURON_IMAGE_ACCEPTED_OFFLINE_NO_BOARD")
+        self.assertFalse(result["neural_execution_proven"])
+
     def test_readonly_drc_diagnostic_reports_owner_hierarchy_and_counts(self):
         path = self.run / "reports/20_route_drc.rpt"
         report = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
@@ -275,7 +327,7 @@ class D3DNeuronTests(unittest.TestCase):
         result = drc_inspect.inspect(self.run)
         self.assertIn("M08_D3D_DRC_EVIDENCE_SHA256=VERIFIED", result)
         self.assertIn("DRC_CHECKS_FOUND=7", result)
-        self.assertIn("RTSTAT_NETS_WITH_NO_LOADS=47", result)
+        self.assertIn("RTSTAT_NETS_WITH_NO_LOADS=39", result)
         self.assertIn("RTSTAT_PARSED_SAMPLE_PATHS=15", result)
         self.assertIn("known_debug_prefix:", result)
         self.assertNotIn("UNREVIEWED:", result)
@@ -292,13 +344,13 @@ class D3DNeuronTests(unittest.TestCase):
 
     def test_readonly_drc_diagnostic_does_not_approve_unreviewed_rtstat(self):
         report = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
-        report = report.replace("47 net(s) have no routable loads",
+        report = report.replace("39 net(s) have no routable loads",
                                 "36 net(s) have no routable loads")
         path = self.run / "reports/20_route_drc.rpt"
         path.write_text(report)
         self.refresh()
         self.assertIn("RTSTAT_NETS_WITH_NO_LOADS=36", drc_inspect.inspect(self.run))
-        with self.assertRaisesRegex(g.Reject, "unused-load warning scope changed"):
+        with self.assertRaisesRegex(g.Reject, "D3.D reviewed RTSTAT-10 count changed"):
             g.native(self.run)
 
     def test_native_rejects_wrong_image_schema_even_with_valid_rehash(self):
