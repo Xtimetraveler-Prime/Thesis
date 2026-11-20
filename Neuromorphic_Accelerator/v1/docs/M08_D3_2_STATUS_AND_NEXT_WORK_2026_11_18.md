@@ -1,6 +1,12 @@
 # M08 D3.2 — protected PS–PL AXI status and forward research work (2026-11-18)
 
 
+## 2026-11-19 — M08 D3.C new branch: standalone PL JTAG transport circuit built in source
+
+Owner agreed to focus on retrieving FPGA results regardless of Linux SSH after JTAG and to defer PS/Linux integration. Created `agent/neuromorphic-accelerator-v1-m08-d3c-jtag-pl-link` and [D3.C communication link plan](M08_D3C_JTAG_BRAM_PL_LINK_2026_11_19.md). New offline Vivado Tcl creates KV260 PS8 (board preset, **all PS HPM masters disabled**, TTC0 EMIO channel2→A12 fan, PS PL0 nominal 100MHz clock and reset) with **PL-only JTAG AXI Master → SmartConnect → AXI BRAM Controller → 4KiB BRAM at 0xA0000000**. Fresh PC build runs BD validation, synth, route, DRC/timing reports, one unreleased .bit candidate and SHA evidence. Separate guarded one-shot JTAG Tcl writes/reads four 32-bit known values over debug AXI and compares exact return data before an optional stock power-cycle. No Linux/SSH/MMIO to obtain results, but PS FCLK continuity after Linux loses responsiveness is **UNVERIFIED**. Source tests may be synthetic; *new owner genuine Vivado build and physical readback are pending*. No inference tested. After link accepted, route existing M06 LIF/event kernel result registers into this transport, compare against M02 Python oracle; DDR remains independent later issue.
+
+
+
 ## 2026-11-19 — Owner-approved research pivot: offline JTAG readback mode as primary physical validation
 
 After successful physical programming of the NEW D3.2 passive image followed by an SSH timeout, owner power cycled the KV260, demonstrated 4/4 ICMP ping, successful SSH `M08_STOCK_RECOVERY_SSH_OK`, uptime around 1 minute, FPGA manager `operating`, `dfx-mgr`/`fancontrol` `active`, stock `k26-starter-kits_image_1` restored and default `k26-starter-kits`. This proves **recovery for this observed physical run**; does not prove general boot rollback or that the OS had kernel-stalled versus merely lost its network before reset. Owner confirms fans worked through test.

@@ -1,6 +1,12 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
 
+## M08 D3.C PL JTAG AXI→BRAM smoke circuit (2026-11-19)
+
+New `scripts/m08_d3c_jtag_bram_build.tcl` prepares native KV260 board preset, PS HPM disabled, TTC0 fan A12 and JTAG-to-AXI→SmartConnect→AXI BRAM→4KiB PL BRAM, with PS PL0 100MHz clock and synchronized reset; outputs native synth/route/DRC/timing and an **unreleased** bitstream via owner PC runner. New `scripts/m08_d3c_jtag_bram_gate.py` checks source and, once available, genuine owner Vivado evidence SHA, DRC zero, bitstream not equal previous known images, address 0xA0000000 and no false physical proof. `tests/test_m08_d3c_jtag_bram_gate.py` includes synthetic tampered bit/report/ledger, nonzero DRC, nonzero Vivado exit, forbidden source action, wrong run, and source-only physical test scope. Separate physical Tcl/hardware runner explicitly opt-in, single program, bounded, four 32-bit write/read comparisons; **not invoked by unit tests**. Owner genuine native build, PL clock survival after SSH loss and actual JTAG readback not yet proven, no neuron or DDR parity claims.
+
+
+
 ## M08 D3.2 live stock-only physical safety observation (2026-11-19)
 
 Owner 5/6+manual separate SHA receipt `m08_d3_2_xmutil_MANUAL_REVIEW_84_nk8zb` accepted review-only; no new image deployed. New `scripts/m08_d3_2_stock_live_readonly_pc.py` is guarded against altered manual receipt, wrong new passive/stock image SHA, wrong SSH target, unexpected stock overlay, inactive FPGA manager/fancontrol, missing or out-of-envelope sensor, failed SSH and board-side mutation. Performs exactly three default serial PC SSH reads to stock KV260 with fresh PC-only evidence and SHA. `tests/test_m08_d3_2_stock_live_readonly_pc.py` uses synthetic mock SSH only, no physical board; tests observation accepted and failures/replay and receipt tamper. Never runs sudo, changes fan speed or reconfigures FPGA. This tests only **stock runtime continuity**, not fan airflow independently or PS boot rollback/recovery or passive image loading.
