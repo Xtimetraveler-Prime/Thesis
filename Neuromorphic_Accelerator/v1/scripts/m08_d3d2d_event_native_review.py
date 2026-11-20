@@ -61,6 +61,8 @@ def require(ok,why):
     if not ok:
         raise Reject(why)
 
+check=require  # same fail-closed condition helper for exact DRC detail
+
 def read(path:Path,limit=12_000_000):
     require(path.is_file() and not path.is_symlink(),"missing/symlink original native evidence "+str(path))
     require(0<path.stat().st_size<=limit,"empty/oversize native evidence "+str(path))
@@ -76,9 +78,9 @@ def inspect_reviewed_drc(report: str) -> dict:
     review="M08_D3D2D_NEW_DRC_REVIEW_REQUIRED: "
     for snippet in (
         "Vivado v.2025.2 (lin64)",
-        "Date         : Fri Nov 20 12:31:10 2026",
+        "Date         : Fri Nov 20 15:32:35 2026",
         "Command      : report_drc -file "+REVIEWED_DRC_PATH,
-        "Design       : m08_d3d2c_m06_lif_jtag_wrapper",
+        "Design       : m08_d3d2d_event_lif_jtag_wrapper",
         "Device       : xck26-sfvc784-2LV-c",
         "Design State : Fully Routed",
     ):
