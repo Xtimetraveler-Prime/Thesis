@@ -216,11 +216,11 @@ class D3DNeuronTests(unittest.TestCase):
             "RTSTAT-10#1 Warning",
             "No routable loads",
             "47 net(s) have no routable loads. The problem bus(es) and/or net(s) are "
-            + ",\\n".join(sample),
+            + ",\n".join(sample),
             "(the first 15 of 45 listed).",
             "Related violations: <none>",
         ))
-        return "\\n".join(lines) + "\\n"
+        return "\n".join(lines) + "\n"
 
     def test_original_d3c_warning_scope_is_not_silently_extended(self):
         old = self.synthetic_exact_vendor_jtag_drc("m08_d3c_jtag_link_i")
@@ -263,7 +263,7 @@ class D3DNeuronTests(unittest.TestCase):
             with self.subTest(label=label):
                 drc.write_text(bad)
                 self.refresh()
-                with self.assertRaises(g.d3c.Reject):
+                with self.assertRaises(g.Reject):
                     g.native(self.run)
 
     def test_native_rejects_wrong_image_schema_even_with_valid_rehash(self):
