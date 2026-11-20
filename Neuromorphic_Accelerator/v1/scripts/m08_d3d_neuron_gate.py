@@ -247,7 +247,12 @@ def native(folder: Path) -> dict:
     drc = read(folder/"reports/20_route_drc.rpt", 3000000).decode(errors="replace")
     timing = read(folder/"reports/21_route_timing.rpt", 3000000).decode(errors="replace")
     try:
-        drc_check = d3c.inspect_drc(drc)
+        # JTAG vendor IP is still identical to D3.C; only the generated
+        # block-design top-level prefix changed in the genuine D3.D design.
+        # Keep all other old D3.C warning quantity, class and source guards.
+        drc_check = d3c.inspect_drc(
+            drc, design_instance="m08_d3d_lif_jtag_i"
+        )
         timing_check = d3c.inspect_timing(timing)
     except d3c.Reject as exc:
         raise Reject("native DRC/timing rejected: " + str(exc)) from exc
