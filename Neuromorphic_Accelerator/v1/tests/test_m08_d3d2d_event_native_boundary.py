@@ -1,7 +1,8 @@
 """D3.D.2D owner offline raw-event Vivado and physical no-program gate.
 
 All tests are PC-only. No test calls genuine Vivado or physical programming.
-Even if new native bitgen succeeds, the exact first-image DRC gate must STOP.
+First owner new image only is now eligible for strict read-only native gate PASS.
+No physical action occurs in these tests and no other image is approved.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -70,12 +71,14 @@ class RawM06NativeBoundaryTests(unittest.TestCase):
             with self.assertRaises(gate.Reject):
                 gate.inspect(fake)
 
-    def test_new_first_image_native_gate_never_authorizes_any_board(self):
+    def test_exact_owner_image_native_gate_remains_read_only(self):
         src=(ROOT/"scripts/m08_d3d2d_event_native_review.py").read_text()
-        self.assertIn("M08_D3D2D_FIRST_NEW_NATIVE_DRC_REVIEW_REQUIRED_NO_BOARD",src)
-        self.assertIn("return 2",src)
-        self.assertIn("original_drc_sha256",src)
-        self.assertIn("physical_authorized=False",src)
+        self.assertIn("M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD",src)
+        self.assertIn("OWNER_ORIGINAL_BIT_SHA",src)
+        self.assertIn("OWNER_ORIGINAL_DRC_SHA",src)
+        self.assertIn("inspect_reviewed_drc",src)
+        self.assertIn("original_12_sha_entries_verified",src)
+        self.assertIn("native_image_reviewed=True",src)
         self.assertIn("physical_programmed=False",src)
         self.assertIn("raw_event_ingress_physically_verified=False",src)
         self.assertNotIn("M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD",src)
