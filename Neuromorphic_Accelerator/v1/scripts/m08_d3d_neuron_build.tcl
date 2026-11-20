@@ -295,6 +295,7 @@ puts $f {lif_map_range=0x00001000}
 puts $f {lif_requires_hardware_execution=YES}
 puts $f "lif_rtl_sha256=[string tolower [lindex [exec sha256sum -- $lif_receipt] 0]]"
 puts $f "vivado_version=[version -short]"
+puts $f "builder_sha256=[string tolower [lindex [exec sha256sum -- [info script]] 0]]"
 puts $f "part=[get_property PART [current_project]]"
 puts $f "board_part=[get_property BOARD_PART [current_project]]"
 puts $f {ps_to_pl_hpm=DISABLED}
