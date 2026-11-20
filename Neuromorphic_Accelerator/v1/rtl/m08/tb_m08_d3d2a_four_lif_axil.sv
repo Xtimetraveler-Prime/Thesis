@@ -175,7 +175,7 @@ module tb_m08_d3d2a_four_lif_axil;
         read_reg(12'h018,0,2'b10);
         read_reg(12'h100,0,2'b10);
         write_reg(12'h014,1,4'hF,2'b10); // invalid unconfigured START
-        write_reg(12'h050,32'h0000FFFF,4'hF,2'b10); // not signed16
+        write_reg(12'h044,32'h0000FFFF,4'hF,2'b10); // not signed16
         write_reg(12'h010,32'd3,4'hF,2'b10); // invalid decay
         write_reg(12'h014,1,4'h7,2'b10); // partial strobe
         write_reg(12'h015,1,4'hF,2'b11); // unaligned
