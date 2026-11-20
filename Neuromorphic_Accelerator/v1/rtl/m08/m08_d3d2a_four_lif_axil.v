@@ -241,7 +241,10 @@ module m08_d3d2a_four_lif_axil (
                     endcase
                 end else if (s_axi_araddr >= 12'h100 &&
                              s_axi_araddr < 12'h180) begin
-                    if (!done) s_axi_rresp <= SLVERR;
+                    // Reserved result-window holes are DECERR even before
+                    // DONE. Valid result registers are SLVERR until DONE.
+                    if (result_word > 3'd4) s_axi_rresp <= DECERR;
+                    else if (!done) s_axi_rresp <= SLVERR;
                     else begin
                         case (result_word)
                             3'd0,3'd1,3'd2,3'd3:
