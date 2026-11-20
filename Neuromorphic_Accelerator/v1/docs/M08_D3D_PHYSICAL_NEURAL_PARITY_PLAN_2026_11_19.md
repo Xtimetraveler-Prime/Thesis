@@ -181,3 +181,26 @@ sha256sum "$RUN/bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"
 python3 scripts/m08_d3d_neuron_gate.py --run-dir "$RUN"
 ```
 The existing image can be rechecked because **its native builder and actual Verilog source were NOT modified**—only the separate PC Python gate and regression tests changed. If any *other* real DRC finding differs from the exact scoped vendor inventory, the gate **must continue to reject**; inspect/preserve the exact `$RUN/reports/20_route_drc.rpt` before any policy change or hardware action. In particular, if the `RTSTAT-10` count changes with the new neuron peripheral, do not guess a new count without examining the original report. Physical programming is not authorized merely by bitgen success.
+
+## 2026-11-19 21:31 MST — owner-revalidated native candidate still blocked by RTSTAT-10; no physical load
+
+Owner reran on `~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi` after the exact D3.D JTAG hierarchy fix. All **12 original evidence files passed SHA256 verification**. Candidate bitstream SHA256: `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`. Native checker advanced past FIFO hierarchy review but correctly failed closed with `native DRC/timing rejected: native DRC unused-load warning scope changed`.
+
+This is an **RTSTAT-10 gate mismatch**. The original D3.C vendor/debug-only pattern hard-coded `47 net(s) have no routable loads` and `(the first 15 of 45 listed)`. D3.D adds the neural AXI-Lite peripheral, SmartConnect output and control wiring, so count and sample differences may be legitimate, but the owner's **full D3.D DRC report was not supplied**. Do **not** infer that the warning is harmless, assume a new count, globally suppress RTSTAT-10, modify the DRC file, or use this bitstream on the board. `Bitgen Completed Successfully` does NOT mean the fail-closed acceptance gate passed.
+
+A new `scripts/m08_d3d_drc_inspect.py` read-only forensic helper validates the native DRC SHA against the existing original 12-entry evidence receipt, then prints the original full RTSTAT-10 body (capped), actual unused-net counts, declared sample count, all parseable sample nets, and flags paths outside the exact debug-hub/JTAG hierarchy as `UNREVIEWED`. It **never approves** a candidate and cannot change the DRC gate. Test suite verifies diagnostic display, unchanged owner report bytes, SHA mismatch rejection, and that a modified RTSTAT count still fails actual native approval.
+
+To inspect existing evidence **without rebuilding**:
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+cd Neuromorphic_Accelerator/v1
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d_drc_inspect.py --run-dir "$RUN"
+```
+
+Preserve diagnostic stdout and relevant DRC summary and `RTSTAT-10` detail. Only after the **actual complete original warning count, instance list and sample paths** are reviewed should the D3.D-specific acceptance gate be adjusted to an exact narrowed profile; keep D3.C old scope unchanged. The physical runner remains blocked until actual candidate accepted with positive route timing and no unrelated findings.
