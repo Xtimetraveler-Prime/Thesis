@@ -102,7 +102,7 @@ def verify(owner:Path,hw:Path):
     log=read(hw/"01_jtag_m06.log",12_000_000).decode(errors="replace")
     for marker in (
         "M08_D3D2D_ACCEPTED_IMAGE_HASH|"+first["candidate_sha256"],
-        "M08_D3D2D_M06_TRIPLE_ORACLE_579_WORDS_VERIFIED",
+        "M08_D3D2D_M06_TRIPLE_ORACLE_630_WORDS_VERIFIED",
         "M08_D3D2D_DEVICE|xck26_0|xck26",
         "M08_D3D2D_PROGRAM_START",
         "M08_D3D2D_PROGRAM_COMPLETED",
