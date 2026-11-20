@@ -1,7 +1,8 @@
-"""D3.D.2D hard-blocked future M32E JTAG test, read-only PC regressions.
+"""D3.D.2D exact owner M32E JTAG ONE-SHOT guard, read-only PC regressions.
 
-No hardware is invoked, no Vivado run, no socket opened or programming done.
-The future exact new image DRC/timing gate ALWAYS returns 2 until reviewed.
+No test invokes Vivado, JTAG, sockets or physical programming. Native gate
+may approve only one original owner candidate; two physical arming variables
+still require the owner to confirm the board cooling/UART/JTAG recovery.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -17,13 +18,15 @@ sys.path.insert(0,str(ROOT/"scripts"))
 import m08_d3d2d_event_physical_audit as audit
 
 class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
-    def test_staged_shell_is_bash_valid_and_safely_blocked(self):
+    def test_shell_exact_owner_image_and_preflight_required(self):
         file=ROOT/"scripts/run_m08_d3d2d_event_physical_once.sh"
         result=subprocess.run(["bash","-n",str(file)],
                               capture_output=True,text=True,timeout=15)
         self.assertEqual(result.returncode,0,result.stderr)
         s=file.read_text()
-        self.assertIn('EXPECTED_SHA="UNREVIEWED_M08_D3D2D_NEW_IMAGE"',s)
+        self.assertIn('EXPECTED_SHA="f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab"',s)
+        self.assertIn('EXPECTED_SIZE=7797844',s)
+        self.assertIn('m08_d3d2d_event_DE6kQWvt',s)
         self.assertIn("m08_d3d2d_event_native_review.py",s)
         self.assertIn("m08_d3d2d_event_vectors.py",s)
         self.assertIn("m08_d3d2d_event_readback_once.tcl",s)
@@ -34,7 +37,7 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
         self.assertIn("m08_d3d2d_event_HW_",s)
         self.assertLess(s.index("m08_d3d2d_event_native_review.py"),
                         s.index('HW="$(mktemp -d'))
-        self.assertLess(s.index('EXPECTED_SHA="UNREVIEWED_'),
+        self.assertLess(s.index('EXPECTED_SHA="f50a156'),
                         s.index('HW="$(mktemp -d'))
         self.assertNotIn("m08_d3d2c_m06_MN2pwduB",s)
         # A comment may document Tcl's one-program rule. The SHELL must
@@ -43,9 +46,12 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
                          if x.strip() and not x.lstrip().startswith("#"))
         self.assertNotIn("program_hw_devices",active)
 
-    def test_staged_tcl_single_program_statement_new_identity_and_630_words(self):
+    def test_one_program_tcl_exact_image_identity_and_630_words(self):
         src=(ROOT/"scripts/m08_d3d2d_event_readback_once.tcl").read_text()
-        self.assertIn('set RELEASED_SHA "UNREVIEWED_M08_D3D2D_NEW_IMAGE"',src)
+        self.assertIn('set RELEASED_SHA "f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab"',src)
+        self.assertIn("m08_d3d2d_event_DE6kQWvt",src)
+        self.assertIn("[file size $bit] != 7797844",src)
+        self.assertNotIn("UNREVIEWED_M08_D3D2D_NEW_IMAGE",src)
         self.assertEqual(len(re.findall(r"(?m)^\s*program_hw_devices \$fpga\s*$",src)),1)
         self.assertLess(src.index('set RELEASED_SHA'),src.index("    open_hw_manager"))
         for token in (
@@ -92,6 +98,8 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
         code=(ROOT/"scripts/m08_d3d2d_event_physical_audit.py").read_text()
         self.assertIn("M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD",code)
         self.assertIn("new raw-event first image SHA/DRC release still PENDING",code)
+        # The exact native gate *can* now accept the reviewed owner image.
+        # These synthetic folders still cannot be accepted by that gate.
         self.assertNotIn("open_hw_manager(",code)
         self.assertNotIn("program_hw_devices(",code)
 
