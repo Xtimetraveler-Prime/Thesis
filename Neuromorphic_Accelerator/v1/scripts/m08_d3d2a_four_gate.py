@@ -137,7 +137,7 @@ def inspect_new_drc(report: str) -> dict:
     require(not re.search(r"(?m)^[A-Z]+-\d+#\d+\s+(?:Warning|Critical Warning|Error)",
                           report),
             "new native DRC has detail despite zero summary")
-    require(not re.search(r"(?m)^\\|\\s*[A-Z]+-\\d+\\s*\\|", report),
+    require(not re.search(r"(?m)^\|\s*[A-Z]+-\d+\s*\|", report),
             "new native DRC has summary rules despite zero count")
     return {"drc_checks": 0, "drc_review_status": "ZERO_NEW_FINDINGS"}
 
