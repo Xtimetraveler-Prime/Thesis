@@ -141,14 +141,11 @@ try {
     d2e_write $axi A0001010 [lindex $lines 1]
     d2e_write $axi A0001020 [lindex $lines 2]
     for {set n 0} {$n < 32} {incr n} {
-        for {set j 0} {$j < 8} {incr j} {
+        # M32Q current buckets are READ-ONLY: write ONLY 4 LIF params.
+        # Explicitly never write +4..+7: these MUST be service-generated.
+        for {set j 0} {$j < 4} {incr j} {
             set address [format %08X [expr {0xA0001100+$n*32+$j*4}]]
-            # Never write software-coalesced expected current registers.
-            if {$j < 4} {
-                d2e_write $axi $address [lindex $lines [expr {3+$n*8+$j}]]
-            } else {
-                d2e_write $axi $address 00000000
-            }
+            d2e_write $axi $address [lindex $lines [expr {3+$n*8+$j}]]
         }
     }
     # Only original five ACTIVE M06 edges; unused edge delay zero is illegal.
