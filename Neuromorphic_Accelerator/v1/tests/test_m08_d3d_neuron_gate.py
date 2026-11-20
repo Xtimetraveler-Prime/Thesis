@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -43,6 +44,7 @@ class D3DNeuronTests(unittest.TestCase):
     def mock_native(self):
         data = {
             "schema": g.SCHEMA,
+            "wrapper_top": "m08_d3d_lif_jtag_wrapper",
             "builder_sha256": sha256(g.BUILDER.read_bytes()).hexdigest(),
             "lif_rtl_sha256": sha256(g.LIF_RTL.read_bytes()).hexdigest(),
             "fabric_por_rtl_sha256": sha256(g.POR_RTL.read_bytes()).hexdigest(),
@@ -75,7 +77,9 @@ class D3DNeuronTests(unittest.TestCase):
             "bitstream_size_bytes": "131072",
         }
         files = {
-            "00_vivado.log": b"M08_D3D_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\n",
+            "00_vivado.log": (
+                b"M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|m08_d3d_lif_jtag_wrapper\n"
+                b"M08_D3D_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED\n"),
             "01_vivado.jou": b"native journal\n",
             "02_vivado_exit.txt": b"vivado_build_exit=0\n",
             "reports/10_fan_a12.xdc": b"set_property PACKAGE_PIN A12 [get_ports {M08_FAN_PWM}]\n",
@@ -119,6 +123,55 @@ class D3DNeuronTests(unittest.TestCase):
         self.assertEqual(result["neural_register_base"], "0xA0001000")
         self.assertEqual(result["transport_bram_base"], "0xA0000000")
         self.assertEqual(result["wns_ns"], 5.242)
+
+    def test_native_top_wrapper_is_derived_and_checked_not_guessed(self):
+        builder = g.BUILDER.read_text()
+        self.assertIn("set wrapper_path [lindex $wrapper 0]", builder)
+        self.assertIn("set wrapper_top [file rootname [file tail $wrapper_path]]", builder)
+        self.assertIn('if {$wrapper_top ne "m08_d3d_lif_jtag_wrapper"}', builder)
+        self.assertIn("set_property top $wrapper_top [current_fileset]", builder)
+        self.assertIn("set resolved_top [get_property top [current_fileset]]", builder)
+        self.assertIn("M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|$wrapper_top", builder)
+        self.assertNotIn("set_property top m08_d3d_neuron_wrapper", builder)
+
+    def test_source_gate_rejects_historical_wrong_top_and_missing_assertion(self):
+        original = g.BUILDER.read_text()
+        mutations = (
+            ("set_property top $wrapper_top [current_fileset]",
+             "set_property top m08_d3d_neuron_wrapper [current_fileset]"),
+            ('if {$wrapper_top ne "m08_d3d_lif_jtag_wrapper"}',
+             'if {$wrapper_top ne "m08_d3d_neuron_wrapper"}'),
+            ("set resolved_top [get_property top [current_fileset]]",
+             "set resolved_top $wrapper_top"),
+        )
+        for old, new in mutations:
+            with self.subTest(mutation=old):
+                self.assertIn(old, original)
+                mutated = self.home / "bad_neural_builder.tcl"
+                mutated.write_text(original.replace(old, new))
+                with patch.object(g, "BUILDER", mutated):
+                    with self.assertRaisesRegex(g.Reject,
+                                                "wrapper top|top setting|wrong Vivado top"):
+                        g.source()
+
+    def test_native_gate_rejects_missing_wrapper_proof_after_rehash(self):
+        path = self.run / "00_vivado.log"
+        path.write_text(path.read_text().replace(
+            "M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|m08_d3d_lif_jtag_wrapper",
+            "M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|m08_d3d_neuron_wrapper"))
+        self.refresh()
+        with self.assertRaisesRegex(g.Reject, "no native proof generated top"):
+            g.native(self.run)
+
+    def test_native_gate_rejects_actual_vivado_filemgmt_critical_after_rehash(self):
+        path = self.run / "00_vivado.log"
+        path.write_text(path.read_text() +
+            'CRITICAL WARNING: [filemgmt 20-742] The top module '
+            '"m08_d3d_neuron_wrapper" specified for this project can not '
+            'be validated.\n')
+        self.refresh()
+        with self.assertRaisesRegex(g.Reject, "native fatal diagnostics"):
+            g.native(self.run)
 
     def test_native_rejects_wrong_image_schema_even_with_valid_rehash(self):
         path = self.run / "reports/30_native_result.txt"
