@@ -40,3 +40,56 @@ Only after real neural outputs are available, integrate M06 two `m_axi` ports th
 ## Scope / release decision
 
 **D3.C communication PASS is necessary but insufficient for a full-scale physical neuromorphic-accelerator claim.** The current r2 bitstream has no neural executor. First implement D3.D.1 with a new honest compute-bearing PL image and compare hardware results to M02; extend to 32×4 and beyond before considering performance/capacity/DDR claims. No physical run command belongs in this plan until an actual D3.D native image passes independent gates.
+
+## 2026-11-19 D3.D.1 implementation — real clocked neuron RTL, PC/native verification (PHYSICAL PENDING)
+
+**Scope:** Implemented a **new** compute-bearing, standalone diagnostic JTAG design, not the full 32-neuron M06 HLS and not DDR-backed inference. It executes ONE signed16 M02 LIF neuron over FOUR finite hardware clocked ticks and stores all four resulting membrane voltages and spike bits. Supported decay ratios are **0/1, 1/2, 1/1 only**. This is deliberately a computational subset of M02 v1, not a replacement for M05/M06 integrated event/synapse engine. No synapses, delays, event router, cache, DRAM, classifier, chip benchmark, or physical neural result is claimed.
+
+**Implemented sources:**
+- `rtl/m08/m08_d3d_lif_axil.sv` — AXI4-Lite 32-bit slave, independent AW/W capture and stable R/B under backpressure, 1 initial signed16 neuron, signed bias/threshold/reset, four externally supplied signed32 per-tick currents, hardware-only 4-tick sequential LIF datapath using M02 saturate-after-full-add, inclusive firing threshold, signed negative truncation-toward-zero for the half decay and reset. Rejects incomplete WSTRB, invalid thresholds or decoder values and writes to read-only outputs. Hardware output is gated to `DONE`, and each new START records the caller's nonce, invalidates stale outputs, and increments a hardware run count only after four clocked updates.
+- `rtl/m08/tb_m08_d3d_lif_axil.sv` — directed Icarus AXI4-Lite/arith tests for four independent M02 fixtures including negative truncation, saturation, spike/reset, autonomous bias/threshold equality, invalid writes, unaligned addresses and stalled stable responses.
+- `scripts/m08_d3d_neuron_vectors.py` — PC generates golden results via the **actual** existing `m02_dense_reference.evaluate_dense` AND `m02_event_reference.evaluate_events`, requires exact matching references; outputs four distinct nonce/input/expected-output fixtures, never writes HW outputs.
+- `scripts/m08_d3d_neuron_build.tcl` — **fresh new** Vivado 2025.2 native candidate, preserves D3.C r2 JTAG→SmartConnect→AXI BRAM at `0xA0000000`, adds AXI-Lite neuron at `0xA0001000`; two SmartConnect targets; same PS PL0 nominal 100 MHz, separate 256-cycle fabric-POR reset, TTC0 waveout2 to A12, no PS HPM masters. Native builder checks both address segments, clock/reset, memory dimensions, DRC, timing; hashes exact original builder + POR RTL + neuron RTL into result receipt, no board contact.
+- `scripts/run_m08_d3d_neuron_pc.sh` & `scripts/m08_d3d_neuron_gate.py` — new evidence folder, **12 SHA entries**, checks native Vivado identity, source hashes, exact RTL provenance, scoped DRC findings and nonnegative routed timing. The seven D3.C vendor/debug warnings may remain, but are only accepted if the **exact reviewed D3.C pattern** matches; new/changed warnings block physical authorization.
+- `scripts/m08_d3d_neuron_readback_once.tcl` & `scripts/run_m08_d3d_neuron_physical_once.sh` — **not yet authorized or executed**. Separate one-shot hardware runner first revalidates fresh native D3.D acceptance, checks explicitly named new bitstream SHA and JTAG K26 identity, program once, confirms retained BRAM echo, sends four M02-only inputs, invokes genuine hardware neuron start, reads four voltages/spike mask/nonce/monotonic completion count per fixture, and records trace equality in new immutable PC-only SHA evidence. Separate owner physical authorization, independent cooling, UART monitor and stock power-cycle recovery are mandatory.
+
+**AXI4-Lite register map** (all offsets relative to `0xA0001000`; 4-byte aligned; 32-bit full `WSTRB=0xF` mandatory for writes):
+
+| Offset | Access | Meaning |
+|---|---|---|
+| `0x000` | R | Magic `0x4D384C46` (M8LF) |
+| `0x004` | R | Version `0x00010000` |
+| `0x008` | R | Status: bit0 DONE, bit1 BUSY |
+| `0x00C` | R/W | Host-set nonzero nonce (input tag) |
+| `0x010` | R/W | Signed16 initial membrane as signed-extended 32 |
+| `0x014` | R/W | Signed16 bias as signed-extended 32 |
+| `0x018` | R/W | Signed16 threshold >0 as signed-extended 32 |
+| `0x01C` | R/W | Signed16 reset voltage < threshold |
+| `0x020` | R/W | Decay mode 0: 0/1, 1: 1/2, 2: 1/1 |
+| `0x024..0x030` | R/W | Four successive signed32 total external currents, one per tick |
+| `0x034` | W | START value exactly `1`: validates parameters; clears prior DONE; starts four sequential clocked updates |
+| `0x038` | R after DONE | Completed nonce (not a computed answer) |
+| `0x03C` | R after DONE | Four spike bits (tick0 bit0 through tick3 bit3) |
+| `0x040..0x04C` | R after DONE | Four signed16 resulting voltages, signed-extended 32 |
+| `0x050` | R | Hardware-completed run counter (increments after four real updates) |
+
+This exposes the true output state; the PC supplies initial parameters and per-tick input currents, **not** expected spike/voltage values. All trace registers are inaccessible with SLVERR before DONE, and an accepted START clears stale trace data; invalid control writes generate SLVERR/DECERR. A single applied current is an already aggregated per-neuron current (no synaptic pipeline exists).
+
+**Verification (owner PC, NO FPGA PROGRAMMING):**
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+cd Neuromorphic_Accelerator/v1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_d3d_neuron_gate.py' -v
+python3 scripts/m08_d3d_neuron_gate.py --source-only
+bash -n scripts/run_m08_d3d_neuron_pc.sh
+bash -n scripts/run_m08_d3d_neuron_physical_once.sh
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+bash scripts/run_m08_d3d_neuron_pc.sh
+```
+
+The last command is a fresh **offline synth/place/route/bitgen** requiring real owner Vivado; it may fail with a genuine IP interface or DRC finding not visible to CI. Preserve any first native failure in its new original directory; do not patch receipts, skip checks, or retry on the same folder. **Do not run the physical-programming script until the new offline evidence, source SHA, actual route reports, cooling/UART/recovery and a separate operator decision have been reviewed.** The previously successful r2 D3.C bit SHA `87e04662...` is *not* a neural candidate and will be rejected by D3.D audit.
