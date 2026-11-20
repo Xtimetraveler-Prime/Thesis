@@ -1,0 +1,154 @@
+# M08 D3.D.2D — 32-neuron FPGA raw external-event ingress (first source/PC candidate)
+
+> **AUTHORITATIVE PHYSICAL ACCEPTANCE — 2026-11-20; D3.D.2D COMPLETE.** The owner has now executed the actual protected first KV260 JTAG test and independent original physical auditor. Immutable `~/Thesis_Evidence/M08/m08_d3d2d_event_HW_h7RmZQui` has **6/6 SHA receipts OK**, saved physical Vivado exit **0**, and independent audit **`M08_D3D2D_PHYSICAL_M06_17_RAW_EVENT_128_BUCKET_384_NEURAL_ACCEPTED`**. On fabric, 17 individually submitted original signed external events reconstruct **128 input buckets** that match M02/M03, and the 32-neuron×4-tick/five delayed recurrent-edge test matches **128 voltage +128 spike +128 delivered synaptic current** values. **512/512 original numerical checks PASS.** First native 2025.2 image `m08_d3d2d_event_DE6kQWvt` bit SHA `f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab` remains unchanged; original 12/12 native SHA checks, WNS +2.136 ns/WHS +0.010 ns, exact 7 source-pinned vendor JTAG/XSDB warning review. **All earlier “gate pending / do not program / next owner build” paragraphs below are HISTORICAL and superseded; do NOT rerun build or this physical test.** [Original accepted physical results](M08_D3D2D_OWNER_PHYSICAL_ACCEPTANCE_2026_11_20.md) · [Working Vivado/physical method](M08_KV260_SUCCESSFUL_BITSTREAM_METHODS_2026_11_20.md) · [New-chat handoff / next distinct physical candidate](M08_D3D2D_TO_NEXT_PHYSICAL_HANDOFF_2026_11_20.md). Does **not** prove async event streams, original M05 HLS/DDR, sparse physical scheduling, PS-clock independence or measured performance. **M08 OPEN, M09 PLANNED; PRs remain draft/unmerged.**
+
+
+## HISTORICAL PRE-PHYSICAL GATE: ORIGINAL FIRST D3.D.2D VIVADO IMAGE (2026-11-20 15:33 MST)
+
+The owner's first new `M32E` v5 17-individual-event physical candidate **successfully routed and generated**; `M08_D3D2D_OFFLINE_BUILD_EXIT=2` is the intended historical unreviewed first-image gate (not a Vivado bitstream failure). Original immutable run `~/Thesis_Evidence/M08/m08_d3d2d_event_DE6kQWvt`, bitstream `bitstream_candidate/m08_d3d2d_event_lif_jtag_UNRELEASED.bit`, **7,797,844 bytes**, SHA256 **`f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab`**. The owner supplied all 12 SHA ledger rows **12/12 OK**, with original routed timing **WNS +2.136 ns, TNS 0, WHS +0.010 ns, THS 0, setup/hold failing endpoints 0** (100MHz design constraint). Original DRC report SHA256 **`f1cc7a7b72b7eeee85828a6c5f7cb75d56894a55a2143cfe4e0f1f6c8098ebee`**. Original reports are on the owner's PC; they were not reproduced here.
+
+**Exactly seven newly reviewed owner-original DRC warnings; NO D3.D.2C allowlist inheritance:** three XSDB debug hub LUT term `PDCN-1569` advisories at `temp_curid[31]_i_1`: **A2/I1** and **A3/I0**, both with exact `O5=(A5*A1)+(A5*(~A1)*(~A4))+((~A5))` equation; `id_state[0]_i_1` **A5/I0** with `O6=(A6+~A6)*((A4))`; one `REQP-1857` `rx_fifo_i` JTAG AXI FIFO BRAM18 advisory; two `REQP-1858` JTAG AXI `rd_cmd_fifo_i` and `wr_cmd_fifo_i` BRAM36 advisories; one `RTSTAT-10` **39 unroutable nets, 37 listed, only first 15 printed and individually checked** (the raw full original report SHA locks other bytes). All are in vendor XSDB/JTAG debug infrastructure and not a blanket permission to ignore a future warning or all FIFO collision behavior. Source `M32E` original JTAG name `m08_d3d2d_event_lif_jtag_i`, wrapper `m08_d3d2d_event_lif_jtag_wrapper`, Vivado 2025.2, owner DRC date `Fri Nov 20 15:32:35 2026`.
+
+**Code developed:** The read-only `scripts/m08_d3d2d_event_native_review.py` now accepts **only this exact original image** when it is reverified on the owner PC: immutable 12-file SHA rows, recorded source/RTL/builders, wrapper, original bit SHA/size, raw DRC SHA and exact seven pin/FIFO/RTSTAT warning instances, positive timing and native metadata. Success marker `M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD`, exit 0. New synthetic parser/mutation tests pin this exact profile. **DO NOT assume acceptance simply from CI**: owner must run the real native read-only gate and obtain exit 0 against original `DE6kQWvt` before programming.
+
+The future one-shot shell/Tcl is now pinned to this exact owner candidate/bitstream SHA/size. Both shell and Tcl require `M08_D3D2D_ALLOW_PROGRAM=YES` AND `M08_D3D2D_PREFLIGHT_CONFIRMED=YES`, a new unique physical evidence dir, exact K26/JTAG target, and precisely one programming instruction, with **no automatic retries**. **No D3.D.2D physical test has occurred yet.** After native PASS, owner must manually verify independently powered active cooling, UART console capture, stock boot recovery, exclusive stable JTAG and Vivado 2025.2 before one deliberately authorized physical attempt. The physical audit separately checks original six-file SHA receipt and all **128 hardware input sums + 384 neural quantities**. Original D3.D.2C physical parity remains untouched.
+
+### Owner verification and one-shot readiness check (read-only)
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d2d-raw-event-ingress
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d2d-raw-event-ingress
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_owner_native_review.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_native_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_physical_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_physical_audit.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_raw_events_source.py' -v
+bash -n scripts/run_m08_d3d2d_event_physical_once.sh
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2d_event_DE6kQWvt"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d2d_event_native_review.py --run-dir "$RUN"
+echo "M08_D3D2D_NATIVE_GATE_EXIT=$?"
+```
+
+**STOP if local native gate is nonzero**; preserve all original files and share the first rejection. If exact native gate accepts, the one-shot **physical** command is documented below for owner execution **only after active cooling/UART/stock recovery/exclusive JTAG preflight**:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+vivado -version
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2d_event_DE6kQWvt"
+M08_D3D2D_ALLOW_PROGRAM=YES M08_D3D2D_PREFLIGHT_CONFIRMED=YES \
+  bash scripts/run_m08_d3d2d_event_physical_once.sh "$RUN"
+RC=$?
+echo "M08_D3D2D_PHYSICAL_RUN_EXIT=$RC"
+```
+
+Preserve the printed `M08_D3D2D_NEW_PC_HW_EVIDENCE=...` folder even if the one-shot fails. Do NOT repeat JTAG programming automatically. The independent post-run (read-only) audit is `python3 scripts/m08_d3d2d_event_physical_audit.py --run-dir "$RUN" --hw-dir "$HW"` using the **actual new** printed hardware evidence directory, after checking its six SHA rows. Hardware PASS must be based only on real owner evidence, not synthetic tests or a 0 native gate.
+
+---
+
+
+**Date:** 2026-11-20. **Stage:** Owner first native candidate generated and reviewed; exact-image owner-local native gate pending. **Do not program until read-only gate reports exit 0 and physical preflight complete.** No D3.D.2D physical result exists.
+
+## Where this comes from — original physical D3.D.2C
+
+Owner's first 32-neuron actual FPGA test has just **PASSED**: genuine JTAG folder `~/Thesis_Evidence/M08/m08_d3d2c_m06_HW_BsHcfs4j`, 6/6 original physical SHA entries OK, full 32×4 readback and independent audit `M08_D3D2C_PHYSICAL_M06_32X4_REAL_RECURRENT_M02_PARITY_ACCEPTED`; 128 voltages, 128 spike decisions and 128 on-FPGA delayed recurrent-current values matched original M06 M02 dense/event + M03 sparse. The original D3.D.2C bitstream SHA `244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932` is immutable. **Only the 17 external M06 events were coalesced on the host** before being sent to fabric. [Exact owner physical acceptance](M08_D3D2C_OWNER_PHYSICAL_ACCEPTANCE_2026_11_20.md).
+
+## Scientific question and controlled physical increment
+
+**Question:** Can the FPGA itself accept the **17 original individually encoded signed external events** and reconstruct the 128 neuron/timestep input buckets while retaining the exact original 32-neuron / 4-tick / five-positive-delay-synapse LIF traces?
+
+The **single** deliberately changed architectural variable is external-event accumulation: PC-side aggregation (D3.D.2C) is replaced by **one event per AXI-Lite mailbox PUSH**, with signed33 overflow checking and 128 on-chip signed32 buckets. The 32-neuron M06 network, 3/4 truncate-toward-zero decay, 5 recurrent signed16 edges (capacity 8), 4 logical timesteps, pulse-based spike output and five-stage pipelined neuron evaluation are otherwise retained.
+
+**Do not misinterpret this test:** Host-to-FPGA **JTAG AXI-Lite control-plane transactions are still serialized and synchronous**, not hardware asynchronous routing, AXI-Stream, DMA, automatic temporal queue, or the originally synthesized M05 event engine. D3.D.2D adds an actual fabric-side external-event **adder**, not a true independent event scheduler or physical DDR paging. The M06 fixture's 17 events may include opposite-sign contributions to the same neuron/tick bucket. Hardware must accept individual signed32 values, correctly accumulate them, and reject signed32 overflow without modifying a bucket or accepted-event counter. Do not claim performance, event-rate capacity, PS DDR, sparse skipping or energy measurements.
+
+## Distinct source and immutable build boundary
+
+New stacked branch `agent/neuromorphic-accelerator-v1-m08-d3d2d-raw-event-ingress`; draft PR #92 stacked on D3.D.2C PR #91 (unmerged). A **new** `M32E` v5 peripheral and new image are required; D3.D.2C's reviewed seven-warning DRC allowlist and bitstream MUST NOT be reused. The prior physically accepted RTL is checked by SHA in source gate; its original files/evidence remain untouched.
+
+### New peripheral AXI byte-address map (`0xA0001000` base)
+
+| Offset | Purpose / access / bounds |
+| --- | --- |
+| `0x000` | `M32E` magic `0x4D333245` (RO) |
+| `0x004` | ABI version `0x00050000` (RO) |
+| `0x008` | DONE/BUSY, `0x00C` nonce, `0x010` decay mode, `0x014` START, `0x018` result nonce, `0x01C` completed run count, `0x020` active recurrent edge count |
+| `0x024` | EVENT_NEURON RW, integer `0..31` |
+| `0x028` | EVENT_TICK RW, integer `0..3` |
+| `0x02C` | EVENT_CURRENT RW, signed32, no host aggregation |
+| `0x030` | EVENT_PUSH, write-only with value `1`. **Fabric** conditionally does `currents[4*neuron+tick] += signed_current` with signed33 intermediate, overflow check and atomic reject. Full AXI WSTRB required. Each successful PUSH increments counter. Limit 64 accepted events per CLEAR. |
+| `0x034` | EVENT_COUNT RO, current successful PUSH count `0..64` |
+| `0x038` | EVENT_CLEAR write-only value `1`, zeros all 128 current buckets and resets event mailbox/count, only when IDLE. This permits an independently tested fresh event replay, without changing neuron parameter registers. |
+| `0x03C` | Selected accumulated bucket (RO) for currently selected neuron/tick |
+| `0x100..0x4FF` | Original 32 neuron param/control banks. External-current words exist for **readback**, but the D3.D.2D physical protocol must write **zero**, not the host-coalesced expected values. |
+| `0x500..0x57F` | Eight possible weighted positive-delay recurrent edges (original M06 uses five) |
+| `0x900..0xCFF` | 128 voltage results / 32 per-neuron four-bit spike masks, only after DONE |
+| `0xD00..0xEFF` | 128 on-device delivered recurrent currents, only after DONE |
+
+Malformed event neuron/tick, signed32 overflow, >64 PUSHes, partial writes, a PUSH during BUSY, invalid CLEAR, writes to RO registers and an unconfigured START must fail closed. Input bucket writes do not affect previous D3.D.2C physical result.
+
+## PC source and numerical acceptance
+
+New files:
+- `rtl/m08/m08_d3d2d_raw_event_lif_axil.v`: separate M32E v5 event ingress + exact inherited pipelined recurrent neural RTL (NOT prior accepted D3.D.2C module).
+- `scripts/m08_d3d2d_event_vectors.py`: original M06 independent M02/M03 579-word neural oracle **plus 17 raw triples = 630 words**. It computes expected bucket sums only for verification; those sums are **not** written to hardware.
+- `rtl/m08/tb_m08_d3d2d_raw_event_lif_axil.sv`: actual Icarus clocked AXI protocol, hardware pushes 17 distinct events, reads all 128 accumulated buckets, checks all 128 voltages + 128 spike decisions + 128 delivered currents, performs three runs (including CLEAR/reingestion), and tests atomic overflow and BUSY/invalid-access rejections. A no-Icarus `SKIP` is not an RTL PASS.
+- `scripts/m08_d3d2d_event_gate.py` and `tests/test_m08_d3d2d_raw_events_source.py`: fail-closed predecessor source SHA, new pipeline/API source and real Icarus acceptance.
+- `scripts/m08_d3d2d_event_build.tcl` and `scripts/run_m08_d3d2d_event_pc.sh`: only **offline** Vivado 2025.2 K26 implementation. Preserves independent PL reset/PS-clock-dependency, JTAG AXI + BRAM separate base `0xA0000000`, new `M32E` 4KiB base `0xA0001000`, PS HPM disabled, PL fan pin A12, first original 12-file evidence SHA receipt. No hw_manager, no programming.
+- `scripts/m08_d3d2d_event_native_review.py`: new first native image source/build/receipt/timing/DRC identity triage that **ALWAYS exits 2** pending independent owner DRC/profile/SHA review, even if bitgen succeeds. This is an intentional safety gate, not a bitgen failure.
+- `tests/test_m08_d3d2d_event_native_boundary.py`: source and fake-native fail-closed negative checks, no physical execution.
+
+## Staged future one-shot hardware test and independent auditor — HARD BLOCKED
+
+- `scripts/m08_d3d2d_event_readback_once.tcl`: contains only one `program_hw_devices $fpga` statement **but immediately rejects the literal unreviewed image token** `UNREVIEWED_M08_D3D2D_NEW_IMAGE` before opening Hardware Manager. After a separately accepted new original candidate and pinned exact SHA, it will load new `M32E` v5, write the 32 neuron parameters and **zero** initial input-current words, load five recurrent synapses, push all **17 raw M06 input events** individually, read the event count after every push, independently verify **128** fabric-computed input buckets, then compare **128 voltages + 128 spikes + 128 recurrent currents**. The receipt captures event sums and neural traces for each of 32 neurons. No physical JTAG run has occurred.
+- `scripts/run_m08_d3d2d_event_physical_once.sh`: also **HARD BLOCKED**, because it requires the separately reviewed owner-native first-image gate (which currently always exits 2) **and** an unreviewed SHA sentinel. It must not be executed until a future explicit exact-image release, 2025.2 preflight, known stable exclusive K26 JTAG, independently operating cooling, captured UART, stock recovery, and owner `M08_D3D2D_ALLOW_PROGRAM=YES` plus `M08_D3D2D_PREFLIGHT_CONFIRMED=YES`. When released, it creates a fresh immutable physical evidence folder, six SHA rows and does not automatically retry.
+- `scripts/m08_d3d2d_event_physical_audit.py`: read-only, currently must reject because it requires a future `M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD` status not provided by the first-image checker. Future acceptance requires original six-file physical ledger, exact executed Tcl, exactly one programming marker, genuine M32E identity, every original raw event/count/bucket marker, all 32 full four-tick traces and independent M02/M03 references. No synthetic test can replace an actual owner board receipt.
+- `tests/test_m08_d3d2d_event_physical_audit.py`: additional **MOCK-ONLY** positive physical receipt parser and rehashed-tampering rejection checks for all 128 input buckets, 384 neural outputs, duplicate program markers, event-count claims and executed Tcl. A mock return is NEVER new original board evidence.
+- `tests/test_m08_d3d2d_event_physical_boundary.py`: PC-only tests for Tcl syntax, one program statement, literal hard stop, correct 630-word oracle and raw-event loop, no Linux/MMIO route, original native preflight before any Vivado execution, and 32-row audit geometry.
+
+**Do not invoke the physical shell or Tcl now.** The next permitted experiment is **offline PC-only new Vivado candidate generation**, not board programming. Future physical authorizations must be image-specific and separately tested, not cloned from D3.D.2C's seven accepted advisories.
+
+
+## Owner local source verification — no Vivado/board needed yet
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d2d-raw-event-ingress
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d2d-raw-event-ingress
+git rev-parse HEAD
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+python3 -m compileall -q src scripts tests
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_raw_events_source.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_native_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_physical_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_physical_audit.py' -v
+python3 scripts/m08_d3d2d_event_gate.py --source-only
+bash -n scripts/run_m08_d3d2d_event_pc.sh
+bash -n scripts/run_m08_d3d2d_event_physical_once.sh
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+```
+
+**STOP on failure.** None of these commands can program the board.
+
+## Next owner-PC Vivado native candidate (after the above and CI pass)
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+vivado -version
+bash scripts/run_m08_d3d2d_event_pc.sh
+RC=$?
+echo "M08_D3D2D_OFFLINE_BUILD_EXIT=$RC"
+```
+
+New folder: `~/Thesis_Evidence/M08/m08_d3d2d_event_XXXXXXXX`. If route/bitgen succeeds, original `bitstream_candidate/m08_d3d2d_event_lif_jtag_UNRELEASED.bit`, new DRC/timing/utilization/clock reports and original 12-entry SHA manifest are preserved. The first-image reviewer will **still exit 2** with `M08_D3D2D_FIRST_NEW_NATIVE_DRC_REVIEW_REQUIRED_NO_BOARD`. If Vivado exits nonzero, preserve the first failed evidence, no automatic retries. Do not replace old D3.D.2C or D3.D.2D folders. Do not attempt the new JTAG test until the owner supplies original report/bit SHA and the image-specific gate has been independently coded and accepted; a separate explicit one-shot hardware release and independent 128 bucket + 384 neural output audit will follow.
+
+**M08 remains OPEN, M09 remains PLANNED, PR #91/92 remain draft and unmerged.**
