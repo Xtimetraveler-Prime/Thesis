@@ -204,3 +204,21 @@ python3 scripts/m08_d3d_drc_inspect.py --run-dir "$RUN"
 ```
 
 Preserve diagnostic stdout and relevant DRC summary and `RTSTAT-10` detail. Only after the **actual complete original warning count, instance list and sample paths** are reviewed should the D3.D-specific acceptance gate be adjusted to an exact narrowed profile; keep D3.C old scope unchanged. The physical runner remains blocked until actual candidate accepted with positive route timing and no unrelated findings.
+
+## 2026-11-19 — owner-original D3.D RTSTAT-10 review, 39/37 scoped approval rule
+
+Owner supplied the SHA-backed output of `scripts/m08_d3d_drc_inspect.py --run-dir ~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi`, with all 12 evidence files independently verified. **Seven DRC checks**, each at Warning severity: PDCN-1569 ×3 (debug-hub LUT equation), REQP-1857 ×1 (JTAG AXI FIFO BRAM18 collision advisory), REQP-1858 ×2 (JTAG AXI FIFO BRAM36 collision advisories), RTSTAT-10 ×1 (no routable loads).
+
+The original RTSTAT-10 `#1` detail at lines 69–89 reports:
+- **39** net(s) have no routable loads, **37** named nets are listed in Vivado's context, and only **the first 15 of those 37 are printed** in the warning. These values supersede D3.C's 47/45 **only for the D3.D hierarchy**.
+- All **15 shown** paths are either `dbg_hub/inst/BSCANID.u_xsdbm_id/...` (7 paths) or `m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/...` (8 FIFO FWFT `aempty`/`empty` paths). The latter paths come from `rd_cmd_fifo_i`, `rx_fifo_i`, `tx_fifo_i`, and `wr_cmd_fifo_i`. **None of the 15 shown** are paths in `lif`, neural state or the new AXI-Lite register bank.
+- `Related violations: <none>`. The other **22 named paths were not displayed** by Vivado's first-15 sample. We are **not** claiming independent exhaustive verification of those 22, nor that RTL cannot have functional bugs because DRC passed.
+
+**Code change:** The existing `d3c.inspect_drc` retains its exact D3.C default, 47 net/45 listed RTSTAT profile and previously reviewed vendor FIFO rules. When explicitly supplied `design_instance="m08_d3d_lif_jtag_i"`, it now requires **exactly 39 nets**, **first 15 of 37 listed**, and an **exact 15-entry ordered path allowlist** transcribed from the owner's actual evidence. The unchanged global warnings inventory still requires precisely seven details, four known codes, warning-only severities, no related violations, the debug-hub-only PDCN paths and the JTAG FIFO-only REQP paths. A changed count, additional net, changed path even within debug IP, a path in `lif` or any other memory, an unknown DRC rule or any critical warning still rejects the bitstream. This is a bounded, evidence-based waiver for a named vendor debug warning *profile*, not a broad suppression of RTSTAT-10.
+
+**Bitstream was NOT rebuilt or reprogrammed.** Existing candidate remains
+`~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi/bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit`,
+SHA256 `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`.
+The owner must pull the latest D3.D branch and rerun all 12 SHA checks and `scripts/m08_d3d_neuron_gate.py --run-dir` to establish whether the **complete** offline native acceptance (including actual timing and receipt provenance) passes. No physical neural test or Linux-compatibility claim yet.
+
+**Physical checkpoint after native acceptance only:** Do not program until fresh explicit operator authorization, stock board boot/recovery, independent backup cooling and UART capture are confirmed. One-shot script must verify the same candidate SHA, read back the original BRAM transport, then write four independent M02 inputs and compare genuinely FPGA-computed voltages and spikes to Python. If it fails, preserve both hardware and UART evidence without an automatic retry.
