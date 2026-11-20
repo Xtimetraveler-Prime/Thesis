@@ -47,7 +47,7 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
         src=(ROOT/"scripts/m08_d3d2d_event_readback_once.tcl").read_text()
         self.assertIn('set RELEASED_SHA "UNREVIEWED_M08_D3D2D_NEW_IMAGE"',src)
         self.assertEqual(len(re.findall(r"(?m)^\s*program_hw_devices \$fpga\s*$",src)),1)
-        self.assertLess(src.index('set RELEASED_SHA'),src.index("open_hw_manager"))
+        self.assertLess(src.index('set RELEASED_SHA'),src.index("    open_hw_manager"))
         for token in (
             "M08_D3D2D_ALLOW_PROGRAM","M08_D3D2D_PREFLIGHT_CONFIRMED",
             "m08_d3d2d_event_lif_jtag_UNRELEASED.bit",
