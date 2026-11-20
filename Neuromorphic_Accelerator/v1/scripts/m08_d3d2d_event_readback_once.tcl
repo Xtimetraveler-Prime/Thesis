@@ -5,13 +5,13 @@
 # required. Exactly one program statement; NO automatic programming retry.
 set RELEASED_SHA "UNREVIEWED_M08_D3D2D_NEW_IMAGE"
 if {![regexp {^[a-f0-9]{64}$} $RELEASED_SHA]} {
-    error "D3.D.2C HARD STOP: first owner native image NOT RELEASED"
+    error "D3.D.2D HARD STOP: first owner native image NOT RELEASED"
 }
 if {![info exists ::env(M08_D3D2D_ALLOW_PROGRAM)] ||
     $::env(M08_D3D2D_ALLOW_PROGRAM) ne "YES" ||
     ![info exists ::env(M08_D3D2D_PREFLIGHT_CONFIRMED)] ||
     $::env(M08_D3D2D_PREFLIGHT_CONFIRMED) ne "YES"} {
-    error "D3.D.2C explicit one-shot owner consent AND cooling/UART/JTAG/recovery preflight confirmation required"
+    error "D3.D.2D explicit one-shot owner consent AND cooling/UART/JTAG/recovery preflight confirmation required"
 }
 foreach key {M08_D3D2D_BIT M08_D3D2D_VECTORS M08_D3D2D_RESULT M08_D3D2D_EXPECTED_SHA} {
     if {![info exists ::env($key)] || [string trim $::env($key)] eq ""} {
@@ -44,7 +44,7 @@ if {$digest ne $RELEASED_SHA || ![file isfile $bit] ||
     [file type $source] ne "file" ||
     [file size $bit] < 100000 || [file size $source] > 9000 ||
     [file size $source] < 100} {
-    error "D3.D.2C is NOT an independently approved owner bitstream"
+    error "D3.D.2D is NOT an independently approved owner bitstream"
 }
 set real [string tolower [lindex [exec sha256sum -- $bit] 0]]
 if {$real ne $RELEASED_SHA} {error "New bitstream differs from accepted first owner"}
