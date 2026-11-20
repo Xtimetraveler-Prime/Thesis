@@ -1,5 +1,27 @@
 # M08 D3.D.2C — real M06 32-neuron ×4-tick FPGA neural workload (staged; NO BOARD)
 
+## D3.D.2C TIMING FIX r2 — staged 32-neuron sequential recurrent evaluation (2026-11-20)
+
+**Actual original owner timing evidence:** `m08_d3d2c_m06_RIezhupj` original routed timing: **WNS −0.188 ns, TNS −18.168 ns, 277 setup-failing endpoints, WHS +0.012 ns, THS 0, 0 hold-failing endpoints**. Worst path begins at `lif/inst/spike_mask_reg[6][3]/Q` and ends at `lif/inst/trace_voltage_reg[80][15]/D`; 10.073 ns datapath (4.268 ns combinational logic, 5.805 ns routed nets), 32 logic levels / 14 CARRY8, 10 ns `clk_pl_0` requirement. Other worst paths end in `trace_voltage` banks and share the recurrent-spike source. These are *measured original routes*, not inferred guesses. The read-only diagnostic's five tests passed; timing report original SHA256 `87109eb9f948368493d4f90561a4dd52b6d0269b1c233c40207bbbeb1e0f42c3` and checkpoint originally 12,605,864 bytes. **Never rewrite/reuse that failed directory.**
+
+**RTL fix (new source commit only, NOT new routed timing closure yet):** The eight parallel signed64 synapse contributions and saturated neuron update are no longer computed as one combinational chain between spike history and voltage registers. The 32-neuron RTL now uses a bounded multi-cycle finite state machine for each neuron/tick:
+
+1. `PHASE_ROUTE`: iterate **only configured** active edges, at most eight. One signed16 weight per clock conditionally accumulates into exact signed20 synaptic sum. Delayed spike bits are from completed logical ticks; no same-tick propagation.
+2. `PHASE_BASE`: register signed17 `leaked + bias`, preserving 3/4 signed truncation.
+3. `PHASE_EXT`: register exact signed34 `leaked+bias+external_current`.
+4. `PHASE_TOTAL`: register exact signed34 total after adding signed20 delayed recurrent current.
+5. `PHASE_COMMIT`: saturate once to signed16, threshold/spike/reset, store membrane, voltage and sign-extended signed32 recurrent delivered-current trace. Advance neuron and logical tick **only at commit**.
+
+The engine therefore requires **active_edge_count + 5 fabric cycles per neuron per logical tick**, instead of one cycle. The M06 five-edge network nominally takes **10 clocks × 128 neuron/tick evaluations = 1280 fabric clocks**, not including AXI setup. All four logical timesteps, 32 physical neuron state banks, five weighted positive-delay edges, M02/M03 oracle and `M32N` v4 register ABI are unchanged. This is a deliberate throughput-for-timing tradeoff; actual native WNS/TNS, utilization, fmax, throughput and hardware remain **UNVERIFIED** until a new independent owner Vivado run. The previously verified D3.D.2B physical image is unaffected.
+
+**PC-only validation added:** `scripts/m08_d3d2c_m06_gate.py --source-only` now requires distinct pipeline phases and refuses the old monolithic combinational signature. New regression checks confirm staged arithmetic and use an RTL mutation to reject a flipped recurrent weight sign. Real Icarus bench must again compare all **128 voltages, 128 spike decisions and 128 delivered-synaptic-current values** for two independent replay executions against the original M06 fixture. `NO BOARD` safety guard remains, new DRC and timing review remains exact-first-image-blocked, and all previous PRs remain drafts.
+
+### Rebuild policy / new hardware phase
+
+Only once PC tests and GitHub Actions pass, generate **one new** offline Vivado 2025.2 run via `bash scripts/run_m08_d3d2c_m06_pc.sh`; it creates a fresh unique evidence folder under `~/Thesis_Evidence/M08/`. This is **not** a rebuild of the accepted D3.D.2B image or the original failed D3.D.2C folder. No automatic retries; if timing fails again, preserve the folder and extract WNS/TNS/paths. If native route closes and bitstream generates, the first-image reviewer **intentionally exits 2** pending new exact warning, timing, source and SHA validation. Do not program the KV260 yet.
+
+---
+
 ## FIRST ORIGINAL OWNER NATIVE ROUTE — TIMING FAILURE, NOT BITGEN (2026-11-20 11:36 MST)
 
 **New owner evidence (immutable):** `/home/dna/Thesis_Evidence/M08/m08_d3d2c_m06_RIezhupj`. The owner-provided first original Vivado 2025.2 console excerpt shows:
