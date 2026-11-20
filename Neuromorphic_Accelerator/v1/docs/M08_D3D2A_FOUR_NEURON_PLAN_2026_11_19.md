@@ -1,5 +1,46 @@
 # M08 D3.D.2A — four independent signed16 LIF neurons × four ticks
 
+## Owner-original routed candidate and the new physical test (2026-11-19, 23:08 MST)
+
+Owner's **genuine Vivado 2025.2** build generated the first complete original four-neuron routed bitstream, and all 12/12 original native SHA ledger rows passed before the deliberately fail-closed first-time DRC review. The original native run `~/Thesis_Evidence/M08/m08_d3d2a_four_w4YfdBuE` must remain unchanged. Exact bitstream SHA256: `3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411`; exact size **7,797,843 bytes**. Routed timing **WNS +1.224 ns, WHS +0.010 ns, TNS 0, THS 0**, with all specified constraints met; source/RTL and builder SHA receipts from original `30_native_result.txt`: RTL `9ef70ea93fe35ff290f9d40f3b2872f04dba551dc205200487c0a69431060fc0`, builder `5b79f09bddb9e1cf3dc60a5f0186a208c3e5e32c3baf53c6de8f3bea940cab29`. No `ERROR:` or `CRITICAL WARNING:` line was returned in the owner's grep of the original Vivado log.
+
+**DRC now explicitly reviewed from owner-supplied exact original report (not inherited automatically):** 7 vendor-only/debug entries: three `PDCN-1569` LUT advisories in the XSDB `dbg_hub/inst` hierarchy (original exact A2, A4 and A5 pins); `REQP-1857` in `m08_d3d2a_four_lif_jtag_i/jtag_axi/.../rx_fifo_i`; two `REQP-1858` in `rd_cmd_fifo_i` and `wr_cmd_fifo_i`; one `RTSTAT-10` with 39 unroutable nets / 37 names listed, **only the first 15** printed and each checked against the exact reviewed vendor-debug paths. The other 22 listed names are NOT individually reviewed; this scope is not exhaustive. The new gate permits **only these seven** and checks full original SHA evidence, RTL/builder provenance, unique immutable image hash/size and positive timing. Every new/elevated/changed warning fails closed. This limited waiver is not permission for a future bitstream.
+
+**New physical test implementation:** `scripts/run_m08_d3d2a_four_physical_once.sh` (owner-armed one-shot) launches `scripts/m08_d3d2a_four_readback_once.tcl` for exactly one JTAG program of the exact owner image; verifies xck26_0, `hw_axi_1`, BRAM echo `55AA22DD`, M4LF magic/version, then executes both four-neuron ×4-tick test cases. It compares every real FPGA voltage/spike word with independently generated M02 dense+queued fixtures; status, nonce and run counters must match. A separate new physical evidence directory gets six SHA entries and `scripts/m08_d3d2a_four_physical_audit.py` checks byte-for-byte executed Tcl, genuine markers and all 32 voltages and 32 spike decisions. **No physical four-neuron result exists yet**; completion must be reported by the owner after the real JTAG attempt.
+
+### Next owner verification — no rebuild
+
+~~~bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d2a-four-neuron
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d2a-four-neuron
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2a_four_w4YfdBuE"
+python3 -m unittest discover -s tests -p 'test_m08_d3d2a_four_gate.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2a_four_physical.py' -v
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d2a_four_gate.py --run-dir "$RUN"
+~~~
+
+Only after both local test suites, original SHA ledger and native gate accept the unchanged original candidate:
+
+~~~bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2a_four_w4YfdBuE"
+M08_D3D2A_ALLOW_PROGRAM=YES bash scripts/run_m08_d3d2a_four_physical_once.sh "$RUN"
+~~~
+
+On success, record the printed `M08_D3D2A_NEW_PC_HW_EVIDENCE=...` path, six-file SHA receipt, independent `status=M08_D3D2A_PHYSICAL_FOUR_NEURON_FOUR_TICK_M02_PARITY_ACCEPTED`, and the actual physical exit. On failure STOP: preserve that original single program attempt and share its log; never claim parity or silently retry. Keep external cooling/UART as already established during D3.D.1.
+
+### Evidence boundaries
+
+The original four-neuron native bitstream **exists** and the reviewed DRC profile is bounded, but final native gate and actual four-neuron hardware acceptance have not yet been reproduced locally after this source-only audit update. D3.D.2A still proves no synapses, M06 32×4, physical DDR/paging, Linux PS integration or device throughput.
+
+
 **STATUS (2026-11-19): new source/RTL and native PC-only candidate workflow CREATED; owner Icarus, genuine native Vivado, and physical parity PENDING.** The accepted D3.D.1 one-neuron FPGA remains immutable.
 
 ## Objective and computational boundary
