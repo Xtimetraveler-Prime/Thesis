@@ -18,6 +18,7 @@ set bit [file normalize $::env(M08_D3D2B_BIT)]
 set golden [file normalize $::env(M08_D3D2B_VECTORS)]
 set result [file normalize $::env(M08_D3D2B_RESULT)]
 set expected [string tolower $::env(M08_D3D2B_EXPECTED_SHA)]
+set reviewed "dae1c4953826317854acd3c61d013b6fddec410a0450002fa13b3ab1f1650d14"
 set native [file dirname [file dirname $bit]]
 set hw [file dirname $result]
 set base [file normalize [file join $::env(HOME) Thesis_Evidence M08]]
@@ -31,8 +32,8 @@ if {[file tail $bit] ne "m08_d3d2b_synaptic_lif_jtag_UNRELEASED.bit" ||
     error "Noncanonical isolated owner synaptic candidate/HW evidence"
 }
 if {![file isfile $bit] || [file type $bit] ne "file" ||
-    [file size $bit] < 100000 || [file size $bit] > 100000000 ||
-    ![regexp {^[a-f0-9]{64}$} $expected] ||
+    [file size $bit] != 7797847 ||
+    $expected ne $reviewed ||
     $expected eq "3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411" ||
     $expected eq "b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b"} {
     error "Old, missing or invalid new synapse-routed bitstream"
@@ -44,8 +45,8 @@ if {![file isfile $golden] || [file type $golden] ne "file" ||
     error "Missing/unsafe dense+queued M02 synaptic golden"
 }
 set digest [string tolower [lindex [exec sha256sum -- $bit] 0]]
-if {$digest ne $expected} {
-    error "Accepted routed native bitstream digest no longer matches"
+if {$digest ne $expected || $digest ne $reviewed} {
+    error "Accepted routed native bitstream digest differs from reviewed original"
 }
 set f [open $golden RDONLY]
 set lines [split [string trim [read $f]] "\n"]
