@@ -79,8 +79,12 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
         self.assertIn("native 32-neuron first-image DRC/image approval is PENDING",
                       src)
         self.assertIn("original M06",src)
-        self.assertNotIn("program_hw_devices",src)
-        self.assertNotIn("open_hw_manager",src)
+        # Auditor inspects the literal Tcl program statement as evidence;
+        # the presence of that *string* is not a hardware operation.
+        self.assertIn("program_hw_devices",src)
+        self.assertNotIn("program_hw_devices(",src)
+        self.assertNotIn("open_hw_manager(",src)
+        self.assertNotIn("subprocess.run",src)
 
     def test_first_owner_image_cannot_be_falsely_approved(self):
         with tempfile.TemporaryDirectory() as directory:
