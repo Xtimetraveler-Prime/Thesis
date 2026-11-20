@@ -43,9 +43,11 @@ def inspect(run: Path):
     require(re.fullmatch(r"m08_d3d2e_queue_[A-Za-z0-9]{8}", run.name) is not None,
             "not a new D3.D.2E evidence directory")
     expected_base = Path.home() / "Thesis_Evidence" / "M08"
-    require(run.parent.resolve() == expected_base.resolve(),
-            "directory outside owner M08 evidence root")
+    require(not expected_base.is_symlink() and run.parent.resolve() == expected_base.resolve(),
+            "symlinked evidence base or directory outside owner M08 evidence root")
     receipt = run / "99_evidence_sha256.txt"
+    require(receipt.is_file() and not receipt.is_symlink(),
+            "missing or symlinked original evidence ledger")
     lines = receipt.read_text(encoding="ascii").splitlines()
     require(len(lines) == len(FILES), "not exactly 12 original receipts")
     for line, name in zip(lines, FILES):
@@ -108,7 +110,7 @@ def inspect(run: Path):
         "sha_ledger_rows_verified": len(FILES),
         "new_original_candidate_sha256": digest(run / BIT),
         "new_original_candidate_bytes": bit_bytes,
-        "drс_allowlist": "NONE_NEW_IMAGE_PENDING_HUMAN_REVIEW",
+        "drc_allowlist": "NONE_NEW_IMAGE_PENDING_HUMAN_REVIEW",
         "timing_acceptance": "NOT_REVIEWED",
         "image_specific_gate": "BLOCKED",
         "physical_programming": "NOT_AUTHORIZED",
