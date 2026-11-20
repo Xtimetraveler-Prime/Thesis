@@ -206,6 +206,7 @@ class D3DNeuronTests(unittest.TestCase):
         builder = g.BUILDER.read_text()
         self.assertIn("m08 m08_d3d_lif_axil.v", builder)
         self.assertIn("reports 12_lif_axil.v", builder)
+        self.assertTrue((ROOT / "rtl/m08/tb_m08_d3d_lif_axil.sv").is_file())
         if not shutil.which("iverilog"):
             self.skipTest("Icarus not installed")
         result = subprocess.run(["iverilog", "-g2005", "-t", "null",
@@ -222,7 +223,7 @@ class D3DNeuronTests(unittest.TestCase):
                 "iverilog", "-g2012", "-s", "tb_m08_d3d_lif_axil",
                 "-o", executable,
                 str(ROOT / "rtl/m08/m08_d3d_lif_axil.v"),
-                str(ROOT / "rtl/m08/tb_m08_d3d_lif_axil.v"),
+                str(ROOT / "rtl/m08/tb_m08_d3d_lif_axil.sv"),
             ]
             build = subprocess.run(compile_cmd, capture_output=True, text=True,
                                    timeout=45)
