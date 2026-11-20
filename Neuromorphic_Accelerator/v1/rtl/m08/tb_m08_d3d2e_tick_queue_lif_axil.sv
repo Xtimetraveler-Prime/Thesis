@@ -132,10 +132,8 @@ module tb_m08_d3d2e_tick_queue_lif_axil;
             write_reg(base+4,bias,4'hF,2'b00);
             write_reg(base+8,threshold,4'hF,2'b00);
             write_reg(base+12,reset_v,4'hF,2'b00);
-            write_reg(base+16,c0,4'hF,2'b00);
-            write_reg(base+20,c1,4'hF,2'b00);
-            write_reg(base+24,c2,4'hF,2'b00);
-            write_reg(base+28,c3,4'hF,2'b00);
+            // M32Q input currents are service-only: no host writes here.
+            // The accepted M06 fixture supplies only four neuron parameters.
         end
     endtask
 
@@ -378,6 +376,7 @@ module tb_m08_d3d2e_tick_queue_lif_axil;
         write_reg(12'h50C,0,4'hF,2'b10);
         write_reg(12'h508,32'h0000FFFF,4'hF,2'b10);
         write_reg(12'h501,1,4'hF,2'b11); // unaligned
+        write_reg(12'h110,0,4'hF,2'b10); // live bucket HOST bypass forbidden
         write_reg(12'h900,1,4'hF,2'b11); // output read only
         write_reg(12'hD00,1,4'hF,2'b11);
 
