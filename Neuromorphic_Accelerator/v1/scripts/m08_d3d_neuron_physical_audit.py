@@ -72,8 +72,8 @@ def verify(native: Path, hw: Path) -> dict:
 
     result = read(hw/"80_neural_parity_readback.txt", 10000).decode("ascii")
     lines = result.splitlines()
-    check(len(lines) == 13, "incorrect hardware neural result row count")
-    kv = [x.split("=", 1) for x in lines[:9]]
+    check(len(lines) == 16, "incorrect hardware neural result row count")
+    kv = [x.split("=", 1) for x in lines[:12]]
     check(all(len(p) == 2 for p in kv) and len(dict(kv)) == len(kv),
           "malformed neural hardware result header")
     data = dict(kv)
