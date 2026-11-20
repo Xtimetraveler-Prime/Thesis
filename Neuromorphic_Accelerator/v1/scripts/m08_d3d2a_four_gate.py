@@ -194,8 +194,8 @@ def native(folder: Path) -> dict:
     digest = sha256(bit).hexdigest()
     require(len(bit) > 100000 and values.get("bitstream_size_bytes") == str(len(bit)),
             "new four-neuron bitstream missing/unexpected size")
-    require(digest not in (OLD_BIT, d3c.OLD_FAILED, d3c.PREV_PASSIVE, d3c.R2_BIT_SHA)
-            if hasattr(d3c,"R2_BIT_SHA") else digest != OLD_BIT,
+    require(digest not in (OLD_BIT, d3c.OLD_FAILED,
+                           d3c.PREV_PASSIVE, predecessor.R2_BIT_SHA),
             "reused prior image, not real new four-neuron bitstream")
     log = read(folder/"00_vivado.log").decode(errors="replace")
     require("M08_D3D2A_NATIVE_TOP_WRAPPER_VALIDATED|m08_d3d2a_four_lif_jtag_wrapper" in log and
