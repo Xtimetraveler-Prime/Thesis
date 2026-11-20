@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Independent read-only D3.D.2E raw 17-event 32-neuron JTAG receipt auditor.
 
-STAGED ONLY. The first new native image gate NEVER approves D3.D.2E currently,
-so this physical auditor cannot accept anything until a separately reviewed
-future source/image-specific release. No Vivado/JTAG/PS/DDR/board operations.
+Requires the independently approved exact original M32Q native DRC/timing/
+source/bit SHA gate BEFORE accepting ANY physical receipts. No Vivado/JTAG/PS/DDR/board operations.
 """
 from __future__ import annotations
 import argparse
@@ -16,7 +15,7 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 import m08_d3d2d_event_vectors as oracle
-import m08_d3d2e_queue_native_review as native
+import m08_d3d2e_queue_exact_native_accept as native
 
 TCL=ROOT/"scripts/m08_d3d2e_queue_readback_once.tcl"
 FILES=("00_executed_source.tcl","01_jtag_m06.log","02_jtag_m06.jou",
@@ -70,9 +69,8 @@ def verify(owner:Path,hw:Path):
         first=native.inspect(owner)
     except (native.Reject,ValueError,KeyError,OSError) as exc:
         raise Reject("new original raw-event native image not accepted: "+str(exc)) from exc
-    # First-original native gate returns BLOCKED + main exit 2 today.
-    # No simulated evidence, owner arming flag, or old D3.D.2D receipt may
-    # bypass a new independently accepted native DRC/timing/image boundary.
+    # An owner arming flag or old D3.D.2D image can never bypass an exact
+    # new D3.D.2E DRC/timing/source/bit SHA release.
     require(first.get("status")==
             "M08_D3D2E_EXACT_OWNER_NATIVE_TICKQUEUE_IMAGE_ACCEPTED_NO_BOARD"
             and first.get("image_specific_gate") == "ACCEPTED",
