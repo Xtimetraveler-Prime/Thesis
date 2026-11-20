@@ -14,10 +14,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts/m08_d3c_jtag_bram_build.tcl"
 RUNNER = ROOT / "scripts/run_m08_d3c_jtag_bram_pc.sh"
-BIT_REL = "bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit"
+BIT_REL = "bitstream_candidate/m08_d3c_jtag_bram_r2_UNRELEASED.bit"
+POR = ROOT / "rtl/m08_d3c_fabric_por.v"
 EXPECTED = (
     "00_vivado.log", "01_vivado.jou", "02_vivado_exit.txt",
-    "reports/10_fan_a12.xdc", "reports/20_route_drc.rpt",
+    "reports/10_fan_a12.xdc", "reports/11_fabric_por.v",
+    "reports/20_route_drc.rpt",
     "reports/21_route_timing.rpt", "reports/22_route_utilization.rpt",
     "reports/23_route_clocks.rpt", "reports/30_native_result.txt", BIT_REL,
 )
@@ -55,11 +57,14 @@ def source(root=ROOT) -> dict:
         "get_property CONFIG.MEM_DEPTH $ctrl", "jtag_axi:1.2", "smartconnect:1.0",
         "axi_bram_ctrl:4.1", "blk_mem_gen:8.4",
         "ps/pl_clk0", "ps/pl_resetn0",
-        "rst_pl0/peripheral_aresetn",
-        "get_property CONFIG.C_EXT_RESET_HIGH $rst",
+        "fabric_por/clk", "fabric_por/aresetn",
+        "create_bd_cell -type module -reference m08_d3c_fabric_por fabric_por",
+        "get_bd_nets -quiet -of_objects [get_bd_pins fabric_por/aresetn]",
+        "ps_reset_net eq $por_reset_net",
+        "file copy $rtl $rtl_receipt",
         "get_property CONFIG.Write_Depth_A $bram",
         "get_property CONFIG.Write_Width_A $bram",
-        "M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS",
+        "M08_D3C_NATIVE_FABRIC_POR_AND_BRAM_DERIVED_CHECK=PASS",
         "connect_bd_intf_net [get_bd_intf_pins jtag_axi/M_AXI]",
         "connect_bd_intf_net [get_bd_intf_pins link_sc/M00_AXI]",
         "connect_bd_intf_net [get_bd_intf_pins bram_ctrl/BRAM_PORTA]",
@@ -67,7 +72,7 @@ def source(root=ROOT) -> dict:
         "validate_bd_design -force",
         "report_drc -file",
         "report_timing_summary -file",
-        "m08_d3c_jtag_bram_UNRELEASED.bit",
+        "m08_d3c_jtag_bram_r2_UNRELEASED.bit",
         "M08_D3C_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED",
     ):
         require(must_have in script, "native builder missing contract: " + must_have)
@@ -79,6 +84,10 @@ def source(root=ROOT) -> dict:
     ):
         require(forbidden not in body, "offline native builder contains forbidden action: " + forbidden)
     # Hard-fail source that tries to force Vivado 2025.2 read-only derived fields.
+    require("connect_bd_net $reset_out" not in body and
+            "rst_pl0/peripheral_aresetn" not in body and
+            "CONFIG.C_EXT_RESET_HIGH" not in body,
+            "r2 may not drive JTAG/AXI reset from PS reset or old reset IP")
     require(re.search(r"set_property[^\n]*CONFIG\.C_EXT_RESET_HIGH", body) is None
             and re.search(r"set_property[^\n]*CONFIG\.MEM_DEPTH", body) is None,
             "native builder must not force read-only reset or BRAM depth")
@@ -105,10 +114,17 @@ def source(root=ROOT) -> dict:
             "native Vivado options must precede the single -tclargs evidence directory")
     require("set allowed_precreated {00_vivado.log 01_vivado.jou}" in script,
             "native Tcl preflight must allow only the two vendor-generated files")
+    por = read_file(root / "rtl/m08_d3c_fabric_por.v", 20000).decode()
+    for required in ("module m08_d3c_fabric_por", "input  wire clk",
+                     "output wire aresetn", "delay_count = 8'h00",
+                     "released    = 1'b0", "if (delay_count != 8'hFF)",
+                     "always @(posedge clk)", "assign aresetn = released"):
+        require(required in por, "fabric POR source missing: " + required)
     return {
         "status": "M08_D3C_JTAG_BRAM_PC_SOURCE_ACCEPTED_NOT_BUILT",
         "builder_sha256": sha256(script.encode()).hexdigest(),
         "runner_sha256": sha256(runner.encode()).hexdigest(),
+        "fabric_por_sha256": sha256(por.encode()).hexdigest(),
         "linux_online_required_for_test": False,
         "pl_clock_independence_proven": False,
         "native_vivado_completed": False,
@@ -260,13 +276,15 @@ def native(folder: Path) -> dict:
             "native result has malformed/duplicate fields")
     data = dict(rows)
     for k, expected in {
-        "schema": "m08-d3c-jtag-bram-offline-build-v1",
+        "schema": "m08-d3c-jtag-bram-offline-build-v2-fabric-por",
+        "reset_mode": "FABRIC_POR_256_CYCLES",
+        "ps_reset_dependency": "NO",
+        "ps_clock_dependency": "YES",
         "part": "xck26-sfvc784-2LV-c",
         "ps_to_pl_hpm": "DISABLED",
         "jtag_axi": "ENABLED_PL",
         "bram_map_base": "0xA0000000",
         "bram_map_range": "0x00001000",
-        "ext_reset_active_high": "0",
         "bram_depth_words": "1024",
         "bram_width_bits": "32",
         "fan_route": "TTC0_WAVEOUT2_TO_A12",
@@ -277,6 +295,10 @@ def native(folder: Path) -> dict:
         "hardware_neural_execution_proven": "NO",
     }.items():
         require(data.get(k) == expected, "invalid native field: "+k)
+    por_digest = sha256(read_file(POR, 20000)).hexdigest()
+    require(data.get("fabric_por_rtl_sha256") == por_digest and
+            sha256(read_file(folder/"reports/11_fabric_por.v", 20000)).hexdigest() == por_digest,
+            "native fabric POR RTL differs from source or generated receipt")
     ctrl_depth = data.get("bram_controller_derived_depth", "")
     require(ctrl_depth.isdecimal() and int(ctrl_depth) > 0,
             "invalid native controller-derived BRAM depth")
@@ -318,6 +340,8 @@ def native(folder: Path) -> dict:
         "candidate_sha256": digest,
         "candidate_bytes": len(bit),
         "jtag_axi_bram_base": "0xA0000000",
+        "reset_mode": "FABRIC_POR_256_CYCLES",
+        "ps_clock_dependency": True,
         "stock_linux_compatibility": "NOT_TESTED",
         "physical_hardware_programmed": False,
         "readback_proven": False,
