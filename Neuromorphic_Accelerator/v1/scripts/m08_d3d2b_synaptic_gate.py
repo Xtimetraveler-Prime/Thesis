@@ -122,29 +122,148 @@ def source() -> dict:
     }
 
 
+# Pinned owner-original genuine Vivado 2025.2 routed candidate, 2026-11-20.
+# These constants come from the FIRST immutable original native run, not a
+# reimplementation. No other image, source or warning profile is released.
+ORIGINAL_OWNER_NATIVE_DIR = "m08_d3d2b_synaptic_DakjdpCO"
+ORIGINAL_OWNER_BIT_SHA = "dae1c4953826317854acd3c61d013b6fddec410a0450002fa13b3ab1f1650d14"
+ORIGINAL_OWNER_BIT_BYTES = 7797847
+OWNER_ORIGINAL_RTL_SHA = "2894f33a1c0054a0cf0231e1c4970e5eaea377bbe7524e4c57717c033b5ad88b"
+OWNER_ORIGINAL_BUILDER_SHA = "82ba3b226e16ac579cfc2527216f8acb02f9b13d3f42c5574344fcc9ce49e1a8"
+REVIEWED_NEW_JTAG_INSTANCE = "m08_d3d2b_synaptic_lif_jtag_i"
+REVIEWED_RTSTAT_FIRST15 = tuple(
+    item.replace("m08_d3d_lif_jtag_i", REVIEWED_NEW_JTAG_INSTANCE)
+    for item in d3c.D3D_RTSTAT10_REVIEWED_FIRST15
+)
+REVIEWED_OWNER_DRC_PATH = (
+    "/home/dna/Thesis_Evidence/M08/" + ORIGINAL_OWNER_NATIVE_DIR +
+    "/reports/20_route_drc.rpt"
+)
+REVIEWED_DEBUG_PREFIX = (
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN."
+)
+
+
 def inspect_new_drc(report: str) -> dict:
-    # New native source changes ROM/logic/routing; a prior debug-hub vendor
-    # waiver MUST NOT be automatically inherited. First report needs review.
-    counts = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", report)
-    check(len(counts) == 1, "new route DRC missing/ambiguous finding count")
-    if counts[0] != "0":
-        raise Reject(
-            "D3D2B_NEW_DRC_REVIEW_REQUIRED: first new four-neuron synaptic "
-            f"candidate reported {counts[0]} findings; preserve original "
-            "report, do not reprogram or silently waive")
-    check(not re.search(r"(?m)^\|\s*[A-Z]+-\d+\s*\|", report) and
-          not re.search(
-              r"(?m)^[A-Z]+-\d+#\d+\s+(?:Warning|Critical Warning|Error)",
-              report),
-          "zero DRC summary contradicts nonzero warning rows")
-    return {"drc_checks": 0, "drc_review_status": "ZERO_UNREVIEWED_FINDINGS"}
+    """Precisely bound 7 owner-reviewed vendor/debug warning details.
+
+    This is NOT a blanket waiver for warning classes or DRC count. Check
+    owner-original native provenance, exact severity/count/description, all
+    seven detailed instances/pins, and the 15 RTSTAT paths actually printed.
+    Vivado reported 39 unroutable nets / 37 listed but printed ONLY 15; the
+    remaining paths are not asserted as reviewed.
+    """
+    from collections import Counter
+
+    review = "D3D2B_NEW_DRC_REVIEW_REQUIRED: "
+    found = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", report)
+    check(len(found) == 1, "new route DRC missing/ambiguous finding count")
+    if found[0] == "0":
+        check(not re.search(r"(?m)^\|\s*[A-Z]+-\d+\s*\|", report)
+              and not re.search(
+                  r"(?m)^[A-Z]+-\d+#\d+\s+(?:Warning|Critical Warning|Error)",
+                  report),
+              "zero DRC summary contradicts nonzero warning rows")
+        return {"drc_checks": 0, "drc_review_status": "ZERO_UNREVIEWED_FINDINGS"}
+    check(found[0] == "7", review + "wrong total DRC finding count")
+    for fragment in (
+        "Vivado v.2025.2 (lin64)",
+        "Date         : Fri Nov 20 00:49:59 2026",
+        "Command      : report_drc -file " + REVIEWED_OWNER_DRC_PATH,
+        "Design       : m08_d3d2b_synaptic_lif_jtag_wrapper",
+        "Device       : xck26-sfvc784-2LV-c",
+        "Design State : Fully Routed",
+    ):
+        check(fragment in report, review + "original routed report provenance drift")
+    rows = re.findall(
+        r"(?m)^\|\s*([A-Z]+-\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(\d+)\s*\|\s*$",
+        report)
+    check(len(rows) == 4 and len({row[0] for row in rows}) == 4,
+          review + "warning summary row count/uniqueness drift")
+    parsed = {code: (int(qty), desc.strip()) for code, severity, desc, qty in rows
+              if severity.strip() == "Warning"}
+    check(parsed == d3c.VENDOR_DRC_PROFILE and
+          sum(int(row[3]) for row in rows) == 7,
+          review + "warning rule/severity/count/description drift")
+    details = list(re.finditer(
+        r"(?m)^([A-Z]+-\d+)#(\d+)\s+(Warning|Critical Warning|Error)\s*$",
+        report))
+    check(len(details) == 7, review + "seven original details not all present")
+    per_rule, seen = Counter(), set()
+    for index, match in enumerate(details):
+        code, ordinal, severity = match.group(1), int(match.group(2)), match.group(3)
+        check(severity == "Warning" and code in parsed and
+              (code, ordinal) not in seen,
+              review + "unknown/critical/duplicate DRC detail")
+        seen.add((code, ordinal))
+        per_rule[code] += 1
+        end = details[index + 1].start() if index + 1 < len(details) else len(report)
+        body = report[match.end():end]
+        check(body.count("Related violations: <none>") == 1 and
+              d3c.VENDOR_DRC_PROFILE[code][1] in body,
+              review + "vendor warning body/related violations changed")
+        if code == "PDCN-1569":
+            pins = {
+                1: ("'A1'", "bscan_switch/temp_curid[31]_i_1", "I0"),
+                2: ("'A3'", "bscan_switch/temp_curid[31]_i_1", "I1"),
+                3: ("'A4'", "bscan_switch/id_state[0]_i_1", "I0"),
+            }
+            check(ordinal in pins, review + "unreviewed LUT warning ordinal")
+            physical_pin, suffix, endpoint = pins[ordinal]
+            complete_cell = REVIEWED_DEBUG_PREFIX + suffix
+            fragment = (f"Used physical LUT pin {physical_pin} of cell "
+                        f"{complete_cell} (pin {complete_cell}/{endpoint}) "
+                        "is not included in the LUT equation")
+            check(fragment in body and body.count("of cell ") == 1 and
+                  body.count("(pin ") == 1,
+                  review + "LUT advisory is not the exact XSDB debug cell/pin")
+        elif code in ("REQP-1857", "REQP-1858"):
+            names = {
+                ("REQP-1857", 1): "rx_fifo_i",
+                ("REQP-1858", 1): "rd_cmd_fifo_i",
+                ("REQP-1858", 2): "wr_cmd_fifo_i",
+            }
+            fifo = names.get((code, ordinal))
+            prefix = ("BRAM (" + REVIEWED_NEW_JTAG_INSTANCE +
+                      "/jtag_axi/inst/jtag_axi_engine_u/")
+            check(fifo is not None and
+                  body.count("BRAM (") == 1 and
+                  body.count(prefix + fifo + "/") == 1 and
+                  "SDP mode with WRITE_FIRST write-mode" in body and
+                  "address collisions" in body,
+                  review + "non-JTAG or changed vendor command FIFO advisory")
+        elif code == "RTSTAT-10":
+            check(ordinal == 1 and re.search(
+                r"(?m)^\s*39 net\(s\) have no routable loads\.", body) is not None
+                and "(the first 15 of 37 listed)" in body,
+                review + "RTSTAT count/sample size changed")
+            m = re.search(
+                r"problem bus\(es\) and/or net\(s\) are (.*?)\s*"
+                r"\(the first 15 of 37 listed\)", body, re.S)
+            check(m is not None, review + "RTSTAT sample missing")
+            paths = tuple(x.strip() for x in m.group(1).split(",") if x.strip())
+            check(paths == REVIEWED_RTSTAT_FIRST15,
+                  review + "RTSTAT sample includes unreviewed routing path")
+    for code, (count, _) in d3c.VENDOR_DRC_PROFILE.items():
+        check(per_rule[code] == count and
+              {num for rule, num in seen if rule == code} ==
+              set(range(1, count + 1)),
+              review + "missing/renumbered vendor warning")
+    return {
+        "drc_checks": 7,
+        "vendor_drc_warnings": 7,
+        "drc_review_status": "EXACT_OWNER_D3D2B_VENDOR_DEBUG_SEVEN_FIRST15_RTSTAT",
+        "rtstat_total_unroutable": 39,
+        "rtstat_listed_count": 37,
+        "rtstat_sampled_paths": 15,
+    }
 
 
 def native(folder: Path) -> dict:
     check(folder.is_dir() and not folder.is_symlink() and
-          re.fullmatch(r"m08_d3d2b_synaptic_[A-Za-z0-9]+", folder.name) is not None
-          and folder.parent.name == "M08",
-          "not an original isolated D3.D.2B owner native run")
+          folder.name == ORIGINAL_OWNER_NATIVE_DIR and
+          folder.parent.name == "M08",
+          "not the immutable owner-original D3.D.2B native run")
     receipt = read(folder/"99_evidence_sha256.txt",12000).decode().splitlines()
     check(len(receipt) == len(FILES), "expected exactly twelve original SHA rows")
     for name, line in zip(FILES,receipt):
@@ -178,6 +297,9 @@ def native(folder: Path) -> dict:
         "hardware_neural_execution_proven":"NO",
     }.items():
         check(data.get(key)==value,"native metadata mismatch: "+key)
+    check(data.get("builder_sha256") == OWNER_ORIGINAL_BUILDER_SHA and
+          data.get("lif_rtl_sha256") == OWNER_ORIGINAL_RTL_SHA,
+          "original owner Vivado builder/RTL provenance not the routed candidate")
     for key,obj in (
         ("builder_sha256",BUILDER),("lif_rtl_sha256",RTL),
         ("fabric_por_rtl_sha256",POR),
@@ -194,6 +316,9 @@ def native(folder: Path) -> dict:
     digest=sha256(bit).hexdigest()
     check(len(bit)>100000 and data.get("bitstream_size_bytes")==str(len(bit)),
           "invalid new synapse image")
+    check(len(bit) == ORIGINAL_OWNER_BIT_BYTES and
+          digest == ORIGINAL_OWNER_BIT_SHA,
+          "bitstream digest/bytes differ from reviewed original owner candidate")
     check(digest not in (
         predecessor.ORIGINAL_OWNER_BIT_SHA, predecessor.OLD_BIT,
         d3c.OLD_FAILED, d3c.PREV_PASSIVE),
@@ -206,6 +331,8 @@ def native(folder: Path) -> dict:
           "native Vivado build contains error/critical warning")
     drc=inspect_new_drc(read(
         folder/"reports/20_route_drc.rpt",3000000).decode(errors="replace"))
+    check(drc["drc_checks"] == 7,
+          "native DRC profile not the exact seven owner-reviewed warnings")
     try:
         timing=d3c.inspect_timing(read(
             folder/"reports/21_route_timing.rpt",3000000).decode(errors="replace"))
