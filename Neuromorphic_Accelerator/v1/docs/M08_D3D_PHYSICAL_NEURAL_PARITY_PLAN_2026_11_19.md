@@ -158,3 +158,26 @@ It was caused by a **stale hard-coded `set_property top m08_d3d_neuron_wrapper`*
 **Repair:** get the wrapper name dynamically from the actual single `make_wrapper` output file; require EXACT `m08_d3d_lif_jtag_wrapper`, explicitly set this generated name as `top`, run compile order update, read back `get_property top`, and fail before synthesis unless the selected name still matches. Print a unique validated-top marker. Add `wrapper_top=m08_d3d_lif_jtag_wrapper` to native result receipt; the source and native gate now require both that property and the genuine exact validated-top log marker, and continue rejecting **ALL** Critical Warnings and Errors. New regression mutations recreate the historical wrong top name, silent top substitution and exact `filemgmt 20-742` original warning, even with rehashed output. The actual LIF RTL, mathematical contract, JTAG interface and fan are unchanged.
 
 **Next owner action:** pull latest D3.D branch, run focused Python/RTL tests and PC-only source gate; perform a new `bash scripts/run_m08_d3d_neuron_pc.sh` in a *fresh* directory. Do not regenerate/modify `R3BZiFI7`, do not use its automatically recovered-top .bit for hardware, do not assert that an image is accepted from zero bitgen warnings, and do not run the physical one-shot until exact new genuine DRC/timing reports and candidate SHA pass native acceptance.
+
+## 2026-11-19 21:28 MST — third owner D3.D native image generated; strict gate rejected inherited D3.C hierarchy pattern
+
+Owner-reported run `~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi`: Vivado 2025.2 genuinely completed routed `write_bitstream`, `[Vivado 12-1842] Bitgen Completed Successfully`, and `M08_D3D_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED`; 12/12 **original SHA ledger rows OK**, including the separately generated `m08_d3d_lif_jtag_UNRELEASED.bit`. But **`m08_d3d_neuron_gate.py --run-dir` rejected**, not accepted, with `native DRC/timing rejected: native DRC memory collision advisory outside vendor JTAG FIFO`. No physical programming occurred. Keep original `Yz3k4vsi` artifacts intact.
+
+**Checker investigation:** D3.D native gate called `d3c.inspect_drc(drc)`, inheriting the D3.C-only exact RTL wrapper prefix `m08_d3c_jtag_link_i/jtag_axi/inst/...`. D3.D's now-validated block-design wrapper is `m08_d3d_lif_jtag_wrapper` and its expected instance hierarchy is `m08_d3d_lif_jtag_i`. The old exact prefix was used for both `REQP-1857`/`REQP-1858` FIFO BRAM collision details and `RTSTAT-10` unrouted sample paths. The log error was compatible with this wrapper rename; **this remains a hypothesis about the original DRC until the owner's exact DRC report is examined**.
+
+**Narrow source repair (PC-only, NO bitstream rebuild):** Parameterize `d3c.inspect_drc` with a *strict two-option* design instance, leaving `m08_d3c_jtag_link_i` as default and allowing only `m08_d3d_lif_jtag_i` for D3.D. Match vendor BRAM warnings and unused-net samples against their exact respective `/jtag_axi/inst/` hierarchy; preserve the exact 7-warning count and 4-code inventory, REQP one RX/two command FIFO scope, PDCN debug-hub scope, RTSTAT exact 47-net/15-sample scope, warning severities, no unknown related violations, and positive route timing gate. Do NOT broadly allow REQP warnings, disable Vivado DRC, edit the original DRC report, fake the SHA receipt, or claim success without another genuine D3.D native audit.
+
+**Next owner commands (do NOT rebuild first):**
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d-neural-jtag-parity
+cd Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m08_d3d_neuron_gate.py' -v
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+sha256sum "$RUN/bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"
+python3 scripts/m08_d3d_neuron_gate.py --run-dir "$RUN"
+```
+The existing image can be rechecked because **its native builder and actual Verilog source were NOT modified**—only the separate PC Python gate and regression tests changed. If any *other* real DRC finding differs from the exact scoped vendor inventory, the gate **must continue to reject**; inspect/preserve the exact `$RUN/reports/20_route_drc.rpt` before any policy change or hardware action. In particular, if the `RTSTAT-10` count changes with the new neuron peripheral, do not guess a new count without examining the original report. Physical programming is not authorized merely by bitgen success.
