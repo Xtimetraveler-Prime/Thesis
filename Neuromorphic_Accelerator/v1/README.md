@@ -1,6 +1,6 @@
 # Neuromorphic Accelerator v1
 
-**Status (November 10, 2026): M01–M07 complete in explicitly bounded scopes; M08 IN PROGRESS, beginning with read-only KV260/2025.2 toolchain and original-evidence inventory. No physical FPGA/DDR evidence yet.** This is the active, independently versioned SNN/FPGA research program—not Loihi Digital Twin v4.
+**Current status (November 19, 2026): M01–M07 accepted within their bounded scopes; M08 IN PROGRESS. D3.C JTAG→AXI→BRAM FOUR-WORD READBACK PHYSICALLY PASSED on the KV260; D3.D.1 genuine owner Vivado 2025.2 signed16 one-neuron ×4-tick LIF bitstream is NATIVE ACCEPTED (12 SHA checks, positive routed slack, exact scoped vendor DRC), but **HAS NOT BEEN PHYSICALLY PROGRAMMED OR EXECUTED**. No physical neural inference, DDR paging, or throughput measurements yet.** This remains the independent SNN/FPGA research program—not Loihi Digital Twin v4.
 
 The goal is to determine the tradeoffs among **neural-state virtualization, sparse event execution, cache locality and FPGA resource limits**. The reference neural behavior is a separately checked signed-integer LIF model. The accelerator must preserve that reference while scaling logical neurons beyond the bounded resident working set.
 
@@ -10,6 +10,7 @@ The goal is to determine the tradeoffs among **neural-state virtualization, spar
 | --- | --- |
 | Research questions and project lineage | [Thesis overview](../../README.md) |
 | Milestones, next experiment and acceptance criteria | [M01–M09 roadmap](roadmap.md) |
+| **NEXT: D3.D.1 physical LIF parity (read this first)** | [New chat handoff + operator workflow](docs/M08_D3D_1_PHYSICAL_LIF_NEXT_CHAT_HANDOFF_2026_11_19.md), [D3.D.1 native and DRC owner evidence](docs/M08_D3D_PHYSICAL_NEURAL_PARITY_PLAN_2026_11_19.md), [D3.C physical JTAG communication acceptance](docs/M08_D3C_JTAG_BRAM_PL_LINK_2026_11_19.md). **No D3.D board test yet** |
 | **M08 physical roadmap and first hardware entry** | [M08 phased plan](docs/M08_PHASED_HARDWARE_PLAN.md), [owner first PC/UART runbook](docs/M08_FIRST_PC_KV260_RUNBOOK.md), [M08 tests explained](docs/M08_TESTS_EXPLAINED.md); M07 acceptance preserved [here](docs/M07_ACCEPTANCE_REVIEW_2026_11_10.md) |
 | M05 signed32 on-chip engine verification | [M05 acceptance review](docs/M05_ACCEPTANCE_REVIEW_2026_11_09.md) |
 | M06 original HLS+AMD paging/fault/recovery evidence | [M06 acceptance review](docs/M06_ACCEPTANCE_REVIEW_2026_11_10.md) |
