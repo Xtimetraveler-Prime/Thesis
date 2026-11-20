@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent read-only D3.D.2E raw 17-event 32-neuron JTAG receipt auditor.
+"""Independent read-only D3.D.2E 17-event queued 32-neuron JTAG receipt auditor.
 
 Requires the independently approved exact original M32Q native DRC/timing/
 source/bit SHA gate BEFORE accepting ANY physical receipts. No Vivado/JTAG/PS/DDR/board operations.
@@ -63,6 +63,21 @@ def expected_lines():
             f"mask={words[output+4]} "
             f"synaptic_currents={','.join(words[output+5:output+9])}")
     return lines
+
+def verify_tick_service_log(log: str, per_tick: list[int]) -> None:
+    """Require each actual four-tick SERVICE marker once, in order.
+
+    Split real log lines; never look for a literal backslash+n suffix. Extra,
+    duplicate, missing, reordered or altered tick markers all fail closed.
+    """
+    require(len(per_tick)==4 and all(isinstance(v,int) and v>=0 for v in per_tick)
+            and sum(per_tick)==17, "invalid independently derived tick counts")
+    actual=[line for line in log.splitlines()
+            if line.startswith("M08_D3D2E_TICK_SERVICE_PARITY|")]
+    expected=[f"M08_D3D2E_TICK_SERVICE_PARITY|{t}|{per_tick[t]}"
+              for t in range(4)]
+    require(actual==expected,
+            "missing/duplicated/reordered/incorrect physical per-tick SERVICE receipt")
 
 def verify(owner:Path,hw:Path):
     try:
@@ -132,9 +147,7 @@ def verify(owner:Path,hw:Path):
     for marker in ("M08_D3D2E_PROGRAM_START","M08_D3D2E_PROGRAM_COMPLETED"):
         require(len(re.findall(r"(?m)^"+marker+r"$",log))==1,
                 "ambiguous or duplicated JTAG program marker")
-    for t in range(4):
-        require(log.count(f"M08_D3D2E_TICK_SERVICE_PARITY|{t}|{per_tick[t]}\\n")==1,
-                "missing/duplicated physical per-tick SERVICE receipt")
+    verify_tick_service_log(log,per_tick)
     for n in range(32):
         for marker in (f"M08_D3D2E_EVENT_BUCKET_PARITY|{n}\n",
                        f"M08_D3D2E_M06_REAL_NEURON_PARITY|{n}\n"):
@@ -143,7 +156,7 @@ def verify(owner:Path,hw:Path):
                     for line in log.splitlines()),
             "physical Vivado log contains errors/critical warnings")
     return dict(
-        status="M08_D3D2E_PHYSICAL_M06_17_RAW_EVENT_128_BUCKET_384_NEURAL_ACCEPTED",
+        status="M08_D3D2E_PHYSICAL_M06_17_QUEUED_EVENT_128_BUCKET_384_NEURAL_ACCEPTED",
         first_original_image_sha256=first["candidate_sha256"],
         external_event_ingestion_in_fabric=True,
         hardware_input_buckets_verified=128,
