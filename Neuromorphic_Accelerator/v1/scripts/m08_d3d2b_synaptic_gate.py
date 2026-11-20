@@ -211,14 +211,12 @@ def inspect_new_drc(report: str) -> dict:
             check(ordinal in pins, review + "unreviewed LUT warning ordinal")
             physical_pin, suffix, endpoint = pins[ordinal]
             complete_cell = REVIEWED_DEBUG_PREFIX + suffix
-            # The owner-original #3 warning uses no bscan_switch subtree
-            # and prints "notincluded" (no space). Match that exact report;
-            # do not widen the accepted warning hierarchy or message.
-            equation_term = ("is notincluded in the LUT equation" if ordinal == 3
-                             else "is not included in the LUT equation")
+            # Owner-original #3 uses no bscan_switch subtree, but has
+            # the SAME "is not included" wording as #1/#2. Keep the exact
+            # physical pin, complete cell hierarchy and endpoint pinned.
             fragment = (f"Used physical LUT pin {physical_pin} of cell "
                         f"{complete_cell} (pin {complete_cell}/{endpoint}) "
-                        f"{equation_term}")
+                        "is not included in the LUT equation")
             check(fragment in body and body.count("of cell ") == 1 and
                   body.count("(pin ") == 1,
                   review + "LUT advisory is not the exact XSDB debug cell/pin")
