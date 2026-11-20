@@ -421,6 +421,23 @@ class D3CJtagBramTests(unittest.TestCase):
         with self.assertRaisesRegex(g.Reject, "forbidden action"):
             g.source(self.root)
 
+    def test_r2_both_runners_and_readback_require_new_bitstream(self):
+        image = "m08_d3c_jtag_bram_r2_UNRELEASED.bit"
+        old_image = "m08_d3c_jtag_bram_UNRELEASED.bit"
+        for script in (
+            "run_m08_d3c_jtag_bram_pc.sh",
+            "run_m08_d3c_jtag_bram_physical_once.sh",
+            "m08_d3c_jtag_bram_readback_once.tcl",
+            "m08_d3c_jtag_bram_build.tcl",
+        ):
+            with self.subTest(script=script):
+                body = (ROOT / "scripts" / script).read_text()
+                self.assertIn(image, body)
+                self.assertNotIn(old_image, body)
+        self.assertEqual(g.BIT_REL, "bitstream_candidate/" + image)
+        self.assertIn("M08_D3C_RUNTIME_VARIANT=FABRIC_POR_256_CYCLES",
+                      (ROOT / "scripts/m08_d3c_jtag_bram_readback_once.tcl").read_text())
+
     def test_script_readback_is_separate_and_exactly_one_program_call(self):
         script = (ROOT/"scripts/m08_d3c_jtag_bram_readback_once.tcl").read_text()
         active = [line.strip() for line in script.splitlines()
