@@ -142,3 +142,23 @@ sha256sum "$RUN/bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit"
 ```
 
 If the gate accepts, independently review the original SHA, board/part, reset polarity and memory dimensions, timing, fan A12 route, plus UART/fan/recovery readiness before a **separately owner-authorized**, bounded one-shot physical JTAG BRAM write/read test. No hardware programming has been performed by the changes in this section. Original HPM0 image remains quarantined. A JTAG communication PASS validates one observed diagnostic sequence only and does **not** close the vendor-IP warnings, demonstrate Linux/PL clock independence, or prove neural inference.
+
+## 2026-11-19 17:46 MST — first actual D3.C physical load; AXI first WRITE failed (STOP, NO RETRY)
+
+**Owner-provided genuine Vivado 2025.2 terminal evidence** of the first explicitly authorized M08 D3.C physical JTAG experiment. Tested **only** owner-PC offline-accepted `m08_d3c_jtag_link_A2SUrkhI` bitstream SHA256 `51c090b95069fc4fd5b9d79f3cbbf45aea222d6ac484569aabe115877df098ea`, 7,797,837 bytes, exact vendor-warning DRC profile and timing WNS +5.907ns / WHS +0.011ns. Fresh physical evidence directory **`~/Thesis_Evidence/M08/m08_d3c_jtag_HW_ApS9gZgk`** (the owner has not yet supplied its full 99 SHA receipt or original UART log). Original offline receipt and bitstream are unchanged.
+
+Physical observed sequence:
+1. `M08_D3C_HARDWARE_IMAGE_VERIFIED|51c090b9...`.
+2. `get_hw_targets` identified the prior unique `localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA` target; JTAG chain exposed `xck26_0|xck26` and `arm_dap_1|arm_dap`.
+3. `M08_D3C_PROGRAM_START` followed by native Vivado `End of startup status: HIGH` and **`M08_D3C_PROGRAM_COMPLETED`**. **The FPGA was actually programmed**, regardless of earlier source-only JSON claiming `hardware_programmed=false`.
+4. `refresh_hw_device` reported **1 JTAG AXI core**; `M08_D3C_AXI_MASTER_DISCOVERED|hw_axi_1`; `reset_hw_axi` returned without error.
+5. First attempted `create_hw_axi_txn`/ `run_hw_axi` WRITE to `A0000000` with data `A5A55A5A` failed: **`ERROR: [Xicom 50-38] xicom: AXI TRANSACTION FAILED`**, then `[Common 17-39] 'run_hw_axi' failed`. The informational `WRITE DATA is: A5A55A5A` does **not** show completion of a write.
+6. No `M08_D3C_AXI_WRITE` success marker, no read transaction, no four-word result, no readback receipt; runner emitted **`M08_D3C_HW_STOP_NO_RETRY`**. Physical status is **`PROGRAMMED_BUT_FIRST_JTAG_AXI_WRITE_FAILED_UNVERIFIED`**, not a completed communication test, no neural execution and no Linux-independent clock proof.
+
+### Required next investigation (nonprogramming)
+
+**No second programming call and no further AXI/MMIO traffic until this failure is reviewed and separately authorized.** Keep physical `HW_ApS9gZgk` and native `link_A2SUrkhI` original files intact; check existing physical `99_evidence_sha256.txt`, `03_exit.txt`, `01_jtag_run.log`, `02_jtag_run.jou` and any UART monitor/SSH/link state saved near 17:46 MST. Check independent cooling and obtain the board's current state before, if needed, operator-controlled stock power-cycle; log whether normal stock SSH and fan operation return. The script does not rollback stock by itself.
+
+Leading **hypotheses, not established causes**: PS `pl_clk0` not toggling after asynchronous JTAG overwrite of Linux/dfx-managed stock PL, PS `pl_resetn0` asserted or propagating an unintended reset, or live AXI interconnect/BRAM response problem. Hardware Manager detecting the core does **not** prove its AXI clock/reset or BRAM response works. Existing `reset_hw_axi` call follows AMD UG908; absent `-size` is not by itself a fault because modern Vivado infers AXI data word size. Do not mask `run_hw_axi` errors, try a second write, bypass system/thermal safety, assert Linux failure from SSH timeout alone, or weaken the accepted build DRC gate. Do not merge D3.C or claim JTAG transport/FPGA neural inference verified.
+
+Next engineering proposal **after the original evidence and UART/recovery status are reviewed**: devise a separately scoped PC-only diagnostic for actual clock/reset reachability and PS/PL ownership, potentially a read-only boot/PS clock analysis and future instrumented, independently sourced PL diagnostic design if available. Any revised physical test is a separate owner-approved hardware action.
