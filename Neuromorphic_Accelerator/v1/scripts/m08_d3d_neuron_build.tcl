@@ -40,10 +40,10 @@ file mkdir $reports $candidate_dir
 create_project m08_d3d_lif_jtag $project_dir -part $part
 # Copy source-controlled POR and compute RTL into original native evidence.
 set rtl [file normalize [file join [file dirname [info script]] .. rtl m08_d3c_fabric_por.v]]
-set lif_rtl [file normalize [file join [file dirname [info script]] .. rtl m08 m08_d3d_lif_axil.sv]]
+set lif_rtl [file normalize [file join [file dirname [info script]] .. rtl m08 m08_d3d_lif_axil.v]]
 if {![file isfile $rtl]} {error "Missing bounded PL reset RTL"}
 set rtl_receipt [file join $reports 11_fabric_por.v]
-set lif_receipt [file join $reports 12_lif_axil.sv]
+set lif_receipt [file join $reports 12_lif_axil.v]
 if {![file isfile $lif_rtl]} {error "Missing signed16 LIF AXI-Lite RTL"}
 file copy $rtl $rtl_receipt
 file copy $lif_rtl $lif_receipt
