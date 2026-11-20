@@ -1,6 +1,6 @@
 # M08 D3.D — first genuine KV260 neural-inference parity over proven JTAG readback
 
-**Status:** architecture/acceptance contract only. No D3.D Vivado bitstream has been generated, no D3.D board programming, no neural inference. The r2 D3.C communication experiment completed physically and is preserved; D3.C is not itself a neural accelerator.
+**Status:** D3.D.1 signed16 LIF RTL, exact-M02 fixture generator, RTL tests, new Vivado builder, native receipt gate, guarded physical runner and independent physical receipt auditor are implemented **in source**. A genuine owner Vivado D3.D bitstream and physical neural execution have NOT yet been demonstrated. The r2 D3.C communication experiment completed physically and is preserved; D3.C is not itself a neural accelerator.
 
 ## Physical prerequisite established (owner originals, 2026-11-19)
 
@@ -39,7 +39,7 @@ Only after real neural outputs are available, integrate M06 two `m_axi` ports th
 
 ## Scope / release decision
 
-**D3.C communication PASS is necessary but insufficient for a full-scale physical neuromorphic-accelerator claim.** The current r2 bitstream has no neural executor. First implement D3.D.1 with a new honest compute-bearing PL image and compare hardware results to M02; extend to 32×4 and beyond before considering performance/capacity/DDR claims. No physical run command belongs in this plan until an actual D3.D native image passes independent gates.
+**D3.C communication PASS is necessary but insufficient for a full-scale physical neuromorphic-accelerator claim.** The current r2 bitstream has no neural executor. First implement D3.D.1 with a new honest compute-bearing PL image and compare hardware results to M02; extend to 32×4 and beyond before considering performance/capacity/DDR claims. The physical runner exists only for a later separately authorized one-shot. Do not run it until the owner native D3.D build has passed all gates, original image SHA/DRC/timing have been inspected, and cooling, UART and stock recovery conditions are safe.
 
 ## 2026-11-19 D3.D.1 implementation — real clocked neuron RTL, PC/native verification (PHYSICAL PENDING)
 
@@ -93,3 +93,27 @@ bash scripts/run_m08_d3d_neuron_pc.sh
 ```
 
 The last command is a fresh **offline synth/place/route/bitgen** requiring real owner Vivado; it may fail with a genuine IP interface or DRC finding not visible to CI. Preserve any first native failure in its new original directory; do not patch receipts, skip checks, or retry on the same folder. **Do not run the physical-programming script until the new offline evidence, source SHA, actual route reports, cooling/UART/recovery and a separate operator decision have been reviewed.** The previously successful r2 D3.C bit SHA `87e04662...` is *not* a neural candidate and will be rejected by D3.D audit.
+
+### Independent physical evidence verifier (only AFTER a separately approved D3.D load)
+
+A new `scripts/m08_d3d_neuron_physical_audit.py` independently verifies the six-file physical SHA ledger, exact executed Tcl, real Vivado exit=0, original JTAG transaction log, source-consistent native image SHA, original M02 dense+event fixture file and all four hardware-produced signed16 voltage/spike traces. It rejects a false or edited result even if an attacker rehashes the result receipt. Its only successful status is `M08_D3D_PHYSICAL_SINGLE_NEURON_FOUR_TICK_M02_PARITY_ACCEPTED`, with explicit claims `full_m06_neuromorphic_accelerator_verified=false`, `physical_ddr_verified=false` and `ps_clock_independence_verified=false`.
+
+For a **future reviewed** hardware run, the separately armed one-shot command is:
+
+```bash
+# NEVER run this with the old D3.C r2 BRAM-only bitstream.
+# RUN must be a new, genuinely accepted m08_d3d_neuron_* native directory.
+# Requires owner-approved board preflight, live independent backup cooling,
+# UART/recovery readiness, and explicit consent for ONE JTAG reprogramming.
+M08_D3D_ALLOW_PROGRAM=YES bash scripts/run_m08_d3d_neuron_physical_once.sh "$RUN"
+```
+
+The physical runner will automatically run the independent auditor before printing a hardware success marker. Afterward, an owner can separately verify the 6/6 SHA receipt and run:
+
+```bash
+HW="<FRESH_m08_d3d_neuron_HW_...>"
+(cd "$HW" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d_neuron_physical_audit.py --run-dir "$RUN" --hw-dir "$HW"
+```
+
+Any native Vivado error, unknown DRC warning, actual negative route slack, mismatched golden trace, failed board JTAG transaction, lost cooling, or ambiguous stock recovery stops the checkpoint; do not repeat immediately or relabel a BRAM echo as neural computation.
