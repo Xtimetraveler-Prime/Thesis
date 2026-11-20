@@ -162,3 +162,28 @@ Physical observed sequence:
 Leading **hypotheses, not established causes**: PS `pl_clk0` not toggling after asynchronous JTAG overwrite of Linux/dfx-managed stock PL, PS `pl_resetn0` asserted or propagating an unintended reset, or live AXI interconnect/BRAM response problem. Hardware Manager detecting the core does **not** prove its AXI clock/reset or BRAM response works. Existing `reset_hw_axi` call follows AMD UG908; absent `-size` is not by itself a fault because modern Vivado infers AXI data word size. Do not mask `run_hw_axi` errors, try a second write, bypass system/thermal safety, assert Linux failure from SSH timeout alone, or weaken the accepted build DRC gate. Do not merge D3.C or claim JTAG transport/FPGA neural inference verified.
 
 Next engineering proposal **after the original evidence and UART/recovery status are reviewed**: devise a separately scoped PC-only diagnostic for actual clock/reset reachability and PS/PL ownership, potentially a read-only boot/PS clock analysis and future instrumented, independently sourced PL diagnostic design if available. Any revised physical test is a separate owner-approved hardware action.
+
+## 2026-11-19 — D3.C r2 reset-isolation diagnostic after actual first AXI failure
+
+Owner first physical attempt `m08_d3c_jtag_HW_ApS9gZgk` yielded matching original SHA evidence (four files), `vivado_physical_exit=1`, real successful K26 JTAG programming (STARTUP HIGH), discovery of `hw_axi_1`, and **`Xicom 50-38 AXI TRANSACTION FAILED` on the first write**; no data was confirmed written or read back. A subsequent PC `ping -c 3 -W 1 10.42.0.135` had **3 transmitted / 0 received**; this establishes network unreachability, **not** Linux kernel failure, PS clock state, or AXI error source. Operator announced a physical reboot. A fresh stock-recovery observation after reboot was not provided yet. First native bitstream `m08_d3c_jtag_bram_UNRELEASED.bit` SHA256 `51c090b95069fc4fd5b9d79f3cbbf45aea222d6ac484569aabe115877df098ea` remains **QUARANTINED FOR PHYSICAL RETRY**.
+
+**New diagnosis:** The old JTAG/AXI/BRAM fabric relied on both PS `pl_clk0` and PS `pl_resetn0` at runtime. A success message from the JTAG configuration engine and discovery of a JTAG AXI core do not prove either is usable. AMD documentation indicates KV260 software platforms generally derive PL clocks from PS `pl_clk0`, and no documented board-level user PL clock has been verified for this design. Avoid guessing PL oscillator pins. Other suspects (JTAG core, AXI response, Linux overlay ownership) remain possible.
+
+**r2 bounded engineering change, not a proven cure:** Replace **only the AXI reset source**. A new version-controlled module `rtl/m08_d3c_fabric_por.v` initializes its active-low reset output LOW at configuration and releases it after 256 rising edges of `ps/pl_clk0`. That same output drives `jtag_axi/aresetn`, `link_sc/aresetn`, and `bram_ctrl/s_axi_aresetn`. `ps/pl_resetn0` is now disconnected from these AXI resets, but the **100 MHz PS-sourced clock and all other PS/board/fan assumptions remain unchanged**. This isolates a possible PS reset-held-low cause and leaves a stopped PS fabric clock as a falsifiable second hypothesis. It cannot guarantee recovery from JTAG-overwrite/dfx-manager ownership conflicts or prove that Linux should survive. All PS HPM0/HPM1/LPD masters remain disabled and fan A12 TTC0 routing is retained.
+
+The r2 offline Tcl requires explicit validation of the POR reset net connecting to all three AXI reset sinks, and copies the exact RTL source to `reports/11_fabric_por.v`. The updated Python gate checks its SHA against repository code and native receipt; r2 has a **distinct bitstream name** `m08_d3c_jtag_bram_r2_UNRELEASED.bit`, `...-v2-fabric-por` schema, `reset_mode=FABRIC_POR_256_CYCLES`, `ps_reset_dependency=NO`, `ps_clock_dependency=YES`, and an 11-file SHA receipt. The previous 10-file native r1 candidate is no longer accepted by the updated physical runner or source/native gate. Existing narrow vendor-IP DRC review and positive timing requirements remain; if r2 changes their profile, stop and examine the NEW original reports, **do not waive DRC or rewrite evidence**.
+
+**Owner next PC-only workflow after physically restoring stock, verifying independent fan/UART readiness, and pulling the development branch:**
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3c-jtag-pl-link
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3c-jtag-pl-link
+cd Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m08_d3c_jtag_bram_gate.py' -v
+python3 scripts/m08_d3c_jtag_bram_gate.py --source-only
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+bash scripts/run_m08_d3c_jtag_bram_pc.sh
+```
+
+This builds **one fresh r2 offline candidate only** in a NEW directory; do not program the KV260 from this command. Native Vivado cannot be executed via GitHub CI; operator must report the actual native candidate, logs, original 11 SHA receipt and status. Even if accepted, r2 physical JTAG programming must be a **new separate deliberate owner decision** after reviewing the newly generated bit SHA, timing, DRC, UART, cooling and stock recovery. No automatic second hardware attempt, no XSCT/PS register writes, no Linux firmware or manager mutation, and no silent retry of the old r1 SHA.
