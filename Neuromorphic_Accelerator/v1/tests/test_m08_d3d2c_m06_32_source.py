@@ -66,14 +66,37 @@ class M0632NeuronSourceTests(unittest.TestCase):
     def test_new_rtl_mutation_detected_before_native(self):
         with tempfile.TemporaryDirectory() as directory:
             altered=Path(directory)/"altered.v"
-            altered.write_text(
-                gate.RTL.read_text().replace(
-                    "synaptic_sum = synaptic_sum +",
-                    "synaptic_sum = synaptic_sum -"))
+            needle="syn_accum <= syn_accum + selected_weight"
+            original=gate.RTL.read_text()
+            self.assertEqual(original.count(needle),1)
+            altered.write_text(original.replace(
+                needle,"syn_accum <= syn_accum - selected_weight"))
             with patch.object(gate,"RTL",altered):
                 with self.assertRaisesRegex(gate.Reject,
                                             "hardware semantic absent"):
                     gate.source()
+
+    def test_timing_fix_requires_sequential_neuron_updates(self):
+        accepted=gate.source()
+        self.assertTrue(accepted["neuron_update_pipelined"])
+        self.assertEqual(accepted["clock_cycles_per_neuron_expression"],
+                         "configured_active_edges + 5")
+        self.assertFalse(accepted["routed_timing_closed"])
+        rtl=gate.RTL.read_text()
+        self.assertEqual(rtl.count("syn_accum <= syn_accum + selected_weight"),1)
+        self.assertEqual(rtl.count("trace_voltage[compute_index] <= next_voltage"),1)
+        self.assertNotIn("wire signed [63:0] total =",rtl)
+        self.assertNotIn("synaptic_sum = synaptic_sum +",rtl)
+        # Arithmetic, routing and commit are distinct case arms. A new
+        # original Vivado route is still required for true WNS/TNS closure.
+        phases=rtl.split("case (update_phase)",1)[1]
+        for token in ("PHASE_ROUTE:", "PHASE_BASE:", "PHASE_EXT:",
+                      "PHASE_TOTAL:", "PHASE_COMMIT:"):
+            self.assertEqual(phases.count(token),1)
+        self.assertLess(phases.index("PHASE_ROUTE:"),
+                        phases.index("PHASE_COMMIT:"))
+        self.assertIn("route_slot <= 0;",phases)
+        self.assertIn("syn_accum <= 0;",phases)
 
     def test_actual_32_neuron_m06_oracle_vs_icarus_rtl(self):
         if not shutil.which("iverilog") or not shutil.which("vvp"):
