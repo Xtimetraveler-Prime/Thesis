@@ -8,10 +8,10 @@
 # Owner confirms independent ACTIVE cooling, UART capture, stock recovery,
 # stable exclusive JTAG, and explicit one-shot program consent manually.
 # Exactly one Tcl program_hw_devices invocation; NEVER retry automatically.
-# No PS/DDR/Linux MMIO, no flash, SD writes or D3.D.2B image reuse.
+# No PS/DDR/Linux MMIO, no flash, SD writes or D3.D.2D image reuse.
 set -euo pipefail
 if [[ "$#" -ne 1 ]]; then
-    echo 'usage: run_m08_d3d2e_event_physical_once.sh <new-original-accepted-native-dir>' >&2
+    echo 'usage: run_m08_d3d2e_queue_physical_once.sh <new-original-accepted-native-dir>' >&2
     exit 2
 fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -78,7 +78,7 @@ printf 'vivado_physical_exit=%s\n' "$RC" > "$HW/03_exit.txt"
         sha256sum -c 99_evidence_sha256.txt
         python3 "$ROOT/scripts/m08_d3d2e_queue_physical_audit.py" \
             --run-dir "$NATIVE" --hw-dir "$HW"
-        echo 'M08_D3D2E_HARDWARE_M06_32X4_RAW_EVENT_AND_RECURRENT_PARITY_SUCCEEDED'
+        echo 'M08_D3D2E_HARDWARE_M06_32X4_QUEUE_SERVICE_AND_RECURRENT_PARITY_SUCCEEDED'
     else
         for f in 00_executed_source.tcl 01_jtag_m06.log 02_jtag_m06.jou \
                  03_exit.txt 10_m06_tickqueue_golden.hex 80_m06_tickqueue_hw_parity.txt; do
