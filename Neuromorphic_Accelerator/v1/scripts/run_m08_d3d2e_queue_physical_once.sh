@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# D3.D.2E M32Q STAGED/NOT RELEASED: native inspector MUST return 0 first.
+# D3.D.2E M32Q STAGED/NOT RELEASED: new EXACT owner-image inspector MUST return 0 first.
 # image, only after read-only original 12-SHA/DRC/timing native gate exit 0.
 # User must separately confirm independent cooling, UART, stable exclusive
 # JTAG and stock recovery. One owner-authorized physical run, NO AUTO RETRY.
@@ -30,17 +30,17 @@ fi
 # Exact original owner image provenance, seven JTAG/XSDB warnings, bitstream
 # SHA and timing are independently verified by the native checker BEFORE any
 # physical receipt directory or JTAG operation.
-# This is the unconditional first-image REVIEW-REQUIRED exit-2 blocker until
-# full new DRC and timing report details are independently owner-approved.
+# This is the NEW first-original exact DRC/timing acceptance gate, released only after
+# all exact owner report hashes and warning pins are independently reviewed.
 # DO NOT bypass this line; stop before creating an HW folder or opening JTAG.
-python3 "$ROOT/scripts/m08_d3d2e_queue_native_review.py" --run-dir "$NATIVE"
+python3 "$ROOT/scripts/m08_d3d2e_queue_exact_native_accept.py" --run-dir "$NATIVE"
 EXPECTED_SHA="2c443c3d80e86e5e9488b457110a45b0db96881016e9f87a5c801a72ec7527dc"
 EXPECTED_SIZE=7797844
 BIT="$NATIVE/bitstream_candidate/m08_d3d2e_queue_lif_jtag_UNRELEASED.bit"
 if [[ ! -f "$BIT" || -L "$BIT" ||
       "$(stat -c '%s' "$BIT")" != "$EXPECTED_SIZE" ||
       "$(sha256sum "$BIT" | awk '{print $1}')" != "$EXPECTED_SHA" ]]; then
-    echo 'M08_D3D2E_HW_STOP: no exact reviewed original M06 candidate' >&2
+    echo 'M08_D3D2E_HW_STOP: no exact reviewed first-original M32Q candidate' >&2
     exit 2
 fi
 if [[ "${M08_D3D2E_ALLOW_PROGRAM:-}" != YES ||
