@@ -47,9 +47,20 @@ def source()->dict:
         "scaled_three", # see RTL source for real name
         "three_quarter_trunc",
         "three_scaled < 0 ? -((-three_scaled) >>> 2)",
-        "spike_mask[edge_pre[route_idx]][tick - edge_delay[route_idx]]",
-        "synaptic_sum = synaptic_sum +",
-        "trace_syn_current[compute_index] <= synaptic_sum[31:0]",
+        "spike_mask[edge_pre[route_slot]][tick - edge_delay[route_slot]]",
+        "reg signed [19:0] syn_accum",
+        "reg signed [16:0] leak_bias_stage",
+        "reg signed [33:0] external_stage",
+        "reg signed [33:0] total_stage",
+        "PHASE_ROUTE", "PHASE_BASE", "PHASE_EXT",
+        "PHASE_TOTAL", "PHASE_COMMIT",
+        "if (route_slot < cfg_edge_count)",
+        "if (edge_active_now)",
+        "syn_accum <= syn_accum + selected_weight",
+        "total_stage <= external_stage +",
+        "update_phase <= PHASE_COMMIT",
+        "trace_syn_current[compute_index] <=",
+        "{{12{syn_accum[19]}},syn_accum}",
         "trace_voltage[compute_index] <= next_voltage",
         "spike_mask[neuron][tick] <= fired",
         "if (neuron == 5'd31)",
@@ -61,6 +72,16 @@ def source()->dict:
     for needle in requirements:
         if needle not in rtl:
             raise Reject("new 32-neuron hardware semantic absent: "+needle)
+    # The original 32-level carry/LUT spike-to-voltage chain must NOT be
+    # reintroduced: clock-to-clock sequential routing and staged arithmetic
+    # are part of the new timing-fix acceptance contract.
+    for path in (
+        "synaptic_sum = synaptic_sum +",
+        "trace_syn_current[compute_index] <= synaptic_sum[31:0]",
+        "wire signed [63:0] total =",
+    ):
+        if path in rtl:
+            raise Reject("old monolithic routed datapath reintroduced: "+path)
     for forbidden in (
         "program_hw_devices", "open_hw_manager", "connect_hw_server",
         "run_hw_axi", "xmutil ", "/dev/uio", "/dev/mem", "sudo ", "ssh ",
@@ -89,6 +110,10 @@ def source()->dict:
         new_fpga_programmed=False,
         physical_32_neuron_m02_parity_verified=False,
         source_only=True,
+        clock_cycles_per_neuron_expression="configured_active_edges + 5",
+        neuron_update_pipelined=True,
+        physical_clock_hz_verified=False,
+        routed_timing_closed=False,
         rtl_sha256=sha256(RTL.read_bytes()).hexdigest(),
         bench_sha256=sha256(TB.read_bytes()).hexdigest(),
         oracle_sha256=sha256(VECTORS.read_bytes()).hexdigest(),
