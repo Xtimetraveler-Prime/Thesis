@@ -211,7 +211,9 @@ module tb_m08_d3d2c_m06_32_lif_axil;
                 vectors[base_word+4],vectors[base_word+5],
                 vectors[base_word+6],vectors[base_word+7]);
         end
-        for(e=0;e<8;e=e+1) begin
+        // Only five ACTIVE M06 edges may be written: unused slots must
+        // remain reset instead of receiving an illegal zero delay.
+        for(e=0;e<5;e=e+1) begin
             edge_base=259+e*4;
             set_edge(e,vectors[edge_base+0],vectors[edge_base+1],
                        vectors[edge_base+2],vectors[edge_base+3]);
