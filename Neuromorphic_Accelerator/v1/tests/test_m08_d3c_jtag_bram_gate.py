@@ -32,7 +32,11 @@ class D3CJtagBramTests(unittest.TestCase):
 
     def make_mock_native(self):
         report = {
-            "schema": "m08-d3c-jtag-bram-offline-build-v1",
+            "schema": "m08-d3c-jtag-bram-offline-build-v2-fabric-por",
+            "reset_mode": "FABRIC_POR_256_CYCLES",
+            "ps_reset_dependency": "NO",
+            "ps_clock_dependency": "YES",
+            "fabric_por_rtl_sha256": sha256((ROOT/"rtl/m08_d3c_fabric_por.v").read_bytes()).hexdigest(),
             "vivado_version": "2025.2",
             "part": "xck26-sfvc784-2LV-c",
             "board_part": "xilinx.com:kv260_som:part0:1.4",
@@ -42,7 +46,6 @@ class D3CJtagBramTests(unittest.TestCase):
             "ps_pl0_runtime_clock_proven": "NO",
             "bram_map_base": "0xA0000000",
             "bram_map_range": "0x00001000",
-            "ext_reset_active_high": "0",
             "bram_controller_derived_depth": "1024",
             "bram_depth_words": "1024",
             "bram_width_bits": "32",
@@ -60,6 +63,7 @@ class D3CJtagBramTests(unittest.TestCase):
             "01_vivado.jou": b"source test\n",
             "02_vivado_exit.txt": b"vivado_build_exit=0\n",
             "reports/10_fan_a12.xdc": b"set_property PACKAGE_PIN A12 [get_ports {M08_FAN_PWM}]\n",
+            "reports/11_fabric_por.v": (ROOT/"rtl/m08_d3c_fabric_por.v").read_bytes(),
             "reports/20_route_drc.rpt": b"Checks found: 0\n",
             "reports/21_route_timing.rpt": (
                 b"Design Timing Summary\n"
@@ -169,35 +173,62 @@ class D3CJtagBramTests(unittest.TestCase):
         self.assertEqual(result["jtag_axi_bram_base"], "0xA0000000")
         self.assertEqual(result["candidate_bytes"], 131072)
 
-    def test_source_does_not_force_readonly_ip_properties(self):
+    def test_r2_source_forces_no_ps_reset_and_uses_deterministic_por(self):
         script = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
-        self.assertNotRegex(script, r"set_property[^\n]*CONFIG\.C_EXT_RESET_HIGH")
+        por = (ROOT / "rtl/m08_d3c_fabric_por.v").read_text()
+        self.assertNotIn("connect_bd_net $reset_out", script)
+        self.assertNotIn("rst_pl0/peripheral_aresetn", script)
+        self.assertNotIn("CONFIG.C_EXT_RESET_HIGH", "\n".join(
+            x for x in script.splitlines() if not x.lstrip().startswith("#")))
         self.assertNotRegex(script, r"set_property[^\n]*CONFIG\.MEM_DEPTH")
-        self.assertIn("get_property CONFIG.C_EXT_RESET_HIGH $rst", script)
-        self.assertIn("get_property CONFIG.MEM_DEPTH $ctrl", script)
-        self.assertIn("get_property CONFIG.Write_Depth_A $bram", script)
-        self.assertIn("get_property CONFIG.Write_Width_A $bram", script)
-        self.assertIn("M08_D3C_NATIVE_RESET_AND_BRAM_DERIVED_CHECK=PASS", script)
+        self.assertIn("create_bd_cell -type module -reference m08_d3c_fabric_por fabric_por", script)
+        self.assertIn("get_bd_nets -quiet -of_objects [get_bd_pins fabric_por/aresetn]", script)
+        self.assertIn("fabric_por/clk", script)
+        self.assertIn("m08_d3c_jtag_bram_r2_UNRELEASED.bit", script)
+        self.assertIn("M08_D3C_NATIVE_FABRIC_POR_AND_BRAM_DERIVED_CHECK=PASS", script)
+        self.assertIn("reg [7:0] delay_count = 8'h00;", por)
+        self.assertIn("reg       released    = 1'b0;", por)
+        self.assertIn("always @(posedge clk)", por)
+        self.assertIn("assign aresetn = released;", por)
+        self.assertEqual(g.source()["fabric_por_sha256"],
+                         sha256(por.encode()).hexdigest())
 
-    def test_source_gate_rejects_writes_to_readonly_vivado_properties(self):
+    def test_r2_source_gate_rejects_ps_reset_connections_and_readonly_writes(self):
         original = (ROOT / "scripts/m08_d3c_jtag_bram_build.tcl").read_text()
         shell = (ROOT / "scripts/run_m08_d3c_jtag_bram_pc.sh").read_text()
         scripts = self.root / "scripts"
         scripts.mkdir()
         (scripts / "run_m08_d3c_jtag_bram_pc.sh").write_text(shell)
-        for forbidden in ("CONFIG.C_EXT_RESET_HIGH", "CONFIG.MEM_DEPTH"):
-            with self.subTest(forbidden=forbidden):
-                (scripts / "m08_d3c_jtag_bram_build.tcl").write_text(
-                    original + "\nset_property " + forbidden + " 0 $ctrl\n")
-                with self.assertRaisesRegex(g.Reject, "must not force read-only"):
+        for suffix in ("\nconnect_bd_net $reset_out [get_bd_pins fabric_por/aresetn]\n",
+                       "\nset_property CONFIG.C_EXT_RESET_HIGH 0 $por\n",
+                       "\nset_property CONFIG.MEM_DEPTH 1024 $ctrl\n"):
+            with self.subTest(suffix=suffix):
+                (scripts / "m08_d3c_jtag_bram_build.tcl").write_text(original + suffix)
+                with self.assertRaises(g.Reject):
                     g.source(self.root)
 
-    def test_native_reset_mismatch_rejected_even_with_rehashed_receipt(self):
+    def test_native_ps_reset_dependency_mismatch_rejected_even_if_rehashed(self):
         p = self.run / "reports/30_native_result.txt"
-        p.write_text(p.read_text().replace("ext_reset_active_high=0",
-                                          "ext_reset_active_high=1"))
+        p.write_text(p.read_text().replace("ps_reset_dependency=NO",
+                                          "ps_reset_dependency=YES"))
         self.refresh_ledger()
-        with self.assertRaisesRegex(g.Reject, "native field: ext_reset_active_high"):
+        with self.assertRaisesRegex(g.Reject, "native field: ps_reset_dependency"):
+            g.native(self.run)
+
+    def test_native_r2_por_provenance_rejected_even_if_rehashed(self):
+        p = self.run / "reports/11_fabric_por.v"
+        p.write_text(p.read_text() + "\n// altered after build\n")
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, "fabric POR RTL differs"):
+            g.native(self.run)
+
+    def test_old_candidate_report_is_not_accepted_for_r2(self):
+        p = self.run / "reports/30_native_result.txt"
+        p.write_text(p.read_text().replace(
+            "schema=m08-d3c-jtag-bram-offline-build-v2-fabric-por",
+            "schema=m08-d3c-jtag-bram-offline-build-v1"))
+        self.refresh_ledger()
+        with self.assertRaisesRegex(g.Reject, "native field: schema"):
             g.native(self.run)
 
     def test_native_bram_auto_geometry_mismatch_rejected(self):
