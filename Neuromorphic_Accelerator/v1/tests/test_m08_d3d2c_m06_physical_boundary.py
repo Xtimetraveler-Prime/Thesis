@@ -93,9 +93,16 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
             with self.assertRaises(audit.Reject):
                 audit.verify(fake,fake)
         native_source=(ROOT/"scripts/m08_d3d2c_m06_native_review.py").read_text()
-        self.assertIn('return 2  # *mandatory*',native_source)
-        self.assertNotIn("M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD",
-                         native_source)
+        self.assertIn("M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD",
+                      native_source)
+        self.assertIn("OWNER_ORIGINAL_BIT_SHA",native_source)
+        self.assertIn("OWNER_ORIGINAL_DRC_SHA",native_source)
+        # Native source may now accept exactly one owner image; the
+        # independently staged one-shot JTAG runner remains HARD BLOCKED.
+        shell=(ROOT/"scripts/run_m08_d3d2c_m06_physical_once.sh").read_text()
+        self.assertIn('EXPECTED_SHA="UNREVIEWED_M08_D3D2C_OWNER_IMAGE"',shell)
+        tcl=(ROOT/"scripts/m08_d3d2c_m06_readback_once.tcl").read_text()
+        self.assertIn('set RELEASED_SHA "UNREVIEWED_M08_D3D2C_OWNER_IMAGE"',tcl)
 
 if __name__=="__main__":
     unittest.main()
