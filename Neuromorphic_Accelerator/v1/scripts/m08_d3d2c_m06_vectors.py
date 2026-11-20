@@ -27,7 +27,7 @@ NONCE=0xD2C00001
 DECAY_MODE=3 # exact M06 3/4 signed truncate-to-zero
 
 def u32(x: int) -> str:
-    if not -(1<<31) <= x <= (1<<31)-1:
+    if not -(1<<31) <= x < (1<<32):
         raise ValueError("32-bit signed wire value overflow")
     return f"{x & 0xffffffff:08X}"
 
