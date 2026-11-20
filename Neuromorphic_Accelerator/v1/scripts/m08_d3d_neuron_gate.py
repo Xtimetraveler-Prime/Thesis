@@ -53,6 +53,25 @@ def source() -> dict:
                        if x.strip() and not x.lstrip().startswith("#"))
     check("m08_d3d_lif_axil.sv" not in active and "12_lif_axil.sv" not in active,
           "native builder must use Verilog .v module reference and evidence")
+    # Actual owner Vivado picked a DIFFERENT wrapper after a typo in the
+    # hardcoded top name, even though route and bitgen succeeded. This exact
+    # source boundary catches that error BEFORE any new native build.
+    top_commands = [line.strip() for line in active.splitlines()
+                    if re.match(r"^set_property\\s+top\\s+", line.strip())]
+    check(top_commands == ["set_property top $wrapper_top [current_fileset]"],
+          "unsafe/mismatched Vivado explicit top setting: " + repr(top_commands))
+    for top_token in (
+        "set wrapper_path [lindex $wrapper 0]",
+        "set wrapper_top [file rootname [file tail $wrapper_path]]",
+        'if {$wrapper_top ne "m08_d3d_lif_jtag_wrapper"}',
+        'set resolved_top [get_property top [current_fileset]]',
+        'if {$resolved_top ne $wrapper_top}',
+        "M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|$wrapper_top",
+        "puts $f {wrapper_top=m08_d3d_lif_jtag_wrapper}",
+    ):
+        check(top_token in active, "missing native verified wrapper top: " + top_token)
+    check("m08_d3d_neuron_wrapper" not in active,
+          "obsolete hardcoded wrong Vivado top retained")
     for token in (
         "2025.2", "m08_d3d_neuron_", "xck26-sfvc784-2LV-c",
         "get_board_parts -quiet xilinx.com:kv260_som:part0:*",
@@ -167,6 +186,7 @@ def native(folder: Path) -> dict:
     values = dict(rows)
     for key, val in {
         "schema": SCHEMA,
+        "wrapper_top": "m08_d3d_lif_jtag_wrapper",
         "part": "xck26-sfvc784-2LV-c",
         "ps_to_pl_hpm": "DISABLED",
         "jtag_axi": "ENABLED_PL",
@@ -219,6 +239,8 @@ def native(folder: Path) -> dict:
     log = read(folder/"00_vivado.log").decode(errors="replace")
     check("M08_D3D_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED" in log,
           "no native neural bitstream completion marker")
+    check("M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|m08_d3d_lif_jtag_wrapper" in log,
+          "no native proof generated top was selected and verified")
     errors = [(n, x.strip()) for n, x in enumerate(log.splitlines(), 1)
               if re.match(r"^(ERROR:|CRITICAL WARNING:)", x)]
     check(not errors, "native fatal diagnostics: " + repr(errors[:2]))
