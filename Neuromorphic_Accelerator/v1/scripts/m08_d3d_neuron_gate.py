@@ -17,13 +17,13 @@ import m08_d3c_jtag_bram_gate as d3c
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER = ROOT / "scripts/m08_d3d_neuron_build.tcl"
 RUNNER = ROOT / "scripts/run_m08_d3d_neuron_pc.sh"
-LIF_RTL = ROOT / "rtl/m08/m08_d3d_lif_axil.sv"
+LIF_RTL = ROOT / "rtl/m08/m08_d3d_lif_axil.v"
 POR_RTL = ROOT / "rtl/m08_d3c_fabric_por.v"
 BIT_REL = "bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"
 EXPECTED = (
     "00_vivado.log", "01_vivado.jou", "02_vivado_exit.txt",
     "reports/10_fan_a12.xdc", "reports/11_fabric_por.v",
-    "reports/12_lif_axil.sv", "reports/20_route_drc.rpt",
+    "reports/12_lif_axil.v", "reports/20_route_drc.rpt",
     "reports/21_route_timing.rpt", "reports/22_route_utilization.rpt",
     "reports/23_route_clocks.rpt", "reports/30_native_result.txt", BIT_REL,
 )
@@ -43,12 +43,16 @@ def read(path: Path, limit: int = 12000000) -> bytes:
     return path.read_bytes()
 
 def source() -> dict:
+    check(LIF_RTL.suffix == ".v" and not (ROOT / "rtl/m08/m08_d3d_lif_axil.sv").exists(),
+          "Vivado module-reference top must be native Verilog .v, not SystemVerilog .sv")
     builder = read(BUILDER, 200000).decode()
     runner = read(RUNNER, 60000).decode()
     lif = read(LIF_RTL, 50000).decode()
     por = read(POR_RTL, 20000).decode()
     active = "\n".join(x for x in builder.splitlines()
                        if x.strip() and not x.lstrip().startswith("#"))
+    check("m08_d3d_lif_axil.sv" not in active and "12_lif_axil.sv" not in active,
+          "native builder must use Verilog .v module reference and evidence")
     for token in (
         "2025.2", "m08_d3d_neuron_", "xck26-sfvc784-2LV-c",
         "get_board_parts -quiet xilinx.com:kv260_som:part0:*",
@@ -101,7 +105,7 @@ def source() -> dict:
         "set -euo pipefail", "mktemp -d",
         "m08_d3d_neuron_build.tcl", "m08_d3d_neuron_gate.py",
         "99_evidence_sha256.txt", 'sha256sum -c',
-        "reports/12_lif_axil.sv", "m08_d3d_lif_jtag_UNRELEASED.bit",
+        "reports/12_lif_axil.v", "m08_d3d_lif_jtag_UNRELEASED.bit",
     ):
         check(token in runner, "neural PC runner missing: " + token)
     for forbidden in ("program_hw_devices", "run_hw_axi", "xmutil", "sudo ", "ssh ", "rm -rf"):
@@ -196,7 +200,7 @@ def native(folder: Path) -> dict:
         check(values.get(name) == sha256(content).hexdigest(),
               "neural source provenance mismatch: " + name)
     for filename, original in (("11_fabric_por.v", POR_RTL),
-                               ("12_lif_axil.sv", LIF_RTL)):
+                               ("12_lif_axil.v", LIF_RTL)):
         check(sha256(read(folder/"reports"/filename, 50000)).hexdigest() ==
               sha256(read(original, 50000)).hexdigest(),
               "native evidence RTL differs from source: " + filename)
