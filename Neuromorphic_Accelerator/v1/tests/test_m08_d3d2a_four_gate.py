@@ -52,15 +52,79 @@ class FourNeuronGateTests(unittest.TestCase):
             self.assertNotEqual(second.returncode, 0)
             self.assertEqual(out.read_bytes(), before)
 
-    def test_drc_fails_closed_on_unreviewed_warnings(self):
-        with self.assertRaisesRegex(gate.Reject,"REVIEW_REQUIRED"):
-            gate.inspect_new_drc("Checks found: 7\n")
-        with self.assertRaisesRegex(gate.Reject,"unambiguous"):
-            gate.inspect_new_drc("")
-        with self.assertRaisesRegex(gate.Reject,"detail despite zero"):
-            gate.inspect_new_drc(
-                "Checks found: 0\nREQP-1858#1 Warning\n")
-        self.assertEqual(gate.inspect_new_drc("Checks found: 0\n")["drc_checks"],0)
+    @staticmethod
+    def reviewed_report() -> str:
+        # Synthetic clone of owner-reviewed warning classes/hierarchy.
+        # A positive UNIT test does not substitute for original owner file.
+        header = (
+            "Vivado v.2025.2\n"
+            "Design       : m08_d3d2a_four_lif_jtag_wrapper\n"
+            "Device       : xck26-sfvc784-2LV-c\n"
+            "Design State : Fully Routed\n"
+            "Checks found: 7\n"
+        )
+        for code, (count, desc) in gate.d3c.VENDOR_DRC_PROFILE.items():
+            header += f"| {code} | Warning | {desc} | {count} |\n"
+        for idx, (pin, path, conn) in enumerate((
+            ("A2", "temp_curid[31]_i_1", "I1"),
+            ("A4", "temp_curid[31]_i_1", "I0"),
+            ("A5", "id_state[0]_i_1", "I0"),
+        ), 1):
+            header += (f"PDCN-1569#{idx} Warning\nLUT equation term check\n"
+                       f"Used physical LUT pin '{pin}' of cell dbg_hub/inst/"
+                       f"xsdb/{path} (pin dbg_hub/inst/xsdb/{path}/{conn}) "
+                       "is not included in the LUT equation.\n"
+                       "Related violations: <none>\n")
+        for code, idx, name, desc in (
+            ("REQP-1857", 1, "rx_fifo_i", "RAMB18E2_writefirst_collision_advisory"),
+            ("REQP-1858", 1, "rd_cmd_fifo_i", "RAMB36E2_writefirst_collision_advisory"),
+            ("REQP-1858", 2, "wr_cmd_fifo_i", "RAMB36E2_writefirst_collision_advisory"),
+        ):
+            header += (f"{code}#{idx} Warning\n{desc}\n"
+                       f"Synchronous clocking for BRAM ({gate.NEW_JTAG_INSTANCE}"
+                       f"/jtag_axi/inst/jtag_axi_engine_u/{name}/inst) in SDP "
+                       "mode with WRITE_FIRST write-mode; possible address collisions.\n"
+                       "Related violations: <none>\n")
+        header += ("RTSTAT-10#1 Warning\nNo routable loads\n"
+                   "39 net(s) have no routable loads. The problem bus(es) "
+                   "and/or net(s) are " + ",\n".join(gate.REVIEWED_15) +
+                   "\n (the first 15 of 37 listed).\n"
+                   "Related violations: <none>\n")
+        return header
+
+    def test_drc_requires_precise_original_debug_paths(self):
+        report = self.reviewed_report()
+        result = gate.inspect_new_drc(report)
+        self.assertEqual(result["drc_checks"], 7)
+        self.assertEqual(result["rtstat_sampled_paths"], 15)
+        for mutated in (
+            report.replace("Checks found: 7", "Checks found: 8"),
+            report.replace("| PDCN-1569 | Warning |", "| PDCN-1569 | Error |"),
+            report.replace("rx_fifo_i", "user_logic_fifo", 1),
+            report.replace("rd_cmd_fifo_i", "user_logic_fifo", 1),
+            report.replace("wr_cmd_fifo_i", "user_logic_fifo", 1),
+            report.replace(gate.REVIEWED_15[7], "fabric/neuron_bad_signal", 1),
+            report.replace("first 15 of 37", "first 15 of 38"),
+            report.replace("39 net(s)", "40 net(s)"),
+            report.replace("PDCN-1569#3 Warning", "PDCN-1569#3 Error"),
+            report.replace("Related violations: <none>", "Related violations: new"),
+            report.replace("Design       : m08_d3d2a_four_lif_jtag_wrapper",
+                           "Design       : forged_wrapper"),
+        ):
+            with self.subTest(mutated=mutated[:100]):
+                with self.assertRaises(gate.Reject):
+                    gate.inspect_new_drc(mutated)
+
+    def test_owner_native_source_hashes_match_checked_in_source(self):
+        # Independent provenance: source must be exact bytes accepted in the
+        # genuine routed owner build; otherwise NO JTAG program is permitted.
+        hashes = gate.source()
+        self.assertEqual(hashes["builder_sha256"],gate.OWNER_ORIGINAL_BUILDER_SHA)
+        self.assertEqual(hashes["lif_rtl_sha256"],gate.OWNER_ORIGINAL_LIF_SHA)
+        self.assertEqual(gate.ORIGINAL_OWNER_BIT_BYTES, 7797843)
+        self.assertEqual(
+            gate.ORIGINAL_OWNER_BIT_SHA,
+            "3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411")
 
     def test_mutated_design_fails_source_gate(self):
         with tempfile.TemporaryDirectory() as td:
