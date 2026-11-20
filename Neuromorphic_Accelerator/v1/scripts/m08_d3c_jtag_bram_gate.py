@@ -143,7 +143,13 @@ VENDOR_DRC_PROFILE = {
 }
 
 
-def inspect_drc(drc: str) -> dict:
+def inspect_drc(drc: str, *, design_instance: str = "m08_d3c_jtag_link_i") -> dict:
+    # Fail-closed hierarchy map for the two ORIGINAL, source-reviewed designs.
+    # Physical D3.C uses m08_d3c_jtag_link_i; the D3.D LIF image uses
+    # m08_d3d_lif_jtag_i. This is NOT a wildcard DRC waiver.
+    require(design_instance in (
+        "m08_d3c_jtag_link_i", "m08_d3d_lif_jtag_i"
+    ), "native DRC unreviewed JTAG hierarchy instance")
     from collections import Counter
 
     matches = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", drc)
@@ -197,7 +203,8 @@ def inspect_drc(drc: str) -> dict:
             fifo_names = ("rx_fifo_i",) if code == "REQP-1857" else (
                 "rd_cmd_fifo_i", "wr_cmd_fifo_i"
             )
-            prefix = "BRAM (m08_d3c_jtag_link_i/jtag_axi/inst/jtag_axi_engine_u/"
+            prefix = (f"BRAM ({design_instance}/jtag_axi/inst/"
+                      "jtag_axi_engine_u/")
             require(body.count(prefix) == 1 and
                     any(prefix + fifo + "/" in body for fifo in fifo_names) and
                     "SDP mode with WRITE_FIRST write-mode" in body and
@@ -214,7 +221,7 @@ def inspect_drc(drc: str) -> dict:
             require(sample is not None, "native DRC unused-load sample missing")
             paths = [p.strip() for p in sample.group(1).split(",") if p.strip()]
             require(len(paths) == 15 and all(p.startswith((
-                "dbg_hub/inst/", "m08_d3c_jtag_link_i/jtag_axi/inst/"
+                "dbg_hub/inst/", f"{design_instance}/jtag_axi/inst/"
             )) for p in paths), "native DRC unused-load sample includes non-vendor logic")
 
     require(all(per_code[code] == qty and
