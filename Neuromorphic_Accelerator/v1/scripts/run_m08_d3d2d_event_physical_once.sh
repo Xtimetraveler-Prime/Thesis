@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# D3.D.2D M06 raw-event — FIRST new FPGA test STAGED AND HARD BLOCKED.
-# NO new original DRC/timing/bitstream signoff exists. DO NOT RUN ON BOARD.
+# D3.D.2D M06 raw-event — exact FIRST owner-reviewed 32-neuron M32E v5
+# image, only after read-only original 12-SHA/DRC/timing native gate exit 0.
+# User must separately confirm independent cooling, UART, stable exclusive
+# JTAG and stock recovery. One owner-authorized physical run, NO AUTO RETRY.
 # Revalidate all 12 immutable native SHA files, exact DRC, RTL, 100MHz timing,
 # original image digest BEFORE generating physical evidence or opening JTAG.
 # Owner confirms independent ACTIVE cooling, UART capture, stock recovery,
@@ -16,7 +18,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="$HOME/Thesis_Evidence/M08"
 NATIVE="$(realpath -- "$1")"
 if [[ ! -d "$BASE" || -L "$BASE" || ! -d "$NATIVE" || -L "$NATIVE" ||
-      "$NATIVE" != "$BASE"/m08_d3d2d_event_* || "$(id -u)" -eq 0 ]]; then
+      "$NATIVE" != "$BASE/m08_d3d2d_event_DE6kQWvt" || "$(id -u)" -eq 0 ]]; then
     echo 'M08_D3D2D_HW_STOP: noncanonical native folder or root' >&2
     exit 2
 fi
@@ -25,11 +27,12 @@ if ! command -v vivado >/dev/null 2>&1 ||
     echo 'M08_D3D2D_HW_STOP: expected genuine Vivado 2025.2' >&2
     exit 2
 fi
-# NEW first-owner native DRC/timing/bitstream must be reviewed separately.
-# Its first-image native gate ALWAYS exits 2. No physical programming now.
+# Exact original owner image provenance, seven JTAG/XSDB warnings, bitstream
+# SHA and timing are independently verified by the native checker BEFORE any
+# physical receipt directory or JTAG operation.
 python3 "$ROOT/scripts/m08_d3d2d_event_native_review.py" --run-dir "$NATIVE"
-EXPECTED_SHA="UNREVIEWED_M08_D3D2D_NEW_IMAGE"
-EXPECTED_SIZE=0  # Unreviewed first image: HARD STOP, NEVER force to zero-size bit
+EXPECTED_SHA="f50a156342eaf1173a3869b5316e4edc1d59662d9f0d687bcec600f7b0efdeab"
+EXPECTED_SIZE=7797844
 BIT="$NATIVE/bitstream_candidate/m08_d3d2d_event_lif_jtag_UNRELEASED.bit"
 if [[ ! -f "$BIT" || -L "$BIT" ||
       "$(stat -c '%s' "$BIT")" != "$EXPECTED_SIZE" ||
