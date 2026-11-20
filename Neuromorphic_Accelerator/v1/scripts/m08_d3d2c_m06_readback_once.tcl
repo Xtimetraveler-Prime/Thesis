@@ -1,15 +1,19 @@
-# D3.D.2C: STAGED one-shot JTAG M06 32-neuron neural readback, NO APPROVED IMAGE.
-# This Tcl cannot pass until NEW original owner DRC/timing/image hash reviewed,
-# RELEASED_SHA below replaced with exact new approved SHA, and shell reviewer
-# independently accepts the immutable original 12-file SHA ledger.
-# NEVER reuse D3.D.2B image or waive its seven debug warnings.
-set RELEASED_SHA "UNREVIEWED_M08_D3D2C_OWNER_IMAGE"
+# D3.D.2C: ONE explicitly owner-armed JTAG M06 32-neuron readback.
+# Pinned exact owner-original first successful 2026-11-20 12:31 native image.
+# This Tcl rechecks bitstream SHA/size, exact owner dir, 579 M06 oracle words,
+# board target/device identity BEFORE the ONE program_hw_devices call.
+# Shell MUST first independently accept unchanged native 12-file SHA/DRC/
+# timing and source hashes. No other image or automatic retry is authorized.
+# JTAG AXI/BRAM/PL only. No PS MMIO, DDR, Linux, flash or SD changes.
+set RELEASED_SHA "244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932"
 if {![regexp {^[a-f0-9]{64}$} $RELEASED_SHA]} {
     error "D3.D.2C HARD STOP: first owner native image NOT RELEASED"
 }
 if {![info exists ::env(M08_D3D2C_ALLOW_PROGRAM)] ||
-    $::env(M08_D3D2C_ALLOW_PROGRAM) ne "YES"} {
-    error "D3.D.2C owner explicit program authorization missing"
+    $::env(M08_D3D2C_ALLOW_PROGRAM) ne "YES" ||
+    ![info exists ::env(M08_D3D2C_PREFLIGHT_CONFIRMED)] ||
+    $::env(M08_D3D2C_PREFLIGHT_CONFIRMED) ne "YES"} {
+    error "D3.D.2C explicit one-shot owner consent AND cooling/UART/JTAG/recovery preflight confirmation required"
 }
 foreach key {M08_D3D2C_BIT M08_D3D2C_VECTORS M08_D3D2C_RESULT M08_D3D2C_EXPECTED_SHA} {
     if {![info exists ::env($key)] || [string trim $::env($key)] eq ""} {
@@ -27,7 +31,7 @@ set base [file normalize [file join $::env(HOME) Thesis_Evidence M08]]
 set native [file dirname [file dirname $bit]]
 set hw [file dirname $result]
 if {[file tail $bit] ne "m08_d3d2c_m06_lif_jtag_UNRELEASED.bit" ||
-    ![regexp {^m08_d3d2c_m06_[A-Za-z0-9]+$} [file tail $native]] ||
+    [file tail $native] ne "m08_d3d2c_m06_MN2pwduB" ||
     [file dirname $native] ne $base ||
     ![regexp {^m08_d3d2c_m06_HW_[A-Za-z0-9]+$} [file tail $hw]] ||
     [file dirname $hw] ne $base ||
@@ -40,7 +44,8 @@ if {[file tail $bit] ne "m08_d3d2c_m06_lif_jtag_UNRELEASED.bit" ||
 if {$digest ne $RELEASED_SHA || ![file isfile $bit] ||
     ![file isfile $source] || [file type $bit] ne "file" ||
     [file type $source] ne "file" ||
-    [file size $bit] < 100000 || [file size $source] > 9000} {
+    [file size $bit] != 7797842 || [file size $source] > 9000 ||
+    [file size $source] < 100} {
     error "D3.D.2C is NOT an independently approved owner bitstream"
 }
 set real [string tolower [lindex [exec sha256sum -- $bit] 0]]
@@ -112,12 +117,15 @@ try {
     flush stdout
     program_hw_devices $fpga
     puts {M08_D3D2C_PROGRAM_COMPLETED}
+    flush stdout
     refresh_hw_device -update_hw_probes false $fpga
     set axis [get_hw_axis -quiet]
     if {[llength $axis] != 1 || [lindex $axis 0] ne "hw_axi_1"} {
         error "Missing unique postprogram hw_axi_1"
     }
     set axi [lindex $axis 0]
+    puts "M08_D3D2C_AXI_MASTER|$axi"
+    flush stdout
     reset_hw_axi $axi
     d2c_write $axi A0000000 55AA22DD
     if {[d2c_read $axi A0000000] ne "55AA22DD"} {
