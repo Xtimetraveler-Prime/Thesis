@@ -46,7 +46,7 @@ class QueuePhysicalStagedBoundary(unittest.TestCase):
 
     def test_tcl_one_program_only_exact_candidate_then_fifo_service_and_m06(self):
         s=(ROOT/"scripts/m08_d3d2e_queue_readback_once.tcl").read_text()
-        self.assertEqual(len(re.findall(r"(?m)^\\s*program_hw_devices \\$fpga\\s*$",s)),1)
+        self.assertEqual(len(re.findall(r"(?m)^\s*program_hw_devices \$fpga\s*$",s)),1)
         for req in (BIT_SHA,NATIVE,"7797844","4D333251","00060000",
                     "llength $lines] != 630",
                     "M08_D3D2E_ALLOW_PROGRAM","M08_D3D2E_PREFLIGHT_CONFIRMED",
