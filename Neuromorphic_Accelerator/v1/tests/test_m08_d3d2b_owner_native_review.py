@@ -37,11 +37,9 @@ class OriginalD3D2BReviewTests(unittest.TestCase):
         )
         for idx,(pin,suffix,endpoint) in enumerate(pin_details,1):
             full=gate.REVIEWED_DEBUG_PREFIX+suffix
-            equation_term=("is notincluded in the LUT equation" if idx==3
-                           else "is not included in the LUT equation")
             s+=(f"PDCN-1569#{idx} Warning\nLUT equation term check\n"
                 f"Used physical LUT pin '{pin}' of cell {full} "
-                f"(pin {full}/{endpoint}) {equation_term}.\n"
+                f"(pin {full}/{endpoint}) is not included in the LUT equation.\n"
                 "Related violations: <none>\n")
         fifo_details=(
             ("REQP-1857",1,"rx_fifo_i","RAMB18E2_writefirst_collision_advisory"),
@@ -81,12 +79,14 @@ class OriginalD3D2BReviewTests(unittest.TestCase):
         self.assertEqual(data["rtstat_listed_count"],37)
         self.assertEqual(data["rtstat_sampled_paths"],15)
         self.assertIn("EXACT_OWNER_D3D2B_VENDOR_DEBUG",data["drc_review_status"])
-        # Literal owner report from 2026-11-20: A4 is directly under
-        # SWITCH_N_EXT_BSCAN, with the original "notincluded" typo.
+        # Owner-original A4 pin is directly under SWITCH_N_EXT_BSCAN,
+        # and the genuine reporter prints "is not included" with a space.
         self.assertIn(
             "SWITCH_N_EXT_BSCAN.id_state[0]_i_1/I0) "
-            "is notincluded in the LUT equation",
+            "is not included in the LUT equation",
             self.reviewed_report())
+        self.assertNotIn("is notincluded in the LUT equation",
+                         self.reviewed_report())
         self.assertNotIn(
             "SWITCH_N_EXT_BSCAN.bscan_switch/id_state[0]_i_1",
             self.reviewed_report())
@@ -109,8 +109,8 @@ class OriginalD3D2BReviewTests(unittest.TestCase):
             ("spurious A4 BSCAN subtree",
              "SWITCH_N_EXT_BSCAN.id_state[0]_i_1",
              "SWITCH_N_EXT_BSCAN.bscan_switch/id_state[0]_i_1"),
-            ("rewritten A4 warning text", "is notincluded in the LUT equation",
-             "is not included in the LUT equation"),
+            ("rewritten A4 warning text", "is not included in the LUT equation",
+             "is notincluded in the LUT equation"),
             ("wrong XSDB LUT cell", "SWITCH_N_EXT_BSCAN.bscan_switch/",
              "user_lif_engine/"),
             ("different native run", gate.ORIGINAL_OWNER_NATIVE_DIR,
