@@ -255,9 +255,22 @@ set wrapper [make_wrapper -files $bd_files -top]
 if {[llength $wrapper] != 1 || ![file isfile [lindex $wrapper 0]]} {
     error "Cannot generate JTAG link wrapper"
 }
-add_files -norecurse $wrapper
-set_property top m08_d3d_neuron_wrapper [current_fileset]
+# The generated block-design name is m08_d3d_lif_jtag, not m08_d3d_neuron.
+# Resolve the actual generated wrapper, fail-closed on the required exact top,
+# and prevent IPI's automatic hierarchy selector from silently replacing it.
+set wrapper_path [lindex $wrapper 0]
+set wrapper_top [file rootname [file tail $wrapper_path]]
+if {$wrapper_top ne "m08_d3d_lif_jtag_wrapper"} {
+    error "D3.D generated wrapper top mismatch: $wrapper_top"
+}
+add_files -norecurse $wrapper_path
+set_property top $wrapper_top [current_fileset]
 update_compile_order -fileset sources_1
+set resolved_top [get_property top [current_fileset]]
+if {$resolved_top ne $wrapper_top} {
+    error "D3.D hierarchy top was auto-replaced: expected $wrapper_top found $resolved_top"
+}
+puts "M08_D3D_NATIVE_TOP_WRAPPER_VALIDATED|$wrapper_top"
 
 # Produce route/bit candidate on owner PC. This script does NOT PROGRAM BOARD.
 launch_runs synth_1 -jobs 2
