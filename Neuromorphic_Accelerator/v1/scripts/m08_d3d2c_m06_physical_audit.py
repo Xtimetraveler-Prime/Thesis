@@ -109,8 +109,10 @@ def verify(native:Path,hw:Path)->dict:
         "M08_D3D2C_PHYSICAL_M06_128_VOLTAGE_128_SPIKE_128_SYN_CURRENT_PASS",
     ):
         require(marker in log,"actual board log missing: "+marker)
-    require(log.count("M08_D3D2C_PROGRAM_START")==1 and
-            log.count("M08_D3D2C_PROGRAM_COMPLETED")==1,
+    # Vivado's journal echoes source lines containing marker strings.
+    # Only count standalone stdout marker lines, not echoed Tcl commands.
+    require(len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_START\\s*$",log))==1 and
+            len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_COMPLETED\\s*$",log))==1,
             "physical record has ambiguous/multiple program markers")
     for n in range(32):
         require(log.count(f"M08_D3D2C_M06_REAL_NEURON_PARITY|{n}\n")==1,
