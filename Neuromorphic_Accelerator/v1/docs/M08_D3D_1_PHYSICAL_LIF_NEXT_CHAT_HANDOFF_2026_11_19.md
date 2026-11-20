@@ -1,5 +1,16 @@
 # M08 D3.D.1 — NEXT CHAT HANDOFF: first **physical** signed16 LIF execution on KV260
 
+## CURRENT HANDOFF ADDENDUM — D3.D.1 physical neuron parity PASSED on 2026-11-19 (supersedes preflight-next instructions below)
+
+Owner ran one genuine Vivado 2025.2 JTAG execution of the previously accepted bitstream SHA256 `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b` at approximately 22:20 MST. Physical original evidence directory `~/Thesis_Evidence/M08/m08_d3d_neuron_HW_NMgBWpCj` is immutable. K26 JTAG configuration startup HIGH / `M08_D3D_PROGRAM_COMPLETED`; `hw_axi_1` BRAM readback `55AA22DD` matched; new hardware LIF magic/version correct. Four real one-neuron × four-tick M02 traces matched exactly: `negative_trunc_spike [2,-2,-4,-1], spike mask 2`; `positive_negative_saturation [-5,-32768,-32768,-32768], mask 1`; `autonomous_bias_equality [3,0,-3,0], mask 2`; `negative_half_toward_zero [-1,-1,-1,-1], mask 0`. All four DONE/nonce/monotonic completed-run count assertions passed. The original terminal transcript includes 6/6 SHA ledger OK, independent physical auditor acceptance `status=M08_D3D_PHYSICAL_SINGLE_NEURON_FOUR_TICK_M02_PARITY_ACCEPTED`, `hardware_execution_verified=true`, and `M08_D3D_PHYSICAL_RUN_EXIT=0`.
+
+The native-gate outer `hardware_programmed=false` refers only to historical offline native-build evidence; it is superseded for physical-run status by the actual owner Vivado log and independent physical receipt, not by editing the original native receipt. **No reprogramming is needed to validate the saved results.** Read-only recheck: `(cd ~/Thesis_Evidence/M08/m08_d3d_neuron_HW_NMgBWpCj && sha256sum -c 99_evidence_sha256.txt)` and `python3 scripts/m08_d3d_neuron_physical_audit.py --run-dir ~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi --hw-dir ~/Thesis_Evidence/M08/m08_d3d_neuron_HW_NMgBWpCj`. No PC/board files were read directly by this documentation update; it records the owner-supplied original console transcript.
+
+**NEW NEXT GATE:** D3.D.2 actual multi-neuron/timestep execution, state banks and positive-delay synapse routing with exact M02 dense+queued bit-level oracle parity, scaling toward the existing M06 32 neurons ×4 ticks accepted software/HLS reference. D3.D.3 actual DDR/paging, protected PS/Linux owner integration and quantitative M09 are later separate hardware milestones. **One-neuron physical parity DOES NOT prove full M06 accelerator, DDR, kernel health, PS clock independence, throughput or energy.** Existing D3.C and D3.D evidence remains immutable; M08 OPEN, M09 PLANNED; PR #88 and PR #87 remain drafts/unmerged. All following preflight/programming commands are **historical** and should not be rerun automatically.
+
+## Historical first-physical-test handoff (completed; retained for provenance)
+
+
 **Updated:** 2026-11-19, following owner-verifiable genuine Vivado native image acceptance.  
 **AUTHORITATIVE NEXT GATE:** **physical one-shot JTAG LIF parity on the existing, already-accepted D3.D.1 bitstream**. DO NOT rebuild automatically.  
 **Repository:** `Xtimetraveler-Prime/Thesis`, project `Neuromorphic_Accelerator/v1`.  
