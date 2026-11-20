@@ -1,4 +1,33 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
+## D3.D.2A OWNER-ORIGINAL PHYSICAL ACCEPTANCE (2026-11-20 00:03 MST)
+
+**CURRENT OWNER-REPORTED PHYSICAL ACCEPTANCE — D3.D.2A PASSED (2026-11-20 00:02–00:03 MST).** Genuine KV260 `xck26_0` programmed with unchanged accepted four-neuron bitstream SHA256 `3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411` (7,797,843 bytes; owner native `~/Thesis_Evidence/M08/m08_d3d2a_four_w4YfdBuE`). Live JTAG `hw_axi_1`, startup HIGH, BRAM echo `55AA22DD`, four-LIF magic/version `0x4D344C46/0x00020000`, two distinct four-neuron × four-tick workloads returned full M02-matching voltages and spike masks. **All 32 individual membrane voltages and 32 per-neuron/tick spike decisions passed**, nonce/status/count 1→2 passed. `independent_half_decay` masks `[2,1,0,0]`; `independent_unit_decay` masks `[2,1,2,0]`. Owner's original six physical SHA ledger entries checked `OK`; independent `m08_d3d2a_four_physical_audit.py` returned `status=M08_D3D2A_PHYSICAL_FOUR_NEURON_FOUR_TICK_M02_PARITY_ACCEPTED`, `hardware_execution_verified=true`, and launcher `M08_D3D2A_PHYSICAL_RUN_EXIT=0`. Original physical evidence path **`~/Thesis_Evidence/M08/m08_d3d2a_four_HW_UBi3VCax` is immutable**. This conclusion is sourced to the owner's supplied original Vivado/host terminal transcript, not to direct local file reads here. **Bounded result: four independent neurons, no synaptic routing, M06 network/DDR/PS-clock independence/throughput or energy. Next D3.D.2B: implement genuine positive-delay signed weighted synaptic routing and recurrent/cancellation M02 parity before new native/physical tests.** M08 OPEN, M09 PLANNED. D3.C and D3.D.1 original evidence remains preserved; drafts unmerged.
+
+**Actual signed16 voltage traces and spike masks:**
+
+| Four-neuron M02 fixture | N0 voltages | N1 voltages | N2 voltages | N3 voltages | Four spike masks (LSB=tick0) |
+|---|---|---|---|---|---|
+| independent_half_decay | 2,-2,-4,-1 | -5,-32768,-16386,-8195 | 3,4,-1,3 | -1,-1,-1,-1 | 2,1,0,0 |
+| independent_unit_decay | 3,0,-3,0 | -5,-32768,-32768,-32768 | -1,-2,-5,-4 | -2,-3,-4,-5 | 2,1,2,0 |
+
+**Read-only verification, no FPGA writes:**
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+N="$HOME/Thesis_Evidence/M08/m08_d3d2a_four_w4YfdBuE"
+H="$HOME/Thesis_Evidence/M08/m08_d3d2a_four_HW_UBi3VCax"
+(cd "$N" && sha256sum -c 99_evidence_sha256.txt)
+(cd "$H" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d2a_four_physical_audit.py --run-dir "$N" --hw-dir "$H"
+```
+
+### Historical pre-physical notes follow
+
+
+## Historical D3.D.2A source/PC native candidate introduction (superseded by physical pass)
+
+New separate Verilog module `rtl/m08/m08_d3d2a_four_lif_axil.v` holds four distinct neuron state/parameter banks and computes 16 LIF updates across four logical ticks without synaptic routing. Reference generator `scripts/m08_d3d2a_four_vectors.py` reconciles actual M02 dense and queued reference plus hard-coded anchor values for two four-neuron fixtures. Directed `rtl/m08/tb_m08_d3d2a_four_lif_axil.sv` and `tests/test_m08_d3d2a_four_gate.py` must PASS genuine Icarus. New `scripts/run_m08_d3d2a_four_pc.sh` performs **PC-only** Vivado 2025.2 BD/route/bitgen in a fresh, separate original-evidence folder; strict `scripts/m08_d3d2a_four_gate.py` checks source and native hashes, timing and requires zero unreviewed DRC warnings. D3.D.1 vendor warning review is NOT inherited. No fresh native hardware candidate is accepted yet; no D3.D.2A JTAG program performed. Full [plan, register map and owner commands](M08_D3D2A_FOUR_NEURON_PLAN_2026_11_19.md). Preserve original D3.D.1 physical SHA evidence and all failures.
+
 
 ## M08 D3.D.1 physical LIF neural execution ACCEPTED (owner original, 2026-11-19 22:20 MST)
 
