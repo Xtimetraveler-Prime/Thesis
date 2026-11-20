@@ -1,5 +1,35 @@
 # M08 D3.D.2B — first genuine recurrent on-FPGA synaptic routing
 
+## Owner first genuine D3.D.2B native build — BITGEN PASS / DRC GATE PENDING (2026-11-20 00:50 MST)
+
+Owner ran `scripts/run_m08_d3d2b_synaptic_pc.sh` and supplied original Vivado 2025.2 stdout. The **separate routed four-neuron recurrent-synapse bitstream was generated successfully** (`Bitgen Completed Successfully`, `write_bitstream completed successfully`, Vivado bitgen reports 0 errors/critical warnings/warnings). All **12/12 original evidence SHA256 rows returned OK**. The owner-native evidence folder is **`~/Thesis_Evidence/M08/m08_d3d2b_synaptic_DakjdpCO`**, with `bitstream_candidate/m08_d3d2b_synaptic_lif_jtag_UNRELEASED.bit`. The native gate deliberately returned **exit 2**, `D3D2B_NEW_DRC_REVIEW_REQUIRED`, because the **first new design's report contains seven DRC findings**. Neither the actual DRC report detail, bitstream SHA256 value nor routed WNS/WHS/TNS/THS was included in this supplied extract. **DO NOT call the bitstream broken, accepted, or physically programmed. DO NOT rebuild it yet.** Preserve original evidence and original failed acceptance output without alteration.
+
+**Exact next read-only owner commands (no Vivado, no JTAG, no new bitgen):**
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2b_synaptic_DakjdpCO"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+printf '\n===== ORIGINAL D3.D.2B DRC REPORT =====\n'
+cat "$RUN/reports/20_route_drc.rpt"
+printf '\n===== ROUTED TIMING SUMMARY =====\n'
+grep -A 3 -m 1 'WNS(ns)' "$RUN/reports/21_route_timing.rpt"
+grep 'All user specified timing constraints are met' "$RUN/reports/21_route_timing.rpt" || true
+printf '\n===== ORIGINAL NATIVE BUILD METADATA =====\n'
+cat "$RUN/reports/30_native_result.txt"
+printf '\n===== ORIGINAL NEW BITSTREAM SHA256 =====\n'
+sha256sum "$RUN/bitstream_candidate/m08_d3d2b_synaptic_lif_jtag_UNRELEASED.bit"
+printf '\n===== ORIGINAL VIVADO FATAL DIAGNOSTICS =====\n'
+grep -nE '^(ERROR:|CRITICAL WARNING:)' "$RUN/00_vivado.log" || true
+```
+
+**DRC review criteria before accepting this exact candidate:** compare all seven rule IDs, warning severities/counts, detailed instance paths, BRAM write-collision advisories, XSDB/debug-hub-only LUT notices, and the RTSTAT net-count and sampled paths. Their coincidence with prior D3.D.2A's seven warnings is *insufficient* for waiver; a genuinely new synaptic RTL hierarchy or unreviewed nonvendor path must be investigated. Independently verify positive setup/hold timing at the constrained 100 MHz PL clock and correct new image/source hashes. Only then update `m08_d3d2b_synaptic_gate.py` with an **exact owner-original bitstream SHA256/size, RTL+builder hashes and scoped DRC allowlist**; run the read-only gate on the **same** evidence directory and complete its tests. No original receipts or bitstream may be edited. If genuine routing/neural critical findings are present, diagnose design and generate a separate new run, retaining this first attempt.
+
+**Architecture boundary before D3.D.2C:** D3.D.2B supports four neurons, eight directed synapses, four logical ticks and positive delays 1–3. Its arrays and address map are hard-coded for that scope. The **M06 32-neuron ×4-tick physical reference is a NEW D3.D.2C hardware design**, not a property of this existing bitstream and not yet verified. First close D3.D.2B *physical* recurrent-synapse parity using the accepted original D3.D.2B image, then specify 32-neuron state storage, synapse/event capacity and addressing, scheduler, and exact M02/M06 network oracle for separate RTL/native/physical gates.
+
+### Earlier pre-native test plan (historical)
+
+
 **Current: SOURCE/RTL CANDIDATE + PHYSICAL TEST HARNESS CREATED; GENUINE OWNER D3.D.2B NATIVE ROUTE/DRC/IMAGE AND BOARD EXECUTION NOT YET ACCEPTED.** This is a *new* staged development branch, not an update to the independently accepted previous bitstream.
 
 ## Prior accepted physical baseline
