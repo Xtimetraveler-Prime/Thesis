@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# EXPLICIT physical one-shot JTAG link experiment: no Linux/SSH dependency.
+# EXPLICIT r2 fabric-POR physical one-shot JTAG link experiment: no Linux/SSH dependency.
+# Never accept the first programmed r1 SHA; gate requires fresh r2 native receipt.
 # Never call until fresh native Vivado 2025.2 image is verified and physical setup ready.
 set -euo pipefail
 if [[ "$#" -ne 1 ]]; then
@@ -23,7 +24,7 @@ if ! command -v vivado >/dev/null 2>&1 ||
     exit 2
 fi
 python3 "$ROOT/scripts/m08_d3c_jtag_bram_gate.py" --run-dir "$RUN"
-BIT="$RUN/bitstream_candidate/m08_d3c_jtag_bram_UNRELEASED.bit"
+BIT="$RUN/bitstream_candidate/m08_d3c_jtag_bram_r2_UNRELEASED.bit"
 if [[ ! -f "$BIT" || -L "$BIT" ]]; then
     echo 'M08_D3C_HW_STOP: missing/symlinked new bit' >&2
     exit 2
