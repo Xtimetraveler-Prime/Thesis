@@ -28,8 +28,7 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
         self.assertIn("m08_d3d2d_event_vectors.py",s)
         self.assertIn("m08_d3d2d_event_readback_once.tcl",s)
         self.assertIn("m08_d3d2d_event_physical_audit.py",s)
-        self.assertIn("M08_D3D2D_NO", 
-                      "M08_D3D2D_NO" if "M08_D3D2D_HW_STOP_NO_RETRY" in s else "")
+        self.assertIn("M08_D3D2D_HW_STOP_NO_RETRY",s)
         self.assertIn("M08_D3D2D_ALLOW_PROGRAM",s)
         self.assertIn("M08_D3D2D_PREFLIGHT_CONFIRMED",s)
         self.assertIn("m08_d3d2d_event_HW_",s)
