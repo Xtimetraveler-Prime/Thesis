@@ -223,9 +223,9 @@ class D3DNeuronTests(unittest.TestCase):
         folder.mkdir(exist_ok=True)
         sha = g.native(self.run)["candidate_sha256"]
         original_fixture_lines = [vectors.format_fixture(f) for f in vectors.FIXTURES]
-        golden = ("# schema=m08-d3d-m02-golden-v1\\n"
-                  "# independent_dense_vs_event=PASS\\n"
-                  + "\\n".join(original_fixture_lines) + "\\n")
+        golden = ("# schema=m08-d3d-m02-golden-v1\n"
+                  "# independent_dense_vs_event=PASS\n"
+                  + "\n".join(original_fixture_lines) + "\n")
         lines = [
             "schema=m08-d3d-hardware-lif4-ticks-v1",
             "result=FOUR_HARDWARE_NEURON_FIXTURES_MATCHED_M02",
@@ -256,11 +256,11 @@ class D3DNeuronTests(unittest.TestCase):
                 f"M08_D3D_HW_NEURAL_M02_PARITY_PASS|{fixture.name}|{fields[15]}")
         files = {
             "00_executed_source.tcl": physical_audit.SCRIPT.read_bytes(),
-            "01_jtag_neuron.log": ("\\n".join(log)+"\\n").encode(),
-            "02_jtag_neuron.jou": b"synthetic test journal\\n",
-            "03_exit.txt": b"vivado_physical_exit=0\\n",
+            "01_jtag_neuron.log": ("\n".join(log)+"\n").encode(),
+            "02_jtag_neuron.jou": b"synthetic test journal\n",
+            "03_exit.txt": b"vivado_physical_exit=0\n",
             "10_m02_golden.txt": golden.encode("ascii"),
-            "80_neural_parity_readback.txt": ("\\n".join(lines)+"\\n").encode(),
+            "80_neural_parity_readback.txt": ("\n".join(lines)+"\n").encode(),
         }
         for name, data in files.items():
             (folder/name).write_bytes(data)
@@ -270,7 +270,7 @@ class D3DNeuronTests(unittest.TestCase):
     @staticmethod
     def rehash_hardware(folder):
         (folder/"99_evidence_sha256.txt").write_text(
-            "".join(sha256((folder/name).read_bytes()).hexdigest() + "  " + name + "\\n"
+            "".join(sha256((folder/name).read_bytes()).hexdigest() + "  " + name + "\n"
                     for name in physical_audit.EXPECTED))
 
     def test_synthetic_physical_auditor_requires_m02_parity_original_receipts(self):
@@ -296,11 +296,11 @@ class D3DNeuronTests(unittest.TestCase):
                          "m08_d3d_neuron_readback_once.tcl"):
             script = ROOT / "scripts" / filename
             command = (
-                'set fd [open {' + str(script) + '} r]\\n'
-                'set source [read $fd]\\n'
-                'close $fd\\n'
-                'if {![info complete $source]} {puts stderr "incomplete Tcl"; exit 3}\\n'
-                'puts TCL_SYNTAX_BALANCED\\n'
+                'set fd [open {' + str(script) + '} r]\n'
+                'set source [read $fd]\n'
+                'close $fd\n'
+                'if {![info complete $source]} {puts stderr "incomplete Tcl"; exit 3}\n'
+                'puts TCL_SYNTAX_BALANCED\n'
             )
             run = subprocess.run(["tclsh"], input=command, text=True,
                                  capture_output=True, timeout=15)
