@@ -285,9 +285,10 @@ module m08_d3d2b_synaptic_lif_axil (
                                     membrane[i] <= cfg_initial[i];
                                     spike_mask[i] <= 0;
                                 end
-                                for (i=0; i<16; i=i+1)
+                                for (i=0; i<16; i=i+1) begin
                                     trace_voltage[i] <= 0;
                                     trace_syn_current[i] <= 0;
+                                end
                                 neuron <= 0; tick <= 0;
                                 busy <= 1; done <= 0;
                                 result_nonce <= cfg_nonce;
