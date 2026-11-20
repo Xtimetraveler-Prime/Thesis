@@ -1,7 +1,8 @@
-"""D3.D.2C unreleased JTAG physical harness: PC-only fail-closed regression.
+"""D3.D.2C first owner-released JTAG harness: PC-only fail-closed regression.
 
-No test here calls Vivado, JTAG, hw_server, PS MMIO or programs the KV260.
-The original M06 32×4 physical candidate is UNREVIEWED and must stay blocked.
+These tests NEVER invoke Vivado, JTAG, hw_server, PS MMIO, or FPGA programming.
+Original M06 32x4 physical test is not yet performed; exact accepted-image
+and 2 explicit owner arming variables gate a single fresh hardware attempt.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -18,7 +19,7 @@ import m08_d3d2c_m06_native_review as native
 import m08_d3d2c_m06_vectors as oracle
 
 class M0632PhysicalBoundaryTests(unittest.TestCase):
-    def test_shell_syntax_owner_guard_and_exact_first_image_block(self):
+    def test_shell_syntax_original_owner_image_and_explicit_board_arming(self):
         shell=ROOT/"scripts/run_m08_d3d2c_m06_physical_once.sh"
         check=subprocess.run(["bash","-n",str(shell)],
                              capture_output=True,text=True,timeout=10)
@@ -26,7 +27,9 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
         s=shell.read_text()
         for token in (
             "m08_d3d2c_m06_native_review.py",
-            "UNREVIEWED_M08_D3D2C_OWNER_IMAGE",
+            "244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932",
+            'M08_D3D2C_PREFLIGHT_CONFIRMED',
+            'm08_d3d2c_m06_MN2pwduB',
             'M08_D3D2C_ALLOW_PROGRAM',
             "sha256sum",
             "mktemp -d",
@@ -34,8 +37,8 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
             "M08_D3D2C_HW_STOP_NO_RETRY",
         ):
             self.assertIn(token,s)
-        # The mandatory first-image reviewer executes before ANY Vivado
-        # programming workflow or creating an evidence directory.
+        # Exact owner-original native gate executes before any NEW
+        # evidence folder or Vivado/JTAG program operation.
         self.assertLess(s.index("native_review.py"),
                         s.index("EXPECTED_SHA="))
         self.assertLess(s.index("EXPECTED_SHA="),
@@ -45,9 +48,13 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
         self.assertNotIn("/dev/mem",s)
         self.assertNotIn("/dev/uio",s)
 
-    def test_unreleased_tcl_has_only_one_program_and_no_sneaky_ps_access(self):
+    def test_one_program_tcl_is_pinned_and_no_sneaky_ps_access(self):
         t=(ROOT/"scripts/m08_d3d2c_m06_readback_once.tcl").read_text()
-        self.assertIn('set RELEASED_SHA "UNREVIEWED_M08_D3D2C_OWNER_IMAGE"',t)
+        self.assertIn(
+            'set RELEASED_SHA "244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932"',t)
+        self.assertIn('M08_D3D2C_PREFLIGHT_CONFIRMED',t)
+        self.assertIn('m08_d3d2c_m06_MN2pwduB',t)
+        self.assertIn('[file size $bit] != 7797842',t)
         self.assertEqual(
             len(re.findall(r"(?m)^\s*program_hw_devices \$fpga\s*$",t)),1)
         self.assertLess(t.index("set RELEASED_SHA "),t.index("open_hw_manager"))
@@ -97,12 +104,19 @@ class M0632PhysicalBoundaryTests(unittest.TestCase):
                       native_source)
         self.assertIn("OWNER_ORIGINAL_BIT_SHA",native_source)
         self.assertIn("OWNER_ORIGINAL_DRC_SHA",native_source)
-        # Native source may now accept exactly one owner image; the
-        # independently staged one-shot JTAG runner remains HARD BLOCKED.
+        # Native approval is necessary but INSUFFICIENT. Both shell and
+        # Tcl independently insist on exact accepted SHA and OWNER arming.
         shell=(ROOT/"scripts/run_m08_d3d2c_m06_physical_once.sh").read_text()
-        self.assertIn('EXPECTED_SHA="UNREVIEWED_M08_D3D2C_OWNER_IMAGE"',shell)
         tcl=(ROOT/"scripts/m08_d3d2c_m06_readback_once.tcl").read_text()
-        self.assertIn('set RELEASED_SHA "UNREVIEWED_M08_D3D2C_OWNER_IMAGE"',tcl)
+        self.assertIn('M08_D3D2C_PREFLIGHT_CONFIRMED',shell)
+        self.assertIn('M08_D3D2C_PREFLIGHT_CONFIRMED',tcl)
+        self.assertIn('M08_D3D2C_ALLOW_PROGRAM',shell)
+        self.assertIn('M08_D3D2C_ALLOW_PROGRAM',tcl)
+        self.assertIn('m08_d3d2c_m06_MN2pwduB',shell)
+        self.assertIn('m08_d3d2c_m06_MN2pwduB',tcl)
+        self.assertNotIn('UNREVIEWED_M08_D3D2C_OWNER_IMAGE',shell+tcl)
+        self.assertLess(shell.index('native_review.py'),shell.index('HW="$(mktemp'))
+        self.assertLess(tcl.index('set RELEASED_SHA'),tcl.index('open_hw_manager'))
 
 if __name__=="__main__":
     unittest.main()
