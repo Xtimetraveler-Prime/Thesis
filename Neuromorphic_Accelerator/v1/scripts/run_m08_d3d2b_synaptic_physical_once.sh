@@ -24,8 +24,12 @@ fi
 # not a previous generation's image/waiver. This must PASS before any JTAG.
 python3 "$ROOT/scripts/m08_d3d2b_synaptic_gate.py" --run-dir "$NATIVE"
 BIT="$NATIVE/bitstream_candidate/m08_d3d2b_synaptic_lif_jtag_UNRELEASED.bit"
-if [[ ! -f "$BIT" || -L "$BIT" ]]; then
-    echo 'M08_D3D2B_HW_STOP: native synapse bitstream missing' >&2
+EXPECTED_SHA="dae1c4953826317854acd3c61d013b6fddec410a0450002fa13b3ab1f1650d14"
+EXPECTED_SIZE=7797847
+if [[ ! -f "$BIT" || -L "$BIT" ||
+      "$(stat -c '%s' "$BIT")" != "$EXPECTED_SIZE" ||
+      "$(sha256sum "$BIT" | awk '{print $1}')" != "$EXPECTED_SHA" ]]; then
+    echo 'M08_D3D2B_HW_STOP: not the exact original reviewed synaptic bitstream' >&2
     exit 2
 fi
 if [[ "${M08_D3D2B_ALLOW_PROGRAM:-}" != YES ]]; then
@@ -37,8 +41,7 @@ echo "M08_D3D2B_NEW_PC_HW_EVIDENCE=$HW"
 python3 "$ROOT/scripts/m08_d3d2b_synaptic_vectors.py" --out "$HW/10_m02_golden.txt"
 cp -- "$ROOT/scripts/m08_d3d2b_synaptic_readback_once.tcl" "$HW/00_executed_source.tcl"
 export M08_D3D2B_BIT="$BIT"
-export M08_D3D2B_EXPECTED_SHA
-M08_D3D2B_EXPECTED_SHA="$(sha256sum "$BIT" | awk '{print $1}')"
+export M08_D3D2B_EXPECTED_SHA="$EXPECTED_SHA"
 export M08_D3D2B_VECTORS="$HW/10_m02_golden.txt"
 export M08_D3D2B_RESULT="$HW/80_synaptic_parity_readback.txt"
 set +e
