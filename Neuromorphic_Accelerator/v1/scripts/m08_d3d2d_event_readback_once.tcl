@@ -87,7 +87,7 @@ set server_open 0
 set target_open 0
 set target_path "localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA"
 puts "M08_D3D2D_ACCEPTED_IMAGE_HASH|$real"
-puts "M08_D3D2D_M06_TRIPLE_ORACLE_579_WORDS_VERIFIED"
+puts "M08_D3D2D_M06_TRIPLE_ORACLE_630_WORDS_VERIFIED"
 flush stdout
 try {
     open_hw_manager
