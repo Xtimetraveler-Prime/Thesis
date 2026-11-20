@@ -1,5 +1,66 @@
 # M08 D3.D.2C — real M06 32-neuron ×4-tick FPGA neural workload (staged; NO BOARD)
 
+## EXACT OWNER NATIVE PASSED — ONE-SHOT PHYSICAL TEST ARMED (2026-11-20 14:34 MST)
+
+The owner reran the new exact-image read-only `m08_d3d2c_m06_native_review.py` against original `~/Thesis_Evidence/M08/m08_d3d2c_m06_MN2pwduB` and supplied **status `M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD` with exit 0**, candidate SHA256 `244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932`, 7,797,842 bytes, original 12/12 SHA verified, seven exactly reviewed XSDB/JTAG warnings and clean WNS +2.675ns / WHS +0.010ns timing. This is owner-original evidence, **not** an assistant-local direct filesystem check and **not** a physical test.
+
+The independently protected JTAG shell/Tcl now pin exactly this accepted image/size and require **two explicit owner arming flags** (`M08_D3D2C_ALLOW_PROGRAM=YES` and `M08_D3D2C_PREFLIGHT_CONFIRMED=YES`), independently revalidate the exact original native gate before any JTAG and before creating a hardware folder, and validate K26 device identity prior to the **single** `program_hw_devices $fpga` invocation. They compare every 32-neuron×4-tick voltage (128 values), spike-mask decision (128 bits) and fabric-delivered recurrent current (128 values) to the independent original M06 dense/event/M03 oracle. The 17 external input events are **coalesced on the host**; no M06 DDR, streamed event-ingestion, Linux PS MMIO or sparse hardware skipping is claimed.
+
+### Mandatory physical preflight — do not program if any condition is false
+
+**Owner manual confirmation only:** The KV260 is recoverable to its stock boot, powered normally, independently actively cooled (fan power verified independently of PL), UART is connected and terminal log capture running, USB/JTAG is stable, Vivado 2025.2 is installed, previous hardware programming isn't running, no competing GUI Hardware Manager or other JTAG client owns the cable, exact expected K26 serial target/device is visible or has been verified previously, and the user accepts that programming PL may interrupt current functionality. Keep the original evidence folders untouched. If any item is uncertain, STOP; do not set the preflight flag.
+
+**Local code/real original image checks before programming:**
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d2c-m06-32-neuron
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d2c-m06-32-neuron
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_physical_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_physical_audit.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_owner_native_review.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_owner_native_receipt.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_32_source.py' -v
+bash -n scripts/run_m08_d3d2c_m06_physical_once.sh
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2c_m06_MN2pwduB"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d2c_m06_native_review.py --run-dir "$RUN"
+```
+
+**Only after all local tests, native image review, and manual preflight PASS, execute ONCE:**
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+vivado -version
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2c_m06_MN2pwduB"
+M08_D3D2C_ALLOW_PROGRAM=YES M08_D3D2C_PREFLIGHT_CONFIRMED=YES \
+  bash scripts/run_m08_d3d2c_m06_physical_once.sh "$RUN"
+RC=$?
+echo "M08_D3D2C_PHYSICAL_RUN_EXIT=$RC"
+```
+
+The one-shot runner prints a **new** `M08_D3D2C_NEW_PC_HW_EVIDENCE=...` folder. Preserve that exact folder and all UART output regardless of results. The runner does NOT retry. On genuine successful board execution it prints `M08_D3D2C_HARDWARE_M06_32X4_RECURRENT_M02_PARITY_SUCCEEDED`, exit 0, and the independent physical auditor status `M08_D3D2C_PHYSICAL_M06_32X4_REAL_RECURRENT_M02_PARITY_ACCEPTED`; six hardware SHA files are checked. **Never fabricate these markers, assume hardware success from CI, or program again automatically after a failure.**
+
+**Independent read-only post-run audit (after owner provides the actual new `HW` folder path):**
+
+```bash
+HW="<PASTE_EXACT_M08_D3D2C_NEW_PC_HW_EVIDENCE_PATH>"
+(cd "$HW" && sha256sum -c 99_evidence_sha256.txt)
+cat "$HW/03_exit.txt"
+cat "$HW/80_m06_32x4_hw_parity.txt"
+python3 scripts/m08_d3d2c_m06_physical_audit.py --run-dir "$RUN" --hw-dir "$HW"
+```
+
+Hardware evidence is **not yet available**. The stock recovery procedure remains the fallback if the one-shot experiment fails or the board becomes unresponsive, and the first failure evidence must be preserved before any investigation or recovery. No repeated JTAG programming without a new review.
+
+---
+
+
 ## D3.D.2C TIMING FIX r2 — staged 32-neuron sequential recurrent evaluation (2026-11-20)
 
 **Actual original owner timing evidence:** `m08_d3d2c_m06_RIezhupj` original routed timing: **WNS −0.188 ns, TNS −18.168 ns, 277 setup-failing endpoints, WHS +0.012 ns, THS 0, 0 hold-failing endpoints**. Worst path begins at `lif/inst/spike_mask_reg[6][3]/Q` and ends at `lif/inst/trace_voltage_reg[80][15]/D`; 10.073 ns datapath (4.268 ns combinational logic, 5.805 ns routed nets), 32 logic levels / 14 CARRY8, 10 ns `clk_pl_0` requirement. Other worst paths end in `trace_voltage` banks and share the recurrent-spike source. These are *measured original routes*, not inferred guesses. The read-only diagnostic's five tests passed; timing report original SHA256 `87109eb9f948368493d4f90561a4dd52b6d0269b1c233c40207bbbeb1e0f42c3` and checkpoint originally 12,605,864 bytes. **Never rewrite/reuse that failed directory.**
