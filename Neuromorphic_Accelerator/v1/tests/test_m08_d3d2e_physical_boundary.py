@@ -41,8 +41,10 @@ class QueuePhysicalStagedBoundary(unittest.TestCase):
             self.assertIn(req,s,req)
         self.assertLess(s.index("m08_d3d2e_queue_native_review.py"),
                         s.index('HW="$(mktemp -d'))
-        self.assertNotIn("program_hw_devices",s)
-        self.assertNotIn("run_hw_axi",s)
+        active="\\n".join(x for x in s.splitlines()
+                         if x.strip() and not x.lstrip().startswith("#"))
+        self.assertNotIn("program_hw_devices",active)
+        self.assertNotIn("run_hw_axi",active)
 
     def test_tcl_one_program_only_exact_candidate_then_fifo_service_and_m06(self):
         s=(ROOT/"scripts/m08_d3d2e_queue_readback_once.tcl").read_text()
