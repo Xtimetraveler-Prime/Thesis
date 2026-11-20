@@ -37,7 +37,11 @@ class D3D2DRawEventPhysicalBoundary(unittest.TestCase):
         self.assertLess(s.index('EXPECTED_SHA="UNREVIEWED_'),
                         s.index('HW="$(mktemp -d'))
         self.assertNotIn("m08_d3d2c_m06_MN2pwduB",s)
-        self.assertNotIn("program_hw_devices",s)
+        # A comment may document Tcl's one-program rule. The SHELL must
+        # never contain an actual hardware programming statement.
+        active="\n".join(x for x in s.splitlines()
+                         if x.strip() and not x.lstrip().startswith("#"))
+        self.assertNotIn("program_hw_devices",active)
 
     def test_staged_tcl_single_program_statement_new_identity_and_630_words(self):
         src=(ROOT/"scripts/m08_d3d2d_event_readback_once.tcl").read_text()
