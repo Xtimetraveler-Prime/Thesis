@@ -143,6 +143,32 @@ VENDOR_DRC_PROFILE = {
 }
 
 
+# Original owner Vivado 2025.2 D3.D receipt: m08_d3d_neuron_Yz3k4vsi.
+# Seven warnings: three PDCN-1569, one REQP-1857, two REQP-1858 and
+# one RTSTAT-10. RTSTAT lists the *first fifteen* of 37 reported names,
+# while 39 nets have no routable load. The remaining unlisted paths are NOT
+# individually verified: do not claim this is an exhaustive net inventory.
+# This is an exact allowlist for the printed vendor-debug/JTAG sample ONLY.
+D3D_RTSTAT10_NETS_WITHOUT_LOAD = 39
+D3D_RTSTAT10_LISTED_COUNT = 37
+D3D_RTSTAT10_REVIEWED_FIRST15 = (
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD1/ctl_reg_en_2[1]",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_5_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD7_CTL/ctl_reg[2:0]",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD7_CTL/ctl_reg_en_2[1]",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_inst/TMS",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_capture[0]",
+    "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_drck[0]",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rd_cmd_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rd_cmd_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rx_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rx_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/tx_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/tx_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/wr_cmd_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/aempty_fwft_i",
+    "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/wr_cmd_fifo_i/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i",
+)
+
 def inspect_drc(drc: str, *, design_instance: str = "m08_d3c_jtag_link_i") -> dict:
     # Fail-closed hierarchy map for the two ORIGINAL, source-reviewed designs.
     # Physical D3.C uses m08_d3c_jtag_link_i; the D3.D LIF image uses
@@ -211,18 +237,34 @@ def inspect_drc(drc: str, *, design_instance: str = "m08_d3c_jtag_link_i") -> di
                     "address collisions" in body,
                     "native DRC memory collision advisory outside vendor JTAG FIFO")
         elif code == "RTSTAT-10":
-            require("47 net(s) have no routable loads" in body and
-                    "(the first 15 of 45 listed)" in body,
-                    "native DRC unused-load warning scope changed")
+            if design_instance == "m08_d3c_jtag_link_i":
+                # Preserve the physically validated D3.C r2 warning scope.
+                require("47 net(s) have no routable loads" in body and
+                        "(the first 15 of 45 listed)" in body,
+                        "native DRC unused-load warning scope changed")
+                marker = r"\(the first 15 of 45 listed\)"
+            else:
+                # D3.D.1 owner-original report: 39 unroutable loads, only 37
+                # names listed, with a *sample* of the first 15. Do not
+                # substitute the old 47/45 D3.C pattern.
+                require(re.search(
+                    r"(?m)^\s*39 net\(s\) have no routable loads\.", body
+                ) is not None and
+                        "(the first 15 of 37 listed)" in body,
+                        "native DRC D3.D reviewed RTSTAT-10 count changed")
+                marker = r"\(the first 15 of 37 listed\)"
             sample = re.search(
                 r"problem bus\(es\) and/or net\(s\) are (.*?)\s*"
-                r"\(the first 15 of 45 listed\)", body, flags=re.S
+                + marker, body, flags=re.S
             )
             require(sample is not None, "native DRC unused-load sample missing")
             paths = [p.strip() for p in sample.group(1).split(",") if p.strip()]
             require(len(paths) == 15 and all(p.startswith((
                 "dbg_hub/inst/", f"{design_instance}/jtag_axi/inst/"
             )) for p in paths), "native DRC unused-load sample includes non-vendor logic")
+            if design_instance == "m08_d3d_lif_jtag_i":
+                require(tuple(paths) == D3D_RTSTAT10_REVIEWED_FIRST15,
+                        "native DRC D3.D RTSTAT-10 first-15 sample differs from owner receipt")
 
     require(all(per_code[code] == qty and
                 {n for k, n in seen if k == code} == set(range(1, qty + 1))
