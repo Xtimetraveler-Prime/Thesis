@@ -112,7 +112,7 @@ class D3D2ENativeAlwaysBlockedTests(unittest.TestCase):
             with patch.object(Path, "home", return_value=home):
                 with self.assertRaisesRegex(review.Reject, "symlinked"):
                     review.inspect(run)
-            with self.assertRaisesRegex(review.Reject, "not a new D3.D.2E"):
+            with self.assertRaisesRegex(review.Reject, "not a real evidence directory"):
                 review.inspect(run.with_name("m08_d3d2d_event_DE6kQWvt"))
 
 if __name__ == "__main__":
