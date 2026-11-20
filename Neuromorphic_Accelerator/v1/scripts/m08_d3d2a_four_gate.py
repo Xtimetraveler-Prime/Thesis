@@ -125,22 +125,119 @@ def source() -> dict:
     }
 
 
-def inspect_new_drc(report: str) -> dict:
-    # No automatic carry-forward of vendor warnings from the different RTL/BD.
-    # The first original four-neuron native report MUST be reviewed before an
-    # exact, source-anchored vendor allowlist can be proposed.
-    counts = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", report)
-    require(len(counts) == 1, "new native DRC missing unambiguous count")
-    require(int(counts[0]) == 0,
-            "NEW_D3D2A_DRC_REVIEW_REQUIRED: new original vendor/debug "
-            f"warning count={counts[0]}; do NOT waive/rebuild/reprogram")
-    require(not re.search(r"(?m)^[A-Z]+-\d+#\d+\s+(?:Warning|Critical Warning|Error)",
-                          report),
-            "new native DRC has detail despite zero summary")
-    require(not re.search(r"(?m)^\|\s*[A-Z]+-\d+\s*\|", report),
-            "new native DRC has summary rules despite zero count")
-    return {"drc_checks": 0, "drc_review_status": "ZERO_NEW_FINDINGS"}
+# The owner-provided genuine 2026-11-19 23:08 MST report is the
+# *only* reviewed D3.D.2A native image. It is not the D3.D.1 image.
+ORIGINAL_OWNER_BIT_SHA = "3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411"
+ORIGINAL_OWNER_BIT_BYTES = 7797843
+OWNER_ORIGINAL_BUILDER_SHA = "5b79f09bddb9e1cf3dc60a5f0186a208c3e5e32c3baf53c6de8f3bea940cab29"
+OWNER_ORIGINAL_LIF_SHA = "9ef70ea93fe35ff290f9d40f3b2872f04dba551dc205200487c0a69431060fc0"
+NEW_JTAG_INSTANCE = "m08_d3d2a_four_lif_jtag_i"
+REVIEWED_15 = tuple(
+    path.replace("m08_d3d_lif_jtag_i", NEW_JTAG_INSTANCE)
+    for path in d3c.D3D_RTSTAT10_REVIEWED_FIRST15
+)
 
+
+def inspect_new_drc(report: str) -> dict:
+    """Accept only the seven *reviewed, original* D3.D.2A vendor/debug findings.
+
+    Four warning rules, all seven detail records, precise vendor JTAG/debug
+    paths and the exact first-15 RTSTAT sample are required. This does NOT
+    approve the remaining undisplayed 22 listed nets and does not waive any
+    changed/future warning counts. Reject new critical/error warnings.
+    """
+    from collections import Counter
+
+    require(
+        "Design       : m08_d3d2a_four_lif_jtag_wrapper" in report
+        and "Device       : xck26-sfvc784-2LV-c" in report
+        and "Design State : Fully Routed" in report
+        and "Vivado v.2025.2" in report,
+        "native four-neuron DRC report provenance not the reviewed design")
+    counts = re.findall(r"(?m)^\s*Checks found:\s*(\d+)\s*$", report)
+    require(len(counts) == 1 and counts[0] == "7",
+            "NEW_D3D2A_DRC_REVIEW_REQUIRED: unknown finding count")
+    summary = re.findall(
+        r"(?m)^\|\s*([A-Z]+-\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(\d+)\s*\|\s*$",
+        report)
+    rows = [(code, level.strip(), desc.strip(), int(qty))
+            for code, level, desc, qty in summary]
+    require(len(rows) == 4 and
+            len({code for code, _, _, _ in rows}) == 4 and
+            {code: (qty, desc) for code, level, desc, qty in rows
+             if level == "Warning"} == d3c.VENDOR_DRC_PROFILE,
+            "NEW_D3D2A_DRC_REVIEW_REQUIRED: rule/severity/description drift")
+    require(sum(qty for _, _, _, qty in rows) == 7,
+            "wrong count in DRC summary rows")
+    details = list(re.finditer(
+        r"(?m)^([A-Z]+-\d+)#(\d+)\s+(Warning|Critical Warning|Error)\s*$", report))
+    require(len(details) == 7,
+            "NEW_D3D2A_DRC_REVIEW_REQUIRED: detail cardinality drift")
+    seen, per_rule = set(), Counter()
+    for index, match in enumerate(details):
+        code, num, level = match.group(1), int(match.group(2)), match.group(3)
+        require(level == "Warning" and code in d3c.VENDOR_DRC_PROFILE and
+                (code, num) not in seen,
+                "new unknown/elevated/duplicated DRC warning")
+        seen.add((code, num))
+        per_rule[code] += 1
+        end = details[index+1].start() if index + 1 < len(details) else len(report)
+        body = report[match.end():end]
+        require(body.count("Related violations: <none>") == 1 and
+                d3c.VENDOR_DRC_PROFILE[code][1] in body,
+                "vendor warning detail changed")
+        if code == "PDCN-1569":
+            require("cell dbg_hub/inst/" in body and
+                    "(pin dbg_hub/inst/" in body and
+                    "not included in the LUT equation" in body and
+                    NEW_JTAG_INSTANCE not in body,
+                    "LUT advisory outside XSDB dbg_hub")
+            expected_pin = {
+                1: ("'A2'", "temp_curid[31]_i_1", "/I1"),
+                2: ("'A4'", "temp_curid[31]_i_1", "/I0"),
+                3: ("'A5'", "id_state[0]_i_1", "/I0"),
+            }.get(num)
+            require(expected_pin is not None and all(
+                token in body for token in expected_pin),
+                "XSDB LUT warning cell/pin sample drift")
+        elif code in ("REQP-1857", "REQP-1858"):
+            expected_fifo = {
+                ("REQP-1857", 1): "rx_fifo_i",
+                ("REQP-1858", 1): "rd_cmd_fifo_i",
+                ("REQP-1858", 2): "wr_cmd_fifo_i",
+            }.get((code, num))
+            prefix = f"BRAM ({NEW_JTAG_INSTANCE}/jtag_axi/inst/jtag_axi_engine_u/"
+            require(expected_fifo is not None and
+                    body.count(prefix + expected_fifo + "/") == 1 and
+                    "SDP mode with WRITE_FIRST write-mode" in body and
+                    "address collisions" in body and
+                    "jtag_axi_engine_u" in body,
+                    "BRAM collision advisory outside reviewed vendor JTAG FIFO")
+        elif code == "RTSTAT-10":
+            require(re.search(
+                r"(?m)^\s*39 net\(s\) have no routable loads\.", body) is not None and
+                "(the first 15 of 37 listed)" in body,
+                "new RTL or nonvendor RTSTAT count drift")
+            m = re.search(
+                r"problem bus\(es\) and/or net\(s\) are (.*?)\s*"
+                r"\(the first 15 of 37 listed\)", body, flags=re.S)
+            require(m is not None, "missing original RTSTAT sample")
+            paths = tuple(p.strip() for p in m.group(1).split(",") if p.strip())
+            require(paths == REVIEWED_15,
+                    "NEW_D3D2A_DRC_REVIEW_REQUIRED: RTSTAT first 15 paths drift")
+    require(all(
+        per_rule[code] == qty and
+        {n for k, n in seen if k == code} == set(range(1, qty+1))
+        for code, (qty, _) in d3c.VENDOR_DRC_PROFILE.items()),
+        "missing or renumbered reviewed vendor warning")
+    return {
+        "drc_checks": 7,
+        "vendor_drc_warnings": 7,
+        "drc_review_status": "EXACT_OWNER_REVIEWED_JTAG_DEBUG_7_WARNINGS_FIRST15_RTSTAT",
+        "rtstat_total_unroutable": 39,
+        "rtstat_listed_count": 37,
+        "rtstat_sampled_paths": 15,
+    }
 
 def native(folder: Path) -> dict:
     require(folder.is_dir() and not folder.is_symlink() and
@@ -182,6 +279,9 @@ def native(folder: Path) -> dict:
         "hardware_neural_execution_proven": "NO",
     }.items():
         require(values.get(k) == v, "new native metadata mismatch: " + k)
+    require(values.get("builder_sha256") == OWNER_ORIGINAL_BUILDER_SHA and
+            values.get("lif_rtl_sha256") == OWNER_ORIGINAL_LIF_SHA,
+            "new native source hash differs from owner-reviewed routed image")
     for k, src in (("builder_sha256",BUILDER),
                    ("fabric_por_rtl_sha256",POR),("lif_rtl_sha256",RTL)):
         require(values.get(k) == sha256(read(src,200000)).hexdigest(),
@@ -196,6 +296,8 @@ def native(folder: Path) -> dict:
     digest = sha256(bit).hexdigest()
     require(len(bit) > 100000 and values.get("bitstream_size_bytes") == str(len(bit)),
             "new four-neuron bitstream missing/unexpected size")
+    require(len(bit) == ORIGINAL_OWNER_BIT_BYTES and digest == ORIGINAL_OWNER_BIT_SHA,
+            "not the one exact owner-original reviewed D3.D.2A physical candidate")
     require(digest not in (OLD_BIT, d3c.OLD_FAILED,
                            d3c.PREV_PASSIVE, predecessor.R2_BIT_SHA),
             "reused prior image, not real new four-neuron bitstream")
