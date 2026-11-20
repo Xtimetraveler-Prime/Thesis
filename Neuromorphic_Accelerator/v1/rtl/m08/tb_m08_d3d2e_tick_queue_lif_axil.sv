@@ -221,6 +221,8 @@ module tb_m08_d3d2e_tick_queue_lif_axil;
                 endcase
                 read_reg(12'h058,expected_per_tick,2'b00);
                 read_reg(12'h04C,expected_total,2'b00);
+                if(tick_id<3)
+                    write_reg(12'h014,1,4'hF,2'b10); // under-service
                 write_reg(12'h040,tick_id,4'hF,2'b10); // no duplicate tick
             end
             read_reg(12'h044,0,2'b00);
@@ -322,8 +324,36 @@ module tb_m08_d3d2e_tick_queue_lif_axil;
         read_reg(12'h034,32,2'b00);
         write_reg(12'h030,1,4'hF,2'b10); // full: no count mutation
         read_reg(12'h034,32,2'b00);
+        // With 32 queued events service takes 32+ clocks, so these host
+        // commands are unambiguously concurrent and must be refused.
+        write_reg(12'h040,0,4'hF,2'b00);
+        write_reg(12'h030,1,4'hF,2'b10); // PUSH refused while servicing
+        write_reg(12'h038,1,4'hF,2'b10); // CLEAR refused while servicing
+        wait(dut.next_service_tick === 1);
+        read_reg(12'h044,0,2'b00);
+        read_reg(12'h04C,32,2'b00);
+        // Event lifetime bound remains exactly 64, independent of depth.
+        write_reg(12'h028,1,4'hF,2'b00);
+        for(n=0;n<32;n=n+1)
+            write_reg(12'h030,1,4'hF,2'b00);
+        read_reg(12'h034,64,2'b00);
+        read_reg(12'h044,32,2'b00);
+        write_reg(12'h030,1,4'hF,2'b10); // lifetime limit 64
+        read_reg(12'h034,64,2'b00);
+        write_reg(12'h040,1,4'hF,2'b00);
+        wait(dut.next_service_tick === 2);
+        read_reg(12'h04C,64,2'b00);
+        write_reg(12'h014,1,4'hF,2'b10); // cannot START with ticks 2/3 unserved
         write_reg(12'h038,1,4'hF,2'b00);
         read_reg(12'h048,0,2'b00);
+        // Signed negative prefix must also reject without mutation.
+        write_reg(12'h02C,32'h80000000,4'hF,2'b00);
+        write_reg(12'h030,1,4'hF,2'b00);
+        write_reg(12'h02C,32'hffffffff,4'hF,2'b00);
+        write_reg(12'h030,1,4'hF,2'b10);
+        read_reg(12'h034,1,2'b00);
+        read_reg(12'h044,1,2'b00);
+        write_reg(12'h038,1,4'hF,2'b00);
         // Tick order is monotonic even with an empty FIFO.
         write_reg(12'h028,1,4'hF,2'b00);
         write_reg(12'h030,1,4'hF,2'b00);
@@ -370,6 +400,7 @@ module tb_m08_d3d2e_tick_queue_lif_axil;
         // Must fail if there are no accepted external events.
         write_reg(12'h014,1,4'hF,2'b10);
         load_raw_events();
+        write_reg(12'h014,1,4'hF,2'b10); // FIFO not serviced yet
         service_all_ticks();
         check_fabric_event_sums();
 
