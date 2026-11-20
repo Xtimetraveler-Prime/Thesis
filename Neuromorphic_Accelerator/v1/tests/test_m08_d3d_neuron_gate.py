@@ -173,6 +173,99 @@ class D3DNeuronTests(unittest.TestCase):
         with self.assertRaisesRegex(g.Reject, "native fatal diagnostics"):
             g.native(self.run)
 
+    @staticmethod
+    def synthetic_exact_vendor_jtag_drc(instance):
+        # Synthetic seven-warning D3.C pattern. This is NOT owner DRC evidence.
+        # All DRC checks, severities, detail instances and RTSTAT samples
+        # remain rigidly scoped, including in the new D3.D hierarchy.
+        lines = [
+            "Report DRC",
+            "Checks found: 7",
+            "| Rule | Severity | Description | Checks |",
+            "| PDCN-1569 | Warning | LUT equation term check | 3 |",
+            "| REQP-1857 | Warning | RAMB18E2_writefirst_collision_advisory | 1 |",
+            "| REQP-1858 | Warning | RAMB36E2_writefirst_collision_advisory | 2 |",
+            "| RTSTAT-10 | Warning | No routable loads | 1 |",
+        ]
+        for i in range(1, 4):
+            lines.extend((
+                f"PDCN-1569#{i} Warning",
+                "LUT equation term check",
+                f"Used pin of cell dbg_hub/inst/debug_lut_{i} "
+                f"(pin dbg_hub/inst/debug_lut_{i}/I0) is not included in the LUT equation",
+                "Related violations: <none>",
+            ))
+        for code, index, fifo in (
+            ("REQP-1857", 1, "rx_fifo_i"),
+            ("REQP-1858", 1, "rd_cmd_fifo_i"),
+            ("REQP-1858", 2, "wr_cmd_fifo_i"),
+        ):
+            lines.extend((
+                f"{code}#{index} Warning",
+                g.d3c.VENDOR_DRC_PROFILE[code][1],
+                f"Synchronous clocking is detected for BRAM "
+                f"({instance}/jtag_axi/inst/jtag_axi_engine_u/"
+                f"{fifo}/inst_fifo_gen/ram) in SDP mode with WRITE_FIRST write-mode.",
+                "Both modes may exhibit address collisions.",
+                "Related violations: <none>",
+            ))
+        sample = [f"dbg_hub/inst/debug_net_{i}" for i in range(3)]
+        sample += [f"{instance}/jtag_axi/inst/engine_net_{i}"
+                   for i in range(12)]
+        lines.extend((
+            "RTSTAT-10#1 Warning",
+            "No routable loads",
+            "47 net(s) have no routable loads. The problem bus(es) and/or net(s) are "
+            + ",\\n".join(sample),
+            "(the first 15 of 45 listed).",
+            "Related violations: <none>",
+        ))
+        return "\\n".join(lines) + "\\n"
+
+    def test_original_d3c_warning_scope_is_not_silently_extended(self):
+        old = self.synthetic_exact_vendor_jtag_drc("m08_d3c_jtag_link_i")
+        new = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
+        # D3.C default unchanged, zero wildcard hierarchy acceptance.
+        self.assertEqual(g.d3c.inspect_drc(old)["vendor_drc_warnings"], 7)
+        with self.assertRaisesRegex(g.d3c.Reject, "outside vendor JTAG FIFO"):
+            g.d3c.inspect_drc(new)
+        result = g.d3c.inspect_drc(
+            new, design_instance="m08_d3d_lif_jtag_i")
+        self.assertEqual(result["vendor_drc_warnings"], 7)
+        self.assertEqual(result["drc_warning_profile"],
+                         "EXACT_REVIEWED_VENDOR_JTAG_PROFILE")
+        with self.assertRaisesRegex(g.d3c.Reject, "unreviewed JTAG hierarchy"):
+            g.d3c.inspect_drc(new, design_instance="user_neuron_bram_i")
+
+    def test_d3d_native_gate_accepts_only_exact_vendor_jtag_hierarchy(self):
+        drc = self.run / "reports/20_route_drc.rpt"
+        original = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
+        drc.write_text(original)
+        self.refresh()
+        result = g.native(self.run)
+        self.assertEqual(result["drc_checks"], 7)
+        self.assertEqual(result["vendor_drc_warnings"], 7)
+        self.assertFalse(result["hardware_programmed"])
+        bad_cases = (
+            ("foreign_memory", original.replace(
+                "m08_d3d_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/rx_fifo_i",
+                "m08_d3d_lif_jtag_i/lif/neural_state_ram")),
+            ("foreign_unrouted_sample", original.replace(
+                "dbg_hub/inst/debug_net_0", "m08_d3d_lif_jtag_i/lif/unsafe_net")),
+            ("foreign_design", original.replace(
+                "m08_d3d_lif_jtag_i/jtag_axi", "m08_other_i/jtag_axi")),
+            ("unknown_rule", original.replace(
+                "REQP-1857", "REQP-7777")),
+            ("elevated_critical", original.replace(
+                "REQP-1857#1 Warning", "REQP-1857#1 Critical Warning")),
+        )
+        for label, bad in bad_cases:
+            with self.subTest(label=label):
+                drc.write_text(bad)
+                self.refresh()
+                with self.assertRaises(g.d3c.Reject):
+                    g.native(self.run)
+
     def test_native_rejects_wrong_image_schema_even_with_valid_rehash(self):
         path = self.run / "reports/30_native_result.txt"
         path.write_text(path.read_text().replace(
