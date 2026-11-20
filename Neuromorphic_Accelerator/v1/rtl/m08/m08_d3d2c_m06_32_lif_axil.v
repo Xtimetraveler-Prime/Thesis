@@ -1,4 +1,9 @@
 // M08 D3.D.2C: 32 LIF neurons x4 ticks, M06 5-edge recurrent workload.
+// Timing-fix r2: one edge per clock, plus separately registered leak+bias,
+// external current, recurrent sum and spike/voltage commit. Original first
+// owner route had WNS=-0.188ns, 277 endpoints and 32 logic levels from
+// spike_mask to trace_voltage. No false timing constraint or clock change.
+// The M32N v4 AXI ABI, M06 arithmetic and logical tick semantics are unchanged.
 // Independent new RTL candidate; NOT physically implemented or owner-accepted.
 // 17 M06 external events are coalesced on PC before AXI signed32 currents.
 // NO DDR, PS HPM, Linux MMIO, event coalescing in fabric, throughput claims.
@@ -78,7 +83,6 @@ module m08_d3d2c_m06_32_lif_axil (
     reg busy, done;
     reg [31:0] result_nonce, run_count;
     integer i;
-    integer route_idx;
     integer validate_idx;
     integer validate_neuron;
     reg neurons_valid;
@@ -90,7 +94,16 @@ module m08_d3d2c_m06_32_lif_axil (
                 neurons_valid = 1'b0;
     end
     reg edges_valid;
-    reg signed [63:0] synaptic_sum;
+    // Exact signed20 width for eight signed16 contributions:
+    // [-262144,+262136], leaving all five original M06 edges intact.
+    reg signed [19:0] syn_accum;
+    reg [3:0] route_slot;
+    reg [2:0] update_phase;
+    reg signed [16:0] leak_bias_stage;
+    reg signed [33:0] external_stage;
+    reg signed [33:0] total_stage;
+    localparam [2:0] PHASE_ROUTE = 3'd0, PHASE_BASE = 3'd1,
+        PHASE_EXT = 3'd2, PHASE_TOTAL = 3'd3, PHASE_COMMIT = 3'd4;
 
     // All active edges must have genuine positive delays, exact IDs and
     // sign-extended weights. Inactive slots are never visited at execution.
@@ -146,30 +159,21 @@ module m08_d3d2c_m06_32_lif_axil (
         cfg_decay == 1 ? half_trunc :
         cfg_decay == 2 ? prev_ext : three_quarter_trunc;
     wire signed [31:0] current_now = currents[compute_index];
-    // No same-tick propagation: delay >= 1, so source history bit is
-    // already committed at the time the destination tick is evaluated.
-    // Thirty-two neurons * four ticks use 32 separate four-bit histories.
-    // Signed64 sum ensures parallel weights are combined before saturation.
-    always @* begin
-        synaptic_sum = 64'sd0;
-        for (route_idx=0;route_idx<8;route_idx=route_idx+1) begin
-            if (route_idx < cfg_edge_count &&
-                edge_post[route_idx] == neuron &&
-                edge_delay[route_idx] != 0 &&
-                {30'b0,tick} >= {30'b0,edge_delay[route_idx]} &&
-                spike_mask[edge_pre[route_idx]][tick - edge_delay[route_idx]]) begin
-                synaptic_sum = synaptic_sum +
-                   $signed({{48{edge_weight[route_idx][15]}},edge_weight[route_idx]});
-            end
-        end
-    end
-    wire signed [63:0] total =
-        $signed({{32{leaked[31]}},leaked}) +
-        $signed({{48{cfg_bias[neuron][15]}},cfg_bias[neuron]}) +
-        $signed({{32{current_now[31]}},current_now}) + synaptic_sum;
+    // No same-tick propagation: positive delay consults committed history.
+    // Time-multiplex one synapse per fabric cycle. Only ONE 20-bit weight
+    // addition occurs per edge clock; the post-synaptic sum and threshold
+    // evaluation consume independently registered pipeline stages.
+    wire edge_active_now =
+        route_slot < cfg_edge_count &&
+        edge_post[route_slot] == neuron &&
+        edge_delay[route_slot] != 0 &&
+        {30'b0,tick} >= {30'b0,edge_delay[route_slot]} &&
+        spike_mask[edge_pre[route_slot]][tick - edge_delay[route_slot]];
+    wire signed [19:0] selected_weight =
+        {{4{edge_weight[route_slot][15]}},edge_weight[route_slot]};
     wire signed [15:0] saturated =
-        total > 64'sd32767 ? 16'sd32767 :
-        total < -64'sd32768 ? -16'sd32768 : total[15:0];
+        total_stage > 34'sd32767 ? 16'sd32767 :
+        total_stage < -34'sd32768 ? -16'sd32768 : total_stage[15:0];
     wire fired = saturated >= cfg_threshold[neuron];
     wire signed [15:0] next_voltage =
         fired ? cfg_reset[neuron] : saturated;
@@ -188,6 +192,8 @@ module m08_d3d2c_m06_32_lif_axil (
                 edge_delay[i] <= 0;
             end
             neuron <= 0; tick <= 0;
+            syn_accum <= 0; route_slot <= 0; update_phase <= PHASE_ROUTE;
+            leak_bias_stage <= 0; external_stage <= 0; total_stage <= 0;
             busy <= 0; done <= 0;
             result_nonce <= 0; run_count <= 0;
             for (i=0; i<32; i=i+1) begin
@@ -215,22 +221,65 @@ module m08_d3d2c_m06_32_lif_axil (
                 w_data_q <= s_axi_wdata;
                 w_strb_q <= s_axi_wstrb;
             end
-            // One independent neuron update per clock; no premature next-tick
-            // propagation. All 32 neurons update even with zero input.
+            // Time-multiplexed neuron execution: all 32 neurons and each
+            // logical tick still update (zero input included). No direct
+            // spike_mask -> trace_voltage register-to-register path.
             if (busy) begin
-                membrane[neuron] <= next_voltage;
-                trace_voltage[compute_index] <= next_voltage;
-                trace_syn_current[compute_index] <= synaptic_sum[31:0];
-                spike_mask[neuron][tick] <= fired;
-                if (neuron == 5'd31) begin
-                    neuron <= 0;
-                    if (tick == 2'd3) begin
-                        tick <= 0;
+                case (update_phase)
+                    PHASE_ROUTE: begin
+                        if (route_slot < cfg_edge_count) begin
+                            if (edge_active_now)
+                                syn_accum <= syn_accum + selected_weight;
+                            route_slot <= route_slot + 1'b1;
+                        end else update_phase <= PHASE_BASE;
+                    end
+                    PHASE_BASE: begin
+                        // Both operands signed16: exact signed17.
+                        leak_bias_stage <=
+                            $signed({leaked[15],leaked[15:0]}) +
+                            $signed({cfg_bias[neuron][15],cfg_bias[neuron]});
+                        update_phase <= PHASE_EXT;
+                    end
+                    PHASE_EXT: begin
+                        // Signed17 plus signed32: exact in signed34.
+                        external_stage <=
+                            $signed({{17{leak_bias_stage[16]}},leak_bias_stage}) +
+                            $signed({{2{current_now[31]}},current_now});
+                        update_phase <= PHASE_TOTAL;
+                    end
+                    PHASE_TOTAL: begin
+                        // Signed34 exact total, then one final saturate.
+                        total_stage <= external_stage +
+                            $signed({{14{syn_accum[19]}},syn_accum});
+                        update_phase <= PHASE_COMMIT;
+                    end
+                    PHASE_COMMIT: begin
+                        membrane[neuron] <= next_voltage;
+                        trace_voltage[compute_index] <= next_voltage;
+                        trace_syn_current[compute_index] <=
+                            {{12{syn_accum[19]}},syn_accum};
+                        spike_mask[neuron][tick] <= fired;
+                        route_slot <= 0;
+                        syn_accum <= 0;
+                        update_phase <= PHASE_ROUTE;
+                        if (neuron == 5'd31) begin
+                            neuron <= 0;
+                            if (tick == 2'd3) begin
+                                tick <= 0;
+                                busy <= 0;
+                                done <= 1;
+                                run_count <= run_count + 1;
+                            end else tick <= tick + 1'b1;
+                        end else neuron <= neuron + 1'b1;
+                    end
+                    default: begin
+                        // Invalid pipeline state fails closed (no DONE).
+                        route_slot <= 0;
+                        syn_accum <= 0;
+                        update_phase <= PHASE_ROUTE;
                         busy <= 0;
-                        done <= 1;
-                        run_count <= run_count + 1;
-                    end else tick <= tick + 1'b1;
-                end else neuron <= neuron + 1'b1;
+                    end
+                endcase
             end
             if (aw_pending && w_pending && !s_axi_bvalid) begin
                 aw_pending <= 0; w_pending <= 0;
@@ -291,6 +340,10 @@ module m08_d3d2c_m06_32_lif_axil (
                                     trace_syn_current[i] <= 0;
                                 end
                                 neuron <= 0; tick <= 0;
+                                syn_accum <= 0; route_slot <= 0;
+                                update_phase <= PHASE_ROUTE;
+                                leak_bias_stage <= 0; external_stage <= 0;
+                                total_stage <= 0;
                                 busy <= 1; done <= 0;
                                 result_nonce <= cfg_nonce;
                             end
