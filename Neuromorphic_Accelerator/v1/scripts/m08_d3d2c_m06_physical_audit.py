@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Read-only independent D3.D.2C original physical receipt checker, NOT RELEASED.
+"""Read-only independent D3.D.2C first owner-armed physical receipt checker.
 
-No JTAG, PS MMIO, Vivado or board interaction; reconstructs original M06
-32-neuron×4-tick voltages, masks and fabric-derived recurrent currents from
-independent M02 dense/event and M03 sparse references. Requires exact new
-owner native image approval (currently absent; ALWAYS REJECTS).
+No JTAG, PS MMIO, Vivado or board interactions. Recomputes original M06
+32-neuron x 4-tick volts/masks/delivered-current reference against the genuine
+receipt, and first revalidates exact immutable original owner native
+bitstream+12-file SHA/DRC/timing gate. No board parity claim without receipts.
 """
 from __future__ import annotations
 import argparse
@@ -59,8 +59,8 @@ def verify(native:Path,hw:Path)->dict:
         accepted=native_gate.inspect(native)
     except (native_gate.Reject,ValueError,OSError,KeyError) as exc:
         raise Reject("unaccepted original 32-neuron native image: "+str(exc)) from exc
-    # Exact native release status is deliberately unreachable during the
-    # first-image review phase. Never infer approval from a valid SHA alone.
+    # Native ACCEPTED means the image is approved for owner-armed one-shot
+    # JTAG. It never by itself proves any real physical computation.
     require(accepted.get("status")==
             "M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD",
             "native 32-neuron first-image DRC/image approval is PENDING")
@@ -101,12 +101,17 @@ def verify(native:Path,hw:Path)->dict:
         "M08_D3D2C_ACCEPTED_IMAGE_HASH|"+accepted["candidate_sha256"],
         "M08_D3D2C_M06_TRIPLE_ORACLE_579_WORDS_VERIFIED",
         "M08_D3D2C_DEVICE|xck26_0|xck26",
+        "M08_D3D2C_PROGRAM_START",
         "M08_D3D2C_PROGRAM_COMPLETED",
+        "M08_D3D2C_AXI_MASTER|hw_axi_1",
         "M08_D3D2C_BRAM_TRANSPORT_PASS",
         "M08_D3D2C_M32N_V4_IDENTITY_PASS",
         "M08_D3D2C_PHYSICAL_M06_128_VOLTAGE_128_SPIKE_128_SYN_CURRENT_PASS",
     ):
         require(marker in log,"actual board log missing: "+marker)
+    require(log.count("M08_D3D2C_PROGRAM_START")==1 and
+            log.count("M08_D3D2C_PROGRAM_COMPLETED")==1,
+            "physical record has ambiguous/multiple program markers")
     for n in range(32):
         require(log.count(f"M08_D3D2C_M06_REAL_NEURON_PARITY|{n}\n")==1,
                 "missing/duplicated physical neuron parity marker "+str(n))
