@@ -18,7 +18,7 @@ if {![string match "2025.2*" [version -short]]} {
 set bit [file normalize $::env(M08_D3C_BIT)]
 set expected [string tolower $::env(M08_D3C_EXPECTED_SHA)]
 set result [file normalize $::env(M08_D3C_RESULT)]
-if {[file tail $bit] ne "m08_d3c_jtag_bram_UNRELEASED.bit" ||
+if {[file tail $bit] ne "m08_d3c_jtag_bram_r2_UNRELEASED.bit" ||
     ![regexp {^m08_d3c_jtag_link_[A-Za-z0-9]+$} [file tail [file dirname [file dirname $bit]]]]} {
     error "Not the newly generated D3C diagnostic image"
 }
@@ -43,6 +43,7 @@ set hw_open 0
 set server_open 0
 set tgt_open 0
 puts "M08_D3C_HARDWARE_IMAGE_VERIFIED|$digest"
+puts {M08_D3C_RUNTIME_VARIANT=FABRIC_POR_256_CYCLES_PS_CLOCK_UNCHANGED}
 try {
     open_hw_manager
     set hw_open 1
@@ -119,6 +120,8 @@ try {
     puts $fd "debug_axi=$axi"
     puts $fd {no_linux_ssh_or_ps_mmio_used=YES}
     puts $fd {neural_inference_tested=NO}
+    puts $fd {reset_mode=FABRIC_POR_256_CYCLES}
+    puts $fd {ps_clock_dependency=YES}
     foreach line $lines {puts $fd $line}
     close $fd
     puts "M08_D3C_FOUR_WORDS_READBACK_PASS_PC_RECEIPT=$result"
