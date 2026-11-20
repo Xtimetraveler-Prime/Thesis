@@ -1,5 +1,46 @@
 # M08 tests explained — entry/read-only and hardware-readiness contracts
 
+## M08 D3.D.1 physical LIF neural execution ACCEPTED (owner original, 2026-11-19 22:20 MST)
+
+The actual owner one-shot Vivado 2025.2 run programmed K26 `xck26_0` with the distinct previously accepted D3.D.1 bit SHA256 `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`. Owner evidence directory `~/Thesis_Evidence/M08/m08_d3d_neuron_HW_NMgBWpCj` must remain unchanged. JTAG master `hw_axi_1` reported `M08_D3D_PROGRAM_COMPLETED`, retained BRAM transport echo `55AA22DD` and live LIF magic/version `4D384C46/00010000`. On actual fabric, four sequential four-tick signed16 LIF cases produced the M02-matching traces: `negative_trunc_spike [2,-2,-4,-1] mask=0002`; `positive_negative_saturation [-5,-32768,-32768,-32768] mask=0001`; `autonomous_bias_equality [3,0,-3,0] mask=0002`; `negative_half_toward_zero [-1,-1,-1,-1] mask=0000`. Each DONE/nonce/run-count check passed (counts 1–4). Owner original stdout reports **six of six SHA files OK** and `scripts/m08_d3d_neuron_physical_audit.py` result `M08_D3D_PHYSICAL_SINGLE_NEURON_FOUR_TICK_M02_PARITY_ACCEPTED`, `hardware_execution_verified=true`, physical runner exit `0`. The audit script is PC-only and checks original readback against the regenerated M02 oracle; it does not cause more FPGA programming.
+
+**Read-only owner check:**
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi"
+HW="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_HW_NMgBWpCj"
+(cd "$HW" && sha256sum -c 99_evidence_sha256.txt)
+cat "$HW/03_exit.txt"
+cat "$HW/80_neural_parity_readback.txt"
+python3 scripts/m08_d3d_neuron_physical_audit.py --run-dir "$RUN" --hw-dir "$HW"
+```
+
+**Gate scope:** physical ONE-neuron ×4-tick signed16 arithmetic/spike parity PASSED; D3.C JTAG transport also PASS. Nothing here verifies real multi-neuron synapses/events, the M06 32-neuron ×4-tick HLS engine, physical DDR/paging, Linux PS-PL management, PS-clock independence, energy or throughput. **Next D3.D.2:** implement and independently verify multi-neuron state/timestep scheduling and positive-delay synaptic delivery; progressively match the existing M06 32×4 reference. Preserve previous source/native/physical evidence and all original failures. M08 remains OPEN; M09 PLANNED.
+
+
+
+## Historical pre-physical native acceptance (2026-11-19; superseded by physical pass above)
+
+The **actual owner Vivado 2025.2** D3.D.1 compute-bearing LIF image under `~/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi` is **OFFLINE NATIVE ACCEPTED**, not physically programmed. Original 12/12 SHA files passed and `scripts/m08_d3d_neuron_gate.py --run-dir` returned nested `native.status=M08_D3D_NATIVE_NEURON_IMAGE_ACCEPTED_OFFLINE_NO_BOARD`; .bit SHA `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`, 7,797,836 bytes, WNS +3.170 ns, WHS +0.010 ns, TNS/THS zero, exactly seven bounded vendor/debug DRC warnings (3 PDCN, 1 REQP-1857, 2 REQP-1858, 1 RTSTAT-10). The last owner-supplied RTSTAT warning was **39 unused nets / first 15 of 37 named**; the exact 15 sample paths are accepted only for `m08_d3d_lif_jtag_i`; old D3.C uses its original 47/45 count. **Only 15 of 37 named nets were displayed**, not an exhaustive DRC net review. Source-only outer `status=M08_D3D_SOURCE_ACCEPTED_PC_ONLY_NOT_BUILT` coexists with genuine nested native acceptance and must not be misreported as a failed build.
+
+Relevant files: `rtl/m08/m08_d3d_lif_axil.v` (actual four-tick neuron with AXI-Lite state/spikes at 0xA0001000), `rtl/m08/tb_m08_d3d_lif_axil.sv` (real Icarus directed test), `scripts/m08_d3d_neuron_vectors.py` (M02 dense/event independently reconciled 4 fixtures), `scripts/m08_d3d_neuron_build.tcl` / `run_m08_d3d_neuron_pc.sh` (owner Vivado original build, no board), `scripts/m08_d3d_neuron_gate.py` (new native+source SHA/provenance/DRC/timing reject), `scripts/m08_d3d_drc_inspect.py` (read-only original-DRC review), `tests/test_m08_d3d_neuron_gate.py` (synthetic positive/negative gate, source, missing/mutated evidence, true RTL simulation), `scripts/run_m08_d3d_neuron_physical_once.sh` / `m08_d3d_neuron_readback_once.tcl` (**future** one-shot physical owner test), and `scripts/m08_d3d_neuron_physical_audit.py` (independent **future** 6-file hardware evidence/oracle parity review). The hardware suite is not invoked by unit tests or CI.
+
+Source/CI only validates behavior and guard logic, while native original Vivado routes/implements an actual K26 image and the later owner hardware runner will **really program the FPGA**. It uses the D3.C physically passed JTAG AXI→BRAM transport (0xA0000000) as a regression, then programs four distinct M02 parameter/current cases; PL must generate four successive signed16 membrane voltages, a four-bit spike mask, nonce and run count per fixture, and the receipt auditor must compare all to M02 independently. Four workloads × four ticks **on one neuron** do NOT constitute the later M06 32-neuron HLS/paged/DDR engine. PC-only full M08 regression and 8 CI workflows passed after DRC rule update, but actual new D3.D neural physical parity and PL clock survival after SSH loss remain UNTESTED.
+
+Expected offline commands from VS Code terminal:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+python3 -m unittest discover -s tests -p 'test_m08_d3d_neuron_gate.py' -v
+python3 scripts/m08_d3d_neuron_gate.py --source-only
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d_neuron_gate.py --run-dir "$RUN"
+sha256sum "$RUN/bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"
+```
+
+For physical preflight, one-shot exact command, stop/no-retry/PC receipts and subsequent M06 accelerator work, **read [the D3.D.1 new-chat handoff](M08_D3D_1_PHYSICAL_LIF_NEXT_CHAT_HANDOFF_2026_11_19.md)**. Do not program the bitstream until actual owner readiness and the above acceptance are reconfirmed.
 
 ## M08 D3.C PL JTAG AXI→BRAM smoke circuit (2026-11-19)
 
