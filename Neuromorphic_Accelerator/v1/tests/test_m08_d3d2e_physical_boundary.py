@@ -1,7 +1,6 @@
 """M08 D3.D.2E STAGED physical source boundary, never opens Vivado/JTAG.
 
-Full original DRC instance/pin report still missing: original native checker
-unconditionally exits 2, so user launch must STOP before creating HW evidence.
+Full original DRC instance/pin report still missing: exact native gate rejects nonoriginal source/report bytes before JTAG.
 These are static/negative mock checks, NOT actual board evidence.
 """
 from __future__ import annotations
@@ -18,7 +17,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 import m08_d3d2e_queue_physical_audit as audit
-import m08_d3d2e_queue_native_review as native
+import m08_d3d2e_queue_exact_native_accept as native
 
 BIT_SHA="2c443c3d80e86e5e9488b457110a45b0db96881016e9f87a5c801a72ec7527dc"
 NATIVE="m08_d3d2e_queue_GFz0SbiC"
@@ -30,7 +29,7 @@ class QueuePhysicalStagedBoundary(unittest.TestCase):
         self.assertEqual(proc.returncode,0,proc.stderr)
         s=p.read_text()
         for req in (BIT_SHA,NATIVE,"EXPECTED_SIZE=7797844",
-                    "m08_d3d2e_queue_native_review.py",
+                    "m08_d3d2e_queue_exact_native_accept.py",
                     "m08_d3d2e_queue_readback_once.tcl",
                     "m08_d3d2e_queue_physical_audit.py",
                     "m08_d3d2d_event_vectors.py",
@@ -39,7 +38,7 @@ class QueuePhysicalStagedBoundary(unittest.TestCase):
                     "M08_D3D2E_HW_STOP_NO_RETRY",
                     "m08_d3d2e_queue_HW_"):
             self.assertIn(req,s,req)
-        self.assertLess(s.index("m08_d3d2e_queue_native_review.py"),
+        self.assertLess(s.index("m08_d3d2e_queue_exact_native_accept.py"),
                         s.index('HW="$(mktemp -d'))
         active="\\n".join(x for x in s.splitlines()
                          if x.strip() and not x.lstrip().startswith("#"))
