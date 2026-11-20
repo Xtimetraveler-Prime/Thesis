@@ -111,8 +111,8 @@ def verify(native:Path,hw:Path)->dict:
         require(marker in log,"actual board log missing: "+marker)
     # Vivado's journal echoes source lines containing marker strings.
     # Only count standalone stdout marker lines, not echoed Tcl commands.
-    require(len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_START\\s*$",log))==1 and
-            len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_COMPLETED\\s*$",log))==1,
+    require(len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_START$",log))==1 and
+            len(re.findall(r"(?m)^M08_D3D2C_PROGRAM_COMPLETED$",log))==1,
             "physical record has ambiguous/multiple program markers")
     for n in range(32):
         require(log.count(f"M08_D3D2C_M06_REAL_NEURON_PARITY|{n}\n")==1,
