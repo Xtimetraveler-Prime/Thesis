@@ -1,5 +1,21 @@
 # M08 D3.D.2B — first genuine recurrent on-FPGA synaptic routing
 
+
+## NEW OWNER-ORIGINAL D3.D.2B DRC REVIEW VERDICT — no bitstream rebuild (2026-11-20)
+
+**THE ORIGINAL BITSTREAM IS TECHNICALLY ELIGIBLE FOR A FIRST GUARDED PHYSICAL TEST AFTER THE OWNER RE-RUNS THE UPDATED NATIVE GATE.** Full owner original report supplied and reviewed in this chat (first attempt DRC gate exit 2 was intentional, NOT a bitgen failure). New image path and provenance are preserved exactly; **NO RTL/Vivado builder rework is indicated**, and no native source/bitstream/evidence was edited.
+
+- **Original owner directory:** /home/dna/Thesis_Evidence/M08/m08_d3d2b_synaptic_DakjdpCO.
+- **Original accepted-for-review bit SHA256:** dae1c4953826317854acd3c61d013b6fddec410a0450002fa13b3ab1f1650d14; **size 7,797,847** bytes.
+- **Provenance:** Vivado 2025.2, part xck26-sfvc784-2LV-c; builder SHA 82ba3b226e16ac579cfc2527216f8acb02f9b13d3f42c5574344fcc9ce49e1a8; synaptic RTL SHA 2894f33a1c0054a0cf0231e1c4970e5eaea377bbe7524e4c57717c033b5ad88b; POR SHA 56dffdb178772296c7d751d75654aff8be44885939f752a9200ad1f961373fb2.
+- **Original timing:** +0.136 ns setup slack, +0.012 ns hold slack, TNS/THS zero, user-specified constraints met, zero failing endpoints; 100 MHz nominal requested PS PL0. This setup margin is narrow. Physical device/PS runtime clocks are still unproven independent of Linux.
+- **Original DRC:** 7 Warn-only, no reported user synapse RTL-specific violation. PDCN-1569 three exact debug XSDB LUT advisories (pin A1/I0, A3/I1, A4/I0), REQP-1857 rx_fifo_i once, REQP-1858 rd_cmd_fifo_i and wr_cmd_fifo_i once, RTSTAT-10 39 nets without load / 37 listed / first **15** printed. The first fifteen are exact previously known debug-hub/JTAG FIFO paths under the renamed current module instance. The other 22 were not printed individually and are NOT claimed reviewed. Warning severity/count/hierarchy and real original report provenance must match a fail-closed allowlist.
+- **Fix committed:** scripts/m08_d3d2b_synaptic_gate.py now binds original folder name, bit SHA and bytes, original RTL and builder hashes and all seven detailed DRC paths/pins; tests/test_m08_d3d2b_owner_native_review.py checks positive synthetic review and fail-closed mutations. The one-shot physical shell/Tcl independently recheck exact reviewed image hash/size. The original failed native exit-2 remains historical evidence. **GitHub CI and operator original-gate outcomes are separate**.
+- **Owner next:** follow the authoritative [NEXT CHAT D3.D.2B ORIGINAL-BITSTREAM PHYSICAL HANDOFF](M08_D3D2B_NEXT_CHAT_PHYSICAL_HANDOFF_2026_11_20.md). First do source/tests and **READ-ONLY native** revalidation against the original 12 SHA files; require nested M08_D3D2B_NATIVE_ROUTED_SYNAPSE_CANDIDATE_ACCEPTED_NO_BOARD. If it passes, fresh stock/independent cooling/UART/JTAG preflight followed by *one* explicitly authorized hardware run. No current D3.D.2B physical neural evidence exists; no 32-neuron physical result exists. No new Vivado build is necessary unless the gate or real hardware reveals a specific design/source issue.
+
+### Historical original native DRC rejection preserved below
+
+
 ## Owner first genuine D3.D.2B native build — BITGEN PASS / DRC GATE PENDING (2026-11-20 00:50 MST)
 
 Owner ran `scripts/run_m08_d3d2b_synaptic_pc.sh` and supplied original Vivado 2025.2 stdout. The **separate routed four-neuron recurrent-synapse bitstream was generated successfully** (`Bitgen Completed Successfully`, `write_bitstream completed successfully`, Vivado bitgen reports 0 errors/critical warnings/warnings). All **12/12 original evidence SHA256 rows returned OK**. The owner-native evidence folder is **`~/Thesis_Evidence/M08/m08_d3d2b_synaptic_DakjdpCO`**, with `bitstream_candidate/m08_d3d2b_synaptic_lif_jtag_UNRELEASED.bit`. The native gate deliberately returned **exit 2**, `D3D2B_NEW_DRC_REVIEW_REQUIRED`, because the **first new design's report contains seven DRC findings**. Neither the actual DRC report detail, bitstream SHA256 value nor routed WNS/WHS/TNS/THS was included in this supplied extract. **DO NOT call the bitstream broken, accepted, or physically programmed. DO NOT rebuild it yet.** Preserve original evidence and original failed acceptance output without alteration.
