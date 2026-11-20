@@ -1,5 +1,49 @@
 # M08 D3.D.2C — real M06 32-neuron ×4-tick FPGA neural workload (staged; NO BOARD)
 
+## FIRST ORIGINAL OWNER NATIVE ROUTE — TIMING FAILURE, NOT BITGEN (2026-11-20 11:36 MST)
+
+**New owner evidence (immutable):** `/home/dna/Thesis_Evidence/M08/m08_d3d2c_m06_RIezhupj`. The owner-provided first original Vivado 2025.2 console excerpt shows:
+
+- `route_design completed successfully`, routed checkpoint `project/m08_d3d2c_m06_lif_jtag.runs/impl_1/m08_d3d2c_m06_lif_jtag_wrapper_routed.dcp` was generated. This is useful original placement/routing evidence.
+- During automatic post-route `report_timing_summary`, Vivado reported `CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements`. Additional `Timing 38-436` bus-skew advisory calls for independent `report_bus_skew` review. The `Power 33-332` high-fanout reset/vectorless activity advisory concerns **power-estimate accuracy**, not the demonstrated timing root cause.
+- The Tcl status check at line 279 of `scripts/m08_d3d2c_m06_build.tcl` rejected `impl_1` because it was not marked `*Complete!*`. This **correctly stopped bitstream generation**. The source-owned `reports/20_route_drc.rpt`, `reports/21_route_timing.rpt`, `reports/30_native_result.txt`, original 12-file SHA ledger and new `.bit` were **not** reached in this run; no physical programming.
+- The submitted console excerpt **does not include numerical WNS, TNS, failing endpoint count, detailed startpoint/endpoint, logic-vs-route delay, or exact critical path hierarchy**. Thus it does not establish whether the longest path is recurrence, neuron state selection, AXI readback, reset, or vendor JTAG. Do not change frequency, apply a false timing exception, use D3.D.2B's warning allowlist, or rebuild simply because route_design itself succeeded.
+- **Next: diagnose the FIRST original routed design read-only.** Do not rerun build or Vivado at this stage. The latest branch includes `scripts/m08_d3d2c_m06_failed_route_audit.py` and synthetic negative tests. That auditor reads *existing* original routed reports and hash-checks nothing by mutation; it never starts Vivado, opens the device, or writes evidence.
+
+### Original evidence read-only commands — local VS Code terminal
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d2c-m06-32-neuron
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d2c-m06-32-neuron
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d2c_m06_RIezhupj"
+IMPL="$RUN/project/m08_d3d2c_m06_lif_jtag.runs/impl_1"
+test -f "$IMPL/m08_d3d2c_m06_lif_jtag_wrapper_routed.dcp"
+
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_failed_route_audit.py' -v
+python3 scripts/m08_d3d2c_m06_failed_route_audit.py --run-dir "$RUN"
+
+# Direct original report excerpts: read only, no rerun of synthesis/routing.
+RPT="$IMPL/m08_d3d2c_m06_lif_jtag_wrapper_timing_summary_routed.rpt"
+grep -n -A 5 -m 1 'WNS(ns)' "$RPT"
+grep -n -A 90 -m 3 'Slack (VIOLATED)' "$RPT"
+grep -n -E -m 40 'Source:|Destination:|Path Group:|Path Type:|Data Path Delay:|Logic Levels:|Requirement:' "$RPT" || true
+grep -n -E 'VIOLATED|WNS|bus skew' "$IMPL/m08_d3d2c_m06_lif_jtag_wrapper_bus_skew_routed.rpt" | head -n 40 || true
+sha256sum "$RPT" "$IMPL/m08_d3d2c_m06_lif_jtag_wrapper_routed.dcp"
+```
+
+**Report the exact WNS/TNS and the first one to three worst setup path excerpts** (source/destination, requirement, data path delay, major cells/nets and bus-skew result). This determines whether to pipeline synaptic routing, restructure neuron state selection or fix a distinct AXI/IP path. The source/RTL Icarus PASS remains valid for its bounded model but does not override native timing.
+
+The original `m08_d3d2c_m06_RIezhupj` directory and its failed run status are **immutable**. Any subsequent RTL timing fix must produce a **NEW** distinct native evidence folder with new full DRC/timing review; no original `.dcp`, log, or report gets replaced.
+
+---
+
+
 **November 20, 2026; new stacked branch based on documented D3.D.2B physical PASS.**
 
 ## Why this is a distinct hardware milestone
