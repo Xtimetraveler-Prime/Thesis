@@ -1,0 +1,39 @@
+name: M08 D3.D.2E.1 bounded tick queue (SOURCE ONLY / NO BOARD)
+
+on:
+  push:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m08_d3d2e_queue.yml"
+  pull_request:
+    paths:
+      - "Neuromorphic_Accelerator/v1/**"
+      - ".github/workflows/neuromorphic_accelerator_m08_d3d2e_queue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-real-rtl:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: Neuromorphic_Accelerator/v1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python source and shell syntax (NO HARDWARE)
+        run: |
+          python3 -m compileall -q src scripts tests
+          bash -n scripts/run_m08_d3d2d_event_pc.sh
+          python3 scripts/m08_d3d2e_queue_gate.py --source-only
+      - name: Install REAL Icarus; no fake/synthetic pass
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          iverilog -V | head -n 1
+      - name: D3.D.2E real clocked AXI queue RTL + M06 512-value oracle + mutations
+        run: python3 -m unittest discover -s tests -p 'test_m08_d3d2e_tick_queue.py' -v
+      - name: Preserve all earlier M08 tests and owner image boundaries
+        run: python3 -m unittest discover -s tests -p 'test_m08*.py' -v
