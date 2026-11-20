@@ -29,7 +29,7 @@ fi
 # Its first-image native gate ALWAYS exits 2. No physical programming now.
 python3 "$ROOT/scripts/m08_d3d2d_event_native_review.py" --run-dir "$NATIVE"
 EXPECTED_SHA="UNREVIEWED_M08_D3D2D_NEW_IMAGE"
-EXPECTED_SIZE=0
+EXPECTED_SIZE=0  # Unreviewed first image: HARD STOP, NEVER force to zero-size bit
 BIT="$NATIVE/bitstream_candidate/m08_d3d2d_event_lif_jtag_UNRELEASED.bit"
 if [[ ! -f "$BIT" || -L "$BIT" ||
       "$(stat -c '%s' "$BIT")" != "$EXPECTED_SIZE" ||
@@ -64,7 +64,7 @@ printf 'vivado_physical_exit=%s\n' "$RC" > "$HW/03_exit.txt"
     if [[ "$RC" -eq 0 && -s 80_m06_raw17_hw_parity.txt ]] &&
         grep -Fxq 'result=ONE_ORIGINAL_M06_32X4_RAW_EVENT_AND_RECURRENT_HARDWARE_PARITY' \
             80_m06_raw17_hw_parity.txt &&
-        [[ "$(grep -c '^neuron=[0-9]* voltages=.* mask=.* synaptic_currents=' \
+        [[ "$(grep -c '^neuron=[0-9]* external_currents=.* voltages=.* mask=.* synaptic_currents=' \
             80_m06_raw17_hw_parity.txt)" -eq 32 ]]; then
         sha256sum 00_executed_source.tcl 01_jtag_m06.log 02_jtag_m06.jou \
             03_exit.txt 10_m06_raw17_golden.hex 80_m06_raw17_hw_parity.txt \
@@ -72,7 +72,7 @@ printf 'vivado_physical_exit=%s\n' "$RC" > "$HW/03_exit.txt"
         sha256sum -c 99_evidence_sha256.txt
         python3 "$ROOT/scripts/m08_d3d2d_event_physical_audit.py" \
             --run-dir "$NATIVE" --hw-dir "$HW"
-        echo 'M08_D3D2D_HARDWARE_M06_32X4_RECURRENT_M02_PARITY_SUCCEEDED'
+        echo 'M08_D3D2D_HARDWARE_M06_32X4_RAW_EVENT_AND_RECURRENT_PARITY_SUCCEEDED'
     else
         for f in 00_executed_source.tcl 01_jtag_m06.log 02_jtag_m06.jou \
                  03_exit.txt 10_m06_raw17_golden.hex 80_m06_raw17_hw_parity.txt; do
