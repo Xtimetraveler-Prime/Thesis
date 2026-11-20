@@ -32,7 +32,7 @@ if [[ "$RC" -ne 0 ]]; then
     exit "$RC"
 fi
 for name in "00_vivado.log" "01_vivado.jou" "02_vivado_exit.txt" \
-    "reports/10_fan_a12.xdc" "reports/11_fabric_por.v" "reports/12_lif_axil.sv" "reports/20_route_drc.rpt" "reports/21_route_timing.rpt" \
+    "reports/10_fan_a12.xdc" "reports/11_fabric_por.v" "reports/12_lif_axil.v" "reports/20_route_drc.rpt" "reports/21_route_timing.rpt" \
     "reports/22_route_utilization.rpt" "reports/23_route_clocks.rpt" \
     "reports/30_native_result.txt" "bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"; do
     if [[ ! -s "$RUN/$name" || -L "$RUN/$name" ]]; then
@@ -43,7 +43,7 @@ done
 (
     cd "$RUN"
     sha256sum "00_vivado.log" "01_vivado.jou" "02_vivado_exit.txt" \
-        "reports/10_fan_a12.xdc" "reports/11_fabric_por.v" "reports/12_lif_axil.sv" "reports/20_route_drc.rpt" "reports/21_route_timing.rpt" \
+        "reports/10_fan_a12.xdc" "reports/11_fabric_por.v" "reports/12_lif_axil.v" "reports/20_route_drc.rpt" "reports/21_route_timing.rpt" \
         "reports/22_route_utilization.rpt" "reports/23_route_clocks.rpt" \
         "reports/30_native_result.txt" "bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit" \
         > 99_evidence_sha256.txt
