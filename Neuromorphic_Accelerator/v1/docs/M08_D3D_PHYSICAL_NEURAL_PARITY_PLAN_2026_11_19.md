@@ -1,6 +1,6 @@
 # M08 D3.D — first genuine KV260 neural-inference parity over proven JTAG readback
 
-**Status:** D3.D.1 signed16 LIF RTL, exact-M02 fixture generator, RTL tests, new Vivado builder, native receipt gate, guarded physical runner and independent physical receipt auditor are implemented **in source**. A genuine owner Vivado D3.D bitstream and physical neural execution have NOT yet been demonstrated. The r2 D3.C communication experiment completed physically and is preserved; D3.C is not itself a neural accelerator.
+**CURRENT STATUS (owner-verified 2026-11-19 21:28–21:31 MST): D3.D.1 accepted genuine native Vivado image; PHYSICAL NEURAL EXECUTION PENDING.** Signed16 LIF RTL, M02 golden generator, directed RTL tests, Vivado builder, native receipt gate, guarded physical one-shot and independent hardware receipt auditor exist. The original owner Vivado run `m08_d3d_neuron_Yz3k4vsi` has 12/12 SHA ledger PASS and **nested `native.status=M08_D3D_NATIVE_NEURON_IMAGE_ACCEPTED_OFFLINE_NO_BOARD`** after strict owner-evidenced DRC review. Its bitstream SHA is `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`, 7,797,836 bytes, WNS +3.170 ns, WHS +0.010 ns, TNS/THS 0. **No physical D3.D load or hardware LIF result exists yet.** D3.C r2 JTAG→BRAM communication has already PASSED on the actual KV260. [Physical-test next-chat handoff](M08_D3D_1_PHYSICAL_LIF_NEXT_CHAT_HANDOFF_2026_11_19.md).
 
 ## Physical prerequisite established (owner originals, 2026-11-19)
 
@@ -222,3 +222,37 @@ SHA256 `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b`.
 The owner must pull the latest D3.D branch and rerun all 12 SHA checks and `scripts/m08_d3d_neuron_gate.py --run-dir` to establish whether the **complete** offline native acceptance (including actual timing and receipt provenance) passes. No physical neural test or Linux-compatibility claim yet.
 
 **Physical checkpoint after native acceptance only:** Do not program until fresh explicit operator authorization, stock board boot/recovery, independent backup cooling and UART capture are confirmed. One-shot script must verify the same candidate SHA, read back the original BRAM transport, then write four independent M02 inputs and compare genuinely FPGA-computed voltages and spikes to Python. If it fails, preserve both hardware and UART evidence without an automatic retry.
+
+## D3.D.1 accepted native image — final owner verification (2026-11-19, PHYSICAL STILL PENDING)
+
+The owner ran these commands against the **original unmodified run**, not a synthetic fixture:
+
+```bash
+RUN="$HOME/Thesis_Evidence/M08/m08_d3d_neuron_Yz3k4vsi"
+(cd "$RUN" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_d3d_neuron_gate.py --run-dir "$RUN"
+sha256sum "$RUN/bitstream_candidate/m08_d3d_lif_jtag_UNRELEASED.bit"
+```
+
+**Original result:** all **12** expected evidence files checked `OK`. The complete source/native JSON included source stage `status=M08_D3D_SOURCE_ACCEPTED_PC_ONLY_NOT_BUILT` **alongside** nested, actual vendor-backed `native.status=M08_D3D_NATIVE_NEURON_IMAGE_ACCEPTED_OFFLINE_NO_BOARD`; interpret only the nested `native` object as the genuine native acceptance. Its fields:
+
+| Native field | Original owner result |
+| --- | --- |
+| Candidate SHA256 | `b071adcec0ba33077cdf70543d5cc9c354f6746bcc8138e8c741c41a3cbb1c8b` |
+| Candidate bytes | `7797836` |
+| `builder_sha256` | `3fcaaa0e839effe49addb0ae258ec91cc4f544ff37caf4880b26239c93ecd7f4` |
+| `lif_rtl_sha256` | `3d1194ab1c9e248f79560c89955a02e06b47dcd546c85e6a7f584ac62d06ed29` |
+| `fabric_por_sha256` | `56dffdb178772296c7d751d75654aff8be44885939f752a9200ad1f961373fb2` |
+| DRC checks/warnings | `7` / `7`, `EXACT_REVIEWED_VENDOR_JTAG_PROFILE` |
+| WNS / WHS | `+3.170 ns` / `+0.010 ns` |
+| TNS / THS | `0.0 ns` / `0.0 ns` |
+| JTAG BRAM base | `0xA0000000` |
+| LIF AXI-Lite base | `0xA0001000` |
+| `hardware_programmed` | `false` |
+| `neural_execution_proven` | `false` |
+
+The 7 owner DRC warnings are 3 `PDCN-1569` (debug hub), 1 `REQP-1857` (JTAG FIFO), 2 `REQP-1858` (JTAG FIFO), 1 `RTSTAT-10` (unused vendor/debug nets). The recorded RTSTAT detail states **39 nets without routable loads; 37 names listed, first 15 shown**. The 15 owner-supplied paths were transcribed into an **ordered exact-match D3.D-only** reviewed set, with no observed neural datapath paths among those 15; **the other 22 listed names are not individually visible in this DRC excerpt**. The D3.C old 47/45 warning profile stays unchanged. Both source gate and native DRC/timing parser remain fail-closed for unknown/changed findings.
+
+**Outstanding before physical:** Independently powered backup cooling, live UART logging, normal stock boot/recovery and one operator-approved JTAG reprogramming remain on the *owner*, not proven in the native report. The image retains `PS pl_clk0` clock dependency, so no claim of full Linux-independent PL clock generation. Board SSH may become unreachable after JTAG; do not equate that alone with kernel hang or treat raw JTAG programming as Linux manager-compatible. Original bad PS HPM0 image SHA `a8ed0e4d461029522750afa7afd9318e956e0874d1b6e5f7f4e6607562c9f45b` stays quarantined. Preserve prior failed D3.D owner directories `BVm2BQh9` (unsupported SystemVerilog IPI top) and `R3BZiFI7` (wrong wrapper critical warning) separately from accepted `Yz3k4vsi`.
+
+**Next bounded physical test:** one genuine owner-approved `M08_D3D_ALLOW_PROGRAM=YES` JTAG one-shot `scripts/run_m08_d3d_neuron_physical_once.sh`, which first re-audits source/native and emits an independent PC `m08_d3d_neuron_HW_*` receipt. Its fixed four fixtures perform one-neuron four-tick **hardware-computed** signed16 LIF updates, with M02 dense/event oracle comparison and final SHA-based `scripts/m08_d3d_neuron_physical_audit.py` evidence verification. A BRAM-echo-only pass does NOT satisfy neural acceptance; no DDR, HLS 32-neuron stream network, recurrent routing or performance results claimed. **Never auto-retry on a failed hardware attempt.**
