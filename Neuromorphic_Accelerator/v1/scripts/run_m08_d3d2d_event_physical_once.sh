@@ -16,7 +16,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="$HOME/Thesis_Evidence/M08"
 NATIVE="$(realpath -- "$1")"
 if [[ ! -d "$BASE" || -L "$BASE" || ! -d "$NATIVE" || -L "$NATIVE" ||
-      "$NATIVE" != "$BASE/m08_d3d2d_event_MN2pwduB" || "$(id -u)" -eq 0 ]]; then
+      "$NATIVE" != "$BASE"/m08_d3d2d_event_* || "$(id -u)" -eq 0 ]]; then
     echo 'M08_D3D2D_HW_STOP: noncanonical native folder or root' >&2
     exit 2
 fi
