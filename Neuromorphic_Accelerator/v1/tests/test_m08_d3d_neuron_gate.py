@@ -23,6 +23,7 @@ g = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(g)
 import m08_d3d_neuron_vectors as vectors
 import m08_d3d_neuron_physical_audit as physical_audit
+import m08_d3d_drc_inspect as drc_inspect
 
 
 class D3DNeuronTests(unittest.TestCase):
@@ -265,6 +266,40 @@ class D3DNeuronTests(unittest.TestCase):
                 self.refresh()
                 with self.assertRaises(g.Reject):
                     g.native(self.run)
+
+    def test_readonly_drc_diagnostic_reports_owner_hierarchy_and_counts(self):
+        path = self.run / "reports/20_route_drc.rpt"
+        report = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
+        path.write_text(report)
+        self.refresh()
+        result = drc_inspect.inspect(self.run)
+        self.assertIn("M08_D3D_DRC_EVIDENCE_SHA256=VERIFIED", result)
+        self.assertIn("DRC_CHECKS_FOUND=7", result)
+        self.assertIn("RTSTAT_NETS_WITH_NO_LOADS=47", result)
+        self.assertIn("RTSTAT_PARSED_SAMPLE_PATHS=15", result)
+        self.assertIn("known_debug_prefix:", result)
+        self.assertNotIn("UNREVIEWED:", result)
+        self.assertEqual(report, path.read_text(), "read-only inspection modified original report")
+        self.assertEqual(g.native(self.run)["drc_checks"], 7)
+
+    def test_readonly_drc_diagnostic_detects_original_evidence_mutation(self):
+        path = self.run / "reports/20_route_drc.rpt"
+        path.write_text(self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i"))
+        self.refresh()
+        path.write_text(path.read_text() + "\\nRTSTAT-10 mutated after owner SHA\\n")
+        with self.assertRaisesRegex(ValueError, "SHA does not match"):
+            drc_inspect.inspect(self.run)
+
+    def test_readonly_drc_diagnostic_does_not_approve_unreviewed_rtstat(self):
+        report = self.synthetic_exact_vendor_jtag_drc("m08_d3d_lif_jtag_i")
+        report = report.replace("47 net(s) have no routable loads",
+                                "36 net(s) have no routable loads")
+        path = self.run / "reports/20_route_drc.rpt"
+        path.write_text(report)
+        self.refresh()
+        self.assertIn("RTSTAT_NETS_WITH_NO_LOADS=36", drc_inspect.inspect(self.run))
+        with self.assertRaisesRegex(g.Reject, "unused-load warning scope changed"):
+            g.native(self.run)
 
     def test_native_rejects_wrong_image_schema_even_with_valid_rehash(self):
         path = self.run / "reports/30_native_result.txt"
