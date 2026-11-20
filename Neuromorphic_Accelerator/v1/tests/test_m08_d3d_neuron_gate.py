@@ -21,6 +21,7 @@ assert SPEC and SPEC.loader
 g = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(g)
 import m08_d3d_neuron_vectors as vectors
+import m08_d3d_neuron_physical_audit as physical_audit
 
 
 class D3DNeuronTests(unittest.TestCase):
@@ -216,6 +217,95 @@ class D3DNeuronTests(unittest.TestCase):
                                  text=True, timeout=45)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("M08_D3D_FOUR_FIXTURE_AXIL_M02_RTL_PASS", run.stdout)
+
+    def build_mock_hardware_evidence(self):
+        folder = self.run.parent / "m08_d3d_neuron_HW_SYNTH01"
+        folder.mkdir(exist_ok=True)
+        sha = g.native(self.run)["candidate_sha256"]
+        original_fixture_lines = [vectors.format_fixture(f) for f in vectors.FIXTURES]
+        golden = ("# schema=m08-d3d-m02-golden-v1\\n"
+                  "# independent_dense_vs_event=PASS\\n"
+                  + "\\n".join(original_fixture_lines) + "\\n")
+        lines = [
+            "schema=m08-d3d-hardware-lif4-ticks-v1",
+            "result=FOUR_HARDWARE_NEURON_FIXTURES_MATCHED_M02",
+            "candidate_sha256=" + sha,
+            "target=localhost:3121/xilinx_tcf/Xilinx/XFL1RK5M5ILQA",
+            "device=xck26_0",
+            "debug_axi=hw_axi_1",
+            "neural_execution_tested=YES_SINGLE_NEURON_FOUR_TICKS",
+            "no_ps_axi_ddr_ssh_used=YES",
+            "reset_mode=FABRIC_POR_256_CYCLES",
+            "ps_clock_dependency=YES",
+            "synapse_routing_tested=NO",
+            "full_m06_paging_tested=NO",
+        ]
+        log = [
+            "M08_D3D_PROGRAM_COMPLETED",
+            "M08_D3D_BRAM_TRANSPORT_REGRESSION_PASS",
+            "M08_D3D_AXI_MASTER|hw_axi_1",
+            "M08_D3D_PHYSICAL_NEURAL_RESULT_PC_RECEIPT=" + str(folder),
+        ]
+        for fixture in vectors.FIXTURES:
+            fields = vectors.format_fixture(fixture).split("|")
+            lines.append(
+                f"fixture={fixture.name} nonce={fields[1]} "
+                f"voltages={','.join(fields[11:15])} "
+                f"spike_mask={fields[15]} hardware=PASS")
+            log.append(
+                f"M08_D3D_HW_NEURAL_M02_PARITY_PASS|{fixture.name}|{fields[15]}")
+        files = {
+            "00_executed_source.tcl": physical_audit.SCRIPT.read_bytes(),
+            "01_jtag_neuron.log": ("\\n".join(log)+"\\n").encode(),
+            "02_jtag_neuron.jou": b"synthetic test journal\\n",
+            "03_exit.txt": b"vivado_physical_exit=0\\n",
+            "10_m02_golden.txt": golden.encode("ascii"),
+            "80_neural_parity_readback.txt": ("\\n".join(lines)+"\\n").encode(),
+        }
+        for name, data in files.items():
+            (folder/name).write_bytes(data)
+        self.rehash_hardware(folder)
+        return folder
+
+    @staticmethod
+    def rehash_hardware(folder):
+        (folder/"99_evidence_sha256.txt").write_text(
+            "".join(sha256((folder/name).read_bytes()).hexdigest() + "  " + name + "\\n"
+                    for name in physical_audit.EXPECTED))
+
+    def test_synthetic_physical_auditor_requires_m02_parity_original_receipts(self):
+        hw = self.build_mock_hardware_evidence()
+        result = physical_audit.verify(self.run, hw)
+        self.assertTrue(result["hardware_execution_verified"])
+        self.assertFalse(result["full_m06_neuromorphic_accelerator_verified"])
+        self.assertEqual(result["fixtures"], 4)
+
+    def test_physical_auditor_rejects_false_success_even_if_rehashed(self):
+        hw = self.build_mock_hardware_evidence()
+        receipt = hw / "80_neural_parity_readback.txt"
+        receipt.write_text(receipt.read_text().replace(
+            "voltages=00000002", "voltages=00000003"))
+        self.rehash_hardware(hw)
+        with self.assertRaisesRegex(physical_audit.Reject, "trace differs"):
+            physical_audit.verify(self.run, hw)
+
+    def test_vivado_tcl_scripts_are_lexically_balanced(self):
+        if not shutil.which("tclsh"):
+            self.skipTest("tclsh is not installed")
+        for filename in ("m08_d3d_neuron_build.tcl",
+                         "m08_d3d_neuron_readback_once.tcl"):
+            script = ROOT / "scripts" / filename
+            command = (
+                'set fd [open {' + str(script) + '} r]\\n'
+                'set source [read $fd]\\n'
+                'close $fd\\n'
+                'if {![info complete $source]} {puts stderr "incomplete Tcl"; exit 3}\\n'
+                'puts TCL_SYNTAX_BALANCED\\n'
+            )
+            run = subprocess.run(["tclsh"], input=command, text=True,
+                                 capture_output=True, timeout=15)
+            self.assertEqual(run.returncode, 0, filename + ": " + run.stderr)
+            self.assertIn("TCL_SYNTAX_BALANCED", run.stdout)
 
     def test_physical_programming_remains_an_explicit_separate_action(self):
         path = ROOT / "scripts/run_m08_d3d_neuron_physical_once.sh"
