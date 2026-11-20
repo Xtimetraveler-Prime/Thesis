@@ -140,3 +140,21 @@ This is a known documented limitation of Vivado IP Integrator's **module referen
 `rtl/m08/m08_d3d_lif_axil.sv` to **`rtl/m08/m08_d3d_lif_axil.v`** (the module syntax is Verilog-compatible); remove the old `.sv` top, point the native `add_files` and BD `create_bd_cell -type module` flow at the `.v` file, update native evidence copy to `reports/12_lif_axil.v`, update the runner's 12-file manifest, source/native gate, provenance hashes and fixture tests. Add a Verilog-2005 compilation regression and an explicit check rejecting reintroduction of the `.sv` module top. The *contents* of the neural module and its signed arithmetic did not change. The standalone directed SystemVerilog testbench `tb_m08_d3d_lif_axil.sv` remains a valid simulation file; it is not used as an IPI module reference.
 
 **New owner verification:** pull the latest D3.D branch head, rerun Python+Icarus/source checks, then run `bash scripts/run_m08_d3d_neuron_pc.sh` with real sourced Vivado 2025.2. The script creates a NEW immutable `m08_d3d_neuron_*` directory. **Do not rerun Vivado inside failed `BVm2BQh9`**, do not edit original logs or force a bitstream out of the failed project, and **do not run physical programming** without reviewing the new genuine native build, timing, DRC, exact candidate SHA and board safety.
+
+## 2026-11-19 20:52 MST — second native D3.D.1 candidate routed and bit-generated; FAIL-CLOSED top critical warning
+
+User provided original terminal tail from second new owner-PC native directory
+`~/Thesis_Evidence/M08/m08_d3d_neuron_R3BZiFI7` (keep immutable).
+Vivado 2025.2 generated `m08_d3d_lif_jtag_wrapper_routed.dcp`,
+completed implementation, ran route DRC, emitted an informational
+`[Vivado 12-3199] DRC finished with 0 Errors`, then
+**`[Vivado 12-1842] Bitgen Completed Successfully`**.
+The owner runner checked all **12 native SHA receipt entries OK**, and
+`M08_D3D_JTAG_BRAM_OFFLINE_BITSTREAM_CREATED_NOT_PROGRAMMED` appeared.
+However, the D3.D Python native safety gate **REJECTED** this exact candidate:
+`CRITICAL WARNING: [filemgmt 20-742] The top module "m08_d3d_neuron_wrapper" specified for this project can not be validated. The current project is using automatic hierarchy update mode, and hence a new suitable replacement top will be automatically selected.`
+It was caused by a **stale hard-coded `set_property top m08_d3d_neuron_wrapper`** in the new D3.D Tcl, while the actual BD is `m08_d3d_lif_jtag` and the generated wrapper name is `m08_d3d_lif_jtag_wrapper`. Vivado's silent automatic top replacement is not an acceptable basis for a physical release: preserve original warning and do not waive it. **No board was programmed; no physical neural inference has run.**
+
+**Repair:** get the wrapper name dynamically from the actual single `make_wrapper` output file; require EXACT `m08_d3d_lif_jtag_wrapper`, explicitly set this generated name as `top`, run compile order update, read back `get_property top`, and fail before synthesis unless the selected name still matches. Print a unique validated-top marker. Add `wrapper_top=m08_d3d_lif_jtag_wrapper` to native result receipt; the source and native gate now require both that property and the genuine exact validated-top log marker, and continue rejecting **ALL** Critical Warnings and Errors. New regression mutations recreate the historical wrong top name, silent top substitution and exact `filemgmt 20-742` original warning, even with rehashed output. The actual LIF RTL, mathematical contract, JTAG interface and fan are unchanged.
+
+**Next owner action:** pull latest D3.D branch, run focused Python/RTL tests and PC-only source gate; perform a new `bash scripts/run_m08_d3d_neuron_pc.sh` in a *fresh* directory. Do not regenerate/modify `R3BZiFI7`, do not use its automatically recovered-top .bit for hardware, do not assert that an image is accepted from zero bitgen warnings, and do not run the physical one-shot until exact new genuine DRC/timing reports and candidate SHA pass native acceptance.
