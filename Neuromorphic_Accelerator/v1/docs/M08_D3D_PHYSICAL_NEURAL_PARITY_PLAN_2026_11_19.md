@@ -46,7 +46,7 @@ Only after real neural outputs are available, integrate M06 two `m_axi` ports th
 **Scope:** Implemented a **new** compute-bearing, standalone diagnostic JTAG design, not the full 32-neuron M06 HLS and not DDR-backed inference. It executes ONE signed16 M02 LIF neuron over FOUR finite hardware clocked ticks and stores all four resulting membrane voltages and spike bits. Supported decay ratios are **0/1, 1/2, 1/1 only**. This is deliberately a computational subset of M02 v1, not a replacement for M05/M06 integrated event/synapse engine. No synapses, delays, event router, cache, DRAM, classifier, chip benchmark, or physical neural result is claimed.
 
 **Implemented sources:**
-- `rtl/m08/m08_d3d_lif_axil.sv` — AXI4-Lite 32-bit slave, independent AW/W capture and stable R/B under backpressure, 1 initial signed16 neuron, signed bias/threshold/reset, four externally supplied signed32 per-tick currents, hardware-only 4-tick sequential LIF datapath using M02 saturate-after-full-add, inclusive firing threshold, signed negative truncation-toward-zero for the half decay and reset. Rejects incomplete WSTRB, invalid thresholds or decoder values and writes to read-only outputs. Hardware output is gated to `DONE`, and each new START records the caller's nonce, invalidates stale outputs, and increments a hardware run count only after four clocked updates.
+- `rtl/m08/m08_d3d_lif_axil.v` — AXI4-Lite 32-bit slave, independent AW/W capture and stable R/B under backpressure, 1 initial signed16 neuron, signed bias/threshold/reset, four externally supplied signed32 per-tick currents, hardware-only 4-tick sequential LIF datapath using M02 saturate-after-full-add, inclusive firing threshold, signed negative truncation-toward-zero for the half decay and reset. Rejects incomplete WSTRB, invalid thresholds or decoder values and writes to read-only outputs. Hardware output is gated to `DONE`, and each new START records the caller's nonce, invalidates stale outputs, and increments a hardware run count only after four clocked updates.
 - `rtl/m08/tb_m08_d3d_lif_axil.sv` — directed Icarus AXI4-Lite/arith tests for four independent M02 fixtures including negative truncation, saturation, spike/reset, autonomous bias/threshold equality, invalid writes, unaligned addresses and stalled stable responses.
 - `scripts/m08_d3d_neuron_vectors.py` — PC generates golden results via the **actual** existing `m02_dense_reference.evaluate_dense` AND `m02_event_reference.evaluate_events`, requires exact matching references; outputs four distinct nonce/input/expected-output fixtures, never writes HW outputs.
 - `scripts/m08_d3d_neuron_build.tcl` — **fresh new** Vivado 2025.2 native candidate, preserves D3.C r2 JTAG→SmartConnect→AXI BRAM at `0xA0000000`, adds AXI-Lite neuron at `0xA0001000`; two SmartConnect targets; same PS PL0 nominal 100 MHz, separate 256-cycle fabric-POR reset, TTC0 waveout2 to A12, no PS HPM masters. Native builder checks both address segments, clock/reset, memory dimensions, DRC, timing; hashes exact original builder + POR RTL + neuron RTL into result receipt, no board contact.
@@ -117,3 +117,26 @@ python3 scripts/m08_d3d_neuron_physical_audit.py --run-dir "$RUN" --hw-dir "$HW"
 ```
 
 Any native Vivado error, unknown DRC warning, actual negative route slack, mismatched golden trace, failed board JTAG transaction, lost cooling, or ambiguous stock recovery stops the checkpoint; do not repeat immediately or relabel a BRAM echo as neural computation.
+
+## 2026-11-19 — first original native D3.D build stopped before BD validation: unsupported SystemVerilog top
+
+Owner's original **PC-only** Vivado 2025.2 build evidence:
+`~/Thesis_Evidence/M08/m08_d3d_neuron_BVm2BQh9` (preserve exactly; no output bitstream and no physical board programming). Source gate passed with initial builder SHA256
+`b558e975894495e8efb746dc205c1a22771de023955bf81ef4f39630f20ac69c`;
+actual Vivado started at approximately 20:28 MST, created the K26 project and JTAG/BRAM IP, then **stopped at**:
+
+```text
+ERROR: [filemgmt 56-195] Reference 'm08_d3d_lif_axil' contains top file
+'.../rtl/m08/m08_d3d_lif_axil.sv' of type SystemVerilog.
+This type is not allowed as the top file in the reference.
+ERROR: [BD 41-1690] Unable to resolve module-source based on inputs:
+m08_d3d_lif_axil
+ERROR: [Common 17-39] 'create_bd_cell' failed due to earlier errors.
+```
+
+This is a known documented limitation of Vivado IP Integrator's **module reference** feature (UG994): its top file cannot be SystemVerilog. It is **not a synthesis, DRC, timing, or neural arithmetic failure**; native implementation and bitstream were not reached. The `xlslice` deprecation INFO was not the fatal cause and that established fan path is not changed in this fix.
+
+**Narrow source repair, no algorithm change:** relocate the exact-byte signed16 LIF peripheral top from
+`rtl/m08/m08_d3d_lif_axil.sv` to **`rtl/m08/m08_d3d_lif_axil.v`** (the module syntax is Verilog-compatible); remove the old `.sv` top, point the native `add_files` and BD `create_bd_cell -type module` flow at the `.v` file, update native evidence copy to `reports/12_lif_axil.v`, update the runner's 12-file manifest, source/native gate, provenance hashes and fixture tests. Add a Verilog-2005 compilation regression and an explicit check rejecting reintroduction of the `.sv` module top. The *contents* of the neural module and its signed arithmetic did not change. The standalone directed SystemVerilog testbench `tb_m08_d3d_lif_axil.sv` remains a valid simulation file; it is not used as an IPI module reference.
+
+**New owner verification:** pull the latest D3.D branch head, rerun Python+Icarus/source checks, then run `bash scripts/run_m08_d3d_neuron_pc.sh` with real sourced Vivado 2025.2. The script creates a NEW immutable `m08_d3d_neuron_*` directory. **Do not rerun Vivado inside failed `BVm2BQh9`**, do not edit original logs or force a bitstream out of the failed project, and **do not run physical programming** without reviewing the new genuine native build, timing, DRC, exact candidate SHA and board safety.
