@@ -119,7 +119,7 @@ class D3D2DOwnerNativeReviewTests(unittest.TestCase):
     def test_native_gate_never_executes_jtag(self):
         text=(ROOT/"scripts/m08_d3d2d_event_native_review.py").read_text()
         self.assertIn("M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD",text)
-        self.assertIn('"raw_event_ingress_physically_verified":False',text)
+        self.assertIn('raw_event_ingress_physically_verified=False',text)
         self.assertIn("OWNER_ORIGINAL_BIT_SHA",text)
         for token in ("open_hw_manager", "program_hw_devices",
                       "run_hw_axi", "/dev/mem", "/dev/uio"):
