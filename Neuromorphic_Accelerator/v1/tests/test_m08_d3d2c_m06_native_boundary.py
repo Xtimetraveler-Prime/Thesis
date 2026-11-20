@@ -60,8 +60,12 @@ class M0632NativeBoundaryTests(unittest.TestCase):
             with self.assertRaises(gate.Reject):
                 gate.inspect(fake)
         src=(ROOT/"scripts/m08_d3d2c_m06_native_review.py").read_text()
-        self.assertIn("return 2  # *mandatory*",src)
-        self.assertIn("new_image_approved_for_programming\":False",src)
+        self.assertIn("M08_D3D2C_EXACT_OWNER_NATIVE_M06_32_IMAGE_ACCEPTED_NO_BOARD",src)
+        self.assertIn("OWNER_ORIGINAL_BIT_SHA",src)
+        self.assertIn("OWNER_ORIGINAL_DRC_SHA",src)
+        self.assertIn("return 0  # read-only native acceptance",src)
+        self.assertIn('"physical_programming_authorized":False',src)
+        self.assertIn('"physical_32_neuron_m02_parity_verified":False',src)
         self.assertNotIn("program_hw_devices",src)
         self.assertNotIn("open_hw_manager",src)
 
