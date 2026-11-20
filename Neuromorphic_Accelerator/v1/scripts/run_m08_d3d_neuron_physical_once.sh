@@ -64,6 +64,10 @@ printf 'vivado_physical_exit=%s\n' "$RC" > "$TEST/03_exit.txt"
            03_exit.txt 10_m02_golden.txt 80_neural_parity_readback.txt \
            > 99_evidence_sha256.txt
         sha256sum -c 99_evidence_sha256.txt
+        # Independent read-only verdict requires complete per-tick physical
+        # parity against the separately computed existing M02 reference.
+        python3 "$ROOT/scripts/m08_d3d_neuron_physical_audit.py" \
+            --run-dir "$RUN" --hw-dir "$TEST"
         echo 'M08_D3D_HARDWARE_M02_LIF_FOUR_FIXTURE_PARITY_SUCCEEDED'
     else
         sha256sum 00_executed_source.tcl 01_jtag_neuron.log 02_jtag_neuron.jou \
