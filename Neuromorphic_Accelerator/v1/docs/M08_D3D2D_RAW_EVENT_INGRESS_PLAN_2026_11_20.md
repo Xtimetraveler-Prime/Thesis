@@ -50,6 +50,16 @@ New files:
 - `scripts/m08_d3d2d_event_native_review.py`: new first native image source/build/receipt/timing/DRC identity triage that **ALWAYS exits 2** pending independent owner DRC/profile/SHA review, even if bitgen succeeds. This is an intentional safety gate, not a bitgen failure.
 - `tests/test_m08_d3d2d_event_native_boundary.py`: source and fake-native fail-closed negative checks, no physical execution.
 
+## Staged future one-shot hardware test and independent auditor — HARD BLOCKED
+
+- `scripts/m08_d3d2d_event_readback_once.tcl`: contains only one `program_hw_devices $fpga` statement **but immediately rejects the literal unreviewed image token** `UNREVIEWED_M08_D3D2D_NEW_IMAGE` before opening Hardware Manager. After a separately accepted new original candidate and pinned exact SHA, it will load new `M32E` v5, write the 32 neuron parameters and **zero** initial input-current words, load five recurrent synapses, push all **17 raw M06 input events** individually, read the event count after every push, independently verify **128** fabric-computed input buckets, then compare **128 voltages + 128 spikes + 128 recurrent currents**. The receipt captures event sums and neural traces for each of 32 neurons. No physical JTAG run has occurred.
+- `scripts/run_m08_d3d2d_event_physical_once.sh`: also **HARD BLOCKED**, because it requires the separately reviewed owner-native first-image gate (which currently always exits 2) **and** an unreviewed SHA sentinel. It must not be executed until a future explicit exact-image release, 2025.2 preflight, known stable exclusive K26 JTAG, independently operating cooling, captured UART, stock recovery, and owner `M08_D3D2D_ALLOW_PROGRAM=YES` plus `M08_D3D2D_PREFLIGHT_CONFIRMED=YES`. When released, it creates a fresh immutable physical evidence folder, six SHA rows and does not automatically retry.
+- `scripts/m08_d3d2d_event_physical_audit.py`: read-only, currently must reject because it requires a future `M08_D3D2D_EXACT_OWNER_NATIVE_RAW17_IMAGE_ACCEPTED_NO_BOARD` status not provided by the first-image checker. Future acceptance requires original six-file physical ledger, exact executed Tcl, exactly one programming marker, genuine M32E identity, every original raw event/count/bucket marker, all 32 full four-tick traces and independent M02/M03 references. No synthetic test can replace an actual owner board receipt.
+- `tests/test_m08_d3d2d_event_physical_boundary.py`: PC-only tests for Tcl syntax, one program statement, literal hard stop, correct 630-word oracle and raw-event loop, no Linux/MMIO route, original native preflight before any Vivado execution, and 32-row audit geometry.
+
+**Do not invoke the physical shell or Tcl now.** The next permitted experiment is **offline PC-only new Vivado candidate generation**, not board programming. Future physical authorizations must be image-specific and separately tested, not cloned from D3.D.2C's seven accepted advisories.
+
+
 ## Owner local source verification — no Vivado/board needed yet
 
 ```bash
@@ -64,8 +74,10 @@ export PYTHONDONTWRITEBYTECODE=1
 python3 -m compileall -q src scripts tests
 python3 -m unittest discover -s tests -p 'test_m08_d3d2d_raw_events_source.py' -v
 python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_native_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2d_event_physical_boundary.py' -v
 python3 scripts/m08_d3d2d_event_gate.py --source-only
 bash -n scripts/run_m08_d3d2d_event_pc.sh
+bash -n scripts/run_m08_d3d2d_event_physical_once.sh
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
 ```
 
