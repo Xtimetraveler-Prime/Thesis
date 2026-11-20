@@ -33,6 +33,17 @@ The **17 M06 external current events are aggregated by the Python golden/host in
 
 The JTAG-only BRAM echo remains `0xA0000000`. New physical identity is **different** from D3.D.2B `M4SN`. All active synapses require valid neuron IDs and delay ≥1; AXI writes require full strobe and are blocked BUSY. No DRAM/LINUX MMIO access.
 
+## Staged next physical test harness — deliberately UNRELEASED
+
+The following files are now staged for a **future** one-shot physical experiment, but cannot program any device in the present phase:
+
+- `scripts/m08_d3d2c_m06_readback_once.tcl`: exact KV260 `xck26_0`/JTAG target, future one-program-only operation, BRAM echo and `M32N` v4 identity, five active M06 synapse configurations, 32 neuron configurations, complete 128 voltage + 128 spike-decision + 128 hardware-computed synaptic-current comparison, 32 per-neuron receipt rows. Contains `RELEASED_SHA=UNREVIEWED_M08_D3D2C_OWNER_IMAGE` hard stop **before** hardware manager is opened.
+- `scripts/run_m08_d3d2c_m06_physical_once.sh`: a second independent hard stop runs the **always-exit-2** original-image review before creating any hardware evidence or starting Vivado; its image SHA is likewise `UNREVIEWED_M08_D3D2C_OWNER_IMAGE`. If later separately authorized, it would use one new unique hardware evidence folder, bounded Vivado, six SHA rows, no automatic programming retry and no reuse of old evidence.
+- `scripts/m08_d3d2c_m06_physical_audit.py`: read-only independent complete-neural-trace auditor; requires an exact native release status which the current first-image reviewer **never returns**, as well as six original SHA rows and exact source/target/trace/nonce evidence.
+- `tests/test_m08_d3d2c_m06_physical_boundary.py`: PC-only guard and negative tests that check these blockers. This source coverage is not a native Vivado or hardware execution result.
+
+**DO NOT run the staged physical shell or Tcl against a board now.** A source/CI PASS does not allow removal of these barriers. A first genuine owner Vivado 2025.2 offline build and full new DRC/timing/source SHA/image review must happen first, with any change to release gate separately reviewed and tested. The already accepted D3.D.2B image must never be swapped in.
+
 ## PC-only owner replication (no Vivado needed for first part)
 
 ```bash
@@ -47,8 +58,10 @@ export PYTHONDONTWRITEBYTECODE=1
 python3 -m compileall -q src scripts tests
 python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_32_source.py' -v
 python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_native_boundary.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_d3d2c_m06_physical_boundary.py' -v
 python3 scripts/m08_d3d2c_m06_gate.py --source-only
 bash -n scripts/run_m08_d3d2c_m06_pc.sh
+bash -n scripts/run_m08_d3d2c_m06_physical_once.sh
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
 ```
 
