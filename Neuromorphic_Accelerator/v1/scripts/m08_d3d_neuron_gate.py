@@ -57,7 +57,7 @@ def source() -> dict:
     # hardcoded top name, even though route and bitgen succeeded. This exact
     # source boundary catches that error BEFORE any new native build.
     top_commands = [line.strip() for line in active.splitlines()
-                    if re.match(r"^set_property\\s+top\\s+", line.strip())]
+                    if re.match(r"^set_property\s+top\s+", line.strip())]
     check(top_commands == ["set_property top $wrapper_top [current_fileset]"],
           "unsafe/mismatched Vivado explicit top setting: " + repr(top_commands))
     for top_token in (
