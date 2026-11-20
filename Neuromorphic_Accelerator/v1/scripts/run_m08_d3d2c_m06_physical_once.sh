@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# D3.D.2C M06 32-neuron — staged single-owner-authorized KV260 JTAG test.
-# CURRENTLY HARD BLOCKED until original NEW owner image is reviewed and its
-# SHA256 (and exact new DRC/timing hierarchy) are recorded in *new* gate.
-# NO D3.D.2B prior image reuse and NO automatic retry on any failure.
+# D3.D.2C M06 32-neuron — ONE owner-authorized KV260 JTAG test.
+# Owner-original 2026-11-20 12:31 native ACCEPTED in unchanged run MN2pwduB.
+# Revalidate all 12 immutable native SHA files, exact DRC, RTL, 100MHz timing,
+# original image digest BEFORE generating physical evidence or opening JTAG.
+# Owner confirms independent ACTIVE cooling, UART capture, stock recovery,
+# stable exclusive JTAG, and explicit one-shot program consent manually.
+# Exactly one Tcl program_hw_devices invocation; NEVER retry automatically.
+# No PS/DDR/Linux MMIO, no flash, SD writes or D3.D.2B image reuse.
 set -euo pipefail
 if [[ "$#" -ne 1 ]]; then
     echo 'usage: run_m08_d3d2c_m06_physical_once.sh <new-original-accepted-native-dir>' >&2
@@ -12,7 +16,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="$HOME/Thesis_Evidence/M08"
 NATIVE="$(realpath -- "$1")"
 if [[ ! -d "$BASE" || -L "$BASE" || ! -d "$NATIVE" || -L "$NATIVE" ||
-      "$NATIVE" != "$BASE"/m08_d3d2c_m06_* || "$(id -u)" -eq 0 ]]; then
+      "$NATIVE" != "$BASE/m08_d3d2c_m06_MN2pwduB" || "$(id -u)" -eq 0 ]]; then
     echo 'M08_D3D2C_HW_STOP: noncanonical native folder or root' >&2
     exit 2
 fi
@@ -21,25 +25,25 @@ if ! command -v vivado >/dev/null 2>&1 ||
     echo 'M08_D3D2C_HW_STOP: expected genuine Vivado 2025.2' >&2
     exit 2
 fi
-# Always returns 2 in current stage, even with valid new native evidence.
-# It may be modified ONLY after independent original owner DRC/timing/image
-# review with image-specific SHA, exact warning paths and mutation tests.
+# First-owner native SHA, DRC A1/A2/A5 / exact FIFO and 100MHz timing:
+# independently locked against the ORIGINAL owner image, never a waiver.
 python3 "$ROOT/scripts/m08_d3d2c_m06_native_review.py" --run-dir "$NATIVE"
-EXPECTED_SHA="UNREVIEWED_M08_D3D2C_OWNER_IMAGE"
-if [[ ! "$EXPECTED_SHA" =~ ^[a-f0-9]{64}$ ]]; then
-    echo 'M08_D3D2C_HW_STOP_NO_RELEASE: first owner image NOT accepted' >&2
-    exit 2
-fi
+EXPECTED_SHA="244d304a44af6b1eda1943c18e7b5a3bed302cae2308c28a11944ede7eadf932"
+EXPECTED_SIZE=7797842
 BIT="$NATIVE/bitstream_candidate/m08_d3d2c_m06_lif_jtag_UNRELEASED.bit"
 if [[ ! -f "$BIT" || -L "$BIT" ||
+      "$(stat -c '%s' "$BIT")" != "$EXPECTED_SIZE" ||
       "$(sha256sum "$BIT" | awk '{print $1}')" != "$EXPECTED_SHA" ]]; then
     echo 'M08_D3D2C_HW_STOP: no exact reviewed original M06 candidate' >&2
     exit 2
 fi
-if [[ "${M08_D3D2C_ALLOW_PROGRAM:-}" != YES ]]; then
-    echo 'M08_D3D2C_HW_STOP: explicit owner M08_D3D2C_ALLOW_PROGRAM=YES needed' >&2
+if [[ "${M08_D3D2C_ALLOW_PROGRAM:-}" != YES ||
+      "${M08_D3D2C_PREFLIGHT_CONFIRMED:-}" != YES ]]; then
+    echo 'M08_D3D2C_HW_STOP: owner must confirm independent active cooling, UART logging, recovery, stable single-owner JTAG and arm M08_D3D2C_ALLOW_PROGRAM=YES M08_D3D2C_PREFLIGHT_CONFIRMED=YES' >&2
     exit 2
 fi
+# No GUI Hardware Manager / independent hw_server on the same JTAG cable.
+# Unique evidence dir, exclusive fresh name; no failed attempt overwritten.
 HW="$(mktemp -d "$BASE/m08_d3d2c_m06_HW_XXXXXXXX")"
 echo "M08_D3D2C_NEW_PC_HW_EVIDENCE=$HW"
 python3 "$ROOT/scripts/m08_d3d2c_m06_vectors.py" --out "$HW/10_m06_32x4_golden.hex"
