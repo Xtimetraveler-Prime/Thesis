@@ -301,6 +301,7 @@ if {![file isfile $bit] || [file size $bit] < 100000} {
 set receipt [file join $reports 30_native_result.txt]
 set f [open $receipt {WRONLY CREAT EXCL}]
 puts $f {schema=m08-d3d-neural-jtag-offline-build-v1}
+puts $f {wrapper_top=m08_d3d_lif_jtag_wrapper}
 puts $f {neural_mode=SINGLE_NEURON_FOUR_TICKS_SIGNED16}
 puts $f {decay_modes=ZERO_HALF_ONE}
 puts $f {lif_base=0xA0001000}
