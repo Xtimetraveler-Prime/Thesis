@@ -1,5 +1,7 @@
 # Neuromorphic Accelerator v1
 
+> **Current D3.D.2A boundary (2026-11-19):** Four-neuron ×four-tick RTL/Icarus passes on GitHub CI, genuine owner original routed candidate exists with 12/12 original SHA receipt checks, exact reviewed seven vendor/debug DRC warnings, positive timing and new SHA-pinned physical JTAG readback/auditor scripts. Owner physical four-neuron run is still pending: do not conflate source/CI/native evidence with physical execution. Exact bit SHA256 `3c213c1271f48106495203d008d7f46619f8f079549117e404fca11fd3179411`, original native folder `m08_d3d2a_four_w4YfdBuE`. [Next owner original-gate and one-shot JTAG commands](docs/M08_D3D2A_FOUR_NEURON_PLAN_2026_11_19.md).
+
 > **D3.D.2A (NEW SOURCE ONLY, November 19 2026):** After independently accepted physical one-neuron LIF parity, the next development branch adds a four-neuron ×four-tick AXI-Lite hardware prototype, two M02 dense/queued fixtures, directed Icarus testbench, and a separate native-PC Vivado builder. Its own real RTL/owner native and physical FPGA verification have NOT yet passed. The existing D3.D.1 bitstream and physical evidence remain accepted and untouched; do not claim new multi-neuron physical proof. [Owner D3.D.2A verification steps](docs/M08_D3D2A_FOUR_NEURON_PLAN_2026_11_19.md).
 
 
