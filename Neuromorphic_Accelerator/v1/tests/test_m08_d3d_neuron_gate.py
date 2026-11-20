@@ -80,7 +80,7 @@ class D3DNeuronTests(unittest.TestCase):
             "02_vivado_exit.txt": b"vivado_build_exit=0\n",
             "reports/10_fan_a12.xdc": b"set_property PACKAGE_PIN A12 [get_ports {M08_FAN_PWM}]\n",
             "reports/11_fabric_por.v": g.POR_RTL.read_bytes(),
-            "reports/12_lif_axil.sv": g.LIF_RTL.read_bytes(),
+            "reports/12_lif_axil.v": g.LIF_RTL.read_bytes(),
             "reports/20_route_drc.rpt": b"Checks found: 0\n",
             "reports/21_route_timing.rpt": (
                 b"Design Timing Summary\n"
@@ -129,7 +129,7 @@ class D3DNeuronTests(unittest.TestCase):
             g.native(self.run)
 
     def test_native_rejects_fabric_source_change_even_with_valid_rehash(self):
-        path = self.run / "reports/12_lif_axil.sv"
+        path = self.run / "reports/12_lif_axil.v"
         path.write_bytes(path.read_bytes() + b"\n// changed design\n")
         self.refresh()
         with self.assertRaisesRegex(g.Reject, "native evidence RTL differs"):
@@ -199,6 +199,20 @@ class D3DNeuronTests(unittest.TestCase):
             self.assertNotEqual(second.returncode, 0)
             self.assertIn("refusing to overwrite", second.stderr)
 
+    def test_lif_module_top_is_verilog2001_for_vivado_ip_integrator(self):
+        # AMD UG994: an SV top is not valid as an IPI module reference.
+        self.assertEqual(g.LIF_RTL.suffix, ".v")
+        self.assertFalse((ROOT / "rtl/m08/m08_d3d_lif_axil.sv").exists())
+        builder = g.BUILDER.read_text()
+        self.assertIn("m08 m08_d3d_lif_axil.v", builder)
+        self.assertIn("reports 12_lif_axil.v", builder)
+        if not shutil.which("iverilog"):
+            self.skipTest("Icarus not installed")
+        result = subprocess.run(["iverilog", "-g2005", "-t", "null",
+                                 str(g.LIF_RTL)],
+                                capture_output=True, text=True, timeout=45)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_native_rtl_four_fixture_axil_protocol_and_m02(self):
         if not shutil.which("iverilog") or not shutil.which("vvp"):
             self.skipTest("Icarus RTL simulation not installed")
@@ -207,8 +221,8 @@ class D3DNeuronTests(unittest.TestCase):
             compile_cmd = [
                 "iverilog", "-g2012", "-s", "tb_m08_d3d_lif_axil",
                 "-o", executable,
-                str(ROOT / "rtl/m08/m08_d3d_lif_axil.sv"),
-                str(ROOT / "rtl/m08/tb_m08_d3d_lif_axil.sv"),
+                str(ROOT / "rtl/m08/m08_d3d_lif_axil.v"),
+                str(ROOT / "rtl/m08/tb_m08_d3d_lif_axil.v"),
             ]
             build = subprocess.run(compile_cmd, capture_output=True, text=True,
                                    timeout=45)
