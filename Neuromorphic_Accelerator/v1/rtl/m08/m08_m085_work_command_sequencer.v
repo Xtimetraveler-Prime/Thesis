@@ -5,7 +5,7 @@
 // Receives ONE completed 32-bit AXI-Lite register write from its frontend.
 // Only the 7 frozen DMA slots are admitted by the independent lease fence.
 // 0x24 slot RW, 0x28 tick RW, 0x2c command WO (1 load,2 dispatch,3 save),
-// 0x30 status RO [0 busy,1 completed sticky,2 fault, 4:3 last op],
+// 0x30 status RO [0 busy,1 completed sticky,2 fault, 7:6 last op],
 // 0x34 completed-command counter RO. Every successful command serializes
 // full page/compute completion; each invalid write poisons irreversibly.
 // A direct START pulse lasts exactly one clock. No user-chosen DMA address.
