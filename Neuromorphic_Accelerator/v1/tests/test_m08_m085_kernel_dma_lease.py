@@ -66,7 +66,7 @@ class M085KernelDMAWindowSourceTests(unittest.TestCase):
         self.assertIn("AXI49_EXCLUSIVE=(65'd1 << 49)",fence)
         self.assertIn("bus_quiescent",fence)
         self.assertIn("runtime_window_begin",fence)
-        self.assertIn("session_poison(lease_poisoned)",leased)
+        self.assertIn("session_poison(lease_poisoned || unauthorized_request)",leased)
         self.assertNotIn("input wire [63:0] request_addr",leased)
         self.assertIn("m08_paged_m06_lif_engine neural_engine",shell)
         self.assertIn(".ENABLE_EDGE_SLOT(1)",shell)
@@ -136,7 +136,7 @@ class M085KernelDMAWindowSourceTests(unittest.TestCase):
             root=Path(d)
             exe=self._build(root)
             plus=self._original_input_arguments(root)
-            for case in range(1,30):
+            for case in range(1,33):
                 with self.subTest(case=case):
                     run=subprocess.run(["vvp",str(exe),f"+CASE={case}",*plus],
                                        capture_output=True,text=True,timeout=120)
