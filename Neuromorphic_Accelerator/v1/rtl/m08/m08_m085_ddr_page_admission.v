@@ -11,11 +11,14 @@ module m08_m085_ddr_page_admission #(
     parameter [63:0] WINDOW_END   = 64'd0, // exclusive
     parameter integer MAX_WAIT_CYCLES = 32,
     parameter integer LOGICAL_PAGES = 6,
-    parameter integer LOGICAL_TICKS = 4
+    parameter integer LOGICAL_TICKS = 4,
+    parameter integer USE_RUNTIME_WINDOW = 0
 )(
     input wire clk,
     input wire resetn,
     input wire owner_lease_active,
+    input wire [63:0] runtime_window_begin,
+    input wire [63:0] runtime_window_end,
     input wire compute_idle,
     input wire page_bank_idle,
     input wire req,
@@ -46,20 +49,24 @@ module m08_m085_ddr_page_admission #(
     // physical address-width interface, NOT a verified M08 platform map.
     // M08 must independently validate mapped limits against its eventual
     // routed XSA/PS/driver before the parameters are given nonzero values.
+    wire [63:0] effective_begin = USE_RUNTIME_WINDOW != 0 ?
+        runtime_window_begin : WINDOW_BEGIN;
+    wire [63:0] effective_end = USE_RUNTIME_WINDOW != 0 ?
+        runtime_window_end : WINDOW_END;
     wire [64:0] last_exclusive =
         {1'b0, req_addr} + {49'd0, req_size_bytes};
     wire legal_window =
-        (WINDOW_END > WINDOW_BEGIN) &&
-        (WINDOW_BEGIN[63:49] == 15'd0) &&
-        (WINDOW_END[63:49] == 15'd0) &&
+        (effective_end > effective_begin) &&
+        (effective_begin[63:49] == 15'd0) &&
+        (effective_end[63:49] == 15'd0) &&
         (req_addr[63:49] == 15'd0) &&
         (req_addr[7:0] == 8'd0) &&
         (req_size_bytes == 16'd256) &&
         (LOGICAL_PAGES > 0) && (LOGICAL_TICKS > 0) &&
         (req_logical_page < LOGICAL_PAGES) &&
         (req_tick < LOGICAL_TICKS) &&
-        (req_addr >= WINDOW_BEGIN) &&
-        (last_exclusive <= {1'b0, WINDOW_END});
+        (req_addr >= effective_begin) &&
+        (last_exclusive <= {1'b0, effective_end});
 
     reg armed;
     reg [31:0] wait_count;
