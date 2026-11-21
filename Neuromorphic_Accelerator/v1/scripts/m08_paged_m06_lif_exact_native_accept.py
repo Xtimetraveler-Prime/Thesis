@@ -35,7 +35,7 @@ ORIGINAL={
     "reports/20_route_drc.rpt":("2fd20b6a84cb803c4935b509b4bb5f32306ffb608067450e068d85a2284e92d4",9366),
     "reports/21_route_timing.rpt":("fcb73aca06ced0c7df7d2f9f6657e23375a2504a7a5c64461ec683a969c0e42c",80427),
     "reports/23_route_clocks.rpt":("e8330903e1ee569af95ef98fa1f072760b33b067a154fd89f3630244ea0a9ac0",2243),
-    "reports/30_native_result.txt":("495a6468fd23fa2ab1558b793553025518753dddc0faece8d17c951a1894c88a",2221),
+    "reports/30_native_result.txt":("495a6468fd23fa2ab1558b793553025518753dddc0faece8d17c951a1894c88a",2211),
 }
 # The metadata size in the owner's Linux file can vary with final newline in
 # summaries; the hash is authoritative for this text file.
