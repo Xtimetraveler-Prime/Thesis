@@ -52,7 +52,10 @@ printf 'M08_5_SSH_READONLY_EVIDENCE_DIR=%s\n' "$OUT"
 if (( RC != 0 )) ||
    [[ "$(head -n1 "$OUT/02_original_stdout.log")" != M08_5_SSH_READONLY_BEGIN ]] ||
    [[ "$(tail -n1 "$OUT/02_original_stdout.log")" != M08_5_SSH_READONLY_END_NO_DMA_OR_BOARD_CHANGES ]] ||
-   ! grep -Eq '^BOARD_MODEL=.*KV260' "$OUT/02_original_stdout.log"; then
+   ! grep -Eq '^BOARD_MODEL=.*KV260' "$OUT/02_original_stdout.log" ||
+   ! grep -Fxq 'SECTION_END|device_tree' "$OUT/02_original_stdout.log" ||
+   ! grep -Fxq 'SECTION_END|dma_platform' "$OUT/02_original_stdout.log" ||
+   ! grep -Fxq 'SECTION_END|safety_observation' "$OUT/02_original_stdout.log"; then
     echo "M08_5_SSH_READONLY_INCOMPLETE_NOT_DMA_READY; original log preserved" >&2
     exit 3
 fi
