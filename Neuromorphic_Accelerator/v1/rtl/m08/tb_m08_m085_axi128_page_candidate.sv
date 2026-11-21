@@ -16,6 +16,10 @@ module tb_m08_m085_axi128_page_candidate;
     wire [31:0] completed_axi_read_bursts,completed_axi_write_bursts,completed_axi_bytes;
     wire [2047:0] read_page_data;
     wire [48:0] awaddr,araddr;
+    wire [0:0] awid,arid;
+    wire awlock,arlock;
+    wire [3:0] awcache,arcache,awqos,arqos;
+    wire [2:0] awprot,arprot;
     wire [7:0] awlen,arlen;
     wire [2:0] awsize,arsize;
     wire [1:0] awburst,arburst;
@@ -24,6 +28,7 @@ module tb_m08_m085_axi128_page_candidate;
     wire [15:0] wstrb;
     reg awready=0,wready=0,bvalid=0,arready=0,rvalid=0;
     reg [1:0] bresp=0,rresp=0;
+    reg [0:0] bid=0,rid=0;
     reg [127:0] rdata=0;
     reg rlast=0;
     reg [2047:0] accepted_write_page=0, expected_read=0;
@@ -51,16 +56,22 @@ module tb_m08_m085_axi128_page_candidate;
         .completed_axi_read_bursts(completed_axi_read_bursts),
         .completed_axi_write_bursts(completed_axi_write_bursts),
         .completed_axi_bytes(completed_axi_bytes),
-        .m_axi_awaddr(awaddr),.m_axi_awlen(awlen),.m_axi_awsize(awsize),
+        .m_axi_awid(awid),.m_axi_awaddr(awaddr),
+        .m_axi_awlock(awlock),.m_axi_awcache(awcache),
+        .m_axi_awprot(awprot),.m_axi_awqos(awqos),
+        .m_axi_awlen(awlen),.m_axi_awsize(awsize),
         .m_axi_awburst(awburst),.m_axi_awvalid(awvalid),
         .m_axi_awready(awready),
         .m_axi_wdata(wdata),.m_axi_wstrb(wstrb),.m_axi_wlast(wlast),
         .m_axi_wvalid(wvalid),.m_axi_wready(wready),
-        .m_axi_bresp(bresp),.m_axi_bvalid(bvalid),.m_axi_bready(bready),
-        .m_axi_araddr(araddr),.m_axi_arlen(arlen),.m_axi_arsize(arsize),
+        .m_axi_bid(bid),.m_axi_bresp(bresp),.m_axi_bvalid(bvalid),.m_axi_bready(bready),
+        .m_axi_arid(arid),.m_axi_araddr(araddr),
+        .m_axi_arlock(arlock),.m_axi_arcache(arcache),
+        .m_axi_arprot(arprot),.m_axi_arqos(arqos),
+        .m_axi_arlen(arlen),.m_axi_arsize(arsize),
         .m_axi_arburst(arburst),.m_axi_arvalid(arvalid),
         .m_axi_arready(arready),
-        .m_axi_rdata(rdata),.m_axi_rresp(rresp),.m_axi_rlast(rlast),
+        .m_axi_rid(rid),.m_axi_rdata(rdata),.m_axi_rresp(rresp),.m_axi_rlast(rlast),
         .m_axi_rvalid(rvalid),.m_axi_rready(rready)
     );
 
@@ -68,7 +79,9 @@ module tb_m08_m085_axi128_page_candidate;
     always @(posedge clk) if(resetn) begin
         if(awvalid && awready) begin
             if (awlen!==8'd15 || awsize!==3'd4 || awburst!==2'b01 ||
-                awaddr[7:0]!==8'd0)
+                awaddr[7:0]!==8'd0 || awid!==1'b0 ||
+                awlock!==1'b0 || awcache!==4'b0011 ||
+                awprot!==3'b000 || awqos!==4'b0)
                 $fatal(1,"wrong AW shape");
             aw_count=aw_count+1;
         end
@@ -82,7 +95,9 @@ module tb_m08_m085_axi128_page_candidate;
         if(bvalid && bready) b_count=b_count+1;
         if(arvalid && arready) begin
             if(arlen!==8'd15 || arsize!==3'd4 || arburst!==2'b01 ||
-               araddr[7:0]!==8'd0)
+               araddr[7:0]!==8'd0 || arid!==1'b0 ||
+               arlock!==1'b0 || arcache!==4'b0011 ||
+               arprot!==3'b000 || arqos!==4'b0)
                 $fatal(1,"wrong AR shape");
             ar_count=ar_count+1;
         end
@@ -285,6 +300,11 @@ module tb_m08_m085_axi128_page_candidate;
                       @(negedge clk);bvalid=1;expect_poison();end
             23: begin launch(1);handshake_aw();
                       @(negedge clk);rvalid=1;expect_poison();end
+            24: begin launch(1);handshake_aw();handshake_w(16);
+                      @(negedge clk);bid=1;handshake_b(0);expect_poison();end
+            25: begin launch(0);handshake_ar();
+                      @(negedge clk);rid=1;handshake_r(0,0,0);
+                      expect_poison();end
             default: $fatal(1,"unknown case");
         endcase
         $finish;
