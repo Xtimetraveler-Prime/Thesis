@@ -413,7 +413,7 @@ module tb_m08_m085_kernel_dma_neural;
         repeat(3)@(negedge clk);resetn=1;
         // Testbench pretends to be a trusted driver; NEVER provenance.
         // Deliberate pre-grant scenarios 12..16 skip valid grant.
-        if(case_id<12 || case_id>16) grant_dma_lease();
+        if((case_id<12 || case_id>16) && case_id!=28 && case_id!=29) grant_dma_lease();
         case(case_id)
           0:begin
               setup_edges();
@@ -603,6 +603,26 @@ module tb_m08_m085_kernel_dma_neural;
               repeat(2)@(negedge clk);
               resetn=1;lease_dma_base=64'h0002_0000_0000_0000;
               @(negedge clk);lease_grant=1;
+              @(posedge clk);#1;
+              @(negedge clk);lease_grant=0;
+              expect_fault();
+          end
+          27:begin // Quiescence must remain TRUE for a valid release.
+              start_page_request(0,6,0);wait_bank_transfer(0,6);
+              @(negedge clk);bus_quiescent=0;lease_release=1;
+              expect_fault();
+          end
+          28:begin // A phantom 'drained' grant is not allowed.
+              @(negedge clk);bus_quiescent=0;lease_grant=1;
+              @(posedge clk);#1;
+              @(negedge clk);lease_grant=0;
+              expect_fault();
+          end
+          29:begin // Allocation upper edge crossing the 49-bit aperture.
+              @(negedge clk);
+              lease_dma_base=64'h0001_FFFF_FFFF_F000;
+              lease_allocation_bytes=8192;
+              lease_grant=1;
               @(posedge clk);#1;
               @(negedge clk);lease_grant=0;
               expect_fault();
