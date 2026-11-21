@@ -129,7 +129,8 @@ proc m08_dispatch {axi} {
             set complete 1
             break
         }
-        if {[expr {0x$status & 0x108}] != 0} {
+        scan $status %x status_int
+        if {($status_int & 0x108) != 0} {
             error "M08.4 sticky fault/poison in page compute: $status"
         }
     }
