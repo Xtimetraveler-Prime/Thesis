@@ -35,6 +35,9 @@ class M084MethodologyCaptureSafety(unittest.TestCase):
         self.assertIn("m08_paged_m06_lif_physical_readiness.py",text)
         self.assertIn("m08_paged_m06_lif_methodology_probe.tcl",text)
         self.assertIn("-name '*_routed.dcp'",text)
+        self.assertLess(text.index('-journal "$OUT/02_vivado_methodology.jou"'),
+                        text.index('-tclargs "${dcp[0]}" "$OUT"'),
+                        "Vivado -tclargs last; no -log/-journal forwarded into Tcl argv")
         self.assertIn('"${#dcp[@]}" -ne 1',text)
         self.assertIn("mktemp -d",text)
         self.assertIn("99_evidence_sha256.txt",text)
