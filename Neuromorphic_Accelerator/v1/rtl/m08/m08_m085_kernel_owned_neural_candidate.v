@@ -88,6 +88,11 @@ module m08_m085_kernel_owned_neural_candidate #(
     output wire [63:0] admitted_end
 );
     wire lease_active,neural_poisoned,lease_error;
+    // No compute dispatch or memory request may escape a revoked,
+    // ungranted or sealed lease. Poison on an unauthorized attempt.
+    wire unauthorized_request=(request || dispatch_req) && !lease_active;
+    wire restricted_request=request && lease_active && !lease_poisoned;
+    wire restricted_dispatch=dispatch_req && lease_active && !lease_poisoned;
     wire [63:0] page_dma_address =
         admitted_begin+({32'd0,request_page}<<8);
     wire transport_idle= !busy && !request && !dispatch_req &&
@@ -122,7 +127,7 @@ module m08_m085_kernel_owned_neural_candidate #(
     ) neural(
         .clk(clk),
         .resetn(resetn),
-        .request(request),
+        .request(restricted_request),
         .request_save(request_save),
         .request_page(request_page),
         .request_tick(request_tick),
@@ -137,7 +142,7 @@ module m08_m085_kernel_owned_neural_candidate #(
         .bank_logical(bank_logical),
         .bank_loaded_bytes(bank_loaded_bytes),
         .axi_bytes_completed_in_simulation(axi_bytes_completed_in_simulation),
-        .dispatch_req(dispatch_req),
+        .dispatch_req(restricted_dispatch),
         .dispatch_logical(dispatch_logical),
         .dispatch_accept(dispatch_accept),
         .m_axi_awid(m_axi_awid),
@@ -183,8 +188,8 @@ module m08_m085_kernel_owned_neural_candidate #(
         .owner_lease_active(lease_active && !lease_poisoned),
         .runtime_window_begin(admitted_begin),
         .runtime_window_end(admitted_end),
-        .session_poison(lease_poisoned),
+        .session_poison(lease_poisoned || unauthorized_request),
         .request_addr(page_dma_address)
     );
-    assign poisoned=neural_poisoned || lease_poisoned;
+    assign poisoned=neural_poisoned || lease_poisoned || unauthorized_request;
 endmodule
