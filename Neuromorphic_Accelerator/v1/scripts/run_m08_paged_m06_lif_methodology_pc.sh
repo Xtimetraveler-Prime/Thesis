@@ -39,8 +39,8 @@ sha256sum -- "${dcp[0]}" >"$OUT/03_original_routed_checkpoint_sha256.txt"
 set +e
 timeout --signal=TERM --kill-after=15s 240s \
     vivado -mode batch -source "$OUT/00_executed_source.tcl" \
-    -tclargs "${dcp[0]}" "$OUT" \
-    -log "$OUT/01_vivado_methodology.log" -journal "$OUT/02_vivado_methodology.jou"
+    -log "$OUT/01_vivado_methodology.log" -journal "$OUT/02_vivado_methodology.jou" \
+    -tclargs "${dcp[0]}" "$OUT"
 RC=$?
 set -e
 printf 'vivado_methodology_exit=%s\n' "$RC" >"$OUT/04_exit.txt"
