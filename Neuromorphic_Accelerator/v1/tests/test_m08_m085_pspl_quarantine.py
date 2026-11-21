@@ -54,7 +54,7 @@ class M085PSPLQuarantine(unittest.TestCase):
             "get_bd_addr_segs -quiet ps/SAXIGP2/HP0_DDR_LOW",
         ):
             with self.subTest(removed=removed),self.assertRaises(check.UnsafeTopology):
-                check.audit(self.tcl.replace(removed,"",1),self.rtl,self.runner)
+                check.audit(self.tcl.replace(removed,""),self.rtl,self.runner)
 
     def test_wrong_k26_part_clock_ps_port_width_and_map_are_blocked(self):
         for old,new in (
