@@ -17,7 +17,8 @@ module m08_m085_axi_bank_bridge #(
     parameter [63:0] WINDOW_END=64'd0,
     parameter integer GUARD_WAIT_CYCLES=4096,
     parameter integer AXI_STALL_CYCLES=128,
-    parameter integer HOST_WAIT_CYCLES=128
+    parameter integer HOST_WAIT_CYCLES=128,
+    parameter integer ENABLE_EDGE_SLOT=0 // 0: six neurons only; 1: distinct edge slot 6
 )(
     input wire clk,
     input wire resetn,
@@ -132,24 +133,40 @@ module m08_m085_axi_bank_bridge #(
                       !compute_done;
     wire bank_idle=!bank_host_busy && !host_req && !host_begin &&
                    !host_commit && !host_save;
-    wire header_ok=(axi_read_page[60*32 +:32]==32'h4D364E46) &&
-       (axi_read_page[61*32 +:32]==page_q) &&
-       (axi_read_page[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
-       (axi_read_page[63*32 +:32]==tick_q);
+    localparam integer BACKING_SLOTS=ENABLE_EDGE_SLOT ? 7 : 6;
+    wire is_edge=(page_q==32'd6 && ENABLE_EDGE_SLOT!=0);
+    wire [31:0] semantic_page_id=is_edge ? 32'hFFFFFFFF : page_q;
+    wire expected_page_header_ok =
+       is_edge ?
+          ((axi_read_page[60*32 +:32]==32'h4D364547) &&
+           (axi_read_page[61*32 +:32]==32'hFFFFFFFF) &&
+           (axi_read_page[62*32 +:32]==32'd5) &&
+           (axi_read_page[63*32 +:32]==32'd0)) :
+          ((axi_read_page[60*32 +:32]==32'h4D364E46) &&
+           (axi_read_page[61*32 +:32]==page_q) &&
+           (axi_read_page[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
+           (axi_read_page[63*32 +:32]==tick_q));
+    wire header_ok=expected_page_header_ok;
     wire [64:0] directory_address =
         {1'b0,WINDOW_BEGIN} + ({33'd0,request_page} << 8);
-    // This candidate binds six 256-byte pages to one contiguous,
-    // independently OWNED future allocation. No arbitrary page/DDR alias.
+    // Six neural slots, plus an optional SEPARATE edge configuration
+    // slot 6 (semantic ID 0xFFFFFFFF). All physical addresses remain
+    // blocked by the empty default owner window until independently leased.
     wire address_binding_ok =
         WINDOW_END>WINDOW_BEGIN &&
         WINDOW_BEGIN[7:0]==8'd0 &&
-        (WINDOW_END-WINDOW_BEGIN)>=64'd1536 &&
+        (WINDOW_END-WINDOW_BEGIN)>= (ENABLE_EDGE_SLOT ? 64'd1792 : 64'd1536) &&
         !directory_address[64] &&
         (request_addr==directory_address[63:0]);
-    wire save_header_ok=(page_snapshot[60*32 +:32]==32'h4D364E46) &&
-       (page_snapshot[61*32 +:32]==page_q) &&
-       (page_snapshot[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
-       (page_snapshot[63*32 +:32]==tick_q);
+    wire save_header_ok=is_edge ?
+       ((page_snapshot[60*32 +:32]==32'h4D364547) &&
+        (page_snapshot[61*32 +:32]==32'hFFFFFFFF) &&
+        (page_snapshot[62*32 +:32]==32'd5) &&
+        (page_snapshot[63*32 +:32]==32'd0)) :
+       ((page_snapshot[60*32 +:32]==32'h4D364E46) &&
+        (page_snapshot[61*32 +:32]==page_q) &&
+        (page_snapshot[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
+        (page_snapshot[63*32 +:32]==tick_q));
     assign busy=(state!=IDLE && state!=FAULT);
     assign poisoned=local_fault;
     assign bank_phase=phase;
@@ -163,7 +180,7 @@ module m08_m085_axi_bank_bridge #(
     // or save_done occurs without real 64-word host readback/DDR comparison.
     m08_host_staged_page_bank bank (
         .clk(clk),.resetn(resetn),
-        .host_begin(host_begin),.host_begin_logical(page_q),
+        .host_begin(host_begin),.host_begin_logical(semantic_page_id),
         .host_req(host_req),.host_write(host_write),.host_word(word_index),
         .host_wdata(host_wdata),.host_wstrb(host_wstrb),
         .host_commit(host_commit),.host_readback_verified(host_commit),
@@ -185,7 +202,8 @@ module m08_m085_axi_bank_bridge #(
     m08_m085_axi128_page_candidate #(
         .WINDOW_BEGIN(WINDOW_BEGIN),.WINDOW_END(WINDOW_END),
         .GUARD_WAIT_CYCLES(GUARD_WAIT_CYCLES),
-        .AXI_STALL_CYCLES(AXI_STALL_CYCLES)
+        .AXI_STALL_CYCLES(AXI_STALL_CYCLES),
+        .LOGICAL_PAGES(BACKING_SLOTS)
     ) page_axi (
         .clk(clk),.resetn(resetn),
         .owner_lease_active(owner_lease_active && !local_fault),
@@ -262,12 +280,15 @@ module m08_m085_axi_bank_bridge #(
                 case(state)
                     IDLE: if(request && armed) begin
                         armed<=0;
-                        if(!owner_lease_active || request_page>=6 ||
-                           request_tick>=4 || !address_binding_ok ||
+                        if(!owner_lease_active || request_page>=BACKING_SLOTS ||
+                           request_tick>=4 ||
+                           (request_page==6 && request_tick!=0) ||
+                           !address_binding_ok ||
                            !compute_idle ||
                            bank_host_busy || axi_busy ||
                            (request_save && (!bank_page_dirty ||
-                              real_bank_logical!=request_page)) ||
+                              real_bank_logical!=(request_page==6 && ENABLE_EDGE_SLOT!=0 ?
+                                                   32'hFFFFFFFF : request_page))) ||
                            (!request_save && bank_page_dirty)) begin
                             state<=FAULT;error<=1;
                         end else begin
@@ -312,7 +333,7 @@ module m08_m085_axi_bank_bridge #(
                     BANK_COMMIT:state<=BANK_COMMIT_CHECK;
                     BANK_COMMIT_CHECK:if(phase==3'd2 && bank_page_valid &&
                                       !bank_page_dirty && real_loaded==9'd256 &&
-                                      real_bank_logical==page_q) begin
+                                      real_bank_logical==semantic_page_id) begin
                         done<=1;state<=IDLE;
                     end else begin state<=FAULT;error<=1;end
                     SAVE_READ_ISSUE:begin state<=SAVE_READ_WAIT;wait_count<=0;end
@@ -349,7 +370,7 @@ module m08_m085_axi_bank_bridge #(
                     BANK_SAVE:state<=BANK_SAVE_CHECK;
                     BANK_SAVE_CHECK:if(phase==3'd2 && bank_page_valid &&
                                     !bank_page_dirty &&
-                                    real_bank_logical==page_q) begin
+                                    real_bank_logical==semantic_page_id) begin
                         completed_save<=1;done<=1;state<=IDLE;
                     end else begin state<=FAULT;error<=1;end
                     default: begin state<=FAULT;error<=1;end
