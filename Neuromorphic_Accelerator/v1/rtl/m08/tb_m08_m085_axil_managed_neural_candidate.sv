@@ -261,6 +261,20 @@ module tb_m08_m085_axil_managed_neural_candidate;
     endtask
     task grant_dma_lease;
         begin
+            // Managed register extension is ABI 1.1; a legacy v1.0
+            // control-only image must never be mistaken for this design.
+            @(negedge clk);s_axi_araddr=12'h004;s_axi_arvalid=1;
+            #1;
+            if(!s_axi_arready)$fatal(1,"ABI version AR not accepted");
+            @(posedge clk);#1;
+            @(negedge clk);s_axi_arvalid=0;
+            #1;
+            if(!s_axi_rvalid || s_axi_rresp!==2'b00 ||
+               s_axi_rdata!==32'h00010001)
+                $fatal(1,"managed-work ABI version must be 1.1");
+            s_axi_rready=1;
+            @(posedge clk);#1;
+            @(negedge clk);s_axi_rready=0;
             write_axil(12'h010,32'h1000);
             write_axil(12'h014,32'd0);
             write_axil(12'h018,32'd4096);
