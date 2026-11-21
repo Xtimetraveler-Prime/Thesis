@@ -223,8 +223,8 @@ module m08_paged_m06_lif_engine (
                                         page_id=={29'b0,expected_page} &&
                                         observed=={29'b0,expected_tick} &&
                                         page_count==
-                                          (expected_page==3'd5?
-                                           32'd2:32'd6) &&
+                                          (expected_page == 3'd5 ?
+                                           32'd2 : 32'd6) &&
                                         expected_tick<4) begin
                                 local_neuron<=0;
                                 field_idx<=0;
