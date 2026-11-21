@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,7 @@ import m08_paged_m06_lif_native_review as reviewer
 BUILDER=ROOT/"scripts/m08_paged_m06_lif_build.tcl"
 RUNNER=ROOT/"scripts/run_m08_paged_m06_lif_pc.sh"
 REVIEW=ROOT/"scripts/m08_paged_m06_lif_native_review.py"
+ENGINE=ROOT/"rtl/m08/m08_paged_m06_lif_engine.v"
 
 class M084NativeFirstImageTests(unittest.TestCase):
     def test_source_gate_remains_explicitly_not_physical(self):
@@ -75,6 +77,25 @@ class M084NativeFirstImageTests(unittest.TestCase):
         for name in reviewer.NAMES:
             self.assertIn(name,shell)
         self.assertEqual(len(reviewer.SOURCE_MAP),5)
+
+    def test_vivado_decimal_literal_ternary_lexer_boundary(self):
+        """Vivado parses 3'd5? as an invalid decimal token, not a ternary."""
+        code=ENGINE.read_text()
+        bad_literal=r"\\b\\d+'[sS]?[dD][0-9_]+\\?"
+        # Mutation control: the actual first owner-native synthesis error.
+        self.assertIsNotNone(re.search(bad_literal,"(expected_page==3'd5?32'd2:32'd6)"))
+        self.assertIsNone(re.search(bad_literal,code),
+                          "Sized decimal literal touches ternary ?: Vivado Synth 8-10871")
+        self.assertIn("(expected_page == 3'd5 ?",code)
+        self.assertIn("32'd2 : 32'd6)",code)
+
+    @unittest.skipUnless(shutil.which("iverilog"),"Icarus needed for strict Verilog-2001 grammar")
+    def test_engine_parses_as_verilog_2001_not_only_systemverilog(self):
+        p=subprocess.run(
+            ["iverilog","-g2001","-tnull","-s","m08_paged_m06_lif_engine",str(ENGINE)],
+            capture_output=True,text=True,timeout=30)
+        self.assertEqual(p.returncode,0,p.stdout+"\\n"+p.stderr)
+        self.assertEqual(p.stderr.strip(),"", "Verilog-2001 parse warnings require review")
 
     def test_first_new_owner_image_cannot_be_source_approved(self):
         text=REVIEW.read_text()
