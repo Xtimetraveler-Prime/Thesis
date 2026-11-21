@@ -72,7 +72,9 @@ module m08_m085_work_command_sequencer #(
     assign write_error=write_valid && !acceptable_write;
     assign read_error=!(read_addr==8'h24 || read_addr==8'h28 ||
                         read_addr==8'h30 || read_addr==8'h34);
-    assign fault=phase==FAULT || write_error || neural_poisoned;
+    // Register neural poison before reflecting it back into session_poison:
+    // no combinational cycle through the original bank's fault outputs.
+    assign fault=phase==FAULT || write_error;
     assign work_busy=phase!=IDLE && phase!=FAULT;
     assign page_slot=slot_q;
     assign page_tick=tick_q;
