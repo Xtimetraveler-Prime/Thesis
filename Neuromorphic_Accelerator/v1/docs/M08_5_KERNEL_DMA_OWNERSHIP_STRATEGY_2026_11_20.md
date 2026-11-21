@@ -70,6 +70,27 @@ An **early revoke**, metadata/generation change or control-path loss during the 
 2. Add a **synthesizable fail-closed DMA lease fence** whose outputs are the latched runtime window and gated owner enable; test it in genuine Icarus with adversarial lease lifecycle and address cases, plus a composed seven-page neural trace against simulated DMA allocation.
 3. Document exact API/ownership and recovery gap here, plus roadmap/handoff; update same draft PR #95. **No C kernel module, physical driver probe, XSA, bitstream, PL programming or PS DDR use** in this increment.
 
+## 7. Development source added after this design decision
+
+The above source deliverables were implemented **on the same M08.5 draft branch** (exact-HEAD CI and user local verification are separate release gates):
+
+- `rtl/m08/m08_m085_kernel_dma_lease_fence.v`: synthesizable source-only FSM that freezes DMA base, length and nonzero generation on one validated grant; **65-bit no-wrap and exact 49-bit aperture checks**; exposes only `[base, base+1792)`; gates permission combinationally on live metadata/control failure; requires engine idle, bank clean, and independently asserted bus quiescence for release. Sticky faults quarantine until externally controlled full reset. **This module does not authenticate a Linux driver or detect true PS outstanding AXI responses.**
+- `rtl/m08/m08_m085_ddr_page_admission.v`, `m08_m085_axi128_page_candidate.v`, `m08_m085_axi_bank_bridge.v`, `m08_m085_axi_neural_shell.v`: each now accepts an **opt-in** `USE_RUNTIME_WINDOW` parameter and pinned 64-bit runtime start/end wires. All existing tests continue to use the default **static parameter mode**; its empty default address window still denies all access.
+- `rtl/m08/m08_m085_kernel_owned_neural_candidate.v`: combines the new lease fence with the **unchanged original recurrent signed16 LIF**, one actual 64-word bank and first-party AXI master. **The requesting interface has no caller-supplied DDR address.** All seven DMA addresses are computed as `latched_base + slot*256`; lease-poison is routed into original bank fail-closed behavior. External `bus_quiescent` is a *future evidence-bearing control*, not a real physical observation in this source candidate.
+- `rtl/m08/tb_m08_m085_kernel_dma_neural.sv` and `tests/test_m08_m085_kernel_dma_lease.py`: genuine Icarus source model, seven exact original M02/M03 INPUT pages and unchanged 512-word read-only neural oracle, source-synthetic valid DMA lease plus **26 negative cases** (11 original neural/edge faults and 15 grant/owner/metadata/release/address failures). The positive case requires the original 24 recurrent neural dispatches and 512 comparisons through real RTL and all 7×256B simulated backing slots. No PS connection or board memory is accessed.
+
+**New next gate, not part of this source pass:** owner must identify exact live kernel/driver/DT/XSA and approved PS HP0/HPM0 control clocks, physical quiesce/reset/late-response protocol, DMA API allocation identity, and 128→32 AXI-Lite width adaptation *before* an actual Linux driver/device-tree or Vivado PS connection can be reviewed. An offline unit test with `kernel_dma_lease_valid=1` is **never** a substitute for that evidence.
+
+**PC-only local regression commands** (from `~/Git/Thesis/Neuromorphic_Accelerator/v1` on current M08.5 branch):
+
+```bash
+python3 -m unittest discover -s tests -p 'test_m08_m085_kernel_dma_lease.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_m085_axi_neural_closed_loop.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_m085_bank_axi_bridge.py' -v
+python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+python3 -m unittest discover -s tests -v
+```
+
 ## References
 
 - Linux Kernel DMA API: https://www.kernel.org/doc/html/latest/core-api/dma-api.html
