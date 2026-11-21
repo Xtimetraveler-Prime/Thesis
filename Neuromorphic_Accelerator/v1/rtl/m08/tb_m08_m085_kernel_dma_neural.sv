@@ -413,7 +413,7 @@ module tb_m08_m085_kernel_dma_neural;
         repeat(3)@(negedge clk);resetn=1;
         // Testbench pretends to be a trusted driver; NEVER provenance.
         // Deliberate pre-grant scenarios 12..16 skip valid grant.
-        if((case_id<12 || case_id>16) && case_id!=28 && case_id!=29) grant_dma_lease();
+        if((case_id<12 || case_id>16) && case_id!=28 && case_id!=29 && case_id!=31) grant_dma_lease();
         case(case_id)
           0:begin
               setup_edges();
@@ -626,6 +626,38 @@ module tb_m08_m085_kernel_dma_neural;
               @(posedge clk);#1;
               @(negedge clk);lease_grant=0;
               expect_fault();
+          end
+          30:begin // Clean release must embargo later compute dispatch.
+              start_page_request(0,6,0);wait_bank_transfer(0,6);
+              @(negedge clk);lease_release=1;
+              @(posedge clk);#1;
+              @(negedge clk);lease_release=0;
+              if(!lease_sealed)$fatal(1,"lease not sealed");
+              @(negedge clk);dispatch_logical=32'hFFFFFFFF;dispatch_req=1;
+              @(posedge clk);#1;
+              if(dispatch_accept)$fatal(1,"post-release neural dispatch escaped");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+          end
+          31:begin // No lease: neural dispatch must fail closed.
+              @(negedge clk);dispatch_logical=0;dispatch_req=1;
+              @(posedge clk);#1;
+              if(dispatch_accept)$fatal(1,"pre-grant compute dispatch escaped");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+              if(ar_seen!=0 || aw_seen!=0)
+                  $fatal(1,"pre-grant dispatch drove AXI");
+          end
+          32:begin // Clean release must also embargo later page I/O.
+              start_page_request(0,6,0);wait_bank_transfer(0,6);
+              @(negedge clk);lease_release=1;
+              @(posedge clk);#1;
+              @(negedge clk);lease_release=0;
+              if(!lease_sealed)$fatal(1,"lease not sealed");
+              start_page_request(0,0,0);
+              expect_fault();
+              if(ar_seen!=1 || aw_seen!=0)
+                  $fatal(1,"post-release AXI read/write escaped");
           end
           default:$fatal(1,"unknown closed loop case=%0d",case_id);
         endcase
