@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 // Actual Icarus AXI4 handshake simulation, NOT fake 'downstream_done'.
 // Read/write full 256B, every 128-bit lane, stalls, BRESP/RRESP/RLAST,
 // invalid address/page/epoch, timeout, orphan response and lease failure.
