@@ -44,6 +44,7 @@ module tb_m08_m085_trusted_control_abi;
             @(posedge clk);#1;
             @(negedge clk);csr_valid=0;csr_write=0;
             csr_trusted=1;csr_wstrb=4'hf;
+            #1; // allow VALID deassertion to settle before fault sampling
         end
     endtask
     task descriptor;
@@ -69,7 +70,7 @@ module tb_m08_m085_trusted_control_abi;
         begin
             write_csr(8'h20,32'd2,4'hf,1);
             #1;
-            if(!stop_new_requests || admit_work || !drain_request ||
+            if(!stop_new_requests || admit_work || !drain_request || lease_poisoned ||
                admitted_begin!=0 || admitted_end!=0)
                 $fatal(1,"STOP failed to embargo new work while draining");
             // A stale high ACK must NOT count as a fresh drain after STOP.
