@@ -75,6 +75,8 @@ module m08_page_compute_probe_shell (
         .s_axi_awready(s_axi_awready),
         .s_axi_wdata(s_axi_wdata),
         .s_axi_wstrb(s_axi_wstrb),
+        .s_axi_wvalid(s_axi_wvalid),
+        .s_axi_wready(s_axi_wready),
         .s_axi_bresp(s_axi_bresp),
         .s_axi_bvalid(s_axi_bvalid),
         .s_axi_bready(s_axi_bready),
