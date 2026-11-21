@@ -42,6 +42,13 @@ class PageComputeProbeTests(unittest.TestCase):
         self.assertIn("module m08_ps_page_safe_shell",old)
         self.assertIn("X_INTERFACE_INFO",top)
         self.assertIn("ASSOCIATED_BUSIF S_AXI",top)
+        for name in ("awaddr","awprot","awvalid","awready",
+                     "wdata","wstrb","wvalid","wready",
+                     "bresp","bvalid","bready",
+                     "araddr","arprot","arvalid","arready",
+                     "rdata","rresp","rvalid","rready"):
+            self.assertIn(f".s_axi_{name}(s_axi_{name})",top,
+                          "AXI-Lite interface signal unconnected: "+name)
         for wire in ("compute_ack","compute_rdata","compute_req",
                      "compute_write","compute_word","compute_wdata",
                      "compute_done","compute_fault","dispatch_accept"):
