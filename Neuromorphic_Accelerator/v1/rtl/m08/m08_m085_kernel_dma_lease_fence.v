@@ -67,7 +67,12 @@ module m08_m085_kernel_dma_lease_fence #(
     assign runtime_window_end=owner_lease_active ?
         base_q+ALLOWED_DMA_BYTES : 64'd0;
     assign granted=(state==ACTIVE) && owner_lease_active;
-    assign poisoned=(state==FAULT);
+    // Also assert the fault combinationally on live loss, before the
+    // next clock can otherwise permit a compute/AXI control handshake.
+    assign poisoned=(state==FAULT) ||
+        ((state==ACTIVE) && (!trust_live || lease_grant ||
+            (lease_release && !(transport_idle && bank_clean_idle &&
+                                  bus_quiescent))));
     assign sealed=(state==SEALED);
     always @(posedge clk) begin
         if(!resetn) begin
