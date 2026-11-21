@@ -32,6 +32,11 @@ jobs:
           bash -n scripts/run_m08_identity_bd.sh
           test -f scripts/m08_identity_ps_bd_candidate.tcl
           test -f scripts/m08_identity_bd_audit.py
+      - name: M08.5 original Twin v3 PS/PL topology and real 256B RTL admission (NO BOARD)
+        run: |
+          python3 scripts/m08_m085_twin_pspl_audit.py --source-only
+          python3 -m unittest discover -s tests -p 'test_m08_m085_pspl_reuse.py' -v
+          python3 -m unittest discover -s tests -p 'test_m08_matched_experiments.py' -v
       - name: M08 targeted read-only, identity and BD-negative tests
         run: python3 -m unittest discover -s tests -p 'test_m08*.py' -v
       - name: Inherited M07 source models
