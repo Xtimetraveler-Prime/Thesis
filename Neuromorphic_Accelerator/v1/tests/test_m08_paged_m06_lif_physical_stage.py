@@ -64,8 +64,8 @@ class M084PagedPhysicalStagingTests(unittest.TestCase):
     def test_shell_requires_missing_new_image_specific_native_gate_before_jtag(self):
         text=SH.read_text()
         self.assertIn("m08_paged_m06_lif_exact_native_accept.py",text)
-        self.assertFalse((ROOT/"scripts/m08_paged_m06_lif_exact_native_accept.py").exists(),
-                         "new physical image release cannot be silently created")
+        self.assertTrue((ROOT/"scripts/m08_paged_m06_lif_exact_native_accept.py").is_file(),
+                        "exact new owner-image release gate must exist before physical runner")
         self.assertLess(text.index('if [[ ! -f "$EXACT_GATE"'),text.index('HW="$(mktemp -d'))
         self.assertLess(text.index('python3 "$EXACT_GATE"'),text.index('HW="$(mktemp -d'))
         self.assertIn("M08_4_PROGRAM_ONCE",text)
