@@ -30,7 +30,9 @@ module m08_m085_axi128_page_engine #(
     output reg [31:0] completed_write_bursts,
     output reg [31:0] completed_axi_bytes,
 
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWADDR", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME M_AXI, PROTOCOL AXI4, ADDR_WIDTH 49, DATA_WIDTH 128, ID_WIDTH 0, HAS_BURST 1, MAX_BURST_LENGTH 16, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, SUPPORTS_NARROW_BURST 0" *)
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWID", X_INTERFACE_PARAMETER = "XIL_INTERFACENAME M_AXI, PROTOCOL AXI4, ADDR_WIDTH 49, DATA_WIDTH 128, ID_WIDTH 1, HAS_BURST 1, MAX_BURST_LENGTH 16, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, SUPPORTS_NARROW_BURST 0" *)
+    output wire [0:0] m_axi_awid,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWADDR" *)
     output wire [48:0] m_axi_awaddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWLEN" *)
     output wire [7:0] m_axi_awlen,
@@ -38,6 +40,14 @@ module m08_m085_axi128_page_engine #(
     output wire [2:0] m_axi_awsize,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWBURST" *)
     output wire [1:0] m_axi_awburst,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWLOCK" *)
+    output wire m_axi_awlock,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWCACHE" *)
+    output wire [3:0] m_axi_awcache,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWPROT" *)
+    output wire [2:0] m_axi_awprot,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWQOS" *)
+    output wire [3:0] m_axi_awqos,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWVALID" *)
     output wire m_axi_awvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWREADY" *)
@@ -52,12 +62,16 @@ module m08_m085_axi128_page_engine #(
     output wire m_axi_wvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI WREADY" *)
     input wire m_axi_wready,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BID" *)
+    input wire [0:0] m_axi_bid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BRESP" *)
     input wire [1:0] m_axi_bresp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BVALID" *)
     input wire m_axi_bvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BREADY" *)
     output wire m_axi_bready,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARID" *)
+    output wire [0:0] m_axi_arid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARADDR" *)
     output wire [48:0] m_axi_araddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARLEN" *)
@@ -66,10 +80,20 @@ module m08_m085_axi128_page_engine #(
     output wire [2:0] m_axi_arsize,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARBURST" *)
     output wire [1:0] m_axi_arburst,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARLOCK" *)
+    output wire m_axi_arlock,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARCACHE" *)
+    output wire [3:0] m_axi_arcache,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARPROT" *)
+    output wire [2:0] m_axi_arprot,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARQOS" *)
+    output wire [3:0] m_axi_arqos,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARVALID" *)
     output wire m_axi_arvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARREADY" *)
     input wire m_axi_arready,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RID" *)
+    input wire [0:0] m_axi_rid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RDATA" *)
     input wire [127:0] m_axi_rdata,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RRESP" *)
@@ -102,20 +126,30 @@ module m08_m085_axi128_page_engine #(
     wire legal_addr=(!(|req_addr[63:49])) && (req_addr[7:0]==8'd0);
     assign busy=(state!=IDLE && state!=FAULT);
     assign poisoned=(state==FAULT);
+    assign m_axi_awid=1'b0;
     assign m_axi_awaddr=address_q;
     assign m_axi_awlen=8'd15;
     assign m_axi_awsize=3'd4; // 16 bytes per beat
     assign m_axi_awburst=2'b01; // INCR
+    assign m_axi_awlock=1'b0;
+    assign m_axi_awcache=4'b0011; // v3 AXI adapter precedent, requires new PS verification
+    assign m_axi_awprot=3'b000;
+    assign m_axi_awqos=4'b0;
     assign m_axi_awvalid=(state==AW);
     assign m_axi_wdata=write_page_q[beat*128 +: 128];
     assign m_axi_wstrb=16'hFFFF;
     assign m_axi_wlast=(beat==4'd15);
     assign m_axi_wvalid=(state==W);
     assign m_axi_bready=(state==B);
+    assign m_axi_arid=1'b0;
     assign m_axi_araddr=address_q;
     assign m_axi_arlen=8'd15;
     assign m_axi_arsize=3'd4;
     assign m_axi_arburst=2'b01;
+    assign m_axi_arlock=1'b0;
+    assign m_axi_arcache=4'b0011;
+    assign m_axi_arprot=3'b000;
+    assign m_axi_arqos=4'b0;
     assign m_axi_arvalid=(state==AR);
     assign m_axi_rready=(state==R);
 
@@ -175,7 +209,7 @@ module m08_m085_axi128_page_engine #(
                         else beat<=beat+4'd1;
                     end
                     B: if (b_fire) begin
-                        if (m_axi_bresp!=2'b00) begin
+                        if (m_axi_bresp!=2'b00 || m_axi_bid!=1'b0) begin
                             state<=FAULT;
                             error<=1'b1;
                             read_page<=0;
@@ -191,7 +225,7 @@ module m08_m085_axi128_page_engine #(
                         beat<=0;
                     end
                     R: if (r_fire) begin
-                        if (m_axi_rresp!=2'b00 ||
+                        if (m_axi_rresp!=2'b00 || m_axi_rid!=1'b0 ||
                             m_axi_rlast!=(beat==4'd15)) begin
                             state<=FAULT;
                             error<=1'b1;
