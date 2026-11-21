@@ -1,4 +1,4 @@
-name: M08 D3.D.2E.1 bounded tick queue (SOURCE ONLY / NO BOARD)
+name: M08.4 paged signed16 neural and accepted FIFO (REAL RTL / NO BOARD)
 
 on:
   push:
@@ -35,5 +35,9 @@ jobs:
           iverilog -V | head -n 1
       - name: D3.D.2E real clocked AXI queue RTL + M06 512-value oracle + mutations
         run: python3 -m unittest discover -s tests -p 'test_m08_d3d2e_tick_queue.py' -v
-      - name: Preserve all earlier M08 tests and owner image boundaries
+      - name: M08.4 six paged neural contexts x four ticks with REAL LIF/recurrent M02/M03 oracle and quarantine
+        run: |
+          python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif.py' -v
+          python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_fail_closed.py' -v
+      - name: Preserve all earlier M08 tests and original physical image boundaries
         run: python3 -m unittest discover -s tests -p 'test_m08*.py' -v
