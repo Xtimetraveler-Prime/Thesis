@@ -24,6 +24,9 @@ import m08_m085_twin_pspl_audit as source_audit
 
 RTL = ROOT / "rtl/m08/m08_m085_ddr_page_admission.v"
 TB = ROOT / "rtl/m08/tb_m08_m085_ddr_page_admission.sv"
+AXI_ENGINE = ROOT / "rtl/m08/m08_m085_axi128_page_engine.v"
+AXI_COMPOSITION = ROOT / "rtl/m08/m08_m085_axi128_page_candidate.v"
+AXI_TB = ROOT / "rtl/m08/tb_m08_m085_axi128_page_candidate.sv"
 
 
 class TwinPSPLReuseTests(unittest.TestCase):
@@ -116,6 +119,53 @@ class TwinPSPLReuseTests(unittest.TestCase):
                               f"M08_5_REAL_IVERILOG_GUARD_NEGATIVE_PASS case={case}")
                     self.assertIn(marker, r.stdout)
                     self.assertNotIn("FATAL", r.stdout+r.stderr)
+
+    @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
+                         "real AXI4 handshake test requires genuine iverilog/vvp")
+    def test_real_axi128_page_read_write_and_twenty_three_faults(self):
+        with tempfile.TemporaryDirectory() as td:
+            exe = Path(td)/"axi_page.vvp"
+            built = subprocess.run(
+                ["iverilog", "-g2012", "-s", "tb_m08_m085_axi128_page_candidate",
+                 "-o", str(exe), str(RTL), str(AXI_ENGINE),
+                 str(AXI_COMPOSITION), str(AXI_TB)],
+                capture_output=True, text=True
+            )
+            self.assertEqual(built.returncode, 0, built.stdout+built.stderr)
+            for case in range(24):
+                with self.subTest(case=case):
+                    r = subprocess.run(
+                        ["vvp", str(exe), f"+CASE={case}"],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+                    marker = ("M08_5_REAL_AXI128_256B_READ_WRITE_AND_512_BYTES_PASS"
+                              if case == 0 else
+                              f"M08_5_REAL_AXI128_256B_NEGATIVE_PASS case={case}")
+                    self.assertIn(marker, r.stdout)
+                    self.assertNotIn("FATAL", r.stdout+r.stderr)
+
+    def test_new_axi_module_defaults_are_not_a_real_ddr_release(self):
+        eng = AXI_ENGINE.read_text(encoding="utf-8")
+        top = AXI_COMPOSITION.read_text(encoding="utf-8")
+        self.assertIn("module m08_m085_axi128_page_engine", eng)
+        self.assertIn("m_axi_awlen=8'd15", eng)
+        self.assertIn("m_axi_arlen=8'd15", eng)
+        self.assertIn("m_axi_wstrb=16'hFFFF", eng)
+        self.assertIn("m_axi_bresp!=2'b00", eng)
+        self.assertIn("m_axi_rresp!=2'b00", eng)
+        self.assertIn("m_axi_rlast!=(beat==4'd15)", eng)
+        self.assertIn("m08_m085_ddr_page_admission", top)
+        self.assertIn("m08_m085_axi128_page_engine", top)
+        self.assertIn("WINDOW_BEGIN=64'd0", top)
+        self.assertIn("WINDOW_END=64'd0", top)
+        self.assertIn(".downstream_done(engine_done)", top)
+        self.assertIn(".downstream_error(engine_error || engine_poisoned)", top)
+        self.assertIn(".downstream_rvalid(engine_read_complete)", top)
+        self.assertIn("staged_write_page<=req_write_page", top)
+        for bad in ("program_hw_devices", "mrd ", "mwr ", "0x40000000",
+                    "dma_alloc_coherent", "create_bd_design"):
+            self.assertNotIn(bad, eng+top)
 
     def test_static_source_never_claims_simulated_guard_is_real_ddr(self):
         raw = (ROOT/"src/neuromorphic_accelerator_v1/m08_m085_pspl_lineage.py").read_text()
