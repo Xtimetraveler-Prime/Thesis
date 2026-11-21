@@ -48,7 +48,9 @@ The engine actually reads and writes paged state, computes 3/4 signed decay **tr
 
 **Absolute no-sprawl rule repeated for the next instance:** these are **engineering tasks inside M08.4**, not new milestones. Do **not** invent D3.D.3B/C/D, M08.4.1, a new PR per timing warning, or a new phase for each failed first owner image. New named debugging experiments are allowed only when genuinely necessary to isolate a distinct failure mechanism; they remain subordinate to M08.4.
 
-## Local owner VS Code test commands (without changing board/evidence)
+## Owner VS Code verification and future first OFFLINE native run
+
+**SOURCE-ONLY / NO VIVADO / NO BOARD.** The user passed the earlier 3-page checksum stage locally; the **NEW** neural/negative/native-source tests below are a *different* updated HEAD and must be run separately before any new owner native evidence:
 
 ```bash
 cd ~/Git/Thesis
@@ -60,11 +62,24 @@ cd Neuromorphic_Accelerator/v1
 export PYTHONDONTWRITEBYTECODE=1
 command -v iverilog
 command -v vvp
-python3 -m unittest discover -s tests -p 'test_m08_page_compute_probe_shell.py' -v
-python3 -m unittest discover -s tests -p 'test_m08_m06_parameter_pages.py' -v
-python3 -m unittest discover -s tests -p 'test_m08_d3d3a_page_stage.py' -v
-python3 scripts/m08_m06_parameter_pages.py --source-only
+python3 scripts/m08_paged_m06_lif_fixture.py --source-only
+python3 scripts/m08_paged_m06_lif_source_gate.py --source-only
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_fail_closed.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_native_candidate.py' -v
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
 ```
+
+**Separate later option: ONE NEW OWNER PC OFFLINE Vivado candidate (never JTAG):** Only after source tests pass and the owner wishes to create a fresh original Vivado bitstream candidate, source the owner's known installed toolchain:
+
+```bash
+cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+vivado -version
+bash scripts/run_m08_paged_m06_lif_pc.sh
+```
+
+The offline runner creates a **new**, non-overwriting `~/Thesis_Evidence/M08/m08_paged_m06_lif_XXXXXXXX` original folder, runs true Vivado once, saves full first-image DRC/clocks/timing/bitstream source SHA evidence and intentionally returns **exit code 2/BLOCKED** on success until a separate real image-specific review authorizes hardware. A genuine routed **timing failure** or new Vivado error also stops; diagnose from the *first original* error, preserving the owner folder and avoiding automatic retries. **NEVER run `program_hw_devices` or any DDR write as part of this step.** The next instance must collect/inspect actual original DRC and timing, not waive the previous M32Q warning profile.
+
 
 **FINAL HANDOFF RULE, REPEATED BECAUSE THE OWNER REQUESTED IT:** `M08.4` is the active deliverable. **DO NOT ADD ANY MORE MILESTONE SUBDIVISIONS UNLESS ABSOLUTELY NECESSARY FOR DEBUGGING**, and then only document the exception as an internal experiment. Preserve simple M08.4 → M08.5 → M08.6–7 → M09 structure in `roadmap.md`.
