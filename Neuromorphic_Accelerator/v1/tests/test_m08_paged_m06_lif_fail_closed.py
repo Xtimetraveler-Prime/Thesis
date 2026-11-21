@@ -30,7 +30,7 @@ class PagedM06LIFNegativeTests(unittest.TestCase):
         txt=(RTL/"tb_m08_paged_m06_lif_fail_closed.sv").read_text()
         for key in ("Missing setup", "skip expected tick0",
                     "invalid positive threshold","compute_ack",
-                    "config[3]=0","stage_words(1,2)",
+                    "edge_page_words[3]=0","stage_words(1,2)",
                     "page_poisoned", "bank_phase!==3'd5"):
             self.assertIn(key,txt)
         self.assertNotIn("program_hw_devices",txt)
