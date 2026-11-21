@@ -1,8 +1,8 @@
-// M08.5 REAL Icarus composed AXI4 + original bank, never physical DDR.
-// All original input page words can be provided with +ORIGINAL_PAGE_HEX.
-// No golden neural output injected; synthetic compute write is NOT SNN.
-// Independent 128-bit AXI BFM keeps six 256B page memories and scores
-// full read/write handshakes. A save MUST read back DDR before bank clears.
+// M08.5 REAL Icarus 7-slot AXI4 + unchanged M08.4 recurrent LIF
+// and one 64x32-bit neural bank. Six M6NF neuron contexts and one
+// distinct M6EG edge page; synthetic DDR ONLY (not PS DDR or DMA).
+// All 512 M02/M03 golden values are comparison-only, never preload.
+// Save must read back all 256 bytes of simulated DDR before bank clears.
 module tb_m08_m085_axi_neural_closed_loop;
     reg clk=0;always #5 clk=~clk;
     reg resetn=0,owner_lease_active=1,request=0,request_save=0;
@@ -447,6 +447,41 @@ module tb_m08_m085_axi_neural_closed_loop;
               start_page_request(0,6,0);wait_bank_transfer(0,6);
               start_neural_dispatch(6);
               start_page_request(1,6,0);expect_fault();
+          end
+          8:begin // Malformed positive-delay edge only caught by LIF engine.
+              synthetic_ddr[6][3*32+:32]=0;
+              start_page_request(0,6,0);wait_bank_transfer(0,6);
+              @(negedge clk);dispatch_logical=32'hFFFFFFFF;dispatch_req=1;
+              @(posedge clk);#1;
+              if(!dispatch_accept)$fatal(1,"bad-edge config dispatch not accepted");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+              if(dut.neural_engine.state!==3'd5)
+                  $fatal(1,"invalid recurrent delay did not poison compute");
+          end
+          9:begin // Real neural page sequence may never skip page 0.
+              setup_edges();
+              start_page_request(0,1,0);wait_bank_transfer(0,1);
+              @(negedge clk);dispatch_logical=1;dispatch_req=1;
+              @(posedge clk);#1;
+              if(!dispatch_accept)$fatal(1,"out-of-order dispatch not accepted by bank");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+          end
+          10:begin // Bad signed16 sign extension in actual neuron state.
+              setup_edges();
+              synthetic_ddr[0][0*32+:32]=32'h00008000;
+              start_page_request(0,0,0);wait_bank_transfer(0,0);
+              @(negedge clk);dispatch_logical=0;dispatch_req=1;
+              @(posedge clk);#1;
+              if(!dispatch_accept)$fatal(1,"bad state dispatch not accepted");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+          end
+          11:begin // Edge config cannot be reloaded from another tick epoch.
+              start_page_request(0,6,1);expect_fault();
+              if(ar_seen!=0)
+                  $fatal(1,"invalid edge epoch issued an AXI read");
           end
           default:$fatal(1,"unknown closed loop case=%0d",case_id);
         endcase
