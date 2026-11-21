@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 // M08.5: 256-byte-only, 128-bit AXI4 page burst master.
 // Accelerator-specific single-page staging: 16 beats, full strobes, one
 // outstanding burst (read OR write). No general Loihi bank/page walker.
