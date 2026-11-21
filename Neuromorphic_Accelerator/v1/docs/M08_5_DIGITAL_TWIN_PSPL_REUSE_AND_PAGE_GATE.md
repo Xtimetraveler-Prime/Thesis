@@ -46,6 +46,10 @@ With the original 18-fault page-admission tests locally verified by the owner, t
 
 No physically mapped or Linux/standalone-owned buffer; no connected SmartConnect / S_AXI_HP0_FPD or PS HPM0 AXI-Lite control; no PS clock/reset/boot width admission; no byte-persistency proof for a real R/B slave; no OS kernel DMA mask/IOMMU/cache sync; no current-period resource/route/timing metrics; no validated overlap-free load/save bank controller; no actual DDR measurements. **M08.5 physical cell stays BLOCKED / NOT MEASURED.** Do not interpret original Dual AXI source path as authorization to modify boot-time PS registers or program the KV260.
 
+### Later continuation on the SAME M08.5 gate — original bank is now connected in source RTL
+
+The paragraph above describing the 2048-bit page staging ports as *not yet wired to a bank* is **historical to the preceding AXI-only increment**. New [M08.5 integrated AXI/64-word neuron bank lifecycle and test runbook](M08_5_BANK_AXI_INTEGRATION_CONTRACT.md) describes the later first-party `m08_m085_axi_bank_bridge.v`. It now connects the existing M08 bank to the 16-beat AXI source engine, requiring **64 actual bank readbacks before LOAD commit and a second full DDR readback before DIRTY save acknowledgement**. Genuine six-original-page Icarus positive tests and 15 negative faults are in `tests/test_m08_m085_bank_axi_bridge.py`. The bridge still has **no connected LIF engine or physical PS HP0/DDR route**, and preserves the original M08.4 accepted image untouched. The actual next work is source-matched neural-compute integration and owner-bound memory admission, not to reinvent this already implemented bridge.
+
 ## Architecture safety gate before any actual DDR wire or new image
 
 1. Run existing read-only M08.3 Linux/driver inventory and inspect current booted PS width, XSA memory routes, real device binding, DMA mask/IOMMU/cache ownership. No /dev/mem, guessed address, DMA heap listing or candidate Vivado address is proof of safe buffer ownership.
