@@ -2,7 +2,7 @@
 # NEVER run this Tcl standalone. The outer shell MUST first pass a newly
 # independent exact-image native DRC/timing/clock/SHA gate, active cooling,
 # UART, stock rollback, exclusive JTAG and explicit one-shot owner consent.
-# JTAG AXI PL ONLY; NOT PS /dev/mem, OS DDR, DMA, flash or SD writes.
+# JTAG AXI PL ONLY; NO PS memory access, OS DDR, DMA, flash or SD writes.
 # Original first failed/succeeded owner evidence directories remain immutable.
 set ORIGINAL_SHA "6a4a71f255adcc79a4131401a3f75eb64f253d3431f5ad1babc0da48479f6494"
 set ORIGINAL_OWNER "m08_paged_m06_lif_QFKpXlPW"
