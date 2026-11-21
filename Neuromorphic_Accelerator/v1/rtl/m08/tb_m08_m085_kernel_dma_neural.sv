@@ -306,7 +306,7 @@ module tb_m08_m085_kernel_dma_neural;
                 @(posedge clk);#1;
             end
             if(!bank_dirty || bank_phase!==3'd4 || poisoned ||
-               dut.neural_engine.state===3'd5)
+               dut.neural.neural_engine.state===3'd5)
                 $fatal(1,"real neural dispatch did not finish slot=%0d",slot);
         end
     endtask
@@ -315,11 +315,11 @@ module tb_m08_m085_kernel_dma_neural;
             start_page_request(0,6,0);
             wait_bank_transfer(0,6);
             start_neural_dispatch(6);
-            if(!dut.neural_engine.edge_configured ||
-               dut.neural_engine.edge_count!==4'd5 ||
+            if(!dut.neural.neural_engine.edge_configured ||
+               dut.neural.neural_engine.edge_count!==4'd5 ||
                neural_completed_pages!==0 ||
-               dut.neural_engine.expected_page!==0 ||
-               dut.neural_engine.expected_tick!==0)
+               dut.neural.neural_engine.expected_page!==0 ||
+               dut.neural.neural_engine.expected_tick!==0)
                 $fatal(1,"five real recurrent edges not configured");
             start_page_request(1,6,0);
             wait_bank_transfer(1,6);
@@ -419,8 +419,8 @@ module tb_m08_m085_kernel_dma_neural;
               setup_edges();
               for(t=0;t<4;t=t+1)begin
                   for(p=0;p<6;p=p+1)run_neural_page(t,p);
-                  if(dut.neural_engine.expected_tick!==t+1 ||
-                     dut.neural_engine.expected_page!==0)
+                  if(dut.neural.neural_engine.expected_tick!==t+1 ||
+                     dut.neural.neural_engine.expected_page!==0)
                       $fatal(1,"mixed-epoch neural step tick=%0d",t);
                   $display("M08_5_AXIDDR_TICK_BARRIER_PASS tick=%0d",t);
               end
@@ -431,7 +431,7 @@ module tb_m08_m085_kernel_dma_neural;
                  neural_synaptic_events===0)
                   $fatal(1,"512 original numerical checks not reproduced");
               for(n=0;n<32;n=n+1)
-                  if(dut.neural_engine.global_spikes[n]!==expected_masks[n])
+                  if(dut.neural.neural_engine.global_spikes[n]!==expected_masks[n])
                       $fatal(1,"actual recursive spike history diverged neuron=%0d",n);
               // Each of 25 pages (1 M6EG + 24 M6NF) is read, written,
               // and read back: 25*3*256=19200 *simulated* AXI bytes.
@@ -457,7 +457,7 @@ module tb_m08_m085_kernel_dma_neural;
               if(!dispatch_accept)$fatal(1,"missing-edge dispatch rejected before engine");
               @(negedge clk);dispatch_req=0;
               expect_fault();
-              if(dut.neural_engine.state!==3'd5)
+              if(dut.neural.neural_engine.state!==3'd5)
                   $fatal(1,"missing edge setup did not fault LIF engine");
           end
           5:begin
@@ -487,7 +487,7 @@ module tb_m08_m085_kernel_dma_neural;
               if(!dispatch_accept)$fatal(1,"bad-edge config dispatch not accepted");
               @(negedge clk);dispatch_req=0;
               expect_fault();
-              if(dut.neural_engine.state!==3'd5)
+              if(dut.neural.neural_engine.state!==3'd5)
                   $fatal(1,"invalid recurrent delay did not poison compute");
           end
           9:begin // Real neural page sequence may never skip page 0.
