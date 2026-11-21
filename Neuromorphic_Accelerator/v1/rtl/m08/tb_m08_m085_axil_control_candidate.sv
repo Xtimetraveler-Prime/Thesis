@@ -231,7 +231,7 @@ module tb_m08_m085_axil_control_candidate;
                    #1;if(admit_work || !stop_new_requests || admitted_begin!==0)
                        $fatal(1,"orphan AW did not embargo work");
                    repeat(4)begin @(posedge clk);#1;
-                       if(!lease_granted || admit_work || bvalid)
+                       if(lease_granted || admit_work || bvalid)
                            $fatal(1,"AW-only wait leaked work/response");
                    end
                    send_w(32'd2,4'hf);await_b(2'b00);
