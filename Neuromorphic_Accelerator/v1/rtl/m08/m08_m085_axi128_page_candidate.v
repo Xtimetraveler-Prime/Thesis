@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 // Source-only M08.5 composition: independent range/lease/page/tick admission
 // plus first-party actual 128-bit AXI4 burst handshake engine.
 // The 2048-bit payload is a deliberately EXTERNAL snapshot boundary;
