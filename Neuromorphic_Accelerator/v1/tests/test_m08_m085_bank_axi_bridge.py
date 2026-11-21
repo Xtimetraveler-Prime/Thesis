@@ -77,7 +77,7 @@ class IntegratedBankAXITests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "real Icarus simulator mandatory; never fake RTL pass")
-    def test_fifteen_integrated_bank_axi_failure_cases(self):
+    def test_nineteen_integrated_bank_axi_failure_cases(self):
         with tempfile.TemporaryDirectory() as td:
             out=Path(td)/"m08_m085_bank_axi.vvp"
             build=subprocess.run(
@@ -86,7 +86,7 @@ class IntegratedBankAXITests(unittest.TestCase):
                 capture_output=True,text=True
             )
             self.assertEqual(build.returncode,0,build.stdout+build.stderr)
-            for case in range(1,16):
+            for case in range(1,20):
                 with self.subTest(case=case):
                     r=subprocess.run(["vvp",str(out),f"+CASE={case}"],
                                      capture_output=True,text=True,timeout=20)
