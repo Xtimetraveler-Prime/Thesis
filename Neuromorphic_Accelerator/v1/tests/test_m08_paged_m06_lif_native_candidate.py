@@ -81,7 +81,7 @@ class M084NativeFirstImageTests(unittest.TestCase):
     def test_vivado_decimal_literal_ternary_lexer_boundary(self):
         """Vivado parses 3'd5? as an invalid decimal token, not a ternary."""
         code=ENGINE.read_text()
-        bad_literal=r"\\b\\d+'[sS]?[dD][0-9_]+\\?"
+        bad_literal=r"\b\d+'[sS]?[dD][0-9_]+\?"
         # Mutation control: the actual first owner-native synthesis error.
         self.assertIsNotNone(re.search(bad_literal,"(expected_page==3'd5?32'd2:32'd6)"))
         self.assertIsNone(re.search(bad_literal,code),
@@ -94,7 +94,7 @@ class M084NativeFirstImageTests(unittest.TestCase):
         p=subprocess.run(
             ["iverilog","-g2001","-tnull","-s","m08_paged_m06_lif_engine",str(ENGINE)],
             capture_output=True,text=True,timeout=30)
-        self.assertEqual(p.returncode,0,p.stdout+"\\n"+p.stderr)
+        self.assertEqual(p.returncode,0,p.stdout+"\n"+p.stderr)
         self.assertEqual(p.stderr.strip(),"", "Verilog-2001 parse warnings require review")
 
     def test_first_new_owner_image_cannot_be_source_approved(self):
