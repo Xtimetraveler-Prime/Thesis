@@ -24,6 +24,7 @@ module m08_m085_axi_neural_shell #(
     input wire owner_lease_active,
     input wire [63:0] runtime_window_begin,
     input wire [63:0] runtime_window_end,
+    input wire session_poison,
     input wire request,
     input wire request_save, // 0=load from DDR; 1=save current DIRTY bank to DDR
     input wire [63:0] request_addr,
@@ -101,6 +102,7 @@ module m08_m085_axi_neural_shell #(
         .owner_lease_active(owner_lease_active),
         .runtime_window_begin(runtime_window_begin),
         .runtime_window_end(runtime_window_end),
+        .session_poison(session_poison),
         .request(request),
         .request_save(request_save),
         .request_addr(request_addr),
