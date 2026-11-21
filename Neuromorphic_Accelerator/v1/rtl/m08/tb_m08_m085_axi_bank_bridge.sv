@@ -344,6 +344,26 @@ module tb_m08_m085_axi_bank_bridge;
             14:begin start_req(0,page_id);expect_fault();end
             15:begin allow_aw=0;start_req(0,page_id);await_success();
                      compute_mutate();start_req(1,page_id);expect_fault();end
+            16:begin start_req(0,page_id);await_success();compute_mutate();
+                     @(negedge clk);
+                     request_page=page_id;request_tick=1;
+                     request_addr=64'h1000+page_id*256;
+                     request_save=1;request=1;
+                     @(posedge clk);#1;
+                     @(negedge clk);request=0;
+                     expect_fault();end
+            17:begin
+                     @(negedge clk);
+                     request_page=page_id;request_tick=0;
+                     request_addr=64'h1000+other_page*256;
+                     request_save=0;request=1;
+                     @(posedge clk);#1;
+                     @(negedge clk);request=0;
+                     expect_fault();end
+            18:begin synthetic_ddr[page_id][62*32 +:32]=32'd17;
+                     start_req(0,page_id);expect_fault();end
+            19:begin synthetic_ddr[page_id][63*32 +:32]=32'd1;
+                     start_req(0,page_id);expect_fault();end
             default:$fatal(1,"unknown test case");
         endcase
         $finish;
