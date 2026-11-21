@@ -146,6 +146,22 @@ def audit(tcl: str, rtl: str, runner: str) -> dict:
         raise UnsafeTopology("expected exactly 56 distinct annotated AXI signal ports")
     ctrl=[name for prefix,name in attrs if prefix=="S_AXI"]
     data=[name for prefix,name in attrs if prefix=="M_AXI"]
+    exact_lite={
+        "AWADDR","AWPROT","AWVALID","AWREADY","WDATA","WSTRB",
+        "WVALID","WREADY","BRESP","BVALID","BREADY","ARADDR",
+        "ARPROT","ARVALID","ARREADY","RDATA","RRESP","RVALID","RREADY",
+    }
+    exact_axi4={
+        "AWID","AWADDR","AWLEN","AWSIZE","AWBURST","AWLOCK",
+        "AWCACHE","AWPROT","AWQOS","AWVALID","AWREADY",
+        "WDATA","WSTRB","WLAST","WVALID","WREADY",
+        "BID","BRESP","BVALID","BREADY",
+        "ARID","ARADDR","ARLEN","ARSIZE","ARBURST","ARLOCK",
+        "ARCACHE","ARPROT","ARQOS","ARVALID","ARREADY",
+        "RID","RDATA","RRESP","RLAST","RVALID","RREADY",
+    }
+    if set(ctrl)!=exact_lite or set(data)!=exact_axi4:
+        raise UnsafeTopology("missing/renamed AXI channel signal despite count preserving mutation")
     if len(ctrl)!=19 or len(data)!=37:
         raise UnsafeTopology("incomplete 19-channel AXI-Lite or 37-signal AXI4 pin mapping")
     return {
