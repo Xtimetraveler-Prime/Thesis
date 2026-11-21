@@ -1,0 +1,39 @@
+# M08 — consolidated remaining physical execution plan (supersedes future D3.D.3 micro-gates)
+
+**Authoritative remaining work as of 2026-11-20.** This replaces the prospective D3.D.3A/.B/.C/.D sub-milestone ladder with **three acceptance-driven M08 release gates**. Earlier D3.D.2A–E and D3.D.3A source artifacts retain their existing names as immutable experiment/history identifiers; they are not new milestone obligations. No new branch/PR per 256B read, RTL test, warning inspection or physical attempt: these are *tasks within the same gate*. M08 is **OPEN**; M09 is **not started**. Continue on [draft PR #94](https://github.com/Xtimetraveler-Prime/Thesis/pull/94), stacked on physically accepted but unmerged D3.D.2E [draft PR #93](https://github.com/Xtimetraveler-Prime/Thesis/pull/93). Do not merge without explicit owner release.
+
+## Assessment: why a simpler structure is warranted
+
+The D3.D.2A–E decomposition was justified by first-on-board risk: single-neuron signed16, multi-neuron recurrent routing, 32×4 M06 arithmetic, 17 *raw* event accumulation and finally a bounded FIFO with independent tick service. Each stage changed a distinct source/bitstream/hardware failure boundary and required first-original DRC/source/hardware acceptance. **This progression has now achieved 512/512 physical M06 numerical parity, a real 17-event FIFO and independent six-hash physical acceptance**. Repeating lettered subdivisions for page readback, decoy, owner preflight and a single word handshake would manufacture milestones rather than advance the research question.
+
+The primary remaining research problem is not a new standalone identity register or another JTAG smoke. It is **more logical signed16 neural state than resident physical FPGA memory**, with authentic host/compute leases, safe page replacement, physical correctness under replacement and, eventually, true PS memory costs and matched performance controls.
+
+## Gate 1 — M08.4: physically paged signed16 neural conformance
+
+**Accept only after ONE newly reviewed owner-original physical experiment, not an assortment of synthetic PASS labels.** Build and test a genuinely compute-bearing M08 signed16 host-paged datapath, tied to the accepted M06/M02/M03 independent oracle and a workload that **exceeds resident state capacity**. A bounded first source-only AXI-Lite 256B memory probe is valuable for proving real RTL arbitration but is *not* neural inference, does *not* implement the proposed 4 KiB M06 reference image, and does *not* close M08.4.
+
+Required before acceptance:
+- Define a **compute-facing state ABI separate from expected oracle output traces**. Preserve original M06 state bits, saturation/truncate-to-zero arithmetic, recurrent weights and tick barriers. No writing expected membrane/spike values into the engine as inputs.
+- Real synthesizeable host bank, PS-style read/write and independent compute owner (not just a Python emulation), explicit load → full observed readback → dispatch → compute → dirty readback → save → page eviction/replace; test positive and fail-closed scenarios with actual Icarus and independent M02/M03 oracle.
+- Logical IDs **N>K**, actual physical page overwrite after a decoy and true compute dispatch on replaced content, complete 32-neuron×4-tick/five-edge/17-event original neural numerical conformance to the extent the page architecture can express. Record the limitations of any smaller preliminary trial; do not call a checksum probe neural correctness.
+- A **new genuine Vivado 2025.2 K26 placed/routed image**, exact new-image warning/pin/timing/source/bit SHA review and clean owner ledger. Previously accepted M32Q image identity is *not inherited*. Require active independent cooling, UART, exclusive JTAG, stock recovery and operator's one-shot authorization before programming. Preserve the first failed/successful original runs in distinct immutable evidence directories, with an independent physical result auditor.
+
+**Current Gate-1 state:** SOURCE DEVELOPMENT. The existing accepted D3.D.2E physical run is the on-chip event/neural baseline, **not paged neural proof**.
+
+## Gate 2 — M08.5: genuine memory placement and matched controls
+
+Implement the feasible **same-precision**, same-geometry, same-work/synapses, same-event-order comparators, with an explicitly matched time boundary: on-chip timestep, on-chip event and **genuine** memory-backed timestep/event configurations where available. Use accepted Loihi P08 host/compute page-ownership precedent without borrowing signed24 RTL arithmetic or treating its measurements as M08's.
+
+**Critical safety precondition for real DDR/DMA:** an actual connected and routed PS/PL access path, *known bound kernel device/driver or explicitly verified safe PS-paged alternative*, address width/DMA mask, IOMMU/cache coherency, kernel-owned buffer allocation and lifetime, and quiesce/reset containment. A devicetree name, `/dev/mem`, `0xA0000000` as guessed CPU→PL address or a simulated 64 KiB array are **not DDR ownership**. M08.3 DMA-readiness owner inventory can help with this gate, but is an input/check, not a separate hardware achievement or permission to write DDR.
+
+A benchmark with only on-chip and JTAG-host-staged page access must be labeled accordingly and cannot close the original **physical DDR** hypothesis. If safe DDR resources remain unavailable, preserve an explicit blocked/negative result for owner decisions rather than inventing numbers.
+
+## Gate 3 — M08.6–M08.7 combined: repeatable physical measurement and owner release
+
+One shared measurement/acceptance gate, not additional lettered stages. Independently verify numerical parity for every plot point; collect immutable raw device/host receipts, original SHA256 manifests, true placed/routed LUT/FF/BRAM/URAM/DSP, clock frequency/negative timing, warm/cold and end-to-end host-vs-PL control latency, true page bytes/transactions, queue stalls, repeats and uncertainty. Measure energy **only** if the meter and boundary exist. Plot measured FPGA results separately from PC/HLS predictions and prior Loihi-v2 work. Owner explicitly accepts or rejects each limitation. A scientifically valid negative result is still useful. Hand off to **M09** only when the quantitative claims are bounded and the necessary raw hardware comparators exist, or the user approves an explicitly narrowed study.
+
+## Engineering workflow within each consolidated gate
+
+Use existing branch/PR for a gate; no PR for every task. Work in order: contract/ABI → first-party real RTL and negative tests → source CI/local verification → **new** offline native project → immutable DRC and timing review → exact original image gate → *owner-preflighted one-shot* physical test → independent SHA-pinned original audit → status documentation. Do not merge or rerun an accepted physical image automatically. Original physical D3.D.2E evidence stays at `~/Thesis_Evidence/M08/m08_d3d2e_queue_HW_4HQkm7rN`; its exact original bit SHA is `2c443c3d80e86e5e9488b457110a45b0db96881016e9f87a5c801a72ec7527dc`.
+
+The interim current branch's `m08_d3d3a_page_stage.py` is explicitly a **software-only proposed 4KiB reference packing**; `m08_page_compute_probe_shell.v` + `m08_page_compute_probe.v` is a **real 256B first-party RTL page port integration** (non-neural), both within **M08.4**. Neither is a separate release gate. Next code must converge them around a validated **compute-facing signed16 page ABI** and a genuine neural engine before owner physical M08.4 acceptance.
