@@ -187,7 +187,7 @@ module tb_m08_paged_m06_lif;
   endtask
 
   task automatic execute_one_neural_page(input integer tick,input integer page);
-    integer j,local,n,field,source_slot,cycles,count;
+    integer j,local_idx,n,field,source_slot,cycles,count;
     reg [31:0] want,readback_mask;
   begin
     count=(page==5)?2:6;
@@ -204,10 +204,10 @@ module tb_m08_paged_m06_lif;
       axi_read(12'h100+j*4,backing[page*64+j],2'b00);
     // Check the 128 external current inputs independently here, not
     // only via the page source-generator's Python test.
-    for(local=0;local<count;local=local+1) begin
-      n=page*6+local;
+    for(local_idx=0;local_idx<count;local_idx=local_idx+1) begin
+      n=page*6+local_idx;
       source_slot=tick*128+n*4;
-      if(backing[page*64+local*10+4+tick]!==golden[source_slot])
+      if(backing[page*64+local_idx*10+4+tick]!==golden[source_slot])
         $fatal(1,"M08_PAGED_M06_RAW_EVENT_BUCKET_ORACLE_INPUT_MISMATCH tick=%0d neuron=%0d",
                  tick,n);
       verified_input_currents=verified_input_currents+1;
@@ -226,9 +226,9 @@ module tb_m08_paged_m06_lif;
     for(j=0;j<64;j=j+1) begin
       want=backing[page*64+j];
       if(j<count*10) begin
-        local=j/10;
+        local_idx=j/10;
         field=j%10;
-        n=page*6+local;
+        n=page*6+local_idx;
         source_slot=tick*128+n*4;
         if(field==0) begin
           want=golden[source_slot+1]; // actual signed16 membrane
