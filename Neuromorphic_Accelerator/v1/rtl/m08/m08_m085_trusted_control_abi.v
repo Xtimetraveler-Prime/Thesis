@@ -51,8 +51,11 @@ module m08_m085_trusted_control_abi #(
     reg [3:0] written_mask;
     reg [31:0] drain_cycles;
     reg local_fault;
+    // Exactly one CSR write per asserted VALID interval; ignore held VALID
+    // after the accepting clock, even if the phase has now changed.
+    reg write_armed;
 
-    wire csr_wr=csr_valid && csr_write;
+    wire csr_wr=csr_valid && csr_write && write_armed;
     wire field_write=(csr_addr==8'h10 || csr_addr==8'h14 ||
                       csr_addr==8'h18 || csr_addr==8'h1c);
     wire full_trusted=csr_trusted && driver_bound_verified &&
@@ -83,7 +86,7 @@ module m08_m085_trusted_control_abi #(
     assign admitted_begin=admit_work ? fence_begin : 64'd0;
     assign admitted_end=admit_work ? fence_end : 64'd0;
     assign drain_request=phase==DRAIN_ACK_LOW || phase==DRAIN_ACK_HIGH;
-    assign csr_ready=csr_valid;
+    assign csr_ready=csr_valid && (!csr_write || write_armed);
     assign csr_error=bad_write || (csr_valid && !csr_write &&
         !(csr_addr==8'h00 || csr_addr==8'h04 || csr_addr==8'h08 ||
           csr_addr==8'h0c || csr_addr==8'h10 || csr_addr==8'h14 ||
@@ -111,7 +114,7 @@ module m08_m085_trusted_control_abi #(
         case(csr_addr)
             8'h00:csr_rdata=CAP_MAGIC;
             8'h04:csr_rdata=ABI_VERSION;
-            8'h08:csr_rdata={23'd0,lease_poisoned,lease_sealed,
+            8'h08:csr_rdata={22'd0,lease_poisoned,lease_sealed,
                               lease_granted,stop_new_requests,3'd0,phase};
             8'h0c:csr_rdata={28'd0,bank_clean_idle,transport_idle,
                               interconnect_drain_ack,drain_request};
@@ -127,9 +130,13 @@ module m08_m085_trusted_control_abi #(
             phase<=CONFIG;
             base_q<=0;bytes_q<=0;generation_q<=0;
             written_mask<=0;drain_cycles<=0;local_fault<=0;
-        end else if(bad_write || live_owner_loss || fence_poisoned || fence_error)begin
-            phase<=FAULT;local_fault<=1;
+            write_armed<=1;
         end else begin
+            if(!csr_valid)write_armed<=1;
+            else if(csr_wr)write_armed<=0;
+            if(bad_write || live_owner_loss || fence_poisoned || fence_error)begin
+                phase<=FAULT;local_fault<=1;
+            end else begin
             case(phase)
                 CONFIG:begin
                     if(csr_wr && field_write)begin
@@ -169,6 +176,7 @@ module m08_m085_trusted_control_abi #(
                 SEALED:phase<=SEALED;
                 default:begin phase<=FAULT;local_fault<=1;end
             endcase
+            end
         end
     end
 endmodule
