@@ -79,10 +79,10 @@ module tb_m08_m085_axi_neural_closed_loop;
     wire [31:0] neural_completed_neurons,neural_completed_pages,neural_synaptic_events;
     reg corrupt_verify=0;
     localparam [31:0] HEADER_MAGIC=32'h4D364E46;
-    m08_m085_axi_bank_bridge #(
+    m08_m085_axi_neural_shell #(
         .WINDOW_BEGIN(64'h1000),.WINDOW_END(64'h1700),
         .GUARD_WAIT_CYCLES(4096),.AXI_STALL_CYCLES(48),
-        .HOST_WAIT_CYCLES(16),.ENABLE_EDGE_SLOT(1)
+        .HOST_WAIT_CYCLES(16)
     ) dut(
         .clk(clk),.resetn(resetn),.owner_lease_active(owner_lease_active),
         .request(request),.request_save(request_save),
@@ -95,11 +95,9 @@ module tb_m08_m085_axi_neural_closed_loop;
         .axi_bytes_completed_in_simulation(axi_bytes_completed_in_simulation),
         .dispatch_req(dispatch_req),.dispatch_logical(dispatch_logical),
         .dispatch_accept(dispatch_accept),
-        .compute_req(compute_req),.compute_write(compute_write),
-        .compute_word(compute_word),.compute_wdata(compute_wdata),
-        .compute_wstrb(compute_wstrb),.compute_ack(compute_ack),
-        .compute_rdata(compute_rdata),.compute_done(compute_done),
-        .compute_fault(compute_fault),
+        .neural_completed_neurons(neural_completed_neurons),
+        .neural_completed_pages(neural_completed_pages),
+        .neural_synaptic_events(neural_synaptic_events),
         .m_axi_awid(m_axi_awid),
         .m_axi_awaddr(m_axi_awaddr),
         .m_axi_awlen(m_axi_awlen),
@@ -138,21 +136,6 @@ module tb_m08_m085_axi_neural_closed_loop;
         .m_axi_rvalid(m_axi_rvalid),
         .m_axi_rready(m_axi_rready)
     );
-    // Existing M08.4 signed16 recurrent LIF engine, UNMODIFIED.
-    // It is driven from the SAME physical 64-word bank that the AXI
-    // transport must load, verify, dispatch, save and read back.
-    m08_paged_m06_lif_engine neural_engine(
-        .clk(clk),.resetn(resetn),.dispatch_accept(dispatch_accept),
-        .compute_ack(compute_ack),.compute_rdata(compute_rdata),
-        .compute_req(compute_req),.compute_write(compute_write),
-        .compute_word(compute_word),.compute_wdata(compute_wdata),
-        .compute_wstrb(compute_wstrb),.compute_done(compute_done),
-        .compute_fault(compute_fault),
-        .completed_neurons(neural_completed_neurons),
-        .completed_pages(neural_completed_pages),
-        .computed_synaptic_events(neural_synaptic_events)
-    );
-
     // The 128-bit AXI memory model is clocked independently from bridge
     // internal host-port operations. READY and VALID may stall arbitrarily.
     always @(negedge clk) begin
@@ -295,7 +278,7 @@ module tb_m08_m085_axi_neural_closed_loop;
                 @(posedge clk);#1;
             end
             if(!bank_dirty || bank_phase!==3'd4 || poisoned ||
-               neural_engine.state===3'd5)
+               dut.neural_engine.state===3'd5)
                 $fatal(1,"real neural dispatch did not finish slot=%0d",slot);
         end
     endtask
@@ -304,11 +287,11 @@ module tb_m08_m085_axi_neural_closed_loop;
             start_page_request(0,6,0);
             wait_bank_transfer(0,6);
             start_neural_dispatch(6);
-            if(!neural_engine.edge_configured ||
-               neural_engine.edge_count!==4'd5 ||
+            if(!dut.neural_engine.edge_configured ||
+               dut.neural_engine.edge_count!==4'd5 ||
                neural_completed_pages!==0 ||
-               neural_engine.expected_page!==0 ||
-               neural_engine.expected_tick!==0)
+               dut.neural_engine.expected_page!==0 ||
+               dut.neural_engine.expected_tick!==0)
                 $fatal(1,"five real recurrent edges not configured");
             start_page_request(1,6,0);
             wait_bank_transfer(1,6);
@@ -405,8 +388,8 @@ module tb_m08_m085_axi_neural_closed_loop;
               setup_edges();
               for(t=0;t<4;t=t+1)begin
                   for(p=0;p<6;p=p+1)run_neural_page(t,p);
-                  if(neural_engine.expected_tick!==t+1 ||
-                     neural_engine.expected_page!==0)
+                  if(dut.neural_engine.expected_tick!==t+1 ||
+                     dut.neural_engine.expected_page!==0)
                       $fatal(1,"mixed-epoch neural step tick=%0d",t);
                   $display("M08_5_AXIDDR_TICK_BARRIER_PASS tick=%0d",t);
               end
@@ -417,7 +400,7 @@ module tb_m08_m085_axi_neural_closed_loop;
                  neural_synaptic_events===0)
                   $fatal(1,"512 original numerical checks not reproduced");
               for(n=0;n<32;n=n+1)
-                  if(neural_engine.global_spikes[n]!==expected_masks[n])
+                  if(dut.neural_engine.global_spikes[n]!==expected_masks[n])
                       $fatal(1,"actual recursive spike history diverged neuron=%0d",n);
               // Each of 25 pages (1 M6EG + 24 M6NF) is read, written,
               // and read back: 25*3*256=19200 *simulated* AXI bytes.
@@ -443,7 +426,7 @@ module tb_m08_m085_axi_neural_closed_loop;
               if(!dispatch_accept)$fatal(1,"missing-edge dispatch rejected before engine");
               @(negedge clk);dispatch_req=0;
               expect_fault();
-              if(neural_engine.state!==3'd5)
+              if(dut.neural_engine.state!==3'd5)
                   $fatal(1,"missing edge setup did not fault LIF engine");
           end
           5:begin
