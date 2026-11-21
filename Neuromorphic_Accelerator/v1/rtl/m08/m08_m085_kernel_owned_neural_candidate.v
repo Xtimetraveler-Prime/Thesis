@@ -6,7 +6,7 @@
 // No Vivado PS, IRQ, DMA API, IOMMU, OS, PS HP0 or board is connected.
 // One active kernel-issued 7x256B lease -> real neural shell and 64-word bank.
 // DMA transfer address is derived ONLY from the FROZEN grant base + slot*256.
-// The window is never compiled to a guessed 0x40000000 fixed v3 location.
+// The window is never compiled to the Loihi v3 fixed backing region.
 module m08_m085_kernel_owned_neural_candidate #(
     parameter integer GUARD_WAIT_CYCLES=4096,
     parameter integer AXI_STALL_CYCLES=128,
