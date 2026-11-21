@@ -108,7 +108,9 @@ module m08_m085_axi128_page_candidate #(
         .clk(clk),.resetn(resetn),.req(forward_req),
         .req_write(forward_write),.req_addr(forward_addr),
         .req_write_page(staged_write_page),
-        .owner_lease_active(owner_lease_active),
+        // A guard-level poison must also quarantine any outstanding AXI
+        // burst before it can issue another beat or accept completion.
+        .owner_lease_active(owner_lease_active && !guard_poisoned),
         .compute_idle(compute_idle),.page_bank_idle(page_bank_idle),
         .done(engine_done),.read_complete(engine_read_complete),
         .error(engine_error),.busy(engine_busy),
