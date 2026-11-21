@@ -136,6 +136,20 @@ module m08_m085_axi_bank_bridge #(
        (axi_read_page[61*32 +:32]==page_q) &&
        (axi_read_page[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
        (axi_read_page[63*32 +:32]==tick_q);
+    wire [64:0] directory_address =
+        {1'b0,WINDOW_BEGIN} + ({33'd0,request_page} << 8);
+    // This candidate binds six 256-byte pages to one contiguous,
+    // independently OWNED future allocation. No arbitrary page/DDR alias.
+    wire address_binding_ok =
+        WINDOW_END>WINDOW_BEGIN &&
+        WINDOW_BEGIN[7:0]==8'd0 &&
+        (WINDOW_END-WINDOW_BEGIN)>=64'd1536 &&
+        !directory_address[64] &&
+        (request_addr==directory_address[63:0]);
+    wire save_header_ok=(page_snapshot[60*32 +:32]==32'h4D364E46) &&
+       (page_snapshot[61*32 +:32]==page_q) &&
+       (page_snapshot[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
+       (page_snapshot[63*32 +:32]==tick_q);
     assign busy=(state!=IDLE && state!=FAULT);
     assign poisoned=local_fault;
     assign bank_phase=phase;
@@ -249,7 +263,8 @@ module m08_m085_axi_bank_bridge #(
                     IDLE: if(request && armed) begin
                         armed<=0;
                         if(!owner_lease_active || request_page>=6 ||
-                           request_tick>=4 || !compute_idle ||
+                           request_tick>=4 || !address_binding_ok ||
+                           !compute_idle ||
                            bank_host_busy || axi_busy ||
                            (request_save && (!bank_page_dirty ||
                               real_bank_logical!=request_page)) ||
@@ -308,7 +323,9 @@ module m08_m085_axi_bank_bridge #(
                         state<=FAULT;error<=1;
                     end else wait_count<=wait_count+1;
                     SAVE_READ_DROP:if(word_index==63) begin
-                        state<=SAVE_AXI_START;
+                        if(!save_header_ok)begin
+                            state<=FAULT;error<=1;
+                        end else state<=SAVE_AXI_START;
                     end else begin word_index<=word_index+1;state<=SAVE_READ_ISSUE;end
                     SAVE_AXI_START:state<=SAVE_AXI_WAIT;
                     SAVE_AXI_WAIT:if(axi_ack) begin
