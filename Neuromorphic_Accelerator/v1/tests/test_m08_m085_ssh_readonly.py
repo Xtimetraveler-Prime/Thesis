@@ -49,7 +49,7 @@ class M085SSHOnlyInventory(unittest.TestCase):
             self.assertEqual(cp.returncode, 0, cp.stderr)
         s = RUN.read_text()
         for required in (
-            "StrictHostKeyChecking=yes", "BatchMode=yes",
+            "StrictHostKeyChecking=yes", "BatchMode=no", "NumberOfPasswordPrompts=1",
             "ConnectTimeout=12", "'bash -s'", "sha256sum",
             "mktemp -d", "timeout --signal=TERM",
             "M08_5_SSH_READONLY_CAPTURE_PASS_NOT_DMA_READY",
