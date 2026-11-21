@@ -118,7 +118,9 @@ module m08_m085_axil_control_candidate #(
     wire read_allowed=csr_trusted || s_axi_araddr==12'h000 ||
                       s_axi_araddr==12'h004;
     m08_m085_trusted_control_abi #(
-        .DRAIN_TIMEOUT_CYCLES(DRAIN_TIMEOUT_CYCLES)
+        .DRAIN_TIMEOUT_CYCLES(DRAIN_TIMEOUT_CYCLES),
+        // Distinct v1.1 managed-work capability; legacy stays v1.0.
+        .ABI_VERSION(ENABLE_WORK_COMMANDS ? 32'h00010001 : 32'h00010000)
     ) control (
         .clk(clk),.resetn(resetn),
         .csr_valid(csr_valid),.csr_write(csr_write),
