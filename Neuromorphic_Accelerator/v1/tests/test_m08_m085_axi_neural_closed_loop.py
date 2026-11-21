@@ -26,6 +26,7 @@ SOURCES=tuple(RTL/p for p in (
     "m08_m085_axi128_page_engine.v",
     "m08_m085_axi128_page_candidate.v",
     "m08_m085_axi_bank_bridge.v",
+    "m08_m085_axi_neural_shell.v",
     "tb_m08_m085_axi_neural_closed_loop.sv",
 ))
 MARK="M08_5_REAL_LIF_AXI_BANK_M02_M03_512_PARITY_24_DISPATCHES_5_EDGES_PASS"
@@ -52,7 +53,10 @@ class M085RecurrentAXINeuralIntegration(unittest.TestCase):
         self.assertIn("computed_synaptic_events",neural)
         self.assertIn("global_spikes",neural)
         tb=SOURCES[-1].read_text()
-        self.assertIn("m08_paged_m06_lif_engine neural_engine",tb)
+        shell=(RTL/"m08_m085_axi_neural_shell.v").read_text()
+        self.assertIn("m08_paged_m06_lif_engine neural_engine",shell)
+        self.assertIn(".ENABLE_EDGE_SLOT(1)",shell)
+        self.assertIn("m08_m085_axi_neural_shell",tb)
         self.assertIn("M08_5_REAL_LIF_AXI_BANK_M02_M03_512_PARITY_24_DISPATCHES_5_EDGES_PASS",tb)
         for forbidden in ("program_hw_devices","open_hw_manager","/dev/mem",
                           "dma_alloc_coherent","0x40000000"):
