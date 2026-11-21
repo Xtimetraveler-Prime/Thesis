@@ -123,7 +123,7 @@ class TwinPSPLReuseTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "real AXI4 handshake test requires genuine iverilog/vvp")
-    def test_real_axi128_page_read_write_and_twenty_three_faults(self):
+    def test_real_axi128_page_read_write_and_twenty_five_faults(self):
         with tempfile.TemporaryDirectory() as td:
             exe = Path(td)/"axi_page.vvp"
             built = subprocess.run(
@@ -133,7 +133,7 @@ class TwinPSPLReuseTests(unittest.TestCase):
                 capture_output=True, text=True
             )
             self.assertEqual(built.returncode, 0, built.stdout+built.stderr)
-            for case in range(24):
+            for case in range(26):
                 with self.subTest(case=case):
                     r = subprocess.run(
                         ["vvp", str(exe), f"+CASE={case}"],
