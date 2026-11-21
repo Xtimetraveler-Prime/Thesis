@@ -168,7 +168,7 @@ module tb_m08_m085_axi_neural_closed_loop;
         m_axi_rlast=(case_id==11 && r_index==0) ||
                     (r_index==15 && case_id!=14);
         m_axi_rdata=synthetic_ddr[ar_slot][r_index*128 +:128];
-        if(case_id==3 && ar_seen>=2 && r_index==4)
+        if(case_id==7 && ar_seen>=2 && r_index==4)
             m_axi_rdata[0]=~m_axi_rdata[0];
     end
     always @(posedge clk) begin
@@ -438,8 +438,13 @@ module tb_m08_m085_axi_neural_closed_loop;
           end
           4:begin // Missing edge config must poison unchanged LIF engine.
               start_page_request(0,0,0);wait_bank_transfer(0,0);
-              start_neural_dispatch(0); // must fault, not become DIRTY
-              $fatal(1,"missing edge config improperly allowed");
+              @(negedge clk);dispatch_logical=0;dispatch_req=1;
+              @(posedge clk);#1;
+              if(!dispatch_accept)$fatal(1,"missing-edge dispatch rejected before engine");
+              @(negedge clk);dispatch_req=0;
+              expect_fault();
+              if(neural_engine.state!==3'd5)
+                  $fatal(1,"missing edge setup did not fault LIF engine");
           end
           5:begin
               setup_edges();
