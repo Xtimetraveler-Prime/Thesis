@@ -26,6 +26,7 @@ module m08_m085_axi_bank_bridge #(
     input wire owner_lease_active,
     input wire [63:0] runtime_window_begin,
     input wire [63:0] runtime_window_end,
+    input wire session_poison, // optional trusted lease-loss fault when runtime mode
     input wire request,
     input wire request_save, // 0=load from DDR; 1=save current DIRTY bank to DDR
     input wire [63:0] request_addr,
@@ -131,7 +132,8 @@ module m08_m085_axi_bank_bridge #(
     wire axi_req=(state==LOAD_AXI_START || state==SAVE_AXI_START ||
                   state==VERIFY_AXI_START);
     wire axi_write=(state==SAVE_AXI_START);
-    wire local_fault=(state==FAULT) || axi_poisoned || bank_poisoned;
+    wire local_fault=(state==FAULT) || axi_poisoned || bank_poisoned ||
+        (USE_RUNTIME_WINDOW != 0 && session_poison);
     wire compute_idle=!bank_compute_busy && !dispatch_req && !compute_req &&
                       !compute_done;
     wire bank_idle=!bank_host_busy && !host_req && !host_begin &&
@@ -200,7 +202,8 @@ module m08_m085_axi_bank_bridge #(
         .compute_word(compute_word),.compute_wdata(compute_wdata),
         .compute_wstrb(compute_wstrb),.compute_ack(compute_ack),
         .compute_rdata(compute_rdata),.compute_done(compute_done),
-        .compute_fault(compute_fault),.fault_in(state==FAULT || axi_poisoned),
+        .compute_fault(compute_fault),.fault_in(state==FAULT || axi_poisoned ||
+                                             (USE_RUNTIME_WINDOW!=0 && session_poison)),
         .phase(phase),.poisoned(bank_poisoned),
         .host_busy(bank_host_busy),.compute_busy(bank_compute_busy),
         .page_valid(bank_page_valid),.page_dirty(bank_page_dirty),
@@ -281,6 +284,7 @@ module m08_m085_axi_bank_bridge #(
                 state<=FAULT;
             end else if(bank_poisoned || bank_host_error ||
                         axi_poisoned || axi_error ||
+                        (USE_RUNTIME_WINDOW!=0 && session_poison) ||
                         ((state!=IDLE) && !owner_lease_active) ||
                         (state!=IDLE && request && armed) ||
                         (state==IDLE && (bank_compute_busy || dispatch_req) &&
