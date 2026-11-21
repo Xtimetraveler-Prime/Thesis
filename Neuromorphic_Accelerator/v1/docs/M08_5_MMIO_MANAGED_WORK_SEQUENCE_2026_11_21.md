@@ -4,7 +4,7 @@
 
 ## Design delta and why it matters
 
-Until now, the source `m08_m085_axil_neural_candidate.v` could grant the address window via a five-channel AXI4-Lite register interface but required separate **testbench-supplied** pins for page requests and compute dispatch. A Linux platform driver cannot use that as a complete host interface. This increment adds a **versioned, polled work-command ABI** to the *same* 32-bit AXI-Lite register aperture, opt-in only, while retaining all preexisting unmodified signed16 recurrent neural components and regression tests.
+Until now, the source `m08_m085_axil_neural_candidate.v` could grant the address window via a five-channel AXI4-Lite register interface but required separate **testbench-supplied** pins for page requests and compute dispatch. A Linux platform driver cannot use that as a complete host interface. This increment adds a **versioned (ABI v1.1), polled work-command ABI** to the *same* 32-bit AXI-Lite register aperture, opt-in only, while retaining all preexisting unmodified signed16 recurrent neural components and regression tests.
 
 - `rtl/m08/m08_m085_work_command_sequencer.v`: synthesizable source-level finite-state machine with one-shot LOAD, DISPATCH and dirty SAVE requests, bank-state safety checks, timeout/sticky fault and monotonic completion counter. It does not expose a DDR address to the caller; the master address remains `frozen DMA base + 256*slot` from the seven-slot lease. A failed, untrusted, busy or malformed work write immediately embargoes new work; a fault cannot be cleared by a second command. Future controlled full reset is **not** a physical AXI drain.
 - `rtl/m08/m08_m085_axil_control_candidate.v` now has `ENABLE_WORK_COMMANDS=0` by default (old standalone decoder tests and old `m08_m085_axil_neural_candidate.v` retain their original behavior), with opt-in work offsets decoded from exact 12-bit byte addresses, no alias of `0x100+...` to low offsets. Actual AW/W independent capture, WSTRB, B/R backpressure, and the core CAP/descriptor/GRANT/STOP ABI are unchanged. The bridge blocks new work on a partial AW or W write, a still-pending BRESP, and any sticky work fault.
@@ -18,7 +18,7 @@ All registers below are 32-bit little-endian, aligned, with full write strobes o
 
 | Byte offset | Operation | Meaning |
 | --- | --- | --- |
-| `0x00`, `0x04` | RO | Existing CAP `M085` and ABI version `0x00010000` |
+| `0x00`, `0x04` | RO | Existing CAP `M085`; **ABI v1.1 `0x00010001` only when `ENABLE_WORK_COMMANDS=1`**. Legacy control-only endpoint remains **ABI v1.0 `0x00010000`**. Driver must read/reject incompatible versions before sending work commands. |
 | `0x08`, `0x0c` | RO | Existing lease STATUS and synthetic external drain observations |
 | `0x10..0x1c` | RW only before GRANT | Existing DMA base low/high, allocation length and generation. Only a future bound kernel driver's `dma_addr_t` may populate these. |
 | `0x20` | WO | Existing `1=GRANT`, `2=STOP_AND_DRAIN` |
