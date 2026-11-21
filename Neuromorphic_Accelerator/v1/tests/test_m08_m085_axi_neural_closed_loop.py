@@ -122,7 +122,7 @@ class M085RecurrentAXINeuralIntegration(unittest.TestCase):
             root=Path(d)
             exe=self._build(root)
             plus=self._original_input_arguments(root)
-            for case in range(1,8):
+            for case in range(1,12):
                 with self.subTest(case=case):
                     run=subprocess.run(["vvp",str(exe),f"+CASE={case}",*plus],
                                        capture_output=True,text=True,timeout=120)
