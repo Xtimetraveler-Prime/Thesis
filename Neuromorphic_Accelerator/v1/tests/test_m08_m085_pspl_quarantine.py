@@ -138,6 +138,106 @@ puts "M085_TCL_SYNTAX_COMPLETE_NOT_NATIVE_VIVADO"
         self.assertEqual(p.returncode,0,p.stderr)
         self.assertIn("M085_TCL_SYNTAX_COMPLETE",p.stdout)
 
+    @unittest.skipUnless(shutil.which("tclsh"),
+                         "real Tcl interpreter required for pre-Vivado preflight")
+    def test_real_tcl_preflight_accepts_exact_shell_created_files(self):
+        # Reproduces the owner Vivado 2025.2 first failure: the runner
+        # creates stdout/stderr BEFORE Tcl's directory freshness check.
+        # A fake create_project deliberately stops before ANY vendor work.
+        for existing in (
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt","05_stderr.txt"),
+            ("04_stdout.txt","05_stderr.txt"),
+            (),
+        ):
+            with self.subTest(existing=existing):
+                output=self._run_real_tcl_preflight(existing)
+                self.assertEqual(output.returncode,0,
+                                 output.stdout+output.stderr)
+                self.assertIn("M085_PREFLIGHT_ACCEPTED_STOP_BEFORE_PROJECT",
+                              output.stdout)
+                self.assertNotIn("Evidence directory not fresh",output.stdout)
+
+    @unittest.skipUnless(shutil.which("tclsh"),
+                         "real Tcl interpreter required for pre-Vivado preflight")
+    def test_real_tcl_preflight_rejects_previous_or_mutated_evidence(self):
+        for existing in (
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt",
+             "05_stderr.txt","02_vivado_exit_status.txt"),
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt",
+             "05_stderr.txt","99_evidence_sha256.txt"),
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt",
+             "05_stderr.txt","project/"),
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt",
+             "05_stderr.txt",".old_evidence"),
+            ("00_vivado.log","01_vivado.jou","04_stdout.txt",
+             "05_stderr.txt","SYMLINK_04"),
+        ):
+            with self.subTest(existing=existing):
+                output=self._run_real_tcl_preflight(existing)
+                self.assertEqual(output.returncode,2,
+                                 output.stdout+output.stderr)
+                self.assertIn("M085_PREFLIGHT_REJECTED:",output.stdout)
+                self.assertNotIn("M085_PREFLIGHT_ACCEPTED",output.stdout)
+
+    def test_audit_requires_exact_four_item_shell_tcl_contract(self):
+        allowed="set allowed_precreated {00_vivado.log 01_vivado.jou 04_stdout.txt 05_stderr.txt}"
+        self.assertIn(allowed,self.tcl)
+        for altered in (
+            "set allowed_precreated {00_vivado.log 01_vivado.jou}",
+            "set allowed_precreated {00_vivado.log 01_vivado.jou 04_stdout.txt}",
+            "set allowed_precreated {00_vivado.log 01_vivado.jou 04_stdout.txt 05_stderr.txt 02_vivado_exit_status.txt}",
+            "set allowed_precreated {00_vivado.log 01_vivado.jou 04_stdout.txt 05_stderr.txt 05_stderr.txt}",
+        ):
+            with self.subTest(altered=altered),self.assertRaises(check.UnsafeTopology):
+                check.audit(self.tcl.replace(allowed,altered),self.rtl,self.runner)
+        with self.assertRaises(check.UnsafeTopology):
+            check.audit(self.tcl,self.rtl,
+                        self.runner.replace('> "$D/04_stdout.txt" 2> "$D/05_stderr.txt"',
+                                            '> "$D/04_stdout.txt" 2> "$D/06_bad.txt"'))
+
+    def _run_real_tcl_preflight(self,existing):
+        with tempfile.TemporaryDirectory() as temp:
+            home=Path(temp)
+            base=home/"Thesis_Evidence"/"M08"
+            base.mkdir(parents=True)
+            evidence=base/"m08_m085_pspl_bd_test_run_12345678"
+            evidence.mkdir()
+            for leaf in existing:
+                if leaf=="SYMLINK_04":
+                    (evidence/"04_stdout.txt").unlink()
+                    (evidence/"04_stdout.txt").symlink_to(
+                        home/"nonexistent_untrusted_source.txt")
+                elif leaf.endswith("/"):
+                    (evidence/leaf).mkdir()
+                else:
+                    (evidence/leaf).write_text("",encoding="utf-8")
+            script="""proc version {arg} {
+    if {$arg ne "-short"} {error "wrong version command"}
+    return 2025.2
+}
+proc create_project {args} {
+    error "M085_STOP_BEFORE_REAL_VIVADO_CREATE_PROJECT"
+}
+set argv [list $::env(M085_EVIDENCE)]
+set rc [catch {source $::env(M085_TCL_SOURCE)} result]
+if {$rc == 1 && $result eq "M085_STOP_BEFORE_REAL_VIVADO_CREATE_PROJECT"} {
+    puts "M085_PREFLIGHT_ACCEPTED_STOP_BEFORE_PROJECT"
+    exit 0
+}
+if {$rc == 1 && [string match "*Evidence directory not fresh*" $result]} {
+    puts "M085_PREFLIGHT_REJECTED:$result"
+    exit 2
+}
+puts stderr "UNEXPECTED_PREPROJECT_PRECHECK_RESULT:$rc:$result"
+exit 3
+"""
+            env=os.environ.copy()
+            env["HOME"]=str(home)
+            env["M085_EVIDENCE"]=str(evidence)
+            env["M085_TCL_SOURCE"]=str(check.TCL)
+            return subprocess.run(["tclsh"],input=script,env=env,
+                                  capture_output=True,text=True,timeout=15)
+
     def _mock_offline_runner(self,version: str):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
