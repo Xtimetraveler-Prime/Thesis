@@ -93,22 +93,37 @@ def inspect(native_dir:Path,hw_dir:Path)->dict:
         require(checked[name]==expected,"original neural input or comparison-only oracle mismatch: "+name)
     log=checked["01_jtag_paged_m06.log"].decode("utf-8",errors="replace")
     lines=log.splitlines()
-    for marker in ("M08_4_ORIGINAL_BIT_SHA|"+EXPECTED_BIT_SHA,
-                   "M08_4_NEW_IMAGE_PROGRAM_ONCE_START",
-                   "M08_4_NEW_IMAGE_PROGRAM_ONCE_COMPLETE",
-                   "M08_4_PHYSICAL_EDGE_PAGE_CONFIGURED_5",
-                   "M08_4_PHYSICAL_128_HOST_CURRENTS_384_FABRIC_COMPUTED_24_PAGES_ONE_BANK_PASS"):
-        require(sum(marker in line for line in lines)==1,
-                "missing or duplicate original physical JTAG marker "+marker)
-    require(sum("PROGRAM_ONCE_START" in line for line in lines)==1,
-            "unexpected additional or missing physical programming")
+    # Vivado batch mode ECHOES executed Tcl as comment-prefixed source lines
+    # (e.g. '# puts "M08_4_NEW_IMAGE_PROGRAM_ONCE_START"') in the same
+    # original log as the actual stdout line. Substring counting therefore
+    # double-counts even an EXACTLY ONE-program successful original run.
+    # Count ONLY complete standalone event lines. No receipt rewrite, JTAG
+    # replay or original source mutation is appropriate for this audit bug.
+    ordered=[
+        "M08_4_ORIGINAL_BIT_SHA|"+EXPECTED_BIT_SHA,
+        "M08_4_SEPARATE_6_INPUT_PAGES_AND_512_ONLY_EXTERNAL_GOLDEN_PRECHECK_PASS",
+        "M08_4_NEW_IMAGE_PROGRAM_ONCE_START",
+        "M08_4_NEW_IMAGE_PROGRAM_ONCE_COMPLETE",
+        "M08_4_PHYSICAL_EDGE_PAGE_CONFIGURED_5",
+    ]
     for t in range(4):
-        require(sum(("M08_4_PHYSICAL_ORDERED_TICK_BARRIER|"+str(t)) in line
-                    for line in lines)==1,"missing/duplicate ordered tick barrier")
-        for p in range(6):
-            marker=f"M08_4_PHYSICAL_256B_LOAD_COMPUTE_FULL_DIRTY_SAVE|{t}|{p}"
-            require(sum(marker in line for line in lines)==1,
-                    "missing/duplicate physical page-save marker: "+marker)
+        ordered.extend(
+            f"M08_4_PHYSICAL_256B_LOAD_COMPUTE_FULL_DIRTY_SAVE|{t}|{p}"
+            for p in range(6)
+        )
+        ordered.append(f"M08_4_PHYSICAL_ORDERED_TICK_BARRIER|{t}")
+    ordered.append(
+        "M08_4_PHYSICAL_128_HOST_CURRENTS_384_FABRIC_COMPUTED_24_PAGES_ONE_BANK_PASS"
+    )
+    marker_positions=[]
+    for marker in ordered:
+        positions=[i for i,line in enumerate(lines) if line==marker]
+        require(len(positions)==1,
+                "missing or duplicate original standalone physical JTAG marker "+marker)
+        marker_positions.append(positions[0])
+    require(marker_positions==sorted(marker_positions) and
+            len(set(marker_positions))==len(marker_positions),
+            "first original JTAG markers out of physical execution order")
     body=checked["80_physical_paged_neural_parity.txt"].decode("ascii").splitlines()
     expected_head=(
         "result=ONE_NEW_ORIGINAL_SIGNED16_32X4_ONE_RESIDENT_SIX_PAGE_PHYSICAL_PARITY",
