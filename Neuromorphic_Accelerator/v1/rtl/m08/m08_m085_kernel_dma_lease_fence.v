@@ -35,7 +35,7 @@ module m08_m085_kernel_dma_lease_fence #(
     output reg [31:0] latched_generation
 );
     localparam [1:0] NONE=0, ACTIVE=1, SEALED=2, FAULT=3;
-    localparam [64:0] AXI49_EXCLUSIVE=65'h00020000000000000; // 2**49
+    localparam [64:0] AXI49_EXCLUSIVE=(65'd1 << 49);
     reg [1:0] state;
     reg [63:0] base_q;
     reg [31:0] bytes_q;
