@@ -21,6 +21,7 @@ from neuromorphic_accelerator_v1.m08_m085_pspl_lineage import (
     PRIOR, LineageError, audit_sources,
 )
 import m08_m085_twin_pspl_audit as source_audit
+import m08_paged_m06_lif_fixture as signed16_fixture
 
 RTL = ROOT / "rtl/m08/m08_m085_ddr_page_admission.v"
 TB = ROOT / "rtl/m08/tb_m08_m085_ddr_page_admission.sv"
@@ -143,6 +144,43 @@ class TwinPSPLReuseTests(unittest.TestCase):
                               if case == 0 else
                               f"M08_5_REAL_AXI128_256B_NEGATIVE_PASS case={case}")
                     self.assertIn(marker, r.stdout)
+                    self.assertNotIn("FATAL", r.stdout+r.stderr)
+
+    @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
+                         "original signed16 transfer conformance needs real Icarus")
+    def test_original_six_signed16_pages_byte_exact_axi_roundtrip(self):
+        # Exactly the ORIGINAL independent M02/M03 input pages, not the
+        # 512 output-oracle words. No synthetic neural results preloaded.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            exe = root/"axi_page.vvp"
+            built = subprocess.run(
+                ["iverilog", "-g2012", "-s", "tb_m08_m085_axi128_page_candidate",
+                 "-o", str(exe), str(RTL), str(AXI_ENGINE),
+                 str(AXI_COMPOSITION), str(AXI_TB)],
+                capture_output=True, text=True
+            )
+            self.assertEqual(built.returncode, 0, built.stdout+built.stderr)
+            for page in range(6):
+                with self.subTest(original_signed16_page=page):
+                    words = signed16_fixture.neural_words(page)
+                    self.assertEqual(len(words), 64)
+                    self.assertEqual(words[60], signed16_fixture.MAGIC_NEURAL)
+                    self.assertEqual(words[61], page)
+                    self.assertEqual(words[62], signed16_fixture.neurons_in_page(page))
+                    original = root/f"original_input_page_{page}.hex"
+                    signed16_fixture.write_hex(original, words)
+                    r = subprocess.run(
+                        ["vvp", str(exe), "+CASE=0",
+                         f"+ORIGINAL_PAGE_ID={page}",
+                         f"+ORIGINAL_PAGE_HEX={original}"],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+                    self.assertIn(
+                        f"M08_5_REAL_AXI128_256B_READ_WRITE_AND_512_BYTES_PASS page={page}",
+                        r.stdout
+                    )
                     self.assertNotIn("FATAL", r.stdout+r.stderr)
 
     def test_new_axi_module_defaults_are_not_a_real_ddr_release(self):
