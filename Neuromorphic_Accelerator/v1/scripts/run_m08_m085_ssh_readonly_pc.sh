@@ -31,7 +31,8 @@ printf 'source_commit=%s\ntarget=%s\nscope=SSH_READ_ONLY_NO_DMA_READY\n' \
     "$TARGET" > "$OUT/01_context.txt"
 set +e
 timeout --signal=TERM --kill-after=3s 75s ssh -T \
-    -o BatchMode=yes \
+    -o BatchMode=no \
+    -o NumberOfPasswordPrompts=1 \
     -o StrictHostKeyChecking=yes \
     -o ConnectTimeout=12 \
     -o ServerAliveInterval=5 \
