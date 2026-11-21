@@ -15,7 +15,8 @@
 // the externally reviewed interconnect manager proves all late responses gone.
 // Any malformed CSR write, owner loss, or drain timeout seals in FAULT.
 module m08_m085_trusted_control_abi #(
-    parameter integer DRAIN_TIMEOUT_CYCLES=128
+    parameter integer DRAIN_TIMEOUT_CYCLES=128,
+    parameter [31:0] ABI_VERSION=32'h00010000
 )(
     input wire clk, resetn,
     input wire csr_valid, csr_write,
@@ -44,7 +45,7 @@ module m08_m085_trusted_control_abi #(
     localparam [2:0] CONFIG=0, GRANT_PENDING=1, RUN=2,
                      DRAIN_ACK_LOW=3, DRAIN_ACK_HIGH=4,
                      RELEASE_PENDING=5, SEALED=6, FAULT=7;
-    localparam [31:0] CAP_MAGIC=32'h4d303835, ABI_VERSION=32'h00010000;
+    localparam [31:0] CAP_MAGIC=32'h4d303835;
     reg [2:0] phase;
     reg [63:0] base_q;
     reg [31:0] bytes_q, generation_q;
