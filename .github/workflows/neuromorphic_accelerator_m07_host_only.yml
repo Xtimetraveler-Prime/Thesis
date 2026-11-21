@@ -33,6 +33,14 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_m02*.py' -v
           python3 -m unittest discover -s tests -p 'test_m03*.py' -v
           python3 -m unittest discover -s tests -p 'test_m06*.py' -v
+      # D3.D.2E requires real clocked RTL rather than treating missing
+      # Icarus as a passed/skip test in the broad all-tests regression.
+      - name: Install real Icarus for new M08 FIFO and full v1 discovery
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          command -v iverilog
+          command -v vvp
       - name: Full v1 discovery regression (includes M05/M06 import-order safety)
         run: python3 -m unittest discover -s tests -v
       - name: M07.2 matched 2-locality x 2-policy x 4-control report (NO BOARD)
