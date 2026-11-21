@@ -1,82 +1,112 @@
-# NEXT INSTANCE HANDOFF — M08.4 physical signed16 paging (consolidated, 2026-11-20)
+# NEXT-CHAT HANDOFF — M08.5 matched real memory and execution experiments (2026-11-20)
 
-> **IMMEDIATE INSTRUCTION FOR THE NEXT CHATGPT INSTANCE: DO NOT CREATE FURTHER MILESTONE OR SUB-MILESTONE DIVISIONS UNLESS ABSOLUTELY NECESSARY TO DEBUG A DISTINCT FAILURE BOUNDARY.** The user explicitly reviewed and approved a smaller roadmap. **M08.4 is ONE accepted-hardware deliverable**, M08.5 is ONE matched-memory-comparisons deliverable, and M08.6–7 is ONE physical measurement/owner-release deliverable. Do **not** invent D3.D.3B/C/D, M08.4.1/4.2/4.3, new branches per failing Icarus test, or a status-gate PR per Vivado warning. Tasks, regression tests, checkpoints and isolated evidence folders may exist *inside* the parent M08.4. A temporary named debugging experiment is allowed **only when essential to isolate a genuinely different hardware/software failure**, explicitly record the reason, and do **not** promote it to a separately accepted milestone.
+> **FIRST INSTRUCTION TO THE NEXT CHATGPT INSTANCE:** M08.4 **IS PHYSICALLY ACCEPTED AND CLOSED**. The user supplied the **successful original, independent read-only hardware evidence audit** and explicitly asked that the result be recorded and the next milestone activated. **M08.5 IS NOW ACTIVE.** Do **not** ask the owner to reprogram, re-run or re-audit the original M08.4 image merely to resume work. Read this document and the current `roadmap.md`, then proceed with new **M08.5 source-first development** and give local terminal verification commands after every source change.
 
-**Read first:** [the concise authoritative roadmap](../roadmap.md), [the binding remaining-physical execution gates](M08_REMAINING_PHYSICAL_EXECUTION_PLAN_2026_11_20.md), [the last accepted physical M32Q run](M08_D3D2E_OWNER_PHYSICAL_ACCEPTANCE_2026_11_20.md), [source-only real RTL host-page integration](M08_PAGED_SOURCE_RTL_CONFORMANCE_2026_11_20.md), and [the archival 171 KB troubleshooting/evidence history](archive/M08_ROADMAP_CHRONICLE_THROUGH_2026_11_20.md). Historical “not programmed” entries are dated history, not current status.
+**Do not subdivide milestones:** M08.4 was one physical neural-paging acceptance gate; M08.5 is **one** matched-execution/memory-comparison gate; M08.6–M08.7 will be **one** repeatable measurement/owner-review gate; M09 is thesis/analysis. No additional D3.D.3B/C/D, M08.5.1/5.2/5.3, new PR or branch per failed Icarus test/AXI transfer/DDR check. Engineering tasks inside M08.5 may have descriptive tests/docs, not independently "complete" micro-milestones.
 
+## 1. Essential repository and source context
 
-## Most recent ORIGINAL owner physical run — 2026-11-20 18:40:35–18:41:37 America/Denver
+- GitHub: `Xtimetraveler-Prime/Thesis`; working root `Neuromorphic_Accelerator/v1`. Owner's VS Code/Linux repo is `~/Git/Thesis`. Genuine owner Vivado installation: `/home/dna/Vivado/2025.2/Vivado/settings64.sh`, KV260 K26 SOM, single real `xck26_0`, `hw_axi_1`, 100 MHz PS PL0 requested. Owner's physical evidence is on their **local PC**, not present in GitHub; do not invent file access.
+- **Current accepted M08.4 source branch**: `agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership`; **draft PR #94**, stacked on the older accepted **draft PR #93**, branch `agent/neuromorphic-accelerator-v1-m08-d3d2e-tick-event-queue`. Both PRs remain **DRAFT and UNMERGED**. **Never merge or rebase accepted history without explicit owner authorization.** Inspect Git state before deciding whether to continue on the accepted branch or create **one justified gate-level M08.5 branch** off its tip; absolutely no branch/PR per subtask.
+- **Authoritative documentation**: `roadmap.md`; this one consolidated handoff; `docs/M08_REMAINING_PHYSICAL_EXECUTION_PLAN_2026_11_20.md`; `docs/M08_4_FIRST_OWNER_PAGED_NEURAL_PHYSICAL_2026_11_20.md` (official accepted owner result); `docs/M08_PAGED_SOURCE_RTL_CONFORMANCE_2026_11_20.md`; `docs/M08_D3D2E_OWNER_PHYSICAL_ACCEPTANCE_2026_11_20.md`; `docs/M08_3_LOIHI_KV260_MEMORY_OWNERSHIP_REUSE_2026_11_11.md`; `docs/M08_PHASED_HARDWARE_PLAN.md`. Older `docs/archive/M08_ROADMAP_CHRONICLE_THROUGH_2026_11_20.md` is the preserved historical 171 KB chronicle, **not** current status. `docs/M08_4_PAGED_FIRST_OWNER_NATIVE_TRIAGE_AND_PHYSICAL_STAGE_2026_11_20.md` is a **historical one-shot pre-release runbook, NOT a new instruction to program**.
+- Scientific question: with **identical** neuromorphic numerical semantics, network/synapses, original event workload and measurement boundaries, characterize how sparse event-driven execution interacts with **neuron-state virtualization** when logical resident capacity N exceeds available on-chip resident K. Distinguish source/software model predictions, real RTL simulations, measured real FPGA cycles/transfers, JTAG-host staging and genuine PS/PL DDR. **Never label one as another.**
 
-**M08.4 new first original real KV260 paged neural physical hardware PASS in owner console; independent final read-only receipt audit STILL PENDING.** Original routed native `~/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW` (15/15 original SHA rows and exact routed DRC/timing/clock accepted) has original bit SHA256 `6a4a71f255adcc79a4131401a3f75eb64f253d3431f5ad1babc0da48479f6494`. First physical original **`~/Thesis_Evidence/M08/m08_paged_m06_lif_HW_zhUx7lLJ`**: real single K26 JTAG program, scratch BRAM readback, on-fabric five-edge setup, **24/24** six-page × four-tick 256B state load/compute/full dirty readback/save operations, **128 HOST-coalesced current + 384 PL neural result comparisons =512/512**, and **13/13 physical SHA file checks OK** in owner console. The original hardware run returned Vivado exit 0 and finished its whole neural result. No physical DDR/DMA or raw event FIFO in this first paged image. Original M32Q earlier acceptance is unaffected.
+## 2. M08.4 FINAL PHYSICAL ACCEPTANCE — DO NOT RERUN
 
-**Independent Python audit initial FALSE NEGATIVE** after the successful physical run: Vivado echoes `# puts "M08_4_NEW_IMAGE_PROGRAM_ONCE_START"` and separately prints the genuine standalone runtime marker. The original auditor used substring count, so it double-counted; same hazard for pages/ticks. Fixed **ONLY** `scripts/m08_paged_m06_lif_physical_audit.py` to compare standalone exact runtime lines and require exact chronological 24-page/4-tick marker order. `tests/test_m08_paged_m06_lif_physical_reaudit.py` includes a complete **synthetic original-shaped 13-file** success case with Vivado Tcl echoes, plus five adversarial ledger/output/log failures; dedicated CI [44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415) passed **548 M08 tests**. **DO NOT REPLAY JTAG OR MODIFY FIRST ORIGINAL**. Original files cannot be accessed directly from GitHub; the user must run the corrected auditor locally and provide its exit-0 output. [Detailed first physical provenance and final command](M08_4_FIRST_OWNER_PAGED_NEURAL_PHYSICAL_2026_11_20.md).
+The user supplied the following **original post-fix** evidence and **subsequent** independently passing original-file audit, accepted 2026-11-20:
 
-```bash
-cd ~/Git/Thesis
-git status --short
-git fetch origin
-git switch agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
-git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
-cd Neuromorphic_Accelerator/v1
-export PYTHONDONTWRITEBYTECODE=1
-RUN="$HOME/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW"
-HW="$HOME/Thesis_Evidence/M08/m08_paged_m06_lif_HW_zhUx7lLJ"
-python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_physical_reaudit.py' -v
-(cd "$HW" && sha256sum -c 99_evidence_sha256.txt)
-python3 scripts/m08_paged_m06_lif_physical_audit.py --native-dir "$RUN" --hw-dir "$HW"
+| Accepted original datum | Evidence |
+| --- | --- |
+| Owner-native Vivado 2025.2 first post-fix image | `~/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW` |
+| First-original bit SHA256 | `6a4a71f255adcc79a4131401a3f75eb64f253d3431f5ad1babc0da48479f6494` |
+| Bit file | `bitstream_candidate/m08_paged_m06_lif_jtag_UNRELEASED.bit` (the historical file name, **already programmed and accepted**) |
+| First-original hardware directory | `~/Thesis_Evidence/M08/m08_paged_m06_lif_HW_zhUx7lLJ` |
+| Immutable native source/route/bit SHA ledger | **15/15 verified**, includes exact new K26 source/bit/DRC/clocks/timing; native new-image-specific checker `ACCEPTED` |
+| Immutable original physical evidence SHA ledger | **13/13 verified** by owner's `sha256sum -c`, including original executed Tcl, JTAG Vivado log/jou, exit receipt, original host input pages, oracle and first 128-row neural trace |
+| Original JTAG programming | **Exactly one** first-original K26 program marker, accepted after independent log marker-order audit |
+| One-resident signed16 neural paging | **One** 64×32-bit = 256B on-chip resident host/compute bank, **six** 256B logical pages containing 6+6+6+6+6+2 neurons, plus an **independent** host-loaded five-edge configuration page |
+| Physical dynamic work | **24 real page LOAD/64-word readback/COMMIT/DISPATCH/64-word DIRTY readback/SAVE/replacement cycles** through four ordered tick barriers |
+| Independent numerical parity | **128 HOST-coalesced input-current values** + **128 truly PL-computed voltages** + **128 PL-computed spike decisions** + **128 PL-computed recurrent currents** = **512/512** exact original M02/M03/M06 comparisons |
+| Native route | AMD K26, routed Vivado 2025.2, 100 MHz PS PL0, WNS **+0.763 ns**, WHS **+0.010 ns**, seven individually reviewed vendor debug/JTAG DRC warnings, zero setup/hold/pulse-width violating endpoints |
+| Accepted residual caveat | Five `LUTAR-1` async-reset methodology advisories **untraced**; owner expressly accepted limited first JTAG-test risk. Do not retroactively claim their cell paths were verified. |
+
+The first physical run (Nov 20, 2026 **18:40:35–18:41:37 America/Denver**) finished the hardware test, printed `M08_4_PHYSICAL_128_HOST_CURRENTS_384_FABRIC_COMPUTED_24_PAGES_ONE_BANK_PASS`, and verified all 13 SHA receipts. The **first** independent Python auditor subsequently *falsely* rejected a programming marker: Vivado echoes `# puts "M08_4_NEW_IMAGE_PROGRAM_ONCE_START"` and also emits the actual standalone runtime line. The auditor had wrongly counted both via substring. `scripts/m08_paged_m06_lif_physical_audit.py` was corrected to count **only exact standalone marker lines in globally expected chronological order**, while continuing strict 13 SHA/executed-source/128 physical-row/oracle comparison. Six new synthetic full-receipt/adversarial tests `tests/test_m08_paged_m06_lif_physical_reaudit.py` passed; **548 M08 source/real Icarus tests** passed [GitHub Actions 44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415). **No second hardware program or original evidence rewrite occurred.**
+
+**Critically: the owner has NOW rerun this corrected independent auditor READ-ONLY on the first immutable physical folder and posted actual SUCCESS output**:
+
+```text
+00_executed_source.tcl: OK
+01_jtag_paged_m06.log: OK
+02_jtag_paged_m06.jou: OK
+03_exit.txt: OK
+10_edge_config_input.hex: OK
+11_neural_page_0_input.hex: OK
+11_neural_page_1_input.hex: OK
+11_neural_page_2_input.hex: OK
+11_neural_page_3_input.hex: OK
+11_neural_page_4_input.hex: OK
+11_neural_page_5_input.hex: OK
+20_independent_512_oracle_ONLY.hex: OK
+80_physical_paged_neural_parity.txt: OK
+original_native_15_SHA_files_checked: true
+original_physical_sha_files_checked: 13
+original_single_JTAG_program_marker: true
+ordered_tick_barriers: 4
+physical_256_byte_page_dispatches_saved: 24
+independent_host_coalesced_input_checks: 128
+independent_physical_pl_computed_checks: 384
+total_exact_numerical_comparisons: 512
+physical_ddr: false
 ```
 
-**M08.4 ACCEPTANCE DECISION PENDING:** if (and only if) all 13 original SHA entries match, all 128 original physical observation lines match independently regenerated M02/M03 signed16 values and the auditor exits 0, update the authoritative M08.4 milestone to PHYSICAL ACCEPTED and **then** begin M08.5 on the existing appropriate development branch. Original previously failed optional methodology folder and old M32Q physical evidence remain unchanged. Never assert 13 SHA checks alone prove content parity.
+**Historical auditor output caveat**: the JSON still includes `"owner_final_M08_4_acceptance_review_pending": true` and `"status": "...NUMERICAL_PASS_REVIEW_REQUIRED"`. These are deliberately conservative labels emitted by the generic **pre-human-review** Python tool; every programmed numerical check passed, and the owner **subsequently reviewed and directed formal acceptance**. Do **not** edit original JSON or re-run JTAG to change a status string. **M08.4 is PHYSICALLY ACCEPTED in `roadmap.md` and its owner acceptance document.**
 
-**M08.5 next broad gate**: matched physical memory/exec strategies, workloads and measurement boundaries with strict separate host-staging vs genuine PS/PL DDR ownership. Avoid new subdivisions and no inferred DMA/DDR address or kernel cache/lifetime bypass. Start with read-only owner/runtime/kernel/DT provenance and reproducible matched baseline; user gives local verification commands before any new board experiments.
+**Hard scope limitations**: original 17 external events were **HOST-coalesced** for this new paged-neural design; they did **not** enter an on-fabric raw-event FIFO. No actual PS DDR/DMA, cache coherency, autonomous asynchronous clock/event execution, matched timing/throughput or power/energy was measured. This result **does** establish physical compute-bearing, resource-bounded neural-state page replacement on FPGA with exact signed16 reference parity.
 
-## Authoritative branch / PR / milestones
+### Separate earlier physically accepted on-chip FIFO baseline (DO NOT EQUATE THE IMAGES)
 
-- Repository `Xtimetraveler-Prime/Thesis`; v1 work root `Neuromorphic_Accelerator/v1`.
-- **Work on existing** `agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership` and **draft PR #94**, stacked on draft PR #93 (`agent/neuromorphic-accelerator-v1-m08-d3d2e-tick-event-queue`). Both draft, unmerged; **do not merge without user's explicit approval**. Inherited code in PR #93 is physically accepted; later page code is source-only.
-- **M01–M06 complete within PC/native offline bounds; M07 PC complete; M08 OPEN (M08.4 active); M08.5 and combined M08.6–7 planned; M09 planned.**
-- User independently ran the source tests and then performed first actual M08.4 physical one-shot. Real first physical hardware PASS and final independent read-only audit pending, as detailed above. CI passed **548 M08 tests** including full synthetic auditor adversarial tests [run 44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415); CI on further changes must be checked at their new exact HEAD.
+Prior D3.D.2E M32Q physical run: native `~/Thesis_Evidence/M08/m08_d3d2e_queue_GFz0SbiC`, bit SHA `2c443c3d80e86e5e9488b457110a45b0db96881016e9f87a5c801a72ec7527dc`, physical `~/Thesis_Evidence/M08/m08_d3d2e_queue_HW_4HQkm7rN`, **6/6** immutable physical receipts, **17 actual raw FIFO events** queued and serviced with 5/5/4/3 ordering and 128 initial buckets proven zero; **512/512 physical** neural parity. WNS +1.844 ns, WHS +0.010 ns. It is a **different topology and image**, not automatically apples-to-apples with new 6-page hardware. No accepted source, first owner evidence or bit should be copied over or reprogrammed.
 
-## Immutable owner-original physically accepted baseline
+## 3. M08.5 — ACTIVE NEXT ACCEPTANCE GATE
 
-- Original Vivado 2025.2 native `~/Thesis_Evidence/M08/m08_d3d2e_queue_GFz0SbiC`, accepted bit SHA256 `2c443c3d80e86e5e9488b457110a45b0db96881016e9f87a5c801a72ec7527dc`, WNS **+1.844 ns**, WHS **+0.010 ns**, separately reviewed image-specific vendor DRC. First physical owner `~/Thesis_Evidence/M08/m08_d3d2e_queue_HW_4HQkm7rN`; six original SHA receipt checks OK on **read-only final audit**, `M08_D3D2E_PHYSICAL_M06_17_QUEUED_EVENT_128_BUCKET_384_NEURAL_ACCEPTED`.
-- Real K26 JTAG `xck26_0` / `hw_axi_1`: 17 raw signed32 events FIFO accepted and serviced; four ordered clocked service barriers **5+5+4+3**, all **128 current buckets zero before service**, 128/128 fabric input current +128/128 membrane voltage +128/128 spike decisions +128/128 recurrent current = **512/512** original 32-neuron×4-tick, 5-edge M06 neural reference. Original M02 dense/event, M03 sparse numerical oracle.
-- **Do not reprogram** this accepted bitstream or change/recreate/re-hash the accepted native/physical evidence. Real physical DDR/DMA, pageable M06 HLS neural state, async independent clock, power and throughput remain **NOT proved**.
+**Goal:** rigorously match **same signed16 neuron semantics, same 32-neuron/five-edge/17-event workload, same event order and synchronization boundaries, same N/K geometry when applicable**, and compare feasible memory/execute strategies:
+1. **Timestep-driven on-chip** (actual proven M32Q and/or a source-matched RTL control).
+2. **Event-driven on-chip** (actual FIFO/event-service baseline with explicit differences documented and/or truly equivalent control).
+3. **Timestep-driven host-paged** (the newly accepted six-page JTAG-host-backed execution).
+4. **Event-driven host-paged** where feasible, then **genuine memory-backed DDR timestep/event** only when a safe, verified PS/PL memory owner and route exist.
 
-## Existing M08.4 source assets
+Do **not** claim these are already matched just because two older physical runs both have 512 outputs. Define exactly matched workload, memory residency K/N, queue service semantics, control strategy and **measurement windows** before comparisons. Report honest unmapped or unavailable cells in the comparator matrix.
 
-- A **proposed 4 KiB reference-only page** in `scripts/m08_d3d3a_page_stage.py` contains the 630 original M06 input/output oracle words. It is **NOT compute-facing hardware memory**; cannot serve as compute input (would prepopulate expected outputs).
-- A real first-party one-resident **256B AXI4-Lite host page** in `rtl/m08/m08_axil_page_control.sv` + `m08_host_staged_page_bank.sv`: full 64-word host load, explicit observed readback before COMMIT, exclusive host/computation dispatch, dirty full readback/SAVE, timeout quarantine. The earlier `m08_ps_page_safe_shell.v` remains safely `ENABLE_COMPUTE=0`; never change it to silently enable untested compute.
-- New `m08_page_compute_probe_shell.v` (Verilog-2001 Vivado module-reference-compatible) connects all 19 AXI-Lite pins and `m08_page_compute_probe.v` (real 63-word sequential read/one reserved checksum write). The probe is **NOT a LIF neuron**. Real Icarus test `tests/test_m08_page_compute_probe_shell.py` checks safe handshakes, two page replacement, host/compute mutex, premature SAVE and stalled compute ACK faults. A real regression caught missing WVALID/WREADY and the wrapper was corrected; static gate checks all AXI pins.
-- `scripts/m08_m06_parameter_pages.py` derives **real original M06 neural input parameters only** from 630-word M02/M03-backed oracle, 32 neurons in three logical **256B** pages (15,15,2), 1 RTL resident bank. Original signed16 `initial_v, bias, threshold, reset_v`; metadata M6PG, logical ID, valid neurons; reserved checksum word. Real Icarus `tests/test_m08_m06_parameter_pages.py` runs all three pages through AXI load/readback/dispatch/probe/writeback/dirty-save. **These pages do not currently include per-tick currents, dynamic membrane state or recurrent spike/edge state**; they CANNOT compute real M06 LIF and must be extended/replaced before a neural claim.
+**Mandatory M08.5 deliverables to progress** (one broad gate, not four new milestones):
+- A **single provenance-aware comparator contract/matrix**: image/source SHA, native route/clocks, input M02/M03 golden version, N/K and page bytes, exact numerical outcome per configuration; host-staging vs PL compute time, raw events vs host-coalesced events, on-chip vs host-paged vs actual DDR and its proof, number of actual page transfers, dirty-save bytes, tick/event barriers, stalls, and measurement origin. Explicit **not comparable yet** flags for dissimilar original baselines.
+- First source-only/RTL reproducible matched controls and negative tests for manipulated event order, incorrect off-chip ownership, wrong page state, wrong arithmetic or wrong timing-domain assumptions. Reuse available M07 policy/traffic and original M02/M03 oracle fixtures; **don't introduce another easier neural reference**.
+- Read-only owner-side **M08.3 PS/PL/DDR/DMA readiness inventory** and available runtime/kernel/devicetree/device binding evidence, without programming hardware or writing OS/DDR/MMIO. Ask for only genuinely missing owner data. A device-tree name, `/dev/mem`, a guessed CPU→PL address such as `0xA0000000`, or a simulated backing buffer are **NOT** proof of safe DDR.
+- If true DDR is technically possible, independently validate connected PS→PL route, driver ownership and safe buffer lifetime, physical/DMA mask/IOMMU window, cache coherence, clock/reset and quiesce/recovery, before constructing a separate SHA-pinned **new** offline K26 candidate and separately approved one-shot physical test. **Never** infer DDR ownership from the existing JTAG AXI scratch-BRAM map.
+- Measured/stated costs only when evidence exists; distinguish **simulated cycle/service predictions**, original JTAG **host-end-to-end** timing, **actual on-fabric** cycle counters where available and **true DDR transactions**. Report transfer counts, bandwidth, page locality and stall distributions with their measurement method. Collect repeats/uncertainty at combined M08.6–7; no invented throughput/power/energy.
 
-## ACTUAL new M08.4 work completed since this handoff was started
+### Recommended first development task in the new chat (NO board action)
 
-The initial next-code steps to replace the checksum probe with REAL paged LIF compute have now been **implemented and actually tested in Icarus**; do not start them a second time or claim only a checksum probe is current.
+1. Read `roadmap.md`, this handoff, M08.5 execution-plan gate, M08.3 readiness notes, M07 matched-ablation foundations and original accepted signed16 fixture/oracle. Inspect relevant current source/tests and the existing draft PR state.
+2. Create **one M08.5 comparator/provenance contract** as source + tests. Enumerate which comparator rows are actually **physical**, merely **Icarus**, merely **PC model**, or **not yet available**. Make mismatched raw-event vs host-coalesced input a **fail-closed** comparator condition rather than quietly treating them as identical. Distinguish 128 host checks from 384 PL-computed checks and respect one resident bank in the accepted paged design. Design controls to eventually isolate the contribution of event sparsity from that of page movement.
+3. Add deterministic positive and adversarial source/RTL tests to enforce strategy equivalence before any new physical work; preserve existing M08 tests and original numerical oracle; run CI. Source-only confidence is necessary, **not** hardware authorization.
+4. Design a strictly **read-only** owner PC + KV260 PS/PL memory inventory (do not access unknown MMIO or DDR addresses, no `sudo devmem`, no assumed kernel DMA buffer) and request the owner's outputs only after the software deliverables pass. Make a clean PS/PL DDR gate: `AVAILABLE_VERIFIED`, `NOT_AVAILABLE`, `UNKNOWN`; no guesses or silent fallback labeled as DDR.
+5. Develop in larger coherent increments within M08.5, not a new branch for every missing ready bit. Include reproducible tests, evidence and local VS Code terminal commands in **every development response**; wait for user local verification before requesting a new offline Vivado build or JTAG action.
 
-**New source:** `rtl/m08/m08_paged_m06_lif_engine.v` and the separate Verilog-2001/Vivado module-reference top `rtl/m08/m08_paged_m06_lif_shell.v`. The existing, previously tested one-resident **256B AXI4-Lite host page bank** and the safety-disabled legacy wrapper remain unchanged; accepted D3.D.2E M32Q RTL and bit remain unchanged. The new engine uses **six logical neuron pages (6+6+6+6+6+2) sharing ONE resident physical RTL bank**, with 10 words per neuron for signed16 state/bias/threshold/reset, four signed32 external current buckets, historical spike mask and last delivered synaptic current; metadata word60–63 for magic/ID/count/tick. One separate fully host-staged edge-configuration page initializes up to 8 recurrent edges, with exactly the original five used.
+## 4. Current source/test files worth reopening
 
-The engine actually reads and writes paged state, computes 3/4 signed decay **truncate toward zero**, saturating signed16 threshold/reset LIF, recurrent signed current from previously emitted **on-fabric** spike history and configured positive-delay weighted edges. An enforced **4-tick/6-page order** stops mixed-epoch computation; updated state and actual spike masks are saved from the physical-style RTL bank before host replacement/reload. A 256B page-lease and a small global 32×4 spike-history register remain resident; 32 full neuron state records are **not** retained alongside the page.
+- **First-party signed16 paged neural RTL:** `rtl/m08/m08_paged_m06_lif_engine.v`, `rtl/m08/m08_paged_m06_lif_shell.v`. Real RTL host-owned 256B AXI4-Lite bank in `rtl/m08/m08_host_staged_page_bank.sv`, `rtl/m08/m08_axil_page_control.sv`.
+- **Physical exact-image and immutable auditors:** `scripts/m08_paged_m06_lif_exact_native_accept.py`, `scripts/m08_paged_m06_lif_native_review.py`, `scripts/m08_paged_m06_lif_physical_audit.py`, `scripts/m08_paged_m06_lif_source_gate.py`. Read-only native records are **historical**; no need to run/program for new task.
+- **Unchanged independent oracle:** `scripts/m08_paged_m06_lif_fixture.py`, `scripts/m08_d3d2c_m06_vectors.py`, `scripts/m08_d3d2d_event_vectors.py`; original M02 dense/event and M03 sparse fixtures, signed16 leak 3/4 truncate-toward-zero, saturation and positive-delay recurrent edges. The goldens are **comparison-only**, never preload expected voltages/spikes into neural input pages.
+- **Actual positive/negative HDL tests:** `tests/test_m08_paged_m06_lif.py`, `tests/test_m08_paged_m06_lif_fail_closed.py`, `tests/test_m08_paged_m06_lif_physical_reaudit.py`, `tb_m08_paged_m06_lif.sv`, `tb_m08_paged_m06_lif_fail_closed.sv` (locate exact TB paths before issuing simulator commands). Tests for missing edge setup, wrong page/tick, invalid threshold, compute-ACK timeout and bad recurrent delays deliberately fail closed.
+- **Older foundations with narrower claims:** `scripts/m08_d3d3a_page_stage.py` is a **software-only proposed 4KiB M06 reference image**, NOT the new real on-fabric neural ABI. `rtl/m08/m08_page_compute_probe_shell.v` and `m08_page_compute_probe.v` provide an earlier checksum-only first-party host/compute probe, not LIF. `scripts/m08_m06_parameter_pages.py` derives earlier input-only (15+15+2) neuron parameters; they are **not** the accepted six-page dynamic neural-state geometry. Do not regress to one of these earlier probes as a replacement for accepted M08.4.
+- **Separate old physically accepted 17-event FIFO**: M32Q D3.D.2E original source/fixture; review its owner accepted file before making a physically matched comparator. Do not assert original source’s 17 raw FIFO events enter the new paged shell.
+- **Documentation:** `docs/M08_3_LOIHI_KV260_MEMORY_OWNERSHIP_REUSE_2026_11_11.md` informs PS/PL ownership; older accepted Loihi-v2 P08 experiments are **different project/neural precision** and cannot validate M08 signed16 DDR safety.
 
-**Independent real Icarus positive result:** `scripts/m08_paged_m06_lif_fixture.py` derives original input-only pages from the unchanged M02 dense/event + M03 sparse exact M06 oracle. `tb_m08_paged_m06_lif.sv` performs one real recurrent setup plus **24 real neuron-page dispatches**, 4 tick barriers, full AXI4-Lite 64-word load/readback, real neuron compute, full dirty readback/save, one-bank replacement. Independently verifies **128 input-current + 128 computed voltages +128 spike decisions +128 fabric-generated recurrent currents =512/512**. On commit `4ef8994e` the [genuine full M08 CI](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44844692979) passed **519 tests** with the new neural integration test. The external original **17 signed events are host-coalesced into input buckets for this NEW paged shell**—the earlier accepted D3.D.2E raw-event FIFO is NOT yet present in this image. The comparison therefore proves on-fabric LIF and recurrent math, not on-fabric 17-event ingress in this paged shell.
+## 5. Working method, GitHub integration, local verification
 
-**Independent real Icarus negatives:** `tb_m08_paged_m06_lif_fail_closed.sv` and `tests/test_m08_paged_m06_lif_fail_closed.py` require **six** sticky fault/quarantine scenarios: missing recurrent configuration, wrong logical page, wrong tick, invalid signed16 threshold, withheld compute ACK timeout, invalid recurrent delay. Source CI [run 44845066819](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44845066819) passed **521 M08 tests** including actual negative RTL.
+**Use connected GitHub tools to read/update repository content.** The cloud/container here may not contain a clone and may not access GitHub via raw shell network; do not assume `~/Git/Thesis` exists in the assistant sandbox. Discover live GitHub plugin actions through tools, fetch exact file contents before changing them, use each original blob SHA for updates on the correct branch, and check CI for every substantive new HEAD. If user attaches local files, inspect those exact attachments rather than inferring their contents. Never mutate `~/Thesis_Evidence/M08` through code or invent owner hardware pass results.
 
-**NEW OFFLINE owner-PC native prep (NO board):** `scripts/m08_paged_m06_lif_source_gate.py`, `m08_paged_m06_lif_build.tcl`, `run_m08_paged_m06_lif_pc.sh`, `m08_paged_m06_lif_native_review.py`, `tests/test_m08_paged_m06_lif_native_candidate.py` implement an **independent first-new-image Vivado 2025.2 K26** project generator based on the proven independent fan/PL0/fabric-POR/JTAG AXI topology, with exact separate FPGA RTL, 15 original SHA receipt rows, routed timing, DRC and original .bit candidate in a *fresh* owner directory. The first-image reviewer **ALWAYS exits 2/BLOCKED** until original *new* owner DRC warning instances, achieved timing, source/bit hash and clocks are reviewed and a new-image-specific release gate is written; the FIRST owner-local Vivado attempt on 2026-11-20 FAILED in `lif_0_synth_1` at `m08_paged_m06_lif_engine.v:226` (`Synth 8-10871`), with following cascading Verilog syntax errors. The problem was the decimal literal `3'd5?` adjoining a ternary `?`; the existing branch now changes it to `3'd5 ?` and adds lexer/Verilog-2001 regression coverage. Preserve immutable failed run `~/Thesis_Evidence/M08/m08_paged_m06_lif_gkft3TOX`; do NOT rerun into it. The owner then supplied **15/15 OK first-original offline-native SHA receipt verification** for NEW owner folder `~/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW` and bit SHA256 `6a4a71f255adcc79a4131401a3f75eb64f253d3431f5ad1babc0da48479f6494`. The owner subsequently uploaded the **original DRC/timing/clock/metadata** reports; the exact new-image native acceptance validator `scripts/m08_paged_m06_lif_exact_native_accept.py` now SHA-pins those original reports + bit, all 15 receipt/source rows, and the seven vendor-debug-only DRC warning instances and +0.763 ns WNS/+0.010 ns WHS/100-MHz clocks. The standalone methodology/CDC check was **not required for the earlier accepted D3.D.2E JTAG run**, and the owner explicitly chose to proceed after accepting residual five unlocalized `LUTAR-1` async-reset methodology warnings. The optional methodology runner's previous `-tclargs` ordering bug was repaired without rewriting its failed original output. The SHA-pinned first-image gate now **exists**; the original is still **not programmed**. New `m08_paged_m06_lif_physical_readiness.py` read-only triage and one-shot `m08_paged_m06_lif_physical_vectors.py`, `m08_paged_m06_lif_physical_once.tcl`, `run_m08_paged_m06_lif_physical_once.sh`, `m08_paged_m06_lif_physical_audit.py`, source-only negative tests and [runbook](M08_4_PAGED_FIRST_OWNER_NATIVE_TRIAGE_AND_PHYSICAL_STAGE_2026_11_20.md) are ready. NEXT: owner pulls exact HEAD, runs local exact native gate (MUST print ACCEPTED), confirms independent active cooling/UART/stock rollback/exclusive single-owner JTAG, then executes ONE separately consented physical run. The physical runner is fail-closed and must NOT be bypassed; preserve every original failure/run folder. The KV260 has **not** been programmed with the paged candidate. Do not borrow older M32Q image hashes or DRC waivers. The owner has previously requested to verify local commands before moving to physical changes.
-
-## Actual next task inside M08.4 (no new milestone or branch)
-
-1. Recheck **latest exact-HEAD CI** and owner VS Code real Icarus suites including the 512 positive and six sticky-fault cases. Correct real failures without abandoning M02/M03 values or declaring weaker success.
-2. Check offline-only build Tcl/shell and source/new-image review blocker; produce first **separate** genuine owner-local Vivado 2025.2 bitstream candidate **only after all new PC tests pass** and the owner agrees to that offline build. The offline builder is NOT a JTAG or DDR program and preserves older evidence.
-3. Collect/report original routed DRC (including every new vendor debug/JTAG pin/equation), true slack/clock/source/bit SHA for this new image. Create a NEW exact original-image native acceptance validator as was done for D3.D.2E. Never blanket-waive old warning instances.
-4. Only after accepted first new native image and cooling/UART/exclusive JTAG/stock recovery, prepare one **new** owner-run physical experiment proving 32×4 signed16 state swapped through the same 256-byte on-chip bank with independent **512** comparisons and full original SHA evidence. The JTAG test must explicitly account for input-current host coalescing in this image; do not claim 17 separate raw events were pushed unless a real new FIFO source/physical test proves it.
-5. Once genuinely physically paged M08.4 is independently audited, progress to consolidated M08.5 matched on-chip vs safe memory-backed strategies. Actual DDR requires new kernel/device ownership and coherency proof; `/dev/mem` or assumed `0xA0000000` are never sufficient.
-
-**Absolute no-sprawl rule repeated for the next instance:** these are **engineering tasks inside M08.4**, not new milestones. Do **not** invent D3.D.3B/C/D, M08.4.1, a new PR per timing warning, or a new phase for each failed first owner image. New named debugging experiments are allowed only when genuinely necessary to isolate a distinct failure mechanism; they remain subordinate to M08.4.
-
-## Owner VS Code verification and next FRESH OFFLINE native rerun
-
-**SOURCE-ONLY / NO VIVADO / NO BOARD.** The user passed the earlier 3-page checksum stage locally; the **NEW** neural/negative/native-source tests below are a *different* updated HEAD and must be run separately before any new owner native evidence:
+**Owner's usual local verification commands (VS Code terminal, PC source-only):**
 
 ```bash
 cd ~/Git/Thesis
@@ -86,26 +116,33 @@ git switch agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
 git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
 cd Neuromorphic_Accelerator/v1
 export PYTHONDONTWRITEBYTECODE=1
+
+command -v python3
 command -v iverilog
 command -v vvp
 python3 scripts/m08_paged_m06_lif_fixture.py --source-only
-python3 scripts/m08_paged_m06_lif_source_gate.py --source-only
 python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif.py' -v
 python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_fail_closed.py' -v
-python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_native_candidate.py' -v
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_physical_reaudit.py' -v
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
 ```
 
-**Separate next option: ONE NEW OWNER PC OFFLINE Vivado rerun in a FRESH evidence directory (never JTAG):** Only after source tests pass and the owner wishes to create a fresh original Vivado bitstream candidate, source the owner's known installed toolchain:
+Adjust the `git switch`/pull branch when the new instance deliberately selects **one proper M08.5 feature branch**; fetch first and **never merge draft #93/#94 by accident**. Do not run `vivado`, `program_hw_devices`, hardware manager or board actions as part of initial source tests. The prior source CI run [44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415) passed 548 M08 tests, **at that historical source commit**. New tests/commits require **new exact-HEAD** CI and owner verification; never claim previous CI proves future code.
 
-```bash
-cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
-source /home/dna/Vivado/2025.2/Vivado/settings64.sh
-vivado -version
-bash scripts/run_m08_paged_m06_lif_pc.sh
-```
+**When hardware becomes warranted (not yet authorized for M08.5)** use this sequence: owner review of comparator/ABI and negative tests → real Icarus integration and source CI → fresh unique PC `~/Thesis_Evidence/M08/` **offline** Vivado 2025.2 project/bitstream → original 15-or-redefined SHA ledger → image-specific routed DRC warning/pin, timing, clocks and source/bit SHA acceptance → independent cooling/fan, UART, stock rollback and exclusive JTAG preflight → **explicit owner authorization for one narrowly bounded program** → new unique immutable physical evidence folder → read-only independent audit → owner acceptance/documentation. **No automatic reprogramming, no overwriting original evidence, no unrestricted PS/DDR writes.**
 
-The offline runner creates a **new**, non-overwriting `~/Thesis_Evidence/M08/m08_paged_m06_lif_XXXXXXXX` original folder, runs true Vivado once, saves full first-image DRC/clocks/timing/bitstream source SHA evidence and intentionally returns **exit code 2/BLOCKED** on success until a separate real image-specific review authorizes hardware. A genuine routed **timing failure** or new Vivado error also stops; diagnose from the *first original* error, preserving the owner folder and avoiding automatic retries. **NEVER run `program_hw_devices` or any DDR write as part of this step.** The next instance must collect/inspect actual original DRC and timing, not waive the previous M32Q warning profile.
+### Proof/evidence and reporting expectations
 
+At the end of every development increment give: what files changed, what real tests executed (source vs genuine HDL vs offline Vivado vs physically run, clearly separated), CI run URL/conclusion when verified, any bounded failures or assumptions, and **copy/paste-ready exact owner `~/Git/Thesis` VS Code commands**. Keep the authoritative `roadmap.md` concise and statuses honest. Do not promise asynchronous work.
 
-**FINAL HANDOFF RULE, REPEATED BECAUSE THE OWNER REQUESTED IT:** `M08.4` is the active deliverable. **DO NOT ADD ANY MORE MILESTONE SUBDIVISIONS UNLESS ABSOLUTELY NECESSARY FOR DEBUGGING**, and then only document the exception as an internal experiment. Preserve simple M08.4 → M08.5 → M08.6–7 → M09 structure in `roadmap.md`.
+## 6. Roadmap state / next handoff decision
+
+- **M01–M03**: complete PC neural/traffic/oracle foundations.
+- **M04–M06**: complete within offline/RTL/HLS-conformance bounds; no claim of physical DDR or original HLS neural page execution.
+- **M07**: complete PC caching/scheduling/matched ablation foundations.
+- **M08.4**: **PHYSICALLY ACCEPTED/CLOSED**, immutable first owner 24-page JTAG run, owner independent 13/13 and 512/512 original audit.
+- **M08.5**: **ACTIVE**, matched execution/placement control strategies, documented provenance and safe DDR feasibility inventory.
+- **M08.6–M08.7 (one combined gate)**: PLANNED repeatable hardware measurement, variance/resource reporting and owner release.
+- **M09**: PLANNED thesis analysis/plots/limitations/closeout.
+
+**NOW START M08.5** by inspecting exact current branch/files and implementing a source-only comparator contract + adversarial tests. Do not seek owner reconfirmation of already accepted M08.4 or repeat its hardware run.
