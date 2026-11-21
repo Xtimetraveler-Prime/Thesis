@@ -38,6 +38,46 @@ The tool re-validates the *new* original 15-file/source/bit SHA, requires the ex
 
 **DON'T RUN physical runner yet.** The image-specific release gate requires original DRC warning/pin and routed timing/clock examination and separate owner confirmation of cooling, UART logging, **exclusive** single-owner JTAG and stock recovery. The accepted earlier M32Q `.bit` and original evidence must not be reused; no guessed DDR/PS write addresses.
 
+
+## Owner-uploaded first-new-image report examination (read-only; 2026-11-20)
+
+The owner supplied **original** four Vivado text reports from `QFKpXlPW`; file contents and SHA256 were examined without touching the original owner directory. Report SHA256:
+
+| Report | SHA256 |
+| --- | --- |
+| `reports/20_route_drc.rpt` | `2fd20b6a84cb803c4935b509b4bb5f32306ffb608067450e068d85a2284e92d4` |
+| `reports/21_route_timing.rpt` | `fcb73aca06ced0c7df7d2f9f6657e23375a2504a7a5c64461ec683a969c0e42c` |
+| `reports/23_route_clocks.rpt` | `e8330903e1ee569af95ef98fa1f072760b33b067a154fd89f3630244ea0a9ac0` |
+| `reports/30_native_result.txt` | `495a6468fd23fa2ab1558b793553025518753dddc0faece8d17c951a1894c88a` |
+
+**Actual route:** `m08_paged_m06_lif_jtag_wrapper`, K26 -2LV, fully routed, Vivado 2025.2. `report_drc` default ruledeck has **exactly seven Warning, zero reported Error/Critical Warning**:
+- `PDCN-1569` #1/#2/#3: three LUT pin equation advisories in vendor `dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN` (`temp_curid[31]_i_1` two and `id_state[0]_i_1` one). Their actual physical pin mappings/equations differ from the older accepted M32Q warning profile; do not inherit old exemptions.
+- `REQP-1857` #1 and `REQP-1858` #1/#2: three BRAM `WRITE_FIRST` collision advisories in `m08_paged_m06_lif_jtag_i/jtag_axi/inst/jtag_axi_engine_u/` vendor RX/RD/WR command FIFOs. Must not claim that advisory automatically proves collision-free behavior.
+- `RTSTAT-10` #1: 39 nets without routable loads, first 15 of 37 paths printed; sampled nets reside in the debug hub / vendor JTAG AXI FIFO hierarchy, not LIF. Must check exact original net paths, not only warning class counts.
+
+**Actual timing:** WNS **+0.763 ns**, TNS 0, **0 / 26,211 setup failures**, WHS **+0.010 ns**, THS 0, **0 / 26,147 hold failures**, worst pulse-width slack **+4.238 ns**, no failing PW endpoints, and zero `unconstrained_internal_endpoints` or `no_clock`. Explicit `All user specified timing constraints are met.` `clk_pl_0` and `clk_pl_1` each 10.000 ns (100 MHz) from `PS8_i/PLCLK[0/1]`; debug BSCAN `INTERNAL_TCK` nominal 50 ns. **Route constraint timing does not prove PS PL0 survives firmware/boot or that physical fan cooling works.**
+
+**Outstanding native *methodology* finding, not visible in DRC summary details:** `report_timing_summary` includes `LUTAR-1  Warning  LUT drives async reset alert  5`, and explicitly warns the summary uses the last methodology run, which may not be current. The four original reports do **not** contain the affected five LUT sources/async reset endpoint pin paths. As this could include functional fabric reset logic, **do not approve a first physical image by assuming these are vendor-only or equivalent to older M32Q**. No exact image-specific accept checker exists yet; one-shot physical runner remains deliberately fail-closed.
+
+### Next owner PC action: read-only methodology + CDC on ORIGINAL routed checkpoint
+
+```bash
+cd ~/Git/Thesis
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_methodology_probe.py' -v
+source /home/dna/Vivado/2025.2/Vivado/settings64.sh
+RUN="$HOME/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW"
+bash scripts/run_m08_paged_m06_lif_methodology_pc.sh "$RUN"
+```
+
+The runner first rechecks original source/bit SHA, then **reopens only the ORIGINAL implementation routed .dcp offline**, emitting `10_new_image_methodology.rpt`, `11_new_image_cdc.rpt`, hash ledger and original Vivado log into a **fresh separate** `~/Thesis_Evidence/M08/m08_paged_m06_lif_methodology_XXXXXXXX` folder. It does **NOT** resynthesize, rewrite the bit, or call Hardware Manager. Owner shares the new original supplementary reports for image-specific reset/CDC warning classification.
+
+**Physical release remains BLOCKED.** After exact warning endpoints are reviewed and the original owner image passes a newly SHA-pinned native acceptance gate, owner independently confirms working cooling, UART logging, recoverable stock bitstream and exclusive JTAG, then explicitly executes the already-staged one-shot physical test. No accepted historical run is overwritten.
+
 ## What comes next within M08.4
 
 1. Obtain/review the original `QFKpXlPW` route DRC/timing/clock metadata and independent read-only triage. If safe and fully specified, create an exact SHA-pinned first-image native acceptance validator with adversarial tests and verify on owner PC.
