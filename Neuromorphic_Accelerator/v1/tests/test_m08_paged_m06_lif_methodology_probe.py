@@ -47,8 +47,8 @@ class M084MethodologyCaptureSafety(unittest.TestCase):
         p=subprocess.run(["bash","-n",str(SH)],capture_output=True,text=True,timeout=10)
         self.assertEqual(p.returncode,0,p.stdout+p.stderr)
 
-    def test_existing_one_shot_physical_release_gate_remains_absent(self):
-        self.assertFalse((ROOT/"scripts/m08_paged_m06_lif_exact_native_accept.py").exists())
+    def test_one_shot_physical_release_requires_new_exact_owner_gate(self):
+        self.assertTrue((ROOT/"scripts/m08_paged_m06_lif_exact_native_accept.py").is_file())
         shell=PHYS.read_text()
         self.assertIn("if [[ ! -f \"$EXACT_GATE\"",shell)
         self.assertIn("m08_paged_m06_lif_exact_native_accept.py",shell)
