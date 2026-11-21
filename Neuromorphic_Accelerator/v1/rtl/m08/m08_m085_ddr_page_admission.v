@@ -9,7 +9,9 @@
 module m08_m085_ddr_page_admission #(
     parameter [63:0] WINDOW_BEGIN = 64'd0,
     parameter [63:0] WINDOW_END   = 64'd0, // exclusive
-    parameter integer MAX_WAIT_CYCLES = 32
+    parameter integer MAX_WAIT_CYCLES = 32,
+    parameter integer LOGICAL_PAGES = 6,
+    parameter integer LOGICAL_TICKS = 4
 )(
     input wire clk,
     input wire resetn,
@@ -53,6 +55,9 @@ module m08_m085_ddr_page_admission #(
         (req_addr[63:49] == 15'd0) &&
         (req_addr[7:0] == 8'd0) &&
         (req_size_bytes == 16'd256) &&
+        (LOGICAL_PAGES > 0) && (LOGICAL_TICKS > 0) &&
+        (req_logical_page < LOGICAL_PAGES) &&
+        (req_tick < LOGICAL_TICKS) &&
         (req_addr >= WINDOW_BEGIN) &&
         (last_exclusive <= {1'b0, WINDOW_END});
 
