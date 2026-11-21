@@ -150,7 +150,7 @@ class SyntheticFirstPagedHardwareReceipt(unittest.TestCase):
     def test_missing_runtime_marker_with_echo_only_rejected_even_if_rehashed(self):
         marker="M08_4_NEW_IMAGE_PROGRAM_ONCE_START\n"
         original=self.files["01_jtag_paged_m06.log"].decode()
-        self.assertEqual(original.count(marker),2) # echo contains text+newline, plus real line
+        self.assertEqual(original.count("M08_4_NEW_IMAGE_PROGRAM_ONCE_START"),2) # one echo, one runtime line
         self.files["01_jtag_paged_m06.log"]=original.replace(
             "\n"+marker,"\n",1
         ).encode()
