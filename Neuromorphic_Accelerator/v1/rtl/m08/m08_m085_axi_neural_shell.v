@@ -76,7 +76,7 @@ module m08_m085_axi_neural_shell #(
     input wire [1:0] m_axi_rresp,
     input wire m_axi_rlast,
     input wire m_axi_rvalid,
-    output wire m_axi_rready
+    output wire m_axi_rready,
     output wire [31:0] neural_completed_neurons,
     output wire [31:0] neural_completed_pages,
     output wire [31:0] neural_synaptic_events
