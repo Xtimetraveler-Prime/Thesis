@@ -18,6 +18,21 @@ The new builder is derived from **actual accepted M08.4 owner build source** `sc
 - **`scripts/m08_m085_pspl_quarantine_source_check.py`**: pure PC Python source-only contract auditor (exact 56 annotated pins, 12 source entries, PS port properties, SmartConnect/clock/reset/fan/address nets, hard-zero owner/drain pins, no programming/synthesis commands). Prints source hashes plus **all physical release fields FALSE**.
 - **`tests/test_m08_m085_pspl_quarantine.py`**: Python mutation-negative checks of missing/changed physical ports, address windows, kernel trust, clock, reset, source manifest and forbidden commands; Tcl text syntax `info complete` via real `tclsh` if present; **MOCK** Vivado success and wrong-version tests that must FAIL-CLOSED and retain new original PC logs. These are NOT real native Vivado tests.
 
+## 2026-11-21 owner first native attempt — preflight coordination bug and source fix
+
+The owner's first **offline** Vivado 2025.2 attempt captured its original evidence under `/home/dna/Thesis_Evidence/M08/m08_m085_pspl_bd_20261121T205920Z_E7OxxtTo`. Its original `02_vivado_exit_status.txt` states `vivado_exit_status=1` and the original `00_vivado.log` shows **no PS/PL BD validation was reached**. The first failure was exactly:
+
+```text
+Evidence directory not fresh or unexpected content: 04_stdout.txt
+(file ".../m08_m085_pspl_quarantine_bd.tcl" line 23)
+```
+
+The shell runner created `04_stdout.txt` and `05_stderr.txt` **before** Vivado entered Tcl (normal `> ... 2> ...` redirection), but the source Tcl allowlist recognized only `00_vivado.log` and `01_vivado.jou`. This was an erroneous startup contract between our two first-party scripts, **not** evidence of incorrect K26 interfaces or failed Vivado BD validation. The owner ran `sha256sum -c 99_evidence_sha256.txt` and reported original **7/7 SHA entries OK**: Vivado log, journal, exit status, builder source, stdout, stderr and context. Those seven original bytes and the original directory remain **untouched**; seven hash passes prove receipt integrity, **not** native BD success.
+
+**Fix:** `scripts/m08_m085_pspl_quarantine_bd.tcl` now has one exact startup allowlist: `{00_vivado.log 01_vivado.jou 04_stdout.txt 05_stderr.txt}`, still requiring each existing entry be a regular non-symlink file and refusing ANY other entry (such as stale `02_vivado_exit_status.txt`, `99_evidence_sha256.txt`, `project/`, hidden stale files or symlinked stdout). The owner PC runner's output/redirection and new-folder creation are unchanged. `scripts/m08_m085_pspl_quarantine_source_check.py` pins the exact Tcl **and** shell four-file startup contract, preventing future mismatches; new `test_m08_m085_pspl_quarantine.py` cases invoke the **real local Tcl interpreter** with `create_project` stubbed to stop before any Vivado project, showing valid precreated files pass and stale/symlink/extra files reject. These tests do not claim native Vivado was run in CI.
+
+**Next owner action after tests:** pull the corrected branch and run `bash scripts/run_m08_m085_pspl_quarantine_bd_pc.sh` again. It MUST create a **second, new** `m08_m085_pspl_bd_*` directory, never restart or rewrite the failed first folder. Continue to check its own full original SHA ledger and logged Vivado result; any subsequent Vivado IP/interface error is a NEW finding, not evidence that this fixed preflight already established PS/PL topology.
+
 ## Native boundary and all remaining information gaps
 
 | Gate | Status at this increment | Required independent evidence |
