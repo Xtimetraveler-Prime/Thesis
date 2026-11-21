@@ -27,6 +27,10 @@ module tb_m08_m085_axi128_page_candidate;
     reg [127:0] rdata=0;
     reg rlast=0;
     reg [2047:0] accepted_write_page=0, expected_read=0;
+    reg [2047:0] synthetic_ddr_backing=0;
+    reg [31:0] input_words [0:63];
+    reg [1023:0] input_hex_path;
+    integer original_page_id=2;
     integer aw_count=0,w_count=0,b_count=0,ar_count=0,r_count=0;
     integer case_id=0,i,j;
 
@@ -72,6 +76,7 @@ module tb_m08_m085_axi128_page_candidate;
             if (w_count>=16 || wdata !== accepted_write_page[w_count*128 +:128]
                 || wstrb!==16'hFFFF || wlast !== (w_count==15))
                 $fatal(1,"write payload/lane/strobe/last mismatch beat=%0d",w_count);
+            synthetic_ddr_backing[w_count*128 +:128]=wdata;
             w_count=w_count+1;
         end
         if(bvalid && bready) b_count=b_count+1;
@@ -152,7 +157,7 @@ module tb_m08_m085_axi128_page_candidate;
         begin
             if(!rready)$fatal(1,"no RREADY after AR");
             @(negedge clk);
-            rdata=expected_read[index*128 +:128];rresp=response;
+            rdata=synthetic_ddr_backing[index*128 +:128];rresp=response;
             rlast=last;rvalid=1;
             @(posedge clk);#1;
             @(negedge clk);rvalid=0;rlast=0;
@@ -199,6 +204,13 @@ module tb_m08_m085_axi128_page_candidate;
             req_write_page[i*8 +:8]=i[7:0]^8'hA5;
             expected_read[i*8 +:8]=i[7:0]^8'h5A;
         end
+        if($value$plusargs("ORIGINAL_PAGE_HEX=%s",input_hex_path)) begin
+            $readmemh(input_hex_path,input_words);
+            for(i=0;i<64;i=i+1)
+                req_write_page[i*32 +:32]=input_words[i];
+        end
+        if($value$plusargs("ORIGINAL_PAGE_ID=%d",original_page_id))
+            req_logical_page=original_page_id;
         accepted_write_page=req_write_page;
         repeat(3) @(negedge clk);
         resetn=1;
@@ -216,11 +228,12 @@ module tb_m08_m085_axi128_page_candidate;
                 handshake_b(2'b00);
                 expect_accepted(1'b0);
                 if(completed_axi_write_bursts!=1||completed_axi_bytes!=256 ||
-                   completed_page!=2 || completed_tick!=1 || !completed_write)
+                   completed_page!=original_page_id || completed_tick!=1 || !completed_write)
                     $fatal(1,"write receipt mismatched");
                 // Read next page/tick, verify exact 2048-bit result at ACK.
                 @(negedge clk);
-                req_addr=64'h1100;req_logical_page=4;req_tick=3;
+                req_addr=64'h1000;
+                expected_read=accepted_write_page;
                 launch(1'b0);
                 handshake_ar();
                 for(i=0;i<16;i=i+1)
@@ -229,9 +242,9 @@ module tb_m08_m085_axi128_page_candidate;
                 if(ar_count!=1||r_count!=16 || completed_axi_read_bursts!=1 ||
                    completed_axi_write_bursts!=1 || completed_axi_bytes!=512 ||
                    completed_page_transfers!=2 || completed_write ||
-                   completed_page!=4 || completed_tick!=3)
+                   completed_page!=original_page_id || completed_tick!=1)
                     $fatal(1,"read/write real burst counters invalid");
-                $display("M08_5_REAL_AXI128_256B_READ_WRITE_AND_512_BYTES_PASS");
+                $display("M08_5_REAL_AXI128_256B_READ_WRITE_AND_512_BYTES_PASS page=%0d",original_page_id);
             end
             1: begin req_addr=64'h1080;launch(0);expect_poison();end
             2: begin req_size_bytes=128;launch(0);expect_poison();end
