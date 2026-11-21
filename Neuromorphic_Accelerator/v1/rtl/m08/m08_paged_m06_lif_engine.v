@@ -71,6 +71,7 @@ module m08_paged_m06_lif_engine (
     integer i;
     integer k;
     reg bad_edges;
+    integer m;
     reg signed [19:0] syn_sum;
     reg [3:0] contributing_edges;
 
@@ -110,6 +111,12 @@ module m08_paged_m06_lif_engine (
     wire [3:0] next_spike_mask=old_spike_mask |
                              (fire_now ? (4'b0001<<expected_tick) : 4'b0000);
     wire valid_signed_word=(observed[31:16]=={16{observed[15]}});
+    wire invalid_field =
+        (field_idx<=3 && !valid_signed_word) ||
+        (field_idx==2 && $signed(observed)<=0) ||
+        (field_idx==3 &&
+            $signed(observed)>=
+            $signed({{16{threshold[15]}},threshold}));
     wire [5:0] base_word={local_neuron,3'b000}+
                          {local_neuron,1'b0}; // index x10 (0..50)
 
@@ -123,7 +130,7 @@ module m08_paged_m06_lif_engine (
 
     always @* begin
         bad_edges=1'b0;
-        for(integer m=0;m<8;m=m+1) begin
+        for(m=0;m<8;m=m+1) begin
             if(m<edge_count) begin
                 if(pre[m]>=32 || post[m]>=32 ||
                    delay[m]<1 || delay[m]>3 ||
@@ -288,7 +295,7 @@ module m08_paged_m06_lif_engine (
                                 end
                                 default:state<=S_FAULT;
                             endcase
-                            if(field_idx<5 && state!=S_FAULT) begin
+                            if(field_idx<5 && !invalid_field) begin
                                 field_idx<=field_idx+3'd1;
                                 if(field_idx==3'd3)
                                     address<=base_word+6'd4+{3'd0,expected_tick};
