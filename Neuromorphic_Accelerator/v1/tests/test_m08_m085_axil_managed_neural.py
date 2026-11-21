@@ -46,6 +46,8 @@ class M085ManagedWorkSourceTests(unittest.TestCase):
         self.assertIn("m08_m085_work_command_sequencer",control)
         self.assertIn("raw_lease_admit(csr_admit)",control)
         self.assertIn("wire work_selected=ENABLE_WORK_COMMANDS",control)
+        self.assertIn(".ABI_VERSION(ENABLE_WORK_COMMANDS ? 32'h00010001",control)
+        self.assertIn("managed-work ABI version must be 1.1",tb)
         self.assertIn("work_fault",top)
         self.assertIn(".work_page_req(request)",top)
         self.assertIn(".work_dispatch_req(dispatch_req)",top)
