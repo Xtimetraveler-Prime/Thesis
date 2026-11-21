@@ -4,12 +4,38 @@
 
 **Read first:** [the concise authoritative roadmap](../roadmap.md), [the binding remaining-physical execution gates](M08_REMAINING_PHYSICAL_EXECUTION_PLAN_2026_11_20.md), [the last accepted physical M32Q run](M08_D3D2E_OWNER_PHYSICAL_ACCEPTANCE_2026_11_20.md), [source-only real RTL host-page integration](M08_PAGED_SOURCE_RTL_CONFORMANCE_2026_11_20.md), and [the archival 171 KB troubleshooting/evidence history](archive/M08_ROADMAP_CHRONICLE_THROUGH_2026_11_20.md). Historical “not programmed” entries are dated history, not current status.
 
+
+## Most recent ORIGINAL owner physical run — 2026-11-20 18:40:35–18:41:37 America/Denver
+
+**M08.4 new first original real KV260 paged neural physical hardware PASS in owner console; independent final read-only receipt audit STILL PENDING.** Original routed native `~/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW` (15/15 original SHA rows and exact routed DRC/timing/clock accepted) has original bit SHA256 `6a4a71f255adcc79a4131401a3f75eb64f253d3431f5ad1babc0da48479f6494`. First physical original **`~/Thesis_Evidence/M08/m08_paged_m06_lif_HW_zhUx7lLJ`**: real single K26 JTAG program, scratch BRAM readback, on-fabric five-edge setup, **24/24** six-page × four-tick 256B state load/compute/full dirty readback/save operations, **128 HOST-coalesced current + 384 PL neural result comparisons =512/512**, and **13/13 physical SHA file checks OK** in owner console. The original hardware run returned Vivado exit 0 and finished its whole neural result. No physical DDR/DMA or raw event FIFO in this first paged image. Original M32Q earlier acceptance is unaffected.
+
+**Independent Python audit initial FALSE NEGATIVE** after the successful physical run: Vivado echoes `# puts "M08_4_NEW_IMAGE_PROGRAM_ONCE_START"` and separately prints the genuine standalone runtime marker. The original auditor used substring count, so it double-counted; same hazard for pages/ticks. Fixed **ONLY** `scripts/m08_paged_m06_lif_physical_audit.py` to compare standalone exact runtime lines and require exact chronological 24-page/4-tick marker order. `tests/test_m08_paged_m06_lif_physical_reaudit.py` includes a complete **synthetic original-shaped 13-file** success case with Vivado Tcl echoes, plus five adversarial ledger/output/log failures; dedicated CI [44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415) passed **548 M08 tests**. **DO NOT REPLAY JTAG OR MODIFY FIRST ORIGINAL**. Original files cannot be accessed directly from GitHub; the user must run the corrected auditor locally and provide its exit-0 output. [Detailed first physical provenance and final command](M08_4_FIRST_OWNER_PAGED_NEURAL_PHYSICAL_2026_11_20.md).
+
+```bash
+cd ~/Git/Thesis
+git status --short
+git fetch origin
+git switch agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
+git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership
+cd Neuromorphic_Accelerator/v1
+export PYTHONDONTWRITEBYTECODE=1
+RUN="$HOME/Thesis_Evidence/M08/m08_paged_m06_lif_QFKpXlPW"
+HW="$HOME/Thesis_Evidence/M08/m08_paged_m06_lif_HW_zhUx7lLJ"
+python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_physical_reaudit.py' -v
+(cd "$HW" && sha256sum -c 99_evidence_sha256.txt)
+python3 scripts/m08_paged_m06_lif_physical_audit.py --native-dir "$RUN" --hw-dir "$HW"
+```
+
+**M08.4 ACCEPTANCE DECISION PENDING:** if (and only if) all 13 original SHA entries match, all 128 original physical observation lines match independently regenerated M02/M03 signed16 values and the auditor exits 0, update the authoritative M08.4 milestone to PHYSICAL ACCEPTED and **then** begin M08.5 on the existing appropriate development branch. Original previously failed optional methodology folder and old M32Q physical evidence remain unchanged. Never assert 13 SHA checks alone prove content parity.
+
+**M08.5 next broad gate**: matched physical memory/exec strategies, workloads and measurement boundaries with strict separate host-staging vs genuine PS/PL DDR ownership. Avoid new subdivisions and no inferred DMA/DDR address or kernel cache/lifetime bypass. Start with read-only owner/runtime/kernel/DT provenance and reproducible matched baseline; user gives local verification commands before any new board experiments.
+
 ## Authoritative branch / PR / milestones
 
 - Repository `Xtimetraveler-Prime/Thesis`; v1 work root `Neuromorphic_Accelerator/v1`.
 - **Work on existing** `agent/neuromorphic-accelerator-v1-m08-d3d3a-page-ownership` and **draft PR #94**, stacked on draft PR #93 (`agent/neuromorphic-accelerator-v1-m08-d3d2e-tick-event-queue`). Both draft, unmerged; **do not merge without user's explicit approval**. Inherited code in PR #93 is physically accepted; later page code is source-only.
 - **M01–M06 complete within PC/native offline bounds; M07 PC complete; M08 OPEN (M08.4 active); M08.5 and combined M08.6–7 planned; M09 planned.**
-- The user independently ran the latest VS Code M08 page test instructions and reported **all passed**. Dedicated CI had **515 M08 tests OK**, real Icarus including real AXI host-page and original 32-neuron page replay [run 44843119050](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44843119050); CI on further changes must always be checked at the new exact HEAD before claiming success.
+- User independently ran the source tests and then performed first actual M08.4 physical one-shot. Real first physical hardware PASS and final independent read-only audit pending, as detailed above. CI passed **548 M08 tests** including full synthetic auditor adversarial tests [run 44851903415](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44851903415); CI on further changes must be checked at their new exact HEAD.
 
 ## Immutable owner-original physically accepted baseline
 
