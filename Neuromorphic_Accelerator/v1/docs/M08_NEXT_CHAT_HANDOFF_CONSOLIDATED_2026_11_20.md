@@ -1,5 +1,8 @@
 # NEXT-CHAT HANDOFF — M08.5 matched real memory and execution experiments (2026-11-20)
 
+> **NEW AUTHORITATIVE NEXT-CHAT HANDOFF:** [M08_5_NEXT_CHAT_HANDOFF_2026_11_20.md](M08_5_NEXT_CHAT_HANDOFF_2026_11_20.md). This chronological document contains older, already-completed first-task advice. Start from the NEW handoff for the owner-verified seven-slot real LIF/AXI + runtime DMA lease source state, Linux memory-ownership plan and staged KV260 procedure. Preserve this older file for history only.
+
+
 > **FIRST INSTRUCTION TO THE NEXT CHATGPT INSTANCE:** M08.4 **IS PHYSICALLY ACCEPTED AND CLOSED**. The user supplied the **successful original, independent read-only hardware evidence audit** and explicitly asked that the result be recorded and the next milestone activated. **M08.5 IS NOW ACTIVE.** Do **not** ask the owner to reprogram, re-run or re-audit the original M08.4 image merely to resume work. Read this document and the current `roadmap.md`, then proceed with new **M08.5 source-first development** and give local terminal verification commands after every source change.
 
 **Do not subdivide milestones:** M08.4 was one physical neural-paging acceptance gate; M08.5 is **one** matched-execution/memory-comparison gate; M08.6–M08.7 will be **one** repeatable measurement/owner-review gate; M09 is thesis/analysis. No additional D3.D.3B/C/D, M08.5.1/5.2/5.3, new PR or branch per failed Icarus test/AXI transfer/DDR check. Engineering tasks inside M08.5 may have descriptive tests/docs, not independently "complete" micro-milestones.
