@@ -36,7 +36,7 @@ The engine actually reads and writes paged state, computes 3/4 signed decay **tr
 
 **Independent real Icarus negatives:** `tb_m08_paged_m06_lif_fail_closed.sv` and `tests/test_m08_paged_m06_lif_fail_closed.py` require **six** sticky fault/quarantine scenarios: missing recurrent configuration, wrong logical page, wrong tick, invalid signed16 threshold, withheld compute ACK timeout, invalid recurrent delay. Source CI [run 44845066819](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44845066819) passed **521 M08 tests** including actual negative RTL.
 
-**NEW OFFLINE owner-PC native prep (NO board):** `scripts/m08_paged_m06_lif_source_gate.py`, `m08_paged_m06_lif_build.tcl`, `run_m08_paged_m06_lif_pc.sh`, `m08_paged_m06_lif_native_review.py`, `tests/test_m08_paged_m06_lif_native_candidate.py` implement an **independent first-new-image Vivado 2025.2 K26** project generator based on the proven independent fan/PL0/fabric-POR/JTAG AXI topology, with exact separate FPGA RTL, 15 original SHA receipt rows, routed timing, DRC and original .bit candidate in a *fresh* owner directory. The first-image reviewer **ALWAYS exits 2/BLOCKED** until original *new* owner DRC warning instances, achieved timing, source/bit hash and clocks are reviewed and a new-image-specific release gate is written; this design has **NOT yet been run through owner-local Vivado or programmed on the KV260**. Do not borrow older M32Q image hashes or DRC waivers. The owner has previously requested to verify local commands before moving to physical changes.
+**NEW OFFLINE owner-PC native prep (NO board):** `scripts/m08_paged_m06_lif_source_gate.py`, `m08_paged_m06_lif_build.tcl`, `run_m08_paged_m06_lif_pc.sh`, `m08_paged_m06_lif_native_review.py`, `tests/test_m08_paged_m06_lif_native_candidate.py` implement an **independent first-new-image Vivado 2025.2 K26** project generator based on the proven independent fan/PL0/fabric-POR/JTAG AXI topology, with exact separate FPGA RTL, 15 original SHA receipt rows, routed timing, DRC and original .bit candidate in a *fresh* owner directory. The first-image reviewer **ALWAYS exits 2/BLOCKED** until original *new* owner DRC warning instances, achieved timing, source/bit hash and clocks are reviewed and a new-image-specific release gate is written; the FIRST owner-local Vivado attempt on 2026-11-20 FAILED in `lif_0_synth_1` at `m08_paged_m06_lif_engine.v:226` (`Synth 8-10871`), with following cascading Verilog syntax errors. The problem was the decimal literal `3'd5?` adjoining a ternary `?`; the existing branch now changes it to `3'd5 ?` and adds lexer/Verilog-2001 regression coverage. Preserve immutable failed run `~/Thesis_Evidence/M08/m08_paged_m06_lif_gkft3TOX`; do NOT rerun into it. Post-fix owner offline Vivado rerun, genuine routed DRC/timing and a new image-specific gate remain PENDING; the KV260 has **not** been programmed with the paged candidate. Do not borrow older M32Q image hashes or DRC waivers. The owner has previously requested to verify local commands before moving to physical changes.
 
 ## Actual next task inside M08.4 (no new milestone or branch)
 
@@ -48,7 +48,7 @@ The engine actually reads and writes paged state, computes 3/4 signed decay **tr
 
 **Absolute no-sprawl rule repeated for the next instance:** these are **engineering tasks inside M08.4**, not new milestones. Do **not** invent D3.D.3B/C/D, M08.4.1, a new PR per timing warning, or a new phase for each failed first owner image. New named debugging experiments are allowed only when genuinely necessary to isolate a distinct failure mechanism; they remain subordinate to M08.4.
 
-## Owner VS Code verification and future first OFFLINE native run
+## Owner VS Code verification and next FRESH OFFLINE native rerun
 
 **SOURCE-ONLY / NO VIVADO / NO BOARD.** The user passed the earlier 3-page checksum stage locally; the **NEW** neural/negative/native-source tests below are a *different* updated HEAD and must be run separately before any new owner native evidence:
 
@@ -70,7 +70,7 @@ python3 -m unittest discover -s tests -p 'test_m08_paged_m06_lif_native_candidat
 python3 -m unittest discover -s tests -p 'test_m08*.py' -v
 ```
 
-**Separate later option: ONE NEW OWNER PC OFFLINE Vivado candidate (never JTAG):** Only after source tests pass and the owner wishes to create a fresh original Vivado bitstream candidate, source the owner's known installed toolchain:
+**Separate next option: ONE NEW OWNER PC OFFLINE Vivado rerun in a FRESH evidence directory (never JTAG):** Only after source tests pass and the owner wishes to create a fresh original Vivado bitstream candidate, source the owner's known installed toolchain:
 
 ```bash
 cd ~/Git/Thesis/Neuromorphic_Accelerator/v1
