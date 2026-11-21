@@ -185,6 +185,8 @@ module tb_m08_m085_ddr_page_admission;
                     $fatal(1,"default zero window admitted request");
                 $display("M08_5_REAL_IVERILOG_GUARD_NEGATIVE_PASS case=16");
             end
+            17: begin req_logical_page=6;start_transfer();expect_poison();end
+            18: begin req_tick=4;start_transfer();expect_poison();end
             default: $fatal(1,"bad test selector");
         endcase
         $finish;
