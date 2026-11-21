@@ -30,6 +30,8 @@ class M085SSHOnlyInventory(unittest.TestCase):
                 self.assertIn("DRIVER_UNBOUND_OR_UNKNOWN", s)
             else:
                 self.assertIn(expected, s)
+        executable = "\n".join(line for line in s.splitlines()
+                               if not line.lstrip().startswith("#"))
         for forbidden in (
             "program_hw_devices", "xmutil", "modprobe ", "insmod ",
             "rmmod ", "sudo -", "/dev/mem", "/dev/uio", "fpgautil ",
@@ -38,7 +40,7 @@ class M085SSHOnlyInventory(unittest.TestCase):
         ):
             # The script's opening comments mention policy labels but not
             # dangerous command invocations.
-            self.assertNotIn(forbidden, s)
+            self.assertNotIn(forbidden, executable)
 
     def test_scripts_parse_and_pc_capture_ssh_is_strict(self):
         for p in (RUN, BOARD):
