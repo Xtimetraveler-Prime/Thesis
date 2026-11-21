@@ -11,6 +11,7 @@ from pathlib import Path
 import struct
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
@@ -48,7 +49,7 @@ class D3D3AOnePageSourceContractTests(unittest.TestCase):
 
     def test_cross_page_logical_ids_are_never_silently_aliased(self):
         images=[page.pack_page(i) for i in (0,1,2)]
-        self.assertEqual(len(set(map(sha256,images))),3)
+        self.assertEqual(len({sha256(v).hexdigest() for v in images}),3)
         for i,image in enumerate(images):
             page.audit_page(image,logical_id=i,epoch=0)
             for other in (0,1,2):
@@ -94,13 +95,13 @@ class D3D3AOnePageSourceContractTests(unittest.TestCase):
 
     def test_original_fixture_drift_and_nonmonotonic_ticks_fail_closed(self):
         original=page.fixture.words()
-        with unittest.mock.patch.object(page.fixture,"words",
+        with patch.object(page.fixture,"words",
                                         return_value=original[:-1]):
             with self.assertRaisesRegex(page.PageReject,"fixture length drift"):
                 page.pack_page(0)
         bad=list(original)
         bad[580]="00000003"  # tick 0 -> 3, breaks counts/ordering
-        with unittest.mock.patch.object(page.fixture,"words",return_value=tuple(bad)):
+        with patch.object(page.fixture,"words",return_value=tuple(bad)):
             with self.assertRaisesRegex(page.PageReject,"event tick ordering drift"):
                 page.pack_page(0)
 
