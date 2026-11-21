@@ -135,3 +135,25 @@ For any genuine future Linux DDR run, new exact-platform bound driver should per
 At each development increment report exact branch/HEAD/draft PR status; what files changed; what **actually** passed (Python vs Icarus vs offline Vivado vs physical, all separately), CI on exact commit, any tests pending/failing, copy/paste owner terminal commands, source/evidence limitations, next safe step and whether owner physical permission is required. Preserve all original evidence and failed attempts. No background/asynchronous promises.
 
 **STOP STATE:** Owner verified current M08.5 source increment locally. Hand off on this same branch; continue source/read-only ownership ABI development. This document creates no hardware authorization.
+
+## 8. Subsequent same-branch source-only continuation (after this original handoff)
+
+The branch now includes an additional **M08.5 candidate**, documented in `docs/M08_5_TRUSTED_CONTROL_AND_DRAIN_ABI_2026_11_20.md`: `rtl/m08/m08_m085_trusted_control_abi.v`, `rtl/m08/tb_m08_m085_trusted_control_abi.sv`, and `tests/test_m08_m085_trusted_control_abi.py`. This is a **non-AXI-Lite, source-only 32-bit versioned CSR decoder + original DMA fence** with complete descriptor/full-strobe checks, trusted-write input, same-cycle stop embargo, a low-then-high fresh external drain ACK, bounded drain timeout, and negative cases. The initial CI uncovered a same-cycle held-VALID decode race; the decoder now consumes each valid write only once until deassert/rearm. It is still NOT kernel owner authentication, actual PS HPM0/HP0 connection, a physical drain or M08.5 hardware acceptance. Do **not** treat the original 18/18 at `dbb0db6b` as evidence for later source commits; inspect the exact latest HEAD CI and replay below. No new hardware permission or merging is implied.
+
+```bash
+cd ~/Git/Thesis
+ git status --short
+ git fetch origin
+ git switch agent/neuromorphic-accelerator-v1-m08-matched-experiments
+ git pull --ff-only origin agent/neuromorphic-accelerator-v1-m08-matched-experiments
+ git rev-parse HEAD
+ cd Neuromorphic_Accelerator/v1
+ export PYTHONDONTWRITEBYTECODE=1
+ command -v iverilog && command -v vvp
+ python3 -m unittest discover -s tests -p 'test_m08_m085_trusted_control_abi.py' -v
+ python3 -m unittest discover -s tests -p 'test_m08_m085_kernel_dma_lease.py' -v
+ python3 -m unittest discover -s tests -p 'test_m08*.py' -v
+ python3 -m unittest discover -s tests -v
+```
+
+**Next:** independently review read-only applied-DT/XSA/firmware/Linux provenance under owner authorization, secure PS HPM0 width and kernel-only AXI-Lite bridge, true late-response drain/isolation/recovery, then controlled integration into the existing recurrent candidate. No physical testing before separate consent.
