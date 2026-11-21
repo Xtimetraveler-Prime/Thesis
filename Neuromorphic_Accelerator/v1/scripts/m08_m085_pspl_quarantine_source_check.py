@@ -69,6 +69,27 @@ def audit(tcl: str, rtl: str, runner: str) -> dict:
     match=re.search(r"set source_names\s*\{([^{}]+)\}",active_tcl)
     if not match or tuple(match.group(1).split())!=SOURCES:
         raise UnsafeTopology("not the exact 12 first-party neural RTL source files")
+    # Real owner first attempt (2026-11-21) exited before project creation:
+    # shell redirects 04_stdout/05_stderr before Tcl preflight, but Tcl used
+    # to allow only Vivado log/journal. Pin the EXACT four startup files.
+    allowed_match=re.search(r"^set allowed_precreated\\s*\\{([^{}]+)\\}\\s*$",
+                            active_tcl,re.M)
+    exact_startup={
+        "00_vivado.log","01_vivado.jou","04_stdout.txt","05_stderr.txt",
+    }
+    if not allowed_match or set(allowed_match.group(1).split())!=exact_startup or \
+       len(allowed_match.group(1).split())!=4:
+        raise UnsafeTopology("fresh evidence preflight must allow EXACT four shell-created files")
+    require_all(active_tcl,(
+        'if {$leaf ni $allowed_precreated ||',
+        '[file type $entry] ne "file" || ![file isfile $entry]',
+        'error "Evidence directory not fresh or unexpected content: $leaf"',
+    ),"fresh evidence directory guard")
+    require_all(active_sh,(
+        '-log "$D/00_vivado.log"',
+        '-journal "$D/01_vivado.jou"',
+        '> "$D/04_stdout.txt" 2> "$D/05_stderr.txt"',
+    ),"startup shell evidence contract")
     require_all(active_tcl,(
         "if {![string match \"2025.2*\" [version -short]]}",
         "set part xck26-sfvc784-2LV-c",
