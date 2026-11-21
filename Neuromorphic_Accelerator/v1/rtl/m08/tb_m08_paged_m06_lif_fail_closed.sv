@@ -21,7 +21,7 @@ module tb_m08_paged_m06_lif_fail_closed;
   integer i;
   reg [31:0] expected_checksum;
   reg [31:0] backing [0:383];
-  reg [31:0] config [0:63];
+  reg [31:0] edge_page_words [0:63];
   reg [31:0] neuron0 [0:63];
   reg [31:0] neuron1 [0:63];
   reg [31:0] edge_words [0:63];
@@ -169,7 +169,7 @@ module tb_m08_paged_m06_lif_fail_closed;
     axi_write(12'h014,32'h1,4'hf,1,2'b00);
     for(w=0;w<64;w=w+1) begin
       case(kind)
-        0:value=config[w];
+        0:value=edge_page_words[w];
         1:value=neuron0[w];
         2:value=neuron1[w];
         default:value=0;
@@ -178,7 +178,7 @@ module tb_m08_paged_m06_lif_fail_closed;
     end
     for(w=0;w<64;w=w+1) begin
       case(kind)
-        0:value=config[w];
+        0:value=edge_page_words[w];
         1:value=neuron0[w];
         2:value=neuron1[w];
         default:value=0;
@@ -216,7 +216,7 @@ module tb_m08_paged_m06_lif_fail_closed;
        !$value$plusargs("page0=%s",page0_file) ||
        !$value$plusargs("page1=%s",page1_file))
       $fatal(1,"M08_PAGED_LIF_FAIL_CLOSED_ORIGINAL_SOURCE_PAGES_REQUIRED");
-    $readmemh(edges_file,config);
+    $readmemh(edges_file,edge_page_words);
     $readmemh(page0_file,neuron0);
     $readmemh(page1_file,neuron1);
     for(cas=0;cas<6;cas=cas+1) begin
@@ -229,13 +229,13 @@ module tb_m08_paged_m06_lif_fail_closed;
       end else if(cas==5) begin
         // Malformed edge delay=0 MUST NOT be accepted as safe recurrent
         // configuration; the actual RTL, not Python, performs validation.
-        config[3]=0;
+        edge_page_words[3]=0;
         stage_words(32'hffffffff,0);
         axi_write(12'h014,32'h4,4'hf,1,2'b00);
       end else begin
         stage_words(32'hffffffff,0);
         axi_write(12'h014,32'h4,4'hf,1,2'b00);
-        // Real neural engine config must finish without bank/engine fault.
+        // Real neural engine edge_page_words must finish without bank/engine fault.
         begin:wait_setup
           integer c;
           c=0;
@@ -246,7 +246,7 @@ module tb_m08_paged_m06_lif_fail_closed;
             $fatal(1,"M08_PAGED_LIF_FAIL_CLOSED_PRECONDITION_FAILED case=%0d",cas);
         end
         for(integer w=0;w<64;w=w+1)
-          axi_read(12'h100+w*4,config[w],2'b00);
+          axi_read(12'h100+w*4,edge_page_words[w],2'b00);
         axi_write(12'h014,32'h8,4'hf,1,2'b00);
         case(cas)
           1:stage_words(1,2); // PAGE1 ahead of page0 forbidden
