@@ -97,7 +97,7 @@ class TwinPSPLReuseTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "genuine Icarus only; no synthetic Verilog substitute")
-    def test_real_iverilog_guard_positive_and_sixteen_adversarial_paths(self):
+    def test_real_iverilog_guard_positive_and_eighteen_adversarial_paths(self):
         with tempfile.TemporaryDirectory() as td:
             exe = Path(td)/"guard.vvp"
             built = subprocess.run(
@@ -106,7 +106,7 @@ class TwinPSPLReuseTests(unittest.TestCase):
                 capture_output=True, text=True
             )
             self.assertEqual(built.returncode, 0, built.stderr)
-            for case in range(17):
+            for case in range(19):
                 with self.subTest(case=case):
                     r = subprocess.run(["vvp", str(exe), f"+CASE={case}"],
                                        capture_output=True, text=True, timeout=10)
