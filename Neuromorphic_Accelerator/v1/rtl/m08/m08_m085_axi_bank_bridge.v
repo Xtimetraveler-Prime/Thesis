@@ -18,11 +18,14 @@ module m08_m085_axi_bank_bridge #(
     parameter integer GUARD_WAIT_CYCLES=4096,
     parameter integer AXI_STALL_CYCLES=128,
     parameter integer HOST_WAIT_CYCLES=128,
-    parameter integer ENABLE_EDGE_SLOT=0 // 0: six neurons only; 1: distinct edge slot 6
+    parameter integer ENABLE_EDGE_SLOT=0, // 0: six neurons only; 1: distinct edge slot 6
+    parameter integer USE_RUNTIME_WINDOW=0
 )(
     input wire clk,
     input wire resetn,
     input wire owner_lease_active,
+    input wire [63:0] runtime_window_begin,
+    input wire [63:0] runtime_window_end,
     input wire request,
     input wire request_save, // 0=load from DDR; 1=save current DIRTY bank to DDR
     input wire [63:0] request_addr,
@@ -147,15 +150,19 @@ module m08_m085_axi_bank_bridge #(
            (axi_read_page[62*32 +:32]==(page_q==5 ? 32'd2 : 32'd6)) &&
            (axi_read_page[63*32 +:32]==tick_q));
     wire header_ok=expected_page_header_ok;
+    wire [63:0] effective_begin= USE_RUNTIME_WINDOW != 0 ?
+        runtime_window_begin : WINDOW_BEGIN;
+    wire [63:0] effective_end= USE_RUNTIME_WINDOW != 0 ?
+        runtime_window_end : WINDOW_END;
     wire [64:0] directory_address =
-        {1'b0,WINDOW_BEGIN} + ({33'd0,request_page} << 8);
+        {1'b0,effective_begin} + ({33'd0,request_page} << 8);
     // Six neural slots, plus an optional SEPARATE edge configuration
     // slot 6 (semantic ID 0xFFFFFFFF). All physical addresses remain
     // blocked by the empty default owner window until independently leased.
     wire address_binding_ok =
-        WINDOW_END>WINDOW_BEGIN &&
-        WINDOW_BEGIN[7:0]==8'd0 &&
-        (WINDOW_END-WINDOW_BEGIN)>= (ENABLE_EDGE_SLOT ? 64'd1792 : 64'd1536) &&
+        effective_end>effective_begin &&
+        effective_begin[7:0]==8'd0 &&
+        (effective_end-effective_begin)>= (ENABLE_EDGE_SLOT ? 64'd1792 : 64'd1536) &&
         !directory_address[64] &&
         (request_addr==directory_address[63:0]);
     wire save_header_ok=is_edge ?
@@ -203,10 +210,13 @@ module m08_m085_axi_bank_bridge #(
         .WINDOW_BEGIN(WINDOW_BEGIN),.WINDOW_END(WINDOW_END),
         .GUARD_WAIT_CYCLES(GUARD_WAIT_CYCLES),
         .AXI_STALL_CYCLES(AXI_STALL_CYCLES),
-        .LOGICAL_PAGES(BACKING_SLOTS)
+        .LOGICAL_PAGES(BACKING_SLOTS),
+        .USE_RUNTIME_WINDOW(USE_RUNTIME_WINDOW)
     ) page_axi (
         .clk(clk),.resetn(resetn),
         .owner_lease_active(owner_lease_active && !local_fault),
+        .runtime_window_begin(runtime_window_begin),
+        .runtime_window_end(runtime_window_end),
         .compute_idle(compute_idle),.page_bank_idle(bank_idle),
         .req(axi_req),.req_write(axi_write),.req_addr(address_q),
         .req_size_bytes(16'd256),.req_logical_page(page_q),
