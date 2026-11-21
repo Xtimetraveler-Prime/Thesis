@@ -6,7 +6,9 @@
 # manager, firmware, DMA buffers, PS MMIO or JTAG operations. In particular
 # Vivado BD "validate" is NOT proof that the Linux kernel can own DDR.
 #
-# Requires a NEW empty owner PC evidence directory. Not accepted M08.4 dirs.
+# Requires a NEW owner PC evidence directory. Not accepted M08.4 dirs.
+# The shell opens stdout/stderr redirection files BEFORE Vivado starts.
+# Their presence is normal, but any other preexisting item is rejected.
 if {[llength $argv] != 1} {
     error "usage: m08_m085_pspl_quarantine_bd.tcl <NEW_EMPTY_m08_m085_pspl_bd_*_dir>"
 }
@@ -20,10 +22,15 @@ if {[file dirname $evidence] ne $base ||
     ![file isdirectory $evidence] || [file type $evidence] ne "directory"} {
     error "M08.5 PS/PL only accepts a NEW named directory in ~/Thesis_Evidence/M08"
 }
+# stdout/stderr are created by the owner runner's shell redirections
+# before Vivado enters this Tcl script. The Tcl preflight must agree with
+# that exact four-file startup contract. No ledger, result, previous project,
+# directory, symlink or other file may preexist.
+set allowed_precreated {00_vivado.log 01_vivado.jou 04_stdout.txt 05_stderr.txt}
 foreach entry [glob -nocomplain -directory $evidence * .*] {
     set leaf [file tail $entry]
     if {$leaf in {. ..}} {continue}
-    if {$leaf ni {00_vivado.log 01_vivado.jou} ||
+    if {$leaf ni $allowed_precreated ||
         [file type $entry] ne "file" || ![file isfile $entry]} {
         error "Evidence directory not fresh or unexpected content: $leaf"
     }
