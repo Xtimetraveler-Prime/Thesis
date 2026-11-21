@@ -20,6 +20,14 @@ Required before acceptance:
 
 **Current Gate-1 state:** SOURCE DEVELOPMENT. The existing accepted D3.D.2E physical run is the on-chip event/neural baseline, **not paged neural proof**.
 
+### Current M08.4 source evidence, actual tests (not physical acceptance)
+
+The branch has progressed beyond the first Python-only page model: new real synthesizable `m08_page_compute_probe_shell.v` integrates the unchanged 256-byte AXI4-Lite host-owned memory bank with a bounded clocked compute-port scanner and result writeback. Real Icarus/vvp confirms host lease exclusion, full 64-word readback before commit/save, two logical page replacements, sticky wrong-ID/premature-SAVE/withheld-ACK quarantine and a clean DONE. A first actual RTL regression discovered **missing WVALID/WREADY connections**, now fixed and statically asserted for all 19 AXI-Lite signals.
+
+The **original 32-neuron signed16 M06 configuration source** (not expected neural outputs) is now packed in **three separate 256B logical pages: 15, 15, 2 neurons** with M6PG logical IDs, valid-neuron fields, zero padding and a reserved probe result slot. Real Icarus exercises all three through **one** resident RTL page bank: 64-word load/readback, 63-word compute-port scan plus one writeback, 64-word dirty readback/save and actual replacement. New source/real-Icarus tests verify original independent M02/M03/M06 parameter data and reject wrong page IDs, sign/raw-byte changes and nonzero fake outputs. The dedicated M08 workflow **[44843119050](https://github.com/Xtimetraveler-Prime/Thesis/actions/runs/44843119050) passed all 515 M08 software and real RTL tests** at code commit `146371b5...`. See [source-level integration and test explanation](M08_PAGED_SOURCE_RTL_CONFORMANCE_2026_11_20.md). None of these simulate LIF membrane updates, 4-tick recurrence or DDR, so M08.4 *physical neural* gate remains OPEN.
+
+**Next implementation work inside Gate 1 (not its own milestone):** move M32Q LIF state, raw-event currents and recurrent delivery behind a verified *compute-facing* host-paged ABI, then run the original 32×4/17-event/five-edge independent neural workload across N>K actual resident hardware state. Only after genuine K26 native route/DRC/timing/source+image hash review and fresh one-shot physical audit can Gate 1 be marked accepted.
+
 ## Gate 2 — M08.5: genuine memory placement and matched controls
 
 Implement the feasible **same-precision**, same-geometry, same-work/synapses, same-event-order comparators, with an explicitly matched time boundary: on-chip timestep, on-chip event and **genuine** memory-backed timestep/event configurations where available. Use accepted Loihi P08 host/compute page-ownership precedent without borrowing signed24 RTL arithmetic or treating its measurements as M08's.
