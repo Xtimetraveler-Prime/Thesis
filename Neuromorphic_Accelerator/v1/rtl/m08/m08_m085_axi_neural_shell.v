@@ -16,11 +16,14 @@ module m08_m085_axi_neural_shell #(
     parameter [63:0] WINDOW_END=64'd0,
     parameter integer GUARD_WAIT_CYCLES=4096,
     parameter integer AXI_STALL_CYCLES=128,
-    parameter integer HOST_WAIT_CYCLES=128
+    parameter integer HOST_WAIT_CYCLES=128,
+    parameter integer USE_RUNTIME_WINDOW=0
 )(
     input wire clk,
     input wire resetn,
     input wire owner_lease_active,
+    input wire [63:0] runtime_window_begin,
+    input wire [63:0] runtime_window_end,
     input wire request,
     input wire request_save, // 0=load from DDR; 1=save current DIRTY bank to DDR
     input wire [63:0] request_addr,
@@ -90,11 +93,14 @@ module m08_m085_axi_neural_shell #(
         .GUARD_WAIT_CYCLES(GUARD_WAIT_CYCLES),
         .AXI_STALL_CYCLES(AXI_STALL_CYCLES),
         .HOST_WAIT_CYCLES(HOST_WAIT_CYCLES),
-        .ENABLE_EDGE_SLOT(1)
+        .ENABLE_EDGE_SLOT(1),
+        .USE_RUNTIME_WINDOW(USE_RUNTIME_WINDOW)
     ) bridge(
         .clk(clk),
         .resetn(resetn),
         .owner_lease_active(owner_lease_active),
+        .runtime_window_begin(runtime_window_begin),
+        .runtime_window_end(runtime_window_end),
         .request(request),
         .request_save(request_save),
         .request_addr(request_addr),
