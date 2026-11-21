@@ -20,6 +20,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 import m08_paged_m06_lif_fixture as oracle
 import m08_paged_m06_lif_native_review as native
+import m08_paged_m06_lif_exact_native_accept as first_image
 
 NAMES=(
     "00_executed_source.tcl",
@@ -54,9 +55,10 @@ def inspect(native_dir:Path,hw_dir:Path)->dict:
     require(native_dir.name=="m08_paged_m06_lif_QFKpXlPW" and
             native_dir.parent==(Path.home()/"Thesis_Evidence/M08"),
             "wrong original native image")
-    original=native.inspect(native_dir)
-    require(original["candidate_bitstream_sha256"]==EXPECTED_BIT_SHA,
-            "first owner image SHA mismatch")
+    original=first_image.inspect(native_dir)
+    require(original["image_specific_gate"]=="ACCEPTED" and
+            original["owner_bit_sha256"]==EXPECTED_BIT_SHA,
+            "first owner native image must have an independently accepted exact-source DRC/timing/clock gate")
     require(hw_dir.is_dir() and not hw_dir.is_symlink() and
             hw_dir.parent==(Path.home()/"Thesis_Evidence/M08") and
             re.fullmatch(r"m08_paged_m06_lif_HW_[A-Za-z0-9]+",hw_dir.name),
@@ -170,7 +172,7 @@ def main()->int:
     try:
         print(json.dumps(inspect(args.native_dir,args.hw_dir),indent=2,sort_keys=True))
         return 0
-    except (Reject,native.Reject,oracle.Reject,ValueError,OSError,UnicodeError) as exc:
+    except (Reject,native.Reject,first_image.Reject,oracle.Reject,ValueError,OSError,UnicodeError) as exc:
         print("M08_4_FIRST_HW_RECEIPT_REJECTED: "+str(exc),file=sys.stderr)
         return 2
 
