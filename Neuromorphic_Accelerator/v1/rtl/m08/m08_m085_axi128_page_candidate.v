@@ -9,7 +9,8 @@ module m08_m085_axi128_page_candidate #(
     parameter [63:0] WINDOW_BEGIN=64'd0,
     parameter [63:0] WINDOW_END=64'd0,
     parameter integer GUARD_WAIT_CYCLES=4096,
-    parameter integer AXI_STALL_CYCLES=128
+    parameter integer AXI_STALL_CYCLES=128,
+    parameter integer LOGICAL_PAGES=6
 )(
     input wire clk,
     input wire resetn,
@@ -94,7 +95,7 @@ module m08_m085_axi128_page_candidate #(
     m08_m085_ddr_page_admission #(
         .WINDOW_BEGIN(WINDOW_BEGIN),.WINDOW_END(WINDOW_END),
         .MAX_WAIT_CYCLES(GUARD_WAIT_CYCLES),
-        .LOGICAL_PAGES(6),.LOGICAL_TICKS(4)
+        .LOGICAL_PAGES(LOGICAL_PAGES),.LOGICAL_TICKS(4)
     ) admission(
         .clk(clk),.resetn(resetn),
         .owner_lease_active(owner_lease_active),
