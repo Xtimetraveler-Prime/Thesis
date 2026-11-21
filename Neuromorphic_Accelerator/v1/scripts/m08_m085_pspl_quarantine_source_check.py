@@ -72,7 +72,7 @@ def audit(tcl: str, rtl: str, runner: str) -> dict:
     # Real owner first attempt (2026-11-21) exited before project creation:
     # shell redirects 04_stdout/05_stderr before Tcl preflight, but Tcl used
     # to allow only Vivado log/journal. Pin the EXACT four startup files.
-    allowed_match=re.search(r"^set allowed_precreated\\s*\\{([^{}]+)\\}\\s*$",
+    allowed_match=re.search(r"^set allowed_precreated\s*\{([^{}]+)\}\s*$",
                             active_tcl,re.M)
     exact_startup={
         "00_vivado.log","01_vivado.jou","04_stdout.txt","05_stderr.txt",
