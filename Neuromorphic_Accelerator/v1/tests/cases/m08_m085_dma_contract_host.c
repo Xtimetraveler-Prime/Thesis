@@ -25,6 +25,20 @@ static void check_descriptor(uint64_t base, uint64_t bytes, uint64_t gen,
     }
 }
 
+static void check_hp0_route(uint64_t base, uint64_t bytes,
+                            uint64_t generation, int expected)
+{
+    int got = !!m085_dma_candidate_hp0_low_valid(base, bytes, generation);
+    ++assertions;
+    if (got != expected) {
+        fprintf(stderr,
+                "BAD_HP0_ROUTE base=%llu bytes=%llu gen=%llu got=%d want=%d\\n",
+                (unsigned long long)base, (unsigned long long)bytes,
+                (unsigned long long)generation, got, expected);
+        exit(2);
+    }
+}
+
 static void check_slot(uint64_t slot, uint64_t tick, int expected)
 {
     int got = !!m085_dma_slot_valid(slot, tick);
@@ -60,6 +74,18 @@ int main(void)
     check_descriptor(UINT64_MAX,UINT64_MAX,UINT64_MAX,0);
     check_descriptor(0x1000ULL,0ULL,1ULL,0);
     check_descriptor(0x1000ULL,0xffffffffULL,1ULL,1);
+    /* The 49-bit RTL contract is deliberately broader than the actual
+     * candidate PS HP0 DDR_LOW interconnect decode. These 8 extra checks
+     * prove the narrower candidate bus routing gate separately.
+     */
+    check_hp0_route(0x1000ULL,4096ULL,1ULL,1);
+    check_hp0_route(0ULL,1792ULL,1ULL,1);
+    check_hp0_route(0x7ffff000ULL,4096ULL,1ULL,1);
+    check_hp0_route(0x7ffff000ULL,4097ULL,1ULL,0);
+    check_hp0_route(0x80000000ULL,4096ULL,1ULL,0);
+    check_hp0_route(0x80000100ULL,4096ULL,1ULL,0);
+    check_hp0_route(limit-8192ULL,4096ULL,1ULL,0);
+    check_hp0_route(0x7fffe000ULL,4096ULL,1ULL,1);
 
     for (slot = 0; slot < 7; ++slot)
         for (tick = 0; tick < 4; ++tick)
@@ -69,11 +95,11 @@ int main(void)
     check_slot(UINT64_MAX,UINT64_MAX,0);
     check_slot(0ULL,4ULL,0);
     check_slot(6ULL,1ULL,0);
-    if (assertions != 49) {
-        fprintf(stderr,"M085_C_CONTRACT_TEST_COUNT=%d != 49\n",assertions);
+    if (assertions != 57) {
+        fprintf(stderr,"M085_C_CONTRACT_TEST_COUNT=%d != 57\n",assertions);
         return 3;
     }
-    printf("M08_M085_PORTABLE_C_DMA_49BIT_7SLOT_BOUNDARY_PASS checks=%d\n",
+    printf("M08_M085_PORTABLE_C_DMA_49BIT_HP0LOW_7SLOT_BOUNDARY_PASS checks=%d\n",
            assertions);
     return 0;
 }
