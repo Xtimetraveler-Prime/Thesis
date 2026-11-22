@@ -84,7 +84,7 @@ def regular_file(path: Path, max_bytes: int = MAX_BYTES) -> bytes:
         s = path.lstat()
     except OSError as exc:
         raise EvidenceRejected("missing original file: " + str(path)) from exc
-    if not stat.S_ISREG(s.st_mode) or not (0 < s.st_size <= max_bytes):
+    if not stat.S_ISREG(s.st_mode) or not (0 <= s.st_size <= max_bytes):
         raise EvidenceRejected("unsafe original file size/type: " + str(path))
     return path.read_bytes()
 
