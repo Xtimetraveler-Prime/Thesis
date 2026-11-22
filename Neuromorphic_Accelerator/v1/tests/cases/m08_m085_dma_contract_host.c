@@ -32,7 +32,7 @@ static void check_hp0_route(uint64_t base, uint64_t bytes,
     ++assertions;
     if (got != expected) {
         fprintf(stderr,
-                "BAD_HP0_ROUTE base=%llu bytes=%llu gen=%llu got=%d want=%d\\n",
+                "BAD_HP0_ROUTE base=%llu bytes=%llu gen=%llu got=%d want=%d\n",
                 (unsigned long long)base, (unsigned long long)bytes,
                 (unsigned long long)generation, got, expected);
         exit(2);
