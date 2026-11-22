@@ -82,7 +82,7 @@ class M085DMAPreflightSourceTests(unittest.TestCase):
         )
         self.assertEqual(p.returncode,0,p.stdout+p.stderr)
 
-    def test_real_compiled_portable_contract_49_cases(self):
+    def test_real_compiled_portable_contract_57_cases(self):
         with tempfile.TemporaryDirectory() as tmp:
             exe=Path(tmp)/"dma_contract"
             self._compile(FIXTURE,exe)
