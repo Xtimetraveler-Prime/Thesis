@@ -118,9 +118,12 @@ static int m085_probe(struct platform_device *pdev)
 
     /* Revalidate the ACTUAL device bus address from DMA API, not
      * virt_to_phys / an assumed CPU address / a userspace pointer.
+     * Require BOTH the strict 49-bit RTL descriptor AND the narrower
+     * [0,0x80000000) original QUARANTINED BD HP0 low DDR decode.
+     * Neither check establishes actual boot AFI/dma-ranges/IOMMU setup.
      */
-    if (!m085_dma_descriptor_valid((u64)state->dma_handle,
-                                   state->bytes, 1ULL)) {
+    if (!m085_dma_candidate_hp0_low_valid((u64)state->dma_handle,
+                                           state->bytes, 1ULL)) {
         ret = -ERANGE;
         goto free_never_shared;
     }
