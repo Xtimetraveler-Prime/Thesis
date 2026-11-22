@@ -166,7 +166,7 @@ def verify(original: Path, expected_root: Path = ROOT) -> dict:
     if blobs["02_vivado_exit_status.txt"] != b"vivado_exit_status=0\n":
         raise EvidenceRejected("owner Vivado process did not exit successfully")
     stdout = evidence_text(blobs["04_stdout.txt"], "Vivado stdout")
-    if stdout.count("M08_M085_QUARANTINED_PSPL_BD_COMPLETE_NO_DMA_NO_BITSTREAM") != 1:
+    if sum(line.strip() == "M08_M085_QUARANTINED_PSPL_BD_COMPLETE_NO_DMA_NO_BITSTREAM" for line in stdout.splitlines()) != 1:
         raise EvidenceRejected("unique successful native BD marker absent from stdout")
     log = evidence_text(blobs["00_vivado.log"], "Vivado original log")
     if "Vivado v2025.2" not in log or "M08_M085_QUARANTINED_PSPL_BD_COMPLETE_NO_DMA_NO_BITSTREAM" not in log:
