@@ -14,7 +14,24 @@ The owner ran `sha256sum -c 99_evidence_sha256.txt`, reporting **22/22 OK** (the
 
 This is **owner-attested native Vivado PS/PL interface topology validation**, NOT independent execution by the assistant, bitstream timing/DRC, physical AFI/DT boot register state, PS DDR access, actual `dma_addr_t`, IOMMU/cache translation, kernel-only MMIO, measured throughput or physical drain evidence. In particular, the original builder `validate_bd_design -force` checks the Vivado IPI model; it does **not** prove the booted KV260 Linux system owns or can reach an actual DDR buffer. The previously failed original `m08_m085_pspl_bd_20261121T205920Z_E7OxxtTo` remains a separate immutable 7/7 SHA first-attempt receipt.
 
-The assistant cannot read the owner's private PC directory. The new independent **read-only receipt reviewer** can be run by the owner against the original bytes to close the extra source/provenance consistency check, without rerunning Vivado or modifying evidence.
+The assistant cannot read the owner's private PC directory. The new independent **read-only receipt reviewer was run by the owner against the original bytes and PASSED**, as recorded above; its synthetic mutation tests remain source-only and the reviewer never replays Vivado or modifies the original evidence.
+
+## 2026-11-21 America/Denver — OWNER CONFIRMED independent receipt review PASS
+
+**Update to the initial report:** The owner **actually ran** the previously requested read-only source/receipt reviewer on the immutable successful original `/home/dna/Thesis_Evidence/M08/m08_m085_pspl_bd_20261122T041029Z_PDYwZWvm` and reported **all 22 `sha256sum -c` originals OK again** plus:
+```text
+status=OWNER_RECEIPT_CONSISTENT_SOURCE_ONLY_NATIVE_BD_NOT_DMA_RELEASE
+files_sha256_verified=22
+snapshot_and_builder_match_current_source=true
+declared_ps_hp0_128=true
+declared_ps_hpm0_to_32_axil=true
+four_trust_and_drain_signals_hardwired_zero=true
+independent_vivado_replay_performed=false
+rtl_synthesis_or_route_performed=false
+board_access_performed=false
+physical_dma_allowed=false
+```
+This is a **new independent owner-side read-only integrity/source comparison acceptance** beyond the initial Vivado exit0, not a claim that the assistant opened the private owner files, replayed native Vivado, ran implementation, booted the candidate image or used actual PS DDR. **Do not ask the owner to repeat this exact check as a prerequisite for new source-only M08.5 work.** The precise immutable original names and first-failure 7/7 SHA receipt are retained.
 
 ## 2. New read-only receipt reviewer
 
@@ -22,7 +39,7 @@ The assistant cannot read the owner's private PC directory. The new independent 
 
 Receipt test fixtures are **artificial PC-side files**, not another native Vivado execution. `tests/test_m08_m085_pspl_owner_receipt_review.py` mutates recorded hashes, original source snapshots with regenerated hashes, spoofed trust/width/route properties, false native success, wrong exit/version, changed fan/XDC, symlinks and forbidden bit files. A synthetic fixture passing a reviewer only establishes that its *code path* is testable; it is never called original physical or native evidence.
 
-**Owner PC verification (the exact original folder; read-only):**
+**Owner PC verification (ALREADY OWNER-PASSED; retained solely as a reproducibility command, do not request a routine rerun):**
 
 ```bash
 cd ~/Git/Thesis
