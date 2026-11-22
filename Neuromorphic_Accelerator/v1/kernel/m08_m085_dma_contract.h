@@ -24,6 +24,11 @@ typedef uint64_t m085_u64;
 #define M085_DMA_SLOT_COUNT 7ULL
 #define M085_DMA_USED_BYTES (M085_DMA_PAGE_BYTES * M085_DMA_SLOT_COUNT)
 #define M085_DMA_ALLOC_FIELD_MAX 0xffffffffULL
+/* Source-only 2026-11-21 owner-validated BD address decode: HP0_DDR_LOW
+ * maps the PL master to bus addresses [0,0x80000000). This is NOT proof
+ * that a live Linux DMA handle translates to that route.
+ */
+#define M085_CANDIDATE_HP0_LOW_EXCLUSIVE 0x80000000ULL
 
 static inline int m085_dma_descriptor_valid(m085_u64 dma_base,
                                             m085_u64 allocation_bytes,
@@ -45,6 +50,27 @@ static inline int m085_dma_descriptor_valid(m085_u64 dma_base,
     if (allocation_bytes >= M085_DMA_AXI_LIMIT - dma_base)
         return 0;
     return 1;
+}
+
+/*
+ * SECOND independent route-boundary gate for the QUARANTINED candidate
+ * PS S_AXI_HP0_FPD / HP0_DDR_LOW block diagram, not a replacement for
+ * the 49-bit first-party RTL lease arithmetic.
+ *
+ * The complete *allocated* region must fit the lower 2 GiB routed segment
+ * to avoid a usable first 1792 bytes masking an out-of-route allocation
+ * tail. End == 0x80000000 is within this source bus address decode.
+ * A real boot IOMMU, dma-ranges or AFI can still reject this address.
+ */
+static inline int m085_dma_candidate_hp0_low_valid(m085_u64 dma_base,
+                                                    m085_u64 allocation_bytes,
+                                                    m085_u64 generation)
+{
+    if (!m085_dma_descriptor_valid(dma_base, allocation_bytes, generation))
+        return 0;
+    if (dma_base >= M085_CANDIDATE_HP0_LOW_EXCLUSIVE)
+        return 0;
+    return allocation_bytes <= M085_CANDIDATE_HP0_LOW_EXCLUSIVE - dma_base;
 }
 
 static inline int m085_dma_slot_valid(m085_u64 slot, m085_u64 tick)
