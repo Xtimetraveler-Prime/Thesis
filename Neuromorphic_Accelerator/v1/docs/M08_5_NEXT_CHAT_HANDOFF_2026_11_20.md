@@ -1,5 +1,4 @@
-
-# M08.5 NEXT-CHAT HANDOFF — project context, source acceptance, Linux memory ownership, KV260 workflow
+> **SUPERSEDED FOR NEXT-CHAT STARTUP (2026-11-21 America/Denver):** Start with [the CURRENT owner-accepted M08.5 next-chat handoff](M08_5_NEXT_CHAT_HANDOFF_2026_11_21.md), not this chronological document's older first-task instructions. Owner has confirmed genuine quarantined Vivado 2025.2 offline PS/PL BD exit0, 22/22 original SHA and independent read-only `OWNER_RECEIPT_CONSISTENT_SOURCE_ONLY_NATIVE_BD_NOT_DMA_RELEASE` PASS; 18/18 source-code CI on `3b56646fa3becd68256a25122776c52456e34d48`. No DDR/DMA or physical drain acceptance. This older document remains intact as historical history; its original "authoritative" claim was true when written but is no longer current.\n\n# M08.5 NEXT-CHAT HANDOFF — project context, source acceptance, Linux memory ownership, KV260 workflow
 **Prepared 2026-11-20 America/Denver. This is the authoritative first file for the NEXT chat.** Earlier `M08_NEXT_CHAT_HANDOFF_CONSOLIDATED_2026_11_20.md` contains chronological/interim advice and outdated first tasks. Use this file for the current development state and consult earlier handoffs only for history.
 
 ## 0. Current branch, PR and acceptance snapshot
