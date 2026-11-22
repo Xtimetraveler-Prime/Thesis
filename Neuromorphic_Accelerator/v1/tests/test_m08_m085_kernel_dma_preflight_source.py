@@ -14,7 +14,7 @@ ROOT=Path(__file__).resolve().parents[1]
 HEADER=ROOT/"kernel/m08_m085_dma_contract.h"
 DRIVER=ROOT/"kernel/m08_m085_dma_preflight.c"
 FIXTURE=ROOT/"tests/cases/m08_m085_dma_contract_host.c"
-PASS="M08_M085_PORTABLE_C_DMA_49BIT_7SLOT_BOUNDARY_PASS checks=49"
+PASS="M08_M085_PORTABLE_C_DMA_49BIT_HP0LOW_7SLOT_BOUNDARY_PASS checks=57"
 
 
 class M085DMAPreflightSourceTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class M085DMAPreflightSourceTests(unittest.TestCase):
             "dma_free_coherent(s->dma_dev, s->bytes, s->cpu_virt,",
             "state->never_shared_with_pl = true;",
             "if (WARN_ON_ONCE(!s->never_shared_with_pl))",
-            "m085_dma_descriptor_valid((u64)state->dma_handle,",
+            "m085_dma_candidate_hp0_low_valid((u64)state->dma_handle,",
             "platform_get_resource(pdev, IORESOURCE_MEM, 0)",
             "resource_size(res) != M085_CSR_MIN_BYTES",
             "cap != M085_CAP_MAGIC || version != M085_ABI_V11",
@@ -62,10 +62,14 @@ class M085DMAPreflightSourceTests(unittest.TestCase):
             "dma_base & (M085_DMA_PAGE_BYTES - 1ULL)",
             "allocation_bytes >= M085_DMA_AXI_LIMIT - dma_base",
             "slot != 6ULL || tick == 0ULL",
+            "#define M085_CANDIDATE_HP0_LOW_EXCLUSIVE 0x80000000ULL",
+            "m085_dma_candidate_hp0_low_valid",
+            "allocation_bytes <= M085_CANDIDATE_HP0_LOW_EXCLUSIVE - dma_base",
         ):
             self.assertIn(required,h)
         self.assertNotIn("0x40000000",h)
         self.assertEqual(FIXTURE.read_text().count("check_descriptor("),18)
+        self.assertEqual(FIXTURE.read_text().count("check_hp0_route("),9)
 
     def _compile(self,source: Path, output: Path):
         compiler=shutil.which("cc") or shutil.which("gcc")
